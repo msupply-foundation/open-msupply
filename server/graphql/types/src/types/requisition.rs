@@ -11,7 +11,7 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{requisition_row::RequisitionRow, ApprovalStatusType, NameRow, Requisition};
-use service::ListResult;
+use service::{requisition_line::ancillary_items::AncillaryState, ListResult};
 
 use super::{
     program_node::ProgramNode, InvoiceConnector, NameNode, PeriodNode, RequisitionLineConnector,
@@ -47,6 +47,23 @@ pub enum RequisitionNodeApprovalStatus {
     AutoApproved,
     ApprovedByAnother,
     DeniedByAnother,
+}
+
+/// Whether a request requisition has outstanding ancillary-item work to do.
+/// `NeedsAdd` takes priority over `NeedsUpdate`: once the user has added the
+/// missing lines, any remaining stale quantities surface as `NeedsUpdate`.
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+pub enum AncillaryStateNode {
+    None,
+    NeedsAdd,
+    NeedsUpdate,
+}
+
+#[derive(SimpleObject)]
+pub struct AncillaryStateResponse {
+    pub state: AncillaryStateNode,
+    /// Number of ancillary items in the banner-worthy state. Zero when state is `None`.
+    pub count: u32,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -86,6 +103,31 @@ impl RequisitionNode {
 
     pub async fn status(&self) -> RequisitionNodeStatus {
         RequisitionNodeStatus::from(self.row().status.clone())
+    }
+
+    /// Whether this request requisition has ancillary items that need adding
+    /// or updating, so the client can render the "add"/"update" banner.
+    /// Always returns `None` for non-request requisitions.
+    pub async fn ancillary_state(&self, ctx: &Context<'_>) -> Result<AncillaryStateResponse> {
+        use repository::RequisitionType;
+        if self.row().r#type != RequisitionType::Request {
+            return Ok(AncillaryStateResponse {
+                state: AncillaryStateNode::None,
+                count: 0,
+            });
+        }
+        let service_provider = ctx.service_provider();
+        let service_ctx = service_provider.basic_context()?;
+        let plan = service_provider
+            .requisition_line_service
+            .get_ancillary_plan(&service_ctx, &self.row().id)
+            .map_err(|e| StandardGraphqlError::from_debug(&e))?;
+        let (state, count) = match plan.state() {
+            AncillaryState::None => (AncillaryStateNode::None, 0),
+            AncillaryState::NeedsAdd { count } => (AncillaryStateNode::NeedsAdd, count),
+            AncillaryState::NeedsUpdate { count } => (AncillaryStateNode::NeedsUpdate, count),
+        };
+        Ok(AncillaryStateResponse { state, count })
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
