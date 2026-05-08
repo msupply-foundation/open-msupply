@@ -2840,5 +2840,9 @@
   "warning.confirm-send-ancillary-items-missing_one": "1 ancillary item has not been added to this order. Send anyway?",
   "warning.confirm-send-ancillary-items-missing_other": "{{count}} ancillary items have not been added to this order. Send anyway?",
   "warning.confirm-send-ancillary-items-stale_one": "1 ancillary item line has an outdated quantity. Send anyway?",
-  "warning.confirm-send-ancillary-items-stale_other": "{{count}} ancillary item lines have outdated quantities. Send anyway?"
+  "warning.confirm-send-ancillary-items-stale_other": "{{count}} ancillary item lines have outdated quantities. Send anyway?",
+  "label.ancillary-plan-to-add": "Items to add",
+  "label.ancillary-plan-to-update": "Items to update",
+  "label.ancillary-of": "Ancillary of",
+  "button.details": "Details"
 }
