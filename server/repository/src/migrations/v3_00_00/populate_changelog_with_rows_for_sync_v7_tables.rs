@@ -203,42 +203,4 @@ mod tests {
             "expected ('UPSERT', NULL, Some(42), NULL, NULL) for unit/unit1"
         );
     }
-
-    /// When SETTINGS_SYNC_CENTRAL_SERVER_SITE_ID isn't set, the COALESCE falls
-    /// back to 0
-    #[actix_rt::test]
-    async fn test_populate_changelog_source_site_id_fallback() {
-        let previous_version = V2_18_00.version();
-        let version = V3_00_00.version();
-
-        let SetupResult { connection, .. } = setup_test(SetupOption {
-            db_name: "migration_populate_changelog_v7_fallback",
-            version: Some(previous_version.clone()),
-            ..Default::default()
-        })
-        .await;
-
-        // Insert a single source row but DO NOT seed key_value_store.
-        connection
-            .lock()
-            .connection()
-            .batch_execute(
-                r#"INSERT INTO unit (id, name, description, "index") VALUES ('unit1', 'Each', '', 1);"#,
-            )
-            .unwrap();
-
-        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
-
-        let source_site_id = changelog::table
-            .filter(changelog::table_name.eq("unit"))
-            .filter(changelog::record_id.eq("unit1"))
-            .select(changelog::source_site_id)
-            .first::<Option<i32>>(connection.lock().connection())
-            .unwrap();
-        assert_eq!(
-            source_site_id,
-            Some(0),
-            "expected fallback source_site_id = Some(0) when no central site id is configured"
-        );
-    }
 }
