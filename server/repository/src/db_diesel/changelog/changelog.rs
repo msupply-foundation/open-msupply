@@ -87,7 +87,7 @@ type Source = LeftJoinQuerySource<
 
 diesel_string_enum! {
     #[derive(Clone, Eq, Serialize, Deserialize, TS)]
-    #[strum(serialize_all = "snake_case")]
+    #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
     pub enum RowActionType {
         #[default]
         Upsert,
@@ -527,5 +527,15 @@ mod print_query_tests {
             .select(changelog::all_columns);
 
         println!("{}", debug_query::<DBType, _>(&q));
+    }
+
+    /// Locks the Rust↔DB contract for `row_action`: the column was the PG enum
+    /// `row_action_type` with labels 'UPSERT'/'DELETE' until v3.0.0, then cast
+    /// to TEXT preserving those labels. The strum serialization here must keep
+    /// matching them.
+    #[test]
+    fn row_action_type_serializes_uppercase() {
+        assert_eq!(RowActionType::Upsert.to_string(), "UPSERT");
+        assert_eq!(RowActionType::Delete.to_string(), "DELETE");
     }
 }
