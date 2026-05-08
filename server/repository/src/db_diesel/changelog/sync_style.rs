@@ -2,8 +2,8 @@ use strum::IntoEnumIterator;
 
 use super::changelog::ChangelogTableName;
 
-#[derive(strum::EnumIter, PartialEq, Eq, Debug)]
-pub(crate) enum ChangeLogSyncStyle {
+#[derive(strum::EnumIter, PartialEq, Eq, Debug, Clone, Copy)]
+pub enum ChangeLogSyncStyle {
     Central, // Data created on Open-mSupply central server
     Remote,
     File,
@@ -40,11 +40,8 @@ pub struct SyncVersions {
 
 // When adding a new change log record type, specify how it should be synced
 // If new requirements are needed a different ChangeLogSyncStyle can be added
-//
-// Variants are grouped to match the order of `ChangelogTableName` above and
-// sorted alphabetically within each group. Keep the two in sync.
 impl ChangelogTableName {
-    pub(crate) fn sync_style(&self) -> (Vec<ChangeLogSyncStyle>, SyncVersions) {
+    pub fn sync_style(&self) -> (Vec<ChangeLogSyncStyle>, SyncVersions) {
         use ChangeLogSyncStyle::*;
         use ChangelogTableName::*;
         match self {
@@ -122,19 +119,18 @@ impl ChangelogTableName {
             // more specific sync style.
             // ----------------------------------------------------------
             Abbreviation
+            | Barcode
             | Category
             | Contact
             | ContactTrace
             | Context
+            | Currency
             | DemographicIndicator
             | Diagnosis
             | DocumentRegistry
             | IndicatorColumn
             | IndicatorLine
             | Item
-            | Barcode
-            | Currency
-            | Name
             | ItemCategoryJoin
             | ItemDirection
             | ItemStoreJoin
@@ -193,12 +189,21 @@ impl ChangelogTableName {
             ),
 
             // ----------------------------------------------------------
-            // Patient (v6) — store-scoped patient records that
-            // also flow to sites where the patient is visible (via
-            // name_store_join on the patient_id).
+            // Central + Patient (not v6) — central rows, plus patient rows routed to visible sites
             // ----------------------------------------------------------
-            Encounter | Vaccination | Document => (
+            Name => (
                 vec![Central, Patient],
+                SyncVersions {
+                    is_v6: false,
+                    is_v5: true,
+                },
+            ),
+
+            // ----------------------------------------------------------
+            // Remote + Patient (v6) — store-scoped data also routed to sites where the patient is visible
+            // ----------------------------------------------------------
+            Encounter | Vaccination => (
+                vec![Remote, Patient],
                 SyncVersions {
                     is_v6: true,
                     is_v5: false,
@@ -206,12 +211,10 @@ impl ChangelogTableName {
             ),
 
             // ----------------------------------------------------------
-            // Remote + Patient (v6) — store-scoped patient records that
-            // also flow to sites where the patient is visible (via
-            // name_store_join on the patient_id).
+            // Patient (v6) — routed only to sites where the patient is visible
             // ----------------------------------------------------------
-            Encounter | Vaccination | Document => (
-                vec![Remote, Patient],
+            Document => (
+                vec![Patient],
                 SyncVersions {
                     is_v6: true,
                     is_v5: false,
@@ -230,7 +233,7 @@ impl ChangelogTableName {
             ),
 
             // ----------------------------------------------------------
-            // RemoteAndCentral (v6) — Remote when store_id is set, otherwise Central
+            // Remote + Central (v6) — Remote when store_id is set, otherwise Central
             // ----------------------------------------------------------
             PluginData | Preference => (
                 vec![Remote, Central],
