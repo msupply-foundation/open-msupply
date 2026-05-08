@@ -382,6 +382,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         RequisitionRow {
             id: "requisition".to_string(),
             name_id: name().id,
+            name_store_id: Some(store().id),
             store_id: store().id,
             ..Default::default()
         }

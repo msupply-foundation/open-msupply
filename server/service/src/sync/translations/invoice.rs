@@ -576,7 +576,6 @@ impl SyncTranslation for InvoiceTranslation {
                     shipping_method_id,
                     charges_local_currency,
                     charges_foreign_currency,
-                    transfer_store_id: _,
                 },
             name_row,
             clinician_row,

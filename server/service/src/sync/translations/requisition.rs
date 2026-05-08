@@ -386,7 +386,7 @@ impl SyncTranslation for RequisitionTranslation {
                     is_emergency,
                     created_from_requisition_id,
                     destination_customer_id,
-                    transfer_store_id: _,
+                    name_store_id: _,
                 },
             name_row,
             ..
