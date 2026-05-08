@@ -197,6 +197,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
 
     muiTableHeadCellProps: ({ column, table }) => ({
       sx: {
+        height: '100%',
         fontWeight: 600,
         fontSize: table.getState().density !== 'spacious' ? '0.9em' : '1em',
         lineHeight: 1.2,
@@ -241,6 +242,21 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         '& .MuiInputBase-input, & .MuiPickersInputBase-root': {
           fontSize:
             table.getState().density === 'compact' ? '0.90em' : '0.95em',
+        },
+        '& .MuiDivider-root': {
+          height: '100%',
+          borderWidth: 1,
+        },
+        '& .Mui-TableHeadCell-ResizeHandle-Wrapper': {
+          height: '100%',
+        },
+        '& .Mui-TableHeadCell-Content': {
+          alignItems: 'flex-end',
+          height: '100%',
+          '& .MuiIconButton-root': {
+            height: '100%',
+            marginTop: 0.25,
+          },
         },
       },
     }),
