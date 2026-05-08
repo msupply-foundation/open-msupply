@@ -13,12 +13,40 @@ import type {
 } from './mrtCompat';
 import { useCallback, useMemo, useState } from 'react';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
-import { TablePagination } from '@mui/material';
+import { TablePagination, Pagination } from '@mui/material';
 
 interface PaginatedTableConfig<T extends MRT_RowData>
   extends Omit<BaseTableConfig<T>, 'enablePagination' | 'enableBottomToolbar'> {
   totalCount: number;
 }
+
+/** Custom actions component that renders MUI Pagination with page numbers inside TablePagination */
+const TablePaginationActions = ({
+  page,
+  count,
+  rowsPerPage,
+  onPageChange,
+}: {
+  page: number;
+  count: number;
+  rowsPerPage: number;
+  onPageChange: (event: React.MouseEvent<HTMLButtonElement> | null, page: number) => void;
+}) => {
+  const totalPages = Math.max(1, Math.ceil(count / rowsPerPage));
+  return (
+    <Pagination
+      page={page + 1}
+      count={totalPages}
+      onChange={(_, p) => onPageChange(null, p - 1)}
+      showFirstButton
+      showLastButton
+      siblingCount={2}
+      size="small"
+      shape="rounded"
+      sx={{ '& .MuiPagination-ul': { flexWrap: 'nowrap' } }}
+    />
+  );
+};
 
 /** Use for any paginated datasets. Sort, filter and pagination must be handled externally */
 export const usePaginatedMaterialTable = <T extends MRT_RowData>({
@@ -89,6 +117,8 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
             page={page}
             rowsPerPage={first}
             rowsPerPageOptions={[10, 20, 50, 100]}
+            ActionsComponent={TablePaginationActions}
+            labelDisplayedRows={() => null}
             onPageChange={(_e, newPage) =>
               handlePaginationChange(() => ({ pageIndex: newPage, pageSize: first }))
             }
@@ -98,10 +128,21 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
                 pageSize: parseInt(e.target.value, 10),
               }))
             }
-            SelectProps={{ sx: { minWidth: '40px', fontSize: '0.9em' } }}
+            SelectProps={{
+              sx: { minWidth: '40px', fontSize: '0.9em', marginRight: 0 },
+            }}
+            slotProps={{
+              spacer: { sx: { flex: 0 } },
+              toolbar: {
+                sx: {
+                  '& .MuiTablePagination-actions': { marginLeft: 0 },
+                },
+              },
+              displayedRows: { sx: { display: 'none' } },
+            }}
             sx={{
               '& .MuiTablePagination-toolbar': { minHeight: 0, padding: 0 },
-              '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows':
+              '& .MuiTablePagination-selectLabel':
                 { fontSize: '0.9em' },
             }}
           />
