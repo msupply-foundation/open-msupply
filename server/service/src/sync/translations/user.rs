@@ -1,12 +1,9 @@
-use serde::{Deserialize, Serialize};
-
+use super::{PullTranslateResult, SyncTranslation};
 use repository::{
     LanguageType, StorageConnection, SyncBufferRow, UserAccountRow, UserAccountRowRepository,
 };
-
+use serde::{Deserialize, Serialize};
 use util::sync_serde::empty_str_as_option_string;
-
-use super::{PullTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyUserTable {
@@ -28,6 +25,9 @@ pub struct LegacyUserTable {
     pub phone_number: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub job_title: Option<String>,
+    #[serde(rename = "active")]
+    #[serde(default)]
+    pub is_active: bool,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -59,6 +59,7 @@ impl SyncTranslation for UserTranslation {
             last_name,
             phone_number,
             job_title,
+            is_active,
         } = serde_json::from_str::<LegacyUserTable>(&sync_record.data)?;
 
         let user_account = UserAccountRowRepository::new(connection).find_one_by_id(&id)?;
@@ -82,6 +83,7 @@ impl SyncTranslation for UserTranslation {
             job_title,
             hashed_password,
             last_successful_sync,
+            is_active,
         };
         Ok(PullTranslateResult::upsert(result))
     }
