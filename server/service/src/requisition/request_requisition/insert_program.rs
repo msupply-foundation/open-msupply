@@ -198,6 +198,10 @@ fn generate(
 ) -> Result<GenerateResult, PluginOrRepositoryError> {
     let connection = &ctx.connection;
 
+    let other_party_store = StoreRepository::new(connection).query_one(
+        StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.clone())),
+    )?;
+
     let requisition = RequisitionRow {
         id,
         user_id: Some(ctx.user_id.clone()),
@@ -207,6 +211,7 @@ fn generate(
             &ctx.store_id,
         )?,
         name_id: other_party_id.clone(),
+        name_store_id: other_party_store.map(|store| store.store_row.id),
         store_id: ctx.store_id.clone(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,

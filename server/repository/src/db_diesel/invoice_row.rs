@@ -59,7 +59,6 @@ define_linked_tables! {
         shipping_method_id -> Nullable<Text>,
         charges_local_currency -> Double,
         charges_foreign_currency -> Double,
-        transfer_store_id -> Nullable<Text>,
     },
     links:{
          name_link_id -> name_id,
@@ -161,7 +160,6 @@ pub struct InvoiceRow {
     pub shipping_method_id: Option<String>,
     pub charges_local_currency: f64,
     pub charges_foreign_currency: f64,
-    pub transfer_store_id: Option<String>,
     // Resolved from name_link - must be last to match view column order
     pub name_id: String,
     pub default_donor_id: Option<String>,

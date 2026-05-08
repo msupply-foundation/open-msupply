@@ -11,17 +11,17 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                -- Drop changelog_deduped view before altering columns (SQLite requires this)
+                -- View needs to be dropped here as its no longer included in the all_views list
                 DROP VIEW IF EXISTS changelog_deduped;
 
-                -- Add transfer_store_id and patient_id 
+                -- Add transfer_store_id and patient_id to changelog
                 ALTER TABLE changelog ADD COLUMN transfer_store_id TEXT;
                 ALTER TABLE changelog ADD COLUMN patient_id TEXT;
-                
+
                 -- Create partial indexes on transfer_store_id and patient_id
                 CREATE INDEX index_changelog_transfer_store_id ON changelog (transfer_store_id) WHERE transfer_store_id IS NOT NULL;
                 CREATE INDEX index_changelog_patient_id ON changelog (patient_id) WHERE patient_id IS NOT NULL;
-                
+
                 -- Drop row_action index
                 DROP INDEX IF EXISTS index_changelog_row_action;
             "#

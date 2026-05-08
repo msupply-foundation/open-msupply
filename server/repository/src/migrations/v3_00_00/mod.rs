@@ -6,14 +6,14 @@ mod add_sync_v7_cursor_pg_enum;
 mod add_sync_v7_token_pg_enum;
 mod alter_changelog_table_for_sync_v7;
 mod alter_sync_buffer_for_sync_v7;
-mod changelog_related_changes_for_sync_v7;
+mod update_changelog_for_sync_v7;
 mod create_site_table;
 mod rebuild_sync_buffer;
 
 pub(crate) struct V3_00_00;
 impl Migration for V3_00_00 {
     fn version(&self) -> Version {
-        Version::from_str("2.19.0")
+        Version::from_str("3.00.0")
     }
 
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
@@ -27,7 +27,7 @@ impl Migration for V3_00_00 {
             Box::new(alter_changelog_table_for_sync_v7::Migrate),
             Box::new(alter_sync_buffer_for_sync_v7::Migrate),
             Box::new(add_sync_log_v7::Migrate),
-            Box::new(changelog_related_changes_for_sync_v7::Migrate),
+            Box::new(update_changelog_for_sync_v7::Migrate),
             Box::new(create_site_table::Migrate),
             Box::new(rebuild_sync_buffer::Migrate),
         ]
