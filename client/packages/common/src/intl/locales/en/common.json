@@ -2373,7 +2373,7 @@
   "messages.select-rows-to-pending": "Select rows to set them to pending",
   "messages.select-rows-to-reject": "Select rows to reject them",
   "messages.select-rows-to-return": "Select rows to return them",
-  "messages.select-store-instructions": "Either click on a store to select it and continue or use the <bold>up/down arrow keys</bold> to highlight a store and press <bold>Enter</bold> to continue. You can also check the box below to skip this selection in the future if you always use the same store.",
+  "messages.select-store-instructions": "Click a store to highlight it, or use the <bold>up/down arrow keys</bold>, then press <bold>Continue</bold> or <bold>Enter</bold>. You can also check the box below to skip this selection in the future if you always use the same store.",
   "messages.service-charges-description": "Total amounts of service charges. The calculated tax amount is an effective tax rate using the total tax paid over the subtotal of all service charges.",
   "messages.shipment-saved": "Shipment saved 🥳",
   "messages.skip-dose-warning": "Administering this dose will skip one or more earlier doses and mark them as Not Given.",
