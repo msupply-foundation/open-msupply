@@ -253,6 +253,10 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         '& .Mui-TableHeadCell-Content': {
           alignItems: 'flex-end',
           height: '100%',
+          '& .MuiIconButton-root': {
+            height: '100%',
+            marginTop: 0.25,
+          },
         },
       },
     }),
