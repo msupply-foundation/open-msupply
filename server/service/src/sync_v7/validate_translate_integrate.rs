@@ -1,6 +1,8 @@
 use crate::{
     sync::{
-        sync_buffer::{write_sync_buffer_error, write_sync_buffer_success},
+        sync_buffer::{
+            write_sync_buffer_error, write_sync_buffer_ignored, write_sync_buffer_success,
+        },
         ActiveStoresOnSite,
     },
     sync_v7::{serde::deserialize, sync_logger::SyncLogger},
@@ -55,22 +57,6 @@ fn parse_table_name(table_name: &str) -> Result<ChangelogTableName, Error> {
     table_name
         .parse::<ChangelogTableName>()
         .map_err(|_| Error::UnknownTableName(table_name.to_string()))
-}
-
-fn sync_type(table_name: &ChangelogTableName) -> &'static SyncType {
-    match table_name {
-        ChangelogTableName::Unit
-        | ChangelogTableName::Currency
-        | ChangelogTableName::Name
-        | ChangelogTableName::Store
-        | ChangelogTableName::LocationType
-        | ChangelogTableName::Item => &SyncType::Central,
-        ChangelogTableName::StockLine
-        | ChangelogTableName::Invoice
-        | ChangelogTableName::InvoiceLine => &SyncType::Remote,
-        // Default to Central for unknown types
-        _ => &SyncType::Central,
-    }
 }
 
 fn changelog(
@@ -157,14 +143,15 @@ fn validate_translate_integrate_one(
     sync_context: &SyncContext,
 ) -> Result<(), Error> {
     let table_name = parse_table_name(&row.table_name)?;
-    let st = sync_type(&table_name);
 
     match sync_context {
-        SyncContext::Central { active_stores } => validate_on_central(row, st, active_stores)?,
+        SyncContext::Central { active_stores } => {
+            validate_on_central(row, &table_name, active_stores)?
+        }
         SyncContext::Remote {
             is_initialising,
             active_stores,
-        } => validate_on_remote(row, st, active_stores, *is_initialising)?,
+        } => validate_on_remote(row, &table_name, active_stores, *is_initialising)?,
         SyncContext::PatientLookup => {} // Patient records belong to another store
     };
 
@@ -279,6 +266,9 @@ fn validate_translate_integrate_inner<'a>(
             };
             match one_result {
                 Ok(()) => write_sync_buffer_success(connection, row.cursor, started)?,
+                Err(e @ Error::ValidationError(_)) => {
+                    write_sync_buffer_ignored(connection, row.cursor, started, &format_error(&e))?;
+                }
                 Err(e) => {
                     write_sync_buffer_error(connection, row.cursor, started, &format_error(&e))?;
                 }
