@@ -78,6 +78,7 @@ pub mod android {
             mail: None,
             // Feature flags won't work using tablet as a server. Run in client mode and connect to a desktop server instead
             features: None,
+            changelog_partition: None,
         };
 
         logging_init(settings.logging.clone(), None);

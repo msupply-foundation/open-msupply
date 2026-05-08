@@ -127,7 +127,7 @@ mod tests {
         );
         create_stock_line(&connection, "sl_no_variant", None);
 
-        migrate(&connection, Some(version.clone())).unwrap();
+        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
         assert_eq!(get_database_version(&connection), version);
 
         let stock_lines = stock_line::table

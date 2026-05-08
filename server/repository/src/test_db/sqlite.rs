@@ -8,7 +8,7 @@ use util::lock_file;
 
 use crate::{
     database_settings::{DatabaseSettings, SqliteConnectionOptions},
-    migrations::{migrate, Version},
+    migrations::{migrate, MigrationConfig, Version},
     mock::{all_mock_data, insert_all_mock_data, MockDataCollection, MockDataInserts},
     DBBackendConnection, StorageConnectionManager,
 };
@@ -179,7 +179,7 @@ fn create_db(db_settings: &DatabaseSettings, version: Option<Version>) -> Storag
         .connection()
         .expect("Failed to connect to database");
 
-    migrate(&connection, version).unwrap();
+    migrate(&connection, version, MigrationConfig::default()).unwrap();
 
     connection_manager
 }

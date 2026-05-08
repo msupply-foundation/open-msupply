@@ -10,10 +10,11 @@ use report_builder::{
     Format,
 };
 use repository::{
-    get_storage_connection_manager, migrations::migrate, schema_from_row, test_db, ContextType,
-    EqualFilter, FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository,
-    ReportFilter, ReportRepository, ReportRow, ReportRowRepository, SyncBufferRepository,
-    SyncBufferRowInsert,
+    get_storage_connection_manager,
+    migrations::{migrate, MigrationConfig},
+    schema_from_row, test_db, ContextType, EqualFilter, FormSchemaRow, FormSchemaRowRepository,
+    KeyType, KeyValueStoreRepository, ReportFilter, ReportRepository, ReportRow,
+    ReportRowRepository, SyncBufferRepository, SyncBufferRowInsert,
 };
 use serde::{Deserialize, Serialize};
 use server::{configuration, logging_init};
@@ -351,8 +352,19 @@ async fn main() -> anyhow::Result<()> {
             if let Some(init_sql) = &settings.database.startup_sql() {
                 connection_manager.execute(init_sql).unwrap();
             }
-            migrate(&connection_manager.connection().unwrap(), None)
-                .expect("Failed to run DB migrations");
+            let migration_config = MigrationConfig {
+                changelog_partition: settings
+                    .changelog_partition
+                    .clone()
+                    .unwrap_or_default()
+                    .to_migration_config(),
+            };
+            migrate(
+                &connection_manager.connection().unwrap(),
+                None,
+                migration_config,
+            )
+            .expect("Failed to run DB migrations");
 
             info!("Finished applying database migrations");
         }

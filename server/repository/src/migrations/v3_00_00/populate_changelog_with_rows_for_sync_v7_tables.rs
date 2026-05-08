@@ -159,7 +159,7 @@ mod tests {
         seed_central_site_id(&connection, 42);
 
         // Run all v3_00_00 migrations (this fragment + the others)
-        migrate(&connection, Some(version.clone())).unwrap();
+        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
         assert_eq!(get_database_version(&connection), version);
 
         // Helper: count changelog rows for a given (table_name, record_id)
@@ -227,7 +227,7 @@ mod tests {
             )
             .unwrap();
 
-        migrate(&connection, Some(version.clone())).unwrap();
+        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
 
         let source_site_id = changelog::table
             .filter(changelog::table_name.eq("unit"))

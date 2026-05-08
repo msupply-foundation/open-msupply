@@ -346,7 +346,7 @@ async fn migration_1_07_00_merge() {
         .load(connection.lock().connection())
         .unwrap();
 
-    migrate(&connection, Some(version.clone())).unwrap();
+    migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
     assert_eq!(get_database_version(&connection), version);
 
     let expected_item_links = vec![

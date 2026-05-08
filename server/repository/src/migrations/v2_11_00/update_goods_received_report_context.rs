@@ -77,5 +77,5 @@ async fn migration_report_context() {
     );
 
     // Run migration
-    migrate(&connection, Some(version.clone())).unwrap();
+    migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
 }

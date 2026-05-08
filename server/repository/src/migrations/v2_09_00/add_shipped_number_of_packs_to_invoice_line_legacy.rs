@@ -178,7 +178,7 @@ mod tests {
         add_trans_line_sync_buffer_entry(&connection, "invoice_line_4", r#"invalid-json-data"#);
 
         // --- Run migration --- //
-        migrate(&connection, Some(version.clone())).unwrap();
+        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
         assert_eq!(get_database_version(&connection), version);
 
         // --- Assert: Invoice Lines updated as expected --- //

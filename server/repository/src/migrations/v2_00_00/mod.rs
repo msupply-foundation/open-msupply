@@ -99,7 +99,7 @@ async fn migration_2_00_00() {
     insert_merge_test_data(&connection);
     let cursor_before = latest_changelog_cursor(&connection);
 
-    migrate(&connection, Some(version.clone())).unwrap();
+    migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
     assert_eq!(get_database_version(&connection), version);
 
     let cursor_after = latest_changelog_cursor(&connection);
