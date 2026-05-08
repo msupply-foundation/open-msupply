@@ -26,8 +26,12 @@ pub struct LegacyUserTable {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub job_title: Option<String>,
     #[serde(rename = "active")]
-    #[serde(default)]
+    #[serde(default = "default_true")]
     pub is_active: bool,
+}
+
+fn default_true() -> bool {
+    true
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
