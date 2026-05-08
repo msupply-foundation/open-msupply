@@ -87,7 +87,7 @@ type Source = LeftJoinQuerySource<
 
 diesel_string_enum! {
     #[derive(Clone, Eq, Serialize, Deserialize, TS)]
-    #[strum(serialize_all = "snake_case")]
+    #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
     pub enum RowActionType {
         #[default]
         Upsert,
@@ -98,89 +98,70 @@ diesel_string_enum! {
 diesel_string_enum! {
     #[derive(Clone, Eq, Hash, Serialize, Deserialize, strum::EnumIter, TS)]
     #[strum(serialize_all = "snake_case")]
-    // Variants are grouped by `sync_style()` and sorted alphabetically within each group.
-    // Keep this layout in sync with the match in `sync_style` below.
+    // The set of tables tracked by the changelog. How each one syncs is
+    // defined separately in `sync_style.rs`.
     pub enum ChangelogTableName {
-        // ---- Legacy — Remote (not v6) ----
+        Abbreviation,
         ActivityLog,
-        Barcode,
-        Clinician,
-        ClinicianStoreJoin,
-        Currency,
-        Document,
-        IndicatorValue,
-        InsuranceProvider,
-        Location,
-        LocationMovement,
-        Name,
-        NameInsuranceJoin,
-        NameStoreJoin,
-        PurchaseOrder,
-        PurchaseOrderLine,
-        Sensor,
-        StockLine,
-        Stocktake,
-        StocktakeLine,
-        TemperatureBreach,
-        TemperatureLog,
-        VVMStatusLog,
-
-        // ---- Legacy — Remote + Transfer (not v6) ----
-        Requisition,
-        RequisitionLine,
-
-        // ---- Legacy — Remote + Transfer + Patient (not v6) ----
-        Invoice,
-        InvoiceLine,
-
-        // ---- Central (v6) ----
+        Asset,
         AssetCatalogueItem,
         AssetCatalogueType,
         AssetCategory,
         AssetClass,
+        AssetInternalLocation,
+        AssetLog,
         AssetLogReason,
         AssetProperty,
         BackendPlugin,
+        Barcode,
         BundledItem,
         Campaign,
-        Demographic,
-        FormSchema,
-        FrontendPlugin,
-        ItemVariant,
-        NameOmsFields,
-        NameProperty,
-        PackagingVariant,
-        Property,
-        Report,
-        VaccineCourse,
-        VaccineCourseDose,
-        VaccineCourseItem,
-        VaccineCourseStoreConfig,
-
-        // ---- Central (not v6) ----
-        Abbreviation,
         Category,
-        Item,
+        Clinician,
+        ClinicianStoreJoin,
         Contact,
+        ContactForm,
         ContactTrace,
         Context,
+        Currency,
+        Demographic,
         DemographicIndicator,
         Diagnosis,
+        Document,
         DocumentRegistry,
+        Encounter,
+        FormSchema,
+        FrontendPlugin,
         IndicatorColumn,
         IndicatorLine,
+        IndicatorValue,
+        InsuranceProvider,
+        Invoice,
+        InvoiceLine,
+        Item,
         ItemCategoryJoin,
         ItemDirection,
         ItemStoreJoin,
+        ItemVariant,
         ItemWarningJoin,
+        Location,
+        LocationMovement,
         LocationType,
         MasterList,
         MasterListLine,
         MasterListNameJoin,
+        Name,
+        NameInsuranceJoin,
+        NameOmsFields,
+        NameProperty,
+        NameStoreJoin,
         NameTag,
         NameTagJoin,
+        PackagingVariant,
         Period,
         PeriodSchedule,
+        PluginData,
+        Preference,
         Printer,
         Program,
         ProgramEnrolment,
@@ -188,42 +169,40 @@ diesel_string_enum! {
         ProgramIndicator,
         ProgramRequisitionOrderType,
         ProgramRequisitionSettings,
+        Property,
+        PurchaseOrder,
+        PurchaseOrderLine,
         ReasonOption,
+        Report,
+        Requisition,
+        RequisitionLine,
+        RnrForm,
+        RnrFormLine,
+        Sensor,
         ShippingMethod,
+        Site,
+        StockLine,
+        Stocktake,
+        StocktakeLine,
         Store,
         StorePreference,
+        #[default]
+        SyncFileReference,
+        SyncMessage,
+        SystemLog,
+        TemperatureBreach,
+        TemperatureLog,
         Unit,
         UserAccount,
         UserPermission,
         UserStoreJoin,
         VVMStatus,
-
-        // ---- ToLegacyCentralOnly (not v6) ----
-        Site,
-
-        // ---- Remote (v6) ----
-        Asset,
-        AssetInternalLocation,
-        AssetLog,
-        RnrForm,
-        RnrFormLine,
-        SyncMessage,
-
-        // ---- Remote + Patient (v6) ----
-        Encounter,
+        VVMStatusLog,
         Vaccination,
-
-        // ---- File (v6) ----
-        #[default]
-        SyncFileReference,
-
-        // ---- RemoteAndCentral (v6) ----
-        PluginData,
-        Preference,
-
-        // ---- RemoteToCentral (v6) ----
-        ContactForm,
-        SystemLog,
+        VaccineCourse,
+        VaccineCourseDose,
+        VaccineCourseItem,
+        VaccineCourseStoreConfig,
     }
 }
 
@@ -548,5 +527,15 @@ mod print_query_tests {
             .select(changelog::all_columns);
 
         println!("{}", debug_query::<DBType, _>(&q));
+    }
+
+    /// Locks the Rust↔DB contract for `row_action`: the column was the PG enum
+    /// `row_action_type` with labels 'UPSERT'/'DELETE' until v3.0.0, then cast
+    /// to TEXT preserving those labels. The strum serialization here must keep
+    /// matching them.
+    #[test]
+    fn row_action_type_serializes_uppercase() {
+        assert_eq!(RowActionType::Upsert.to_string(), "UPSERT");
+        assert_eq!(RowActionType::Delete.to_string(), "DELETE");
     }
 }

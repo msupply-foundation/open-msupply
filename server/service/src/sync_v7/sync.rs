@@ -58,7 +58,7 @@ impl SyncBatchV7 {
         connection: &StorageConnection,
         filter: ChangelogCondition::Inner,
         cursor: i64,
-        batch_size: u32,
+        batch_size: Option<u32>,
     ) -> Result<SyncBatchV7, SyncError> {
         let site_id = get_current_site_id(connection)?;
         let repo = ChangelogRepository::new(connection);
@@ -67,7 +67,7 @@ impl SyncBatchV7 {
             filter,
             CursorAndLimit {
                 cursor,
-                limit: batch_size as i64,
+                limit: batch_size.map_or(i64::MAX, |n| n as i64),
             },
         )?;
 
@@ -215,7 +215,7 @@ impl<'a> SyncV7<'a> {
                 self.connection,
                 filter.clone(),
                 cursor,
-                self.batch_size.remote_push,
+                Some(self.batch_size.remote_push),
             )?;
 
             let record_count = batch.records.len();
