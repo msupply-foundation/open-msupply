@@ -330,13 +330,17 @@ async fn spawn_integration_inner(
     let ctx = service_provider.basic_context()?;
 
     let active_stores = ActiveStoresOnSite::get(&ctx.connection)?;
+    let source_site_store_ids = ActiveStoresOnSite::store_ids_for_site(&ctx.connection, site_id)?;
 
     validate_translate_integrate(
         &ctx.connection,
         None,
         site_id,
         None,
-        SyncContext::Central { active_stores },
+        SyncContext::Central {
+            active_stores,
+            source_site_store_ids,
+        },
         false,
     )?;
     Ok(())
