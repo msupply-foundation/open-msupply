@@ -29,8 +29,9 @@ use graphql::{
 };
 use log::info;
 use repository::{
-    get_storage_connection_manager, migrations::migrate, system_log_row::SystemLogType,
-    StorageConnection,
+    get_storage_connection_manager,
+    migrations::{migrate, MigrationConfig},
+    system_log_row::SystemLogType, StorageConnection,
 };
 
 use scheduled_tasks::spawn_scheduled_task_runner;
@@ -62,6 +63,7 @@ use util::format_error;
 
 mod authentication;
 pub mod certs;
+mod changelog_partitions;
 pub mod cold_chain;
 pub mod configuration;
 pub mod cors;
@@ -336,7 +338,11 @@ pub async fn start_server(
 
     info!("Run DB migrations...");
     // start database migrations
-    let (version, messages) = match migrate(&connection, None) {
+    let changelog_partition_settings = settings.changelog_partition.clone().unwrap_or_default();
+    let migration_config = MigrationConfig {
+        changelog_partition: changelog_partition_settings.to_migration_config(),
+    };
+    let (version, messages) = match migrate(&connection, None, migration_config) {
         Ok(result) => result,
         Err(e) => {
             log::error!("Failed to run DB migrations: {}", format_error(&e));
@@ -452,6 +458,10 @@ pub async fn start_server(
 
     // Scheduled tasks
     let schedule_plugin_task = schedule_plugin::spawn();
+    let changelog_partitions_task = changelog_partitions::spawn(
+        service_provider.clone().into_inner(),
+        changelog_partition_settings,
+    );
     let scheduled_task_handle = spawn_scheduled_task_runner(
         service_provider.clone().into_inner(),
         settings.mail.clone().map(|m| m.interval).unwrap_or(60),
@@ -469,6 +479,7 @@ pub async fn start_server(
           _ = ledger_fix_task => unreachable!("Ledger fix unexpectedly stopped"),
         result = processors_task => unreachable!("Processor terminated ({:?})", result),
         result = schedule_plugin_task => unreachable!("Schedule plugin runner terminated ({:?})", result),
+        result = changelog_partitions_task => unreachable!("Changelog partition top-up terminated ({:?})", result),
         scheduled_error = scheduled_task_handle => unreachable!("Scheduled task stopped unexpectedly: {:?}", scheduled_error),
         subscription_error = subscription_task_handle => unreachable!("Subscription task stopped unexpectedly: {:?}", subscription_error),
     };

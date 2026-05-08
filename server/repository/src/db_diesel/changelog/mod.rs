@@ -13,5 +13,8 @@ pub use self::compatibility_changelog::*;
 mod generate_changelog;
 pub(crate) use self::generate_changelog::Changelogs;
 
+pub mod partition;
+pub use self::partition::*;
+
 #[cfg(test)]
 mod test;
