@@ -37,6 +37,18 @@ import {
   PricingTable,
 } from './StocktakeLineEditTables';
 import { StocktakeLineEditModal } from './StocktakeLineEditModal';
+import { DraftStocktakeLine } from './utils';
+
+// A line auto-created for an item with no existing batches — nothing
+// filled in yet. We treat the variant panel's selection as a patch on
+// this line rather than adding a duplicate.
+const isFreshPlaceholder = (line: DraftStocktakeLine) =>
+  !line.stockLine &&
+  !line.itemVariantId &&
+  !line.batch &&
+  !line.isUpdated &&
+  (line.snapshotNumberOfPacks ?? 0) === 0;
+
 interface StocktakeLineEditProps {
   item: StocktakeLineFragment['item'] | null;
   mode: ModalMode | null;
@@ -73,10 +85,29 @@ export const StocktakeLineEdit = ({
   const simplifiedTabletView = useSimplifiedTabletUI();
 
   const [variantPanelOpen, setVariantPanelOpen] = useState(false);
+  const [variantShownForItem, setVariantShownForItem] = useState<string | null>(
+    null
+  );
   const itemVariantsEnabled = useIsItemVariantsEnabled();
   const { data: variantData } = useItemVariants(currentItem?.id ?? '');
   const hasVariants =
     itemVariantsEnabled && (variantData?.variants?.length ?? 0) > 0;
+
+  useEffect(() => {
+    setVariantShownForItem(null);
+  }, [currentItem?.id]);
+
+  useEffect(() => {
+    if (!currentItem || !hasVariants) return;
+    if (variantShownForItem === currentItem.id) return;
+    // Wait for draftLines to populate after item change to avoid popping
+    // during the loading window.
+    if (draftLines.length === 0) return;
+    if (!draftLines.every(isFreshPlaceholder)) return;
+
+    setVariantShownForItem(currentItem.id);
+    setVariantPanelOpen(true);
+  }, [currentItem, hasVariants, variantShownForItem, draftLines]);
 
   const restrictedLocationTypeId =
     currentItem?.restrictedLocationTypeId ?? null;
@@ -85,9 +116,9 @@ export const StocktakeLineEdit = ({
     ? checkInvalidLocationLines(restrictedLocationTypeId, draftLines)
     : null;
 
-  const applyVariantToNewLine = useCallback(
+  const applyVariant = useCallback(
     (variant: ItemVariantFragment) => {
-      addLine({
+      const variantPatch = {
         itemVariantId: variant.id,
         itemVariant: variant,
         manufacturer: variant.manufacturer ?? null,
@@ -96,10 +127,21 @@ export const StocktakeLineEdit = ({
             packSize: currentItem?.defaultPackSize,
             itemVariant: variant,
           }) ?? 0,
-      });
+      };
+      // If the only existing line is a fresh placeholder (auto-pop case),
+      // patch it instead of adding a duplicate.
+      const onlyPlaceholder =
+        draftLines.length === 1 &&
+        draftLines[0] &&
+        isFreshPlaceholder(draftLines[0]);
+      if (onlyPlaceholder) {
+        update({ id: draftLines[0]!.id, ...variantPatch });
+      } else {
+        addLine(variantPatch);
+      }
       setVariantPanelOpen(false);
     },
-    [addLine, currentItem?.defaultPackSize]
+    [addLine, update, draftLines, currentItem?.defaultPackSize]
   );
 
   const handleAddLine = useCallback(() => {
@@ -266,7 +308,7 @@ export const StocktakeLineEdit = ({
                   itemId={currentItem.id}
                   open={variantPanelOpen}
                   onClose={() => setVariantPanelOpen(false)}
-                  onSelect={applyVariantToNewLine}
+                  onSelect={applyVariant}
                   onManual={() => {
                     addLine();
                     setVariantPanelOpen(false);
