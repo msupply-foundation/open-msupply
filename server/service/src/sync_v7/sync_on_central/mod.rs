@@ -696,6 +696,8 @@ mod tests {
             SyncBatchV7 {
                 site_id: authenticated_site_id,
                 max_cursor: 0,
+                last_cursor_in_batch: 0,
+                remaining: 0,
                 records: vec![],
             },
         )

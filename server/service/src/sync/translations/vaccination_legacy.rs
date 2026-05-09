@@ -206,7 +206,7 @@ mod tests {
             .upsert_one(&vaccination_row)
             .unwrap();
 
-        let entry = ChangelogRepository::new(&connection).query_with_data(repository::ChangelogCondition::True(), repository::CursorAndLimit { cursor: cursor as i64, limit: 100 }).unwrap().pop().unwrap();
+        let entry = ChangelogRepository::new(&connection).query_with_data(repository::ChangelogCondition::True(), repository::CursorAndLimit { cursor: cursor as i64, limit: 100 }).unwrap().rows.pop().unwrap();
         let repository::RowOrDelete::Row { changelog: changelog_row, row } = entry else { panic!("expected upsert row") };
 
         // Shouldn't translate if not a central server

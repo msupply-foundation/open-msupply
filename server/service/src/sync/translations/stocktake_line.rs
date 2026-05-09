@@ -379,7 +379,7 @@ mod tests {
         .unwrap();
 
         let translator = StocktakeLineTranslation {};
-        for entry in entries { let RowOrDelete::Row { changelog, row } = entry else { panic!("expected upsert row") };
+        for entry in entries.rows { let RowOrDelete::Row { changelog, row } = entry else { panic!("expected upsert row") };
             // Translate and sort
             // Translate and sort
             assert!(translator.should_translate_to_sync_record(

@@ -309,7 +309,7 @@ mod tests {
         )
         .unwrap();
 
-        for entry in entries { let RowOrDelete::Row { changelog, row } = entry else { panic!("expected upsert row") };
+        for entry in entries.rows { let RowOrDelete::Row { changelog, row } = entry else { panic!("expected upsert row") };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral

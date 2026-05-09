@@ -148,6 +148,7 @@ mod tests {
 
         let entry = ChangelogRepository::new(&connection).query_with_data(repository::ChangelogCondition::True(), repository::CursorAndLimit { cursor: cursor as i64, limit: 100 })
             .unwrap()
+            .rows
             .pop()
             .expect("Expected at least one changelog entry");
         let repository::RowOrDelete::Row { changelog, row } = entry else {
