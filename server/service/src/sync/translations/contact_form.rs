@@ -136,6 +136,7 @@ mod tests {
                 },
             )
             .unwrap()
+            .rows
             .pop()
             .unwrap();
 

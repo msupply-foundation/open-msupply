@@ -241,7 +241,8 @@ async fn test_changelog_filter() {
                     limit: 20
                 },
             )
-            .unwrap(),
+            .unwrap()
+            .rows,
         vec![log2.clone()]
     );
 
@@ -258,7 +259,8 @@ async fn test_changelog_filter() {
                     limit: 20
                 },
             )
-            .unwrap(),
+            .unwrap()
+            .rows,
         vec![log1.clone(), log3.clone(), log4.clone()]
     );
 
@@ -272,7 +274,8 @@ async fn test_changelog_filter() {
                     limit: 20
                 },
             )
-            .unwrap(),
+            .unwrap()
+            .rows,
         vec![log1.clone(), log2.clone()]
     );
 }
@@ -313,6 +316,7 @@ fn test_changelog_name_and_store_id<T, F>(
             },
         )
         .unwrap()
+        .rows
         .into_iter()
         .filter(|c| c.record_id == record.record_id)
         .collect::<Vec<_>>();
@@ -655,7 +659,8 @@ async fn test_changelog_outgoing_sync_records() {
                 limit: 10,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 0); // Nothing to send to the remote site yet...
 
     // Insert an asset_class variant (which should trigger a changelog record for Central Sync)
@@ -676,7 +681,8 @@ async fn test_changelog_outgoing_sync_records() {
                 limit: 1000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     // outgoing_results should contain the changelog record for the asset class
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
@@ -710,7 +716,8 @@ async fn test_changelog_outgoing_sync_records() {
                 limit: 1000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 2);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
     assert_eq!(outgoing_results[1].record_id, asset_id);
@@ -724,7 +731,8 @@ async fn test_changelog_outgoing_sync_records() {
                 limit: 1000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
 
@@ -737,7 +745,8 @@ async fn test_changelog_outgoing_sync_records() {
                 limit: 1000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
 
@@ -764,7 +773,8 @@ async fn test_changelog_outgoing_sync_records() {
                 limit: 1000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 2);
     assert_eq!(outgoing_results[1].record_id, req_id);
 
@@ -776,7 +786,8 @@ async fn test_changelog_outgoing_sync_records() {
                 limit: 1000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 2);
     assert_eq!(outgoing_results[1].record_id, req_id);
 }
@@ -820,7 +831,8 @@ async fn test_changelog_outgoing_patient_sync_records() {
                 limit: 1000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, vaccination.id);
 
@@ -836,7 +848,8 @@ async fn test_changelog_outgoing_patient_sync_records() {
                 limit: 1000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, vaccination.id);
 
@@ -853,6 +866,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
                 limit: 1000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 0);
 }

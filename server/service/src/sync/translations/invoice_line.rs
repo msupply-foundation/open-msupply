@@ -603,7 +603,7 @@ mod tests {
         .unwrap();
 
         let translator = InvoiceLineTranslation {};
-        for entry in entries {
+        for entry in entries.rows {
             let RowOrDelete::Row { changelog, row } = entry else {
                 panic!("expected upsert row")
             };

@@ -244,7 +244,13 @@ mod test_sync_v7_server_api {
         let app = setup!("sync_v7_http_push", Some("test_token"), Some("hw-1"));
 
         let req = authed_post("/sync_v7/push")
-            .set_json(json!({ "siteId": 1, "maxCursor": 0, "records": [] }))
+            .set_json(json!({
+                "siteId": 1,
+                "maxCursor": 0,
+                "lastCursorInBatch": 0,
+                "remaining": 0,
+                "records": []
+            }))
             .to_request();
         let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
 
