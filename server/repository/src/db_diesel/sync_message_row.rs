@@ -1,8 +1,9 @@
 use super::{
-    store_row::store, ChangelogRepository, RowActionType,
-    StorageConnection,
+    store_row::store, ChangelogRepository, RowActionType, RowOrId, StorageConnection,
 };
-use crate::{ChangelogSyncType, RepositoryError, SourceSiteId, Upsert};
+use crate::{
+    diesel_macros::diesel_string_enum, ChangelogSyncType, RepositoryError, SourceSiteId, Upsert,
+};
 use ts_rs::TS;
 
 use chrono::NaiveDateTime;
@@ -19,23 +20,21 @@ pub enum SyncMessageRowStatus {
     Processed,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, TS)]
-pub enum SyncMessageRowType {
-    #[default]
-    RequestFieldChange,
-    #[serde(untagged)]
-    Other(String),
-}
-
-impl From<String> for SyncMessageRowType {
-    fn from(value: String) -> Self {
-        serde_json::from_str(&value).unwrap_or_default()
-    }
-}
-
-impl From<SyncMessageRowType> for String {
-    fn from(value: SyncMessageRowType) -> Self {
-        serde_json::to_string(&value).unwrap_or_default()
+diesel_string_enum! {
+    #[derive(Clone, Eq, Hash, Serialize, Deserialize, TS)]
+    pub enum SyncMessageRowType {
+        #[default]
+        RequestFieldChange,
+        NameMerge,
+        ItemMerge,
+        ClinicianMerge,
+        // `Other` is the catch-all variant: lets older sites tolerate values
+        // added by newer central servers and preserves the raw string verbatim.
+        // `#[serde(untagged)]` keeps the legacy wire format (the variant
+        // serializes as the inner string, not as `{"Other": "..."}`).
+        @catchall
+        #[serde(untagged)]
+        Other(String),
     }
 }
 
@@ -69,7 +68,7 @@ pub struct SyncMessageRow {
     pub body: String,
     pub created_datetime: NaiveDateTime,
     pub status: SyncMessageRowStatus,
-    #[diesel(column_name = type_, serialize_as = String, deserialize_as = String)]
+    #[diesel(column_name = type_)]
     pub r#type: SyncMessageRowType,
     #[ts(optional)]
     pub error_message: Option<String>,
@@ -96,7 +95,7 @@ impl<'a> SyncMessageRowRepository<'a> {
     pub fn upsert_one(&self, row: &SyncMessageRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = SyncMessageRow::generate_changelog(
-            row.id.clone(),
+            RowOrId::Row(row),
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -129,7 +128,7 @@ impl Upsert for SyncMessageRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
+                RowOrId::Row(self),
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),

@@ -380,6 +380,9 @@ pub(crate) fn run_post_sync_triggers(
 
     ctx.processors_trigger
         .trigger_processor(ProcessorType::RequisitionAutoFinalise);
+
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::MergeSyncMessage);
 }
 
 /// Translation And Integration of sync buffer, pub since used in CLI

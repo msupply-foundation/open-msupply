@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_merge_sync_message_processor_cursor_pg_enum;
 mod add_site_sync_version;
 mod add_sync_log_v7;
 mod add_sync_v7_cursor_pg_enum;
@@ -14,6 +15,7 @@ mod create_site_table;
 mod populate_changelog_with_rows_for_sync_v7_tables;
 mod populate_sync_version;
 mod rebuild_sync_buffer;
+mod strip_sync_message_type_quotes;
 
 pub(crate) struct V3_00_00;
 impl Migration for V3_00_00 {
@@ -40,6 +42,8 @@ impl Migration for V3_00_00 {
             Box::new(add_site_sync_version::Migrate),
             Box::new(rebuild_sync_buffer::Migrate),
             Box::new(populate_changelog_with_rows_for_sync_v7_tables::Migrate),
+            Box::new(add_merge_sync_message_processor_cursor_pg_enum::Migrate),
+            Box::new(strip_sync_message_type_quotes::Migrate),
         ]
     }
 }
