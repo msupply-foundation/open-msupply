@@ -103,6 +103,8 @@ mod test {
             "Ok": {
                 "siteId": 1,
                 "maxCursor": 1,
+                "lastCursorInBatch": 1,
+                "remaining": 0,
                 "nameStoreJoinId": NSJ_ID,
                 "records": [
                     {
