@@ -98,7 +98,8 @@ async fn test_sync_pull_and_push() {
                 limit: 100000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     // Translate
     let mut translated = vec![translate_rows_to_sync_records(
         &connection,
