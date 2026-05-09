@@ -259,6 +259,13 @@ pub struct ChangelogRepository<'a> {
     pub(super) connection: &'a StorageConnection,
 }
 
+pub struct ChangelogQuery {
+    pub rows: Vec<ChangelogRow>,
+    pub max_cursor: u64,
+    // Defaults to max cursor
+    pub last_cursor_in_batch: u64,
+}
+
 impl<'a> ChangelogRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         ChangelogRepository { connection }
@@ -268,7 +275,7 @@ impl<'a> ChangelogRepository<'a> {
         &self,
         filter: ChangelogCondition::Inner,
         CursorAndLimit { cursor, limit }: CursorAndLimit,
-    ) -> Result<Vec<ChangelogRow>, RepositoryError> {
+    ) -> Result<ChangelogQuery, RepositoryError> {
         // Each sub-query scans at most this many cursor values. Bounding the cursor
         // range gives the planner a tight window to drive an index scan on
         // changelog_pkey, instead of a full bitmap scan + sort across the whole table.
@@ -304,7 +311,16 @@ impl<'a> ChangelogRepository<'a> {
             current_cursor = window_end;
         }
 
-        Ok(results)
+        let last_cursor_in_batch = results
+            .last()
+            .map(|r| r.cursor as u64)
+            .unwrap_or(max_cursor as u64);
+
+        Ok(ChangelogQuery {
+            rows: results,
+            max_cursor: max_cursor as u64,
+            last_cursor_in_batch,
+        })
     }
 
     /// Returns latest/max change log cursor

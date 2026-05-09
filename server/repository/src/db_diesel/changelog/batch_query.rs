@@ -138,6 +138,14 @@ impl RowOrDelete {
     }
 }
 
+pub struct QueryWithData {
+    pub rows: Vec<RowOrDelete>,
+    pub max_cursor: u64,
+    // Defaults to max cursor
+    pub last_cursor_in_batch: u64,
+    pub remaining: u64,
+}
+
 impl<'a> ChangelogRepository<'a> {
     /// Like `ChangelogRepository::query`, but additionally loads the underlying
     /// row for each Upsert changelog (in batched queries grouped by table) and
@@ -161,17 +169,17 @@ impl<'a> ChangelogRepository<'a> {
         &self,
         filter: ChangelogCondition::Inner,
         CursorAndLimit { cursor, limit }: CursorAndLimit,
-    ) -> Result<Vec<RowOrDelete>, RepositoryError> {
+    ) -> Result<QueryWithData, RepositoryError> {
         let mut output_by_key: HashMap<(ChangelogTableName, String), RowOrDelete> = HashMap::new();
         let mut current_cursor = cursor;
+        let mut need = limit as i64;
 
-        loop {
-            let need = limit - output_by_key.len() as i64;
-            if need <= 0 {
-                break;
-            }
-
-            let changelogs = self.query(
+        let (max_cursor, last_cursor_in_batch) = loop {
+            let ChangelogQuery {
+                rows: changelogs,
+                max_cursor,
+                last_cursor_in_batch,
+            } = self.query(
                 filter.clone(),
                 CursorAndLimit {
                     cursor: current_cursor,
@@ -180,13 +188,8 @@ impl<'a> ChangelogRepository<'a> {
             )?;
 
             if changelogs.is_empty() {
-                break;
+                break (max_cursor, last_cursor_in_batch);
             }
-
-            let last_cursor = changelogs
-                .last()
-                .map(|c| c.cursor)
-                .unwrap_or(current_cursor);
 
             // Within-batch dedup: keep only the latest changelog for each
             // (table_name, record_id). `query` returns ascending by cursor, so
@@ -240,12 +243,21 @@ impl<'a> ChangelogRepository<'a> {
                 }
             }
 
-            current_cursor = last_cursor;
-        }
+            current_cursor = last_cursor_in_batch as i64;
+            need = limit - output_by_key.len() as i64;
+            if need <= 0 {
+                break (max_cursor, last_cursor_in_batch);
+            }
+        };
 
-        let mut output: Vec<RowOrDelete> = output_by_key.into_values().collect();
-        output.sort_by_key(|x| x.changelog().cursor);
-        Ok(output)
+        let mut rows: Vec<RowOrDelete> = output_by_key.into_values().collect();
+        rows.sort_by_key(|x| x.changelog().cursor);
+        Ok(QueryWithData {
+            rows,
+            max_cursor,
+            last_cursor_in_batch,
+            remaining: max_cursor.saturating_sub(last_cursor_in_batch),
+        })
     }
 }
 
@@ -849,7 +861,8 @@ mod test {
                     limit: 10,
                 },
             )
-            .unwrap();
+            .unwrap()
+            .rows;
 
         assert_eq!(result.len(), 3);
         // Ordered ascending by cursor
@@ -895,7 +908,8 @@ mod test {
                     limit: 3,
                 },
             )
-            .unwrap();
+            .unwrap()
+            .rows;
 
         // Three distinct keys, exactly limit. u1 collapsed to its latest cursor.
         assert_eq!(result.len(), 3);
@@ -943,7 +957,8 @@ mod test {
                     limit: 2,
                 },
             )
-            .unwrap();
+            .unwrap()
+            .rows;
 
         // u2 is dropped (Upsert pointing to non-existent row); u1 + u3 remain
         // and were topped up to reach limit=2.
@@ -974,7 +989,8 @@ mod test {
                     limit: 100,
                 },
             )
-            .unwrap();
+            .unwrap()
+            .rows;
 
         assert_eq!(result.len(), 2);
     }
@@ -1021,7 +1037,8 @@ mod test {
                     limit: 2,
                 },
             )
-            .unwrap();
+            .unwrap()
+            .rows;
 
         assert_eq!(result.len(), 2);
         let u1 = result
@@ -1081,7 +1098,8 @@ mod test {
                     limit: 2,
                 },
             )
-            .unwrap();
+            .unwrap()
+            .rows;
 
         assert_eq!(result.len(), 2);
         let u1 = result

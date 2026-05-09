@@ -28,6 +28,7 @@ fn query_all(connection: &StorageConnection, cursor: i64, limit: i64) -> Vec<Cha
     ChangelogRepository::new(connection)
         .query(ChangelogCondition::True(), CursorAndLimit { cursor, limit })
         .unwrap()
+        .rows
 }
 
 #[actix_rt::test]

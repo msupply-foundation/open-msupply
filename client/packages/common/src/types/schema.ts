@@ -9899,6 +9899,7 @@ export enum SyncErrorVariant {
   SiteUuidIsBeingChanged = 'SITE_UUID_IS_BEING_CHANGED',
   Unknown = 'UNKNOWN',
   V6ApiVersionIncompatible = 'V6_API_VERSION_INCOMPATIBLE',
+  V7UpgradeFailed = 'V7_UPGRADE_FAILED',
 }
 
 export enum SyncErrorVariantV7 {
@@ -9915,8 +9916,10 @@ export enum SyncErrorVariantV7 {
   Other = 'OTHER',
   ParsingError = 'PARSING_ERROR',
   RecordNotFound = 'RECORD_NOT_FOUND',
+  RequestSiteAuthError = 'REQUEST_SITE_AUTH_ERROR',
   SiteIdMismatch = 'SITE_ID_MISMATCH',
   SiteIdNotSet = 'SITE_ID_NOT_SET',
+  SiteIsNotV7 = 'SITE_IS_NOT_V7',
   SiteLockError = 'SITE_LOCK_ERROR',
   SyncRecordSerializeError = 'SYNC_RECORD_SERIALIZE_ERROR',
   SyncVersionMismatch = 'SYNC_VERSION_MISMATCH',

@@ -174,7 +174,8 @@ pub(crate) fn process_invoice_transfers(
                     limit: CHANGELOG_BATCH_SIZE as i64,
                 },
             )
-            .map_err(Error::DatabaseError)?;
+            .map_err(Error::DatabaseError)?
+            .rows;
 
         if logs.is_empty() {
             break;

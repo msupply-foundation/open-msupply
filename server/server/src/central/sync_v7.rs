@@ -39,7 +39,7 @@ async fn get_token(
     service_provider: Data<ServiceProvider>,
 ) -> actix_web::Result<impl Responder> {
     let response: api::get_token::Response =
-        handlers::get_token(&service_provider, request.into_inner());
+        handlers::get_token(&service_provider, request.into_inner()).await;
 
     Ok(web::Json(response))
 }
@@ -119,7 +119,7 @@ mod test_sync_v7_server_api {
     use assert_json_diff::assert_json_include;
     use repository::{
         migrations::Version, mock::MockDataInserts, test_db::setup_all, KeyType,
-        KeyValueStoreRepository, SiteRow, SiteRowRepository,
+        KeyValueStoreRepository, SiteRow, SiteRowRepository, SyncVersion,
     };
     use serde_json::json;
     use service::{
@@ -151,6 +151,7 @@ mod test_sync_v7_server_api {
                 hashed_password: HASHED_PASSWORD.into(),
                 hardware_id: hardware_id.map(str::to_string),
                 token: token.map(str::to_string),
+                sync_version: SyncVersion::V7,
             })
             .unwrap();
         let kv = KeyValueStoreRepository::new(&connection);
