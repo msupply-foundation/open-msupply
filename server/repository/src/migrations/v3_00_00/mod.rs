@@ -32,8 +32,8 @@ impl Migration for V3_00_00 {
             Box::new(update_changelog_for_sync_v7::Migrate),
             Box::new(create_site_table::Migrate),
             Box::new(rebuild_sync_buffer::Migrate),
-            Box::new(populate_changelog_with_rows_for_sync_v7_tables::Migrate),
             Box::new(partition_changelog_by_cursor::Migrate),
+            Box::new(populate_changelog_with_rows_for_sync_v7_tables::Migrate),
         ]
     }
 }

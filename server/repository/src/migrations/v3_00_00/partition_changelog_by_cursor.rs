@@ -13,10 +13,19 @@ impl MigrationFragment for Migrate {
     #[cfg(not(feature = "postgres"))]
     fn migrate_with_config(
         &self,
-        _connection: &StorageConnection,
+        connection: &StorageConnection,
         _config: &MigrationConfig,
     ) -> anyhow::Result<()> {
-        // SQLite has no partitioning; remote SQLite stations don't see the v7 spike.
+        // SQLite has no partitioning; Only rename patient_id to patient_link_id and update the index
+        sql!(
+            connection,
+            r#"
+            ALTER TABLE changelog RENAME COLUMN patient_id TO patient_link_id;
+            DROP INDEX IF EXISTS index_changelog_patient_id;
+            CREATE INDEX index_changelog_patient_link_id
+                ON changelog (patient_link_id) WHERE patient_link_id IS NOT NULL;
+            "#
+        )?;
         Ok(())
     }
 
@@ -85,7 +94,7 @@ impl MigrationFragment for Migrate {
                 is_sync_update BOOLEAN NOT NULL DEFAULT FALSE,
                 source_site_id INTEGER,
                 transfer_store_id TEXT,
-                patient_id TEXT,
+                patient_link_id TEXT,
                 PRIMARY KEY (cursor)
             ) PARTITION BY RANGE (cursor);
             "#
@@ -105,7 +114,7 @@ impl MigrationFragment for Migrate {
             r#"
             INSERT INTO changelog (
                 cursor, table_name, record_id, row_action, name_link_id, store_id,
-                is_sync_update, source_site_id, transfer_store_id, patient_id
+                is_sync_update, source_site_id, transfer_store_id, patient_link_id
             )
             SELECT
                 cursor, table_name, record_id, row_action, name_link_id, store_id,
@@ -142,8 +151,8 @@ impl MigrationFragment for Migrate {
                 ON changelog (store_id);
             CREATE INDEX index_changelog_transfer_store_id
                 ON changelog (transfer_store_id) WHERE transfer_store_id IS NOT NULL;
-            CREATE INDEX index_changelog_patient_id
-                ON changelog (patient_id) WHERE patient_id IS NOT NULL;
+            CREATE INDEX index_changelog_patient_link_id
+                ON changelog (patient_link_id) WHERE patient_link_id IS NOT NULL;
             "#
         )?;
 

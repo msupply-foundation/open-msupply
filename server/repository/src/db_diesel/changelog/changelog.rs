@@ -23,7 +23,7 @@ table! {
         is_sync_update -> Bool,
         source_site_id -> Nullable<Integer>,
         transfer_store_id -> Nullable<Text>,
-        patient_id -> Nullable<Text>,
+        patient_link_id -> Nullable<Text>,
     }
 }
 
@@ -49,7 +49,7 @@ fn query() -> _ {
         .left_join(
             name_store_join::table.on(name_store_join::name_id
                 .nullable()
-                .eq(changelog::patient_id)),
+                .eq(changelog::patient_link_id)),
         )
         .left_join(
             patient_stores.on(patient_stores
@@ -76,7 +76,7 @@ type Source = LeftJoinQuerySource<
             >,
         >,
         name_store_join::table,
-        diesel::dsl::Eq<diesel::dsl::Nullable<name_store_join::name_id>, changelog::patient_id>,
+        diesel::dsl::Eq<diesel::dsl::Nullable<name_store_join::name_id>, changelog::patient_link_id>,
     >,
     patient_stores,
     diesel::dsl::Eq<
@@ -236,7 +236,7 @@ pub struct ChangeLogInsertRow {
     pub store_id: Option<String>,
     pub source_site_id: Option<i32>,
     pub transfer_store_id: Option<String>,
-    pub patient_id: Option<String>,
+    pub patient_link_id: Option<String>,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable, Serialize, Deserialize, TS, Default)]
@@ -252,7 +252,7 @@ pub struct ChangelogRow {
     pub is_sync_update: bool,
     pub source_site_id: Option<i32>,
     pub transfer_store_id: Option<String>,
-    pub patient_id: Option<String>,
+    pub patient_link_id: Option<String>,
 }
 
 pub struct ChangelogRepository<'a> {
@@ -347,7 +347,7 @@ create_condition!(
     (store_id, string, changelog::store_id),
     (source_site_id, i32, changelog::source_site_id),
     (transfer_store_id, string, changelog::transfer_store_id),
-    (patient_id, string, changelog::patient_id),
+    (patient_link_id, string, changelog::patient_link_id),
     (transfer_site_id, i32, transfer_stores.field(store::site_id)),
     (patient_site_id, i32, patient_stores.field(store::site_id)),
 );
@@ -391,8 +391,8 @@ impl ChangelogFilter {
                 Central | File => C::And(vec![
                     // We have central and remote records with same table_name, so need to make sure to include only central ones (where store_id is null)
                     C::store_id::is_null(),
-                    // We have patients that are also central data, therefore patient_id should be null
-                    C::patient_id::is_null(),
+                    // We have patients that are also central data, therefore patient_link_id should be null
+                    C::patient_link_id::is_null(),
                 ]),
                 ToLegacyCentralOnly | RemoteToCentral => {
                     // Don't sync
