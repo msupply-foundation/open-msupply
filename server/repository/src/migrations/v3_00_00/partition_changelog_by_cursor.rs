@@ -16,10 +16,15 @@ impl MigrationFragment for Migrate {
         connection: &StorageConnection,
         _config: &MigrationConfig,
     ) -> anyhow::Result<()> {
-        // SQLite has no partitioning; Only rename patient_id to patient_link_id and update the index
+        // SQLite has no partitioning. Bring the SQLite schema into the same
+        // shape as the post-partition Postgres schema: drop `name_link_id`
+        // (no longer used on changelog), rename `patient_id` → `patient_link_id`,
+        // and rename the patient index to match.
         sql!(
             connection,
             r#"
+            DROP INDEX IF EXISTS index_changelog_name_link_id_fkey;
+            ALTER TABLE changelog DROP COLUMN name_link_id;
             ALTER TABLE changelog RENAME COLUMN patient_id TO patient_link_id;
             DROP INDEX IF EXISTS index_changelog_patient_id;
             CREATE INDEX index_changelog_patient_link_id
@@ -54,16 +59,17 @@ impl MigrationFragment for Migrate {
         //    table can reuse the `changelog` name.
         sql!(connection, "ALTER TABLE changelog RENAME TO old_changelog;")?;
 
-        // 2. Drop the old table's constraints and indexes so the new partitioned
-        //    table can reuse `changelog_pkey`, `changelog_name_link_id_fkey`, and
-        //    `index_changelog_*`. The old table is dropped after the copy (step 7)
-        //    so its indexes are about to disappear anyway.
+        // 2. Drop the old table's PK and indexes so the new partitioned
+        //    table can reuse `changelog_pkey` and `index_changelog_*`. The old
+        //    table is dropped after the copy (step 7) so its indexes are about
+        //    to disappear anyway. The old `changelog_name_link_id_fkey` constraint
+        //    and `index_changelog_name_link_id_fkey` index die with the table
+        //    drop — no need to free their names, as the new table no longer has
+        //    a `name_link_id` column.
         sql!(
             connection,
             r#"
             ALTER TABLE old_changelog DROP CONSTRAINT changelog_pkey;
-            ALTER TABLE old_changelog DROP CONSTRAINT changelog_name_link_id_fkey;
-            DROP INDEX IF EXISTS index_changelog_name_link_id_fkey;
             DROP INDEX IF EXISTS index_changelog_store_id_fkey;
             DROP INDEX IF EXISTS index_changelog_table_name;
             DROP INDEX IF EXISTS index_changelog_transfer_store_id;
@@ -89,7 +95,6 @@ impl MigrationFragment for Migrate {
                 table_name TEXT NOT NULL,
                 record_id TEXT NOT NULL,
                 row_action TEXT NOT NULL,
-                name_link_id TEXT REFERENCES name_link(id),
                 store_id TEXT,
                 is_sync_update BOOLEAN NOT NULL DEFAULT FALSE,
                 source_site_id INTEGER,
@@ -113,11 +118,11 @@ impl MigrationFragment for Migrate {
             connection,
             r#"
             INSERT INTO changelog (
-                cursor, table_name, record_id, row_action, name_link_id, store_id,
+                cursor, table_name, record_id, row_action, store_id,
                 is_sync_update, source_site_id, transfer_store_id, patient_link_id
             )
             SELECT
-                cursor, table_name, record_id, row_action, name_link_id, store_id,
+                cursor, table_name, record_id, row_action, store_id,
                 is_sync_update, source_site_id, transfer_store_id, patient_id
             FROM old_changelog
             ORDER BY cursor;
