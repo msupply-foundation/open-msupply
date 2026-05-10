@@ -9,11 +9,11 @@ import {
   usePreferences,
   DateUtils,
 } from '@openmsupply-client/common';
+import { useShallow } from 'zustand/react/shallow';
 
 import { usePrescriptionLineEditColumns } from './columns';
 import {
   DraftStockOutLineFragment,
-  getAllocatedQuantity,
   useAllocationContext,
 } from '../../StockOut';
 
@@ -27,11 +27,16 @@ export const PrescriptionLineEditTable = ({
   const t = useTranslation();
   const { format } = useFormatNumber();
   const prefs = usePreferences();
+  // Select only the fields actually used. Spreading the whole state into the
+  // selector returns a fresh object every call, which under React 19's stricter
+  // useSyncExternalStore snapshot caching causes an infinite re-render loop.
   const { draftLines, allocateIn, item, manualAllocate } = useAllocationContext(
-    state => ({
-      ...state,
-      allocatedQuantity: getAllocatedQuantity(state),
-    })
+    useShallow(state => ({
+      draftLines: state.draftLines,
+      allocateIn: state.allocateIn,
+      item: state.item,
+      manualAllocate: state.manualAllocate,
+    }))
   );
 
   const allocate = (key: string, value: number) => {

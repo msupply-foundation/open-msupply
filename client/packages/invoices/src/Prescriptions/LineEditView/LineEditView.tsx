@@ -10,6 +10,7 @@ import {
   useParams,
 } from '@openmsupply-client/common';
 
+import { useShallow } from 'zustand/react/shallow';
 import { ItemRowFragment, ListItems } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { PageLayout } from './PageLayout';
@@ -35,10 +36,17 @@ export const PrescriptionLineEditView = () => {
     note,
     allocatedQuantity,
     setIsDirty: setAllocationIsDirty,
-  } = useAllocationContext(state => ({
-    ...state,
-    allocatedQuantity: getAllocatedQuantity(state),
-  }));
+  } = useAllocationContext(
+    useShallow(state => ({
+      isDirty: state.isDirty,
+      draftLines: state.draftLines,
+      item: state.item,
+      prescribedUnits: state.prescribedUnits,
+      note: state.note,
+      allocatedQuantity: getAllocatedQuantity(state),
+      setIsDirty: state.setIsDirty,
+    }))
+  );
 
   const {
     mutateAsync: savePrescriptionItemLineData,

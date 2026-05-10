@@ -12,6 +12,7 @@ import {
   useSimpleMaterialTable,
   DateUtils,
 } from '@openmsupply-client/common';
+import { useShallow } from 'zustand/react/shallow';
 import { useOutboundLineEditColumns } from './columns';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import {
@@ -44,24 +45,31 @@ export const OutboundLineEditTable = ({
     item,
     manualAllocate,
     setVvmStatus,
-  } = useAllocationContext(state => {
-    const { placeholderUnits, item, allocateIn } = state;
+  } = useAllocationContext(
+    useShallow(state => {
+      const { placeholderUnits, item, allocateIn } = state;
 
-    const inDoses = allocateIn.type === AllocateInType.Doses;
-    return {
-      ...state,
-      // In packs & units: we show totals in units
-      // In doses: we show totals in doses
-      allocatedQuantity: getAllocatedQuantity({
+      const inDoses = allocateIn.type === AllocateInType.Doses;
+      return {
         draftLines: state.draftLines,
-        allocateIn: inDoses ? allocateIn : { type: AllocateInType.Units },
-      }),
-      placeholderQuantity:
-        placeholderUnits !== null && inDoses
-          ? (placeholderUnits ?? 0) * (item?.doses || 1)
-          : placeholderUnits,
-    };
-  });
+        nonAllocatableLines: state.nonAllocatableLines,
+        allocateIn,
+        item,
+        manualAllocate: state.manualAllocate,
+        setVvmStatus: state.setVvmStatus,
+        // In packs & units: we show totals in units
+        // In doses: we show totals in doses
+        allocatedQuantity: getAllocatedQuantity({
+          draftLines: state.draftLines,
+          allocateIn: inDoses ? allocateIn : { type: AllocateInType.Units },
+        }),
+        placeholderQuantity:
+          placeholderUnits !== null && inDoses
+            ? (placeholderUnits ?? 0) * (item?.doses || 1)
+            : placeholderUnits,
+      };
+    })
+  );
 
   const getIsDisabled = useCallback(
     (row: DraftStockOutLineFragment) => {

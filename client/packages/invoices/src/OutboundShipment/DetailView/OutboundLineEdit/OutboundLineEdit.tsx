@@ -8,6 +8,7 @@ import {
   useNotification,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
+import { useShallow } from 'zustand/react/shallow';
 import { ScannedBarcode } from '../../../types';
 import { SelectItem } from './SelectItem';
 import { Allocation } from './Allocation';
@@ -68,10 +69,17 @@ export const OutboundLineEdit = ({
     isDirty,
     setAlerts,
     clear,
-  } = useAllocationContext(state => ({
-    ...state,
-    allocatedQuantity: getAllocatedQuantity(state),
-  }));
+  } = useAllocationContext(
+    useShallow(state => ({
+      draftLines: state.draftLines,
+      allocatedQuantity: getAllocatedQuantity(state),
+      placeholderUnits: state.placeholderUnits,
+      alerts: state.alerts,
+      isDirty: state.isDirty,
+      setAlerts: state.setAlerts,
+      clear: state.clear,
+    }))
+  );
 
   const onSave = async () => {
     if (!isDirty) return;
