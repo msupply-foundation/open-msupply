@@ -18,7 +18,24 @@ fn main() {
     fs::File::create(Path::new(&markers_path).join(TEMPLATE_MARKER_FILE_SQLITE)).unwrap();
     fs::File::create(Path::new(&markers_path).join(TEMPLATE_MARKER_FILE_POSTGRES)).unwrap();
 
-    // This build script only needs to be rerun if migrations or mock data change.
-    println!("cargo:rerun-if-changed=src/migrations");
-    println!("cargo:rerun-if-changed=src/mock");
+    // A bare `rerun-if-changed=<dir>` only catches add/remove (directory mtime),
+    // not edits to existing files — which is what we hit when changing migration code.
+    // Walk both trees so every file is tracked individually.
+    watch_recursive(Path::new("src/migrations"));
+    watch_recursive(Path::new("src/mock"));
+}
+
+fn watch_recursive(path: &Path) {
+    println!("cargo:rerun-if-changed={}", path.display());
+    let Ok(entries) = fs::read_dir(path) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let p = entry.path();
+        if p.is_dir() {
+            watch_recursive(&p);
+        } else {
+            println!("cargo:rerun-if-changed={}", p.display());
+        }
+    }
 }
