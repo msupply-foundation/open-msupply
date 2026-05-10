@@ -71,7 +71,7 @@ fn changelog(
         store_id: row.store_id.clone(),
         source_site_id: Some(row.source_site_id),
         transfer_store_id: row.transfer_store_id.clone(),
-        patient_id: row.patient_id.clone(),
+        patient_link_id: row.patient_id.clone(),
     }
 }
 
