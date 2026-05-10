@@ -7,6 +7,7 @@ import {
   useFormatNumber,
   Typography,
 } from '@openmsupply-client/common';
+import { useShallow } from 'zustand/react/shallow';
 import { AllocateInType, useAllocationContext } from '../useAllocationContext';
 import { canAutoAllocate } from '../utils';
 
@@ -23,20 +24,22 @@ export const AllocateInSelector = ({
     usePreferences();
 
   const { allocateIn, availablePackSizes, setAllocateIn, item } =
-    useAllocationContext(({ allocateIn, draftLines, item, setAllocateIn }) => ({
-      item,
-      allocateIn,
-      setAllocateIn,
-      availablePackSizes: [
-        ...new Set(
-          draftLines
-            .filter(line =>
-              canAutoAllocate(line, expiredStockIssueThreshold ?? 0)
-            )
-            .map(line => line.packSize)
-        ),
-      ].sort((a, b) => a - b),
-    }));
+    useAllocationContext(
+      useShallow(({ allocateIn, draftLines, item, setAllocateIn }) => ({
+        item,
+        allocateIn,
+        setAllocateIn,
+        availablePackSizes: [
+          ...new Set(
+            draftLines
+              .filter(line =>
+                canAutoAllocate(line, expiredStockIssueThreshold ?? 0)
+              )
+              .map(line => line.packSize)
+          ),
+        ].sort((a, b) => a - b),
+      }))
+    );
 
   const unitName = item?.unitName ?? t('label.unit');
   const pluralisedUnitName = getPlural(unitName, 2);
