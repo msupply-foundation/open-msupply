@@ -554,10 +554,19 @@ mod tests {
     async fn pull_returns_empty_batch_when_no_changelog() {
         let (
             ServiceTestContext {
-                service_provider, ..
+                service_provider,
+                connection_manager,
+                ..
             },
             common,
         ) = setup("sync_v7_pull_empty").await;
+
+        // Setup runs migrations, including `populate_changelog_with_rows_for_sync_v7_tables`
+        // which seeds a changelog row for every pre-existing row across the central tables
+        // (site, store, user_account, master_list, unit, …). The test_site upsert in
+        // `setup` adds one more. To exercise the truly-empty-changelog path the test is
+        // named for, wipe it before pulling.
+        connection_manager.execute("DELETE FROM changelog").unwrap();
 
         let batch = pull(
             &service_provider,

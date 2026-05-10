@@ -748,6 +748,7 @@ async fn test_changelog_outgoing_sync_records() {
             id: req_id.clone(),
             store_id: site1_store_id.clone(),
             name_id: mock_name_store_b().id,
+            name_store_id: Some(mock_store_b().id),
             ..Default::default()
         })
         .unwrap();
