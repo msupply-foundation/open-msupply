@@ -561,11 +561,8 @@ mod tests {
             common,
         ) = setup("sync_v7_pull_empty").await;
 
-        // Setup runs migrations, including `populate_changelog_with_rows_for_sync_v7_tables`
-        // which seeds a changelog row for every pre-existing row across the central tables
-        // (site, store, user_account, master_list, unit, …). The test_site upsert in
-        // `setup` adds one more. To exercise the truly-empty-changelog path the test is
-        // named for, wipe it before pulling.
+        // Clear the central-table rows the v3 populate fragment seeds during
+        // migration so the "no changelog" precondition actually holds.
         connection_manager.execute("DELETE FROM changelog").unwrap();
 
         let batch = pull(
