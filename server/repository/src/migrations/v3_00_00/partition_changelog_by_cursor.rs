@@ -59,13 +59,9 @@ impl MigrationFragment for Migrate {
         //    table can reuse the `changelog` name.
         sql!(connection, "ALTER TABLE changelog RENAME TO old_changelog;")?;
 
-        // 2. Drop the old table's PK and indexes so the new partitioned
-        //    table can reuse `changelog_pkey` and `index_changelog_*`. The old
-        //    table is dropped after the copy (step 7) so its indexes are about
-        //    to disappear anyway. The old `changelog_name_link_id_fkey` constraint
-        //    and `index_changelog_name_link_id_fkey` index die with the table
-        //    drop — no need to free their names, as the new table no longer has
-        //    a `name_link_id` column.
+        // 2. Free the names the new table will reuse — `changelog_pkey` and
+        //    `index_changelog_*`. The old `name_link_id` FK and its index die
+        //    with the DROP TABLE in step 7; the new table has no such column.
         sql!(
             connection,
             r#"
@@ -287,9 +283,9 @@ mod tests {
     }
 
     /// Sets up a DB at v2.18 and runs only `alter_changelog_table_for_sync_v7`
-    /// — the one earlier v3 fragment that reshapes `changelog` (TEXT columns,
-    /// new `transfer_store_id` / `patient_id`). This skips
-    /// `populate_changelog_with_rows_for_sync_v7_tables` as it inserts rows
+    /// (the schema-reshape fragment: TEXT columns, `transfer_store_id`,
+    /// `patient_id`). The test then drives the partition migration directly
+    /// with its chosen seed data — no other v3 fragments are invoked.
     async fn setup_pre_partition(db_name: &str) -> StorageConnection {
         let SetupResult { connection, .. } = setup_test(SetupOption {
             db_name,
