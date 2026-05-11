@@ -100,7 +100,7 @@ impl<'a> ReasonOptionRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    fn _soft_delete(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
+    fn _mark_deleted(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
         diesel::update(reason_option::table)
             .filter(reason_option::id.eq(reason_option_id))
             .set(reason_option::is_active.eq(false))
@@ -108,8 +108,8 @@ impl<'a> ReasonOptionRowRepository<'a> {
         Ok(())
     }
 
-    pub fn soft_delete(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
-        self._soft_delete(reason_option_id)?;
+    pub fn mark_deleted(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
+        self._mark_deleted(reason_option_id)?;
         let changelog = ReasonOptionRow::generate_changelog(
             reason_option_id.to_string(),
             self.connection,
@@ -143,7 +143,7 @@ impl Upsert for ReasonOptionRowDelete {
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
-        repo._soft_delete(&self.0)?;
+        repo._mark_deleted(&self.0)?;
         ChangelogRepository::new(con).insert(&changelog)?;
         Ok(())
     }

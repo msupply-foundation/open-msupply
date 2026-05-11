@@ -88,15 +88,15 @@ impl<'a> ProgramRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    fn _delete(&self, id: &str) -> Result<(), RepositoryError> {
+    fn _mark_deleted(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::update(program::table.filter(program::id.eq(id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        self._delete(id)?;
+    pub fn mark_deleted(&self, id: &str) -> Result<(), RepositoryError> {
+        self._mark_deleted(id)?;
         let changelog = ProgramRow::generate_changelog(
             id.to_string(),
             self.connection,
@@ -158,7 +158,7 @@ impl Upsert for ProgramRowDelete {
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
-        repo._delete(&self.0)?;
+        repo._mark_deleted(&self.0)?;
         ChangelogRepository::new(con).insert(&changelog)?;
         Ok(())
     }

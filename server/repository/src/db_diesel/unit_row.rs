@@ -105,15 +105,15 @@ impl<'a> UnitRowRepository<'a> {
         Ok(result)
     }
 
-    fn _delete(&self, unit_id: &str) -> Result<(), RepositoryError> {
+    fn _mark_deleted(&self, unit_id: &str) -> Result<(), RepositoryError> {
         diesel::update(unit.filter(id.eq(unit_id)))
             .set(is_active.eq(false))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn delete(&self, unit_id: &str) -> Result<(), RepositoryError> {
-        self._delete(unit_id)?;
+    pub fn mark_deleted(&self, unit_id: &str) -> Result<(), RepositoryError> {
+        self._mark_deleted(unit_id)?;
         let changelog = UnitRow::generate_changelog(
             unit_id.to_string(),
             self.connection,
@@ -133,7 +133,7 @@ impl Upsert for UnitRowDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let repo = UnitRowRepository::new(con);
-        repo._delete(&self.0)?;
+        repo._mark_deleted(&self.0)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => UnitRow::generate_changelog(
                 self.0.clone(),

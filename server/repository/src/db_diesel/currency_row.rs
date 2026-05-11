@@ -87,15 +87,15 @@ impl<'a> CurrencyRowRepository<'a> {
         Ok(result)
     }
 
-    fn _delete(&self, currency_id: &str) -> Result<(), RepositoryError> {
+    fn _mark_deleted(&self, currency_id: &str) -> Result<(), RepositoryError> {
         diesel::update(currency::table.filter(currency::id.eq(currency_id)))
             .set(currency::is_active.eq(false))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn delete(&self, currency_id: &str) -> Result<(), RepositoryError> {
-        self._delete(currency_id)?;
+    pub fn mark_deleted(&self, currency_id: &str) -> Result<(), RepositoryError> {
+        self._mark_deleted(currency_id)?;
         let changelog = CurrencyRow::generate_changelog(
             currency_id.to_string(),
             self.connection,
@@ -126,7 +126,7 @@ impl Upsert for CurrencyRowDelete {
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
-        repo._delete(&self.0)?;
+        repo._mark_deleted(&self.0)?;
         ChangelogRepository::new(con).insert(&changelog)?;
         Ok(())
     }
