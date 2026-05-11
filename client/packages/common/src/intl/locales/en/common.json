@@ -404,7 +404,7 @@
   "error.line-combination-error": "Item and pack size combination already exists for item code: {{itemCode}}, and pack size: {{requestedPackSize}}",
   "error.login": "Invalid username or password",
   "error.login-support": "Please contact support@msupply.foundation if you are unable to login to your account",
-  "error.manufacturer-model-unique": "An item already exists with this manufacturer and model",
+  "error.manufacturer-model-unique": "An item already exists with this manufacturer, model and type",
   "error.master-list-not-found": "Master list not found",
   "error.master-list-not-found-for-this-store": "Master list not found for this store",
   "error.max-orders-reached-for-period": "Maximum requisitions for this period already created",
