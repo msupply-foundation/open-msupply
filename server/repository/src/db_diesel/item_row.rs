@@ -1,6 +1,6 @@
 use crate::{
     db_diesel::changelog::ChangelogRepository,
-    ChangelogSyncType, ChangelogTableName, Delete, RowActionType, SourceSiteId, Upsert,
+    ChangelogSyncType, ChangelogTableName, RowActionType, SourceSiteId, Upsert,
 };
 
 use super::{
@@ -253,8 +253,8 @@ impl<'a> ItemRowRepository<'a> {
 
 #[derive(Debug, Clone)]
 pub struct ItemRowDelete(pub String);
-impl Delete for ItemRowDelete {
-    fn delete_sync(
+impl Upsert for ItemRowDelete {
+    fn upsert_sync(
         &self,
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
@@ -275,7 +275,7 @@ impl Delete for ItemRowDelete {
         Ok(())
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert!(matches!(
             ItemRowRepository::new(con).find_one_by_id(&self.0),
             Ok(Some(ItemRow {

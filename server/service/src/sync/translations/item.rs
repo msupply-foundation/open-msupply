@@ -160,7 +160,7 @@ impl SyncTranslation for ItemTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(ItemRowDelete(
+        Ok(PullTranslateResult::upsert(ItemRowDelete(
             sync_record.record_id.clone(),
         )))
     }

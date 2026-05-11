@@ -1,7 +1,7 @@
 use super::{location_row::location, store_row::store, StorageConnection};
 
 use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert,
+    repository_error::RepositoryError, ChangelogSyncType, SourceSiteId, Upsert,
 };
 use crate::{ChangelogRepository, RowActionType};
 
@@ -123,8 +123,8 @@ impl<'a> SensorRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct SensorRowDelete(pub String);
 
-impl Delete for SensorRowDelete {
-    fn delete_sync(
+impl Upsert for SensorRowDelete {
+    fn upsert_sync(
         &self,
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
@@ -151,7 +151,7 @@ impl Delete for SensorRowDelete {
     }
 
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         let row = SensorRowRepository::new(con)
             .find_one_by_id(&self.0)
             .expect("sensor lookup");

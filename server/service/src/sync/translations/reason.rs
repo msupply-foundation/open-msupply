@@ -88,7 +88,7 @@ impl SyncTranslation for ReasonTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(ReasonOptionRowDelete(
+        Ok(PullTranslateResult::upsert(ReasonOptionRowDelete(
             sync_record.record_id.clone(),
         )))
     }

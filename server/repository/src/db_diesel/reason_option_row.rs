@@ -1,8 +1,7 @@
 use super::StorageConnection;
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, Delete,
-    RowActionType, SourceSiteId, Upsert,
+    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, Upsert,
 };
 
 use diesel::prelude::*;
@@ -124,8 +123,8 @@ impl<'a> ReasonOptionRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct ReasonOptionRowDelete(pub String);
 
-impl Delete for ReasonOptionRowDelete {
-    fn delete_sync(
+impl Upsert for ReasonOptionRowDelete {
+    fn upsert_sync(
         &self,
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
@@ -150,11 +149,14 @@ impl Delete for ReasonOptionRowDelete {
     }
 
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert!(matches!(
             ReasonOptionRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
+            Ok(Some(ReasonOptionRow {
+                is_active: false,
+                ..
+            })) | Ok(None)
+        ));
     }
 }
 

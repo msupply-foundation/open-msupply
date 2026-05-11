@@ -63,8 +63,8 @@ impl SyncTranslation for NameMergeTranslation {
                 })
             })
             .collect();
-        // delete the merged name
-        operations.push(IntegrationOperation::delete(NameRowDelete(
+        // soft-delete the merged name
+        operations.push(IntegrationOperation::upsert(NameRowDelete(
             data.merge_id_to_delete.clone(),
         )));
 

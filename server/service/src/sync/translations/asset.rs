@@ -87,7 +87,7 @@ impl SyncTranslation for AssetTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(AssetRowDelete(
+        Ok(PullTranslateResult::upsert(AssetRowDelete(
             sync_record.record_id.clone(),
         )))
     }

@@ -1,8 +1,7 @@
 use super::{unit_row::unit::dsl::*, StorageConnection};
 use crate::{
-    db_diesel::changelog::ChangelogRepository,
-    repository_error::RepositoryError,
-    ChangelogSyncType, ChangelogTableName, Delete, RowActionType, SourceSiteId, Upsert,
+    db_diesel::changelog::ChangelogRepository, repository_error::RepositoryError,
+    ChangelogSyncType, ChangelogTableName, RowActionType, SourceSiteId, Upsert,
 };
 use diesel::prelude::*;
 
@@ -16,7 +15,18 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Insertable,
+    Queryable,
+    Debug,
+    PartialEq,
+    Eq,
+    AsChangeset,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = unit)]
 pub struct UnitRow {
     pub id: String,
@@ -116,8 +126,8 @@ impl<'a> UnitRowRepository<'a> {
 
 #[derive(Debug, Clone)]
 pub struct UnitRowDelete(pub String);
-impl Delete for UnitRowDelete {
-    fn delete_sync(
+impl Upsert for UnitRowDelete {
+    fn upsert_sync(
         &self,
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
@@ -137,7 +147,7 @@ impl Delete for UnitRowDelete {
         Ok(())
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert!(matches!(
             UnitRowRepository::new(con).find_one_by_id(&self.0),
             Ok(Some(UnitRow {
@@ -149,7 +159,11 @@ impl Delete for UnitRowDelete {
 }
 
 impl Upsert for UnitRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         UnitRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => UnitRow::generate_changelog(
