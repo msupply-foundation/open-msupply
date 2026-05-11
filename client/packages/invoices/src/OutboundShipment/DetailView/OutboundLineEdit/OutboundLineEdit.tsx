@@ -7,8 +7,8 @@ import {
   ModalMode,
   useNotification,
   InvoiceNodeStatus,
+  useShallow,
 } from '@openmsupply-client/common';
-import { useShallow } from 'zustand/react/shallow';
 import { ScannedBarcode } from '../../../types';
 import { SelectItem } from './SelectItem';
 import { Allocation } from './Allocation';

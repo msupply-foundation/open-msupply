@@ -11,8 +11,8 @@ import {
   MaterialTable,
   useSimpleMaterialTable,
   DateUtils,
+  useShallow,
 } from '@openmsupply-client/common';
-import { useShallow } from 'zustand/react/shallow';
 import { useOutboundLineEditColumns } from './columns';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import {

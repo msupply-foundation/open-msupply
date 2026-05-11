@@ -8,8 +8,8 @@ import {
   useSimpleMaterialTable,
   usePreferences,
   DateUtils,
+  useShallow,
 } from '@openmsupply-client/common';
-import { useShallow } from 'zustand/react/shallow';
 
 import { usePrescriptionLineEditColumns } from './columns';
 import {

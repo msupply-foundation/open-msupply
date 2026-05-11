@@ -8,9 +8,8 @@ import {
   useConfirmOnLeaving,
   useNavigate,
   useParams,
+  useShallow,
 } from '@openmsupply-client/common';
-
-import { useShallow } from 'zustand/react/shallow';
 import { ItemRowFragment, ListItems } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { PageLayout } from './PageLayout';
