@@ -11,7 +11,12 @@ import {
   useIsCentralServerApi,
   useIsExtraSmallScreen,
   ChevronsDownIcon,
+  ChevronDownIcon,
   DownloadIcon,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Typography,
 } from '@openmsupply-client/common';
 import {
   FullSyncStatusV5V6Fragment,
@@ -56,7 +61,41 @@ export const SyncProgress: FC<SyncProgressProps> = ({
       {!isExtraSmallScreen && (
         <HorizontalStepper steps={steps} colour={colour} />
       )}
+      {isSyncStatusV7(syncStatus) &&
+        syncStatus.linkedSyncRequests.length > 0 && (
+          <LinkedSyncProcesses
+            descriptions={syncStatus.linkedSyncRequests}
+          />
+        )}
     </Box>
+  );
+};
+
+const LinkedSyncProcesses = ({
+  descriptions,
+}: {
+  descriptions: string[];
+}) => {
+  const t = useTranslation();
+  return (
+    <Accordion sx={{ mt: 1 }}>
+      <AccordionSummary expandIcon={<ChevronDownIcon />}>
+        <Typography sx={{ fontWeight: 600 }}>
+          {t('sync-status.linked-sync-requests', {
+            count: descriptions.length,
+          })}
+        </Typography>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Box display="flex" flexDirection="column" gap={0.5}>
+          {descriptions.map((d, i) => (
+            <Typography key={i} variant="body2">
+              {d}
+            </Typography>
+          ))}
+        </Box>
+      </AccordionDetails>
+    </Accordion>
   );
 };
 

@@ -182,7 +182,7 @@ pub fn validate_translate_integrate<'a>(
     connection: &StorageConnection,
     logger: Option<&mut SyncLogger<'a>>,
     source_site_id: i32,
-    reference: Option<&str>,
+    reference_id: Option<&str>,
     sync_context: SyncContext,
     is_initialising: bool,
 ) -> Result<(), RepositoryError> {
@@ -204,7 +204,7 @@ pub fn validate_translate_integrate<'a>(
                     t_con,
                     logger,
                     source_site_id,
-                    reference,
+                    reference_id,
                     sync_context,
                     wrap_record_in_tx,
                 )
@@ -216,7 +216,7 @@ pub fn validate_translate_integrate<'a>(
         connection,
         logger,
         source_site_id,
-        reference,
+        reference_id,
         sync_context,
         wrap_record_in_tx,
     )
@@ -226,7 +226,7 @@ fn validate_translate_integrate_inner<'a>(
     connection: &StorageConnection,
     mut logger: Option<&mut SyncLogger<'a>>,
     source_site_id: i32,
-    reference: Option<&str>,
+    reference_id: Option<&str>,
     sync_context: SyncContext,
     wrap_record_in_tx: bool,
 ) -> Result<(), RepositoryError> {
@@ -235,7 +235,7 @@ fn validate_translate_integrate_inner<'a>(
 
     let repo = SyncBufferRepository::new(connection);
 
-    let mut total = repo.count_pending(source_site_id, SyncVersion::V7, reference)?;
+    let mut total = repo.count_pending(source_site_id, SyncVersion::V7, reference_id)?;
     let mut last_progress = total / PROGRESS_INTERVAL;
 
     if let Some(logger) = logger.as_mut() {
@@ -252,7 +252,7 @@ fn validate_translate_integrate_inner<'a>(
         let rows = repo.pending_ordered_by_cursor(PendingQuery {
             source_site_id,
             sync_version: SyncVersion::V7,
-            reference,
+            reference_id,
             table_name: &table.to_string(),
             action: action.clone(),
             direction,

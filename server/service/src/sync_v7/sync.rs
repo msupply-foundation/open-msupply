@@ -24,6 +24,7 @@ use crate::{
         get_current_site_id,
         prepare::prepare,
         sync_logger::{SyncLogger, SyncLoggerHandle, SyncStep},
+        sync_request::{SyncRequest, SyncRequestStep},
         validate_translate_integrate::{validate_translate_integrate, SyncContext},
     },
 };
@@ -91,6 +92,7 @@ pub(crate) fn sync_record_to_buffer_row(
     record: SyncRecordV7,
     source_site_id: i32,
     app_version: Option<Version>,
+    reference_id: Option<String>,
 ) -> SyncBufferRowInsert {
     SyncBufferRowInsert {
         record_id: record.record_id,
@@ -107,7 +109,7 @@ pub(crate) fn sync_record_to_buffer_row(
         store_id: record.store_id,
         transfer_store_id: record.transfer_store_id,
         patient_id: record.patient_id,
-        reference: None,
+        reference_id,
     }
 }
 
@@ -115,19 +117,12 @@ pub(crate) async fn sync_v7(
     service_provider: &ServiceProvider,
     ctx: &ServiceContext,
     settings: SyncSettings,
-    is_initialising: bool,
+    request: SyncRequest,
 ) -> Result<(), SyncError> {
-    let mut logger = SyncLogger::start(&ctx.connection)?
+    let mut logger = SyncLogger::start(&ctx.connection, request.reference_id.clone())?
         .with_subscription_trigger(service_provider.subscription_trigger.clone());
 
-    let sync_result = sync_inner(
-        &mut logger,
-        service_provider,
-        ctx,
-        settings,
-        is_initialising,
-    )
-    .await;
+    let sync_result = sync_inner(&mut logger, service_provider, ctx, settings, &request).await;
 
     if let Err(error) = &sync_result {
         logger.error(error)?;
@@ -144,7 +139,7 @@ async fn sync_inner<'a>(
     service_provider: &ServiceProvider,
     ctx: &ServiceContext,
     settings: SyncSettings,
-    is_initialising: bool,
+    request: &SyncRequest,
 ) -> Result<(), SyncError> {
     let common = Common::load(service_provider)?;
     let connection = &ctx.connection;
@@ -164,31 +159,45 @@ async fn sync_inner<'a>(
         Some(status.central_site_id),
     )?;
 
-    // During initialisation we have no local data to push and no integration to
-    // wait for — the central server hasn't seen this site yet. Skip both steps
-    // entirely so the sync_log_v7 row leaves their timestamps null and the UI
-    // hides them naturally.
-    if !is_initialising {
+    if let Some(push) = &request.push {
         logger.start_step(SyncStep::Push)?;
-        sync_v7.push(logger).await?;
+        sync_v7.push(logger, push).await?;
 
+        // Wait for integration whenever we pushed — central is integrating
+        // what we just sent, and any subsequent pull must observe that state.
         logger.start_step(SyncStep::WaitForIntegration)?;
         sync_v7
             .wait_for_integration(INTEGRATION_POLL_PERIOD_SECONDS, INTEGRATION_TIMEOUT_SECONDS)
             .await?;
     }
 
-    logger.start_step(SyncStep::Pull)?;
-    sync_v7.pull(logger, is_initialising).await?;
+    if let Some(pull) = &request.pull {
+        logger.start_step(SyncStep::Pull)?;
+        sync_v7
+            .pull(
+                logger,
+                pull,
+                request.reference_id.clone(),
+                request.is_initialising,
+            )
+            .await?;
 
-    logger.start_step(SyncStep::Integrate)?;
-
-    sync_v7
-        .integrate(logger, service_provider, is_initialising)
-        .await?;
+        logger.start_step(SyncStep::Integrate)?;
+        sync_v7
+            .integrate(
+                logger,
+                service_provider,
+                request.reference_id.clone(),
+                request.is_initialising,
+            )
+            .await?;
+    }
 
     logger.finish()?;
-    run_post_sync_triggers(&ctx, service_provider, !is_initialising);
+
+    if request.run_post_sync_triggers {
+        run_post_sync_triggers(&ctx, service_provider, !request.is_initialising);
+    }
 
     Ok(())
 }
@@ -200,13 +209,19 @@ pub(crate) struct SyncV7<'a> {
 }
 
 impl<'a> SyncV7<'a> {
-    pub(crate) async fn push<'b>(&self, logger: &mut SyncLogger<'b>) -> Result<(), SyncError> {
-        let cursor_controller = CursorController::new(KeyType::SyncPushCursorV7);
+    pub(crate) async fn push<'b>(
+        &self,
+        logger: &mut SyncLogger<'b>,
+        step: &SyncRequestStep,
+    ) -> Result<(), SyncError> {
+        let cursor_controller = CursorController::from_cursor_type(step.cursor_type.clone());
         // TODO use SourceSiteId, and remove from other uses
         let site_id = get_current_site_id(self.connection)?;
 
-        // TODO think about just the filter for source site id = current site on changelog
-        let filter = ChangelogFilter::all_data_edited_on_site(site_id);
+        let filter = ChangelogCondition::And(vec![
+            ChangelogFilter::all_data_edited_on_site(site_id),
+            step.filter.clone(),
+        ]);
 
         loop {
             let cursor = cursor_controller.get(self.connection)? as i64;
@@ -219,23 +234,33 @@ impl<'a> SyncV7<'a> {
             )?;
 
             let record_count = batch.records.len();
+            let max_cursor = batch.max_cursor;
 
             // TODO, we need to rethink logger progress by max cursor vs current cursor
             logger.progress(record_count as i64)?;
 
-            // TODO if we don't get any records from changelog filtering, we should really set the
-            // cursor controller to the latest cursor in the changelog
-            // this relies on the filtering of changelog to be always trying to return the batch size number
+            let last_record_cursor = batch.records.last().map(|r| r.cursor);
 
-            let Some(batch_max_cursor) = batch.records.last().map(|r| r.cursor) else {
-                break;
+            if record_count > 0 {
+                self.sync_api_v7.push(batch).await?;
+            }
+
+            // Advance cursor:
+            // - If this is a terminating batch (record_count < batch_size), jump
+            //   to max_cursor so a narrow filter doesn't keep re-scanning the
+            //   same range every sync.
+            // - Otherwise, advance to the last record's cursor and continue paging.
+            let is_last_batch = record_count < self.batch_size.remote_push as usize;
+            let next_cursor = if is_last_batch {
+                max_cursor
+            } else {
+                // safe because record_count > 0 implies last_record_cursor is Some
+                last_record_cursor.unwrap_or(max_cursor as i64) as u64
             };
 
-            self.sync_api_v7.push(batch).await?;
+            cursor_controller.update(self.connection, next_cursor)?;
 
-            cursor_controller.update(self.connection, batch_max_cursor as u64)?;
-
-            if record_count < self.batch_size.remote_push as usize {
+            if is_last_batch {
                 break;
             }
         }
@@ -274,9 +299,11 @@ impl<'a> SyncV7<'a> {
     pub(crate) async fn pull<'b>(
         &self,
         logger: &mut SyncLogger<'b>,
+        step: &SyncRequestStep,
+        reference_id: Option<String>,
         is_initialising: bool,
     ) -> Result<(), SyncError> {
-        let cursor_controller = CursorController::new(KeyType::SyncPullCursorV7);
+        let cursor_controller = CursorController::from_cursor_type(step.cursor_type.clone());
 
         loop {
             let cursor = cursor_controller.get(self.connection)? as i64;
@@ -287,36 +314,48 @@ impl<'a> SyncV7<'a> {
                     cursor,
                     batch_size: self.batch_size.remote_pull,
                     is_initialising,
+                    filter: Some(step.filter.clone()),
                 })
                 .await?;
 
             let record_count = batch.records.len();
             let max_cursor = batch.max_cursor;
-
             let site_id = batch.site_id;
-            let Some(batch_max_cursor) = batch.records.last().map(|r| r.cursor) else {
-                break;
-            };
-            logger.progress(max_cursor as i64 - batch_max_cursor)?;
+            let last_record_cursor = batch.records.last().map(|r| r.cursor);
 
-            info!("Pulled {record_count} max batch cursor {batch_max_cursor} cursor {cursor} max cursor {}", batch.max_cursor);
+            let is_last_batch = record_count < self.batch_size.remote_pull as usize;
+
+            // Advance cursor: jump to max_cursor on terminating batch so narrow
+            // filters don't keep re-scanning the same range every sync.
+            let next_cursor = if is_last_batch {
+                max_cursor
+            } else {
+                last_record_cursor.unwrap_or(max_cursor as i64) as u64
+            };
+
+            if let Some(batch_max_cursor) = last_record_cursor {
+                logger.progress(max_cursor as i64 - batch_max_cursor)?;
+                info!("Pulled {record_count} max batch cursor {batch_max_cursor} cursor {cursor} max cursor {max_cursor}");
+            }
 
             // V7 pull: records arrive without an originating app_version (it isn't
             // carried through the central server), so app_version is None here.
             let sync_buffer_rows: Vec<SyncBufferRowInsert> = batch
                 .records
                 .into_iter()
-                .map(|r| sync_record_to_buffer_row(r, site_id, None))
+                .map(|r| sync_record_to_buffer_row(r, site_id, None, reference_id.clone()))
                 .collect();
 
             self.connection
                 .transaction_sync(|t_con| {
-                    SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows)?;
-                    cursor_controller.update(self.connection, batch_max_cursor as u64)
+                    if !sync_buffer_rows.is_empty() {
+                        SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows)?;
+                    }
+                    cursor_controller.update(self.connection, next_cursor)
                 })
                 .map_err(|e| e.to_inner_error())?;
 
-            if record_count < self.batch_size.remote_pull as usize {
+            if is_last_batch {
                 break;
             }
         }
@@ -330,6 +369,7 @@ impl<'a> SyncV7<'a> {
         &self,
         logger: &mut SyncLogger<'b>,
         service_provider: &ServiceProvider,
+        reference_id: Option<String>,
         is_initialising: bool,
     ) -> Result<(), SyncError> {
         let active_stores = ActiveStoresOnSite::get(self.connection)
@@ -353,7 +393,7 @@ impl<'a> SyncV7<'a> {
                     &ctx.connection,
                     Some(&mut logger),
                     central_site_id,
-                    None,
+                    reference_id.as_deref(),
                     SyncContext::Remote {
                         active_stores,
                         is_initialising,

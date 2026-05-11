@@ -14,7 +14,7 @@ A record that lands in the changelog can leave a site through one of three trans
 | --- | --- | --- | --- |
 | **v5** (legacy) | remote ↔ legacy 4D mSupply central | per-table translated payload (legacy schema) | exclude rows whose source-site is the legacy central server itself |
 | **v6** | remote ↔ OMS central | per-table translated payload (OMS schema), translator must opt in per direction | once a site is initialised, exclude rows whose source-site is that site |
-| **v7** | remote ↔ OMS central | generic JSON of the database row, no per-table translation | push: only rows authored on this site; pull: same as v6 |
+| **v7** | remote ↔ OMS central | generic JSON of the database row, no per-table translation | push: only rows authored on this site **and** not in a SyncRequest-style table; pull: same as v6 |
 
 Coexistence:
 
@@ -36,6 +36,7 @@ A "sync style" classifies what a changelog row *means* in routing terms. A singl
 | **Patient** | Patient-scoped record. | Every site that has the patient registered (via name-store-join). |
 | **ToLegacyCentralOnly** | Pushed up to legacy 4D central but never re-distributed. | None on remote pulls; only flows up to legacy. |
 | **RemoteToCentral** | Pushed up to OMS central but never sent back to remotes. | None — deliberately one-way so a re-init doesn't resurrect them. |
+| **SyncRequest** | One-way central→remote, store-scoped. | The site currently hosting the record's store. Skipped during initialisation. Never pushed back from remote. |
 
 ### Transport-flag per table
 
@@ -47,7 +48,7 @@ Every table is also tagged with a transport flag:
 | **OMS-native** | Lives on the v6 transport. |
 | (no v7 tag) | v7 covers every table that has any sync style. |
 
-Filters that ask for "v6 only" pull just the OMS-native tables. Filters that ask for "v5 only" pull just the legacy-only tables. Filters that pass no transport flag (used by v7) pull every table that has any sync style.
+Filters that ask for "v6 only" pull just the OMS-native tables. Filters that ask for "v5 only" pull just the legacy-only tables. Filters that pass no transport flag (used by v7) pull every table that has any sync style. SyncRequest-style tables carry no v5/v6 transport tag — they exist on v7 only.
 
 ---
 
@@ -121,6 +122,12 @@ If the record carries a store, it routes like Remote (the owning site only). If 
 
 Pushed up to OMS central; **not** sent back to remotes. On re-initialisation a site does not get its old contact-forms / system-logs back.
 
+### SyncRequest
+
+`SyncRequest`
+
+Central-authored requests for a remote to do extra work (e.g. re-pull all data for a transferred store, backfill a record type after a migration). One-way central→remote, routed by the row's `store_id` to whichever site currently has that store active. Skipped entirely during initialisation — the remote should fully bootstrap before it starts running requests. Rows authored on a remote (e.g. a self-queued post-init backfill) stay local: the v7 push filter excludes SyncRequest-style tables explicitly, so a request never travels upstream.
+
 ### Special — `MasterList`
 
 `MasterList` is in the Legacy/Central bucket but its translator does not declare a changelog mapping for push, so nothing actually ships on the wire. The changelog entry exists purely so in-process processors can react to changes; legacy mSupply remains the source of truth and pushes master lists down via its own sync.
@@ -136,7 +143,7 @@ Each changelog row carries a small set of metadata fields. Each filter joins thr
 | **table_name** | Which table the row refers to. | Every filter — "table is in the set of tables I care about". |
 | **record_id** | Primary key of the source row. | Used to fetch the actual record when batching. |
 | **row_action** | Upsert or Delete. | Controls whether the receiver upserts or deletes. |
-| **store_id** | The store this record belongs to (optional). | Remote routing (joined to the store's site). For Central/File rows this must be null, to disambiguate hybrid tables. |
+| **store_id** | The store this record belongs to (optional). | Remote routing (joined to the store's site). For Central/File rows this must be null, to disambiguate hybrid tables. Also routes SyncRequest rows to the site hosting that store. |
 | **transfer_store_id** | The "other party" store for cross-store records. | Transfer routing (joined to the counterpart store's site). |
 | **patient_id** | The patient this record refers to. | Patient routing (joined via name-store-join → store → site, so any site that knows the patient receives the record). |
 | **source_site_id** | The site that originally caused this changelog row. | Echo guards (don't push back to where it came from); also the v7 push filter ("rows authored here"). |
@@ -152,7 +159,7 @@ When a record is mutated, a changelog row is generated. The patterns differ by w
 | Pattern | Tables (examples) | What the changelog records |
 |---|---|---|
 | Store + transfer-store | `Invoice`, `Requisition`, `RnrForm`, `NameStoreJoin` | The row's own store, plus the store backing a referenced name (resolved from the name's home store). Used for both Remote and Transfer routing. |
-| Store only | `StockLine`, `Stocktake`, `Location`, `PurchaseOrder`, `Preference`, `Sensor`, `TemperatureLog`, `VVMStatusLog`, `LocationMovement`, `ActivityLog`, `ContactForm`, `Asset`, `PluginData`, `VaccineCourseStoreConfig` | Just the row's own store. |
+| Store only | `StockLine`, `Stocktake`, `Location`, `PurchaseOrder`, `Preference`, `Sensor`, `TemperatureLog`, `VVMStatusLog`, `LocationMovement`, `ActivityLog`, `ContactForm`, `Asset`, `PluginData`, `VaccineCourseStoreConfig`, `SyncRequest` | Just the row's own store. For `SyncRequest` the store may be null (a local-only request); when set, it's the routing key for SyncRequest. |
 | Line inherits parent | `InvoiceLine` ← `Invoice`, `StocktakeLine` ← `Stocktake`, `RequisitionLine` ← `Requisition`, `RnrFormLine` ← `RnrForm` | The line's changelog is built from the parent's, then `table_name` and `record_id` are overridden to point at the line. Guarantees parent and line stay aligned for store / transfer-store / source-site, so they route together. |
 | Line emits parent **and** child | `PurchaseOrderLine` → `PurchaseOrder` (upsert) + `PurchaseOrderLine` | Mutating a line also emits a changelog for the parent, so the parent re-syncs and is always at least as fresh as its children on the receiver. The parent entry is always an upsert, even when the line is a delete. |
 | Patient + store | `Encounter` | Carries both, so the row routes by Remote and Patient. |
@@ -163,6 +170,8 @@ When a record is mutated, a changelog row is generated. The patterns differ by w
 
 For deletes, the same generator is used; only the `row_action` field changes.
 
+There is also a side effect of integrating an incoming `Store` record on OMS central: when the record reassigns a store to a different site that is not the central itself, a fresh `SyncRequest` row is queued (description: free text "Store: <name>", filter: all changelog rows touching this store, via the existing `data-for-store` filter). The receiving site then re-pulls the store's data via the SyncRequest sync style. This is the only place a changelog row is generated as a *consequence* of integrating another row, rather than from a direct mutation.
+
 ---
 
 ## 6. Outgoing-sync filters
@@ -171,10 +180,10 @@ Five filters compose the metadata above into "this site, this transport" predica
 
 | Filter | Used by | What it returns | Echo guard |
 | --- | --- | --- | --- |
-| **all-data-for-site** | v6 central pull (OMS-native tables only); v7 central pull (all tables) | Per sync style: Central / File → store-id is null; Remote → store's site = this site; Transfer → transfer-store's site = this site; Patient → patient's site = this site (via name-store-join). ToLegacyCentralOnly and RemoteToCentral are skipped. | Once initialised, exclude rows whose source-site = this site. |
+| **all-data-for-site** | v6 central pull (OMS-native tables only); v7 central pull (all tables) | Per sync style: Central / File → store-id is null; Remote → store's site = this site; Transfer → transfer-store's site = this site; Patient → patient's site = this site (via name-store-join); SyncRequest → store's site = this site, **but only if the requesting site is not initialising**. ToLegacyCentralOnly and RemoteToCentral are skipped. | Once initialised, exclude rows whose source-site = this site. |
 | **patient-data-for-site** | v6 patient pull (used together with an explicit patient id) | Just the Patient clause from above, intersected with the requested patient id. | None at this layer — caller composes additional conditions. |
-| **all-data-for-legacy-central** | v5 push (remote → legacy 4D) | Legacy-only tables in styles ToLegacyCentralOnly, Remote, Transfer, Patient. Central, RemoteToCentral, File are excluded. | Exclude rows whose source-site is the legacy central server itself. |
-| **all-data-edited-on-site** | v7 push (remote → OMS central) | Just "rows whose source-site = this site". No per-style filtering, no transport-flag filtering — the per-table translators are not consulted because v7 has no per-table translation. | Implicit — the predicate itself is the echo guard. |
+| **all-data-for-legacy-central** | v5 push (remote → legacy 4D) | Legacy-only tables in styles ToLegacyCentralOnly, Remote, Transfer, Patient. Central, RemoteToCentral, File, SyncRequest are excluded. | Exclude rows whose source-site is the legacy central server itself. |
+| **all-data-edited-on-site** | v7 push (remote → OMS central) | "rows whose source-site = this site **and** whose table is not a SyncRequest-style table". The exclusion stops a remote from ever pushing a SyncRequest row upstream, even if it authored one locally. | Implicit — the source-site predicate is the echo guard. |
 | **data-for-store** | (defined, not yet used) | Remote + Transfer for a specific store, ignoring transport flags. | None. |
 
 ### Per-style behaviour inside `all-data-for-site`
@@ -186,6 +195,7 @@ Five filters compose the metadata above into "this site, this transport" predica
 | Remote | `store.site_id == this site` |
 | Transfer | `transfer_store.site_id == this site` |
 | Patient | `patient_store.site_id == this site` (via name-store-join) |
+| SyncRequest | `store.site_id == this site` (skipped entirely if the request is for an initialising site) |
 | ToLegacyCentralOnly | skipped |
 | RemoteToCentral | skipped |
 
@@ -212,9 +222,10 @@ Notable special cases:
 | Vaccine-course family (`VaccineCourse`, `VaccineCourseDose`, `VaccineCourseItem`) | Central-style on OMS, but a parallel set of "legacy" translators re-publishes them to legacy 4D when running on OMS central, so v5-only stores still receive them. |
 | `Encounter`, `Vaccination` | OMS-native; their main translators opt in to OMS push/pull only. Companion legacy translators re-publish them to legacy 4D when running on OMS central, so v5-only stores still receive them. |
 | `Vaccination`, `Document` | OMS-native, classified as Remote + Patient, but their changelog rows don't carry a store, so in practice they route purely by Patient. |
+| `Store` | When the central server integrates a `Store` record whose `site_id` has changed to a non-central site, the translator also creates a `SyncRequest` row so the receiving site re-pulls the store's data on its next cycle. |
 | `MasterList` | Legacy/Central, but the translator declares no changelog mapping, so nothing pushes on any transport — it only ever flows down from legacy 4D. |
 
-For v7 there is **no** per-table translation step — the database row is serialised directly and deserialised on the other side. As a consequence, v7 push for a given table works whether or not its translator has a v6 opt-in.
+For v7 there is **no** per-table translation step — the database row is serialised directly and deserialised on the other side. As a consequence, v7 push for a given table works whether or not its translator has a v6 opt-in (subject to the SyncRequest-style exclusion in the push filter).
 
 ---
 
@@ -223,7 +234,7 @@ For v7 there is **no** per-table translation step — the database row is serial
 > A row reaches a site only if **both** of the following agree:
 >
 > 1. The sync style + transport flag say the site is an eligible recipient on this transport.
-> 2. The transport-specific machinery actually carries the row — for v5/v6 that's a translator opt-in; for v7 it's blanket (any table with a sync style).
+> 2. The transport-specific machinery actually carries the row — for v5/v6 that's a translator opt-in; for v7 it's blanket (any table with a sync style, except SyncRequest-style tables on push).
 
 Sync style answers *who is eligible*. The transport answers *which wire format and direction*. A row only moves when both agree.
 

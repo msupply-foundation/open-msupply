@@ -140,6 +140,7 @@ fragment FullSyncStatusV7 on FullSyncStatusV7Node {
   }
   errorThreshold
   warningThreshold
+  linkedSyncRequests
 }
 
 query syncInfo {

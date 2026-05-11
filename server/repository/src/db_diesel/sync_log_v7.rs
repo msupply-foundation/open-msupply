@@ -27,6 +27,7 @@ table! {
         integration_progress_total -> Nullable<Integer>,
         integration_progress_done -> Nullable<Integer>,
         error -> Nullable<Text>,
+        reference_id -> Nullable<Text>,
     }
 }
 
@@ -64,6 +65,7 @@ pub struct SyncLogV7Row {
     pub integration_progress_total: Option<i32>,
     pub integration_progress_done: Option<i32>,
     pub error: Option<SyncError>,
+    pub reference_id: Option<String>,
 }
 
 pub struct SyncLogV7Repository<'a> {
@@ -86,11 +88,17 @@ create_condition!(
         sync_log_v7::finished_datetime
     ),
     (
+        PullStartedDatetime,
+        NaiveDateTime,
+        sync_log_v7::pull_started_datetime
+    ),
+    (
         IntegrationFinishedDatetime,
         NaiveDateTime,
         sync_log_v7::integration_finished_datetime
     ),
     (Error, string, sync_log_v7::error),
+    (ReferenceId, string, sync_log_v7::reference_id),
 );
 
 impl<'a> SyncLogV7Repository<'a> {

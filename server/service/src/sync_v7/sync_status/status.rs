@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
     syncv7::SyncError, FilterBuilder, RepositoryError, SyncLogV7Condition, SyncLogV7Repository,
-    SyncLogV7Row,
+    SyncLogV7Row, SyncRequestCondition, SyncRequestRepository, StorageConnection,
 };
 
 use crate::{
@@ -20,9 +20,34 @@ pub struct FullSyncStatusV7 {
     pub pull: Option<SyncStatusWithProgress>,
     pub waiting_for_integration: Option<SyncStatus>,
     pub integration: Option<SyncStatusWithProgress>,
+    /// Descriptions of every sync_request whose `reference_id` matches this
+    /// sync_log_v7 row's `reference_id`. Empty for the main sync
+    /// (reference_id NULL) and for runs whose reference_id no longer links
+    /// to any process row.
+    pub linked_descriptions: Vec<String>,
 }
 
 impl FullSyncStatusV7 {
+    /// Looks up linked sync_request rows by `reference_id` and includes their
+    /// descriptions. Use `from_sync_log_v7_row` when descriptions aren't
+    /// needed (e.g. summary-only callsites).
+    pub fn from_sync_log_v7_row_with_links(
+        connection: &StorageConnection,
+        row: SyncLogV7Row,
+    ) -> Result<FullSyncStatusV7, RepositoryError> {
+        let linked_descriptions = match row.reference_id.as_deref() {
+            Some(reference_id) => SyncRequestRepository::new(connection)
+                .query(SyncRequestCondition::ReferenceId::equal(reference_id.to_string()))?
+                .into_iter()
+                .map(|r| r.description)
+                .collect(),
+            None => Vec::new(),
+        };
+        let mut status = Self::from_sync_log_v7_row(row);
+        status.linked_descriptions = linked_descriptions;
+        Ok(status)
+    }
+
     pub fn from_sync_log_v7_row(row: SyncLogV7Row) -> FullSyncStatusV7 {
         let SyncLogV7Row {
             id: _,
@@ -43,6 +68,7 @@ impl FullSyncStatusV7 {
             integration_progress_total,
             integration_progress_done,
             error,
+            reference_id: _,
         } = row;
 
         FullSyncStatusV7 {
@@ -76,6 +102,7 @@ impl FullSyncStatusV7 {
                 total: push_progress_total.map(i32_to_u32),
                 done: push_progress_done.map(i32_to_u32),
             }),
+            linked_descriptions: Vec::new(),
         }
     }
 }

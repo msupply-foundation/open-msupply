@@ -11,6 +11,11 @@ pub(crate) enum ChangeLogSyncStyle {
     Transfer,
     Patient,
     RemoteToCentral, // These records won't sync back to the remote site on re-initalisation
+    /// One-way central->remote routing keyed by `changelog.store_id`. Pulls
+    /// only when the requesting site has the row's store active and is not
+    /// initialising. Push from remote is excluded entirely (rows can be
+    /// created/edited locally but never propagate up). Used by `sync_request`.
+    SyncRequest,
 }
 
 impl ChangeLogSyncStyle {
@@ -247,6 +252,19 @@ impl ChangelogTableName {
                 vec![RemoteToCentral],
                 SyncVersions {
                     is_v6: true,
+                    is_v5: false,
+                },
+            ),
+
+            // ----------------------------------------------------------
+            // SyncRequest — central->remote only, routed by store_id.
+            // Excluded during initialisation; never pushed back from remote.
+            // (Pattern and style share the variant name, so qualify both.)
+            // ----------------------------------------------------------
+            ChangelogTableName::SyncRequest => (
+                vec![ChangeLogSyncStyle::SyncRequest],
+                SyncVersions {
+                    is_v6: false,
                     is_v5: false,
                 },
             ),

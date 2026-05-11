@@ -1,5 +1,6 @@
 use repository::{KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection};
 
+#[derive(Clone)]
 pub enum CursorType {
     Standard(KeyType),
     Dynamic(String),
