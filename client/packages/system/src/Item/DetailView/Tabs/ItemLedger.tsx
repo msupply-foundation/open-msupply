@@ -52,7 +52,7 @@ const ItemLedgerTable = ({
         filterVariant: 'select',
         filterSelectOptions: Object.values(InvoiceNodeType).map(type => ({
           value: type,
-          label: t(getInvoiceLocalisationKey(type)),
+          label: t(getInvoiceLocalisationKey(type, true)),
         })),
       },
       {
@@ -214,7 +214,7 @@ export const ItemLedgerTab = ({
         name: t('label.type'),
         urlParameter: 'invoiceType',
         options: Object.values(InvoiceNodeType).map(type => ({
-          label: t(getInvoiceLocalisationKey(type)),
+          label: t(getInvoiceLocalisationKey(type, true)),
           value: type,
         })),
       },
