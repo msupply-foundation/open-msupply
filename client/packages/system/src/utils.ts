@@ -160,24 +160,27 @@ export const processProperties = <
   });
 };
 
-export const getInvoiceLocalisationKey = (type: InvoiceNodeType): LocaleKey => {
+export const getInvoiceLocalisationKey = (
+  type: InvoiceNodeType,
+  isFilter = false
+): LocaleKey => {
   switch (type) {
     case InvoiceNodeType.InboundShipment:
-      return 'inbound-shipment';
+      return isFilter ? 'inbound-shipment' : 'label.inbound-shipment';
     case InvoiceNodeType.OutboundShipment:
-      return 'outbound-shipment';
+      return isFilter ? 'outbound-shipment' : 'label.outbound-shipment';
     case InvoiceNodeType.CustomerReturn:
-      return 'customer-return';
+      return isFilter ? 'customer-returns' : 'label.customer-return';
     case InvoiceNodeType.SupplierReturn:
-      return 'supplier-return';
+      return isFilter ? 'supplier-returns' : 'label.supplier-return';
     case InvoiceNodeType.Prescription:
-      return 'prescription';
+      return isFilter ? 'prescriptions' : 'label.prescription';
     case InvoiceNodeType.InventoryAddition:
-      return 'inventory-addition';
+      return isFilter ? 'inventory-additions' : 'label.inventory-addition';
     case InvoiceNodeType.InventoryReduction:
-      return 'inventory-reduction';
+      return isFilter ? 'inventory-reductions' : 'label.inventory-reduction';
     case InvoiceNodeType.Repack:
-      return 'label.repack';
+      return isFilter ? 'label.repacks' : 'label.repack';
   }
 };
 
