@@ -18,7 +18,6 @@ table! {
         table_name -> Text,
         record_id -> Text,
         row_action -> Text,
-        name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
         source_site_id -> Nullable<Integer>,
@@ -246,8 +245,6 @@ pub struct ChangelogRow {
     pub table_name: ChangelogTableName,
     pub record_id: String,
     pub row_action: RowActionType,
-    #[diesel(column_name = "name_link_id")]
-    pub name_id: Option<String>,
     pub store_id: Option<String>,
     pub is_sync_update: bool,
     pub source_site_id: Option<i32>,

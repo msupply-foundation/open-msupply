@@ -166,13 +166,11 @@ async fn test_changelog_iteration() {
 
 #[actix_rt::test]
 async fn test_changelog_filter() {
-    // changelog repository gets changelog.name_id from the related name_link
-    // name_link.name_id so we need to add names and name_links into the DB.
     let (_, connection, _, _) =
-        setup_all("test_changelog_filter", MockDataInserts::none().names()).await;
+        setup_all("test_changelog_filter", MockDataInserts::none()).await;
 
-    // But remove any names and name_links from change log so
-    // the cursors below don't conflict.
+    // Clear any changelog rows the migration sequence inserted, so the
+    // hard-coded cursors below don't conflict.
     delete_all_changelog(&connection);
 
     let log1 = ChangelogRow {
@@ -180,7 +178,6 @@ async fn test_changelog_filter() {
         table_name: ChangelogTableName::Invoice,
         record_id: "invoice1".to_string(),
         row_action: RowActionType::Upsert,
-        name_id: Some("name1".to_string()),
         store_id: Some("store1".to_string()),
         is_sync_update: false,
         source_site_id: None,
@@ -192,7 +189,6 @@ async fn test_changelog_filter() {
         table_name: ChangelogTableName::Requisition,
         record_id: "requisition1".to_string(),
         row_action: RowActionType::Upsert,
-        name_id: Some("name2".to_string()),
         store_id: Some("store2".to_string()),
         is_sync_update: false,
         source_site_id: None,
@@ -204,7 +200,6 @@ async fn test_changelog_filter() {
         table_name: ChangelogTableName::Invoice,
         record_id: "invoice2".to_string(),
         row_action: RowActionType::Upsert,
-        name_id: Some("name3".to_string()),
         store_id: Some("store3".to_string()),
         is_sync_update: false,
         source_site_id: None,
@@ -216,7 +211,6 @@ async fn test_changelog_filter() {
         table_name: ChangelogTableName::StocktakeLine,
         record_id: "stocktake_line1".to_string(),
         row_action: RowActionType::Upsert,
-        name_id: None,
         store_id: None,
         is_sync_update: false,
         source_site_id: None,
