@@ -2,7 +2,7 @@ use super::{
     clinician_row::clinician, invoice_line_row::invoice_line, invoice_row::invoice, name_row::name,
     program_row::program, store_row::store, StorageConnection,
 };
-use crate::{name_link, repository_error::RepositoryError, Upsert};
+use crate::{repository_error::RepositoryError, ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
 
@@ -19,7 +19,6 @@ allow_tables_to_appear_in_same_query!(clinician_link, store);
 allow_tables_to_appear_in_same_query!(clinician_link, invoice);
 allow_tables_to_appear_in_same_query!(clinician_link, invoice_line);
 allow_tables_to_appear_in_same_query!(clinician_link, program);
-allow_tables_to_appear_in_same_query!(clinician_link, name_link);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
 #[diesel(table_name = clinician_link)]
@@ -103,9 +102,9 @@ impl<'a> ClinicianLinkRowRepository<'a> {
 }
 
 impl Upsert for ClinicianLinkRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         ClinicianLinkRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

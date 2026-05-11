@@ -151,7 +151,7 @@ mod test {
         let name_tag_join1 = NameTagJoinRow {
             id: "name_tag_join1".to_string(),
             name_tag_id: name_tag1.id.clone(),
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
         };
         let master_list = MasterListRow {
             id: "master_list1".to_string(),
@@ -160,7 +160,7 @@ mod test {
         };
         let master_list_name_join = MasterListNameJoinRow {
             id: "master_list_name_join".to_string(),
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             master_list_id: master_list.id.clone(),
         };
         let context = ContextRow {
@@ -203,7 +203,7 @@ mod test {
 
         // TEST that program_requisition_settings can be queried by name_tag belonging to a store
         let result = repo.query(Some(ProgramRequisitionSettingsFilter::new().name_tag(
-            NameTagFilter::new().store_id(EqualFilter::equal_to(&mock_store_a().id)),
+            NameTagFilter::new().store_id(EqualFilter::equal_to(mock_store_a().id)),
         )));
 
         assert_eq!(
@@ -217,7 +217,7 @@ mod test {
         );
         // TEST that program_requisition_settings can be queried by master list linked to a store
         let result = repo.query(Some(ProgramRequisitionSettingsFilter::new().master_list(
-            MasterListFilter::new().exists_for_store_id(EqualFilter::equal_to(&mock_store_a().id)),
+            MasterListFilter::new().exists_for_store_id(EqualFilter::equal_to(mock_store_a().id)),
         )));
 
         assert_eq!(

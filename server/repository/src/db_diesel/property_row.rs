@@ -3,13 +3,12 @@ use super::property_row::property::dsl::*;
 use serde::{Deserialize, Serialize};
 
 use crate::types::PropertyValueType;
-use crate::ChangeLogInsertRow;
 use crate::ChangelogRepository;
-use crate::ChangelogTableName;
 use crate::RepositoryError;
 use crate::RowActionType;
+use crate::SourceSiteId;
 use crate::StorageConnection;
-use crate::Upsert;
+use crate::{ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
 
@@ -35,7 +34,6 @@ pub struct PropertyRow {
     pub value_type: PropertyValueType,
     pub allowed_values: Option<String>,
 }
-
 pub struct PropertyRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -55,25 +53,15 @@ impl<'a> PropertyRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, property_row: &PropertyRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, property_row: &PropertyRow) -> Result<(), RepositoryError> {
         self._upsert_one(property_row)?;
-        self.insert_changelog(property_row.id.to_owned(), RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        property_row: String,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Property,
-            record_id: property_row,
-            row_action: action,
-            store_id: None,
-            name_link_id: None,
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+        let changelog = PropertyRow::generate_changelog(
+            property_row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_all(&self) -> Result<Vec<PropertyRow>, RepositoryError> {
@@ -98,12 +86,34 @@ impl<'a> PropertyRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PropertyRow>, RepositoryError> {
+        Ok(property::table
+            .filter(property::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for PropertyRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = PropertyRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        PropertyRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

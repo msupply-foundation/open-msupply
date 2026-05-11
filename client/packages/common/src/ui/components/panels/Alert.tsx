@@ -20,11 +20,7 @@ export const Alert = (props: AlertProps) => {
   const { sx, ...rest } = props;
   const Icon = getIcon(props.severity);
   return (
-    <MuiAlert
-      {...rest}
-      icon={Icon}
-      sx={{ borderRadius: '10px', marginRight: '8px', ...sx }}
-    />
+    <MuiAlert icon={Icon} {...rest} sx={{ borderRadius: '10px', ...sx }} />
   );
 };
 

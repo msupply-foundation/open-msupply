@@ -1,35 +1,37 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import {
-  DownloadIcon,
   PlusCircleIcon,
   AppBarButtonsPortal,
   ButtonWithIcon,
   Grid,
   useTranslation,
-  LoadingButton,
-  ToggleState,
   useNotification,
   FnUtils,
-  UserPermission,
-  useCallbackWithPermission,
   RouteBuilder,
   useNavigate,
-  useExportCSV,
-  usePreferences,
 } from '@openmsupply-client/common';
-import { SupplierSearchModal } from '@openmsupply-client/system';
+import {
+  SupplierSearchModal,
+  ExportSelector,
+} from '@openmsupply-client/system';
 import { useReturns } from '../api';
 import { supplierReturnsToCsv } from '../../utils';
 
-export const AppBarButtonsComponent: FC<{
-  modalController: ToggleState;
-}> = ({ modalController }) => {
+interface AppBarButtonsProps {
+  isOpen: boolean;
+  onCloseModal: () => void;
+  onNew: () => void;
+}
+
+export const AppBarButtonsComponent = ({
+  isOpen,
+  onCloseModal,
+  onNew,
+}: AppBarButtonsProps) => {
   const t = useTranslation();
-  const { error, info } = useNotification();
-  const exportCSV = useExportCSV();
+  const { error } = useNotification();
   const navigate = useNavigate();
-  const { disableManualReturns } = usePreferences();
 
   const { mutateAsync: onCreate } = useReturns.document.insertSupplierReturn();
   const { fetchAsync, isLoading } = useReturns.document.listAllSupplier({
@@ -38,27 +40,9 @@ export const AppBarButtonsComponent: FC<{
     isDesc: true,
   });
 
-  const csvExport = async () => {
+  const getCsvData = async () => {
     const data = await fetchAsync();
-    if (!data || !data?.nodes.length) {
-      error(t('error.no-data'))();
-      return;
-    }
-    const csv = supplierReturnsToCsv(data.nodes, t);
-    exportCSV(csv, t('filename.supplier-returns'));
-  };
-
-  const openModal = useCallbackWithPermission(
-    UserPermission.SupplierReturnMutate,
-    modalController.toggleOn
-  );
-
-  const handleClick = (): void => {
-    if (disableManualReturns) {
-      info(t('messages.manual-returns-preferences-disabled'))();
-      return;
-    }
-    openModal();
+    return data?.nodes?.length ? supplierReturnsToCsv(data.nodes, t) : null;
   };
 
   return (
@@ -67,21 +51,19 @@ export const AppBarButtonsComponent: FC<{
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-return')}
-          onClick={handleClick}
+          onClick={onNew}
         />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
+        <ExportSelector
+          getCsvData={getCsvData}
+          filename={t('filename.supplier-returns')}
           isLoading={isLoading}
-          variant="outlined"
-          onClick={csvExport}
-          label={t('button.export')}
         />
       </Grid>
       <SupplierSearchModal
-        open={modalController.isOn}
-        onClose={modalController.toggleOff}
+        open={isOpen}
+        onClose={onCloseModal}
         onChange={async name => {
-          modalController.toggleOff();
+          onCloseModal();
           try {
             await onCreate({
               id: FnUtils.generateUUID(),

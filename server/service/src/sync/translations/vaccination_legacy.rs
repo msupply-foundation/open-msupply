@@ -4,8 +4,10 @@ use crate::sync::CentralServerConfig;
 
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
-    vaccination_row::VaccinationRowRepository, ChangelogRow, ChangelogTableName,
-    ItemLinkRowRepository, NameLinkRowRepository, StorageConnection, VaccinationRow,
+    ChangelogRow, ChangelogTableName,
+    ItemLinkRowRepository, StorageConnection, VaccinationRow,
+    Row,
+
 };
 
 /*
@@ -31,6 +33,9 @@ pub struct LegacyVaccinationRow {
     pub name_ID: String,
     pub facility_ID: Option<String>,
     pub item_ID: Option<String>,
+    pub encounter_ID: Option<String>,
+    pub program_enrolment_ID: Option<String>,
+    pub given_store_ID: Option<String>,
 }
 
 const LEGACY_VACCINATION_TABLE_NAME: &str = "om_vaccination";
@@ -74,18 +79,23 @@ impl SyncTranslation for VaccinationLegacyTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Vaccination(vaccination_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let VaccinationRow {
             id,
             store_id,
-            given_store_id: _,
-            program_enrolment_id: _,
-            encounter_id: _,
-            patient_link_id,
+            given_store_id,
+            program_enrolment_id,
+            encounter_id,
+            patient_id,
             user_id,
             vaccine_course_dose_id,
             created_datetime,
-            facility_name_link_id,
+            facility_name_id,
             facility_free_text: _,
             invoice_id,
             stock_line_id,
@@ -95,30 +105,11 @@ impl SyncTranslation for VaccinationLegacyTranslation {
             given,
             not_given_reason,
             comment,
-        } = VaccinationRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Vaccination row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = vaccination_row;
 
-        let name_link_repo = NameLinkRowRepository::new(connection);
-
-        let patient_name_id = name_link_repo
-            .find_one_by_id(&patient_link_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Patient name link ({}) not found",
-                patient_link_id
-            )))?
-            .id;
-
-        // If the facility name link is not set, or not found, we use None
-        let facility_name_id = match facility_name_link_id {
-            Some(facility_name_link_id) => name_link_repo
-                .find_one_by_id(&facility_name_link_id)?
-                .map(|name_link| name_link.id),
-            None => None,
-        };
+        // patient_id and facility_name_id are already resolved by the view
+        let patient_name_id = patient_id;
+        let legacy_facility_name_id = facility_name_id;
 
         // Look up item link ID, if it exists
 
@@ -145,17 +136,16 @@ impl SyncTranslation for VaccinationLegacyTranslation {
             not_given_reason,
             comment,
             name_ID: patient_name_id,
-            facility_ID: facility_name_id,
+            facility_ID: legacy_facility_name_id,
             item_ID: item_id,
+            encounter_ID: Some(encounter_id),
+            program_enrolment_ID: Some(program_enrolment_id),
+            given_store_ID: given_store_id,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            LEGACY_VACCINATION_TABLE_NAME,
-            json_record,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, LEGACY_VACCINATION_TABLE_NAME, json_record))
     }
 }
 
@@ -168,10 +158,14 @@ mod tests {
     use repository::mock::{
         mock_immunisation_encounter_a, mock_immunisation_program_enrolment_a, mock_patient,
         mock_store_a, mock_user_account_a, mock_vaccine_course_a_dose_a, mock_vaccine_item_a,
+    
     };
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, vaccination_row::VaccinationRow,
+        mock::MockDataInserts,
+        test_db::setup_all,
+        vaccination_row::{VaccinationRow, VaccinationRowRepository},
         ChangelogRepository,
+    
     };
 
     #[actix_rt::test]
@@ -186,7 +180,7 @@ mod tests {
 
         // Get the current cursor value
         let cursor = ChangelogRepository::new(&connection)
-            .latest_cursor()
+            .max_cursor()
             .unwrap();
 
         // Create a new VaccinationRow (this will get a changelog entry created automatically)
@@ -200,7 +194,7 @@ mod tests {
             given: true,
             given_store_id: Some(mock_store_a().id),
             item_link_id: Some(mock_vaccine_item_a().id),
-            patient_link_id: mock_patient().id,
+            patient_id: mock_patient().id,
             created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -212,21 +206,15 @@ mod tests {
             .upsert_one(&vaccination_row)
             .unwrap();
 
-        let changelog_row = ChangelogRepository::new(&connection)
-            .changelogs(cursor, 100, None)
-            .unwrap()
-            .pop()
-            .unwrap();
+        let entry = ChangelogRepository::new(&connection).query_with_data(repository::ChangelogCondition::True(), repository::CursorAndLimit { cursor: cursor as i64, limit: 100 }).unwrap().pop().unwrap();
+        let repository::RowOrDelete::Row { changelog: changelog_row, row } = entry else { panic!("expected upsert row") };
 
         // Shouldn't translate if not a central server
         test_util_set_is_central_server(false);
-        assert_eq!(
-            translator.should_translate_to_sync_record(
-                &changelog_row,
-                &ToSyncRecordTranslationType::PushToLegacyCentral
-            ),
-            false
-        );
+        assert!(!translator.should_translate_to_sync_record(
+            &changelog_row,
+            &ToSyncRecordTranslationType::PushToLegacyCentral
+        ));
 
         // Should translate if a central server
         test_util_set_is_central_server(true);
@@ -236,14 +224,14 @@ mod tests {
         ));
 
         let translation_result = translator
-            .try_translate_to_upsert_sync_record(&connection, &changelog_row)
+            .try_translate_to_upsert_sync_record(&connection, &changelog_row, row)
             .unwrap();
 
         match translation_result {
-            PushTranslateResult::PushRecord(upsert_result) => {
-                assert_eq!(upsert_result[0].record.record_id, "test_vaccination_id");
+            PushTranslateResult::PushRecord(records) => {
+                assert_eq!(records[0].record.record_id, "test_vaccination_id");
                 assert_eq!(
-                    upsert_result[0].record.table_name,
+                    records[0].record.table_name,
                     LEGACY_VACCINATION_TABLE_NAME
                 );
             }

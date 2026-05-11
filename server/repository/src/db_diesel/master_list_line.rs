@@ -1,5 +1,6 @@
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    item_store_join::item_store_join,
     repository_error::RepositoryError,
     EqualFilter, ItemLinkRow, ItemRow, ItemType, MasterListRepository, Pagination, Sort,
 };
@@ -31,6 +32,7 @@ pub struct MasterListLineFilter {
     pub master_list_id: Option<EqualFilter<String>>,
     pub item_type: Option<EqualFilter<ItemType>>,
     pub master_list: Option<MasterListFilter>,
+    pub ignore_for_orders: Option<bool>,
 }
 
 pub enum MasterListLineSortField {
@@ -51,7 +53,7 @@ impl<'a> MasterListLineRepository<'a> {
 
     pub fn count(&self, filter: Option<MasterListLineFilter>) -> Result<i64, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
-        let query = Self::create_filtered_query(filter)?;
+        let query = Self::create_filtered_query(filter, None)?;
 
         Ok(query
             .count()
@@ -61,9 +63,10 @@ impl<'a> MasterListLineRepository<'a> {
     pub fn query_by_filter(
         &self,
         filter: MasterListLineFilter,
+        store_id: Option<String>,
     ) -> Result<Vec<MasterListLine>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
-        let mut query = Self::create_filtered_query(Some(filter))?;
+        let mut query = Self::create_filtered_query(Some(filter), store_id)?;
 
         query = query.order(master_list_line::id.asc());
 
@@ -77,9 +80,10 @@ impl<'a> MasterListLineRepository<'a> {
         pagination: Pagination,
         filter: Option<MasterListLineFilter>,
         sort: Option<MasterListLineSort>,
+        store_id: Option<String>,
     ) -> Result<Vec<MasterListLine>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
-        let mut query = Self::create_filtered_query(filter)?;
+        let mut query = Self::create_filtered_query(filter, store_id)?;
 
         if let Some(sort) = sort {
             match sort.key {
@@ -104,6 +108,7 @@ impl<'a> MasterListLineRepository<'a> {
 
     pub fn create_filtered_query(
         filter: Option<MasterListLineFilter>,
+        store_id: Option<String>,
     ) -> Result<BoxedMasterListLineQuery, RepositoryError> {
         let mut query = master_list_line::table
             .inner_join(item_link::table.inner_join(item::table))
@@ -120,6 +125,21 @@ impl<'a> MasterListLineRepository<'a> {
                     .select(master_list::id);
 
                 query = query.filter(master_list_line::master_list_id.eq_any(master_list_ids));
+            }
+
+            if let Some(ignore_for_orders) = f.ignore_for_orders {
+                let mut item_ids_for_ignore_for_orders = item_store_join::table
+                    .select(item_store_join::item_link_id)
+                    .filter(item_store_join::ignore_for_orders.eq(ignore_for_orders))
+                    .into_boxed();
+
+                if let Some(store_id) = store_id {
+                    item_ids_for_ignore_for_orders = item_ids_for_ignore_for_orders
+                        .filter(item_store_join::store_id.eq(store_id));
+                }
+
+                query = query
+                    .filter(master_list_line::item_link_id.eq_any(item_ids_for_ignore_for_orders));
             }
         }
 
@@ -169,6 +189,11 @@ impl MasterListLineFilter {
 
     pub fn master_list(mut self, filter: MasterListFilter) -> Self {
         self.master_list = Some(filter);
+        self
+    }
+
+    pub fn ignore_for_orders(mut self, ignore_for_orders: bool) -> Self {
+        self.ignore_for_orders = Some(ignore_for_orders);
         self
     }
 }

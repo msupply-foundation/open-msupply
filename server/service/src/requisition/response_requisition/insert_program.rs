@@ -1,10 +1,11 @@
 use crate::{
     activity_log::activity_log_entry,
     number::next_number,
+    pricing::item_price::{get_pricing_for_items, ItemPriceLookup},
     requisition::{
         common::{
             check_exceeded_max_orders_for_period, check_requisition_row_exists,
-            default_indicator_value, CheckExceededOrdersForPeriod,
+            default_indicator_value, get_indicative_price_pref, CheckExceededOrdersForPeriod,
         },
         program_indicator::query::{program_indicators, ProgramIndicator},
         program_settings::get_program_requisition_settings_by_customer,
@@ -117,7 +118,7 @@ fn validate(
             master_list
                 .order_types
                 .iter()
-                .find(|order_type| (order_type.id == input.program_order_type_id))
+                .find(|order_type| order_type.id == input.program_order_type_id)
                 .map(|order_type| (master_list, order_type))
         })
         .ok_or(OutError::ProgramOrderTypeDoesNotExist)?;
@@ -180,6 +181,10 @@ fn generate(
     }: InsertProgramResponseRequisition,
 ) -> Result<GenerateResult, RepositoryError> {
     let connection = &ctx.connection;
+
+    let customer_store = StoreRepository::new(connection)
+        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.clone())))?;
+
     let requisition = RequisitionRow {
         id,
         user_id: Some(ctx.user_id.clone()),
@@ -188,7 +193,10 @@ fn generate(
             &NumberRowType::ResponseRequisition,
             &ctx.store_id,
         )?,
-        name_link_id: other_party_id.clone(),
+        name_id: other_party_id.clone(),
+        name_store_id: customer_store
+            .as_ref()
+            .map(|store| store.store_row.id.clone()),
         store_id: ctx.store_id.clone(),
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,
@@ -208,13 +216,18 @@ fn generate(
         approval_status: None,
         finalised_datetime: None,
         linked_requisition_id: None,
+        created_from_requisition_id: None,
+        destination_customer_id: None,
+        ..Default::default()
     };
 
     let master_list_id = program.master_list_id.clone().unwrap_or_default();
 
     let program_item_ids: Vec<String> = MasterListLineRepository::new(connection)
         .query_by_filter(
-            MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(&master_list_id)),
+            MasterListLineFilter::new()
+                .master_list_id(EqualFilter::equal_to(master_list_id.to_string())),
+            None,
         )?
         .into_iter()
         .map(|line| line.item_id)
@@ -227,14 +240,15 @@ fn generate(
             connection,
             Pagination::all(),
             None,
-            Some(ProgramIndicatorFilter::new().program_id(EqualFilter::equal_to(&program.id))),
+            Some(
+                ProgramIndicatorFilter::new()
+                    .program_id(EqualFilter::equal_to(program.id.to_string())),
+            ),
+            false,
         )?
     } else {
         vec![]
     };
-
-    let customer_store = StoreRepository::new(connection)
-        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&other_party_id)))?;
 
     let indicator_values = match customer_store {
         Some(_) => generate_program_indicator_values(
@@ -264,6 +278,19 @@ fn generate_lines(
         Some(store_id.to_string()),
     )?;
 
+    let populate_price_per_unit = get_indicative_price_pref(&ctx.connection, store_id)?;
+    let price_list = if populate_price_per_unit {
+        Some(get_pricing_for_items(
+            &ctx.connection,
+            ItemPriceLookup {
+                item_ids: items.iter().map(|i| i.item_row.id.to_string()).collect(),
+                customer_name_id: None,
+            },
+        )?)
+    } else {
+        None
+    };
+
     let result = items
         .into_iter()
         .map(|item| {
@@ -273,6 +300,15 @@ fn generate_lines(
                 item_link_id: item.item_row.id.clone(),
                 item_name: item.item_row.name.clone(),
                 snapshot_datetime: Some(Utc::now().naive_utc()),
+                price_per_unit: if let Some(price_list) = &price_list {
+                    price_list
+                        .get(&item.item_row.id)
+                        .cloned()
+                        .unwrap_or_default()
+                        .calculated_price_per_unit
+                } else {
+                    None
+                },
                 // Default
                 suggested_quantity: 0.0,
                 available_stock_on_hand: 0.0,
@@ -290,6 +326,11 @@ fn generate_lines(
                 expiring_units: 0.0,
                 days_out_of_stock: 0.0,
                 option_id: None,
+                available_volume: None,
+                location_type_id: None,
+                forecast_total_units: None,
+                forecast_total_doses: None,
+                vaccine_courses: None,
             }
         })
         .collect();
@@ -310,7 +351,7 @@ fn generate_program_indicator_values(
             for column in line.columns {
                 let indicator_value = IndicatorValueRow {
                     id: uuid(),
-                    customer_name_link_id: customer_name_id.to_string(),
+                    customer_name_id: customer_name_id.to_string(),
                     store_id: store_id.to_string(),
                     period_id: period_id.to_string(),
                     value: default_indicator_value(&line.line, &column),
@@ -359,7 +400,7 @@ mod test {
         let name_tag_join1 = NameTagJoinRow {
             id: "name_tag_join1".to_string(),
             name_tag_id: name_tag1.id.clone(),
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
         };
         let name_tag2 = NameTagRow {
             id: "name_tag2".to_string(),
@@ -368,7 +409,7 @@ mod test {
         let name_tag_join2 = NameTagJoinRow {
             id: "name_tag_join2".to_string(),
             name_tag_id: name_tag2.id.clone(),
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
         };
 
         // Two programs, with master list both joined to store a
@@ -379,7 +420,7 @@ mod test {
         };
         let master_list_name_join1 = MasterListNameJoinRow {
             id: "master_list_name_join1".to_string(),
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             master_list_id: master_list1.id.clone(),
         };
         let context1 = ContextRow {
@@ -399,7 +440,7 @@ mod test {
         };
         let master_list_name_join2 = MasterListNameJoinRow {
             id: "master_list_name_join2".to_string(),
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             master_list_id: master_list2.id.clone(),
         };
         let context2 = ContextRow {
@@ -470,7 +511,7 @@ mod test {
         let name_tag_join3 = NameTagJoinRow {
             id: "name_tag_join3".to_string(),
             name_tag_id: name_tag1.id.clone(),
-            name_link_id: mock_name_store_b().id,
+            name_id: mock_name_store_b().id,
         };
         let program_requisition_setting3 = ProgramRequisitionSettingsRow {
             id: "program_setting3".to_string(),
@@ -482,7 +523,7 @@ mod test {
         let name_tag_join4 = NameTagJoinRow {
             id: "name_tag_join4".to_string(),
             name_tag_id: name_tag2.id.clone(),
-            name_link_id: mock_name_store_c().id,
+            name_id: mock_name_store_c().id,
         };
         let program_requisition_setting4 = ProgramRequisitionSettingsRow {
             id: "program_setting4".to_string(),
@@ -495,24 +536,24 @@ mod test {
         // to program 1 and program 2 respectively and visible in mock_store_a
         let master_list_name_join3 = MasterListNameJoinRow {
             id: "master_list_name_join3".to_string(),
-            name_link_id: mock_name_store_b().id,
+            name_id: mock_name_store_b().id,
             master_list_id: master_list1.id.clone(),
         };
         let master_list_name_join4 = MasterListNameJoinRow {
             id: "master_list_name_join4".to_string(),
-            name_link_id: mock_name_store_c().id,
+            name_id: mock_name_store_c().id,
             master_list_id: master_list2.id.clone(),
         };
         let name_store_join1 = NameStoreJoinRow {
             id: "name_store_join1".to_string(),
-            name_link_id: mock_name_store_a().id.clone(),
+            name_id: mock_name_store_a().id.clone(),
             store_id: mock_store_a().id,
             name_is_customer: true,
             ..Default::default()
         };
         let name_store_join2: NameStoreJoinRow = NameStoreJoinRow {
             id: "name_store_join2".to_string(),
-            name_link_id: mock_name_store_b().id.clone(),
+            name_id: mock_name_store_b().id.clone(),
             store_id: mock_store_b().id,
             name_is_customer: true,
             ..Default::default()

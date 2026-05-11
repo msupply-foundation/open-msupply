@@ -36,9 +36,9 @@ pub fn suggested_next_encounter(
         return Ok(None);
     };
     let program_filter = ProgramEventFilter::new()
-        .patient_id(EqualFilter::equal_to(patient_id))
-        .document_type(EqualFilter::equal_to(encounter_type))
-        .r#type(EqualFilter::equal_to(&config.event_type));
+        .patient_id(EqualFilter::equal_to(patient_id.to_string()))
+        .document_type(EqualFilter::equal_to(encounter_type.to_owned()))
+        .r#type(EqualFilter::equal_to(config.event_type.to_owned()));
     let Some(program_event) = service_provider
         .program_event_service
         .events(
@@ -55,6 +55,9 @@ pub fn suggested_next_encounter(
             ListError::DatabaseError(err) => err,
             ListError::LimitBelowMin(_) => RepositoryError::as_db_error("Not possible", ()),
             ListError::LimitAboveMax(_) => RepositoryError::as_db_error("Not possible", ()),
+            ListError::PluginError(error_string) => {
+                RepositoryError::as_db_error("Plugin error", error_string)
+            }
         })?
         .rows
         .pop()

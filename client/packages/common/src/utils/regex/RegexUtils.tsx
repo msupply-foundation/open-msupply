@@ -48,6 +48,11 @@ export const RegexUtils = {
   escapeChars: (regexString: string) =>
     regexString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
 
+  convertIndoArToArNumerals: (input: string) =>
+    input.replace(/[\u0660-\u0669\u06F0-\u06F9]/g, ch =>
+      String(ch.charCodeAt(0) & 0xf)
+    ),
+
   /** Takes a string formatted in template-literal style (i.e. using ${ }) and
    * replaces contents of the matching parameters with values from provided
    * data object.

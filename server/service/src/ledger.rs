@@ -35,7 +35,7 @@ pub fn get_item_ledger(
     let repository = ItemLedgerRepository::new(connection);
     let filter = filter
         .unwrap_or_default()
-        .store_id(EqualFilter::equal_to(store_id));
+        .store_id(EqualFilter::equal_to(store_id.to_string()));
 
     let ledgers = repository.query(pagination, Some(filter.clone()))?;
 
@@ -65,7 +65,7 @@ mod test {
         fn invoice1() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice2".to_string(),
-                name_link_id: mock_name_b().id,
+                name_id: mock_name_b().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::InboundShipment,
                 invoice_number: 1,
@@ -90,7 +90,7 @@ mod test {
         fn invoice2() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice2".to_string(),
-                name_link_id: mock_name_b().id,
+                name_id: mock_name_b().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::OutboundShipment,
                 status: InvoiceStatus::Picked,
@@ -128,10 +128,10 @@ mod test {
         fn prescription1() -> InvoiceRow {
             InvoiceRow {
                 id: "prescription1".to_string(),
-                name_link_id: mock_name_b().id,
+                name_id: mock_name_b().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::Prescription,
-                status: InvoiceStatus::Picked,
+                status: InvoiceStatus::Verified,
                 picked_datetime: Some((Utc::now() + Duration::hours(2)).naive_utc()),
                 invoice_number: 3,
                 ..Default::default()

@@ -1,4 +1,4 @@
-use crate::types::program_node::ProgramNode;
+use crate::types::{program_node::ProgramNode, program_order_type::ProgramOrderTypeNode};
 
 use super::{
     CampaignNode, ItemNode, ItemVariantNode, LocationNode, NameNode, VVMStatusLogConnector,
@@ -9,8 +9,9 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     loader::{
-        CampaignByIdLoader, ItemLoader, NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput,
-        ProgramByIdLoader, VVMStatusLogByStockLineIdLoader,
+        CampaignByIdLoader, ItemLoader, NameByIdLoader, NameByIdLoaderInput,
+        OrderTypesByProgramIdInput, OrderTypesByProgramIdLoader, ProgramByIdLoader,
+        VVMStatusLogByStockLineIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
@@ -76,6 +77,9 @@ impl StockLineNode {
     pub async fn expiry_date(&self) -> &Option<NaiveDate> {
         &self.row().expiry_date
     }
+    pub async fn manufacture_date(&self) -> &Option<NaiveDate> {
+        &self.row().manufacture_date
+    }
     pub async fn on_hold(&self) -> bool {
         self.row().on_hold
     }
@@ -110,6 +114,7 @@ impl StockLineNode {
             .extend(),
         )
     }
+
     pub async fn supplier_name(&self) -> Option<&str> {
         self.stock_line.supplier_name()
     }
@@ -150,13 +155,30 @@ impl StockLineNode {
     }
 
     pub async fn donor(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
-        let donor_link_id = match &self.row().donor_link_id {
+        let donor_id = match &self.row().donor_id {
             None => return Ok(None),
-            Some(donor_link_id) => donor_link_id,
+            Some(donor_id) => donor_id,
         };
-        let loader = ctx.get_loader::<DataLoader<NameByNameLinkIdLoader>>();
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
         let result = loader
-            .load_one(NameByNameLinkIdLoaderInput::new(&store_id, donor_link_id))
+            .load_one(NameByIdLoaderInput::new(&store_id, donor_id))
+            .await?;
+
+        Ok(result.map(NameNode::from_domain))
+    }
+
+    pub async fn manufacturer(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<NameNode>> {
+        let manufacturer_id = match &self.row().manufacturer_id {
+            None => return Ok(None),
+            Some(manufacturer_id) => manufacturer_id,
+        };
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+        let result = loader
+            .load_one(NameByIdLoaderInput::new(&store_id, manufacturer_id))
             .await?;
 
         Ok(result.map(NameNode::from_domain))
@@ -184,6 +206,25 @@ impl StockLineNode {
 
         let result = loader.load_one(program_id.clone()).await?;
         Ok(result.map(|program_row| ProgramNode { program_row }))
+    }
+
+    pub async fn program_order_type(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Vec<ProgramOrderTypeNode>> {
+        let loader = ctx.get_loader::<DataLoader<OrderTypesByProgramIdLoader>>();
+
+        let result = loader
+            .load_one(OrderTypesByProgramIdInput::new(
+                &store_id,
+                &self.item_row().id,
+            ))
+            .await?;
+
+        Ok(result
+            .map(ProgramOrderTypeNode::from_vec)
+            .unwrap_or_default())
     }
 
     pub async fn volume_per_pack(&self) -> f64 {

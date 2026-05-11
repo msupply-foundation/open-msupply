@@ -15,7 +15,7 @@ const appVersion = require('../../../../../../package.json').version; // eslint-
 declare const LANG_VERSION: string;
 
 export const CUSTOM_TRANSLATIONS_NAMESPACE = 'custom-translations';
-const defaultNS = 'common';
+export const DEFAULT_TRANSLATIONS_NAMESPACE = 'common';
 const minuteInMilliseconds = 60 * 1000;
 const isDevelopment = process.env['NODE_ENV'] === 'development';
 
@@ -35,10 +35,11 @@ export function initialiseI18n({
 
   // Served with frontend bundle
   // Electron `main` window translations should be served with relative path
+  // for electron, the preloaded script path is `file://:` we don't get a valid API_HOST url until we connect to the server and re-initialise the window
   const defaultTranslationsLoadPath = `${!!isElectron ? '.' : ''}/locales/{{lng}}/{{ns}}.json`;
 
-  // Served from backend
-  const customTranslationsLoadPath = `${Environment.API_HOST}/custom-translations`;
+  // Served from backend, on electron we use a dummy but valid url https://localhost:8000 which shouldn't actually be used.
+  const customTranslationsLoadPath = `${Environment.API_HOST.startsWith('file://') ? 'http://localhost:8000' : Environment.API_HOST}/custom-translations`;
 
   i18next
     .use(initReactI18next) // passes i18n down to react-i18next
@@ -59,14 +60,13 @@ export function initialiseI18n({
           {
             languageVersion,
             endpointByNamespace: {
-              common: defaultTranslationsLoadPath,
+              [DEFAULT_TRANSLATIONS_NAMESPACE]: defaultTranslationsLoadPath,
               [CUSTOM_TRANSLATIONS_NAMESPACE]: customTranslationsLoadPath,
             },
           },
         ],
       },
       debug: isDevelopment,
-      defaultNS,
       detection: {
         order: [
           'querystring',
@@ -77,10 +77,10 @@ export function initialiseI18n({
           'htmlTag',
         ],
       },
-
-      ns: defaultNS, // behaving as I expect defaultNS should. Without specifying ns here, a request is made to 'translation.json'
+      defaultNS: CUSTOM_TRANSLATIONS_NAMESPACE,
+      ns: [CUSTOM_TRANSLATIONS_NAMESPACE, DEFAULT_TRANSLATIONS_NAMESPACE],
+      fallbackNS: DEFAULT_TRANSLATIONS_NAMESPACE,
       fallbackLng: 'en',
-      fallbackNS: 'common',
       // the following option was used to assist the browser language detection; but it prevents regional variations, so has been removed
       // load: 'languageOnly', // if requested language is 'en-US' then we load 'en'; change to the default value of 'all' to load 'en-US' and 'en'
       interpolation: {

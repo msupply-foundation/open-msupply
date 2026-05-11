@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { BasicTextInput } from '../TextInput';
 import { useDebouncedValueCallback, useUrlQuery } from '@common/hooks';
 import {
@@ -17,10 +17,16 @@ export const TextFilter: FC<{
   filterDefinition: TextFilterDefinition;
   remove: () => void;
 }> = ({ filterDefinition }) => {
-  const { urlQuery, updateQuery } = useUrlQuery();
-  const [value, setValue] = useState(
-    urlQuery[filterDefinition.urlParameter] ?? ''
-  );
+  const { urlQuery, updateQuery } = useUrlQuery({
+    // text filter values shouldn't have special parsing i.e. code `0300` should retain leading zeroes
+    skipParse: [filterDefinition.urlParameter],
+  });
+  const urlValue = (urlQuery[filterDefinition.urlParameter] ?? '') as string;
+  const [value, setValue] = useState(urlValue);
+
+  useEffect(() => {
+    setValue(urlValue);
+  }, [urlValue]);
 
   const debouncedOnChange = useDebouncedValueCallback(
     value => updateQuery({ [filterDefinition.urlParameter]: value }),

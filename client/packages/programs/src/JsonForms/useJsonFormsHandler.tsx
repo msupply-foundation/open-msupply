@@ -132,7 +132,7 @@ export const useJsonFormsHandler = <R,>(
   const [isSaving, setSaving] = useState(false);
   const t = useTranslation();
   const [validationError, setValidationError] = useState<string | false>(false);
-  const { success, error: errorNotification } = useNotification();
+  const { success } = useNotification();
 
   const { isDirty, setIsDirty } = useConfirmOnLeaving('json-forms', {
     disabled: !confirmOnLeaving,
@@ -162,9 +162,6 @@ export const useJsonFormsHandler = <R,>(
 
       setInitialData(sanitizedData);
       return result;
-    } catch (err) {
-      const errorSnack = errorNotification(t('error.problem-saving'));
-      errorSnack();
     } finally {
       setSaving(false);
     }

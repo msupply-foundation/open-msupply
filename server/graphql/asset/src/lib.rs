@@ -205,9 +205,9 @@ mod test {
         let test_service = TestService(Box::new(|_, _, _| {
             Ok(ListResult {
                 rows: vec![Asset {
-                    id: "test_id".to_owned(),
-                    notes: Some("test_note".to_owned()),
-                    asset_number: Some("test_asset_number".to_owned()),
+                    id: "test_id".to_string(),
+                    notes: Some("test_note".to_string()),
+                    asset_number: Some("test_asset_number".to_string()),
                     ..Default::default()
                 }],
                 count: 1,

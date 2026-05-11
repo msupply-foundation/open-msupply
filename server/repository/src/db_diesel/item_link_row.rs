@@ -2,7 +2,7 @@ use super::{
     clinician_link_row::clinician_link, clinician_row::clinician, item_row::item,
     location_type_row::location_type, StorageConnection,
 };
-use crate::{name_link, repository_error::RepositoryError, Upsert};
+use crate::{repository_error::RepositoryError, ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
 
@@ -14,7 +14,6 @@ table! {
 }
 
 joinable!(item_link -> item (item_id));
-allow_tables_to_appear_in_same_query!(item_link, name_link);
 allow_tables_to_appear_in_same_query!(item_link, clinician_link);
 allow_tables_to_appear_in_same_query!(item_link, clinician);
 allow_tables_to_appear_in_same_query!(item_link, location_type);
@@ -102,9 +101,9 @@ impl<'a> ItemLinkRowRepository<'a> {
 }
 
 impl Upsert for ItemLinkRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         ItemLinkRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

@@ -6,8 +6,9 @@ import {
   RequisitionReasonsNotProvidedErrorFragmentDoc,
   ProgramIndicatorFragmentDoc,
 } from '../../RequestRequisition/api/operations.generated';
-import { ItemWithStatsFragmentDoc } from '../../../../system/src/RequestRequisitionLine/operations.generated';
+import { ItemWithAvailableStockFragmentDoc } from '../../../../system/src/RequestRequisitionLine/operations.generated';
 import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
+import { SyncFileReferenceFragmentDoc } from '../../../../system/src/Documents/types.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type UpdateResponseMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -76,6 +77,7 @@ export type ResponseLineFragment = {
   itemId: string;
   itemName: string;
   requestedQuantity: number;
+  pricePerUnit?: number | null;
   supplyQuantity: number;
   remainingQuantityToSupply: number;
   alreadyIssued: number;
@@ -95,6 +97,9 @@ export type ResponseLineFragment = {
   requisitionId: string;
   approvedQuantity: number;
   approvalComment?: string | null;
+  forecastTotalUnits?: number | null;
+  forecastTotalDoses?: number | null;
+  vaccineCourses?: string | null;
   itemStats: {
     __typename: 'ItemStatsNode';
     stockOnHand: number;
@@ -111,15 +116,6 @@ export type ResponseLineFragment = {
     isVaccine: boolean;
     doses: number;
     availableStockOnHand: number;
-    stats: {
-      __typename: 'ItemStatsNode';
-      averageMonthlyConsumption: number;
-      availableStockOnHand: number;
-      availableMonthsOfStockOnHand?: number | null;
-      totalConsumption: number;
-      stockOnHand: number;
-      monthsOfStockOnHand?: number | null;
-    };
   };
   linkedRequisitionLine?: {
     __typename: 'RequisitionLineNode';
@@ -137,6 +133,19 @@ export type ResponseLineFragment = {
     reason: string;
     isActive: boolean;
   } | null;
+  availableVolumeAtLocationType?: {
+    __typename: 'AvailableVolumeAtLocationTypeNode';
+    availableVolume: number;
+    itemVolumePerUnit: number;
+    locationType: { __typename: 'LocationTypeNode'; name: string };
+  } | null;
+};
+
+export type AvailableVolumeAtLocationTypeFragment = {
+  __typename: 'AvailableVolumeAtLocationTypeNode';
+  availableVolume: number;
+  itemVolumePerUnit: number;
+  locationType: { __typename: 'LocationTypeNode'; name: string };
 };
 
 export type ResponseFragment = {
@@ -159,6 +168,16 @@ export type ResponseFragment = {
   programName?: string | null;
   orderType?: string | null;
   isEmergency: boolean;
+  documents: {
+    __typename: 'SyncFileReferenceConnector';
+    nodes: Array<{
+      __typename: 'SyncFileReferenceNode';
+      id: string;
+      fileName: string;
+      recordId: string;
+      createdDatetime: string;
+    }>;
+  };
   user?: {
     __typename: 'UserNode';
     username: string;
@@ -188,6 +207,7 @@ export type ResponseFragment = {
       itemId: string;
       itemName: string;
       requestedQuantity: number;
+      pricePerUnit?: number | null;
       supplyQuantity: number;
       remainingQuantityToSupply: number;
       alreadyIssued: number;
@@ -207,6 +227,9 @@ export type ResponseFragment = {
       requisitionId: string;
       approvedQuantity: number;
       approvalComment?: string | null;
+      forecastTotalUnits?: number | null;
+      forecastTotalDoses?: number | null;
+      vaccineCourses?: string | null;
       itemStats: {
         __typename: 'ItemStatsNode';
         stockOnHand: number;
@@ -223,15 +246,6 @@ export type ResponseFragment = {
         isVaccine: boolean;
         doses: number;
         availableStockOnHand: number;
-        stats: {
-          __typename: 'ItemStatsNode';
-          averageMonthlyConsumption: number;
-          availableStockOnHand: number;
-          availableMonthsOfStockOnHand?: number | null;
-          totalConsumption: number;
-          stockOnHand: number;
-          monthsOfStockOnHand?: number | null;
-        };
       };
       linkedRequisitionLine?: {
         __typename: 'RequisitionLineNode';
@@ -249,6 +263,12 @@ export type ResponseFragment = {
         reason: string;
         isActive: boolean;
       } | null;
+      availableVolumeAtLocationType?: {
+        __typename: 'AvailableVolumeAtLocationTypeNode';
+        availableVolume: number;
+        itemVolumePerUnit: number;
+        locationType: { __typename: 'LocationTypeNode'; name: string };
+      } | null;
     }>;
   };
   otherParty: {
@@ -261,6 +281,16 @@ export type ResponseFragment = {
     name: string;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   };
+  destinationCustomer?: {
+    __typename: 'NameNode';
+    id: string;
+    code: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   period?: {
     __typename: 'PeriodNode';
@@ -301,6 +331,16 @@ export type ResponseByNumberQuery = {
         programName?: string | null;
         orderType?: string | null;
         isEmergency: boolean;
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+          }>;
+        };
         user?: {
           __typename: 'UserNode';
           username: string;
@@ -330,6 +370,7 @@ export type ResponseByNumberQuery = {
             itemId: string;
             itemName: string;
             requestedQuantity: number;
+            pricePerUnit?: number | null;
             supplyQuantity: number;
             remainingQuantityToSupply: number;
             alreadyIssued: number;
@@ -349,6 +390,9 @@ export type ResponseByNumberQuery = {
             requisitionId: string;
             approvedQuantity: number;
             approvalComment?: string | null;
+            forecastTotalUnits?: number | null;
+            forecastTotalDoses?: number | null;
+            vaccineCourses?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               stockOnHand: number;
@@ -365,15 +409,6 @@ export type ResponseByNumberQuery = {
               isVaccine: boolean;
               doses: number;
               availableStockOnHand: number;
-              stats: {
-                __typename: 'ItemStatsNode';
-                averageMonthlyConsumption: number;
-                availableStockOnHand: number;
-                availableMonthsOfStockOnHand?: number | null;
-                totalConsumption: number;
-                stockOnHand: number;
-                monthsOfStockOnHand?: number | null;
-              };
             };
             linkedRequisitionLine?: {
               __typename: 'RequisitionLineNode';
@@ -391,6 +426,12 @@ export type ResponseByNumberQuery = {
               reason: string;
               isActive: boolean;
             } | null;
+            availableVolumeAtLocationType?: {
+              __typename: 'AvailableVolumeAtLocationTypeNode';
+              availableVolume: number;
+              itemVolumePerUnit: number;
+              locationType: { __typename: 'LocationTypeNode'; name: string };
+            } | null;
           }>;
         };
         otherParty: {
@@ -403,6 +444,16 @@ export type ResponseByNumberQuery = {
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         };
+        destinationCustomer?: {
+          __typename: 'NameNode';
+          id: string;
+          code: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          name: string;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        } | null;
         program?: {
           __typename: 'ProgramNode';
           id: string;
@@ -451,6 +502,16 @@ export type ResponseByIdQuery = {
         programName?: string | null;
         orderType?: string | null;
         isEmergency: boolean;
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+          }>;
+        };
         user?: {
           __typename: 'UserNode';
           username: string;
@@ -480,6 +541,7 @@ export type ResponseByIdQuery = {
             itemId: string;
             itemName: string;
             requestedQuantity: number;
+            pricePerUnit?: number | null;
             supplyQuantity: number;
             remainingQuantityToSupply: number;
             alreadyIssued: number;
@@ -499,6 +561,9 @@ export type ResponseByIdQuery = {
             requisitionId: string;
             approvedQuantity: number;
             approvalComment?: string | null;
+            forecastTotalUnits?: number | null;
+            forecastTotalDoses?: number | null;
+            vaccineCourses?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               stockOnHand: number;
@@ -515,15 +580,6 @@ export type ResponseByIdQuery = {
               isVaccine: boolean;
               doses: number;
               availableStockOnHand: number;
-              stats: {
-                __typename: 'ItemStatsNode';
-                averageMonthlyConsumption: number;
-                availableStockOnHand: number;
-                availableMonthsOfStockOnHand?: number | null;
-                totalConsumption: number;
-                stockOnHand: number;
-                monthsOfStockOnHand?: number | null;
-              };
             };
             linkedRequisitionLine?: {
               __typename: 'RequisitionLineNode';
@@ -541,6 +597,12 @@ export type ResponseByIdQuery = {
               reason: string;
               isActive: boolean;
             } | null;
+            availableVolumeAtLocationType?: {
+              __typename: 'AvailableVolumeAtLocationTypeNode';
+              availableVolume: number;
+              itemVolumePerUnit: number;
+              locationType: { __typename: 'LocationTypeNode'; name: string };
+            } | null;
           }>;
         };
         otherParty: {
@@ -553,6 +615,16 @@ export type ResponseByIdQuery = {
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         };
+        destinationCustomer?: {
+          __typename: 'NameNode';
+          id: string;
+          code: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          name: string;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        } | null;
         program?: {
           __typename: 'ProgramNode';
           id: string;
@@ -588,7 +660,19 @@ export type ResponseRowFragment = {
   otherPartyId: string;
   approvalStatus: Types.RequisitionNodeApprovalStatus;
   programName?: string | null;
+  maxMonthsOfStock: number;
+  minMonthsOfStock: number;
   orderType?: string | null;
+  documents: {
+    __typename: 'SyncFileReferenceConnector';
+    nodes: Array<{
+      __typename: 'SyncFileReferenceNode';
+      id: string;
+      fileName: string;
+      recordId: string;
+      createdDatetime: string;
+    }>;
+  };
   period?: {
     __typename: 'PeriodNode';
     name: string;
@@ -628,7 +712,19 @@ export type ResponsesQuery = {
       otherPartyId: string;
       approvalStatus: Types.RequisitionNodeApprovalStatus;
       programName?: string | null;
+      maxMonthsOfStock: number;
+      minMonthsOfStock: number;
       orderType?: string | null;
+      documents: {
+        __typename: 'SyncFileReferenceConnector';
+        nodes: Array<{
+          __typename: 'SyncFileReferenceNode';
+          id: string;
+          fileName: string;
+          recordId: string;
+          createdDatetime: string;
+        }>;
+      };
       period?: {
         __typename: 'PeriodNode';
         name: string;
@@ -772,6 +868,25 @@ export type CreateOutboundFromResponseMutation = {
           | { __typename: 'RecordNotFound'; description: string };
       }
     | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number };
+};
+
+export type ResponseAddFromMasterListMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  responseId: Types.Scalars['String']['input'];
+  masterListId: Types.Scalars['String']['input'];
+}>;
+
+export type ResponseAddFromMasterListMutation = {
+  __typename: 'Mutations';
+  responseAddFromMasterList:
+    | { __typename: 'RequisitionLineConnector'; totalCount: number }
+    | {
+        __typename: 'ResponseAddFromMasterListError';
+        error: {
+          __typename: 'MasterListNotFoundForThisStore';
+          description: string;
+        };
+      };
 };
 
 export type SupplyRequestedQuantityMutationVariables = Types.Exact<{
@@ -954,6 +1069,7 @@ export type ProgramIndicatorsQuery = {
           columnNumber: number;
           name: string;
           valueType?: Types.IndicatorValueTypeNode | null;
+          isActive: boolean;
           value?: {
             __typename: 'IndicatorValueNode';
             id: string;
@@ -967,6 +1083,7 @@ export type ProgramIndicatorsQuery = {
           lineNumber: number;
           name: string;
           valueType?: Types.IndicatorValueTypeNode | null;
+          isActive: boolean;
         };
         customerIndicatorInfo: Array<{
           __typename: 'CustomerIndicatorInformationNode';
@@ -1001,12 +1118,52 @@ export type UpdateIndicatorValueMutation = {
       };
 };
 
+export type InsertRequestFromResponseRequisitionMutationVariables =
+  Types.Exact<{
+    storeId: Types.Scalars['String']['input'];
+    input: Types.InsertFromResponseRequisitionInput;
+  }>;
+
+export type InsertRequestFromResponseRequisitionMutation = {
+  __typename: 'Mutations';
+  insertRequestFromResponseRequisition:
+    | {
+        __typename: 'InsertFromResponseRequisitionError';
+        error:
+          | { __typename: 'OtherPartyNotASupplier'; description: string }
+          | { __typename: 'OtherPartyNotVisible'; description: string };
+      }
+    | { __typename: 'RequisitionNode'; id: string };
+};
+
+export type HasCustomerProgramRequisitionSettingsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  customerNameIds:
+    | Array<Types.Scalars['String']['input']>
+    | Types.Scalars['String']['input'];
+}>;
+
+export type HasCustomerProgramRequisitionSettingsQuery = {
+  __typename: 'Queries';
+  hasCustomerProgramRequisitionSettings: boolean;
+};
+
+export const AvailableVolumeAtLocationTypeFragmentDoc = gql`
+  fragment AvailableVolumeAtLocationType on AvailableVolumeAtLocationTypeNode {
+    locationType {
+      name
+    }
+    availableVolume
+    itemVolumePerUnit
+  }
+`;
 export const ResponseLineFragmentDoc = gql`
   fragment ResponseLine on RequisitionLineNode {
     id
     itemId
     itemName
     requestedQuantity
+    pricePerUnit
     supplyQuantity
     remainingQuantityToSupply
     alreadyIssued
@@ -1032,7 +1189,7 @@ export const ResponseLineFragmentDoc = gql`
       averageMonthlyConsumption
     }
     item {
-      ...ItemWithStats
+      ...ItemWithAvailableStock
     }
     approvedQuantity
     approvalComment
@@ -1046,9 +1203,16 @@ export const ResponseLineFragmentDoc = gql`
     reason {
       ...ReasonOptionRow
     }
+    availableVolumeAtLocationType {
+      ...AvailableVolumeAtLocationType
+    }
+    forecastTotalUnits
+    forecastTotalDoses
+    vaccineCourses
   }
-  ${ItemWithStatsFragmentDoc}
+  ${ItemWithAvailableStockFragmentDoc}
   ${ReasonOptionRowFragmentDoc}
+  ${AvailableVolumeAtLocationTypeFragmentDoc}
 `;
 export const ResponseFragmentDoc = gql`
   fragment Response on RequisitionNode {
@@ -1068,6 +1232,12 @@ export const ResponseFragmentDoc = gql`
     maxMonthsOfStock
     minMonthsOfStock
     approvalStatus
+    documents {
+      __typename
+      nodes {
+        ...SyncFileReference
+      }
+    }
     user {
       __typename
       username
@@ -1113,6 +1283,19 @@ export const ResponseFragmentDoc = gql`
         code
       }
     }
+    destinationCustomer(storeId: $storeId) {
+      __typename
+      id
+      code
+      isCustomer
+      isSupplier
+      isOnHold
+      name
+      store {
+        id
+        code
+      }
+    }
     programName
     program {
       id
@@ -1130,6 +1313,7 @@ export const ResponseFragmentDoc = gql`
     orderType
     isEmergency
   }
+  ${SyncFileReferenceFragmentDoc}
   ${ResponseLineFragmentDoc}
 `;
 export const ResponseRowFragmentDoc = gql`
@@ -1148,6 +1332,14 @@ export const ResponseRowFragmentDoc = gql`
     otherPartyId
     approvalStatus
     programName
+    maxMonthsOfStock
+    minMonthsOfStock
+    documents {
+      __typename
+      nodes {
+        ...SyncFileReference
+      }
+    }
     period {
       name
       startDate
@@ -1159,6 +1351,7 @@ export const ResponseRowFragmentDoc = gql`
       totalCount
     }
   }
+  ${SyncFileReferenceFragmentDoc}
 `;
 export const CannotDeleteLineLinkedToShipmentErrorFragmentDoc = gql`
   fragment CannotDeleteLineLinkedToShipmentError on CannotDeleteLineLinkedToShipment {
@@ -1510,6 +1703,33 @@ export const CreateOutboundFromResponseDocument = gql`
     }
   }
 `;
+export const ResponseAddFromMasterListDocument = gql`
+  mutation responseAddFromMasterList(
+    $storeId: String!
+    $responseId: String!
+    $masterListId: String!
+  ) {
+    responseAddFromMasterList(
+      input: { responseRequisitionId: $responseId, masterListId: $masterListId }
+      storeId: $storeId
+    ) {
+      ... on RequisitionLineConnector {
+        __typename
+        totalCount
+      }
+      ... on ResponseAddFromMasterListError {
+        __typename
+        error {
+          description
+          ... on MasterListNotFoundForThisStore {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+`;
 export const SupplyRequestedQuantityDocument = gql`
   mutation supplyRequestedQuantity($responseId: String!, $storeId: String!) {
     supplyRequestedQuantity(
@@ -1640,6 +1860,44 @@ export const UpdateIndicatorValueDocument = gql`
     }
   }
 `;
+export const InsertRequestFromResponseRequisitionDocument = gql`
+  mutation insertRequestFromResponseRequisition(
+    $storeId: String!
+    $input: InsertFromResponseRequisitionInput!
+  ) {
+    insertRequestFromResponseRequisition(input: $input, storeId: $storeId) {
+      ... on RequisitionNode {
+        __typename
+        id
+      }
+      ... on InsertFromResponseRequisitionError {
+        __typename
+        error {
+          description
+          ... on OtherPartyNotASupplier {
+            __typename
+            description
+          }
+          ... on OtherPartyNotVisible {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+`;
+export const HasCustomerProgramRequisitionSettingsDocument = gql`
+  query hasCustomerProgramRequisitionSettings(
+    $storeId: String!
+    $customerNameIds: [String!]!
+  ) {
+    hasCustomerProgramRequisitionSettings(
+      storeId: $storeId
+      customerNameIds: $customerNameIds
+    )
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -1662,15 +1920,17 @@ export function getSdk(
   return {
     updateResponse(
       variables: UpdateResponseMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpdateResponseMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateResponseMutation>(
-            UpdateResponseDocument,
+          client.request<UpdateResponseMutation>({
+            document: UpdateResponseDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'updateResponse',
         'mutation',
         variables
@@ -1678,15 +1938,17 @@ export function getSdk(
     },
     deleteResponse(
       variables: DeleteResponseMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<DeleteResponseMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteResponseMutation>(
-            DeleteResponseDocument,
+          client.request<DeleteResponseMutation>({
+            document: DeleteResponseDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'deleteResponse',
         'mutation',
         variables
@@ -1694,15 +1956,17 @@ export function getSdk(
     },
     responseByNumber(
       variables: ResponseByNumberQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ResponseByNumberQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ResponseByNumberQuery>(
-            ResponseByNumberDocument,
+          client.request<ResponseByNumberQuery>({
+            document: ResponseByNumberDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'responseByNumber',
         'query',
         variables
@@ -1710,13 +1974,16 @@ export function getSdk(
     },
     responseById(
       variables: ResponseByIdQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ResponseByIdQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ResponseByIdQuery>(ResponseByIdDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<ResponseByIdQuery>({
+            document: ResponseByIdDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'responseById',
         'query',
@@ -1725,13 +1992,16 @@ export function getSdk(
     },
     responses(
       variables: ResponsesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ResponsesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ResponsesQuery>(ResponsesDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<ResponsesQuery>({
+            document: ResponsesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'responses',
         'query',
@@ -1740,15 +2010,17 @@ export function getSdk(
     },
     insertResponse(
       variables: InsertResponseMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsertResponseMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertResponseMutation>(
-            InsertResponseDocument,
+          client.request<InsertResponseMutation>({
+            document: InsertResponseDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insertResponse',
         'mutation',
         variables
@@ -1756,15 +2028,17 @@ export function getSdk(
     },
     insertProgramResponse(
       variables: InsertProgramResponseMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsertProgramResponseMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertProgramResponseMutation>(
-            InsertProgramResponseDocument,
+          client.request<InsertProgramResponseMutation>({
+            document: InsertProgramResponseDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insertProgramResponse',
         'mutation',
         variables
@@ -1772,15 +2046,17 @@ export function getSdk(
     },
     insertResponseLine(
       variables: InsertResponseLineMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsertResponseLineMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertResponseLineMutation>(
-            InsertResponseLineDocument,
+          client.request<InsertResponseLineMutation>({
+            document: InsertResponseLineDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insertResponseLine',
         'mutation',
         variables
@@ -1788,15 +2064,17 @@ export function getSdk(
     },
     updateResponseLine(
       variables: UpdateResponseLineMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpdateResponseLineMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateResponseLineMutation>(
-            UpdateResponseLineDocument,
+          client.request<UpdateResponseLineMutation>({
+            document: UpdateResponseLineDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'updateResponseLine',
         'mutation',
         variables
@@ -1804,15 +2082,17 @@ export function getSdk(
     },
     deleteResponseLines(
       variables: DeleteResponseLinesMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<DeleteResponseLinesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteResponseLinesMutation>(
-            DeleteResponseLinesDocument,
+          client.request<DeleteResponseLinesMutation>({
+            document: DeleteResponseLinesDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'deleteResponseLines',
         'mutation',
         variables
@@ -1820,31 +2100,53 @@ export function getSdk(
     },
     createOutboundFromResponse(
       variables: CreateOutboundFromResponseMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<CreateOutboundFromResponseMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<CreateOutboundFromResponseMutation>(
-            CreateOutboundFromResponseDocument,
+          client.request<CreateOutboundFromResponseMutation>({
+            document: CreateOutboundFromResponseDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'createOutboundFromResponse',
+        'mutation',
+        variables
+      );
+    },
+    responseAddFromMasterList(
+      variables: ResponseAddFromMasterListMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<ResponseAddFromMasterListMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ResponseAddFromMasterListMutation>({
+            document: ResponseAddFromMasterListDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'responseAddFromMasterList',
         'mutation',
         variables
       );
     },
     supplyRequestedQuantity(
       variables: SupplyRequestedQuantityMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<SupplyRequestedQuantityMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<SupplyRequestedQuantityMutation>(
-            SupplyRequestedQuantityDocument,
+          client.request<SupplyRequestedQuantityMutation>({
+            document: SupplyRequestedQuantityDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'supplyRequestedQuantity',
         'mutation',
         variables
@@ -1852,15 +2154,17 @@ export function getSdk(
     },
     responseRequisitionStats(
       variables: ResponseRequisitionStatsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ResponseRequisitionStatsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ResponseRequisitionStatsQuery>(
-            ResponseRequisitionStatsDocument,
+          client.request<ResponseRequisitionStatsQuery>({
+            document: ResponseRequisitionStatsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'responseRequisitionStats',
         'query',
         variables
@@ -1868,15 +2172,17 @@ export function getSdk(
     },
     programRequisitionSettingsByCustomer(
       variables: ProgramRequisitionSettingsByCustomerQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ProgramRequisitionSettingsByCustomerQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ProgramRequisitionSettingsByCustomerQuery>(
-            ProgramRequisitionSettingsByCustomerDocument,
+          client.request<ProgramRequisitionSettingsByCustomerQuery>({
+            document: ProgramRequisitionSettingsByCustomerDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'programRequisitionSettingsByCustomer',
         'query',
         variables
@@ -1884,15 +2190,17 @@ export function getSdk(
     },
     programIndicators(
       variables: ProgramIndicatorsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ProgramIndicatorsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ProgramIndicatorsQuery>(
-            ProgramIndicatorsDocument,
+          client.request<ProgramIndicatorsQuery>({
+            document: ProgramIndicatorsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'programIndicators',
         'query',
         variables
@@ -1900,17 +2208,55 @@ export function getSdk(
     },
     updateIndicatorValue(
       variables: UpdateIndicatorValueMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpdateIndicatorValueMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateIndicatorValueMutation>(
-            UpdateIndicatorValueDocument,
+          client.request<UpdateIndicatorValueMutation>({
+            document: UpdateIndicatorValueDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'updateIndicatorValue',
         'mutation',
+        variables
+      );
+    },
+    insertRequestFromResponseRequisition(
+      variables: InsertRequestFromResponseRequisitionMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InsertRequestFromResponseRequisitionMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertRequestFromResponseRequisitionMutation>({
+            document: InsertRequestFromResponseRequisitionDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'insertRequestFromResponseRequisition',
+        'mutation',
+        variables
+      );
+    },
+    hasCustomerProgramRequisitionSettings(
+      variables: HasCustomerProgramRequisitionSettingsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<HasCustomerProgramRequisitionSettingsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<HasCustomerProgramRequisitionSettingsQuery>({
+            document: HasCustomerProgramRequisitionSettingsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'hasCustomerProgramRequisitionSettings',
+        'query',
         variables
       );
     },

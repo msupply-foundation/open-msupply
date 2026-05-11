@@ -3,7 +3,6 @@ use chrono::{DateTime, Utc};
 use graphql_asset::types::AssetConnector;
 use graphql_core::generic_filters::StringFilterInput;
 use graphql_core::loader::AssetByLocationLoader;
-use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_core::{generic_filters::EqualFilterStringInput, loader::LocationByIdLoader};
@@ -73,6 +72,7 @@ pub enum SensorNodeType {
     BlueMaestro,
     Laird,
     Berlinger,
+    LogTag,
 }
 
 #[Object]
@@ -147,7 +147,7 @@ impl SensorNode {
         ctx: &Context<'_>,
     ) -> Result<Option<TemperatureLogConnector>> {
         let filter = TemperatureLogFilter::new()
-            .sensor(SensorFilter::new().id(EqualFilter::equal_to(&self.row().id)));
+            .sensor(SensorFilter::new().id(EqualFilter::equal_to(self.row().id.to_string())));
 
         let latest_log = get_temperature_logs(
             &ctx.get_connection_manager().connection()?,
@@ -169,7 +169,7 @@ impl SensorNode {
     pub async fn breach(&self, ctx: &Context<'_>) -> Result<Option<TemperatureBreachNodeType>> {
         let filter = TemperatureBreachFilter::new()
             .end_datetime(DatetimeFilter::is_null(true))
-            .sensor(SensorFilter::new().id(EqualFilter::equal_to(&self.row().id)));
+            .sensor(SensorFilter::new().id(EqualFilter::equal_to(self.row().id.to_string())));
 
         let breach = temperature_breaches(
             &ctx.get_connection_manager().connection()?,
@@ -191,12 +191,6 @@ impl SensorNode {
 #[derive(Union)]
 pub enum SensorsResponse {
     Response(SensorConnector),
-}
-
-#[derive(Union)]
-pub enum SensorResponse {
-    Error(NodeError),
-    Response(SensorNode),
 }
 
 impl SensorNode {

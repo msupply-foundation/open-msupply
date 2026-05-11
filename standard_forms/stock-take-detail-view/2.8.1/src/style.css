@@ -1,0 +1,36 @@
+@media print {
+    @page {
+      size: portrait;
+    }
+  }
+  
+  .header_image_section,
+  .header_supplied_section {
+    margin-left: 8px;
+    width: 100%;
+    font-family: Tahoma;
+    font-size: 8pt;
+    border-bottom: 0.5px solid black;
+    padding-top: 1pt;
+  }
+  
+  .logo {
+    display: block;
+    height: 96px;
+  }
+  
+  .body_column_label th {
+    border-bottom: 0.5px solid black;
+    text-align: left;
+  }
+  
+  .body_column_label th,
+  .body_value td {
+    font-family: Tahoma;
+    font-size: 8pt;
+  }
+
+  .batch {
+    word-break: break-word;
+  }
+  

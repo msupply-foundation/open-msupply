@@ -36,7 +36,7 @@ pub fn delete_purchase_order(
                 activity_log_entry(
                     ctx,
                     ActivityLogType::PurchaseOrderDeleted,
-                    Some(id.to_owned()),
+                    Some(id.to_string()),
                     None,
                     None,
                 )?;
@@ -56,7 +56,7 @@ pub enum DeletePurchaseOrderError {
     PurchaseOrderDoesNotExist,
     DatabaseError(RepositoryError),
     NotThisStorePurchaseOrder,
-    CannotDeleteNonNewPurchaseOrder,
+    CannotDeletePurchaseOrder,
     LineDeleteError {
         line_id: String,
         error: DeletePurchaseOrderLineError,
@@ -134,18 +134,18 @@ mod test {
             Err(ServiceError::NotThisStorePurchaseOrder)
         );
 
-        // CannotDeleteNonNewPurchaseOrder - test with a FINALISED status purchase order
+        // CannotDeletePurchaseOrder - test with a FINALISED status purchase order
         assert_eq!(
             service.delete_purchase_order(&context, &mock_store_a().id, mock_purchase_order_c().id),
-            Err(ServiceError::CannotDeleteNonNewPurchaseOrder)
+            Err(ServiceError::CannotDeletePurchaseOrder)
         );
 
-        // CannotDeleteNonNewPurchaseOrder - test with a CONFIRMED status purchase order
+        // CannotDeletePurchaseOrder - test with a CONFIRMED status purchase order
         let confirmed_purchase_order = PurchaseOrderRow {
             id: "test_purchase_order_confirmed".to_string(),
             store_id: mock_store_a().id,
             status: PurchaseOrderStatus::Confirmed,
-            supplier_name_link_id: "name_a".to_string(),
+            supplier_name_id: "name_a".to_string(),
             purchase_order_number: 1111111111,
             ..Default::default()
         };
@@ -161,7 +161,7 @@ mod test {
                 &mock_store_a().id,
                 confirmed_purchase_order.id
             ),
-            Err(ServiceError::CannotDeleteNonNewPurchaseOrder)
+            Err(ServiceError::CannotDeletePurchaseOrder)
         );
     }
 

@@ -3,9 +3,13 @@ import {
   Autocomplete,
   BasicTextInput,
   Checkbox,
+  DateTimePickerInput,
   NumericTextInput,
 } from '@common/components';
 import { PropertyNodeValueType } from '@common/types';
+import { DateUtils } from '@common/intl';
+import { Formatter } from '@common/utils';
+import { SxProps, Theme } from '@common/styles';
 
 type PropertyValue = string | number | boolean | undefined;
 type PropertyInput = {
@@ -14,6 +18,7 @@ type PropertyInput = {
   value: PropertyValue | null;
   onChange: (value: PropertyValue) => void;
   disabled?: boolean;
+  textSx?: SxProps<Theme>;
 };
 
 const mapValueToOption = (value: PropertyValue | null) =>
@@ -31,6 +36,7 @@ export const PropertyInput: FC<PropertyInput> = ({
   value,
   onChange,
   disabled,
+  textSx,
 }) => {
   switch (valueType) {
     case PropertyNodeValueType.Boolean:
@@ -55,6 +61,19 @@ export const PropertyInput: FC<PropertyInput> = ({
             onChange(n);
           }}
           decimalLimit={valueType === PropertyNodeValueType.Float ? 5 : 0}
+          disabled={disabled}
+          slotProps={{ htmlInput: { sx: textSx } }}
+        />
+      );
+    case PropertyNodeValueType.Date:
+      return (
+        <DateTimePickerInput
+          // value is always string | null for Date properties, but PropertyValue is wider
+          value={DateUtils.getDateOrNull(value as string)}
+          format="P"
+          onChange={date =>
+            onChange(date ? Formatter.naiveDate(date) ?? undefined : undefined)
+          }
           disabled={disabled}
         />
       );

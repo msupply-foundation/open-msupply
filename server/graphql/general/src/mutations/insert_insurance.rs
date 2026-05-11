@@ -19,6 +19,7 @@ pub struct InsertInsuranceInput {
     pub discount_percentage: f64,
     pub expiry_date: chrono::NaiveDate,
     pub is_active: bool,
+    pub name_of_insured: Option<String>,
 }
 
 impl InsertInsuranceInput {
@@ -33,11 +34,12 @@ impl InsertInsuranceInput {
             discount_percentage,
             expiry_date,
             is_active,
+            name_of_insured,
         } = self;
 
         ServiceInput {
             id,
-            name_link_id: name_id,
+            name_id,
             insurance_provider_id,
             policy_number_family,
             policy_number_person,
@@ -45,6 +47,7 @@ impl InsertInsuranceInput {
             discount_percentage,
             expiry_date,
             is_active,
+            name_of_insured,
         }
     }
 }
@@ -89,7 +92,7 @@ pub fn map_response(
 
 fn map_error(error: ServiceError) -> Result<InsertInsuranceResponse> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::InsuranceAlreadyExists | ServiceError::CreatedRecordNotFound => {

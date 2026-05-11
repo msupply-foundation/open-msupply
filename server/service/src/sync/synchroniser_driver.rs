@@ -2,10 +2,10 @@ use std::{future::Future, sync::Arc};
 
 use crate::service_provider::ServiceProvider;
 use crate::sync::is_initialised;
+use crate::sync::CentralServerConfig;
+use crate::sync_v7::synchroniser::SynchroniserV7;
 
-use super::{
-    file_sync_driver::FileSyncTrigger, settings::SyncSettings, synchroniser::Synchroniser,
-};
+use super::{settings::SyncSettings, synchroniser::SynchroniserV5V6};
 use tokio::{
     sync::mpsc::{self, Receiver, Sender},
     time::Duration,
@@ -13,7 +13,6 @@ use tokio::{
 
 pub struct SynchroniserDriver {
     receiver: Receiver<Option<String>>,
-    file_sync_trigger: FileSyncTrigger,
 }
 
 #[derive(Clone)]
@@ -25,20 +24,14 @@ pub struct SyncTrigger {
 /// * Expose channel for manually triggering sync
 /// * Trigger sync every SyncSettings.interval_seconds (only when initialised)
 impl SynchroniserDriver {
-    pub fn init(file_sync_trigger: FileSyncTrigger) -> (SyncTrigger, SynchroniserDriver) {
+    pub fn init() -> (SyncTrigger, SynchroniserDriver) {
         // We use a single-element channel so that we can only have one sync pending at a time.
         // We consume this at the *start* of sync, so we could schedule a sync while syncing.
         // Worst-case scenario, we produce an infinite stream of sync instructions and always go
         // straight from one sync to the next, but that's OK.
         let (sender, receiver) = mpsc::channel(1);
 
-        (
-            SyncTrigger { sender },
-            SynchroniserDriver {
-                receiver,
-                file_sync_trigger,
-            },
-        )
+        (SyncTrigger { sender }, SynchroniserDriver { receiver })
     }
 
     /// SynchroniserDriver entry point, this method is meant to be run within main `select!` macro
@@ -74,10 +67,10 @@ impl SynchroniserDriver {
                 }
             } else {
                 // If not initialised just wait for manual trigger
-                if self.receiver.recv().await.is_none() {
-                    break;
+                match self.receiver.recv().await {
+                    None => break,
+                    Some(patient_id) => patient_id,
                 }
-                None
             };
 
             self.sync(service_provider.clone(), fetch_patient_id).await;
@@ -89,26 +82,25 @@ impl SynchroniserDriver {
         service_provider: Arc<ServiceProvider>,
         fetch_patient_id: Option<String>,
     ) {
-        // Error is already logged, keeping result with `_` to avoid compilation warning
-        // We initialise new instance of Syncrhoniser since SyncSettings could have changed
-
-        // Pause file sync
-        self.file_sync_trigger.pause();
-
-        let _ = Synchroniser::new(get_sync_settings(&service_provider), service_provider)
-            .unwrap()
-            .sync(fetch_patient_id)
-            .await;
-
-        // Unpause file sync
-        self.file_sync_trigger.unpause();
+        // Error is already logged inside the sync flow, keeping result with `_` to avoid compilation warning.
+        // We initialise a new instance on every tick since SyncSettings could have changed.
+        let settings = get_sync_settings(&service_provider);
+        if CentralServerConfig::is_central_server() {
+            let _ = SynchroniserV5V6::new(settings, service_provider)
+                .unwrap()
+                .sync(fetch_patient_id)
+                .await;
+        } else {
+            // V7 doesn't take fetch_patient_id (yet) — only V5/V6 uses it.
+            let _ = SynchroniserV7::new(settings, service_provider).sync().await;
+        }
     }
 }
 
 impl SyncTrigger {
     pub fn trigger(&self, fetch_patient_id: Option<String>) {
         if let Err(error) = self.sender.try_send(fetch_patient_id) {
-            log::error!("Problem triggering sync {:#?}", error)
+            log::error!("Problem triggering sync {error:#?}")
         }
     }
 
@@ -169,7 +161,7 @@ impl SiteIsInitialisedCallback {
 impl SiteIsInitialisedTrigger {
     pub fn trigger(&self) {
         if let Err(error) = self.sender.try_send(()) {
-            log::error!("Problem triggering site is initialised {:#?}", error)
+            log::error!("Problem triggering site is initialised {error:#?}")
         }
     }
 

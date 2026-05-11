@@ -4,7 +4,6 @@ use super::{
 };
 
 use crate::repository_error::RepositoryError;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use diesel::prelude::*;
 
@@ -25,7 +24,7 @@ joinable!(temperature_breach_config -> store (store_id));
 
 allow_tables_to_appear_in_same_query!(temperature_breach_config, temperature_log);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = temperature_breach_config)]
 pub struct TemperatureBreachConfigRow {
@@ -39,7 +38,6 @@ pub struct TemperatureBreachConfigRow {
     pub minimum_temperature: f64,
     pub maximum_temperature: f64,
 }
-
 pub struct TemperatureBreachConfigRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -49,30 +47,14 @@ impl<'a> TemperatureBreachConfigRowRepository<'a> {
         TemperatureBreachConfigRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &TemperatureBreachConfigRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &TemperatureBreachConfigRow) -> Result<(), RepositoryError> {
         diesel::insert_into(temperature_breach_config::table)
             .values(row)
             .on_conflict(temperature_breach_config::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row, RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        row: &TemperatureBreachConfigRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::TemperatureBreachConfig,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_link_id: None,
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+        Ok(())
     }
 
     pub fn find_one_by_id(

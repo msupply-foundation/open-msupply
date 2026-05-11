@@ -53,7 +53,16 @@ const URL_QUERY_DATE_TIME = 'yyyy-MM-dd HH:mm';
 
 const dateInputHandler = (date: Date | string | number): Date => {
   // Assume a string is an ISO date-time string
-  if (typeof date === 'string') return parseISO(date);
+  if (typeof date === 'string') {
+    // Any dates we receive from the server without timezone information are
+    // assumed to be in UTC time
+    const tIndex = date.indexOf('T');
+    const needsUtcSuffix =
+      tIndex !== -1 &&
+      !date.endsWith('Z') &&
+      !/[+-]/.test(date.substring(tIndex));
+    return parseISO(needsUtcSuffix ? date + 'Z' : date);
+  }
   // Assume a number is a UNIX timestamp
   if (typeof date === 'number') return fromUnixTime(date);
   return date as Date;
@@ -158,7 +167,7 @@ export const DateUtils = {
   isExpired: (expiryDate: Date | string | number): boolean =>
     isPast(expiryDate),
   isAlmostExpired: (
-    expiryDate: Date,
+    expiryDate: Date | string | number,
     threshold = MINIMUM_EXPIRY_MONTHS
   ): boolean => differenceInMonths(expiryDate, Date.now()) <= threshold,
   isSameDay,
@@ -196,8 +205,10 @@ export const DateUtils = {
   endOfWeek,
   setMilliseconds,
   getCurrentYear: () => getYear(new Date()),
-  formatDuration: (date: Date | string | number): string =>
-    formatIfValid(dateInputHandler(date), 'HH:mm:ss'),
+  formatDuration: (
+    date: Date | string | number,
+    formatString: string = 'HH:mm:ss'
+  ): string => formatIfValid(dateInputHandler(date), formatString),
 
   /** Number of milliseconds in one second, i.e. SECOND = 1000*/
   SECOND,
@@ -277,6 +288,11 @@ export const useFormatDateTime = () => {
       return `${months > 0 ? t('label.age-months-and', { count: months }) : ''}${t('label.age-days', { count: days })}`;
   };
 
+  const formatDaysFromToday = (days?: number): string => {
+    const date = days ? DateUtils.addDays(new Date(), days) : new Date();
+    return customDate(date, URL_QUERY_DATE);
+  };
+
   return {
     urlQueryDate: URL_QUERY_DATE,
     urlQueryDateTime: URL_QUERY_DATE_TIME,
@@ -290,5 +306,6 @@ export const useFormatDateTime = () => {
     localisedTime,
     relativeDateTime,
     getDisplayAge,
+    formatDaysFromToday,
   };
 };

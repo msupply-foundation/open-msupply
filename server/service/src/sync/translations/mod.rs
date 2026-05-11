@@ -2,12 +2,13 @@ pub(crate) mod abbreviation;
 pub(crate) mod activity_log;
 pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
+pub(crate) mod asset_catalogue_type;
 pub(crate) mod asset_category;
 pub(crate) mod asset_class;
+pub(crate) mod asset_internal_location;
 pub(crate) mod asset_log;
 pub(crate) mod asset_log_reason;
 pub(crate) mod asset_property;
-pub(crate) mod asset_type;
 pub(crate) mod backend_plugin;
 pub(crate) mod barcode;
 pub(crate) mod campaign;
@@ -21,6 +22,7 @@ pub(crate) mod demographic;
 pub(crate) mod diagnosis;
 pub(crate) mod document;
 pub(crate) mod document_registry;
+pub(crate) mod encounter_legacy;
 pub(crate) mod form_schema;
 pub(crate) mod frontend_plugin;
 pub(crate) mod goods_received;
@@ -66,6 +68,8 @@ pub(crate) mod requisition_line;
 pub(crate) mod rnr_form;
 pub(crate) mod rnr_form_line;
 pub(crate) mod sensor;
+pub(crate) mod shipping_method;
+pub(crate) mod site;
 pub(crate) mod special;
 pub(crate) mod stock_line;
 pub(crate) mod stocktake;
@@ -90,6 +94,7 @@ pub(crate) mod vaccine_course_dose_legacy;
 pub(crate) mod vaccine_course_item;
 pub(crate) mod vaccine_course_item_legacy;
 pub(crate) mod vaccine_course_legacy;
+pub(crate) mod vaccine_course_store_config;
 pub(crate) mod vvm_status;
 pub(crate) mod vvm_status_log;
 pub(crate) mod warning;
@@ -118,6 +123,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         category::boxed(),
         item::boxed(),
         item_store_join::boxed(),
+        site::boxed(),
         store::boxed(),
         master_list::boxed(),
         master_list_line::boxed(),
@@ -172,9 +178,10 @@ pub(crate) fn all_translators() -> SyncTranslators {
         special::clinician_merge::boxed(),
         // Assets
         asset::boxed(),
+        asset_internal_location::boxed(),
         asset_class::boxed(),
         asset_category::boxed(),
-        asset_type::boxed(),
+        asset_catalogue_type::boxed(),
         asset_catalogue_item::boxed(),
         asset_log::boxed(),
         asset_log_reason::boxed(),
@@ -189,8 +196,10 @@ pub(crate) fn all_translators() -> SyncTranslators {
         vaccine_course_legacy::boxed(),
         vaccine_course_dose::boxed(),
         vaccine_course_dose_legacy::boxed(),
+        vaccine_course_store_config::boxed(),
         vaccine_course_item::boxed(),
         vaccine_course_item_legacy::boxed(),
+        encounter_legacy::boxed(),
         demographic::boxed(),
         // Vaccination
         vaccination::boxed(),
@@ -215,9 +224,10 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Purchase Order
         purchase_order::boxed(),
         purchase_order_line::boxed(),
-        // Goods Receiving
+        // Shipping Method
+        shipping_method::boxed(),
+        // Goods Received (legacy OG → InboundShipment)
         goods_received::boxed(),
-        // Goods Received
         goods_received_line::boxed(),
     ]
 }
@@ -294,6 +304,7 @@ impl PartialEq for PullTranslateResult {
     fn eq(&self, other: &Self) -> bool {
         format!("{self:?}") == format!("{other:?}")
     }
+
 }
 
 impl PullTranslateResult {
@@ -304,12 +315,12 @@ impl PullTranslateResult {
         Self::upserts(vec![upsert])
     }
 
-    pub(crate) fn upserts<U>(upsert: Vec<U>) -> Self
+    pub(crate) fn upserts<U>(upserts: Vec<U>) -> Self
     where
         U: Upsert + 'static,
     {
         Self::IntegrationOperations(
-            upsert
+            upserts
                 .into_iter()
                 .map(|upsert| IntegrationOperation::Upsert(Box::new(upsert))) // Source site is added later using add_source_site_id
                 .collect(),
@@ -323,14 +334,14 @@ impl PullTranslateResult {
         Self::deletes(vec![upsert])
     }
 
-    pub(crate) fn deletes<U>(upsert: Vec<U>) -> Self
+    pub(crate) fn deletes<U>(deletes: Vec<U>) -> Self
     where
         U: Delete + 'static,
     {
         Self::IntegrationOperations(
-            upsert
+            deletes
                 .into_iter()
-                .map(|upsert| IntegrationOperation::Delete(Box::new(upsert))) // Source site is added later using add_source_site_id
+                .map(|delete| IntegrationOperation::Delete(Box::new(delete))) // Source site is added later using add_source_site_id
                 .collect(),
         )
     }
@@ -407,11 +418,13 @@ pub(crate) trait SyncTranslation {
     /// A single table name to match on, If there's just one table name to match on, use this function
     fn table_name(&self) -> &str {
         ""
+    
     }
 
     /// If you need to match on more than one table_name with the same translator, use this one...
     fn table_names(&self) -> Vec<&str> {
         vec![self.table_name()]
+    
     }
 
     /// By default matching by table name
@@ -473,10 +486,19 @@ pub(crate) trait SyncTranslation {
         }
     }
 
+    /// Translate a pre-loaded bare row into the JSON wire payload.
+    /// `row` is passed by value so the translator can move fields out
+    /// of it without cloning. Translators that fit (no joined struct
+    /// needed) pattern-match on the matching `Row::*` variant.
+    /// Translators that need additional joined data may use
+    /// `_connection` for further `query_by_filter` lookups; the bare
+    /// `_row` is then ignored. Cursor / store_id / record_id are
+    /// added by the dispatcher.
     fn try_translate_to_upsert_sync_record(
         &self,
-        _: &StorageConnection,
-        _: &ChangelogRow,
+        _connection: &StorageConnection,
+        _changelog: &ChangelogRow,
+        _row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
         Ok(PushTranslateResult::NotMatched)
     }
@@ -496,16 +518,17 @@ pub(crate) struct PushTranslationError {
     source: anyhow::Error,
 }
 
-pub(crate) fn translate_changelogs_to_sync_records(
+pub(crate) fn translate_rows_to_sync_records(
     connection: &StorageConnection,
-    changelogs: Vec<ChangelogRow>,
+    rows: Vec<RowOrDelete>,
     r#type: Vec<ToSyncRecordTranslationType>,
 ) -> Result<Vec<PushSyncRecord>, PushTranslationError> {
     let translators = all_translators();
     let mut out_records = Vec::new();
-    for changelog in changelogs {
+    for row_or_delete in rows {
+        let changelog = row_or_delete.changelog().clone();
         let mut translation_results =
-            translate_changelog(connection, &translators, &changelog, &r#type)
+            translate_row_or_delete(connection, &translators, row_or_delete, &r#type)
                 .map_err(|source| PushTranslationError { source, changelog })?;
         out_records.append(&mut translation_results);
     }
@@ -513,35 +536,35 @@ pub(crate) fn translate_changelogs_to_sync_records(
     Ok(out_records)
 }
 
-fn translate_changelog(
+fn translate_row_or_delete(
     connection: &StorageConnection,
     translators: &SyncTranslators,
-    changelog: &ChangelogRow,
+    row_or_delete: RowOrDelete,
     r#type: &Vec<ToSyncRecordTranslationType>,
 ) -> Result<Vec<PushSyncRecord>, anyhow::Error> {
     let mut translation_results = Vec::new();
+    let changelog = row_or_delete.changelog().clone();
 
     for translator in translators.iter() {
         if !r#type
             .iter()
-            .any(|r| translator.should_translate_to_sync_record(changelog, &r))
+            .any(|r| translator.should_translate_to_sync_record(&changelog, r))
         {
             continue;
         }
 
-        let translation_result = match changelog.row_action {
-            RowActionType::Upsert => {
-                translator.try_translate_to_upsert_sync_record(connection, changelog)?
-            }
-            RowActionType::Delete => {
-                translator.try_translate_to_delete_sync_record(connection, changelog)?
+        let translation_result = match &row_or_delete {
+            RowOrDelete::Row { row, .. } => translator
+                .try_translate_to_upsert_sync_record(connection, &changelog, row.clone())?,
+            RowOrDelete::Delete { .. } => {
+                translator.try_translate_to_delete_sync_record(connection, &changelog)?
             }
         };
 
         match translation_result {
             PushTranslateResult::PushRecord(records) => translation_results.push(records),
             PushTranslateResult::Ignored(ignore_message) => {
-                log::debug!("Ignored record in push translation: {}", ignore_message)
+                log::debug!("Ignored record in push translation: {ignore_message}")
             }
             PushTranslateResult::NotMatched => {}
         }
@@ -578,7 +601,7 @@ fn is_active_record_on_site(
     let result = match &record {
         ActiveRecordCheck::InvoiceLine { invoice_id } => {
             let invoice = InvoiceRepository::new(connection)
-                .query_one(InvoiceFilter::new().id(EqualFilter::equal_to(invoice_id)))
+                .query_one(InvoiceFilter::new().id(EqualFilter::equal_to(invoice_id.to_string())))
                 .map_err(Error::DatabaseError)?
                 .ok_or(Error::ParentRecordNotFound(record))?;
             invoice.store_row.site_id == site_id

@@ -10,6 +10,7 @@ import {
   SnackbarProvider,
 } from '@openmsupply-client/common';
 import { LoginIcon } from '@openmsupply-client/host/src/components/Login/LoginIcon';
+import { LanguageButton } from '@openmsupply-client/host/src/components/LanguageButton';
 import { Theme } from '@common/styles';
 import { DiscoveredServers } from './DiscoveredServers';
 import { ManualServerConfig } from './ManualServerConfig';
@@ -166,6 +167,7 @@ export const ServerDiscovery = () => {
             />
           </Box>
         </Box>
+        <LanguageButton />
       </Stack>
     </SnackbarProvider>
   );

@@ -14,8 +14,8 @@ export const useOutboundItems = () => {
 
     return Object.entries(
       ArrayUtils.groupBy(stockLines, line => line.item.id)
-    ).map(([itemId, lines]) => {
-      return { id: itemId, itemId, lines };
+    ).map(([_, lines]) => {
+      return lines[0]!.item;
     });
   }, []);
 

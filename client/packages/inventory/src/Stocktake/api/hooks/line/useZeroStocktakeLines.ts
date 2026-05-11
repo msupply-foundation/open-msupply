@@ -1,14 +1,14 @@
 import { useNotification, useTranslation } from '@openmsupply-client/common';
 import { useSaveStocktakeLines } from './useStocktakeSaveLines';
 import { ReasonOptionRowFragment } from '@openmsupply-client/system';
-import { useSelectedRows } from '../utils/useSelectedRows';
+import { StocktakeLineFragment } from '../../operations.generated';
 
-export const useZeroStocktakeLines = () => {
+export const useZeroStocktakeLines = (
+  selectedRows: StocktakeLineFragment[]
+) => {
   const { saveAndMapStructuredErrors } = useSaveStocktakeLines();
   const t = useTranslation();
   const { error, success } = useNotification();
-
-  const selectedRows = useSelectedRows();
 
   const onZeroQuantities = async (
     reasonOption: ReasonOptionRowFragment | null

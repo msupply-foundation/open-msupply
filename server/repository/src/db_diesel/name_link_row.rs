@@ -1,6 +1,6 @@
-use super::{location_type_row::location_type, name_link_row::name_link::dsl::*, name_row::name};
+use super::{name_link_row::name_link::dsl::*, name_row::name};
 
-use crate::{RepositoryError, StorageConnection, Upsert};
+use crate::{RepositoryError, StorageConnection, ChangelogSyncType, Upsert};
 
 use diesel::prelude::*;
 
@@ -11,7 +11,6 @@ table! {
     }
 }
 joinable!(name_link -> name (name_id));
-allow_tables_to_appear_in_same_query!(name_link, location_type);
 
 #[derive(Queryable, Insertable, Clone, Debug, PartialEq, AsChangeset, Eq, Default)]
 #[diesel(table_name = name_link)]
@@ -75,9 +74,9 @@ impl<'a> NameLinkRowRepository<'a> {
 }
 
 impl Upsert for NameLinkRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
         NameLinkRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog
     }
 
     // Test only

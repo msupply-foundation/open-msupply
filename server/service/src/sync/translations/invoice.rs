@@ -1,15 +1,12 @@
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 use crate::sync::translations::{
     clinician::ClinicianTranslation, currency::CurrencyTranslation,
     diagnosis::DiagnosisTranslation, name::NameTranslation,
-    name_insurance_join::NameInsuranceJoinTranslation, store::StoreTranslation, to_legacy_time,
-};
+    name_insurance_join::NameInsuranceJoinTranslation, purchase_order::PurchaseOrderTranslation,
+    shipping_method::ShippingMethodTranslation, store::StoreTranslation, to_legacy_time,
 
+};
 use anyhow::Context;
-use util::sync_serde::{
-    date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
-    empty_str_as_option_string, naive_time, zero_date_as_option, zero_f64_as_none,
-};
-
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
@@ -17,11 +14,16 @@ use repository::{
     InvoiceStatus, InvoiceType, KeyValueStoreRepository, NameRow, NameRowRepository,
     StorageConnection, StoreFilter, StoreRepository, StoreRowRepository, SyncBufferRow,
     UserAccountRow, UserAccountRowRepository,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
+use util::sync_serde::{
+    date_option_to_isostring, date_to_isostring, empty_str_as_option, empty_str_as_option_string,
+    naive_time, object_fields_as_option, zero_date_as_option, zero_f64_as_none,
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -121,6 +123,14 @@ pub enum TransactMode {
     #[serde(other)]
     Others,
 }
+#[derive(Deserialize, Serialize, Default)]
+pub struct TransactRowOmsFields {
+    #[serde(default)]
+    pub charges_local_currency: f64,
+    #[serde(default)]
+    pub charges_foreign_currency: f64,
+}
+
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacyTransactRow {
@@ -154,6 +164,9 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub goods_received_ID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "original_PO_ID")]
+    pub purchase_order_id: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub requisition_ID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub linked_transaction_id: Option<String>,
@@ -176,20 +189,19 @@ pub struct LegacyTransactRow {
     /// time in seconds
     #[serde(deserialize_with = "naive_time")]
     pub entry_time: NaiveTime, // e.g. 47046,
-    /// shipped_datetime
-    #[serde(deserialize_with = "zero_date_as_option")]
-    #[serde(serialize_with = "date_option_to_isostring")]
-    pub ship_date: Option<NaiveDate>, // "0000-00-00",
-    /// delivered_datetime
-    #[serde(deserialize_with = "zero_date_as_option")]
-    #[serde(serialize_with = "date_option_to_isostring")]
-    pub arrival_date_actual: Option<NaiveDate>,
-    /// verified_datetime
+    /// delivered_datetime / picked_datetime
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub confirm_date: Option<NaiveDate>,
     #[serde(deserialize_with = "naive_time")]
     pub confirm_time: NaiveTime,
+
+    /// verified_datetime / shipped_datetime
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
+    pub finalised_date: Option<NaiveDate>,
+    #[serde(deserialize_with = "naive_time")]
+    pub finalised_time: NaiveTime,
 
     pub mode: TransactMode,
     #[serde(rename = "tax_rate")]
@@ -275,6 +287,15 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub expected_delivery_date: Option<NaiveDate>,
+
+    #[serde(default)]
+    #[serde(rename = "ship_method_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub shipping_method_id: Option<String>,
+
+    #[serde(default)]
+    #[serde(deserialize_with = "object_fields_as_option")]
+    pub oms_fields: Option<TransactRowOmsFields>,
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
@@ -311,6 +332,7 @@ fn sanitize_legacy_record(mut data: serde_json::Value) -> serde_json::Value {
     }
 
     data
+
 }
 
 // Needs to be added to all_translators()
@@ -332,6 +354,8 @@ impl SyncTranslation for InvoiceTranslation {
             CurrencyTranslation.table_name(),
             DiagnosisTranslation.table_name(),
             NameInsuranceJoinTranslation.table_name(),
+            ShippingMethodTranslation.table_name(),
+            PurchaseOrderTranslation.table_name(),
         ]
     }
 
@@ -344,7 +368,7 @@ impl SyncTranslation for InvoiceTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<serde_json::Value>(&sync_record.data)?;
+        let data = sync_record.deserialize::<serde_json::Value>()?;
         let data = sanitize_legacy_record(data);
         let data = serde_json::from_value::<LegacyTransactRow>(data)?;
         // For owner records, only integrate if it's an insert operation, to happen only during initialisation,
@@ -359,7 +383,9 @@ impl SyncTranslation for InvoiceTranslation {
             )))?;
 
         let name_store_id = StoreRepository::new(connection)
-            .query_by_filter(StoreFilter::new().name_id(EqualFilter::equal_to(&data.name_ID)))?
+            .query_by_filter(
+                StoreFilter::new().name_id(EqualFilter::equal_to(data.name_ID.to_owned())),
+            )?
             .pop()
             .map(|store| store.store_row.id);
 
@@ -399,6 +425,8 @@ impl SyncTranslation for InvoiceTranslation {
             }
         };
 
+        let oms_fields = data.oms_fields.unwrap_or_default();
+
         let status = match data.om_status {
             Some(legacy_om_status) => legacy_om_status.to_invoice_status(),
             None => invoice_status,
@@ -408,7 +436,7 @@ impl SyncTranslation for InvoiceTranslation {
             id: data.ID,
             user_id: data.user_id,
             store_id: data.store_ID,
-            name_link_id: data.name_ID,
+            name_id: data.name_ID,
             name_store_id,
             invoice_number: data.invoice_num,
             r#type: data.om_type.unwrap_or(invoice_type),
@@ -436,7 +464,7 @@ impl SyncTranslation for InvoiceTranslation {
 
             requisition_id: data.requisition_ID,
             linked_invoice_id: data.linked_transaction_id,
-            default_donor_link_id: data.default_donor_id,
+            default_donor_id: data.default_donor_id,
             transport_reference: data.transport_reference,
             original_shipment_id: data.original_shipment_id,
             backdated_datetime: mapping.backdated_datetime,
@@ -446,7 +474,11 @@ impl SyncTranslation for InvoiceTranslation {
             insurance_discount_amount: data.insurance_discount_amount,
             insurance_discount_percentage: data.insurance_discount_percentage,
             expected_delivery_date: data.expected_delivery_date,
-            goods_received_id: data.goods_received_ID,
+            purchase_order_id: data.purchase_order_id,
+            shipping_method_id: data.shipping_method_id,
+            charges_local_currency: oms_fields.charges_local_currency,
+            charges_foreign_currency: oms_fields.charges_foreign_currency,
+            ..Default::default()
         };
 
         // HACK...
@@ -483,22 +515,29 @@ impl SyncTranslation for InvoiceTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Invoice(invoice_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let Some(invoice) = InvoiceRepository::new(connection)
-            .query_by_filter(InvoiceFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
+            .query_by_filter(
+                InvoiceFilter::new().id(EqualFilter::equal_to(invoice_row.id)),
+            )?
             .pop()
         else {
             return Err(anyhow::anyhow!("Invoice not found"));
         };
 
-        let confirm_datetime = to_legacy_confirm_time(&invoice.invoice_row);
+        let legacy_datetimes = to_legacy_datetime(&invoice.invoice_row);
 
         let Invoice {
             invoice_row:
                 InvoiceRow {
                     id,
                     user_id,
-                    name_link_id: _,
+                    name_id: _,
                     name_store_id: _,
                     store_id,
                     invoice_number,
@@ -532,8 +571,11 @@ impl SyncTranslation for InvoiceTranslation {
                     insurance_discount_percentage,
                     is_cancellation,
                     expected_delivery_date,
-                    default_donor_link_id: default_donor_id,
-                    goods_received_id,
+                    default_donor_id,
+                    purchase_order_id,
+                    shipping_method_id,
+                    charges_local_currency,
+                    charges_foreign_currency,
                 },
             name_row,
             clinician_row,
@@ -544,8 +586,7 @@ impl SyncTranslation for InvoiceTranslation {
             Some(_type) => _type,
             None => {
                 return Ok(PushTranslateResult::Ignored(format!(
-                    "Unsupported invoice type {:?}",
-                    r#type
+                    "Unsupported invoice type {type:?}"
                 )))
             }
         };
@@ -554,8 +595,7 @@ impl SyncTranslation for InvoiceTranslation {
             Some(legacy_status) => legacy_status,
             None => {
                 return Ok(PushTranslateResult::Ignored(format!(
-                    "Unsupported invoice status: {:?}",
-                    status
+                    "Unsupported invoice status: {status:?}"
                 )))
             }
         };
@@ -575,12 +615,10 @@ impl SyncTranslation for InvoiceTranslation {
             linked_transaction_id: linked_invoice_id,
             entry_date: created_datetime.date(),
             entry_time: to_legacy_time(created_datetime),
-            ship_date: shipped_datetime
-                .map(|shipped_datetime| date_from_date_time(&shipped_datetime)),
-            arrival_date_actual: delivered_datetime
-                .map(|delivered_datetime| date_from_date_time(&delivered_datetime)),
-            confirm_date: confirm_datetime.0,
-            confirm_time: confirm_datetime.1,
+            confirm_date: legacy_datetimes.confirm_datetime.0,
+            confirm_time: legacy_datetimes.confirm_datetime.1,
+            finalised_date: legacy_datetimes.finalised_datetime.0,
+            finalised_time: legacy_datetimes.finalised_datetime.1,
             tax_percentage,
             mode: if r#type == InvoiceType::Prescription {
                 TransactMode::Dispensary
@@ -610,17 +648,20 @@ impl SyncTranslation for InvoiceTranslation {
             insurance_discount_percentage,
             is_cancellation,
             expected_delivery_date,
-            default_donor_id,
-            goods_received_ID: goods_received_id,
+            default_donor_id: default_donor_id,
+            goods_received_ID: None,
+            purchase_order_id,
+            shipping_method_id,
+            oms_fields: Some(TransactRowOmsFields {
+                charges_local_currency,
+                charges_foreign_currency,
+            
+            }),
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            json_record,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), json_record))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -733,6 +774,11 @@ fn map_legacy(
         .confirm_date
         .map(|confirm_date| NaiveDateTime::new(confirm_date, data.confirm_time));
 
+    let finalised_datetime = data
+        .finalised_date
+        .map(|finalised_date| NaiveDateTime::new(finalised_date, data.finalised_time))
+        .or(confirm_datetime);
+
     // Try to figure out if a legacy record was backdated
     let backdated_datetime = map_backdated_datetime(&mapping.created_datetime, &confirm_datetime);
     if backdated_datetime.is_some() {
@@ -748,67 +794,70 @@ fn map_legacy(
             LegacyTransactStatus::Fn => {
                 mapping.allocated_datetime = confirm_datetime;
                 mapping.picked_datetime = confirm_datetime;
-                mapping.shipped_datetime = confirm_datetime;
+                mapping.shipped_datetime = finalised_datetime;
             }
             _ => {}
         },
-        InvoiceType::InboundShipment | InvoiceType::CustomerReturn => {
-            mapping.received_datetime = confirm_datetime;
-            mapping.delivered_datetime = confirm_datetime;
-            match data.status {
-                LegacyTransactStatus::Nw if is_transfer => {
-                    mapping.shipped_datetime = Some(mapping.created_datetime);
-                }
-                LegacyTransactStatus::Cn => {
-                    mapping.received_datetime = confirm_datetime;
-                    mapping.delivered_datetime = confirm_datetime;
-                }
-                LegacyTransactStatus::Fn => {
-                    mapping.received_datetime = confirm_datetime;
-                    mapping.delivered_datetime = confirm_datetime;
-                    mapping.verified_datetime = confirm_datetime;
-                }
-                _ => {}
+        InvoiceType::InboundShipment | InvoiceType::CustomerReturn => match data.status {
+            LegacyTransactStatus::Nw if is_transfer => {
+                mapping.shipped_datetime = Some(mapping.created_datetime);
             }
-        }
+            LegacyTransactStatus::Cn => {
+                mapping.received_datetime = confirm_datetime;
+                mapping.delivered_datetime = confirm_datetime;
+            }
+            LegacyTransactStatus::Fn => {
+                mapping.received_datetime = confirm_datetime;
+                mapping.delivered_datetime = confirm_datetime;
+                mapping.verified_datetime = finalised_datetime;
+            }
+            _ => {}
+        },
         InvoiceType::Prescription => match data.status {
             LegacyTransactStatus::Cn => {
                 mapping.picked_datetime = confirm_datetime;
             }
             LegacyTransactStatus::Fn => {
                 mapping.picked_datetime = confirm_datetime;
-                mapping.verified_datetime = confirm_datetime;
+                mapping.verified_datetime = finalised_datetime;
             }
             _ => {}
         },
         InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => match data.status {
             LegacyTransactStatus::Cn => {
-                mapping.verified_datetime = confirm_datetime;
+                mapping.verified_datetime = finalised_datetime;
             }
             LegacyTransactStatus::Fn => {
-                mapping.verified_datetime = confirm_datetime;
+                mapping.verified_datetime = finalised_datetime;
             }
             _ => {}
         },
         InvoiceType::Repack => {
             if let LegacyTransactStatus::Fn = data.status {
-                mapping.verified_datetime = confirm_datetime;
+                mapping.verified_datetime = finalised_datetime;
             }
         }
     };
     mapping
+
 }
 
-fn to_legacy_confirm_time(
+struct ToLegacyDatetime {
+    confirm_datetime: (Option<NaiveDate>, NaiveTime),
+    finalised_datetime: (Option<NaiveDate>, NaiveTime),
+}
+
+fn to_legacy_datetime(
     InvoiceRow {
         r#type,
         picked_datetime,
         received_datetime: delivered_datetime,
         verified_datetime,
+        shipped_datetime,
         ..
     }: &InvoiceRow,
-) -> (Option<NaiveDate>, NaiveTime) {
-    let datetime = match r#type {
+) -> ToLegacyDatetime {
+    let confirm_datetime = match r#type {
         InvoiceType::OutboundShipment => picked_datetime,
         InvoiceType::InboundShipment => delivered_datetime,
         InvoiceType::Prescription => picked_datetime,
@@ -820,11 +869,31 @@ fn to_legacy_confirm_time(
         InvoiceType::SupplierReturn => picked_datetime,
     };
 
-    let date = datetime.map(|datetime| datetime.date());
-    let time = datetime
+    let finalised_datetime = match r#type {
+        InvoiceType::OutboundShipment | InvoiceType::Prescription | InvoiceType::SupplierReturn => {
+            shipped_datetime
+        }
+        InvoiceType::InboundShipment
+        | InvoiceType::InventoryAddition
+        | InvoiceType::InventoryReduction
+        | InvoiceType::Repack
+        | InvoiceType::CustomerReturn => verified_datetime,
+    };
+
+    let confirm_date = confirm_datetime.map(|datetime| datetime.date());
+    let confirm_time = confirm_datetime
         .map(to_legacy_time)
         .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
-    (date, time)
+
+    let finalised_date = finalised_datetime.map(|datetime| datetime.date());
+    let finalised_time = finalised_datetime
+        .map(to_legacy_time)
+        .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+
+    ToLegacyDatetime {
+        confirm_datetime: (confirm_date, confirm_time),
+        finalised_datetime: (finalised_date, finalised_time),
+    }
 }
 
 fn invoice_status(
@@ -967,13 +1036,15 @@ fn check_owned_invoice_update(
 mod tests {
     use crate::sync::{
         test::merge_helpers::merge_all_name_links, translations::ToSyncRecordTranslationType,
+    
     };
 
     use super::*;
     use repository::{
         mock::{mock_store_a, MockData, MockDataInserts},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogFilter, ChangelogRepository, KeyType, KeyValueStoreRow,
+        ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, KeyType,
+        KeyValueStoreRow, RowOrDelete,
     };
     use serde_json::json;
 
@@ -1030,23 +1101,26 @@ mod tests {
 
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(ChangelogFilter::new().table_name(ChangelogTableName::Invoice.equal_to())),
-            )
-            .unwrap();
+        let entries = ChangelogRepository::new(&connection).query_with_data(
+            ChangelogCondition::table_name::equal(ChangelogTableName::Invoice),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1_000_000,
+            },
+        )
+        .unwrap();
 
         let translator = InvoiceTranslation {};
-        for changelog in changelogs {
+        for entry in entries {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));

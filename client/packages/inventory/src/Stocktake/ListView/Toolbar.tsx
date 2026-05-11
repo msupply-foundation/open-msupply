@@ -1,50 +1,15 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   useTranslation,
   AppBarContentPortal,
-  FilterController,
-  StocktakeNodeStatus,
-  Autocomplete,
-  AutocompleteOnChange,
-  InputLabel,
+  FilterMenu,
   Box,
-  useSimplifiedTabletUI,
-  FilterRule,
+  StocktakeNodeStatus,
 } from '@openmsupply-client/common';
 
-type StatusOption = {
-  label: string;
-  value: StocktakeNodeStatus;
-};
-
-export const Toolbar: FC<{
-  filter: FilterController;
-}> = ({ filter }) => {
+export const Toolbar = () => {
   const t = useTranslation();
-  const simplifiedTabletView = useSimplifiedTabletUI();
-
-  const onFilterChange: AutocompleteOnChange<StatusOption> = (_, option) => {
-    if (!option) {
-      filter.onClearFilterRule('status');
-      return;
-    }
-    filter.onChangeStringFilterRule('status', 'equalTo', option.value);
-  };
-
-  const options = [
-    { label: t('status.new'), value: StocktakeNodeStatus.New },
-    {
-      label: t('status.finalised'),
-      value: StocktakeNodeStatus.Finalised,
-    },
-  ];
-
-  const selectedFilter = (filter.filterBy?.['status'] as FilterRule)?.equalTo;
-  const selectedOption = options.find(
-    option => option.value === selectedFilter
-  );
-
-  return simplifiedTabletView ? null : (
+  return (
     <AppBarContentPortal
       sx={{
         paddingBottom: '16px',
@@ -53,14 +18,22 @@ export const Toolbar: FC<{
         display: 'flex',
       }}
     >
-      <Box display="flex" alignItems="center" gap={1}>
-        <InputLabel>{t('placeholder.filter-by-status')}</InputLabel>
-        <Autocomplete
-          isOptionEqualToValue={(option, value) => option.value === value.value}
-          width="150px"
-          options={options}
-          onChange={onFilterChange}
-          value={selectedOption ?? null}
+      <Box display="flex" gap={1}>
+        <FilterMenu
+          filters={[
+            {
+              type: 'enum',
+              name: t('label.status'),
+              urlParameter: 'status',
+              options: [
+                { label: t('status.new'), value: StocktakeNodeStatus.New },
+                {
+                  label: t('status.finalised'),
+                  value: StocktakeNodeStatus.Finalised,
+                },
+              ],
+            },
+          ]}
         />
       </Box>
     </AppBarContentPortal>

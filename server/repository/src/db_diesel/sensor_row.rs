@@ -1,7 +1,9 @@
 use super::{location_row::location, store_row::store, StorageConnection};
 
-use crate::{repository_error::RepositoryError, Upsert};
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{
+    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert,
+};
+use crate::{ChangelogRepository, RowActionType};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -33,6 +35,7 @@ pub enum SensorType {
     BlueMaestro,
     Laird,
     Berlinger,
+    LogTag,
 }
 
 // TODO put this somewhere more sensible
@@ -42,11 +45,14 @@ pub fn get_sensor_type(serial: &str) -> SensorType {
         Some("BLUE_MAESTRO") => SensorType::BlueMaestro,
         Some("LAIRD") => SensorType::Laird,
         Some("BERLINGER") => SensorType::Berlinger,
+        Some("LOG_TAG") => SensorType::LogTag,
         _ => SensorType::BlueMaestro,
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Serialize, Default)]
+#[derive(
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Serialize, Deserialize, Default,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = sensor)]
 pub struct SensorRow {
@@ -62,7 +68,6 @@ pub struct SensorRow {
     #[diesel(column_name = "type_")]
     pub r#type: SensorType,
 }
-
 pub struct SensorRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -72,30 +77,24 @@ impl<'a> SensorRowRepository<'a> {
         SensorRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &SensorRow) -> Result<i64, RepositoryError> {
+    pub fn _upsert_one(&self, row: &SensorRow) -> Result<(), RepositoryError> {
         diesel::insert_into(sensor::table)
             .values(row)
             .on_conflict(sensor::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row, RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(
-        &self,
-        row: &SensorRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Sensor,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_link_id: None,
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn upsert_one(&self, row: &SensorRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = row.generate_changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<SensorRow>, RepositoryError> {
@@ -111,12 +110,74 @@ impl<'a> SensorRowRepository<'a> {
             .filter(sensor::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
+
+    fn _soft_delete(&self, sensor_id: &str) -> Result<(), RepositoryError> {
+        diesel::update(sensor::table)
+            .filter(sensor::id.eq(sensor_id))
+            .set(sensor::is_active.eq(false))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SensorRowDelete(pub String);
+
+impl Delete for SensorRowDelete {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let repo = SensorRowRepository::new(con);
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                let row = repo.find_one_by_id(&self.0)?.ok_or_else(|| {
+                    RepositoryError::NotFound
+                })?;
+                row.generate_changelog(
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        repo._soft_delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        let row = SensorRowRepository::new(con)
+            .find_one_by_id(&self.0)
+            .expect("sensor lookup");
+        assert_eq!(row.map(|r| r.is_active), Some(false));
+    }
 }
 
 impl Upsert for SensorRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = SensorRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        SensorRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

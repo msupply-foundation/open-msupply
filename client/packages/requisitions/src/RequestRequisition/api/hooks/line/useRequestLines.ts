@@ -1,50 +1,43 @@
 import { useMemo } from 'react';
-import { SortUtils, useItemUtils } from '@openmsupply-client/common';
-import { useRequestColumns } from '../../../DetailView/columns';
+import { useItemUtils } from '@openmsupply-client/common';
 import { useHideOverStocked } from '../index';
 import { useRequestFields } from '../document/useRequestFields';
 
-export const useRequestLines = () => {
+export const useRequestLines = (draftItemId?: string) => {
   const { on } = useHideOverStocked();
   const { itemFilter, setItemFilter, matchItem } = useItemUtils();
-  const { columns, onChangeSortBy, sortBy } = useRequestColumns();
-  const { lines, minMonthsOfStock, maxMonthsOfStock } = useRequestFields([
-    'lines',
-    'minMonthsOfStock',
-    'maxMonthsOfStock',
-  ]);
+  const { lines, minMonthsOfStock, maxMonthsOfStock, isFetching, isError } =
+    useRequestFields(['lines', 'minMonthsOfStock', 'maxMonthsOfStock']);
 
-  const sorted = useMemo(() => {
-    const threshold = minMonthsOfStock ?? maxMonthsOfStock;
-    const currentColumn = columns.find(({ key }) => key === sortBy.key);
-    const { getSortValue } = currentColumn ?? {};
-    const sorted = getSortValue
-      ? lines?.nodes.sort(
-          SortUtils.getColumnSorter(getSortValue, !!sortBy.isDesc)
-        )
-      : lines?.nodes;
+  const threshold = minMonthsOfStock ?? maxMonthsOfStock;
 
-    if (on) {
-      return sorted?.filter(
-        ({ item, itemStats }) =>
-          (itemStats.availableStockOnHand === 0 &&
-            itemStats.averageMonthlyConsumption === 0) ||
-          (itemStats.availableStockOnHand <
-            itemStats.averageMonthlyConsumption * threshold &&
-            matchItem(itemFilter, item))
-      );
-    } else {
-      return sorted?.filter(item => matchItem(itemFilter, item.item));
-    }
+  const filteredLines = useMemo(() => {
+    const matchingLines = lines?.nodes?.filter(item =>
+      matchItem(itemFilter, item.item)
+    );
+
+    if (!on) return matchingLines;
+
+    return matchingLines.filter(({ item, itemStats }) => {
+      const passesFilter =
+        (itemStats.availableStockOnHand === 0 &&
+          itemStats.averageMonthlyConsumption === 0) ||
+        itemStats.availableStockOnHand <
+          itemStats.averageMonthlyConsumption * threshold;
+
+      // need to account for draft item here
+      const isDraftItem = draftItemId && item.id === draftItemId;
+      return passesFilter || isDraftItem;
+    });
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortBy.key, sortBy.isDesc, lines, on, minMonthsOfStock, itemFilter]);
+  }, [lines, on, threshold, itemFilter, draftItemId]);
 
   return {
-    lines: sorted,
-    sortBy,
-    onChangeSortBy,
-    columns,
+    lines: filteredLines,
     itemFilter,
     setItemFilter,
+    isFetching,
+    isError,
   };
 };

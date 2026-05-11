@@ -52,8 +52,8 @@ mod query_catalogue_item {
                 None,
                 Some(
                     AssetCatalogueItemFilter::new().id(EqualFilter::equal_any(vec![
-                        "e2285ed2-1492-41c2-8933-79591c179ec5".to_owned(),
-                        "f04d5fd1-150d-4ee7-8011-151f74dc42e2".to_owned(),
+                        "e2285ed2-1492-41c2-8933-79591c179ec5".to_string(),
+                        "f04d5fd1-150d-4ee7-8011-151f74dc42e2".to_string(),
                     ])),
                 ),
                 Some(Sort {
@@ -74,7 +74,7 @@ mod query_catalogue_item {
                 None,
                 Some(
                     AssetCatalogueItemFilter::new().id(EqualFilter::equal_any(vec![
-                        "id-that-does-not-exist".to_owned(),
+                        "id-that-does-not-exist".to_string(),
                     ])),
                 ),
                 None,
@@ -230,7 +230,7 @@ mod query_catalogue_item {
                             "some string which does not match anything",
                         ))
                         .id(EqualFilter::equal_any(vec![
-                            "9ba05fbe-3a24-4f1b-af33-d45dd9de8fa8".to_owned(),
+                            "9ba05fbe-3a24-4f1b-af33-d45dd9de8fa8".to_string(),
                         ])),
                 ),
                 None,
@@ -248,8 +248,8 @@ mod query_catalogue_item {
                         .class(StringFilter::like("Cold Chain Equipment"))
                         .category(StringFilter::equal_to("Refrigerators and freezers"))
                         .r#type(StringFilter::equal_any(vec![
-                            "Ultralow freezer".to_owned(),
-                            "Vaccine carrier".to_owned(),
+                            "Ultralow freezer".to_string(),
+                            "Vaccine carrier".to_string(),
                         ])),
                 ),
                 Some(Sort {
@@ -272,8 +272,8 @@ mod query_catalogue_item {
                         .class(StringFilter::like("Cold chain equipment"))
                         .category(StringFilter::equal_to("Refrigerators and freezers"))
                         .r#type(StringFilter::equal_any(vec![
-                            "Freeze-Free Vaccine Carrier Long Range".to_owned(),
-                            "Vaccine Carrier LR 3L".to_owned(),
+                            "Freeze-Free Vaccine Carrier Long Range".to_string(),
+                            "Vaccine Carrier LR 3L".to_string(),
                         ])),
                 ),
                 None,

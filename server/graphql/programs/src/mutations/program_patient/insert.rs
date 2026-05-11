@@ -37,7 +37,8 @@ pub fn insert_program_patient(
     let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
+    let service_context =
+        service_provider.context(store_id.to_string(), user.user_id.to_string())?;
 
     match service_provider.patient_service.upsert_program_patient(
         &service_context,
@@ -56,7 +57,7 @@ pub fn insert_program_patient(
             allowed_ctx: allowed_ctx.clone(),
         })),
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             let std_err = match error {
                 UpdateProgramPatientError::InvalidDataSchema(_) => {
                     StandardGraphqlError::BadUserInput(formatted_error)

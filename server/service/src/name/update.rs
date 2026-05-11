@@ -33,7 +33,7 @@ pub fn update_name_properties(
             NameRepository::new(connection)
                 .query_one(
                     store_id,
-                    NameFilter::new().id(EqualFilter::equal_to(&input.id)),
+                    NameFilter::new().id(EqualFilter::equal_to(input.id.to_string())),
                 )?
                 .ok_or(UpdateNamePropertiesError::UpdatedRecordNotFound)
         })

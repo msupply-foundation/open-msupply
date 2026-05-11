@@ -16,7 +16,7 @@ pub fn mock_name_store_remote_pull() -> NameRow {
 pub fn mock_store_remote_pull() -> StoreRow {
     StoreRow {
         id: "store_remote_pull".to_string(),
-        name_link_id: "name_store_remote_pull".to_string(),
+        name_id: "name_store_remote_pull".to_string(),
         code: "codepull".to_string(),
         ..Default::default()
     }

@@ -35,8 +35,7 @@ fn parse_default_query(input: &str) -> anyhow::Result<DefaultQuery> {
         "requisition" => DefaultQuery::Requisition,
         _ => {
             return Err(anyhow::Error::msg(format!(
-                "Invalid default query: {}",
-                input
+                "Invalid default query: {input}"
             )))
         }
     };
@@ -57,7 +56,7 @@ fn extract_sql_entry(
             let common_query = format!("{query}.sql");
             if let Some(file_path) = files.remove(&common_query) {
                 let query_sql = fs::read_to_string(file_path).map_err(|err| {
-                    anyhow::Error::msg(format!("Failed to load query file: {}", err))
+                    anyhow::Error::msg(format!("Failed to load query file: {err}"))
                 })?;
                 return Ok(SQLQuery {
                     name: query.clone(),
@@ -72,7 +71,7 @@ fn extract_sql_entry(
                     "Sqlite query file ({query_sqlite}) does not exist"
                 )))?;
             let query_sqlite_sql = fs::read_to_string(file_path).map_err(|err| {
-                anyhow::Error::msg(format!("Failed to load Sqlite query file: {}", err))
+                anyhow::Error::msg(format!("Failed to load Sqlite query file: {err}"))
             })?;
             let query_postgres = format!("{query}.postgres.sql");
             let file_path = files
@@ -81,7 +80,7 @@ fn extract_sql_entry(
                     "Postgres query file ({query_postgres}) does not exist"
                 )))?;
             let query_postgres_sql = fs::read_to_string(file_path).map_err(|err| {
-                anyhow::Error::msg(format!("Failed to load Postgres query file: {}", err))
+                anyhow::Error::msg(format!("Failed to load Postgres query file: {err}"))
             })?;
             Ok(SQLQuery {
                 name: query.clone(),
@@ -109,7 +108,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
         .remove(&args.template)
         .ok_or(anyhow::Error::msg("Template file does not exist"))?;
     let data = fs::read_to_string(template_file)
-        .map_err(|err| anyhow::Error::msg(format!("Failed to load template file: {}", err)))?;
+        .map_err(|err| anyhow::Error::msg(format!("Failed to load template file: {err}")))?;
     entries.insert(
         args.template.clone(),
         ReportDefinitionEntry::TeraTemplate(TeraTemplate {
@@ -124,7 +123,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
             .remove(header)
             .ok_or(anyhow::Error::msg("Header file does not exist"))?;
         let data = fs::read_to_string(file_path)
-            .map_err(|err| anyhow::Error::msg(format!("Failed to load header file: {}", err)))?;
+            .map_err(|err| anyhow::Error::msg(format!("Failed to load header file: {err}")))?;
         index.header = Some(header.clone());
         entries.insert(
             header.clone(),
@@ -141,7 +140,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
             .remove(footer)
             .ok_or(anyhow::Error::msg("Footer file does not exist"))?;
         let data = fs::read_to_string(file_path)
-            .map_err(|err| anyhow::Error::msg(format!("Failed to load footer file: {}", err)))?;
+            .map_err(|err| anyhow::Error::msg(format!("Failed to load footer file: {err}")))?;
         index.footer = Some(footer.clone());
         entries.insert(
             footer.clone(),
@@ -170,7 +169,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
             .remove(query_gql)
             .ok_or(anyhow::Error::msg("GraphQl query file does not exist"))?;
         let query = fs::read_to_string(file_path)
-            .map_err(|err| anyhow::Error::msg(format!("Failed to load GQL query file: {}", err)))?;
+            .map_err(|err| anyhow::Error::msg(format!("Failed to load GQL query file: {err}")))?;
         index.query.push(query_gql.clone());
         entries.insert(
             query_gql.clone(),
@@ -203,14 +202,14 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
         let data = match fs::read_to_string(&path) {
             Ok(data) => data,
             Err(_) => {
-                log::warn!("Ignore non text file resource: {:?}", path);
+                log::warn!("Ignore non text file resource: {path:?}");
                 continue;
             }
         };
         let (name, value) = if name.ends_with(".ref.json") {
             // add reference
             let data = serde_json::from_str(&data).map_err(|err| {
-                anyhow::Error::msg(format!("Failed to parse reference {}: {}", name, err))
+                anyhow::Error::msg(format!("Failed to parse reference {name}: {err}"))
             })?;
             let name = name.strip_suffix(".ref.json").unwrap();
             (name.to_string(), ReportDefinitionEntry::Ref(data))
@@ -218,13 +217,13 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
             let name = name.strip_suffix(".json").unwrap();
             if name == "manifest" {
                 let manifest: Manifest = serde_json::from_str(&data).map_err(|err| {
-                    anyhow::Error::msg(format!("Failed to parse report-manifest.json: {}", err))
+                    anyhow::Error::msg(format!("Failed to parse report-manifest.json: {err}"))
                 })?;
                 (name.to_string(), ReportDefinitionEntry::Manifest(manifest))
             } else {
                 // add data as json
                 let data = serde_json::from_str(&data).map_err(|err| {
-                    anyhow::Error::msg(format!("Failed to parse json resource {}: {}", name, err))
+                    anyhow::Error::msg(format!("Failed to parse json resource {name}: {err}"))
                 })?;
                 (name.to_string(), ReportDefinitionEntry::Resource(data))
             }
@@ -247,14 +246,12 @@ pub fn build(args: BuildArgs) -> anyhow::Result<()> {
         .output
         .unwrap_or(PathBuf::new().join("generated").join("output.json"));
     fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
-        "Invalid output path: {:?}",
-        output_path
+        "Invalid output path: {output_path:?}"
     )))?)?;
 
     fs::write(&output_path, serde_json::to_string_pretty(&definition)?).map_err(|_| {
         anyhow::Error::msg(format!(
-            "Failed to write to {:?}. Does output dir exist?",
-            output_path
+            "Failed to write to {output_path:?}. Does output dir exist?"
         ))
     })?;
 

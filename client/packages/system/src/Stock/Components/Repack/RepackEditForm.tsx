@@ -33,6 +33,7 @@ export const RepackEditForm = ({
   const [location, setLocation] = useState<LocationRowFragment | null>(null);
   const textProps = { textAlign: 'end' as 'end' | 'start' };
   const labelProps = { sx: { width: 0 } };
+  const numberDisplaySx = { padding: '4px 8px' };
 
   return (
     <Box justifyContent="center">
@@ -43,7 +44,12 @@ export const RepackEditForm = ({
             <InputWithLabelRow
               label={t('label.packs-available')}
               labelWidth="100%"
-              Input={<NumericTextDisplay value={availableNumberOfPacks} />}
+              Input={
+                <NumericTextDisplay
+                  value={availableNumberOfPacks}
+                  sx={numberDisplaySx}
+                />
+              }
             />
           )}
           <InputWithLabelRow
@@ -67,7 +73,9 @@ export const RepackEditForm = ({
           <InputWithLabelRow
             label={t('label.pack-size')}
             labelWidth="100%"
-            Input={<NumericTextDisplay value={data.packSize} />}
+            Input={
+              <NumericTextDisplay value={data.packSize} sx={numberDisplaySx} />
+            }
           />
           <TextWithLabelRow
             label={t('label.location')}
@@ -101,6 +109,7 @@ export const RepackEditForm = ({
                   ((data.numberOfPacks ?? 0) * (data?.packSize ?? 0)) /
                   (data.newPackSize || 1)
                 }
+                sx={numberDisplaySx}
               />
             }
           />

@@ -1,7 +1,7 @@
 import {
   RequisitionNodeStatus,
   SortBy,
-  FilterByWithBoolean,
+  FilterBy,
   RequisitionSortFieldInput,
   RequisitionNodeType,
   UpdateResponseRequisitionInput,
@@ -21,10 +21,10 @@ import {
 import { DraftResponseLine } from './../DetailView/ResponseLineEdit/hooks';
 
 export type ListParams = {
-  first: number;
-  offset: number;
-  sortBy: SortBy<ResponseRowFragment>;
-  filterBy: FilterByWithBoolean | null;
+  first?: number;
+  offset?: number;
+  sortBy?: SortBy<ResponseRowFragment>;
+  filterBy: FilterBy | null;
 };
 
 const responseParser = {
@@ -39,9 +39,9 @@ const responseParser = {
     }
   },
   toSortField: (
-    sortBy: SortBy<ResponseRowFragment>
+    sortBy?: SortBy<ResponseRowFragment>
   ): RequisitionSortFieldInput => {
-    switch (sortBy.key) {
+    switch (sortBy?.key) {
       case 'createdDatetime': {
         return RequisitionSortFieldInput.CreatedDatetime;
       }
@@ -117,12 +117,17 @@ const responseParser = {
 export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
   get: {
     list: async ({ first, offset, sortBy, filterBy }: ListParams) => {
+      const s = sortBy || {
+        key: 'createdDatetime',
+        direction: 'desc',
+        isDesc: true,
+      };
       const result = await sdk.responses({
         storeId,
         page: { offset, first },
         sort: {
-          key: responseParser.toSortField(sortBy),
-          desc: !!sortBy.isDesc,
+          key: responseParser.toSortField(s),
+          desc: !!s?.isDesc,
         },
         filter: {
           ...filterBy,
@@ -209,6 +214,36 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to create requisition');
   },
+  insertRequestFromResponse: async ({
+    id,
+    responseRequisitionId,
+    otherPartyId,
+    comment,
+  }: {
+    id: string;
+    responseRequisitionId: string;
+    otherPartyId: string;
+    comment?: string;
+  }): Promise<string> => {
+    const result = await sdk.insertRequestFromResponseRequisition({
+      storeId,
+      input: {
+        id,
+        responseRequisitionId,
+        otherPartyId,
+        comment,
+      },
+    });
+
+    const { insertRequestFromResponseRequisition } = result || {};
+
+    if (insertRequestFromResponseRequisition?.__typename === 'RequisitionNode') {
+      return insertRequestFromResponseRequisition.id;
+    }
+
+    throw new Error('Unable to create request from response requisition');
+  },
+
   insertProgram: async (input: InsertProgramResponseRequisitionInput) => {
     const result = await sdk.insertProgramResponse({
       storeId,
@@ -351,5 +386,44 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not update indicator value');
+  },
+
+  responseAddFromMasterList: async ({
+    responseId,
+    masterListId,
+  }: {
+    responseId: string;
+    masterListId: string;
+  }) => {
+    const result = await sdk.responseAddFromMasterList({
+      storeId,
+      responseId,
+      masterListId,
+    });
+
+    if (
+      result.responseAddFromMasterList.__typename === 'RequisitionLineConnector'
+    ) {
+      return result.responseAddFromMasterList;
+    }
+
+    if (
+      result.responseAddFromMasterList.__typename ===
+      'ResponseAddFromMasterListError'
+    ) {
+      throw new Error(result.responseAddFromMasterList.error.__typename);
+    }
+
+    throw new Error('Could not add from master list');
+  },
+  hasCustomerProgramRequisitionSettings: async (
+    customerNameIds: string[]
+  ): Promise<boolean> => {
+    const result = await sdk.hasCustomerProgramRequisitionSettings({
+      storeId,
+      customerNameIds,
+    });
+
+    return result.hasCustomerProgramRequisitionSettings;
   },
 });

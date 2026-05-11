@@ -12,164 +12,81 @@ import {
   TypedTFunction,
   noOtherVariants,
   InvoiceNodeType,
+  SplitButtonOption,
 } from '@openmsupply-client/common';
 import { OutboundFragment, OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
 import { InboundItem } from './types';
-import { PrescriptionRowFragment } from './Prescriptions/api';
+import {
+  PrescriptionLineFragment,
+  PrescriptionRowFragment,
+} from './Prescriptions/api';
 import {
   CustomerReturnFragment,
   CustomerReturnRowFragment,
   SupplierReturnRowFragment,
 } from './Returns';
 
-export const outboundStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Allocated,
-  InvoiceNodeStatus.Picked,
-  InvoiceNodeStatus.Shipped,
-  InvoiceNodeStatus.Delivered,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
+export enum InboundShipmentType {
+  Manual = 'Manual',
+  Internal = 'Internal',
+  External = 'External',
+}
 
-export const inboundStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Picked,
-  InvoiceNodeStatus.Shipped,
-  InvoiceNodeStatus.Delivered,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
-
-export const manualInboundStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Delivered,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
-
-export const nextStatusMap: { [k in InvoiceNodeStatus]?: InvoiceNodeStatus } = {
-  [InvoiceNodeStatus.New]: InvoiceNodeStatus.Delivered,
-  [InvoiceNodeStatus.Shipped]: InvoiceNodeStatus.Delivered,
-  [InvoiceNodeStatus.Delivered]: InvoiceNodeStatus.Received,
-  [InvoiceNodeStatus.Received]: InvoiceNodeStatus.Verified,
+export const getInboundShipmentType = (inbound: {
+  linkedShipment?: { id: string } | null;
+  purchaseOrder?: { id: string } | null;
+}): InboundShipmentType => {
+  if (inbound.purchaseOrder?.id) return InboundShipmentType.External;
+  if (inbound.linkedShipment?.id) return InboundShipmentType.Internal;
+  return InboundShipmentType.Manual;
 };
 
-export const nextStatusMapCustomerReturn: {
-  [k in InvoiceNodeStatus]?: InvoiceNodeStatus;
-} = {
-  [InvoiceNodeStatus.New]: InvoiceNodeStatus.Received,
-  [InvoiceNodeStatus.Shipped]: InvoiceNodeStatus.Received,
-  [InvoiceNodeStatus.Received]: InvoiceNodeStatus.Verified,
-};
-
-export const prescriptionStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Picked,
-  InvoiceNodeStatus.Verified,
-  InvoiceNodeStatus.Cancelled,
-];
-
-export const supplierReturnStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Picked,
-  InvoiceNodeStatus.Shipped,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
-
-export const customerReturnStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Picked,
-  InvoiceNodeStatus.Shipped,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
-export const manualCustomerReturnStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
 
 const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
-  ALLOCATED: 'label.allocated',
-  PICKED: 'label.picked',
-  SHIPPED: 'label.shipped',
-  DELIVERED: 'label.delivered',
-  RECEIVED: 'label.received',
-  NEW: 'label.new',
-  VERIFIED: 'label.verified',
-  CANCELLED: 'label.cancelled',
+  ALLOCATED: 'status.allocated',
+  PICKED: 'status.picked',
+  SHIPPED: 'status.shipped',
+  DELIVERED: 'status.delivered',
+  RECEIVED: 'status.received',
+  NEW: 'status.new',
+  VERIFIED: 'status.verified',
+  CANCELLED: 'status.cancelled',
 };
 
-export const getStatusTranslation = (status: InvoiceNodeStatus): LocaleKey => {
-  return statusTranslation[status];
+export const getPreviousStatus = (
+  currentStatus: InvoiceNodeStatus,
+  validStatuses: InvoiceNodeStatus[],
+  sequence: InvoiceNodeStatus[]
+): InvoiceNodeStatus => {
+  const currentIndex = sequence.findIndex(status => status === currentStatus);
+
+  const previousValidStatus = sequence
+    .slice(0, currentIndex)
+    .reverse()
+    .find(status => validStatuses.includes(status));
+
+  return previousValidStatus ?? InvoiceNodeStatus.New;
 };
 
-export const getNextOutboundStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const currentStatusIdx = outboundStatuses.findIndex(
-    status => currentStatus === status
-  );
-  const nextStatus = outboundStatuses[currentStatusIdx + 1];
-  return nextStatus ?? null;
+export const getNextStatusOption = (
+  status: InvoiceNodeStatus | undefined,
+  options: SplitButtonOption<InvoiceNodeStatus>[]
+): SplitButtonOption<InvoiceNodeStatus> | null => {
+  if (!status) return options[0] ?? null;
+
+  const currentIndex = options.findIndex(o => o.value === status);
+  const nextOption = options[currentIndex + 1];
+  return nextOption || null;
 };
 
-export const getNextSupplierReturnStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const currentStatusIdx = supplierReturnStatuses.findIndex(
-    status => currentStatus === status
-  );
-  const nextStatus = supplierReturnStatuses[currentStatusIdx + 1];
-  return nextStatus ?? null;
-};
-
-export const getNextInboundStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const nextStatus = nextStatusMap[currentStatus];
-  return nextStatus ?? null;
-};
-
-export const getNextCustomerReturnStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const nextStatus = nextStatusMapCustomerReturn[currentStatus];
-  return nextStatus ?? null;
-};
-
-export const getNextPrescriptionStatus = (
-  currentStatus: InvoiceNodeStatus
-): InvoiceNodeStatus | null => {
-  const currentStatusIdx = prescriptionStatuses.findIndex(
-    status => currentStatus === status
-  );
-  const nextStatus = prescriptionStatuses[currentStatusIdx + 1];
-  return nextStatus ?? null;
-};
-
-export const getNextOutboundStatusButtonTranslation = (
-  currentStatus: InvoiceNodeStatus
-): LocaleKey | undefined => {
-  const nextStatus = getNextOutboundStatus(currentStatus);
-
-  if (nextStatus) return statusTranslation[nextStatus];
-
-  return undefined;
-};
-
-export const getNextInboundStatusButtonTranslation = (
-  currentStatus: InvoiceNodeStatus
-): LocaleKey | undefined => {
-  const nextStatus = getNextInboundStatus(currentStatus);
-
-  if (nextStatus) return statusTranslation[nextStatus];
-
-  return undefined;
-};
+export const getButtonLabel =
+  (t: ReturnType<typeof useTranslation>) =>
+  (invoiceStatus: InvoiceNodeStatus): string => {
+    return t('button.save-and-confirm-status', {
+      status: getStatusTranslator(t)(invoiceStatus),
+    });
+  };
 
 export const getStatusTranslator =
   (t: ReturnType<typeof useTranslation>) =>
@@ -200,7 +117,8 @@ export const isOutboundDisabled = (
 };
 
 /** Returns true if the inbound shipment cannot be edited */
-export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
+export const isInboundDisabled = (inbound?: InboundRowFragment): boolean => {
+  if (!inbound) return true;
   const isManuallyCreated = !inbound.linkedShipment?.id;
   if (isManuallyCreated) {
     return inbound.status === InvoiceNodeStatus.Verified;
@@ -223,8 +141,8 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
 };
 
 /** Returns true if the inbound shipment can be put on hold */
-export const isInboundHoldable = (inbound: InboundRowFragment): boolean =>
-  inbound.status !== InvoiceNodeStatus.Verified;
+export const isInboundHoldable = (inbound?: InboundRowFragment): boolean =>
+  inbound ? inbound.status !== InvoiceNodeStatus.Verified : true;
 
 export const isCustomerReturnDisabled = (
   customerReturn: CustomerReturnRowFragment
@@ -246,6 +164,9 @@ export const isPrescriptionDisabled = (
   );
 };
 
+export const isPrescriptionPlaceholderRow = (row: PrescriptionLineFragment) =>
+  row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;
+
 export const isInboundListItemDisabled = (
   inbound: InboundRowFragment | CustomerReturnRowFragment
 ): boolean => {
@@ -261,9 +182,20 @@ export const isInboundPlaceholderRow = (row: InboundLineFragment): boolean =>
   row.numberOfPacks === 0 &&
   !row.shippedNumberOfPacks;
 
+export const getInboundStockLines = (
+  lines: InboundLineFragment[]
+): InboundLineFragment[] =>
+  lines.filter(
+    line =>
+      isA.stockInLine(line) ||
+      isInboundPlaceholderRow(line) ||
+      isA.placeholderLine(line) // for rejected lines
+  );
+
 export const isInboundStatusChangeDisabled = (
-  inbound: InboundFragment | CustomerReturnFragment
+  inbound?: InboundFragment | CustomerReturnFragment
 ): boolean => {
+  if (!inbound) return true;
   if (inbound.onHold) return true;
 
   const isManuallyCreated = !inbound.linkedShipment?.id;
@@ -308,9 +240,9 @@ export const canDeleteInvoice = (
   invoice.status === InvoiceNodeStatus.Picked;
 
 export const canCancelInvoice = (invoice: PrescriptionRowFragment) =>
-  // TO-DO Pass in preferences and check preference enabled
   invoice.type === InvoiceNodeType.Prescription &&
-  invoice.status === InvoiceNodeStatus.Verified;
+  invoice.status === InvoiceNodeStatus.Verified &&
+  !invoice.isCancellation;
 
 export const canDeleteSupplierReturn = (
   SupplierReturn: SupplierReturnRowFragment
@@ -323,6 +255,9 @@ export const canDeletePrescription = (
 ): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Picked;
+
+export const canDeleteInbound = (inbound: InboundRowFragment): boolean =>
+  inbound.status === InvoiceNodeStatus.New;
 
 export const canReturnInboundLines = (inbound: InboundFragment): boolean =>
   inbound.status === InvoiceNodeStatus.Delivered ||
@@ -349,25 +284,23 @@ export const outboundsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
     t('label.created'),
     t('label.reference'),
-    t('label.comment'),
     t('label.total'),
+    t('label.comment'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.otherPartyName,
     node.status,
     node.invoiceNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
     node.theirReference,
-    node.comment,
     node.pricing.totalAfterTax,
+    node.comment,
   ]);
   return Formatter.csv({ fields, data });
 };
@@ -377,19 +310,19 @@ export const supplierReturnsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
     t('label.created'),
+    t('label.reference'),
   ];
 
   const data = returns.map(node => [
-    node.id,
     node.otherPartyName,
     node.status,
     node.invoiceNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
+    node.theirReference,
   ]);
   return Formatter.csv({ fields, data });
 };
@@ -399,21 +332,21 @@ export const customerReturnsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
     t('label.created'),
-    t('label.confirmed'),
+    t('label.reference'),
+    t('label.comment'),
   ];
 
   const data = returns.map(node => [
-    node.id,
     node.otherPartyName,
     node.status,
     node.invoiceNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
-    Formatter.csvDateTimeString(node.deliveredDatetime),
+    node.theirReference,
+    node.comment,
   ]);
   return Formatter.csv({ fields, data });
 };
@@ -423,25 +356,25 @@ export const inboundsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
-    t('label.status'),
     t('label.invoice-number'),
     t('label.created'),
-    t('label.confirmed'),
-    t('label.comment'),
+    t('label.delivered'),
+    t('label.status'),
+    t('label.reference'),
     t('label.total'),
+    t('label.comment'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.otherPartyName,
-    node.status,
     node.invoiceNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
     Formatter.csvDateTimeString(node.deliveredDatetime),
-    node.comment,
+    node.status,
+    node.theirReference,
     node.pricing.totalAfterTax,
+    node.comment,
   ]);
   return Formatter.csv({ fields, data });
 };
@@ -451,20 +384,20 @@ export const prescriptionToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.created'),
+    t('label.prescription-date'),
+    t('label.reference'),
     t('label.comment'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.otherPartyName,
-    t(getStatusTranslation(node.status)),
+    getStatusTranslator(t)(node.status),
     node.invoiceNumber,
-    Formatter.csvDateTimeString(node.createdDatetime),
+    Formatter.csvDateTimeString(node.prescriptionDate || node.createdDatetime),
+    node.theirReference,
     node.comment,
   ]);
   return Formatter.csv({ fields, data });

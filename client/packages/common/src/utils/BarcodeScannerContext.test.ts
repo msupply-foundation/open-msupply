@@ -1,9 +1,10 @@
-import { parseBarcodeData, parseResult } from './BarcodeScannerContext';
+import { parseResult } from './BarcodeScannerContext';
+import { BarcodeUtils } from './barcode/BarcodeUtils';
 
 describe('barcode parsing', () => {
   it('parses UPC-A', () => {
     const barcode = new Array(12).fill(56);
-    const result = parseBarcodeData(barcode);
+    const result = BarcodeUtils.parseBarcodeFromBytes(barcode);
     expect(result).toBe('88888888');
   });
 
@@ -14,7 +15,7 @@ describe('barcode parsing', () => {
       37, 11, 0, 0, 0, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0,
     ];
-    const result = parseBarcodeData(barcode);
+    const result = BarcodeUtils.parseBarcodeFromBytes(barcode);
     expect(result).toBe('01108479760000401319112010ABC1234');
   });
 
@@ -25,7 +26,7 @@ describe('barcode parsing', () => {
       22, 37, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0,
     ];
-    const result = parseBarcodeData(barcode);
+    const result = BarcodeUtils.parseBarcodeFromBytes(barcode);
     expect(result).toBe('01108479760000401319112010ABC1234');
   });
 });

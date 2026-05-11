@@ -1,8 +1,8 @@
 use super::StorageConnection;
 
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    Upsert,
+    ChangelogRepository, ChangelogSyncType,
+    RepositoryError, RowActionType, SourceSiteId, Upsert,
 };
 
 use diesel::prelude::*;
@@ -25,7 +25,6 @@ pub struct DemographicRow {
     pub name: String,
     pub population_percentage: f64,
 }
-
 pub struct DemographicRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -35,30 +34,25 @@ impl<'a> DemographicRowRepository<'a> {
         DemographicRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &DemographicRow) -> Result<i64, RepositoryError> {
+    pub fn _upsert_one(&self, row: &DemographicRow) -> Result<(), RepositoryError> {
         diesel::insert_into(demographic::table)
             .values(row)
             .on_conflict(demographic::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-
-        self.insert_changelog(row.id.to_owned(), RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(
-        &self,
-        row_id: String,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Demographic,
-            record_id: row_id,
-            row_action: action,
-            store_id: None,
-            ..Default::default()
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn upsert_one(&self, row: &DemographicRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = DemographicRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(
@@ -82,12 +76,32 @@ impl<'a> DemographicRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<DemographicRow>, RepositoryError> {
+        Ok(demographic::table
+            .filter(demographic::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for DemographicRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = DemographicRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        DemographicRowRepository::new(con)._upsert_one(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

@@ -13,10 +13,11 @@ use crate::{
 
 use chrono::NaiveDate;
 use diesel::{dsl::IntoBoxed, prelude::*};
+use serde::{Deserialize, Serialize};
 
 pub type Patient = NameRow;
 
-#[derive(Clone, Default, PartialEq, Debug)]
+#[derive(Clone, Default, PartialEq, Debug, Serialize, Deserialize)]
 pub struct PatientFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
@@ -405,7 +406,7 @@ mod tests {
 
         let result = PatientRepository::new(&connection)
             .query_by_filter(
-                PatientFilter::new().id(EqualFilter::equal_to("patient_1")),
+                PatientFilter::new().id(EqualFilter::equal_to("patient_1".to_string())),
                 None,
             )
             .unwrap();
@@ -469,7 +470,7 @@ mod tests {
                 .names()
                 .stores()
                 .name_store_joins()
-                .full_master_list()
+                .full_master_lists()
                 .contexts()
                 .programs(),
         )
@@ -531,7 +532,7 @@ mod tests {
             .upsert_one(&ProgramEnrolmentRow {
                 id: util::uuid::uuid(),
                 document_name: "doc_name".to_string(),
-                patient_link_id: patient_row.id.clone(),
+                patient_id: patient_row.id.clone(),
                 document_type: "ProgramType".to_string(),
                 program_id: mock_program_a().id,
                 enrolment_datetime: Utc::now().naive_utc(),
@@ -618,7 +619,7 @@ mod tests {
                 .names()
                 .stores()
                 .name_store_joins()
-                .full_master_list()
+                .full_master_lists()
                 .contexts()
                 .programs(),
         )
@@ -641,7 +642,7 @@ mod tests {
             .upsert_one(&ProgramEnrolmentRow {
                 id: util::uuid::uuid(),
                 document_name: "doc_name".to_string(),
-                patient_link_id: patient_row.id.clone(),
+                patient_id: patient_row.id.clone(),
                 document_type: "ProgramType".to_string(),
                 program_id: mock_program_a().id,
                 enrolment_datetime: Utc::now().naive_utc(),

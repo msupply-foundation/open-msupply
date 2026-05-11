@@ -2,14 +2,13 @@ import {
   useQueryClient,
   useMutation,
   useTranslation,
-  useTableStore,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { OutboundFragment } from './../../operations.generated';
 import { useOutboundApi } from './../utils/useOutboundApi';
 import { useOutboundId } from '../utils/useOutboundId';
 import { useOutboundIsDisabled } from './../utils/useOutboundIsDisabled';
-import { useOutboundRows } from './useOutboundRows';
+import { StockOutLineFragment } from 'packages/invoices/src/StockOut';
 
 export const useOutboundDeleteLines = () => {
   const outboundId = useOutboundId();
@@ -50,40 +49,31 @@ export const useOutboundDeleteLines = () => {
   });
 };
 
-export const useOutboundDeleteSelectedLines = (): (() => void) => {
-  const { items, lines } = useOutboundRows();
+export const useOutboundDeleteSelectedLines = (
+  rowsToDelete: StockOutLineFragment[],
+  resetRowSelection: () => void
+): (() => void) => {
   const { mutateAsync } = useOutboundDeleteLines();
   const isDisabled = useOutboundIsDisabled();
   const t = useTranslation();
 
-  const selectedRows =
-    useTableStore(state => {
-      const { isGrouped } = state;
-
-      return isGrouped
-        ? items
-          ?.filter(({ id }) => state.rowState[id]?.isSelected)
-          .map(({ lines }) => lines.flat())
-          .flat()
-        : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
-    }) || [];
-
   const onDelete = async () => {
-    await mutateAsync(selectedRows || []).catch(err => {
+    await mutateAsync(rowsToDelete || []).catch(err => {
       throw err;
     });
+    resetRowSelection();
   };
 
   const confirmAndDelete = useDeleteConfirmation({
-    selectedRows,
+    selectedRows: rowsToDelete,
     deleteAction: onDelete,
     canDelete: !isDisabled,
     messages: {
       confirmMessage: t('messages.confirm-delete-invoice-lines', {
-        count: selectedRows.length,
+        count: rowsToDelete.length,
       }),
       deleteSuccess: t('messages.deleted-lines', {
-        count: selectedRows.length,
+        count: rowsToDelete.length,
       }),
     },
   });

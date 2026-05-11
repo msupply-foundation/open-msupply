@@ -1,9 +1,13 @@
-import { StockLineSortFieldInput, useQuery } from '@openmsupply-client/common';
+import {
+  FilterBy,
+  StockLineSortFieldInput,
+  useQuery,
+} from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../operations.generated';
 import { useStockGraphQL } from '../useStockGraphQL';
 import { LIST, STOCK } from './keys';
 
-export const useExportStockList = () => {
+export const useExportStockList = (filterBy: FilterBy | null) => {
   const { stockApi, storeId } = useStockGraphQL();
 
   const queryKey = [STOCK, storeId, LIST];
@@ -15,7 +19,7 @@ export const useExportStockList = () => {
       key: StockLineSortFieldInput.ItemName,
       desc: false,
       storeId,
-      filter: { hasPacksInStore: true },
+      filter: { ...filterBy, hasPacksInStore: true },
     });
     return result?.stockLines;
   };
@@ -25,5 +29,5 @@ export const useExportStockList = () => {
     queryFn,
     enabled: false,
   });
-  return { data, fetchAllStock: refetch, isLoading, isError };
+  return { data, fetchStock: refetch, isLoading, isError };
 };

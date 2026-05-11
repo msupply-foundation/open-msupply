@@ -1,8 +1,11 @@
 import React, { FC } from 'react';
-import { Box, DetailFormSkeleton } from '@openmsupply-client/common';
+import {
+  Box,
+  DetailFormSkeleton,
+  LocaleKey,
+  StatusChip,
+} from '@openmsupply-client/common';
 import { SimpleLabelDisplay } from '../../Components/SimpleLabelDisplay';
-import { Status } from 'packages/coldchain/src/Equipment/Components';
-
 import { AccordionPanelSection } from 'packages/invoices/src/Prescriptions/LineEditView/PanelSection';
 import { useEquipmentDetailView } from 'packages/coldchain/src/Equipment/DetailView';
 import {
@@ -14,6 +17,7 @@ import { StatusLogs } from 'packages/coldchain/src/Equipment/DetailView/Tabs/Sta
 import { UpdateStatusButton } from 'packages/coldchain/src/Equipment/DetailView/UpdateStatusButton';
 import { Documents } from 'packages/coldchain/src/Equipment/DetailView/Tabs/Documents';
 import { LogCardListView } from './LogCardListView';
+import { statusColourMap } from 'packages/coldchain/src/Equipment/utils';
 
 export const EquipmentDetailView: FC = () => {
   const {
@@ -31,8 +35,11 @@ export const EquipmentDetailView: FC = () => {
   } = useEquipmentDetailView();
 
   if (isLoading && isLoadingLocations) return <DetailFormSkeleton />;
-
   if (!data) return <h1>{t('error.asset-not-found')}</h1>;
+
+  const status = data.statusLog?.status
+    ? statusColourMap(data.statusLog?.status)
+    : undefined;
 
   return (
     <Box
@@ -59,17 +66,20 @@ export const EquipmentDetailView: FC = () => {
         }}
       >
         <SimpleLabelDisplay
-          label="Manufacturer"
+          label={t('label.manufacturer')}
           value={data.catalogueItem?.manufacturer || 'n/a'}
         />
         <SimpleLabelDisplay
-          label="Type"
+          label={t('label.type')}
           value={data.assetType?.name || 'n/a'}
         />
       </Box>
 
       <Box sx={{ padding: '.2rem', marginBottom: '.5em' }}>
-        <Status status={data.statusLog?.status} />
+        <StatusChip
+          label={t(status?.label as LocaleKey)}
+          colour={status?.colour}
+        />
       </Box>
 
       <Box
@@ -79,23 +89,35 @@ export const EquipmentDetailView: FC = () => {
           gap: 1,
         }}
       >
-        <AccordionPanelSection title="Status History" defaultExpanded={false}>
+        <AccordionPanelSection
+          title={t('label.statushistory')}
+          defaultExpanded={false}
+        >
           {draft === undefined ? null : <StatusLogs assetId={draft.id} />}
         </AccordionPanelSection>
 
-        <AccordionPanelSection title="Summary" defaultExpanded={false}>
+        <AccordionPanelSection
+          title={t('label.summary')}
+          defaultExpanded={false}
+        >
           <Summary onChange={onChange} draft={draft} locations={locations} />
         </AccordionPanelSection>
 
-        <AccordionPanelSection title="Details" defaultExpanded={false}>
+        <AccordionPanelSection
+          title={t('label.details')}
+          defaultExpanded={false}
+        >
           <Details onChange={onChange} draft={draft} />
         </AccordionPanelSection>
 
-        <AccordionPanelSection title="Documents" defaultExpanded={false}>
+        <AccordionPanelSection
+          title={t('label.documents')}
+          defaultExpanded={false}
+        >
           {draft === undefined ? null : <Documents draft={draft} />}
         </AccordionPanelSection>
 
-        <AccordionPanelSection title="Logs" defaultExpanded={false}>
+        <AccordionPanelSection title={t('label.log')} defaultExpanded={false}>
           <LogCardListView recordId={data?.id} />
         </AccordionPanelSection>
         {isDirty && (

@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Action,
   ActionsFooter,
@@ -9,16 +9,26 @@ import {
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { useAssetDelete } from '../api/hooks';
+import { AssetCatalogueItemFragment } from '../api';
 
-export const FooterComponent: FC = () => {
+export const FooterComponent = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: AssetCatalogueItemFragment[];
+  resetRowSelection: () => void;
+}) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
 
-  const { deleteAssets, selectedRows } = useAssetDelete();
+  const { deleteAssets } = useAssetDelete();
 
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
-    deleteAction: deleteAssets,
+    deleteAction: async () => {
+      deleteAssets(selectedRows);
+      resetRowSelection();
+    },
     messages: {
       confirmMessage: t('messages.confirm-delete-assets', {
         count: selectedRows.length,
@@ -45,6 +55,7 @@ export const FooterComponent: FC = () => {
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
         </>

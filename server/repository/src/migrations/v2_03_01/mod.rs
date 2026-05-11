@@ -5,6 +5,7 @@ mod add_demographic_table;
 mod add_reference_and_comment_to_rnr_form;
 mod add_rnr_columns;
 mod move_vaccine_course_to_demographic;
+mod update_changelog_for_demographic_table;
 
 pub(crate) struct V2_03_01;
 
@@ -20,6 +21,7 @@ impl Migration for V2_03_01 {
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
             Box::new(add_demographic_table::Migrate),
+            Box::new(update_changelog_for_demographic_table::Migrate),
             Box::new(move_vaccine_course_to_demographic::Migrate),
             Box::new(add_reference_and_comment_to_rnr_form::Migrate),
             Box::new(add_rnr_columns::Migrate),

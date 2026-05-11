@@ -43,13 +43,13 @@ async fn migration_2_02_01() {
 
     add_rnr_form_changelogs_no_store_id(&connection).unwrap();
 
-    assert_eq!(check_changelogs_have_store_id(&connection), false);
+    assert!(!check_changelogs_have_store_id(&connection));
 
     // Run this migration
     migrate(&connection, Some(version.clone())).unwrap();
     assert_eq!(get_database_version(&connection), version);
 
-    assert_eq!(check_changelogs_have_store_id(&connection), true);
+    assert!(check_changelogs_have_store_id(&connection));
 }
 
 // Temp table definition for testing for changelog schema at this point in time

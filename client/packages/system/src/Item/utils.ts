@@ -49,7 +49,6 @@ interface GenericStockItemSearchInputProps {
 export interface StockItemSearchInputProps
   extends GenericStockItemSearchInputProps {
   onChange: (item: ItemStockOnHandFragment | null) => void;
-  extraFilter?: (item: ItemStockOnHandFragment) => boolean;
   filter?: ItemFilterInput;
   itemCategoryName?: string;
   programId?: string;
@@ -63,7 +62,7 @@ export const ItemOption = styled('li')(({ theme }) => ({
 export interface StockItemSearchInputWithStatsProps
   extends GenericStockItemSearchInputProps {
   onChange: (item: ItemWithStatsFragment | null) => void;
-  extraFilter?: (item: ItemWithStatsFragment) => boolean;
+  filter: ItemFilterInput;
 }
 
 export const itemFilterOptions = {

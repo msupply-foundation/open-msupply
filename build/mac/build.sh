@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Current directory
 DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -41,6 +42,7 @@ cp "server/target/${TARGET}/release/remote_server_cli" $DESTINATION/bin
 # Copy configurations
 mkdir $DESTINATION/configuration
 cp -R server/configuration/base.yaml $DESTINATION/configuration/
+mkdir $DESTINATION/app_data
 # Local file should be present
 touch $DESTINATION/configuration/local.yaml
 

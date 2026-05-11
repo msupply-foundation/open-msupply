@@ -32,8 +32,9 @@ pub fn get_demographic_projection(
 ) -> Result<DemographicProjection, SingleRecordError> {
     let repository = DemographicProjectionRepository::new(&ctx.connection);
 
-    let mut result = repository
-        .query_by_filter(DemographicProjectionFilter::new().id(EqualFilter::equal_to(&id)))?;
+    let mut result = repository.query_by_filter(
+        DemographicProjectionFilter::new().id(EqualFilter::equal_to(id.to_string())),
+    )?;
 
     if let Some(record) = result.pop() {
         Ok(record)
@@ -49,7 +50,7 @@ pub fn get_demographic_projection_by_base_year(
     let repository = DemographicProjectionRepository::new(&ctx.connection);
 
     let mut result = repository.query_by_filter(
-        DemographicProjectionFilter::new().base_year(EqualFilter::equal_to_i32(base_year)),
+        DemographicProjectionFilter::new().base_year(EqualFilter::equal_to(base_year)),
     )?;
 
     Ok(result.pop())

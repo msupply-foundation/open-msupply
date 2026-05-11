@@ -1,19 +1,26 @@
 import React from 'react';
 import {
   AppBarContentPortal,
+  Box,
   InputWithLabelRow,
   BufferedTextInput,
   Grid,
   useTranslation,
-  SearchBar,
   Alert,
   Tooltip,
   Switch,
   Autocomplete,
   useConfirmationModal,
+  usePreferences,
+  NameNodeType,
+  SearchBar,
 } from '@openmsupply-client/common';
-import { InternalSupplierSearchInput } from '@openmsupply-client/system';
+import {
+  CustomerSearchInput,
+  InternalSupplierSearchInput,
+} from '@openmsupply-client/system';
 import { useHideOverStocked, useRequest } from '../../api';
+import { useRequestLines } from '../../api/hooks/line/useRequestLines';
 
 const MONTHS = [1, 2, 3, 4, 5, 6];
 
@@ -22,19 +29,23 @@ export const Toolbar = () => {
   const t = useTranslation();
   const isDisabled = useRequest.utils.isDisabled();
   const isProgram = useRequest.utils.isProgram();
-  const { itemFilter, setItemFilter } = useRequest.line.list();
+  const { itemFilter, setItemFilter } = useRequestLines();
+
   const {
     minMonthsOfStock,
     maxMonthsOfStock,
     theirReference,
     update,
     otherParty,
+    destinationCustomer,
   } = useRequest.document.fields([
     'theirReference',
     'otherParty',
     'minMonthsOfStock',
     'maxMonthsOfStock',
+    'destinationCustomer',
   ]);
+  const { selectDestinationStoreForAnInternalOrder } = usePreferences();
 
   const getMinMOSConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
@@ -68,7 +79,9 @@ export const Toolbar = () => {
                 <InternalSupplierSearchInput
                   disabled={isDisabled || isProgram}
                   value={otherParty ?? null}
-                  onChange={otherParty => update({ otherParty: otherParty ?? undefined })}
+                  onChange={otherParty =>
+                    update({ otherParty: otherParty ?? undefined })
+                  }
                 />
               }
             />
@@ -77,23 +90,53 @@ export const Toolbar = () => {
             label={t('label.supplier-ref')}
             Input={
               <Tooltip title={theirReference} placement="bottom-start">
-                <BufferedTextInput
-                  disabled={isDisabled}
-                  size="small"
-                  sx={{ width: 250 }}
-                  value={theirReference ?? null}
-                  onChange={e => update({ theirReference: e.target.value })}
-                />
+                <Box>
+                  <BufferedTextInput
+                    disabled={isDisabled}
+                    size="small"
+                    sx={{ width: 250 }}
+                    value={theirReference ?? ''}
+                    onChange={e => update({ theirReference: e.target.value })}
+                  />
+                </Box>
               </Tooltip>
             }
           />
+          {selectDestinationStoreForAnInternalOrder && (
+            <InputWithLabelRow
+              label={t('label.destination-customer')}
+              Input={
+                <CustomerSearchInput
+                  disabled={isDisabled}
+                  value={destinationCustomer ?? null}
+                  onChange={destinationCustomer =>
+                    update({
+                      destinationCustomer: destinationCustomer,
+                    })
+                  }
+                  clearable
+                  extraFilter={option => option.id !== otherParty?.id}
+                  filterBy={{
+                    type: { equalTo: NameNodeType.Store },
+                  }}
+                />
+              }
+            />
+          )}
           {isProgram && (
             <Alert severity="info" sx={{ maxWidth: 1000 }}>
               {t('info.cannot-edit-program-requisition')}
             </Alert>
           )}
         </Grid>
-        <Grid>
+        <Grid
+          display="flex"
+          flex={1}
+          flexDirection="column"
+          gap={1}
+          justifyContent="flex-end"
+          alignItems="flex-end"
+        >
           <InputWithLabelRow
             label={t('label.min-months-of-stock')}
             labelWidth={'350px'}
@@ -171,26 +214,22 @@ export const Toolbar = () => {
             alignItems="flex-end"
             justifyContent="flex-end"
           >
-            <Grid>
-              <Switch
-                label={t('label.hide-stock-over-minimum')}
-                onChange={toggle}
-                checked={on}
-                color="secondary"
-                size="small"
-                labelSx={{ margin: '5px 0' }}
-              />
-            </Grid>
-            <Grid>
-              <SearchBar
-                placeholder={t('placeholder.filter-items')}
-                value={itemFilter}
-                onChange={newValue => {
-                  setItemFilter(newValue);
-                }}
-                debounceTime={0}
-              />
-            </Grid>
+            <Switch
+              label={t('label.hide-stock-over-minimum')}
+              onChange={toggle}
+              checked={on}
+              color="secondary"
+              size="small"
+              labelSx={{ margin: '5px 0' }}
+            />
+            <SearchBar
+              placeholder={t('placeholder.filter-items')}
+              value={itemFilter}
+              onChange={newValue => {
+                setItemFilter(newValue);
+              }}
+              debounceTime={0}
+            />
           </Grid>
         </Grid>
       </Grid>

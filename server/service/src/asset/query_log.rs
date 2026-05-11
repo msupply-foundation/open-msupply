@@ -24,8 +24,8 @@ pub fn get_asset_logs(
 pub fn get_asset_log(ctx: &ServiceContext, id: String) -> Result<AssetLog, SingleRecordError> {
     let repository = AssetLogRepository::new(&ctx.connection);
 
-    let mut result =
-        repository.query_by_filter(AssetLogFilter::new().id(EqualFilter::equal_to(&id)))?;
+    let mut result = repository
+        .query_by_filter(AssetLogFilter::new().id(EqualFilter::equal_to(id.to_string())))?;
 
     if let Some(record) = result.pop() {
         Ok(record)

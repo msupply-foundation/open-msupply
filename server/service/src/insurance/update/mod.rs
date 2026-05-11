@@ -46,6 +46,7 @@ pub struct UpdateInsurance {
     pub discount_percentage: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
     pub is_active: Option<bool>,
+    pub name_of_insured: Option<String>,
 }
 
 pub fn update_insurance(

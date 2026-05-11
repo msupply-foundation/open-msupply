@@ -14,7 +14,6 @@ mod test_update {
         RequisitionLineRowRepository, RequisitionRowRepository,
     };
 
-
     use crate::{
         requisition::request_requisition::{
             UpdateRequestRequisition, UpdateRequestRequisitionError as ServiceError,
@@ -42,7 +41,7 @@ mod test_update {
         fn not_a_supplier_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "not_a_supplier_join".to_string(),
-                name_link_id: not_a_supplier().id,
+                name_id: not_a_supplier().id,
                 store_id: mock_store_a().id,
                 name_is_supplier: false,
                 ..Default::default()
@@ -196,6 +195,7 @@ mod test_update {
                     min_months_of_stock: None,
                     other_party_id: Some(mock_name_store_c().id),
                     expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap()),
+                    destination_customer_id: None,
                 },
             )
             .unwrap();
@@ -207,19 +207,16 @@ mod test_update {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            updated_row,
-            {
-                let mut expected = updated_row.clone();
-                expected.colour = Some("new colour".to_string());
-                expected.status = RequisitionStatus::Sent;
-                expected.their_reference = Some("new their_reference".to_string());
-                expected.comment = Some("new comment".to_string());
-                expected.name_link_id = mock_name_store_c().id;
-                expected.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap());
-                expected
-            }
-        );
+        assert_eq!(updated_row, {
+            let mut expected = updated_row.clone();
+            expected.colour = Some("new colour".to_string());
+            expected.status = RequisitionStatus::Sent;
+            expected.their_reference = Some("new their_reference".to_string());
+            expected.comment = Some("new comment".to_string());
+            expected.name_id = mock_name_store_c().id;
+            expected.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap());
+            expected
+        });
 
         let sent_datetime = updated_row.sent_datetime.unwrap();
         assert!(sent_datetime > before_update && sent_datetime < after_update);

@@ -2,7 +2,9 @@ use repository::name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoin
 
 use crate::sync::{
     test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
-    translations::name_insurance_join::{LegacyInsurancePolicyType, LegacyNameInsuranceJoinRow},
+    translations::name_insurance_join::{
+        LegacyInsurancePolicyType, LegacyNameInsuranceJoinRow, LegacyNameInsuranceJoinRowOmsFields,
+    },
 };
 use serde_json::json;
 
@@ -21,7 +23,8 @@ const NAME_INSURANCE_JOIN_1: (&str, &str) = (
         "policyNumberFamily": "888",
         "policyNumberFull": "888",
         "policyNumberPerson": "",
-        "type": "personal"
+        "type": "personal",
+        "oms_fields": { "name_of_insured": "D" }
     }"#,
 );
 
@@ -31,16 +34,17 @@ fn name_insurance_join_1() -> TestSyncIncomingRecord {
         NAME_INSURANCE_JOIN_1,
         NameInsuranceJoinRow {
             id: NAME_INSURANCE_JOIN_1.0.to_owned(),
-            name_link_id: "1FB32324AF8049248D929CFB35F255BA".to_owned(),
-            insurance_provider_id: "INSURANCE_PROVIDER_1_ID".to_owned(),
+            name_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+            insurance_provider_id: "INSURANCE_PROVIDER_1_ID".to_string(),
             policy_number_person: None,
-            policy_number_family: Some("888".to_owned()),
-            policy_number: "888".to_owned(),
+            policy_number_family: Some("888".to_string()),
+            policy_number: "888".to_string(),
             policy_type: InsurancePolicyType::Personal,
             discount_percentage: 30.0,
             expiry_date: "2026-01-23".parse().unwrap(),
             is_active: true,
             entered_by_id: None,
+            name_of_insured: Some("D".to_string()),
         },
     )
 }
@@ -58,7 +62,8 @@ const NAME_INSURANCE_JOIN_2: (&str, &str) = (
         "policyNumberFamily": "",
         "policyNumberFull": "777",
         "policyNumberPerson": "777",
-        "type": "business"
+        "type": "business",
+        "oms_fields": {}
     }"#,
 );
 
@@ -68,16 +73,17 @@ fn name_insurance_join_2() -> TestSyncIncomingRecord {
         NAME_INSURANCE_JOIN_2,
         NameInsuranceJoinRow {
             id: NAME_INSURANCE_JOIN_2.0.to_owned(),
-            name_link_id: "1FB32324AF8049248D929CFB35F255BA".to_owned(),
-            insurance_provider_id: "INSURANCE_PROVIDER_1_ID".to_owned(),
-            policy_number_person: Some("777".to_owned()),
+            name_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+            insurance_provider_id: "INSURANCE_PROVIDER_1_ID".to_string(),
+            policy_number_person: Some("777".to_string()),
             policy_number_family: None,
-            policy_number: "777".to_owned(),
+            policy_number: "777".to_string(),
             policy_type: InsurancePolicyType::Business,
             discount_percentage: 20.5,
             expiry_date: "2027-01-01".parse().unwrap(),
             is_active: true,
             entered_by_id: None,
+            name_of_insured: None,
         },
     )
 }
@@ -103,6 +109,9 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
                 policyNumberFull: "888".to_string(),
                 policyNumberPerson: None,
                 policyType: LegacyInsurancePolicyType::Personal,
+                oms_fields: Some(LegacyNameInsuranceJoinRowOmsFields {
+                    name_of_insured: Some("D".to_string()),
+                })
             }),
         },
         TestSyncOutgoingRecord {
@@ -120,6 +129,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
                 policyNumberFull: "777".to_string(),
                 policyNumberPerson: Some("777".to_string()),
                 policyType: LegacyInsurancePolicyType::Business,
+                oms_fields: None,
             }),
         },
     ]

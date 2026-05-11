@@ -1,5 +1,5 @@
 import { LIST_KEY, useQuery } from '@openmsupply-client/common';
-import { FilterByWithBoolean, SortBy } from '@common/hooks';
+import { FilterBy, SortBy } from '@common/hooks';
 
 import { SENSOR } from './keys';
 import { SensorFragment } from '../operations.generated';
@@ -10,7 +10,7 @@ export interface ListParams {
   first: number;
   offset: number;
   sortBy: SortBy<SensorFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 }
 
 export const useSensorList = (queryParams?: ListParams) => {
@@ -20,17 +20,20 @@ export const useSensorList = (queryParams?: ListParams) => {
   const queryFn = async () => {
     const { first, offset, sortBy, filterBy } = queryParams ?? {};
 
+    const sortKey = (sortBy?.key ||
+      SensorSortFieldInput.Serial) as SensorSortFieldInput;
     const result = await sensorApi.sensors({
       storeId,
       page: { offset, first },
       sort: {
-        key: sortBy?.key as SensorSortFieldInput,
+        key: sortKey,
         desc: !!sortBy?.isDesc,
       },
       filter: filterBy,
     });
 
-    const { nodes, totalCount } = result?.sensors;
+    if (!result.sensors) return { nodes: [], totalCount: 0 };
+    const { nodes, totalCount } = result.sensors;
     return { nodes, totalCount };
   };
 

@@ -11,7 +11,10 @@ import {
 import { usePrescription } from './usePrescription';
 import { DraftPrescriptionLine } from '@openmsupply-client/invoices/src/types';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
-import { PrescriptionRowFragment } from '../operations.generated';
+import {
+  PrescriptionLineFragment,
+  PrescriptionRowFragment,
+} from '../operations.generated';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
 import { createInputObject, mapStatus } from './utils';
 import { HISTORICAL_STOCK_LINES } from '@openmsupply-client/system/src/Item/api/keys';
@@ -55,7 +58,7 @@ export const usePrescriptionLines = (id?: string) => {
     error: deleteLinesError,
   } = useDeleteLines(data?.id ?? '');
 
-  const deleteLines = async (rowsToDelete: DraftPrescriptionLine[]) => {
+  const deleteLines = async (rowsToDelete: PrescriptionLineFragment[]) => {
     const lines = rowsToDelete.map(({ id }) => ({ id }));
     await deleteMutation(lines);
   };

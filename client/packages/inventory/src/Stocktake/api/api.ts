@@ -11,8 +11,9 @@ import {
   StocktakeNodeStatus,
   UpdateStocktakeStatusInput,
   setNullableInput,
-  FilterByWithBoolean,
+  FilterBy,
   StocktakeLineSortFieldInput,
+  isEnumValue,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -27,14 +28,14 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<StocktakeRowFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
 export type LinesParams = {
-  first: number;
-  offset: number;
-  sortBy: SortBy<StocktakeLineFragment>;
-  filterBy: FilterByWithBoolean | null;
+  first?: number;
+  offset?: number;
+  sortBy?: SortBy<StocktakeLineFragment>;
+  filterBy?: FilterBy | null;
 };
 
 const stocktakeParser = {
@@ -43,9 +44,6 @@ const stocktakeParser = {
     comment: patch.comment,
     id: patch.id,
     isLocked: patch.isLocked,
-    stocktakeDate: patch.stocktakeDate
-      ? Formatter.naiveDate(new Date(patch.stocktakeDate))
-      : undefined,
     status:
       patch.status === StocktakeNodeStatus.Finalised
         ? UpdateStocktakeStatusInput.Finalised
@@ -65,16 +63,26 @@ const stocktakeParser = {
       countedNumberOfPacks: line.countedNumberOfPacks,
       sellPricePerPack: line.sellPricePerPack,
       id: line.id,
-      expiryDate: line.expiryDate
-        ? Formatter.naiveDate(new Date(line.expiryDate))
-        : undefined,
+      expiryDate: {
+        value: line.expiryDate
+          ? Formatter.naiveDate(new Date(line.expiryDate))
+          : null,
+      },
+      manufactureDate: {
+        value: line.manufactureDate
+          ? Formatter.naiveDate(new Date(line.manufactureDate))
+          : null,
+      },
       comment: line.comment ?? '',
       itemVariantId: setNullableInput('itemVariantId', {
         itemVariantId: line.itemVariantId,
       }),
       donorId: setNullableInput('donorId', line),
+      manufacturerId: setNullableInput('manufacturerId', {
+        manufacturerId: line.manufacturer?.id ?? null,
+      }),
       reasonOptionId: line.reasonOption?.id,
-      vvmStatusId: line.vvmStatus?.id,
+      vvmStatusId: setNullableInput('id', line.vvmStatus ?? null),
       volumePerPack: line.volumePerPack,
       campaignId: setNullableInput('id', line.campaign),
       programId: setNullableInput('id', line.program),
@@ -93,9 +101,13 @@ const stocktakeParser = {
       expiryDate: line.expiryDate
         ? Formatter.naiveDate(new Date(line.expiryDate))
         : undefined,
+      manufactureDate: line.manufactureDate
+        ? Formatter.naiveDate(new Date(line.manufactureDate))
+        : undefined,
       comment: line.comment ?? '',
       itemVariantId: line.itemVariantId,
       donorId: line.donorId,
+      manufacturerId: line.manufacturer?.id,
       reasonOptionId: line.reasonOption?.id,
       vvmStatusId: line.vvmStatus?.id,
       volumePerPack: line.volumePerPack,
@@ -110,11 +122,15 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
     list:
       ({ first, offset, sortBy, filterBy }: ListParams) =>
       async () => {
+        const key = isEnumValue(StocktakeSortFieldInput, sortBy.key)
+          ? sortBy.key
+          : StocktakeSortFieldInput.StocktakeNumber;
+
         const result = await sdk.stocktakes({
           storeId,
           page: { offset, first },
           sort: {
-            key: sortBy.key as StocktakeSortFieldInput,
+            key,
             desc: !!sortBy.isDesc,
           },
           filter: filterBy,
@@ -124,10 +140,14 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
     listAll:
       ({ sortBy }: { sortBy: SortBy<StocktakeRowFragment> }) =>
       async () => {
+        const key = isEnumValue(StocktakeSortFieldInput, sortBy.key)
+          ? sortBy.key
+          : StocktakeSortFieldInput.StocktakeNumber;
+
         const result = await sdk.stocktakes({
           storeId,
           sort: {
-            key: sortBy.key as StocktakeSortFieldInput,
+            key,
             desc: !!sortBy.isDesc,
           },
         });
@@ -162,10 +182,14 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
         stocktakeId: id,
         storeId,
         page: { offset, first },
-        sort: {
-          key: sortBy.key as StocktakeLineSortFieldInput,
-          desc: !!sortBy.isDesc,
-        },
+        sort: sortBy
+          ? {
+              key: isEnumValue(StocktakeLineSortFieldInput, sortBy.key)
+                ? sortBy.key
+                : StocktakeLineSortFieldInput.ItemName,
+              desc: !!sortBy.isDesc,
+            }
+          : undefined,
         filter: filterBy,
       });
 
@@ -278,6 +302,7 @@ const getInsertStocktakeLines = (stocktakeId: string, items: Item[]) => {
           batch: stockLine.batch,
           costPricePerPack: stockLine.costPricePerPack,
           expiryDate: stockLine.expiryDate,
+          manufactureDate: stockLine.manufactureDate,
           packSize: stockLine.packSize,
           sellPricePerPack: stockLine.sellPricePerPack,
         });

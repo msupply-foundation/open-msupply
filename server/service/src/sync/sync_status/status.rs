@@ -4,18 +4,16 @@ use repository::{
     SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
 };
 
-
 use crate::{
     cursor_controller::CursorController,
     i32_to_u32,
     service_provider::ServiceContext,
     settings_service::{SettingsService, SettingsServiceTrait},
-    sync::{get_sync_push_changelogs_filter, SyncChangelogError},
 };
 
 use super::SyncLogError;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 
 pub struct SyncStatus {
     pub started: NaiveDateTime,
@@ -46,7 +44,7 @@ pub struct FullSyncStatus {
 }
 
 impl FullSyncStatus {
-    fn from_sync_log_row(sync_log_row: SyncLogRow) -> FullSyncStatus {
+    pub fn from_sync_log_row(sync_log_row: SyncLogRow) -> FullSyncStatus {
         let SyncLogRow {
             started_datetime,
             finished_datetime,
@@ -150,7 +148,7 @@ pub enum SyncStatusType {
     Integration,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum InitialisationStatus {
     /// Fully initialised (name)
     Initialised(String),
@@ -189,7 +187,7 @@ pub trait SyncStatusTrait: Sync + Send {
     fn number_of_records_in_push_queue(
         &self,
         ctx: &ServiceContext,
-    ) -> Result<u64, NumberOfRecordsInPushQueueError> {
+    ) -> Result<u64, RepositoryError> {
         number_of_records_in_push_queue(ctx)
     }
 
@@ -290,49 +288,22 @@ fn get_latest_successful_sync_status(
         None => return Ok(None),
     };
 
-    let result = Some(FullSyncStatus::from_sync_log_row(sync_log.sync_log_row));
+    let result = FullSyncStatus::from_sync_log_row(sync_log.sync_log_row);
 
-    Ok(result)
+    Ok(Some(result))
 }
-
-#[derive(Debug)]
-pub enum NumberOfRecordsInPushQueueError {
-    DatabaseError(RepositoryError),
-    SyncChangelogError(SyncChangelogError),
-}
-
-fn number_of_records_in_push_queue(
-    ctx: &ServiceContext,
-) -> Result<u64, NumberOfRecordsInPushQueueError> {
-    use NumberOfRecordsInPushQueueError as Error;
+fn number_of_records_in_push_queue(ctx: &ServiceContext) -> Result<u64, RepositoryError> {
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
-    let cursor = CursorController::new(KeyType::RemoteSyncPushCursor)
-        .get(&ctx.connection)
-        .map_err(Error::DatabaseError)?;
+    let cursor = CursorController::new(KeyType::RemoteSyncPushCursor).get(&ctx.connection)?;
 
-    let changelog_filter = get_sync_push_changelogs_filter(&ctx.connection)
-        .map_err(NumberOfRecordsInPushQueueError::SyncChangelogError)?;
+    let max_cursor = changelog_repo.max_cursor()?;
 
-    let change_logs_total = changelog_repo
-        .count(cursor, changelog_filter)
-        .map_err(Error::DatabaseError)?;
-
-    Ok(change_logs_total)
-}
-
-impl Default for SyncStatus {
-    fn default() -> Self {
-        Self {
-            started: Default::default(),
-            duration_in_seconds: Default::default(),
-            finished: Default::default(),
-        }
-    }
+    Ok(max_cursor.saturating_sub(cursor))
 }
 
 impl SyncLogError {
-    fn from_sync_log_row(
+    pub fn from_sync_log_row(
         SyncLogRow {
             error_code,
             error_message,

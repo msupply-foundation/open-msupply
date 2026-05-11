@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use repository::{
     ChangelogRow, ChangelogTableName, Document, DocumentRepository, DocumentRow, DocumentStatus,
     StorageConnection, SyncBufferRow,
+    Row,
+
 };
 use serde_json::Value;
 
@@ -13,6 +15,7 @@ use crate::sync::{
         document_registry::DocumentRegistryTranslation, form_schema::FormSchemaTranslation,
         name::NameTranslation,
     },
+
 };
 
 use util::sync_serde::empty_str_as_option_string;
@@ -91,7 +94,7 @@ impl SyncTranslation for DocumentTranslation {
             status,
             owner_name_id,
             context_id,
-        } = serde_json::from_str::<LegacyDocumentRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
         let result = Document {
             id,
             name,
@@ -115,12 +118,17 @@ impl SyncTranslation for DocumentTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Document(document_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let document = DocumentRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
+            .find_one_by_id(&document_row.id)?
             .ok_or(anyhow::Error::msg(format!(
                 "Document row ({}) not found",
-                changelog.record_id
+                document_row.id
             )))?;
         let DocumentRow {
             id,
@@ -132,8 +140,8 @@ impl SyncTranslation for DocumentTranslation {
             data,
             form_schema_id,
             status,
-            owner_name_link_id: _,
             context_id,
+            owner_name_id: _,
         } = document.to_row()?;
 
         let legacy_row = LegacyDocumentRow {
@@ -153,10 +161,6 @@ impl SyncTranslation for DocumentTranslation {
             context_id,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 }

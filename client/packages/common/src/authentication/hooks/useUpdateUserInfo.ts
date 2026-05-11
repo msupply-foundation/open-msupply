@@ -45,9 +45,11 @@ export const useUpdateUserInfo = (
             store,
             token: cookie?.token ?? '',
             user: {
-              id: cookie?.user?.id ?? '',
+              id: userDetails?.userId ?? '',
               name: cookie?.user?.name ?? '',
               permissions,
+              email: userDetails?.email,
+              jobTitle: userDetails?.jobTitle,
             },
           };
           setCookie(authCookie);

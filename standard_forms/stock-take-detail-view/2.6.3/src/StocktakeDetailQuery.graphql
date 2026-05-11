@@ -11,6 +11,7 @@ query StocktakeDetailQuery(
       status
       createdDatetime
       description
+      comment
     }
     ... on NodeError {
       __typename

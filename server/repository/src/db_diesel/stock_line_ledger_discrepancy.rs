@@ -72,8 +72,9 @@ fn create_filtered_query(
     );
 
     if let Some(stock_line_filter) = stock_line {
-        let stock_line_ids = StockLineRepository::create_filtered_query(Some(stock_line_filter))
-            .select(stock_line::id);
+        let stock_line_ids =
+            StockLineRepository::create_filtered_query(Some(stock_line_filter), None)
+                .select(stock_line::id);
 
         query = query.filter(stock_line_ledger_discrepancy::stock_line_id.eq_any(stock_line_ids));
     };

@@ -2,6 +2,7 @@ use std::vec;
 
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
+use chrono::{DateTime, Utc};
 use graphql_core::generic_filters::{
     DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
 };
@@ -22,7 +23,7 @@ use repository::EqualFilter;
 use repository::{DatetimeFilter, StringFilter};
 use service::ListResult;
 
-use repository::asset_log_row::AssetLogStatus;
+use repository::asset_log_row::{AssetLogStatus, AssetLogType};
 use serde::Serialize;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
@@ -35,6 +36,14 @@ pub enum AssetLogStatusNodeType {
     NotFunctioning,
     Decommissioned,
     Unserviceable,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[graphql(remote = "repository::db_diesel::assets::asset_log_row
+::AssetLogType")]
+pub enum AssetLogTypeNodeType {
+    StatusUpdate,
+    TemperatureMapping,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -63,6 +72,7 @@ pub struct AssetLogFilterInput {
     pub log_datetime: Option<DatetimeFilterInput>,
     pub user: Option<StringFilterInput>,
     pub reason_id: Option<EqualFilterStringInput>,
+    pub r#type: Option<EqualFilterAssetLogTypeInput>,
 }
 
 impl From<AssetLogFilterInput> for AssetLogFilter {
@@ -70,12 +80,11 @@ impl From<AssetLogFilterInput> for AssetLogFilter {
         AssetLogFilter {
             id: f.id.map(EqualFilter::from),
             asset_id: f.asset_id.map(EqualFilter::from),
-            status: f
-                .status
-                .map(|s| map_filter!(s, |t| AssetLogStatus::from(t))),
+            status: f.status.map(|s| map_filter!(s, AssetLogStatus::from)),
             log_datetime: f.log_datetime.map(DatetimeFilter::from),
             user: f.user.map(StringFilter::from),
             reason_id: f.reason_id.map(EqualFilter::from),
+            r#type: f.r#type.map(|s| map_filter!(s, AssetLogType::from)),
         }
     }
 }
@@ -85,6 +94,15 @@ pub struct EqualFilterStatusInput {
     pub equal_to: Option<AssetLogStatusNodeType>,
     pub equal_any: Option<Vec<AssetLogStatusNodeType>>,
     pub not_equal_to: Option<AssetLogStatusNodeType>,
+    pub not_equal_all: Option<Vec<AssetLogStatusNodeType>>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterAssetLogTypeInput {
+    pub equal_to: Option<AssetLogTypeNodeType>,
+    pub equal_any: Option<Vec<AssetLogTypeNodeType>>,
+    pub not_equal_to: Option<AssetLogTypeNodeType>,
+    pub not_equal_all: Option<Vec<AssetLogTypeNodeType>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -125,8 +143,9 @@ impl AssetLogNode {
         &self.row().comment
     }
 
-    pub async fn r#type(&self) -> &Option<String> {
-        &self.row().r#type
+    pub async fn r#type(&self) -> AssetLogTypeNodeType {
+        // Historical rows may store NULL — expose those as the default StatusUpdate.
+        AssetLogTypeNodeType::from(self.row().r#type.clone().unwrap_or_default())
     }
 
     pub async fn reason(&self, ctx: &Context<'_>) -> Result<Option<AssetLogReasonNode>> {
@@ -142,8 +161,12 @@ impl AssetLogNode {
         }
     }
 
-    pub async fn log_datetime(&self) -> &chrono::NaiveDateTime {
-        &self.row().log_datetime
+    pub async fn log_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().log_datetime, Utc)
+    }
+
+    pub async fn created_datetime(&self) -> &chrono::NaiveDateTime {
+        &self.row().created_datetime
     }
 
     pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
@@ -242,6 +265,10 @@ impl AssetLogReasonNode {
     pub async fn reason(&self) -> &str {
         &self.row().reason
     }
+
+    pub async fn comments_required(&self) -> bool {
+        self.row().comments_required
+    }
 }
 
 #[derive(Union)]
@@ -269,7 +296,7 @@ impl From<AssetLogReasonFilterInput> for AssetLogReasonFilter {
             id: f.id.map(EqualFilter::from),
             asset_log_status: f
                 .asset_log_status
-                .map(|s| map_filter!(s, |t| AssetLogStatus::from(t))),
+                .map(|s| map_filter!(s, AssetLogStatus::from)),
             reason: f.reason.map(StringFilter::from),
         }
     }

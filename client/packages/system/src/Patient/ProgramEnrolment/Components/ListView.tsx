@@ -1,16 +1,12 @@
-import React, { FC } from 'react';
+import React, { useMemo } from 'react';
 import {
-  TableProvider,
-  DataTable,
-  useColumns,
-  createTableStore,
+  MaterialTable,
   NothingHere,
-  useFormatDateTime,
-  ColumnAlign,
   useTranslation,
-  ProgramEnrolmentSortFieldInput,
-  useUrlQueryParams,
-  ColumnDataAccessor,
+  useNonPaginatedMaterialTable,
+  ColumnDef,
+  ChipTableCell,
+  ColumnType,
 } from '@openmsupply-client/common';
 import {
   PatientModal,
@@ -20,114 +16,80 @@ import {
   useProgramEnrolments,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../../api';
-import { createQueryParamsStore, useQueryParamsStore } from '@common/hooks';
-import { ChipTableCell } from '@openmsupply-client/system';
 
-const programAdditionalInfoAccessor: ColumnDataAccessor<
-  ProgramEnrolmentRowFragment,
-  string[]
-> = ({ rowData }): string[] => {
-  const additionalInfo = getStatusEventData(rowData.activeProgramEvents.nodes);
-  return additionalInfo;
-};
+const programAdditionalInfoAccessor = (row: ProgramEnrolmentRowFragment) =>
+  getStatusEventData(row.activeProgramEvents.nodes);
 
-const ProgramListComponent: FC = () => {
-  const {
-    sort: { sortBy, onChangeSortBy },
-  } = useQueryParamsStore();
-
-  const {
-    queryParams: { page, first, offset },
-    updatePaginationQuery,
-  } = useUrlQueryParams();
-
-  const patientId = usePatient.utils.id();
-
-  const { data, isError, isLoading } = useProgramEnrolments.document.list({
-    sortBy: {
-      key: sortBy.key as ProgramEnrolmentSortFieldInput,
-      isDesc: sortBy.isDesc,
-    },
-    filterBy: { patientId: { equalTo: patientId } },
-  });
-  const pagination = { page, first, offset };
-  const { localisedDate } = useFormatDateTime();
+export const ProgramListView = () => {
   const t = useTranslation();
   const { setEditModal: setEditingModal, setModal: selectModal } =
     usePatientModalStore();
+  const patientId = usePatient.utils.id();
 
-  const columns = useColumns<ProgramEnrolmentRowFragment>(
-    [
+  const { data, isError, isFetching } = useProgramEnrolments.document.list({
+    sortBy: {
+      key: 'enrolmentDatetime',
+      isDesc: true,
+    },
+    filterBy: { patientId: { equalTo: patientId } },
+  });
+
+  const columns: ColumnDef<ProgramEnrolmentRowFragment>[] = useMemo(
+    () => [
       {
-        key: 'type',
-        label: 'label.enrolment-program',
-        accessor: row => row.rowData?.document?.documentRegistry?.name,
+        id: 'type',
+        header: t('label.enrolment-program'),
+        accessorFn: (row: ProgramEnrolmentRowFragment) =>
+          row.document?.documentRegistry?.name,
+        enableSorting: true,
       },
       {
-        key: 'programEnrolmentId',
-        label: 'label.enrolment-patient-id',
+        accessorKey: 'programEnrolmentId',
+        header: t('label.enrolment-patient-id'),
       },
       {
-        label: 'label.additional-info',
-        key: 'events',
-        sortable: false,
-        accessor: programAdditionalInfoAccessor,
+        accessorKey: 'events',
+        header: t('label.additional-info'),
+        accessorFn: programAdditionalInfoAccessor,
         Cell: ChipTableCell,
-        minWidth: 400,
+        size: 400,
+        enableSorting: false,
       },
       {
-        key: 'status',
-        label: 'label.program-status',
+        accessorKey: 'status',
+        header: t('label.program-status'),
+        enableSorting: true,
       },
       {
-        key: 'enrolmentDatetime',
-        label: 'label.enrolment-datetime',
-        align: ColumnAlign.Right,
-        width: 175,
-        formatter: dateString =>
-          dateString ? localisedDate((dateString as string) || '') : '',
+        accessorKey: 'enrolmentDatetime',
+        header: t('label.enrolment-datetime'),
+        size: 175,
+        align: 'right',
+        columnType: ColumnType.Date,
+        enableSorting: true,
       },
     ],
-    {
-      sortBy,
-      onChangeSortBy,
+    []
+  );
+
+  const { table } = useNonPaginatedMaterialTable({
+    tableId: 'program-enrolment-list',
+    columns,
+    data: data?.nodes,
+    isLoading: isFetching,
+    isError,
+    enableRowSelection: false,
+    onRowClick: row => {
+      setEditingModal(PatientModal.Program, row.type, row.name);
     },
-    [sortBy, onChangeSortBy]
-  );
+    noDataElement: (
+      <NothingHere
+        onCreate={() => selectModal(PatientModal.ProgramSearch)}
+        body={t('messages.no-programs')}
+        buttonText={t('button.add-program')}
+      />
+    ),
+  });
 
-  return (
-    <DataTable
-      id="program-enrolment-list"
-      pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-      onChangePage={updatePaginationQuery}
-      columns={columns}
-      data={data?.nodes}
-      isLoading={isLoading}
-      isError={isError}
-      onRowClick={row => {
-        setEditingModal(PatientModal.Program, row.type, row.name);
-      }}
-      noDataElement={
-        <NothingHere
-          onCreate={() => selectModal(PatientModal.ProgramSearch)}
-          body={t('messages.no-programs')}
-          buttonText={t('button.add-program')}
-        />
-      }
-    />
-  );
+  return <MaterialTable table={table} />;
 };
-
-export const ProgramListView: FC = () => (
-  <TableProvider
-    createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<ProgramEnrolmentRowFragment>({
-      initialSortBy: {
-        key: ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
-        isDesc: false,
-      },
-    })}
-  >
-    <ProgramListComponent />
-  </TableProvider>
-);

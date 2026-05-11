@@ -31,8 +31,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             PROGRAM_INDICATOR_A,
             ProgramIndicatorRow {
                 id: PROGRAM_INDICATOR_A.0.to_owned(),
-                code: Some("Program Indicator a".to_owned()),
-                program_id: "program_a".to_owned(),
+                code: Some("Program Indicator a".to_string()),
+                program_id: "program_a".to_string(),
                 is_active: true,
             },
         ),
@@ -42,7 +42,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             ProgramIndicatorRow {
                 id: PROGRAM_INDICATOR_B.0.to_owned(),
                 code: None,
-                program_id: "program_a".to_owned(),
+                program_id: "program_a".to_string(),
                 is_active: true,
             },
         ),

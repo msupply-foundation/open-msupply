@@ -38,7 +38,7 @@ impl From<SingleRecordError> for InsertInsuranceError {
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct InsertInsurance {
     pub id: String,
-    pub name_link_id: String,
+    pub name_id: String,
     pub insurance_provider_id: String,
     pub policy_number_person: String,
     pub policy_number_family: String,
@@ -46,6 +46,7 @@ pub struct InsertInsurance {
     pub discount_percentage: f64,
     pub expiry_date: chrono::NaiveDate,
     pub is_active: bool,
+    pub name_of_insured: Option<String>,
 }
 
 pub fn insert_insurance(

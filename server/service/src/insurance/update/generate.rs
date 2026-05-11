@@ -20,6 +20,7 @@ pub fn generate(
         discount_percentage,
         expiry_date,
         is_active,
+        name_of_insured,
     } = update_input;
 
     NameInsuranceJoinRow {
@@ -31,6 +32,7 @@ pub fn generate(
             .unwrap_or(name_insurance_join_row.discount_percentage),
         expiry_date: expiry_date.unwrap_or(name_insurance_join_row.expiry_date),
         is_active: is_active.unwrap_or(name_insurance_join_row.is_active),
+        name_of_insured: name_of_insured.or(name_insurance_join_row.name_of_insured),
         ..name_insurance_join_row
     }
 }

@@ -8,6 +8,8 @@ export type SyncSettingsFragment = {
   intervalSeconds: number;
   url: string;
   username: string;
+  centralServerSiteId?: number | null;
+  syncSiteId?: number | null;
 };
 
 export type SyncSettingsQueryVariables = Types.Exact<{ [key: string]: never }>;
@@ -19,6 +21,8 @@ export type SyncSettingsQuery = {
     intervalSeconds: number;
     url: string;
     username: string;
+    centralServerSiteId?: number | null;
+    syncSiteId?: number | null;
   } | null;
 };
 
@@ -45,6 +49,8 @@ export type InitialiseSiteMutation = {
         intervalSeconds: number;
         url: string;
         username: string;
+        centralServerSiteId?: number | null;
+        syncSiteId?: number | null;
       };
 };
 
@@ -65,6 +71,8 @@ export type UpdateSyncSettingsMutation = {
         intervalSeconds: number;
         url: string;
         username: string;
+        centralServerSiteId?: number | null;
+        syncSiteId?: number | null;
       };
 };
 
@@ -319,12 +327,97 @@ export type ManualSyncMutation = {
   manualSync: string;
 };
 
+export type SyncInfoUpdatedSubscriptionVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type SyncInfoUpdatedSubscription = {
+  __typename: 'Subscriptions';
+  syncInfoUpdated: {
+    __typename: 'SyncInfoUpdatedNode';
+    numberOfRecordsInPushQueue: number;
+    syncStatus?: {
+      __typename: 'FullSyncStatusNode';
+      isSyncing: boolean;
+      errorThreshold: number;
+      warningThreshold: number;
+      error?: {
+        __typename: 'SyncErrorNode';
+        variant: Types.SyncErrorVariant;
+        fullError: string;
+      } | null;
+      integration?: {
+        __typename: 'SyncStatusWithProgressNode';
+        finished?: string | null;
+        started: string;
+        done?: number | null;
+        total?: number | null;
+      } | null;
+      prepareInitial?: {
+        __typename: 'SyncStatusNode';
+        finished?: string | null;
+        durationInSeconds: number;
+        started: string;
+      } | null;
+      pullCentral?: {
+        __typename: 'SyncStatusWithProgressNode';
+        finished?: string | null;
+        started: string;
+        done?: number | null;
+        total?: number | null;
+      } | null;
+      pullRemote?: {
+        __typename: 'SyncStatusWithProgressNode';
+        finished?: string | null;
+        started: string;
+        done?: number | null;
+        total?: number | null;
+      } | null;
+      push?: {
+        __typename: 'SyncStatusWithProgressNode';
+        finished?: string | null;
+        started: string;
+        done?: number | null;
+        total?: number | null;
+      } | null;
+      pullV6?: {
+        __typename: 'SyncStatusWithProgressNode';
+        finished?: string | null;
+        started: string;
+        done?: number | null;
+        total?: number | null;
+      } | null;
+      pushV6?: {
+        __typename: 'SyncStatusWithProgressNode';
+        finished?: string | null;
+        started: string;
+        done?: number | null;
+        total?: number | null;
+      } | null;
+      summary: {
+        __typename: 'SyncStatusNode';
+        finished?: string | null;
+        durationInSeconds: number;
+        started: string;
+      };
+      lastSuccessfulSync?: {
+        __typename: 'SyncStatusNode';
+        finished?: string | null;
+        durationInSeconds: number;
+        started: string;
+      } | null;
+    } | null;
+  };
+};
+
 export const SyncSettingsFragmentDoc = gql`
   fragment SyncSettings on SyncSettingsNode {
     __typename
     intervalSeconds
     url
     username
+    centralServerSiteId
+    syncSiteId
   }
 `;
 export const SyncErrorFragmentDoc = gql`
@@ -452,6 +545,17 @@ export const ManualSyncDocument = gql`
     manualSync(fetchPatientId: $fetchPatientId)
   }
 `;
+export const SyncInfoUpdatedDocument = gql`
+  subscription syncInfoUpdated {
+    syncInfoUpdated {
+      syncStatus {
+        ...FullSyncStatus
+      }
+      numberOfRecordsInPushQueue
+    }
+  }
+  ${FullSyncStatusFragmentDoc}
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -474,13 +578,16 @@ export function getSdk(
   return {
     syncSettings(
       variables?: SyncSettingsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<SyncSettingsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<SyncSettingsQuery>(SyncSettingsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<SyncSettingsQuery>({
+            document: SyncSettingsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'syncSettings',
         'query',
@@ -489,15 +596,17 @@ export function getSdk(
     },
     initialiseSite(
       variables: InitialiseSiteMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InitialiseSiteMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InitialiseSiteMutation>(
-            InitialiseSiteDocument,
+          client.request<InitialiseSiteMutation>({
+            document: InitialiseSiteDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'initialiseSite',
         'mutation',
         variables
@@ -505,15 +614,17 @@ export function getSdk(
     },
     updateSyncSettings(
       variables: UpdateSyncSettingsMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpdateSyncSettingsMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateSyncSettingsMutation>(
-            UpdateSyncSettingsDocument,
+          client.request<UpdateSyncSettingsMutation>({
+            document: UpdateSyncSettingsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'updateSyncSettings',
         'mutation',
         variables
@@ -521,13 +632,16 @@ export function getSdk(
     },
     syncInfo(
       variables?: SyncInfoQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<SyncInfoQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<SyncInfoQuery>(SyncInfoDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<SyncInfoQuery>({
+            document: SyncInfoDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'syncInfo',
         'query',
@@ -536,13 +650,16 @@ export function getSdk(
     },
     syncStatus(
       variables?: SyncStatusQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<SyncStatusQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<SyncStatusQuery>(SyncStatusDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<SyncStatusQuery>({
+            document: SyncStatusDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'syncStatus',
         'query',
@@ -551,16 +668,37 @@ export function getSdk(
     },
     manualSync(
       variables?: ManualSyncMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ManualSyncMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ManualSyncMutation>(ManualSyncDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<ManualSyncMutation>({
+            document: ManualSyncDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'manualSync',
         'mutation',
+        variables
+      );
+    },
+    syncInfoUpdated(
+      variables?: SyncInfoUpdatedSubscriptionVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<SyncInfoUpdatedSubscription> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<SyncInfoUpdatedSubscription>({
+            document: SyncInfoUpdatedDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'syncInfoUpdated',
+        'subscription',
         variables
       );
     },

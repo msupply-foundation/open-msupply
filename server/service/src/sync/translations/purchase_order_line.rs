@@ -1,16 +1,25 @@
 use crate::sync::translations::{
     item::ItemTranslation, purchase_order::PurchaseOrderTranslation, PullTranslateResult,
     PushTranslateResult, SyncTranslation,
+
 };
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, PurchaseOrderLineDelete, PurchaseOrderLineRow,
-    PurchaseOrderLineRowRepository, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, PurchaseOrderLineDelete, PurchaseOrderLineRow, PurchaseOrderLineStatus, StorageConnection, SyncBufferRow,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, zero_date_as_option, zero_f64_as_none,
+
 };
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct LegacyPurchaseOrderLineRowOmsFields {
+    #[serde(default)]
+    pub status: PurchaseOrderLineStatus,
+}
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -40,9 +49,6 @@ pub struct LegacyPurchaseOrderLineRow {
     #[serde(rename = "quan_adjusted_order")]
     pub adjusted_number_of_units: Option<f64>,
     #[serde(default)]
-    #[serde(rename = "quan_rec_to_date")]
-    pub received_number_of_units: f64,
-    #[serde(default)]
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     #[serde(rename = "delivery_date_requested")]
@@ -56,11 +62,14 @@ pub struct LegacyPurchaseOrderLineRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     pub supplier_item_code: Option<String>,
     #[serde(default)]
-    #[serde(rename = "price_extension_expected")]
-    pub price_per_unit_before_discount: f64,
+    #[serde(rename = "price_per_pack_before_discount")]
+    pub price_per_pack_before_discount: f64,
     #[serde(default)]
     #[serde(rename = "price_expected_after_discount")]
-    pub price_per_unit_after_discount: f64,
+    // Currently does not save in OMS database, but we calculate it when pushing to legacy
+    pub price_per_pack_after_discount: f64,
+    #[serde(rename = "price_extension_expected")]
+    pub price_extension_expected: f64,
     #[serde(deserialize_with = "empty_str_as_option")]
     pub comment: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option")]
@@ -71,6 +80,8 @@ pub struct LegacyPurchaseOrderLineRow {
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(rename = "pack_units")]
     pub unit: Option<String>,
+    #[serde(default)]
+    pub oms_fields: Option<LegacyPurchaseOrderLineRowOmsFields>,
 }
 
 #[deny(dead_code)]
@@ -112,17 +123,18 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             requested_pack_size,
             requested_number_of_units,
             adjusted_number_of_units,
-            received_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
             supplier_item_code,
-            price_per_unit_before_discount,
-            price_per_unit_after_discount,
+            price_per_pack_before_discount,
+            price_per_pack_after_discount,
+            price_extension_expected: _,
             comment,
             manufacturer_id,
             note,
             unit,
-        } = serde_json::from_str::<LegacyPurchaseOrderLineRow>(&sync_record.data)?;
+            oms_fields,
+        } = sync_record.deserialize()?;
 
         let result = PurchaseOrderLineRow {
             id,
@@ -134,17 +146,17 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             requested_number_of_units,
             requested_pack_size,
             adjusted_number_of_units,
-            received_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
             stock_on_hand_in_units,
             supplier_item_code,
-            price_per_unit_before_discount,
-            price_per_unit_after_discount,
+            price_per_pack_before_discount,
+            price_per_pack_after_discount,
             comment,
-            manufacturer_link_id: manufacturer_id,
+            manufacturer_id: manufacturer_id,
             note,
             unit,
+            status: oms_fields.map_or(PurchaseOrderLineStatus::New, |f| f.status),
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -161,9 +173,14 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::PurchaseOrderLine(purchase_order_line_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let PurchaseOrderLineRow {
             id,
             store_id,
@@ -176,18 +193,26 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             requested_number_of_units,
             requested_pack_size,
             adjusted_number_of_units,
-            received_number_of_units,
             stock_on_hand_in_units,
             supplier_item_code,
-            price_per_unit_before_discount,
-            price_per_unit_after_discount,
+            price_per_pack_before_discount,
+            price_per_pack_after_discount,
             comment,
-            manufacturer_link_id,
+            manufacturer_id: manufacturer_link_id,
             note,
             unit,
-        } = PurchaseOrderLineRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or_else(|| anyhow::anyhow!("Purchase Order Line not found"))?;
+            status,
+        } = purchase_order_line_row;
+
+        // Total Cost calculated in Front End: price_per_pack_after_discount * number_of_packs
+        // Number of packs = (requested_number_of_units OR adjusted_number_of_units) / requested_pack_size
+        let price_extension_expected = if requested_pack_size > 0.0 {
+            price_per_pack_after_discount
+                * (adjusted_number_of_units.unwrap_or(requested_number_of_units)
+                    / requested_pack_size)
+        } else {
+            0.0
+        };
 
         let legacy_row = LegacyPurchaseOrderLineRow {
             id,
@@ -200,23 +225,20 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             requested_pack_size,
             requested_number_of_units,
             adjusted_number_of_units,
-            received_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
             supplier_item_code,
-            price_per_unit_before_discount,
-            price_per_unit_after_discount,
+            price_per_pack_before_discount,
+            price_per_pack_after_discount,
+            price_extension_expected,
             comment,
             manufacturer_id: manufacturer_link_id,
             note,
             unit,
+            oms_fields: Some(LegacyPurchaseOrderLineRowOmsFields { status }),
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -234,8 +256,8 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
-    };
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RowOrDelete,
+};
     use serde_json::json;
 
     #[actix_rt::test]
@@ -278,25 +300,22 @@ mod tests {
         .await;
 
         let translator = PurchaseOrderLineTranslation {};
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(
-                    ChangelogFilter::new()
-                        .table_name(ChangelogTableName::PurchaseOrderLine.equal_to()),
-                ),
-            )
-            .unwrap();
+        let entries = ChangelogRepository::new(&connection).query_with_data(
+            ChangelogCondition::table_name::equal(ChangelogTableName::PurchaseOrderLine),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1_000_000,
+            },
+        )
+        .unwrap();
 
-        for changelog in changelogs {
+        for entry in entries { let RowOrDelete::Row { changelog, row } = entry else { panic!("expected upsert row") };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarButtonsPortal,
   Grid,
@@ -13,12 +13,13 @@ import { AddButton } from './AddButton';
 interface AppBarButtonProps {
   isDisabled: boolean;
   onAddItem: () => void;
+  disableNewLines: boolean;
 }
 
-export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
+export const AppBarButtonsComponent = ({
   onAddItem,
-  isDisabled,
-}) => {
+  disableNewLines,
+}: AppBarButtonProps) => {
   const { OpenButton } = useDetailPanel();
 
   const {
@@ -26,22 +27,22 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   } = useUrlQueryParams();
 
   const {
-    query: { data, isLoading },
+    query: { data, isFetching },
   } = usePurchaseOrder();
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
+        <AddButton
+          purchaseOrder={data ?? undefined}
+          onAddItem={onAddItem}
+          disable={disableNewLines}
+          disableAddFromMasterListButton={isFetching}
+        />
         <ReportSelector
           context={ReportContext.PurchaseOrder}
           dataId={data?.id ?? ''}
           sort={{ key: sortBy.key, desc: sortBy.isDesc }}
-        />
-        <AddButton
-          purchaseOrder={data ?? undefined}
-          onAddItem={onAddItem}
-          disable={isDisabled}
-          disableAddFromMasterListButton={isLoading}
         />
         {OpenButton}
       </Grid>

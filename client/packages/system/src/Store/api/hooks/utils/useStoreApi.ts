@@ -1,4 +1,4 @@
-import { FilterByWithBoolean, useGql } from '@openmsupply-client/common';
+import { FilterBy, useGql } from '@openmsupply-client/common';
 import { getSdk } from '../../operations.generated';
 import { getStoreQueries } from '../../api';
 
@@ -7,7 +7,7 @@ export const useStoreApi = () => {
     base: () => ['store'] as const,
     detail: (id: string) => [...keys.base(), id] as const,
     list: () => [...keys.base(), 'list'] as const,
-    paramList: (filterBy: FilterByWithBoolean | null) =>
+    paramList: (filterBy: FilterBy | null) =>
       [...keys.list(), filterBy] as const,
   };
 

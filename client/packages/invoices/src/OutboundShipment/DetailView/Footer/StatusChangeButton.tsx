@@ -4,99 +4,27 @@ import {
   useTranslation,
   useNotification,
   InvoiceNodeStatus,
+  InvoiceNodeType,
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
   useAlertModal,
   InvoiceLineNodeType,
   useDisabledNotificationToast,
+  usePreferences,
 } from '@openmsupply-client/common';
-import { getNextOutboundStatus, getStatusTranslation } from '../../../utils';
-import { useOutbound } from '../../api';
-
-const getStatusOptions = (
-  currentStatus: InvoiceNodeStatus,
-  getButtonLabel: (status: InvoiceNodeStatus) => string
-): SplitButtonOption<InvoiceNodeStatus>[] => {
-  const options: [
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-  ] = [
-    {
-      value: InvoiceNodeStatus.New,
-      label: getButtonLabel(InvoiceNodeStatus.New),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Allocated,
-      label: getButtonLabel(InvoiceNodeStatus.Allocated),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Picked,
-      label: getButtonLabel(InvoiceNodeStatus.Picked),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Shipped,
-      label: getButtonLabel(InvoiceNodeStatus.Shipped),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Delivered,
-      label: getButtonLabel(InvoiceNodeStatus.Delivered),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Verified,
-      label: getButtonLabel(InvoiceNodeStatus.Verified),
-      isDisabled: true,
-    },
-  ];
-
-  if (currentStatus === InvoiceNodeStatus.New) {
-    options[1].isDisabled = false;
-    options[2].isDisabled = false;
-    options[3].isDisabled = false;
-  }
-
-  if (currentStatus === InvoiceNodeStatus.Allocated) {
-    options[2].isDisabled = false;
-    options[3].isDisabled = false;
-  }
-
-  if (currentStatus === InvoiceNodeStatus.Picked) {
-    options[3].isDisabled = false;
-  }
-
-  return options;
-};
-
-const getNextStatusOption = (
-  status: InvoiceNodeStatus,
-  options: SplitButtonOption<InvoiceNodeStatus>[]
-): SplitButtonOption<InvoiceNodeStatus> | null => {
-  if (!status) return options[0] ?? null;
-
-  const nextStatus = getNextOutboundStatus(status);
-  const nextStatusOption = options.find(o => o.value === nextStatus);
-  return nextStatusOption || null;
-};
-
-const getButtonLabel =
-  (t: ReturnType<typeof useTranslation>) =>
-  (invoiceStatus: InvoiceNodeStatus): string => {
-    return t('button.save-and-confirm-status', {
-      status: t(getStatusTranslation(invoiceStatus)),
-    });
-  };
+import {
+  getPreviousStatus,
+  getButtonLabel,
+  getNextStatusOption,
+  getStatusTranslator,
+} from '../../../utils';
+import { useOutbound, useOutboundLines } from '../../api';
+import { getStatusOptions, getStatusSequence } from '../../../statuses';
 
 const useStatusChangeButton = () => {
   const t = useTranslation();
+  const { invoiceStatusOptions } = usePreferences();
   const { lines, status, onHold } = useOutbound.document.fields([
     'status',
     'onHold',
@@ -109,35 +37,58 @@ const useStatusChangeButton = () => {
     data?.status === InvoiceNodeStatus.New &&
     (data?.lines?.nodes ?? []).some(line => line.numberOfPacks === 0);
 
-  const options = useMemo(
-    () => getStatusOptions(status, getButtonLabel(t)),
-    [status, getButtonLabel]
-  );
+  const options = useMemo(() => {
+    let statusOptions = getStatusOptions(
+      InvoiceNodeType.OutboundShipment,
+      status,
+      getButtonLabel(t)
+    );
+    if (invoiceStatusOptions) {
+      statusOptions = statusOptions.filter(
+        option => !!option.value && invoiceStatusOptions.includes(option.value)
+      );
+    }
+    return statusOptions;
+  }, [status, getButtonLabel, invoiceStatusOptions]);
+
+  // If the status has already been set, but is not included in the preferences,
+  // then use the previous valid status.
+  const currentStatus =
+    !invoiceStatusOptions || invoiceStatusOptions.includes(status)
+      ? status
+      : getPreviousStatus(
+          status,
+          invoiceStatusOptions,
+          getStatusSequence(InvoiceNodeType.OutboundShipment)
+        );
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
-      getNextStatusOption(status, options)
+      getNextStatusOption(currentStatus, options)
     );
 
   const onConfirmStatusChange = async () => {
-    if (!selectedOption) return null;
+    if (!selectedOption) return;
     try {
-      await update({
+      const responses = await update({
         id: data?.id ?? '',
         status: selectedOption.value,
-      }).then(res => {
-        res?.forEach(res => {
-          if (
-            res.__typename === 'UpdateOutboundShipmentError' &&
-            res.error.__typename ===
-              'CannotHaveEstimatedDeliveryDateBeforeShippedDate'
-          ) {
-            info(t('error.estimated-delivery-before-shipped-date'))();
-          } else {
-            success(t('messages.shipment-saved'))();
-          }
-        });
       });
+      const updateError = responses?.find(
+        res => res?.__typename === 'UpdateOutboundShipmentError'
+      );
+      if (updateError?.__typename === 'UpdateOutboundShipmentError') {
+        switch (updateError.error.__typename) {
+          case 'CannotHaveEstimatedDeliveryDateBeforeShippedDate':
+            info(t('error.estimated-delivery-before-shipped-date'))();
+            break;
+          default:
+            error(t('messages.error-saving-shipment'))();
+            break;
+        }
+      } else {
+        success(t('messages.shipment-saved'))();
+      }
     } catch (e) {
       error(t('messages.error-saving-shipment'))();
     }
@@ -149,7 +100,7 @@ const useStatusChangeButton = () => {
       ? t('messages.confirm-zero-quantity-status')
       : t('messages.confirm-status-as', {
           status: selectedOption?.value
-            ? getStatusTranslation(selectedOption?.value)
+            ? getStatusTranslator(t)(selectedOption?.value)
             : '',
         }),
     onConfirm: onConfirmStatusChange,
@@ -158,8 +109,8 @@ const useStatusChangeButton = () => {
   // When the status of the invoice changes (after an update), set the selected option to the next status.
   // It would be set to the current status, which is now a disabled option.
   useEffect(() => {
-    setSelectedOption(() => getNextStatusOption(status, options));
-  }, [status, options]);
+    setSelectedOption(() => getNextStatusOption(currentStatus, options));
+  }, [status, options, currentStatus]);
 
   return {
     options,
@@ -173,7 +124,7 @@ const useStatusChangeButton = () => {
 
 const useStatusChangePlaceholderCheck = () => {
   const t = useTranslation();
-  const { data: lines } = useOutbound.line.stockLines();
+  const { data: lines } = useOutboundLines();
   const alert = useAlertModal({
     title: t('heading.cannot-do-that'),
     message: t('messages.must-allocate-all-lines'),
@@ -211,7 +162,9 @@ export const StatusChangeButton = () => {
     t('messages.no-lines')
   );
 
-  const onHoldNotication = useDisabledNotificationToast(t('messages.on-hold'));
+  const onHoldNotification = useDisabledNotificationToast(
+    t('messages.on-hold-outbound')
+  );
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
@@ -219,7 +172,7 @@ export const StatusChangeButton = () => {
   const onStatusClick = () => {
     if (hasPlaceholder) return alert();
     if (noLines) return noLinesNotification();
-    if (onHold) return onHoldNotication();
+    if (onHold) return onHoldNotification();
     return getConfirmation();
   };
 

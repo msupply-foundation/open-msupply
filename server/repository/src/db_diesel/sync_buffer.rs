@@ -1,169 +1,178 @@
+use std::ops::Deref;
+
 use super::StorageConnection;
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter},
+    diesel_macros::{diesel_json_type, diesel_string_enum},
+    migrations::Version,
     repository_error::RepositoryError,
-    DBType, DatetimeFilter, EqualFilter,
 };
-use chrono::NaiveDateTime;
-use diesel::{dsl::IntoBoxed, prelude::*};
-use diesel_derive_enum::DbEnum;
+use chrono::{NaiveDateTime, Utc};
+use diesel::prelude::*;
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-#[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum SyncAction {
-    Upsert,
-    Delete,
-    Merge,
+diesel_string_enum! {
+    #[derive(Clone, Serialize, Deserialize, Eq)]
+    #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
+    pub enum SyncAction {
+        #[default]
+        Upsert,
+        Delete,
+        Merge,
+    }
+}
+
+diesel_string_enum! {
+    #[derive(Clone, Copy, Serialize, Deserialize, Eq)]
+    pub enum SyncVersion {
+        #[default]
+        #[strum(serialize = "V5_V6")]
+        V5V6,
+        V7,
+    }
+}
+
+diesel_string_enum! {
+    #[derive(Clone, Copy, Serialize, Deserialize, Eq)]
+    #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
+    pub enum IntegrationResult {
+        #[default]
+        Success,
+        Error,
+        Ignored,
+    }
+}
+
+diesel_json_type! {
+    #[derive(Clone, Debug, Default, PartialEq)]
+    pub struct SyncRecordData(pub serde_json::Value);
+}
+
+impl Deref for SyncRecordData {
+    type Target = serde_json::Value;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+diesel_json_type! {
+    #[derive(Clone, Debug, PartialEq)]
+    pub struct AppVersion(pub Version);
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CursorDirection {
+    Asc,
+    Desc,
 }
 
 table! {
-    sync_buffer (record_id) {
+    sync_buffer (cursor) {
+        cursor -> Integer,
         record_id -> Text,
         received_datetime -> Timestamp,
+        integration_started_datetime -> Nullable<Timestamp>,
         integration_datetime -> Nullable<Timestamp>,
         integration_error -> Nullable<Text>,
+        integration_result -> Nullable<Text>,
         table_name -> Text,
-        action -> crate::SyncActionMapping,
+        action -> Text,
         data -> Text,
-        source_site_id -> Nullable<Integer>,
+        sync_version -> Text,
+        app_version -> Nullable<Text>,
+        source_site_id -> Integer,
+        store_id -> Nullable<Text>,
+        transfer_store_id -> Nullable<Text>,
+        patient_id -> Nullable<Text>,
+        reference -> Nullable<Text>,
+        is_integrated -> Bool,
     }
 }
 
-#[derive(
-    Clone, Queryable, Insertable, Serialize, Deserialize, Debug, AsChangeset, PartialEq, Eq,
-)]
-#[diesel(treat_none_as_null = true)]
-#[diesel(table_name = sync_buffer)]
+#[derive(Clone, Queryable, Serialize, Deserialize, Debug, PartialEq, Default)]
 pub struct SyncBufferRow {
+    #[serde(default)]
+    pub cursor: i32,
     pub record_id: String,
     pub received_datetime: NaiveDateTime,
+    #[serde(default)]
+    pub integration_started_datetime: Option<NaiveDateTime>,
     pub integration_datetime: Option<NaiveDateTime>,
     pub integration_error: Option<String>,
+    #[serde(default)]
+    pub integration_result: Option<IntegrationResult>,
     pub table_name: String,
     pub action: SyncAction,
-    pub data: String,
-    pub source_site_id: Option<i32>,
+    pub data: SyncRecordData,
+    #[serde(default)]
+    pub sync_version: SyncVersion,
+    #[serde(default)]
+    pub app_version: Option<AppVersion>,
+    pub source_site_id: i32,
+    #[serde(default)]
+    pub store_id: Option<String>,
+    #[serde(default)]
+    pub transfer_store_id: Option<String>,
+    #[serde(default)]
+    pub patient_id: Option<String>,
+    #[serde(default)]
+    pub reference: Option<String>,
+    #[serde(default)]
+    pub is_integrated: bool,
 }
 
-impl Default for SyncBufferRow {
-    fn default() -> Self {
-        Self {
-            record_id: Default::default(),
-            received_datetime: Default::default(),
-            integration_datetime: Default::default(),
-            integration_error: Default::default(),
-            table_name: Default::default(),
-            action: SyncAction::Upsert,
-            data: Default::default(),
-            source_site_id: Default::default(),
+impl SyncBufferRow {
+    pub fn deserialize<T: DeserializeOwned>(&self) -> Result<T, serde_json::Error> {
+        serde_json::from_value(self.data.0.clone())
+    }
+}
+
+/// Insert shape for `sync_buffer` — `cursor` is auto-assigned by the DB
+/// (SERIAL on Postgres / INTEGER PRIMARY KEY AUTOINCREMENT on SQLite).
+#[derive(Clone, Insertable, Debug, PartialEq, Default)]
+#[diesel(table_name = sync_buffer)]
+pub struct SyncBufferRowInsert {
+    pub record_id: String,
+    pub received_datetime: NaiveDateTime,
+    pub table_name: String,
+    pub action: SyncAction,
+    pub data: SyncRecordData,
+    pub sync_version: SyncVersion,
+    pub app_version: Option<AppVersion>,
+    pub source_site_id: i32,
+    pub store_id: Option<String>,
+    pub transfer_store_id: Option<String>,
+    pub patient_id: Option<String>,
+    pub reference: Option<String>,
+}
+
+impl From<SyncBufferRow> for SyncBufferRowInsert {
+    fn from(row: SyncBufferRow) -> Self {
+        SyncBufferRowInsert {
+            record_id: row.record_id,
+            received_datetime: row.received_datetime,
+            table_name: row.table_name,
+            action: row.action,
+            data: row.data,
+            sync_version: row.sync_version,
+            app_version: row.app_version,
+            source_site_id: row.source_site_id,
+            store_id: row.store_id,
+            transfer_store_id: row.transfer_store_id,
+            patient_id: row.patient_id,
+            reference: row.reference,
         }
     }
 }
 
-pub struct SyncBufferRowRepository<'a> {
-    connection: &'a StorageConnection,
+pub struct PendingQuery<'a> {
+    pub source_site_id: i32,
+    pub sync_version: SyncVersion,
+    pub reference: Option<&'a str>,
+    pub table_name: &'a str,
+    pub action: SyncAction,
+    pub direction: CursorDirection,
 }
-
-use serde::{Deserialize, Serialize};
-
-impl<'a> SyncBufferRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
-        SyncBufferRowRepository { connection }
-    }
-
-    pub fn upsert_one(&self, row: &SyncBufferRow) -> Result<(), RepositoryError> {
-        let statement = diesel::insert_into(sync_buffer::table)
-            .values(row)
-            .on_conflict(sync_buffer::record_id)
-            .do_update()
-            .set(row);
-
-        // //   Debug diesel query
-        // println!("{}", diesel::debug_query::<DBType, _>(&statement).to_string());
-
-        statement.execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    pub fn upsert_many(&self, rows: &Vec<SyncBufferRow>) -> Result<(), RepositoryError> {
-        for row in rows {
-            self.upsert_one(row)?
-        }
-        Ok(())
-    }
-
-    pub fn get_all(&self) -> Result<Vec<SyncBufferRow>, RepositoryError> {
-        Ok(sync_buffer::table.load(self.connection.lock().connection())?)
-    }
-
-    pub fn find_one_by_record_id(
-        &self,
-        record_id: &str,
-    ) -> Result<Option<SyncBufferRow>, RepositoryError> {
-        let result = sync_buffer::table
-            .filter(sync_buffer::record_id.eq(record_id))
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
-    }
-}
-
-#[derive(Clone, Default)]
-pub struct SyncBufferFilter {
-    pub record_id: Option<EqualFilter<String>>,
-    pub integration_datetime: Option<DatetimeFilter>,
-    pub integration_error: Option<EqualFilter<String>>,
-    pub action: Option<EqualFilter<SyncAction>>,
-    pub table_name: Option<EqualFilter<String>>,
-    pub source_site_id: Option<EqualFilter<i32>>,
-}
-
-impl SyncBufferFilter {
-    pub fn new() -> SyncBufferFilter {
-        SyncBufferFilter::default()
-    }
-
-    pub fn integration_datetime(mut self, filter: DatetimeFilter) -> Self {
-        self.integration_datetime = Some(filter);
-        self
-    }
-
-    pub fn record_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.record_id = Some(filter);
-        self
-    }
-
-    pub fn integration_error(mut self, filter: EqualFilter<String>) -> Self {
-        self.integration_error = Some(filter);
-        self
-    }
-
-    pub fn table_name(mut self, filter: EqualFilter<String>) -> Self {
-        self.table_name = Some(filter);
-        self
-    }
-
-    pub fn action(mut self, filter: EqualFilter<SyncAction>) -> Self {
-        self.action = Some(filter);
-        self
-    }
-
-    pub fn source_site_id(mut self, filter: EqualFilter<i32>) -> Self {
-        self.source_site_id = Some(filter);
-        self
-    }
-}
-
-impl SyncAction {
-    pub fn equal_to(&self) -> EqualFilter<Self> {
-        EqualFilter {
-            equal_to: Some(self.clone()),
-            ..Default::default()
-        }
-    }
-}
-
-type SyncBuffer = SyncBufferRow;
 
 pub struct SyncBufferRepository<'a> {
     connection: &'a StorageConnection,
@@ -174,147 +183,360 @@ impl<'a> SyncBufferRepository<'a> {
         SyncBufferRepository { connection }
     }
 
-    pub fn query_by_filter(
-        &self,
-        filter: SyncBufferFilter,
-    ) -> Result<Vec<SyncBuffer>, RepositoryError> {
-        self.query(Some(filter))
+    /// The only insertion path. Cursor is auto-assigned per row.
+    pub fn insert_many(&self, rows: &[SyncBufferRowInsert]) -> Result<(), RepositoryError> {
+        if rows.is_empty() {
+            return Ok(());
+        }
+        diesel::insert_into(sync_buffer::table)
+            .values(rows)
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 
-    pub fn query(
+    /// The only filtered list query. Always filters `is_integrated = false`,
+    /// orders by `cursor` in the requested direction, and returns all matching rows.
+    pub fn pending_ordered_by_cursor(
         &self,
-        filter: Option<SyncBufferFilter>,
-    ) -> Result<Vec<SyncBuffer>, RepositoryError> {
-        let query = create_filtered_query(filter);
+        query: PendingQuery,
+    ) -> Result<Vec<SyncBufferRow>, RepositoryError> {
+        let PendingQuery {
+            source_site_id,
+            sync_version,
+            reference,
+            table_name,
+            action,
+            direction,
+        } = query;
 
-        let result = query.load::<SyncBuffer>(self.connection.lock().connection())?;
+        let mut q = sync_buffer::table
+            .filter(sync_buffer::is_integrated.eq(false))
+            .filter(sync_buffer::sync_version.eq(sync_version))
+            .filter(sync_buffer::table_name.eq(table_name.to_string()))
+            .filter(sync_buffer::action.eq(action))
+            .filter(sync_buffer::source_site_id.eq(source_site_id))
+            .into_boxed();
 
+        if let Some(reference) = reference {
+            q = q.filter(sync_buffer::reference.eq(reference.to_string()));
+        }
+
+        let rows = match direction {
+            CursorDirection::Asc => q
+                .order(sync_buffer::cursor.asc())
+                .load(self.connection.lock().connection())?,
+            CursorDirection::Desc => q
+                .order(sync_buffer::cursor.desc())
+                .load(self.connection.lock().connection())?,
+        };
+
+        Ok(rows)
+    }
+
+    /// Total pending rows across all tables and actions, for the given source/version/reference.
+    /// Used for progress reporting.
+    pub fn count_pending(
+        &self,
+        source_site_id: i32,
+        sync_version: SyncVersion,
+        reference: Option<&str>,
+    ) -> Result<i64, RepositoryError> {
+        let mut q = sync_buffer::table
+            .filter(sync_buffer::is_integrated.eq(false))
+            .filter(sync_buffer::sync_version.eq(sync_version))
+            .filter(sync_buffer::source_site_id.eq(source_site_id))
+            .into_boxed();
+
+        if let Some(reference) = reference {
+            q = q.filter(sync_buffer::reference.eq(reference.to_string()));
+        }
+
+        let count: i64 = q.count().get_result(self.connection.lock().connection())?;
+        Ok(count)
+    }
+
+    /// Records the outcome of integrating a single buffer row.
+    ///
+    /// `started_datetime` is captured by the caller immediately before integration begins
+    /// and passed in here once integration completes (success, error, or ignored). Sets
+    /// `is_integrated = true`, which moves the row out of the pending partition (PG) and
+    /// drops it from the partial pending index (SQLite).
+    pub fn set_integration_result(
+        &self,
+        cursor: i32,
+        started_datetime: NaiveDateTime,
+        result: IntegrationResult,
+        error: Option<&str>,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(sync_buffer::table.filter(sync_buffer::cursor.eq(cursor)))
+            .set((
+                sync_buffer::integration_started_datetime.eq(Some(started_datetime)),
+                sync_buffer::integration_datetime.eq(Some(Utc::now().naive_utc())),
+                sync_buffer::integration_result.eq(Some(result)),
+                sync_buffer::integration_error.eq(error.map(|s| s.to_string())),
+                sync_buffer::is_integrated.eq(true),
+            ))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    /// Escape hatch: returns the most recent (highest cursor) row matching the record_id,
+    /// across both pending and integrated rows. Used by translators that look up parent records.
+    pub fn find_one_by_record_id(
+        &self,
+        record_id: &str,
+    ) -> Result<Option<SyncBufferRow>, RepositoryError> {
+        let result = sync_buffer::table
+            .filter(sync_buffer::record_id.eq(record_id))
+            .order(sync_buffer::cursor.desc())
+            .first(self.connection.lock().connection())
+            .optional()?;
         Ok(result)
     }
-}
 
-type BoxedSyncBufferQuery = IntoBoxed<'static, sync_buffer::table, DBType>;
-
-fn create_filtered_query(filter: Option<SyncBufferFilter>) -> BoxedSyncBufferQuery {
-    let mut query = sync_buffer::table.into_boxed();
-
-    if let Some(f) = filter {
-        let SyncBufferFilter {
-            integration_datetime,
-            integration_error,
-            action,
-            table_name,
-            record_id,
-            source_site_id,
-        } = f;
-
-        apply_equal_filter!(query, record_id, sync_buffer::record_id);
-        apply_date_time_filter!(
-            query,
-            integration_datetime,
-            sync_buffer::integration_datetime
-        );
-        apply_equal_filter!(query, integration_error, sync_buffer::integration_error);
-        apply_equal_filter!(query, action, sync_buffer::action);
-        apply_equal_filter!(query, table_name, sync_buffer::table_name);
-        apply_equal_filter!(query, source_site_id, sync_buffer::source_site_id);
+    /// Escape hatch: returns rows for the given table whose JSON `data` matches the LIKE pattern,
+    /// ordered by cursor DESC so callers see the most recent first.
+    pub fn find_by_table_and_data_like(
+        &self,
+        table_name: &str,
+        data_pattern: &str,
+    ) -> Result<Vec<SyncBufferRow>, RepositoryError> {
+        let result = sync_buffer::table
+            .filter(
+                sync_buffer::table_name
+                    .eq(table_name)
+                    .and(sync_buffer::data.like(data_pattern)),
+            )
+            .order(sync_buffer::cursor.desc())
+            .load(self.connection.lock().connection())?;
+        Ok(result)
     }
 
-    query
+    pub fn get_all(&self) -> Result<Vec<SyncBufferRow>, RepositoryError> {
+        Ok(sync_buffer::table
+            .order(sync_buffer::cursor.asc())
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 #[cfg(test)]
 mod test {
+    use super::*;
+    use crate::{mock::MockDataInserts, test_db};
 
-    use crate::{
-        mock::{MockData, MockDataInserts},
-        test_db, DatetimeFilter, EqualFilter, SyncAction, SyncBufferFilter, SyncBufferRepository,
-        SyncBufferRow, SyncBufferRowRepository,
-    };
-
-    pub fn row_a() -> SyncBufferRow {
-        SyncBufferRow {
-            record_id: "store_a".to_string(),
-            integration_datetime: Some(Default::default()),
+    fn insert(record_id: &str, table_name: &str) -> SyncBufferRowInsert {
+        SyncBufferRowInsert {
+            record_id: record_id.to_string(),
+            table_name: table_name.to_string(),
             action: SyncAction::Upsert,
-            ..Default::default()
-        }
-    }
-
-    pub fn row_b() -> SyncBufferRow {
-        SyncBufferRow {
-            record_id: "store_b".to_string(),
-            integration_error: Some("error".to_string()),
-            action: SyncAction::Delete,
-            ..Default::default()
-        }
-    }
-
-    pub fn row_c() -> SyncBufferRow {
-        SyncBufferRow {
-            record_id: "store_c".to_string(),
-            action: SyncAction::Upsert,
+            data: SyncRecordData(serde_json::json!({})),
             ..Default::default()
         }
     }
 
     #[actix_rt::test]
-    async fn test_sync_buffer() {
-        let (_, connection, _, _) = test_db::setup_all_with_data(
-            "test_sync_buffer",
+    async fn test_sync_buffer_insert_and_query() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_sync_buffer_insert_and_query",
             MockDataInserts::none(),
-            MockData {
-                sync_buffer_rows: vec![row_a(), row_b(), row_c()],
-                ..Default::default()
-            },
         )
         .await;
 
-        assert_eq!(
-            SyncBufferRepository::new(&connection)
-                .query_by_filter(
-                    SyncBufferFilter::new()
-                        .integration_datetime(DatetimeFilter::is_null(true))
-                        .integration_error(EqualFilter::is_null(true))
-                )
-                .unwrap(),
-            vec![row_c()]
-        );
+        let repo = SyncBufferRepository::new(&connection);
 
-        assert_eq!(
-            SyncBufferRepository::new(&connection)
-                .query_by_filter(
-                    SyncBufferFilter::new()
-                        .integration_datetime(DatetimeFilter::is_null(true))
-                        .integration_error(EqualFilter::is_null(true))
-                )
-                .unwrap(),
-            vec![row_c()]
-        );
+        // Insert four rows in order — cursor must reflect insertion order
+        repo.insert_many(&[
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                sync_version: SyncVersion::V5V6,
+                ..insert("a1", "store")
+            },
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                sync_version: SyncVersion::V5V6,
+                ..insert("a2", "store")
+            },
+            SyncBufferRowInsert {
+                source_site_id: 2,
+                sync_version: SyncVersion::V7,
+                ..insert("b1", "store")
+            },
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                sync_version: SyncVersion::V5V6,
+                reference: Some("batch-x".to_string()),
+                ..insert("c1", "store")
+            },
+        ])
+        .unwrap();
 
-        assert_eq!(
-            SyncBufferRepository::new(&connection)
-                .query_by_filter(SyncBufferFilter::new().action(SyncAction::Delete.equal_to()))
-                .unwrap(),
-            vec![row_b()]
-        );
-        // Test upsert overwrites integration_datetime
-        let mut new_a = row_a().clone();
-        new_a.integration_datetime = None;
+        // Filter by source_site_id + sync_version, no reference filter
+        let rows = repo
+            .pending_ordered_by_cursor(PendingQuery {
+                source_site_id: 1,
+                sync_version: SyncVersion::V5V6,
+                reference: None,
+                table_name: "store",
+                action: SyncAction::Upsert,
+                direction: CursorDirection::Asc,
+            })
+            .unwrap();
+        let ids: Vec<_> = rows.iter().map(|r| r.record_id.as_str()).collect();
+        assert_eq!(ids, vec!["a1", "a2", "c1"]);
 
-        SyncBufferRowRepository::new(&connection)
-            .upsert_one(&new_a)
+        // Filter narrowed to the batch reference
+        let rows = repo
+            .pending_ordered_by_cursor(PendingQuery {
+                source_site_id: 1,
+                sync_version: SyncVersion::V5V6,
+                reference: Some("batch-x"),
+                table_name: "store",
+                action: SyncAction::Upsert,
+                direction: CursorDirection::Asc,
+            })
+            .unwrap();
+        let ids: Vec<_> = rows.iter().map(|r| r.record_id.as_str()).collect();
+        assert_eq!(ids, vec!["c1"]);
+
+        // Reverse direction (deletes use Desc within table)
+        let rows = repo
+            .pending_ordered_by_cursor(PendingQuery {
+                source_site_id: 1,
+                sync_version: SyncVersion::V5V6,
+                reference: None,
+                table_name: "store",
+                action: SyncAction::Upsert,
+                direction: CursorDirection::Desc,
+            })
+            .unwrap();
+        let ids: Vec<_> = rows.iter().map(|r| r.record_id.as_str()).collect();
+        assert_eq!(ids, vec!["c1", "a2", "a1"]);
+
+        // V7 partition is isolated
+        let rows = repo
+            .pending_ordered_by_cursor(PendingQuery {
+                source_site_id: 2,
+                sync_version: SyncVersion::V7,
+                reference: None,
+                table_name: "store",
+                action: SyncAction::Upsert,
+                direction: CursorDirection::Asc,
+            })
+            .unwrap();
+        let ids: Vec<_> = rows.iter().map(|r| r.record_id.as_str()).collect();
+        assert_eq!(ids, vec!["b1"]);
+    }
+
+    #[actix_rt::test]
+    async fn test_sync_buffer_set_integration_result() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_sync_buffer_set_integration_result",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let repo = SyncBufferRepository::new(&connection);
+
+        repo.insert_many(&[
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                ..insert("r1", "store")
+            },
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                ..insert("r2", "store")
+            },
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                ..insert("r3", "store")
+            },
+        ])
+        .unwrap();
+
+        let rows = repo
+            .pending_ordered_by_cursor(PendingQuery {
+                source_site_id: 1,
+                sync_version: SyncVersion::V5V6,
+                reference: None,
+                table_name: "store",
+                action: SyncAction::Upsert,
+                direction: CursorDirection::Asc,
+            })
+            .unwrap();
+        assert_eq!(rows.len(), 3);
+
+        let started = chrono::Utc::now().naive_utc();
+        repo.set_integration_result(rows[0].cursor, started, IntegrationResult::Success, None)
+            .unwrap();
+        repo.set_integration_result(
+            rows[1].cursor,
+            started,
+            IntegrationResult::Error,
+            Some("oh no"),
+        )
+        .unwrap();
+        repo.set_integration_result(
+            rows[2].cursor,
+            started,
+            IntegrationResult::Ignored,
+            Some("not for us"),
+        )
+        .unwrap();
+
+        // After recording results, no rows are pending
+        let pending = repo
+            .pending_ordered_by_cursor(PendingQuery {
+                source_site_id: 1,
+                sync_version: SyncVersion::V5V6,
+                reference: None,
+                table_name: "store",
+                action: SyncAction::Upsert,
+                direction: CursorDirection::Asc,
+            })
+            .unwrap();
+        assert!(pending.is_empty());
+
+        let r1 = repo.find_one_by_record_id("r1").unwrap().unwrap();
+        assert_eq!(r1.integration_result, Some(IntegrationResult::Success));
+        assert_eq!(r1.integration_error, None);
+        assert!(r1.integration_started_datetime.is_some());
+        assert!(r1.integration_datetime.is_some());
+
+        let r2 = repo.find_one_by_record_id("r2").unwrap().unwrap();
+        assert_eq!(r2.integration_result, Some(IntegrationResult::Error));
+        assert_eq!(r2.integration_error.as_deref(), Some("oh no"));
+
+        let r3 = repo.find_one_by_record_id("r3").unwrap().unwrap();
+        assert_eq!(r3.integration_result, Some(IntegrationResult::Ignored));
+        assert_eq!(r3.integration_error.as_deref(), Some("not for us"));
+    }
+
+    #[actix_rt::test]
+    async fn test_sync_buffer_find_one_by_record_id_returns_most_recent() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_sync_buffer_find_one_by_record_id_returns_most_recent",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let repo = SyncBufferRepository::new(&connection);
+
+        repo.insert_many(&[insert("dup", "store"), insert("dup", "store")])
             .unwrap();
 
-        assert_eq!(
-            SyncBufferRepository::new(&connection)
-                .query_by_filter(
-                    SyncBufferFilter::new()
-                        .integration_datetime(DatetimeFilter::is_null(true))
-                        .record_id(EqualFilter::equal_to(&row_a().record_id))
-                )
-                .unwrap(),
-            vec![new_a]
-        );
+        let pending = repo
+            .pending_ordered_by_cursor(PendingQuery {
+                source_site_id: 0,
+                sync_version: SyncVersion::V5V6,
+                reference: None,
+                table_name: "store",
+                action: SyncAction::Upsert,
+                direction: CursorDirection::Asc,
+            })
+            .unwrap();
+        assert_eq!(pending.len(), 2);
+
+        let latest = repo.find_one_by_record_id("dup").unwrap().unwrap();
+        assert_eq!(latest.cursor, pending[1].cursor);
     }
 }

@@ -1,9 +1,25 @@
 use anyhow::Context;
 use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use util::sync_serde::ok_or_none;
 
-use crate::{migrations::*, sync_buffer::sync_buffer, GenderType, SyncAction};
+use crate::{migrations::*, GenderType};
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum SyncAction {
+    Upsert,
+}
+
+table! {
+    sync_buffer (record_id) {
+        record_id -> Text,
+        data -> Text,
+        action -> crate::migrations::v2_09_00::reintegrate_clinician_gender::SyncActionMapping,
+        table_name -> Text,
+    }
+}
 
 #[derive(Deserialize, Serialize)]
 pub struct ClinicianOmsFields {
@@ -25,7 +41,7 @@ table! {
   }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = clinician)]
 pub struct ClinicianRow {
     pub id: String,
@@ -51,7 +67,7 @@ impl MigrationFragment for Migrate {
 
         for (id, data) in sync_buffer_rows {
             let legacy_row = serde_json::from_str::<LegacyClinicianRow>(&data)
-                .with_context(|| format!("Cannot parse sync buffer row data: {}", data))?;
+                .with_context(|| format!("Cannot parse sync buffer row data: {data}"))?;
 
             let Some(fields) = legacy_row.oms_fields else {
                 continue;

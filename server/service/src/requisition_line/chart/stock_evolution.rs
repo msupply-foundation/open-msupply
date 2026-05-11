@@ -47,8 +47,8 @@ pub fn get_stock_evolution_for_item(
     let points = generate_evolution_series(reference_datetime, options);
     // Get rows
     let filter = StockMovementFilter::new()
-        .store_id(EqualFilter::equal_to(store_id))
-        .item_id(EqualFilter::equal_to(item_id))
+        .store_id(EqualFilter::equal_to(store_id.to_string()))
+        .item_id(EqualFilter::equal_to(item_id.to_string()))
         .datetime(DatetimeFilter::date_range(
             points.first_historic_datetime,
             points.last_historic_datetime,
@@ -123,7 +123,7 @@ fn generate_evolution_series(
     points
 }
 
-fn calculate_historic_stock_evolution(
+pub fn calculate_historic_stock_evolution(
     reference_stock_on_hand: u32,
     mut historic_points: Vec<NaiveDate>,
     stock_on_hand_rows: Vec<StockMovementRow>,

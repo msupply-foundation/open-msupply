@@ -1,8 +1,8 @@
 use super::period_row::period::dsl::*;
 
 use crate::{
-    db_diesel::name_link_row::name_link, period_schedule_row::period_schedule,
-    repository_error::RepositoryError, StorageConnection, Upsert,
+    period_schedule_row::period_schedule, repository_error::RepositoryError, ChangelogRepository,
+    ChangelogSyncType, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDate;
@@ -18,7 +18,7 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = period)]
 pub struct PeriodRow {
     pub id: String,
@@ -30,7 +30,6 @@ pub struct PeriodRow {
 
 joinable!(period -> period_schedule (period_schedule_id));
 
-allow_tables_to_appear_in_same_query!(period, name_link);
 allow_tables_to_appear_in_same_query!(period, period_schedule);
 
 pub struct PeriodRowRepository<'a> {
@@ -42,7 +41,7 @@ impl<'a> PeriodRowRepository<'a> {
         PeriodRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &PeriodRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &PeriodRow) -> Result<(), RepositoryError> {
         diesel::insert_into(period)
             .values(row)
             .on_conflict(id)
@@ -52,12 +51,29 @@ impl<'a> PeriodRowRepository<'a> {
         Ok(())
     }
 
+    pub fn upsert_one(&self, row: &PeriodRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = PeriodRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
+
     pub fn find_one_by_id(&self, period_id: &str) -> Result<Option<PeriodRow>, RepositoryError> {
         let result = period
             .filter(id.eq(period_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PeriodRow>, RepositoryError> {
+        Ok(period
+            .filter(id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 
     pub fn find_many_by_program_schedule_ids(
@@ -72,9 +88,25 @@ impl<'a> PeriodRowRepository<'a> {
 }
 
 impl Upsert for PeriodRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        PeriodRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        PeriodRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

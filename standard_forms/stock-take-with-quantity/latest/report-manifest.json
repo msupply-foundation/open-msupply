@@ -1,13 +1,12 @@
 {
   "is_custom": false,
-  "version": "2.6.2",
+  "version": "2.6.4",
   "code": "stock-take-with-quantity",
   "context": "STOCKTAKE",
   "sub_context": "picklist",
-  "name": "Stocktake with Quantity",
+  "name": "Stocktake with snapshot quantity",
   "queries": {},
   "arguments": {},
   "header": "header.html",
-  "footer": "footer.html",
   "query_default": "stocktake"
 }

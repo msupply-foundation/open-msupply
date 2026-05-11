@@ -2,11 +2,10 @@ import React from 'react';
 import { useFormatDateTime, useTranslation } from '@common/intl';
 import {
   Box,
-  CellProps,
   CircleAlertIcon,
   IconButton,
   MessageSquareIcon,
-  PaperHoverPopover,
+  PaperPopover,
   PaperPopoverSection,
   Typography,
   useTheme,
@@ -14,13 +13,15 @@ import {
 import { TemperatureBreachFragment } from '../../api/TemperatureBreach';
 
 export const DurationCell = ({
-  rowData,
-}: CellProps<TemperatureBreachFragment>) => {
+  row: { original },
+}: {
+  row: { original: TemperatureBreachFragment };
+}) => {
   const t = useTranslation();
   const { localisedDistance } = useFormatDateTime();
-  const duration = !rowData.endDatetime
+  const duration = !original.endDatetime
     ? t('label.ongoing')
-    : localisedDistance(rowData.startDatetime, rowData.endDatetime);
+    : localisedDistance(original.startDatetime, original.endDatetime);
 
   return (
     <Box
@@ -28,7 +29,7 @@ export const DurationCell = ({
       display="flex"
       flex={1}
       sx={
-        !rowData.endDatetime
+        !original.endDatetime
           ? {
               color: 'error.main',
               fontStyle: 'italic',
@@ -76,7 +77,8 @@ export const IconCell = ({
 
   if (!!rowData?.comment)
     return (
-      <PaperHoverPopover
+      <PaperPopover
+        mode="hover"
         width={400}
         Content={
           <PaperPopoverSection label={t('label.comment')}>
@@ -85,7 +87,7 @@ export const IconCell = ({
         }
       >
         <MessageSquareIcon sx={{ fontSize: 16 }} color="primary" />
-      </PaperHoverPopover>
+      </PaperPopover>
     );
 
   return null;

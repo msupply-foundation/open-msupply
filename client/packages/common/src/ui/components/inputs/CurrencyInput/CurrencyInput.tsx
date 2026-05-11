@@ -3,12 +3,14 @@ import { styled } from '@mui/material/styles';
 import RCInput, {
   CurrencyInputProps as RCInputProps,
 } from 'react-currency-input-field';
-import { useCurrency } from '@common/intl';
+import { Currencies, useCurrency, useFormatNumber } from '@common/intl';
 import { NumUtils } from '@common/utils';
+import { useBufferState } from '@common/hooks';
 
 interface CurrencyInputProps extends RCInputProps {
   onChangeNumber: (value: number) => void;
   maxWidth?: number | string;
+  currencyCode?: Currencies;
 }
 
 // TODO: It would be nice if we were to just use the BasicTextInput or
@@ -41,16 +43,25 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   value,
   disabled,
   width,
+  currencyCode,
+  decimalsLimit: decimalsLimitProp,
   ...restOfProps
 }) => {
-  const { c, options } = useCurrency();
+  const val = value !== undefined ? value : defaultValue;
+  const valueAsNumber = Number.isNaN(Number(val)) ? 0 : Number(val);
+  const { options } = useCurrency(currencyCode);
+
+  const precision = decimalsLimitProp ?? options.precision;
+
+  const { format } = useFormatNumber();
+
+  const [buffer, setBuffer] = useBufferState<string | number | undefined>(
+    NumUtils.round(valueAsNumber, precision)
+  );
+
   const isSymbolLast = options.pattern.endsWith('!');
   const prefix = !isSymbolLast ? options.symbol : '';
   const suffix = isSymbolLast ? options.symbol : '';
-  const defaultValueAsNumber = Number.isNaN(Number(defaultValue))
-    ? undefined
-    : Number(defaultValue);
-  const valueAsNumber = Number.isNaN(value) ? 0 : Number(value);
 
   return (
     <StyledCurrencyInput
@@ -58,30 +69,47 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
         maxWidth,
         backgroundColor: theme =>
           disabled
-            ? theme.palette.background.toolbar
-            : theme.palette.background.menu,
+            ? theme.palette.background.input.disabled
+            : theme.palette.background.input.main,
         '&:hover': {
           borderBottom: disabled ? 'none' : undefined,
         },
         color: disabled ? theme => theme.palette.text.disabled : undefined,
         width,
       }}
-      // We implement our own rounding here, as the react-currency-input-field
-      // component only truncates internally
-      defaultValue={NumUtils.round(
-        defaultValueAsNumber ?? valueAsNumber,
-        options.precision
-      )}
-      onValueChange={newValue => onChangeNumber(c(newValue || '').value)}
+      value={buffer}
+      onValueChange={(_v, _e, values) => {
+        setBuffer(values?.value);
+        if (
+          // Intermediate states (typing decimal, or a leading 0 (e.g. 2.0.. heading for 2.05))
+          !values?.value.endsWith(options.decimal) &&
+          !values?.value.endsWith('0')
+        ) {
+          onChangeNumber(values?.float ?? 0);
+        }
+      }}
       onFocus={e => e.target.select()}
+      onBlur={() => {
+        const finalValue = buffer ? Number(buffer) : 0;
+        setBuffer(
+          format(finalValue, {
+            minimumFractionDigits: precision,
+            // Need to disable grouping because RCInput doesn't handle commas in
+            // the value and displays NaN. But RCInput internally formats with
+            // grouping anyway, so we're good.
+            useGrouping: false,
+          })
+        );
+        onChangeNumber(finalValue);
+      }}
       allowNegativeValue={allowNegativeValue}
       prefix={prefix}
       suffix={suffix}
       decimalSeparator={options.decimal}
       groupSeparator={options.separator}
-      decimalsLimit={options.precision}
+      decimalsLimit={precision}
       allowDecimals={allowDecimals}
-      decimalScale={allowDecimals ? options.precision : undefined}
+      decimalScale={allowDecimals ? precision : undefined}
       disabled={disabled}
       {...restOfProps}
     />

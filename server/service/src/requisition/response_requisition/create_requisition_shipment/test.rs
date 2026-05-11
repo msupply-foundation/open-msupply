@@ -1,5 +1,12 @@
 #[cfg(test)]
 mod test_update {
+    use crate::{
+        requisition::response_requisition::{
+            CreateRequisitionShipment, CreateRequisitionShipmentError as ServiceError,
+        },
+        requisition_line::response_requisition_line::UpdateResponseRequisitionLine,
+        service_provider::ServiceProvider,
+    };
     use repository::mock::{mock_new_response_program_requisition, mock_store_a, mock_store_b};
     use repository::EqualFilter;
     use repository::{
@@ -9,13 +16,6 @@ mod test_update {
         },
         test_db::setup_all,
         InvoiceLineFilter, InvoiceLineRepository, InvoiceRowRepository,
-    };
-    use crate::{
-        requisition::response_requisition::{
-            CreateRequisitionShipment, CreateRequisitionShipmentError as ServiceError,
-        },
-        requisition_line::response_requisition_line::UpdateResponseRequisitionLine,
-        service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]
@@ -34,7 +34,7 @@ mod test_update {
             service.create_requisition_shipment(
                 &context,
                 CreateRequisitionShipment {
-                    response_requisition_id: "invalid".to_owned(),
+                    response_requisition_id: "invalid".to_string(),
                 },
             ),
             Err(ServiceError::RequisitionDoesNotExist)
@@ -111,7 +111,7 @@ mod test_update {
 
         let mut invoice_lines = InvoiceLineRepository::new(&connection)
             .query_by_filter(
-                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&invoice.id)),
+                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice.id.to_string())),
             )
             .unwrap();
 
@@ -171,7 +171,7 @@ mod test_update {
 
         let mut invoice_lines = InvoiceLineRepository::new(&connection)
             .query_by_filter(
-                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&invoice.id)),
+                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice.id.to_string())),
             )
             .unwrap();
 

@@ -8,12 +8,13 @@ const TABLE_NAME: &str = "vaccine_course";
 const VACCINE_COURSE1: (&str, &str) = (
     "test_vaccine_course",
     r#"{
-        "id":  "test_vaccine_course",
+        "id": "test_vaccine_course",
         "name": "test_course",
         "program_id": "program_test",
         "coverage_rate": 0.0,
         "is_active": false,
-        "wastage_rate": 1.0
+        "wastage_rate": 1.0,
+        "can_skip_dose": false
     }"#,
 );
 
@@ -27,6 +28,7 @@ fn vaccine_course1() -> VaccineCourseRow {
         use_in_gaps_calculations: false,
         wastage_rate: 1.0,
         deleted_datetime: None,
+        can_skip_dose: false,
     }
 }
 

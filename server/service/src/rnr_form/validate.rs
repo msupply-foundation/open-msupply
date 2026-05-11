@@ -9,7 +9,7 @@ pub fn check_rnr_form_exists(
     rnr_form_id: &str,
 ) -> Result<Option<RnRForm>, RepositoryError> {
     RnRFormRepository::new(connection)
-        .query_one(RnRFormFilter::new().id(EqualFilter::equal_to(rnr_form_id)))
+        .query_one(RnRFormFilter::new().id(EqualFilter::equal_to(rnr_form_id.to_string())))
 }
 
 pub fn check_rnr_form_does_not_exist(
@@ -38,8 +38,8 @@ pub fn check_rnr_form_already_exists_for_period(
             store_id.to_string(),
             Some(program_id.to_string()),
             PeriodFilter::new()
-                .id(EqualFilter::equal_to(period_id))
-                .rnr_form_program_id(EqualFilter::equal_to(program_id)),
+                .id(EqualFilter::equal_to(period_id.to_string()))
+                .rnr_form_program_id(EqualFilter::equal_to(program_id.to_string())),
         )?
         .pop())
 }
@@ -51,8 +51,8 @@ pub fn check_master_list_exists(
 ) -> Result<bool, RepositoryError> {
     let count = MasterListRepository::new(connection).count(Some(
         MasterListFilter::new()
-            .id(EqualFilter::equal_to(master_list_id))
-            .exists_for_store_id(EqualFilter::equal_to(store_id)),
+            .id(EqualFilter::equal_to(master_list_id.to_string()))
+            .exists_for_store_id(EqualFilter::equal_to(store_id.to_string())),
     ))?;
 
     Ok(count > 0)

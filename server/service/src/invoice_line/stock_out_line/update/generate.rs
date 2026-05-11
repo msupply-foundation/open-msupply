@@ -65,8 +65,7 @@ pub fn generate(
                 invoice_line_id: new_line.id.clone(),
                 comment: Some(format!(
                     "Updated from {} #{}",
-                    invoice.r#type.to_string(),
-                    invoice.invoice_number
+                    invoice.r#type, invoice.invoice_number
                 )),
             }))
         } else {
@@ -135,11 +134,12 @@ fn generate_line(
         foreign_currency_price_before_tax,
         sell_price_per_pack: invoice_line_sell_price_per_pack,
         cost_price_per_pack: invoice_line_cost_price_per_pack,
-        donor_link_id,
+        donor_id: donor_link_id,
         campaign_id,
         program_id,
         shipped_number_of_packs,
         shipped_pack_size,
+        manufacturer_id,
         ..
     }: InvoiceLineRow,
     ItemRow {
@@ -174,6 +174,8 @@ fn generate_line(
         pack_size,
         batch,
         expiry_date,
+        manufacture_date: None,
+        purchase_order_line_id: None,
         sell_price_per_pack,
         cost_price_per_pack,
         number_of_packs,
@@ -189,7 +191,8 @@ fn generate_line(
         foreign_currency_price_before_tax,
         item_variant_id,
         vvm_status_id: input.vvm_status_id.or(vvm_status_id),
-        donor_link_id,
+        donor_id: donor_link_id,
+        manufacturer_id,
         campaign_id,
         program_id,
         shipped_number_of_packs,
@@ -197,6 +200,7 @@ fn generate_line(
         shipped_pack_size,
         reason_option_id: None,
         linked_invoice_id: None,
+        status: None,
     };
 
     if let Some(number_of_packs) = input.number_of_packs {

@@ -146,9 +146,22 @@ const UIComponent = (props: ControlProps) => {
           allPrescriptionLines.forEach(
             line => (line.invoiceId = prescriptionId)
           );
+
+          const linesWithPacks = allPrescriptionLines.filter(
+            line => line.numberOfPacks > 0
+          );
+
+          // If we have any issued lines, we need to calculate the total for the prescribed quantity
+          if (linesWithPacks[0]) {
+            const prescribedQuantity = linesWithPacks.reduce((acc, line) => {
+              return acc + line.numberOfPacks * line.packSize;
+            }, 0);
+            linesWithPacks[0].prescribedQuantity = prescribedQuantity;
+          }
+
           // Add lines to prescription
           await saveLines({
-            draftPrescriptionLines: allPrescriptionLines,
+            draftPrescriptionLines: linesWithPacks,
             patch: { id: prescriptionId, status: InvoiceNodeStatus.Picked },
           });
           success(

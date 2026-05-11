@@ -11,6 +11,7 @@ import { merge } from '@common/utils';
 export type Option = {
   label: string;
   value: string | number;
+  disabled?: boolean;
 };
 export interface SelectProps extends StandardTextFieldProps {
   options: Option[];
@@ -19,7 +20,7 @@ export interface SelectProps extends StandardTextFieldProps {
 }
 
 const defaultRenderOption = (option: Option) => (
-  <MenuItem key={option.value} value={option.value}>
+  <MenuItem key={option.value} value={option.value} disabled={option.disabled}>
     {option.label}
   </MenuItem>
 );
@@ -30,9 +31,6 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
     ref
   ) => {
     const t = useTranslation();
-
-    const showClearOption =
-      !!props?.value && !!props?.onChange && clearable && options.length > 1;
 
     return (
       <TextField
@@ -51,8 +49,8 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
               color: 'secondary',
               sx: {
                 backgroundColor: props.disabled
-                  ? 'background.toolbar'
-                  : 'background.menu',
+                  ? 'background.input.disabled'
+                  : 'background.input.main',
                 borderRadius: 2,
                 padding: '4px 8px',
               },
@@ -66,8 +64,8 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
         {...props}
       >
         {options.map(renderOption || defaultRenderOption)}
-        {showClearOption && <Divider />}
-        {showClearOption && (
+        {clearable && <Divider />}
+        {clearable && (
           <MenuItem
             key={'clear-filters'}
             onClick={() =>

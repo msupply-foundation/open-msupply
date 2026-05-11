@@ -11,7 +11,6 @@ use crate::{
     get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
     SingleRecordError,
 };
- 
 
 pub fn temperature_breaches(
     connection: &StorageConnection,
@@ -34,8 +33,9 @@ pub fn get_temperature_breach(
 ) -> Result<TemperatureBreach, SingleRecordError> {
     let repository = TemperatureBreachRepository::new(&ctx.connection);
 
-    let mut result = repository
-        .query_by_filter(TemperatureBreachFilter::new().id(EqualFilter::equal_to(&id)))?;
+    let mut result = repository.query_by_filter(
+        TemperatureBreachFilter::new().id(EqualFilter::equal_to(id.to_string())),
+    )?;
 
     if let Some(record) = result.pop() {
         Ok(record)
@@ -79,11 +79,11 @@ pub fn get_max_or_min_breach_temperature(
     let breach = TemperatureBreachRowRepository::new(connection)
         .find_one_by_id(id)?
         .ok_or(RepositoryError::NotFound)?;
-    let logs =
-        TemperatureLogRepository::new(connection)
-            .query_by_filter(TemperatureLogFilter::new().temperature_breach(
-                TemperatureBreachFilter::new().id(EqualFilter::equal_to(id)),
-            ))?;
+    let logs = TemperatureLogRepository::new(connection).query_by_filter(
+        TemperatureLogFilter::new().temperature_breach(
+            TemperatureBreachFilter::new().id(EqualFilter::equal_to(id.to_string())),
+        ),
+    )?;
 
     let max_or_min_from_logs = match breach.r#type {
         TemperatureBreachType::HotConsecutive | TemperatureBreachType::HotCumulative => logs

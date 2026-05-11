@@ -27,13 +27,13 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TABLE_NAME,
         INDICATOR_VALUE_A,
         IndicatorValueRow {
-            id: "indicator_value_a".to_owned(),
-            customer_name_link_id: "name_store_a".to_owned(),
-            store_id: "store_b".to_owned(),
-            period_id: "period_1".to_owned(),
-            indicator_line_id: "indicator_line_a".to_owned(),
-            indicator_column_id: "indicator_column_a".to_owned(),
-            value: "123".to_owned(),
+            id: "indicator_value_a".to_string(),
+            customer_name_id: "name_store_a".to_string(),
+            store_id: "store_b".to_string(),
+            period_id: "period_1".to_string(),
+            indicator_line_id: "indicator_line_a".to_string(),
+            indicator_column_id: "indicator_column_a".to_string(),
+            value: "123".to_string(),
         },
     ));
 
@@ -53,13 +53,13 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TABLE_NAME,
         INDICATOR_VALUE_B,
         IndicatorValueRow {
-            id: "indicator_value_b".to_owned(),
-            customer_name_link_id: "name_store_a".to_owned(),
-            store_id: "store_b".to_owned(),
-            period_id: "period_1".to_owned(),
-            indicator_line_id: "indicator_line_a".to_owned(),
-            indicator_column_id: "indicator_column_b".to_owned(),
-            value: "My life for Aiur".to_owned(),
+            id: "indicator_value_b".to_string(),
+            customer_name_id: "name_store_a".to_string(),
+            store_id: "store_b".to_string(),
+            period_id: "period_1".to_string(),
+            indicator_line_id: "indicator_line_a".to_string(),
+            indicator_column_id: "indicator_column_b".to_string(),
+            value: "My life for Aiur".to_string(),
         },
     ));
     data
@@ -84,9 +84,10 @@ pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
         .map(|r| TestSyncOutgoingRecord {
             record_id: r.sync_buffer_row.record_id.clone(),
             table_name: r.sync_buffer_row.table_name.clone(),
-            push_data: json!(
-                serde_json::from_str::<LegacyIndicatorValue>(&r.sync_buffer_row.data).unwrap()
-            ),
+            push_data: json!(r
+                .sync_buffer_row
+                .deserialize::<LegacyIndicatorValue>()
+                .unwrap()),
         })
         .collect()
 }

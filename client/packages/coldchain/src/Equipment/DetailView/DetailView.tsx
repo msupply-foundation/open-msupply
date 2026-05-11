@@ -10,8 +10,6 @@ import {
   useConfirmationModal,
   useNotification,
   useConfirmOnLeaving,
-  TableProvider,
-  createTableStore,
   ObjUtils,
   useAuthContext,
   useIsCentralServerApi,
@@ -156,7 +154,10 @@ export const EquipmentDetailView = () => {
       value: 'Summary',
     },
     {
-      Component: <Details onChange={onChange} draft={draft} />,
+      Component:
+        draft === undefined ? null : (
+          <Details onChange={onChange} draft={draft} />
+        ),
       value: 'Details',
     },
     {
@@ -168,11 +169,7 @@ export const EquipmentDetailView = () => {
       value: 'Documents',
     },
     {
-      Component: (
-        <TableProvider createStore={createTableStore}>
-          <ActivityLogList recordId={data?.id ?? ''} />
-        </TableProvider>
-      ),
+      Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: 'Log',
     },
   ];

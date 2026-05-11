@@ -118,7 +118,7 @@ mod test_update {
             service.update_outbound_shipment_unallocated_line(
                 &context,
                 UpdateOutboundShipmentUnallocatedLine {
-                    id: "invalid".to_owned(),
+                    id: "invalid".to_string(),
                     quantity: 0.0
                 },
             ),

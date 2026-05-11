@@ -1,5 +1,8 @@
 use super::{item_link, item_row::item, warning_row::warning};
-use crate::{RepositoryError, StorageConnection, Upsert};
+use crate::{
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
+};
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -40,7 +43,7 @@ impl<'a> ItemWarningJoinRowRepository<'a> {
         ItemWarningJoinRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &ItemWarningJoinRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &ItemWarningJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item_warning_join::table)
             .values(row)
             .on_conflict(item_warning_join::id)
@@ -48,6 +51,17 @@ impl<'a> ItemWarningJoinRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &ItemWarningJoinRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = ItemWarningJoinRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(
@@ -60,12 +74,37 @@ impl<'a> ItemWarningJoinRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<ItemWarningJoinRow>, RepositoryError> {
+        Ok(item_warning_join::table
+            .filter(item_warning_join::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for ItemWarningJoinRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ItemWarningJoinRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        ItemWarningJoinRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

@@ -37,19 +37,22 @@ export const useProgramEnrolments = (input: ProgramEnrolmentListParams) => {
     },
     filterBy: input.filterBy,
   };
-  return useQuery(api.keys.list(params), () =>
-    api.programEnrolments(params).then(programs => ({
-      nodes: programs.nodes.map(node => {
-        // only take the latest status event
-        const events = node.activeProgramEvents.nodes
-          .filter(e => e.type === 'programStatus' && e.data)
-          .slice(0, 1);
-        return {
-          ...node,
-          events,
-        };
-      }),
-      totalCount: programs.totalCount,
-    }))
+  return useQuery(
+    api.keys.list(params),
+    () =>
+      api.programEnrolments(params).then(programs => ({
+        nodes: programs.nodes.map(node => {
+          // only take the latest status event
+          const events = node.activeProgramEvents.nodes
+            .filter(e => e.type === 'programStatus' && e.data)
+            .slice(0, 1);
+          return {
+            ...node,
+            events,
+          };
+        }),
+        totalCount: programs.totalCount,
+      })),
+    { keepPreviousData: true }
   );
 };

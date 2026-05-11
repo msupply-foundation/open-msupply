@@ -1,15 +1,12 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   useTranslation,
   AppBarContentPortal,
-  FilterController,
   FilterMenu,
   Box,
 } from '@openmsupply-client/common';
 
-export const Toolbar: FC<{
-  filter: FilterController;
-}> = () => {
+export const Toolbar = () => {
   const t = useTranslation();
 
   return (
@@ -28,6 +25,11 @@ export const Toolbar: FC<{
               type: 'text',
               name: t('label.name'),
               urlParameter: 'name',
+            },
+            {
+              type: 'text',
+              name: t('label.code'),
+              urlParameter: 'code',
             },
             {
               type: 'boolean',

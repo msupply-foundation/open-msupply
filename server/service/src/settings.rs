@@ -1,4 +1,7 @@
-use std::fmt::{Display, Formatter, Result};
+use std::{
+    collections::HashMap,
+    fmt::{Display, Formatter, Result},
+};
 
 use repository::database_settings::DatabaseSettings;
 use serde::{Deserialize, Serialize};
@@ -13,6 +16,7 @@ pub struct Settings {
     pub logging: Option<LoggingSettings>,
     pub backup: Option<BackupSettings>,
     pub mail: Option<MailSettings>,
+    pub features: Option<HashMap<String, bool>>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -30,12 +34,17 @@ pub struct ServerSettings {
     /// Sets the allowed origin for cors requests
     pub cors_origins: Vec<String>,
     /// Directory where the server stores its data, e.g. sqlite DB file or certs
-    pub base_dir: Option<String>,
+    #[serde(default = "default_base_dir")]
+    pub base_dir: String,
     /// Option to set the machine id of the device for an OS that isn't supported by machine_uid
     pub machine_uid: Option<String>,
     // Option to set server mode as central server, should only be used in testing, demo and development
     #[serde(default)]
     pub override_is_central_server: bool,
+}
+
+fn default_base_dir() -> String {
+    "app_data".to_string()
 }
 
 impl ServerSettings {
@@ -98,7 +107,7 @@ impl Display for Level {
             Level::Debug => "debug",
             Level::Trace => "trace",
         };
-        write!(f, "{}", level)
+        write!(f, "{level}")
     }
 }
 

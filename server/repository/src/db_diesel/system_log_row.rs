@@ -1,5 +1,8 @@
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, Upsert};
-use crate::{RepositoryError, StorageConnection};
+use crate::{
+    ChangelogRepository, ChangelogSyncType, RowActionType,
+    Upsert,
+};
+use crate::{RepositoryError, SourceSiteId, StorageConnection};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -26,6 +29,8 @@ pub enum SystemLogType {
     ProcessorError,
     LedgerFixError,
     LedgerFix,
+    Migration,
+    ServerStatus,
 }
 
 impl SystemLogType {
@@ -34,6 +39,8 @@ impl SystemLogType {
             SystemLogType::ProcessorError => true,
             SystemLogType::LedgerFixError => true,
             SystemLogType::LedgerFix => false,
+            SystemLogType::Migration => false,
+            SystemLogType::ServerStatus => false,
         }
     }
 }
@@ -52,7 +59,6 @@ pub struct SystemLogRow {
     pub message: Option<String>,
     pub is_error: bool,
 }
-
 pub struct SystemLogRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -62,27 +68,22 @@ impl<'a> SystemLogRowRepository<'a> {
         SystemLogRowRepository { connection }
     }
 
-    pub fn insert_one(&self, row: &SystemLogRow) -> Result<i64, RepositoryError> {
+    pub fn _insert_one(&self, row: &SystemLogRow) -> Result<(), RepositoryError> {
         diesel::insert_into(system_log::table)
             .values(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row, RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(
-        &self,
-        row: &SystemLogRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::SystemLog,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: None,
-            name_link_id: None,
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn insert_one(&self, row: &SystemLogRow) -> Result<(), RepositoryError> {
+        self._insert_one(row)?;
+        let changelog = SystemLogRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, log_id: &str) -> Result<Option<SystemLogRow>, RepositoryError> {
@@ -93,18 +94,46 @@ impl<'a> SystemLogRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn last_x_messages(&self, count: i64) -> Result<Vec<SystemLogRow>, RepositoryError> {
+    pub fn last_x_errors(&self, count: i64) -> Result<Vec<SystemLogRow>, RepositoryError> {
         let result = system_log::table
             .limit(count)
+            .filter(system_log::is_error.eq(true))
             .get_results(self.connection.lock().connection())?;
         Ok(result)
+    }
+
+    pub fn find_all(&self) -> Result<Vec<SystemLogRow>, RepositoryError> {
+        let result = system_log::table.load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<SystemLogRow>, RepositoryError> {
+        Ok(system_log::table
+            .filter(system_log::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 
 impl Upsert for SystemLogRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = SystemLogRowRepository::new(con).insert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        SystemLogRowRepository::new(con)._insert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

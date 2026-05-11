@@ -1,40 +1,59 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   AlertModal,
-  createQueryParamsStore,
-  createTableStore,
   DetailTabs,
   DetailViewSkeleton,
+  MaterialTable,
+  NothingHere,
+  PurchaseOrderLineStatusNode,
   RouteBuilder,
-  TableProvider,
   useBreadcrumbs,
   useEditModal,
   useNavigate,
+  useNonPaginatedMaterialTable,
   useTranslation,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
-import { PurchaseOrderLineFragment } from '../api';
-import { ContentArea, Details, Documents } from './Tabs';
+import { ActivityLogList } from '@openmsupply-client/system';
+import { canAddNewLines, isPurchaseOrderDisabled } from '../../utils';
+import { PurchaseOrderLineFragment, usePurchaseOrder } from '../api';
+import { Details, Documents, InboundShipments } from './Tabs';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
-import { canAddNewLines } from '../../utils';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
 import { PurchaseOrderLineEditModal } from './LineEdit/PurchaseOrderLineEditModal';
-import { ActivityLogList } from 'packages/system/src';
+import { usePurchaseOrderColumns } from './columns';
+import { PurchaseOrderLineErrorProvider } from '../context';
 
-export const DetailViewInner = () => {
+const getPlaceholderRow = (line: PurchaseOrderLineFragment) => {
+  return line.requestedNumberOfUnits === 0;
+};
+
+const getClosedLine = (line: PurchaseOrderLineFragment) => {
+  return line.status === PurchaseOrderLineStatusNode.Closed;
+};
+
+export const PurchaseOrderDetailView = () => (
+  <PurchaseOrderLineErrorProvider>
+    <DetailViewInner />
+  </PurchaseOrderLineErrorProvider>
+);
+
+const DetailViewInner = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const [showStatusBar, setShowStatusBar] = useState(true);
+  const { urlQuery } = useUrlQuery();
+  const currentTab = urlQuery['tab'];
 
   const {
-    query: { data, isLoading },
-    lines: { sortedAndFilteredLines },
+    query: { data, isFetching, isLoading },
+    lines: { filteredLines: lines },
     draft,
     handleChange,
+    invalidateQueries,
   } = usePurchaseOrder();
 
   const {
@@ -53,110 +72,114 @@ export const DetailViewInner = () => {
   );
 
   const openNext = useCallback(() => {
-    const currentIndex = sortedAndFilteredLines.findIndex(
-      line => line.id === lineId
-    );
-    const nextLine = sortedAndFilteredLines[currentIndex + 1];
+    const currentIndex = lines?.findIndex(line => line.id === lineId);
+    const nextLine = lines[currentIndex + 1];
     if (!nextLine) return;
     onOpen(nextLine.id);
-  }, [onOpen, lineId, sortedAndFilteredLines]);
+  }, [lines, onOpen, lineId]);
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.number]);
 
-  if (isLoading) return <DetailViewSkeleton />;
+  const disableNewLines = !data || !canAddNewLines(data);
+  const isDisabled = !data || isPurchaseOrderDisabled(data);
+  const columns = usePurchaseOrderColumns(data?.currency?.code);
 
-  const isDisabled = !data || !canAddNewLines(data);
+  const { table, selectedRows } =
+    useNonPaginatedMaterialTable<PurchaseOrderLineFragment>({
+      tableId: 'purchase-order-detail-view',
+      isLoading: isFetching,
+      onRowClick: onRowClick,
+      columns,
+      data: lines,
+      initialSort: { key: 'lineNumber', dir: 'asc' },
+      getIsRestrictedRow: row => getClosedLine(row.original),
+      getIsPlaceholderRow: row => getPlaceholderRow(row.original),
+      manualFiltering: true,
+      noDataElement: (
+        <NothingHere
+          body={t('error.no-purchase-order-items')}
+          onCreate={disableNewLines ? undefined : onOpen}
+        />
+      ),
+    });
 
   const tabs = [
     {
-      Component: (
-        <ContentArea
-          lines={sortedAndFilteredLines}
-          isDisabled={isDisabled}
-          onAddItem={onOpen}
-          onRowClick={!isDisabled ? onRowClick : null}
-        />
-      ),
-      value: 'General',
+      Component: <MaterialTable table={table} />,
+      value: t('label.general'),
     },
     {
-      Component: <Details draft={draft} onChange={handleChange} />,
-      value: 'Details',
+      Component: <InboundShipments />,
+      value: t('label.inbound-shipment'),
+    },
+    {
+      Component: (
+        <Details draft={draft} onChange={handleChange} disabled={isDisabled} />
+      ),
+      value: t('label.details'),
     },
     {
       Component: (
         <Documents
-          purchaseOrderId={data?.id}
-          documents={data?.documents?.nodes}
-          setShowStatusBar={setShowStatusBar}
+          data={data}
+          disable={isDisabled}
+          invalidateQueries={invalidateQueries}
         />
       ),
-      value: 'Documents',
+      value: t('label.documents'),
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
-      value: 'Log',
+      value: t('label.log'),
     },
   ];
+  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
-  return (
-    <React.Suspense
-      fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
-    >
-      {data ? (
-        <>
-          <AppBarButtons isDisabled={isDisabled} onAddItem={onOpen} />
-          <Toolbar isDisabled={isDisabled} />
-          <DetailTabs tabs={tabs} />
-          <Footer showStatusBar={showStatusBar} />
-          <SidePanel />
-          {isOpen && (
-            <PurchaseOrderLineEditModal
-              purchaseOrder={data}
-              isOpen={isOpen}
-              onClose={onClose}
-              mode={mode}
-              lineId={lineId}
-              isDisabled={isDisabled}
-              hasNext={
-                sortedAndFilteredLines.findIndex(line => line.id === lineId) <
-                sortedAndFilteredLines.length - 1
-              }
-              openNext={openNext}
-            />
-          )}
-        </>
-      ) : (
-        <AlertModal
-          open={true}
-          onOk={() =>
-            navigate(
-              RouteBuilder.create(AppRoute.Replenishment)
-                .addPart(AppRoute.PurchaseOrder)
-                .build()
-            )
+  return data ? (
+    <>
+      <AppBarButtons
+        isDisabled={isDisabled}
+        disableNewLines={disableNewLines}
+        onAddItem={onOpen}
+      />
+      <Toolbar isDisabled={isDisabled} />
+      <DetailTabs tabs={tabs} />
+      <Footer
+        showStatusBar={currentTab !== 'Documents'}
+        status={data.status}
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+      />
+      <SidePanel />
+      {isOpen && (
+        <PurchaseOrderLineEditModal
+          purchaseOrder={data}
+          isOpen={isOpen}
+          onClose={onClose}
+          mode={mode}
+          lineId={lineId}
+          isDisabled={isDisabled}
+          hasNext={
+            lines.findIndex(line => line.id === lineId) < lines.length - 1
           }
-          title={t('error.purchase-order-not-found')}
-          message={t('messages.click-to-return-to-purchase-orders')}
+          openNext={openNext}
         />
       )}
-    </React.Suspense>
-  );
-};
-
-export const PurchaseOrderDetailView = () => {
-  return (
-    <TableProvider
-      createStore={createTableStore}
-      queryParamsStore={createQueryParamsStore<PurchaseOrderLineFragment>({
-        initialSortBy: {
-          key: 'itemName',
-        },
-      })}
-    >
-      <DetailViewInner />
-    </TableProvider>
+    </>
+  ) : (
+    <AlertModal
+      open={true}
+      onOk={() =>
+        navigate(
+          RouteBuilder.create(AppRoute.Replenishment)
+            .addPart(AppRoute.PurchaseOrder)
+            .build()
+        )
+      }
+      title={t('error.purchase-order-not-found')}
+      message={t('messages.click-to-return-to-purchase-orders')}
+    />
   );
 };

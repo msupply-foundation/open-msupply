@@ -4,6 +4,7 @@ use dataloader::DataLoader;
 use graphql_core::{
     loader::{
         DemographicLoader, VaccineCourseDoseByVaccineCourseIdLoader,
+        VaccineCourseStoreConfigByVaccineCourseIdLoader,
         VaccineCourseItemByVaccineCourseIdLoader,
     },
     ContextExt,
@@ -11,7 +12,10 @@ use graphql_core::{
 
 use repository::vaccine_course::vaccine_course_row::VaccineCourseRow;
 
-use super::{DemographicNode, VaccineCourseDoseNode, VaccineCourseItemNode};
+use super::{
+    DemographicNode, VaccineCourseDoseNode, VaccineCourseStoreConfigNode,
+    VaccineCourseItemNode,
+};
 
 #[derive(PartialEq, Debug)]
 pub struct VaccineCourseNode {
@@ -46,6 +50,10 @@ impl VaccineCourseNode {
 
     pub async fn wastage_rate(&self) -> f64 {
         self.row().wastage_rate
+    }
+
+    pub async fn can_skip_dose(&self) -> bool {
+        self.row().can_skip_dose
     }
 
     pub async fn demographic(&self, ctx: &Context<'_>) -> Result<Option<DemographicNode>> {
@@ -86,6 +94,21 @@ impl VaccineCourseNode {
             doses
                 .into_iter()
                 .map(VaccineCourseDoseNode::from_domain)
+                .collect()
+        }))
+    }
+
+    pub async fn store_configs(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<Vec<VaccineCourseStoreConfigNode>>> {
+        let loader =
+            ctx.get_loader::<DataLoader<VaccineCourseStoreConfigByVaccineCourseIdLoader>>();
+        let result = loader.load_one(self.row().id.clone()).await?;
+
+        Ok(result.map(|rows| {
+            rows.into_iter()
+                .map(VaccineCourseStoreConfigNode::from_domain)
                 .collect()
         }))
     }

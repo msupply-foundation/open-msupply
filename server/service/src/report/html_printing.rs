@@ -3,7 +3,7 @@ use std::{fs, path::PathBuf, str::FromStr};
 use headless_chrome::{types::PrintToPdfOptions, Browser, LaunchOptionsBuilder};
 
 pub fn html_to_pdf(
-    temp_dir: &Option<String>,
+    temp_dir: &str,
     document: &str,
     document_id: &str,
 ) -> Result<Vec<u8>, anyhow::Error> {
@@ -29,11 +29,7 @@ pub fn html_to_pdf(
         generate_tagged_pdf: None,
     });
 
-    let temp_dir = match temp_dir {
-        Some(temp_dir) => PathBuf::from_str(temp_dir)?,
-        None => std::env::current_dir()?,
-    }
-    .join("report_printing_tmp");
+    let temp_dir = PathBuf::from_str(temp_dir)?.join("report_printing_tmp");
     // headless chrome needs an absolute path
     let temp_dir = if !temp_dir.is_absolute() {
         std::env::current_dir()?.join(temp_dir)
@@ -42,7 +38,7 @@ pub fn html_to_pdf(
     };
     fs::create_dir_all(&temp_dir)?;
 
-    let document_name = format!("{}.html", document_id);
+    let document_name = format!("{document_id}.html");
     let temp_html_doc_path = temp_dir.join(document_name);
     fs::write(&temp_html_doc_path, document)?;
 

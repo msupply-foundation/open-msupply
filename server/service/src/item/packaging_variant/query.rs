@@ -9,7 +9,6 @@ use repository::{
 };
 
 use crate::{get_pagination_or_default, i64_to_u32, ListError, ListResult};
- 
 
 pub fn get_packaging_variants(
     connection: &StorageConnection,

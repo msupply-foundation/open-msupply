@@ -1,10 +1,17 @@
 import React from 'react';
 import { useFormatNumber, useIntlUtils, useTranslation } from '@common/intl';
-import { Box, Typography, NewValueBar } from '@openmsupply-client/common';
-import { RepresentationValue, useValueInUnitsOrPacks } from '../../../common';
+import {
+  Box,
+  Typography,
+  NewValueBar,
+  RequisitionNodeStatus,
+  RepresentationValue,
+  QuantityUtils,
+} from '@openmsupply-client/common';
 import { calculatePercentage, stats } from './utils';
 
 export interface ResponseStoreStatsProps {
+  requisitionStatus: RequisitionNodeStatus;
   representation: RepresentationValue;
   defaultPackSize: number;
   unitName?: string | null;
@@ -16,6 +23,7 @@ export interface ResponseStoreStatsProps {
 }
 
 export const ResponseStoreStats = ({
+  requisitionStatus,
   representation,
   defaultPackSize,
   unitName,
@@ -32,27 +40,27 @@ export const ResponseStoreStats = ({
 
   const statsDisplay = stats(t, getPlural, round, unit, representation);
 
-  const formattedSoh = useValueInUnitsOrPacks(
+  const formattedSoh = QuantityUtils.useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     stockOnHand
   );
-  const formattedIncoming = useValueInUnitsOrPacks(
+  const formattedIncoming = QuantityUtils.useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     incomingStock
   );
-  const formattedSoo = useValueInUnitsOrPacks(
+  const formattedSoo = QuantityUtils.useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     stockOnOrder
   );
-  const formattedRequested = useValueInUnitsOrPacks(
+  const formattedRequested = QuantityUtils.useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     requestedQuantity
   );
-  const formattedOtherRequested = useValueInUnitsOrPacks(
+  const formattedOtherRequested = QuantityUtils.useValueInUnitsOrPacks(
     representation,
     defaultPackSize,
     otherRequestedQuantity
@@ -127,19 +135,19 @@ export const ResponseStoreStats = ({
                 />
               </Box>
               <Box paddingTop={1}>
-                {!!formattedSoh &&
+                {formattedSoh !== null &&
                   statsDisplay(
                     'label.stock-on-hand',
                     formattedSoh,
                     'gray.dark'
                   )}
-                {!!formattedIncoming &&
+                {formattedIncoming !== null &&
                   statsDisplay(
                     'label.incoming-stock',
                     formattedIncoming,
                     'gray.main'
                   )}
-                {!!formattedSoo &&
+                {formattedSoo !== null &&
                   statsDisplay(
                     'label.stock-on-order',
                     formattedSoo,
@@ -155,7 +163,18 @@ export const ResponseStoreStats = ({
           p: '4px 8px',
         }}
       >
-        {(!!formattedRequested || !!formattedOtherRequested) && (
+        {formattedRequested === 0 && formattedOtherRequested === 0 ? (
+          <Typography
+            fontSize={14}
+            style={{ textAlign: 'center' }}
+            justifyContent="center"
+          >
+            ⓘ
+            <span style={{ fontStyle: 'italic', paddingLeft: 4 }}>
+              {t('messages.no-requested-quantities')}
+            </span>
+          </Typography>
+        ) : (
           <>
             <Typography style={{ textAlign: 'start' }} variant="h6">
               {t('label.requested')}
@@ -179,13 +198,12 @@ export const ResponseStoreStats = ({
                 />
               </Box>
               <Box paddingTop={1}>
-                {!!formattedRequested &&
-                  statsDisplay(
-                    'label.requested-quantity',
-                    formattedRequested,
-                    'primary.main'
-                  )}
-                {!!formattedOtherRequested &&
+                {statsDisplay(
+                  'label.requested-quantity',
+                  formattedRequested,
+                  'primary.main'
+                )}
+                {requisitionStatus !== RequisitionNodeStatus.Finalised &&
                   statsDisplay(
                     'label.other-requested-quantity',
                     formattedOtherRequested,

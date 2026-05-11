@@ -2,7 +2,7 @@ use std::vec;
 
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, Utc};
 use repository::asset_log_row::AssetLogStatus;
 use serde_json;
 
@@ -89,7 +89,7 @@ impl From<AssetFilterInput> for AssetFilter {
             store_id: f.store_id.map(StringFilter::from),
             functional_status: f
                 .functional_status
-                .map(|t| map_filter!(t, |s| AssetLogStatus::from(s))),
+                .map(|t| map_filter!(t, AssetLogStatus::from)),
         }
     }
 }
@@ -147,12 +147,12 @@ impl AssetNode {
         self.row().replacement_date
     }
 
-    pub async fn created_datetime(&self) -> &chrono::NaiveDateTime {
-        &self.row().created_datetime
+    pub async fn created_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
 
-    pub async fn modified_datetime(&self) -> &chrono::NaiveDateTime {
-        &self.row().modified_datetime
+    pub async fn modified_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().modified_datetime, Utc)
     }
 
     pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
@@ -400,7 +400,7 @@ pub(crate) fn map_parse_error(
     error: ServiceScannedDataParseError,
 ) -> Result<ScannedDataParseErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors

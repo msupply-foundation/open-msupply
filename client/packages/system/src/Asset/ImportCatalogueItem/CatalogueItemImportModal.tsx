@@ -49,7 +49,7 @@ export type ImportRow = {
   type: string;
   typeId?: string;
   errorMessage?: string;
-  properties: Record<string, string>;
+  properties: Record<string, string | number>;
 };
 
 export type LineNumber = {
@@ -273,7 +273,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
     {
       label: t('label.review'),
       description: '',
-      clickable: true,
+      clickable: bufferedAssetItem.length > 0,
       tab: Tabs.Review,
     },
     {

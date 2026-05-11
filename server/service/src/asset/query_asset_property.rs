@@ -29,7 +29,7 @@ pub fn get_asset_property(
     let repository = AssetPropertyRepository::new(&ctx.connection);
 
     let mut result = repository.query(Some(
-        AssetPropertyFilter::new().id(EqualFilter::equal_to(&id)),
+        AssetPropertyFilter::new().id(EqualFilter::equal_to(id.to_string())),
     ))?;
 
     if let Some(record) = result.pop() {

@@ -1,9 +1,8 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   useTranslation,
   AppBarContentPortal,
   FilterMenu,
-  FilterController,
   Box,
   FilterDefinition,
   useAuthContext,
@@ -11,7 +10,7 @@ import {
   getGenderTranslationKey,
 } from '@openmsupply-client/common';
 
-export const Toolbar: FC<{ filter: FilterController }> = () => {
+export const Toolbar = () => {
   const t = useTranslation();
   const { store } = useAuthContext();
   const { genderOptions = [] } = usePreferences();

@@ -2,7 +2,7 @@ import {
   ItemNodeType,
   SortBy,
   ItemSortFieldInput,
-  FilterByWithStringAndBool,
+  FilterBy,
 } from '@openmsupply-client/common';
 import { Sdk, ItemRowFragment } from './operations.generated';
 
@@ -10,7 +10,7 @@ export type ListParams<T> = {
   first: number;
   offset: number;
   sortBy: SortBy<T>;
-  filterBy?: FilterByWithStringAndBool | null;
+  filterBy?: FilterBy | null;
   isVisible?: boolean;
 };
 
@@ -55,6 +55,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
           ...filterBy,
           type: { equalTo: ItemNodeType.Stock },
           isActive: true,
+          isVisible: true,
         },
       });
 
@@ -110,8 +111,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         // because service items don't have SOH & AMC so it's odd to show them alongside stock items
         filter: {
           ...filterBy,
-          // includes non-visible items that have stock on hand
-          isVisibleOrOnHand: true,
+          isVisible: true,
           isActive: true,
         },
       });

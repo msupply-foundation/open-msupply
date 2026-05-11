@@ -26,17 +26,15 @@ export const ProgramsNav = ({ store }: { store?: UserStoreNodeFragment }) => {
     <AppNavSection isActive={isActive} to={AppRoute.Programs}>
       <AppNavLink
         visible={immunisationsVisible}
-        end={false}
+        isParent
         to={AppRoute.Programs}
         icon={<InvoiceIcon color="primary" fontSize="small" />}
         text={t('programs')}
-        inactive
       />
       <Collapse in={isActive}>
         <List>
           <AppNavLink
             visible={immunisationsVisible}
-            end
             to={RouteBuilder.create(AppRoute.Programs)
               .addPart(AppRoute.ImmunisationPrograms)
               .build()}

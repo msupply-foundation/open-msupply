@@ -59,7 +59,7 @@ impl SyncTranslation for UserStorePermissionTranslation {
             can_action_replenishments: _,
         } = serde_json::from_str::<LegacyUserStorePermissionTable>(&sync_record.data)?;
         if StoreRepository::new(connection)
-            .query_one(StoreFilter::new().id(EqualFilter::equal_to(&store_id)))?
+            .query_one(StoreFilter::new().id(EqualFilter::equal_to(store_id.to_owned())))?
             .is_none()
         {
             return Ok(PullTranslateResult::NotMatched);
@@ -83,8 +83,8 @@ impl SyncTranslation for UserStorePermissionTranslation {
 
         let existing_permissions = UserPermissionRepository::new(connection).query_by_filter(
             UserPermissionFilter::new()
-                .user_id(EqualFilter::equal_to(&user_id))
-                .store_id(EqualFilter::equal_to(&store_id))
+                .user_id(EqualFilter::equal_to(user_id.to_owned()))
+                .store_id(EqualFilter::equal_to(store_id.to_owned()))
                 .has_context(false),
         )?;
 

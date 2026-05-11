@@ -1,7 +1,8 @@
 use async_trait::async_trait;
 use repository::{
-    ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter,
-    PluginType, RepositoryError, TransactionError,
+    ChangelogCondition, ChangelogRepository, ChangelogRow, ChangelogTableName,
+    CompatibilityChangelogFilter, CursorAndLimit, FilterBuilder, PluginType, RepositoryError,
+    TransactionError,
 };
 use strum::Display;
 use thiserror::Error;
@@ -22,6 +23,7 @@ use super::{
     add_central_patient_visibility::AddPatientVisibilityForCentral,
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
     load_plugin::LoadPlugin, plugin_processor::PluginProcessor,
+    requisition_auto_finalise::RequisitionAutoFinaliseProcessor,
 };
 
 #[derive(Error, Debug)]
@@ -51,6 +53,7 @@ pub enum ProcessorType {
     AssignRequisitionNumber,
     AddPatientVisibilityForCentral,
     Plugins,
+    RequisitionAutoFinalise,
 }
 
 impl ProcessorType {
@@ -64,6 +67,9 @@ impl ProcessorType {
                 vec![Box::new(AddPatientVisibilityForCentral)]
             }
             ProcessorType::Plugins => get_plugin_processors(),
+            ProcessorType::RequisitionAutoFinalise => {
+                vec![Box::new(RequisitionAutoFinaliseProcessor)]
+            }
         }
     }
 
@@ -88,6 +94,46 @@ fn get_plugin_processors() -> Vec<Box<dyn Processor>> {
         .collect()
 }
 
+/// A processor either uses the new changelog filter or the pre-v7 compatibility filter.
+/// Plugins (and other legacy callers) opt into the compatibility path by returning
+/// `Some` from `Processor::compatibility_filter`.
+enum ProcessorFilter {
+    Compatibility(CompatibilityChangelogFilter),
+    Normal(ChangelogCondition::Inner),
+}
+
+impl ProcessorFilter {
+    fn from_processor(
+        processor: &dyn Processor,
+        ctx: &ServiceContext,
+    ) -> Result<Self, ProcessorError> {
+        if let Some(compat) = processor.compatibility_filter(ctx)? {
+            Ok(ProcessorFilter::Compatibility(compat))
+        } else {
+            Ok(ProcessorFilter::Normal(processor.changelogs_filter(ctx)?))
+        }
+    }
+
+    fn query(
+        &self,
+        changelog_repo: &ChangelogRepository,
+        cursor: u64,
+    ) -> Result<Vec<ChangelogRow>, RepositoryError> {
+        match self {
+            ProcessorFilter::Compatibility(f) => {
+                changelog_repo.compatibility_query(cursor, CHANGELOG_BATCH_SIZE, Some(f.clone()))
+            }
+            ProcessorFilter::Normal(f) => changelog_repo.query(
+                f.clone(),
+                CursorAndLimit {
+                    cursor: cursor as i64,
+                    limit: CHANGELOG_BATCH_SIZE as i64,
+                },
+            ),
+        }
+    }
+}
+
 pub(crate) async fn process_records(
     service_provider: &ServiceProvider,
     r#type: ProcessorType,
@@ -104,20 +150,18 @@ pub(crate) async fn process_records(
         let ctx = service_provider
             .basic_context()
             .map_err(Error::DatabaseError)?;
-        let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
         let cursor_controller = CursorController::from_cursor_type(processor.cursor_type());
-
-        // Only process the changelogs we care about
-        let filter = processor.changelogs_filter(&ctx)?;
+        let filter = ProcessorFilter::from_processor(processor.as_ref(), &ctx)?;
 
         loop {
             let cursor = cursor_controller
                 .get(&ctx.connection)
                 .map_err(Error::DatabaseError)?;
 
-            let logs = changelog_repo
-                .changelogs(cursor, CHANGELOG_BATCH_SIZE, Some(filter.clone()))
+            let changelog_repo = ChangelogRepository::new(&ctx.connection);
+            let logs = filter
+                .query(&changelog_repo, cursor)
                 .map_err(Error::DatabaseError)?;
 
             if logs.is_empty() {
@@ -151,16 +195,28 @@ pub(super) trait Processor: Sync + Send {
     fn get_description(&self) -> String;
 
     /// Default to using change_log_table_names
-    fn changelogs_filter(&self, _ctx: &ServiceContext) -> Result<ChangelogFilter, ProcessorError> {
-        Ok(ChangelogFilter::new().table_name(EqualFilter {
-            equal_any: Some(self.change_log_table_names()),
-            ..Default::default()
-        }))
+    fn changelogs_filter(
+        &self,
+        _ctx: &ServiceContext,
+    ) -> Result<ChangelogCondition::Inner, ProcessorError> {
+        Ok(ChangelogCondition::table_name::any(
+            self.change_log_table_names(),
+        ))
     }
 
-    /// Default to empty array in case chanelogs_filter is manually implemented
+    /// Default to empty array in case changelogs_filter is manually implemented
     fn change_log_table_names(&self) -> Vec<ChangelogTableName> {
         Vec::new()
+    }
+
+    /// Plugins (and other legacy callers) can return a compatibility filter to use the
+    /// pre-v7 changelog query path. When `Some`, the processor loop uses
+    /// `compatibility_query` and ignores `changelogs_filter`.
+    fn compatibility_filter(
+        &self,
+        _ctx: &ServiceContext,
+    ) -> Result<Option<CompatibilityChangelogFilter>, ProcessorError> {
+        Ok(None)
     }
 
     /// Extra check to see if processor should trigger, like if it's central for contact form email

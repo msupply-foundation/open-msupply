@@ -82,7 +82,7 @@ impl DeleteInput {
 
 fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     use ServiceError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -318,7 +318,7 @@ mod test {
                     r#type: Some(StockOutType::OutboundShipment)
                 }
             );
-            Ok("deleted id".to_owned())
+            Ok("deleted id".to_string())
         }));
 
         let variables = json!({

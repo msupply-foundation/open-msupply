@@ -1,6 +1,6 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType,
+    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -28,7 +28,6 @@ pub struct BundledItemRow {
     pub ratio: f64,
     pub deleted_datetime: Option<NaiveDateTime>,
 }
-
 pub struct BundledItemRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -38,30 +37,25 @@ impl<'a> BundledItemRowRepository<'a> {
         BundledItemRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &BundledItemRow) -> Result<i64, RepositoryError> {
+    fn _upsert_one(&self, row: &BundledItemRow) -> Result<(), RepositoryError> {
         diesel::insert_into(bundled_item::table)
             .values(row)
             .on_conflict(bundled_item::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-
-        self.insert_changelog(row.id.to_owned(), RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(
-        &self,
-        row_id: String,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::BundledItem,
-            record_id: row_id,
-            row_action: action,
-            store_id: None,
-            ..Default::default()
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn upsert_one(&self, row: &BundledItemRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = BundledItemRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(
@@ -75,20 +69,48 @@ impl<'a> BundledItemRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn mark_deleted(&self, bundled_item_id: &str) -> Result<i64, RepositoryError> {
+    pub fn mark_deleted(&self, bundled_item_id: &str) -> Result<(), RepositoryError> {
         diesel::update(bundled_item::table.filter(bundled_item::id.eq(bundled_item_id)))
             .set(bundled_item::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
-        self.insert_changelog(bundled_item_id.to_owned(), RowActionType::Upsert)
+        let changelog = BundledItemRow::generate_changelog(
+            bundled_item_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<BundledItemRow>, RepositoryError> {
+        Ok(bundled_item::table
+            .filter(bundled_item::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 
 impl Upsert for BundledItemRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = BundledItemRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        BundledItemRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

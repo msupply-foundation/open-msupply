@@ -41,6 +41,7 @@ pub struct EqualFilterActivityLogTypeInput {
     pub equal_to: Option<ActivityLogNodeType>,
     pub equal_any: Option<Vec<ActivityLogNodeType>>,
     pub not_equal_to: Option<ActivityLogNodeType>,
+    pub not_equal_all: Option<Vec<ActivityLogNodeType>>,
 }
 
 #[derive(InputObject, Clone)]
@@ -59,6 +60,7 @@ pub enum ActivityLogResponse {
 
 pub fn activity_logs(
     ctx: &Context<'_>,
+    store_id: String,
     page: Option<PaginationInput>,
     filter: Option<ActivityLogFilterInput>,
     sort: Option<Vec<ActivityLogSortInput>>,
@@ -67,7 +69,7 @@ pub fn activity_logs(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryLog,
-            store_id: None,
+            store_id: Some(store_id),
         },
     )?;
 
@@ -99,7 +101,7 @@ impl ActivityLogFilterInput {
 
         ActivityLogFilter {
             id: id.map(EqualFilter::from),
-            r#type: r#type.map(|t| map_filter!(t, |r| ActivityLogType::from(r))),
+            r#type: r#type.map(|t| map_filter!(t, ActivityLogType::from)),
             user_id: user_id.map(EqualFilter::from),
             store_id: store_id.map(EqualFilter::from),
             record_id: record_id.map(EqualFilter::from),

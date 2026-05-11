@@ -97,7 +97,7 @@ const BundledItemForm = ({
                 openOnFocus={!draft.itemId}
                 onChange={item => updateDraft({ itemId: item?.id })}
                 currentItemId={draft.itemId}
-                extraFilter={item => item.id !== principalVariant.itemId}
+                filter={{ id: { notEqualAll: [principalVariant.itemId] } }}
               />
             </Box>
           }

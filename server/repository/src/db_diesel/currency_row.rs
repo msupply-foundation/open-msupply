@@ -1,8 +1,8 @@
 use super::StorageConnection;
-use crate::{Delete, Upsert};
+use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
 
 use crate::repository_error::RepositoryError;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -18,7 +18,17 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = currency)]
 pub struct CurrencyRow {
@@ -29,7 +39,6 @@ pub struct CurrencyRow {
     pub date_updated: Option<NaiveDate>,
     pub is_active: bool,
 }
-
 pub struct CurrencyRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -39,30 +48,25 @@ impl<'a> CurrencyRowRepository<'a> {
         CurrencyRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &CurrencyRow) -> Result<i64, RepositoryError> {
+    fn _upsert_one(&self, row: &CurrencyRow) -> Result<(), RepositoryError> {
         diesel::insert_into(currency::table)
             .values(row)
             .on_conflict(currency::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(&row.id, RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(
-        &self,
-        record_id: &String,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Currency,
-            record_id: record_id.clone(),
-            row_action: action,
-            store_id: None,
-            name_link_id: None,
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn upsert_one(&self, row: &CurrencyRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = CurrencyRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(
@@ -76,23 +80,57 @@ impl<'a> CurrencyRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, currency_id: &str) -> Result<i64, RepositoryError> {
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<CurrencyRow>, RepositoryError> {
+        let result = currency::table
+            .filter(currency::id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    fn _delete(&self, currency_id: &str) -> Result<(), RepositoryError> {
         diesel::update(currency::table.filter(currency::id.eq(currency_id)))
             .set(currency::is_active.eq(false))
             .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
 
-        self.insert_changelog(&currency_id.to_string(), RowActionType::Delete)
+    pub fn delete(&self, currency_id: &str) -> Result<(), RepositoryError> {
+        self._delete(currency_id)?;
+        let changelog = CurrencyRow::generate_changelog(
+            currency_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct CurrencyRowDelete(pub String);
 impl Delete for CurrencyRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = CurrencyRowRepository::new(con).delete(&self.0)?;
-        Ok(Some(change_log_id))
-    }
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let repo = CurrencyRowRepository::new(con);
 
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => CurrencyRow::generate_changelog(
+                self.0.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        repo._delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+    // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert!(matches!(
             CurrencyRowRepository::new(con).find_one_by_id(&self.0),
@@ -105,11 +143,26 @@ impl Delete for CurrencyRowDelete {
 }
 
 impl Upsert for CurrencyRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = CurrencyRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
-    }
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        CurrencyRowRepository::new(con)._upsert_one(self)?;
 
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(

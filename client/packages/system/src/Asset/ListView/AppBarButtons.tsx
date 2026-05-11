@@ -1,7 +1,5 @@
 import React from 'react';
 import {
-  DownloadIcon,
-  useNotification,
   AppBarButtonsPortal,
   Grid,
   useTranslation,
@@ -13,38 +11,33 @@ import {
   useNavigate,
   BaseButton,
   EditIcon,
-  useExportCSV,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { AssetCatalogueItemFragment } from '../api';
+import { ExportSelector } from '@openmsupply-client/system';
+import { useAssetCatalogueListAll } from '../api';
 import { assetCatalogueItemsListToCsv } from '../utils';
 
 export const AppBarButtonsComponent = ({
   importModalController,
-  assets,
 }: {
   importModalController: ToggleState;
-  assets: AssetCatalogueItemFragment[];
 }) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
-  const { error } = useNotification();
   const navigate = useNavigate();
-  const exportCSV = useExportCSV();
+  const { fetchAsync, isLoading } = useAssetCatalogueListAll();
 
-  const csvExport = async () => {
-    if (!assets || !assets?.length) {
-      error(t('error.no-data'))();
-      return;
-    }
-
-    const csv = assetCatalogueItemsListToCsv(assets, t);
-    exportCSV(csv, t('filename.asset-categories'));
-  };
   const path = RouteBuilder.create(AppRoute.Catalogue)
     .addPart(AppRoute.Assets)
     .addPart(AppRoute.LogReasons)
     .build();
+
+  const getCsvData = async () => {
+    const result = await fetchAsync();
+    return result?.nodes?.length
+      ? assetCatalogueItemsListToCsv(result.nodes, t)
+      : null;
+  };
 
   return (
     <AppBarButtonsPortal>
@@ -56,13 +49,11 @@ export const AppBarButtonsComponent = ({
             onClick={importModalController.toggleOn}
           />
         )}
-        <BaseButton
-          startIcon={<DownloadIcon />}
-          variant="outlined"
-          onClick={csvExport}
-        >
-          {t('button.export')}
-        </BaseButton>
+        <ExportSelector
+          getCsvData={getCsvData}
+          filename={t('filename.asset-categories')}
+          isLoading={isLoading}
+        />
         {isCentralServer && (
           <BaseButton
             startIcon={<EditIcon />}

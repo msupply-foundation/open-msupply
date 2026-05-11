@@ -1,18 +1,18 @@
 use super::sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress};
 use super::{
-    sync_buffer::SyncBuffer,
+    sync_buffer::{write_sync_buffer_error, write_sync_buffer_ignored, write_sync_buffer_success},
     translations::{IntegrationOperation, PullTranslateResult, SyncTranslation, SyncTranslators},
 };
 use crate::usize_to_u64;
 use log::{debug, warn};
 use repository::*;
 use std::collections::HashMap;
+use util::datetime_now;
 
 static PROGRESS_STEP_LEN: usize = 100;
 
 pub(crate) struct TranslationAndIntegration<'a> {
     connection: &'a StorageConnection,
-    sync_buffer: &'a SyncBuffer<'a>,
 }
 
 #[derive(Default, Debug)]
@@ -25,14 +25,8 @@ type TableName = String;
 pub struct TranslationAndIntegrationResults(HashMap<TableName, TranslationAndIntegrationResult>);
 
 impl<'a> TranslationAndIntegration<'a> {
-    pub(crate) fn new(
-        connection: &'a StorageConnection,
-        sync_buffer: &'a SyncBuffer,
-    ) -> TranslationAndIntegration<'a> {
-        TranslationAndIntegration {
-            connection,
-            sync_buffer,
-        }
+    pub(crate) fn new(connection: &'a StorageConnection) -> TranslationAndIntegration<'a> {
+        TranslationAndIntegration { connection }
     }
 
     // Go through each translator, adding translations to result, if no translators matched return None
@@ -88,12 +82,19 @@ impl<'a> TranslationAndIntegration<'a> {
         };
 
         for (number_of_records_integrated, sync_record) in sync_records.iter().enumerate() {
+            let started = datetime_now();
+            let cursor = sync_record.cursor;
+
             let translation_results = match self.translate_sync_record(sync_record, translators) {
                 Ok(translation_result) => translation_result,
                 // Record error in sync buffer and in result, continue to next sync_record
                 Err(translation_error) => {
-                    self.sync_buffer
-                        .record_integration_error(sync_record, &translation_error)?;
+                    write_sync_buffer_error(
+                        self.connection,
+                        cursor,
+                        started,
+                        &format!("{:?}", translation_error),
+                    )?;
                     result.insert_error(&sync_record.table_name);
                     warn!(
                         "{:?} {:?} {:?}",
@@ -112,14 +113,16 @@ impl<'a> TranslationAndIntegration<'a> {
                         // Add source site id to each operations, based on sync buffer row
                         let operations_with_source_site_id = operations
                             .into_iter()
-                            .map(|operation| (sync_record.source_site_id, operation));
+                            .map(|operation| (Some(sync_record.source_site_id), operation));
                         integration_records.extend(operations_with_source_site_id)
                     }
                     PullTranslateResult::Ignored(ignore_message) => {
                         ignored = true;
-                        self.sync_buffer.record_integration_error(
-                            sync_record,
-                            &anyhow::anyhow!("Ignored: {}", ignore_message),
+                        write_sync_buffer_ignored(
+                            self.connection,
+                            cursor,
+                            started,
+                            &ignore_message,
                         )?;
                         result.insert_error(&sync_record.table_name);
 
@@ -139,9 +142,8 @@ impl<'a> TranslationAndIntegration<'a> {
 
             // Record translator not found error in sync buffer and in result, continue to next sync_record
             if integration_records.is_empty() {
-                let error = anyhow::anyhow!("Translator for record not found");
-                self.sync_buffer
-                    .record_integration_error(sync_record, &error)?;
+                let error = "Translator for record not found";
+                write_sync_buffer_error(self.connection, cursor, started, error)?;
                 result.insert_error(&sync_record.table_name);
                 warn!(
                     "{:?} {:?} {:?}",
@@ -155,15 +157,13 @@ impl<'a> TranslationAndIntegration<'a> {
             let integration_result = integrate(self.connection, &integration_records);
             match integration_result {
                 Ok(_) => {
-                    self.sync_buffer
-                        .record_successful_integration(sync_record)?;
+                    write_sync_buffer_success(self.connection, cursor, started)?;
                     result.insert_success(&sync_record.table_name)
                 }
                 // Record database_error in sync buffer and in result
                 Err(database_error) => {
-                    let error = anyhow::anyhow!("{:?}", database_error);
-                    self.sync_buffer
-                        .record_integration_error(sync_record, &error)?;
+                    let error = format!("{database_error:?}");
+                    write_sync_buffer_error(self.connection, cursor, started, &error)?;
                     result.insert_error(&sync_record.table_name);
                     warn!(
                         "{:?} {:?} {:?}",
@@ -192,24 +192,15 @@ impl IntegrationOperation {
     ) -> Result<(), RepositoryError> {
         match self {
             IntegrationOperation::Upsert(upsert) => {
-                let cursor_id = upsert.upsert(connection)?;
-
-                // Update the change log if we get a cursor id
-                if let Some(cursor_id) = cursor_id {
-                    ChangelogRepository::new(connection)
-                        .set_source_site_id_and_is_sync_update(cursor_id, source_site_id)?;
-                }
+                upsert.upsert_sync(
+                    connection,
+                    ChangelogSyncType::SyncTypeV5V6 { source_site_id },
+                )?;
                 Ok(())
             }
 
             IntegrationOperation::Delete(delete) => {
-                let cursor_id = delete.delete(connection)?;
-
-                // Update the change log if we get a cursor id
-                if let Some(cursor_id) = cursor_id {
-                    ChangelogRepository::new(connection)
-                        .set_source_site_id_and_is_sync_update(cursor_id, source_site_id)?;
-                }
+                delete.delete_sync(connection, ChangelogSyncType::SyncTypeV5V6 { source_site_id })?;
                 Ok(())
             }
         }
@@ -245,6 +236,28 @@ pub(crate) fn integrate(
 impl TranslationAndIntegrationResults {
     fn new() -> TranslationAndIntegrationResults {
         Default::default()
+    }
+
+    pub(crate) fn log(&self, operation_name: &str) {
+        let has_results = !self.0.is_empty()
+            && self
+                .0
+                .values()
+                .any(|result| result.integrated_count > 0 || result.errors_count > 0);
+        if has_results {
+            for (table_name, result) in &self.0 {
+                if result.errors_count > 0 {
+                    log::warn!("{operation_name} Integration result for {table_name}: {result:?}");
+                } else {
+                    log::info!("{operation_name} Integration result for {table_name}: {result:?}");
+                }
+            }
+        } else {
+            log::debug!(
+                "{operation_name} Integration result: No records integrated or errored {:?}",
+                self.0
+            );
+        }
     }
 
     fn insert_error(&mut self, table_name: &str) {

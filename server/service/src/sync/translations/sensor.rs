@@ -3,11 +3,14 @@ use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, naive_time,
     zero_date_as_option,
+
 };
 
 use repository::{
-    get_sensor_type, ChangelogRow, ChangelogTableName, SensorRow, SensorRowRepository, SensorType,
+    get_sensor_type, ChangelogRow, ChangelogTableName, SensorRow, SensorType,
     StorageConnection, SyncBufferRow,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
 
@@ -71,7 +74,7 @@ impl SyncTranslation for SensorTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacySensorRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacySensorRow>()?;
 
         let LegacySensorRow {
             id,
@@ -111,9 +114,14 @@ impl SyncTranslation for SensorTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Sensor(sensor_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let SensorRow {
             id,
             name,
@@ -125,12 +133,7 @@ impl SyncTranslation for SensorTranslation {
             is_active,
             last_connection_datetime,
             r#type,
-        } = SensorRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Sensor row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = sensor_row;
 
         let last_connection_date = last_connection_datetime.map(|t| t.date());
 
@@ -142,6 +145,7 @@ impl SyncTranslation for SensorTranslation {
             SensorType::BlueMaestro => "BLUE_MAESTRO",
             SensorType::Laird => "LAIRD",
             SensorType::Berlinger => "BERLINGER",
+            SensorType::LogTag => "LOG_TAG",
         }
         .to_string();
 
@@ -161,11 +165,7 @@ impl SyncTranslation for SensorTranslation {
             last_connection_datetime,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 }
 

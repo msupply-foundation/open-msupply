@@ -7,9 +7,12 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { useResponse } from '../api';
-import { AdditionalInfoSection } from './AdditionalInfoSection';
-import { RelatedDocumentsSection } from './RelatedDocumentsSection';
-import { ProgramInfoSection } from './ProgramInfoSection';
+import {
+  AdditionalInfoSection,
+  PricingSectionComponent,
+  ProgramInfoSection,
+  RelatedDocumentsSection,
+} from '../../common';
 
 export const SidePanel: FC = () => {
   const { success } = useNotification();
@@ -32,9 +35,25 @@ export const SidePanel: FC = () => {
         />
       }
     >
-      <ProgramInfoSection />
-      <AdditionalInfoSection />
-      <RelatedDocumentsSection />
+      <ProgramInfoSection
+        {...useResponse.document.fields(['orderType', 'programName', 'period'])}
+      />
+      <AdditionalInfoSection
+        isDisabled={useResponse.utils.isDisabled()}
+        {...useResponse.document.fields([
+          'colour',
+          'comment',
+          'createdDatetime',
+          'user',
+        ])}
+      />
+      <RelatedDocumentsSection
+        {...useResponse.document.fields(['shipments'])}
+      />
+      <PricingSectionComponent
+        isResponseReq={true}
+        {...useResponse.document.fields('lines')}
+      />
     </DetailPanelPortal>
   );
 };

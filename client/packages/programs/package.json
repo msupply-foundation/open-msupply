@@ -9,9 +9,9 @@
     "eslint": "eslint ./src"
   },
   "dependencies": {
-    "@jsonforms/core": "^3.5.1",
-    "@jsonforms/material-renderers": "^3.5.1",
-    "@jsonforms/react": "^3.5.1",
+    "@jsonforms/core": "3.5.1",
+    "@jsonforms/material-renderers": "3.5.1",
+    "@jsonforms/react": "3.5.1",
     "@mui/icons-material": "^5.14.1",
     "@openmsupply-client/common": "^0.0.1",
     "@openmsupply-client/config": "^0.0.0",

@@ -18,3 +18,6 @@ pub use insert_program::*;
 
 mod batch;
 pub use self::batch::*;
+
+mod add_from_master_list;
+pub use self::add_from_master_list::*;

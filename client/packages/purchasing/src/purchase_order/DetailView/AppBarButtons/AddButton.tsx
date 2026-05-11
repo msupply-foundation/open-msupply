@@ -1,17 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { SplitButton, SplitButtonOption } from '@common/components';
-import { useTranslation } from '@common/intl';
-import { AddFromMasterListButton } from './AddFromMasterListButton';
-import { useToggle } from '@common/hooks';
-import { PlusCircleIcon } from '@common/icons';
-import { PurchaseOrderFragment } from '../../api';
-import { UserPermission } from '@common/types';
-import { AddDocumentModal } from './AddDocumentModal';
-import { PurchaseOrderLineImportModal } from '../ImportLines/PurchaseOrderLineImportModal';
 import {
   NonEmptyArray,
   useCallbackWithPermission,
-} from '@openmsupply-client/common/src';
+  useToggle,
+  PlusCircleIcon,
+  UserPermission,
+  SplitButton,
+  SplitButtonOption,
+  useTranslation,
+} from '@openmsupply-client/common';
+import { PurchaseOrderFragment } from '../../api';
+import { LineImportModal } from '../ImportLines/LineImportModal';
+import { AddFromMasterListButton } from './AddFromMasterListButton';
 
 interface AddButtonProps {
   purchaseOrder: PurchaseOrderFragment | undefined;
@@ -22,14 +22,13 @@ interface AddButtonProps {
 }
 
 export const AddButton = ({
-  purchaseOrder,
   onAddItem,
   disable,
   disableAddFromMasterListButton,
 }: AddButtonProps) => {
   const t = useTranslation();
+
   const masterListModalController = useToggle();
-  const uploadDocumentController = useToggle();
   const importModalController = useToggle();
 
   const handleUploadPurchaseOrderLines = useCallbackWithPermission(
@@ -55,10 +54,6 @@ export const AddButton = ({
         label: t('button.upload-purchase-order-lines'),
         isDisabled: disable,
       },
-      {
-        value: 'upload-document',
-        label: t('label.upload-document'),
-      },
     ],
     [disable, disableAddFromMasterListButton, t]
   );
@@ -78,12 +73,6 @@ export const AddButton = ({
         break;
       case 'add-from-master-list':
         masterListModalController.toggleOn();
-        break;
-      case 'upload-document':
-        uploadDocumentController.toggleOn();
-        break;
-      case 'upload-document':
-        uploadDocumentController.toggleOn();
         break;
       case 'import-from-csv':
         handleUploadPurchaseOrderLines();
@@ -107,24 +96,15 @@ export const AddButton = ({
         isDisabled={disable}
         openFrom="bottom"
         Icon={<PlusCircleIcon />}
-        staticLabel={t('button.add')}
       />
-
       {masterListModalController.isOn && (
         <AddFromMasterListButton
           isOn={masterListModalController.isOn}
           toggleOff={masterListModalController.toggleOff}
         />
       )}
-      {uploadDocumentController.isOn && (
-        <AddDocumentModal
-          isOn={uploadDocumentController.isOn}
-          toggleOff={uploadDocumentController.toggleOff}
-          purchaseOrderId={purchaseOrder?.id}
-        />
-      )}
       {importModalController.isOn && (
-        <PurchaseOrderLineImportModal
+        <LineImportModal
           isOpen={importModalController.isOn}
           onClose={importModalController.toggleOff}
         />

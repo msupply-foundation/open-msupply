@@ -1,13 +1,18 @@
 use repository::{
-    asset_row::{AssetRow, AssetRowRepository},
+    asset_row::{AssetRow, AssetRowDelete},
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    Row,
+
 };
 
-use crate::sync::translations::asset_category::AssetCategoryTranslation;
+use crate::sync::translations::{
+    asset_catalogue_item::AssetCatalogueItemTranslation,
+    asset_catalogue_type::AssetCatalogueTypeTranslation, asset_category::AssetCategoryTranslation,
+    asset_class::AssetClassTranslation, store::StoreTranslation,
 
-use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
+
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -23,7 +28,13 @@ impl SyncTranslation for AssetTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&'static str> {
-        vec![AssetCategoryTranslation.table_name()]
+        vec![
+            StoreTranslation.table_name(),
+            AssetCatalogueItemTranslation.table_name(),
+            AssetCategoryTranslation.table_name(),
+            AssetClassTranslation.table_name(),
+            AssetCatalogueTypeTranslation.table_name(),
+        ]
     }
 
     fn try_translate_from_upsert_sync_record(
@@ -32,7 +43,7 @@ impl SyncTranslation for AssetTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Ok(PullTranslateResult::upsert(
-            serde_json::from_str::<AssetRow>(&sync_record.data)?,
+            sync_record.deserialize::<AssetRow>()?,
         ))
     }
 
@@ -58,21 +69,35 @@ impl SyncTranslation for AssetTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
+        changelog: &ChangelogRow,
+        row: Row,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Asset(asset_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let row = asset_row;
+
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
+    }
+
+    fn try_translate_from_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::delete(AssetRowDelete(
+            sync_record.record_id.clone(),
+        )))
+    }
+
+    fn try_translate_to_delete_sync_record(
+        &self,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = AssetRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Asset row ({}) not found",
-                changelog.record_id
-            )))?;
-
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(row)?,
-        ))
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }
 

@@ -1,11 +1,11 @@
 use crate::sync::translations::store::StoreTranslation;
 
-use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
-    ChangelogRow, ChangelogTableName, PreferenceRow, PreferenceRowDelete, PreferenceRowRepository,
+    ChangelogRow, ChangelogTableName, PreferenceRow, PreferenceRowDelete,
     StorageConnection, SyncBufferRow,
+    Row,
+
 };
 
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
@@ -27,9 +27,9 @@ impl SyncTranslation for PreferenceTranslator {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_str::<
+        Ok(PullTranslateResult::upsert(serde_json::from_value::<
             PreferenceRow,
-        >(&sync_record.data)?))
+        >(sync_record.data.0.clone())?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -52,20 +52,16 @@ impl SyncTranslation for PreferenceTranslator {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = PreferenceRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "preference row ({}) not found",
-                changelog.record_id
-            )))?;
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(row)?,
-        ))
+        let Row::Preference(preference_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let row = preference_row;
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
     }
 
     fn try_translate_from_delete_sync_record(

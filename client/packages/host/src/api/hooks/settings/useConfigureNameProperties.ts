@@ -1,4 +1,5 @@
 import {
+  ConfigureNamePropertyInput,
   useIntlUtils,
   useMutation,
   useQueryClient,
@@ -11,7 +12,11 @@ import {
   LocalisedNamePropertyConfig,
   populationNameProperties,
 } from './namePropertyData';
-import { gapsKeys, forecastingKeys } from './namePropertyKeys';
+import {
+  gapsKeys,
+  forecastingKeys,
+  SUPPLY_LEVEL_KEY,
+} from './namePropertyKeys';
 
 interface PropertyConfigurations {
   properties: LocalisedNamePropertyConfig;
@@ -62,6 +67,19 @@ export const useConfigureNameProperties = () => {
   );
 };
 
+export const useConfigureCustomProperties = () => {
+  const api = useHostApi();
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    (customProperties: ConfigureNamePropertyInput[]) =>
+      api.configureNameProperties(customProperties),
+    {
+      onSuccess: () => queryClient.invalidateQueries(NAME_PROPERTIES_KEY),
+    }
+  );
+};
+
 interface NamePropertyStatus {
   gapsConfigured: boolean;
   forecastingConfigured: boolean;
@@ -73,9 +91,10 @@ export const useCheckConfiguredProperties = (): NamePropertyStatus => {
   const gapsConfigured =
     data?.some(nameProperty =>
       gapsKeys
-        // Exclude the populationKeys as they'll be present if "population" has
-        // been initialised -- they are present in both types
-        .filter(key => !forecastingKeys.includes(key))
+        // Exclude forecasting and supply level keys
+        .filter(
+          key => !forecastingKeys.includes(key) && key !== SUPPLY_LEVEL_KEY
+        )
         .includes(nameProperty.property.key)
     ) ?? false;
 

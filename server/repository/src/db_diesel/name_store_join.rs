@@ -1,34 +1,40 @@
-use super::{name_link_row::name_link, name_row::name, store_row::store, StorageConnection};
+use super::{name_row::name, store_row::store, StorageConnection};
+use crate::db_diesel::changelog::changelog::RowOrId;
+use crate::diesel_macros::define_linked_tables;
 use crate::{
     diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
-    NameLinkRow, NameRow,
+    NameRow,
 };
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
-use crate::{Delete, Upsert};
+use crate::{ChangelogRepository, RowActionType};
+use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
 
-use diesel::{
-    dsl::{InnerJoin, IntoBoxed},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
-table! {
-    name_store_join (id) {
-        id -> Text,
-        name_link_id -> Text,
+define_linked_tables!(
+    view: name_store_join = "name_store_join_view",
+    core: name_store_join_with_links = "name_store_join",
+    struct: NameStoreJoinRow,
+    repo: NameStoreJoinRepository,
+    shared: {
         store_id -> Text,
         name_is_customer -> Bool,
         name_is_supplier -> Bool,
+    },
+    links: {
+        name_link_id -> name_id,
+    },
+    optional_links: {
     }
-}
+);
 
-#[derive(Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Clone, Default)]
+#[derive(Queryable, Debug, PartialEq, Eq, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = name_store_join)]
 pub struct NameStoreJoinRow {
     pub id: String,
-    pub name_link_id: String,
     pub store_id: String,
     pub name_is_customer: bool,
     pub name_is_supplier: bool,
+    pub name_id: String,
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -38,10 +44,9 @@ pub struct NameStoreJoin {
 }
 
 joinable!(name_store_join -> store (store_id));
-joinable!(name_store_join -> name_link (name_link_id));
-allow_tables_to_appear_in_same_query!(name_store_join, name_link);
+joinable!(name_store_join -> name (name_id));
 
-type NameStoreJoins = (NameStoreJoinRow, (NameLinkRow, NameRow));
+type NameStoreJoins = (NameStoreJoinRow, NameRow);
 
 #[derive(Clone, Default)]
 pub struct NameStoreJoinFilter {
@@ -49,7 +54,6 @@ pub struct NameStoreJoinFilter {
     pub name_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
 }
-
 pub struct NameStoreJoinRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -59,42 +63,22 @@ impl<'a> NameStoreJoinRepository<'a> {
         NameStoreJoinRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &NameStoreJoinRow) -> Result<i64, RepositoryError> {
-        self._upsert_one(row)?;
-        self.insert_changelog(row, RowActionType::Upsert)
+    pub fn upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
+        self._upsert(row)?;
+        let changelog = NameStoreJoinRow::generate_changelog(
+            RowOrId::Row(row),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn upsert_one_without_changelog(
         &self,
         row: &NameStoreJoinRow,
     ) -> Result<(), RepositoryError> {
-        self._upsert_one(row)
-    }
-
-    fn _upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(name_store_join::table)
-            .values(row)
-            .on_conflict(name_store_join::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    fn insert_changelog(
-        &self,
-        row: &NameStoreJoinRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::NameStoreJoin,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_link_id: Some(row.name_link_id.clone()),
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+        self._upsert(row)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<NameStoreJoinRow>, RepositoryError> {
@@ -105,17 +89,19 @@ impl<'a> NameStoreJoinRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = self.find_one_by_id(id)?;
-        let change_log_id = match old_row {
-            Some(old_row) => self.insert_changelog(&old_row, RowActionType::Delete)?,
-            None => {
-                return Ok(None);
-            }
-        };
-        diesel::delete(name_store_join::table.filter(name_store_join::id.eq(id)))
-            .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        let changelog = NameStoreJoinRow::generate_changelog(
+            RowOrId::Id(id),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
+        diesel::delete(
+            name_store_join_with_links::table.filter(name_store_join_with_links::id.eq(id)),
+        )
+        .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 
     pub fn query_by_filter(
@@ -135,18 +121,23 @@ impl<'a> NameStoreJoinRepository<'a> {
 
         Ok(result.into_iter().map(to_domain).collect())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NameStoreJoinRow>, RepositoryError> {
+        Ok(name_store_join::table
+            .filter(name_store_join::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
-type BoxedNameStoreJoinQuery = IntoBoxed<
-    'static,
-    InnerJoin<name_store_join::table, InnerJoin<name_link::table, name::table>>,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    name_store_join::table.inner_join(name::table)
+}
 
-fn create_filtered_query(filter: Option<NameStoreJoinFilter>) -> BoxedNameStoreJoinQuery {
-    let mut query = name_store_join::table
-        .inner_join(name_link::table.inner_join(name::table))
-        .into_boxed();
+type BoxedQuery = IntoBoxed<'static, query, DBType>;
+
+fn create_filtered_query(filter: Option<NameStoreJoinFilter>) -> BoxedQuery {
+    let mut query = query().into_boxed();
 
     if let Some(f) = filter {
         let NameStoreJoinFilter {
@@ -156,14 +147,14 @@ fn create_filtered_query(filter: Option<NameStoreJoinFilter>) -> BoxedNameStoreJ
         } = f;
 
         apply_equal_filter!(query, id, name_store_join::id);
-        apply_equal_filter!(query, name_id, name::id);
+        apply_equal_filter!(query, name_id, name_store_join::name_id);
         apply_equal_filter!(query, store_id, name_store_join::store_id);
     }
 
     query
 }
 
-fn to_domain((name_store_join_row, (_, name_row)): NameStoreJoins) -> NameStoreJoin {
+fn to_domain((name_store_join_row, name_row): NameStoreJoins) -> NameStoreJoin {
     NameStoreJoin {
         name_store_join: name_store_join_row,
         name: name_row,
@@ -194,8 +185,29 @@ impl NameStoreJoinFilter {
 #[derive(Debug, Clone)]
 pub struct NameStoreJoinRowDelete(pub String);
 impl Delete for NameStoreJoinRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        NameStoreJoinRepository::new(con).delete(&self.0)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                NameStoreJoinRow::generate_changelog(
+                    RowOrId::Id(&self.0),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(
+            name_store_join_with_links::table.filter(name_store_join_with_links::id.eq(&self.0)),
+        )
+        .execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -207,9 +219,27 @@ impl Delete for NameStoreJoinRowDelete {
 }
 
 impl Upsert for NameStoreJoinRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = NameStoreJoinRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        NameStoreJoinRepository::new(con)._upsert(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                NameStoreJoinRow::generate_changelog(
+                    RowOrId::Row(self),
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

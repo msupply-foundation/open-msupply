@@ -24,6 +24,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             on_hold: false,
             store_id: store_id.to_string(),
             location_type_id: None,
+            ..Default::default()
         };
         // create test home currency
         let currency_row = CurrencyRow {
@@ -38,7 +39,7 @@ impl SyncRecordTester for InvoiceRecordTester {
         let inventory_adjustment_reason_id = uuid();
         let base_invoice_row = InvoiceRow {
             id: uuid(),
-            name_link_id: uuid(),
+            name_id: uuid(),
             name_store_id: Some(uuid()),
             store_id: store_id.to_string(),
             user_id: Some("user 1".to_string()),
@@ -76,7 +77,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             cancelled_datetime: None,
             is_cancellation: false,
             expected_delivery_date: None,
-            default_donor_id: None,
+            ..Default::default()
         };
         let base_invoice_line_row = InvoiceLineRow {
             id: uuid(),
@@ -102,7 +103,8 @@ impl SyncRecordTester for InvoiceRecordTester {
             item_variant_id: None,
             prescribed_quantity: None,
             linked_invoice_id: None,
-            donor_link_id: None,
+            donor_id: None,
+            ..Default::default()
         };
         let invoice_row_1 = base_invoice_row.clone();
         let invoice_line_row_1 = base_invoice_line_row.clone();
@@ -182,12 +184,12 @@ impl SyncRecordTester for InvoiceRecordTester {
                     "type_of": "general"
                 }],
                 "name": [{
-                    "ID": base_invoice_row.name_link_id,
+                    "ID": base_invoice_row.name_id,
                     "type": "store"
                 }],
                 "store": [{
                     "ID": base_invoice_row.name_store_id.as_ref().unwrap(),
-                    "name_ID": base_invoice_row.name_link_id,
+                    "name_ID": base_invoice_row.name_id,
                     "store_mode": "store"
                 }],
                 "options": [{
@@ -234,7 +236,7 @@ impl SyncRecordTester for InvoiceRecordTester {
         // create requisition and linked invoice
         let mut requisition_row = mock_request_draft_requisition().clone();
         requisition_row.id = uuid();
-        requisition_row.name_link_id = invoice_row_1.name_link_id.clone();
+        requisition_row.name_id = invoice_row_1.name_id.clone();
         requisition_row.store_id = store_id.clone();
 
         let invoice_row_1 = {

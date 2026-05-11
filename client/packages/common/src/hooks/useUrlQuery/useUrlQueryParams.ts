@@ -10,12 +10,7 @@ import {
   Formatter,
   useLocalStorage,
 } from '@openmsupply-client/common';
-import {
-  FilterBy,
-  FilterByWithBoolean,
-  FilterController,
-  SortBy,
-} from '../useQueryParams';
+import { FilterBy, FilterController, SortBy } from '../useQueryParams';
 
 // This hook uses the state of the url query parameters (from useUrlQuery hook)
 // to provide query parameters and update methods to tables.
@@ -35,6 +30,7 @@ interface Filter {
 }
 interface UrlQueryParams {
   initialSort?: UrlQuerySort;
+  initialFilter?: { id: string; value: string }[];
   filters?: Filter[];
 }
 
@@ -46,52 +42,80 @@ export type ListParams<T> = {
 };
 
 export const useUrlQueryParams = ({
-  initialSort,
+  initialFilter,
+  initialSort = { key: '', dir: 'asc' },
   filters = [],
 }: UrlQueryParams = {}) => {
-  // do not coerce the filter parameter if the user enters a numeric value
-  // if this is parsed as numeric, the query param changes filter=0300 to filter=300
-  // which then does not match against codes, as the filter is usually a 'startsWith'
+  // Do not coerce the filter parameter if the user enters a numeric value
+  // If this is parsed as numeric, the query param changes filter=0300 to
+  // filter=300 which then does not match against codes, as the filter is
+  // usually a 'startsWith'
   const skipParse = filters.length > 0 ? filters.map(f => f.key) : ['filter'];
 
-  const { urlQuery, updateQuery } = useUrlQuery({
-    skipParse,
-  });
-
-  const [storedRowsPerPage] = useLocalStorage(
+  const [storedRowsPerPage, setStoredRowsPerPage] = useLocalStorage(
     '/pagination/rowsperpage',
     DEFAULT_RECORDS_PER_PAGE
   );
   const rowsPerPage = storedRowsPerPage ?? DEFAULT_RECORDS_PER_PAGE;
 
+  const { urlQuery, updateQuery } = useUrlQuery({
+    skipParse,
+  });
+
+  const initialUrlSort = { sort: initialSort.key, dir: initialSort?.dir };
+
+  // Set initial sort on mount
   useEffect(() => {
-    if (!initialSort) return;
+    // Only try updating query if sort key is set
+    if (!initialUrlSort?.sort) return;
 
-    // Don't want to override existing sort
-    if (urlQuery['sort']) return;
+    if (initialSort) {
+      // Don't want to override existing sort
+      if (urlQuery['sort']) return;
 
-    const { key: sort, dir } = initialSort;
-    updateQuery({ sort, dir: dir === 'desc' ? 'desc' : '' });
-  }, [initialSort, updateQuery, urlQuery]);
+      const { key: sort, dir } = initialSort;
+      updateQuery({ sort, dir });
+    }
+
+    if (initialFilter) {
+      initialFilter.forEach(({ id, value }) => {
+        // Don't want to override existing filter
+        if (urlQuery[id]) return;
+
+        updateQuery({ [id]: value });
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialUrlSort?.sort, initialUrlSort?.dir, initialFilter]);
 
   const updateSortQuery = useCallback(
     (sort: string, dir: 'desc' | 'asc') => {
-      updateQuery({ sort, dir: dir === 'asc' ? '' : 'desc' });
+      updateQuery({ sort, dir });
     },
     [updateQuery]
   );
 
-  const updatePaginationQuery = (page: number) => {
+  const clearSort = () => updateQuery({ sort: undefined, dir: undefined });
+
+  const updatePaginationQuery = (
+    page: number,
+    pageSize: number = rowsPerPage
+  ) => {
     // Page is zero-indexed in useQueryParams store, so increase it by one
-    updateQuery({ page: page === 0 ? '' : page + 1 });
+    updateQuery({
+      page: page === 0 ? '' : page + 1,
+      pageSize:
+        pageSize && pageSize !== DEFAULT_RECORDS_PER_PAGE ? pageSize : '',
+    });
+    setStoredRowsPerPage(pageSize);
   };
 
   const updateFilterQuery = (key: string, value: string) => {
     updateQuery({ [key]: value });
   };
 
-  const getFilterBy = (): FilterByWithBoolean =>
-    filters.reduce<FilterByWithBoolean>((prev, filter) => {
+  const getFilterBy = (): FilterBy =>
+    filters.reduce<FilterBy>((prev, filter) => {
       const filterValue = getFilterValue(
         urlQuery,
         filter.key,
@@ -134,20 +158,27 @@ export const useUrlQueryParams = ({
     onClearFilterRule: key => updateFilterQuery(key, ''),
     filterBy: getFilterBy(),
   };
+
+  const pageSize =
+    urlQuery['pageSize'] && typeof urlQuery['pageSize'] === 'number'
+      ? urlQuery['pageSize']
+      : rowsPerPage;
+
+  const page =
+    urlQuery['page'] && typeof urlQuery['page'] === 'number'
+      ? urlQuery['page'] - 1
+      : 0;
+
+  const urlSort = urlQuery['sort'] ? urlQuery : initialUrlSort;
+
   const queryParams = {
-    page:
-      urlQuery['page'] && typeof urlQuery['page'] === 'number'
-        ? urlQuery['page'] - 1
-        : 0,
-    offset:
-      urlQuery['page'] && typeof urlQuery['page'] === 'number'
-        ? (urlQuery['page'] - 1) * rowsPerPage
-        : 0,
-    first: rowsPerPage,
+    page,
+    offset: page * pageSize,
+    first: pageSize,
     sortBy: {
-      key: urlQuery['sort'] ?? initialSort?.key ?? '',
-      direction: urlQuery['dir'] ?? 'asc',
-      isDesc: urlQuery['dir'] === 'desc',
+      key: urlSort.sort,
+      direction: urlSort.dir,
+      isDesc: urlSort.dir === 'desc',
     } as SortBy<unknown>,
     filterBy: filter.filterBy,
     reportArgs: urlQuery['reportArgs'],
@@ -157,6 +188,7 @@ export const useUrlQueryParams = ({
     queryParams,
     urlQuery,
     updateSortQuery,
+    clearSort,
     updatePaginationQuery,
     updateFilterQuery,
     filter,
@@ -191,7 +223,9 @@ const getFilterEntry = (
   if (filter.condition === 'between' && filter.key) {
     const filterItems = String(filterValue).split(RANGE_SPLIT_CHAR);
 
-    const isDateTime = DateUtils.isUrlQueryDateTime(filterItems[0] ?? '');
+    const isDateTime = filterItems.some(item =>
+      DateUtils.isUrlQueryDateTime(item ?? '')
+    );
 
     // If just "date", we are time zone agnostic, pass the filter straight through
     if (!isDateTime) {
@@ -214,6 +248,27 @@ const getFilterEntry = (
   const condition = filter.condition ? filter.condition : 'like';
   if (condition === '=') {
     return Boolean(filterValue);
+  }
+  if (condition === 'isNumber') {
+    return Number(filterValue);
+  }
+
+  if (
+    (condition === 'equalAny' || condition === 'equalAnyOrNull') &&
+    typeof filterValue === 'string'
+  ) {
+    const arrayValue = filterValue.split(',');
+    if (nestedKey) {
+      return {
+        [nestedKey]: {
+          [condition]: arrayValue,
+        },
+      };
+    } else {
+      return {
+        [condition]: arrayValue,
+      };
+    }
   }
 
   if (nestedKey) {

@@ -46,8 +46,10 @@ pub fn response_store_stats(
 ) -> Result<ResponseStoreStats, RepositoryError> {
     let stock_lines = StockLineRepository::new(connection).query_by_filter(
         StockLineFilter::new()
-            .item_id(EqualFilter::equal_to(&requisition_line.item_row.id))
-            .store_id(EqualFilter::equal_to(store_id)),
+            .item_id(EqualFilter::equal_to(
+                requisition_line.item_row.id.to_string(),
+            ))
+            .store_id(EqualFilter::equal_to(store_id.to_string())),
         None,
     )?;
 
@@ -57,9 +59,11 @@ pub fn response_store_stats(
 
     let request_requisitions = RequisitionLineRepository::new(connection).query_by_filter(
         RequisitionLineFilter::new()
-            .store_id(EqualFilter::equal_to(store_id))
+            .store_id(EqualFilter::equal_to(store_id.to_string()))
             .r#type(RequisitionType::Request.equal_to())
-            .item_id(EqualFilter::equal_to(&requisition_line.item_row.id))
+            .item_id(EqualFilter::equal_to(
+                requisition_line.item_row.id.to_string(),
+            ))
             .status(RequisitionStatus::Sent.equal_to()),
     )?;
 
@@ -71,8 +75,10 @@ pub fn response_store_stats(
 
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .store_id(EqualFilter::equal_to(store_id))
-            .item_id(EqualFilter::equal_to(&requisition_line.item_row.id))
+            .store_id(EqualFilter::equal_to(store_id.to_string()))
+            .item_id(EqualFilter::equal_to(
+                requisition_line.item_row.id.to_string(),
+            ))
             .r#type(InvoiceLineType::StockIn.equal_to())
             .invoice_type(InvoiceType::InboundShipment.equal_to())
             .invoice_status(InvoiceStatus::Shipped.equal_to()),
@@ -83,13 +89,22 @@ pub fn response_store_stats(
             * invoice_line.invoice_line_row.pack_size) as i32
     });
 
-    let response_requisition_lines = RequisitionLineRepository::new(connection).query_by_filter(
-        RequisitionLineFilter::new()
-            .store_id(EqualFilter::equal_to(store_id))
-            .item_id(EqualFilter::equal_to(&requisition_line.item_row.id))
-            .r#type(RequisitionType::Response.equal_to())
-            .status(RequisitionStatus::Finalised.not_equal_to()),
-    )?;
+    let other_response_requisition_lines = RequisitionLineRepository::new(connection)
+        .query_by_filter(
+            RequisitionLineFilter::new()
+                .store_id(EqualFilter::equal_to(store_id.to_string()))
+                .item_id(EqualFilter::equal_to(
+                    requisition_line.item_row.id.to_string(),
+                ))
+                .requisition_id(EqualFilter::not_equal_to(
+                    requisition_line
+                        .requisition_line_row
+                        .requisition_id
+                        .to_owned(),
+                ))
+                .r#type(RequisitionType::Response.equal_to())
+                .status(RequisitionStatus::Finalised.not_equal_to()),
+        )?;
 
     let prefs = get_store_preferences(connection, store_id)?;
 
@@ -119,21 +134,12 @@ pub fn response_store_stats(
         }
     };
 
-    // Sum of all lines in other requisitions
-    let calculate_other_requested_quantity = |current_line_quantity: f64| -> f64 {
-        let sum_of_lines = response_requisition_lines
-            .iter()
-            .map(|line| {
-                let line_quantity = calculate_line_quantity(line);
-                line_quantity
-            })
-            .sum::<f64>();
-
-        sum_of_lines - current_line_quantity
-    };
-
     let current_line_quantity = calculate_line_quantity(requisition_line);
-    let other_requested_quantity = calculate_other_requested_quantity(current_line_quantity);
+    let other_requested_quantity = other_response_requisition_lines
+        .iter()
+        .map(calculate_line_quantity)
+        .sum::<f64>()
+        .max(0.0); // Normalises negative values (-0 to 0) to zero
 
     Ok(ResponseStoreStats {
         stock_on_hand,

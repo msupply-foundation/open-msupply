@@ -11,15 +11,13 @@ export type FilterRule = {
     | FilterByConditionByType['date']]?: unknown;
 };
 
-export type FilterBy = Record<string, FilterRule | null>;
-export type FilterByWithBoolean = Record<string, FilterRule | null | boolean>;
-export type FilterByWithStringAndBool = Record<
+export type FilterBy = Record<
   string,
-  FilterRule | null | boolean | string
+  FilterRule | null | boolean | string | number
 >;
 
 export interface FilterController {
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 
   onChangeDateFilterRule: (
     key: string,

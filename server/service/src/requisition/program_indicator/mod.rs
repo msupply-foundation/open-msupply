@@ -14,8 +14,9 @@ pub trait ProgramIndicatorServiceTrait: Sync + Send {
         pagination: Pagination,
         sort: Option<ProgramIndicatorSort>,
         filter: Option<ProgramIndicatorFilter>,
+        include_inactive: bool,
     ) -> Result<Vec<ProgramIndicator>, RepositoryError> {
-        program_indicators(connection, pagination, sort, filter)
+        program_indicators(connection, pagination, sort, filter, include_inactive)
     }
 }
 

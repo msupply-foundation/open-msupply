@@ -1,15 +1,17 @@
 use super::{
-    name_link_row::name_link, name_row::name, program_enrolment_row::program_enrolment,
+    name_row::name, program_enrolment_row::program_enrolment,
     program_row::program, StorageConnection,
 };
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
-    DBType, DatetimeFilter, EqualFilter, NameLinkRow, NameRow, Pagination, ProgramEnrolmentRow,
-    ProgramRow, RepositoryError, Sort, StringFilter,
+    document_registry_row::document_registry,
+    DBType, DatetimeFilter, DocumentRegistryFilter, DocumentRegistryRepository, EqualFilter,
+    NameRow, Pagination, ProgramEnrolmentRow, ProgramRow, RepositoryError, Sort,
+    StringFilter,
 };
 
-use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Clone, Default)]
 pub struct ProgramEnrolmentFilter {
@@ -95,7 +97,7 @@ pub enum ProgramEnrolmentSortField {
     Status,
 }
 
-type ProgramEnrolmentJoin = (ProgramEnrolmentRow, ProgramRow, (NameLinkRow, NameRow));
+type ProgramEnrolmentJoin = (ProgramEnrolmentRow, ProgramRow, NameRow);
 
 #[derive(Clone, Debug)]
 pub struct ProgramEnrolment {
@@ -106,14 +108,14 @@ pub struct ProgramEnrolment {
 
 pub type ProgramEnrolmentSort = Sort<ProgramEnrolmentSortField>;
 
-type BoxedProgramEnrolmentQuery = IntoBoxed<
-    'static,
-    InnerJoin<
-        InnerJoin<program_enrolment::table, program::table>,
-        InnerJoin<name_link::table, name::table>,
-    >,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    program_enrolment::table
+        .inner_join(program::table)
+        .inner_join(name::table.on(program_enrolment::patient_id.eq(name::id)))
+}
+
+type BoxedProgramEnrolmentQuery = IntoBoxed<'static, query, DBType>;
 
 pub struct ProgramEnrolmentRepository<'a> {
     connection: &'a StorageConnection,
@@ -175,7 +177,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
             .load::<ProgramEnrolmentJoin>(self.connection.lock().connection())?;
         let result = result
             .into_iter()
-            .map(|(row, program_row, (_, patient_row))| ProgramEnrolment {
+            .map(|(row, program_row, patient_row)| ProgramEnrolment {
                 row,
                 program_row,
                 patient_row,
@@ -188,10 +190,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
     pub fn create_filtered_query(
         filter: Option<ProgramEnrolmentFilter>,
     ) -> BoxedProgramEnrolmentQuery {
-        let mut query = program_enrolment::table
-            .inner_join(program::table)
-            .inner_join(name_link::table.inner_join(name::table))
-            .into_boxed();
+        let mut query = query().into_boxed();
 
         if let Some(ProgramEnrolmentFilter {
             id,
@@ -224,7 +223,14 @@ impl<'a> ProgramEnrolmentRepository<'a> {
             apply_string_filter!(query, status, program_enrolment::status);
             apply_equal_filter!(query, document_type, program_enrolment::document_type);
             apply_equal_filter!(query, document_name, program_enrolment::document_name);
-            apply_string_filter!(query, program_name, program::name);
+
+            if let Some(program_name) = program_name {
+                let document_types = DocumentRegistryRepository::create_filtered_query(Some(
+                    DocumentRegistryFilter::new().name(program_name),
+                ))
+                .select(document_registry::document_type);
+                query = query.filter(program_enrolment::document_type.eq_any(document_types))
+            }
 
             if let Some(is_immunisation_program) = is_immunisation_program {
                 query = query.filter(program::is_immunisation.eq(is_immunisation_program))
@@ -241,8 +247,8 @@ impl<'a> ProgramEnrolmentRepository<'a> {
         Ok(self
             .query_by_filter(
                 ProgramEnrolmentFilter::new()
-                    .program_id(EqualFilter::equal_to(program_id))
-                    .patient_id(EqualFilter::equal_to(patient_id)),
+                    .program_id(EqualFilter::equal_to(program_id.to_string()))
+                    .patient_id(EqualFilter::equal_to(patient_id.to_string())),
             )?
             .pop())
     }

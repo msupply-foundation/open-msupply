@@ -1,5 +1,3 @@
-pub mod goods_received;
-pub mod goods_received_row;
 use crate::repository_error::RepositoryError;
 
 pub mod abbreviation;
@@ -27,6 +25,8 @@ pub mod contact_trace_row;
 mod context_row;
 pub mod currency;
 mod currency_row;
+pub mod days_out_of_stock;
+pub mod days_out_of_stock_query;
 pub mod demographic;
 pub mod demographic_indicator;
 pub mod demographic_indicator_row;
@@ -47,9 +47,7 @@ mod filter_restriction;
 mod filter_sort_pagination;
 pub mod form_schema;
 mod form_schema_row;
-mod frontend_plugin_row;
-pub mod goods_received_line;
-pub mod goods_received_line_row;
+pub mod frontend_plugin_row;
 pub mod indicator_column;
 mod indicator_column_row;
 pub mod indicator_line;
@@ -100,7 +98,7 @@ mod number_row;
 pub mod patient;
 pub mod period;
 pub mod plugin_data;
-mod plugin_data_row;
+pub mod plugin_data_row;
 pub mod preference;
 mod preference_row;
 pub mod printer;
@@ -132,6 +130,8 @@ pub mod rnr_form_line_row;
 pub mod rnr_form_row;
 pub mod sensor;
 pub mod sensor_row;
+pub mod shipping_method;
+pub mod shipping_method_row;
 pub mod stock_line;
 pub mod stock_line_ledger;
 pub mod stock_line_ledger_discrepancy;
@@ -146,11 +146,14 @@ mod storage_connection;
 pub mod store;
 mod store_preference_row;
 pub mod store_row;
+pub mod site;
+pub mod site_row;
 pub mod sync_buffer;
 pub mod sync_file_reference;
 pub mod sync_file_reference_row;
 pub mod sync_log;
 mod sync_log_row;
+pub mod sync_log_v7;
 pub mod sync_message_row;
 pub mod system_log_row;
 pub mod temperature_breach;
@@ -192,6 +195,8 @@ pub use contact_row::*;
 pub use context_row::*;
 pub use currency::*;
 pub use currency_row::*;
+pub use days_out_of_stock::*;
+pub use days_out_of_stock_query::*;
 pub use demographic_indicator::*;
 pub use demographic_indicator_row::*;
 pub use demographic_projection_row::*;
@@ -207,9 +212,6 @@ pub use filter_sort_pagination::*;
 pub use form_schema::*;
 pub use form_schema_row::*;
 pub use frontend_plugin_row::*;
-pub use goods_received::*;
-pub use goods_received_line::*;
-pub use goods_received_line_row::*;
 pub use indicator_column_row::*;
 pub use indicator_line_row::*;
 pub use indicator_value_row::*;
@@ -280,6 +282,8 @@ pub use rnr_form_line_row::*;
 pub use rnr_form_row::*;
 pub use sensor::*;
 pub use sensor_row::*;
+pub use shipping_method::*;
+pub use shipping_method_row::*;
 pub use stock_line::*;
 pub use stock_line_row::*;
 pub use stock_movement::*;
@@ -289,6 +293,8 @@ pub use stocktake_line::*;
 pub use stocktake_line_row::*;
 pub use stocktake_row::*;
 pub use storage_connection::*;
+pub use site::*;
+pub use site_row::*;
 pub use store::*;
 pub use store_preference_row::*;
 pub use store_row::*;
@@ -297,6 +303,7 @@ pub use sync_file_reference::*;
 pub use sync_file_reference_row::*;
 pub use sync_log::*;
 pub use sync_log_row::*;
+pub use sync_log_v7::*;
 pub use sync_message_row::*;
 pub use temperature_breach::*;
 pub use temperature_breach_config::*;
@@ -315,6 +322,12 @@ pub use vaccination::*;
 pub use vaccination_card::*;
 pub use vaccination_course::*;
 pub use vaccination_row::*;
+pub use vaccine_course::*;
+pub use vvm_status::*;
+pub use item_variant::*;
+pub use contact_form_row::*;
+pub use name_insurance_join_row::*;
+pub use system_log_row::*;
 pub use warning::*;
 pub use warning_row::*;
 
@@ -390,7 +403,7 @@ impl From<DieselError> for RepositoryError {
             }
             _ => {
                 // try to get a more detailed diesel msg:
-                let diesel_msg = format!("{}", err);
+                let diesel_msg = format!("{err}");
                 Error::as_db_error("DIESEL_UNKNOWN", diesel_msg)
             }
         }
@@ -402,7 +415,7 @@ fn get_connection(
 ) -> Result<DBConnection, RepositoryError> {
     pool.get().map_err(|error| RepositoryError::DBError {
         msg: "Failed to open Connection".to_string(),
-        extra: format!("{:?}", error),
+        extra: format!("{error:?}"),
     })
 }
 

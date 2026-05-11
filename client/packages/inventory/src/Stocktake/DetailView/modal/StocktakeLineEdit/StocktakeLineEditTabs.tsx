@@ -20,10 +20,11 @@ export enum Tabs {
 
 export const StyledTabPanel = styled(TabPanel)({
   height: '100%',
+  padding: '16px 0 0 0',
 });
 
 export const StyledTabContainer = styled(Box)(() => ({
-  height: 300,
+  height: 325,
   flexDirection: 'row',
   display: 'flex',
 }));

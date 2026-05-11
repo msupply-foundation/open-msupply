@@ -1,0 +1,16 @@
+fragment ShippingMethodRow on ShippingMethodNode {
+  id
+  method
+  deletedDatetime
+}
+
+query shippingMethods($storeId: String!, $filter: ShippingMethodFilterInput) {
+  shippingMethods(storeId: $storeId, filter: $filter) {
+    ... on ShippingMethodConnector {
+      nodes {
+        ...ShippingMethodRow
+      }
+      totalCount
+    }
+  }
+}

@@ -1,24 +1,27 @@
-pub mod mutations;
-mod program_indicator;
-mod program_settings;
-mod requisition_queries;
+use crate::program_settings::has_customer_program_requisition_settings;
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
 use graphql_types::types::program_indicator::{
     ProgramIndicatorFilterInput, ProgramIndicatorResponse, ProgramIndicatorSortInput,
 };
 use graphql_types::types::RequisitionNodeType;
-use program_indicator::program_indicators;
-use program_settings::{
-    get_program_requisition_settings_by_customer, get_supplier_program_requisition_settings,
-    CustomerProgramRequisitionSettingNode, SupplierProgramRequisitionSettingNode,
-};
+
+pub mod mutations;
+mod program_indicator;
+mod program_settings;
+mod requisition_queries;
 
 use self::mutations::{request_requisition, response_requisition};
 use self::requisition_queries::*;
 use mutations::update_indicator_value::{
     self, UpdateIndicatorValueInput, UpdateIndicatorValueResponse,
 };
+use program_indicator::program_indicators;
+use program_settings::{
+    get_program_requisition_settings_by_customer, get_supplier_program_requisition_settings,
+    CustomerProgramRequisitionSettingNode, SupplierProgramRequisitionSettingNode,
+};
+
 #[derive(Default, Clone)]
 pub struct RequisitionQueries;
 
@@ -69,6 +72,15 @@ impl RequisitionQueries {
         customer_name_id: String,
     ) -> Result<CustomerProgramRequisitionSettingNode> {
         get_program_requisition_settings_by_customer(ctx, &store_id, &customer_name_id)
+    }
+
+    pub async fn has_customer_program_requisition_settings(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        customer_name_ids: Vec<String>,
+    ) -> Result<bool> {
+        has_customer_program_requisition_settings(ctx, &store_id, &customer_name_ids)
     }
 
     pub async fn program_indicators(
@@ -123,6 +135,17 @@ impl RequisitionMutations {
         request_requisition::delete::delete(ctx, &store_id, input)
     }
 
+    async fn insert_request_from_response_requisition(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: request_requisition::insert_request_from_response_requisition::InsertFromResponseRequisitionInput,
+    ) -> Result<request_requisition::insert_request_from_response_requisition::InsertFromResponse> {
+        request_requisition::insert_request_from_response_requisition::insert_request_from_response_requisition(
+            ctx, &store_id, input,
+        )
+    }
+
     /// Set requested for each line in request requisition to calculated
     async fn use_suggested_quantity(
         &self,
@@ -141,6 +164,17 @@ impl RequisitionMutations {
         input: request_requisition::add_from_master_list::AddFromMasterListInput,
     ) -> Result<request_requisition::add_from_master_list::AddFromMasterListResponse> {
         request_requisition::add_from_master_list::add_from_master_list(ctx, &store_id, input)
+    }
+
+    async fn response_add_from_master_list(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: response_requisition::add_from_master_list::ResponseAddFromMasterListInput,
+    ) -> Result<response_requisition::add_from_master_list::ResponseAddFromMasterListResponse> {
+        response_requisition::add_from_master_list::response_add_from_master_list(
+            ctx, &store_id, input,
+        )
     }
 
     async fn insert_response_requisition(

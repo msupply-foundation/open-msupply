@@ -1,3 +1,5 @@
+use crate::types::{PurchaseOrderNode, ShippingMethodNode, SyncFileReferenceConnector};
+
 use super::patient::PatientNode;
 use super::program_node::ProgramNode;
 use super::{
@@ -9,9 +11,9 @@ use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
 
 use graphql_core::loader::{
-    DiagnosisLoader, InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput,
-    NameByNameLinkIdLoader, NameByNameLinkIdLoaderInput, NameInsuranceJoinLoader, PatientLoader,
-    ProgramByIdLoader, UserLoader,
+    CurrencyByIdLoader, DiagnosisLoader, InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader,
+    NameByIdLoaderInput, NameInsuranceJoinLoader, PatientLoader, ProgramByIdLoader,
+    PurchaseOrderByIdLoader, ShippingMethodByIdLoader, SyncFileReferenceLoader, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
@@ -19,7 +21,7 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{
-    ClinicianRow, InvoiceRow, Name, NameLinkRow, NameRow, PricingRow, Store, StoreRow,
+    ClinicianRow, InvoiceRow, InvoiceType, Name, NameRow, NameRowType, PricingRow, Store, StoreRow,
 };
 
 use repository::Invoice;
@@ -88,6 +90,7 @@ pub struct EqualFilterInvoiceTypeInput {
     pub equal_to: Option<InvoiceNodeType>,
     pub equal_any: Option<Vec<InvoiceNodeType>>,
     pub not_equal_to: Option<InvoiceNodeType>,
+    pub not_equal_all: Option<Vec<InvoiceNodeType>>,
 }
 
 #[derive(InputObject, Clone)]
@@ -95,6 +98,7 @@ pub struct EqualFilterInvoiceStatusInput {
     pub equal_to: Option<InvoiceNodeStatus>,
     pub equal_any: Option<Vec<InvoiceNodeStatus>>,
     pub not_equal_to: Option<InvoiceNodeStatus>,
+    pub not_equal_all: Option<Vec<InvoiceNodeStatus>>,
 }
 
 pub struct InvoiceNode {
@@ -310,18 +314,11 @@ impl InvoiceNode {
             None => patient_loader
                 .load_one(self.name_row().id.clone())
                 .await?
-                .map(|name_row| {
-                    let name_id = name_row.id.clone();
-                    Name {
-                        name_row,
-                        name_link_row: NameLinkRow {
-                            id: name_id.clone(),
-                            name_id,
-                        },
-                        name_store_join_row: None,
-                        store_row: None,
-                        properties: None,
-                    }
+                .map(|name_row| Name {
+                    name_row,
+                    name_store_join_row: None,
+                    store_row: None,
+                    properties: None,
                 }),
         };
 
@@ -367,30 +364,31 @@ impl InvoiceNode {
     }
 
     pub async fn currency(&self, ctx: &Context<'_>) -> Result<Option<CurrencyNode>> {
-        let service_provider = ctx.service_provider();
-        let currency_provider = &service_provider.currency_service;
-        let service_context = &service_provider.basic_context()?;
-
-        let currency_id = if let Some(currency_id) = &self.row().currency_id {
-            currency_id
-        } else {
-            return Ok(None);
+        let currency_id = match &self.row().currency_id {
+            Some(currency_id) => currency_id,
+            None => return Ok(None),
         };
 
-        let currency = currency_provider
-            .get_currency(service_context, currency_id)
-            .map_err(|e| StandardGraphqlError::from_repository_error(e).extend())?
-            .ok_or(StandardGraphqlError::InternalError(format!(
-                "Cannot find currency ({}) linked to invoice ({})",
-                currency_id,
-                &self.row().id
-            )))?;
+        let loader = ctx.get_loader::<DataLoader<CurrencyByIdLoader>>();
 
-        Ok(Some(CurrencyNode::from_domain(currency)))
+        let result = loader
+            .load_one(currency_id.clone())
+            .await?
+            .map(CurrencyNode::from_domain);
+
+        Ok(result)
     }
 
     pub async fn currency_rate(&self) -> &f64 {
         &self.row().currency_rate
+    }
+
+    pub async fn charges_local_currency(&self) -> &f64 {
+        &self.row().charges_local_currency
+    }
+
+    pub async fn charges_foreign_currency(&self) -> &f64 {
+        &self.row().charges_foreign_currency
     }
 
     /// Inbound Shipment that is the origin of this Supplier Return
@@ -484,16 +482,72 @@ impl InvoiceNode {
         ctx: &Context<'_>,
         store_id: String,
     ) -> Result<Option<NameNode>> {
-        let donor_link_id = match &self.row().default_donor_link_id {
+        let donor_id = match &self.row().default_donor_id {
             None => return Ok(None),
-            Some(donor_link_id) => donor_link_id,
+            Some(donor_id) => donor_id,
         };
-        let loader = ctx.get_loader::<DataLoader<NameByNameLinkIdLoader>>();
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
         let result = loader
-            .load_one(NameByNameLinkIdLoaderInput::new(&store_id, donor_link_id))
+            .load_one(NameByIdLoaderInput::new(&store_id, donor_id))
             .await?;
 
         Ok(result.map(NameNode::from_domain))
+    }
+
+    pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
+        let invoice_id = &self.row().id;
+        let loader = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
+        let result_option = loader.load_one(invoice_id.to_string()).await?;
+
+        let documents = SyncFileReferenceConnector::from_vec(result_option.unwrap_or(vec![]));
+
+        Ok(documents)
+    }
+
+    pub async fn shipping_method(&self, ctx: &Context<'_>) -> Result<Option<ShippingMethodNode>> {
+        let shipping_method_id = match &self.row().shipping_method_id {
+            Some(shipping_method_id) => shipping_method_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<ShippingMethodByIdLoader>>();
+
+        let result = loader
+            .load_one(shipping_method_id.clone())
+            .await?
+            .map(ShippingMethodNode::from_domain);
+
+        Ok(result)
+    }
+
+    pub async fn purchase_order(&self, ctx: &Context<'_>) -> Result<Option<PurchaseOrderNode>> {
+        // &self.row().purchase_order_id
+        let Some(purchase_order_id) = &self.row().purchase_order_id else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<PurchaseOrderByIdLoader>>();
+        Ok(loader
+            .load_one(purchase_order_id.to_string())
+            .await?
+            .map(PurchaseOrderNode::from_domain))
+    }
+
+    pub async fn inbound_type(&self) -> InboundNodeType {
+        match self.row().r#type {
+            InvoiceType::InboundShipment => {
+                if self.row().requisition_id.is_some() {
+                    InboundNodeType::FromRequisition
+                } else if self.row().purchase_order_id.is_some() {
+                    InboundNodeType::FromPurchaseOrder
+                } else if self.name_row().r#type == NameRowType::Store {
+                    InboundNodeType::ManualInternal
+                } else {
+                    InboundNodeType::ManualExternal
+                }
+            }
+            _ => InboundNodeType::ManualExternal, // Default to external for non-inbound shipments
+        }
     }
 }
 
@@ -583,6 +637,14 @@ impl InvoiceConnector {
     }
 }
 
+#[derive(Enum, Clone, Copy, PartialEq, Eq, Debug, Serialize)]
+pub enum InboundNodeType {
+    FromRequisition,
+    FromPurchaseOrder,
+    ManualInternal,
+    ManualExternal,
+}
+
 #[cfg(test)]
 mod test {
 
@@ -608,7 +670,7 @@ mod test {
         fn invoice() -> InvoiceRow {
             InvoiceRow {
                 id: "test_invoice_pricing".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 currency_id: Some(currency_a().id),
                 ..Default::default()

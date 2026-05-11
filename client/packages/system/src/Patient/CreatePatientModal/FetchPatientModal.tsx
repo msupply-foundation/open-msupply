@@ -8,7 +8,6 @@ import {
   noOtherVariants,
   useDialog,
   useIntlUtils,
-  useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
 import { PatientColumnData } from './PatientResultsTab';
@@ -24,15 +23,16 @@ import { usePatientStore } from '@openmsupply-client/programs/src';
 interface FetchPatientModal {
   patient: PatientColumnData;
   onClose: () => void;
+  onDownload: (patientId: PatientColumnData) => void;
 }
 
 /** Fetch a patient from central */
 export const FetchPatientModal: FC<FetchPatientModal> = ({
   patient,
   onClose,
+  onDownload,
 }) => {
   const t = useTranslation();
-  const navigate = useNavigate();
   const { Modal, showDialog, hideDialog } = useDialog({ onClose });
   const { setCreateNewPatient } = usePatientStore();
   const { getLocalisedFullName } = useIntlUtils();
@@ -76,9 +76,9 @@ export const FetchPatientModal: FC<FetchPatientModal> = ({
             } else {
               setStarted(false);
               hideDialog();
+              onDownload(patient);
               onClose();
               setCreateNewPatient(undefined);
-              navigate(patient.id);
             }
           }}
           disabled={(step !== 'Start' && step !== 'Synced') || !!error}

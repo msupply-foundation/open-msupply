@@ -33,13 +33,18 @@ export const PrescriptionLineEdit = ({
 
   const t = useTranslation();
   const { format } = useFormatNumber();
-  const { manageVaccinesInDoses, sortByVvmStatusThenExpiry } = usePreferences();
+  const {
+    manageVaccinesInDoses,
+    sortByVvmStatusThenExpiry,
+    expiredStockPreventIssue,
+    expiredStockIssueThreshold,
+  } = usePreferences();
 
   // Needs to update when user clicks on different item in the list, or when
   // changing item with the selector
   const [currentItemId, setCurrentItemId] = useBufferState(itemId);
 
-  const { isDisabled, rows: items } = usePrescription(); // TODO: how much can we strip now?
+  const { isDisabled, rows: lines } = usePrescription(); // TODO: how much can we strip now?
 
   const { clear, initialise, item } = useAllocationContext(
     ({ initialise, item, clear }) => ({
@@ -80,6 +85,9 @@ export const PrescriptionLineEdit = ({
             manageVaccinesInDoses && data.item.isVaccine
               ? { type: AllocateInType.Doses }
               : undefined,
+          expiryThresholdDays: expiredStockPreventIssue
+            ? (expiredStockIssueThreshold ?? 0)
+            : 0,
         },
         format,
         t
@@ -88,6 +96,8 @@ export const PrescriptionLineEdit = ({
     // Expect dependencies to be stable
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentItemId]);
+
+  const existingItemIds = lines.map(line => line.item.id);
 
   return (
     <Grid
@@ -107,12 +117,10 @@ export const PrescriptionLineEdit = ({
             disabled={!isNew || isDisabled}
             currentItemId={itemId ?? currentItemId}
             onChange={item => setCurrentItemId(item?.id)}
-            filter={{ isVisibleOrOnHand: true }}
-            extraFilter={
-              isDisabled
-                ? undefined
-                : item => !items?.some(({ id }) => id === item.id)
-            }
+            filter={{
+              isVisibleOrOnHand: true,
+              id: { notEqualAll: existingItemIds },
+            }}
             programId={programId}
           />
         </Grid>

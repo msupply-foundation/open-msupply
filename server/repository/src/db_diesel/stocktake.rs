@@ -1,4 +1,7 @@
-use super::{stocktake_row::stocktake, StocktakeRow, StocktakeStatus, StorageConnection};
+use super::{
+    stocktake_line_row::stocktake_line, stocktake_row::stocktake, StocktakeRow, StocktakeStatus,
+    StorageConnection,
+};
 
 use crate::{
     diesel_macros::{
@@ -6,7 +9,7 @@ use crate::{
         apply_sort_no_case, apply_string_filter,
     },
     DBType, DateFilter, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort,
-    StringFilter,
+    StocktakeLineFilter, StocktakeLineRepository, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -26,6 +29,7 @@ pub struct StocktakeFilter {
     pub is_locked: Option<bool>,
     pub is_program_stocktake: Option<bool>,
     pub program_id: Option<EqualFilter<String>>,
+    pub stocktake_line: Option<StocktakeLineFilter>,
 }
 
 impl StocktakeFilter {
@@ -97,6 +101,11 @@ impl StocktakeFilter {
         self.program_id = Some(filter);
         self
     }
+
+    pub fn stocktake_line(mut self, filter: StocktakeLineFilter) -> Self {
+        self.stocktake_line = Some(filter);
+        self
+    }
 }
 
 pub enum StocktakeSortField {
@@ -118,31 +127,53 @@ type BoxedStocktakeQuery = IntoBoxed<'static, stocktake::table, DBType>;
 fn create_filtered_query(filter: Option<StocktakeFilter>) -> BoxedStocktakeQuery {
     let mut query = stocktake::table.into_boxed();
 
-    if let Some(f) = filter {
-        apply_equal_filter!(query, f.id, stocktake::id);
-        apply_equal_filter!(query, f.store_id, stocktake::store_id);
-        apply_equal_filter!(query, f.user_id, stocktake::user_id);
-        apply_equal_filter!(query, f.stocktake_number, stocktake::stocktake_number);
-        apply_string_filter!(query, f.comment, stocktake::comment);
-        apply_string_filter!(query, f.description, stocktake::description);
+    if let Some(StocktakeFilter {
+        id,
+        store_id,
+        user_id,
+        stocktake_number,
+        comment,
+        description,
+        status,
+        created_datetime,
+        stocktake_date,
+        finalised_datetime,
+        is_locked,
+        is_program_stocktake,
+        program_id,
+        stocktake_line,
+    }) = filter
+    {
+        apply_equal_filter!(query, id, stocktake::id);
+        apply_equal_filter!(query, store_id, stocktake::store_id);
+        apply_equal_filter!(query, user_id, stocktake::user_id);
+        apply_equal_filter!(query, stocktake_number, stocktake::stocktake_number);
+        apply_string_filter!(query, comment, stocktake::comment);
+        apply_string_filter!(query, description, stocktake::description);
 
-        if let Some(value) = f.status {
+        if let Some(value) = status {
             if let Some(eq) = value.equal_to {
                 query = query.filter(stocktake::status.eq(eq));
             }
         }
 
-        apply_date_time_filter!(query, f.created_datetime, stocktake::created_datetime);
-        apply_date_filter!(query, f.stocktake_date, stocktake::stocktake_date);
-        apply_date_time_filter!(query, f.finalised_datetime, stocktake::finalised_datetime);
+        apply_date_time_filter!(query, created_datetime, stocktake::created_datetime);
+        apply_date_filter!(query, stocktake_date, stocktake::stocktake_date);
+        apply_date_time_filter!(query, finalised_datetime, stocktake::finalised_datetime);
 
-        if let Some(value) = f.is_locked {
+        if let Some(value) = is_locked {
             query = query.filter(stocktake::is_locked.eq(value));
         }
-        if f.is_program_stocktake.is_some() {
+        if is_program_stocktake.is_some() {
             query = query.filter(stocktake::program_id.is_not_null());
         }
-        apply_equal_filter!(query, f.program_id, stocktake::program_id);
+        apply_equal_filter!(query, program_id, stocktake::program_id);
+
+        if stocktake_line.is_some() {
+            let stocktake_ids = StocktakeLineRepository::create_filtered_query(stocktake_line)
+                .select(stocktake_line::stocktake_id);
+            query = query.filter(stocktake::id.eq_any(stocktake_ids));
+        }
     }
     query
 }

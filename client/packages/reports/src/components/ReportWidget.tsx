@@ -4,11 +4,12 @@ import { ReportRowFragment } from '@openmsupply-client/system';
 import {
   BasicSpinner,
   Link,
+  LocaleKey,
   RouteBuilder,
   Card,
   Grid,
   Typography,
-  useIntlUtils,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -29,7 +30,7 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
   onReportClick,
   hasReports = false,
 }) => {
-  const { translateDynamicKey } = useIntlUtils();
+  const t = useTranslation();
   if (!hasReports) return null;
 
   return (
@@ -69,11 +70,11 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
       <React.Suspense fallback={<BasicSpinner inline />}>
         {reports && (
           <Grid
-            container
+            display="flex"
             justifyContent="flex-start"
-            flex="none"
             flexDirection="column"
             paddingTop={2}
+            sx={{ overflowY: 'auto' }}
           >
             {reports.map((report, index) => (
               <React.Fragment key={`${report.id}_${index}`}>
@@ -103,11 +104,12 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
                       sx={{
                         color: 'secondary.main',
                         fontWeight: 'bold',
-                        paddingBottom: 2,
+                        paddingBottom: 1.5,
                       }}
                     >
-                      {translateDynamicKey(
-                        `report-code.${report.code}`,
+                      {/* Cast is safe — i18next falls back to report.name if key doesn't exist */}
+                      {t(
+                        `report-code.${report.code}` as LocaleKey,
                         report.name
                       )}
                     </Typography>

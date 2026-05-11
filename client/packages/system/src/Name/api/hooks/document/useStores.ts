@@ -8,7 +8,11 @@ export const useStores = () => {
     filters: [{ key: 'codeOrName' }],
   });
 
-  return useQuery(api.keys.paramList(queryParams), () =>
-    api.get.stores(queryParams)
+  return useQuery(
+    api.keys.storesList(queryParams),
+    () => api.get.stores(queryParams),
+    {
+      keepPreviousData: true,
+    }
   );
 };

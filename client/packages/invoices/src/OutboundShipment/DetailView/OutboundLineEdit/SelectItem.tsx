@@ -6,21 +6,32 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { StockItemSearchInput } from '@openmsupply-client/system';
-import { useOutbound } from '../../api';
+import { useOutboundItems } from '../../api';
 
 interface SelectItemProps {
   itemId: string | undefined;
   onChangeItem: (newItemId?: string) => void;
   disabled: boolean;
+  openedWithBarcode?: boolean;
 }
 
 export const SelectItem = ({
   itemId,
   onChangeItem,
   disabled,
+  openedWithBarcode = false,
 }: SelectItemProps) => {
   const t = useTranslation();
-  const { items } = useOutbound.line.rows();
+  const { data: items } = useOutboundItems();
+
+  const existingItemIds = items?.map(item => item.id);
+
+  // Normally we exclude items already in the invoice from the search, but if we
+  // opened the modal with a barcode, we want to allow selecting the same item
+  // again (e.g. to add another line with the same item)
+  const existingItemFilter = openedWithBarcode
+    ? {}
+    : { id: { notEqualAll: existingItemIds } };
 
   return (
     <Grid container gap="4px" width="100%">
@@ -33,12 +44,10 @@ export const SelectItem = ({
             disabled={disabled}
             currentItemId={itemId}
             onChange={item => onChangeItem(item?.id)}
-            filter={{ isVisibleOrOnHand: true }}
-            extraFilter={
-              disabled
-                ? undefined
-                : item => !items?.some(({ id }) => id === item.id)
-            }
+            filter={{
+              isVisibleOrOnHand: true,
+              ...existingItemFilter,
+            }}
           />
         </Grid>
       </ModalRow>

@@ -65,7 +65,7 @@ pub fn insert_contact_trace(
     ) {
         Ok(document) => document,
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             let std_err = match error {
                 UpsertContactTraceError::NotAllowedToMutateDocument => {
                     StandardGraphqlError::Forbidden(formatted_error)

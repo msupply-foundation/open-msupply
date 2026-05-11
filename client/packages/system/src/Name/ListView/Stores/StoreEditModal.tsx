@@ -71,7 +71,9 @@ export const StoreEditModal = ({
         <DialogButton
           variant="ok"
           onClick={async () => {
-            await save();
+            if (draftProperties && Object.keys(draftProperties).length > 0) {
+              await save();
+            }
             onClose();
           }}
         />
@@ -92,30 +94,37 @@ export const StoreEditModal = ({
       }
       height={1000}
       width={800}
+      sx={{
+        background: theme => theme.palette.background.toolbar,
+        '& .MuiDialogContent-root': { padding: 0, display: 'flex' },
+        '& .MuiDialogContent-root > div': { flex: 1 },
+      }}
     >
-      <DetailContainer>
-        <Box display="flex" flexDirection="column" gap={2} width="750px">
-          <NameRenderer
-            isStore={!!data.store}
-            label={data.name}
-            sx={{ fontWeight: 'bold', fontSize: 18 }}
-          />
-          <Box display="flex" flexDirection="column">
-            <Box display="flex" flexDirection="row">
-              <Typography fontWeight="bold">{t('label.code')}:</Typography>
-              <Typography paddingX={1}>{data.code}</Typography>
-            </Box>
-            <DisplayCoordinates
-              latitude={(draftProperties['latitude'] as number) ?? 0}
-              longitude={(draftProperties['longitude'] as number) ?? 0}
-              onDraftPropertiesChange={(latitude, longitude) => {
-                setDraftProperties({
-                  ...draftProperties,
-                  latitude,
-                  longitude,
-                });
-              }}
+      <DetailContainer paddingLeft={0} paddingRight={0} paddingTop={2}>
+        <Box display="flex" flexDirection="column" width="100%">
+          <Box padding={4}>
+            <NameRenderer
+              isStore={!!data.store}
+              label={data.name}
+              sx={{ fontWeight: 'bold', fontSize: 18 }}
             />
+            <Box display="flex" flexDirection="column">
+              <Box display="flex" flexDirection="row">
+                <Typography fontWeight="bold">{t('label.code')}:</Typography>
+                <Typography paddingX={1}>{data.code}</Typography>
+              </Box>
+              <DisplayCoordinates
+                latitude={(draftProperties['latitude'] as number) ?? 0}
+                longitude={(draftProperties['longitude'] as number) ?? 0}
+                onDraftPropertiesChange={(latitude, longitude) => {
+                  setDraftProperties({
+                    ...draftProperties,
+                    latitude,
+                    longitude,
+                  });
+                }}
+              />
+            </Box>
           </Box>
           <ModalTabs
             storeId={data.store?.id}
@@ -169,7 +178,13 @@ const ModalTabs = ({
           <Tab value={Tabs.Preferences} label={t('label.preferences')} />
         )}
       </TabList>
-      <TabPanel value={Tabs.Properties}>
+      <TabPanel
+        value={Tabs.Properties}
+        sx={{
+          background: theme => theme.palette.background.white,
+          height: '100%',
+        }}
+      >
         <StoreProperties
           propertyConfigs={propertyConfigs}
           draftProperties={draftProperties}
@@ -177,7 +192,13 @@ const ModalTabs = ({
         />
       </TabPanel>
       {storeId && (
-        <TabPanel value={Tabs.Preferences}>
+        <TabPanel
+          value={Tabs.Preferences}
+          sx={{
+            background: theme => theme.palette.background.white,
+            height: '100%',
+          }}
+        >
           <EditStorePreferences storeId={storeId} />
         </TabPanel>
       )}

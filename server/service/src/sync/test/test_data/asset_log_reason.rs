@@ -11,7 +11,8 @@ const ASSET_LOG_REASON1: (&str, &str) = (
         "id": "42577e2f-2ede-461f-80cd-6a3b86f48b5e",
         "asset_log_status": "FUNCTIONING",
         "reason": "test_reason",
-        "deleted_datetime": null   
+        "deleted_datetime": null,
+        "comments_required": false   
     }"#,
 );
 
@@ -21,7 +22,8 @@ const ASSET_LOG_REASON2: (&str, &str) = (
         "id": "e87d728f-14bd-4ac8-9b9b-5ef00283b60f",
         "asset_log_status": "FUNCTIONING",
         "reason": "test_reason_for_deleted",
-        "deleted_datetime": "2020-01-22T15:16:00"
+        "deleted_datetime": "2020-01-22T15:16:00",
+        "comments_required": false
     }"#,
 );
 
@@ -31,6 +33,7 @@ fn asset_log_reason1() -> AssetLogReasonRow {
         asset_log_status: AssetLogStatus::Functioning,
         reason: "test_reason".to_string(),
         deleted_datetime: None,
+        comments_required: false,
     }
 }
 
@@ -43,6 +46,7 @@ fn asset_log_reason2() -> AssetLogReasonRow {
             chrono::NaiveDateTime::parse_from_str("2020-01-22T15:16:00", "%Y-%m-%dT%H:%M:%S")
                 .unwrap(),
         ),
+        comments_required: false,
     }
 }
 

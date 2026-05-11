@@ -1,11 +1,9 @@
 import {
   RecordPatch,
-  SortUtils,
   UpdatePrescriptionInput,
   useMutation,
   useParams,
   useQuery,
-  useUrlQueryParams,
   usePatchState,
   setNullableInput,
   InsertPrescriptionInput,
@@ -18,7 +16,6 @@ import { isPrescriptionDisabled } from '@openmsupply-client/invoices/src/utils';
 import { mapStatus } from './utils';
 import { useDelete } from './usePrescriptionDelete';
 import { useMemo } from 'react';
-import { usePrescriptionColumn } from '../../DetailView/columns';
 
 export const usePrescriptionId = () => {
   const { invoiceId = '' } = useParams();
@@ -27,15 +24,6 @@ export const usePrescriptionId = () => {
 
 export const usePrescription = (id?: string) => {
   const paramInvoiceId = usePrescriptionId();
-  const {
-    updateSortQuery,
-    queryParams: { sortBy },
-  } = useUrlQueryParams();
-
-  const columns = usePrescriptionColumn({
-    onChangeSortBy: updateSortQuery,
-    sortBy,
-  });
 
   // If an id is passed in (which is the case when accessing from JSON Forms
   // Prescription component), we use that and fetch by ID. Otherwise we use the
@@ -48,14 +36,8 @@ export const usePrescription = (id?: string) => {
 
   const rows = useMemo(() => {
     const stockLines = data?.lines?.nodes ?? [];
-    const currentColumn = columns.find(({ key }) => key === sortBy.key);
-    if (!currentColumn?.getSortValue) return stockLines;
-    const sorter = SortUtils.getColumnSorter(
-      currentColumn.getSortValue,
-      !!sortBy.isDesc
-    );
-    return [...stockLines].sort(sorter);
-  }, [data, sortBy.key, sortBy.isDesc]);
+    return stockLines;
+  }, [data]);
 
   // UPDATE
   const { patch, updatePatch, resetDraft, isDirty } =

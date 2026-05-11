@@ -1,7 +1,7 @@
 use crate::{
     processors::ProcessorType,
     service_provider::{ServiceContext, ServiceProvider},
-    sync::{sync_buffer::SyncBufferSource, sync_status::logger::SyncStep, CentralServerConfig},
+    sync::{sync_status::logger::SyncStep, CentralServerConfig},
 };
 use log::warn;
 use repository::{
@@ -14,17 +14,13 @@ use util::format_error;
 
 use super::{
     api::{SyncApiError, SyncApiSettings, SyncApiV5},
-    api_v6::SyncApiV6CreatingError,
     central_data_synchroniser::{CentralDataSynchroniser, CentralPullError},
-    central_data_synchroniser_v6::{
-        CentralPullErrorV6, RemotePushErrorV6, SynchroniserV6, WaitForSyncOperationErrorV6,
-    },
     remote_data_synchroniser::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
         WaitForSyncOperationError,
     },
-    settings::{SyncSettings, SYNC_V5_VERSION, SYNC_V6_VERSION},
-    sync_buffer::SyncBuffer,
+    settings::{SyncSettings, SYNC_V5_VERSION},
+    sync_buffer::get_ordered_sync_buffer_records,
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
     translations::{all_translators, pull_integration_order},
@@ -32,23 +28,19 @@ use super::{
 
 const INTEGRATION_POLL_PERIOD_SECONDS: u64 = 1;
 const INTEGRATION_TIMEOUT_SECONDS: u64 = 30;
-pub struct Synchroniser {
+pub struct SynchroniserV5V6 {
     settings: SyncSettings,
     service_provider: Arc<ServiceProvider>,
     central: CentralDataSynchroniser,
+    #[allow(dead_code)]
     sync_v5_settings: SyncApiSettings,
     remote: RemoteDataSynchroniser,
-    sync_v6_version: u32,
 }
 
 #[derive(Error)]
 pub(crate) enum SyncError {
     #[error(transparent)]
     SyncApiError(#[from] SyncApiError),
-    #[error("V6 Not configured")]
-    V6NotConfigured,
-    #[error("Failed to create Sync v6 Url")]
-    SyncApiV6CreatingError(#[from] SyncApiV6CreatingError),
     #[error("Database error while syncing")]
     DatabaseError(#[from] RepositoryError),
     #[error(transparent)]
@@ -59,14 +51,8 @@ pub(crate) enum SyncError {
     RemotePushError(#[from] RemotePushError),
     #[error("Error while awaiting remote record integration")]
     WaitForIntegrationError(#[from] WaitForSyncOperationError),
-    #[error("Error while awaiting v6 remote record integration")]
-    WaitForIntegrationErrorV6(#[from] WaitForSyncOperationErrorV6),
     #[error("Error while pulling central records")]
     CentralPullError(#[from] CentralPullError),
-    #[error("Error while pulling central v6 records")]
-    CentralPullErrorV6(#[from] CentralPullErrorV6),
-    #[error("Error while pushing remote v6 records")]
-    RemotePushErrorV6(#[from] RemotePushErrorV6),
     #[error("Error while pulling remote records")]
     RemotePullError(#[from] RemotePullError),
     #[error("Error while integrating records")]
@@ -106,23 +92,22 @@ impl std::fmt::Debug for SyncError {
 /// pulled from the central server through this queue.
 /// 3) Remote data is regularly pushed to the central server.
 ///
-impl Synchroniser {
+impl SynchroniserV5V6 {
     pub(crate) fn new(
         settings: SyncSettings,
         service_provider: Arc<ServiceProvider>,
     ) -> anyhow::Result<Self> {
-        Self::new_with_version(settings, service_provider, SYNC_V5_VERSION, SYNC_V6_VERSION)
+        Self::new_with_version(settings, service_provider, SYNC_V5_VERSION)
     }
 
     pub(crate) fn new_with_version(
         settings: SyncSettings,
         service_provider: Arc<ServiceProvider>,
         sync_version: u32,
-        sync_v6_version: u32,
     ) -> anyhow::Result<Self> {
         let sync_v5_settings = SyncApiV5::new_settings(&settings, &service_provider, sync_version)?;
         let sync_api_v5 = SyncApiV5::new(sync_v5_settings.clone())?;
-        Ok(Synchroniser {
+        Ok(SynchroniserV5V6 {
             remote: RemoteDataSynchroniser {
                 sync_api_v5: sync_api_v5.clone(),
             },
@@ -130,15 +115,15 @@ impl Synchroniser {
             service_provider,
             central: CentralDataSynchroniser { sync_api_v5 },
             sync_v5_settings,
-            sync_v6_version,
         })
     }
 
-    pub(crate) async fn sync(&self, fetch_patient_id: Option<String>) -> Result<(), SyncError> {
+    pub(crate) async fn sync(&self, _fetch_patient_id: Option<String>) -> Result<(), SyncError> {
         let ctx = self.service_provider.basic_context()?;
-        let mut logger = SyncLogger::start(&ctx.connection)?;
+        let mut logger = SyncLogger::start(&ctx.connection)?
+            .with_subscription_trigger(self.service_provider.subscription_trigger.clone());
 
-        let sync_result = self.sync_inner(&mut logger, &ctx, fetch_patient_id).await;
+        let sync_result = self.sync_inner(&mut logger, &ctx).await;
 
         if let Err(error) = &sync_result {
             logger.error(error)?;
@@ -154,7 +139,6 @@ impl Synchroniser {
         &self,
         logger: &mut SyncLogger<'a>,
         ctx: &'a ServiceContext,
-        fetch_patient_id: Option<String>,
     ) -> Result<(), SyncError> {
         let batch_size = &self.settings.batch_size;
         let sync_status_service = &self.service_provider.sync_status_service;
@@ -165,7 +149,7 @@ impl Synchroniser {
             return Ok(());
         }
 
-        // Get site info for initialisation status and for omSupply central url required in SynchroniserV6
+        // Get site info for initialisation status and for central server config
         let site_info = self.remote.sync_api_v5.get_site_info().await?;
         CentralServerConfig::set_central_server_config(&site_info);
 
@@ -193,34 +177,6 @@ impl Synchroniser {
 
         // First push before pulling, this avoids records being pulled from central server
         // and overwriting existing records waiting to be pulled
-
-        // We'll push records to open-mSupply first, then push to Legacy mSupply
-
-        let v6_sync = match CentralServerConfig::get() {
-            CentralServerConfig::NotConfigured => return Err(SyncError::V6NotConfigured),
-            CentralServerConfig::IsCentralServer | CentralServerConfig::ForcedCentralServer => None,
-            CentralServerConfig::CentralServerUrl(url) => {
-                let v6_sync =
-                    SynchroniserV6::new(&url, &self.sync_v5_settings, self.sync_v6_version)?;
-                Some(v6_sync)
-            }
-        };
-
-        // PUSH V6
-        logger.start_step(SyncStep::PushCentralV6)?;
-        if let (true, Some(v6_sync)) = (is_initialised, &v6_sync) {
-            v6_sync
-                .push(&ctx.connection, batch_size.remote_push, logger)
-                .await?;
-
-            v6_sync
-                .wait_for_sync_operation(
-                    INTEGRATION_POLL_PERIOD_SECONDS,
-                    INTEGRATION_TIMEOUT_SECONDS,
-                )
-                .await?;
-        }
-        logger.done_step(SyncStep::PushCentralV6)?;
 
         // PUSH
         // Only push if initialised (site data was initialised on central and successfully pulled)
@@ -253,31 +209,6 @@ impl Synchroniser {
 
         logger.done_step(SyncStep::PullRemote)?;
 
-        // PULL V6
-        if let Some(v6_sync) = &v6_sync {
-            logger.start_step(SyncStep::PullCentralV6)?;
-
-            match fetch_patient_id {
-                Some(patient_id) => {
-                    v6_sync
-                        .patient_pull(&ctx.connection, batch_size.central_pull, patient_id, logger)
-                        .await?;
-                }
-                None => {
-                    v6_sync
-                        .pull(
-                            &ctx.connection,
-                            batch_size.central_pull,
-                            is_initialised,
-                            logger,
-                        )
-                        .await?;
-                }
-            }
-
-            logger.done_step(SyncStep::PullCentralV6)?;
-        }
-
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
@@ -288,53 +219,64 @@ impl Synchroniser {
                 false => Some(logger),
                 true => None,
             },
-            SyncBufferSource::Central(central_sync_server_id),
+            central_sync_server_id,
         )
         .map_err(SyncError::IntegrationError)?;
 
-        warn!("Upsert Integration result: {:?}", upserts);
-        warn!("Delete Integration result: {:?}", deletes);
-        warn!("Merge Integration result: {:?}", merges);
+        upserts.log("Upsert");
+        deletes.log("Delete");
+        merges.log("Merge");
 
         logger.done_step(SyncStep::Integrate)?;
 
         if !is_initialised {
             self.remote.advance_push_cursor(&ctx.connection)?;
-            if let Some(v6_sync) = &v6_sync {
-                v6_sync.advance_push_cursor(&ctx.connection)?;
-            }
-            self.service_provider.site_is_initialised_trigger.trigger();
-            // Trigger ledger fix after initialisation
-            self.service_provider.ledger_fix_trigger.trigger();
         }
 
-        ctx.processors_trigger
-            .trigger_requisition_transfer_processors();
-        ctx.processors_trigger.trigger_invoice_transfer_processors();
-
-        ctx.processors_trigger
-            .trigger_processor(ProcessorType::ContactFormEmail);
-
-        // This should be before plugin processor below, in case there is a processor error, need to be able
-        // to sync new plugin version to avoid bricking the app
-        ctx.processors_trigger
-            .trigger_processor(ProcessorType::LoadPlugin);
-
-        ctx.processors_trigger
-            .trigger_processor(ProcessorType::AssignRequisitionNumber);
-
-        ctx.processors_trigger
-            .trigger_processor(ProcessorType::Plugins);
+        run_post_sync_triggers(ctx, &self.service_provider, is_initialised);
 
         Ok(())
     }
+}
+
+pub(crate) fn run_post_sync_triggers(
+    ctx: &ServiceContext,
+    service_provider: &ServiceProvider,
+    was_initialised: bool,
+) {
+    if !was_initialised {
+        service_provider.site_is_initialised_trigger.trigger();
+        // Trigger ledger fix after initialisation
+        service_provider.ledger_fix_trigger.trigger();
+    }
+
+    ctx.processors_trigger
+        .trigger_requisition_transfer_processors();
+    ctx.processors_trigger.trigger_invoice_transfer_processors();
+
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::ContactFormEmail);
+
+    // This should be before plugin processor below, in case there is a processor error, need to be able
+    // to sync new plugin version to avoid bricking the app
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::LoadPlugin);
+
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::AssignRequisitionNumber);
+
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::Plugins);
+
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::RequisitionAutoFinalise);
 }
 
 /// Translation And Integration of sync buffer, pub since used in CLI
 pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
     logger: Option<&mut SyncLogger<'_>>,
-    record_type: SyncBufferSource,
+    source_site_id: i32,
 ) -> Result<
     (
         TranslationAndIntegrationResults,
@@ -363,21 +305,22 @@ pub fn integrate_and_translate_sync_buffer(
         let translators = all_translators();
         let table_order = pull_integration_order(&translators);
 
-        let sync_buffer = SyncBuffer::new(connection);
-        let translation_and_integration = TranslationAndIntegration::new(connection, &sync_buffer);
+        let translation_and_integration = TranslationAndIntegration::new(connection);
 
         // Translate and integrate upserts (ordered by referential database constraints)
-        let upsert_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
+        let upsert_sync_buffer_records = get_ordered_sync_buffer_records(
+            connection,
             SyncAction::Upsert,
             &table_order,
-            record_type.clone(),
+            source_site_id,
         )?;
 
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
-        let delete_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
+        let delete_sync_buffer_records = get_ordered_sync_buffer_records(
+            connection,
             SyncAction::Delete,
             &table_order,
-            record_type.clone(),
+            source_site_id,
         )?;
 
         let upsert_integration_result = translation_and_integration
@@ -395,10 +338,11 @@ pub fn integrate_and_translate_sync_buffer(
                 None,
             )?;
 
-        let merge_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
+        let merge_sync_buffer_records = get_ordered_sync_buffer_records(
+            connection,
             SyncAction::Merge,
             &table_order,
-            record_type.clone(),
+            source_site_id,
         )?;
 
         let merge_integration_result: TranslationAndIntegrationResults =
@@ -440,7 +384,7 @@ mod tests {
 
         let ctx = service_provider.basic_context().unwrap();
         let service = &service_provider.settings;
-        let s = Synchroniser::new(
+        let s = SynchroniserV5V6::new(
             SyncSettings {
                 url: "http://0.0.0.0:0".to_string(),
                 ..Default::default()

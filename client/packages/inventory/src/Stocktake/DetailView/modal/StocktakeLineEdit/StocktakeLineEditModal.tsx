@@ -19,12 +19,12 @@ interface StocktakeLineEditModalProps {
 export const StocktakeLineEditModal: FC<
   PropsWithChildren<StocktakeLineEditModalProps>
 > = ({ isOpen, isValid, children, mode, onCancel, onOk, onNext, hasNext }) => {
+  const t = useTranslation();
   const { Modal } = useDialog({
     onClose: onCancel,
     isOpen,
     disableBackdrop: true,
   });
-  const t = useTranslation();
 
   return (
     <Modal
@@ -46,6 +46,7 @@ export const StocktakeLineEditModal: FC<
       }
       height={650}
       width={1260}
+      slideAnimation={false}
     >
       <>{children}</>
     </Modal>

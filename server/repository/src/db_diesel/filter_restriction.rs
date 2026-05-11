@@ -20,7 +20,6 @@ impl EqualFilter<String> {
 
 #[cfg(test)]
 mod tests {
-    
 
     use crate::{
         mock::{mock_name_a, MockData, MockDataInserts},
@@ -30,7 +29,7 @@ mod tests {
     fn mock_invoice_a() -> InvoiceRow {
         InvoiceRow {
             id: "invoice1".to_string(),
-            name_link_id: mock_name_a().id,
+            name_id: mock_name_a().id,
             store_id: "store_a".to_string(),
             user_id: Some("A".to_string()),
             ..Default::default()
@@ -40,7 +39,7 @@ mod tests {
     fn mock_invoice_b() -> InvoiceRow {
         InvoiceRow {
             id: "invoice2".to_string(),
-            name_link_id: mock_name_a().id,
+            name_id: mock_name_a().id,
             store_id: "store_a".to_string(),
             user_id: Some("B".to_string()),
             ..Default::default()
@@ -50,7 +49,7 @@ mod tests {
     fn mock_invoice_excluded() -> InvoiceRow {
         InvoiceRow {
             id: "invoice3".to_string(),
-            name_link_id: mock_name_a().id,
+            name_id: mock_name_a().id,
             store_id: "store_a".to_string(),
             user_id: Some("Excluded".to_string()),
             ..Default::default()
@@ -60,7 +59,7 @@ mod tests {
     fn mock_invoice_none() -> InvoiceRow {
         InvoiceRow {
             id: "invoice4".to_string(),
-            name_link_id: mock_name_a().id,
+            name_id: mock_name_a().id,
             store_id: "store_a".to_string(),
             user_id: None,
             ..Default::default()
@@ -98,7 +97,9 @@ mod tests {
 
         // test excluded entry is in the data set
         let result = repository
-            .query_by_filter(InvoiceFilter::new().user_id(EqualFilter::equal_to(&excluded_id)))
+            .query_by_filter(
+                InvoiceFilter::new().user_id(EqualFilter::equal_to(excluded_id.to_string())),
+            )
             .unwrap();
         assert!(result.len() == 1);
 
@@ -116,17 +117,18 @@ mod tests {
         assert!(result.contains(&"B".to_string()));
 
         // equal_to: prevent query excluded id
-        let result = repository
-            .query_by_filter(
-                InvoiceFilter::new()
-                    .user_id(EqualFilter::equal_to(&excluded_id).restrict_results(&allowed)),
-            )
-            .unwrap();
+        let result =
+            repository
+                .query_by_filter(InvoiceFilter::new().user_id(
+                    EqualFilter::equal_to(excluded_id.to_string()).restrict_results(&allowed),
+                ))
+                .unwrap();
         assert!(result.is_empty());
         // equal_to: allow query allowed id
         let result = repository
             .query_by_filter(
-                InvoiceFilter::new().user_id(EqualFilter::equal_to("A").restrict_results(&allowed)),
+                InvoiceFilter::new()
+                    .user_id(EqualFilter::equal_to("A".to_string()).restrict_results(&allowed)),
             )
             .unwrap()
             .into_iter()
@@ -178,7 +180,7 @@ mod tests {
         let result = repository
             .query_by_filter(
                 InvoiceFilter::new()
-                    .user_id(EqualFilter::not_equal_to("A").restrict_results(&allowed)),
+                    .user_id(EqualFilter::not_equal_to("A".to_string()).restrict_results(&allowed)),
             )
             .unwrap()
             .into_iter()

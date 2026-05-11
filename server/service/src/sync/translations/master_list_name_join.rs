@@ -1,5 +1,6 @@
 use repository::{
     MasterListNameJoinRow, MasterListNameJoinRowDelete, StorageConnection, SyncBufferRow,
+
 };
 
 use serde::Deserialize;
@@ -39,7 +40,7 @@ impl SyncTranslation for MasterListNameJoinTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyListMasterNameJoinRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyListMasterNameJoinRow>()?;
         if data.name_ID.is_empty() {
             return Ok(PullTranslateResult::Ignored("Missing name id".to_string()));
         }
@@ -47,7 +48,7 @@ impl SyncTranslation for MasterListNameJoinTranslation {
         let result = MasterListNameJoinRow {
             id: data.ID,
             master_list_id: data.list_master_ID,
-            name_link_id: data.name_ID,
+            name_id: data.name_ID,
         };
 
         Ok(PullTranslateResult::upsert(result))

@@ -1,167 +1,190 @@
-import React, { FC, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import {
   useNavigate,
-  DataTable,
-  useColumns,
-  TableProvider,
-  createTableStore,
   useTranslation,
-  NothingHere,
   useUrlQueryParams,
-  ColumnFormat,
-  GenericColumnKey,
   PurchaseOrderNodeStatus,
-  useTableStore,
+  useToggle,
+  ColumnType,
+  ColumnDef,
+  usePaginatedMaterialTable,
+  MaterialTable,
+  NothingHere,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderList } from '../api';
 import { PurchaseOrderRowFragment } from '../api/operations.generated';
-import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import {
-  DeliveryStatus,
-  getDeliveryStatusTranslator,
   getPurchaseOrderStatusTranslator,
+  isPurchaseOrderDisabled,
 } from '../../utils';
 
-const ListView: FC = () => {
+export const PurchaseOrderListView = () => {
   const t = useTranslation();
-  const { setDisabledRows } = useTableStore();
+  const navigate = useNavigate();
+  const modalController = useToggle();
+
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    filter,
-    queryParams: { page, first, offset, sortBy, filterBy },
+    queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
       { key: 'supplier' },
-      { key: 'createdDatetime', condition: 'between' },
       {
         key: 'status',
         condition: 'equalTo',
       },
+      { key: 'createdDatetime', condition: 'between' },
+      { key: 'confirmedDatetime', condition: 'between' },
+      { key: 'requestedDeliveryDate', condition: 'between' },
+      { key: 'sentDatetime', condition: 'between' },
     ],
   });
+
   const listParams = {
     sortBy,
     first,
     offset,
     filterBy,
   };
-
-  const navigate = useNavigate();
   const {
-    query: { data, isError, isLoading },
+    query: { data, isFetching },
   } = usePurchaseOrderList(listParams);
-  const pagination = { page, first, offset };
 
-  useEffect(() => {
-    const disabledRows = (data?.nodes ?? [])
-      .filter(row => row.status === PurchaseOrderNodeStatus.Finalised)
-      .map(({ id }) => id);
-    setDisabledRows(disabledRows);
-  }, [data, setDisabledRows]);
-
-  const columns = useColumns<PurchaseOrderRowFragment>(
-    [
-      GenericColumnKey.Selection,
+  const columns = useMemo(
+    (): ColumnDef<PurchaseOrderRowFragment>[] => [
       {
-        key: 'supplier',
-        label: 'label.supplier',
-        accessor: ({ rowData }) => rowData.supplier?.name,
-        sortable: true,
-      },
-      [
-        'invoiceNumber',
-        {
-          label: 'label.number',
-          maxWidth: 110,
-          accessor: ({ rowData }) => rowData.number,
-        },
-      ],
-      {
-        key: 'createdDatetime',
-        label: 'label.created',
-        format: ColumnFormat.Date,
-        accessor: ({ rowData }) => rowData.createdDatetime,
-        sortable: true,
+        header: t('label.supplier'),
+        id: 'supplier',
+        accessorFn: row => row.supplier?.name,
+        enableColumnFilter: true,
+        defaultHideOnMobile: true,
       },
       {
-        key: 'confirmedDatetime',
-        label: 'label.confirmed',
-        format: ColumnFormat.Date,
-        accessor: ({ rowData }) => rowData.confirmedDatetime,
-        sortable: true,
-      },
-      [
-        'status',
-        {
-          formatter: status =>
-            getPurchaseOrderStatusTranslator(t)(
-              status as PurchaseOrderNodeStatus
-            ),
-        },
-      ],
-      {
-        key: 'deliveryStatus',
-        label: 'label.delivery-status',
-        accessor: ({}) => DeliveryStatus.NotDelivered, // Todo: Replace with actual delivery status calculation once we have goods received data (add rowData back)
-        formatter: status =>
-          getDeliveryStatusTranslator(t)(status as DeliveryStatus),
+        header: t('label.number'),
+        accessorKey: 'number',
+        columnType: ColumnType.Number,
+        size: 90,
+        enableSorting: true,
       },
       {
-        key: 'deliveryDatetime',
-        label: 'label.delivered',
-        accessor: ({ rowData: _ }) => '', // rowData.deliveredDatetime,
-        // format: ColumnFormat.Date,
-        // accessor: ({ rowData }) => rowData.deliveredDatetime,
-        // TODO: Figure out how to get the delivery date from the goods received data
-        sortable: true,
+        header: t('label.created'),
+        accessorKey: 'createdDatetime',
+        columnType: ColumnType.Date,
+        enableSorting: true,
+        enableColumnFilter: true,
+        size: 100,
       },
       {
-        key: 'lines',
-        label: 'label.lines',
-        accessor: ({ rowData }) => rowData.lines.totalCount,
-        maxWidth: 80,
-        sortable: false,
+        header: t('label.confirmed'),
+        accessorKey: 'confirmedDatetime',
+        enableColumnFilter: true,
+        columnType: ColumnType.Date,
+        size: 100,
       },
-      ['comment'],
+      {
+        header: t('label.sent'),
+        accessorKey: 'sentDatetime',
+        enableColumnFilter: true,
+        columnType: ColumnType.Date,
+        size: 100,
+      },
+      {
+        header: t('label.requested-delivery-date'),
+        accessorKey: 'requestedDeliveryDate',
+        columnType: ColumnType.Date,
+        enableColumnFilter: true,
+        dateFilterFormat: 'date',
+        size: 100,
+      },
+      {
+        header: t('label.status'),
+        accessorFn: row => getPurchaseOrderStatusTranslator(t)(row.status),
+        id: 'status',
+        size: 140,
+        filterVariant: 'select',
+        filterSelectOptions: Object.values(PurchaseOrderNodeStatus).map(
+          status => ({
+            value: status,
+            label: getPurchaseOrderStatusTranslator(t)(status),
+          })
+        ),
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        header: t('label.target-months'),
+        accessorKey: 'targetMonths',
+        columnType: ColumnType.Number,
+        accessorFn: row => row.targetMonths,
+        defaultHideOnMobile: true,
+        size: 90,
+      },
+      {
+        header: t('label.total-cost'),
+        accessorKey: 'orderTotalAfterDiscount',
+        columnType: ColumnType.Currency,
+        defaultHideOnMobile: true,
+      },
+      {
+        header: t('label.currency'),
+        id: 'currency',
+        accessorFn: row => row.currency?.code ?? '',
+        defaultHideOnMobile: true,
+        size: 80,
+      },
+      {
+        header: t('label.lines'),
+        accessorFn: row => row.lines?.totalCount ?? 0,
+        size: 80,
+        defaultHideOnMobile: true,
+        columnType: ColumnType.Number,
+      },
+      {
+        header: t('label.comment'),
+        accessorKey: 'comment',
+        columnType: ColumnType.Comment,
+        enableSorting: true,
+      },
     ],
-    { onChangeSortBy: updateSortQuery, sortBy },
-    [sortBy]
+    []
   );
+
+  const { table, selectedRows } =
+    usePaginatedMaterialTable<PurchaseOrderRowFragment>({
+      tableId: 'purchase-order-list-view',
+      isLoading: isFetching,
+      onRowClick: row => navigate(row.id),
+      columns,
+      data: data?.nodes ?? [],
+      totalCount: data?.totalCount ?? 0,
+      initialSort: { key: 'number', dir: 'desc' },
+      getIsRestrictedRow: row => isPurchaseOrderDisabled(row.original),
+      noDataElement: (
+        <NothingHere
+          body={t('error.no-purchase-orders')}
+          onCreate={modalController.toggleOn}
+        />
+      ),
+    });
 
   return (
     <>
-      <Toolbar filter={filter} />
-      <AppBarButtons />
-      <DataTable
-        id="purchase-order-list"
-        enableColumnSelection
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes ?? []}
-        isError={isError}
-        isLoading={isLoading}
-        noDataElement={
-          <NothingHere
-            body={t('error.no-purchase-orders')}
-            // onCreate={modalController.toggleOn}
-          />
-        }
-        onRowClick={row => {
-          navigate(row.id);
-        }}
+      <Toolbar />
+      <AppBarButtons
+        data={data?.nodes}
+        isLoading={isFetching}
+        modalController={modalController}
+        onCreate={modalController.toggleOn}
       />
-      <Footer listParams={listParams} />
+      <MaterialTable table={table} />
+
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+      />
     </>
   );
 };
-
-export const PurchaseOrderListView: FC = () => (
-  <TableProvider createStore={createTableStore}>
-    <ListView />
-  </TableProvider>
-);

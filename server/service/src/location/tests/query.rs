@@ -4,7 +4,7 @@ mod query {
         location::{LocationFilter, LocationSortField},
         mock::{mock_asset_b, mock_location_1, stock_line_with_volume, MockDataInserts},
         test_db::setup_all,
-        LocationRow, StockLineRow, Upsert,
+        LocationRow, LocationRowRepository, StockLineRow, StockLineRowRepository,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
 
@@ -46,12 +46,12 @@ mod query {
         let service = service_provider.location_service;
 
         assert_eq!(
-            service.get_location(&context, "invalid_id".to_owned()),
-            Err(SingleRecordError::NotFound("invalid_id".to_owned()))
+            service.get_location(&context, "invalid_id".to_string()),
+            Err(SingleRecordError::NotFound("invalid_id".to_string()))
         );
 
         let result = service
-            .get_location(&context, "location_on_hold".to_owned())
+            .get_location(&context, "location_on_hold".to_string())
             .unwrap();
 
         assert_eq!(result.location_row.id, "location_on_hold");
@@ -71,7 +71,7 @@ mod query {
             .get_locations(
                 &context,
                 None,
-                Some(LocationFilter::new().id(EqualFilter::equal_to("location_1"))),
+                Some(LocationFilter::new().id(EqualFilter::equal_to("location_1".to_string()))),
                 None,
             )
             .unwrap();
@@ -84,8 +84,8 @@ mod query {
                 &context,
                 None,
                 Some(LocationFilter::new().id(EqualFilter::equal_any(vec![
-                    "location_1".to_owned(),
-                    "location_on_hold".to_owned(),
+                    "location_1".to_string(),
+                    "location_on_hold".to_string(),
                 ]))),
                 None,
             )
@@ -162,6 +162,73 @@ mod query {
     }
 
     #[actix_rt::test]
+    async fn location_service_sort_by_name_secondary_sort_by_code() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "test_location_sort_name_then_code",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        // Insert three locations with the same name but different codes,
+        // in an order that wouldn't sort correctly by chance (id or insertion order)
+        let location_repo = LocationRowRepository::new(&connection);
+        location_repo
+            .upsert_one(&LocationRow {
+                id: "loc_a".to_string(),
+                name: "Same Name".to_string(),
+                code: "code_c".to_string(),
+                store_id: "store_a".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+
+        location_repo
+            .upsert_one(&LocationRow {
+                id: "loc_b".to_string(),
+                name: "Same Name".to_string(),
+                code: "code_a".to_string(),
+                store_id: "store_a".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+
+        location_repo
+            .upsert_one(&LocationRow {
+                id: "loc_c".to_string(),
+                name: "Same Name".to_string(),
+                code: "code_b".to_string(),
+                store_id: "store_a".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.location_service;
+
+        // Sort by name ascending — secondary sort by code should put code_a first
+        let result = service
+            .get_locations(
+                &context,
+                None,
+                None,
+                Some(Sort {
+                    key: LocationSortField::Name,
+                    desc: None,
+                }),
+            )
+            .unwrap();
+
+        let result_codes: Vec<String> = result
+            .rows
+            .into_iter()
+            .map(|l| l.location_row.code)
+            .collect();
+
+        assert_eq!(result_codes, vec!["code_a", "code_b", "code_c"]);
+    }
+
+    #[actix_rt::test]
     async fn location_service_assigned_to_asset() {
         let (_mock_data, _, connection_manager, _) =
             setup_all("test_location_asset_assigned", MockDataInserts::all()).await;
@@ -177,7 +244,7 @@ mod query {
                 None,
                 Some(
                     LocationFilter::new()
-                        .id(EqualFilter::equal_to("location_1"))
+                        .id(EqualFilter::equal_to("location_1".to_string()))
                         .assigned_to_asset(true),
                 ),
                 None,
@@ -206,7 +273,7 @@ mod query {
                 None,
                 Some(
                     LocationFilter::new()
-                        .id(EqualFilter::equal_to("location_1"))
+                        .id(EqualFilter::equal_to("location_1".to_string()))
                         .assigned_to_asset(true),
                 ),
                 None,
@@ -223,11 +290,13 @@ mod query {
 
         // Insert a new empty location
         let location_with_no_stock_lines = LocationRow {
-            id: "location_with_no_stock_lines".to_owned(),
-            store_id: "store_a".to_owned(),
+            id: "location_with_no_stock_lines".to_string(),
+            store_id: "store_a".to_string(),
             ..Default::default()
         };
-        location_with_no_stock_lines.upsert(&connection).unwrap();
+        LocationRowRepository::new(&connection)
+            .upsert_one(&location_with_no_stock_lines)
+            .unwrap();
 
         // Confirm handles location with no stock lines
         let result = get_volume_used(&connection, &location_with_no_stock_lines).unwrap();
@@ -235,21 +304,21 @@ mod query {
         assert_eq!(result.to_bits(), 0.0f64.to_bits());
 
         // Insert some stock lines for the location
-        StockLineRow {
-            id: "line1".to_owned(),
-            location_id: Some(location_with_no_stock_lines.id.clone()),
-            ..stock_line_with_volume() // total volume is 1000.0
-        }
-        .upsert(&connection)
-        .unwrap();
-        StockLineRow {
-            id: "line2".to_owned(),
-            location_id: Some(location_with_no_stock_lines.id.clone()),
-            total_volume: 500.0,
-            ..stock_line_with_volume()
-        }
-        .upsert(&connection)
-        .unwrap();
+        StockLineRowRepository::new(&connection)
+            .upsert_one(&StockLineRow {
+                id: "line1".to_string(),
+                location_id: Some(location_with_no_stock_lines.id.clone()),
+                ..stock_line_with_volume() // total volume is 1000.0
+            })
+            .unwrap();
+        StockLineRowRepository::new(&connection)
+            .upsert_one(&StockLineRow {
+                id: "line2".to_string(),
+                location_id: Some(location_with_no_stock_lines.id.clone()),
+                total_volume: 500.0,
+                ..stock_line_with_volume()
+            })
+            .unwrap();
 
         // Adds volumes correctly
         let result = get_volume_used(&connection, &location_with_no_stock_lines).unwrap();

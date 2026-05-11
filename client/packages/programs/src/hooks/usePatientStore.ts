@@ -15,6 +15,8 @@ export enum Gender {
   UNKNOWN = 'UNKNOWN',
   /** 772004004 Non-binary gender*/
   NON_BINARY = 'NON_BINARY',
+  /** Either TRANSGENDER_MALE or TRANSGENDER_FEMALE */
+  TRANSGENDER = 'TRANSGENDER',
 }
 
 export interface CreateNewPatient {

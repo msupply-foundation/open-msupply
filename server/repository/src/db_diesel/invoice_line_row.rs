@@ -1,25 +1,28 @@
 use super::{
     campaign_row::campaign, invoice_line_row::invoice_line::dsl::*, invoice_row::invoice,
-    item_link_row::item_link, location_row::location, name_link_row::name_link,
-    reason_option_row::reason_option, stock_line_row::stock_line,
-    vvm_status::vvm_status_row::vvm_status, StorageConnection,
+    item_link_row::item_link, location_row::location, reason_option_row::reason_option,
+    stock_line_row::stock_line, vvm_status::vvm_status_row::vvm_status, StorageConnection,
 };
 
+use crate::diesel_macros::define_linked_tables;
+use crate::item_row::item;
 use crate::repository_error::RepositoryError;
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, InvoiceRowRepository,
-    RowActionType,
+    db_diesel::changelog::changelog::RowOrId, ChangelogRepository,
+    ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert,
 };
-use crate::{Delete, Upsert};
 
 use diesel::prelude::*;
 
 use chrono::NaiveDate;
 use diesel_derive_enum::DbEnum;
 
-table! {
-    invoice_line (id) {
-        id -> Text,
+define_linked_tables! {
+    view: invoice_line = "invoice_line_view",
+    core: invoice_line_with_links = "invoice_line",
+    struct: InvoiceLineRow,
+    repo: InvoiceLineRowRepository,
+    shared: {
         invoice_id -> Text,
         item_link_id -> Text,
         item_name -> Text,
@@ -34,21 +37,30 @@ table! {
         total_before_tax -> Double,
         total_after_tax -> Double,
         tax_percentage -> Nullable<Double>,
-        #[sql_name = "type"] type_ -> crate::db_diesel::invoice_line_row::InvoiceLineTypeMapping,
+        #[sql_name = "type"]
+        type_ -> crate::db_diesel::invoice_line_row::InvoiceLineTypeMapping,
         number_of_packs -> Double,
         prescribed_quantity -> Nullable<Double>,
         note -> Nullable<Text>,
         foreign_currency_price_before_tax -> Nullable<Double>,
         item_variant_id -> Nullable<Text>,
         linked_invoice_id -> Nullable<Text>,
-        donor_link_id -> Nullable<Text>,
         vvm_status_id -> Nullable<Text>,
         reason_option_id -> Nullable<Text>,
         campaign_id -> Nullable<Text>,
         program_id -> Nullable<Text>,
         shipped_number_of_packs -> Nullable<Double>,
         volume_per_pack -> Double,
-        shipped_pack_size -> Nullable<Double>
+        shipped_pack_size -> Nullable<Double>,
+        status -> Nullable<crate::db_diesel::invoice_line_row::InvoiceLineStatusMapping>,
+        manufacture_date -> Nullable<Date>,
+        purchase_order_line_id -> Nullable<Text>,
+    },
+    links: {
+    },
+    optional_links: {
+        donor_link_id -> donor_id,
+        manufacturer_link_id -> manufacturer_id,
     }
 }
 
@@ -61,10 +73,24 @@ joinable!(invoice_line -> reason_option (reason_option_id));
 joinable!(invoice_line -> campaign (campaign_id));
 
 allow_tables_to_appear_in_same_query!(invoice_line, item_link);
-allow_tables_to_appear_in_same_query!(invoice_line, name_link);
 allow_tables_to_appear_in_same_query!(invoice_line, reason_option);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
+table! {
+    invoice_line_stats (invoice_line_id) {
+        invoice_line_id -> Text,
+    }
+}
+
+joinable!(invoice_line -> invoice_line_stats (id));
+allow_tables_to_appear_in_same_query!(invoice_line_stats, invoice_line);
+allow_tables_to_appear_in_same_query!(invoice_line_stats, invoice);
+allow_tables_to_appear_in_same_query!(invoice_line_stats, location);
+allow_tables_to_appear_in_same_query!(invoice_line_stats, stock_line);
+allow_tables_to_appear_in_same_query!(invoice_line_stats, reason_option);
+allow_tables_to_appear_in_same_query!(invoice_line_stats, item_link);
+allow_tables_to_appear_in_same_query!(invoice_line_stats, item);
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceLineType {
     #[default]
@@ -74,8 +100,15 @@ pub enum InvoiceLineType {
     Service,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[diesel(treat_none_as_null = true)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum InvoiceLineStatus {
+    Pending,
+    Passed,
+    Rejected,
+}
+
+#[derive(Clone, Queryable, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = invoice_line)]
 pub struct InvoiceLineRow {
     pub id: String,
@@ -103,7 +136,6 @@ pub struct InvoiceLineRow {
     pub foreign_currency_price_before_tax: Option<f64>,
     pub item_variant_id: Option<String>,
     pub linked_invoice_id: Option<String>,
-    pub donor_link_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub reason_option_id: Option<String>,
     pub campaign_id: Option<String>,
@@ -111,6 +143,17 @@ pub struct InvoiceLineRow {
     pub shipped_number_of_packs: Option<f64>,
     pub volume_per_pack: f64,
     pub shipped_pack_size: Option<f64>,
+    pub status: Option<InvoiceLineStatus>,
+    pub manufacture_date: Option<NaiveDate>,
+    pub purchase_order_line_id: Option<String>,
+    // Resolved from name_link - must be last to match view column order
+    pub donor_id: Option<String>,
+    pub manufacturer_id: Option<String>,
+}
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Default)]
+#[diesel(table_name = invoice_line_stats)]
+pub struct InvoiceLineStatsRow {
+    pub invoice_line_id: String,
 }
 
 pub struct InvoiceLineRowRepository<'a> {
@@ -122,36 +165,15 @@ impl<'a> InvoiceLineRowRepository<'a> {
         InvoiceLineRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(invoice_line)
-            .values(row)
-            .on_conflict(id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row, RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        row: &InvoiceLineRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let invoice = InvoiceRowRepository::new(self.connection).find_one_by_id(&row.invoice_id)?;
-        let invoice = match invoice {
-            Some(invoice) => invoice,
-            None => return Err(RepositoryError::NotFound),
-        };
-
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::InvoiceLine,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(invoice.store_id.clone()),
-            name_link_id: Some(invoice.name_link_id.clone()),
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<(), RepositoryError> {
+        self._upsert(row)?;
+        let changelog = InvoiceLineRow::generate_changelog(
+            RowOrId::Row(row),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn update_reason_option_id(
@@ -159,9 +181,9 @@ impl<'a> InvoiceLineRowRepository<'a> {
         record_id: &str,
         reason_id: Option<String>,
     ) -> Result<(), RepositoryError> {
-        diesel::update(invoice_line)
-            .filter(id.eq(record_id))
-            .set(reason_option_id.eq(reason_id))
+        diesel::update(invoice_line_with_links::table)
+            .filter(invoice_line_with_links::id.eq(record_id))
+            .set(invoice_line_with_links::reason_option_id.eq(reason_id))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -172,11 +194,11 @@ impl<'a> InvoiceLineRowRepository<'a> {
         tax_input: Option<f64>,
         total_after_tax_calculation: f64,
     ) -> Result<(), RepositoryError> {
-        diesel::update(invoice_line)
-            .filter(id.eq(record_id))
+        diesel::update(invoice_line_with_links::table)
+            .filter(invoice_line_with_links::id.eq(record_id))
             .set((
-                tax_percentage.eq(tax_input),
-                total_after_tax.eq(total_after_tax_calculation),
+                invoice_line_with_links::tax_percentage.eq(tax_input),
+                invoice_line_with_links::total_after_tax.eq(total_after_tax_calculation),
             ))
             .execute(self.connection.lock().connection())?;
         Ok(())
@@ -187,11 +209,28 @@ impl<'a> InvoiceLineRowRepository<'a> {
         record_id: &str,
         foreign_currency_price_before_tax_calculation: Option<f64>,
     ) -> Result<(), RepositoryError> {
-        diesel::update(invoice_line)
-            .filter(id.eq(record_id))
+        diesel::update(invoice_line_with_links::table)
+            .filter(invoice_line_with_links::id.eq(record_id))
             .set(
-                foreign_currency_price_before_tax.eq(foreign_currency_price_before_tax_calculation),
+                invoice_line_with_links::foreign_currency_price_before_tax
+                    .eq(foreign_currency_price_before_tax_calculation),
             )
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    pub fn update_cost_price(
+        &self,
+        record_id: &str,
+        new_cost_price_per_pack: f64,
+        new_sell_price_per_pack: f64,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(invoice_line_with_links::table)
+            .filter(invoice_line_with_links::id.eq(record_id))
+            .set((
+                invoice_line_with_links::cost_price_per_pack.eq(new_cost_price_per_pack),
+                invoice_line_with_links::sell_price_per_pack.eq(new_sell_price_per_pack),
+            ))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -202,26 +241,32 @@ impl<'a> InvoiceLineRowRepository<'a> {
         item_link: &str,
         new_note: Option<String>,
     ) -> Result<(), RepositoryError> {
-        diesel::update(invoice_line)
-            .filter(invoice_id.eq(invoice))
-            .filter(item_link_id.eq(item_link))
-            .set(note.eq(new_note))
+        diesel::update(invoice_line_with_links::table)
+            .filter(invoice_line_with_links::invoice_id.eq(invoice))
+            .filter(invoice_line_with_links::item_link_id.eq(item_link))
+            .set(invoice_line_with_links::note.eq(new_note))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn delete(&self, invoice_line_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = self.find_one_by_id(invoice_line_id)?;
-        let change_log_id = match old_row {
-            Some(old_row) => self.insert_changelog(&old_row, RowActionType::Delete)?,
-            None => {
-                return Ok(None);
-            }
-        };
+    fn _delete(&self, invoice_line_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(
+            invoice_line_with_links::table.filter(invoice_line_with_links::id.eq(invoice_line_id)),
+        )
+        .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
 
-        diesel::delete(invoice_line.filter(id.eq(invoice_line_id)))
-            .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+    pub fn delete(&self, invoice_line_id: &str) -> Result<(), RepositoryError> {
+        let changelog = InvoiceLineRow::generate_changelog(
+            RowOrId::Id(invoice_line_id),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
+        self._delete(invoice_line_id)?;
+        Ok(())
     }
 
     pub fn find_one_by_id(
@@ -267,9 +312,28 @@ impl<'a> InvoiceLineRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct InvoiceLineRowDelete(pub String);
 impl Delete for InvoiceLineRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = InvoiceLineRowRepository::new(con).delete(&self.0)?;
-        Ok(change_log_id)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let repo = InvoiceLineRowRepository::new(con);
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                InvoiceLineRow::generate_changelog(
+                    RowOrId::Id(&self.0),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        repo._delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -281,11 +345,28 @@ impl Delete for InvoiceLineRowDelete {
 }
 
 impl Upsert for InvoiceLineRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = InvoiceLineRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
-    }
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        InvoiceLineRowRepository::new(con)._upsert(self)?;
 
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                InvoiceLineRow::generate_changelog(
+                    RowOrId::Row(self),
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(

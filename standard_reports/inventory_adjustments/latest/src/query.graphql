@@ -1,0 +1,109 @@
+query InventoryAdjustments(
+  $storeId: String!
+  $adjustmentDateFrom: DateTime
+  $adjustmentDateTo: DateTime
+) {
+  # Query inventory adjustment invoices
+  invoices(
+    storeId: $storeId
+    filter: {
+      type: { equalAny: [INVENTORY_ADDITION, INVENTORY_REDUCTION] }
+      verifiedDatetime: {
+        afterOrEqualTo: $adjustmentDateFrom
+        beforeOrEqualTo: $adjustmentDateTo
+      }
+    }
+  ) {
+    ... on InvoiceConnector {
+      nodes {
+        id
+        invoiceNumber
+        type
+        verifiedDatetime
+        lines {
+          ... on InvoiceLineConnector {
+            nodes {
+              id
+              itemCode
+              itemName
+              batch
+              expiryDate
+              numberOfPacks
+              packSize
+              location {
+                id
+                code
+                name
+              }
+              stockLine {
+                id
+              }
+              inventoryAdjustmentReason {
+                id
+                reason
+              }
+              item {
+                id
+                code
+                name
+                unitName
+                masterLists(storeId: $storeId) {
+                  id
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  # Query finalised stocktakes that have inventory adjustments
+  stocktakes(
+    storeId: $storeId
+    filter: {
+      status: { equalTo: FINALISED }
+      finalisedDatetime: {
+        afterOrEqualTo: $adjustmentDateFrom
+        beforeOrEqualTo: $adjustmentDateTo
+      }
+    }
+  ) {
+    ... on StocktakeConnector {
+      nodes {
+        id
+        stocktakeNumber
+        finalisedDatetime
+        inventoryAdditionId
+        inventoryReductionId
+        lines {
+          ... on StocktakeLineConnector {
+            nodes {
+              id
+              snapshotNumberOfPacks
+              countedNumberOfPacks
+              stockLine {
+                id
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  store(id: $storeId) {
+    ... on StoreNode {
+      id
+      code
+      storeName
+      logo
+      name(storeId: $storeId) {
+        address1
+        address2
+        code
+        email
+        phone
+      }
+    }
+  }
+}

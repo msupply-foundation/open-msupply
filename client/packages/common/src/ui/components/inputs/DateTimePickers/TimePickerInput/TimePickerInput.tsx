@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { TimePicker, TimePickerProps } from '@mui/x-date-pickers';
 import { DateUtils } from '@common/intl';
 import { useDebounceCallback } from '@common/hooks';
-import { useAppTheme } from '@common/styles';
 import { getActionBarSx, getPaperSx, getTextFieldSx } from '../styles';
 
 export const TimePickerInput = ({
@@ -14,7 +13,6 @@ export const TimePickerInput = ({
   onChange(date: Date): void;
   value: Date | string | null;
 }) => {
-  const theme = useAppTheme();
   const [internalValue, setInternalValue] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -42,14 +40,14 @@ export const TimePickerInput = ({
       disabled={disabled}
       format="HH:mm"
       slotProps={{
-        desktopPaper: { sx: getPaperSx(theme) },
-        mobilePaper: { sx: getPaperSx(theme) },
-        actionBar: { sx: getActionBarSx(theme) },
+        desktopPaper: { sx: getPaperSx() },
+        mobilePaper: { sx: getPaperSx() },
+        actionBar: { sx: getActionBarSx() },
 
         textField: {
           disabled: !!disabled,
           error: isInvalid(internalValue),
-          sx: getTextFieldSx(theme, !!props.label, false),
+          sx: getTextFieldSx(!!props.label, false),
         },
       }}
       {...props}

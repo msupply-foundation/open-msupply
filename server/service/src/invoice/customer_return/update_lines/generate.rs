@@ -28,7 +28,7 @@ pub fn generate(
     }: UpdateCustomerReturnLines,
 ) -> Result<GenerateResult, RepositoryError> {
     let existing_lines = InvoiceLineRepository::new(connection).query_by_filter(
-        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&customer_return_id)),
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(customer_return_id.to_string())),
     )?;
     let check_already_exists = |id: &str| {
         existing_lines
@@ -77,10 +77,13 @@ pub fn generate(
                 stock_line_id: None,
                 stock_on_hold: false,
                 donor_id: None,
+                manufacturer_id: None,
                 campaign_id: None,
                 program_id: None,
+                manufacture_date: None,
                 shipped_number_of_packs: None,
                 shipped_pack_size: None,
+                purchase_order_line_id: None,
             },
         )
         .collect();
@@ -106,7 +109,7 @@ pub fn generate(
              }| UpdateStockInLine {
                 id,
                 batch,
-                expiry_date,
+                expiry_date: Some(NullableUpdate { value: expiry_date }),
                 note: Some(NullableUpdate { value: note }),
                 item_id: Some(item_id),
                 pack_size: Some(pack_size),
@@ -115,7 +118,7 @@ pub fn generate(
                 item_variant_id: Some(NullableUpdate {
                     value: item_variant_id,
                 }),
-                vvm_status_id,
+                vvm_status_id: vvm_status_id.map(|id| NullableUpdate { value: Some(id) }),
                 volume_per_pack,
                 // Default
                 location: None,
@@ -124,10 +127,13 @@ pub fn generate(
                 tax_percentage: None,
                 total_before_tax: None,
                 donor_id: None,
+                manufacturer_id: None,
                 campaign_id: None,
                 program_id: None,
+                manufacture_date: None,
                 shipped_number_of_packs: None,
                 shipped_pack_size: None,
+                status: None,
             },
         )
         .collect();

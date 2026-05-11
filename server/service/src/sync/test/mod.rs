@@ -5,7 +5,7 @@ mod pull_and_push;
 pub(crate) mod test_data;
 
 use super::translations::{IntegrationOperation, PullTranslateResult};
-use repository::{mock::MockData, *};
+use repository::{mock::MockData, sync_buffer::SyncRecordData, *};
 
 #[derive(Debug)]
 pub(crate) struct TestSyncIncomingRecord {
@@ -32,7 +32,7 @@ impl TestSyncIncomingRecord {
             sync_buffer_row: SyncBufferRow {
                 table_name: table_name.to_string(),
                 record_id: id_and_data.0.to_string(),
-                data: id_and_data.1.to_string(),
+                data: SyncRecordData(serde_json::from_str(id_and_data.1).unwrap()),
                 action: SyncAction::Upsert,
                 ..Default::default()
             },
@@ -42,20 +42,20 @@ impl TestSyncIncomingRecord {
 
     fn new_pull_delete<U>(table_name: &str, id: &str, result: U) -> TestSyncIncomingRecord
     where
-        U: Delete + 'static,
+        U: Delete + Clone + 'static,
     {
         Self::new_pull_deletes(table_name, id, vec![result])
     }
     fn new_pull_deletes<U>(table_name: &str, id: &str, deletes: Vec<U>) -> TestSyncIncomingRecord
     where
-        U: Delete + 'static,
+        U: Delete + Clone + 'static,
     {
         TestSyncIncomingRecord {
             translated_record: PullTranslateResult::deletes(deletes),
             sync_buffer_row: SyncBufferRow {
                 table_name: table_name.to_string(),
                 record_id: id.to_string(),
-                data: "{}".to_string(),
+                data: SyncRecordData(serde_json::json!({})),
                 action: SyncAction::Delete,
                 ..Default::default()
             },

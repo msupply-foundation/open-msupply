@@ -61,9 +61,7 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("purchase_order", "created_datetime"),
         ("purchase_order", "confirmed_datetime"),
         ("purchase_order", "sent_datetime"),
-        ("goods_received", "created_datetime"),
-        ("goods_received", "finalised_datetime"),
-        ("purchase_order", "authorised_datetime"),
+        ("purchase_order", "request_approval_datetime"),
         ("purchase_order", "finalised_datetime"),
     ]
     .iter()
@@ -80,6 +78,13 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
     vec![
         ("sync_buffer", "received_datetime"),
         ("sync_buffer", "integration_datetime"),
+        ("sync_buffer", "integration_started_datetime"),
+        ("sync_buffer_pending", "received_datetime"),
+        ("sync_buffer_pending", "integration_datetime"),
+        ("sync_buffer_pending", "integration_started_datetime"),
+        ("sync_buffer_archive", "received_datetime"),
+        ("sync_buffer_archive", "integration_datetime"),
+        ("sync_buffer_archive", "integration_started_datetime"),
         ("sync_log", "started_datetime"),
         ("sync_log", "finished_datetime"),
         ("sync_log", "prepare_initial_started_datetime"),
@@ -96,9 +101,20 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
         ("sync_log", "pull_v6_finished_datetime"),
         ("sync_log", "push_v6_started_datetime"),
         ("sync_log", "push_v6_finished_datetime"),
+        ("sync_log_v7", "started_datetime"),
+        ("sync_log_v7", "finished_datetime"),
+        ("sync_log_v7", "push_started_datetime"),
+        ("sync_log_v7", "push_finished_datetime"),
+        ("sync_log_v7", "wait_for_integration_started_datetime"),
+        ("sync_log_v7", "wait_for_integration_finished_datetime"),
+        ("sync_log_v7", "pull_started_datetime"),
+        ("sync_log_v7", "pull_finished_datetime"),
+        ("sync_log_v7", "integration_started_datetime"),
+        ("sync_log_v7", "integration_finished_datetime"),
         ("user_account", "last_successful_sync"),
         ("activity_log", "datetime"),
         ("asset_log", "log_datetime"),
+        ("asset_log", "created_datetime"),
         ("sync_file_reference", "retry_at"),
         ("migration_fragment_log", "datetime"),
         ("system_log", "datetime"),
@@ -120,10 +136,13 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("name", "date_of_birth"),
         ("name", "date_of_death"),
         ("stock_line", "expiry_date"),
+        ("stock_line", "manufacture_date"),
         ("requisition", "expected_delivery_date"),
         ("invoice_line", "expiry_date"),
+        ("invoice_line", "manufacture_date"),
         ("stocktake", "stocktake_date"),
         ("stocktake_line", "expiry_date"),
+        ("stocktake_line", "manufacture_date"),
         ("period", "start_date"),
         ("period", "end_date"),
         ("store", "created_date"),
@@ -144,8 +163,6 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("purchase_order_line", "expected_delivery_date"),
         ("purchase_order", "contract_signed_date"),
         ("purchase_order", "advance_paid_date"),
-        ("goods_received", "received_date"),
-        ("goods_received_line", "expiry_date"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -224,8 +241,7 @@ impl<'a> RefreshDatesRepository<'a> {
 
         if days_difference < 0 {
             println!(
-                "Reference date {} - 1 day is lower than the max date {} for record: {:#?}",
-                reference_date, max_timestamp, max_record
+                "Reference date {reference_date} - 1 day is lower than the max date {max_timestamp} for record: {max_record:#?}"
             );
             return None;
         }
@@ -281,8 +297,7 @@ impl<'a> RefreshDatesRepository<'a> {
         // the program_event table is using `9999-09-09 09:09:09` as a max timestamp value
         // we don't want to update this datetime value
         let query = format!(
-            "select id, {} as dt from {} where {0} is not null and {0} <> '9999-09-09 09:09:09'",
-            field_name, table_name
+            "select id, {field_name} as dt from {table_name} where {field_name} is not null and {field_name} <> '9999-09-09 09:09:09'"
         );
 
         Ok(sql_query(query).load::<IdAndTimestamp>(self.connection.lock().connection())?)
@@ -320,8 +335,7 @@ impl<'a> RefreshDatesRepository<'a> {
         field_name: &str,
     ) -> Result<Vec<IdAndDate>, RepositoryError> {
         let query = format!(
-            "select id, {} as d from {} where {0} is not null",
-            field_name, table_name
+            "select id, {field_name} as d from {table_name} where {field_name} is not null"
         );
 
         Ok(sql_query(query).load::<IdAndDate>(self.connection.lock().connection())?)
@@ -411,7 +425,7 @@ mod tests {
         fn invoice1() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice1".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 created_datetime: NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()
@@ -424,7 +438,7 @@ mod tests {
         fn invoice2() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice2".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 created_datetime: NaiveDate::from_ymd_opt(2021, 2, 1)
                     .unwrap()
@@ -695,6 +709,7 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "postgres")]
     #[derive(QueryableByName, Debug, PartialEq)]
     struct TableNameAndFieldRow {
         #[diesel(sql_type = Text)]
