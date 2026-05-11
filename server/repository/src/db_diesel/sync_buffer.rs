@@ -112,7 +112,7 @@ table! {
         store_id -> Nullable<Text>,
         transfer_store_id -> Nullable<Text>,
         patient_id -> Nullable<Text>,
-        reference -> Nullable<Text>,
+        reference_id -> Nullable<Text>,
         is_integrated -> Bool,
     }
 }
@@ -143,8 +143,11 @@ pub struct SyncBufferRow {
     pub transfer_store_id: Option<String>,
     #[serde(default)]
     pub patient_id: Option<String>,
+    /// Logical FK to sync_request.reference_id. Set by the v7 sync layer
+    /// when a sync_request is run; identifies which run produced this row
+    /// so integrate can scope its work to that run on retry.
     #[serde(default)]
-    pub reference: Option<String>,
+    pub reference_id: Option<String>,
     #[serde(default)]
     pub is_integrated: bool,
 }
@@ -171,7 +174,7 @@ pub struct SyncBufferRowInsert {
     pub store_id: Option<String>,
     pub transfer_store_id: Option<String>,
     pub patient_id: Option<String>,
-    pub reference: Option<String>,
+    pub reference_id: Option<String>,
 }
 
 impl From<SyncBufferRow> for SyncBufferRowInsert {
@@ -188,7 +191,7 @@ impl From<SyncBufferRow> for SyncBufferRowInsert {
             store_id: row.store_id,
             transfer_store_id: row.transfer_store_id,
             patient_id: row.patient_id,
-            reference: row.reference,
+            reference_id: row.reference_id,
         }
     }
 }
@@ -196,7 +199,7 @@ impl From<SyncBufferRow> for SyncBufferRowInsert {
 pub struct PendingQuery<'a> {
     pub source_site_id: i32,
     pub sync_version: SyncVersion,
-    pub reference: Option<&'a str>,
+    pub reference_id: Option<&'a str>,
     pub table_name: &'a str,
     pub action: SyncAction,
     pub direction: CursorDirection,
@@ -231,7 +234,7 @@ impl<'a> SyncBufferRepository<'a> {
         let PendingQuery {
             source_site_id,
             sync_version,
-            reference,
+            reference_id,
             table_name,
             action,
             direction,
@@ -245,8 +248,8 @@ impl<'a> SyncBufferRepository<'a> {
             .filter(sync_buffer::source_site_id.eq(source_site_id))
             .into_boxed();
 
-        if let Some(reference) = reference {
-            q = q.filter(sync_buffer::reference.eq(reference.to_string()));
+        if let Some(reference_id) = reference_id {
+            q = q.filter(sync_buffer::reference_id.eq(reference_id.to_string()));
         }
 
         let rows = match direction {
@@ -261,13 +264,13 @@ impl<'a> SyncBufferRepository<'a> {
         Ok(rows)
     }
 
-    /// Total pending rows across all tables and actions, for the given source/version/reference.
-    /// Used for progress reporting.
+    /// Total pending rows across all tables and actions, for the given
+    /// source/version/reference_id. Used for progress reporting.
     pub fn count_pending(
         &self,
         source_site_id: i32,
         sync_version: SyncVersion,
-        reference: Option<&str>,
+        reference_id: Option<&str>,
     ) -> Result<i64, RepositoryError> {
         let mut q = sync_buffer::table
             .filter(sync_buffer::is_integrated.eq(false))
@@ -275,8 +278,8 @@ impl<'a> SyncBufferRepository<'a> {
             .filter(sync_buffer::source_site_id.eq(source_site_id))
             .into_boxed();
 
-        if let Some(reference) = reference {
-            q = q.filter(sync_buffer::reference.eq(reference.to_string()));
+        if let Some(reference_id) = reference_id {
+            q = q.filter(sync_buffer::reference_id.eq(reference_id.to_string()));
         }
 
         let count: i64 = q.count().get_result(self.connection.lock().connection())?;
@@ -392,7 +395,7 @@ mod test {
             SyncBufferRowInsert {
                 source_site_id: 1,
                 sync_version: SyncVersion::V5V6,
-                reference: Some("batch-x".to_string()),
+                reference_id: Some("batch-x".to_string()),
                 ..insert("c1", "store")
             },
         ])
@@ -403,7 +406,7 @@ mod test {
             .pending_ordered_by_cursor(PendingQuery {
                 source_site_id: 1,
                 sync_version: SyncVersion::V5V6,
-                reference: None,
+                reference_id: None,
                 table_name: "store",
                 action: SyncAction::Upsert,
                 direction: CursorDirection::Asc,
@@ -417,7 +420,7 @@ mod test {
             .pending_ordered_by_cursor(PendingQuery {
                 source_site_id: 1,
                 sync_version: SyncVersion::V5V6,
-                reference: Some("batch-x"),
+                reference_id: Some("batch-x"),
                 table_name: "store",
                 action: SyncAction::Upsert,
                 direction: CursorDirection::Asc,
@@ -431,7 +434,7 @@ mod test {
             .pending_ordered_by_cursor(PendingQuery {
                 source_site_id: 1,
                 sync_version: SyncVersion::V5V6,
-                reference: None,
+                reference_id: None,
                 table_name: "store",
                 action: SyncAction::Upsert,
                 direction: CursorDirection::Desc,
@@ -445,7 +448,7 @@ mod test {
             .pending_ordered_by_cursor(PendingQuery {
                 source_site_id: 2,
                 sync_version: SyncVersion::V7,
-                reference: None,
+                reference_id: None,
                 table_name: "store",
                 action: SyncAction::Upsert,
                 direction: CursorDirection::Asc,
@@ -485,7 +488,7 @@ mod test {
             .pending_ordered_by_cursor(PendingQuery {
                 source_site_id: 1,
                 sync_version: SyncVersion::V5V6,
-                reference: None,
+                reference_id: None,
                 table_name: "store",
                 action: SyncAction::Upsert,
                 direction: CursorDirection::Asc,
@@ -516,7 +519,7 @@ mod test {
             .pending_ordered_by_cursor(PendingQuery {
                 source_site_id: 1,
                 sync_version: SyncVersion::V5V6,
-                reference: None,
+                reference_id: None,
                 table_name: "store",
                 action: SyncAction::Upsert,
                 direction: CursorDirection::Asc,
@@ -556,7 +559,7 @@ mod test {
             .pending_ordered_by_cursor(PendingQuery {
                 source_site_id: 0,
                 sync_version: SyncVersion::V5V6,
-                reference: None,
+                reference_id: None,
                 table_name: "store",
                 action: SyncAction::Upsert,
                 direction: CursorDirection::Asc,

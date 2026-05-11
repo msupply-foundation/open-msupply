@@ -3052,6 +3052,13 @@ export type FullSyncStatusV7Node = {
   integration?: Maybe<SyncStatusWithProgressV7Node>;
   isSyncing: Scalars['Boolean']['output'];
   lastSuccessfulSync?: Maybe<SyncStatusNode>;
+  /**
+   * Free-text descriptions of every sync_request linked to this run via
+   * `reference_id`. Empty for the main sync (no reference_id) and for
+   * runs whose reference_id no longer matches any sync_request row. The
+   * front-end displays each string verbatim.
+   */
+  linkedSyncRequests: Array<Scalars['String']['output']>;
   pull?: Maybe<SyncStatusWithProgressV7Node>;
   push?: Maybe<SyncStatusWithProgressV7Node>;
   summary: SyncStatusV7Node;

@@ -316,9 +316,14 @@ fn get_latest_v5_v6(ctx: &ServiceContext) -> Result<Option<FullSyncStatusV5V6>, 
 }
 
 fn get_latest_v7(ctx: &ServiceContext) -> Result<Option<FullSyncStatusV7>, RepositoryError> {
-    Ok(SyncLogV7Repository::new(&ctx.connection)
-        .query_one(SyncLogV7Condition::TRUE)?
-        .map(FullSyncStatusV7::from_sync_log_v7_row))
+    let Some(row) = SyncLogV7Repository::new(&ctx.connection).query_one(SyncLogV7Condition::TRUE)?
+    else {
+        return Ok(None);
+    };
+    Ok(Some(FullSyncStatusV7::from_sync_log_v7_row_with_links(
+        &ctx.connection,
+        row,
+    )?))
 }
 
 /// Summary of the most recent successful sync — v7 first (always more recent

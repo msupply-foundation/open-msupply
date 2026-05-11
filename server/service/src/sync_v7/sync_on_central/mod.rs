@@ -6,9 +6,9 @@ use std::{
 use repository::{
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
-    ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination, RepositoryError,
-    SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId, StorageConnection,
-    StringFilter, SyncBufferRepository,
+    ChangelogCondition, ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination,
+    RepositoryError, SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId,
+    StorageConnection, StringFilter, SyncBufferRepository,
 };
 use thiserror::Error;
 use util::format_error;
@@ -172,7 +172,11 @@ pub async fn pull(
 ) -> pull::Response {
     let (site, ctx) = validate(service_provider, &common)?;
 
-    let filter = ChangelogFilter::all_data_for_site(site.id, input.is_initialising, None);
+    let base = ChangelogFilter::all_data_for_site(site.id, input.is_initialising, None);
+    let filter = match input.filter {
+        Some(extra) => ChangelogCondition::And(vec![base, extra]),
+        None => base,
+    };
 
     let batch = SyncBatchV7::generate(&ctx.connection, filter, input.cursor, input.batch_size)?;
 
@@ -208,7 +212,7 @@ pub async fn push(
 
     let sync_buffer_rows = records
         .into_iter()
-        .map(|record| sync_record_to_buffer_row(record, site_id, app_version.clone()))
+        .map(|record| sync_record_to_buffer_row(record, site_id, app_version.clone(), None))
         .collect::<Vec<_>>();
 
     ctx.connection
@@ -486,6 +490,7 @@ mod tests {
                 cursor: 0,
                 batch_size: 100,
                 is_initialising: true,
+                filter: None,
             },
         )
         .await
@@ -538,6 +543,7 @@ mod tests {
                 cursor: 0,
                 batch_size: 100,
                 is_initialising: true,
+                filter: None,
             },
         )
         .await;

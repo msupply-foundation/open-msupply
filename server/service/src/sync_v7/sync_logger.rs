@@ -42,11 +42,15 @@ impl SyncLoggerHandle {
 }
 
 impl<'a> SyncLogger<'a> {
-    pub fn start(connection: &'a StorageConnection) -> Result<SyncLogger<'a>, RepositoryError> {
+    pub fn start(
+        connection: &'a StorageConnection,
+        reference_id: Option<String>,
+    ) -> Result<SyncLogger<'a>, RepositoryError> {
         info!("Sync started");
         let row = SyncLogV7Row {
             id: util::uuid::uuid(),
             started_datetime: chrono::Utc::now().naive_utc(),
+            reference_id,
             ..Default::default()
         };
 

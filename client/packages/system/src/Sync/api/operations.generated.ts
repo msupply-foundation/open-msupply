@@ -184,6 +184,7 @@ export type FullSyncStatusV7Fragment = {
   isSyncing: boolean;
   errorThreshold: number;
   warningThreshold: number;
+  linkedSyncRequests: Array<string>;
   error?: {
     __typename: 'SyncErrorV7Node';
     fullError: string;
@@ -306,6 +307,7 @@ export type SyncInfoQuery = {
         isSyncing: boolean;
         errorThreshold: number;
         warningThreshold: number;
+        linkedSyncRequests: Array<string>;
         error?: {
           __typename: 'SyncErrorV7Node';
           fullError: string;
@@ -429,6 +431,7 @@ export type SyncStatusQuery = {
         isSyncing: boolean;
         errorThreshold: number;
         warningThreshold: number;
+        linkedSyncRequests: Array<string>;
         error?: {
           __typename: 'SyncErrorV7Node';
           fullError: string;
@@ -566,6 +569,7 @@ export type SyncInfoUpdatedSubscription = {
           isSyncing: boolean;
           errorThreshold: number;
           warningThreshold: number;
+          linkedSyncRequests: Array<string>;
           error?: {
             __typename: 'SyncErrorV7Node';
             fullError: string;
@@ -736,6 +740,7 @@ export const FullSyncStatusV7FragmentDoc = gql`
     }
     errorThreshold
     warningThreshold
+    linkedSyncRequests
   }
   ${SyncErrorV7FragmentDoc}
   ${SyncStatusWithProgressV7FragmentDoc}

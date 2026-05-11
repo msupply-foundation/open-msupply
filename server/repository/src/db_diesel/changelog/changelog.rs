@@ -224,6 +224,9 @@ diesel_string_enum! {
         // ---- RemoteToCentral (v6) ----
         ContactForm,
         SystemLog,
+
+        // ---- SyncRequest (central -> remote, store-scoped) ----
+        SyncRequest,
     }
 }
 
@@ -422,6 +425,16 @@ impl ChangelogFilter {
                 Remote => C::site_id::equal(site_id),
                 Transfer => C::transfer_site_id::equal(site_id),
                 Patient => C::patient_site_id::equal(site_id),
+                SyncRequest => {
+                    // Routed to whichever site currently has the row's store
+                    // active. Skipped entirely during initialisation — the
+                    // remote should fully bootstrap before the runner starts
+                    // executing requests.
+                    if is_initialising {
+                        continue;
+                    }
+                    C::site_id::equal(site_id)
+                }
             };
 
             inner_or_conditions.push(C::And(vec![pre_condition, condition]));
@@ -454,7 +467,7 @@ impl ChangelogFilter {
         ])
     }
 
-    pub fn data_for_store(store_id: i32) -> ChangelogCondition::Inner {
+    pub fn data_for_store(store_id: &str) -> ChangelogCondition::Inner {
         use ChangeLogSyncStyle::*;
         use ChangelogCondition as C;
 
@@ -511,7 +524,8 @@ impl ChangelogFilter {
                 ToLegacyCentralOnly | Remote | Transfer | Patient => {
                     inner_or_conditions.push(C::table_name::any(table_names))
                 }
-                Central | RemoteToCentral | File => continue,
+                // SyncRequest is OMS-only (central->remote). Doesn't reach legacy mSupply.
+                Central | RemoteToCentral | File | SyncRequest => continue,
             };
         }
 
@@ -525,7 +539,18 @@ impl ChangelogFilter {
 impl ChangelogFilter {
     // Push from OMS remote
     pub fn all_data_edited_on_site(site_id: i32) -> ChangelogCondition::Inner {
-        ChangelogCondition::source_site_id::equal(site_id)
+        use ChangeLogSyncStyle::*;
+        use ChangelogCondition as C;
+        // SyncRequest is central->remote only; rows authored on this remote
+        // (e.g. self-resync sync_request during init) must never be pushed up.
+        // Restrict push to tables whose sync style is not SyncRequest.
+        let pushable_tables: Vec<ChangelogTableName> = ChangelogTableName::iter()
+            .filter(|t| !t.sync_style().0.contains(&SyncRequest))
+            .collect();
+        C::And(vec![
+            C::source_site_id::equal(site_id),
+            C::table_name::any(pushable_tables),
+        ])
     }
 }
 

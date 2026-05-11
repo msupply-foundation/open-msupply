@@ -13,9 +13,11 @@ mod test_sync_v7_client_api {
     use serde_json::json;
     use tokio::sync::Mutex;
 
+    use crate::cursor_controller::CursorType;
     use crate::sync::settings::{BatchSize, SyncSettings};
     use crate::sync_v7::api::{APP_VERSION_HEADER, HARDWARE_ID_HEADER};
     use crate::sync_v7::sync::sync_v7;
+    use crate::sync_v7::sync_request::{SyncRequest, SyncRequestStep};
     use crate::test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext};
 
     // ---- Test data: expected rows after integration ----
@@ -256,6 +258,19 @@ mod test_sync_v7_client_api {
         tokio::spawn(server_handle);
 
         let ctx = service_provider.basic_context().unwrap();
+        let request = SyncRequest {
+            push: (!is_initialising).then(|| SyncRequestStep {
+                filter: ChangelogCondition::True(),
+                cursor_type: CursorType::Standard(KeyType::SyncPushCursorV7),
+            }),
+            pull: Some(SyncRequestStep {
+                filter: ChangelogCondition::True(),
+                cursor_type: CursorType::Standard(KeyType::SyncPullCursorV7),
+            }),
+            reference_id: None,
+            is_initialising,
+            run_post_sync_triggers: true,
+        };
         let result = sync_v7(
             &service_provider,
             &ctx,
@@ -267,7 +282,7 @@ mod test_sync_v7_client_api {
                 batch_size,
                 ..Default::default()
             },
-            is_initialising,
+            request,
         )
         .await;
         assert!(result.is_ok(), "sync_v7 failed: {:?}", result.err());

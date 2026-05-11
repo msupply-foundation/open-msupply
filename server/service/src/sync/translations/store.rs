@@ -1,12 +1,15 @@
 use chrono::NaiveDate;
-use repository::{StorageConnection, StoreMode, StoreRow, SyncBufferRow};
+use repository::{
+    ChangelogFilter, KeyType, KeyValueStoreRepository, NameRowRepository, StorageConnection,
+    StoreMode, StoreRow, StoreRowRepository, SyncBufferRow, SyncRequestFilter, SyncRequestRow,
+};
 
-use crate::sync::translations::name::NameTranslation;
+use crate::sync::{translations::name::NameTranslation, CentralServerConfig};
 use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
 
 use serde::{Deserialize, Serialize};
 
-use super::{PullTranslateResult, SyncTranslation};
+use super::{IntegrationOperation, PullTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyStoreMode {
@@ -53,7 +56,7 @@ impl SyncTranslation for StoreTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyStoreRow>()?;
@@ -92,8 +95,65 @@ impl SyncTranslation for StoreTranslation {
             is_disabled: data.is_disabled,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        let mut operations: Vec<IntegrationOperation> =
+            vec![IntegrationOperation::upsert(result.clone())];
+
+        // Central-only side effect: when an incoming Store record reassigns
+        // the store to a different (non-central) site, queue a SyncRequest
+        // for that store's data so the receiving site re-pulls everything.
+        if let Some(sync_request) = sync_request_for_site_change(connection, &result)? {
+            operations.push(IntegrationOperation::upsert(sync_request));
+        }
+
+        Ok(PullTranslateResult::IntegrationOperations(operations))
     }
+}
+
+/// Returns Some(sync_request) iff:
+/// - this server is acting as central
+/// - the store already exists locally with a different `site_id`
+/// - the new `site_id` is not the central server's own site id
+fn sync_request_for_site_change(
+    connection: &StorageConnection,
+    new_store: &StoreRow,
+) -> Result<Option<SyncRequestRow>, anyhow::Error> {
+    if !CentralServerConfig::is_central_server() {
+        return Ok(None);
+    }
+
+    let Some(existing) = StoreRowRepository::new(connection).find_one_by_id(&new_store.id)? else {
+        return Ok(None);
+    };
+    if existing.site_id == new_store.site_id {
+        return Ok(None);
+    }
+
+    let central_site_id =
+        KeyValueStoreRepository::new(connection).get_i32(KeyType::SettingsSyncSiteId)?;
+    if Some(new_store.site_id) == central_site_id {
+        return Ok(None);
+    }
+
+    let name = NameRowRepository::new(connection)
+        .find_one_by_id(&new_store.name_id)?
+        .map(|n| n.name)
+        .unwrap_or_else(|| new_store.code.clone());
+
+    // Filter: all changelog rows touching this store, on either side of a
+    // transfer. Sent over the v7 pull API and ANDed with the central's
+    // standard `all_data_for_site` filter when the runner executes.
+    let pull_filter = ChangelogFilter::data_for_store(&new_store.id);
+
+    Ok(Some(SyncRequestRow {
+        id: util::uuid::uuid(),
+        reference_id: None,
+        description: format!("Store: {name}"),
+        store_id: Some(new_store.id.clone()),
+        pull_filter: Some(SyncRequestFilter(pull_filter)),
+        push_filter: None,
+        created_datetime: chrono::Utc::now().naive_utc(),
+        finished_datetime: None,
+    }))
 }
 
 #[cfg(test)]

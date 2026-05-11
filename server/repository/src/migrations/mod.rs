@@ -48,6 +48,7 @@ mod views;
 pub(crate) use self::types::*;
 
 pub(crate) mod helpers;
+pub(crate) mod sync_request_helpers;
 mod templates;
 
 pub use self::version::*;

@@ -37,7 +37,7 @@ impl MigrationFragment for Migrate {
                     store_id TEXT,
                     transfer_store_id TEXT,
                     patient_id TEXT,
-                    reference TEXT,
+                    reference_id TEXT,
                     is_integrated BOOLEAN NOT NULL DEFAULT FALSE,
                     PRIMARY KEY (cursor, is_integrated)
                 ) PARTITION BY LIST (is_integrated);
@@ -67,7 +67,7 @@ impl MigrationFragment for Migrate {
                     store_id TEXT,
                     transfer_store_id TEXT,
                     patient_id TEXT,
-                    reference TEXT,
+                    reference_id TEXT,
                     is_integrated BOOLEAN NOT NULL DEFAULT FALSE
                 );
                 "#
@@ -80,7 +80,7 @@ impl MigrationFragment for Migrate {
             INSERT INTO sync_buffer_new (
                 record_id, received_datetime, integration_started_datetime, integration_datetime,
                 integration_error, table_name, action, data, sync_version,
-                app_version, source_site_id, store_id, transfer_store_id, patient_id, reference,
+                app_version, source_site_id, store_id, transfer_store_id, patient_id, reference_id,
                 is_integrated
             )
             SELECT
@@ -118,7 +118,7 @@ impl MigrationFragment for Migrate {
                 r#"
                 ALTER SEQUENCE sync_buffer_new_cursor_seq RENAME TO sync_buffer_cursor_seq;
                 CREATE INDEX index_sync_buffer_pending
-                    ON sync_buffer_pending (source_site_id, reference, sync_version, table_name);
+                    ON sync_buffer_pending (source_site_id, reference_id, sync_version, table_name);
                 "#
             )?;
         } else {
@@ -126,7 +126,7 @@ impl MigrationFragment for Migrate {
                 connection,
                 r#"
                 CREATE INDEX index_sync_buffer_pending
-                    ON sync_buffer (source_site_id, reference, sync_version, table_name)
+                    ON sync_buffer (source_site_id, reference_id, sync_version, table_name)
                     WHERE is_integrated = FALSE;
                 "#
             )?;

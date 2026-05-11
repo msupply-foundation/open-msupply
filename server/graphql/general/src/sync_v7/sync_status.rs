@@ -65,6 +65,11 @@ pub struct FullSyncStatusV7Node {
     last_successful_sync: Option<SyncStatusNode>,
     warning_threshold: i64,
     error_threshold: i64,
+    /// Free-text descriptions of every sync_request linked to this run via
+    /// `reference_id`. Empty for the main sync (no reference_id) and for
+    /// runs whose reference_id no longer matches any sync_request row. The
+    /// front-end displays each string verbatim.
+    linked_sync_requests: Vec<String>,
 }
 
 impl FullSyncStatusV7Node {
@@ -94,6 +99,7 @@ impl FullSyncStatusV7Node {
             last_successful_sync: last_successful_sync.map(SyncStatusNode::from_sync_status),
             warning_threshold: 1,
             error_threshold: 3,
+            linked_sync_requests: status.linked_descriptions,
         }
     }
 }

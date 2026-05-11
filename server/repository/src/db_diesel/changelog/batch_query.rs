@@ -118,6 +118,7 @@ pub enum Row {
     NameOmsFields(NameOmsFieldsRow),
     Site(SiteRow),
     AssetCatalogueType(AssetTypeRow),
+    SyncRequest(SyncRequestRow),
 }
 
 /// Output entry of `query_with_data`. `Row` carries the loaded row
@@ -772,6 +773,11 @@ fn fetch_rows_for_table(
             ChangelogTableName::AssetCatalogueType => {
                 for r in AssetTypeRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::AssetCatalogueType(r));
+                }
+            }
+            ChangelogTableName::SyncRequest => {
+                for r in SyncRequestRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::SyncRequest(r));
                 }
             }
         }

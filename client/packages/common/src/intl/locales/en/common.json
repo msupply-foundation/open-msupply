@@ -2777,6 +2777,7 @@
   "sync-info.updating-user": "Updating user...",
   "sync-info.user-last-updated": "User configuration last updated",
   "sync-status.integrate": "Integrate",
+  "sync-status.linked-sync-requests": "Special syncs ({{count}})",
   "sync-status.prepare": "Prepare",
   "sync-status.pull": "Pull",
   "sync-status.pull-central": "Pull Central",

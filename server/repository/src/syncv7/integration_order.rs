@@ -105,6 +105,9 @@ pub const INTEGRATION_ORDER: &[ChangelogTableName] = &[
     ChangelogTableName::StocktakeLine,
     ChangelogTableName::TemperatureLog,
     ChangelogTableName::VVMStatusLog,
+    // Sync requests (central->remote only). Integrated last; rows are
+    // self-contained and have no FK to other synced tables.
+    ChangelogTableName::SyncRequest,
 ];
 
 /// Variants not yet wired up to v7. Move each into `INTEGRATION_ORDER`
