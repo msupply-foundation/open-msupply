@@ -70,7 +70,7 @@ impl SyncTranslation for CurrencyTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(CurrencyRowDelete(
+        Ok(PullTranslateResult::upsert(CurrencyRowDelete(
             sync_record.record_id.clone(),
         )))
     }

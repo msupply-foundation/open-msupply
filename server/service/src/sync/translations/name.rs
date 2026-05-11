@@ -338,7 +338,7 @@ impl SyncTranslation for NameTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(NameRowDelete(
+        Ok(PullTranslateResult::upsert(NameRowDelete(
             sync_record.record_id.clone(),
         )))
     }

@@ -61,7 +61,7 @@ impl SyncTranslation for CategoryTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(CategoryRowDelete(
+        Ok(PullTranslateResult::upsert(CategoryRowDelete(
             sync_record.record_id.clone(),
         )))
     }

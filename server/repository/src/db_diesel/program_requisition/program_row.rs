@@ -7,7 +7,7 @@ use crate::{
         master_list_row::master_list,
     },
     repository_error::RepositoryError,
-    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, StorageConnection,
+    ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, StorageConnection,
     Upsert,
 };
 
@@ -140,8 +140,8 @@ impl Upsert for ProgramRow {
 
 #[derive(Debug, Clone)]
 pub struct ProgramRowDelete(pub String);
-impl Delete for ProgramRowDelete {
-    fn delete_sync(
+impl Upsert for ProgramRowDelete {
+    fn upsert_sync(
         &self,
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
@@ -164,10 +164,13 @@ impl Delete for ProgramRowDelete {
     }
 
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert!(matches!(
             ProgramRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
+            Ok(Some(ProgramRow {
+                deleted_datetime: Some(_),
+                ..
+            })) | Ok(None)
+        ));
     }
 }

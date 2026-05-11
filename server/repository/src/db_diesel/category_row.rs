@@ -1,7 +1,7 @@
 use super::item_link_row::item_link;
 use crate::{
     item_row::item, repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType,
-    Delete, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -130,8 +130,8 @@ impl Upsert for CategoryRow {
 
 #[derive(Debug, Clone)]
 pub struct CategoryRowDelete(pub String);
-impl Delete for CategoryRowDelete {
-    fn delete_sync(
+impl Upsert for CategoryRowDelete {
+    fn upsert_sync(
         &self,
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
@@ -153,7 +153,7 @@ impl Delete for CategoryRowDelete {
         Ok(())
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert!(matches!(
             CategoryRowRepository::new(con).find_one_by_id(&self.0),
             Ok(Some(CategoryRow {

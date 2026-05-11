@@ -49,13 +49,12 @@ impl SyncTranslation for UnitTranslation {
         Ok(PullTranslateResult::upsert(result))
     }
 
-    // TODO soft delete
     fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(UnitRowDelete(
+        Ok(PullTranslateResult::upsert(UnitRowDelete(
             sync_record.record_id.clone(),
         )))
     }
