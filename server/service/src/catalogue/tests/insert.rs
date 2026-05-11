@@ -1,7 +1,9 @@
 #[cfg(test)]
 mod query {
     use repository::{
-        migrations::constants::{COLD_CHAIN_EQUIPMENT_UUID, REFRIGERATORS_AND_FREEZERS_UUID},
+        migrations::constants::{
+            COLD_CHAIN_EQUIPMENT_UUID, FREEZER_UUID, REFRIGERATORS_AND_FREEZERS_UUID,
+        },
         mock::{mock_store_a, MockDataInserts},
         test_db::setup_all,
     };
@@ -102,8 +104,6 @@ mod query {
             ),
             Err(InsertAssetCatalogueItemError::ManufacturerAndModelAlreadyExist)
         );
-
-        const FREEZER_UUID: &str = "710194ce-8c6c-47ab-b7fe-13ba8cf091f6";
 
         // 5. Check we CAN create an asset_catalogue_item with the same manufacturer and model when the type differs
         assert!(service
