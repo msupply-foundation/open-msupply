@@ -39,6 +39,9 @@ pub mod android {
                 // rustls-platform-verifier needs the Android Context before any TLS
                 // handshake. Without this, outbound HTTPS (e.g. sync to the central
                 // server) panics with "Expect rustls-platform-verifier to be initialized".
+                // The `android` module is cfg-gated by the upstream crate, so guard the
+                // call so the workspace still compiles on non-Android hosts in CI.
+                #[cfg(target_os = "android")]
                 rustls_platform_verifier::android::init_with_env(env, context)?;
 
                 let files_dir = files_dir.try_to_string(env)?;
