@@ -129,9 +129,7 @@ impl PatientNode {
     }
 
     pub async fn gender(&self) -> Option<GenderTypeNode> {
-        Some(GenderTypeNode::from(
-            self.patient.gender.clone().unwrap_or_default(),
-        ))
+        self.patient.gender.clone().map(GenderTypeNode::from)
     }
 
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {
