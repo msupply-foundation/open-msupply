@@ -15,6 +15,15 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
+        sql!(
+            connection,
+            r#"
+                UPDATE sync_buffer
+                SET integration_datetime = NULL
+                WHERE table_name = 'user';
+            "#
+        )?;
+
         Ok(())
     }
 }
