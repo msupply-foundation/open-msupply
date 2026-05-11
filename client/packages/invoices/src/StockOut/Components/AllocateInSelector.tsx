@@ -6,8 +6,8 @@ import {
   useIntlUtils,
   useFormatNumber,
   Typography,
+  useShallow,
 } from '@openmsupply-client/common';
-import { useShallow } from 'zustand/react/shallow';
 import { AllocateInType, useAllocationContext } from '../useAllocationContext';
 import { canAutoAllocate } from '../utils';
 
