@@ -1,6 +1,6 @@
-import type { MRT_RowData } from './mrtCompat';
+import type { MRT_RowData, MRT_RowSelectionState } from './mrtCompat';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 interface NonPaginatedTableConfig<
   T extends MRT_RowData,
@@ -9,9 +9,13 @@ interface NonPaginatedTableConfig<
 export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
   ...tableOptions
 }: NonPaginatedTableConfig<T>) => {
+  const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
+
   const table = useBaseMaterialTable<T>({
     enableVirtualization: true,
     manualSorting: false,
+    onRowSelectionChange: setRowSelection,
+    state: { rowSelection },
     ...tableOptions,
   });
 
