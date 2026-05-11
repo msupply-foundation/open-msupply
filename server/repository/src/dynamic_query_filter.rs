@@ -1,6 +1,9 @@
-// Regarding dynamic queries, see: docs/content/server/repository/db_diesel/_index.md
+// Docs: docs/content/server/repository/_index.md
 // This is from dynamic filtering repository [tutorial](https://github.com/andreievg/diesel-rs-dynamic-filters/tree/main)
 
+// Implementation: ChangelogCondition in server/repository/src/db_diesel/changelog/changelog.rs
+
+// The set of operators available on every filterable field.
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 #[serde(bound = "T: Clone + serde::Serialize + serde::de::DeserializeOwned")]
 pub enum GeneralFilter<T: Clone + serde::Serialize + serde::de::DeserializeOwned> {
@@ -13,6 +16,7 @@ pub enum GeneralFilter<T: Clone + serde::Serialize + serde::de::DeserializeOwned
     IsNotNull,
 }
 
+// Compiles a single GeneralFilter operator against a Diesel column expression to a boxed nullable Bool.
 macro_rules! general_filter {
     ($filter:ident, $dsl_field:expr ) => {{
         match $filter {
@@ -75,6 +79,8 @@ pub trait FilterBuilder<T: Clone + serde::Serialize + serde::de::DeserializeOwne
     }
 }
 
+// Generates a filter module for a given query Source.
+// create_condition!(ModuleName, Source, (field_name, kind, dsl_expression), ...);
 macro_rules! create_condition {
     ($mod_name:ident, $source:ty, $(($variant:ident, $filter_kind:ident, $dsl_expr:expr)),+ $(,)?) => {
         #[allow(non_snake_case, non_camel_case_types)]
@@ -94,6 +100,7 @@ macro_rules! create_condition {
             }
 
             impl Inner {
+                // Compile the filter AST into a boxed Diesel WHERE expression. An empty/no-op filter compiles to TRUE.
                 pub fn to_boxed(self) -> BoxedCondition {
                     self.to_boxed_condition().unwrap_or_else(|| Box::new(true.into_sql::<diesel::sql_types::Bool>().nullable()))
                 }
@@ -162,6 +169,9 @@ macro_rules! create_condition {
             }
         }
     };
+
+    // Internal arms below resolve the `kind` token. To add a new shorthand (e.g. `bool`),
+    // add matching arms to @filter_type, @impl_trait, and @filter_macro.
 
     // Map filter kind to filter type
     (@filter_type number) => { crate::dynamic_query_filter::GeneralFilter<i32> };
