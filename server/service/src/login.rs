@@ -568,7 +568,7 @@ mod test {
         EqualFilter, KeyType, KeyValueStoreRepository, UserFilter, UserPermissionFilter,
         UserPermissionRepository, UserRepository,
     };
-    use util::{assert_matches, assert_variant};
+    use util::assert_matches;
 
     use crate::{
         apis::login_v4::LoginResponseV4,
@@ -701,7 +701,7 @@ mod test {
 
             assert!(result.is_ok());
         }
-        // check login error handling when empty password hash and can't connect to mSupply
+
         {
             let mock_server = MockServer::start();
             mock_server.mock(|when, then| {
@@ -723,10 +723,12 @@ mod test {
             )
             .await;
 
-            assert_matches!(result, Err(LoginError::MSupplyCentralNotReached));
+            assert_matches!(
+                result,
+                Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+            );
         }
 
-        // check login error handling when empty password hash and can connect to mSupply
         {
             let mock_server = MockServer::start();
             mock_server.mock(|when, then| {
@@ -751,13 +753,12 @@ mod test {
                 },
                 0,
             )
-            .await
-            .inspect_err(|e| {
-                let err_message = assert_variant!(e, LoginError::InternalError(err) => err);
-                assert_eq!(err_message, "Corrupted credentials")
-            });
+            .await;
 
-            assert!(result.is_err());
+            assert_matches!(
+                result,
+                Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+            );
         }
         // If server password has changed, and trying to login with old password, return LoginError::LoginFailure
         {
