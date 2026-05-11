@@ -239,7 +239,7 @@ export const ItemLedgerTab = ({
 
   return (
     <Box display="flex" flexDirection="column" flex={1}>
-      <Box display="flex" ml={2} mb={1}>
+      <Box display="flex" ml={2} mb={1} mt={2}>
         <FilterMenu filters={filters} />
       </Box>
       <ItemLedgerTable
