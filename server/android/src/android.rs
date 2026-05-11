@@ -13,7 +13,7 @@ pub mod android {
     use tokio::sync::mpsc;
 
     use self::jni::errors::LogErrorAndDefault;
-    use self::jni::objects::{JClass, JString};
+    use self::jni::objects::{JClass, JObject, JString};
     use self::jni::EnvUnowned;
 
     struct ServerBucket {
@@ -31,10 +31,16 @@ pub mod android {
         files_dir: JString,
         cache_dir: JString,
         android_id: JString,
+        context: JObject,
     ) {
         let (off_switch, off_switch_receiver) = mpsc::channel(1);
         let (files_dir, android_id, cache_dir) = unowned_env
             .with_env(|env| -> Result<_, jni::errors::Error> {
+                // rustls-platform-verifier needs the Android Context before any TLS
+                // handshake. Without this, outbound HTTPS (e.g. sync to the central
+                // server) panics with "Expect rustls-platform-verifier to be initialized".
+                rustls_platform_verifier::android::init_with_env(env, context)?;
+
                 let files_dir = files_dir.try_to_string(env)?;
                 let android_id = android_id.try_to_string(env)?;
                 let cache_dir = cache_dir.try_to_string(env)?;

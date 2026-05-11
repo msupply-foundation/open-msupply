@@ -17,6 +17,7 @@ log-panics = { workspace = true }
 once_cell = "1.21.4"
 rcgen = { workspace = true }
 repository = { path = "../repository" }
+rustls-platform-verifier = "0.7.0"
 service = { path = "../service" }
 server = { path = "../server", default-features = false, features = [
     "android",

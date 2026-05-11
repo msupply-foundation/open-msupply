@@ -49,7 +49,7 @@ public class MainActivity extends BridgeActivity {
 
         String path = getFilesDir().getAbsolutePath();
         String cache = getCacheDir().getAbsolutePath();
-        server.start(discoveryConstants.PORT, path, cache, discoveryConstants.hardwareId);
+        server.start(discoveryConstants.PORT, path, cache, discoveryConstants.hardwareId, getApplicationContext());
     }
 
     @Override
