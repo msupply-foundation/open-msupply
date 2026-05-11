@@ -12,8 +12,10 @@ use ts_rs::TS;
 
 use super::sync_style::{ChangeLogSyncStyle, SyncVersions};
 
+// Underlying table — INSERTs target this. Carries raw `*_link_id` columns.
 table! {
-    changelog (cursor) {
+    #[sql_name = "changelog"]
+    changelog_with_links (cursor) {
         cursor -> BigInt,
         table_name -> Text,
         record_id -> Text,
@@ -23,6 +25,23 @@ table! {
         source_site_id -> Nullable<Integer>,
         transfer_store_id -> Nullable<Text>,
         patient_link_id -> Nullable<Text>,
+    }
+}
+
+// View — SELECTs target this. Exposes resolved `patient_id`
+// (via LEFT JOIN name_link on the patient_link_id column).
+table! {
+    #[sql_name = "changelog_view"]
+    changelog (cursor) {
+        cursor -> BigInt,
+        table_name -> Text,
+        record_id -> Text,
+        row_action -> Text,
+        store_id -> Nullable<Text>,
+        is_sync_update -> Bool,
+        source_site_id -> Nullable<Integer>,
+        transfer_store_id -> Nullable<Text>,
+        patient_id -> Nullable<Text>,
     }
 }
 
@@ -48,7 +67,7 @@ fn query() -> _ {
         .left_join(
             name_store_join::table.on(name_store_join::name_id
                 .nullable()
-                .eq(changelog::patient_link_id)),
+                .eq(changelog::patient_id)),
         )
         .left_join(
             patient_stores.on(patient_stores
@@ -75,7 +94,7 @@ type Source = LeftJoinQuerySource<
             >,
         >,
         name_store_join::table,
-        diesel::dsl::Eq<diesel::dsl::Nullable<name_store_join::name_id>, changelog::patient_link_id>,
+        diesel::dsl::Eq<diesel::dsl::Nullable<name_store_join::name_id>, changelog::patient_id>,
     >,
     patient_stores,
     diesel::dsl::Eq<
@@ -227,7 +246,7 @@ impl SourceSiteId {
 }
 
 #[derive(Debug, Clone, PartialEq, Insertable, Default)]
-#[diesel(table_name = changelog)]
+#[diesel(table_name = changelog_with_links)]
 pub struct ChangeLogInsertRow {
     pub table_name: ChangelogTableName,
     pub record_id: String,
@@ -238,7 +257,7 @@ pub struct ChangeLogInsertRow {
     pub patient_link_id: Option<String>,
 }
 
-#[derive(Clone, Queryable, Debug, PartialEq, Insertable, Serialize, Deserialize, TS, Default)]
+#[derive(Clone, Queryable, Debug, PartialEq, Serialize, Deserialize, TS, Default)]
 #[diesel(table_name = changelog)]
 pub struct ChangelogRow {
     pub cursor: i64,
@@ -249,7 +268,7 @@ pub struct ChangelogRow {
     pub is_sync_update: bool,
     pub source_site_id: Option<i32>,
     pub transfer_store_id: Option<String>,
-    pub patient_link_id: Option<String>,
+    pub patient_id: Option<String>,
 }
 
 pub struct ChangelogRepository<'a> {
@@ -304,16 +323,18 @@ impl<'a> ChangelogRepository<'a> {
         Ok(results)
     }
 
-    /// Returns latest/max change log cursor
+    /// Returns latest/max change log cursor. Queries the underlying table
+    /// (not the view) so it works during migrations, before `changelog_view`
+    /// gets rebuilt at the end of the migration run.
     pub fn max_cursor(&self) -> Result<u64, RepositoryError> {
-        let result = changelog::table
-            .select(diesel::dsl::max(changelog::cursor))
+        let result = changelog_with_links::table
+            .select(diesel::dsl::max(changelog_with_links::cursor))
             .first::<Option<i64>>(self.connection.lock().connection())?;
         Ok(result.unwrap_or(0) as u64)
     }
 
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(changelog::table)
+        diesel::insert_into(changelog_with_links::table)
             .values(row)
             .execute(self.connection.lock().connection())?;
         self.connection
@@ -323,7 +344,7 @@ impl<'a> ChangelogRepository<'a> {
 
     pub fn batch_insert(&self, rows: Vec<ChangeLogInsertRow>) -> Result<(), RepositoryError> {
         //TODO: Need to handle batch insert size limit
-        diesel::insert_into(changelog::table)
+        diesel::insert_into(changelog_with_links::table)
             .values(rows)
             .execute(self.connection.lock().connection())?;
         self.connection
@@ -344,7 +365,7 @@ create_condition!(
     (store_id, string, changelog::store_id),
     (source_site_id, i32, changelog::source_site_id),
     (transfer_store_id, string, changelog::transfer_store_id),
-    (patient_link_id, string, changelog::patient_link_id),
+    (patient_id, string, changelog::patient_id),
     (transfer_site_id, i32, transfer_stores.field(store::site_id)),
     (patient_site_id, i32, patient_stores.field(store::site_id)),
 );
@@ -388,8 +409,8 @@ impl ChangelogFilter {
                 Central | File => C::And(vec![
                     // We have central and remote records with same table_name, so need to make sure to include only central ones (where store_id is null)
                     C::store_id::is_null(),
-                    // We have patients that are also central data, therefore patient_link_id should be null
-                    C::patient_link_id::is_null(),
+                    // We have patients that are also central data, therefore patient_id should be null
+                    C::patient_id::is_null(),
                 ]),
                 ToLegacyCentralOnly | RemoteToCentral => {
                     // Don't sync

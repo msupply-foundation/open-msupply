@@ -1,4 +1,4 @@
-use super::changelog::changelog;
+use super::changelog::changelog_with_links;
 use diesel::prelude::*;
 
 use crate::{
@@ -19,7 +19,9 @@ use crate::{
 };
 
 fn delete_all_changelog(connection: &StorageConnection) {
-    diesel::delete(changelog::table)
+    // Delete via the underlying table — `changelog::table` now resolves to the
+    // changelog_view, which is read-only.
+    diesel::delete(changelog_with_links::table)
         .execute(connection.lock().connection())
         .unwrap();
 }
@@ -217,9 +219,32 @@ async fn test_changelog_filter() {
         ..Default::default()
     };
 
+    // Insert via the underlying table — `changelog::table` is the view
+    // (read-only). A small test-only Insertable lets us set an explicit cursor
+    // per row so the assertions below can compare against the `log{N}` fixtures.
+    #[derive(Insertable)]
+    #[diesel(table_name = changelog_with_links)]
+    struct TestChangelogInsert<'a> {
+        cursor: i64,
+        table_name: &'a ChangelogTableName,
+        record_id: &'a str,
+        row_action: &'a RowActionType,
+        store_id: Option<&'a str>,
+        is_sync_update: bool,
+        source_site_id: Option<i32>,
+    }
+
     for log in [&log1, &log2, &log3, &log4] {
-        diesel::insert_into(changelog::table)
-            .values(log)
+        diesel::insert_into(changelog_with_links::table)
+            .values(&TestChangelogInsert {
+                cursor: log.cursor,
+                table_name: &log.table_name,
+                record_id: &log.record_id,
+                row_action: &log.row_action,
+                store_id: log.store_id.as_deref(),
+                is_sync_update: log.is_sync_update,
+                source_site_id: log.source_site_id,
+            })
             .execute(connection.lock().connection())
             .unwrap();
     }
@@ -822,7 +847,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
         .query(
             ChangelogCondition::And(vec![
                 ChangelogFilter::patient_data_for_site(site1_id, None),
-                ChangelogCondition::patient_link_id::equal("patient2".to_string()),
+                ChangelogCondition::patient_id::equal("patient2".to_string()),
             ]),
             CursorAndLimit {
                 cursor: cursor_before,
@@ -839,7 +864,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
         .query(
             ChangelogCondition::And(vec![
                 ChangelogFilter::patient_data_for_site(5, None),
-                ChangelogCondition::patient_link_id::equal("patient2".to_string()),
+                ChangelogCondition::patient_id::equal("patient2".to_string()),
             ]),
             CursorAndLimit {
                 cursor: cursor + 500,
