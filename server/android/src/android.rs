@@ -43,6 +43,8 @@ pub mod android {
                 // call so the workspace still compiles on non-Android hosts in CI.
                 #[cfg(target_os = "android")]
                 rustls_platform_verifier::android::init_with_env(env, context)?;
+                #[cfg(not(target_os = "android"))]
+                let _ = &context;
 
                 let files_dir = files_dir.try_to_string(env)?;
                 let android_id = android_id.try_to_string(env)?;
