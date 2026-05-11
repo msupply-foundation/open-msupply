@@ -84,7 +84,12 @@ export const StocktakeLineEdit = ({
   const reversedDraftLines = [...draftLines].reverse();
   const simplifiedTabletView = useSimplifiedTabletUI();
 
-  const [variantPanelOpen, setVariantPanelOpen] = useState(false);
+  // 'auto' = panel popped for a master-list placeholder row (selection
+  // patches that row, manual just dismisses). 'add' = panel opened via
+  // Add batch (selection/manual both add a new line). null = closed.
+  const [variantAction, setVariantAction] = useState<'auto' | 'add' | null>(
+    null
+  );
   const [variantShownForItem, setVariantShownForItem] = useState<string | null>(
     null
   );
@@ -106,7 +111,7 @@ export const StocktakeLineEdit = ({
     if (!draftLines.every(isFreshPlaceholder)) return;
 
     setVariantShownForItem(currentItem.id);
-    setVariantPanelOpen(true);
+    setVariantAction('auto');
   }, [currentItem, hasVariants, variantShownForItem, draftLines]);
 
   const restrictedLocationTypeId =
@@ -128,25 +133,21 @@ export const StocktakeLineEdit = ({
             itemVariant: variant,
           }) ?? 0,
       };
-      // If the only existing line is a fresh placeholder (auto-pop case),
-      // patch it instead of adding a duplicate.
-      const onlyPlaceholder =
-        draftLines.length === 1 &&
-        draftLines[0] &&
-        isFreshPlaceholder(draftLines[0]);
-      if (onlyPlaceholder) {
-        update({ id: draftLines[0]!.id, ...variantPatch });
+      // Auto-pop: patch the placeholder row in place. Add batch: append a
+      // new line.
+      if (variantAction === 'auto' && draftLines[0]) {
+        update({ id: draftLines[0].id, ...variantPatch });
       } else {
         addLine(variantPatch);
       }
-      setVariantPanelOpen(false);
+      setVariantAction(null);
     },
-    [addLine, update, draftLines, currentItem?.defaultPackSize]
+    [addLine, update, draftLines, currentItem?.defaultPackSize, variantAction]
   );
 
   const handleAddLine = useCallback(() => {
     if (hasVariants) {
-      setVariantPanelOpen(true);
+      setVariantAction('add');
     } else {
       addLine();
     }
@@ -306,12 +307,15 @@ export const StocktakeLineEdit = ({
                 {tableContent}
                 <ItemVariantSelectPanel
                   itemId={currentItem.id}
-                  open={variantPanelOpen}
-                  onClose={() => setVariantPanelOpen(false)}
+                  open={variantAction !== null}
+                  onClose={() => setVariantAction(null)}
                   onSelect={applyVariant}
                   onManual={() => {
-                    addLine();
-                    setVariantPanelOpen(false);
+                    // Auto-pop case: the placeholder row is already
+                    // there for the user to fill in; just dismiss.
+                    // Add-batch case: create the requested empty row.
+                    if (variantAction === 'add') addLine();
+                    setVariantAction(null);
                   }}
                 />
               </>
