@@ -69,7 +69,7 @@ pub struct AssetRow {
 
 impl AssetRow {
 
-    pub(crate) fn soft_delete_and_get_changelog(
+    pub(crate) fn mark_deleted_and_get_changelog(
         row_id: &str,
         con: &StorageConnection,
         source_site_id: SourceSiteId,
@@ -147,7 +147,7 @@ impl<'a> AssetRowRepository<'a> {
     }
 
     pub fn mark_deleted(&self, asset_id_param: &str) -> Result<(), RepositoryError> {
-        let changelog = AssetRow::soft_delete_and_get_changelog(
+        let changelog = AssetRow::mark_deleted_and_get_changelog(
             asset_id_param,
             self.connection,
             SourceSiteId::CurrentSiteId,
@@ -200,7 +200,7 @@ impl Upsert for AssetRowDelete {
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                AssetRow::soft_delete_and_get_changelog(
+                AssetRow::mark_deleted_and_get_changelog(
                     &self.0,
                     con,
                     SourceSiteId::SourceSiteId(source_site_id),

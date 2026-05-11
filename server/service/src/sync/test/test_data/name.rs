@@ -980,7 +980,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
 }
 
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
-    vec![TestSyncIncomingRecord::new_pull_soft_delete(
+    vec![TestSyncIncomingRecord::new_pull_mark_deleted(
         TABLE_NAME,
         NAME_4.0,
         NameRowDelete(NAME_4.0.to_string()),

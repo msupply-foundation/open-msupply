@@ -47,9 +47,9 @@ impl TestSyncIncomingRecord {
         Self::new_pull_deletes(table_name, id, vec![result])
     }
 
-    /// For soft-delete tables: the incoming sync record has action = Delete,
+    /// For mark-deleted tables: the incoming sync record has action = Delete,
     /// but the translator routes it through Upsert (deleted_datetime / is_active=false).
-    fn new_pull_soft_delete<U>(table_name: &str, id: &str, result: U) -> TestSyncIncomingRecord
+    fn new_pull_mark_deleted<U>(table_name: &str, id: &str, result: U) -> TestSyncIncomingRecord
     where
         U: Upsert + 'static,
     {

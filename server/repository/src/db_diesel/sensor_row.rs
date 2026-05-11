@@ -111,7 +111,7 @@ impl<'a> SensorRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    fn _soft_delete(&self, sensor_id: &str) -> Result<(), RepositoryError> {
+    fn _mark_deleted(&self, sensor_id: &str) -> Result<(), RepositoryError> {
         diesel::update(sensor::table)
             .filter(sensor::id.eq(sensor_id))
             .set(sensor::is_active.eq(false))
@@ -145,7 +145,7 @@ impl Upsert for SensorRowDelete {
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
-        repo._soft_delete(&self.0)?;
+        repo._mark_deleted(&self.0)?;
         ChangelogRepository::new(con).insert(&changelog)?;
         Ok(())
     }
