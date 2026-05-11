@@ -9,6 +9,7 @@ import {
   useTranslation,
   ColumnType,
   UnitsAndDosesCell,
+  NumericTextDisplay,
   Box,
   LinkIcon,
   PaperPopover,
@@ -101,7 +102,7 @@ export const useRequestColumns = () => {
         header: t(showExtraColumns ? 'label.area-amc' : 'label.amc'),
         description: t('description.average-monthly-consumption'),
         columnType: ColumnType.Number,
-        Cell: UnitsAndDosesCell,
+        Cell: props => <UnitsAndDosesCell {...props} roundUp />,
         enableSorting: true,
       },
       {
@@ -109,6 +110,16 @@ export const useRequestColumns = () => {
         header: t('label.months-of-stock'),
         description: t('description.available-months-of-stock'),
         columnType: ColumnType.Number,
+        Cell: ({ cell }) => {
+          const value = cell.getValue<number | undefined>();
+          return (
+            <NumericTextDisplay
+              value={typeof value === 'number' ? value : undefined}
+              defaultValue={UNDEFINED_STRING_VALUE}
+              decimalLimit={1}
+            />
+          );
+        },
         enableSorting: true,
       },
       {
@@ -149,7 +160,7 @@ export const useRequestColumns = () => {
           const showAlert =
             warningForExcessRequest &&
             row.original.requestedQuantity - row.original.suggestedQuantity >=
-              1;
+            1;
           return (
             <UnitsAndDosesCell row={row} {...props} showAlert={showAlert} />
           );
@@ -290,40 +301,40 @@ const ItemNameCell = ({
         {name}
       </Box>
       <Box onClick={e => e.stopPropagation()} display="inline-flex">
-      <PaperPopover
-        mode="hover"
-        width={280}
-        placement={{ vertical: 'bottom', horizontal: 'center' }}
-        Content={
-          <Box display="flex" flexDirection="column" gap={1} p={3}>
-            <Typography fontWeight={700}>
-              {t('label.ancillary-of')}
-            </Typography>
-            {parents.length > 1 ? (
-              <Box
-                component="ul"
-                sx={{ m: 0, pl: 2.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}
-              >
-                {parents.map(p => (
-                  <Typography component="li" key={p.id} variant="body2">
-                    {p.name}
-                  </Typography>
-                ))}
-              </Box>
-            ) : (
-              <Typography variant="body2">{parents[0]?.name}</Typography>
-            )}
-          </Box>
-        }
-      >
-        <LinkIcon
-          sx={{
-            fontSize: 14,
-            color: 'text.secondary',
-            verticalAlign: 'middle',
-          }}
-        />
-      </PaperPopover>
+        <PaperPopover
+          mode="hover"
+          width={280}
+          placement={{ vertical: 'bottom', horizontal: 'center' }}
+          Content={
+            <Box display="flex" flexDirection="column" gap={1} p={3}>
+              <Typography fontWeight={700}>
+                {t('label.ancillary-of')}
+              </Typography>
+              {parents.length > 1 ? (
+                <Box
+                  component="ul"
+                  sx={{ m: 0, pl: 2.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}
+                >
+                  {parents.map(p => (
+                    <Typography component="li" key={p.id} variant="body2">
+                      {p.name}
+                    </Typography>
+                  ))}
+                </Box>
+              ) : (
+                <Typography variant="body2">{parents[0]?.name}</Typography>
+              )}
+            </Box>
+          }
+        >
+          <LinkIcon
+            sx={{
+              fontSize: 14,
+              color: 'text.secondary',
+              verticalAlign: 'middle',
+            }}
+          />
+        </PaperPopover>
       </Box>
     </Box>
   );
