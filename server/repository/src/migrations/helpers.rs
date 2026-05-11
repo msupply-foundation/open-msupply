@@ -1,8 +1,7 @@
 use diesel::prelude::*;
 
 use crate::{
-    db_diesel::changelog::changelog::changelog as changelog_table, ChangelogRepository,
-    StorageConnection,
+    db_diesel::changelog::changelog::changelog_with_links, ChangelogRepository, StorageConnection,
 };
 
 /// For testing, it returns the change_log cursors as if the changelog would have been updated.
@@ -19,9 +18,10 @@ pub(crate) fn run_without_change_log_updates<
     job(connection)?;
 
     let cursor_after_job = ChangelogRepository::new(connection).max_cursor()?;
-    // Revert changelog to the state before the merge migrations
-    diesel::delete(changelog_table::dsl::changelog)
-        .filter(changelog_table::dsl::cursor.gt(cursor_before_job as i64))
+    // Revert changelog to the state before the merge migrations. Delete via the
+    // underlying table — `changelog::table` (the view) is read-only.
+    diesel::delete(changelog_with_links::table)
+        .filter(changelog_with_links::cursor.gt(cursor_before_job as i64))
         .execute(connection.lock().connection())?;
     Ok(cursor_after_job)
 }
