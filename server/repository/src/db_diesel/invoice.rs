@@ -1,8 +1,8 @@
 use super::{
     clinician_link_row::clinician_link, clinician_row::clinician, invoice_line_row::invoice_line,
     invoice_row::invoice, name_row::name, purchase_order_row::purchase_order,
-    store_row::store, ClinicianRow, DBType, InvoiceRow,
-    InvoiceStatus, InvoiceType, NameRow, RepositoryError, StorageConnection, StoreRow,
+    requisition::requisition_row::requisition, store_row::store, ClinicianRow, DBType,
+    InvoiceRow, InvoiceStatus, InvoiceType, NameRow, RepositoryError, StorageConnection, StoreRow,
 };
 
 use crate::{
@@ -276,12 +276,21 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
 
         if let Some(linked_order_number) = linked_order_number {
             if let Some(number) = linked_order_number.equal_to {
-                query = query.filter(diesel::dsl::sql::<diesel::sql_types::Bool>(&format!(
-                    "invoice_view.purchase_order_id IN \
-                        (SELECT id FROM purchase_order WHERE purchase_order_number = {number}) \
-                     OR invoice_view.requisition_id IN \
-                        (SELECT id FROM requisition WHERE requisition_number = {number})"
-                )));
+                let po_subquery = purchase_order::table
+                    .select(purchase_order::id.nullable())
+                    .filter(purchase_order::purchase_order_number.eq(number))
+                    .into_boxed();
+
+                let req_subquery = requisition::table
+                    .select(requisition::id.nullable())
+                    .filter(requisition::requisition_number.eq(number))
+                    .into_boxed();
+
+                query = query.filter(
+                    invoice::purchase_order_id
+                        .eq_any(po_subquery)
+                        .or(invoice::requisition_id.eq_any(req_subquery)),
+                );
             }
         }
 
