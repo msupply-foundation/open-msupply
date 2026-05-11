@@ -493,20 +493,28 @@ export const DataTable = <T extends RowData>({
           </TableHead>
 
           {/* ── Body ── */}
-          <TableBody sx={isEmpty ? { height: '100%' } : bodyStyle}>
+          <TableBody
+            sx={
+              isEmpty
+                ? { flex: 1, display: 'flex', flexDirection: 'column' }
+                : bodyStyle
+            }
+          >
             {isLoading ? (
               // Skeleton rows while loading
               Array.from({ length: 5 }).map((_, i) => (
                 <SkeletonRow key={i} table={table} density={density} />
               ))
             ) : isEmpty ? (
-              <TableRow>
+              <TableRow sx={{ display: 'flex', flex: 1 }}>
                 <TableCell
                   colSpan={table.getVisibleLeafColumns().length}
                   sx={{
                     border: 'none',
-                    height: '100%',
-                    textAlign: 'center',
+                    flex: 1,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                   }}
                 >
                   {isError ? (
