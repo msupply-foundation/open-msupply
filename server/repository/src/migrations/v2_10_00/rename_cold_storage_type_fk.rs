@@ -19,8 +19,7 @@ impl MigrationFragment for Migrate {
             );
             if result.is_err() {
                 log::warn!(
-                    "Failed to drop FK constraint on location and item_variant tables: {:?}",
-                    result
+                    "Failed to drop FK constraint on location and item_variant tables: {result:?}"
                 );
             }
 

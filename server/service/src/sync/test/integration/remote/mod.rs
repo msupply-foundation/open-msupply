@@ -68,7 +68,8 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
         replace_system_name_ids(&mut integration_records, &previous_connection);
 
         // Integrate
-        integrate_with_is_sync_reset(&previous_connection, &integration_records);
+        let integration_records =
+            integrate_with_is_sync_reset(&previous_connection, integration_records);
         // Push integrated changes
         previous_synchroniser.sync(None).await.unwrap();
         // Re initialise
@@ -106,7 +107,7 @@ fn replace_system_name_ids(
         if mut_invoice.r#type == InvoiceType::InventoryAddition
             || mut_invoice.r#type == InvoiceType::InventoryReduction
         {
-            mut_invoice.name_link_id = inventory_adjustment_name.id.clone();
+            mut_invoice.name_id = inventory_adjustment_name.id.clone();
             mut_invoice.name_store_id = None;
         }
     }

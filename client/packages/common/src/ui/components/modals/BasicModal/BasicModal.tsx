@@ -24,11 +24,11 @@ export const BasicModal = ({
     <Dialog
       fullScreen={fullScreen}
       PaperProps={{
+        dir: isRtl ? 'rtl' : 'ltr',
         sx: {
           borderRadius: fullScreen ? undefined : '20px',
           minHeight: `${height}px`,
-          minWidth: `${width}px`,
-          direction: isRtl ? 'rtl' : 'ltr',
+          minWidth: `min(${width}px, calc(100vw - 64px))`,
           ...sx,
         },
         ...PaperProps,

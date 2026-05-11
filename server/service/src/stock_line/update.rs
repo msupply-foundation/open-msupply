@@ -1,6 +1,6 @@
 use super::query::get_stock_line;
 use crate::{
-    activity_log::activity_log_entry,
+    activity_log::activity_log_entry_with_diff,
     barcode::{self, BarcodeInput},
     check_item_variant_exists, check_location_exists, check_location_type_is_valid,
     common::{check_stock_line_exists, CommonStockLineError},
@@ -23,7 +23,8 @@ pub struct UpdateStockLine {
     pub location: Option<NullableUpdate<String>>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
-    pub expiry_date: Option<NaiveDate>,
+    pub expiry_date: Option<NullableUpdate<NaiveDate>>,
+    pub manufacture_date: Option<NullableUpdate<NaiveDate>>,
     pub on_hold: Option<bool>,
     pub batch: Option<String>,
     pub barcode: Option<String>,
@@ -33,6 +34,7 @@ pub struct UpdateStockLine {
     pub campaign_id: Option<NullableUpdate<String>>,
     pub program_id: Option<NullableUpdate<String>>,
     pub volume_per_pack: Option<f64>,
+    pub manufacturer_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -45,6 +47,9 @@ pub enum UpdateStockLineError {
     DonorDoesNotExist,
     DonorNotVisible,
     DonorIsNotADonor,
+    ManufacturerDoesNotExist,
+    ManufacturerNotVisible,
+    ManufacturerIsNotAManufacturer,
     UpdatedStockNotFound,
     StockMovementNotFound,
     VVMStatusDoesNotExist,
@@ -145,6 +150,24 @@ fn validate(
         )?;
     };
 
+    if let Some(NullableUpdate {
+        value: Some(manufacturer_id),
+    }) = &input.manufacturer_id
+    {
+        check_other_party(
+            connection,
+            store_id,
+            manufacturer_id,
+            CheckOtherPartyType::Manufacturer,
+        )
+        .map_err(|e| match e {
+            OtherPartyErrors::OtherPartyDoesNotExist => ManufacturerDoesNotExist,
+            OtherPartyErrors::OtherPartyNotVisible => ManufacturerNotVisible,
+            OtherPartyErrors::TypeMismatched => ManufacturerIsNotAManufacturer,
+            OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
+        })?;
+    };
+
     Ok(stock_line)
 }
 
@@ -164,6 +187,7 @@ fn generate(
         cost_price_per_pack,
         sell_price_per_pack,
         expiry_date,
+        manufacture_date,
         batch,
         on_hold,
         barcode,
@@ -173,6 +197,7 @@ fn generate(
         campaign_id,
         program_id,
         volume_per_pack,
+        manufacturer_id,
     }: UpdateStockLine,
 ) -> Result<GenerateResult, UpdateStockLineError> {
     let mut existing = existing_line.stock_line_row;
@@ -217,18 +242,27 @@ fn generate(
     existing.batch = batch.or(existing.batch);
     existing.cost_price_per_pack = cost_price_per_pack.unwrap_or(existing.cost_price_per_pack);
     existing.sell_price_per_pack = sell_price_per_pack.unwrap_or(existing.sell_price_per_pack);
-    existing.expiry_date = expiry_date.or(existing.expiry_date);
+
+    existing.expiry_date = expiry_date.map(|v| v.value).unwrap_or(existing.expiry_date);
+    existing.manufacture_date = manufacture_date
+        .map(|v| v.value)
+        .unwrap_or(existing.manufacture_date);
+
     existing.on_hold = on_hold.unwrap_or(existing.on_hold);
     existing.barcode_id = barcode_id;
     existing.vvm_status_id = vvm_status_id.or(existing.vvm_status_id);
+
     existing.item_variant_id = item_variant_id
         .map(|v| v.value)
         .unwrap_or(existing.item_variant_id);
-    existing.donor_link_id = donor_id.map(|v| v.value).unwrap_or(existing.donor_link_id);
+    existing.donor_id = donor_id.map(|v| v.value).unwrap_or(existing.donor_id);
+    existing.manufacturer_id = manufacturer_id
+        .map(|v| v.value)
+        .unwrap_or(existing.manufacturer_id);
     existing.campaign_id = campaign_id.map(|v| v.value).unwrap_or(existing.campaign_id);
     existing.program_id = program_id.map(|v| v.value).unwrap_or(existing.program_id);
-    existing.volume_per_pack = volume_per_pack.unwrap_or(existing.volume_per_pack);
 
+    existing.volume_per_pack = volume_per_pack.unwrap_or(existing.volume_per_pack);
     if let Some(volume_per_pack) = volume_per_pack {
         existing.total_volume = volume_per_pack * existing.total_number_of_packs;
     }
@@ -255,9 +289,9 @@ fn generate_location_movement(
                 LocationMovementFilter::new()
                     .enter_datetime(DatetimeFilter::is_null(false))
                     .exit_datetime(DatetimeFilter::is_null(true))
-                    .location_id(EqualFilter::equal_to(&location_id))
-                    .stock_line_id(EqualFilter::equal_to(&existing.id))
-                    .store_id(EqualFilter::equal_to(&store_id)),
+                    .location_id(EqualFilter::equal_to(location_id.to_string()))
+                    .stock_line_id(EqualFilter::equal_to(existing.id.to_string()))
+                    .store_id(EqualFilter::equal_to(store_id.to_string())),
             )?
             .into_iter()
             .map(|l| l.location_movement_row)
@@ -287,97 +321,13 @@ fn log_stock_changes(
     existing: StockLineRow,
     new: StockLineRow,
 ) -> Result<(), RepositoryError> {
-    if existing.location_id != new.location_id {
-        let previous_location = if let Some(location_id) = existing.location_id {
-            Some(location_id)
-        } else {
-            Some("-".to_string())
-        };
-
-        activity_log_entry(
-            ctx,
-            ActivityLogType::StockLocationChange,
-            Some(new.id.to_owned()),
-            previous_location,
-            new.location_id,
-        )?;
-    }
-    if existing.batch != new.batch {
-        let previous_batch = if let Some(batch) = existing.batch {
-            Some(batch)
-        } else {
-            Some("-".to_string())
-        };
-
-        activity_log_entry(
-            ctx,
-            ActivityLogType::StockBatchChange,
-            Some(new.id.to_owned()),
-            previous_batch,
-            new.batch,
-        )?;
-    }
-    if existing.cost_price_per_pack != new.cost_price_per_pack {
-        activity_log_entry(
-            ctx,
-            ActivityLogType::StockCostPriceChange,
-            Some(new.id.to_owned()),
-            Some(existing.cost_price_per_pack.to_string()),
-            Some(new.cost_price_per_pack.to_string()),
-        )?;
-    }
-    if existing.sell_price_per_pack != new.sell_price_per_pack {
-        activity_log_entry(
-            ctx,
-            ActivityLogType::StockSellPriceChange,
-            Some(new.id.to_owned()),
-            Some(existing.sell_price_per_pack.to_string()),
-            Some(new.sell_price_per_pack.to_string()),
-        )?;
-    }
-    if existing.expiry_date != new.expiry_date {
-        let previous_expiry_date = if let Some(expiry_date) = existing.expiry_date {
-            Some(expiry_date.to_string())
-        } else {
-            Some("-".to_string())
-        };
-
-        activity_log_entry(
-            ctx,
-            ActivityLogType::StockExpiryDateChange,
-            Some(new.id.to_owned()),
-            previous_expiry_date,
-            new.expiry_date.map(|date| date.to_string()),
-        )?;
-    }
-    if existing.on_hold != new.on_hold && new.on_hold {
-        activity_log_entry(
-            ctx,
-            ActivityLogType::StockOnHold,
-            Some(new.id.to_owned()),
-            None,
-            None,
-        )?;
-    }
-    if existing.on_hold != new.on_hold && !new.on_hold {
-        activity_log_entry(
-            ctx,
-            ActivityLogType::StockOffHold,
-            Some(new.id.to_owned()),
-            None,
-            None,
-        )?;
-    }
-
-    if existing.volume_per_pack != new.volume_per_pack {
-        activity_log_entry(
-            ctx,
-            ActivityLogType::VolumePerPackChanged,
-            Some(new.id),
-            Some(existing.volume_per_pack.to_string()),
-            Some(new.volume_per_pack.to_string()),
-        )?;
-    }
+    activity_log_entry_with_diff(
+        ctx,
+        ActivityLogType::StockLineEdit,
+        Some(new.id.clone()),
+        Some(&existing),
+        &new,
+    )?;
 
     Ok(())
 }

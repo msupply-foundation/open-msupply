@@ -1,29 +1,21 @@
 import {
-  useTableStore,
   useTranslation,
   useQueryClient,
   useDeleteConfirmation,
-  useUrlQueryParams,
   useMutation,
 } from '@openmsupply-client/common';
 import { useReturnsApi } from '../utils/useReturnsApi';
 import { canDeleteSupplierReturn } from '../../../../utils';
-import { useSupplierReturns } from './useSupplierReturns';
+import { SupplierReturnRowFragment } from '../../operations.generated';
 
-export const useSupplierDeleteRows = () => {
+export const useSupplierDeleteRows = (
+  selectedRows: SupplierReturnRowFragment[],
+  resetRowSelection: () => void
+) => {
   const t = useTranslation();
   const queryClient = useQueryClient();
   const api = useReturnsApi();
-  const { queryParams } = useUrlQueryParams({
-    initialSort: { key: 'createdDatetime', dir: 'desc' },
-  });
-  const { data: rows } = useSupplierReturns(queryParams);
   const { mutateAsync } = useMutation(api.deleteSupplier);
-
-  const selectedRows = useTableStore(
-    state =>
-      rows?.nodes.filter(({ id }) => state.rowState[id]?.isSelected) ?? []
-  );
 
   const deleteAction = async () => {
     await Promise.all(selectedRows.map(row => mutateAsync(row.id)))
@@ -31,6 +23,7 @@ export const useSupplierDeleteRows = () => {
       .catch(err => {
         throw err;
       });
+    resetRowSelection();
   };
 
   const confirmAndDelete = useDeleteConfirmation({
@@ -47,5 +40,5 @@ export const useSupplierDeleteRows = () => {
     },
   });
 
-  return { confirmAndDelete, selectedRows };
+  return { confirmAndDelete };
 };

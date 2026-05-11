@@ -1,4 +1,4 @@
-fragment ItemWithStats on ItemNode {
+fragment ItemWithAvailableStock on ItemNode {
   id
   name
   code
@@ -7,6 +7,10 @@ fragment ItemWithStats on ItemNode {
   isVaccine
   doses
   availableStockOnHand(storeId: $storeId)
+}
+
+fragment ItemWithStats on ItemNode {
+  ...ItemWithAvailableStock
   stats(storeId: $storeId) {
     averageMonthlyConsumption
     availableStockOnHand
@@ -15,7 +19,6 @@ fragment ItemWithStats on ItemNode {
     stockOnHand
     monthsOfStockOnHand
   }
-  isVaccine
 }
 
 fragment RequestLine on RequisitionLineNode {
@@ -33,6 +36,7 @@ fragment RequestLine on RequisitionLineNode {
   additionInUnits
   expiringUnits
   daysOutOfStock
+  pricePerUnit
 
   itemStats {
     __typename
@@ -45,11 +49,15 @@ fragment RequestLine on RequisitionLineNode {
     approvalComment
   }
   item {
-    ...ItemWithStats
+    ...ItemWithAvailableStock
   }
   reason {
     ...ReasonOptionRow
   }
+
+  forecastTotalUnits
+  forecastTotalDoses
+  vaccineCourses
 }
 
 fragment Request on RequisitionNode {
@@ -69,7 +77,12 @@ fragment Request on RequisitionNode {
   maxMonthsOfStock
   minMonthsOfStock
   approvalStatus
-
+  documents {
+    __typename
+    nodes {
+      ...SyncFileReference
+    }
+  }
   user {
     __typename
     username
@@ -111,6 +124,20 @@ fragment Request on RequisitionNode {
     isSupplier
     isOnHold
     name
+    margin
+    store {
+      id
+      code
+    }
+  }
+
+  destinationCustomer(storeId: $storeId) {
+    id
+    code
+    isCustomer
+    isSupplier
+    isOnHold
+    name
     store {
       id
       code
@@ -129,6 +156,16 @@ fragment Request on RequisitionNode {
   }
   orderType
   isEmergency
+
+  createdFromRequisition {
+    id
+    requisitionNumber
+    createdDatetime
+    user {
+      __typename
+      username
+    }
+  }
 }
 
 query OnlyHereToAvoidUnusedWarnings {

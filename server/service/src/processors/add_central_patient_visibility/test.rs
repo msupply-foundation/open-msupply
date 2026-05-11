@@ -2,7 +2,7 @@ use repository::{
     mock::{mock_name_store_a, mock_store_a, MockData, MockDataInserts},
     system_log_row::SystemLogRowRepository,
     EqualFilter, KeyType, KeyValueStoreRow, NameRow, NameRowType, NameStoreJoinFilter,
-    NameStoreJoinRepository, NameStoreJoinRow, StorageConnection, StoreRow, Upsert,
+    NameStoreJoinRepository, NameStoreJoinRow, StorageConnection, StoreRow,
 };
 use util::uuid::uuid;
 
@@ -30,7 +30,7 @@ async fn requests_link_patient_to_oms_central_store() {
 
     let central_store = StoreRow {
         id: uuid(),
-        name_link_id: central_store_name.id.clone(),
+        name_id: central_store_name.id.clone(),
         site_id: central_site_id,
         ..Default::default()
     };
@@ -71,7 +71,7 @@ async fn requests_link_patient_to_oms_central_store() {
 
     let nsj_non_visible_patient_remote = NameStoreJoinRow {
         id: uuid(),
-        name_link_id: non_visible_patient.id.clone(),
+        name_id: non_visible_patient.id.clone(),
         store_id: mock_store_a().id,
         ..Default::default()
     };
@@ -79,8 +79,8 @@ async fn requests_link_patient_to_oms_central_store() {
     log::debug!("insert nsj_non_visible_patient_remote");
 
     // Insert, to emulate receiving this record via push from remote site
-    nsj_non_visible_patient_remote
-        .upsert(&ctx.connection)
+    NameStoreJoinRepository::new(&ctx.connection)
+        .upsert_one(&nsj_non_visible_patient_remote)
         .unwrap();
 
     // manually trigger because insert doesn't trigger the processor
@@ -95,7 +95,7 @@ async fn requests_link_patient_to_oms_central_store() {
     // Currently not possible to mock the call to central from the processor
     // So let's just check it errors in the right place :violent_sob:
     let error_log = SystemLogRowRepository::new(&ctx.connection)
-        .last_x_messages(1)
+        .last_x_errors(1)
         .unwrap()
         .pop()
         .unwrap();
@@ -119,8 +119,8 @@ fn is_patient_visible_on_central(
     let patient_visible_on_central = repo
         .query_by_filter(
             NameStoreJoinFilter::new()
-                .name_id(EqualFilter::equal_to(patient_id))
-                .store_id(EqualFilter::equal_to(central_store_id)),
+                .name_id(EqualFilter::equal_to(patient_id.to_string()))
+                .store_id(EqualFilter::equal_to(central_store_id.to_string())),
         )
         .unwrap();
 

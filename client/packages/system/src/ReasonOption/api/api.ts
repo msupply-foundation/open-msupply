@@ -2,6 +2,7 @@ import {
   SortBy,
   ReasonOptionSortInput,
   ReasonOptionSortFieldInput,
+  isEnumValue,
 } from '@openmsupply-client/common';
 import { Sdk, ReasonOptionRowFragment } from './operations.generated';
 
@@ -13,7 +14,9 @@ const reasonOptionParsers = {
   ): ReasonOptionSortInput => {
     return {
       desc: sortBy.isDesc,
-      key: sortBy.key as ReasonOptionSortFieldInput,
+      key: isEnumValue(ReasonOptionSortFieldInput, sortBy.key)
+        ? sortBy.key
+        : ReasonOptionSortFieldInput.Reason,
     };
   },
 };

@@ -2,22 +2,27 @@ use crate::sync::translations::{
     barcode::BarcodeTranslation, campaign::CampaignTranslation, item::ItemTranslation,
     item_variant::ItemVariantTranslation, location::LocationTranslation, name::NameTranslation,
     store::StoreTranslation, vvm_status::VVMStatusTranslation,
+
 };
 
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, StockLine, StockLineFilter, StockLineRepository,
     StockLineRow, StorageConnection, SyncBufferRow,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option_string, object_fields_as_option,
     zero_date_as_option,
+
 };
 
 use super::{
     utils::{clear_invalid_barcode_id, clear_invalid_location_id},
     PullTranslateResult, PushTranslateResult, SyncTranslation,
+
 };
 
 #[allow(non_snake_case)]
@@ -29,6 +34,8 @@ pub struct StockLineRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub program_id: Option<String>,
+    #[serde(default)]
+    pub manufacture_date: Option<NaiveDate>,
 }
 
 #[allow(non_snake_case)]
@@ -66,6 +73,10 @@ pub struct LegacyStockLineRow {
     pub donor_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub vvm_status_id: Option<String>,
+    #[serde(rename = "manufacturer_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(default)]
+    pub manufacturer_id: Option<String>,
     #[serde(default)]
     #[serde(deserialize_with = "object_fields_as_option")]
     pub oms_fields: Option<StockLineRowOmsFields>,
@@ -125,10 +136,11 @@ impl SyncTranslation for StockLineTranslation {
             item_variant_id,
             donor_id,
             vvm_status_id,
+            manufacturer_id,
             oms_fields,
             total_volume,
             volume_per_pack,
-        } = serde_json::from_str::<LegacyStockLineRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         let barcode_id = clear_invalid_barcode_id(connection, barcode_id)?;
         let location_id = clear_invalid_location_id(connection, location_ID)?;
@@ -136,6 +148,7 @@ impl SyncTranslation for StockLineTranslation {
         let StockLineRowOmsFields {
             campaign_id,
             program_id,
+            manufacture_date,
         } = oms_fields.unwrap_or_default();
 
         let result = StockLineRow {
@@ -152,13 +165,15 @@ impl SyncTranslation for StockLineTranslation {
             expiry_date,
             on_hold: hold,
             note,
-            supplier_link_id: supplier_id,
+            supplier_id,
             barcode_id,
             item_variant_id,
-            donor_link_id: donor_id,
+            donor_id,
+            manufacturer_id,
             vvm_status_id,
             campaign_id,
             program_id,
+            manufacture_date,
             total_volume,
             volume_per_pack,
         };
@@ -170,10 +185,15 @@ impl SyncTranslation for StockLineTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::StockLine(stock_line_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let Some(stock_line) = StockLineRepository::new(connection)
             .query_by_filter(
-                StockLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+                StockLineFilter::new().id(EqualFilter::equal_to(stock_line_row.id)),
                 None,
             )?
             .pop()
@@ -197,13 +217,15 @@ impl SyncTranslation for StockLineTranslation {
                     expiry_date,
                     on_hold,
                     note,
-                    supplier_link_id: _,
+                    supplier_id: _,
                     barcode_id,
                     item_variant_id,
-                    donor_link_id,
+                    donor_id: donor_link_id,
+                    manufacturer_id,
                     vvm_status_id,
                     campaign_id,
                     program_id,
+                    manufacture_date,
                     total_volume,
                     volume_per_pack,
                 },
@@ -215,6 +237,7 @@ impl SyncTranslation for StockLineTranslation {
         let oms_fields = Some(StockLineRowOmsFields {
             campaign_id,
             program_id,
+            manufacture_date,
         });
 
         let legacy_row = LegacyStockLineRow {
@@ -236,16 +259,13 @@ impl SyncTranslation for StockLineTranslation {
             item_variant_id,
             donor_id: donor_link_id,
             vvm_status_id,
+            manufacturer_id,
             oms_fields,
             total_volume,
             volume_per_pack,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -262,12 +282,13 @@ mod tests {
     use crate::sync::{
         test::merge_helpers::{merge_all_item_links, merge_all_name_links},
         translations::ToSyncRecordTranslationType,
+    
     };
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
-    };
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RowOrDelete,
+};
     use serde_json::json;
 
     #[actix_rt::test]
@@ -297,24 +318,24 @@ mod tests {
         merge_all_item_links(&connection, &mock_data).unwrap();
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(ChangelogFilter::new().table_name(ChangelogTableName::StockLine.equal_to())),
-            )
-            .unwrap();
+        let entries = ChangelogRepository::new(&connection).query_with_data(
+            ChangelogCondition::table_name::equal(ChangelogTableName::StockLine),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1_000_000,
+            },
+        )
+        .unwrap();
 
         let translator = StockLineTranslation {};
-        for changelog in changelogs {
+        for entry in entries { let RowOrDelete::Row { changelog, row } = entry else { panic!("expected upsert row") };
             // Translate and sort
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));

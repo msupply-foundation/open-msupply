@@ -22,13 +22,16 @@ export const enableNextOptions = (
   switch (currentStatus) {
     case PurchaseOrderNodeStatus.New:
       if (requiresAuthorisation)
-        enableStatusOption(PurchaseOrderNodeStatus.Authorised);
+        enableStatusOption(PurchaseOrderNodeStatus.RequestApproval);
       else enableStatusOption(PurchaseOrderNodeStatus.Confirmed);
       break;
-    case PurchaseOrderNodeStatus.Authorised:
+    case PurchaseOrderNodeStatus.RequestApproval:
       enableStatusOption(PurchaseOrderNodeStatus.Confirmed);
       break;
     case PurchaseOrderNodeStatus.Confirmed:
+      enableStatusOption(PurchaseOrderNodeStatus.Sent);
+      break;
+    case PurchaseOrderNodeStatus.Sent:
       enableStatusOption(PurchaseOrderNodeStatus.Finalised);
       break;
   }
@@ -50,8 +53,8 @@ export const getStatusOptions = (
     ...(requiresAuthorisation
       ? [
           {
-            value: PurchaseOrderNodeStatus.Authorised,
-            label: getButtonLabel(PurchaseOrderNodeStatus.Authorised),
+            value: PurchaseOrderNodeStatus.RequestApproval,
+            label: getButtonLabel(PurchaseOrderNodeStatus.RequestApproval),
             isDisabled: true,
           },
         ]
@@ -59,6 +62,11 @@ export const getStatusOptions = (
     {
       value: PurchaseOrderNodeStatus.Confirmed,
       label: getButtonLabel(PurchaseOrderNodeStatus.Confirmed),
+      isDisabled: true,
+    },
+    {
+      value: PurchaseOrderNodeStatus.Sent,
+      label: getButtonLabel(PurchaseOrderNodeStatus.Sent),
       isDisabled: true,
     },
     {
@@ -81,7 +89,10 @@ export const getNextStatusOption = (
   if (!status) return options[0] ?? null;
 
   // Handles case where status is Authorised but requiresAuthorisation is false (got turned off)
-  if (status === PurchaseOrderNodeStatus.Authorised && !requiresAuthorisation) {
+  if (
+    status === PurchaseOrderNodeStatus.RequestApproval &&
+    !requiresAuthorisation
+  ) {
     return (
       options.find(
         option => option.value === PurchaseOrderNodeStatus.Confirmed
@@ -92,7 +103,7 @@ export const getNextStatusOption = (
   const filteredStatuses = requiresAuthorisation
     ? purchaseOrderStatuses
     : purchaseOrderStatuses.filter(
-        status => status !== PurchaseOrderNodeStatus.Authorised
+        status => status !== PurchaseOrderNodeStatus.RequestApproval
       );
 
   const nextStatus = filteredStatuses[filteredStatuses.indexOf(status) + 1];

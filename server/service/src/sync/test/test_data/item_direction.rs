@@ -31,8 +31,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             ITEM_DIRECTION_1,
             ItemDirectionRow {
                 id: ITEM_DIRECTION_1.0.to_owned(),
-                item_link_id: "8F252B5884B74888AAB73A0D42C09E7A".to_owned(),
-                directions: "1m".to_owned(),
+                item_link_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
+                directions: "1m".to_string(),
                 priority: 1,
             },
         ),
@@ -41,8 +41,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             ITEM_DIRECTION_2,
             ItemDirectionRow {
                 id: ITEM_DIRECTION_2.0.to_owned(),
-                item_link_id: "8F252B5884B74888AAB73A0D42C09E7A".to_owned(),
-                directions: "are actually free text but may have abbreviations in it".to_owned(),
+                item_link_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
+                directions: "are actually free text but may have abbreviations in it".to_string(),
                 priority: 2,
             },
         ),

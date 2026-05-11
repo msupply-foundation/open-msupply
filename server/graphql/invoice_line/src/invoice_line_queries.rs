@@ -27,6 +27,7 @@ pub struct EqualFilterInvoiceLineTypeInput {
     pub equal_to: Option<InvoiceLineNodeType>,
     pub equal_any: Option<Vec<InvoiceLineNodeType>>,
     pub not_equal_to: Option<InvoiceLineNodeType>,
+    pub not_equal_all: Option<Vec<InvoiceLineNodeType>>,
 }
 
 #[derive(InputObject, Clone)]
@@ -47,6 +48,7 @@ pub struct InvoiceLineFilterInput {
     pub inventory_adjustment_reason: Option<EqualFilterStringInput>,
     pub verified_datetime: Option<DatetimeFilterInput>,
     pub program_id: Option<EqualFilterStringInput>,
+    pub is_program_invoice: Option<bool>,
 }
 
 impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
@@ -57,17 +59,13 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
             invoice_id: f.invoice_id.map(EqualFilter::from),
             location_id: f.location_id.map(EqualFilter::from),
             item_id: f.item_id.map(EqualFilter::from),
-            r#type: f
-                .r#type
-                .map(|t| map_filter!(t, |r| InvoiceLineType::from(r))),
+            r#type: f.r#type.map(|t| map_filter!(t, InvoiceLineType::from)),
             requisition_id: f.requisition_id.map(EqualFilter::from),
             number_of_packs: f.number_of_packs.map(|t| map_filter!(t, f64::from)),
-            invoice_type: f
-                .invoice_type
-                .map(|t| map_filter!(t, |i| InvoiceType::from(i))),
+            invoice_type: f.invoice_type.map(|t| map_filter!(t, InvoiceType::from)),
             invoice_status: f
                 .invoice_status
-                .map(|t| map_filter!(t, |i| InvoiceStatus::from(i))),
+                .map(|t| map_filter!(t, InvoiceStatus::from)),
             stock_line_id: f.stock_line_id.map(EqualFilter::from),
             verified_datetime: f.verified_datetime.map(DatetimeFilter::from),
             reason_option: f
@@ -75,6 +73,7 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
                 .map(EqualFilter::from)
                 .or(f.inventory_adjustment_reason.map(EqualFilter::from)),
             program_id: f.program_id.map(EqualFilter::from),
+            is_program_invoice: f.is_program_invoice,
             picked_datetime: None,
             delivered_datetime: None,
             has_prescribed_quantity: None,
@@ -161,7 +160,7 @@ pub fn invoice_lines(
         ))
     } else {
         let err = invoice_lines.unwrap_err();
-        let formatted_error = format!("{:#?}", err);
+        let formatted_error = format!("{err:#?}");
         let graphql_error = match err {
             GetInvoiceLinesError::DatabaseError(err) => err.into(),
             GetInvoiceLinesError::InvalidStore => {
@@ -205,8 +204,8 @@ pub fn draft_outbound_lines(
         })
     } else {
         let err = result.unwrap_err();
-        let formatted_error = format!("{:#?}", err);
-        log::error!("Draft outbound lines generation error: {}", formatted_error);
+        let formatted_error = format!("{err:#?}");
+        log::error!("Draft outbound lines generation error: {formatted_error}");
         Err(list_error_to_gql_err(err))
     }
 }

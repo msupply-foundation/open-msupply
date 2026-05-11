@@ -186,7 +186,7 @@ mod tests {
 
         // Query by id
         let t = AssetTypeRepository::new(&storage_connection)
-            .query_one(AssetTypeFilter::new().id(EqualFilter::equal_to(&id)))
+            .query_one(AssetTypeFilter::new().id(EqualFilter::equal_to(id.to_string())))
             .unwrap()
             .unwrap();
         assert_eq!(t.id, id);

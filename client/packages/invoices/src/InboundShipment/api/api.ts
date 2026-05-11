@@ -2,15 +2,15 @@ import {
   InvoiceLineNodeType,
   RecordPatch,
   InvoiceNodeType,
+  InvoiceTypeInput,
   InvoiceSortFieldInput,
-  FilterByWithBoolean,
+  FilterBy,
   SortBy,
   InvoiceNodeStatus,
   UpdateInboundShipmentLineInput,
   InsertInboundShipmentLineInput,
   DeleteInboundShipmentLineInput,
   UpdateInboundShipmentInput,
-  Formatter,
   UpdateInboundShipmentStatusInput,
   setNullableInput,
   InsertInboundShipmentServiceLineInput,
@@ -21,6 +21,7 @@ import {
   InsertInboundShipmentLineFromInternalOrderLineInput,
   RequisitionNodeStatus,
   UpdateDonorInput,
+  PurchaseOrderNodeStatus,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
 import { isA, isInboundPlaceholderRow } from '../../utils';
@@ -36,14 +37,17 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<InboundRowFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
+  type?: InvoiceTypeInput[];
 };
 
-const inboundParsers = {
+export const inboundParsers = {
   toStatus: (
     patch: RecordPatch<InboundFragment> | RecordPatch<InboundRowFragment>
   ): UpdateInboundShipmentStatusInput | undefined => {
     switch (patch.status) {
+      case InvoiceNodeStatus.Shipped:
+        return UpdateInboundShipmentStatusInput.Shipped;
       case InvoiceNodeStatus.Verified:
         return UpdateInboundShipmentStatusInput.Verified;
       case InvoiceNodeStatus.Delivered:
@@ -101,8 +105,18 @@ const inboundParsers = {
           : undefined,
       currencyId: 'currency' in patch ? patch.currency?.id : undefined,
       currencyRate: 'currencyRate' in patch ? patch.currencyRate : undefined,
+      chargesLocalCurrency:
+        'chargesLocalCurrency' in patch
+          ? patch.chargesLocalCurrency
+          : undefined,
+      chargesForeignCurrency:
+        'chargesForeignCurrency' in patch
+          ? patch.chargesForeignCurrency
+          : undefined,
       defaultDonor:
         'defaultDonorUpdate' in patch ? patch.defaultDonorUpdate : undefined,
+      receivedDatetime:
+        'receivedDatetime' in patch ? patch.receivedDatetime : undefined,
     };
   },
   toInsertLine: (line: DraftInboundLine): InsertInboundShipmentLineInput => {
@@ -112,22 +126,23 @@ const inboundParsers = {
       batch: line.batch,
       costPricePerPack: line.costPricePerPack,
       sellPricePerPack: line.sellPricePerPack,
-      expiryDate: line.expiryDate
-        ? Formatter.naiveDate(new Date(line.expiryDate))
-        : null,
+      expiryDate: line.expiryDate,
+      manufactureDate: line.manufactureDate,
       packSize: line.packSize,
       numberOfPacks: line.numberOfPacks,
       invoiceId: line.invoiceId,
       location: setNullableInput('id', line.location),
-      itemVariantId: line.itemVariantId,
+      itemVariantId: 'itemVariant' in line ? line.itemVariant?.id : undefined,
       vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : undefined,
       donorId: line.donor?.id,
+      manufacturerId: line.manufacturer?.id,
       campaignId: line.campaign?.id,
       programId: line.program?.id,
       note: line.note,
       shippedNumberOfPacks: line.shippedNumberOfPacks,
       volumePerPack: line.volumePerPack,
       shippedPackSize: line.shippedPackSize,
+      purchaseOrderLineId: line.purchaseOrderLine?.id,
     };
   },
   toInsertLineFromInternalOrder: (line: {
@@ -144,18 +159,22 @@ const inboundParsers = {
     itemId: line.item.id,
     batch: line.batch,
     costPricePerPack: line.costPricePerPack,
-    expiryDate: line.expiryDate
-      ? Formatter.naiveDate(new Date(line.expiryDate))
-      : null,
+    expiryDate: {
+      value: line.expiryDate || null,
+    },
+    manufactureDate: {
+      value: line.manufactureDate || null,
+    },
     sellPricePerPack: line.sellPricePerPack,
     packSize: line.packSize,
     numberOfPacks: line.numberOfPacks,
     location: setNullableInput('id', line.location),
-    itemVariantId: setNullableInput('itemVariantId', {
-      itemVariantId: line.itemVariantId,
-    }),
-    vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : undefined,
+    itemVariantId: setNullableInput('id', line.itemVariant),
+    vvmStatusId: setNullableInput('id', 'vvmStatus' in line ? (line.vvmStatus ?? null) : undefined),
     donorId: setNullableInput('donorId', { donorId: line.donor?.id ?? null }), // set to null if undefined, so value is cleared
+    manufacturerId: setNullableInput('manufacturerId', {
+      manufacturerId: line.manufacturer?.id ?? null,
+    }),
     campaignId: setNullableInput('campaignId', {
       campaignId: line.campaign?.id ?? null,
     }),
@@ -166,6 +185,7 @@ const inboundParsers = {
     shippedNumberOfPacks: line.shippedNumberOfPacks ?? null,
     volumePerPack: line.volumePerPack ?? null,
     shippedPackSize: line.shippedPackSize ?? null,
+    status: line.status ?? null,
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };
@@ -198,7 +218,7 @@ const inboundParsers = {
 
 export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    list: async ({ first, offset, sortBy, filterBy }: ListParams) => {
+    list: async ({ first, offset, sortBy, filterBy, type }: ListParams) => {
       const filter = {
         ...filterBy,
         type: { equalTo: InvoiceNodeType.InboundShipment },
@@ -211,19 +231,22 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         desc: !!sortBy.isDesc,
         filter,
         storeId,
+        type,
       });
       return result?.invoices;
     },
-    listAll: async ({ sortBy }: { sortBy: SortBy<InboundRowFragment> }) => {
-      const filter = {
-        type: { equalTo: InvoiceNodeType.InboundShipment },
-      };
-
+    listAll: async ({
+      sortBy,
+      type,
+    }: {
+      sortBy: SortBy<InboundRowFragment>;
+      type?: InvoiceTypeInput[];
+    }) => {
       const result = await sdk.invoices({
         key: inboundParsers.toSortField(sortBy),
         desc: !!sortBy.isDesc,
-        filter,
         storeId,
+        type,
       });
       return result?.invoices;
     },
@@ -277,15 +300,31 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         return result.requisition;
       }
     },
-  },
-  delete: async (invoices: InboundRowFragment[]): Promise<string[]> => {
-    const result =
-      (await sdk.deleteInboundShipments({
+    listSentPurchaseOrders: async (filterBy: FilterBy | null) => {
+      const filter = {
+        ...filterBy,
+        status: { equalTo: PurchaseOrderNodeStatus.Sent },
+      };
+      const result = await sdk.purchaseOrders({
         storeId,
-        deleteInboundShipments: invoices.map(invoice => ({ id: invoice.id })),
-      })) || {};
+        filter,
+      });
+      return result?.purchaseOrders;
+    },
+  },
+  delete: async (
+    invoices: InboundRowFragment[],
+    isExternal = false
+  ): Promise<string[]> => {
+    const variables = {
+      storeId,
+      deleteInboundShipments: invoices.map(invoice => ({ id: invoice.id })),
+    };
 
-    const { batchInboundShipment } = result;
+    const batchInboundShipment = isExternal
+      ? (await sdk.deleteInboundShipmentsExternal(variables))
+          ?.batchInboundShipmentExternal
+      : (await sdk.deleteInboundShipments(variables))?.batchInboundShipment;
 
     if (batchInboundShipment?.deleteInboundShipments) {
       return batchInboundShipment.deleteInboundShipments.map(({ id }) => id);
@@ -294,80 +333,110 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error('Could not delete invoices');
   },
   insert: async (
-    patch: Omit<InsertInboundShipmentMutationVariables, 'storeId'>
+    patch: Omit<InsertInboundShipmentMutationVariables, 'storeId'>,
+    isExternal = false
   ): Promise<string> => {
-    const result =
-      (await sdk.insertInboundShipment({
-        id: patch.id,
-        otherPartyId: patch.otherPartyId,
-        storeId,
-        requisitionId: patch.requisitionId,
-      })) || {};
+    const variables = {
+      id: patch.id,
+      otherPartyId: patch.otherPartyId,
+      storeId,
+      requisitionId: patch.requisitionId,
+      purchaseOrderId: patch.purchaseOrderId,
+      insertLinesFromPurchaseOrder: patch.insertLinesFromPurchaseOrder,
+    };
 
-    const { insertInboundShipment } = result;
+    const insertResult = isExternal
+      ? (await sdk.insertInboundShipmentExternal(variables))
+          ?.insertInboundShipmentExternal
+      : (await sdk.insertInboundShipment(variables))?.insertInboundShipment;
 
-    if (insertInboundShipment?.__typename === 'InvoiceNode') {
-      return insertInboundShipment.id;
+    if (insertResult?.__typename === 'InvoiceNode') {
+      return insertResult.id;
     }
 
-    throw new Error(insertInboundShipment.error.description);
+    throw new Error(
+      (insertResult as any)?.error?.description ?? 'Could not create invoice'
+    );
   },
   update: async (
     patch:
       | RecordPatch<InboundFragment>
       | RecordPatch<InboundRowFragment>
-      | { id: string; defaultDonorUpdate: UpdateDonorInput }
-  ) =>
-    sdk.updateInboundShipment({
+      | { id: string; defaultDonorUpdate: UpdateDonorInput },
+    isExternal = false
+  ) => {
+    const variables = {
       input: inboundParsers.toUpdate(patch),
       storeId,
-    }),
+    };
+    if (isExternal) {
+      return sdk.updateInboundShipmentExternal(variables);
+    }
+    return sdk.updateInboundShipment(variables);
+  },
   insertLinesFromInternalOrder: async (
-    lines: { invoiceId: string; requisitionLineId: string }[]
+    lines: { invoiceId: string; requisitionLineId: string }[],
+    isExternal = false
   ) => {
-    const result = await sdk.insertLinesFromInternalOrder({
+    const variables = {
       storeId,
       input: {
         insertFromInternalOrderLines: lines.map(
           inboundParsers.toInsertLineFromInternalOrder
         ),
       },
-    });
+    };
 
-    return result;
+    if (isExternal) {
+      const result = await sdk.insertLinesFromInternalOrderExternal(variables);
+      return {
+        batchInboundShipment: result.batchInboundShipmentExternal,
+      };
+    }
+    return sdk.insertLinesFromInternalOrder(variables);
   },
-  deleteLines: async (lines: { id: string }[]) => {
-    return sdk.deleteInboundShipmentLines({
+  deleteLines: async (lines: { id: string }[], isExternal = false) => {
+    const variables = {
       storeId,
       input: {
         deleteInboundShipmentLines: lines.map(inboundParsers.toDeleteLine),
       },
-    });
+    };
+
+    if (isExternal) {
+      const result = await sdk.deleteInboundShipmentLinesExternal(variables);
+      return {
+        batchInboundShipment: result.batchInboundShipmentExternal,
+      };
+    }
+    return sdk.deleteInboundShipmentLines(variables);
   },
   updateServiceTax: async ({
     lines,
     taxPercentage,
     type,
+    isExternal = false,
   }: {
     lines: InboundLineFragment[];
     taxPercentage: number;
     type: InvoiceLineNodeType.StockIn | InvoiceLineNodeType.Service;
+    isExternal?: boolean;
   }) => {
     const toUpdateServiceLine = (line: InboundLineFragment) =>
       inboundParsers.toUpdateServiceCharge({ ...line, taxPercentage });
 
-    const result =
-      (await sdk.upsertInboundShipment({
-        storeId,
-        input: {
-          updateInboundShipmentServiceLines:
-            type === InvoiceLineNodeType.Service
-              ? lines.filter(isA.serviceLine).map(toUpdateServiceLine)
-              : [],
-        },
-      })) || {};
+    const input = {
+      updateInboundShipmentServiceLines:
+        type === InvoiceLineNodeType.Service
+          ? lines.filter(isA.serviceLine).map(toUpdateServiceLine)
+          : [],
+    };
 
-    const { batchInboundShipment } = result;
+    const batchInboundShipment = isExternal
+      ? (await sdk.upsertInboundShipmentExternal({ storeId, input }))
+          ?.batchInboundShipmentExternal
+      : (await sdk.upsertInboundShipment({ storeId, input }))
+          ?.batchInboundShipment;
 
     if (batchInboundShipment?.__typename === 'BatchInboundShipmentResponse') {
       return batchInboundShipment;
@@ -375,7 +444,10 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to update invoice');
   },
-  updateLines: async (draftInboundLine: DraftInboundLine[]) => {
+  updateLines: async (
+    draftInboundLine: DraftInboundLine[],
+    isExternal = false
+  ) => {
     const input = {
       insertInboundShipmentLines: draftInboundLine
         .filter(
@@ -388,7 +460,10 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       updateInboundShipmentLines: draftInboundLine
         .filter(
           ({ type, isCreated, isUpdated }) =>
-            !isCreated && isUpdated && type === InvoiceLineNodeType.StockIn
+            !isCreated &&
+            isUpdated &&
+            (type === InvoiceLineNodeType.StockIn ||
+              type === InvoiceLineNodeType.UnallocatedStock)
         )
         .map(inboundParsers.toUpdateLine),
       insertInboundShipmentServiceLines: draftInboundLine
@@ -414,9 +489,18 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         .map(inboundParsers.toDeleteServiceCharge),
     };
 
-    const result = await sdk.upsertInboundShipment({ storeId, input });
+    if (isExternal) {
+      const result = await sdk.upsertInboundShipmentExternal({
+        storeId,
+        input,
+      });
+      // Normalize response so consumers can use the same field name
+      return {
+        batchInboundShipment: result.batchInboundShipmentExternal,
+      };
+    }
 
-    return result;
+    return sdk.upsertInboundShipment({ storeId, input });
   },
   addFromMasterList: async ({
     shipmentId,

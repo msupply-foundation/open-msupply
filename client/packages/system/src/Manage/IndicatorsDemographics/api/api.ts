@@ -2,7 +2,7 @@ import {
   DemographicIndicatorSortFieldInput,
   DemographicProjectionSortFieldInput,
   DemographicSortFieldInput,
-  FilterByWithBoolean,
+  FilterBy,
   InsertDemographicIndicatorInput,
   InsertDemographicProjectionInput,
   isEmpty,
@@ -21,7 +21,7 @@ export type ListParams<T> = {
   first: number;
   offset: number;
   sortBy: SortBy<T>;
-  filterBy?: FilterByWithBoolean | null;
+  filterBy?: FilterBy | null;
 };
 // Leaving this here as probably want to sort by other values in future ie population percentage
 const Parsers = {

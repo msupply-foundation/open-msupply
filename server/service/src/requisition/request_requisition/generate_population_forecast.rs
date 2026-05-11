@@ -1,0 +1,406 @@
+use crate::service_provider::ServiceContext;
+use repository::{
+    vaccine_course::vaccine_course_store_config::{
+        VaccineCourseStoreConfigFilter, VaccineCourseStoreConfigRepository,
+    },
+    EqualFilter, NameFilter, NameRepository, RepositoryError, StorageConnection, StoreFilter,
+    VaccinationCourseRepository, VaccinationCourseRow,
+};
+use serde::{Deserialize, Serialize};
+use serde_json::{Map, Value};
+use std::collections::{HashMap, HashSet};
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ForecastQuantityData {
+    pub forecast_total_units: f64,
+    pub forecast_total_doses: f64,
+    pub vaccine_courses: Vec<CourseData>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct CourseData {
+    pub course_title: String,
+    pub number_of_doses: i32,
+    pub coverage_rate: f64,
+    pub target_population: f64,
+    pub wastage_rate: f64,
+    pub loss_factor: f64,
+    pub annual_target_doses: f64,
+    pub buffer_stock_months: f64,
+    pub supply_period_months: f64,
+    pub doses_per_unit: i32,
+    pub forecast_doses: f64,
+    pub forecast_units: f64,
+}
+
+pub fn calculate_forecasting_fields(
+    ctx: &ServiceContext,
+    item_ids: Vec<String>,
+) -> Result<HashMap<String, Option<ForecastQuantityData>>, RepositoryError> {
+    let store_properties = match get_store_properties_and_validate(&ctx.connection, &ctx.store_id)?
+    {
+        Some(props) => props,
+        None => return Ok(HashMap::new()),
+    };
+
+    calculate_forecast_quantities(&ctx.connection, &ctx.store_id, &store_properties, item_ids)
+}
+
+struct StoreProperties {
+    buffer_stock_months: f64,
+    supply_period_months: f64,
+    population_served: f64,
+}
+
+fn get_store_properties_and_validate(
+    connection: &StorageConnection,
+    store_id: &str,
+) -> Result<Option<StoreProperties>, RepositoryError> {
+    let store_properties: Map<String, Value> = NameRepository::new(connection)
+        .query_by_filter(
+            store_id,
+            NameFilter::new()
+                .store(StoreFilter::new().id(EqualFilter::equal_to(store_id.to_string()))),
+        )?
+        .pop()
+        .and_then(|n| n.properties)
+        .and_then(|json_str| serde_json::from_str(&json_str).ok())
+        .unwrap_or_default();
+
+    let buffer_stock_months = store_properties
+        .get("buffer_stock")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.0);
+
+    let supply_period_months = store_properties
+        .get("supply_interval")
+        .and_then(|v| v.as_f64());
+
+    let population_served = store_properties
+        .get("population_served")
+        .and_then(|v| v.as_f64());
+
+    match (supply_period_months, population_served) {
+        (Some(supply), Some(population)) => Ok(Some(StoreProperties {
+            buffer_stock_months,
+            supply_period_months: supply,
+            population_served: population,
+        })),
+        _ => {
+            log::debug!(
+                "Forecasting: Missing Store Properties for store_id {store_id}. Values:\n - Supply interval: {supply_period_months:?}\n - Population served: {population_served:?}"
+            );
+            Ok(None)
+        }
+    }
+}
+
+struct CourseGroup {
+    course_name: String,
+    demographic_name: Option<String>,
+    coverage_rate: f64,
+    wastage_rate: f64,
+    population_percentage: f64,
+    vaccine_doses: i32,
+    dose_labels: HashSet<String>,
+}
+
+fn calculate_forecast_quantities(
+    connection: &StorageConnection,
+    store_id: &str,
+    StoreProperties {
+        buffer_stock_months,
+        supply_period_months,
+        population_served,
+    }: &StoreProperties,
+    item_ids: Vec<String>,
+) -> Result<HashMap<String, Option<ForecastQuantityData>>, RepositoryError> {
+    let vaccination_courses =
+        VaccinationCourseRepository::new(connection).query_by_item_ids(item_ids.clone())?;
+
+    let store_config_map: HashMap<String, (Option<f64>, Option<f64>)> =
+        VaccineCourseStoreConfigRepository::new(connection)
+            .query_by_filter(
+                VaccineCourseStoreConfigFilter::new()
+                    .store_id(EqualFilter::equal_to(store_id.to_string())),
+            )?
+            .into_iter()
+            .map(|row| (row.vaccine_course_id, (row.wastage_rate, row.coverage_rate)))
+            .collect();
+
+    let mut results = HashMap::new();
+
+    for item_id in item_ids {
+        let item_vaccination_courses: Vec<&VaccinationCourseRow> = vaccination_courses
+            .iter()
+            .filter(|course| course.item_id == item_id)
+            .collect();
+
+        if item_vaccination_courses.is_empty() {
+            log::debug!("Forecasting: No vaccine courses for item {item_id}");
+            continue;
+        }
+
+        let mut course_groups: HashMap<
+            String, // course key (vaccine_course_name + demographic_name)
+            CourseGroup,
+        > = HashMap::new();
+
+        for course in item_vaccination_courses {
+            let course_key = format!(
+                "{}-{}",
+                course.vaccine_course_name,
+                course.demographic_name.as_deref().unwrap_or("")
+            );
+
+            let group = course_groups.entry(course_key).or_insert_with(|| {
+                let store_config = store_config_map.get(&course.id);
+                let wastage_rate = store_config
+                    .and_then(|(w, _)| *w)
+                    .unwrap_or(course.wastage_rate);
+                let coverage_rate = store_config
+                    .and_then(|(_, c)| *c)
+                    .unwrap_or(course.coverage_rate);
+
+                CourseGroup {
+                    course_name: course.vaccine_course_name.clone(),
+                    demographic_name: course.demographic_name.clone(),
+                    coverage_rate,
+                    wastage_rate,
+                    population_percentage: course.population_percentage.unwrap_or(100.0),
+                    vaccine_doses: course.vaccine_doses,
+                    dose_labels: HashSet::new(),
+                }
+            });
+
+            group.dose_labels.insert(course.dose_label.clone());
+        }
+
+        let mut forecast_values = Vec::new();
+        let mut forecast_total_doses = 0.0;
+        let mut forecast_total_units = 0.0;
+
+        for (_, group) in course_groups {
+            let coverage_rate = group.coverage_rate;
+            let wastage_rate = group.wastage_rate;
+            let population_percentage = group.population_percentage;
+
+            let target_population = population_served * (population_percentage / 100.0);
+            let loss_factor = 1.0 / (1.0 - wastage_rate / 100.0);
+
+            let doses_per_unit = if group.vaccine_doses == 0 {
+                1
+            } else {
+                group.vaccine_doses
+            };
+
+            let number_of_doses = group.dose_labels.len() as f64;
+            let annual_target_doses =
+                target_population * number_of_doses * (coverage_rate / 100.0) * loss_factor;
+            let forecast_doses =
+                (annual_target_doses / 12.0) * (supply_period_months + buffer_stock_months);
+            let forecast_units = forecast_doses / doses_per_unit as f64;
+
+            let course_title = format!(
+                "{} ({})",
+                group.course_name,
+                group.demographic_name.as_deref().unwrap_or_default()
+            );
+
+            forecast_values.push(CourseData {
+                course_title,
+                number_of_doses: number_of_doses as i32,
+                coverage_rate,
+                target_population,
+                wastage_rate,
+                loss_factor,
+                annual_target_doses,
+                buffer_stock_months: *buffer_stock_months,
+                supply_period_months: *supply_period_months,
+                doses_per_unit,
+                forecast_doses,
+                forecast_units,
+            });
+
+            forecast_total_doses += forecast_doses;
+            forecast_total_units += forecast_units;
+        }
+
+        let forecast_data = if forecast_values.is_empty() {
+            None
+        } else {
+            Some(ForecastQuantityData {
+                forecast_total_units,
+                forecast_total_doses,
+                vaccine_courses: forecast_values,
+            })
+        };
+
+        results.insert(item_id, forecast_data);
+    }
+
+    Ok(results)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::service_provider::ServiceProvider;
+    use repository::{
+        mock::{
+            mock_demographic_a, mock_vaccine_course_a, mock_vaccine_item_a, MockData,
+            MockDataInserts,
+        },
+        test_db::setup_all_with_data,
+        vaccine_course::vaccine_course_row::VaccineCourseRow,
+    };
+
+    fn mock_vaccine_course() -> VaccineCourseRow {
+        VaccineCourseRow {
+            demographic_id: Some(mock_demographic_a().id.clone()),
+            coverage_rate: 80.0,
+            wastage_rate: 10.0,
+            ..mock_vaccine_course_a()
+        }
+    }
+
+    // store_a: store-specific wastage (50%) and coverage (60%)
+    // Target population: 10000.0 * (25.0 / 100.0) = 2500.0
+    // Loss factor: 1 / (1 - 0.5) = 2.0
+    // Annual target doses: 2500.0 * 3 * (60.0 / 100.0) * 2.0 = 9000.0
+    // Forecast doses: (9000.0 / 12) * (3 + 2) = 3750.0
+    // Forecast units: 3750.0 / 2 = 1875.0
+    fn forecast_result_store_specific_config() -> ForecastQuantityData {
+        ForecastQuantityData {
+            forecast_total_units: 1875.0,
+            forecast_total_doses: 3750.0,
+            vaccine_courses: vec![CourseData {
+                course_title: "Vaccine Course A (demographic_1)".to_string(),
+                number_of_doses: 3,
+                coverage_rate: 60.0,
+                target_population: 2500.0,
+                wastage_rate: 50.0,
+                loss_factor: 2.0,
+                annual_target_doses: 9000.0,
+                buffer_stock_months: 2.0,
+                supply_period_months: 3.0,
+                doses_per_unit: 2,
+                forecast_doses: 3750.0,
+                forecast_units: 1875.0,
+            }],
+        }
+    }
+
+    // store_b (no store config): course wastage (10%), course coverage (80%)
+    // Target population: 10000.0 * (25.0 / 100.0) = 2500.0
+    // Loss factor: 1 / (1 - 0.1) = 1.1111111111111112
+    // Annual target doses: 2500.0 * 3 * (80.0 / 100.0) * 1.1111111111111112 = 6666.666666666667
+    // Forecast doses: (6666.666666666667 / 12) * (3 + 2) = 2777.777777777778
+    // Forecast units: 2777.777777777778 / 2
+    fn forecast_result_global_rates() -> ForecastQuantityData {
+        ForecastQuantityData {
+            forecast_total_units: 1388.888888888889,
+            forecast_total_doses: 2777.777777777778,
+            vaccine_courses: vec![CourseData {
+                course_title: "Vaccine Course A (demographic_1)".to_string(),
+                number_of_doses: 3,
+                coverage_rate: 80.0,
+                target_population: 2500.0,
+                wastage_rate: 10.0,
+                loss_factor: 1.1111111111111112,
+                annual_target_doses: 6666.666666666667,
+                buffer_stock_months: 2.0,
+                supply_period_months: 3.0,
+                doses_per_unit: 2,
+                forecast_doses: 2777.777777777778,
+                forecast_units: 1388.888888888889,
+            }],
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_store_specific_config() {
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "test_store_specific_config",
+            MockDataInserts::all(),
+            MockData {
+                vaccine_courses: vec![mock_vaccine_course()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let connection = service_provider.connection().unwrap();
+
+        let store_properties = StoreProperties {
+            buffer_stock_months: 2.0,
+            supply_period_months: 3.0,
+            population_served: 10000.0,
+        };
+
+        let item_ids = vec![mock_vaccine_item_a().id.clone()];
+
+        // store_a has store-specific wastage (50%), coverage rae (60%)
+        let result = calculate_forecast_quantities(
+            &connection,
+            "store_a",
+            &store_properties,
+            item_ids.clone(),
+        )
+        .unwrap();
+
+        assert_eq!(result.len(), 1);
+        let item_id = &mock_vaccine_item_a().id;
+        let forecast_data = result.get(item_id).unwrap();
+
+        if let Some(forecast) = forecast_data {
+            assert_eq!(forecast, &forecast_result_store_specific_config());
+        } else {
+            panic!("Expected forecast data but got None");
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_global_forecasting_config() {
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "test_global_forecasting_config",
+            MockDataInserts::all(),
+            MockData {
+                vaccine_courses: vec![mock_vaccine_course()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let connection = service_provider.connection().unwrap();
+
+        let store_properties = StoreProperties {
+            buffer_stock_months: 2.0,
+            supply_period_months: 3.0,
+            population_served: 10000.0,
+        };
+
+        let item_ids = vec![mock_vaccine_item_a().id.clone()];
+
+        let result: HashMap<String, Option<ForecastQuantityData>> = calculate_forecast_quantities(
+            &connection,
+            "store_b",
+            &store_properties,
+            item_ids.clone(),
+        )
+        .unwrap();
+
+        assert_eq!(result.len(), 1);
+        let item_id = &mock_vaccine_item_a().id;
+        let forecast_data = result.get(item_id).unwrap();
+
+        if let Some(forecast) = forecast_data {
+            assert_eq!(forecast, &forecast_result_global_rates());
+        } else {
+            panic!("Expected forecast data but got None");
+        }
+    }
+}

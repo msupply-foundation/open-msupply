@@ -25,7 +25,7 @@ pub struct PatientParamsV4 {
     pub code: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PatientV4 {
     #[serde(rename = "ID")]
     pub id: String,
@@ -61,6 +61,7 @@ pub struct NameStoreJoinV2 {
 #[derive(Debug)]
 pub enum PatientV4Error {
     AuthenticationFailed,
+    HttpStatusError(StatusCode, String),
     InvalidResponse(serde_json::Error),
     ConnectionError(reqwest::Error),
 }
@@ -91,6 +92,12 @@ impl PatientApiV4 {
 
         if response.status() == StatusCode::UNAUTHORIZED {
             return Err(PatientV4Error::AuthenticationFailed);
+        }
+        if response.status() != StatusCode::OK {
+            return Err(PatientV4Error::HttpStatusError(
+                response.status(),
+                response.text().await.unwrap_or_else(|_| "".to_string()),
+            ));
         }
         response
             .json()

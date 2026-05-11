@@ -1,31 +1,35 @@
 use std::any::Any;
 
 use crate::db_diesel::{
-    item_link_row::item_link, name_link_row::name_link, period::period_row::period,
+    item_link_row::item_link, name_row::name, period::period_row::period,
     program_requisition::program_row::program, store_row::store, user_row::user_account,
+    StorageConnection,
 };
+use crate::diesel_macros::define_linked_tables;
 use crate::repository_error::RepositoryError;
-use crate::StorageConnection;
 
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
-use crate::{Delete, Upsert};
+use crate::db_diesel::changelog::changelog::RowOrId;
+use crate::{ChangelogRepository, RowActionType};
+use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
-use diesel::dsl::max;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-
-table! {
-    requisition (id) {
-        id -> Text,
+define_linked_tables! {
+    view: requisition = "requisition_view",
+    core: requisition_with_links = "requisition",
+    struct: RequisitionRow,
+    repo: RequisitionRowRepository,
+    shared: {
         requisition_number -> Bigint,
-        name_link_id -> Text,
         store_id -> Text,
         user_id -> Nullable<Text>,
-        #[sql_name = "type"] type_ -> crate::db_diesel::requisition::requisition_row::RequisitionTypeMapping,
-        #[sql_name = "status"] status -> crate::db_diesel::requisition::requisition_row::RequisitionStatusMapping,
+        #[sql_name = "type"]
+        type_ -> crate::db_diesel::requisition::requisition_row::RequisitionTypeMapping,
+        #[sql_name = "status"]
+        status -> crate::db_diesel::requisition::requisition_row::RequisitionStatusMapping,
         created_datetime -> Timestamp,
         sent_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
@@ -41,27 +45,39 @@ table! {
         period_id -> Nullable<Text>,
         order_type -> Nullable<Text>,
         is_emergency -> Bool,
+        created_from_requisition_id -> Nullable<Text>,
+        name_store_id -> Nullable<Text>,
+    },
+    links: {
+        name_link_id -> name_id,
+    },
+    optional_links: {
+        destination_customer_link_id -> destination_customer_id,
     }
+
 }
 
-joinable!(requisition -> name_link (name_link_id));
+joinable!(requisition -> name (name_id));
 joinable!(requisition -> store (store_id));
 joinable!(requisition -> user_account (user_id));
 joinable!(requisition -> period (period_id));
 joinable!(requisition -> program (program_id));
-allow_tables_to_appear_in_same_query!(requisition, name_link);
 allow_tables_to_appear_in_same_query!(requisition, item_link);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum RequisitionType {
+    #[default]
     Request,
     Response,
+    Imprest,
+    StockHistory,
 }
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum RequisitionStatus {
+    #[default]
     Draft,
     New,
     Sent,
@@ -81,14 +97,13 @@ pub enum ApprovalStatusType {
 }
 
 #[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, TS, Serialize, Deserialize,
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, TS, Serialize, Deserialize, Default,
 )]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = requisition)]
 pub struct RequisitionRow {
     pub id: String,
     pub requisition_number: i64,
-    pub name_link_id: String,
     pub store_id: String,
     pub user_id: Option<String>,
     #[diesel(column_name = type_)]
@@ -109,38 +124,12 @@ pub struct RequisitionRow {
     pub period_id: Option<String>,
     pub order_type: Option<String>,
     pub is_emergency: bool,
+    pub created_from_requisition_id: Option<String>, // for Internal Orders created from a Requisition
+    pub name_store_id: Option<String>,
+    // Resolved from name_link - must be last to match view column order
+    pub name_id: String,
+    pub destination_customer_id: Option<String>,
 }
-
-impl Default for RequisitionRow {
-    fn default() -> Self {
-        Self {
-            r#type: RequisitionType::Request,
-            status: RequisitionStatus::Draft,
-            created_datetime: Default::default(),
-            // Defaults
-            id: Default::default(),
-            user_id: Default::default(),
-            requisition_number: Default::default(),
-            name_link_id: Default::default(),
-            store_id: Default::default(),
-            sent_datetime: Default::default(),
-            finalised_datetime: Default::default(),
-            expected_delivery_date: Default::default(),
-            colour: Default::default(),
-            comment: Default::default(),
-            their_reference: Default::default(),
-            max_months_of_stock: Default::default(),
-            min_months_of_stock: Default::default(),
-            approval_status: Default::default(),
-            linked_requisition_id: Default::default(),
-            program_id: None,
-            period_id: None,
-            order_type: None,
-            is_emergency: false,
-        }
-    }
-}
-
 pub struct RequisitionRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -150,45 +139,32 @@ impl<'a> RequisitionRowRepository<'a> {
         RequisitionRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &RequisitionRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(requisition::table)
-            .values(row)
-            .on_conflict(requisition::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row, RowActionType::Upsert)
+    pub fn upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
+        self._upsert(row)?;
+        let changelog = RequisitionRow::generate_changelog(
+            RowOrId::Row(row),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    fn insert_changelog(
-        &self,
-        row: &RequisitionRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Requisition,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_link_id: Some(row.name_link_id.clone()),
-        };
+    pub fn delete(&self, requisition_id: &str) -> Result<(), RepositoryError> {
+        let changelog = RequisitionRow::generate_changelog(
+            RowOrId::Id(requisition_id),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
 
-        ChangelogRepository::new(self.connection).insert(&row)
-    }
+        diesel::delete(
+            requisition_with_links::table.filter(requisition_with_links::id.eq(requisition_id)),
+        )
+        .execute(self.connection.lock().connection())?;
 
-    pub fn delete(&self, requisition_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let requisition = self.find_one_by_id(requisition_id)?;
-        let requisition = match requisition {
-            Some(requisition) => requisition,
-            None => return Ok(None),
-        };
-
-        let change_log_id = self.insert_changelog(&requisition, RowActionType::Delete)?;
-
-        diesel::delete(requisition::table.filter(requisition::id.eq(requisition_id)))
-            .execute(self.connection.lock().connection())?;
-
-        Ok(Some(change_log_id))
+        Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<RequisitionRow>, RepositoryError> {
@@ -210,17 +186,42 @@ impl<'a> RequisitionRowRepository<'a> {
                     .eq(r#type)
                     .and(requisition::store_id.eq(store_id)),
             )
-            .select(max(requisition::requisition_number))
+            .select(diesel::dsl::max(requisition::requisition_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<RequisitionRow>, RepositoryError> {
+        Ok(requisition::table
+            .filter(requisition::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct RequisitionRowDelete(pub String);
 impl Delete for RequisitionRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        RequisitionRowRepository::new(con).delete(&self.0)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RequisitionRow::generate_changelog(
+                RowOrId::Id(&self.0),
+                con,
+                RowActionType::Delete,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(
+            requisition_with_links::table.filter(requisition_with_links::id.eq(&self.0)),
+        )
+        .execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -232,9 +233,25 @@ impl Delete for RequisitionRowDelete {
 }
 
 impl Upsert for RequisitionRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = RequisitionRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        RequisitionRowRepository::new(con)._upsert(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RequisitionRow::generate_changelog(
+                RowOrId::Row(self),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
@@ -295,12 +312,12 @@ mod test {
             assert_eq!(result.approval_status, row.approval_status);
         }
 
-        assert_eq!(ApprovalStatusType::Approved.is_approved(), true);
-        assert_eq!(ApprovalStatusType::ApprovedByAnother.is_approved(), true);
-        assert_eq!(ApprovalStatusType::AutoApproved.is_approved(), true);
-        assert_eq!(ApprovalStatusType::Denied.is_approved(), false);
-        assert_eq!(ApprovalStatusType::DeniedByAnother.is_approved(), false);
-        assert_eq!(ApprovalStatusType::Pending.is_approved(), false);
-        assert_eq!(ApprovalStatusType::None.is_approved(), false);
+        assert!(ApprovalStatusType::Approved.is_approved());
+        assert!(ApprovalStatusType::ApprovedByAnother.is_approved());
+        assert!(ApprovalStatusType::AutoApproved.is_approved());
+        assert!(!ApprovalStatusType::Denied.is_approved());
+        assert!(!ApprovalStatusType::DeniedByAnother.is_approved());
+        assert!(!ApprovalStatusType::Pending.is_approved());
+        assert!(!ApprovalStatusType::None.is_approved());
     }
 }

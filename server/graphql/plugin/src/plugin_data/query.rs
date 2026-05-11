@@ -57,7 +57,7 @@ pub fn get_plugin_data(
 
     // Filter by plugin_code
     let mut filter = filter.map(|f| f.to_domain()).unwrap_or_default();
-    filter.plugin_code = Some(EqualFilter::equal_to(plugin_code));
+    filter.plugin_code = Some(EqualFilter::equal_to(plugin_code.to_owned()));
 
     let plugin_data = service_provider
         .plugin_data_service

@@ -1,20 +1,20 @@
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, GenderType, NameRow, NameRowDelete, NameRowRepository,
-    NameRowType, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, GenderType, NameRow, NameRowDelete,
+    NameRowType, Row, StorageConnection, SyncBufferRow,
+
 };
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
+
 };
 
 use serde::{Deserialize, Serialize};
 
-use crate::sync::translations::currency::CurrencyTranslation;
+use crate::sync::{translations::currency::CurrencyTranslation, CentralServerConfig};
 
-use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyNameRowType {
@@ -54,11 +54,14 @@ impl LegacyNameRowType {
 pub struct LegacyNameRow {
     #[serde(rename = "ID")]
     pub id: String,
+
     pub name: String,
     pub code: String,
     pub r#type: LegacyNameRowType,
+
     #[serde(rename = "customer")]
     pub is_customer: bool,
+
     #[serde(rename = "supplier")]
     pub is_supplier: bool,
 
@@ -68,11 +71,13 @@ pub struct LegacyNameRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "first")]
     pub first_name: Option<String>,
+
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "last")]
     pub last_name: Option<String>,
 
     pub female: bool,
+
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub date_of_birth: Option<NaiveDate>,
@@ -86,12 +91,14 @@ pub struct LegacyNameRow {
 
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub comment: Option<String>,
+
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub country: Option<String>,
 
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "bill_address1")]
     pub address1: Option<String>,
+
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "bill_address2")]
     pub address2: Option<String>,
@@ -105,8 +112,10 @@ pub struct LegacyNameRow {
 
     #[serde(rename = "manufacturer")]
     pub is_manufacturer: bool,
+
     #[serde(rename = "donor")]
     pub is_donor: bool,
+
     #[serde(rename = "hold")]
     pub on_hold: bool,
 
@@ -127,27 +136,42 @@ pub struct LegacyNameRow {
 
     #[serde(rename = "isDeceased")]
     pub is_deceased: bool,
+
     #[serde(rename = "om_created_datetime")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub created_datetime: Option<NaiveDateTime>,
+
     #[serde(rename = "om_gender")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub gender: Option<GenderType>,
-    #[serde(rename = "om_date_of_death")]
+
     #[serde(default)]
+    #[serde(rename = "om_date_of_death")]
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub date_of_death: Option<NaiveDate>,
+
+    #[serde(default)]
     pub custom_data: Option<serde_json::Value>,
+
+    #[serde(default)]
     #[serde(rename = "HSH_code")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub hsh_code: Option<String>,
+
+    #[serde(default)]
     #[serde(rename = "HSH_name")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub hsh_name: Option<String>,
+
+    #[serde(default)]
     pub margin: Option<f64>,
+
+    #[serde(default)]
     #[serde(rename = "freightfac")]
     pub freight_factor: Option<f64>,
+
+    #[serde(default)]
     #[serde(rename = "currency_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub currency_id: Option<String>,
@@ -179,7 +203,23 @@ impl SyncTranslation for NameTranslation {
     ) -> bool {
         match r#type {
             ToSyncRecordTranslationType::PushToLegacyCentral => {
-                self.change_log_type().as_ref() == Some(&row.table_name)
+                let is_name_record = self.change_log_type().as_ref() == Some(&row.table_name);
+
+                if !is_name_record {
+                    return false;
+                }
+
+                // Check if we're the central server, if we are don't push changes received from remote sites
+                // Otherwise we could end up syncing changes back to the site they came from
+                if CentralServerConfig::is_central_server() && row.source_site_id.is_some() {
+                    log::debug!(
+                        "Not pushing name update from remote site back to central for id: {}",
+                        row.record_id
+                    );
+                    return false;
+                }
+
+                true
             }
             // We are also pushing to omsupply central so that it's available for
             // cross site patient details sharing, same for names_store_join
@@ -232,7 +272,7 @@ impl SyncTranslation for NameTranslation {
             margin,
             freight_factor,
             currency_id,
-        } = serde_json::from_str::<LegacyNameRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         // Custom data for facility or name only (for others, say patient, don't need to have extra overhead or push translation back to json)
         let r#type = legacy_type.to_name_type();
@@ -305,9 +345,13 @@ impl SyncTranslation for NameTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Name(name_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
         let NameRow {
             id,
             name,
@@ -345,12 +389,7 @@ impl SyncTranslation for NameTranslation {
             currency_id,
             // See comment in pull translation
             custom_data_string: _,
-        } = NameRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Name row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = name_row;
         if deleted_datetime.is_some() {
             return Ok(PushTranslateResult::Ignored(
                 "Ignore pushing soft deleted name".to_string(),
@@ -408,11 +447,7 @@ impl SyncTranslation for NameTranslation {
             custom_data: None,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     // TODO soft delete
@@ -443,7 +478,12 @@ mod tests {
             // TODO add match record here
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
-                .unwrap();
+                .unwrap_or_else(|_| {
+                    panic!(
+                        "Error translating from upsert sync record {:?}",
+                        record.sync_buffer_row.record_id
+                    )
+                });
 
             assert_eq!(translation_result, record.translated_record);
         }
@@ -452,7 +492,12 @@ mod tests {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
-                .unwrap();
+                .unwrap_or_else(|_| {
+                    panic!(
+                        "Error translating from delete sync record {:?}",
+                        record.sync_buffer_row.record_id
+                    )
+                });
 
             assert_eq!(translation_result, record.translated_record);
         }

@@ -2,25 +2,26 @@ use crate::sync::translations::{
     currency::CurrencyTranslation, invoice::InvoiceTranslation, item::ItemTranslation,
     item_variant::ItemVariantTranslation, location::LocationTranslation, reason::ReasonTranslation,
     stock_line::StockLineTranslation,
+
 };
 
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
-    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineType,
-    InvoiceRowRepository, InvoiceType, ItemRowRepository, StockLineRowRepository,
+    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineStatus,
+    InvoiceLineType, InvoiceRowRepository, InvoiceType, ItemRowRepository, StockLineRowRepository,
     StorageConnection, SyncBufferRow,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option_string, object_fields_as_option,
     zero_date_as_option,
+
 };
 
-use super::{
-    is_active_record_on_site, utils::clear_invalid_location_id, ActiveRecordCheck,
-    PullTranslateResult, PushTranslateResult, SyncTranslation,
-};
+use super::{is_active_record_on_site, utils::clear_invalid_location_id, ActiveRecordCheck, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyTransLineType {
@@ -47,6 +48,12 @@ pub struct TransLineRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub program_id: Option<String>,
+    #[serde(default)]
+    pub status: Option<String>,
+    #[serde(default)]
+    pub manufacture_date: Option<NaiveDate>,
+    #[serde(default)]
+    pub purchase_order_line_id: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -119,6 +126,10 @@ pub struct LegacyTransLineRow {
     pub volume_per_pack: f64,
     #[serde(rename = "sent_pack_size")]
     pub shipped_pack_size: Option<f64>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "manufacturer_ID")]
+    #[serde(default)]
+    pub manufacturer_id: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -184,14 +195,14 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
-        } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
+            manufacturer_id,
+        } = sync_record.deserialize()?;
 
         let line_type = match to_invoice_line_type(&r#type) {
             Some(line_type) => line_type,
             None => {
                 return Ok(PullTranslateResult::Ignored(format!(
-                    "Unsupported line type {:?}",
-                    r#type
+                    "Unsupported line type {type:?}"
                 )))
             }
         };
@@ -200,8 +211,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             Some(invoice) => invoice,
             None => {
                 return Err(anyhow::Error::msg(format!(
-                    "Failed to get invoice: {}",
-                    invoice_id
+                    "Failed to get invoice: {invoice_id}"
                 )))
             }
         };
@@ -223,10 +233,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                 let item = match ItemRowRepository::new(connection).find_active_by_id(&item_id)? {
                     Some(item) => item,
                     None => {
-                        return Err(anyhow::Error::msg(format!(
-                            "Failed to get item: {}",
-                            item_id
-                        )))
+                        return Err(anyhow::Error::msg(format!("Failed to get item: {item_id}")))
                     }
                 };
                 let total_multiplier = match r#type {
@@ -247,6 +254,7 @@ impl SyncTranslation for InvoiceLineTranslation {
 
                 let total = total_multiplier * number_of_packs;
                 (item.code, None, total, total)
+            
             }
         };
 
@@ -268,9 +276,7 @@ impl SyncTranslation for InvoiceLineTranslation {
 
         if !is_stock_line_valid {
             log::warn!(
-                "Stock line is not valid, invoice_line_id: {}, stock_line_id: {:?}",
-                id,
-                stock_line_id
+                "Stock line is not valid, invoice_line_id: {id}, stock_line_id: {stock_line_id:?}"
             );
         }
 
@@ -296,6 +302,9 @@ impl SyncTranslation for InvoiceLineTranslation {
         let TransLineRowOmsFields {
             campaign_id,
             program_id,
+            status,
+            manufacture_date,
+            purchase_order_line_id,
         } = oms_fields.unwrap_or_default();
 
         let result = InvoiceLineRow {
@@ -321,7 +330,8 @@ impl SyncTranslation for InvoiceLineTranslation {
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
-            donor_link_id: donor_id,
+            donor_id,
+            manufacturer_id,
             reason_option_id,
             vvm_status_id,
             campaign_id,
@@ -329,6 +339,14 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            manufacture_date,
+            purchase_order_line_id,
+            status: match status.as_deref() {
+                Some("PENDING") => Some(repository::InvoiceLineStatus::Pending),
+                Some("PASSED") => Some(repository::InvoiceLineStatus::Passed),
+                Some("REJECTED") => Some(repository::InvoiceLineStatus::Rejected),
+                _ => None,
+            },
         };
 
         let result = adjust_negative_values(result);
@@ -351,9 +369,15 @@ impl SyncTranslation for InvoiceLineTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let Some(invoice_line) = InvoiceLineRepository::new(connection)
-            .query_one(InvoiceLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
+        let Row::InvoiceLine(invoice_line_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let Some(invoice_line) = InvoiceLineRepository::new(connection).query_one(
+            InvoiceLineFilter::new().id(EqualFilter::equal_to(invoice_line_row.id)),
+        )?
         else {
             return Err(anyhow::anyhow!("invoice_line row not found"));
         };
@@ -383,7 +407,8 @@ impl SyncTranslation for InvoiceLineTranslation {
                     foreign_currency_price_before_tax,
                     item_variant_id,
                     linked_invoice_id,
-                    donor_link_id,
+                    donor_id: donor_link_id,
+                    manufacturer_id,
                     vvm_status_id,
                     reason_option_id,
                     campaign_id,
@@ -391,6 +416,9 @@ impl SyncTranslation for InvoiceLineTranslation {
                     shipped_number_of_packs,
                     volume_per_pack,
                     shipped_pack_size,
+                    status,
+                    manufacture_date,
+                    purchase_order_line_id,
                 },
             item_row,
             ..
@@ -399,6 +427,14 @@ impl SyncTranslation for InvoiceLineTranslation {
         let oms_fields = Some(TransLineRowOmsFields {
             campaign_id,
             program_id,
+            status: match status {
+                Some(InvoiceLineStatus::Pending) => Some("PENDING".to_string()),
+                Some(InvoiceLineStatus::Passed) => Some("PASSED".to_string()),
+                Some(InvoiceLineStatus::Rejected) => Some("REJECTED".to_string()),
+                None => None,
+            },
+            manufacture_date,
+            purchase_order_line_id,
         });
 
         let legacy_row = LegacyTransLineRow {
@@ -431,12 +467,9 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            manufacturer_id,
         };
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -491,13 +524,15 @@ fn adjust_negative_values(line: InvoiceLineRow) -> InvoiceLineRow {
 mod tests {
     use crate::sync::{
         test::merge_helpers::merge_all_item_links, translations::ToSyncRecordTranslationType,
+    
     };
 
     use super::*;
     use repository::{
         mock::{mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogFilter, ChangelogRepository, KeyType, KeyValueStoreRow,
+        ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, KeyType,
+        KeyValueStoreRow, RowOrDelete,
     };
     use serde_json::json;
 
@@ -558,23 +593,26 @@ mod tests {
 
         merge_all_item_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(ChangelogFilter::new().table_name(ChangelogTableName::InvoiceLine.equal_to())),
-            )
-            .unwrap();
+        let entries = ChangelogRepository::new(&connection).query_with_data(
+            ChangelogCondition::table_name::equal(ChangelogTableName::InvoiceLine),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1_000_000,
+            },
+        )
+        .unwrap();
 
         let translator = InvoiceLineTranslation {};
-        for changelog in changelogs {
+        for entry in entries {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));

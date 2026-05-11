@@ -8,7 +8,11 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, Upsert};
+use crate::SourceSiteId;
+use crate::{
+    ChangelogRepository, ChangelogSyncType, RowActionType,
+    Upsert,
+};
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -85,7 +89,6 @@ pub struct SyncFileReferenceRow {
     pub created_datetime: NaiveDateTime,
     pub deleted_datetime: Option<NaiveDateTime>,
 }
-
 pub struct SyncFileReferenceRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -111,24 +114,15 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
     pub fn upsert_one(
         &self,
         sync_file_reference_row: &SyncFileReferenceRow,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         self._upsert_one(sync_file_reference_row)?;
-        self.insert_changelog(sync_file_reference_row.id.to_owned(), RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        sync_file_reference_id: String,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::SyncFileReference,
-            record_id: sync_file_reference_id,
-            row_action: action,
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+        let changelog = SyncFileReferenceRow::generate_changelog(
+            sync_file_reference_row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(
@@ -146,7 +140,13 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         diesel::update(sync_file_reference.filter(id.eq(sync_file_reference_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(sync_file_reference_id.to_owned(), RowActionType::Upsert)?;
+        let changelog = SyncFileReferenceRow::generate_changelog(
+            sync_file_reference_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
         Ok(())
     }
 
@@ -176,13 +176,34 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         self._upsert_one(sync_file_reference_row)?;
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<SyncFileReferenceRow>, RepositoryError> {
+        Ok(sync_file_reference::table
+            .filter(sync_file_reference::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for SyncFileReferenceRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        // We'll return the later changelog id, as that's the one that will be marked as coming from this site...
-        let cursor_id = SyncFileReferenceRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        SyncFileReferenceRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

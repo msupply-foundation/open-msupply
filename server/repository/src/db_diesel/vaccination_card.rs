@@ -9,6 +9,7 @@ table! {
         id -> Text,
         vaccine_course_id -> Text,
         vaccine_course_dose_id -> Text,
+        can_skip_dose -> Bool,
         label -> Text,
         min_interval_days -> Integer,
         min_age -> Double,
@@ -33,6 +34,7 @@ pub struct VaccinationCardRow {
     pub id: String,
     pub vaccine_course_id: String,
     pub vaccine_course_dose_id: String,
+    pub can_skip_dose: bool,
     pub label: String,
     pub min_interval_days: i32,
     pub min_age: f64,
@@ -65,7 +67,7 @@ impl<'a> VaccinationCardRepository<'a> {
 
         apply_equal_filter!(
             query,
-            Some(EqualFilter::equal_to(&program_enrolment_id)),
+            Some(EqualFilter::equal_to(program_enrolment_id.to_string())),
             vaccination_card::program_enrolment_id
         );
 

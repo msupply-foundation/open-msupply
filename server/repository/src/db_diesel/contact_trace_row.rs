@@ -1,6 +1,9 @@
 use super::{document::document, program_row::program, StorageConnection};
 
-use crate::{repository_error::RepositoryError, GenderType};
+use crate::{
+    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, GenderType,
+    RowActionType, SourceSiteId, Upsert,
+};
 
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -69,7 +72,7 @@ allow_tables_to_appear_in_same_query!(contact_trace_name_link_view, program);
 joinable!(contact_trace_name_link_view -> document (document_id));
 allow_tables_to_appear_in_same_query!(contact_trace_name_link_view, document);
 
-#[derive(Clone, Queryable, Debug, PartialEq, Eq)]
+#[derive(Clone, Queryable, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ContactTraceRow {
     pub id: String,
     pub program_id: String,
@@ -135,7 +138,7 @@ impl<'a> ContactTraceRowRepository<'a> {
         ContactTraceRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
         diesel::insert_into(contact_trace::dsl::contact_trace)
             .values(row.to_raw())
             .on_conflict(contact_trace::dsl::id)
@@ -145,11 +148,73 @@ impl<'a> ContactTraceRowRepository<'a> {
         Ok(())
     }
 
+    pub fn upsert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = ContactTraceRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
+
     pub async fn insert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
         diesel::insert_into(contact_trace::dsl::contact_trace)
             .values(row.to_raw())
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn find_one_by_id(
+        &self,
+        contact_trace_id: &str,
+    ) -> Result<Option<ContactTraceRow>, RepositoryError> {
+        let result = contact_trace_name_link_view::table
+            .filter(contact_trace_name_link_view::id.eq(contact_trace_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<ContactTraceRow>, RepositoryError> {
+        Ok(contact_trace_name_link_view::table
+            .filter(contact_trace_name_link_view::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+}
+
+impl Upsert for ContactTraceRow {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        ContactTraceRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert!(ContactTraceRowRepository::new(con)
+            .find_one_by_id(&self.id)
+            .unwrap()
+            .is_some())
     }
 }
 

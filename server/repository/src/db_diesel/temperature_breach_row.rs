@@ -1,7 +1,9 @@
 use super::{location_row::location, sensor_row::sensor, store_row::store, StorageConnection};
 
-use crate::{repository_error::RepositoryError, Upsert};
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{
+    repository_error::RepositoryError, ChangelogSyncType, SourceSiteId, Upsert,
+};
+use crate::{ChangelogRepository, RowActionType};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -43,7 +45,15 @@ pub enum TemperatureBreachType {
 }
 
 #[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize,
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = temperature_breach)]
@@ -63,7 +73,6 @@ pub struct TemperatureBreachRow {
     pub threshold_duration_milliseconds: i32,
     pub comment: Option<String>,
 }
-
 pub struct TemperatureBreachRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -73,30 +82,56 @@ impl<'a> TemperatureBreachRowRepository<'a> {
         TemperatureBreachRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &TemperatureBreachRow) -> Result<i64, RepositoryError> {
+    pub fn _upsert_one(&self, row: &TemperatureBreachRow) -> Result<(), RepositoryError> {
         diesel::insert_into(temperature_breach::table)
             .values(row)
             .on_conflict(temperature_breach::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row, RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(
-        &self,
-        row: &TemperatureBreachRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::TemperatureBreach,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(row.store_id.clone()),
-            name_link_id: None,
-        };
+    pub fn upsert_one(&self, row: &TemperatureBreachRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = row.generate_changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
 
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn update_location_id_by_sensor_id(
+        &self,
+        sensor_id: &str,
+        location_id: &str,
+    ) -> Result<(), RepositoryError> {
+        let rows_updated = diesel::update(temperature_breach::table)
+            .filter(temperature_breach::sensor_id.eq(sensor_id))
+            .filter(temperature_breach::location_id.is_null())
+            .set(temperature_breach::location_id.eq(Some(location_id)))
+            .execute(self.connection.lock().connection())?;
+
+        if rows_updated == 0 {
+            return Ok(());
+        }
+
+        let breaches = temperature_breach::table
+            .filter(temperature_breach::sensor_id.eq(sensor_id))
+            .filter(temperature_breach::location_id.eq(location_id))
+            .load::<TemperatureBreachRow>(self.connection.lock().connection())?;
+
+        for breach in &breaches {
+            let changelog = breach.generate_changelog(
+                self.connection,
+                RowActionType::Upsert,
+                SourceSiteId::CurrentSiteId,
+            )?;
+            ChangelogRepository::new(self.connection).insert(&changelog)?;
+        }
+
+        Ok(())
     }
 
     pub fn find_one_by_id(
@@ -121,9 +156,24 @@ impl<'a> TemperatureBreachRowRepository<'a> {
 }
 
 impl Upsert for TemperatureBreachRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = TemperatureBreachRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        TemperatureBreachRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

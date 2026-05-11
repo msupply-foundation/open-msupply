@@ -17,8 +17,6 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
-
-
         Ok(())
     }
 }

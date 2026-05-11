@@ -11,6 +11,8 @@ import {
   SplitButton,
   PrinterIcon,
   SplitButtonOption,
+  useRegisterActions,
+  ALT_KEY,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
 import { Draft } from '../../StockOut';
@@ -32,11 +34,8 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     query: { data: prescription },
   } = usePrescription();
   const { OpenButton } = useDetailPanel();
-  const {
-    printLabels: printPrescriptionLabels,
-    isPrintingLabels,
-    DisabledNotification,
-  } = usePrintLabels();
+  const { printLabels: printPrescriptionLabels, isPrintingLabels } =
+    usePrintLabels();
 
   const handlePrintLabels = (e?: React.MouseEvent<HTMLButtonElement>) => {
     if (prescription) {
@@ -58,6 +57,19 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const [selected, setSelected] = useState<SplitButtonOption<string>>(
     options[1]!
   );
+
+  useRegisterActions([
+    {
+      id: 'print',
+      name: `${t('button.print-prescription-label')} (${ALT_KEY}+L)`,
+      shortcut: ['Alt+KeyL'],
+      perform: () => {
+        if (prescription) {
+          printPrescriptionLabels(prescription, prescription.lines.nodes);
+        }
+      },
+    },
+  ]);
 
   return (
     <AppBarButtonsPortal>
@@ -105,7 +117,6 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         />
         {OpenButton}
       </Grid>
-      <DisabledNotification />
     </AppBarButtonsPortal>
   );
 };

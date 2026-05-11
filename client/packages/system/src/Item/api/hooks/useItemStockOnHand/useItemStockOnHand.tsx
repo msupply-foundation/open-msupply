@@ -38,6 +38,10 @@ export const useItemStockOnHandInfinite = ({
         pageNumber,
       };
     },
-    { refetchOnWindowFocus: false, cacheTime: 0 }
+    {
+      refetchOnWindowFocus: false,
+      cacheTime: 5 * 60 * 1000,
+      staleTime: 2 * 60 * 1000,
+    }
   );
 };

@@ -1,6 +1,9 @@
-use super::{name_link_row::name_link, StorageConnection};
+use super::StorageConnection;
 
-use crate::{lower, repository_error::RepositoryError, Upsert};
+use crate::{
+    lower, repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, Delete,
+    RowActionType, SourceSiteId, Upsert,
+};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -21,9 +24,8 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(user_account, name_link);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum LanguageType {
@@ -38,7 +40,7 @@ pub enum LanguageType {
     Tetum,
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = user_account)]
 pub struct UserAccountRow {
     pub id: String,
@@ -62,7 +64,7 @@ impl<'a> UserAccountRowRepository<'a> {
         UserAccountRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
         diesel::insert_into(user_account::table)
             .values(row)
             .on_conflict(user_account::id)
@@ -70,6 +72,17 @@ impl<'a> UserAccountRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = UserAccountRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn insert_one(&self, user_account_row: &UserAccountRow) -> Result<(), RepositoryError> {
@@ -119,18 +132,46 @@ impl<'a> UserAccountRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete_by_id(&self, id: &str) -> Result<usize, RepositoryError> {
+    fn _delete_by_id(&self, id: &str) -> Result<usize, RepositoryError> {
         let result = diesel::delete(user_account::table)
             .filter(user_account::id.eq(id))
             .execute(self.connection.lock().connection())?;
         Ok(result)
     }
+
+    pub fn delete_by_id(&self, id: &str) -> Result<usize, RepositoryError> {
+        let result = self._delete_by_id(id)?;
+        let changelog = UserAccountRow::generate_changelog(
+            id.to_string(),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
+        Ok(result)
+    }
 }
 
 impl Upsert for UserAccountRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        UserAccountRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        UserAccountRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
@@ -138,6 +179,42 @@ impl Upsert for UserAccountRow {
         assert_eq!(
             UserAccountRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
+        )
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct UserAccountRowDelete(pub String);
+impl Delete for UserAccountRowDelete {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let repo = UserAccountRowRepository::new(con);
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                UserAccountRow::generate_changelog(
+                    self.0.clone(),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        repo._delete_by_id(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            UserAccountRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
         )
     }
 }
@@ -158,7 +235,7 @@ mod test {
         let repo = UserAccountRowRepository::new(&connection);
         // Try upsert all variants of Language, confirm that diesel enums match postgres
         for variant in LanguageType::iter() {
-            let id = format!("{:?}", variant);
+            let id = format!("{variant:?}");
             let result = repo.insert_one(&UserAccountRow {
                 id: id.clone(),
                 language: variant.clone(),

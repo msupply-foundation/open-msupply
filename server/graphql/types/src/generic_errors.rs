@@ -1,6 +1,9 @@
-use crate::types::{InvoiceLineConnector, RequisitionLineNode, StockLineNode, StocktakeLineNode};
+use crate::types::{
+    InvoiceLineConnector, PurchaseOrderLineNode, RequisitionLineNode, StockLineNode,
+    StocktakeLineNode,
+};
 use async_graphql::*;
-use repository::{RequisitionLine, StockLine, StocktakeLine};
+use repository::{PurchaseOrderLine, RequisitionLine, StockLine, StocktakeLine};
 
 pub struct CannotDeleteInvoiceWithLines(pub InvoiceLineConnector);
 #[Object]
@@ -26,6 +29,25 @@ impl StockLineReducedBelowZero {
 impl StockLineReducedBelowZero {
     pub async fn description(&self) -> &str {
         "Stock line reduced below zero."
+    }
+
+    pub async fn stock_line(&self) -> &StockLineNode {
+        &self.0
+    }
+}
+
+pub struct LedgerWouldGoBelowZero(pub StockLineNode);
+
+impl LedgerWouldGoBelowZero {
+    pub fn from_domain(line: StockLine) -> Self {
+        LedgerWouldGoBelowZero(StockLineNode::from_domain(line))
+    }
+}
+
+#[Object]
+impl LedgerWouldGoBelowZero {
+    pub async fn description(&self) -> &str {
+        "Backdated reduction would cause the stock ledger to go below zero at some point."
     }
 
     pub async fn stock_line(&self) -> &StockLineNode {
@@ -67,6 +89,22 @@ impl SnapshotCountCurrentCountMismatchLine {
     }
 
     pub async fn stocktake_line(&self) -> &StocktakeLineNode {
+        &self.0
+    }
+}
+
+pub struct ItemCannotBeOrdered(pub PurchaseOrderLineNode);
+impl ItemCannotBeOrdered {
+    pub fn from_domain(line: PurchaseOrderLine) -> Self {
+        ItemCannotBeOrdered(PurchaseOrderLineNode::from_domain(line))
+    }
+}
+#[Object]
+impl ItemCannotBeOrdered {
+    pub async fn description(&self) -> &str {
+        "This item cannot be ordered."
+    }
+    pub async fn line(&self) -> &PurchaseOrderLineNode {
         &self.0
     }
 }

@@ -1,4 +1,3 @@
-use super::IdPair;
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use repository::{EqualFilter, StockOnHandFilter, StockOnHandRepository};
@@ -9,15 +8,16 @@ pub struct ItemsStockOnHandLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
-#[derive(Clone)]
-pub struct EmptyPayload;
-pub type ItemsStockOnHandLoaderInput = IdPair<EmptyPayload>;
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub struct ItemsStockOnHandLoaderInput {
+    pub store_id: String,
+    pub item_id: String,
+}
 impl ItemsStockOnHandLoaderInput {
     pub fn new(store_id: &str, item_id: &str) -> Self {
         ItemsStockOnHandLoaderInput {
-            primary_id: store_id.to_string(),
-            secondary_id: item_id.to_string(),
-            payload: EmptyPayload {},
+            store_id: store_id.to_string(),
+            item_id: item_id.to_string(),
         }
     }
 }
@@ -32,7 +32,10 @@ impl Loader<ItemsStockOnHandLoaderInput> for ItemsStockOnHandLoader {
     ) -> Result<HashMap<ItemsStockOnHandLoaderInput, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
 
-        let (store_ids, item_ids) = IdPair::extract_unique_ids(store_and_item_id);
+        let item_ids =
+            util::dedup_iter(store_and_item_id.iter().map(|input| input.item_id.clone()));
+        let store_ids =
+            util::dedup_iter(store_and_item_id.iter().map(|input| input.store_id.clone()));
 
         let filter = StockOnHandFilter {
             item_id: Some(EqualFilter::equal_any(item_ids)),

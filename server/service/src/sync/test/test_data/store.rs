@@ -1,6 +1,6 @@
 use crate::sync::{test::TestSyncIncomingRecord, translations::PullTranslateResult};
 use chrono::NaiveDate;
-use repository::{StoreRow, StoreRowDelete, SyncBufferRow};
+use repository::{sync_buffer::SyncRecordData, StoreRow, SyncBufferRow};
 
 const TABLE_NAME: &str = "store";
 
@@ -55,7 +55,7 @@ fn store_1() -> TestSyncIncomingRecord {
         STORE_1,
         StoreRow {
             id: STORE_1.0.to_string(),
-            name_link_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+            name_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
             code: "GEN".to_string(),
             site_id: 1,
             logo: Some("No logo".to_string()),
@@ -117,7 +117,7 @@ fn store_2() -> TestSyncIncomingRecord {
         sync_buffer_row: SyncBufferRow {
             table_name: TABLE_NAME.to_string(),
             record_id: STORE_2.0.to_string(),
-            data: STORE_2.1.to_string(),
+            data: SyncRecordData(serde_json::from_str(STORE_2.1).unwrap()),
             ..Default::default()
         },
         extra_data: None,
@@ -176,7 +176,7 @@ fn store_3() -> TestSyncIncomingRecord {
         sync_buffer_row: SyncBufferRow {
             table_name: TABLE_NAME.to_string(),
             record_id: STORE_3.0.to_string(),
-            data: STORE_3.1.to_string(),
+            data: SyncRecordData(serde_json::from_str(STORE_3.1).unwrap()),
             ..Default::default()
         },
         extra_data: None,
@@ -235,7 +235,7 @@ fn store_4() -> TestSyncIncomingRecord {
         sync_buffer_row: SyncBufferRow {
             table_name: TABLE_NAME.to_string(),
             record_id: STORE_4.0.to_string(),
-            data: STORE_4.1.to_string(),
+            data: SyncRecordData(serde_json::from_str(STORE_4.1).unwrap()),
             ..Default::default()
         },
         extra_data: None,
@@ -244,12 +244,4 @@ fn store_4() -> TestSyncIncomingRecord {
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![store_1(), store_2(), store_3(), store_4()]
-}
-
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
-    vec![TestSyncIncomingRecord::new_pull_delete(
-        TABLE_NAME,
-        STORE_4.0,
-        StoreRowDelete(STORE_4.0.to_string()),
-    )]
 }

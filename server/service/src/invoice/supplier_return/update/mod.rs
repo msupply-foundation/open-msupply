@@ -72,13 +72,13 @@ pub fn update_supplier_return(
                 activity_log_entry(
                     ctx,
                     log_type_from_invoice_status(&updated_return.status, false),
-                    Some(updated_return.id.to_owned()),
+                    Some(updated_return.id.to_string()),
                     None,
                     None,
                 )?;
             }
 
-            get_invoice(ctx, None, &input.supplier_return_id)
+            get_invoice(ctx, None, &input.supplier_return_id, None)
                 .map_err(UpdateSupplierReturnError::DatabaseError)?
                 .ok_or(UpdateSupplierReturnError::UpdatedReturnDoesNotExist)
         })
@@ -145,7 +145,7 @@ mod test {
         fn base_test_return() -> InvoiceRow {
             InvoiceRow {
                 store_id: mock_store_b().id,
-                name_link_id: mock_name_store_b().id,
+                name_id: mock_name_store_b().id,
                 currency_id: Some(currency_a().id),
                 r#type: InvoiceType::SupplierReturn,
                 status: InvoiceStatus::New,

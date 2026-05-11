@@ -14,7 +14,13 @@
           },
           "AMC": 20,
           "AMC12": 92.4,
+          "AMC12Months": {
+            "averageMonthlyConsumption": 92.4
+          },
           "AMC24": 192.4,
+          "AMC24Months": {
+            "averageMonthlyConsumption": 192.4
+          },
           "SOH": 200,
           "MOS": 4.5,
           "monthConsumption": 150,
@@ -41,7 +47,13 @@
           "expiringInTwelveMonths": 170,
           "stockOnOrder": 5,
           "AMC12": 150.8,
+          "AMC12Months": {
+            "averageMonthlyConsumption": 150.8
+          },
           "AMC24": 250.8,
+          "AMC24Months": {
+            "averageMonthlyConsumption": 250.8
+          },
           "AMC": 266.7,
           "SOH": 300.902,
           "MOS": 4.5

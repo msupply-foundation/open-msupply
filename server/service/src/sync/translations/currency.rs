@@ -1,6 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
     CurrencyRow, CurrencyRowDelete, CurrencyRowRepository, StorageConnection, SyncBufferRow,
+
 };
 use serde::{Deserialize, Serialize};
 
@@ -48,7 +49,7 @@ impl SyncTranslation for CurrencyTranslation {
             code,
             is_home_currency,
             date_updated,
-        } = serde_json::from_str(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         let currency = CurrencyRowRepository::new(connection).find_one_by_id(&id)?;
 
@@ -58,7 +59,7 @@ impl SyncTranslation for CurrencyTranslation {
             code,
             is_home_currency,
             date_updated,
-            is_active: currency.map_or(true, |c| c.is_active),
+            is_active: currency.is_none_or(|c| c.is_active),
         };
 
         Ok(PullTranslateResult::upsert(result))

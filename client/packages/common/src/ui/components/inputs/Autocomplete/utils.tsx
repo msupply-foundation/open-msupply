@@ -49,13 +49,17 @@ export const useOpenStateWithKeyboard = ({
 }: UseOpen): UseOpen => {
   const { keyboardIsEnabled, keyboardIsOpen } = useKeyboard();
   const [isComponentOpen, setIsComponentOpen] = useState(false);
-  const isKeyboardOpen = keyboardIsEnabled ? keyboardIsOpen : true;
+  // Keyboard can be enabled but not open due to external keyboard.
+  const shouldOpen =
+    !keyboardIsEnabled ||
+    keyboardIsOpen ||
+    (keyboardIsEnabled && !keyboardIsOpen);
 
   return {
     // Open should be false if keyboard is not open
     // If keyboard is open then open is either state provided through props (open)
     // or state requested/set by component (isComponentOpen)
-    open: isKeyboardOpen && (open ?? isComponentOpen),
+    open: shouldOpen && (open ?? isComponentOpen),
     onOpen: (...args) => {
       setIsComponentOpen(true);
       onOpen?.(...args);

@@ -1,21 +1,28 @@
 import React, { useState } from 'react';
 import {
   AppBarContentPortal,
+  Box,
   InputWithLabelRow,
   BufferedTextInput,
   Grid,
   useTranslation,
-  SearchBar,
   Tooltip,
   DateTimePickerInput,
-  DateUtils,
   Formatter,
   useNotification,
+  NumericTextInput,
+  useConfirmationModal,
+  SearchBar,
 } from '@openmsupply-client/common';
-import { InternalSupplierSearchInput } from '@openmsupply-client/system';
+import {
+  CurrencyAutocomplete,
+  CurrencyRowFragment,
+  SupplierSearchInput,
+} from '@openmsupply-client/system';
 import { usePurchaseOrder } from '../api/hooks/usePurchaseOrder';
-import { NameFragment } from 'packages/system/src/Name/api/operations.generated';
-import { PurchaseOrderFragment } from '../api';
+import { NameFragment } from '@openmsupply-client/system';
+import { PurchaseOrderFragment, usePurchaseOrderLine } from '../api';
+import { isFieldDisabled, StatusGroup } from '../../utils';
 
 interface ToolbarProps {
   isDisabled?: boolean;
@@ -25,15 +32,37 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   const t = useTranslation();
   const { error } = useNotification();
   const {
-    query: { data, isLoading },
+    draft,
+    query: { data, isFetching },
     lines: { itemFilter, setItemFilter },
     update: { update },
     handleChange,
   } = usePurchaseOrder();
+  const { updateLines } = usePurchaseOrderLine();
 
-  const [requestedDeliveryDate, setRequestedDeliveryDate] = useState(
-    DateUtils.getDateOrNull(data?.requestedDeliveryDate)
+  const [requestedDeliveryDate, setRequestedDeliveryDate] =
+    useState<Date | null>(
+      data?.requestedDeliveryDate ? new Date(data.requestedDeliveryDate) : null
+    );
+
+  const getMostRecentExpectedDate = () => {
+    const dates = data?.lines?.nodes
+      ?.map(line => line.expectedDeliveryDate)
+      .sort((a, b) => (b || '').localeCompare(a || ''));
+    return dates?.[0] ? dates[0] : null;
+  };
+
+  const mostRecentExpectedDate = getMostRecentExpectedDate();
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<Date | null>(
+    mostRecentExpectedDate ? new Date(mostRecentExpectedDate) : null
   );
+
+  const disabledRequestedDeliveryDate = data?.status
+    ? isFieldDisabled(data.status, StatusGroup.AfterSent)
+    : false;
+  const disabledExpectedDeliveryDate = data?.status
+    ? isFieldDisabled(data.status, StatusGroup.AfterSent)
+    : false;
 
   const handleUpdate = (input: Partial<PurchaseOrderFragment>) => {
     try {
@@ -41,6 +70,83 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     } catch (e) {
       error(t('messages.error-saving-purchase-order'))();
     }
+  };
+
+  const handleCurrencyChange = async (currency: CurrencyRowFragment | null) => {
+    if (!currency) return;
+
+    handleChange({
+      currencyId: currency.id,
+      foreignExchangeRate: currency.rate,
+    });
+  };
+
+  const updateExpectedDeliveryChange = async (date: Date | null) => {
+    if (!data) return;
+    const formattedDate = Formatter.naiveDate(date);
+    await updateLines(data?.lines?.nodes, {
+      expectedDeliveryDate: { value: formattedDate },
+    });
+  };
+
+  const confirmExpectedModal = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t(
+      'label.update-purchase-order-expected-delivery-date-for-all-lines'
+    ),
+    onConfirm: () => {},
+  });
+
+  const handleExpectedDeliveryDateChange = (newDate: Date | null) => {
+    const previousDate = expectedDeliveryDate;
+
+    setExpectedDeliveryDate(newDate);
+    confirmExpectedModal({
+      onConfirm: () => updateExpectedDeliveryChange(newDate),
+      onCancel: () => setExpectedDeliveryDate(previousDate),
+    });
+  };
+
+  const updateRequestedDeliveryChange = async (date: Date | null) => {
+    if (!data) return;
+    const formattedDate = Formatter.naiveDate(date);
+    handleUpdate({ requestedDeliveryDate: formattedDate });
+    await updateLines(data?.lines?.nodes, {
+      requestedDeliveryDate: { value: formattedDate },
+    });
+    // Auto-fill expected delivery date for lines that have none
+    const linesWithoutExpected =
+      data?.lines?.nodes?.filter(line => !line.expectedDeliveryDate) ?? [];
+    if (linesWithoutExpected.length > 0) {
+      try {
+        await updateLines(linesWithoutExpected, {
+          expectedDeliveryDate: { value: formattedDate },
+        });
+        if (!getMostRecentExpectedDate()) {
+          setExpectedDeliveryDate(date);
+        }
+      } catch (e) {
+        error(t('messages.error-saving-purchase-order'))();
+      }
+    }
+  };
+
+  const confirmRequestedModal = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t(
+      'label.update-purchase-order-requested-delivery-date-for-all-lines'
+    ),
+    onConfirm: () => {},
+  });
+
+  const handleRequestedDeliveryDateChange = (newDate: Date | null) => {
+    const previousDate = requestedDeliveryDate;
+
+    setRequestedDeliveryDate(newDate);
+    confirmRequestedModal({
+      onConfirm: () => updateRequestedDeliveryChange(newDate),
+      onCancel: () => setRequestedDeliveryDate(previousDate),
+    });
   };
 
   return (
@@ -58,8 +164,9 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
             <InputWithLabelRow
               label={t('label.supplier-name')}
               Input={
-                <InternalSupplierSearchInput
-                  disabled={isDisabled || isLoading}
+                <SupplierSearchInput
+                  external
+                  disabled={isDisabled || isFetching}
                   value={(data?.supplier as NameFragment) ?? null}
                   onChange={supplier => {
                     if (!supplier) return;
@@ -73,36 +180,71 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
             label={t('label.supplier-ref')}
             Input={
               <Tooltip title={data?.reference} placement="bottom-start">
-                <BufferedTextInput
-                  disabled={isDisabled}
-                  size="small"
-                  sx={{ width: 250 }}
-                  value={data?.reference ?? null}
-                  onChange={e => {
-                    handleChange({ reference: e.target.value });
-                  }}
-                />
+                <Box>
+                  <BufferedTextInput
+                    disabled={isDisabled}
+                    size="small"
+                    sx={{ width: 250 }}
+                    value={data?.reference ?? ''}
+                    onChange={e => {
+                      handleChange({ reference: e.target.value });
+                    }}
+                  />
+                </Box>
               </Tooltip>
             }
           />
         </Grid>
-        <Grid display="flex" flexGrow={1} flexDirection="column" gap={1}>
+        <Grid display="flex" flexDirection="column" gap={1}>
           <InputWithLabelRow
-            label={t('label.requested-delivery-date')}
+            label={t('label.currency')}
             Input={
-              <DateTimePickerInput
-                value={requestedDeliveryDate}
-                onChange={date => {
-                  setRequestedDeliveryDate(date);
-                  const formattedDate = Formatter.naiveDate(date);
-                  handleUpdate({
-                    requestedDeliveryDate: formattedDate,
-                  });
-                }}
+              <CurrencyAutocomplete
+                currencyId={draft?.currencyId}
+                onChange={handleCurrencyChange}
+                width={150}
+                disabled={!!draft?.confirmedDatetime}
               />
             }
           />
-          <Grid sx={{ justifyContent: 'flex-end', display: 'flex' }}>
+          <InputWithLabelRow
+            label={t('label.foreign-exchange-rate')}
+            Input={
+              <NumericTextInput
+                value={draft?.foreignExchangeRate ?? 0}
+                decimalLimit={4}
+                disabled={true}
+                width={150}
+              />
+            }
+          />
+        </Grid>
+        <Grid display="flex" flexGrow={1} gap={1}>
+          <Grid display="flex" flexDirection="column" gap={1}>
+            <InputWithLabelRow
+              label={t('label.requested-delivery-date')}
+              Input={
+                <DateTimePickerInput
+                  value={requestedDeliveryDate}
+                  onChange={handleRequestedDeliveryDateChange}
+                  width={250}
+                  disabled={disabledRequestedDeliveryDate}
+                />
+              }
+            />
+            <InputWithLabelRow
+              label={t('label.expected-delivery-date')}
+              Input={
+                <DateTimePickerInput
+                  value={expectedDeliveryDate}
+                  onChange={handleExpectedDeliveryDateChange}
+                  width={250}
+                  disabled={disabledExpectedDeliveryDate}
+                />
+              }
+            />
+          </Grid>
+          <Grid display="flex" flexGrow={1} justifyContent="flex-end">
             <SearchBar
               placeholder={t('placeholder.filter-items')}
               value={itemFilter ?? ''}

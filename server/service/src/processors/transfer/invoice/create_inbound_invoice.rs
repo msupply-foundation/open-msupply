@@ -11,7 +11,10 @@ use crate::{
     activity_log::system_activity_log_entry,
     number::next_number,
     preference::{Preference, PreventTransfersMonthsBeforeInitialisation},
-    processors::transfer::invoice::InvoiceTransferOutput,
+    processors::transfer::invoice::{
+        common::auto_verify_if_store_preference, InvoiceTransferOutput,
+    },
+    service_provider::ServiceContext,
     store_preference::get_store_preferences,
 };
 
@@ -39,7 +42,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
     /// 2. Source invoice is either Outbound shipment or Supplier Return
     /// 3. Source outbound invoice is either Shipped or Picked
     ///    (outbounds can also be New or Allocated, but we only want to generate transfer when it's Shipped or Picked, as per
-    ///     ./doc/omSupply_shipment_transfer_workflow.png)
+    ///    ./doc/omSupply_shipment_transfer_workflow.png)
     /// 4. The outbound_invoice.linked_invoice_id is None. This check rather than looking for the Some inbound invoice gives us an escape hatch to prevent transfers being generated.
     /// 5. Source invoice was not created a month before receiving store was created.
     /// 6. Source invoice was not picked more than 3 months before initialisation of the site that we skip generating the transfer
@@ -48,7 +51,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
     /// 5. Because created inbound invoice will be linked to source outbound invoice `4.` will never be true again
     fn try_process_record(
         &self,
-        connection: &StorageConnection,
+        ctx: &ServiceContext,
         record_for_processing: &InvoiceTransferProcessorRecord,
     ) -> Result<InvoiceTransferOutput, RepositoryError> {
         // Check can execute
@@ -94,7 +97,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
         }
 
         // 5.
-        let store = StoreRowRepository::new(connection)
+        let store = StoreRowRepository::new(&ctx.connection)
             .find_one_by_id(&record_for_processing.other_party_store_id)?
             .ok_or(RepositoryError::NotFound)?;
         if let Some(created_date) = store.created_date {
@@ -110,7 +113,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
         if outbound_invoice.invoice_row.status == InvoiceStatus::Picked {
             if let Some(picked_date) = outbound_invoice.invoice_row.picked_datetime {
                 let pref_months = PreventTransfersMonthsBeforeInitialisation {}
-                    .load(connection, None)
+                    .load(&ctx.connection, None)
                     .map_err(|e| RepositoryError::DBError {
                         msg: e.to_string(),
                         extra: "".to_string(),
@@ -124,7 +127,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
                     let filter = SyncLogFilter::new()
                         .integration_finished_datetime(DatetimeFilter::is_null(false));
 
-                    let first_initialisation_log = SyncLogRepository::new(connection)
+                    let first_initialisation_log = SyncLogRepository::new(&ctx.connection)
                         .query(Pagination::one(), Some(filter), Some(sort))?
                         .pop();
 
@@ -133,7 +136,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
                         .and_then(|initialisation_date| {
                             initialisation_date.checked_sub_months(Months::new(pref_months as u32))
                         })
-                        .map_or(false, |cutoff_date| picked_date < cutoff_date)
+                        .is_some_and(|cutoff_date| picked_date < cutoff_date)
                     {
                         return Ok(InvoiceTransferOutput::BeforeInitialisationMonths);
                     }
@@ -143,7 +146,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
 
         // Execute
         let new_inbound_invoice = generate_inbound_invoice(
-            connection,
+            &ctx.connection,
             outbound_invoice,
             record_for_processing,
             request_requisition,
@@ -151,32 +154,35 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
             new_invoice_type,
         )?;
         let new_inbound_lines = generate_inbound_lines(
-            connection,
+            &ctx.connection,
             &new_inbound_invoice.id,
             &new_inbound_invoice.store_id,
             outbound_invoice,
         )?;
-        let store_preferences = get_store_preferences(connection, &new_inbound_invoice.store_id)?;
+        let store_preferences =
+            get_store_preferences(&ctx.connection, &new_inbound_invoice.store_id)?;
 
         let new_inbound_lines = match store_preferences.pack_to_one {
             true => convert_invoice_line_to_single_pack(new_inbound_lines),
             false => new_inbound_lines,
         };
 
-        InvoiceRowRepository::new(connection).upsert_one(&new_inbound_invoice)?;
+        InvoiceRowRepository::new(&ctx.connection).upsert_one(&new_inbound_invoice)?;
 
         system_activity_log_entry(
-            connection,
+            &ctx.connection,
             ActivityLogType::InvoiceCreated,
             &new_inbound_invoice.store_id,
             &new_inbound_invoice.id,
         )?;
 
-        let invoice_line_repository = InvoiceLineRowRepository::new(connection);
+        let invoice_line_repository = InvoiceLineRowRepository::new(&ctx.connection);
 
         for line in new_inbound_lines.iter() {
             invoice_line_repository.upsert_one(line)?;
         }
+
+        auto_verify_if_store_preference(ctx, &new_inbound_invoice)?;
 
         let result = format!(
             "invoice ({}) lines ({:?}) source invoice ({})",
@@ -202,9 +208,9 @@ fn generate_inbound_invoice(
 ) -> Result<InvoiceRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
     let name_id = StoreRepository::new(connection)
-        .query_by_filter(
-            StoreFilter::new().id(EqualFilter::equal_to(&outbound_invoice.store_row.id)),
-        )?
+        .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(
+            outbound_invoice.store_row.id.to_string(),
+        )))?
         .pop()
         .ok_or(RepositoryError::NotFound)?
         .name_row
@@ -237,11 +243,11 @@ fn generate_inbound_invoice(
 
     let formatted_comment = match r#type {
         InboundInvoiceType::InboundShipment => match &outbound_invoice_row.comment {
-            Some(comment) => format!("Stock transfer ({})", comment),
+            Some(comment) => format!("Stock transfer ({comment})"),
             None => "Stock transfer".to_string(),
         },
         InboundInvoiceType::CustomerReturn => match &outbound_invoice_row.comment {
-            Some(comment) => format!("Stock return ({})", comment),
+            Some(comment) => format!("Stock return ({comment})"),
             None => "Stock return".to_string(),
         },
     };
@@ -260,7 +266,7 @@ fn generate_inbound_invoice(
             InboundInvoiceType::CustomerReturn => InvoiceType::CustomerReturn,
             InboundInvoiceType::InboundShipment => InvoiceType::InboundShipment,
         },
-        name_link_id: name_id,
+        name_id: name_id,
         store_id,
         status,
         requisition_id: request_requisition_id,
@@ -279,6 +285,9 @@ fn generate_inbound_invoice(
         expected_delivery_date: outbound_invoice_row.expected_delivery_date,
         original_shipment_id,
         program_id: outbound_invoice_row.program_id.clone(),
+        shipping_method_id: outbound_invoice_row.shipping_method_id.clone(),
+        charges_local_currency: 0.0,
+        charges_foreign_currency: 0.0,
         // Default
         colour: None,
         user_id: None,
@@ -295,8 +304,9 @@ fn generate_inbound_invoice(
         insurance_discount_amount: None,
         insurance_discount_percentage: None,
         is_cancellation: false,
-        default_donor_link_id: None,
-        goods_received_id: None,
+        default_donor_id: None,
+        purchase_order_id: None,
+        ..Default::default()
     };
 
     Ok(result)
@@ -305,11 +315,12 @@ fn generate_inbound_invoice(
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::{preference::PrefKey, service_provider::ServiceProvider};
     use chrono::NaiveDate;
     use repository::{
         mock::{mock_name_b, mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        SyncLogRow,
+        InvoiceFilter, InvoiceRepository, PreferenceRow, SyncLogRow,
     };
 
     #[actix_rt::test]
@@ -317,7 +328,7 @@ mod test {
         let log_1 = SyncLogRow {
             id: "sync_log_1".to_string(),
             integration_finished_datetime: Some(
-                NaiveDate::from_ymd_opt(2025, 01, 01)
+                NaiveDate::from_ymd_opt(2025, 1, 1)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
@@ -328,7 +339,7 @@ mod test {
         let log_2 = SyncLogRow {
             id: "sync_log_2".to_string(),
             integration_finished_datetime: Some(
-                NaiveDate::from_ymd_opt(2024, 01, 01)
+                NaiveDate::from_ymd_opt(2024, 1, 1)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
@@ -395,7 +406,7 @@ mod test {
             other_party_store_id: "store_a".to_string(),
         };
 
-        let (_, connection, _, _) = setup_all_with_data(
+        let (_, _, connection_manager, _) = setup_all_with_data(
             "test_create_inbound_invoice_picked_cutoff",
             MockDataInserts::none().stores(),
             MockData {
@@ -406,9 +417,12 @@ mod test {
         )
         .await;
 
+        let service_provider = &ServiceProvider::new(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+
         let processor = CreateInboundInvoiceProcessor {};
         let result = processor
-            .try_process_record(&connection, &invoice_transfer_old)
+            .try_process_record(&ctx, &invoice_transfer_old)
             .unwrap();
         assert!(
             matches!(result, InvoiceTransferOutput::BeforeInitialisationMonths),
@@ -417,12 +431,198 @@ mod test {
         );
 
         let result = processor
-            .try_process_record(&connection, &invoice_transfer_new)
+            .try_process_record(&ctx, &invoice_transfer_new)
             .unwrap();
         assert!(
             matches!(result, InvoiceTransferOutput::Processed(_)),
             "The new invoice should have had a transfer generated, skipped because: {:?}",
             result
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_create_inbound_invoice_auto_finalise() {
+        fn make_invoice(
+            id: &str,
+            status: InvoiceStatus,
+            r#type: InvoiceType,
+        ) -> (InvoiceTransferProcessorRecord, InvoiceRow) {
+            let invoice_row = InvoiceRow {
+                id: id.to_string(),
+                status,
+                created_datetime: Utc::now().naive_utc(),
+                r#type,
+                ..mock_outbound_shipment_a()
+            };
+            let invoice = Invoice {
+                invoice_row: invoice_row.clone(),
+                name_row: mock_name_b(),
+                store_row: mock_store_b(),
+                clinician_row: None,
+            };
+            (
+                InvoiceTransferProcessorRecord {
+                    operation: Operation::Upsert {
+                        invoice,
+                        linked_invoice: None,
+                        linked_shipment_requisition: None,
+                        linked_original_shipment: None,
+                    },
+                    other_party_store_id: "store_a".to_string(),
+                },
+                invoice_row,
+            )
+        }
+
+        let (new_status_invoice_input, new_invoice_row) = make_invoice(
+            "new_status",
+            InvoiceStatus::New,
+            InvoiceType::OutboundShipment,
+        );
+        let (picked_status_invoice_input, picked_invoice_row) = make_invoice(
+            "picked_status",
+            InvoiceStatus::Picked,
+            InvoiceType::OutboundShipment,
+        );
+        let (shipped_status_invoice_input, shipped_invoice_row) = make_invoice(
+            "shipped_status",
+            InvoiceStatus::Shipped,
+            InvoiceType::OutboundShipment,
+        );
+        let (supplier_return_shipped, supplier_return_row) = make_invoice(
+            "shipped_supplier_credit",
+            InvoiceStatus::Shipped,
+            InvoiceType::SupplierReturn,
+        );
+
+        // First test without preference
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "test_create_inbound_invoice_auto_finalise_off",
+            MockDataInserts::none().stores(),
+            MockData {
+                invoices: vec![
+                    new_invoice_row.clone(),
+                    picked_invoice_row.clone(),
+                    shipped_invoice_row.clone(),
+                    supplier_return_row.clone(),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let ctx = &ServiceProvider::new(connection_manager)
+            .basic_context()
+            .unwrap();
+
+        fn get_linked_invoice(connection: &StorageConnection, id: String) -> Option<Invoice> {
+            InvoiceRepository::new(connection)
+                .query_one(InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(id)))
+                .unwrap()
+        }
+
+        CreateInboundInvoiceProcessor {}
+            .try_process_record(ctx, &new_status_invoice_input)
+            .unwrap();
+
+        let invoice = get_linked_invoice(&ctx.connection, new_invoice_row.id.to_string());
+        assert!(
+            invoice.is_none(),
+            "The transfer should not be made for a new invoice"
+        );
+
+        CreateInboundInvoiceProcessor {}
+            .try_process_record(ctx, &picked_status_invoice_input)
+            .unwrap();
+        let invoice_status = get_linked_invoice(&ctx.connection, picked_invoice_row.id.to_string())
+            .unwrap()
+            .invoice_row
+            .status;
+        assert_eq!(
+            invoice_status,
+            InvoiceStatus::Picked,
+            "The transfer should remain Picked if the first half is just Picked"
+        );
+
+        CreateInboundInvoiceProcessor {}
+            .try_process_record(ctx, &shipped_status_invoice_input)
+            .unwrap();
+        let invoice_status =
+            get_linked_invoice(&ctx.connection, shipped_invoice_row.id.to_string())
+                .unwrap()
+                .invoice_row
+                .status;
+        assert_eq!(
+            invoice_status,
+            InvoiceStatus::Shipped,
+            "The transfer should remain Shipped if the first half is shipped and the auto verify preference is off"
+        );
+
+        let preference = PreferenceRow {
+            id: "preference_on".to_string(),
+            key: PrefKey::InboundShipmentAutoVerify.to_string(),
+            value: "true".to_string(),
+            store_id: Some("store_a".to_string()),
+        };
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "test_create_inbound_invoice_auto_finalise_on",
+            MockDataInserts::none().stores(),
+            MockData {
+                invoices: vec![
+                    new_invoice_row.clone(),
+                    picked_invoice_row.clone(),
+                    shipped_invoice_row.clone(),
+                ],
+                preferences: vec![preference],
+                ..Default::default()
+            },
+        )
+        .await;
+        let ctx = &ServiceProvider::new(connection_manager)
+            .basic_context()
+            .unwrap();
+
+        CreateInboundInvoiceProcessor {}
+            .try_process_record(ctx, &picked_status_invoice_input)
+            .unwrap();
+        let invoice_status = get_linked_invoice(&ctx.connection, picked_invoice_row.id.to_string())
+            .unwrap()
+            .invoice_row
+            .status;
+        assert_eq!(
+            invoice_status,
+            InvoiceStatus::Picked,
+            "The transfer should remain Picked if the first half is just Picked"
+        );
+
+        CreateInboundInvoiceProcessor {}
+            .try_process_record(ctx, &shipped_status_invoice_input)
+            .unwrap();
+        let invoice_status =
+            get_linked_invoice(&ctx.connection, shipped_invoice_row.id.to_string())
+                .unwrap()
+                .invoice_row
+                .status;
+        assert_eq!(
+            invoice_status,
+            InvoiceStatus::Verified,
+            "The transfer should be auto verified if the first half is shipped and the auto verify preference is on"
+        );
+
+        CreateInboundInvoiceProcessor {}
+            .try_process_record(ctx, &supplier_return_shipped)
+            .unwrap();
+
+        let invoice_status =
+            get_linked_invoice(&ctx.connection, supplier_return_row.id.to_string())
+                .unwrap()
+                .invoice_row
+                .status;
+        assert_eq!(
+            invoice_status,
+            InvoiceStatus::Shipped,
+            "Only inbound shipments should get a transfer created"
         );
     }
 }

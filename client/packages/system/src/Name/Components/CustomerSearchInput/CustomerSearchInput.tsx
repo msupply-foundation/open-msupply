@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import {
   Autocomplete,
+  CLEAR,
   useBufferState,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -19,9 +20,11 @@ export const CustomerSearchInput = ({
   disabled = false,
   clearable = false,
   currentId = undefined,
+  extraFilter,
+  filterBy,
 }: NameSearchInputProps) => {
   const t = useTranslation();
-  const { data, isLoading } = useName.document.customers();
+  const { data, isLoading } = useName.document.customers(filterBy);
   const [buffer, setBuffer] = useBufferState(value);
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
@@ -42,11 +45,22 @@ export const CustomerSearchInput = ({
       clearable={clearable}
       value={buffer && { ...buffer, label: buffer.name }}
       filterOptionConfig={basicFilterOptions}
-      filterOptions={filterByNameAndCode}
+      filterOptions={(options, state) =>
+        filterByNameAndCode(options, state, extraFilter)
+      }
       loading={isLoading}
       onChange={(_, name) => {
         setBuffer(name);
         onChange(name);
+      }}
+      onInputChange={(
+        _event: React.SyntheticEvent<Element, Event>,
+        _value: string,
+        reason: string
+      ) => {
+        if (reason === CLEAR) {
+          onChange(null);
+        }
       }}
       options={data?.nodes ?? []}
       renderOption={NameOptionRenderer}

@@ -18,15 +18,16 @@ pub fn get_repack(ctx: &ServiceContext, invoice_id: &str) -> Result<Repack, Repo
     let invoice = InvoiceRepository::new(connection)
         .query_by_filter(
             InvoiceFilter::new()
-                .id(EqualFilter::equal_to(invoice_id))
-                .store_id(EqualFilter::equal_to(&ctx.store_id))
+                .id(EqualFilter::equal_to(invoice_id.to_string()))
+                .store_id(EqualFilter::equal_to(ctx.store_id.to_string()))
                 .r#type(InvoiceType::Repack.equal_to()),
         )?
         .pop()
         .ok_or(RepositoryError::NotFound)?;
 
-    let invoice_lines = InvoiceLineRepository::new(connection)
-        .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)))?;
+    let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id.to_string())),
+    )?;
 
     let invoice_line_from = invoice_lines
         .iter()
@@ -55,9 +56,9 @@ pub fn get_repacks_by_stock_line(
 
     let invoices = InvoiceRepository::new(connection).query_by_filter(
         InvoiceFilter::new()
-            .store_id(EqualFilter::equal_to(&ctx.store_id))
+            .store_id(EqualFilter::equal_to(ctx.store_id.to_string()))
             .r#type(InvoiceType::Repack.equal_to())
-            .stock_line_id(stock_line_id.to_owned()),
+            .stock_line_id(stock_line_id.to_string()),
     )?;
     let invoice_ids: Vec<String> = invoices
         .iter()
@@ -88,6 +89,13 @@ pub fn get_repacks_by_stock_line(
             })
             .ok_or(RepositoryError::NotFound)?
             .clone();
+
+        // Skip invoice if 'repacked to' stock line is same as the queried stock line
+        if let Some(stock_line_id_to) = &invoice_line_to.invoice_line_row.stock_line_id {
+            if stock_line_id_to == stock_line_id {
+                continue;
+            }
+        }
 
         repacks.push(Repack {
             invoice,
@@ -128,7 +136,7 @@ mod test {
     async fn query_repacks() {
         let invoice = InvoiceRow {
             id: "repack_invoice_a".to_string(),
-            name_link_id: "name_store_a".to_string(),
+            name_id: "name_store_a".to_string(),
             store_id: "store_a".to_string(),
             invoice_number: 10,
             r#type: InvoiceType::Repack,
@@ -286,8 +294,8 @@ mod test {
         let invoice_a = InvoiceRepository::new(&context.connection)
             .query_by_filter(
                 InvoiceFilter::new()
-                    .id(EqualFilter::equal_to(&repack.invoice_row.id))
-                    .store_id(EqualFilter::equal_to(&context.store_id))
+                    .id(EqualFilter::equal_to(repack.invoice_row.id.to_string()))
+                    .store_id(EqualFilter::equal_to(context.store_id.to_string()))
                     .r#type(InvoiceType::Repack.equal_to()),
             )
             .unwrap()
@@ -296,15 +304,15 @@ mod test {
         let invoice_a_lines = InvoiceLineRepository::new(&context.connection)
             .query_by_filter(
                 InvoiceLineFilter::new()
-                    .invoice_id(EqualFilter::equal_to(&invoice_a.invoice_row.id)),
+                    .invoice_id(EqualFilter::equal_to(invoice_a.invoice_row.id.to_string())),
             )
             .unwrap();
 
         let invoice_b = InvoiceRepository::new(&context.connection)
             .query_by_filter(
                 InvoiceFilter::new()
-                    .id(EqualFilter::equal_to(&invoice.id))
-                    .store_id(EqualFilter::equal_to(&context.store_id))
+                    .id(EqualFilter::equal_to(invoice.id.to_string()))
+                    .store_id(EqualFilter::equal_to(context.store_id.to_string()))
                     .r#type(InvoiceType::Repack.equal_to()),
             )
             .unwrap()
@@ -313,7 +321,7 @@ mod test {
         let invoice_b_lines = InvoiceLineRepository::new(&context.connection)
             .query_by_filter(
                 InvoiceLineFilter::new()
-                    .invoice_id(EqualFilter::equal_to(&invoice_b.invoice_row.id)),
+                    .invoice_id(EqualFilter::equal_to(invoice_b.invoice_row.id.to_string())),
             )
             .unwrap();
 

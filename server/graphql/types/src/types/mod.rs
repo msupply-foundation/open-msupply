@@ -112,6 +112,8 @@ pub mod vaccine_course_item;
 pub use self::vaccine_course_item::*;
 pub mod vaccine_course_dose;
 pub use self::vaccine_course_dose::*;
+pub mod vaccine_course_store_config;
+pub use self::vaccine_course_store_config::*;
 
 pub mod demographic_indicator;
 pub use self::demographic_indicator::*;
@@ -157,6 +159,12 @@ pub use self::purchase_order_line::*;
 
 pub mod item_store_join;
 pub use self::item_store_join::*;
+
+pub mod shipping_method;
+pub use self::shipping_method::*;
+
+pub mod pref_nodes;
+pub use self::pref_nodes::*;
 
 use async_graphql::*;
 pub struct DeleteResponse(pub String);

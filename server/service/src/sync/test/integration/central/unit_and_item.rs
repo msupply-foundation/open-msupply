@@ -59,6 +59,7 @@ impl SyncRecordTester for UnitAndItemTester {
             strength: None,
             ven_category: Default::default(),
             vaccine_doses: 0,
+            ..Default::default()
         };
         let item_json1 = extend_base(json!({
             "ID": item_row1.id,
@@ -82,6 +83,7 @@ impl SyncRecordTester for UnitAndItemTester {
             strength: None,
             ven_category: Default::default(),
             vaccine_doses: 0,
+            ..Default::default()
         };
         let item_json2 = extend_base(json!({
             "ID": item_row2.id,
@@ -105,6 +107,7 @@ impl SyncRecordTester for UnitAndItemTester {
             strength: None,
             ven_category: Default::default(),
             vaccine_doses: 0,
+            ..Default::default()
         };
         let item_json3 = extend_base(json!({
             "ID": item_row3.id,
@@ -143,8 +146,8 @@ impl SyncRecordTester for UnitAndItemTester {
 }
 
 fn extend_base(value: serde_json::Value) -> serde_json::Value {
-    let mut base =
-        serde_json::from_str(&test_pull_upsert_records()[0].sync_buffer_row.data).unwrap();
+    let mut base: serde_json::Value =
+        test_pull_upsert_records()[0].sync_buffer_row.deserialize().unwrap();
     merge_json(&mut base, &value);
     base
 }

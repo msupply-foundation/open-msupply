@@ -10,7 +10,7 @@ use graphql_core::{
 use graphql_types::types::*;
 use repository::{
     location::LocationFilter, DateFilter, EqualFilter, PaginationOption, StockLineFilter,
-    StockLineSort, StockLineSortField,
+    StockLineSort, StockLineSortField, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -22,6 +22,7 @@ pub struct StockLineQueries;
 #[graphql(remote = "repository::db_diesel::stock_line::StockLineSortField")]
 pub enum StockLineSortFieldInput {
     ExpiryDate,
+    ManufactureDate,
     NumberOfPacks,
     ItemCode,
     ItemName,
@@ -29,6 +30,7 @@ pub enum StockLineSortFieldInput {
     PackSize,
     SupplierName,
     LocationCode,
+    CostPricePerPack,
     VvmStatusThenExpiry,
 }
 #[derive(InputObject)]
@@ -44,8 +46,11 @@ pub struct StockLineSortInput {
 pub struct StockLineFilterInput {
     pub expiry_date: Option<DateFilterInput>,
     pub id: Option<EqualFilterStringInput>,
+    pub code: Option<StringFilterInput>,
+    pub name: Option<StringFilterInput>,
     pub is_available: Option<bool>,
     pub item_code_or_name: Option<StringFilterInput>,
+    pub search: Option<StringFilterInput>,
     pub item_id: Option<EqualFilterStringInput>,
     pub location_id: Option<EqualFilterStringInput>,
     pub vvm_status_id: Option<EqualFilterStringInput>,
@@ -54,6 +59,7 @@ pub struct StockLineFilterInput {
     pub location: Option<LocationFilterInput>,
     pub master_list: Option<MasterListFilterInput>,
     pub is_active: Option<bool>,
+    pub is_program_stock_line: Option<bool>,
 }
 
 impl From<StockLineFilterInput> for StockLineFilter {
@@ -61,8 +67,11 @@ impl From<StockLineFilterInput> for StockLineFilter {
         StockLineFilter {
             expiry_date: f.expiry_date.map(DateFilter::from),
             id: f.id.map(EqualFilter::from),
+            code: f.code.map(StringFilter::from),
+            name: f.name.map(StringFilter::from),
             is_available: f.is_available,
             item_code_or_name: f.item_code_or_name.map(StringFilterInput::into),
+            search: f.search.map(StringFilterInput::into),
             item_id: f.item_id.map(EqualFilter::from),
             location_id: f.location_id.map(EqualFilter::from),
             store_id: None,
@@ -71,6 +80,7 @@ impl From<StockLineFilterInput> for StockLineFilter {
             location: f.location.map(LocationFilter::from),
             master_list: f.master_list.map(|f| f.to_domain()),
             is_active: f.is_active,
+            is_program_stock_line: f.is_program_stock_line,
         }
     }
 }
@@ -111,7 +121,7 @@ impl StockLineQueries {
         let filter = filter
             .map(StockLineFilter::from)
             .unwrap_or_default()
-            .store_id(EqualFilter::equal_to(&store_id));
+            .store_id(EqualFilter::equal_to(store_id.to_string()));
 
         let stock_lines = service_provider
             .stock_line_service
@@ -157,8 +167,8 @@ impl StockLineQueries {
                     &service_context,
                     None,
                     Some(StockLineFilter {
-                        item_id: Some(EqualFilter::equal_to(&item_id)),
-                        store_id: Some(EqualFilter::equal_to(&store_id)),
+                        item_id: Some(EqualFilter::equal_to(item_id.to_string())),
+                        store_id: Some(EqualFilter::equal_to(store_id.to_string())),
                         is_available: Some(true),
                         ..Default::default()
                     }),

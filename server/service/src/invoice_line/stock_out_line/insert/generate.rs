@@ -7,7 +7,7 @@ use crate::{
     invoice_line::StockOutType,
     pricing::{
         calculate_sell_price::calculate_sell_price,
-        item_price::{get_pricing_for_item, ItemPrice, ItemPriceLookup},
+        item_price::{get_pricing_for_items, ItemPrice, ItemPriceLookup},
     },
     service_provider::ServiceContext,
 };
@@ -40,13 +40,15 @@ pub fn generate(
     );
 
     // Check if we need to override the pricing with a default
-    let pricing = get_pricing_for_item(
-        ctx,
+    let pricing = get_pricing_for_items(
+        &ctx.connection,
         ItemPriceLookup {
-            item_id: item_row.id.clone(),
-            customer_name_id: Some(invoice.name_link_id.clone()),
+            item_ids: vec![item_row.id.clone()],
+            customer_name_id: Some(invoice.name_id.clone()),
         },
-    )?;
+    )?
+    .remove(&item_row.id)
+    .unwrap_or_default();
     let new_line = generate_line(
         &ctx.connection,
         input.clone(),
@@ -67,8 +69,7 @@ pub fn generate(
                 invoice_line_id: new_line.id.clone(),
                 comment: Some(format!(
                     "Updated from {} #{}",
-                    invoice.r#type.to_string(),
-                    invoice.invoice_number
+                    invoice.r#type, invoice.invoice_number
                 )),
             }))
         } else {
@@ -100,6 +101,7 @@ fn generate_batch_update(
         program_id,
         item_variant_id,
         donor_id,
+        manufacturer_id,
         prescribed_quantity: _,
         note: _,
         id: _,
@@ -127,19 +129,25 @@ fn generate_batch_update(
     StockLineRow {
         available_number_of_packs: batch.available_number_of_packs - available_reduction,
         total_number_of_packs: batch.total_number_of_packs - total_reduction,
-        location_id: location_id.or(batch.location_id),
+        location_id: location_id.map(|l| l.value).unwrap_or(batch.location_id),
         batch: input_batch_name.or(batch.batch),
-        expiry_date: expiry_date.or(batch.expiry_date),
+        expiry_date: expiry_date.map(|e| e.value).unwrap_or(batch.expiry_date),
         pack_size: pack_size.unwrap_or(batch.pack_size),
         cost_price_per_pack: cost_price_per_pack.unwrap_or(batch.cost_price_per_pack),
         sell_price_per_pack: sell_price_per_pack.unwrap_or(batch.sell_price_per_pack),
         vvm_status_id: vvm_status_id.or(batch.vvm_status_id),
         volume_per_pack,
         total_volume,
-        program_id: program_id.or(batch.program_id),
-        campaign_id: campaign_id.or(batch.campaign_id),
-        item_variant_id: item_variant_id.or(batch.item_variant_id),
-        donor_link_id: donor_id.or(batch.donor_link_id),
+
+        program_id: program_id.map(|p| p.value).unwrap_or(batch.program_id),
+        campaign_id: campaign_id.map(|c| c.value).unwrap_or(batch.campaign_id),
+        item_variant_id: item_variant_id
+            .map(|i| i.value)
+            .unwrap_or(batch.item_variant_id),
+        donor_id: donor_id.map(|d| d.value).unwrap_or(batch.donor_id),
+        manufacturer_id: manufacturer_id
+            .map(|m| m.value)
+            .unwrap_or(batch.manufacturer_id),
         ..batch
     }
 }
@@ -155,11 +163,12 @@ fn generate_line(
         prescribed_quantity,
         total_before_tax,
         note,
-        campaign_id,
-        program_id,
-        volume_per_pack: input_volume_per_pack,
-        item_variant_id: input_item_variant_id,
-        donor_id: input_donor_id,
+        campaign_id: _,
+        program_id: _,
+        volume_per_pack: _,
+        item_variant_id: _,
+        donor_id: _,
+        manufacturer_id: _,
         tax_percentage: _,
         location_id: _,
         batch: _,
@@ -167,7 +176,7 @@ fn generate_line(
         expiry_date: _,
         cost_price_per_pack: _,
         sell_price_per_pack: _,
-        vvm_status_id: input_vvm_status_id,
+        vvm_status_id: _,
     }: InsertStockOutLine,
     ItemRow {
         id: item_id,
@@ -183,16 +192,20 @@ fn generate_line(
         expiry_date,
         location_id,
         item_variant_id,
-        donor_link_id,
-        note: _,
+        donor_id: donor_link_id,
+        manufacturer_id,
         vvm_status_id,
         volume_per_pack,
+        campaign_id,
+        program_id,
+        note: _,
         ..
     }: StockLineRow,
     InvoiceRow {
         tax_percentage,
         currency_id,
         currency_rate,
+        program_id: invoice_program_id,
         ..
     }: InvoiceRow,
     default_pricing: ItemPrice,
@@ -219,6 +232,8 @@ fn generate_line(
         pack_size,
         batch,
         expiry_date,
+        manufacture_date: None,
+        purchase_order_line_id: None,
         sell_price_per_pack,
         cost_price_per_pack,
         r#type: InvoiceLineType::StockOut,
@@ -230,19 +245,21 @@ fn generate_line(
         total_before_tax,
         total_after_tax,
         tax_percentage,
-        donor_link_id: input_donor_id.or(donor_link_id),
+        donor_id: donor_link_id,
+        manufacturer_id,
         note,
         foreign_currency_price_before_tax,
-        vvm_status_id: input_vvm_status_id.or(vvm_status_id),
-        item_variant_id: input_item_variant_id.or(item_variant_id),
+        vvm_status_id,
+        item_variant_id,
         campaign_id,
-        program_id,
-        volume_per_pack: input_volume_per_pack.unwrap_or(volume_per_pack),
+        program_id: program_id.or(invoice_program_id),
+        volume_per_pack,
         shipped_number_of_packs: (r#type == StockOutType::OutboundShipment)
             .then_some(number_of_packs),
         shipped_pack_size: (r#type == StockOutType::OutboundShipment).then_some(pack_size),
         linked_invoice_id: None,
         reason_option_id: None,
+        status: None,
     })
 }
 

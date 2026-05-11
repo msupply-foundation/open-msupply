@@ -1,9 +1,9 @@
 use super::asset_log_row::asset_log::dsl::*;
 
-use crate::asset_row::{asset, AssetRowRepository};
+use crate::asset_row::asset;
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType,
+    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -19,9 +19,10 @@ table! {
         user_id -> Text,
         status -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogStatusMapping>,
         comment -> Nullable<Text>,
-        #[sql_name = "type"] type_ -> Nullable<Text>,
+        #[sql_name = "type"] type_ -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogTypeMapping>,
         reason_id -> Nullable<Text>,
         log_datetime -> Timestamp,
+        created_datetime -> Timestamp,
     }
 }
 
@@ -32,9 +33,10 @@ table! {
         user_id -> Text,
         status -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogStatusMapping>,
         comment -> Nullable<Text>,
-        #[sql_name = "type"] type_ -> Nullable<Text>,
+        #[sql_name = "type"] type_ -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogTypeMapping>,
         reason_id -> Nullable<Text>,
         log_datetime -> Timestamp,
+        created_datetime -> Timestamp,
     }
 }
 
@@ -53,6 +55,15 @@ pub enum AssetLogStatus {
     Unserviceable,
 }
 
+#[derive(DbEnum, Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum AssetLogType {
+    #[default]
+    StatusUpdate,
+    TemperatureMapping,
+}
+
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
 )]
@@ -65,11 +76,13 @@ pub struct AssetLogRow {
     pub status: Option<AssetLogStatus>,
     pub comment: Option<String>,
     #[diesel(column_name = "type_")]
-    pub r#type: Option<String>,
+    #[serde(default)]
+    pub r#type: Option<AssetLogType>,
     pub reason_id: Option<String>,
     pub log_datetime: NaiveDateTime,
+    #[serde(default)]
+    pub created_datetime: NaiveDateTime,
 }
-
 pub struct AssetLogRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -89,42 +102,14 @@ impl<'a> AssetLogRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, asset_log_row: &AssetLogRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, asset_log_row: &AssetLogRow) -> Result<(), RepositoryError> {
         self._upsert_one(asset_log_row)?;
-        // Return the changelog id
-        self.insert_changelog(
-            asset_log_row.id.to_owned(),
+        let changelog = asset_log_row.generate_changelog(
+            self.connection,
             RowActionType::Upsert,
-            Some(asset_log_row.clone()),
-        )
-    }
-
-    fn insert_changelog(
-        &self,
-        asset_log_id: String,
-        action: RowActionType,
-        row: Option<AssetLogRow>,
-    ) -> Result<i64, RepositoryError> {
-        let store_id = match &row {
-            Some(r) => {
-                // Find the asset, and get the store id for that asset
-                let asset = AssetRowRepository::new(self.connection).find_one_by_id(&r.asset_id)?;
-                match asset {
-                    Some(a) => a.store_id,
-                    None => None,
-                }
-            }
-            None => None,
-        };
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::AssetLog,
-            record_id: asset_log_id,
-            row_action: action,
-            store_id,
-            ..Default::default()
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_all(&mut self) -> Result<Vec<AssetLogRow>, RepositoryError> {
@@ -142,13 +127,31 @@ impl<'a> AssetLogRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AssetLogRow>, RepositoryError> {
+        Ok(asset_log::table
+            .filter(asset_log::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for AssetLogRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        // We'll return the later changelog id, as that's the one that will be marked as coming from this site...
-        let cursor_id = AssetLogRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        AssetLogRowRepository::new(con)._upsert_one(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

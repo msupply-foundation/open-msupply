@@ -5,8 +5,10 @@ import {
   useFormatNumber,
   useTranslation,
   usePreferences,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { useItem } from '../../api';
+import { AppRoute } from '@openmsupply-client/config';
 
 export const Statistics = () => {
   const t = useTranslation();
@@ -16,6 +18,11 @@ export const Statistics = () => {
   } = useItem();
   const { manageVaccinesInDoses } = usePreferences();
   const { stats, isVaccine, doses } = data || {};
+
+  const widgetContext = 'item-details';
+  const stockOnHandPanelContext = `${widgetContext}-stock-on-hand}`;
+  const AMCPanelContext = `${widgetContext}-amc`;
+  const monthsOfStockPanelContext = `${widgetContext}-months-of-stock`;
 
   if (!stats) return null;
 
@@ -35,38 +42,53 @@ export const Statistics = () => {
       display="flex"
     >
       <StatsPanel
+        title={t('title.stock-on-hand')}
+        panelContext={stockOnHandPanelContext}
         isLoading={false}
         stats={[
           {
             label: t('label.units'),
             value: formatNumber.round(stats.stockOnHand),
             extraMessage: getDosesMessage(stats.stockOnHand),
+            statContext: `${stockOnHandPanelContext}-units`,
           },
         ]}
-        title={t('title.stock-on-hand')}
+        link={
+          data?.code &&
+          RouteBuilder.create(AppRoute.Inventory)
+            .addPart(AppRoute.Stock)
+            .addQuery({
+              search: data?.code,
+            })
+            .build()
+        }
         width={300}
       />
       <StatsPanel
         isLoading={false}
+        title={t('title.average-monthly-consumption')}
+        panelContext={AMCPanelContext}
         stats={[
           {
             label: t('label.units'),
             value: formatNumber.round(stats.averageMonthlyConsumption, 2),
             extraMessage: getDosesMessage(stats.averageMonthlyConsumption),
+            statContext: `${AMCPanelContext}-units`,
           },
         ]}
-        title={t('title.average-monthly-consumption')}
         width={300}
       />
       <StatsPanel
         isLoading={false}
+        title={t('title.months-of-stock')}
+        panelContext={monthsOfStockPanelContext}
         stats={[
           {
             label: t('text.months'),
             value: formatNumber.round(stats?.monthsOfStockOnHand ?? 0, 2),
+            statContext: `${monthsOfStockPanelContext}-months`,
           },
         ]}
-        title={t('title.months-of-stock')}
         width={300}
       />
     </Grid>

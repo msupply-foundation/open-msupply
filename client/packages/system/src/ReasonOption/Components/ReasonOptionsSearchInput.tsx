@@ -17,15 +17,17 @@ interface ReasonOptionsSearchInputProps
   value?: ReasonOptionNode | null;
   onChange: (reasonOption: ReasonOptionNode | null) => void;
   type: ReasonOptionNodeType | ReasonOptionNodeType[];
+  fallbackType?: ReasonOptionNodeType;
   initialStocktake?: boolean;
-  width?: number;
+  width?: number | string;
 }
 
 export const ReasonOptionsSearchInput = ({
   value,
-  width,
+  width = '100%',
   onChange,
   type,
+  fallbackType,
   initialStocktake,
   disabled,
   ...restProps
@@ -38,12 +40,19 @@ export const ReasonOptionsSearchInput = ({
     }
     return reasonOption.type === type;
   };
-  const reasons = (reasonOptions?.nodes ?? []).filter(reasonFilter);
+  let reasons = (reasonOptions?.nodes ?? []).filter(reasonFilter);
+
+  if (reasons.length === 0 && fallbackType) {
+    reasons = (reasonOptions?.nodes ?? []).filter(
+      reasonOption => reasonOption.type === fallbackType
+    );
+  }
+
   const isRequired = reasons.length !== 0 && !initialStocktake;
 
   return (
     <Autocomplete
-      sx={{ width: width ? `${width}px` : '100%' }}
+      sx={{ width }}
       disabled={disabled || !isRequired}
       clearable={false}
       value={

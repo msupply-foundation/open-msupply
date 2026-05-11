@@ -146,7 +146,7 @@ impl FileSynchroniser {
 
         let file_category = StaticFileCategory::SyncFile(
             sync_file_reference.table_name.to_owned(),
-            sync_file_reference.record_id.to_owned(),
+            sync_file_reference.record_id.to_string(),
         );
 
         let file = self

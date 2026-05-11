@@ -10,7 +10,7 @@ export interface DraftInboundLine extends InboundLineFragment {
   isCreated?: boolean;
   isDeleted?: boolean;
   isUpdated?: boolean;
-  unitsPerPack?: number;
+  receivedNumberOfUnits?: number;
 }
 
 export interface DraftStockOutLine extends StockOutLineFragment {

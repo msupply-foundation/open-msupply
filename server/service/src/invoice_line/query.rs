@@ -26,7 +26,7 @@ pub fn get_invoice_line(
     id: &str,
 ) -> Result<Option<InvoiceLine>, RepositoryError> {
     let mut result = InvoiceLineRepository::new(&ctx.connection)
-        .query_by_filter(InvoiceLineFilter::new().id(EqualFilter::equal_to(id)))?;
+        .query_by_filter(InvoiceLineFilter::new().id(EqualFilter::equal_to(id.to_string())))?;
 
     Ok(result.pop())
 }
@@ -40,7 +40,7 @@ pub fn get_invoice_lines(
 ) -> Result<ListResult<InvoiceLine>, GetInvoiceLinesError> {
     let filter = filter
         .unwrap_or_default()
-        .store_id(EqualFilter::equal_to(store_id));
+        .store_id(EqualFilter::equal_to(store_id.to_string()));
     let pagination =
         get_pagination_or_default(pagination).map_err(GetInvoiceLinesError::ListError)?;
 

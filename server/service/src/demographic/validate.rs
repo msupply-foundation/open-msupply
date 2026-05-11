@@ -40,8 +40,8 @@ pub fn check_base_year_unique(
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
     let filter = DemographicProjectionFilter::new()
-        .base_year(EqualFilter::equal_to_i32(base_year))
-        .id(EqualFilter::not_equal_to(id));
+        .base_year(EqualFilter::equal_to(base_year))
+        .id(EqualFilter::not_equal_to(id.to_string()));
     let result = DemographicProjectionRepository::new(connection).query_by_filter(filter)?;
     Ok(result.is_empty())
 }
@@ -53,11 +53,11 @@ pub fn check_year_name_combination_unique(
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
     let mut filter = DemographicIndicatorFilter::new()
-        .base_year(EqualFilter::equal_to_i32(base_year.to_owned()))
+        .base_year(EqualFilter::equal_to(base_year.to_owned()))
         .name(StringFilter::equal_to(name));
 
     if let Some(id) = id {
-        filter = filter.id(EqualFilter::not_equal_to(&id));
+        filter = filter.id(EqualFilter::not_equal_to(id.to_string()));
     }
     let result = DemographicIndicatorRepository::new(connection).query_by_filter(filter)?;
     Ok(result.is_empty())

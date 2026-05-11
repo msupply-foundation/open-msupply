@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Box,
   DialogButton,
   LoadingButton,
   SaveIcon,
@@ -14,7 +15,7 @@ interface CreateClinicianSliderProps {
   updateDraft: (update: Partial<DraftClinician>) => void;
   open: boolean;
   onClose: (clinicianId?: string) => void;
-  width?: number;
+  width?: number | string;
   confirmAndSave?: () => void;
   isSaving?: boolean;
   isValid?: boolean;
@@ -25,7 +26,7 @@ export const CreateClinicianSlider = ({
   updateDraft,
   open,
   onClose,
-  width = 400,
+  width = '100%',
   confirmAndSave = () => {},
   isSaving = false,
   isValid = true,
@@ -51,7 +52,9 @@ export const CreateClinicianSlider = ({
       }
       cancelButton={<DialogButton variant="cancel" onClick={() => onClose()} />}
     >
-      <CreateClinicianForm draft={draft} updateDraft={updateDraft} />
+      <Box display="flex" justifyContent="center">
+        <CreateClinicianForm draft={draft} updateDraft={updateDraft} />
+      </Box>
     </SlidePanel>
   );
 };

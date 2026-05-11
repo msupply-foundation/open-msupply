@@ -4,7 +4,6 @@ use super::{
     item_row::item,
     item_variant::item_variant_row::{item_variant, ItemVariantRow},
     location_row::location,
-    name_link_row::name_link,
     name_row::name,
     stock_line_row::stock_line,
     vvm_status::vvm_status_row::{vvm_status, VVMStatusRow},
@@ -15,18 +14,15 @@ use crate::{
     diesel_extensions::OrderByExtensions,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_last,
-        apply_sort_no_case,
+        apply_sort_no_case, apply_string_filter,
     },
     location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
     BarcodeRow, DateFilter, EqualFilter, ItemFilter, ItemLinkRow, ItemRepository, ItemRow,
-    MasterListLineRepository, NameLinkRow, NameRow, Pagination, Sort, StringFilter,
+    MasterListLineRepository, NameRow, Pagination, Sort, StringFilter,
 };
 
-use diesel::{
-    dsl::{Eq, InnerJoin, IntoBoxed, LeftJoin, LeftJoinOn, Nullable},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct StockLine {
@@ -41,6 +37,7 @@ pub struct StockLine {
 
 pub enum StockLineSortField {
     ExpiryDate,
+    ManufactureDate,
     NumberOfPacks,
     ItemCode,
     ItemName,
@@ -48,6 +45,7 @@ pub enum StockLineSortField {
     PackSize,
     SupplierName,
     LocationCode,
+    CostPricePerPack,
     VvmStatusThenExpiry,
 }
 
@@ -55,6 +53,9 @@ pub enum StockLineSortField {
 pub struct StockLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub item_code_or_name: Option<StringFilter>,
+    pub code: Option<StringFilter>,
+    pub name: Option<StringFilter>,
+    pub search: Option<StringFilter>,
     pub item_id: Option<EqualFilter<String>>,
     pub location_id: Option<EqualFilter<String>>,
     pub vvm_status_id: Option<EqualFilter<String>>,
@@ -65,6 +66,7 @@ pub struct StockLineFilter {
     pub location: Option<LocationFilter>,
     pub master_list: Option<MasterListFilter>,
     pub is_active: Option<bool>,
+    pub is_program_stock_line: Option<bool>,
 }
 
 pub type StockLineSort = Sort<StockLineSortField>;
@@ -74,7 +76,7 @@ type StockLineJoin = (
     (ItemLinkRow, ItemRow),
     Option<ItemVariantRow>,
     Option<LocationRow>,
-    Option<(NameLinkRow, NameRow)>,
+    Option<NameRow>,
     Option<BarcodeRow>,
     Option<VVMStatusRow>,
 );
@@ -92,8 +94,7 @@ impl<'a> StockLineRepository<'a> {
         filter: Option<StockLineFilter>,
         store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
-        let mut query = Self::create_filtered_query(filter.clone());
-        query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
+        let query = Self::create_filtered_query(filter, store_id);
 
         Ok(query
             .count()
@@ -115,8 +116,7 @@ impl<'a> StockLineRepository<'a> {
         sort: Option<StockLineSort>,
         store_id: Option<String>,
     ) -> Result<Vec<StockLine>, RepositoryError> {
-        let mut query = Self::create_filtered_query(filter.clone());
-        query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
+        let mut query = Self::create_filtered_query(filter, store_id);
 
         if let Some(sort) = sort {
             match sort.key {
@@ -126,6 +126,9 @@ impl<'a> StockLineRepository<'a> {
                 StockLineSortField::ExpiryDate => {
                     // TODO: would prefer to have extra parameter on Sort.nulls_last
                     apply_sort_asc_nulls_last!(query, sort, stock_line::expiry_date);
+                }
+                StockLineSortField::ManufactureDate => {
+                    apply_sort_asc_nulls_last!(query, sort, stock_line::manufacture_date);
                 }
                 StockLineSortField::ItemCode => {
                     apply_sort_no_case!(query, sort, item::code);
@@ -144,6 +147,9 @@ impl<'a> StockLineRepository<'a> {
                 }
                 StockLineSortField::LocationCode => {
                     apply_sort_no_case!(query, sort, location::code);
+                }
+                StockLineSortField::CostPricePerPack => {
+                    apply_sort!(query, sort, stock_line::cost_price_per_pack);
                 }
                 StockLineSortField::VvmStatusThenExpiry => {
                     // Complex sort, not using apply_sort
@@ -177,26 +183,21 @@ impl<'a> StockLineRepository<'a> {
         Ok(result.into_iter().map(to_domain).collect())
     }
 
-    pub fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery {
-        let mut query = stock_line::table
-            .inner_join(item_link::table.inner_join(item::table))
-            .left_join(item_variant::table)
-            .left_join(location::table)
-            .left_join(
-                name_link::table
-                    .on(stock_line::supplier_link_id.eq(name_link::id.nullable()))
-                    .inner_join(name::table),
-            )
-            .left_join(barcode::table)
-            .left_join(vvm_status::table)
-            .into_boxed();
+    pub fn create_filtered_query(
+        filter: Option<StockLineFilter>,
+        query_store_id: Option<String>,
+    ) -> BoxedStockLineQuery {
+        let mut query = query().into_boxed();
 
         if let Some(f) = filter {
             let StockLineFilter {
-                expiry_date,
                 id,
+                code,
+                name,
                 is_available,
-                item_code_or_name: _,
+                item_code_or_name,
+                expiry_date,
+                search,
                 item_id,
                 location_id,
                 vvm_status_id,
@@ -205,9 +206,34 @@ impl<'a> StockLineRepository<'a> {
                 location,
                 master_list,
                 is_active,
+                is_program_stock_line,
             } = f;
 
+            // OR filters must come first
+            if search.is_some() || item_code_or_name.is_some() {
+                let search_for_item = search.clone();
+                apply_string_filter!(query, search, stock_line::batch);
+
+                // Store id must be passed to filter
+                if let Some(store_id) = &query_store_id {
+                    if search_for_item.is_some() || item_code_or_name.is_some() {
+                        let item_filter = ItemFilter {
+                            code_or_name: search_for_item.or(item_code_or_name),
+                            ..ItemFilter::new().is_visible(true).is_active(true)
+                        };
+                        let item_query = ItemRepository::create_filtered_query(
+                            store_id.clone(),
+                            Some(item_filter),
+                        );
+
+                        query = query.or_filter(item::id.eq_any(item_query.select(item::id)));
+                    }
+                }
+            }
+
             apply_equal_filter!(query, id, stock_line::id);
+            apply_string_filter!(query, code, item::code);
+            apply_string_filter!(query, name, item::name);
             apply_equal_filter!(query, item_id, item::id);
             apply_equal_filter!(query, location_id, stock_line::location_id);
             apply_date_filter!(query, expiry_date, stock_line::expiry_date);
@@ -237,13 +263,18 @@ impl<'a> StockLineRepository<'a> {
             }
 
             if master_list.is_some() {
-                let item_ids = MasterListLineRepository::create_filtered_query(Some(
-                    MasterListLineFilter::new().master_list(master_list.unwrap()),
-                ))
+                let item_ids = MasterListLineRepository::create_filtered_query(
+                    Some(MasterListLineFilter::new().master_list(master_list.unwrap())),
+                    None,
+                )
                 .unwrap()
                 .select(item::id);
 
                 query = query.filter(item::id.eq_any(item_ids));
+            }
+
+            if is_program_stock_line.is_some() {
+                query = query.filter(stock_line::program_id.is_not_null());
             }
         }
 
@@ -251,50 +282,18 @@ impl<'a> StockLineRepository<'a> {
     }
 }
 
-type BoxedStockLineQuery = IntoBoxed<
-    'static,
-    LeftJoin<
-        LeftJoin<
-            LeftJoinOn<
-                LeftJoin<
-                    LeftJoin<
-                        InnerJoin<stock_line::table, InnerJoin<item_link::table, item::table>>,
-                        item_variant::table,
-                    >,
-                    location::table,
-                >,
-                InnerJoin<name_link::table, name::table>,
-                Eq<stock_line::supplier_link_id, Nullable<name_link::id>>,
-            >,
-            barcode::table,
-        >,
-        vvm_status::table,
-    >,
-    DBType,
->;
-
-fn apply_item_filter(
-    query: BoxedStockLineQuery,
-    filter: Option<StockLineFilter>,
-    connection: &StorageConnection,
-    store_id: String,
-) -> BoxedStockLineQuery {
-    if let Some(f) = filter {
-        if let Some(item_code_or_name) = &f.item_code_or_name {
-            let mut item_filter = ItemFilter::new();
-            item_filter.code_or_name = Some(item_code_or_name.clone());
-            item_filter.is_visible = Some(true);
-            item_filter.is_active = Some(true);
-            let items = ItemRepository::new(connection)
-                .query_by_filter(item_filter, Some(store_id))
-                .unwrap_or_default(); // if there is a database issue, allow the filter to fail silently
-            let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
-
-            return query.filter(item::id.eq_any(item_ids));
-        }
-    }
-    query
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    stock_line::table
+        .inner_join(item_link::table.inner_join(item::table))
+        .left_join(item_variant::table)
+        .left_join(location::table)
+        .left_join(name::table)
+        .left_join(barcode::table)
+        .left_join(vvm_status::table)
 }
+
+type BoxedStockLineQuery = IntoBoxed<'static, query, DBType>;
 
 fn to_domain(
     (
@@ -302,7 +301,7 @@ fn to_domain(
         (_, item_row),
         item_variant_row,
         location_row,
-        name_link_join,
+        supplier_name_row,
         barcode_row,
         vvm_status_row,
     ): StockLineJoin,
@@ -311,7 +310,7 @@ fn to_domain(
         stock_line_row,
         item_row,
         location_row,
-        supplier_name_row: name_link_join.map(|(_, name_row)| name_row),
+        supplier_name_row,
         barcode_row,
         item_variant_row,
         vvm_status_row,
@@ -372,6 +371,11 @@ impl StockLineFilter {
         self.master_list = Some(filter);
         self
     }
+
+    pub fn is_program_stock_line(mut self, filter: bool) -> Self {
+        self.is_program_stock_line = Some(filter);
+        self
+    }
 }
 
 impl StockLine {
@@ -401,7 +405,6 @@ impl StockLine {
 #[cfg(test)]
 mod test {
     use chrono::NaiveDate;
-    
 
     use crate::{
         mock::MockDataInserts,

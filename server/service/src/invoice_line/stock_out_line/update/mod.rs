@@ -155,9 +155,7 @@ mod test {
         test_db::setup_all,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
         InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository,
-        Upsert,
     };
-   
 
     use crate::{
         invoice::outbound_shipment::update::{
@@ -620,7 +618,7 @@ mod test {
         let earlier_stock_in_invoice = InvoiceRow {
             id: earlier_invoice_id.clone(),
             invoice_number: -7,
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             r#type: InvoiceType::InboundShipment,
             store_id: context.store_id.clone(),
             created_datetime: datetime,
@@ -631,14 +629,14 @@ mod test {
             ..Default::default()
         };
 
-        earlier_stock_in_invoice.upsert(&connection).unwrap();
+        InvoiceRowRepository::new(&connection).upsert_one(&earlier_stock_in_invoice).unwrap();
 
         // Current invoice (1 minute ago)
         let datetime = chrono::Utc::now().naive_utc() - chrono::Duration::minutes(1);
         let current_invoice = InvoiceRow {
             id: "stock_in_invoice_id-0".to_string(),
             invoice_number: 0,
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             r#type: InvoiceType::InboundShipment,
             store_id: context.store_id.clone(),
             created_datetime: datetime,
@@ -649,7 +647,7 @@ mod test {
             ..Default::default()
         };
 
-        current_invoice.upsert(&context.connection).unwrap();
+        InvoiceRowRepository::new(&context.connection).upsert_one(&current_invoice).unwrap();
 
         // Create a stock line for the item
         let stock_line_id = "stock_line_id".to_string();
@@ -664,7 +662,7 @@ mod test {
             ..Default::default()
         };
 
-        stock_line.upsert(&context.connection).unwrap();
+        StockLineRowRepository::new(&context.connection).upsert_one(&stock_line).unwrap();
 
         // Add the invoice lines (each invoice introduces 10 packs)
 
@@ -681,7 +679,7 @@ mod test {
             ..Default::default()
         };
 
-        invoice_line.upsert(&context.connection).unwrap();
+        InvoiceLineRowRepository::new(&context.connection).upsert_one(&invoice_line).unwrap();
 
         // Current invoice
         let invoice_line = InvoiceLineRow {
@@ -696,7 +694,7 @@ mod test {
             ..Default::default()
         };
 
-        invoice_line.upsert(&context.connection).unwrap();
+        InvoiceLineRowRepository::new(&context.connection).upsert_one(&invoice_line).unwrap();
 
         // Create a backdated prescription (2 days ago)
         let prescription_id = "prescription_id".to_string();
@@ -704,7 +702,7 @@ mod test {
         let prescription_invoice = InvoiceRow {
             id: prescription_id.clone(),
             invoice_number: 999,
-            name_link_id: mock_patient().id,
+            name_id: mock_patient().id,
             r#type: InvoiceType::Prescription,
             store_id: context.store_id.clone(),
             created_datetime: chrono::Utc::now().naive_utc(), // Created now
@@ -716,7 +714,7 @@ mod test {
             ..Default::default()
         };
 
-        prescription_invoice.upsert(&context.connection).unwrap();
+        InvoiceRowRepository::new(&context.connection).upsert_one(&prescription_invoice).unwrap();
 
         // Add a stock out line to the prescription (using half available stock)
         invoice_line_service
@@ -735,7 +733,13 @@ mod test {
 
         let item_stats_service = service_provider.item_stats_service;
         let stats = item_stats_service
-            .get_item_stats(&context, &context.store_id, None, vec![mock_item_a().id])
+            .get_item_stats(
+                &context,
+                &context.store_id,
+                None,
+                vec![mock_item_a().id],
+                None,
+            )
             .unwrap();
         let stats = stats.first().unwrap();
         assert_eq!(
@@ -758,7 +762,13 @@ mod test {
             .unwrap();
 
         let stats = item_stats_service
-            .get_item_stats(&context, &context.store_id, None, vec![mock_item_a().id])
+            .get_item_stats(
+                &context,
+                &context.store_id,
+                None,
+                vec![mock_item_a().id],
+                None,
+            )
             .unwrap();
         let stats = stats.first().unwrap();
         assert_eq!(
@@ -805,7 +815,7 @@ mod test {
         let prescription = InvoiceRow {
             id: "prescription_invoice-0".to_string(),
             invoice_number: 0,
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             r#type: InvoiceType::Prescription,
             store_id: context.store_id.clone(),
             created_datetime: datetime,
@@ -815,7 +825,7 @@ mod test {
             ..Default::default()
         };
 
-        prescription.upsert(&context.connection).unwrap();
+        InvoiceRowRepository::new(&context.connection).upsert_one(&prescription).unwrap();
 
         // insert a stock out line to the prescription
         let stock_out_line = InsertStockOutLine {
@@ -863,7 +873,7 @@ mod test {
         let outbound1 = InvoiceRow {
             id: "outbound_invoice-1".to_string(),
             invoice_number: 1,
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             r#type: InvoiceType::OutboundShipment,
             store_id: context.store_id.clone(),
             created_datetime: datetime,
@@ -872,7 +882,7 @@ mod test {
             ..Default::default()
         };
 
-        outbound1.upsert(&context.connection).unwrap();
+        InvoiceRowRepository::new(&context.connection).upsert_one(&outbound1).unwrap();
 
         let stock_out_line = InsertStockOutLine {
             id: "outbound_invoice-1-1".to_string(),
@@ -897,7 +907,7 @@ mod test {
         let prescription1 = InvoiceRow {
             id: "prescription_invoice-1".to_string(),
             invoice_number: 1,
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             r#type: InvoiceType::Prescription,
             store_id: context.store_id.clone(),
             created_datetime: datetime,
@@ -906,7 +916,7 @@ mod test {
             ..Default::default()
         };
 
-        prescription1.upsert(&context.connection).unwrap();
+        InvoiceRowRepository::new(&context.connection).upsert_one(&prescription1).unwrap();
 
         let stock_out_line = InsertStockOutLine {
             id: "prescription_invoice-1-1".to_string(),
@@ -948,7 +958,7 @@ mod test {
         let prescription = InvoiceRow {
             id: "prescription_invoice-0".to_string(),
             invoice_number: 0,
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             r#type: InvoiceType::Prescription,
             store_id: context.store_id.clone(),
             verified_datetime: None,
@@ -956,7 +966,7 @@ mod test {
             ..Default::default()
         };
 
-        prescription.upsert(&context.connection).unwrap();
+        InvoiceRowRepository::new(&context.connection).upsert_one(&prescription).unwrap();
 
         // insert a stock out line to the prescription
         let stock_out_line = InsertStockOutLine {

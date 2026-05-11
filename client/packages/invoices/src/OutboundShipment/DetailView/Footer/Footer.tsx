@@ -11,74 +11,47 @@ import {
   ZapIcon,
   useTranslation,
   AppFooterPortal,
-  InvoiceNodeStatus,
   useBreadcrumbs,
   useConfirmationModal,
   InvoiceLineNodeType,
+  InvoiceNodeType,
+  usePreferences,
 } from '@openmsupply-client/common';
-import { getStatusTranslator, outboundStatuses } from '../../../utils';
-import { useOutbound, OutboundFragment } from '../../api';
+import { getStatusTranslator } from '../../../utils';
+import { createStatusLog, getStatusSequence } from '../../../statuses';
+import { useOutbound } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
 import { StockOutLineFragment } from 'packages/invoices/src/StockOut';
 
-const createStatusLog = (invoice: OutboundFragment) => {
-  const statusIdx = outboundStatuses.findIndex(s => invoice.status === s);
-
-  const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
-    [InvoiceNodeStatus.New]: null,
-    [InvoiceNodeStatus.Allocated]: null,
-    [InvoiceNodeStatus.Picked]: null,
-    [InvoiceNodeStatus.Shipped]: null,
-    [InvoiceNodeStatus.Delivered]: null,
-    [InvoiceNodeStatus.Verified]: null,
-    // Not used in outbound shipments
-    [InvoiceNodeStatus.Cancelled]: null,
-    [InvoiceNodeStatus.Received]: null,
-  };
-
-  if (statusIdx >= 0) {
-    statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
-  }
-  if (statusIdx >= 1) {
-    statusLog[InvoiceNodeStatus.Allocated] = invoice.allocatedDatetime;
-  }
-  if (statusIdx >= 2) {
-    statusLog[InvoiceNodeStatus.Picked] = invoice.pickedDatetime;
-  }
-  if (statusIdx >= 3) {
-    statusLog[InvoiceNodeStatus.Shipped] = invoice.shippedDatetime;
-  }
-  if (statusIdx >= 4) {
-    statusLog[InvoiceNodeStatus.Delivered] = invoice.deliveredDatetime;
-  }
-  if (statusIdx >= 5) {
-    statusLog[InvoiceNodeStatus.Received] = invoice.receivedDatetime;
-  }
-  if (statusIdx >= 6) {
-    statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
-  }
-
-  return statusLog;
-};
+const outboundSequence = getStatusSequence(InvoiceNodeType.OutboundShipment);
 
 interface FooterComponentProps {
   onReturnLines: (selectedLines: StockOutLineFragment[]) => void;
+  selectedRows: StockOutLineFragment[];
+  resetRowSelection: () => void;
 }
 
 export const FooterComponent: FC<FooterComponentProps> = ({
   onReturnLines,
+  selectedRows,
+  resetRowSelection,
 }) => {
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
+  const { invoiceStatusOptions } = usePreferences();
 
   const { data } = useOutbound.document.get();
-  const onDelete = useOutbound.line.deleteSelected();
-  const { onAllocate } = useOutbound.line.allocateSelected();
+  const onDelete = useOutbound.line.deleteSelected(
+    selectedRows,
+    resetRowSelection
+  );
+  const { onAllocate } = useOutbound.line.allocateSelected(
+    selectedRows,
+    resetRowSelection
+  );
 
-  const selectedLines = useOutbound.utils.selectedLines();
-
-  const selectedUnallocatedEmptyLines = selectedLines
+  const selectedUnallocatedEmptyLines = selectedRows
     .filter(
       ({ type, numberOfPacks }) =>
         type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks === 0
@@ -97,7 +70,9 @@ export const FooterComponent: FC<FooterComponentProps> = ({
   const confirmAllocate = () => {
     if (selectedUnallocatedEmptyLines.length !== 0) {
       getConfirmation();
-    } else onAllocate();
+    } else {
+      onAllocate();
+    }
   };
 
   const actions: Action[] = [
@@ -115,22 +90,27 @@ export const FooterComponent: FC<FooterComponentProps> = ({
     {
       label: t('button.return-lines'),
       icon: <ArrowLeftIcon />,
-      onClick: () => onReturnLines(selectedLines),
+      onClick: () => onReturnLines(selectedRows),
       shouldShrink: false,
     },
   ];
+
+  const statuses = outboundSequence.filter(status =>
+    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
+  );
 
   return (
     <AppFooterPortal
       Content={
         <>
-          {selectedLines.length !== 0 && (
+          {selectedRows.length !== 0 && (
             <ActionsFooter
               actions={actions}
-              selectedRowCount={selectedLines.length}
+              selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
-          {data && selectedLines.length === 0 && (
+          {data && selectedRows.length === 0 && (
             <Box
               gap={2}
               display="flex"
@@ -141,8 +121,8 @@ export const FooterComponent: FC<FooterComponentProps> = ({
               <OnHoldButton />
 
               <StatusCrumbs
-                statuses={outboundStatuses}
-                statusLog={createStatusLog(data)}
+                statuses={statuses}
+                statusLog={createStatusLog(data, outboundSequence)}
                 statusFormatter={getStatusTranslator(t)}
               />
 
@@ -155,7 +135,6 @@ export const FooterComponent: FC<FooterComponentProps> = ({
                   sx={{ fontSize: '12px' }}
                   onClick={() => navigateUpOne()}
                 />
-
                 <StatusChangeButton />
               </Box>
             </Box>

@@ -1,4 +1,3 @@
-use crate::activity_log::system_log_entry;
 use repository::system_log_row::SystemLogType;
 use repository::{RepositoryError, StorageConnection};
 use std::sync::Arc;
@@ -6,8 +5,8 @@ use thiserror::Error;
 use tokio::sync::mpsc::{self, Receiver, Sender};
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
-use util::format_error;
 
+use crate::activity_log::system_error_log;
 use crate::service_provider::ServiceProvider;
 
 use self::transfer::invoice::ProcessInvoiceTransfersError;
@@ -23,6 +22,7 @@ mod contact_form;
 mod general_processor;
 mod load_plugin;
 mod plugin_processor;
+mod requisition_auto_finalise;
 pub use general_processor::ProcessorType;
 #[cfg(test)]
 mod test_helpers;
@@ -119,7 +119,7 @@ impl Processors {
                 };
 
                 if let Err(error) = result {
-                    log::error!("{}", error);
+                    log::error!("{error}");
                 }
             }
         })
@@ -129,23 +129,20 @@ impl Processors {
 impl ProcessorsTrigger {
     pub(crate) fn trigger_requisition_transfer_processors(&self) {
         if let Err(error) = self.requisition_transfer.try_send(()) {
-            log::error!(
-                "Problem triggering requisition transfer processor {:#?}",
-                error
-            )
+            log::error!("Problem triggering requisition transfer processor {error:#?}")
         }
     }
 
     pub(crate) fn trigger_invoice_transfer_processors(&self) {
         if let Err(error) = self.invoice_transfer.try_send(()) {
-            log::error!("Problem triggering invoice transfer processor {:#?}", error)
+            log::error!("Problem triggering invoice transfer processor {error:#?}")
         }
     }
 
     pub(crate) fn trigger_processor(&self, r#type: ProcessorType) {
         if let Err(error) = self.general_processor.try_send(r#type.clone()) {
             let description = r#type.get_description();
-            log::error!("Problem triggering {description} processor {:#?}", error)
+            log::error!("Problem triggering {description} processor {error:#?}")
         }
     }
 
@@ -156,17 +153,11 @@ impl ProcessorsTrigger {
     pub async fn await_events_processed(&self) {
         let (sender, receiver) = oneshot::channel();
         if let Err(error) = self.await_process_queue.try_send(sender) {
-            log::error!(
-                "Problem sending the await_events_processed queue {:#?}",
-                error
-            );
+            log::error!("Problem sending the await_events_processed queue {error:#?}");
         }
 
         if let Err(error) = receiver.await {
-            log::error!(
-                "Problem receiving the await_events_processed response {:#?}",
-                error
-            );
+            log::error!("Problem receiving the await_events_processed response {error:#?}");
         }
     }
 
@@ -185,9 +176,7 @@ fn log_system_error(
     connection: &StorageConnection,
     error: &impl std::error::Error,
 ) -> Result<(), RepositoryError> {
-    let error_message = format_error(error);
-    log::error!("{}", error_message);
-    system_log_entry(connection, SystemLogType::ProcessorError, &error_message)?;
+    system_error_log(connection, SystemLogType::ProcessorError, &error, "")?;
     Ok(())
 }
 

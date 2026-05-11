@@ -13,8 +13,8 @@ export const StyledTextInputButton = styled(MuiButton)(({
     color: theme.palette.gray.dark,
 
     backgroundColor: disabled
-      ? theme.palette.background.toolbar
-      : theme.palette.background.menu,
+      ? theme.palette.background.input.disabled
+      : theme.palette.background.input.main,
     height: '36px',
     justifyContent: 'space-between',
     '& .MuiButton-endIcon': {

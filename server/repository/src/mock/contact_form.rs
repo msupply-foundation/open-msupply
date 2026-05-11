@@ -1,6 +1,5 @@
 use crate::contact_form_row::{ContactFormRow, ContactType};
 
-
 use super::{mock_store_a, mock_user_account_a};
 
 pub fn mock_contact_form_a() -> ContactFormRow {

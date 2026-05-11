@@ -3,8 +3,8 @@ use repository::{
         mock_name_tag_1, mock_name_tag_2, mock_name_tag_3, mock_period_schedule_1,
         mock_period_schedule_2,
     },
-    ContextRow, ProgramRequisitionOrderTypeRow, ProgramRequisitionSettingsRow, ProgramRow,
-    SyncAction, SyncBufferRow,
+    sync_buffer::SyncRecordData, ContextRow, ProgramRequisitionOrderTypeRow,
+    ProgramRequisitionSettingsRow, ProgramRow, SyncAction, SyncBufferRow,
 };
 
 use crate::sync::{
@@ -125,15 +125,15 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             translated_record: PullTranslateResult::IntegrationOperations(vec![
                 IntegrationOperation::upsert(ContextRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
-                    name: "Program Test 01".to_owned(),
+                    name: "Program Test 01".to_string(),
                 }),
                 IntegrationOperation::upsert(ProgramRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
-                    name: "Program Test 01".to_owned(),
+                    name: "Program Test 01".to_string(),
                     master_list_id: Some(MASTER_LIST_WITH_PROGRAM_1.0.to_owned()),
                     context_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                     is_immunisation: false,
-                    elmis_code: Some("elmis".to_owned()),
+                    elmis_code: Some("elmis".to_string()),
                     deleted_datetime: None,
                 }),
                 IntegrationOperation::upsert(ProgramRequisitionSettingsRow {
@@ -148,7 +148,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                         + "New order 1",
                     program_requisition_settings_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned()
                         + &mock_name_tag_1().id,
-                    name: "New order 1".to_owned(),
+                    name: "New order 1".to_string(),
                     threshold_mos: 3.0,
                     max_mos: 3.0,
                     max_order_per_period: 1,
@@ -161,7 +161,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                         + "New order 2",
                     program_requisition_settings_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned()
                         + &mock_name_tag_1().id,
-                    name: "New order 2".to_owned(),
+                    name: "New order 2".to_string(),
                     threshold_mos: 3.0,
                     max_mos: 3.0,
                     max_order_per_period: 1,
@@ -180,7 +180,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                         + "New order 1",
                     program_requisition_settings_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned()
                         + &mock_name_tag_2().id,
-                    name: "New order 1".to_owned(),
+                    name: "New order 1".to_string(),
                     threshold_mos: 4.0,
                     max_mos: 4.0,
                     max_order_per_period: 1,
@@ -199,7 +199,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                         + "New order 1",
                     program_requisition_settings_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned()
                         + &mock_name_tag_3().id,
-                    name: "New order 1".to_owned(),
+                    name: "New order 1".to_string(),
                     threshold_mos: 2.0,
                     max_mos: 2.0,
                     max_order_per_period: 0,
@@ -210,7 +210,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             sync_buffer_row: SyncBufferRow {
                 table_name: TABLE_NAME.to_string(),
                 record_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
-                data: MASTER_LIST_WITH_PROGRAM_1.1.to_owned(),
+                data: SyncRecordData(serde_json::from_str(MASTER_LIST_WITH_PROGRAM_1.1).unwrap()),
                 action: SyncAction::Upsert,
                 ..Default::default()
             },
@@ -220,11 +220,11 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             translated_record: PullTranslateResult::IntegrationOperations(vec![
                 IntegrationOperation::upsert(ContextRow {
                     id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
-                    name: "Program Test 02".to_owned(),
+                    name: "Program Test 02".to_string(),
                 }),
                 IntegrationOperation::upsert(ProgramRow {
                     id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
-                    name: "Program Test 02".to_owned(),
+                    name: "Program Test 02".to_string(),
                     master_list_id: Some(MASTER_LIST_WITH_PROGRAM_2.0.to_owned()),
                     context_id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
                     is_immunisation: true,
@@ -241,7 +241,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             sync_buffer_row: SyncBufferRow {
                 table_name: TABLE_NAME.to_string(),
                 record_id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
-                data: MASTER_LIST_WITH_PROGRAM_2.1.to_owned(),
+                data: SyncRecordData(serde_json::from_str(MASTER_LIST_WITH_PROGRAM_2.1).unwrap()),
                 action: SyncAction::Upsert,
                 ..Default::default()
             },

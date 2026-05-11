@@ -1,19 +1,16 @@
 use super::{
     clinician_link_row::clinician_link, clinician_row::clinician, item_link, item_row::item,
-    name_link_row::name_link, name_row::name, vaccination_row::vaccination, DBType, ItemLinkRow,
+    name_row::name, vaccination_row::vaccination, DBType, ItemLinkRow,
     ItemRow, RepositoryError, StorageConnection, VaccinationRow,
 };
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort},
     vaccine_course::vaccine_course_dose_row::{vaccine_course_dose, VaccineCourseDoseRow},
-    ClinicianLinkRow, ClinicianRow, EqualFilter, NameLinkRow, NameRow, Pagination, Sort,
+    ClinicianLinkRow, ClinicianRow, EqualFilter, NameRow, Pagination, Sort,
 };
 
-use diesel::{
-    dsl::{Eq, InnerJoin, IntoBoxed, LeftJoin, LeftJoinOn, Nullable},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Vaccination {
@@ -48,7 +45,7 @@ type VaccinationJoin = (
     Option<(ClinicianLinkRow, ClinicianRow)>,
     Option<(ItemLinkRow, ItemRow)>,
     VaccineCourseDoseRow,
-    Option<(NameLinkRow, NameRow)>,
+    Option<NameRow>,
 );
 
 impl<'a> VaccinationRepository<'a> {
@@ -110,44 +107,30 @@ impl<'a> VaccinationRepository<'a> {
 }
 
 fn to_domain(
-    (vaccination_row, clinician_link_join, item_link_join, vaccine_course_dose_row, name_link_join): VaccinationJoin,
+    (vaccination_row, clinician_link_join, item_link_join, vaccine_course_dose_row, facility_name_row): VaccinationJoin,
 ) -> Vaccination {
     Vaccination {
         vaccination_row,
         clinician_row: clinician_link_join.map(|(_, clinician_row)| clinician_row),
         vaccine_course_dose_row,
-        facility_name_row: name_link_join.map(|(_, name_row)| name_row),
+        facility_name_row,
         item_row: item_link_join.map(|(_, item_row)| item_row),
     }
 }
 
-type BoxedVaccinationQuery = IntoBoxed<
-    'static,
-    LeftJoinOn<
-        InnerJoin<
-            LeftJoin<
-                LeftJoin<vaccination::table, InnerJoin<clinician_link::table, clinician::table>>,
-                InnerJoin<item_link::table, item::table>,
-            >,
-            vaccine_course_dose::table,
-        >,
-        InnerJoin<name_link::table, name::table>,
-        Eq<vaccination::facility_name_link_id, Nullable<name_link::id>>,
-    >,
-    DBType,
->;
-
-fn create_filtered_query(filter: Option<VaccinationFilter>) -> BoxedVaccinationQuery {
-    let mut query = vaccination::table
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    vaccination::table
         .left_join(clinician_link::table.inner_join(clinician::table))
         .left_join(item_link::table.inner_join(item::table))
         .inner_join(vaccine_course_dose::table)
-        .left_join(
-            name_link::table
-                .on(vaccination::facility_name_link_id.eq(name_link::id.nullable()))
-                .inner_join(name::table),
-        )
-        .into_boxed();
+        .left_join(name::table)
+}
+
+type BoxedVaccinationQuery = IntoBoxed<'static, query, DBType>;
+
+fn create_filtered_query(filter: Option<VaccinationFilter>) -> BoxedVaccinationQuery {
+    let mut query = query().into_boxed();
 
     if let Some(f) = filter {
         let VaccinationFilter {

@@ -87,14 +87,14 @@ async fn ledger_fix(service_provider: Arc<ServiceProvider>) {
             Utc::now().naive_utc()
         );
 
-        let result = stock_line_ledger_fix(&ctx.connection, &mut operation_log, &stock_line_id);
-        operation_log.push_str(&format!(
-            "Finished stock line fix operation {}\n",
-            Utc::now().naive_utc()
-        ));
+        let result = stock_line_ledger_fix(&ctx.connection, &mut operation_log, stock_line_id);
 
         match result {
             Ok(is_fixed) => {
+                operation_log.push_str(&format!(
+                    "Finished stock line fix operation {}\n",
+                    Utc::now().naive_utc()
+                ));
                 let status = if is_fixed { "Fully" } else { "Partially" };
                 system_log(&ctx.connection, SystemLogType::LedgerFix,
                         &format!("{status} fixed ledger discrepancy for stock_line {stock_line_id} - Details: {operation_log}\n"
@@ -105,10 +105,7 @@ async fn ledger_fix(service_provider: Arc<ServiceProvider>) {
                     &ctx.connection,
                     SystemLogType::LedgerFixError,
                     &e,
-                    &format!(
-                        "Error fixing stock line {}, {}",
-                        stock_line_id, operation_log
-                    ),
+                    &format!("Error fixing stock line {stock_line_id}, {operation_log}"),
                 )
                 .unwrap();
             }
@@ -119,7 +116,7 @@ async fn ledger_fix(service_provider: Arc<ServiceProvider>) {
 impl LedgerFixTrigger {
     pub fn trigger(&self) {
         if let Err(error) = self.sender.try_send(None) {
-            log::error!("Problem triggering ledger fix {:#?}", error)
+            log::error!("Problem triggering ledger fix {error:#?}")
         }
     }
 
@@ -146,7 +143,7 @@ async fn delay(service_provider: Arc<ServiceProvider>, duration: Duration) -> bo
     if (Utc::now().naive_utc() - last_ledger_fix_run) > LEDGER_FIX_INTERVAL {
         return true;
     }
-    return false;
+    false
 }
 
 fn get_last_ledger_fix_run(
@@ -220,7 +217,12 @@ mod test {
             ..
         } = setup_all_with_data_and_service_provider(
             "test_all_ledger_fixes",
-            MockDataInserts::none().names().stores().units().items(),
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .units()
+                .items()
+                .currencies(),
             mock_data,
         )
         .await;

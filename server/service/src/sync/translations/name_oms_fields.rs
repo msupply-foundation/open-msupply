@@ -1,13 +1,13 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, NameOmsFieldsRow, NameRowRepository, StorageConnection,
+    ChangelogRow, ChangelogTableName, NameOmsFieldsRow, StorageConnection,
     SyncBufferRow,
+    Row,
+
 };
 
 use crate::sync::translations::name::NameTranslation;
 
-use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -34,8 +34,8 @@ impl SyncTranslation for NameOmsFieldsTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let upsert_record = PullTranslateResult::upsert(serde_json::from_str::<NameOmsFieldsRow>(
-            &sync_record.data,
+        let upsert_record = PullTranslateResult::upsert(serde_json::from_value::<NameOmsFieldsRow>(
+            sync_record.data.0.clone(),
         )?);
         Ok(upsert_record)
     }
@@ -58,21 +58,15 @@ impl SyncTranslation for NameOmsFieldsTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
-        changelog: &ChangelogRow,
+        _connection: &StorageConnection,
+        _changelog: &ChangelogRow,
+        _row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = NameRowRepository::new(connection)
-            .find_one_oms_fields_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Name row ({}) not found for Name OMS Fields translation",
-                changelog.record_id
-            )))?;
-
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(row)?,
-        ))
+        // NameOmsFields is not represented in the `Row` enum (no
+        // standalone bare-row repository), so `query_with_data` cannot
+        // surface it on the push path. Until the table is added to
+        // `Row`, this translator is unreachable for push.
+        Ok(PushTranslateResult::NotMatched)
     }
 }
 

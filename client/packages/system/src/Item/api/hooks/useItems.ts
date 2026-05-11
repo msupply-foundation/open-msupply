@@ -1,34 +1,63 @@
 import {
+  FilterBy,
   ItemFilterInput,
   ItemSortFieldInput,
   SortBy,
   useQuery,
-  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useItemGraphQL } from '../useItemGraphQL';
 import { ITEM } from '../keys';
-import { ItemRowFragment } from '../operations.generated';
+import { ItemsWithStatsFragment } from '../operations.generated';
 
-export const useVisibleOrOnHandItems = () => {
+export type ItemParams = {
+  first?: number;
+  offset?: number;
+  sortBy?: SortBy<ItemsWithStatsFragment>;
+  filterBy: FilterBy | null;
+};
+
+export const useVisibleOrOnHandItems = (queryParams: ItemParams) => {
   const { api, storeId } = useItemGraphQL();
-  const { queryParams } = useUrlQueryParams({
-    filters: [{ key: 'codeOrName' }],
-  });
-  const { filterBy, sortBy, offset, first } = queryParams;
+
+  const {
+    sortBy = {
+      key: 'number',
+      direction: 'desc',
+    },
+    filterBy,
+    offset,
+    first,
+  } = queryParams;
+
+  const sortFieldMap: Record<string, ItemSortFieldInput> = {
+    code: ItemSortFieldInput.Code,
+    name: ItemSortFieldInput.Name,
+    type: ItemSortFieldInput.Type,
+  };
 
   const queryFn = async () => {
+    const { stockStatus, ...restOfFilterBy } = filterBy ?? {};
+
+    const stockStatusValue =
+      typeof stockStatus === 'object' && stockStatus?.like
+        ? stockStatus?.like
+        : stockStatus;
+
+    const filter: ItemFilterInput = {
+      ...restOfFilterBy,
+      ...getVisibleOrOnHandFilter(stockStatusValue as string | undefined),
+      isActive: true,
+      minMonthsOfStock: filterBy?.['minMonthsOfStock'] as number | undefined,
+      maxMonthsOfStock: filterBy?.['maxMonthsOfStock'] as number | undefined,
+    };
+
     const result = await api.itemsWithStats({
       storeId,
-      key: toSortField(sortBy),
+      key: sortFieldMap[sortBy.key] ?? ItemSortFieldInput.Code,
       first,
-      isDesc: sortBy.isDesc,
+      isDesc: sortBy.direction === 'desc',
       offset,
-      filter: {
-        ...filterBy,
-        // includes non-visible items that have stock on hand
-        isVisibleOrOnHand: true,
-        isActive: true,
-      },
+      filter,
     });
 
     if (result.items.__typename === 'ItemConnector') {
@@ -42,14 +71,38 @@ export const useVisibleOrOnHandItems = () => {
   });
 };
 
+const getVisibleOrOnHandFilter = (stockStatus?: string) => {
+  switch (stockStatus) {
+    case 'inStock':
+      // All items with stock currently in the store, including non-visible items
+      return { hasStockOnHand: true };
+
+    case 'outOfStock':
+      // All items with no stock in store. Should only include visible items.
+      return { hasStockOnHand: false, isVisible: true };
+
+    case 'inStockWithRecentConsumption':
+      return { withRecentConsumption: true, hasStockOnHand: true };
+
+    case 'outOfStockWithRecentConsumption':
+      return { withRecentConsumption: true, hasStockOnHand: false };
+
+    case undefined:
+      // include non-visible items that have stock on hand
+      return { isVisibleOrOnHand: true };
+  }
+};
+
 interface ItemHookProps {
   filterBy?: ItemFilterInput;
   refetchOnMount?: boolean;
+  enabled?: boolean;
 }
 
 export const useItemsByFilter = ({
   filterBy = {},
   refetchOnMount = false,
+  enabled = true,
 }: ItemHookProps = {}) => {
   const { api, storeId } = useItemGraphQL();
 
@@ -76,16 +129,6 @@ export const useItemsByFilter = ({
     queryKey: [ITEM, filterBy],
     queryFn,
     refetchOnMount,
+    enabled,
   });
-};
-
-const toSortField = (sortBy: SortBy<ItemRowFragment>) => {
-  switch (sortBy.key) {
-    case 'name':
-      return ItemSortFieldInput.Name;
-    case 'code':
-      return ItemSortFieldInput.Code;
-    default:
-      return ItemSortFieldInput.Name;
-  }
 };

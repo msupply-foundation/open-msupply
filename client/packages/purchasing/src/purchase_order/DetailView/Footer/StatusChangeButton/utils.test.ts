@@ -13,7 +13,12 @@ describe('enableNextOptions', () => {
     { value: PurchaseOrderNodeStatus.New, label: 'New', isDisabled: true },
     {
       value: PurchaseOrderNodeStatus.Confirmed,
-      label: 'Confirmed',
+      label: 'Ready for Sending',
+      isDisabled: true,
+    },
+    {
+      value: PurchaseOrderNodeStatus.Sent,
+      label: 'Sent',
       isDisabled: true,
     },
     {
@@ -23,7 +28,7 @@ describe('enableNextOptions', () => {
     },
   ];
 
-  it('should enable Confirm option when status is New and does not require authorisation', () => {
+  it('should enable Ready for Sending option when status is New and does not require authorisation', () => {
     const options = createOptions();
     enableNextOptions(
       options,
@@ -33,20 +38,23 @@ describe('enableNextOptions', () => {
     expect(options[0]?.label).toBe('New');
     expect(options[0]?.isDisabled).toBe(true);
 
-    expect(options[1]?.label).toBe('Confirmed');
+    expect(options[1]?.label).toBe('Ready for Sending');
     expect(options[1]?.isDisabled).toBe(false);
 
-    expect(options[2]?.label).toBe('Finalised');
+    expect(options[2]?.label).toBe('Sent');
     expect(options[2]?.isDisabled).toBe(true);
+
+    expect(options[3]?.label).toBe('Finalised');
+    expect(options[3]?.isDisabled).toBe(true);
   });
 
-  it('should enable Confirmed option when status is Authorised', () => {
+  it('should enable Ready for Sending option when status is Ready for Approval', () => {
     const options = createOptions();
     const optionsWithAuthorised: PurchaseOrderStatusOption[] = [
       options[0] as PurchaseOrderStatusOption,
       {
-        value: PurchaseOrderNodeStatus.Authorised,
-        label: 'Authorised',
+        value: PurchaseOrderNodeStatus.RequestApproval,
+        label: 'Ready for Approval',
         isDisabled: true,
       },
       ...options.slice(1),
@@ -54,23 +62,26 @@ describe('enableNextOptions', () => {
 
     enableNextOptions(
       optionsWithAuthorised,
-      PurchaseOrderNodeStatus.Authorised,
+      PurchaseOrderNodeStatus.RequestApproval,
       requiresAuthorisation
     );
     expect(optionsWithAuthorised[0]?.label).toBe('New');
     expect(optionsWithAuthorised[0]?.isDisabled).toBe(true);
 
-    expect(optionsWithAuthorised[1]?.label).toBe('Authorised');
+    expect(optionsWithAuthorised[1]?.label).toBe('Ready for Approval');
     expect(optionsWithAuthorised[1]?.isDisabled).toBe(true);
 
-    expect(optionsWithAuthorised[2]?.label).toBe('Confirmed');
+    expect(optionsWithAuthorised[2]?.label).toBe('Ready for Sending');
     expect(optionsWithAuthorised[2]?.isDisabled).toBe(false);
 
-    expect(optionsWithAuthorised[3]?.label).toBe('Finalised');
+    expect(optionsWithAuthorised[3]?.label).toBe('Sent');
     expect(optionsWithAuthorised[3]?.isDisabled).toBe(true);
+
+    expect(optionsWithAuthorised[4]?.label).toBe('Finalised');
+    expect(optionsWithAuthorised[4]?.isDisabled).toBe(true);
   });
 
-  it('should enable Finalised option when status is Confirmed', () => {
+  it('should enable Sent option when status is Ready for Sending', () => {
     const options = createOptions();
     enableNextOptions(
       options,
@@ -80,11 +91,34 @@ describe('enableNextOptions', () => {
     expect(options[0]?.label).toBe('New');
     expect(options[0]?.isDisabled).toBe(true);
 
-    expect(options[1]?.label).toBe('Confirmed');
+    expect(options[1]?.label).toBe('Ready for Sending');
     expect(options[1]?.isDisabled).toBe(true);
 
-    expect(options[2]?.label).toBe('Finalised');
+    expect(options[2]?.label).toBe('Sent');
     expect(options[2]?.isDisabled).toBe(false);
+
+    expect(options[3]?.label).toBe('Finalised');
+    expect(options[3]?.isDisabled).toBe(true);
+  });
+
+  it('should enable Finalised option when status is Sent', () => {
+    const options = createOptions();
+    enableNextOptions(
+      options,
+      PurchaseOrderNodeStatus.Sent,
+      !requiresAuthorisation
+    );
+    expect(options[0]?.label).toBe('New');
+    expect(options[0]?.isDisabled).toBe(true);
+
+    expect(options[1]?.label).toBe('Ready for Sending');
+    expect(options[1]?.isDisabled).toBe(true);
+
+    expect(options[2]?.label).toBe('Sent');
+    expect(options[2]?.isDisabled).toBe(true);
+
+    expect(options[3]?.label).toBe('Finalised');
+    expect(options[3]?.isDisabled).toBe(false);
   });
 
   it('should not enable options for Finalised status', () => {
@@ -98,11 +132,14 @@ describe('enableNextOptions', () => {
     expect(options[0]?.label).toBe('New');
     expect(options[0]?.isDisabled).toBe(true);
 
-    expect(options[1]?.label).toBe('Confirmed');
+    expect(options[1]?.label).toBe('Ready for Sending');
     expect(options[1]?.isDisabled).toBe(true);
 
-    expect(options[2]?.label).toBe('Finalised');
+    expect(options[2]?.label).toBe('Sent');
     expect(options[2]?.isDisabled).toBe(true);
+
+    expect(options[3]?.label).toBe('Finalised');
+    expect(options[3]?.isDisabled).toBe(true);
   });
 });
 
@@ -125,15 +162,18 @@ describe('getStatusOptions', () => {
       !requiresAuthorisation
     );
 
-    expect(options).toHaveLength(3);
+    expect(options).toHaveLength(4);
     expect(options[0]?.value).toBe(PurchaseOrderNodeStatus.New);
     expect(options[0]?.isDisabled).toBe(true);
 
     expect(options[1]?.value).toBe(PurchaseOrderNodeStatus.Confirmed);
     expect(options[1]?.isDisabled).toBe(false);
 
-    expect(options[2]?.value).toBe(PurchaseOrderNodeStatus.Finalised);
+    expect(options[2]?.value).toBe(PurchaseOrderNodeStatus.Sent);
     expect(options[2]?.isDisabled).toBe(true);
+
+    expect(options[3]?.value).toBe(PurchaseOrderNodeStatus.Finalised);
+    expect(options[3]?.isDisabled).toBe(true);
   });
 
   it('should return options with authorisation', () => {
@@ -143,18 +183,21 @@ describe('getStatusOptions', () => {
       requiresAuthorisation
     );
 
-    expect(options).toHaveLength(4);
+    expect(options).toHaveLength(5);
     expect(options[0]?.value).toBe(PurchaseOrderNodeStatus.New);
     expect(options[0]?.isDisabled).toBe(true);
 
-    expect(options[1]?.value).toBe(PurchaseOrderNodeStatus.Authorised);
+    expect(options[1]?.value).toBe(PurchaseOrderNodeStatus.RequestApproval);
     expect(options[1]?.isDisabled).toBe(false);
 
     expect(options[2]?.value).toBe(PurchaseOrderNodeStatus.Confirmed);
     expect(options[2]?.isDisabled).toBe(true);
 
-    expect(options[3]?.value).toBe(PurchaseOrderNodeStatus.Finalised);
+    expect(options[3]?.value).toBe(PurchaseOrderNodeStatus.Sent);
     expect(options[3]?.isDisabled).toBe(true);
+
+    expect(options[4]?.value).toBe(PurchaseOrderNodeStatus.Finalised);
+    expect(options[4]?.isDisabled).toBe(true);
   });
 });
 
@@ -164,8 +207,18 @@ describe('getNextStatusOption', () => {
   const createOptions = (): PurchaseOrderStatusOption[] => [
     { value: PurchaseOrderNodeStatus.New, label: 'New', isDisabled: true },
     {
+      value: PurchaseOrderNodeStatus.RequestApproval,
+      label: 'Ready for Approval',
+      isDisabled: true,
+    },
+    {
       value: PurchaseOrderNodeStatus.Confirmed,
-      label: 'Confirmed',
+      label: 'Ready for Sending',
+      isDisabled: true,
+    },
+    {
+      value: PurchaseOrderNodeStatus.Sent,
+      label: 'Sent',
       isDisabled: true,
     },
     {
@@ -192,43 +245,43 @@ describe('getNextStatusOption', () => {
       options,
       !requiresAuthorisation
     );
-    expect(nextOption?.value).toBe(PurchaseOrderNodeStatus.Finalised);
+    expect(nextOption?.value).toBe(PurchaseOrderNodeStatus.Sent);
   });
 
-  it('should handle Authorised status correctly', () => {
+  it('should handle Ready for Approval status correctly', () => {
     const options = createOptions();
     const optionsWithAuthorised: PurchaseOrderStatusOption[] = [
       options[0] as PurchaseOrderStatusOption,
       {
-        value: PurchaseOrderNodeStatus.Authorised,
-        label: 'Authorised',
+        value: PurchaseOrderNodeStatus.RequestApproval,
+        label: 'Ready for Approval',
         isDisabled: true,
       },
       ...options.slice(1),
     ];
 
     const nextOption = getNextStatusOption(
-      PurchaseOrderNodeStatus.Authorised,
+      PurchaseOrderNodeStatus.New,
       optionsWithAuthorised,
       requiresAuthorisation
     );
-    expect(nextOption?.value).toBe(PurchaseOrderNodeStatus.Confirmed);
+    expect(nextOption?.value).toBe(PurchaseOrderNodeStatus.RequestApproval);
   });
 
-  it('should return Confirmed option when status is Authorised but requiresAuthorisation is false', () => {
+  it('should return Confirmed option when status is New but requiresAuthorisation is false', () => {
     const options = createOptions();
     const optionsWithAuthorised: PurchaseOrderStatusOption[] = [
       options[0] as PurchaseOrderStatusOption,
       {
-        value: PurchaseOrderNodeStatus.Authorised,
-        label: 'Authorised',
+        value: PurchaseOrderNodeStatus.RequestApproval,
+        label: 'Ready for Approval',
         isDisabled: true,
       },
       ...options.slice(1),
     ];
 
     const nextOption = getNextStatusOption(
-      PurchaseOrderNodeStatus.Authorised,
+      PurchaseOrderNodeStatus.RequestApproval,
       optionsWithAuthorised,
       !requiresAuthorisation
     );

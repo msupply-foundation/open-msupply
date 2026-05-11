@@ -1,13 +1,18 @@
-use crate::{Delete, Upsert};
+use crate::{
+    db_diesel::changelog::ChangelogRepository,
+    ChangelogSyncType, ChangelogTableName, Delete, RowActionType, SourceSiteId, Upsert,
+};
 
 use super::{
     clinician_link_row::clinician_link, item_link_row::item_link, item_row::item::dsl::*,
-    location_type_row::location_type, name_link_row::name_link, unit_row::unit, ItemLinkRow,
+    location_type_row::location_type, unit_row::unit, ItemLinkRow,
     ItemLinkRowRepository, RepositoryError, StorageConnection,
 };
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 table! {
     item (id) {
@@ -25,6 +30,8 @@ table! {
         is_vaccine -> Bool,
         vaccine_doses -> Integer,
         restricted_location_type_id ->  Nullable<Text>,
+        volume_per_pack -> Double,
+        universal_code -> Nullable<Text>,
     }
 }
 
@@ -38,11 +45,10 @@ table! {
 joinable!(item -> unit (unit_id));
 joinable!(item_is_visible -> item (id));
 allow_tables_to_appear_in_same_query!(item, item_link);
-allow_tables_to_appear_in_same_query!(item, name_link);
 allow_tables_to_appear_in_same_query!(item, clinician_link);
 allow_tables_to_appear_in_same_query!(item, location_type);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Deserialize, Serialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ItemType {
     Stock,
@@ -50,7 +56,7 @@ pub enum ItemType {
     NonStock,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum VENCategory {
     V,
@@ -60,7 +66,7 @@ pub enum VENCategory {
     NotAssigned,
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Serialize, Deserialize)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = item)]
 pub struct ItemRow {
@@ -79,6 +85,17 @@ pub struct ItemRow {
     pub is_vaccine: bool,
     pub vaccine_doses: i32,
     pub restricted_location_type_id: Option<String>,
+    pub volume_per_pack: f64,
+    pub universal_code: Option<String>,
+}
+
+impl ItemRow {
+    pub fn table_name() -> ChangelogTableName {
+        ChangelogTableName::Item
+    }
+    pub fn record_id(&self) -> String {
+        self.id.clone()
+    }
 }
 
 impl Default for ItemRow {
@@ -97,6 +114,8 @@ impl Default for ItemRow {
             ven_category: VENCategory::NotAssigned,
             vaccine_doses: 0,
             restricted_location_type_id: None,
+            volume_per_pack: 0.0,
+            universal_code: None,
         }
     }
 }
@@ -122,7 +141,7 @@ impl<'a> ItemRowRepository<'a> {
         ItemRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item)
             .values(item_row)
             .on_conflict(id)
@@ -132,6 +151,17 @@ impl<'a> ItemRowRepository<'a> {
 
         insert_or_ignore_item_link(self.connection, item_row)?;
         Ok(())
+    }
+
+    pub fn upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
+        self._upsert_one(item_row)?;
+        let changelog = ItemRow::generate_changelog(
+            item_row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub async fn insert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
@@ -171,6 +201,18 @@ impl<'a> ItemRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_one_by_item_link_id(
+        &self,
+        item_link_id: &str,
+    ) -> Result<Option<ItemRow>, RepositoryError> {
+        let result: Option<(ItemRow, ItemLinkRow)> = item
+            .inner_join(item_link::table)
+            .filter(item_link::id.eq(item_link_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.map(|r| r.0))
+    }
+
     pub fn find_many_by_id(&self, ids: &Vec<String>) -> Result<Vec<ItemRow>, RepositoryError> {
         let result = item
             .filter(id.eq_any(ids))
@@ -189,20 +231,48 @@ impl<'a> ItemRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, item_id: &str) -> Result<(), RepositoryError> {
+    fn _delete(&self, item_id: &str) -> Result<(), RepositoryError> {
         diesel::update(item.filter(id.eq(item_id)))
             .set(is_active.eq(false))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn delete(&self, item_id: &str) -> Result<(), RepositoryError> {
+        self._delete(item_id)?;
+        // Soft delete keeps the row, so emit Upsert so receivers re-query and see is_active=false.
+        let changelog = ItemRow::generate_changelog(
+            item_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct ItemRowDelete(pub String);
 impl Delete for ItemRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ItemRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Table not in Changelog
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let repo = ItemRowRepository::new(con);
+        repo._delete(&self.0)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => ItemRow::generate_changelog(
+                self.0.clone(),
+                con,
+                // Soft delete: keep row, emit Upsert so receivers see is_active=false.
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -217,11 +287,20 @@ impl Delete for ItemRowDelete {
 }
 
 impl Upsert for ItemRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ItemRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        ItemRowRepository::new(con)._upsert_one(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => ItemRow::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
-
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(

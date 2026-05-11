@@ -1,38 +1,48 @@
 use super::{
-    name_link_row::name_link, name_row::name, ChangeLogInsertRow, ChangelogRepository,
-    ChangelogTableName, RowActionType, StorageConnection,
+    name_row::name, ChangelogRepository, RowActionType,
+    StorageConnection,
 };
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::ChangelogSyncType;
+use crate::SourceSiteId;
+use crate::{
+    diesel_macros::define_linked_tables, repository_error::RepositoryError, Delete, Upsert,
+};
 use diesel::prelude::*;
 
-table! {
-    indicator_value (id) {
-        id -> Text,
-        customer_name_link_id -> Text,
+define_linked_tables! {
+    view: indicator_value = "indicator_value_view",
+    core: indicator_value_with_links = "indicator_value",
+    struct: IndicatorValueRow,
+    repo: IndicatorValueRowRepository,
+    shared: {
         store_id -> Text,
         period_id -> Text,
         indicator_line_id -> Text,
         indicator_column_id -> Text,
         value -> Text,
+    },
+    links: {
+        customer_name_link_id -> customer_name_id,
+    },
+    optional_links: {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default)]
+joinable!(indicator_value -> name (customer_name_id));
+allow_tables_to_appear_in_same_query!(indicator_value, name);
+
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = indicator_value)]
 pub struct IndicatorValueRow {
     pub id: String,
-    pub customer_name_link_id: String,
     pub store_id: String,
     pub period_id: String,
     pub indicator_line_id: String,
     pub indicator_column_id: String,
     pub value: String,
+    // Resolved from name_link - must be last to match view column order
+    pub customer_name_id: String,
 }
-
-joinable!(indicator_value -> name_link (customer_name_link_id));
-allow_tables_to_appear_in_same_query!(indicator_value, name_link);
-allow_tables_to_appear_in_same_query!(indicator_value, name);
-
 pub struct IndicatorValueRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -42,45 +52,31 @@ impl<'a> IndicatorValueRowRepository<'a> {
         IndicatorValueRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &IndicatorValueRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(indicator_value::table)
-            .values(row)
-            .on_conflict(indicator_value::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
-
-        self.insert_changelog(row, RowActionType::Upsert)
+    pub fn upsert_one(&self, row: &IndicatorValueRow) -> Result<(), RepositoryError> {
+        self._upsert(row)?;
+        let changelog = IndicatorValueRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = self.find_one_by_id(id)?;
-        let change_log_id = match old_row {
-            Some(old_row) => self.insert_changelog(&old_row, RowActionType::Delete)?,
-            None => {
-                return Ok(None);
-            }
-        };
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        let changelog = IndicatorValueRow::generate_changelog(
+            id.to_string(),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
 
-        diesel::delete(indicator_value::table.filter(indicator_value::id.eq(id)))
-            .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
-    }
-
-    fn insert_changelog(
-        &self,
-        row: &IndicatorValueRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::IndicatorValue,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: None,
-            name_link_id: None,
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+        diesel::delete(
+            indicator_value_with_links::table.filter(indicator_value_with_links::id.eq(id)),
+        )
+        .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 
     pub fn find_one_by_id(
@@ -93,14 +89,38 @@ impl<'a> IndicatorValueRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<IndicatorValueRow>, RepositoryError> {
+        Ok(indicator_value::table
+            .filter(indicator_value::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct IndicatorValueRowDelete(pub String);
 impl Delete for IndicatorValueRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = IndicatorValueRowRepository::new(con).delete(&self.0)?;
-        Ok(change_log_id)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => IndicatorValueRow::generate_changelog(
+                self.0.clone(),
+                con,
+                RowActionType::Delete,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(
+            indicator_value_with_links::table.filter(indicator_value_with_links::id.eq(&self.0)),
+        )
+        .execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -112,9 +132,25 @@ impl Delete for IndicatorValueRowDelete {
 }
 
 impl Upsert for IndicatorValueRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = IndicatorValueRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        IndicatorValueRowRepository::new(con)._upsert(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

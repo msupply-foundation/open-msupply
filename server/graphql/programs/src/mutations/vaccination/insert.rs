@@ -57,6 +57,7 @@ impl From<InsertVaccinationInput> for InsertVaccination {
             item_id,
             stock_line_id,
             not_given_reason,
+            create_not_given_records_for_skipped_doses: false, // Default to false for API inputs
         }
     }
 }
@@ -98,7 +99,7 @@ pub fn insert_vaccination(
 
 fn map_error(error: ServiceError) -> Result<InsertVaccinationResponse> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::VaccinationAlreadyExists

@@ -1,6 +1,9 @@
-use std::convert::TryInto;
+use diesel::prelude::*;
 
-use crate::{ChangelogRepository, StorageConnection};
+use crate::{
+    db_diesel::changelog::changelog::changelog as changelog_table, ChangelogRepository,
+    StorageConnection,
+};
 
 /// For testing, it returns the change_log cursors as if the changelog would have been updated.
 pub(crate) fn run_without_change_log_updates<
@@ -11,13 +14,15 @@ pub(crate) fn run_without_change_log_updates<
 ) -> anyhow::Result<u64> {
     // Remember the current changelog cursor in order to be able to delete all changelog entries
     // triggered by the merge migrations.
-    let cursor_before_job = ChangelogRepository::new(connection).latest_cursor()?;
+    let cursor_before_job = ChangelogRepository::new(connection).max_cursor()?;
 
     job(connection)?;
 
-    let cursor_after_job = ChangelogRepository::new(connection).latest_cursor()?;
+    let cursor_after_job = ChangelogRepository::new(connection).max_cursor()?;
     // Revert changelog to the state before the merge migrations
-    ChangelogRepository::new(connection).delete((cursor_before_job + 1).try_into()?)?;
+    diesel::delete(changelog_table::dsl::changelog)
+        .filter(changelog_table::dsl::cursor.gt(cursor_before_job as i64))
+        .execute(connection.lock().connection())?;
     Ok(cursor_after_job)
 }
 
@@ -39,36 +44,20 @@ async fn check_change_log_update() {
     };
 
     // First insert
-    let cursor = ChangelogRepository::new(&connection)
-        .latest_cursor()
-        .unwrap();
+    let cursor = ChangelogRepository::new(&connection).max_cursor().unwrap();
     NameRowRepository::new(&connection)
         .upsert_one(&name_row)
         .unwrap();
-    assert!(
-        cursor
-            < ChangelogRepository::new(&connection)
-                .latest_cursor()
-                .unwrap()
-    );
+    assert!(cursor < ChangelogRepository::new(&connection).max_cursor().unwrap());
     // Now update
-    let cursor = ChangelogRepository::new(&connection)
-        .latest_cursor()
-        .unwrap();
+    let cursor = ChangelogRepository::new(&connection).max_cursor().unwrap();
     NameRowRepository::new(&connection)
         .upsert_one(&name_row)
         .unwrap();
-    assert!(
-        cursor
-            < ChangelogRepository::new(&connection)
-                .latest_cursor()
-                .unwrap()
-    );
+    assert!(cursor < ChangelogRepository::new(&connection).max_cursor().unwrap());
 
     // Now update with run_without_change_log_updates
-    let cursor = ChangelogRepository::new(&connection)
-        .latest_cursor()
-        .unwrap();
+    let cursor = ChangelogRepository::new(&connection).max_cursor().unwrap();
     run_without_change_log_updates(&connection, |connection| {
         NameRowRepository::new(connection).upsert_one(&name_row)?;
         Ok(())
@@ -76,8 +65,6 @@ async fn check_change_log_update() {
     .unwrap();
     assert_eq!(
         cursor,
-        ChangelogRepository::new(&connection)
-            .latest_cursor()
-            .unwrap()
+        ChangelogRepository::new(&connection).max_cursor().unwrap()
     );
 }

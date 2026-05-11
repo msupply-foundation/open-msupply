@@ -1,11 +1,14 @@
-import { LocaleKey, TypedTFunction } from '@openmsupply-client/common';
+import {
+  LocaleKey,
+  TypedTFunction,
+  ValueInfo,
+} from '@openmsupply-client/common';
 import { DraftRequestLine } from '.';
-import { ValueInfo } from '../../../common';
 
 export const getLeftPanel = (
   t: TypedTFunction<LocaleKey>,
   draft?: DraftRequestLine | null,
-  showExtraFields: boolean = false
+  showAsAreaAmc?: boolean
 ): ValueInfo[] => {
   const base: ValueInfo[] = [
     {
@@ -13,25 +16,12 @@ export const getLeftPanel = (
       value: draft?.itemStats.availableStockOnHand,
     },
     {
-      label: t('label.amc/amd'),
+      label: t(showAsAreaAmc ? 'label.area-amc' : 'label.amc/amd'),
       value: draft?.itemStats.averageMonthlyConsumption,
     },
-    {
-      label: t('label.months-of-stock'),
-      value: draft?.itemStats.availableMonthsOfStockOnHand,
-      endAdornmentOverride: t('label.months'),
-      displayVaccinesInDoses: false,
-    },
   ];
 
-  const extraPanel: ValueInfo[] = [
-    {
-      label: t('label.short-expiry'),
-      value: draft?.expiringUnits,
-    },
-  ];
-
-  return showExtraFields ? [...base, ...extraPanel] : base;
+  return base;
 };
 
 export const getExtraMiddlePanels = (
@@ -43,10 +33,11 @@ export const getExtraMiddlePanels = (
       label: t('label.suggested'),
       value: draft?.suggestedQuantity,
       sx: {
-        background: theme => theme.palette.background.group,
+        background: theme => theme.palette.background.group.dark,
         pt: 0.5,
         pb: 0.5,
       },
+      roundUp: true,
     },
     {
       label: t('label.incoming-stock'),
@@ -68,7 +59,7 @@ export const getExtraMiddlePanels = (
       label: t('label.days-out-of-stock'),
       value: draft?.daysOutOfStock,
       endAdornmentOverride: t('label.days'),
-      displayVaccinesInDoses: false,
+      isFixedValue: true,
     },
   ];
 };
@@ -87,6 +78,7 @@ export const getSuggestedRow = (
         pl: 0,
         pt: 0.5,
       },
+      roundUp: true,
     },
   ];
 };

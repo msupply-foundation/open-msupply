@@ -184,3 +184,66 @@ query lastSuccessfulUserSync {
     ...UpdateUser
   }
 }
+
+query preferences($storeId: String!) {
+  preferences(storeId: $storeId) {
+    adjustForNumberOfDaysOutOfStock
+    allowTrackingOfStockByDonor
+    authorisePurchaseOrder
+    canCreateInternalOrderFromARequisition
+    customTranslations
+    daysInMonth
+    disableManualReturns
+    firstThresholdForExpiringItems
+    genderOptions
+    manageVaccinesInDoses
+    manageVvmStatusForStock
+    numberOfMonthsThresholdToShowLowStockAlertsForProducts
+    numberOfMonthsThresholdToShowOverStockAlertsForProducts
+    numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
+    orderInPacks
+    preventTransfersMonthsBeforeInitialisation
+    requisitionAutoFinalise
+    secondThresholdForExpiringItems
+    selectDestinationStoreForAnInternalOrder
+    showContactTracing
+    sortByVvmStatusThenExpiry
+    storeCustomColour
+    syncRecordsDisplayThreshold
+    useProcurementFunctionality
+    useSimplifiedMobileUi
+    expiredStockPreventIssue
+    expiredStockIssueThreshold
+    displayPopulationBasedForecasting
+    warnWhenMissingRecentStocktake {
+      enabled
+      maxAge
+      minItems
+    }
+    warningForExcessRequest
+    externalInboundShipmentLinesMustBeAuthorised
+    invoiceStatusOptions
+    itemMarginOverridesSupplierMargin
+    showIndicativePriceInRequisitions
+    isGaps
+    globalTableConfigs
+    backdating {
+      shipmentsEnabled
+      inventoryAdjustmentsEnabled
+      maxDays
+    }
+  }
+}
+
+mutation saveGlobalTableConfigs(
+  $storeId: String!
+  $input: UpsertPreferencesInput!
+) {
+  centralServer {
+    preferences {
+      upsertPreferences(storeId: $storeId, input: $input) {
+        ok
+      }
+    }
+  }
+}

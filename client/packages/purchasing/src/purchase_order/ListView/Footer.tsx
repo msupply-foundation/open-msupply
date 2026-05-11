@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Action,
   ActionsFooter,
@@ -8,32 +8,38 @@ import {
   useDeleteConfirmation,
   PurchaseOrderNodeStatus,
 } from '@openmsupply-client/common';
-import { ListParams, usePurchaseOrderList } from '../api';
+import { PurchaseOrderRowFragment, usePurchaseOrderList } from '../api';
 
-export const FooterComponent: FC<{ listParams: ListParams }> = ({
-  listParams,
+export const FooterComponent = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: PurchaseOrderRowFragment[];
+  resetRowSelection: () => void;
 }) => {
   const t = useTranslation();
-
   const {
-    selectedRows,
     delete: { deletePurchaseOrders },
-  } = usePurchaseOrderList(listParams);
+  } = usePurchaseOrderList();
 
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
     deleteAction: async () => {
       const ids = selectedRows.map(row => row.id);
       deletePurchaseOrders(ids);
+      resetRowSelection();
     },
-    canDelete: selectedRows.every(
-      row => row.status === PurchaseOrderNodeStatus.New
+    canDelete: selectedRows.every(row =>
+      [
+        PurchaseOrderNodeStatus.New,
+        PurchaseOrderNodeStatus.RequestApproval,
+      ].includes(row.status)
     ),
     messages: {
-      confirmMessage: t('messages.confirm-delete-purchase_orders', {
+      confirmMessage: t('messages.confirm-delete-purchase-orders', {
         count: selectedRows.length,
       }),
-      deleteSuccess: t('messages.deleted-purchase_orders', {
+      deleteSuccess: t('messages.deleted-purchase-orders', {
         count: selectedRows.length,
       }),
     },
@@ -55,6 +61,7 @@ export const FooterComponent: FC<{ listParams: ListParams }> = ({
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
         </>

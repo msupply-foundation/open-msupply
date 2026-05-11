@@ -1,18 +1,15 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
-  TableProvider,
-  DataTable,
-  useColumns,
-  createTableStore,
+  MaterialTable,
   NothingHere,
-  useFormatDateTime,
-  ColumnAlign,
-  useTranslation,
-  ProgramEnrolmentSortFieldInput,
-  useUrlQueryParams,
   useNavigate,
   RouteBuilder,
+  useTranslation,
+  useNonPaginatedMaterialTable,
+  ColumnDef,
+  ColumnType,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import {
   PatientModal,
   ProgramEnrolmentRowFragment,
@@ -20,109 +17,80 @@ import {
   useProgramEnrolments,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
-import { createQueryParamsStore, useQueryParamsStore } from '@common/hooks';
-import { AppRoute } from '@openmsupply-client/config';
 
-const VaccinationCardListComponent: FC = () => {
+const VaccinationCardListComponent = () => {
   const t = useTranslation();
-  const {
-    sort: { sortBy, onChangeSortBy },
-  } = useQueryParamsStore();
-
-  const {
-    queryParams: { page, first, offset },
-    updatePaginationQuery,
-  } = useUrlQueryParams();
-
   const patientId = usePatient.utils.id();
-
-  const { data, isError, isLoading } = useProgramEnrolments.document.list({
+  const { data, isError, isFetching } = useProgramEnrolments.document.list({
     sortBy: {
-      key: sortBy.key as ProgramEnrolmentSortFieldInput,
-      isDesc: sortBy.isDesc,
+      key: 'enrolmentDatetime',
+      isDesc: true,
     },
     filterBy: {
       patientId: { equalTo: patientId },
       isImmunisationProgram: true,
     },
   });
-  const pagination = { page, first, offset };
-  const { localisedDate } = useFormatDateTime();
   const navigate = useNavigate();
   const { setModal: selectModal } = usePatientModalStore();
 
-  const columns = useColumns<ProgramEnrolmentRowFragment>(
-    [
-      {
-        key: 'type',
-        label: 'label.enrolment-program',
-        accessor: row => row.rowData?.document?.documentRegistry?.name,
-      },
-      {
-        key: 'programEnrolmentId',
-        label: 'label.enrolment-patient-id',
-      },
-      // TODO - add column for next appointment
-      {
-        key: 'status',
-        label: 'label.program-status',
-      },
-      {
-        key: 'enrolmentDatetime',
-        label: 'label.enrolment-datetime',
-        align: ColumnAlign.Right,
-        width: 175,
-        formatter: dateString =>
-          dateString ? localisedDate((dateString as string) || '') : '',
-      },
-    ],
+  const columns: ColumnDef<ProgramEnrolmentRowFragment>[] = [
     {
-      sortBy,
-      onChangeSortBy,
+      id: 'type',
+      header: t('label.enrolment-program'),
+      accessorFn: row => row?.document?.documentRegistry?.name,
+      enableSorting: true,
+      enableColumnFilter: true,
     },
-    [sortBy, onChangeSortBy]
-  );
+    {
+      accessorKey: 'programEnrolmentId',
+      header: t('label.enrolment-patient-id'),
+      enableSorting: true,
+    },
+    // TODO - add column for next appointment
+    {
+      accessorKey: 'status',
+      header: t('label.program-status'),
+      enableSorting: true,
+      enableColumnFilter: true,
+      filterVariant: 'select',
+    },
+    {
+      accessorKey: 'enrolmentDatetime',
+      header: t('label.enrolment-datetime'),
+      columnType: ColumnType.Date,
+      size: 175,
+      enableSorting: true,
+      enableColumnFilter: true,
+    },
+  ];
 
-  return (
-    <DataTable
-      id="vaccination-card-list"
-      pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-      onChangePage={updatePaginationQuery}
-      columns={columns}
-      data={data?.nodes}
-      isLoading={isLoading}
-      isError={isError}
-      onRowClick={row =>
-        navigate(
-          RouteBuilder.create(AppRoute.Dispensary)
-            .addPart(AppRoute.Patients)
-            .addPart(patientId)
-            .addPart(AppRoute.VaccineCard)
-            .addPart(row.id)
-            .build()
-        )
-      }
-      noDataElement={
-        <NothingHere
-          onCreate={() => selectModal(PatientModal.ProgramSearch)}
-          body={t('messages.no-programs')}
-          buttonText={t('button.add-program')}
-        />
-      }
-    />
-  );
+  const { table } = useNonPaginatedMaterialTable({
+    tableId: 'vaccination-card-list',
+    columns,
+    data: data?.nodes,
+    isLoading: isFetching,
+    isError,
+    enableRowSelection: false,
+    onRowClick: row =>
+      navigate(
+        RouteBuilder.create(AppRoute.Dispensary)
+          .addPart(AppRoute.Patients)
+          .addPart(patientId)
+          .addPart(AppRoute.VaccineCard)
+          .addPart(row.id)
+          .build()
+      ),
+    noDataElement: (
+      <NothingHere
+        onCreate={() => selectModal(PatientModal.ProgramSearch)}
+        body={t('messages.no-programs')}
+        buttonText={t('button.add-program')}
+      />
+    ),
+  });
+
+  return <MaterialTable table={table} />;
 };
 
-export const VaccinationCardsListView = () => (
-  <TableProvider
-    createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<ProgramEnrolmentRowFragment>({
-      initialSortBy: {
-        key: ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
-        isDesc: false,
-      },
-    })}
-  >
-    <VaccinationCardListComponent />
-  </TableProvider>
-);
+export const VaccinationCardsListView = () => <VaccinationCardListComponent />;

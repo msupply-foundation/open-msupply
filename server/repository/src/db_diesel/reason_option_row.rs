@@ -1,6 +1,9 @@
 use super::StorageConnection;
 
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{
+    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, Delete,
+    RowActionType, SourceSiteId, Upsert,
+};
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -8,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::db_diesel::{
     invoice_row::invoice, item_link_row::item_link, item_row::item, location_row::location,
-    name_link_row::name_link, name_row::name, stock_line_row::stock_line,
+    name_row::name, stock_line_row::stock_line,
 };
 
 table! {
@@ -25,7 +28,6 @@ allow_tables_to_appear_in_same_query!(reason_option, item);
 allow_tables_to_appear_in_same_query!(reason_option, location);
 allow_tables_to_appear_in_same_query!(reason_option, invoice);
 allow_tables_to_appear_in_same_query!(reason_option, stock_line);
-allow_tables_to_appear_in_same_query!(reason_option, name_link);
 allow_tables_to_appear_in_same_query!(reason_option, name);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -41,7 +43,7 @@ pub enum ReasonOptionType {
     RequisitionLineVariance,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = reason_option)]
 pub struct ReasonOptionRow {
@@ -61,7 +63,7 @@ impl<'a> ReasonOptionRowRepository<'a> {
         ReasonOptionRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &ReasonOptionRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &ReasonOptionRow) -> Result<(), RepositoryError> {
         diesel::insert_into(reason_option::table)
             .values(row)
             .on_conflict(reason_option::id)
@@ -69,6 +71,17 @@ impl<'a> ReasonOptionRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &ReasonOptionRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = ReasonOptionRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ReasonOptionRow>, RepositoryError> {
@@ -79,12 +92,32 @@ impl<'a> ReasonOptionRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn soft_delete(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<ReasonOptionRow>, RepositoryError> {
+        Ok(reason_option::table
+            .filter(reason_option::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
+    fn _soft_delete(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
         diesel::update(reason_option::table)
             .filter(reason_option::id.eq(reason_option_id))
             .set(reason_option::is_active.eq(false))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn soft_delete(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
+        self._soft_delete(reason_option_id)?;
+        let changelog = ReasonOptionRow::generate_changelog(
+            reason_option_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
@@ -92,9 +125,28 @@ impl<'a> ReasonOptionRowRepository<'a> {
 pub struct ReasonOptionRowDelete(pub String);
 
 impl Delete for ReasonOptionRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ReasonOptionRowRepository::new(con).soft_delete(&self.0)?;
-        Ok(None)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let repo = ReasonOptionRowRepository::new(con);
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                ReasonOptionRow::generate_changelog(
+                    self.0.clone(),
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        repo._soft_delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
@@ -107,9 +159,25 @@ impl Delete for ReasonOptionRowDelete {
 }
 
 impl Upsert for ReasonOptionRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ReasonOptionRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        ReasonOptionRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
@@ -137,7 +205,7 @@ mod test {
         let repo = ReasonOptionRowRepository::new(&connection);
         // Try upsert all variants, confirm that diesel enums match postgres
         for option_type in ReasonOptionType::iter() {
-            let id = format!("{:?}", option_type);
+            let id = format!("{option_type:?}");
             let result = repo.upsert_one(&ReasonOptionRow {
                 id: id.clone(),
                 r#type: option_type,

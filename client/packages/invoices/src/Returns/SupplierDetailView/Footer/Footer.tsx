@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Box,
   ButtonWithIcon,
@@ -7,63 +7,42 @@ import {
   useTranslation,
   AppFooterPortal,
   useBreadcrumbs,
-  InvoiceNodeStatus,
   Action,
   DeleteIcon,
   ActionsFooter,
+  usePreferences,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
+import { getStatusTranslator } from '../../../utils';
+import { createStatusLog, getStatusSequence } from '../../../statuses';
 import {
-  getStatusTranslator,
-  supplierReturnStatuses,
-  outboundStatuses,
-} from '../../../utils';
-import { SupplierReturnRowFragment, useReturns } from '../../api';
+  SupplierReturnLineFragment,
+  useReturns,
+} from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
 
-const createStatusLog = (invoice: SupplierReturnRowFragment) => {
-  const statusIdx = outboundStatuses.findIndex(s => invoice.status === s);
-  const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
-    [InvoiceNodeStatus.New]: null,
-    [InvoiceNodeStatus.Picked]: null,
-    [InvoiceNodeStatus.Shipped]: null,
-    [InvoiceNodeStatus.Verified]: null,
-    [InvoiceNodeStatus.Received]: null,
-    // Not used for Supplier return
-    [InvoiceNodeStatus.Delivered]: null,
-    [InvoiceNodeStatus.Allocated]: null,
-    [InvoiceNodeStatus.Cancelled]: null,
-  };
-  if (statusIdx >= 0) {
-    statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
-  }
-  // Skipping Allocated
-  if (statusIdx >= 2) {
-    statusLog[InvoiceNodeStatus.Picked] = invoice.pickedDatetime;
-  }
-  if (statusIdx >= 3) {
-    statusLog[InvoiceNodeStatus.Shipped] = invoice.shippedDatetime;
-  }
-  // Skipping Delivered
-  if (statusIdx >= 5) {
-    statusLog[InvoiceNodeStatus.Received] = invoice.receivedDatetime;
-  }
-  // Skipping received
-  if (statusIdx >= 6) {
-    statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
-  }
-  return statusLog;
-};
+const supplierReturnSequence = getStatusSequence(
+  InvoiceNodeType.SupplierReturn
+);
 
-export const FooterComponent: FC = () => {
+export const FooterComponent = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: SupplierReturnLineFragment[];
+  resetRowSelection: () => void;
+}) => {
   const t = useTranslation();
-  const { data } = useReturns.document.supplierReturn();
   const { navigateUpOne } = useBreadcrumbs();
+  const { invoiceStatusOptions } = usePreferences();
+  const { data } = useReturns.document.supplierReturn();
   const { id } = data ?? { id: '' };
-  const { selectedIds, confirmAndDelete } =
-    useReturns.lines.deleteSelectedSupplierLines({
-      returnId: id,
-    });
+  const { confirmAndDelete } = useReturns.lines.deleteSelectedSupplierLines({
+    returnId: id,
+    selectedRows,
+    resetRowSelection,
+  });
 
   const actions: Action[] = [
     {
@@ -73,18 +52,22 @@ export const FooterComponent: FC = () => {
     },
   ];
 
+  const statuses = supplierReturnSequence.filter(status =>
+    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
+  );
+
   return (
     <AppFooterPortal
       Content={
         <>
-          {' '}
-          {selectedIds.length !== 0 && (
+          {selectedRows.length !== 0 && (
             <ActionsFooter
               actions={actions}
-              selectedRowCount={selectedIds.length}
+              selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
-          {data && selectedIds.length === 0 && (
+          {data && selectedRows.length === 0 && (
             <Box
               gap={2}
               display="flex"
@@ -94,8 +77,8 @@ export const FooterComponent: FC = () => {
             >
               <OnHoldButton />
               <StatusCrumbs
-                statuses={supplierReturnStatuses}
-                statusLog={createStatusLog(data)}
+                statuses={statuses}
+                statusLog={createStatusLog(data, supplierReturnSequence)}
                 statusFormatter={getStatusTranslator(t)}
               />
               <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
@@ -107,7 +90,6 @@ export const FooterComponent: FC = () => {
                   sx={{ fontSize: '12px' }}
                   onClick={() => navigateUpOne()}
                 />
-
                 <StatusChangeButton />
               </Box>
             </Box>

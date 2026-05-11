@@ -13,6 +13,7 @@ pub struct SupplierReturnLine {
     pub number_of_packs: f64,
     pub available_number_of_packs: f64,
     pub stock_line: StockLine,
+    pub on_hold: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -99,9 +100,9 @@ fn stock_lines_for_item_id(
     match item_id {
         Some(item_id) => {
             let filter = StockLineFilter::new()
-                .item_id(EqualFilter::equal_to(item_id))
+                .item_id(EqualFilter::equal_to(item_id.to_string()))
                 .id(EqualFilter::not_equal_all(stock_line_ids_to_exclude))
-                .store_id(EqualFilter::equal_to(store_id))
+                .store_id(EqualFilter::equal_to(store_id.to_string()))
                 .is_available(true);
 
             stock_line_repo.query_by_filter(filter, None)
@@ -119,7 +120,8 @@ fn get_existing_return_lines(
     let Some(return_id) = return_id else {
         return Ok(vec![]);
     };
-    let base_filter = InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&return_id));
+    let base_filter =
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(return_id.to_string()));
     let repo = InvoiceLineRepository::new(&ctx.connection);
 
     let lines_by_stock_line = repo.query_by_filter(
@@ -134,8 +136,11 @@ fn get_existing_return_lines(
         return Ok(lines_by_stock_line);
     };
 
-    let lines_by_item_id =
-        repo.query_by_filter(base_filter.clone().item_id(EqualFilter::equal_to(item_id)))?;
+    let lines_by_item_id = repo.query_by_filter(
+        base_filter
+            .clone()
+            .item_id(EqualFilter::equal_to(item_id.to_string())),
+    )?;
 
     let all_lines = lines_by_stock_line.into_iter().chain(lines_by_item_id);
 
@@ -156,6 +161,12 @@ fn get_existing_return_lines(
 fn outbound_line_from_stock_line_and_invoice_line(
     (invoice_line, stock_line): (Option<InvoiceLine>, StockLine),
 ) -> SupplierReturnLine {
+    let on_hold = stock_line.stock_line_row.on_hold
+        || stock_line
+            .location_row
+            .as_ref()
+            .map_or(false, |l| l.on_hold);
+
     let Some(invoice_line) = invoice_line else {
         return SupplierReturnLine {
             id: uuid(),
@@ -163,6 +174,7 @@ fn outbound_line_from_stock_line_and_invoice_line(
             note: None,
             number_of_packs: 0.0,
             available_number_of_packs: stock_line.stock_line_row.available_number_of_packs,
+            on_hold,
             stock_line,
         };
     };
@@ -186,6 +198,7 @@ fn outbound_line_from_stock_line_and_invoice_line(
         number_of_packs,
         reason_id: reason_option_id,
         available_number_of_packs: number_of_packs_available_to_return,
+        on_hold,
         stock_line,
     }
 }

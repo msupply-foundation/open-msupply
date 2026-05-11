@@ -46,7 +46,8 @@ pub fn delete_response_requisition(
             validate(connection, &ctx.store_id, &input)?;
 
             let lines = RequisitionLineRepository::new(connection).query_by_filter(
-                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&input.id)),
+                RequisitionLineFilter::new()
+                    .requisition_id(EqualFilter::equal_to(input.id.to_string())),
             )?;
             for line in lines {
                 delete_response_requisition_line(
@@ -97,7 +98,7 @@ fn validate(
     }
 
     let filter = InvoiceFilter {
-        requisition_id: Some(EqualFilter::equal_to(&requisition_row.id)),
+        requisition_id: Some(EqualFilter::equal_to(requisition_row.id.to_string())),
         ..Default::default()
     };
     if InvoiceRepository::new(connection)
@@ -155,7 +156,7 @@ mod test_delete {
             service.delete_response_requisition(
                 &context,
                 DeleteResponseRequisition {
-                    id: "invalid".to_owned(),
+                    id: "invalid".to_string(),
                 },
             ),
             Err(ServiceError::RequisitionDoesNotExist)
@@ -187,7 +188,7 @@ mod test_delete {
         let transfer_requisition = RequisitionRow {
             id: "transfer_requisition".to_string(),
             requisition_number: 3,
-            name_link_id: "name_a".to_string(),
+            name_id: "name_a".to_string(),
             store_id: mock_store_a().id,
             r#type: RequisitionType::Response,
             status: RequisitionStatus::New,
@@ -208,7 +209,7 @@ mod test_delete {
         // RequisitionWithShipment
         let invoice = InvoiceRow {
             id: "invoice_id".to_string(),
-            name_link_id: "name_a".to_string(),
+            name_id: "name_a".to_string(),
             store_id: mock_store_a().id,
             invoice_number: 3,
             r#type: InvoiceType::OutboundShipment,

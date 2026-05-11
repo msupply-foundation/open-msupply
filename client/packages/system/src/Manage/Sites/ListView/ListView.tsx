@@ -1,0 +1,155 @@
+import React, { useMemo } from 'react';
+import {
+  NothingHere,
+  useUrlQueryParams,
+  useEditModal,
+  useTranslation,
+  // useNotification,
+  // useConfirmationModal,
+  usePaginatedMaterialTable,
+  MaterialTable,
+  ColumnDef,
+} from '@openmsupply-client/common';
+// import { AppBarButtons } from './AppBarButtons';
+// import { Footer } from './Footer';
+import { Toolbar } from './Toolbar';
+import { SiteEditModal } from './SiteEditModal';
+import {
+  SiteRowFragment,
+  defaultDraftSite,
+  DraftSite,
+  useSites,
+} from '../api';
+
+// TODO: Site create/edit/delete is disabled for now and will be revisited in
+// the future. 
+export const SitesList = () => {
+  const t = useTranslation();
+  const {
+    filter,
+    queryParams: { sortBy, first, offset },
+  } = useUrlQueryParams({
+    initialSort: { key: 'name', dir: 'asc' },
+    filters: [{ key: 'name' }],
+  });
+
+  const queryParams = { ...filter, sortBy, first, offset };
+  const {
+    query: { data, isError, isFetching },
+    // upsert: { upsert },
+    // deleteSite: { deleteSite },
+    clearSyncToken: { clearSyncToken, isClearingSyncToken },
+    draft,
+    updateDraft,
+  } = useSites(queryParams);
+
+  const { isOpen, onClose, onOpen } = useEditModal();
+  // const { error, success } = useNotification();
+
+  const handleClose = () => {
+    onClose();
+    updateDraft(defaultDraftSite);
+  };
+
+  // const handleCreate = () => {
+  //   const nextId = Math.max(0, ...(data?.nodes?.map(s => s.id) ?? [])) + 1;
+  //   updateDraft({ ...defaultDraftSite, id: nextId });
+  //   onOpen();
+  // };
+
+  // const save = async (saveStoreAssignments: () => Promise<void>) => {
+  //   try {
+  //     await upsert();
+  //     await saveStoreAssignments();
+  //     success(t('messages.site-saved'))();
+  //     handleClose();
+  //   } catch (e) {
+  //     error(String(e))();
+  //   }
+  // };
+
+  // const confirmDelete = useConfirmationModal({
+  //   title: t('heading.are-you-sure'),
+  //   message: t('messages.confirm-delete-sites', { count: 1 }),
+  //   onConfirm: async () => {
+  //     try {
+  //       await deleteSite(draft.id);
+  //       success(t('messages.deleted-sites', { count: 1 }))();
+  //       handleClose();
+  //     } catch (e) {
+  //       error(String(e))();
+  //     }
+  //   },
+  // });
+
+  const columns = useMemo(
+    (): ColumnDef<SiteRowFragment>[] => [
+      {
+        accessorKey: 'code',
+        header: t('label.code'),
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'name',
+        header: t('label.name'),
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'hardwareId',
+        header: t('label.hardware-id'),
+      },
+    ],
+    []
+  );
+
+  const onRowClick = (row: SiteRowFragment) => {
+    const selected = data?.nodes.find(site => site.id === row.id);
+    if (selected) {
+      updateDraft({
+        id: selected.id,
+        code: selected.code ?? '',
+        name: selected.name,
+        password: '',
+        clearHardwareId: false,
+        hardwareId: selected.hardwareId,
+        isNew: false,
+      } as DraftSite);
+      onOpen();
+    }
+  };
+
+  const { table } = usePaginatedMaterialTable({
+    tableId: 'site-list',
+    columns,
+    data: data?.nodes,
+    totalCount: data?.totalCount ?? 0,
+    isLoading: isFetching,
+    isError,
+    onRowClick,
+    noDataElement: <NothingHere body={t('error.no-sites')} />,
+    enableRowSelection: false, // TODO: Remove if allowing deletes on OMS central
+  });
+
+  return (
+    <>
+      <Toolbar filter={filter} />
+      {/* <AppBarButtons onOpen={handleCreate} /> */}
+      <MaterialTable table={table} />
+      {isOpen && (
+        <SiteEditModal
+          isOpen={isOpen}
+          site={draft}
+          onClose={handleClose}
+          updateDraft={updateDraft}
+          clearSyncToken={clearSyncToken}
+          isClearingSyncToken={isClearingSyncToken}
+        />
+      )}
+      {/* <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+        deleteSite={deleteSite}
+      /> */}
+    </>
+  );
+};

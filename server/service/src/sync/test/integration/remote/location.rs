@@ -15,11 +15,12 @@ impl SyncRecordTester for LocationRecordTester {
         let store_id = &new_site_properties.store_id;
         let row = LocationRow {
             id: uuid(),
-            name: "LoationName".to_string(),
+            name: "LocationName".to_string(),
             code: "LocationCode".to_string(),
             on_hold: false,
             store_id: store_id.to_string(),
             location_type_id: None,
+            ..Default::default()
         };
 
         result.push(TestStepData {

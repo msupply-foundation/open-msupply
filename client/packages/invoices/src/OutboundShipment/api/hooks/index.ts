@@ -2,6 +2,9 @@ import { Utils } from './utils';
 import { Lines } from './line';
 import { Document } from './document';
 
+export { useOutboundItems } from './line/useOutboundItems';
+export { useOutboundLines } from './line/useOutboundLines';
+
 export const useOutbound = {
   utils: {
     addFromMasterList: Utils.useAddFromMasterList,
@@ -10,7 +13,6 @@ export const useOutbound = {
     barcodeInsert: Utils.useBarcodeInsert,
     isDisabled: Utils.useOutboundIsDisabled,
     id: Utils.useOutboundId,
-    selectedLines: Utils.useSelectedLines,
   },
 
   document: {
@@ -30,9 +32,7 @@ export const useOutbound = {
   },
 
   line: {
-    stockLines: Lines.useOutboundLines,
     serviceLines: Lines.useOutboundServiceLines,
-    rows: Lines.useOutboundRows,
     save: Lines.useOutboundSaveLines,
     deleteSelected: Lines.useOutboundDeleteSelectedLines,
     allocateSelected: Lines.useOutboundAllocateSelectedLines,

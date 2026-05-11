@@ -1,20 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
+  DosesOrUnitsCaption,
   NumericTextInput,
   Select,
   Typography,
   useDebounceCallback,
-  useFormatNumber,
   useIntlUtils,
   useTranslation,
-} from '@openmsupply-client/common';
-import { getCurrentValue, getUpdatedSupply } from './utils';
-import {
-  calculateValueInDoses,
   Representation,
   RepresentationValue,
-} from '../../../../common';
+} from '@openmsupply-client/common';
+import { getCurrentValue, getUpdatedSupply } from './utils';
 import { DraftResponseLine } from '../hooks';
 
 interface Option {
@@ -31,7 +28,7 @@ interface SupplySelectionProps {
   representation: RepresentationValue;
   setRepresentation: (rep: RepresentationValue) => void;
   unitName: string;
-  displayVaccinesInDoses?: boolean;
+  isDosesEnabled?: boolean;
   dosesPerUnit: number;
   setIsEditingSupply: (isEditingSupply: boolean) => void;
 }
@@ -45,13 +42,12 @@ export const SupplySelection = ({
   representation,
   setRepresentation,
   unitName,
-  displayVaccinesInDoses = false,
+  isDosesEnabled = false,
   dosesPerUnit,
   setIsEditingSupply,
 }: SupplySelectionProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
-  const { round } = useFormatNumber();
 
   const currentValue = useMemo(
     (): number =>
@@ -96,28 +92,6 @@ export const SupplySelection = ({
     debouncedUpdate(newValue);
   };
 
-  // doses always rounded to display in whole numbers
-  const valueInDoses = useMemo(
-    () =>
-      displayVaccinesInDoses
-        ? round(
-            calculateValueInDoses(
-              representation,
-              defaultPackSize || 1,
-              dosesPerUnit,
-              value
-            )
-          )
-        : undefined,
-    [
-      displayVaccinesInDoses,
-      representation,
-      defaultPackSize,
-      dosesPerUnit,
-      value,
-    ]
-  );
-
   return (
     <Box
       sx={{
@@ -160,16 +134,15 @@ export const SupplySelection = ({
               },
             }}
           />
-          {displayVaccinesInDoses && !!value && (
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              pt={0.3}
-              pr={1.2}
-              sx={{ textAlign: 'right' }}
-            >
-              {valueInDoses} {t('label.doses').toLowerCase()}
-            </Typography>
+          {isDosesEnabled && !!value && (
+            <DosesOrUnitsCaption
+              value={
+                representation === Representation.PACKS
+                  ? value * (defaultPackSize ?? 1)
+                  : value
+              }
+              dosesPerUnit={dosesPerUnit}
+            />
           )}
         </Box>
         <Box flex={1}>
@@ -197,6 +170,7 @@ export const SupplySelection = ({
                 },
               },
             }}
+            disabled={disabled}
           />
         </Box>
       </Box>

@@ -22,6 +22,7 @@ impl SyncRecordTester for LocationMovementRecordTester {
             on_hold: false,
             store_id: store_id.clone(),
             location_type_id: None,
+            ..Default::default()
         };
         let stock_line_row = StockLineRow {
             id: uuid(),
@@ -37,10 +38,11 @@ impl SyncRecordTester for LocationMovementRecordTester {
             expiry_date: NaiveDate::from_ymd_opt(2021, 03, 21),
             on_hold: true,
             note: Some("some remote sync test note".to_string()),
-            supplier_link_id: Some(new_site_properties.name_id.clone()),
+            supplier_id: Some(new_site_properties.name_id.clone()),
             barcode_id: None,
             item_variant_id: None,
-            donor_link_id: None,
+            donor_id: None,
+            ..Default::default()
         };
 
         let location_movement_row = LocationMovementRow {

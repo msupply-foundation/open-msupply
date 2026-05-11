@@ -101,7 +101,7 @@ impl PatientSearchInput {
             first_name: self.first_name,
             last_name: self.last_name,
             date_of_birth: self.date_of_birth,
-            gender: self.gender.map(|g| GenderType::from(g)),
+            gender: self.gender.map(GenderType::from),
             identifier: self.identifier,
         }
     }

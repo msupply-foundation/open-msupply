@@ -24,8 +24,6 @@ use crate::{
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
     },
     email::{EmailService, EmailServiceTrait},
-    goods_received::{GoodsReceivedService, GoodsReceivedServiceTrait},
-    goods_received_line::{GoodsReceivedLineService, GoodsReceivedLineServiceTrait},
     insurance::{InsuranceService, InsuranceServiceTrait},
     insurance_provider::{InsuranceProviderService, InsuranceProviderServiceTrait},
     invoice::{InvoiceService, InvoiceServiceTrait},
@@ -67,16 +65,19 @@ use crate::{
     sensor::{SensorService, SensorServiceTrait},
     settings::MailSettings,
     settings_service::{SettingsService, SettingsServiceTrait},
+    shipping_method::{ShippingMethodService, ShippingMethodServiceTrait},
+    site::{SiteService, SiteServiceTrait},
     standard_reports::StandardReports,
     stock_line::{StockLineService, StockLineServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
     sync::{
-        site_info::{SiteInfoService, SiteInfoTrait},
+        site_auth::{SiteAuthService, SiteAuthTrait},
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
+    sync_v7::sync_status::status::{SyncStatusV7Service, SyncStatusV7Trait},
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
     vaccination::{VaccinationService, VaccinationServiceTrait},
     vaccine_course::VaccineCourseServiceTrait,
@@ -88,11 +89,15 @@ use repository::{
     StoreFilter, StoreSort,
 };
 
+use crate::subscription::SubscriptionTriggerHandle;
+use util::constants::SYSTEM_USER_ID;
+
 pub struct ServiceProvider {
     pub connection_manager: StorageConnectionManager,
     pub validation_service: Box<dyn AuthServiceTrait>,
 
     pub location_service: Box<dyn LocationServiceTrait>,
+    pub site_service: Box<dyn SiteServiceTrait>,
 
     // Cold chain
     pub sensor_service: Box<dyn SensorServiceTrait>,
@@ -142,8 +147,9 @@ pub struct ServiceProvider {
     // App Data Service
     pub app_data_service: Box<dyn AppDataServiceTrait>,
     // Sync
-    pub site_info_service: Box<dyn SiteInfoTrait>,
+    pub site_auth_service: Box<dyn SiteAuthTrait>,
     pub sync_status_service: Box<dyn SyncStatusTrait>,
+    pub sync_status_v7_service: Box<dyn SyncStatusV7Trait>,
     // Triggers
     processors_trigger: ProcessorsTrigger,
     pub sync_trigger: SyncTrigger,
@@ -196,10 +202,13 @@ pub struct ServiceProvider {
     // Purchase Orders
     pub purchase_order_service: Box<dyn PurchaseOrderServiceTrait>,
     pub purchase_order_line_service: Box<dyn PurchaseOrderLineServiceTrait>,
-    pub goods_received_service: Box<dyn GoodsReceivedServiceTrait>,
-    pub goods_received_line_service: Box<dyn GoodsReceivedLineServiceTrait>,
     // Contacts
     pub contact_service: Box<dyn ContactServiceTrait>,
+    // Shipping Method
+    pub shipping_method_service: Box<dyn ShippingMethodServiceTrait>,
+    // Subscription trigger handle — used by SyncLogger and changelog callbacks
+    // to send events to the shared subscription worker.
+    pub subscription_trigger: SubscriptionTriggerHandle,
 }
 
 pub struct ServiceContext {
@@ -224,6 +233,7 @@ impl ServiceProvider {
             LedgerFixTrigger::new_void(),
             SiteIsInitialisedTrigger::new_void(),
             None, // Mail not required for test/CLI setups
+            SubscriptionTriggerHandle::new_void(),
         )
     }
 
@@ -234,11 +244,13 @@ impl ServiceProvider {
         ledger_fix_trigger: LedgerFixTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
         mail_settings: Option<MailSettings>,
+        subscription_trigger: SubscriptionTriggerHandle,
     ) -> Self {
         ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
             location_service: Box::new(LocationService {}),
+            site_service: Box::new(SiteService {}),
             sensor_service: Box::new(SensorService {}),
             cold_chain_service: Box::new(ColdChainService {}),
             master_list_service: Box::new(MasterListService {}),
@@ -268,8 +280,9 @@ impl ServiceProvider {
             encounter_service: Box::new(EncounterService {}),
             contact_trace_service: Box::new(ContactTraceService {}),
             app_data_service: Box::new(AppDataService {}),
-            site_info_service: Box::new(SiteInfoService),
+            site_auth_service: Box::new(SiteAuthService),
             sync_status_service: Box::new(SyncStatusService),
+            sync_status_v7_service: Box::new(SyncStatusV7Service),
             processors_trigger,
             sync_trigger,
             site_is_initialised_trigger,
@@ -308,10 +321,10 @@ impl ServiceProvider {
             campaign_service: Box::new(CampaignService),
             purchase_order_service: Box::new(PurchaseOrderService),
             purchase_order_line_service: Box::new(PurchaseOrderLineService),
-            goods_received_service: Box::new(GoodsReceivedService),
-            goods_received_line_service: Box::new(GoodsReceivedLineService),
             contact_service: Box::new(ContactService {}),
             ledger_fix_trigger,
+            shipping_method_service: Box::new(ShippingMethodService {}),
+            subscription_trigger,
         }
     }
 
@@ -322,6 +335,19 @@ impl ServiceProvider {
             processors_trigger: self.processors_trigger.clone(),
             user_id: "".to_string(),
             store_id: "".to_string(),
+            frontend_plugins_cache: self.frontend_plugins_cache.clone(),
+        })
+    }
+
+    pub fn system_context(
+        &self,
+        store_id: Option<String>,
+    ) -> Result<ServiceContext, RepositoryError> {
+        Ok(ServiceContext {
+            connection: self.connection()?,
+            processors_trigger: self.processors_trigger.clone(),
+            user_id: SYSTEM_USER_ID.to_string(),
+            store_id: store_id.unwrap_or("".to_string()),
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
         })
     }

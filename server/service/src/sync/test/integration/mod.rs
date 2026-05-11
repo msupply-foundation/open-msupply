@@ -9,7 +9,7 @@ mod transfer;
 use self::central_server_configurations::NewSiteProperties;
 use crate::{
     sync::{
-        synchroniser::Synchroniser, translation_and_integration::integrate,
+        synchroniser::SynchroniserV5V6, translation_and_integration::integrate,
         translations::IntegrationOperation,
     },
     test_helpers::{setup_all_and_service_provider, ServiceTestContext},
@@ -23,7 +23,7 @@ use std::{error::Error, future::Future};
 pub(super) struct FullSiteConfig {
     config: SiteConfiguration,
     context: ServiceTestContext,
-    synchroniser: Synchroniser,
+    synchroniser: SynchroniserV5V6,
 }
 
 pub(super) async fn init_test_context(
@@ -45,8 +45,8 @@ pub(super) async fn init_test_context(
     let SiteConfiguration { sync_settings, .. } = &config;
 
     service_provider
-        .site_info_service
-        .request_and_set_site_info(service_provider, sync_settings)
+        .site_auth_service
+        .request_and_set_site_auth(service_provider, sync_settings)
         .await
         .unwrap();
     service_provider
@@ -55,7 +55,7 @@ pub(super) async fn init_test_context(
         .unwrap();
 
     let synchroniser =
-        Synchroniser::new(sync_settings.clone(), service_provider.clone().into()).unwrap();
+        SynchroniserV5V6::new(sync_settings.clone(), service_provider.clone().into()).unwrap();
 
     FullSiteConfig {
         config,
@@ -78,22 +78,12 @@ pub(crate) struct GraphqlRequest {
     query: String,
     variables: serde_json::Value,
 }
+#[derive(Default)]
 struct TestStepData {
     central_upsert: serde_json::Value,
     central_delete: serde_json::Value,
     integration_records: Vec<IntegrationOperation>,
     om_supply_central_graphql_operations: Vec<GraphqlRequest>,
-}
-
-impl Default for TestStepData {
-    fn default() -> Self {
-        Self {
-            central_upsert: json!({}),
-            central_delete: json!({}),
-            integration_records: Default::default(),
-            om_supply_central_graphql_operations: Default::default(),
-        }
-    }
 }
 
 trait SyncRecordTester {
@@ -138,22 +128,26 @@ where
 }
 
 async fn random_delay(min_millisecond: u64, max_millisecond: u64) {
-    use rand::prelude::*;
+    use rand::RngExt;
     let diff = max_millisecond - min_millisecond;
-    // .gen::<f64>() generates a float between 0 and 1
+    // .random::<f64>() generates a float between 0 and 1
     let delay_millisecond =
-        (rand::thread_rng().gen::<f64>() * diff as f64) as u64 + min_millisecond;
+        (rand::rng().random::<f64>() * diff as f64) as u64 + min_millisecond;
     tokio::time::sleep(std::time::Duration::from_millis(delay_millisecond)).await;
 }
 
 pub(crate) fn integrate_with_is_sync_reset(
     connection: &StorageConnection,
-    integrations: &[IntegrationOperation],
-) {
+    integrations: Vec<IntegrationOperation>,
+) -> Vec<IntegrationOperation> {
     let changelog_repo = ChangelogRepository::new(&connection);
-    let cursor = changelog_repo.latest_cursor().unwrap();
+    let cursor = changelog_repo.max_cursor().unwrap();
     // Need to reset is_sync_update since we've inserted test data with sync methods
     // they need to sync to central (if is_sync_update is set to true they will not sync to central)
-    integrate(&connection, integrations, None).unwrap();
+    let integrations: Vec<(Option<_>, IntegrationOperation)> =
+        integrations.into_iter().map(|i| (None, i)).collect();
+    integrate(&connection, &integrations).unwrap();
     changelog_repo.reset_is_sync_update(cursor).unwrap();
+
+    integrations.into_iter().map(|(_, i)| i).collect()
 }

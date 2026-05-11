@@ -1,51 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
-  TableProvider,
-  DataTable,
-  useColumns,
-  createTableStore,
   NothingHere,
-  useFormatDateTime,
-  ColumnAlign,
   useUrlQueryParams,
-  DotCell,
-  ColumnDataAccessor,
   useAuthContext,
   useNavigate,
-  ColumnDescription,
   useCallbackWithPermission,
   UserPermission,
   useTranslation,
   getGenderTranslationKey,
+  MaterialTable,
+  usePaginatedMaterialTable,
+  ColumnDef,
+  ColumnType,
+  ChipTableCell,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
-import { Toolbar } from './Toolbar';
 import { usePatientStore } from '@openmsupply-client/programs';
-import { ChipTableCell } from '../Components';
 import { CreatePatientModal } from '../CreatePatientModal';
 import { PatientColumnData } from '../CreatePatientModal/PatientResultsTab';
+import { Toolbar } from './Toolbar';
 
-export const programEnrolmentLabelAccessor: ColumnDataAccessor<
-  PatientRowFragment,
-  string[]
-> = ({ rowData }): string[] => {
-  return rowData.programEnrolments.nodes.map(it => {
-    const programEnrolmentId = it.programEnrolmentId
-      ? ` (${it.programEnrolmentId})`
-      : '';
-    return `${it.document.documentRegistry?.name}${programEnrolmentId}`;
-  });
-};
-
-const PatientListComponent = () => {
+export const PatientListView = () => {
   const t = useTranslation();
+  const { genderOptions } = usePreferences();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    filter,
-    queryParams: { page, first, offset, sortBy, filterBy },
+    queryParams: { sortBy, filterBy, first, offset },
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
@@ -79,76 +61,116 @@ const PatientListComponent = () => {
 
   const { setDocumentName, createNewPatient } = usePatientStore();
 
-  const { data, isError, isLoading } = usePatient.document.list(queryParams);
-  const pagination = { page, first, offset };
-
-  const { localisedDate } = useFormatDateTime();
+  const { data, isError, isFetching } = usePatient.document.list(queryParams);
   const navigate = useNavigate();
 
-  const columnDefinitions: ColumnDescription<PatientRowFragment>[] = [
-    { key: 'code', label: 'label.patient-id' },
-    { key: 'code2', label: 'label.patient-nuic' },
-    {
-      key: 'createdDatetime',
-      label: 'label.created',
-      formatter: dateString =>
-        dateString ? localisedDate((dateString as string) || '') : '',
-      sortable: true,
-    },
-    {
-      key: 'firstName',
-      label: 'label.first-name',
-    },
-    {
-      key: 'lastName',
-      label: 'label.last-name',
-    },
-    {
-      key: 'gender',
-      label: 'label.gender',
-      accessor: ({ rowData }) =>
-        rowData.gender ? t(getGenderTranslationKey(rowData.gender)) : '',
-    },
-    {
-      key: 'dateOfBirth',
-      label: 'label.date-of-birth',
-      formatter: dateString =>
-        dateString ? localisedDate((dateString as string) || '') : '',
-    },
-    {
-      key: 'nextOfKinName',
-      label: 'label.next-of-kin',
-      sortable: false,
-    },
-  ];
-
-  if (store?.preferences.omProgramModule) {
-    columnDefinitions.push({
-      label: 'label.program-enrolments',
-      key: 'programEnrolments',
-      sortable: false,
-      accessor: programEnrolmentLabelAccessor,
-      Cell: ChipTableCell,
-      maxWidth: 250,
-    });
-  }
-
-  columnDefinitions.push({
-    key: 'isDeceased',
-    label: 'label.deceased',
-    align: ColumnAlign.Center,
-    Cell: DotCell,
-    sortable: false,
-  });
-
-  const columns = useColumns<PatientRowFragment>(
-    columnDefinitions,
-    {
-      onChangeSortBy: updateSortQuery,
-      sortBy,
-    },
-    [updateSortQuery, sortBy]
+  const columns = useMemo(
+    (): ColumnDef<PatientRowFragment>[] => [
+      {
+        accessorKey: 'code',
+        header: t('label.patient-id'),
+        enableSorting: true,
+        size: 100,
+      },
+      {
+        accessorKey: 'code2',
+        header: t('label.patient-nuic'),
+        enableSorting: true,
+        size: 90,
+      },
+      {
+        accessorKey: 'createdDatetime',
+        header: t('label.created'),
+        enableSorting: true,
+        columnType: ColumnType.Date,
+        size: 115,
+      },
+      {
+        accessorKey: 'firstName',
+        header: t('label.first-name'),
+        enableSorting: true,
+        enableColumnFilter: true,
+        size: 125,
+      },
+      {
+        accessorKey: 'lastName',
+        header: t('label.last-name'),
+        enableSorting: true,
+        enableColumnFilter: true,
+        size: 125,
+      },
+      {
+        id: 'gender',
+        header: t('label.gender'),
+        accessorFn: row =>
+          row.gender ? t(getGenderTranslationKey(row.gender)) : '',
+        enableSorting: true,
+        enableColumnFilter: true,
+        size: 100,
+        filterVariant: 'select',
+        filterSelectOptions: genderOptions?.map(gender => ({
+          value: gender,
+          label: t(getGenderTranslationKey(gender)),
+        })),
+      },
+      {
+        accessorKey: 'dateOfBirth',
+        header: t('label.date-of-birth'),
+        columnType: ColumnType.Date,
+        enableSorting: true,
+        enableColumnFilter: true,
+        dateFilterFormat: 'date',
+        size: 110,
+      },
+      {
+        accessorKey: 'nextOfKinName',
+        header: t('label.next-of-kin'),
+        size: 110,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'programEnrolmentName',
+        header: t('label.program-enrolments'),
+        accessorFn: (row: PatientRowFragment) =>
+          row.programEnrolments.nodes.map(it => {
+            const programEnrolmentId = it.programEnrolmentId
+              ? ` (${it.programEnrolmentId})`
+              : '';
+            return `${it.document.documentRegistry?.name}${programEnrolmentId}`;
+          }),
+        Cell: ChipTableCell,
+        enableColumnFilter: true,
+        size: 135,
+        includeColumn: store?.preferences.omProgramModule,
+      },
+      {
+        header: t('label.deceased'),
+        accessorKey: 'isDeceased',
+        columnType: ColumnType.Boolean,
+        enableSorting: false,
+        size: 80,
+        align: 'center',
+      },
+    ],
+    [store?.preferences.omProgramModule, t]
   );
+
+  const { table } = usePaginatedMaterialTable({
+    tableId: 'patient-list',
+    columns,
+    data: data?.nodes,
+    totalCount: data?.totalCount ?? 0,
+    isLoading: isFetching,
+    isError,
+    onRowClick: row => {
+      setDocumentName(row.document?.name);
+      navigate(String(row.id));
+    },
+    noDataElement: (
+      <NothingHere body={t('error.no-patients')} onCreate={handleClick} />
+    ),
+    enableRowSelection: false,
+  });
 
   const onCreatePatient = () => {
     setCreateModalOpen(false);
@@ -162,28 +184,13 @@ const PatientListComponent = () => {
 
   return (
     <>
-      <Toolbar filter={filter} />
+      <Toolbar />
       <AppBarButtons
         sortBy={sortBy}
         onCreatePatient={onCreatePatient}
         onSelectPatient={onSelectPatient}
       />
-      <DataTable
-        id="patients"
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes}
-        isLoading={isLoading}
-        isError={isError}
-        onRowClick={row => {
-          setDocumentName(row.document?.name);
-          navigate(String(row.id));
-        }}
-        noDataElement={
-          <NothingHere body={t('error.no-patients')} onCreate={handleClick} />
-        }
-      />
+      <MaterialTable table={table} />
       {createModalOpen ? (
         <CreatePatientModal
           open={createModalOpen}
@@ -197,9 +204,3 @@ const PatientListComponent = () => {
     </>
   );
 };
-
-export const PatientListView = () => (
-  <TableProvider createStore={createTableStore}>
-    <PatientListComponent />
-  </TableProvider>
-);

@@ -1,20 +1,15 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   useTranslation,
   AppBarContentPortal,
-  FilterController,
   FilterMenu,
   Box,
   RequisitionNodeStatus,
-  useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 
-export const Toolbar: FC<{
-  filter: FilterController;
-}> = () => {
+export const Toolbar = () => {
   const t = useTranslation();
-  const simplifiedTabletView = useSimplifiedTabletUI();
-  return simplifiedTabletView ? null : (
+  return (
     <AppBarContentPortal
       sx={{
         paddingBottom: '16px',
@@ -31,6 +26,12 @@ export const Toolbar: FC<{
               name: t('label.name'),
               urlParameter: 'otherPartyName',
               placeholder: t('placeholder.search-by-name'),
+            },
+            {
+              type: 'number',
+              name: t('label.requisition-number'),
+              urlParameter: 'requisitionNumber',
+              wide: true,
             },
             {
               type: 'enum',

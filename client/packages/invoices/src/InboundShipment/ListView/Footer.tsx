@@ -1,17 +1,46 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Action,
   ActionsFooter,
   DeleteIcon,
   useTranslation,
   AppFooterPortal,
+  useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { useInbound } from '../api';
+import { InboundRowFragment, useInboundList } from '../api';
+import { canDeleteInbound } from '../../utils';
 
-export const FooterComponent: FC = () => {
+export const FooterComponent = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: InboundRowFragment[];
+  resetRowSelection: () => void;
+}) => {
   const t = useTranslation();
 
-  const { selectedRows, confirmAndDelete } = useInbound.document.deleteRows();
+  const {
+    delete: { deleteInbounds },
+  } = useInboundList();
+
+  const deleteAction = async () => {
+    await deleteInbounds(selectedRows);
+    resetRowSelection();
+  };
+
+  const confirmAndDelete = useDeleteConfirmation({
+    selectedRows,
+    deleteAction,
+    canDelete: selectedRows.every(canDeleteInbound),
+    messages: {
+      confirmMessage: t('messages.confirm-delete-shipments', {
+        count: selectedRows.length,
+      }),
+      deleteSuccess: t('messages.deleted-shipments', {
+        count: selectedRows.length,
+      }),
+    },
+  });
 
   const actions: Action[] = [
     {
@@ -29,6 +58,7 @@ export const FooterComponent: FC = () => {
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
         </>

@@ -24,21 +24,16 @@ pub fn get_schedules_with_periods_by_program(
 
     let settings = settings_repo.find_many_by_program_id(program_id)?;
 
-    let mut period_schedule_ids = settings
-        .iter()
-        .map(|s| s.period_schedule_id.clone())
-        .collect::<Vec<String>>();
-
     // There can be duplicates in the program settings due to name tags
     // which we don't care about here, so we dedup here
-    period_schedule_ids.sort_unstable();
-    period_schedule_ids.dedup();
+    let period_schedule_ids =
+        util::dedup_iter(settings.iter().map(|s| s.period_schedule_id.clone()));
 
     let schedules = period_schedule_ids
         .into_iter()
         .map(|schedule_id| {
             let period_filter = PeriodFilter::new()
-                .period_schedule_id(EqualFilter::equal_to(&schedule_id))
+                .period_schedule_id(EqualFilter::equal_to(schedule_id.to_string()))
                 .end_date(DateFilter::before_or_equal_to(Utc::now().date_naive()));
 
             let closed_periods = period_repo.query(

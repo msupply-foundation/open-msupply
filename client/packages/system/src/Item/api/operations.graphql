@@ -2,6 +2,7 @@ fragment StockLine on StockLineNode {
   availableNumberOfPacks
   batch
   expiryDate
+  manufactureDate
   id
   itemId
   location {
@@ -49,6 +50,14 @@ fragment StockLine on StockLineNode {
     unusable
     description
   }
+  program {
+    id
+    name
+  }
+  campaign {
+    id
+    name
+  }
 }
 
 fragment ItemRow on ItemNode {
@@ -95,6 +104,10 @@ fragment ItemStockOnHand on ItemNode {
   availableStockOnHand(storeId: $storeId)
   itemStoreProperties(storeId: $storeId) {
     defaultSellPricePerPack
+    ignoreForOrders
+  }
+  stats(storeId: $storeId) {
+    stockOnHand
   }
 }
 fragment ItemRowWithStats on ItemNode {
@@ -227,6 +240,7 @@ fragment Item on ItemNode {
   }
   itemStoreProperties(storeId: $storeId) {
     defaultSellPricePerPack
+    ignoreForOrders
   }
 }
 
@@ -509,6 +523,9 @@ fragment ItemLedger on ItemLedgerNode {
   sellPricePerPack
   totalBeforeTax
   numberOfPacks
+  user {
+    username
+  }
 }
 
 query itemLedger(

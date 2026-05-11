@@ -29,6 +29,7 @@ impl ViewMigrationFragment for ViewMigration {
       vcd.max_age,
       vcd.custom_age_label,
       vc.id as vaccine_course_id,
+      vc.can_skip_dose,
       v.id as vaccination_id,
       v.vaccination_date,
       v.given,

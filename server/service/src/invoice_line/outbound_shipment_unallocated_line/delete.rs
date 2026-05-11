@@ -103,7 +103,7 @@ mod test_delete {
             service.delete_outbound_shipment_unallocated_line(
                 &context,
                 DeleteOutboundShipmentUnallocatedLine {
-                    id: "invalid".to_owned()
+                    id: "invalid".to_string()
                 },
             ),
             Err(ServiceError::LineDoesNotExist)

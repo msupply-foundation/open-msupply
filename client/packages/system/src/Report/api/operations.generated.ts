@@ -115,6 +115,22 @@ export type GenerateReportQuery = {
     | { __typename: 'PrintReportNode'; fileId: string };
 };
 
+export type CsvToExcelQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  csvData: Types.Scalars['String']['input'];
+  filename: Types.Scalars['String']['input'];
+}>;
+
+export type CsvToExcelQuery = {
+  __typename: 'Queries';
+  csvToExcel:
+    | {
+        __typename: 'PrintReportError';
+        error: { __typename: 'FailedToFetchReportData'; description: string };
+      }
+    | { __typename: 'PrintReportNode'; fileId: string };
+};
+
 export const ReportRowFragmentDoc = gql`
   fragment ReportRow on ReportNode {
     __typename
@@ -223,6 +239,22 @@ export const GenerateReportDocument = gql`
     }
   }
 `;
+export const CsvToExcelDocument = gql`
+  query csvToExcel($storeId: String!, $csvData: String!, $filename: String!) {
+    csvToExcel(storeId: $storeId, csvData: $csvData, filename: $filename) {
+      ... on PrintReportNode {
+        __typename
+        fileId
+      }
+      ... on PrintReportError {
+        __typename
+        error {
+          description
+        }
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -245,13 +277,16 @@ export function getSdk(
   return {
     report(
       variables: ReportQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ReportQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ReportQuery>(ReportDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<ReportQuery>({
+            document: ReportDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'report',
         'query',
@@ -260,13 +295,16 @@ export function getSdk(
     },
     reports(
       variables: ReportsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ReportsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ReportsQuery>(ReportsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<ReportsQuery>({
+            document: ReportsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'reports',
         'query',
@@ -275,16 +313,36 @@ export function getSdk(
     },
     generateReport(
       variables: GenerateReportQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<GenerateReportQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<GenerateReportQuery>(
-            GenerateReportDocument,
+          client.request<GenerateReportQuery>({
+            document: GenerateReportDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'generateReport',
+        'query',
+        variables
+      );
+    },
+    csvToExcel(
+      variables: CsvToExcelQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<CsvToExcelQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<CsvToExcelQuery>({
+            document: CsvToExcelDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'csvToExcel',
         'query',
         variables
       );

@@ -4,8 +4,8 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType,
+    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
 use diesel::prelude::*;
@@ -20,6 +20,7 @@ table! {
         use_in_gaps_calculations -> Bool,
         wastage_rate -> Double,
         deleted_datetime -> Nullable<Timestamp>,
+        can_skip_dose -> Bool
     }
 }
 
@@ -38,8 +39,8 @@ pub struct VaccineCourseRow {
     pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
+    pub can_skip_dose: bool,
 }
-
 pub struct VaccineCourseRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -49,33 +50,31 @@ impl<'a> VaccineCourseRowRepository<'a> {
         VaccineCourseRowRepository { connection }
     }
 
-    pub fn upsert_one(
+    pub fn _upsert_one(
         &self,
         vaccine_course_row: &VaccineCourseRow,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         diesel::insert_into(vaccine_course)
             .values(vaccine_course_row)
             .on_conflict(id)
             .do_update()
             .set(vaccine_course_row)
             .execute(self.connection.lock().connection())?;
-
-        self.insert_changelog(vaccine_course_row.id.to_owned(), RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(
+    pub fn upsert_one(
         &self,
-        row_id: String,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::VaccineCourse,
-            record_id: row_id,
-            row_action: action,
-            store_id: None,
-            ..Default::default()
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
+        vaccine_course_row: &VaccineCourseRow,
+    ) -> Result<(), RepositoryError> {
+        self._upsert_one(vaccine_course_row)?;
+        let changelog = VaccineCourseRow::generate_changelog(
+            vaccine_course_row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_all(&mut self) -> Result<Vec<VaccineCourseRow>, RepositoryError> {
@@ -100,12 +99,34 @@ impl<'a> VaccineCourseRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<VaccineCourseRow>, RepositoryError> {
+        Ok(vaccine_course::table
+            .filter(vaccine_course::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for VaccineCourseRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = VaccineCourseRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        VaccineCourseRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

@@ -8,6 +8,7 @@ fragment Insurance on InsurancePolicyNode {
   discountPercentage
   expiryDate
   isActive
+  nameOfInsured
   insuranceProviders {
     id
     providerName

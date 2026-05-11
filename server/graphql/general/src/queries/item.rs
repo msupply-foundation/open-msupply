@@ -37,6 +37,7 @@ pub struct EqualFilterItemTypeInput {
     pub equal_to: Option<ItemNodeType>,
     pub equal_any: Option<Vec<ItemNodeType>>,
     pub not_equal_to: Option<ItemNodeType>,
+    pub not_equal_all: Option<Vec<ItemNodeType>>,
 }
 
 #[derive(InputObject, Clone)]
@@ -57,6 +58,13 @@ pub struct ItemFilterInput {
     pub is_active: Option<bool>,
     pub is_vaccine: Option<bool>,
     pub master_list_id: Option<EqualFilterStringInput>,
+    pub is_program_item: Option<bool>,
+    pub ignore_for_orders: Option<bool>,
+    pub min_months_of_stock: Option<f64>,
+    pub max_months_of_stock: Option<f64>,
+    pub with_recent_consumption: Option<bool>,
+    pub products_at_risk_of_being_out_of_stock: Option<bool>,
+    pub universal_code: Option<StringFilterInput>,
 }
 
 #[derive(Union)]
@@ -110,13 +118,20 @@ impl ItemFilterInput {
             has_stock_on_hand,
             is_visible_or_on_hand,
             master_list_id,
+            is_program_item,
+            ignore_for_orders,
+            min_months_of_stock,
+            max_months_of_stock,
+            with_recent_consumption,
+            products_at_risk_of_being_out_of_stock,
+            universal_code,
         } = self;
 
         ItemFilter {
             id: id.map(EqualFilter::from),
             name: name.map(StringFilter::from),
             code: code.map(StringFilter::from),
-            r#type: r#type.map(|t| map_filter!(t, |r| ItemType::from(r))),
+            r#type: r#type.map(|t| map_filter!(t, ItemType::from)),
             category_id,
             category_name,
             is_visible,
@@ -126,6 +141,13 @@ impl ItemFilterInput {
             has_stock_on_hand,
             is_visible_or_on_hand,
             master_list_id: master_list_id.map(EqualFilter::from),
+            is_program_item,
+            ignore_for_orders,
+            min_months_of_stock,
+            max_months_of_stock,
+            with_recent_consumption,
+            products_at_risk_of_being_out_of_stock,
+            universal_code: universal_code.map(StringFilter::from),
         }
     }
 }

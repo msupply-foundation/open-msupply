@@ -1,7 +1,8 @@
 use super::{
-    invoice_line_row::invoice_line, invoice_row::invoice, item_link_row::item_link, item_row::item,
-    location_row::location, reason_option_row::reason_option, stock_line_row::stock_line, DBType,
-    DatetimeFilter, InvoiceLineRow, InvoiceLineType, InvoiceRow, LocationRow, ReasonOptionRow,
+    invoice_line_row::invoice_line, invoice_line_stats, invoice_row::invoice,
+    item_link_row::item_link, item_row::item, location_row::location,
+    reason_option_row::reason_option, stock_line_row::stock_line, DBType, DatetimeFilter,
+    InvoiceLineRow, InvoiceLineStatsRow, InvoiceLineType, InvoiceRow, LocationRow, ReasonOptionRow,
     StorageConnection,
 };
 
@@ -52,6 +53,7 @@ pub struct InvoiceLine {
     pub invoice_line_row: InvoiceLineRow,
     pub invoice_row: InvoiceRow,
     pub item_row: ItemRow,
+    pub invoice_line_stats_row: InvoiceLineStatsRow,
     pub location_row_option: Option<LocationRow>,
     pub stock_line_option: Option<StockLineRow>,
 }
@@ -91,6 +93,7 @@ pub struct InvoiceLineFilter {
     pub has_prescribed_quantity: Option<bool>,
     pub has_note: Option<bool>,
     pub program_id: Option<EqualFilter<String>>,
+    pub is_program_invoice: Option<bool>,
 }
 
 impl InvoiceLineFilter {
@@ -187,12 +190,18 @@ impl InvoiceLineFilter {
         self.program_id = Some(filter);
         self
     }
+
+    pub fn is_program_invoice(mut self, filter: bool) -> Self {
+        self.is_program_invoice = Some(filter);
+        self
+    }
 }
 
 type InvoiceLineJoin = (
     InvoiceLineRow,
     (ItemLinkRow, ItemRow),
     InvoiceRow,
+    InvoiceLineStatsRow,
     Option<LocationRow>,
     Option<StockLineRow>,
     Option<ReasonOptionRow>,
@@ -286,8 +295,11 @@ type BoxedInvoiceLineQuery = IntoBoxed<
         LeftJoin<
             LeftJoin<
                 InnerJoin<
-                    InnerJoin<invoice_line::table, InnerJoin<item_link::table, item::table>>,
-                    invoice::table,
+                    InnerJoin<
+                        InnerJoin<invoice_line::table, InnerJoin<item_link::table, item::table>>,
+                        invoice::table,
+                    >,
+                    invoice_line_stats::table,
                 >,
                 location::table,
             >,
@@ -302,6 +314,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
     let mut query = invoice_line::table
         .inner_join(item_link::table.inner_join(item::table))
         .inner_join(invoice::table)
+        .inner_join(invoice_line_stats::table)
         .left_join(location::table)
         .left_join(stock_line::table)
         .left_join(reason_option::table)
@@ -327,6 +340,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
             has_prescribed_quantity,
             has_note,
             program_id,
+            is_program_invoice,
         } = f;
 
         apply_equal_filter!(query, id, invoice_line::id);
@@ -367,18 +381,31 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         }
 
         apply_equal_filter!(query, program_id, invoice::program_id);
+
+        if is_program_invoice.is_some() {
+            query = query.filter(invoice::program_id.is_not_null());
+        }
     }
 
     query
 }
 
 fn to_domain(
-    (invoice_line_row, (_, item_row), invoice_row, location_row_option, stock_line_option, _): InvoiceLineJoin,
+    (
+        invoice_line_row,
+        (_, item_row),
+        invoice_row,
+        invoice_line_stats_row,
+        location_row_option,
+        stock_line_option,
+        _,
+    ): InvoiceLineJoin,
 ) -> InvoiceLine {
     InvoiceLine {
         invoice_line_row,
         invoice_row,
         item_row,
+        invoice_line_stats_row,
         location_row_option,
         stock_line_option,
     }

@@ -1,6 +1,6 @@
 use crate::{
     invoice::query::get_invoice,
-    pricing::item_price::{get_pricing_for_item, ItemPrice, ItemPriceLookup},
+    pricing::item_price::{get_pricing_for_items, ItemPrice, ItemPriceLookup},
     service_provider::ServiceContext,
     stock_line::{
         historical_stock::{
@@ -35,9 +35,10 @@ pub struct DraftStockOutLine {
     pub vvm_status_id: Option<String>,
     pub doses_per_unit: i32,
     pub item_variant_id: Option<String>,
-    pub donor_link_id: Option<String>,
+    pub donor_id: Option<String>,
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
+    pub volume_per_pack: f64,
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -53,7 +54,7 @@ pub fn get_draft_stock_out_lines(
     item_id: &str,
     invoice_id: &str,
 ) -> Result<(Vec<DraftStockOutLine>, DraftStockOutItemData), ListError> {
-    let invoice = get_invoice(ctx, Some(store_id), invoice_id)?.ok_or(ListError::DatabaseError(
+    let invoice = get_invoice(ctx, Some(store_id), invoice_id, None)?.ok_or(ListError::DatabaseError(
         RepositoryError::DBError {
             msg: "Invoice not found".to_string(),
             extra: invoice_id.to_string(),
@@ -88,17 +89,17 @@ pub fn get_draft_stock_out_lines(
     let placeholder_quantity = InvoiceLineRepository::new(&ctx.connection)
         .query_one(
             InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_to(&invoice.invoice_row.id))
+                .invoice_id(EqualFilter::equal_to(invoice.invoice_row.id.to_string()))
                 .r#type(InvoiceLineType::UnallocatedStock.equal_to())
-                .item_id(EqualFilter::equal_to(item_id)),
+                .item_id(EqualFilter::equal_to(item_id.to_string())),
         )?
         .map(|l| l.invoice_line_row.number_of_packs);
 
     let prescribed_quantity = InvoiceLineRepository::new(&ctx.connection)
         .query_one(
             InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_to(&invoice.invoice_row.id))
-                .item_id(EqualFilter::equal_to(item_id))
+                .invoice_id(EqualFilter::equal_to(invoice.invoice_row.id.to_string()))
+                .item_id(EqualFilter::equal_to(item_id.to_string()))
                 .has_prescribed_quantity(true),
         )?
         .map(|l| l.invoice_line_row.prescribed_quantity)
@@ -107,8 +108,8 @@ pub fn get_draft_stock_out_lines(
     let note = InvoiceLineRepository::new(&ctx.connection)
         .query_one(
             InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_to(&invoice.invoice_row.id))
-                .item_id(EqualFilter::equal_to(item_id))
+                .invoice_id(EqualFilter::equal_to(invoice.invoice_row.id.to_string()))
+                .item_id(EqualFilter::equal_to(item_id.to_string()))
                 .has_note(true),
         )?
         .map(|l| l.invoice_line_row.note)
@@ -139,8 +140,8 @@ fn get_historical_available_stock_lines(
             None,
             Some(
                 StockLineFilter::new()
-                    .store_id(EqualFilter::equal_to(store_id))
-                    .item_id(EqualFilter::equal_to(item_id))
+                    .store_id(EqualFilter::equal_to(store_id.to_string()))
+                    .item_id(EqualFilter::equal_to(item_id.to_string()))
                     .is_available(true),
             ),
             None,
@@ -148,7 +149,19 @@ fn get_historical_available_stock_lines(
         )?,
     };
 
-    Ok(historical_stock_lines.rows)
+    // For backdated outbounds, drop stock lines that had no availability at the historical date —
+    // they can't be picked.
+    let rows = if datetime.is_some() {
+        historical_stock_lines
+            .rows
+            .into_iter()
+            .filter(|line| line.stock_line_row.available_number_of_packs > 0.0)
+            .collect()
+    } else {
+        historical_stock_lines.rows
+    };
+
+    Ok(rows)
 }
 
 fn get_outgoing_invoice_lines(
@@ -160,9 +173,9 @@ fn get_outgoing_invoice_lines(
 
     let existing_invoice_lines = invoice_line_repo.query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(&outbound.id))
+            .invoice_id(EqualFilter::equal_to(outbound.id.to_string()))
             .r#type(InvoiceLineType::StockOut.equal_to())
-            .item_id(EqualFilter::equal_to(item_id)),
+            .item_id(EqualFilter::equal_to(item_id.to_string())),
     )?;
 
     let mut invoice_stock_lines = existing_invoice_lines
@@ -185,7 +198,7 @@ fn get_outgoing_invoice_lines(
 
         for stock_line in invoice_stock_lines.iter_mut() {
             if let Some(historic_quantity) = historic_quantities.get(&stock_line.id) {
-                stock_line.available_number_of_packs = *historic_quantity;
+                stock_line.available_number_of_packs = historic_quantity.min_available;
             }
         }
     }
@@ -212,14 +225,16 @@ fn generate_new_draft_lines(
         .filter(|line| !existing_stock_line_ids.contains(&line.stock_line_row.id))
         .collect();
 
-    let item_pricing = get_pricing_for_item(
-        ctx,
+    let item_pricing = get_pricing_for_items(
+        &ctx.connection,
         ItemPriceLookup {
-            item_id: item_id.to_string(),
+            item_ids: vec![item_id.to_string()],
             customer_name_id: Some(other_party_id),
         },
     )
-    .map_err(ListError::DatabaseError)?;
+    .map_err(ListError::DatabaseError)?
+    .remove(item_id)
+    .unwrap_or_default();
 
     let new_lines: Vec<DraftStockOutLine> = available_stock_lines
         .into_iter()
@@ -261,7 +276,8 @@ impl DraftStockOutLine {
             total_number_of_packs,
             on_hold,
             item_variant_id,
-            donor_link_id,
+            donor_id: donor_link_id,
+            volume_per_pack,
             ..
         } = line.stock_line_row;
 
@@ -270,7 +286,7 @@ impl DraftStockOutLine {
             item_id: line.item_row.id,
             stock_line_id: id,
             item_variant_id,
-            donor_link_id,
+            donor_id: donor_link_id,
             batch,
             pack_size,
             expiry_date,
@@ -284,6 +300,7 @@ impl DraftStockOutLine {
             doses_per_unit: line.item_row.vaccine_doses,
             campaign_id: line.stock_line_row.campaign_id,
             program_id: line.stock_line_row.program_id,
+            volume_per_pack,
         }
     }
 
@@ -300,7 +317,7 @@ impl DraftStockOutLine {
             expiry_date,
             location_id,
             sell_price_per_pack,
-            donor_link_id,
+            donor_id: donor_link_id,
             campaign_id,
             program_id,
             ..
@@ -313,6 +330,7 @@ impl DraftStockOutLine {
             on_hold,
             vvm_status_id,
             item_variant_id,
+            volume_per_pack,
             ..
         } = find_stock_line_by_id(line.invoice_line_row.stock_line_id, historical_stock_lines)?
             .ok_or(RepositoryError::DBError {
@@ -324,7 +342,7 @@ impl DraftStockOutLine {
             id,
             item_id: line.item_row.id,
             item_variant_id,
-            donor_link_id,
+            donor_id: donor_link_id,
             number_of_packs,
             stock_line_id,
             pack_size,
@@ -346,6 +364,7 @@ impl DraftStockOutLine {
             doses_per_unit: line.item_row.vaccine_doses,
             campaign_id,
             program_id,
+            volume_per_pack,
         })
     }
 }

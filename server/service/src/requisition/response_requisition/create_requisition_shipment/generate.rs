@@ -19,6 +19,12 @@ pub fn generate(
 ) -> Result<(InvoiceRow, Vec<InvoiceLineRow>), OutError> {
     let other_party = get_other_party(connection, store_id, &requisition.name_row.id)?
         .ok_or(OutError::ProblemGettingOtherParty)?;
+
+    let destination_customer = match &requisition.requisition_row.destination_customer_id {
+        Some(destination_customer_id) => get_other_party(connection, store_id, destination_customer_id)?,
+        None => None,
+    };
+
     let requisition_row = requisition.requisition_row;
     let currency = CurrencyRepository::new(connection)
         .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
@@ -30,9 +36,15 @@ pub fn generate(
     let new_invoice = InvoiceRow {
         id: uuid(),
         user_id: Some(user_id.to_string()),
-        name_link_id: requisition_row.name_link_id,
-        name_store_id: other_party.store_id().map(|id| id.to_string()),
-        store_id: store_id.to_owned(),
+        name_id: destination_customer
+            .as_ref()
+            .map(|customer| customer.name_row.id.clone())
+            .unwrap_or_else(|| other_party.name_row.id.clone()),
+        name_store_id: destination_customer
+            .as_ref()
+            .and_then(|customer| customer.store_id().map(|id| id.to_string()))
+            .or_else(|| other_party.store_id().map(|id| id.to_string())),
+        store_id: store_id.to_string(),
         invoice_number: next_number(connection, &NumberRowType::OutboundShipment, store_id)?,
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::New,
@@ -40,9 +52,9 @@ pub fn generate(
         requisition_id: Some(requisition_row.id),
         their_reference: requisition_row.their_reference,
         program_id: requisition_row.program_id,
+        currency_id: Some(currency.currency_row.id),
 
         // Default
-        currency_id: Some(currency.currency_row.id),
         currency_rate: 1.0,
         on_hold: false,
         comment: None,
@@ -66,8 +78,12 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_link_id: None,
-        goods_received_id: None,
+        default_donor_id: None,
+        purchase_order_id: None,
+        shipping_method_id: None,
+        charges_local_currency: 0.0,
+        charges_foreign_currency: 0.0,
+        ..Default::default()
     };
 
     let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fulfillments)?;
@@ -88,7 +104,7 @@ pub fn generate_invoice_lines(
 
         invoice_line_rows.push(InvoiceLineRow {
             id: uuid(),
-            invoice_id: invoice_id.to_owned(),
+            invoice_id: invoice_id.to_string(),
             pack_size: 1.0,
             number_of_packs: requisition_line_supply_status.remaining_quantity(),
             item_link_id: item_row.id,
@@ -104,6 +120,8 @@ pub fn generate_invoice_lines(
             location_id: None,
             batch: None,
             expiry_date: None,
+            manufacture_date: None,
+            purchase_order_line_id: None,
             sell_price_per_pack: 0.0,
             cost_price_per_pack: 0.0,
             stock_line_id: None,
@@ -111,7 +129,8 @@ pub fn generate_invoice_lines(
             item_variant_id: None,
             prescribed_quantity: None,
             linked_invoice_id: None,
-            donor_link_id: None,
+            donor_id: None,
+            manufacturer_id: None,
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,
@@ -122,6 +141,7 @@ pub fn generate_invoice_lines(
             shipped_number_of_packs: None,
             volume_per_pack: 0.0,
             shipped_pack_size: None,
+            status: None,
         });
     }
 

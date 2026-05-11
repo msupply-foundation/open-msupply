@@ -8,6 +8,7 @@ import {
   useNotification,
   LIST_KEY,
   useMutation,
+  isEnumValue,
 } from '@openmsupply-client/common';
 import { ALLREPORTVERSIONS } from './keys';
 import { ReportRowFragment } from '@openmsupply-client/system/src/Report/index.js';
@@ -26,7 +27,7 @@ export const useCentralReports = ({
   queryParams?: ReportListParams;
 }) => {
   // QUERY
-  const { data, isLoading, isError } = useGetList(queryParams);
+  const { data, isError, isFetching } = useGetList(queryParams);
 
   // INSTALL
   const {
@@ -36,7 +37,7 @@ export const useCentralReports = ({
   } = useInstallUploadedReports();
 
   return {
-    query: { data, isLoading, isError },
+    query: { data, isFetching, isError },
     install: { installMutation, installLoading, installError },
   };
 };
@@ -72,7 +73,9 @@ const useGetList = (queryParams?: ReportListParams) => {
         filter: {
           ...filterBy,
         },
-        key: sortBy.key as ReportSortFieldInput,
+        key: isEnumValue(ReportSortFieldInput, sortBy.key)
+          ? sortBy.key
+          : ReportSortFieldInput.Code,
         desc: sortBy.isDesc,
         storeId,
         userLanguage: language,
@@ -110,6 +113,7 @@ const useGetList = (queryParams?: ReportListParams) => {
       if (/HasPermission\(Report\)/.test(e.message)) return null;
       return [];
     },
+    keepPreviousData: true,
   });
 };
 

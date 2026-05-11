@@ -1,10 +1,10 @@
 use super::item_direction_row::item_direction::dsl::*;
 use super::item_link;
 use super::item_row::item;
-use crate::Delete;
-use crate::RepositoryError;
-use crate::StorageConnection;
-use crate::Upsert;
+use crate::{
+    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
+};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -42,7 +42,7 @@ impl<'a> ItemDirectionRowRepository<'a> {
         ItemDirectionRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &ItemDirectionRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &ItemDirectionRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item_direction)
             .values(row)
             .on_conflict(id)
@@ -50,6 +50,17 @@ impl<'a> ItemDirectionRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &ItemDirectionRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = ItemDirectionRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_all(&self) -> Result<Vec<ItemDirectionRow>, RepositoryError> {
@@ -68,17 +79,53 @@ impl<'a> ItemDirectionRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, item_direction_id: &str) -> Result<(), RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<ItemDirectionRow>, RepositoryError> {
+        Ok(item_direction
+            .filter(id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
+    fn _delete(&self, item_direction_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(item_direction.filter(id.eq(item_direction_id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn delete(&self, item_direction_id: &str) -> Result<(), RepositoryError> {
+        self._delete(item_direction_id)?;
+        let changelog = ItemDirectionRow::generate_changelog(
+            item_direction_id.to_string(),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
 }
 
 impl Upsert for ItemDirectionRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ItemDirectionRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        ItemDirectionRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
@@ -90,12 +137,31 @@ impl Upsert for ItemDirectionRow {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ItemDirectionRowDelete(pub String);
 impl Delete for ItemDirectionRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ItemDirectionRowRepository::new(con).delete(&self.0)?;
-        Ok(None)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let repo = ItemDirectionRowRepository::new(con);
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                ItemDirectionRow::generate_changelog(
+                    self.0.clone(),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        repo._delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

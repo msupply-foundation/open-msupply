@@ -1,25 +1,17 @@
-use super::{item_link_row::item_link, name_link_row::name_link, StorageConnection};
+use super::{item_link_row::item_link, name_row::name, StorageConnection};
 
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{
+    db_diesel::changelog::ChangelogRepository,
+    diesel_macros::define_linked_tables,
+    repository_error::RepositoryError,
+    ChangelogSyncType, ChangelogTableName, RowActionType, SourceSiteId, Upsert,
+};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
-
-table! {
-    store (id) {
-        id -> Text,
-        name_link_id -> Text,
-        code -> Text,
-        site_id -> Integer,
-        logo -> Nullable<Text>,
-        store_mode -> crate::db_diesel::store_row::StoreModeMapping,
-        created_date -> Nullable<Date>,
-        is_disabled -> Bool,
-    }
-}
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, TS)]
 #[cfg_attr(test, derive(strum::EnumIter))]
@@ -30,8 +22,27 @@ pub enum StoreMode {
     Dispensary,
 }
 
-joinable!(store -> name_link (name_link_id));
-allow_tables_to_appear_in_same_query!(store, name_link);
+define_linked_tables! {
+    view: store = "store_view",
+    core: store_with_links = "store",
+    struct: StoreRow,
+    repo: StoreRowRepository,
+    shared: {
+        code -> Text,
+        site_id -> Integer,
+        logo -> Nullable<Text>,
+        store_mode -> crate::db_diesel::store_row::StoreModeMapping,
+        created_date -> Nullable<Date>,
+        is_disabled -> Bool,
+    },
+    links: {
+        name_link_id -> name_id,
+    },
+    optional_links: {
+    }
+}
+
+joinable!(store -> name (name_id));
 allow_tables_to_appear_in_same_query!(store, item_link);
 
 #[derive(
@@ -50,13 +61,23 @@ allow_tables_to_appear_in_same_query!(store, item_link);
 #[diesel(table_name = store)]
 pub struct StoreRow {
     pub id: String,
-    pub name_link_id: String,
     pub code: String,
     pub site_id: i32,
     pub logo: Option<String>,
     pub store_mode: StoreMode,
     pub created_date: Option<NaiveDate>,
     pub is_disabled: bool,
+    // Resolved from name_link - must be last to match view column order
+    pub name_id: String,
+}
+
+impl StoreRow {
+    pub fn table_name() -> ChangelogTableName {
+        ChangelogTableName::Store
+    }
+    pub fn record_id(&self) -> String {
+        self.id.clone()
+    }
 }
 
 pub struct StoreRowRepository<'a> {
@@ -80,25 +101,32 @@ impl<'a> StoreRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(store::table)
-            .values(row)
-            .on_conflict(store::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
+        self._upsert(row)?;
+        let changelog = StoreRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub async fn insert_one(&self, store_row: &StoreRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(store::table)
-            .values(store_row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(store_row)?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, store_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
         let result = store::table
             .filter(store::id.eq(store_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn find_one_by_name_id(&self, name_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
+        let result = store::table
+            .filter(store::name_id.eq(name_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -115,37 +143,23 @@ impl<'a> StoreRowRepository<'a> {
         let result = store::table.load(self.connection.lock().connection())?;
         Ok(result)
     }
-
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(store::table.filter(store::id.eq(id)))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct StoreRowDelete(pub String);
-// TODO soft delete
-impl Delete for StoreRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        StoreRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Table not in Changelog
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            StoreRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
 }
 
 impl Upsert for StoreRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        StoreRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        StoreRowRepository::new(con)._upsert(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => StoreRow::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
-
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(

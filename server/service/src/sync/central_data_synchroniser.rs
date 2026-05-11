@@ -6,7 +6,7 @@ use super::{
 };
 use crate::{cursor_controller::CursorController, sync::api::CentralSyncBatchV5};
 use repository::{
-    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, SyncBufferRowRepository,
+    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, SyncBufferRepository,
 };
 use thiserror::Error;
 
@@ -20,6 +20,8 @@ pub(crate) enum CentralPullError {
     ParsingRecordError(#[from] ParsingSyncRecordError),
     #[error(transparent)]
     SyncLoggerError(#[from] SyncLoggerError),
+    #[error("Central server site id not configured (SettingsSyncCentralServerSiteId)")]
+    CentralServerSiteIdNotSet,
 }
 
 pub(crate) struct CentralDataSynchroniser {
@@ -38,12 +40,13 @@ impl CentralDataSynchroniser {
         let cursor_controller = CursorController::new(KeyType::CentralSyncPullCursor);
 
         let msupply_central_server_id = KeyValueStoreRepository::new(connection)
-            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?;
+            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
+            .ok_or(CentralPullError::CentralServerSiteIdNotSet)?;
 
         log::info!(
             "Pulling central data with batch size {} and msupply_central_server_id {}",
             batch_size,
-            msupply_central_server_id.unwrap_or_default()
+            msupply_central_server_id
         );
 
         loop {
@@ -63,10 +66,10 @@ impl CentralDataSynchroniser {
                 msupply_central_server_id,
             )?;
 
-            // Upsert sync buffer rows in a transaction together with cursor update
+            // Insert sync buffer rows in a transaction together with cursor update
             connection
                 .transaction_sync(|t_con| {
-                    SyncBufferRowRepository::new(t_con).upsert_many(&sync_buffer_rows)?;
+                    SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows)?;
                     cursor_controller.update(t_con, last_cursor_in_batch)
                 })
                 .map_err(|e| e.to_inner_error())?;

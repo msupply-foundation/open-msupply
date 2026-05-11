@@ -16,7 +16,11 @@ import {
   mapKeys,
   mapValues,
 } from '@openmsupply-client/common';
-import { getNextRequestStatus, getStatusTranslation } from '../../../utils';
+import {
+  getNextRequisitionStatus,
+  getStatusTranslation,
+  requestStatuses,
+} from '../../../utils';
 import { useRequest } from '../../api';
 import { useRequestRequisitionLineErrorContext } from '../../context';
 
@@ -59,7 +63,7 @@ const getNextStatusOption = (
 ): SplitButtonOption<RequisitionNodeStatus> | null => {
   if (!status) return options[0] ?? null;
 
-  const nextStatus = getNextRequestStatus(status);
+  const nextStatus = getNextRequisitionStatus(status, requestStatuses);
   const nextStatusOption = options.find(o => o.value === nextStatus);
   return nextStatusOption || null;
 };
@@ -149,6 +153,8 @@ const useStatusChangeButton = () => {
         return t('error.other-party-not-visible');
       case 'RecordNotFound':
         return t('messages.record-not-found');
+      case 'OtherPartyNotACustomer':
+        return t('error.other-party-not-a-customer');
       default:
         return noOtherVariants(error);
     }

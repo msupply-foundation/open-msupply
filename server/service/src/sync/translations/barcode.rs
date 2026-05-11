@@ -1,6 +1,8 @@
 use repository::{
     barcode::{Barcode, BarcodeFilter, BarcodeRepository},
     BarcodeRow, ChangelogRow, ChangelogTableName, EqualFilter, StorageConnection, SyncBufferRow,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
 
@@ -53,7 +55,7 @@ impl SyncTranslation for BarcodeTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyBarcodeRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyBarcodeRow>()?;
 
         let LegacyBarcodeRow {
             id,
@@ -68,7 +70,7 @@ impl SyncTranslation for BarcodeTranslation {
             id,
             gtin,
             item_id,
-            manufacturer_link_id: manufacturer_id,
+            manufacturer_id: manufacturer_id,
             pack_size,
             parent_id,
         };
@@ -80,20 +82,27 @@ impl SyncTranslation for BarcodeTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Barcode(barcode_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let Barcode {
             barcode_row:
                 BarcodeRow {
                     id,
                     gtin,
                     item_id,
-                    manufacturer_link_id: _,
+                    manufacturer_id: _,
                     pack_size,
                     parent_id,
                 },
             manufacturer_name_row,
         } = BarcodeRepository::new(connection)
-            .query_by_filter(BarcodeFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
+            .query_by_filter(
+                BarcodeFilter::new().id(EqualFilter::equal_to(barcode_row.id)),
+            )?
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Barcode not found"))?;
 
@@ -106,11 +115,7 @@ impl SyncTranslation for BarcodeTranslation {
             parent_id,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 }
 
@@ -118,12 +123,13 @@ impl SyncTranslation for BarcodeTranslation {
 mod tests {
     use crate::sync::{
         test::merge_helpers::merge_all_name_links, translations::ToSyncRecordTranslationType,
+    
     };
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
-    };
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RowOrDelete,
+};
     use serde_json::json;
 
     #[actix_rt::test]
@@ -151,23 +157,23 @@ mod tests {
 
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(ChangelogFilter::new().table_name(ChangelogTableName::Barcode.equal_to())),
-            )
-            .unwrap();
+        let entries = ChangelogRepository::new(&connection).query_with_data(
+            ChangelogCondition::table_name::equal(ChangelogTableName::Barcode),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1_000_000,
+            },
+        )
+        .unwrap();
 
         let translator = BarcodeTranslation;
-        for changelog in changelogs {
+        for entry in entries { let RowOrDelete::Row { changelog, row } = entry else { panic!("expected upsert row") };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));

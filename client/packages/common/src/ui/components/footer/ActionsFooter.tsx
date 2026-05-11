@@ -4,7 +4,6 @@ import {
   useTranslation,
   Typography,
   FlatButton,
-  useTableStore,
   MinusCircleIcon,
 } from '@openmsupply-client/common';
 
@@ -20,14 +19,15 @@ export interface Action {
 interface ActionsFooterProps {
   actions: Action[];
   selectedRowCount: number;
+  resetRowSelection: () => void;
 }
 
 export const ActionsFooter = ({
   actions,
   selectedRowCount,
+  resetRowSelection,
 }: ActionsFooterProps): ReactElement => {
   const t = useTranslation();
-  const { clearSelected } = useTableStore();
 
   return (
     <Stack
@@ -69,7 +69,7 @@ export const ActionsFooter = ({
       <FlatButton
         startIcon={<MinusCircleIcon />}
         label={t('label.clear-selection')}
-        onClick={clearSelected}
+        onClick={resetRowSelection}
         shouldShrink={true}
         color="secondary"
       />

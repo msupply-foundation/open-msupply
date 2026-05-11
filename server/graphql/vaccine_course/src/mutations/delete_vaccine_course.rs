@@ -1,6 +1,5 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{DatabaseError, RecordNotFound},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -54,19 +53,31 @@ pub enum DeleteVaccineCourseResponse {
 #[derive(Interface)]
 #[graphql(field(name = "description", ty = "String"))]
 pub enum DeleteVaccineCourseErrorInterface {
-    VaccineCourseNotFound(RecordNotFound),
-    DatabaseError(DatabaseError),
+    VaccineCourseInUse(VaccineCourseInUse),
 }
 
 fn map_error(error: ServiceError) -> Result<DeleteVaccineCourseErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
+        ServiceError::VaccineCourseInUse => {
+            return Ok(DeleteVaccineCourseErrorInterface::VaccineCourseInUse(
+                VaccineCourseInUse {},
+            ))
+        }
         // Standard Graphql Errors
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::VaccineCourseDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
+}
+
+pub struct VaccineCourseInUse;
+#[Object]
+impl VaccineCourseInUse {
+    pub async fn description(&self) -> &str {
+        "The vaccine course is in use and cannot be deleted."
+    }
 }

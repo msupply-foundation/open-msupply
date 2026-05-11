@@ -1,16 +1,19 @@
 use crate::sync::translations::{
     location::LocationTranslation, sensor::SensorTranslation, store::StoreTranslation,
     temperature_breach::TemperatureBreachTranslation,
+
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, naive_time,
     zero_date_as_option,
+
 };
 
 use repository::{
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, TemperatureLogRow,
-    TemperatureLogRowRepository,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
 
@@ -72,7 +75,7 @@ impl SyncTranslation for TemperatureLogTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyTemperatureLogRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyTemperatureLogRow>()?;
 
         let LegacyTemperatureLogRow {
             id,
@@ -103,9 +106,14 @@ impl SyncTranslation for TemperatureLogTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::TemperatureLog(temperature_log_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let TemperatureLogRow {
             id,
             temperature,
@@ -114,12 +122,7 @@ impl SyncTranslation for TemperatureLogTranslation {
             store_id,
             datetime,
             temperature_breach_id,
-        } = TemperatureLogRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "TemperatureLog row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = temperature_log_row;
 
         let legacy_row = LegacyTemperatureLogRow {
             id,
@@ -132,11 +135,7 @@ impl SyncTranslation for TemperatureLogTranslation {
             temperature_breach_id,
             datetime: Some(datetime),
         };
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 }
 

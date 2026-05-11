@@ -4,10 +4,11 @@ use program::deleted_datetime;
 use crate::{
     db_diesel::{
         context_row::context, document::document, item_link_row::item_link,
-        master_list_row::master_list, name_link_row::name_link,
+        master_list_row::master_list,
     },
     repository_error::RepositoryError,
-    StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, StorageConnection,
+    Upsert,
 };
 
 use diesel::prelude::*;
@@ -27,13 +28,11 @@ table! {
 joinable!(program -> master_list (master_list_id));
 joinable!(program -> context (context_id));
 allow_tables_to_appear_in_same_query!(program, document);
-allow_tables_to_appear_in_same_query!(program, name_link);
 allow_tables_to_appear_in_same_query!(program, item_link);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = program)]
 #[diesel(treat_none_as_null = true)]
-
 pub struct ProgramRow {
     pub id: String, // Master list id
     pub master_list_id: Option<String>,
@@ -53,7 +52,7 @@ impl<'a> ProgramRowRepository<'a> {
         ProgramRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &ProgramRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &ProgramRow) -> Result<(), RepositoryError> {
         diesel::insert_into(program::table)
             .values(row)
             .on_conflict(program::id)
@@ -61,6 +60,17 @@ impl<'a> ProgramRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &ProgramRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = ProgramRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ProgramRow>, RepositoryError> {
@@ -72,18 +82,51 @@ impl<'a> ProgramRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ProgramRow>, RepositoryError> {
+        Ok(program::table
+            .filter(program::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
+    fn _delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::update(program::table.filter(program::id.eq(id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        self._delete(id)?;
+        let changelog = ProgramRow::generate_changelog(
+            id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
 }
 
 impl Upsert for ProgramRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ProgramRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        ProgramRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
@@ -91,6 +134,40 @@ impl Upsert for ProgramRow {
         assert_eq!(
             ProgramRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
+        )
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ProgramRowDelete(pub String);
+impl Delete for ProgramRowDelete {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let repo = ProgramRowRepository::new(con);
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => ProgramRow::generate_changelog(
+                self.0.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        repo._delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ProgramRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
         )
     }
 }

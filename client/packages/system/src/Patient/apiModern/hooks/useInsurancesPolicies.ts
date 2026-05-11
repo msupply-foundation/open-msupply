@@ -26,9 +26,10 @@ const defaultDraftInsurance: DraftInsurance = {
   discountPercentage: 0,
   expiryDate: '',
   nameId: '',
+  nameOfInsured: '',
 };
 
-export const useInsurancePolicies = (nameId: string) => {
+export const useInsurancePolicies = (nameId: string, patientName?: string) => {
   const { data, isLoading, error } = useGet(nameId);
 
   const {
@@ -47,11 +48,17 @@ export const useInsurancePolicies = (nameId: string) => {
 
   const { urlQuery } = useUrlQuery();
   const insuranceId = urlQuery['insuranceId'];
-  const haveInsuranceId = insuranceId !== undefined;
+  const hasInsuranceId = insuranceId !== undefined;
   const selectedInsurance = data?.nodes.find(({ id }) => id === insuranceId);
 
   const draft = data
-    ? { ...defaultDraftInsurance, ...selectedInsurance, ...patch, nameId }
+    ? {
+        ...defaultDraftInsurance,
+        nameOfInsured: patientName,
+        ...selectedInsurance,
+        ...patch,
+        nameId,
+      }
     : { ...defaultDraftInsurance, ...patch, nameId };
 
   const create = async () => {
@@ -71,7 +78,7 @@ export const useInsurancePolicies = (nameId: string) => {
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
     insuranceId,
-    haveInsuranceId,
+    hasInsuranceId,
     draft,
     resetDraft,
     isDirty,
@@ -110,6 +117,7 @@ const useCreate = () => {
     isActive,
     discountPercentage,
     expiryDate,
+    nameOfInsured,
   }: DraftInsurance) => {
     return await patientApi.insertInsurance({
       storeId,
@@ -123,6 +131,7 @@ const useCreate = () => {
         isActive,
         discountPercentage,
         expiryDate,
+        nameOfInsured,
       },
     });
   };
@@ -143,6 +152,7 @@ const useUpdate = () => {
     discountPercentage,
     expiryDate,
     isActive,
+    nameOfInsured,
   }: DraftInsurance) => {
     const result = await patientApi.updateInsurance({
       storeId,
@@ -153,6 +163,7 @@ const useUpdate = () => {
         discountPercentage,
         expiryDate,
         isActive,
+        nameOfInsured,
       },
     });
 

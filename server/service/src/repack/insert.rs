@@ -1,14 +1,13 @@
-use repository::{
-    ActivityLogRowRepository, EqualFilter, Invoice, InvoiceFilter, InvoiceLineRowRepository,
-    InvoiceRepository, InvoiceRowRepository, LocationMovementRowRepository, RepositoryError,
-    StockLine, StockLineRowRepository,
-};
-
-use crate::service_provider::ServiceContext;
-
 use super::{
     generate::{generate, GenerateRepack},
     validate,
+};
+use crate::{activity_log::activity_log_entry_with_diff, service_provider::ServiceContext};
+use repository::{
+    ActivityLogRowRepository, ActivityLogType, EqualFilter, Invoice, InvoiceFilter,
+    InvoiceLineRowRepository, InvoiceRepository, InvoiceRowRepository,
+    LocationMovementRowRepository, RepositoryError, StockLine, StockLineRow,
+    StockLineRowRepository,
 };
 
 #[derive(Default)]
@@ -48,7 +47,7 @@ pub fn insert_repack(
 
             let stock_line_repo = StockLineRowRepository::new(connection);
 
-            for line in stock_lines {
+            for line in stock_lines.clone() {
                 stock_line_repo.upsert_one(&line)?;
             }
 
@@ -65,12 +64,20 @@ pub fn insert_repack(
             }
 
             ActivityLogRowRepository::new(connection).insert_one(&activity_log)?;
+            // log changes to old stock line too
+            activity_log_entry_with_diff(
+                ctx,
+                ActivityLogType::Repack,
+                Some(stock_lines[0].id.clone()),
+                None::<&StockLineRow>,
+                &stock_lines[1],
+            )?;
 
             InvoiceRepository::new(connection)
                 .query_by_filter(
                     InvoiceFilter::new()
-                        .id(EqualFilter::equal_to(&repack_invoice.id))
-                        .store_id(EqualFilter::equal_to(&ctx.store_id)),
+                        .id(EqualFilter::equal_to(repack_invoice.id.to_string()))
+                        .store_id(EqualFilter::equal_to(ctx.store_id.to_string())),
                 )?
                 .pop()
                 .ok_or(InsertRepackError::NewlyCreatedInvoiceDoesNotExist)
@@ -158,7 +165,7 @@ mod test {
         // StockLineReducedBelowZero
         let stock_line = StockLineRepository::new(&connection)
             .query_by_filter(
-                StockLineFilter::new().id(EqualFilter::equal_to(&mock_stock_line_b().id)),
+                StockLineFilter::new().id(EqualFilter::equal_to(mock_stock_line_b().id)),
                 None,
             )
             .unwrap()
@@ -205,7 +212,8 @@ mod test {
         ) -> SortedInvoiceAndStock {
             let invoice_lines = InvoiceLineRepository::new(connection)
                 .query_by_filter(
-                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)),
+                    InvoiceLineFilter::new()
+                        .invoice_id(EqualFilter::equal_to(invoice_id.to_string())),
                 )
                 .unwrap();
 
@@ -325,7 +333,7 @@ mod test {
                 id: new_stock.id.clone(),
                 item_link_id: mock_stock_line_a().item_link_id,
                 store_id: mock_stock_line_a().store_id,
-                supplier_link_id: mock_stock_line_a().supplier_link_id,
+                supplier_id: mock_stock_line_a().supplier_id,
                 available_number_of_packs: 4.0,
                 total_number_of_packs: 4.0,
                 pack_size: 2.0,
@@ -541,7 +549,8 @@ mod test {
 
         let enter_location_movement = LocationMovementRepository::new(&connection)
             .query_by_filter(
-                LocationMovementFilter::new().stock_line_id(EqualFilter::equal_to(&new_stock.id)),
+                LocationMovementFilter::new()
+                    .stock_line_id(EqualFilter::equal_to(new_stock.id.to_string())),
             )
             .unwrap()
             .pop()
@@ -562,7 +571,7 @@ mod test {
 
         let activity_log = ActivityLogRepository::new(&connection)
             .query_by_filter(
-                ActivityLogFilter::new().record_id(EqualFilter::equal_to(&new_stock.id)),
+                ActivityLogFilter::new().record_id(EqualFilter::equal_to(new_stock.id.to_string())),
             )
             .unwrap()
             .pop()

@@ -1,36 +1,34 @@
 import {
-  FilterByWithBoolean,
+  FilterBy,
   InvoiceNodeType,
   InvoiceSortFieldInput,
   SortBy,
   useQuery,
-  useTableStore,
 } from '@openmsupply-client/common';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { LIST, PRESCRIPTION } from './keys';
 import { PrescriptionRowFragment } from '../operations.generated';
 import { sortFieldMap } from './utils';
-import { useDelete } from './usePrescriptionDelete';
 
 export type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<PrescriptionRowFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
-export const usePrescriptionList = (queryParams: ListParams) => {
+export const usePrescriptionList = (queryParams?: ListParams) => {
   const { prescriptionApi, storeId } = usePrescriptionGraphQL();
 
   const {
     sortBy = {
-      key: 'name',
+      key: 'invoiceNumber',
       direction: 'asc',
     },
     first,
     offset,
     filterBy,
-  } = queryParams;
+  } = queryParams ?? {};
 
   const queryKey = [
     LIST,
@@ -51,11 +49,14 @@ export const usePrescriptionList = (queryParams: ListParams) => {
       type: { equalTo: InvoiceNodeType.Prescription },
     };
 
+    const sortKey = (sortFieldMap[sortBy.key] ||
+      InvoiceSortFieldInput.InvoiceNumber) as InvoiceSortFieldInput;
+
     const query = await prescriptionApi.prescriptions({
       storeId,
       first: first,
       offset: offset,
-      key: sortFieldMap[sortBy.key] ?? InvoiceSortFieldInput.Status,
+      key: sortKey,
       desc: sortBy.direction === 'desc',
       filter,
     });
@@ -63,28 +64,13 @@ export const usePrescriptionList = (queryParams: ListParams) => {
     return { nodes, totalCount };
   };
 
-  const { data, isLoading, isError } = useQuery({ queryKey, queryFn });
-
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => data?.nodes?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as PrescriptionRowFragment[],
-  }));
-
-  const {
-    mutateAsync: deleteMutation,
-    isLoading: isDeleting,
-    error: deleteError,
-  } = useDelete();
-
-  const deletePrescriptions = async () => {
-    await deleteMutation(selectedRows);
-  };
+  const { data, isLoading, isError, isFetching } = useQuery({
+    queryKey,
+    queryFn,
+    keepPreviousData: true,
+  });
 
   return {
-    query: { data, isLoading, isError },
-    delete: { deletePrescriptions, isDeleting, deleteError },
-    selectedRows,
+    query: { data, isLoading, isFetching, isError },
   };
 };

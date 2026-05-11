@@ -27,6 +27,7 @@ import { VaccinationCardsListView } from '../VaccinationCard/ListView';
 import { InsuranceListView, InsuranceModal } from '../Insurance';
 import { PatientDetailView } from './PatientDetailView';
 import { useInsuranceProviders } from '../apiModern';
+import { ActivityLogList } from '../../ActivityLog';
 
 export enum PatientTabValue {
   Details = 'details',
@@ -35,6 +36,7 @@ export enum PatientTabValue {
   ContactTracing = 'contact-tracing',
   Vaccinations = 'vaccinations',
   Insurance = 'insurance',
+  ActivityLog = 'log',
 }
 
 export const PatientView = () => {
@@ -48,7 +50,6 @@ export const PatientView = () => {
   const [isDirtyPatient, setIsDirtyPatient] = useState(false);
   const { store, storeId } = useAuthContext();
   const { showContactTracing } = usePreferences();
-
   const {
     query: { data: insuranceProvidersData },
   } = useInsuranceProviders();
@@ -123,6 +124,12 @@ export const PatientView = () => {
       value: PatientTabValue.Insurance,
     });
 
+  // Add activity log tab
+  tabs.push({
+    Component: <ActivityLogList recordId={patientId} />,
+    value: PatientTabValue.ActivityLog,
+  });
+
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
       <AppBarButtons disabled={!!createNewPatient} store={store} />
@@ -163,7 +170,9 @@ export const PatientView = () => {
       {current === PatientModal.ContactTraceSearch ? (
         <CreateContactTraceModal />
       ) : null}
-      {current === PatientModal.Insurance ? <InsuranceModal /> : null}
+      {current === PatientModal.Insurance ? (
+        <InsuranceModal patientName={currentPatient?.name} />
+      ) : null}
     </React.Suspense>
   );
 };

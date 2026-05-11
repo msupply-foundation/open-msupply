@@ -11,7 +11,6 @@ import {
 } from '@openmsupply-client/programs';
 
 interface VaccineItemSelectProps {
-  extraFilter?: (item: DraftVaccineCourseItem) => boolean;
   onChange: (newData: Partial<DraftVaccineCourse>) => void;
   draft: DraftVaccineCourse;
 }
@@ -36,7 +35,6 @@ const renderOption: AutocompleteOptionRenderer<DraftVaccineCourseItem> = (
 };
 
 export const VaccineItemSelect = ({
-  // extraFilter,
   onChange,
   draft,
 }: VaccineItemSelectProps) => {

@@ -1,33 +1,40 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarContentPortal,
   Box,
   InputWithLabelRow,
   Grid,
   useTranslation,
-  SearchBar,
   Typography,
   BufferedTextInput,
   Tooltip,
   BasicTextInput,
+  SearchBar,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
-
 import { useResponse } from '../../api';
 import { getApprovalStatusKey } from '../../../utils';
+import { useResponseLines } from '../../api/hooks/line/useResponseLines';
 
-export const Toolbar: FC = () => {
+export const Toolbar = () => {
   const t = useTranslation();
   const isDisabled = useResponse.utils.isDisabled();
-  const { itemFilter, setItemFilter } = useResponse.line.list();
+  const { itemFilter, setItemFilter } = useResponseLines();
 
-  const { approvalStatus, otherParty, theirReference, programName, update } =
-    useResponse.document.fields([
-      'approvalStatus',
-      'otherParty',
-      'theirReference',
-      'programName',
-    ]);
+  const {
+    approvalStatus,
+    otherParty,
+    theirReference,
+    programName,
+    destinationCustomer,
+    update,
+  } = useResponse.document.fields([
+    'approvalStatus',
+    'otherParty',
+    'theirReference',
+    'programName',
+    'destinationCustomer',
+  ]);
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
 
   return (
@@ -61,16 +68,31 @@ export const Toolbar: FC = () => {
                 label={t('label.customer-ref')}
                 Input={
                   <Tooltip title={theirReference} placement="bottom-start">
-                    <BufferedTextInput
-                      disabled={isDisabled}
-                      size="small"
-                      sx={{ width: 250 }}
-                      value={theirReference}
-                      onChange={e => update({ theirReference: e.target.value })}
-                    />
+                    <Box>
+                      <BufferedTextInput
+                        disabled={isDisabled}
+                        size="small"
+                        sx={{ width: 250 }}
+                        value={theirReference}
+                        onChange={e => update({ theirReference: e.target.value })}
+                      />
+                    </Box>
                   </Tooltip>
                 }
               />
+              {!!destinationCustomer && (
+                <InputWithLabelRow
+                  label={t('label.destination-customer')}
+                  Input={
+                    <CustomerSearchInput
+                      disabled
+                      value={destinationCustomer ?? null}
+                      onChange={() => {}}
+                      clearable
+                    />
+                  }
+                />
+              )}
               {isRemoteAuthorisation && (
                 <InputWithLabelRow
                   label={t('label.auth-status')}

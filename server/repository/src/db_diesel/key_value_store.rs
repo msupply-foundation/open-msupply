@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use diesel::prelude::*;
+use std::sync::RwLock;
 
 use super::StorageConnection;
 use crate::repository_error::RepositoryError;
@@ -17,7 +20,7 @@ table! {
 }
 
 // Snippet for adding new, including migration : https://github.com/msupply-foundation/open-msupply/wiki/Snippets "New Key Type for KeyValueStore"
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Hash)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum KeyType {
@@ -25,6 +28,8 @@ pub enum KeyType {
     CentralSyncPullCursor,
     SyncPullCursorV6,
     SyncPushCursorV6,
+    SyncPullCursorV7,
+    SyncPushCursorV7,
     RemoteSyncPushCursor,
     ShipmentTransferProcessorCursor,
     RequisitionTransferProcessorCursor,
@@ -32,6 +37,7 @@ pub enum KeyType {
     LoadPluginProcessorCursor,
     AssignRequisitionNumberProcessorCursor,
     AddCentralPatientVisibilityProcessorCursor,
+    RequisitionAutoFinaliseProcessorCursor,
     // Nested key value store to store dynamic cursor values as JSON text
     DynamicCursor,
 
@@ -43,6 +49,7 @@ pub enum KeyType {
     SettingsSyncSiteId,
     SettingsSyncSiteUuid,
     SettingsSyncIsDisabled,
+    SettingsSyncV7Token,
     SettingsTokenSecret,
 
     DatabaseVersion,
@@ -72,6 +79,31 @@ pub struct KeyValueStoreRow {
     pub value_bool: Option<bool>,
 }
 
+static KEY_VALUE_STORE_CACHE: RwLock<Option<HashMap<KeyType, KeyValueStoreRow>>> =
+    RwLock::new(None);
+
+fn get_cached_row(key: &KeyType) -> Option<KeyValueStoreRow> {
+    // Disable cache in tests: each test has its own database but shares this
+    // process-global static, causing cross-test contamination.
+    if cfg!(test) {
+        return None;
+    }
+    let cache = KEY_VALUE_STORE_CACHE.read().unwrap();
+    cache.as_ref()?.get(key).cloned()
+}
+
+fn set_cached_row(row: KeyValueStoreRow) {
+    if cfg!(test) {
+        return;
+    }
+    let mut cache = KEY_VALUE_STORE_CACHE.write().unwrap();
+    if cache.is_none() {
+        *cache = Some(HashMap::new());
+    }
+
+    cache.as_mut().unwrap().insert(row.id.clone(), row);
+}
+
 pub struct KeyValueStoreRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -82,6 +114,7 @@ impl<'a> KeyValueStoreRepository<'a> {
     }
 
     pub fn upsert_one(&self, value: &KeyValueStoreRow) -> Result<(), RepositoryError> {
+        set_cached_row(value.clone());
         diesel::insert_into(key_value_store::table)
             .values(value)
             .on_conflict(key_value_store::id)
@@ -92,10 +125,18 @@ impl<'a> KeyValueStoreRepository<'a> {
     }
 
     fn get_row(&self, key: KeyType) -> Result<Option<KeyValueStoreRow>, RepositoryError> {
-        let result = key_value_store::table
+        if let Some(cached) = get_cached_row(&key) {
+            return Ok(Some(cached));
+        }
+
+        let result: Option<KeyValueStoreRow> = key_value_store::table
             .filter(key_value_store::id.eq(key))
             .first(self.connection.lock().connection())
             .optional()?;
+
+        if let Some(result) = &result {
+            set_cached_row(result.clone());
+        }
         Ok(result)
     }
 
@@ -177,6 +218,10 @@ impl<'a> KeyValueStoreRepository<'a> {
     pub fn get_bool(&self, key: KeyType) -> Result<Option<bool>, RepositoryError> {
         let row = self.get_row(key)?;
         Ok(row.and_then(|row| row.value_bool))
+    }
+
+    pub fn get_current_site_id(&self) -> Result<Option<i32>, RepositoryError> {
+        self.get_i32(KeyType::SettingsSyncSiteId)
     }
 }
 

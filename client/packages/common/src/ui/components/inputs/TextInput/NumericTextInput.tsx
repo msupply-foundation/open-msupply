@@ -110,6 +110,7 @@ import {
 } from '@common/utils';
 import { useFormatNumber, useCurrency } from '@common/intl';
 import { InputAdornment, Tooltip } from '@common/components';
+import { useBufferState } from '@common/hooks';
 
 export interface NumericInputProps {
   /**
@@ -187,7 +188,7 @@ export const NumericTextInput = React.forwardRef<
       sx,
       slotProps,
       width = DEFAULT_NUMERIC_TEXT_INPUT_WIDTH,
-      onChange = () => {},
+      onChange = () => { },
       defaultValue,
       allowNegative,
       min = allowNegative ? -NumUtils.MAX_SAFE_API_INTEGER : 0,
@@ -216,9 +217,9 @@ export const NumericTextInput = React.forwardRef<
             ? ''
             : String(val)
           : format(val, {
-              minimumFractionDigits: decimalMin,
-              maximumFractionDigits: decimalLimit,
-            }),
+            minimumFractionDigits: decimalMin,
+            maximumFractionDigits: decimalLimit,
+          }),
       [decimalMin, decimalLimit, format, noFormatting]
     );
     const [isDirty, setIsDirty] = useState(false);
@@ -305,14 +306,14 @@ export const NumericTextInput = React.forwardRef<
                 sx: {
                   borderRadius: 2,
                   padding: 0.5,
-                  width: fullWidth ? undefined : `${width}px`,
+                  width: fullWidth ? undefined : width,
                 },
               },
               htmlInput: {
                 sx: {
                   backgroundColor: props.disabled
-                    ? 'background.toolbar'
-                    : 'background.menu',
+                    ? 'background.input.disabled'
+                    : 'background.input.main',
                 },
               },
             },
@@ -321,13 +322,15 @@ export const NumericTextInput = React.forwardRef<
           onChange={e => {
             if (!isDirty) setIsDirty(true);
 
-            const input = e.target.value
-              // Remove separators
-              .replace(new RegExp(`\\${separator}`, 'g'), '')
-              // Remove negative if not allowed
-              .replace(min < 0 ? '' : '-', '')
-              // Remove decimal if not allowed
-              .replace(decimalLimit === 0 ? decimal : '', '');
+            const input = RegexUtils.convertIndoArToArNumerals(
+              e.target.value
+                // Remove separators
+                .replace(new RegExp(`\\${separator}`, 'g'), '')
+                // Remove negative if not allowed
+                .replace(min < 0 ? '' : '-', '')
+                // Remove decimal if not allowed
+                .replace(decimalLimit === 0 ? decimal : '', '')
+            );
 
             if (input === '') {
               setTextValue(''); // For removing single "."
@@ -353,7 +356,7 @@ export const NumericTextInput = React.forwardRef<
           }}
           onKeyDown={e => {
             if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
-
+            e.stopPropagation();
             e.preventDefault();
             const change =
               (e.key === 'ArrowUp' ? step : -step) *
@@ -395,3 +398,18 @@ export const constrain = (
   min: number,
   max: number
 ) => NumUtils.constrain(NumUtils.round(value, decimals), min, max);
+
+export const BufferedNumericTextInput = (props: NumericTextInputProps) => {
+  const [buffer, setBuffer] = useBufferState(props.value);
+
+  return (
+    <NumericTextInput
+      {...props}
+      value={buffer}
+      onChange={value => {
+        props.onChange?.(value);
+        setBuffer(value);
+      }}
+    />
+  );
+};

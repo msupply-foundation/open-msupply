@@ -45,15 +45,15 @@ graphql_preference = { path = "preference" }
 graphql_vvm = { path = "vvm" }
 graphql_purchase_order = { path = "purchase_order" }
 graphql_purchase_order_line = { path = "purchase_order_line" }
-graphql_goods_received = { path = "goods_received" }
-graphql_goods_received_line = { path = "goods_received_line" }
 graphql_contact = { path = "contact" }
+graphql_site = { path = "site" }
 
 actix-web = { workspace = true }
 async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
 async-trait = { workspace = true }
 chrono = { workspace = true }
+futures = { workspace = true }
 rand = { workspace = true }
 log = { workspace = true }
 serde = { workspace = true }

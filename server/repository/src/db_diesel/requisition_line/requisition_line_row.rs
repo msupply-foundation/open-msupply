@@ -1,12 +1,13 @@
 use crate::db_diesel::{item_link_row::item_link, requisition_row::requisition};
 use crate::repository_error::RepositoryError;
-use crate::{RequisitionRowRepository, StorageConnection};
+use crate::StorageConnection;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
-use crate::{Delete, Upsert};
+use crate::db_diesel::changelog::changelog::RowOrId;
+use crate::{ChangelogRepository, RowActionType};
+use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
 
 use chrono::NaiveDateTime;
 
@@ -24,7 +25,10 @@ table! {
         snapshot_datetime -> Nullable<Timestamp>,
         approved_quantity -> Double,
         approval_comment -> Nullable<Text>,
+        price_per_unit -> Nullable<Double>,
         comment -> Nullable<Text>,
+        available_volume -> Nullable<Double>,
+        location_type_id -> Nullable<Text>,
         // Manual requisition fields
         initial_stock_on_hand_units -> Double,
         incoming_units -> Double,
@@ -33,7 +37,11 @@ table! {
         addition_in_units -> Double,
         expiring_units -> Double,
         days_out_of_stock -> Double,
-        option_id -> Nullable<Text>
+        option_id -> Nullable<Text>,
+        // Population forcasting fields
+        forecast_total_units -> Nullable<Double>,
+        forecast_total_doses -> Nullable<Double>,
+        vaccine_courses -> Nullable<Text>,
     }
 }
 
@@ -59,7 +67,10 @@ pub struct RequisitionLineRow {
     pub snapshot_datetime: Option<NaiveDateTime>,
     pub approved_quantity: f64,
     pub approval_comment: Option<String>,
+    pub price_per_unit: Option<f64>,
     pub comment: Option<String>,
+    pub available_volume: Option<f64>,
+    pub location_type_id: Option<String>,
     // Manual requisition fields
     pub initial_stock_on_hand_units: f64,
     pub incoming_units: f64,
@@ -69,8 +80,11 @@ pub struct RequisitionLineRow {
     pub expiring_units: f64,
     pub days_out_of_stock: f64,
     pub option_id: Option<String>,
+    // Population forecasting fields
+    pub forecast_total_units: Option<f64>,
+    pub forecast_total_doses: Option<f64>,
+    pub vaccine_courses: Option<String>,
 }
-
 pub struct RequisitionLineRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -80,14 +94,25 @@ impl<'a> RequisitionLineRowRepository<'a> {
         RequisitionLineRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &RequisitionLineRow) -> Result<i64, RepositoryError> {
+    fn _upsert_one(&self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
         diesel::insert_into(requisition_line::table)
             .values(row)
             .on_conflict(requisition_line::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row, RowActionType::Upsert)
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = RequisitionLineRow::generate_changelog(
+            RowOrId::Row(row),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn update_approved_quantity_by_item_id(
@@ -110,51 +135,32 @@ impl<'a> RequisitionLineRowRepository<'a> {
             .load(self.connection.lock().connection())?;
 
         for row in rows {
-            self.insert_changelog(&row, RowActionType::Upsert)?;
+            let changelog = RequisitionLineRow::generate_changelog(
+                RowOrId::Row(&row),
+                self.connection,
+                RowActionType::Upsert,
+                SourceSiteId::CurrentSiteId,
+            )?;
+            ChangelogRepository::new(self.connection).insert(&changelog)?;
         }
 
         Ok(())
     }
 
-    fn insert_changelog(
-        &self,
-        row: &RequisitionLineRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let requisition =
-            RequisitionRowRepository::new(self.connection).find_one_by_id(&row.requisition_id)?;
-        let requisition = match requisition {
-            Some(requisition) => requisition,
-            None => return Err(RepositoryError::NotFound),
-        };
-
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::RequisitionLine,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(requisition.store_id.clone()),
-            name_link_id: Some(requisition.name_link_id.clone()),
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
-    }
-
-    pub fn delete(&self, requisition_line_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let requisition_line = self.find_one_by_id(requisition_line_id)?;
-        let change_log_id = match requisition_line {
-            Some(requisition_line) => {
-                self.insert_changelog(&requisition_line, RowActionType::Delete)?
-            }
-            None => {
-                return Ok(None);
-            }
-        };
+    pub fn delete(&self, requisition_line_id: &str) -> Result<(), RepositoryError> {
+        let changelog = RequisitionLineRow::generate_changelog(
+            RowOrId::Id(requisition_line_id),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         diesel::delete(
             requisition_line::table.filter(requisition_line::id.eq(requisition_line_id)),
         )
         .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+        Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<RequisitionLineRow>, RepositoryError> {
@@ -164,13 +170,38 @@ impl<'a> RequisitionLineRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
+        Ok(requisition_line::table
+            .filter(requisition_line::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct RequisitionLineRowDelete(pub String);
 impl Delete for RequisitionLineRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        RequisitionLineRowRepository::new(con).delete(&self.0)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                RequisitionLineRow::generate_changelog(
+                    RowOrId::Id(&self.0),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(requisition_line::table.filter(requisition_line::id.eq(&self.0)))
+            .execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -182,9 +213,27 @@ impl Delete for RequisitionLineRowDelete {
 }
 
 impl Upsert for RequisitionLineRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = RequisitionLineRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        RequisitionLineRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                RequisitionLineRow::generate_changelog(
+                    RowOrId::Row(self),
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

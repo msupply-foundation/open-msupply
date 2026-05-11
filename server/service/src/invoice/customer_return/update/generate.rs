@@ -1,10 +1,11 @@
 use chrono::Utc;
 
 use repository::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, Name, StockLineRow,
-    StockLineRowRepository, StorageConnection,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, Name,
+    StockLineRow, StockLineRowRepository, StorageConnection,
 };
 
+use crate::invoice::stock_effect::{stock_effects, StockEffect};
 use crate::invoice_line::stock_in_line::{generate_batch, StockLineInput};
 
 use super::{UpdateCustomerReturn, UpdateCustomerReturnError, UpdateCustomerReturnStatus};
@@ -41,21 +42,31 @@ pub(crate) fn generate(
 
     if let Some(other_party) = other_party_option {
         updated_return.name_store_id = other_party.store_id().map(|id| id.to_string());
-        updated_return.name_link_id = other_party.name_row.id;
+        updated_return.name_id = other_party.name_row.id;
     }
 
     if let Some(status) = patch.status.clone() {
         updated_return.status = status.as_invoice_row_status()
     }
 
-    let should_create_batches = should_create_batches(&existing_return.status, &patch);
+    let should_create_batches = match &patch.status {
+        Some(new_status) => {
+            let to = new_status.as_invoice_row_status();
+            stock_effects(
+                &InvoiceType::CustomerReturn,
+                &existing_return.status,
+                &to,
+            ) == StockEffect::CreateStock
+        }
+        None => false,
+    };
 
     let batches_to_update = if should_create_batches {
         Some(generate_lines_and_stock_lines(
             connection,
             &updated_return.store_id,
             &updated_return.id,
-            &updated_return.name_link_id,
+            &updated_return.name_id,
         )?)
     } else {
         None
@@ -71,10 +82,7 @@ fn changed_status(
     status: Option<UpdateCustomerReturnStatus>,
     existing_status: &InvoiceStatus,
 ) -> Option<UpdateCustomerReturnStatus> {
-    let new_status = match status {
-        Some(status) => status,
-        None => return None, // Status is not changing
-    };
+    let new_status = status?;
 
     if &new_status.as_invoice_row_status() == existing_status {
         // The invoice already has this status, there's nothing to do.
@@ -82,25 +90,6 @@ fn changed_status(
     }
 
     Some(new_status)
-}
-
-pub fn should_create_batches(
-    existing_status: &InvoiceStatus,
-    patch: &UpdateCustomerReturn,
-) -> bool {
-    let new_status = match changed_status(patch.status.to_owned(), existing_status) {
-        Some(status) => status,
-        None => return false, // There's no status to update
-    };
-
-    match (existing_status, new_status) {
-        (
-            // From New/Picked/Shipped to Delivered/Verified
-            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
-            UpdateCustomerReturnStatus::Received | UpdateCustomerReturnStatus::Verified,
-        ) => true,
-        _ => false,
-    }
 }
 
 fn set_new_status_datetime(customer_return: &mut InvoiceRow, patch: &UpdateCustomerReturn) {
@@ -172,9 +161,9 @@ pub fn generate_lines_and_stock_lines(
                 StockLineInput {
                     stock_line_id: return_line.stock_line_id,
                     store_id: store_id.to_string(),
-                    on_hold: existing_stock_line.map_or(false, |stock_line| stock_line.on_hold),
+                    on_hold: existing_stock_line.is_some_and(|stock_line| stock_line.on_hold),
                     barcode_id: None,
-                    supplier_link_id: supplier_id.to_string(),
+                    supplier_id: supplier_id.to_string(),
                     // Update existing stock levels if the stock line already exists
                     overwrite_stock_levels: false,
                 },

@@ -1,13 +1,19 @@
 use super::{
-    item_row::item, purchase_order_line_row::purchase_order_line, DBType, ItemLinkRow, ItemRow,
-    RepositoryError, StorageConnection,
+    item_row::item, name_row::name, purchase_order_line_row::purchase_order_line, DBType,
+    ItemLinkRow, ItemRow, RepositoryError, StorageConnection,
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
-    item_link,
+    diesel_extensions::double_coalesce,
+    diesel_macros::{
+        apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case,
+        apply_string_filter,
+    },
+    item_link, purchase_order_line_stats,
     purchase_order_row::purchase_order::{self},
-    EqualFilter, Pagination, PurchaseOrderLineRow, PurchaseOrderRow, Sort,
+    DateFilter, EqualFilter, Pagination, PurchaseOrderFilter, PurchaseOrderLineRow,
+    PurchaseOrderLineStatsRow, PurchaseOrderLineStatus, PurchaseOrderRepository, PurchaseOrderRow,
+    Sort, StringFilter,
 };
 
 use diesel::{
@@ -19,12 +25,14 @@ type PurchaseOrderLineJoin = (
     PurchaseOrderLineRow,
     (ItemLinkRow, ItemRow),
     PurchaseOrderRow,
+    PurchaseOrderLineStatsRow,
 );
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct PurchaseOrderLine {
     pub purchase_order_line_row: PurchaseOrderLineRow,
     pub item_row: ItemRow,
+    pub purchase_order_line_stats_row: PurchaseOrderLineStatsRow,
 }
 
 #[derive(Clone, Default)]
@@ -34,16 +42,21 @@ pub struct PurchaseOrderLineFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub requested_pack_size: Option<EqualFilter<f64>>,
     pub item_id: Option<EqualFilter<String>>,
+    pub status: Option<EqualFilter<PurchaseOrderLineStatus>>,
+    pub received_less_than_adjusted: Option<bool>,
+    pub purchase_order: Option<PurchaseOrderFilter>,
+    pub supplier_name: Option<StringFilter>,
+    pub purchase_order_number: Option<EqualFilter<i64>>,
+    pub item_name: Option<StringFilter>,
+    pub expected_delivery_date: Option<DateFilter>,
 }
 
 pub enum PurchaseOrderLineSortField {
     ItemName,
     LineNumber,
-    // RequestedQuantity, // TODO: Bring back sorting as needed by frontend
-    // AuthorisedQuantity,
-    // TotalReceived,
     RequestedDeliveryDate,
     ExpectedDeliveryDate,
+    PurchaseOrderNumber,
 }
 
 pub type PurchaseOrderLineSort = Sort<PurchaseOrderLineSortField>;
@@ -102,6 +115,9 @@ impl<'a> PurchaseOrderLineRepository<'a> {
                 PurchaseOrderLineSortField::ExpectedDeliveryDate => {
                     apply_sort!(query, sort, purchase_order_line::expected_delivery_date);
                 }
+                PurchaseOrderLineSortField::PurchaseOrderNumber => {
+                    apply_sort!(query, sort, purchase_order::purchase_order_number);
+                }
             }
         } else {
             query = query.order(purchase_order_line::id.asc())
@@ -127,8 +143,11 @@ impl<'a> PurchaseOrderLineRepository<'a> {
 type BoxedPurchaseOrderLineQuery = IntoBoxed<
     'static,
     InnerJoin<
-        InnerJoin<purchase_order_line::table, InnerJoin<item_link::table, item::table>>,
-        purchase_order::table,
+        InnerJoin<
+            InnerJoin<purchase_order_line::table, InnerJoin<item_link::table, item::table>>,
+            purchase_order::table,
+        >,
+        purchase_order_line_stats::table,
     >,
     DBType,
 >;
@@ -137,6 +156,7 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
     let mut query = purchase_order_line::table
         .inner_join(item_link::table.inner_join(item::table))
         .inner_join(purchase_order::table)
+        .inner_join(purchase_order_line_stats::table)
         .into_boxed();
 
     if let Some(f) = filter {
@@ -146,6 +166,13 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             store_id,
             requested_pack_size,
             item_id,
+            status,
+            received_less_than_adjusted,
+            purchase_order,
+            supplier_name,
+            purchase_order_number,
+            item_name,
+            expected_delivery_date,
         } = f;
 
         apply_equal_filter!(query, purchase_order_id, purchase_order::id);
@@ -157,6 +184,42 @@ fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurcha
             purchase_order_line::requested_pack_size
         );
         apply_equal_filter!(query, item_id, item_link::item_id);
+        apply_equal_filter!(query, status, purchase_order_line::status);
+        if let Some(true) = received_less_than_adjusted {
+            query = query.filter(
+                purchase_order_line_stats::received_number_of_units
+                    .nullable()
+                    .lt(double_coalesce::coalesce(
+                        purchase_order_line::adjusted_number_of_units,
+                        purchase_order_line::requested_number_of_units,
+                    )
+                    .nullable()),
+            );
+        }
+
+        if let Some(po_filter) = purchase_order {
+            let po_ids = PurchaseOrderRepository::create_filtered_query(Some(po_filter))
+                .select(purchase_order::id);
+            query = query.filter(purchase_order_line::purchase_order_id.eq_any(po_ids));
+        }
+
+        if let Some(supplier_name_filter) = supplier_name {
+            let mut sub_query = name::table.select(name::id).into_boxed();
+            apply_string_filter!(sub_query, Some(supplier_name_filter), name::name_);
+            query = query.filter(purchase_order::supplier_name_id.eq_any(sub_query));
+        }
+
+        apply_equal_filter!(
+            query,
+            purchase_order_number,
+            purchase_order::purchase_order_number
+        );
+        apply_string_filter!(query, item_name, item::name);
+        apply_date_filter!(
+            query,
+            expected_delivery_date,
+            purchase_order_line::expected_delivery_date
+        );
     }
 
     query
@@ -180,13 +243,48 @@ impl PurchaseOrderLineFilter {
         self.store_id = Some(filter);
         self
     }
+
+    pub fn requested_pack_size(mut self, filter: EqualFilter<f64>) -> Self {
+        self.requested_pack_size = Some(filter);
+        self
+    }
+
+    pub fn item_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.item_id = Some(filter);
+        self
+    }
+
+    pub fn status(mut self, filter: EqualFilter<PurchaseOrderLineStatus>) -> Self {
+        self.status = Some(filter);
+        self
+    }
+
+    pub fn received_less_than_adjusted(mut self, value: bool) -> Self {
+        self.received_less_than_adjusted = Some(value);
+        self
+    }
+
+    pub fn purchase_order(mut self, filter: PurchaseOrderFilter) -> Self {
+        self.purchase_order = Some(filter);
+        self
+    }
 }
 
 fn to_domain(
-    (purchase_order_line_row, (_, item_row), _): PurchaseOrderLineJoin,
+    (purchase_order_line_row, (_, item_row), _, purchase_order_line_stats_row): PurchaseOrderLineJoin,
 ) -> PurchaseOrderLine {
     PurchaseOrderLine {
         purchase_order_line_row,
         item_row,
+        purchase_order_line_stats_row,
+    }
+}
+
+impl PurchaseOrderLineStatus {
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 }

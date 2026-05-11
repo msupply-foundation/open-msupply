@@ -38,6 +38,7 @@ pub struct EqualFilterReasonOptionTypeInput {
     pub equal_to: Option<ReasonOptionNodeType>,
     pub equal_any: Option<Vec<ReasonOptionNodeType>>,
     pub not_equal_to: Option<ReasonOptionNodeType>,
+    pub not_equal_all: Option<Vec<ReasonOptionNodeType>>,
 }
 
 #[derive(InputObject, Clone)]
@@ -92,7 +93,7 @@ impl ReasonOptionFilterInput {
 
         ReasonOptionFilter {
             id: id.map(EqualFilter::from),
-            r#type: r#type.map(|t| map_filter!(t, |r| ReasonOptionType::from(r))),
+            r#type: r#type.map(|t| map_filter!(t, ReasonOptionType::from)),
             is_active,
         }
     }

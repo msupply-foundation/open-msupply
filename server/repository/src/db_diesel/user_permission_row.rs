@@ -1,7 +1,9 @@
 use super::StorageConnection;
 
 use crate::repository_error::RepositoryError;
-use crate::{Delete, Upsert};
+use crate::{
+    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert,
+};
 use diesel::prelude::*;
 
 use diesel_derive_enum::DbEnum;
@@ -16,7 +18,7 @@ table! {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum PermissionType {
@@ -56,6 +58,7 @@ pub enum PermissionType {
     // inbound shipment
     InboundShipmentQuery,
     InboundShipmentMutate,
+    InboundShipmentVerify,
     // supplier return
     SupplierReturnQuery,
     SupplierReturnMutate,
@@ -70,10 +73,11 @@ pub enum PermissionType {
     PurchaseOrderQuery,
     PurchaseOrderMutate,
     PurchaseOrderAuthorise,
-    // goods received
-    GoodsReceivedQuery,
-    GoodsReceivedMutate,
-    GoodsReceivedAuthorise,
+    // inbound shipment external
+    InboundShipmentExternalQuery,
+    InboundShipmentExternalMutate,
+    InboundShipmentExternalVerify,
+    InboundShipmentExternalAuthorise,
     // reporting
     Report,
     // log
@@ -92,6 +96,7 @@ pub enum PermissionType {
     AssetMutate,
     AssetMutateViaDataMatrix,
     AssetCatalogueItemMutate,
+    AssetStatusMutate,
     // Names
     NamePropertiesMutate,
     // Central Server
@@ -101,7 +106,7 @@ pub enum PermissionType {
     MutateClinician,
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = user_permission)]
 pub struct UserPermissionRow {
@@ -123,7 +128,7 @@ impl<'a> UserPermissionRowRepository<'a> {
         UserPermissionRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
         diesel::insert_into(user_permission::table)
             .values(row)
             .on_conflict(user_permission::id)
@@ -131,6 +136,17 @@ impl<'a> UserPermissionRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = UserPermissionRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<UserPermissionRow>, RepositoryError> {
@@ -141,25 +157,64 @@ impl<'a> UserPermissionRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<UserPermissionRow>, RepositoryError> {
+        Ok(user_permission::table
+            .filter(user_permission::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
     pub fn delete_by_user_id(&self, user_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(user_permission::table.filter(user_permission::user_id.eq(user_id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    fn _delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(user_permission::table.filter(user_permission::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        self._delete(id)?;
+        let changelog = UserPermissionRow::generate_changelog(
+            id.to_string(),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct UserPermissionRowDelete(pub String);
 impl Delete for UserPermissionRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        UserPermissionRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Table not in Changelog
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let repo = UserPermissionRowRepository::new(con);
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                UserPermissionRow::generate_changelog(
+                    self.0.clone(),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        repo._delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -171,9 +226,25 @@ impl Delete for UserPermissionRowDelete {
 }
 
 impl Upsert for UserPermissionRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        UserPermissionRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        UserPermissionRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
@@ -204,7 +275,7 @@ mod test {
         let repo = UserPermissionRowRepository::new(&connection);
         // Try upsert all variants of PermissionType, confirm that diesel enums match postgres
         for permission in PermissionType::iter() {
-            let row_id = format!("{:?}", permission);
+            let row_id = format!("{permission:?}");
 
             let result = repo.upsert_one(&UserPermissionRow {
                 id: row_id.clone(),
@@ -212,7 +283,7 @@ mod test {
                 store_id: Some("store_a".to_string()),
                 ..Default::default()
             });
-            assert_eq!(result, Ok(()), "\n \n HINT: Failed to insert permission for type {:?}. Have you created a migration to add this type to the postgres database enum? \n", row_id);
+            assert_eq!(result, Ok(()), "\n \n HINT: Failed to insert permission for type {row_id:?}. Have you created a migration to add this type to the postgres database enum? \n");
 
             let found = repo.find_one_by_id(&row_id).unwrap().unwrap();
             assert_eq!(found.permission, permission);

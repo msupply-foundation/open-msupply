@@ -8,8 +8,8 @@ use crate::{
 use chrono::{NaiveDate, Utc};
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    ActivityLogType, NumberRowType, RepositoryError, Requisition, RequisitionRowRepository,
-    StorageConnection,
+    ActivityLogType, EqualFilter, NumberRowType, RepositoryError, Requisition,
+    RequisitionRowRepository, StorageConnection, StoreFilter, StoreRepository,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -56,7 +56,7 @@ pub fn insert_request_requisition(
             activity_log_entry(
                 ctx,
                 ActivityLogType::RequisitionCreated,
-                Some(new_requisition.id.to_owned()),
+                Some(new_requisition.id.to_string()),
                 None,
                 None,
             )?;
@@ -116,11 +116,16 @@ fn generate(
         expected_delivery_date,
     }: InsertRequestRequisition,
 ) -> Result<RequisitionRow, RepositoryError> {
+    let other_party_store = StoreRepository::new(connection).query_one(
+        StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.clone())),
+    )?;
+
     let result = RequisitionRow {
         id,
         user_id: Some(user_id.to_string()),
         requisition_number: next_number(connection, &NumberRowType::RequestRequisition, store_id)?,
-        name_link_id: other_party_id,
+        name_id: other_party_id,
+        name_store_id: other_party_store.map(|store| store.store_row.id),
         store_id: store_id.to_string(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,
@@ -140,6 +145,9 @@ fn generate(
         period_id: None,
         order_type: None,
         is_emergency: false,
+        created_from_requisition_id: None,
+        destination_customer_id: None,
+        ..Default::default()
     };
 
     Ok(result)
@@ -299,7 +307,7 @@ mod test_insert {
         let mut expected = new_row.clone();
         expected.id = "new_request_requisition".to_string();
         expected.user_id = Some(mock_user_account_a().id);
-        expected.name_link_id = mock_name_store_c().id;
+        expected.name_id = mock_name_store_c().id;
         expected.colour = Some("new colour".to_string());
         expected.their_reference = Some("new their_reference".to_string());
         expected.comment = Some("new comment".to_string());

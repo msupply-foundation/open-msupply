@@ -64,9 +64,10 @@ mod test {
         InvoiceLineRowRepository,
     };
 
+    use super::DeleteOutboundShipmentServiceLineError;
     use crate::{
         invoice_line::stock_out_line::delete::DeleteStockOutLine, service_provider::ServiceProvider,
-    };    use super::DeleteOutboundShipmentServiceLineError;
+    };
 
     type ServiceError = DeleteOutboundShipmentServiceLineError;
 

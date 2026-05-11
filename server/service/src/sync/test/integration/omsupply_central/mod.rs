@@ -113,7 +113,8 @@ async fn test_omsupply_central_remote_records(identifier: &str, tester: &dyn Syn
         let integration_records = step_data.integration_records;
 
         // Integrate
-        integrate_with_is_sync_reset(&previous_connection, &integration_records); // Push integrated changes
+        let integration_records =
+            integrate_with_is_sync_reset(&previous_connection, integration_records); // Push integrated changes
         previous_synchroniser.sync(None).await.unwrap();
         // Re initialise
         site_config = init_test_context(site_config.config, &inner_identifier).await;

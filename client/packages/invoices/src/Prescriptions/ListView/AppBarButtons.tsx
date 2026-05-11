@@ -1,45 +1,39 @@
 import React from 'react';
 import {
-  DownloadIcon,
   PlusCircleIcon,
-  useNotification,
   AppBarButtonsPortal,
   ButtonWithIcon,
   Grid,
   useTranslation,
-  LoadingButton,
   ToggleState,
-  useExportCSV,
+  FilterBy,
+  SortBy,
 } from '@openmsupply-client/common';
-import { ListParams, usePrescriptionList } from '../api';
+import { PrescriptionRowFragment, useExportPrescriptionList } from '../api';
 import { prescriptionToCsv } from '../../utils';
 import { NewPrescriptionModal } from './NewPrescriptionModal';
+import { ExportSelector } from '@openmsupply-client/system';
 
 interface AppBarButtonsComponentProps {
   modalController: ToggleState;
-  listParams: ListParams;
+  filterBy: FilterBy | null;
+  sortBy: SortBy<PrescriptionRowFragment>;
 }
 
 export const AppBarButtonsComponent = ({
   modalController,
-  listParams,
+  filterBy,
+  sortBy,
 }: AppBarButtonsComponentProps) => {
   const t = useTranslation();
-  const { error } = useNotification();
-  const exportCSV = useExportCSV();
 
-  const {
-    query: { data, isLoading },
-  } = usePrescriptionList(listParams);
-
-  const csvExport = async () => {
-    if (!data || !data?.nodes.length) {
-      error(t('error.no-data'))();
-      return;
-    }
-
-    const csv = prescriptionToCsv(data.nodes, t);
-    exportCSV(csv, t('filename.prescriptions'));
+  const { fetchPrescription, isLoading } = useExportPrescriptionList(
+    filterBy,
+    sortBy
+  );
+  const getCsvData = async () => {
+    const { data } = await fetchPrescription();
+    return data?.nodes?.length ? prescriptionToCsv(data.nodes, t) : null;
   };
 
   return (
@@ -54,12 +48,10 @@ export const AppBarButtonsComponent = ({
           open={modalController.isOn}
           onClose={modalController.toggleOff}
         />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
+        <ExportSelector
+          getCsvData={getCsvData}
+          filename={t('filename.prescriptions')}
           isLoading={isLoading}
-          variant="outlined"
-          onClick={csvExport}
-          label={t('button.export')}
         />
       </Grid>
     </AppBarButtonsPortal>

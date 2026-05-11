@@ -7,23 +7,30 @@ import {
   PanelLabel,
   TextArea,
 } from '@openmsupply-client/common';
-import { DonorSearchInput } from '@openmsupply-client/system/src';
+import {
+  DonorSearchInput,
+  ShippingMethodSearchInput,
+  useShippingMethod,
+} from '@openmsupply-client/system';
 import { PurchaseOrderFragment } from '../../api';
-
-// TODO: ShippingMethod have its own table. Need to migrate over before implementing this
 
 interface OtherSectionProps {
   draft?: PurchaseOrderFragment;
-  onUpdate: (input: Partial<PurchaseOrderFragment>) => void;
   onChange: (input: Partial<PurchaseOrderFragment>) => void;
+  disabled?: boolean;
 }
 
 export const OtherSection = ({
   draft,
-  onUpdate,
   onChange,
+  disabled = false,
 }: OtherSectionProps): ReactElement => {
   const t = useTranslation();
+  const { data: shippingMethods } = useShippingMethod();
+
+  const selectedShippingMethod =
+    shippingMethods?.nodes.find(sm => sm.method === draft?.shippingMethod) ??
+    null;
 
   return (
     <DetailPanelSection title={t('heading.other')}>
@@ -38,12 +45,22 @@ export const OtherSection = ({
           <PanelLabel>{t('label.donor')}</PanelLabel>
           <DonorSearchInput
             donorId={draft?.donor?.id ?? null}
-            onChange={donor => onUpdate({ donor: donor })}
+            onChange={donor => onChange({ donor: donor })}
+            clearable
+            disabled={disabled}
           />
         </PanelRow>
-        {/* <PanelRow>
-          <PanelLabel>{t('label.shipping-method')}</PanelLabel> 
-        </PanelRow> */}
+        <PanelRow>
+          <PanelLabel>{t('label.shipping-method')}</PanelLabel>
+          <ShippingMethodSearchInput
+            value={selectedShippingMethod}
+            onChange={shippingMethod => {
+              onChange({ shippingMethod: shippingMethod?.method ?? null });
+            }}
+            width={250}
+            disabled={disabled}
+          />
+        </PanelRow>
         <PanelLabel>{t('label.comment')}</PanelLabel>
         <TextArea
           fullWidth

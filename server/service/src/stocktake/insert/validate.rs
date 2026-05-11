@@ -43,7 +43,7 @@ fn check_initial_stocktake_does_not_exist(
     store_id: &str,
 ) -> Result<bool, RepositoryError> {
     let count = StocktakeRepository::new(connection).count(Some(
-        StocktakeFilter::new().store_id(EqualFilter::equal_to(store_id)),
+        StocktakeFilter::new().store_id(EqualFilter::equal_to(store_id.to_string())),
     ))?;
     Ok(count == 0)
 }
@@ -53,8 +53,9 @@ fn check_same_stocktake_does_not_exist(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<bool, RepositoryError> {
-    let count = StocktakeRepository::new(connection)
-        .count(Some(StocktakeFilter::new().id(EqualFilter::equal_to(id))))?;
+    let count = StocktakeRepository::new(connection).count(Some(
+        StocktakeFilter::new().id(EqualFilter::equal_to(id.to_string())),
+    ))?;
     Ok(count == 0)
 }
 
@@ -65,8 +66,8 @@ fn check_master_list_exists(
 ) -> Result<bool, RepositoryError> {
     let count = MasterListRepository::new(connection).count(Some(
         MasterListFilter::new()
-            .id(EqualFilter::equal_to(master_list_id))
-            .exists_for_store_id(EqualFilter::equal_to(store_id)),
+            .id(EqualFilter::equal_to(master_list_id.to_string()))
+            .exists_for_store_id(EqualFilter::equal_to(store_id.to_string())),
     ))?;
     Ok(count > 0)
 }

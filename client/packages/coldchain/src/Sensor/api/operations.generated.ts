@@ -2,8 +2,25 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { LocationRowFragmentDoc } from '../../../../system/src/Location/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
+export type LocationRowFragment = {
+  __typename: 'LocationNode';
+  id: string;
+  name: string;
+  onHold: boolean;
+  code: string;
+  volume: number;
+  volumeUsed: number;
+  locationType?: {
+    __typename: 'LocationTypeNode';
+    id: string;
+    name: string;
+    maxTemperature: number;
+    minTemperature: number;
+  } | null;
+  stock: { __typename: 'StockLineConnector'; totalCount: number };
+};
+
 export type SensorFragment = {
   __typename: 'SensorNode';
   id: string;
@@ -166,6 +183,28 @@ export type UpdateSensorMutation = {
     | { __typename: 'UpdateSensorError' };
 };
 
+export const LocationRowFragmentDoc = gql`
+  fragment LocationRow on LocationNode {
+    __typename
+    id
+    name
+    onHold
+    code
+    volume
+    volumeUsed
+    locationType {
+      id
+      name
+      maxTemperature
+      minTemperature
+    }
+    stock {
+      ... on StockLineConnector {
+        totalCount
+      }
+    }
+  }
+`;
 export const SensorFragmentDoc = gql`
   fragment Sensor on SensorNode {
     __typename
@@ -244,13 +283,16 @@ export function getSdk(
   return {
     sensors(
       variables: SensorsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<SensorsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<SensorsQuery>(SensorsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<SensorsQuery>({
+            document: SensorsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'sensors',
         'query',
@@ -259,15 +301,17 @@ export function getSdk(
     },
     updateSensor(
       variables: UpdateSensorMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpdateSensorMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateSensorMutation>(
-            UpdateSensorDocument,
+          client.request<UpdateSensorMutation>({
+            document: UpdateSensorDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'updateSensor',
         'mutation',
         variables

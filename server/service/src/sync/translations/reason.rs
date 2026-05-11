@@ -1,6 +1,7 @@
 use repository::{
     reason_option_row::{ReasonOptionRow, ReasonOptionRowDelete, ReasonOptionType},
     StorageConnection, SyncBufferRow,
+
 };
 use serde::{Deserialize, Serialize};
 
@@ -56,7 +57,7 @@ impl SyncTranslation for ReasonTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyOptionsRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyOptionsRow>()?;
 
         let reason_option_type = match data.r#type {
             LegacyOptionsType::NegativeInventoryAdjustment => {

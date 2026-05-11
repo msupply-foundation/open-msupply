@@ -81,6 +81,7 @@ fn generate_stock_in_out_or_update(
     stocktake_number: &i64,
 ) -> Result<StockLineJob, UpdateStocktakeError> {
     let stocktake_line_row = stocktake_line.line.to_owned();
+    let item = &stocktake_line.item;
     let counted_number_of_packs = match stocktake_line_row.counted_number_of_packs {
         Some(counted_number_of_packs) => counted_number_of_packs,
         None => {
@@ -101,9 +102,6 @@ fn generate_stock_in_out_or_update(
     let pack_size = stocktake_line_row
         .pack_size
         .unwrap_or(stock_line_row.pack_size);
-    let expiry_date = stocktake_line_row
-        .expiry_date
-        .or(stock_line_row.expiry_date);
     let cost_price_per_pack = stocktake_line_row
         .cost_price_per_pack
         .unwrap_or(stock_line_row.cost_price_per_pack);
@@ -117,12 +115,16 @@ fn generate_stock_in_out_or_update(
         .clone()
         .or(previous_vvm_status_id.clone());
 
+    // Clearable fields, e.g.:
     // If item_variant_id is null on the stocktake_line, we need to set the stock_line item_variant_id to null too.
     // Without this, we'd wouldn't be able to clear it...
     let item_variant_id = stocktake_line_row.item_variant_id.clone();
     let campaign_id = stocktake_line_row.campaign_id.clone();
-    let donor_link_id = stocktake_line_row.donor_link_id.clone();
+    let donor_link_id = stocktake_line_row.donor_id.clone();
+    let manufacturer_id = stocktake_line_row.manufacturer_id.clone();
     let program_id = stocktake_line_row.program_id.clone();
+    let expiry_date = stocktake_line_row.expiry_date;
+    let manufacture_date = stocktake_line_row.manufacture_date;
 
     log_stock_changes(ctx, stock_line_row.clone(), stocktake_line_row.clone())?;
 
@@ -135,11 +137,13 @@ fn generate_stock_in_out_or_update(
             cost_price_per_pack,
             sell_price_per_pack,
             expiry_date,
+            manufacture_date,
             item_variant_id,
             vvm_status_id: vvm_status_id.clone(),
             volume_per_pack: stocktake_line_row.volume_per_pack,
             campaign_id,
-            donor_link_id,
+            donor_id: donor_link_id,
+            manufacturer_id,
             program_id,
             ..stock_line_row
         }
@@ -158,7 +162,7 @@ fn generate_stock_in_out_or_update(
                 created_datetime: Utc::now().naive_utc(),
                 created_by: ctx.user_id.clone(),
                 store_id: store_id.to_string(),
-                comment: Some(format!("Updated from Stocktake {}", stocktake_number)),
+                comment: Some(format!("Updated from Stocktake {stocktake_number}")),
                 invoice_line_id: None,
             })
         });
@@ -197,13 +201,15 @@ fn generate_stock_in_out_or_update(
             volume_per_pack: Some(stocktake_line_row.volume_per_pack),
             campaign_id,
             donor_id: donor_link_id,
+            manufacturer_id,
             vvm_status_id,
             program_id,
             note: stocktake_line_row.note,
             item_variant_id,
+            manufacture_date,
             // From existing stock line
             stock_line_id: Some(stock_line_row.id),
-            item_id: stock_line_row.item_link_id,
+            item_id: item.id.clone(),
             stock_on_hold: stock_line_row.on_hold,
             barcode: stock_line_row.barcode_id,
             // Default
@@ -211,27 +217,42 @@ fn generate_stock_in_out_or_update(
             tax_percentage: None,
             shipped_number_of_packs: None,
             shipped_pack_size: None,
+            purchase_order_line_id: None,
         })
     } else {
         StockChange::StockOut(InsertStockOutLine {
             r#type: StockOutType::InventoryReduction,
             id: invoice_line_id,
             invoice_id: inventory_reduction_id.to_string(),
+            stock_line_id: stock_line_row.id.clone(),
             number_of_packs: quantity_change,
             note: stock_line_row.note,
-            location_id: stocktake_line_row.location_id,
             batch: stocktake_line_row.batch,
             pack_size: stocktake_line_row.pack_size,
-            expiry_date: stocktake_line_row.expiry_date,
             cost_price_per_pack: Some(cost_price_per_pack),
             sell_price_per_pack: Some(sell_price_per_pack),
             volume_per_pack: Some(stocktake_line_row.volume_per_pack),
-            stock_line_id: stock_line_row.id.clone(),
-            item_variant_id,
-            donor_id: donor_link_id,
-            campaign_id,
-            program_id,
             vvm_status_id,
+
+            // Potentially clearable fields
+            expiry_date: Some(NullableUpdate {
+                value: stocktake_line_row.expiry_date,
+            }),
+            location_id: Some(NullableUpdate {
+                value: stocktake_line_row.location_id,
+            }),
+            item_variant_id: Some(NullableUpdate {
+                value: item_variant_id,
+            }),
+            donor_id: Some(NullableUpdate {
+                value: donor_link_id,
+            }),
+            manufacturer_id: Some(NullableUpdate {
+                value: manufacturer_id,
+            }),
+            campaign_id: Some(NullableUpdate { value: campaign_id }),
+            program_id: Some(NullableUpdate { value: program_id }),
+
             total_before_tax: None,
             tax_percentage: None,
             prescribed_quantity: None,
@@ -269,7 +290,7 @@ fn log_stock_changes(
         activity_log_entry(
             ctx,
             ActivityLogType::StockLocationChange,
-            Some(existing.id.to_owned()),
+            Some(existing.id.to_string()),
             previous_location,
             new.location_id,
         )?;
@@ -284,7 +305,7 @@ fn log_stock_changes(
         activity_log_entry(
             ctx,
             ActivityLogType::StockBatchChange,
-            Some(existing.id.to_owned()),
+            Some(existing.id.to_string()),
             previous_batch,
             new.batch,
         )?;
@@ -294,7 +315,7 @@ fn log_stock_changes(
             activity_log_entry(
                 ctx,
                 ActivityLogType::StockCostPriceChange,
-                Some(existing.id.to_owned()),
+                Some(existing.id.to_string()),
                 Some(existing.cost_price_per_pack.to_string()),
                 Some(cost_price_per_pack.to_string()),
             )?;
@@ -305,7 +326,7 @@ fn log_stock_changes(
             activity_log_entry(
                 ctx,
                 ActivityLogType::StockSellPriceChange,
-                Some(existing.id.to_owned()),
+                Some(existing.id.to_string()),
                 Some(existing.sell_price_per_pack.to_string()),
                 Some(sell_price_per_pack.to_string()),
             )?;
@@ -321,7 +342,7 @@ fn log_stock_changes(
         activity_log_entry(
             ctx,
             ActivityLogType::StockExpiryDateChange,
-            Some(existing.id.to_owned()),
+            Some(existing.id.to_string()),
             previous_expiry_date,
             new.expiry_date.map(|date| date.to_string()),
         )?;
@@ -336,7 +357,7 @@ fn generate_new_stock_line(
     stocktake_line: &StocktakeLine,
 ) -> Result<StockLineJob, UpdateStocktakeError> {
     let stocktake_line_row = stocktake_line.line.to_owned();
-    let item_id = stocktake_line.item.id.to_owned();
+    let item_id = stocktake_line.item.id.to_string();
     let stock_line_id = uuid();
 
     let counted_number_of_packs = stocktake_line_row.counted_number_of_packs.unwrap_or(0.0);
@@ -382,11 +403,13 @@ fn generate_new_stock_line(
         cost_price_per_pack,
         sell_price_per_pack,
         expiry_date: stocktake_line_row.expiry_date,
+        manufacture_date: stocktake_line_row.manufacture_date,
         stock_line_id: Some(stock_line_id.clone()),
         item_id,
         note: stocktake_line_row.note,
         item_variant_id: stocktake_line.line.item_variant_id.clone(),
-        donor_id: stocktake_line.line.donor_link_id.clone(),
+        donor_id: stocktake_line.line.donor_id.clone(),
+        manufacturer_id: stocktake_line.line.manufacturer_id.clone(),
         vvm_status_id: stocktake_line.line.vvm_status_id.clone(),
         volume_per_pack: Some(stocktake_line.line.volume_per_pack),
         program_id: stocktake_line_row.program_id.clone(),
@@ -398,12 +421,13 @@ fn generate_new_stock_line(
         tax_percentage: None,
         shipped_number_of_packs: None,
         shipped_pack_size: None,
+        purchase_order_line_id: None,
     });
 
     // If new stock line has a location, create location movement
     let location_movement = if stocktake_line_row.location_id.is_some() {
         Some(generate_enter_location_movements(
-            store_id.to_owned(),
+            store_id.to_string(),
             stock_line_id,
             stocktake_line_row.location_id,
         ))
@@ -447,9 +471,9 @@ fn generate_exit_location_movements(
                     LocationMovementFilter::new()
                         .enter_datetime(DatetimeFilter::is_null(false))
                         .exit_datetime(DatetimeFilter::is_null(true))
-                        .location_id(EqualFilter::equal_to(&location_id))
-                        .stock_line_id(EqualFilter::equal_to(&stock_line.id))
-                        .store_id(EqualFilter::equal_to(store_id)),
+                        .location_id(EqualFilter::equal_to(location_id.to_string()))
+                        .stock_line_id(EqualFilter::equal_to(stock_line.id.to_string()))
+                        .store_id(EqualFilter::equal_to(store_id.to_string())),
                 )?
                 .into_iter()
                 .map(|l| l.location_movement_row)
@@ -476,7 +500,7 @@ fn unallocated_lines_to_trim(
         return Ok(None);
     }
     let stocktake_lines = StocktakeLineRepository::new(connection).query_by_filter(
-        StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&stocktake.id)),
+        StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(stocktake.id.to_string())),
         Some(store_id.to_string()),
     )?;
     if stocktake_lines.is_empty() {
@@ -527,7 +551,7 @@ pub fn generate(
         description: input_description.or(existing.description.clone()),
         comment: input_comment.or(existing.comment.clone()),
         is_locked: input_is_locked.unwrap_or(false),
-        stocktake_date: input_stocktake_date.or(existing.stocktake_date.clone()),
+        stocktake_date: input_stocktake_date.or(existing.stocktake_date),
         counted_by: counted_by.or(existing.counted_by.clone()),
         verified_by: verified_by.or(existing.verified_by.clone()),
         ..existing.clone()
@@ -619,7 +643,7 @@ pub fn generate(
         r#type: InvoiceType::InventoryAddition,
         // Same for addition and reduction
         user_id: Some(user_id.to_string()),
-        name_link_id: inventory_adjustment_name.id,
+        name_id: inventory_adjustment_name.id,
         store_id: store_id.to_string(),
         status: InvoiceStatus::New,
         verified_datetime: Some(now),
@@ -652,8 +676,12 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_link_id: None,
-        goods_received_id: None,
+        default_donor_id: None,
+        purchase_order_id: None,
+        shipping_method_id: None,
+        charges_local_currency: 0.0,
+        charges_foreign_currency: 0.0,
+        ..Default::default()
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {

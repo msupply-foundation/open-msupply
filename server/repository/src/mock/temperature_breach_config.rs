@@ -2,7 +2,7 @@ use crate::{TemperatureBreachConfigRow, TemperatureBreachType};
 
 pub fn mock_temperature_breach_config_1() -> TemperatureBreachConfigRow {
     TemperatureBreachConfigRow {
-        id: "temperature_breach_config_1".to_owned(),
+        id: "temperature_breach_config_1".to_string(),
         duration_milliseconds: 120000,
         r#type: TemperatureBreachType::HotConsecutive,
         description: "Hot consecutive for 2 minutes".to_string(),
@@ -14,7 +14,7 @@ pub fn mock_temperature_breach_config_1() -> TemperatureBreachConfigRow {
 }
 pub fn mock_temperature_breach_config_2() -> TemperatureBreachConfigRow {
     TemperatureBreachConfigRow {
-        id: "temperature_breach_config_2".to_owned(),
+        id: "temperature_breach_config_2".to_string(),
         duration_milliseconds: 360000,
         r#type: TemperatureBreachType::HotConsecutive,
         description: "Hot consecutive for 1 hour".to_string(),
@@ -26,7 +26,7 @@ pub fn mock_temperature_breach_config_2() -> TemperatureBreachConfigRow {
 }
 pub fn mock_temperature_breach_config_3() -> TemperatureBreachConfigRow {
     TemperatureBreachConfigRow {
-        id: "temperature_breach_config_3".to_owned(),
+        id: "temperature_breach_config_3".to_string(),
         duration_milliseconds: 120000,
         r#type: TemperatureBreachType::ColdConsecutive,
         description: "Cold consecutive for 2 minutes".to_string(),

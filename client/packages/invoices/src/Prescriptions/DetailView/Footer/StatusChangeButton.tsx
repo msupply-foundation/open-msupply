@@ -4,79 +4,26 @@ import {
   useTranslation,
   useNotification,
   InvoiceNodeStatus,
+  InvoiceNodeType,
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
   InvoiceLineNodeType,
   useDisabledNotificationToast,
   useEditModal,
+  useRegisterActions,
+  ALT_KEY,
 } from '@openmsupply-client/common';
+import { useInsuranceProviders } from '@openmsupply-client/system';
 import {
-  getNextPrescriptionStatus,
-  getStatusTranslation,
+  getButtonLabel,
+  getNextStatusOption,
+  getStatusTranslator,
 } from '../../../utils';
 import { PrescriptionRowFragment, usePrescription } from '../../api';
 import { PaymentsModal } from '../Payments';
-import { Draft } from 'packages/invoices/src/StockOut';
-import { useInsuranceProviders } from '@openmsupply-client/system/src';
-
-const getStatusOptions = (
-  currentStatus: InvoiceNodeStatus | undefined,
-  getButtonLabel: (status: InvoiceNodeStatus) => string
-): SplitButtonOption<InvoiceNodeStatus>[] => {
-  if (!currentStatus) return [];
-  const options: [
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
-  ] = [
-    {
-      value: InvoiceNodeStatus.New,
-      label: getButtonLabel(InvoiceNodeStatus.New),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Picked,
-      label: getButtonLabel(InvoiceNodeStatus.Picked),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Verified,
-      label: getButtonLabel(InvoiceNodeStatus.Verified),
-      isDisabled: true,
-    },
-  ];
-
-  if (currentStatus === InvoiceNodeStatus.New) {
-    options[1].isDisabled = false;
-    options[2].isDisabled = false;
-  }
-
-  if (currentStatus === InvoiceNodeStatus.Picked) {
-    options[2].isDisabled = false;
-  }
-
-  return options;
-};
-
-const getNextStatusOption = (
-  status: InvoiceNodeStatus | undefined,
-  options: SplitButtonOption<InvoiceNodeStatus>[]
-): SplitButtonOption<InvoiceNodeStatus> | null => {
-  if (!status) return options[0] ?? null;
-
-  const nextStatus = getNextPrescriptionStatus(status);
-  const nextStatusOption = options.find(o => o.value === nextStatus);
-  return nextStatusOption || null;
-};
-
-const getButtonLabel =
-  (t: ReturnType<typeof useTranslation>) =>
-  (invoiceStatus: InvoiceNodeStatus): string => {
-    return t('button.save-and-confirm-status', {
-      status: t(getStatusTranslation(invoiceStatus)),
-    });
-  };
+import { Draft } from '../../../StockOut';
+import { getStatusOptions } from '../../../statuses';
 
 const useStatusChangeButton = () => {
   const t = useTranslation();
@@ -110,7 +57,14 @@ const useStatusChangeButton = () => {
     );
 
   const options = useMemo(
-    () => getStatusOptions(status, getButtonLabel(t)),
+    () =>
+      status
+        ? getStatusOptions(
+            InvoiceNodeType.Prescription,
+            status,
+            getButtonLabel(t)
+          )
+        : [],
     [status, getButtonLabel]
   );
 
@@ -140,7 +94,7 @@ const useStatusChangeButton = () => {
       ? t('messages.confirm-zero-quantity-status')
       : t('messages.confirm-status-as', {
           status: selectedOption?.value
-            ? getStatusTranslation(selectedOption?.value)
+            ? getStatusTranslator(t)(selectedOption?.value)
             : '',
         }),
     onConfirm: onConfirmStatusChange,
@@ -186,6 +140,15 @@ export const StatusChangeButton = () => {
     if (showPaymentWindow) return onOpen();
     return getConfirmation();
   };
+
+  useRegisterActions([
+    {
+      id: 'updateStatus',
+      name: `${t('button.update-status')} (${ALT_KEY}+V)`,
+      shortcut: ['Alt+KeyV'],
+      perform: onStatusClick,
+    },
+  ]);
 
   if (!selectedOption) return null;
   if (isDisabled) return null;

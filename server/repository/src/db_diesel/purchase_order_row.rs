@@ -1,18 +1,19 @@
 use crate::{
-    db_diesel::{item_link_row::item_link, item_row::item},
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
-    RowActionType, StorageConnection, Upsert,
+    db_diesel::{
+        changelog::changelog::RowOrId, item_link_row::item_link, item_row::item,
+    },
+    diesel_macros::define_linked_tables, ChangelogRepository, ChangelogSyncType, Delete,
+    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
-use diesel::{dsl::max, prelude::*};
+use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 table! {
     purchase_order_stats (purchase_order_id) {
         purchase_order_id -> Text,
-        line_total_before_discount -> Double,
-        line_total_after_discount -> Double,
+        order_total_before_discount -> Double,
         order_total_after_discount -> Double,
     }
 }
@@ -21,47 +22,53 @@ table! {
 #[diesel(table_name = purchase_order_stats)]
 pub struct PurchaseOrderStatsRow {
     pub purchase_order_id: String,
-    pub line_total_before_discount: f64,
-    pub line_total_after_discount: f64,
+    pub order_total_before_discount: f64,
     pub order_total_after_discount: f64,
 }
 
-table! {
-    purchase_order (id) {
-        id ->  Text,
+define_linked_tables! {
+    view: purchase_order = "purchase_order_view",
+    core: purchase_order_with_links = "purchase_order",
+    struct: PurchaseOrderRow,
+    repo: PurchaseOrderRowRepository,
+    shared: {
         store_id -> Text,
         created_by -> Nullable<Text>,
-        supplier_name_link_id ->  Text,
         purchase_order_number -> BigInt,
         status -> crate::db_diesel::purchase_order_row::PurchaseOrderStatusMapping,
         created_datetime -> Timestamp,
-        confirmed_datetime ->  Nullable<Timestamp>,
-        target_months->  Nullable<Double>,
-        comment->  Nullable<Text>,
-        donor_link_id -> Nullable<Text>,
+        confirmed_datetime -> Nullable<Timestamp>,
+        target_months -> Nullable<Double>,
+        comment -> Nullable<Text>,
         reference -> Nullable<Text>,
         currency_id -> Nullable<Text>,
-        foreign_exchange_rate -> Nullable<Double>,
-        shipping_method->  Nullable<Text>,
+        foreign_exchange_rate -> Double,
+        shipping_method -> Nullable<Text>,
         sent_datetime -> Nullable<Timestamp>,
         contract_signed_date -> Nullable<Date>,
-        advance_paid_date ->  Nullable<Date>,
-        received_at_port_date ->   Nullable<Date>,
+        advance_paid_date -> Nullable<Date>,
+        received_at_port_date -> Nullable<Date>,
         requested_delivery_date -> Nullable<Date>,
-        supplier_agent ->  Nullable<Text>,
-        authorising_officer_1 ->  Nullable<Text>,
+        supplier_agent -> Nullable<Text>,
+        authorising_officer_1 -> Nullable<Text>,
         authorising_officer_2 -> Nullable<Text>,
         additional_instructions -> Nullable<Text>,
-        heading_message ->  Nullable<Text>,
+        heading_message -> Nullable<Text>,
         agent_commission -> Nullable<Double>,
         document_charge -> Nullable<Double>,
         communications_charge -> Nullable<Double>,
-        insurance_charge ->  Nullable<Double>,
-        freight_charge ->  Nullable<Double>,
+        insurance_charge -> Nullable<Double>,
+        freight_charge -> Nullable<Double>,
         freight_conditions -> Nullable<Text>,
         supplier_discount_percentage -> Nullable<Double>,
-        authorised_datetime -> Nullable<Timestamp>,
+        request_approval_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
+    },
+    links: {
+        supplier_name_link_id -> supplier_name_id,
+    },
+    optional_links: {
+        donor_link_id -> donor_id,
     }
 }
 
@@ -71,26 +78,21 @@ allow_tables_to_appear_in_same_query!(purchase_order_stats, purchase_order);
 allow_tables_to_appear_in_same_query!(purchase_order, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order, item);
 
-#[derive(
-    Clone, Insertable, Queryable, Debug, AsChangeset, Serialize, Deserialize, Default, PartialEq,
-)]
+#[derive(Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq)]
 #[diesel(table_name = purchase_order)]
-#[diesel(treat_none_as_null = true)]
 pub struct PurchaseOrderRow {
     pub id: String,
     pub store_id: String,
     pub created_by: Option<String>,
-    pub supplier_name_link_id: String,
     pub purchase_order_number: i64,
     pub status: PurchaseOrderStatus,
     pub created_datetime: NaiveDateTime,
     pub confirmed_datetime: Option<NaiveDateTime>,
     pub target_months: Option<f64>,
     pub comment: Option<String>,
-    pub donor_link_id: Option<String>,
     pub reference: Option<String>,
     pub currency_id: Option<String>,
-    pub foreign_exchange_rate: Option<f64>,
+    pub foreign_exchange_rate: f64,
     pub shipping_method: Option<String>,
     pub sent_datetime: Option<NaiveDateTime>,
     pub contract_signed_date: Option<NaiveDate>,
@@ -109,22 +111,25 @@ pub struct PurchaseOrderRow {
     pub freight_charge: Option<f64>,
     pub freight_conditions: Option<String>,
     pub supplier_discount_percentage: Option<f64>,
-    pub authorised_datetime: Option<NaiveDateTime>,
+    pub request_approval_datetime: Option<NaiveDateTime>,
     pub finalised_datetime: Option<NaiveDateTime>,
+    // Resolved from name_link - must be last to match view column order
+    pub supplier_name_id: String,
+    pub donor_id: Option<String>,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, Ord, PartialOrd)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum PurchaseOrderStatus {
     #[default]
     New,
+    RequestApproval,
     Confirmed,
-    Authorised,
+    Sent,
     Finalised,
 }
-
 pub struct PurchaseOrderRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -134,41 +139,18 @@ impl<'a> PurchaseOrderRowRepository<'a> {
         PurchaseOrderRowRepository { connection }
     }
 
-    pub fn _upsert_one(
-        &self,
-        purchase_order_row: &PurchaseOrderRow,
-    ) -> Result<(), RepositoryError> {
-        diesel::insert_into(purchase_order::table)
-            .values(purchase_order_row)
-            .on_conflict(purchase_order::id)
-            .do_update()
-            .set(purchase_order_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
     pub fn upsert_one(
         &self,
         purchase_order_row: &PurchaseOrderRow,
-    ) -> Result<i64, RepositoryError> {
-        self._upsert_one(purchase_order_row)?;
-        self.insert_changelog(purchase_order_row.to_owned(), RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        row: PurchaseOrderRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::PurchaseOrder,
-            record_id: row.id,
-            row_action: action,
-            store_id: Some(row.store_id),
-            name_link_id: None,
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+    ) -> Result<(), RepositoryError> {
+        self._upsert(purchase_order_row)?;
+        let changelog = PurchaseOrderRow::generate_changelog(
+            RowOrId::Row(purchase_order_row),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_all(&self) -> Result<Vec<PurchaseOrderRow>, RepositoryError> {
@@ -187,19 +169,19 @@ impl<'a> PurchaseOrderRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, purchase_order_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = self.find_one_by_id(purchase_order_id)?;
-        let change_log_id = match old_row {
-            Some(old_row) => self.insert_changelog(old_row, RowActionType::Delete)?,
-            None => {
-                return Ok(None);
-            }
-        };
+    pub fn delete(&self, purchase_order_id: &str) -> Result<(), RepositoryError> {
+        let changelog = PurchaseOrderRow::generate_changelog(
+            RowOrId::Id(purchase_order_id),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
 
-        diesel::delete(purchase_order::table)
-            .filter(purchase_order::id.eq(purchase_order_id))
+        diesel::delete(purchase_order_with_links::table)
+            .filter(purchase_order_with_links::id.eq(purchase_order_id))
             .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+        Ok(())
     }
 
     pub fn find_max_purchase_order_number(
@@ -208,16 +190,40 @@ impl<'a> PurchaseOrderRowRepository<'a> {
     ) -> Result<Option<i64>, RepositoryError> {
         let result = purchase_order::table
             .filter(purchase_order::store_id.eq(store_id))
-            .select(max(purchase_order::purchase_order_number))
+            .select(diesel::dsl::max(purchase_order::purchase_order_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PurchaseOrderRow>, RepositoryError> {
+        Ok(purchase_order::table
+            .filter(purchase_order::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 
 impl Upsert for PurchaseOrderRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = PurchaseOrderRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        PurchaseOrderRowRepository::new(con)._upsert(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                PurchaseOrderRow::generate_changelog(
+                    RowOrId::Row(self),
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
@@ -232,9 +238,28 @@ impl Upsert for PurchaseOrderRow {
 #[derive(Debug, Clone)]
 pub struct PurchaseOrderDelete(pub String);
 impl Delete for PurchaseOrderDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = PurchaseOrderRowRepository::new(con).delete(&self.0)?;
-        Ok(change_log_id)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                PurchaseOrderRow::generate_changelog(
+                    RowOrId::Id(&self.0),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(purchase_order_with_links::table)
+            .filter(purchase_order_with_links::id.eq(&self.0))
+            .execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -257,7 +282,7 @@ mod test {
     #[actix_rt::test]
     async fn purchase_order_status() {
         let (_, connection, _, _) =
-            setup_all("purchase order status", MockDataInserts::all()).await;
+            setup_all("purchase_order_status", MockDataInserts::all()).await;
 
         let repo = PurchaseOrderRowRepository::new(&connection);
         // Try upsert all variants of PurchaseOrderStatus, confirm that diesel enums match postgres
@@ -266,11 +291,12 @@ mod test {
             let id = uuid();
             let row = PurchaseOrderRow {
                 id: id.clone(),
-                supplier_name_link_id: mock_name_c().id,
+                supplier_name_id: mock_name_c().id,
                 status,
                 store_id: mock_store_a().id.clone(),
                 created_datetime: chrono::Utc::now().naive_utc(),
                 purchase_order_number: po_number,
+
                 ..Default::default()
             };
             po_number += 1;

@@ -1,18 +1,45 @@
 use crate::{
-    db_diesel::{item_link_row::item_link, item_row::item, purchase_order_row::purchase_order},
-    name_link, Delete, Upsert,
+    db_diesel::{
+        changelog::{changelog::RowOrId, Changelogs},
+        item_link_row::item_link,
+        item_row::item,
+        purchase_order_row::purchase_order,
+    },
+    diesel_macros::define_linked_tables,
+    ChangelogSyncType, Delete, SourceSiteId, Upsert,
 };
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection,
+    ChangelogRepository, RepositoryError, RowActionType, StorageConnection,
 };
 use chrono::NaiveDate;
-use diesel::{dsl::max, prelude::*};
+use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 table! {
-    purchase_order_line (id) {
-        id ->  Text,
+    purchase_order_line_stats (purchase_order_line_id) {
+        purchase_order_line_id -> Text,
+        shipped_number_of_units -> Double,
+        in_transit_number_of_units -> Double,
+        received_number_of_units -> Double,
+    }
+}
+
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Default)]
+#[diesel(table_name = purchase_order_line_stats)]
+pub struct PurchaseOrderLineStatsRow {
+    pub purchase_order_line_id: String,
+    pub shipped_number_of_units: f64,
+    pub in_transit_number_of_units: f64,
+    pub received_number_of_units: f64,
+}
+
+define_linked_tables! {
+    view: purchase_order_line = "purchase_order_line_view",
+    core: purchase_order_line_with_links = "purchase_order_line",
+    struct: PurchaseOrderLineRow,
+    repo: PurchaseOrderLineRowRepository,
+    shared: {
         store_id -> Text,
         purchase_order_id -> Text,
         line_number -> BigInt,
@@ -21,31 +48,36 @@ table! {
         requested_pack_size -> Double,
         requested_number_of_units -> Double,
         adjusted_number_of_units -> Nullable<Double>,
-        received_number_of_units -> Double,
         requested_delivery_date -> Nullable<Date>,
         expected_delivery_date -> Nullable<Date>,
         stock_on_hand_in_units -> Double,
         supplier_item_code -> Nullable<Text>,
-        price_per_unit_before_discount -> Double,
-        price_per_unit_after_discount -> Double,
+        price_per_pack_before_discount -> Double,
+        price_per_pack_after_discount -> Double,
         comment -> Nullable<Text>,
-        manufacturer_link_id -> Nullable<Text>,
         note -> Nullable<Text>,
         unit -> Nullable<Text>,
+        status -> crate::db_diesel::purchase_order_line_row::PurchaseOrderLineStatusMapping,
+    },
+    links: {
+    },
+    optional_links: {
+        manufacturer_link_id -> manufacturer_id,
     }
 }
 
+joinable!(purchase_order_line -> purchase_order_line_stats (id));
 joinable!(purchase_order_line -> item_link (item_link_id));
 joinable!(purchase_order_line -> purchase_order (purchase_order_id));
-joinable!(purchase_order_line -> name_link (manufacturer_link_id));
+allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order_line_stats);
 allow_tables_to_appear_in_same_query!(purchase_order_line, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order_line, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order);
+allow_tables_to_appear_in_same_query!(purchase_order_line_stats, item_link);
+allow_tables_to_appear_in_same_query!(purchase_order_line_stats, item);
+allow_tables_to_appear_in_same_query!(purchase_order_line_stats, purchase_order);
 
-#[derive(
-    Clone, Insertable, Queryable, Debug, AsChangeset, Serialize, Deserialize, Default, PartialEq,
-)]
-#[diesel(treat_none_as_null = true)]
+#[derive(Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq)]
 #[diesel(table_name = purchase_order_line)]
 pub struct PurchaseOrderLineRow {
     pub id: String,
@@ -57,17 +89,29 @@ pub struct PurchaseOrderLineRow {
     pub requested_pack_size: f64,
     pub requested_number_of_units: f64,
     pub adjusted_number_of_units: Option<f64>,
-    pub received_number_of_units: f64,
     pub requested_delivery_date: Option<NaiveDate>,
     pub expected_delivery_date: Option<NaiveDate>,
     pub stock_on_hand_in_units: f64,
     pub supplier_item_code: Option<String>,
-    pub price_per_unit_before_discount: f64,
-    pub price_per_unit_after_discount: f64,
+    pub price_per_pack_before_discount: f64,
+    pub price_per_pack_after_discount: f64,
     pub comment: Option<String>,
-    pub manufacturer_link_id: Option<String>,
     pub note: Option<String>,
     pub unit: Option<String>,
+    pub status: PurchaseOrderLineStatus,
+    // Resolved from name_link - must be last to match view column order
+    pub manufacturer_id: Option<String>,
+}
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[cfg_attr(test, derive(strum::EnumIter))]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum PurchaseOrderLineStatus {
+    #[default]
+    New,
+    Sent,
+    Closed,
 }
 
 pub struct PurchaseOrderLineRowRepository<'a> {
@@ -79,49 +123,50 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         PurchaseOrderLineRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &PurchaseOrderLineRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(purchase_order_line::table)
-            .values(row)
-            .on_conflict(purchase_order_line::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row, RowActionType::Upsert)
+    pub fn upsert_one(&self, row: &PurchaseOrderLineRow) -> Result<(), RepositoryError> {
+        self._upsert(row)?;
+        let Changelogs {
+            purchase_order_line_changelog,
+            purchase_order_changelog,
+        } = PurchaseOrderLineRow::generate_changelogs(
+            RowOrId::Row(row),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).batch_insert(vec![
+            purchase_order_line_changelog,
+            purchase_order_changelog,
+        ])
     }
 
-    fn insert_changelog(
-        &self,
-        row: &PurchaseOrderLineRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::PurchaseOrderLine,
-            record_id: row.id.clone(),
-            row_action: action,
-            // no information on store - but this can be found on the parent purchase order record
-            store_id: None,
-            name_link_id: None,
+    pub fn delete(&self, purchase_order_line_id: &str) -> Result<(), RepositoryError> {
+        let old_row = match self.find_one_by_id(purchase_order_line_id)? {
+            Some(row) => row,
+            None => return Ok(()),
         };
 
-        ChangelogRepository::new(self.connection).insert(&row)
-    }
+        let Changelogs {
+            purchase_order_changelog,
+            purchase_order_line_changelog,
+        } = PurchaseOrderLineRow::generate_changelogs(
+            RowOrId::Row(&old_row),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
 
-    pub fn delete(&self, purchase_order_line_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let purchase_order_line = self.find_one_by_id(purchase_order_line_id)?;
-        let change_log_id = match purchase_order_line {
-            Some(purchase_order_line) => {
-                self.insert_changelog(&purchase_order_line, RowActionType::Delete)?
-            }
-            None => {
-                return Ok(None);
-            }
-        };
+        ChangelogRepository::new(self.connection).batch_insert(vec![
+            purchase_order_line_changelog,
+            purchase_order_changelog,
+        ])?;
 
         diesel::delete(
-            purchase_order_line::table.filter(purchase_order_line::id.eq(purchase_order_line_id)),
+            purchase_order_line_with_links::table
+                .filter(purchase_order_line_with_links::id.eq(purchase_order_line_id)),
         )
         .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+        Ok(())
     }
 
     pub fn find_one_by_id(
@@ -164,16 +209,42 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
     ) -> Result<Option<i64>, RepositoryError> {
         let result = purchase_order_line::table
             .filter(purchase_order_line::purchase_order_id.eq(purchase_order_id))
-            .select(max(purchase_order_line::line_number))
+            .select(diesel::dsl::max(purchase_order_line::line_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PurchaseOrderLineRow>, RepositoryError> {
+        Ok(purchase_order_line::table
+            .filter(purchase_order_line::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 
 impl Upsert for PurchaseOrderLineRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = PurchaseOrderLineRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        PurchaseOrderLineRowRepository::new(con)._upsert(self)?;
+
+        let repo = ChangelogRepository::new(con);
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                Self::generate_changelogs(
+                    RowOrId::Row(self),
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+                .purchase_order_line_changelog
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        repo.insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
@@ -187,10 +258,35 @@ impl Upsert for PurchaseOrderLineRow {
 
 #[derive(Debug, Clone)]
 pub struct PurchaseOrderLineDelete(pub String);
+
 impl Delete for PurchaseOrderLineDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = PurchaseOrderLineRowRepository::new(con).delete(&self.0)?;
-        Ok(change_log_id)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        // Build changelog BEFORE deleting — generate_changelog needs to fetch the row by id
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                PurchaseOrderLineRow::generate_changelogs(
+                    RowOrId::Id(&self.0),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+                .purchase_order_line_changelog
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(
+            purchase_order_line_with_links::table
+                .filter(purchase_order_line_with_links::id.eq(&self.0)),
+        )
+        .execute(con.lock().connection())?;
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -225,7 +321,7 @@ mod tests {
         let purchase_order_id = "test-po-1";
         let row = PurchaseOrderRow {
             id: purchase_order_id.to_string(),
-            supplier_name_link_id: mock_name_c().id,
+            supplier_name_id: mock_name_c().id,
             status: PurchaseOrderStatus::New,
             store_id: mock_store_a().id.clone(),
             created_datetime: chrono::Utc::now().naive_utc(),

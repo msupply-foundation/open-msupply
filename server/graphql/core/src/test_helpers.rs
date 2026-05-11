@@ -78,9 +78,9 @@ pub async fn run_test_gql_query<
 
     let mut payload: String;
     if let Some(variables) = variables {
-        payload = format!("{{\"query\":\"{}\",\"variables\":{}}}", query, variables);
+        payload = format!("{{\"query\":\"{query}\",\"variables\":{variables}}}");
     } else {
-        payload = format!("{{\"query\":\"{}\"}}", query);
+        payload = format!("{{\"query\":\"{query}\"}}");
     }
     payload = payload.replace('\n', "");
 

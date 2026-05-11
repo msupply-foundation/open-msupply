@@ -1,9 +1,11 @@
 use super::{
-    form_schema_row::form_schema, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
+    form_schema_row::form_schema, ChangelogRepository,
     RowActionType, StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{
+    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert,
+};
 use clap::ValueEnum;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -33,7 +35,8 @@ pub enum ContextType {
     Prescription,
     InternalOrder,
     PurchaseOrder,
-    GoodsReceived,
+    SupplierReturn,
+    CustomerReturn,
 }
 
 table! {
@@ -77,7 +80,7 @@ pub struct ReportRow {
     pub excel_template_buffer: Option<Vec<u8>>,
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Selectable)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Selectable, Default)]
 #[diesel(table_name = report)]
 pub struct ReportMetaDataRow {
     pub id: String,
@@ -86,19 +89,6 @@ pub struct ReportMetaDataRow {
     pub code: String,
     pub is_active: bool,
 }
-
-impl Default for ReportMetaDataRow {
-    fn default() -> Self {
-        Self {
-            id: Default::default(),
-            is_custom: true,
-            version: Default::default(),
-            code: Default::default(),
-            is_active: true,
-        }
-    }
-}
-
 pub struct ReportRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -116,25 +106,25 @@ impl<'a> ReportRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn upsert_one(&self, row: &ReportRow) -> Result<i64, RepositoryError> {
+    fn _upsert_one(&self, row: &ReportRow) -> Result<(), RepositoryError> {
         diesel::insert_into(report::table)
             .values(row)
             .on_conflict(report::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(&row.id, RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(&self, uid: &str, action: RowActionType) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Report,
-            record_id: uid.to_string(),
-            row_action: action,
-            store_id: None,
-            name_link_id: None,
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn upsert_one(&self, row: &ReportRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = ReportRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
@@ -142,14 +132,35 @@ impl<'a> ReportRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ReportRow>, RepositoryError> {
+        Ok(report::table
+            .filter(report::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct ReportRowDelete(pub String);
 impl Delete for ReportRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => ReportRow::generate_changelog(
+                self.0.clone(),
+                con,
+                RowActionType::Delete,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
         ReportRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Table not in Changelog
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -161,9 +172,25 @@ impl Delete for ReportRowDelete {
 }
 
 impl Upsert for ReportRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log = ReportRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log)) // Table not in Changelog
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        ReportRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

@@ -1,8 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-use super::{PullTranslateResult, SyncTranslation};
-use crate::sync::translations::{item::ItemTranslation, store::StoreTranslation};
+use super::{utils::clear_invalid_location_id, PullTranslateResult, SyncTranslation};
+use crate::sync::translations::{
+    item::ItemTranslation, location::LocationTranslation, store::StoreTranslation,
+
+};
 use repository::{ItemStoreJoinRow, StorageConnection, SyncBufferRow};
+use util::sync_serde::empty_str_as_option_string;
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -15,6 +19,12 @@ pub struct LegacyItemStoreJoinRow {
     store_id: String,
     #[serde(rename = "default_price")]
     default_sell_price_per_pack: f64,
+    ignore_for_orders: bool,
+    margin: f64,
+    #[serde(rename = "default_location_ID")]
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    default_location_id: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -30,21 +40,30 @@ impl SyncTranslation for ItemStoreJoinTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![ItemTranslation.table_name(), StoreTranslation.table_name()]
+        vec![
+            ItemTranslation.table_name(),
+            StoreTranslation.table_name(),
+            LocationTranslation.table_name(),
+        ]
     }
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyItemStoreJoinRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyItemStoreJoinRow>()?;
+
+        let default_location_id = clear_invalid_location_id(connection, data.default_location_id)?;
 
         let result = ItemStoreJoinRow {
             id: data.id,
             item_link_id: data.item_id,
             store_id: data.store_id,
             default_sell_price_per_pack: data.default_sell_price_per_pack,
+            ignore_for_orders: data.ignore_for_orders,
+            margin: data.margin,
+            default_location_id,
         };
         Ok(PullTranslateResult::upsert(result))
     }

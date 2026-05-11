@@ -38,8 +38,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             WARNING_1,
             WarningRow {
                 id: WARNING_1.0.to_owned(),
-                warning_text: "1".to_owned(),
-                code: "WARNING_1_exp".to_owned(),
+                warning_text: "1".to_string(),
+                code: "WARNING_1_exp".to_string(),
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -47,8 +47,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             WARNING_2,
             WarningRow {
                 id: WARNING_2.0.to_owned(),
-                warning_text: "2".to_owned(),
-                code: "WARNING_2_exp".to_owned(),
+                warning_text: "2".to_string(),
+                code: "WARNING_2_exp".to_string(),
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -56,8 +56,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             WARNING_3,
             WarningRow {
                 id: WARNING_3.0.to_owned(),
-                warning_text: "3".to_owned(),
-                code: "WARNING_3_exp".to_owned(),
+                warning_text: "3".to_string(),
+                code: "WARNING_3_exp".to_string(),
             },
         ),
     ]

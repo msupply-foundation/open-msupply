@@ -9,8 +9,9 @@ import {
   DeleteIcon,
   LoadingButton,
   SaveIcon,
-  // useAuthContext,
-  // UserPermission,
+  useAuthContext,
+  UserPermission,
+  useNotification,
 } from '@openmsupply-client/common';
 
 import { useAssets } from '../../api';
@@ -27,10 +28,19 @@ export const FooterComponent = ({
   showSaveConfirmation,
 }: FooterProps) => {
   const t = useTranslation();
+  const { info } = useNotification();
   const { navigateUpOne } = useBreadcrumbs();
   const { data } = useAssets.document.get();
   const onDelete = useAssets.document.delete(data?.id || '');
-  // const { userHasPermission } = useAuthContext();
+  const { userHasPermission } = useAuthContext();
+
+  const handleDelete = () => {
+    if (!userHasPermission(UserPermission.AssetMutate)) {
+      info(t('error.no-asset-delete-permission'))();
+      return;
+    }
+    onDelete();
+  };
 
   return (
     <AppFooterPortal
@@ -58,7 +68,7 @@ export const FooterComponent = ({
                 label={t('button.delete')}
                 color="error"
                 sx={{ fontSize: '12px' }}
-                onClick={onDelete}
+                onClick={handleDelete}
               />
               <LoadingButton
                 color="secondary"

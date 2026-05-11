@@ -1,20 +1,21 @@
-use crate::sync::{
-    sync_utils::{map_name_link_id_to_name_id, map_optional_name_link_id_to_name_id},
-    translations::{
-        name::NameTranslation, store::StoreTranslation, PullTranslateResult, PushTranslateResult,
-        SyncTranslation,
-    },
+use crate::sync::translations::{
+    name::NameTranslation, store::StoreTranslation, PullTranslateResult, PushTranslateResult,
+    SyncTranslation,
+
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, PurchaseOrderDelete, PurchaseOrderFilter,
     PurchaseOrderRepository, PurchaseOrderRow, PurchaseOrderStatsRow, PurchaseOrderStatus,
     StorageConnection, SyncBufferRow,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, object_fields_as_option, zero_date_as_option,
     zero_f64_as_none,
+
 };
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -49,7 +50,7 @@ pub struct PurchaseOrderOmsFields {
     #[serde(default)]
     pub supplier_discount_percentage: Option<f64>,
     #[serde(default)]
-    pub authorised_datetime: Option<NaiveDateTime>,
+    pub request_approval_datetime: Option<NaiveDateTime>,
     #[serde(default)]
     pub finalised_datetime: Option<NaiveDateTime>,
     #[serde(default)]
@@ -227,8 +228,8 @@ impl SyncTranslation for PurchaseOrderTranslation {
             curr_rate,
             order_total_before_discount,
             order_total_after_discount: _, // Not used, we calculate from the sum of the lines instead
-            is_authorised,
-        } = serde_json::from_str::<LegacyPurchaseOrderRow>(&sync_record.data)?;
+            is_authorised: _,
+        } = sync_record.deserialize()?;
 
         let created_datetime = match oms_fields.clone() {
             Some(oms) => oms.created_datetime,
@@ -256,9 +257,9 @@ impl SyncTranslation for PurchaseOrderTranslation {
                 }
             });
 
-        let authorised_datetime = oms_fields
+        let request_approval_datetime = oms_fields
             .clone()
-            .and_then(|oms_field| oms_field.authorised_datetime);
+            .and_then(|oms_field| oms_field.request_approval_datetime);
 
         let finalised_datetime = oms_fields
             .clone()
@@ -267,24 +268,24 @@ impl SyncTranslation for PurchaseOrderTranslation {
         let status = oms_fields
             .clone()
             .map(|oms_field| oms_field.status)
-            .unwrap_or_else(|| from_legacy_status(&status, is_authorised));
+            .unwrap_or_else(|| from_legacy_status(&status, sent_datetime));
 
         let result = PurchaseOrderRow {
             id,
             created_by,
             purchase_order_number,
             store_id,
-            supplier_name_link_id: name_id,
+            supplier_name_id: name_id,
             status,
             created_datetime,
             confirmed_datetime,
             target_months,
             comment,
             supplier_discount_percentage,
-            donor_link_id: donor_id,
+            donor_id: donor_id,
             reference,
             currency_id,
-            foreign_exchange_rate: curr_rate,
+            foreign_exchange_rate: curr_rate.unwrap_or(1.0),
             shipping_method: delivery_method,
             sent_datetime,
             contract_signed_date,
@@ -302,7 +303,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             insurance_charge,
             freight_charge,
             freight_conditions,
-            authorised_datetime,
+            request_approval_datetime,
             finalised_datetime,
         };
         Ok(PullTranslateResult::upsert(result))
@@ -322,10 +323,16 @@ impl SyncTranslation for PurchaseOrderTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::PurchaseOrder(purchase_order_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let purchase_order = PurchaseOrderRepository::new(connection)
             .query_by_filter(
-                PurchaseOrderFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+                PurchaseOrderFilter::new()
+                    .id(EqualFilter::equal_to(purchase_order_row.id)),
             )?
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Purchase Order not found"))?;
@@ -334,7 +341,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             id,
             store_id,
             created_by,
-            supplier_name_link_id,
+            supplier_name_id,
             purchase_order_number,
             status,
             created_datetime,
@@ -342,7 +349,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             target_months,
             comment,
             supplier_discount_percentage,
-            donor_link_id,
+            donor_id,
             reference,
             currency_id,
             foreign_exchange_rate,
@@ -363,14 +370,13 @@ impl SyncTranslation for PurchaseOrderTranslation {
             insurance_charge,
             freight_charge,
             freight_conditions,
-            authorised_datetime,
+            request_approval_datetime,
             finalised_datetime,
         } = purchase_order.purchase_order_row;
 
         let PurchaseOrderStatsRow {
             purchase_order_id: _,
-            line_total_before_discount,
-            line_total_after_discount,
+            order_total_before_discount,
             order_total_after_discount,
         } = purchase_order.purchase_order_stats_row.unwrap_or_default();
 
@@ -379,13 +385,10 @@ impl SyncTranslation for PurchaseOrderTranslation {
             confirmed_datetime,
             sent_datetime,
             supplier_discount_percentage,
-            authorised_datetime,
+            request_approval_datetime,
             finalised_datetime,
             status: status.clone(),
         };
-
-        let donor_id = map_optional_name_link_id_to_name_id(connection, donor_link_id)?;
-        let supplier_id = map_name_link_id_to_name_id(connection, supplier_name_link_id)?;
 
         let legacy_row = LegacyPurchaseOrderRow {
             id,
@@ -407,8 +410,11 @@ impl SyncTranslation for PurchaseOrderTranslation {
             communications_charge,
             insurance_charge,
             freight_charge,
-            supplier_discount_amount: line_total_after_discount
-                * (supplier_discount_percentage.unwrap_or(0.0) / 100.0),
+            supplier_discount_amount: if let Some(percentage) = supplier_discount_percentage {
+                order_total_before_discount * (percentage / 100.0)
+            } else {
+                0.0
+            },
             heading_message,
             requested_delivery_date,
             delivery_method: shipping_method,
@@ -416,22 +422,18 @@ impl SyncTranslation for PurchaseOrderTranslation {
             contract_signed_date,
             advance_paid_date,
             received_at_port_date,
-            name_id: supplier_id,
+            name_id: supplier_name_id,
             creation_date: created_datetime.date(),
             confirm_date: confirmed_datetime.map(|d| d.date()),
-            curr_rate: foreign_exchange_rate,
-            order_total_before_discount: line_total_before_discount,
+            curr_rate: Some(foreign_exchange_rate),
+            order_total_before_discount,
             order_total_after_discount,
             donor_id,
             is_authorised: check_is_authorised(&status),
             oms_fields: Some(oms_fields),
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -445,36 +447,43 @@ impl SyncTranslation for PurchaseOrderTranslation {
 
 fn from_legacy_status(
     status: &LegacyPurchaseOrderStatus,
-    is_authorised: bool,
+    sent_datetime: Option<NaiveDateTime>,
 ) -> PurchaseOrderStatus {
     match status {
         LegacyPurchaseOrderStatus::Nw => PurchaseOrderStatus::New,
-        LegacyPurchaseOrderStatus::Sg => PurchaseOrderStatus::New,
+        LegacyPurchaseOrderStatus::Sg => PurchaseOrderStatus::RequestApproval, // TODO: if authorisation not needed should be new?
         LegacyPurchaseOrderStatus::Cn => {
-            if is_authorised {
-                PurchaseOrderStatus::Authorised
+            if sent_datetime.is_some() {
+                PurchaseOrderStatus::Sent
             } else {
                 PurchaseOrderStatus::Confirmed
             }
         }
         LegacyPurchaseOrderStatus::Fn => PurchaseOrderStatus::Finalised, // authorised might or might not be true in this case...
-        LegacyPurchaseOrderStatus::Others => PurchaseOrderStatus::New,   // Default to New for
+        LegacyPurchaseOrderStatus::Others => PurchaseOrderStatus::New, // Default to New for others
     }
 }
 
 fn to_legacy_status(status: &PurchaseOrderStatus) -> LegacyPurchaseOrderStatus {
     match status {
         PurchaseOrderStatus::New => LegacyPurchaseOrderStatus::Nw,
+        PurchaseOrderStatus::RequestApproval => LegacyPurchaseOrderStatus::Sg,
         PurchaseOrderStatus::Confirmed => LegacyPurchaseOrderStatus::Cn,
-        PurchaseOrderStatus::Authorised => LegacyPurchaseOrderStatus::Cn, // We will also set is_authorised to true (See check_is_authorised)
+        PurchaseOrderStatus::Sent => LegacyPurchaseOrderStatus::Cn,
         PurchaseOrderStatus::Finalised => LegacyPurchaseOrderStatus::Fn,
     }
 }
 
+/*
+Assuming Finalised is always authorised
+the action might be skipped if authorisation is not required due to global preference.
+N.B. if this logic changes, update the Purchase Order form's logic
+(the 'AUTHORISED/UNAUTHORISED' watermark in this file: .../open-msupply/standard_forms/purchase-order/latest/src/template.html)
+*/
 fn check_is_authorised(status: &PurchaseOrderStatus) -> bool {
     matches!(
         status,
-        PurchaseOrderStatus::Authorised | PurchaseOrderStatus::Finalised // Assuming Finalised is always authorised, but the action might be skipped if authorisation is not required due to global preference. N.B. if this logic changes, update the Purchase Order form's logic (the 'AUTHORISED/UNAUTHORISED' watermark in this file: .../open-msupply/standard_forms/purchase-order/latest/src/template.html)
+        PurchaseOrderStatus::Confirmed | PurchaseOrderStatus::Sent | PurchaseOrderStatus::Finalised
     )
 }
 
@@ -484,8 +493,8 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
-    };
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RowOrDelete,
+};
     use serde_json::json;
 
     #[actix_rt::test]
@@ -526,24 +535,22 @@ mod tests {
         .await;
 
         let translator = PurchaseOrderTranslation {};
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(
-                    ChangelogFilter::new().table_name(ChangelogTableName::PurchaseOrder.equal_to()),
-                ),
-            )
-            .unwrap();
+        let entries = ChangelogRepository::new(&connection).query_with_data(
+            ChangelogCondition::table_name::equal(ChangelogTableName::PurchaseOrder),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1_000_000,
+            },
+        )
+        .unwrap();
 
-        for changelog in changelogs {
+        for entry in entries { let RowOrDelete::Row { changelog, row } = entry else { panic!("expected upsert row") };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));

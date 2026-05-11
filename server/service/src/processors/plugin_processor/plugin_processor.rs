@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use repository::{ChangelogFilter, ChangelogRow};
+use repository::{ChangelogRow, CompatibilityChangelogFilter};
 use util::format_error;
 
 use crate::{
@@ -39,7 +39,7 @@ impl PluginProcessor {
 impl Processor for PluginProcessor {
     // Description and cursor type is plugin code
     fn get_description(&self) -> String {
-        format!("Plugin processor for {}", (&self.0).code)
+        format!("Plugin processor for {}", self.0.code)
     }
 
     fn cursor_type(&self) -> CursorType {
@@ -57,8 +57,10 @@ impl Processor for PluginProcessor {
         }
     }
 
-    /// Default to using change_log_table_names
-    fn changelogs_filter(&self, _: &ServiceContext) -> Result<ChangelogFilter, ProcessorError> {
+    fn compatibility_filter(
+        &self,
+        _: &ServiceContext,
+    ) -> Result<Option<CompatibilityChangelogFilter>, ProcessorError> {
         let input = processor::Input::Filter;
         let result = self
             .call(input.clone())
@@ -68,7 +70,7 @@ impl Processor for PluginProcessor {
             return Err(ProcessorError::PluginOutputMismatch(input));
         };
 
-        Ok(filter)
+        Ok(Some(filter))
     }
 
     async fn try_process_record(

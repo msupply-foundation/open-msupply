@@ -1,8 +1,8 @@
 use anyhow::anyhow;
-use async_graphql::EmptySubscription;
 use chrono::Utc;
 use clap::{ArgAction, Parser};
-use graphql::{Mutations, OperationalSchema, Queries};
+use colored::Colorize;
+use graphql::{Mutations, OperationalSchema, Queries, Subscriptions};
 use log::info;
 
 use report_builder::{
@@ -12,7 +12,8 @@ use report_builder::{
 use repository::{
     get_storage_connection_manager, migrations::migrate, schema_from_row, test_db, ContextType,
     EqualFilter, FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository,
-    ReportFilter, ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
+    ReportFilter, ReportRepository, ReportRow, ReportRowRepository, SyncBufferRepository,
+    SyncBufferRowInsert,
 };
 use serde::{Deserialize, Serialize};
 use server::{configuration, logging_init};
@@ -25,7 +26,7 @@ use service::{
     settings::Settings,
     standard_reports::{ReportData, ReportsData, StandardReports},
     sync::{
-        file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_buffer::SyncBufferSource,
+        settings::SyncSettings,
         sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
         synchroniser_driver::SynchroniserDriver,
     },
@@ -47,10 +48,10 @@ use backup::*;
 #[cfg(feature = "integration_test")]
 use cli::LoadTest;
 use cli::{
-    generate_and_install_plugin_bundle, generate_plugin_bundle, generate_plugin_typescript_types,
-    generate_report_data, generate_reports_recursive, install_plugin_bundle,
-    GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
-    RefreshDatesRepository, ReportError,
+    all_tests, generate_and_install_plugin_bundle, generate_plugin_bundle,
+    generate_plugin_typescript_types, generate_report_data, generate_reports_recursive,
+    install_plugin_bundle, GenerateAndInstallPluginBundle, GeneratePluginBundle,
+    InstallPluginBundle, RefreshDatesRepository, ReportError, TestCredentials, TestData,
 };
 
 const DATA_EXPORT_FOLDER: &str = "data";
@@ -221,6 +222,18 @@ enum Action {
         #[clap(short, long, action = ArgAction::SetTrue, conflicts_with="enable")]
         disable: bool,
     },
+    /// Test connectivity to configured services (config, database, ping, sync, mail)
+    TestConnection {
+        /// Username for the login test
+        #[clap(short, long)]
+        username: Option<String>,
+        /// Password for the login test
+        #[clap(short, long)]
+        password: Option<String>,
+        /// Log level for the tests, by default set to off to avoid noisy console logging
+        #[clap(short, default_value = "off")]
+        log_level: log::LevelFilter,
+    },
     #[cfg(feature = "integration_test")]
     LoadTest(LoadTest),
     GeneratePluginTypescriptTypes {
@@ -271,16 +284,14 @@ async fn initialise_from_central(
     let service_context = service_provider.basic_context()?;
     info!("Initialising from central");
     service_provider
-        .site_info_service
-        .request_and_set_site_info(&service_provider, &sync_settings)
+        .site_auth_service
+        .request_and_set_site_auth(&service_provider, &sync_settings)
         .await?;
     service_provider
         .settings
         .update_sync_settings(&service_context, &sync_settings)?;
 
-    // file_sync_trigger is not used here, but easier to just create it rather than making file sync trigger optional
-    let (file_sync_trigger, _file_sync_driver) = FileSyncDriver::init(&settings);
-    let (_, sync_driver) = SynchroniserDriver::init(file_sync_trigger);
+    let (_, sync_driver) = SynchroniserDriver::init();
     sync_driver.sync(service_provider.clone(), None).await;
 
     info!("Syncing users");
@@ -293,7 +304,7 @@ async fn initialise_from_central(
         };
         LoginService::login(&service_provider, &auth_data, input.clone(), 0)
             .await
-            .map_err(|_| anyhow!("Cannot login with user {:?}", input))?;
+            .map_err(|_| anyhow!("Cannot login with user {input:?}"))?;
     }
     info!("Initialisation finished");
     Ok((service_provider, service_context))
@@ -321,7 +332,7 @@ async fn main() -> anyhow::Result<()> {
         Action::ExportGraphqlSchema { path } => {
             info!("Exporting graphql schema");
             let schema =
-                OperationalSchema::build(Queries::new(), Mutations::new(), EmptySubscription)
+                OperationalSchema::build(Queries::new(), Mutations::new(), Subscriptions::default())
                     .finish();
             fs::write(
                 path.unwrap_or(PathBuf::from("schema.graphql")),
@@ -337,7 +348,7 @@ async fn main() -> anyhow::Result<()> {
         Action::Migrate => {
             info!("Applying database migrations");
             let connection_manager = get_storage_connection_manager(&settings.database);
-            if let Some(init_sql) = &settings.database.full_init_sql() {
+            if let Some(init_sql) = &settings.database.startup_sql() {
                 connection_manager.execute(init_sql).unwrap();
             }
             migrate(&connection_manager.connection().unwrap(), None)
@@ -379,10 +390,10 @@ async fn main() -> anyhow::Result<()> {
 
             let data = InitialisationData {
                 // Sync Buffer Rows
-                sync_buffer_rows: SyncBufferRowRepository::new(&ctx.connection).get_all()?,
+                sync_buffer_rows: SyncBufferRepository::new(&ctx.connection).get_all()?,
                 users: synced_user_info_rows,
                 site_id: service_provider
-                    .site_info_service
+                    .site_auth_service
                     .get_site_id(&ctx)?
                     .unwrap(),
             };
@@ -396,7 +407,7 @@ async fn main() -> anyhow::Result<()> {
             info!("Saving export");
             let (folder, export_file, users_file) = export_paths(&name);
             if fs::create_dir(&folder).is_err() {
-                info!("Export directory already exists, replacing {:#?}", folder)
+                info!("Export directory already exists, replacing {folder:#?}")
             };
             fs::write(export_file, data_string)?;
             fs::write(users_file, users)?;
@@ -419,23 +430,26 @@ async fn main() -> anyhow::Result<()> {
             // Need to set site_id before integration
             KeyValueStoreRepository::new(&ctx.connection)
                 .set_i32(KeyType::SettingsSyncSiteId, Some(data.site_id))?;
-            let buffer_repo = SyncBufferRowRepository::new(&ctx.connection);
-            let buffer_rows = data
+            let buffer_repo = SyncBufferRepository::new(&ctx.connection);
+            let buffer_rows: Vec<SyncBufferRowInsert> = data
                 .sync_buffer_rows
                 .into_iter()
                 .map(|mut r| {
+                    // Reset integration state — we want re-init to retry integration
+                    r.integration_started_datetime = None;
                     r.integration_datetime = None;
                     r.integration_error = None;
-                    r
+                    r.integration_result = None;
+                    SyncBufferRowInsert::from(r)
                 })
                 .collect();
-            buffer_repo.upsert_many(&buffer_rows)?;
+            buffer_repo.insert_many(&buffer_rows)?;
 
             let mut logger = SyncLogger::start(&ctx.connection).unwrap();
             integrate_and_translate_sync_buffer(
                 &ctx.connection,
                 Some(&mut logger),
-                SyncBufferSource::Central(0),
+                0,
             )?;
 
             info!("Initialising users");
@@ -447,7 +461,7 @@ async fn main() -> anyhow::Result<()> {
                 info!("Refreshing dates");
                 let result = RefreshDatesRepository::new(&ctx.connection)
                     .refresh_dates(Utc::now().naive_utc())?;
-                info!("Refresh data result: {:#?}", result);
+                info!("Refresh data result: {result:#?}");
             }
 
             info!("Disabling sync");
@@ -489,7 +503,7 @@ async fn main() -> anyhow::Result<()> {
                 service.disable_sync(&ctx)?;
             }
 
-            info!("Refresh data result: {:#?}", result);
+            info!("Refresh data result: {result:#?}");
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
         Action::BuildReports { path } => {
@@ -524,15 +538,13 @@ async fn main() -> anyhow::Result<()> {
                 let output_path = base_dir.join("generated").join(output_name);
 
                 fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
-                    "Invalid output path: {:?}",
-                    output_path
+                    "Invalid output path: {output_path:?}"
                 )))?)?;
 
                 fs::write(&output_path, serde_json::to_string_pretty(&reports_data)?).map_err(
                     |_| {
                         anyhow::Error::msg(format!(
-                            "Failed to write to {:?}. Does output dir exist?",
-                            output_path
+                            "Failed to write to {output_path:?}. Does output dir exist?"
                         ))
                     },
                 )?;
@@ -588,7 +600,7 @@ async fn main() -> anyhow::Result<()> {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
 
-            let filter = ReportFilter::new().id(EqualFilter::equal_to(&id));
+            let filter = ReportFilter::new().id(EqualFilter::equal_to(id.to_string()));
             let existing_report = ReportRepository::new(&con).query_by_filter(filter)?.pop();
 
             let argument_schema_id =
@@ -602,7 +614,7 @@ async fn main() -> anyhow::Result<()> {
                 }
                 (Some(arguments_path), Some(arguments_ui_path)) => {
                     Some(schema_from_row(FormSchemaRow {
-                        id: argument_schema_id.unwrap_or(format!("for_report_{}", id)),
+                        id: argument_schema_id.unwrap_or(format!("for_report_{id}")),
                         r#type: "reportArgument".to_string(),
                         json_schema: fs::read_to_string(arguments_path)?,
                         ui_schema: fs::read_to_string(arguments_ui_path)?,
@@ -702,7 +714,7 @@ async fn main() -> anyhow::Result<()> {
 
             let report_generate_data = ReportGenerateData {
                 report: report_json,
-                config: config,
+                config,
                 store_id: Some(test_config.store_id),
                 store_name: None,
                 output_filename: Some(output_name.clone()),
@@ -715,14 +727,20 @@ async fn main() -> anyhow::Result<()> {
             // spawn blocking used to prevent the following error: "Cannot drop a runtime in a context where blocking is not allowed"
             spawn_blocking(|| generate_report_inner(report_generate_data))
                 .await?
-                .map_err(|e| ReportError::FailedToGenerateReport(path, e.into()))?;
+                .map_err(|e| ReportError::FailedToGenerateReport(path, e))?;
 
             let generated_file_path = current_dir()?.join(&output_name);
-
-            Command::new("open")
+            #[cfg(windows)]
+            Command::new("cmd")
+                .args(["/C", "start"])
                 .arg(generated_file_path.clone())
                 .status()
                 .expect(&format!("failed to open file {:?}", generated_file_path));
+            #[cfg(not(windows))]
+            Command::new("open")
+                .arg(generated_file_path.clone())
+                .status()
+                .unwrap_or_else(|_| panic!("{}", "failed to open file {generated_file_path:?}"));
         }
         Action::ToggleReport {
             code,
@@ -733,12 +751,9 @@ async fn main() -> anyhow::Result<()> {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
 
-            let mut filter = ReportFilter::new().code(EqualFilter::equal_to(&code));
-            match is_custom {
-                Some(value) => {
-                    filter = filter.is_custom(value);
-                }
-                None => {}
+            let mut filter = ReportFilter::new().code(EqualFilter::equal_to(code.to_owned()));
+            if let Some(value) = is_custom {
+                filter = filter.is_custom(value);
             }
 
             let report_list = ReportRepository::new(&con).query_by_filter(filter)?;
@@ -773,6 +788,38 @@ async fn main() -> anyhow::Result<()> {
             skip_prettify,
         } => {
             generate_plugin_typescript_types(path, skip_prettify)?;
+        }
+        Action::TestConnection {
+            username,
+            password,
+            log_level,
+        } => {
+            let credentials = TestCredentials {
+                username: username.unwrap_or_default(),
+                password: password.unwrap_or_default(),
+            };
+            let mut test_data = TestData {
+                server_config: None,
+                sync_api_v5: None,
+                credentials,
+            };
+            let tests = all_tests();
+            let current_log_level = log::max_level();
+            // Set log level, defaults to off to suppress noise
+            log::set_max_level(log_level);
+
+            for test in &tests {
+                println!();
+                println!("Running {} test...", test.name());
+                match test.run(&mut test_data).await {
+                    Ok(msg) => println!("{} {}: {}", "[PASS]".green(), test.name(), msg),
+                    Err(err) => {
+                        println!("{} {}: {}", "[FAIL]".red(), test.name(), err);
+                    }
+                }
+            }
+
+            log::set_max_level(current_log_level);
         }
         #[cfg(feature = "integration_test")]
         Action::LoadTest(LoadTest {

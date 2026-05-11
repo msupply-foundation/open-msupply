@@ -6,6 +6,7 @@ import {
   DetailSection,
   Grid,
   CurrencyInput,
+  Checkbox,
 } from '@openmsupply-client/common';
 import { ItemFragment } from '../../api';
 
@@ -43,7 +44,19 @@ export const StoreTab = ({ item }: { item: ItemFragment }) => {
         flexDirection="column"
         style={{ maxWidth: 500 }}
         gap={4}
-      ></Grid>
+      >
+        <DetailSection title={t('title.ordering')}>
+          <DetailInputWithLabelRow
+            label={t('label.ignore-for-orders')}
+            Input={
+              <Checkbox
+                disabled={isDisabled}
+                checked={item?.itemStoreProperties?.ignoreForOrders}
+              />
+            }
+          />
+        </DetailSection>
+      </Grid>
     </DetailContainer>
   );
 };

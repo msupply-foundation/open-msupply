@@ -3,6 +3,7 @@ use super::StorageConnection;
 use crate::{diesel_macros::apply_equal_filter, item_link, EqualFilter, RepositoryError};
 use diesel::prelude::*;
 
+// This is actually a view in our database, not a table, but diesel treats them both the same.
 table! {
     stock_on_hand (id) {
         id -> Text,
@@ -64,12 +65,14 @@ impl<'a> StockOnHandRepository<'a> {
         }
 
         // Debug diesel query
-        // println!(
+        // log::info!(
         //     "{}",
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        Ok(query.load::<StockOnHandRow>(self.connection.lock().connection())?)
+        let result = query.load::<StockOnHandRow>(self.connection.lock().connection())?;
+
+        Ok(result)
     }
 }
 

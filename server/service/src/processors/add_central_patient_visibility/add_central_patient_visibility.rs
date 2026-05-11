@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use log::debug;
 use repository::{
-    ChangelogFilter, ChangelogRow, ChangelogTableName, EqualFilter, KeyType, NameRowRepository,
-    NameRowType, NameStoreJoinFilter, NameStoreJoinRepository,
+    ChangelogCondition, ChangelogRow, ChangelogTableName, EqualFilter, FilterBuilder, KeyType,
+    NameRowRepository, NameRowType, NameStoreJoinFilter, NameStoreJoinRepository,
 };
 use util::format_error;
 
@@ -70,7 +70,8 @@ impl Processor for AddPatientVisibilityForCentral {
                 );
                 let name_store_join = nsj_repo
                     .query_by_filter(
-                        NameStoreJoinFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+                        NameStoreJoinFilter::new()
+                            .id(EqualFilter::equal_to(changelog.record_id.to_string())),
                     )?
                     .pop()
                     .ok_or(ProcessorError::RecordNotFound(
@@ -93,13 +94,13 @@ impl Processor for AddPatientVisibilityForCentral {
         }
 
         let central_store_ids = ActiveStoresOnSite::get(&ctx.connection)
-            .map_err(|err| ProcessorError::GetActiveStoresOnSiteError(err))?
+            .map_err(ProcessorError::GetActiveStoresOnSiteError)?
             .store_ids();
 
         let patient_visible_on_central = nsj_repo
             .query_by_filter(
                 NameStoreJoinFilter::new()
-                    .name_id(EqualFilter::equal_to(&patient.id))
+                    .name_id(EqualFilter::equal_to(patient.id.to_string()))
                     .store_id(EqualFilter::equal_any(central_store_ids)),
             )?
             .pop()
@@ -133,16 +134,14 @@ impl Processor for AddPatientVisibilityForCentral {
         Ok(Some(result))
     }
 
-    fn changelogs_filter(&self, _ctx: &ServiceContext) -> Result<ChangelogFilter, ProcessorError> {
-        let filter = ChangelogFilter::new().table_name(EqualFilter {
-            equal_any: Some(vec![
-                ChangelogTableName::Name,
-                ChangelogTableName::NameStoreJoin,
-            ]),
-            ..Default::default()
-        });
-
-        Ok(filter)
+    fn changelogs_filter(
+        &self,
+        _ctx: &ServiceContext,
+    ) -> Result<ChangelogCondition::Inner, ProcessorError> {
+        Ok(ChangelogCondition::table_name::any(vec![
+            ChangelogTableName::Name,
+            ChangelogTableName::NameStoreJoin,
+        ]))
     }
 
     fn cursor_type(&self) -> CursorType {

@@ -72,7 +72,7 @@ pub struct LegacyPrefData {
     #[serde(rename = "useConsumptionAndStockFromCustomersForInternalOrders")]
     pub use_consumption_and_stock_from_customers_for_internal_orders: bool,
     #[serde(default)]
-    #[serde(rename = "canLinkRequisitionToSupplierInvoice")]
+    #[serde(rename = "canLinkRequistionToSupplierInvoice")]
     pub manually_link_internal_order_to_inbound_shipment: bool,
     #[serde(default)]
     #[serde(rename = "editPrescribedQuantityOnPrescription")]
@@ -83,6 +83,7 @@ pub struct LegacyPrefData {
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
     Box::new(StorePreferenceTranslation)
+
 }
 
 pub(super) struct StorePreferenceTranslation;
@@ -100,7 +101,7 @@ impl SyncTranslation for StorePreferenceTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyPrefRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyPrefRow>()?;
 
         let LegacyPrefRow { id, r#type, data } = data;
 

@@ -1,19 +1,23 @@
 use chrono::{NaiveDate, Utc};
-
 use repository::{
     location_movement::{LocationMovementFilter, LocationMovementRepository},
     DatetimeFilter, EqualFilter, InvoiceLineFilter, InvoiceLineRepository, LocationMovementRow,
     RepositoryError,
 };
 use repository::{
-    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, StockLineRow, StorageConnection,
+    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow,
+    StorageConnection,
 };
 use util::constants::AVG_NUMBER_OF_DAYS_IN_A_MONTH;
 
 use crate::{
-    invoice::common::{
-        calculate_foreign_currency_total, calculate_total_after_tax,
-        generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
+    invoice::{
+        common::{
+            calculate_foreign_currency_total, calculate_total_after_tax,
+            generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
+        },
+        invoice_date_utils::handle_new_backdated_datetime,
+        stock_effect::{stock_effects, StockEffect},
     },
     store_preference::get_store_preferences,
     NullableUpdate,
@@ -44,12 +48,20 @@ pub(crate) fn generate(
         currency_id: input_currency_id,
         currency_rate: input_currency_rate,
         expected_delivery_date: input_expected_delivery_date,
+        shipping_method_id,
+        backdated_datetime: input_backdated_datetime,
     }: UpdateOutboundShipment,
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdateOutboundShipmentError> {
     let store_preferences = get_store_preferences(connection, store_id)?;
-    let should_update_batches_total_number_of_packs =
-        should_update_batches_total_number_of_packs(&existing_invoice, &input_status);
+    let new_status = UpdateOutboundShipmentStatus::full_status_option(&input_status);
+    let should_update_batches_total_number_of_packs = match &new_status {
+        Some(to) => {
+            stock_effects(&InvoiceType::OutboundShipment, &existing_invoice.status, to)
+                == StockEffect::ReduceStock
+        }
+        None => false,
+    };
     let mut update_invoice = existing_invoice.clone();
 
     set_new_status_datetime(&mut update_invoice, &input_status);
@@ -65,9 +77,21 @@ pub(crate) fn generate(
         .unwrap_or(update_invoice.tax_percentage);
     update_invoice.currency_id = input_currency_id.or(update_invoice.currency_id);
     update_invoice.currency_rate = input_currency_rate.unwrap_or(update_invoice.currency_rate);
+    update_invoice.shipping_method_id = shipping_method_id
+        .map(|s| s.value)
+        .unwrap_or(update_invoice.shipping_method_id);
 
     if let Some(status) = input_status.clone() {
         update_invoice.status = status.full_status()
+    }
+
+    // Already validated in validate
+    if let Some(backdated_datetime) = input_backdated_datetime {
+        handle_new_backdated_datetime(
+            &mut update_invoice,
+            backdated_datetime.naive_utc(),
+            Utc::now().naive_utc(),
+        );
     }
 
     let expected_delivery_date = calculate_expected_delivery_date(
@@ -101,7 +125,7 @@ pub(crate) fn generate(
         None
     };
 
-    let update_lines = if update_invoice.tax_percentage.is_some() || input_currency_rate.is_some() {
+    let mut update_lines = if update_invoice.tax_percentage.is_some() || input_currency_rate.is_some() {
         Some(generate_update_for_lines(
             connection,
             &update_invoice.id,
@@ -113,7 +137,25 @@ pub(crate) fn generate(
         None
     };
 
-    let lines_to_trim = lines_to_trim(connection, &existing_invoice, &input_status)?;
+    let mut lines_to_trim = lines_to_trim(connection, &existing_invoice, &input_status)?;
+
+    // When backdating, delete all existing lines (they need re-allocation at the new date)
+    // and clear update_lines so deleted lines don't get re-inserted
+    if input_backdated_datetime.is_some() {
+        update_lines = None;
+        let all_lines = InvoiceLineRepository::new(connection).query_by_filter(
+            InvoiceLineFilter::new()
+                .invoice_id(EqualFilter::equal_to(existing_invoice.id.clone())),
+        )?;
+        if !all_lines.is_empty() {
+            let backdate_lines: Vec<InvoiceLineRow> =
+                all_lines.into_iter().map(|l| l.invoice_line_row).collect();
+            match &mut lines_to_trim {
+                Some(existing) => existing.extend(backdate_lines),
+                None => lines_to_trim = Some(backdate_lines),
+            }
+        }
+    }
 
     Ok(GenerateResult {
         batches_to_update,
@@ -146,21 +188,6 @@ fn calculate_expected_delivery_date(
     }
 }
 
-fn should_update_batches_total_number_of_packs(
-    invoice: &InvoiceRow,
-    status: &Option<UpdateOutboundShipmentStatus>,
-) -> bool {
-    if let Some(new_invoice_status) = UpdateOutboundShipmentStatus::full_status_option(status) {
-        let invoice_status_index = invoice.status.index();
-        let new_invoice_status_index = new_invoice_status.index();
-
-        new_invoice_status_index >= InvoiceStatus::Picked.index()
-            && invoice_status_index < InvoiceStatus::Picked.index()
-    } else {
-        false
-    }
-}
-
 // If status changed to allocated and above, remove unallocated and empty lines
 fn lines_to_trim(
     connection: &StorageConnection,
@@ -186,14 +213,14 @@ fn lines_to_trim(
 
     let mut lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(&invoice.id))
+            .invoice_id(EqualFilter::equal_to(invoice.id.to_string()))
             .r#type(InvoiceLineType::UnallocatedStock.equal_to()),
     )?;
 
     let mut empty_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(&invoice.id))
-            .number_of_packs(EqualFilter::equal_to_f64(0.0))
+            .invoice_id(EqualFilter::equal_to(invoice.id.to_string()))
+            .number_of_packs(EqualFilter::equal_to(0.0))
             .r#type(InvoiceLineType::StockOut.equal_to()),
     )?;
 
@@ -265,7 +292,7 @@ fn generate_update_for_lines(
 ) -> Result<Vec<InvoiceLineRow>, UpdateOutboundShipmentError> {
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(invoice_id))
+            .invoice_id(EqualFilter::equal_to(invoice_id.to_string()))
             .r#type(InvoiceLineType::StockOut.equal_to()),
     )?;
 
@@ -310,10 +337,10 @@ pub fn generate_location_movements(
                         .enter_datetime(DatetimeFilter::is_null(false))
                         .exit_datetime(DatetimeFilter::is_null(true))
                         .location_id(EqualFilter::equal_to(
-                            &batch.location_id.clone().unwrap_or_default(),
+                            batch.location_id.clone().unwrap_or_default().to_owned(),
                         ))
-                        .stock_line_id(EqualFilter::equal_to(&batch.id))
-                        .store_id(EqualFilter::equal_to(store_id)),
+                        .stock_line_id(EqualFilter::equal_to(batch.id.to_string()))
+                        .store_id(EqualFilter::equal_to(store_id.to_string())),
                 )?
                 .into_iter()
                 .map(|l| l.location_movement_row)

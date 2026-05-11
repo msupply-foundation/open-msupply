@@ -1,6 +1,6 @@
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType,
+    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 
 use diesel::prelude::*;
@@ -31,7 +31,6 @@ pub struct PackagingVariantRow {
     pub volume_per_unit: Option<f64>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
 }
-
 pub struct PackagingVariantRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -41,30 +40,25 @@ impl<'a> PackagingVariantRowRepository<'a> {
         PackagingVariantRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &PackagingVariantRow) -> Result<i64, RepositoryError> {
+    fn _upsert_one(&self, row: &PackagingVariantRow) -> Result<(), RepositoryError> {
         diesel::insert_into(packaging_variant::table)
             .values(row)
             .on_conflict(packaging_variant::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-
-        self.insert_changelog(row.id.to_owned(), RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(
-        &self,
-        row_id: String,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::PackagingVariant,
-            record_id: row_id,
-            row_action: action,
-            store_id: None,
-            ..Default::default()
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn upsert_one(&self, row: &PackagingVariantRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = PackagingVariantRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(
@@ -78,7 +72,7 @@ impl<'a> PackagingVariantRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn mark_deleted(&self, packaging_variant_id: &str) -> Result<i64, RepositoryError> {
+    pub fn mark_deleted(&self, packaging_variant_id: &str) -> Result<(), RepositoryError> {
         diesel::update(
             packaging_variant::table.filter(packaging_variant::id.eq(packaging_variant_id)),
         )
@@ -86,14 +80,42 @@ impl<'a> PackagingVariantRowRepository<'a> {
         .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
-        self.insert_changelog(packaging_variant_id.to_owned(), RowActionType::Upsert)
+        let changelog = PackagingVariantRow::generate_changelog(
+            packaging_variant_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PackagingVariantRow>, RepositoryError> {
+        Ok(packaging_variant::table
+            .filter(packaging_variant::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 
 impl Upsert for PackagingVariantRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = PackagingVariantRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        PackagingVariantRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

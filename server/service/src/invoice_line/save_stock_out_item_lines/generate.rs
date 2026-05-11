@@ -4,12 +4,17 @@ use repository::{
 };
 use util::uuid;
 
-use crate::invoice_line::{
-    outbound_shipment_unallocated_line::{
-        DeleteOutboundShipmentUnallocatedLine, InsertOutboundShipmentUnallocatedLine,
-        UpdateOutboundShipmentUnallocatedLine,
+use crate::{
+    invoice_line::{
+        outbound_shipment_unallocated_line::{
+            DeleteOutboundShipmentUnallocatedLine, InsertOutboundShipmentUnallocatedLine,
+            UpdateOutboundShipmentUnallocatedLine,
+        },
+        stock_out_line::{
+            DeleteStockOutLine, InsertStockOutLine, StockOutType, UpdateStockOutLine,
+        },
     },
-    stock_out_line::{DeleteStockOutLine, InsertStockOutLine, StockOutType, UpdateStockOutLine},
+    NullableUpdate,
 };
 
 use super::{SaveStockOutInvoiceLine, SaveStockOutItemLines, SaveStockOutItemLinesError};
@@ -54,8 +59,8 @@ pub fn generate(
 
     let existing_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .item_id(EqualFilter::equal_to(&item_id))
-            .invoice_id(EqualFilter::equal_to(&invoice_id)),
+            .item_id(EqualFilter::equal_to(item_id.to_string()))
+            .invoice_id(EqualFilter::equal_to(invoice_id.to_string())),
     )?;
 
     // The frontend generates ids for each line, however, if we already have a line with the same
@@ -87,8 +92,8 @@ pub fn generate(
                 stock_line_id,
                 number_of_packs,
                 vvm_status_id,
-                campaign_id,
-                program_id,
+                campaign_id: Some(NullableUpdate { value: campaign_id }),
+                program_id: Some(NullableUpdate { value: program_id }),
                 // Default (use None so the stock line values are used)
                 batch: None,
                 pack_size: None,
@@ -103,6 +108,7 @@ pub fn generate(
                 volume_per_pack: None,
                 item_variant_id: None,
                 donor_id: None,
+                manufacturer_id: None,
             },
         )
         .collect();

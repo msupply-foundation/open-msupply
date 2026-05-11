@@ -57,7 +57,7 @@ impl From<PatientFilterInput> for PatientFilter {
             code_2: f.code_2.map(StringFilter::from),
             first_name: f.first_name.map(StringFilter::from),
             last_name: f.last_name.map(StringFilter::from),
-            gender: f.gender.map(|t| map_filter!(t, |g| GenderRepo::from(g))),
+            gender: f.gender.map(|t| map_filter!(t, GenderRepo::from)),
             date_of_birth: f.date_of_birth.map(DateFilter::from),
             phone: f.phone.map(StringFilter::from),
             address1: f.address1.map(StringFilter::from),
@@ -99,6 +99,7 @@ pub struct EqualFilterGenderType {
     pub equal_to: Option<GenderTypeNode>,
     pub equal_any: Option<Vec<GenderTypeNode>>,
     pub not_equal_to: Option<GenderTypeNode>,
+    pub not_equal_all: Option<Vec<GenderTypeNode>>,
 }
 
 #[Object]
@@ -206,7 +207,7 @@ impl PatientNode {
         let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
 
         let result = loader
-            .load_one(next_of_kin_id.to_owned())
+            .load_one(next_of_kin_id.to_string())
             .await?
             .map(|patient| PatientNode {
                 patient,
@@ -254,7 +255,7 @@ impl PatientNode {
             .map_err(|e| StandardGraphqlError::from_error(&e))?;
         let draft = patient_draft_document(&self.patient, document_data);
         let draft = serde_json::to_value(draft)
-            .map_err(|e| StandardGraphqlError::InternalError(format!("{}", e)).extend())?;
+            .map_err(|e| StandardGraphqlError::InternalError(format!("{e}")).extend())?;
         Ok(Some(draft))
     }
 
@@ -267,7 +268,7 @@ impl PatientNode {
         let filter = filter
             .map(ProgramEnrolmentFilter::from)
             .unwrap_or_default()
-            .patient_id(EqualFilter::equal_to(&self.patient.id));
+            .patient_id(EqualFilter::equal_to(self.patient.id.to_string()));
 
         let nodes: Vec<_> = ctx
             .service_provider()
@@ -305,7 +306,7 @@ impl PatientNode {
         let context = service_provider.basic_context()?;
 
         let mut filter = filter.map(|f| f.to_domain_filter()).unwrap_or_default();
-        filter.patient_id = Some(EqualFilter::equal_to(&self.patient.id));
+        filter.patient_id = Some(EqualFilter::equal_to(self.patient.id.to_string()));
         let result = service_provider
             .contact_trace_service
             .contact_traces(

@@ -1,15 +1,15 @@
 use repository::{
-    asset_property_row::{AssetPropertyRow, AssetPropertyRowRepository},
+    asset_property_row::AssetPropertyRow,
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    Row,
+
 };
 
+use crate::sync::translations::asset_catalogue_type::AssetCatalogueTypeTranslation;
 use crate::sync::translations::asset_category::AssetCategoryTranslation;
 use crate::sync::translations::asset_class::AssetClassTranslation;
-use crate::sync::translations::asset_type::AssetTypeTranslation;
 
-use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -28,7 +28,7 @@ impl SyncTranslation for AssetPropertyTranslation {
         vec![
             AssetClassTranslation.table_name(),
             AssetCategoryTranslation.table_name(),
-            AssetTypeTranslation.table_name(),
+            AssetCatalogueTypeTranslation.table_name(),
         ]
     }
 
@@ -37,9 +37,9 @@ impl SyncTranslation for AssetPropertyTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_str::<
+        Ok(PullTranslateResult::upsert(serde_json::from_value::<
             AssetPropertyRow,
-        >(&sync_record.data)?))
+        >(sync_record.data.0.clone())?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -62,21 +62,17 @@ impl SyncTranslation for AssetPropertyTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = AssetPropertyRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "AssetProperty row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::AssetProperty(asset_property_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(row)?,
-        ))
+        let row = asset_property_row;
+
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
     }
 }
 

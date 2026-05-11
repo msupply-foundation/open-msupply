@@ -1,13 +1,12 @@
 use super::asset_log_reason_row::asset_log_reason::dsl::*;
 
 use crate::asset_log_row::AssetLogStatus;
-use crate::ChangeLogInsertRow;
 use crate::ChangelogRepository;
-use crate::ChangelogTableName;
 use crate::RepositoryError;
 use crate::RowActionType;
+use crate::SourceSiteId;
 use crate::StorageConnection;
-use crate::Upsert;
+use crate::{ChangelogSyncType, Upsert};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -19,6 +18,7 @@ table! {
         asset_log_status -> crate::db_diesel::assets::asset_log_row::AssetLogStatusMapping,
         reason -> Text,
         deleted_datetime -> Nullable<Timestamp>,
+        comments_required -> Bool,
     }
 }
 
@@ -31,8 +31,8 @@ pub struct AssetLogReasonRow {
     pub asset_log_status: AssetLogStatus,
     pub reason: String,
     pub deleted_datetime: Option<NaiveDateTime>,
+    pub comments_required: bool,
 }
-
 pub struct AssetLogReasonRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -58,26 +58,15 @@ impl<'a> AssetLogReasonRowRepository<'a> {
     pub fn upsert_one(
         &self,
         asset_log_reason_row: &AssetLogReasonRow,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         self._upsert_one(asset_log_reason_row)?;
-        // Return the changelog id
-        self.insert_changelog(asset_log_reason_row.id.to_owned(), RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        asset_log_id: String,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::AssetLogReason,
-            record_id: asset_log_id,
-            row_action: action,
-            store_id: None,
-            name_link_id: None,
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+        let changelog = AssetLogReasonRow::generate_changelog(
+            asset_log_reason_row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_all(&self) -> Result<Vec<AssetLogReasonRow>, RepositoryError> {
@@ -101,16 +90,41 @@ impl<'a> AssetLogReasonRowRepository<'a> {
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
 
-        let _cursor_id =
-            self.insert_changelog(asset_log_reason_id.to_owned(), RowActionType::Delete);
+        let changelog = AssetLogReasonRow::generate_changelog(
+            asset_log_reason_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
         Ok(())
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AssetLogReasonRow>, RepositoryError> {
+        Ok(asset_log_reason::table
+            .filter(asset_log_reason::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 
 impl Upsert for AssetLogReasonRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = AssetLogReasonRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        AssetLogReasonRowRepository::new(con)._upsert_one(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

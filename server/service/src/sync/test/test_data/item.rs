@@ -3,8 +3,8 @@ use crate::sync::{
     translations::item::ordered_simple_json,
 };
 use repository::{
-    category_row::CategoryRow, item_category_row::ItemCategoryJoinRow, mock::MockData, ItemRow,
-    ItemRowDelete, ItemType, SyncAction, SyncBufferRow,
+    category_row::CategoryRow, item_category_row::ItemCategoryJoinRow, mock::MockData,
+    sync_buffer::SyncRecordData, ItemRow, ItemRowDelete, ItemType, SyncAction, SyncBufferRow,
 };
 
 const TABLE_NAME: &str = "item";
@@ -253,8 +253,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             (ITEM_1.0, &ordered_simple_json(ITEM_1.1).unwrap()),
             ItemRow {
                 id: ITEM_1.0.to_owned(),
-                name: "Non stock items".to_owned(),
-                code: "NSI".to_owned(),
+                name: "Non stock items".to_string(),
+                code: "NSI".to_string(),
                 unit_id: None,
                 r#type: ItemType::NonStock,
                 legacy_record: ordered_simple_json(ITEM_1.1).unwrap(),
@@ -270,9 +270,9 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             (ITEM_2.0, &ordered_simple_json(ITEM_2.1).unwrap()),
             ItemRow {
                 id: ITEM_2.0.to_owned(),
-                name: "Non stock items 2".to_owned(),
-                code: "NSI".to_owned(),
-                unit_id: Some("A02C91EB6C77400BA783C4CD7C565F29".to_owned()),
+                name: "Non stock items 2".to_string(),
+                code: "NSI".to_string(),
+                unit_id: Some("A02C91EB6C77400BA783C4CD7C565F29".to_string()),
                 r#type: ItemType::Stock,
                 legacy_record: ordered_simple_json(ITEM_2.1).unwrap(),
                 default_pack_size: 2.0,
@@ -286,9 +286,9 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             translated_record: PullTranslateResult::IntegrationOperations(vec![
                 IntegrationOperation::upsert(ItemRow {
                     id: ITEM_3_VACCINE.0.to_owned(),
-                    name: "Covid-19 Vaccine".to_owned(),
-                    code: "Covid19-Pfizer-BioNTech".to_owned(),
-                    unit_id: Some("97674EFD5DFD4D8CABCAF58AAB4ED054".to_owned()),
+                    name: "Covid-19 Vaccine".to_string(),
+                    code: "Covid19-Pfizer-BioNTech".to_string(),
+                    unit_id: Some("97674EFD5DFD4D8CABCAF58AAB4ED054".to_string()),
                     r#type: ItemType::Stock,
                     legacy_record: ordered_simple_json(ITEM_3_VACCINE.1).unwrap(),
                     default_pack_size: 1.0,
@@ -296,8 +296,9 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     is_vaccine: true,
                     vaccine_doses: 1,
                     restricted_location_type_id: Some(
-                        "84AA2B7A18694A2AB1E84DCABAD19617".to_owned(),
+                        "84AA2B7A18694A2AB1E84DCABAD19617".to_string(),
                     ),
+                    universal_code: Some("3fd9b240c".to_string()),
                     ..Default::default()
                 }),
                 IntegrationOperation::upsert(ItemCategoryJoinRow {
@@ -305,21 +306,21 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                         "{}-{}",
                         ITEM_3_VACCINE.0, "FA6FC67251CC4560AC7FED0C0B23E5A0"
                     ),
-                    item_id: ITEM_3_VACCINE.0.to_owned(),
-                    category_id: "FA6FC67251CC4560AC7FED0C0B23E5A0".to_owned(),
+                    item_link_id: ITEM_3_VACCINE.0.to_owned(),
+                    category_id: "FA6FC67251CC4560AC7FED0C0B23E5A0".to_string(),
                     deleted_datetime: None,
                 }),
             ]),
             sync_buffer_row: SyncBufferRow {
                 table_name: TABLE_NAME.to_string(),
                 record_id: ITEM_3_VACCINE.0.to_owned(),
-                data: ITEM_3_VACCINE.1.to_owned(),
+                data: SyncRecordData(serde_json::from_str(ITEM_3_VACCINE.1).unwrap()),
                 action: SyncAction::Upsert,
                 ..Default::default()
             },
             extra_data: Some(MockData {
                 categories: vec![CategoryRow {
-                    id: "FA6FC67251CC4560AC7FED0C0B23E5A0".to_owned(),
+                    id: "FA6FC67251CC4560AC7FED0C0B23E5A0".to_string(),
                     ..Default::default()
                 }],
                 ..Default::default()

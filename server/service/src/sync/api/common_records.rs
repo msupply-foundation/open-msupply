@@ -1,5 +1,7 @@
 use chrono::Utc;
-use repository::{ChangelogTableName, SyncAction as SyncActionRepo, SyncBufferRow};
+use repository::{
+    ChangelogTableName, SyncAction as SyncActionRepo, SyncBufferRowInsert, SyncRecordData,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
@@ -69,8 +71,8 @@ pub(crate) struct ParsingSyncRecordError {
 impl CommonSyncRecord {
     fn to_buffer_row(
         self,
-        source_site_id: Option<i32>,
-    ) -> Result<SyncBufferRow, ParsingSyncRecordError> {
+        source_site_id: i32,
+    ) -> Result<SyncBufferRowInsert, ParsingSyncRecordError> {
         let CommonSyncRecord {
             table_name,
             record_id,
@@ -91,25 +93,21 @@ impl CommonSyncRecord {
             _ => record_id,
         };
 
-        Ok(SyncBufferRow {
+        Ok(SyncBufferRowInsert {
             table_name,
             record_id,
             action: action.to_row_action(),
-            data: serde_json::to_string(&data).map_err(|e| ParsingSyncRecordError {
-                source: e,
-                record: data.clone(),
-            })?,
+            data: SyncRecordData(data),
             received_datetime: Utc::now().naive_utc(),
-            integration_datetime: None,
-            integration_error: None,
             source_site_id,
+            ..Default::default()
         })
     }
 
     pub(crate) fn to_buffer_rows(
         rows: Vec<CommonSyncRecord>,
-        source_site_id: Option<i32>,
-    ) -> Result<Vec<SyncBufferRow>, ParsingSyncRecordError> {
+        source_site_id: i32,
+    ) -> Result<Vec<SyncBufferRowInsert>, ParsingSyncRecordError> {
         rows.into_iter()
             .map(|r| r.to_buffer_row(source_site_id))
             .collect()
@@ -137,7 +135,7 @@ impl CommonSyncRecord {
 // tests
 #[cfg(test)]
 mod tests {
-    use repository::{mock::MockDataInserts, test_db::setup_all, SyncBufferRowRepository};
+    use repository::{mock::MockDataInserts, test_db::setup_all, SyncBufferRepository};
 
     use crate::sync::translations::special::item_merge::ItemMergeMessage;
 
@@ -152,11 +150,11 @@ mod tests {
             record_data: json!({}),
         };
 
-        let row = record.to_buffer_row(None).unwrap();
+        let row = record.to_buffer_row(0).unwrap();
         assert_eq!(row.table_name, "test");
         assert_eq!(row.record_id, "test");
         assert_eq!(row.action, SyncActionRepo::Upsert);
-        assert_eq!(row.data, "{}");
+        assert_eq!(row.data, SyncRecordData(json!({})));
     }
 
     #[actix_rt::test]
@@ -211,7 +209,7 @@ mod tests {
                     }),
                 },
             ],
-            None, /* Source Site Id */
+            0, /* Source Site Id */
         )
         .unwrap();
 
@@ -221,8 +219,8 @@ mod tests {
         )
         .await;
 
-        let sync_buffer_repository = SyncBufferRowRepository::new(&connection);
-        sync_buffer_repository.upsert_many(&batch).unwrap();
+        let sync_buffer_repository = SyncBufferRepository::new(&connection);
+        sync_buffer_repository.insert_many(&batch).unwrap();
 
         let row = sync_buffer_repository
             .find_one_by_record_id("itemB")
@@ -230,24 +228,24 @@ mod tests {
             .unwrap();
         assert_eq!(row.action, SyncActionRepo::Upsert);
 
-        // ItemB Upsert + Two Upserts for itemA should should be only be persisted as one + ItemB->ItemA Merge
+        // With insert_many (no upsert dedup) all 4 records are persisted as distinct rows
         let rows = sync_buffer_repository.get_all().unwrap();
-        assert_eq!(rows.len(), 3);
+        assert_eq!(rows.len(), 4);
 
-        // Just one update for item A
+        // Two upsert rows for itemA (Insert + Update both map to Upsert)
         assert_eq!(
             rows.iter()
                 .filter(|r| r.record_id == "itemA" && r.action == SyncActionRepo::Upsert)
                 .collect::<Vec<_>>()
                 .len(),
-            1
+            2
         );
 
         // Merge for itemA
         assert_eq!(
             rows.iter()
                 .filter(|r| r.action == SyncActionRepo::Merge
-                    && serde_json::from_str::<ItemMergeMessage>(&r.data)
+                    && serde_json::from_value::<ItemMergeMessage>(r.data.0.clone())
                         .unwrap()
                         .merge_id_to_keep
                         == "itemA")

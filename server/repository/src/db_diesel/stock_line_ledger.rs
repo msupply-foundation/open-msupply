@@ -43,6 +43,7 @@ table! {
         sell_price_per_pack -> Double,
         total_before_tax -> Nullable<Double>,
         number_of_packs -> Double,
+        user_id -> Nullable<Text>,
         running_balance -> Double,
     }
 }
@@ -68,6 +69,7 @@ pub struct StockLineLedgerRow {
     pub sell_price_per_pack: f64,
     pub total_before_tax: Option<f64>,
     pub number_of_packs: f64,
+    pub user_id: Option<String>,
     /// The running balance for the stock line at the time of this ledger entry
     pub running_balance: f64,
 }
@@ -211,9 +213,10 @@ fn create_filtered_query(filter: Option<StockLineLedgerFilter>) -> BoxedLedgerQu
         apply_date_time_filter!(query, datetime, stock_line_ledger::datetime);
 
         if let Some(master_list_id) = master_list_id {
-            let item_ids = MasterListLineRepository::create_filtered_query(Some(
-                MasterListLineFilter::new().master_list_id(master_list_id),
-            ))
+            let item_ids = MasterListLineRepository::create_filtered_query(
+                Some(MasterListLineFilter::new().master_list_id(master_list_id)),
+                None,
+            )
             .unwrap()
             .select(item::id);
 
@@ -255,7 +258,7 @@ mod tests {
 
         let repo = StockLineLedgerRepository::new(&storage_connection);
         let filter = StockLineLedgerFilter::new()
-            .stock_line_id(EqualFilter::equal_to("ledger_stock_line_a"));
+            .stock_line_id(EqualFilter::equal_to("ledger_stock_line_a".to_string()));
         let sort = StockLineLedgerSort {
             key: StockLineLedgerSortField::Datetime,
             desc: Some(true),

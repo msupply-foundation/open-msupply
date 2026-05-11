@@ -26,7 +26,6 @@ import {
   FORM_LABEL_WIDTH,
   useZodOptionsValidation,
 } from '../common';
-import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError';
 import { PickersActionBarAction } from '@mui/x-date-pickers';
 
 const Options = z
@@ -53,16 +52,14 @@ type Options = z.input<typeof Options>;
 export const dateOfBirthTester = rankWith(10, uiTypeIs('DateOfBirth'));
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, path, uischema, errors } = props;
+  const { data, handleChange, label, path, uischema, errors, config } = props;
   const [age, setAge] = React.useState<number | undefined>();
   const [dob, setDoB] = React.useState<Date | null>(null);
   const t = useTranslation();
   const formatDateTime = useFormatDateTime();
   const { options } = useZodOptionsValidation(Options, uischema.options);
-  const { customError, setCustomError } = useJSONFormsCustomError(
-    path,
-    'Date of Birth'
-  );
+
+  const { customErrors } = config;
 
   const actions: PickersActionBarAction[] = options?.hideClear
     ? ['accept']
@@ -82,7 +79,7 @@ const UIComponent = (props: ControlProps) => {
       handleChange(dobPath, null); // required for validation to fire
       return;
     }
-    setCustomError(undefined);
+    customErrors.remove(path);
     setAge(DateUtils.age(dateOfBirth));
     setDoB(dateOfBirth);
     handleChange(dobPath, formatDateTime.customDate(dateOfBirth, 'yyyy-MM-dd'));
@@ -94,12 +91,18 @@ const UIComponent = (props: ControlProps) => {
     setDoB(dob);
     handleChange(dobPath, formatDateTime.customDate(dob, 'yyyy-MM-dd'));
     handleChange(estimatedPath, true);
-    setCustomError(undefined);
+    customErrors.remove(path);
     setAge(newAge);
   };
 
   useEffect(() => {
     if (!data) return;
+
+    // Okay to reset error if data externally updated, as the "invalid" won't be
+    // added to data -- this ensures that the error state disappears if the data
+    // is reset (by changing another field)
+    customErrors.remove(path);
+
     const naiveDoB = DateUtils.getNaiveDate(
       data[options?.dobFieldName ?? 'dateOfBirth']
     );
@@ -139,9 +142,9 @@ const UIComponent = (props: ControlProps) => {
             disableFuture
             disabled={!props.enabled}
             onError={validationError =>
-              setCustomError(validationError ?? undefined)
+              customErrors.add(path, validationError || 'Invalid date')
             }
-            error={customError || errors}
+            error={errors}
             actions={actions}
           />
 

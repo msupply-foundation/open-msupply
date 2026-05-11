@@ -7,6 +7,7 @@ import {
 import {
   useRequest,
   RequestLineFragment,
+  ItemWithAvailableStockFragment,
   ItemWithStatsFragment,
   RequestFragment,
 } from '../../api';
@@ -35,7 +36,7 @@ const createDraftFromItem = (
     id: FnUtils.generateUUID(),
     requisitionId: request.id,
     itemId: item.id,
-    requestedQuantity: suggested,
+    requestedQuantity: 0,
     suggestedQuantity: suggested,
     isCreated: true,
     itemStats: item.stats,
@@ -65,11 +66,11 @@ const createDraftFromRequestLine = (
 });
 
 export const useDraftRequisitionLine = (
-  item?: ItemWithStatsFragment | null
+  item?: ItemWithAvailableStockFragment | ItemWithStatsFragment | null
 ) => {
   const t = useTranslation();
   const [isReasonsError, setIsReasonsError] = useState(false);
-  const { lines } = useRequest.line.list();
+  const { lines } = useRequest.line.list(item?.id);
   const { data } = useRequest.document.get();
   const { mutateAsync: saveMutation, isLoading } = useRequest.line.save();
 
@@ -85,13 +86,13 @@ export const useDraftRequisitionLine = (
       );
       if (existingLine) {
         setDraft(createDraftFromRequestLine(existingLine, data));
-      } else {
+      } else if ('stats' in item) {
         setDraft(createDraftFromItem(item, data));
       }
     } else {
       setDraft(null);
     }
-  }, [lines, item, data]);
+  }, [lines, item, data, isReasonsError]);
 
   const update = useCallback((patch: Partial<DraftRequestLine>) => {
     setDraft(current => (current ? { ...current, ...patch } : null));
@@ -142,7 +143,7 @@ export const useDraftRequisitionLine = (
 
 export const useNextRequestLine = (
   lines?: RequestLineFragment[],
-  currentItem?: ItemWithStatsFragment | null
+  currentItem?: ItemWithAvailableStockFragment | null
 ) => {
   if (!lines || !currentItem) {
     return { hasNext: false, next: null };
@@ -150,7 +151,7 @@ export const useNextRequestLine = (
 
   const nextState: {
     hasNext: boolean;
-    next: null | ItemWithStatsFragment;
+    next: null | ItemWithAvailableStockFragment;
   } = { hasNext: true, next: null };
   const idx = lines.findIndex(l => l.item.id === currentItem?.id);
   const next = lines[idx + 1];

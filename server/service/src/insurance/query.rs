@@ -11,7 +11,7 @@ pub fn insurances(
     sort: Option<NameInsuranceJoinSort>,
 ) -> Result<Vec<NameInsuranceJoinRow>, RepositoryError> {
     let patient = PatientRepository::new(connection).query_one(
-        PatientFilter::new().id(EqualFilter::equal_to(name_id)),
+        PatientFilter::new().id(EqualFilter::equal_to(name_id.to_string())),
         None,
     )?;
 
@@ -101,7 +101,7 @@ mod query {
         // Create insurance entries
         let insurance_a = NameInsuranceJoinRow {
             id: "1".to_string(),
-            name_link_id: mock_patient().id.clone(),
+            name_id: mock_patient().id.clone(),
             insurance_provider_id: insurance_provider_a.id.clone(),
             policy_number_person: Some("12345".to_string()),
             policy_number_family: Some("67890".to_string()),
@@ -111,11 +111,12 @@ mod query {
             expiry_date: NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date"),
             is_active: true,
             entered_by_id: Some("4".to_string()),
+            name_of_insured: Some("A".to_string()),
         };
 
         let insurance_b = NameInsuranceJoinRow {
             id: "2".to_string(),
-            name_link_id: mock_patient().id.clone(),
+            name_id: mock_patient().id.clone(),
             insurance_provider_id: insurance_provider_b.id.clone(),
             policy_number_person: Some("54321".to_string()),
             policy_number_family: Some("09876".to_string()),
@@ -125,6 +126,7 @@ mod query {
             expiry_date: NaiveDate::from_ymd_opt(2024, 11, 30).expect("Invalid date"),
             is_active: false,
             entered_by_id: Some("5".to_string()),
+            name_of_insured: Some("B".to_string()),
         };
 
         let insurance_repo = NameInsuranceJoinRowRepository::new(&context.connection);

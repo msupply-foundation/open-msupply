@@ -1,10 +1,10 @@
-import { FilterByWithBoolean } from '@common/hooks';
+import { FilterBy } from '@common/hooks';
 import { Sdk } from './operations.generated';
 
 export type StoreListParams = {
   first?: number;
   offset?: number;
-  filter: FilterByWithBoolean | null;
+  filter: FilterBy | null;
 };
 
 export const getStoreQueries = (sdk: Sdk) => ({

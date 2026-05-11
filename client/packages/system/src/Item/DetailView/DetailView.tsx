@@ -36,12 +36,6 @@ export const ItemDetailView = () => {
   if (isLoading || !data) return <DetailFormSkeleton />;
 
   const onLedgerRowClick = (ledger: ItemLedgerFragment) => {
-    navigate(
-      RouteBuilder.create(AppRoute.Replenishment)
-        .addPart(AppRoute.InboundShipment)
-        .addPart(String(ledger.invoiceId))
-        .build()
-    );
     switch (ledger.invoiceType) {
       case InvoiceNodeType.InboundShipment:
         navigate(

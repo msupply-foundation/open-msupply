@@ -1,12 +1,14 @@
 use crate::sync::translations::{
     invoice_line::InvoiceLineTranslation, stock_line::StockLineTranslation,
     store::StoreTranslation, user::UserTranslation, vvm_status::VVMStatusTranslation,
+
 };
 use anyhow::Error;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    vvm_status::vvm_status_log_row::{VVMStatusLogRow, VVMStatusLogRowRepository},
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    vvm_status::vvm_status_log_row::VVMStatusLogRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{date_to_isostring, empty_str_as_option_string, naive_time};
@@ -76,7 +78,7 @@ impl SyncTranslation for VVMStatusLogTranslation {
             created_by,
             invoice_line_id,
             store_id,
-        } = serde_json::from_str::<LegacyVVMStatusLogRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         let created_datetime = NaiveDateTime::new(date, time);
 
@@ -96,9 +98,14 @@ impl SyncTranslation for VVMStatusLogTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<PushTranslateResult, Error> {
+        row: Row,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::VVMStatusLog(vvm_status_log_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let VVMStatusLogRow {
             id,
             status_id,
@@ -108,12 +115,7 @@ impl SyncTranslation for VVMStatusLogTranslation {
             created_by,
             invoice_line_id,
             store_id,
-        } = VVMStatusLogRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "VVM Status Log row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = vvm_status_log_row;
 
         let legacy_row = LegacyVVMStatusLogRow {
             id,
@@ -127,11 +129,7 @@ impl SyncTranslation for VVMStatusLogTranslation {
             store_id,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 
     fn try_translate_to_delete_sync_record(

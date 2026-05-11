@@ -16,7 +16,8 @@ pub(crate) fn fix(
     operation_log.push_str("Starting adjust_historic_incoming_invoices\n");
 
     let ledger_lines = StockLineLedgerRepository::new(connection).query_by_filter(
-        StockLineLedgerFilter::new().stock_line_id(EqualFilter::equal_to(stock_line_id)),
+        StockLineLedgerFilter::new()
+            .stock_line_id(EqualFilter::equal_to(stock_line_id.to_string())),
     )?;
     let balance_summary = ledger_balance_summary(connection, &ledger_lines, stock_line_id)?;
     let LedgerBalanceSummary {
@@ -31,22 +32,22 @@ pub(crate) fn fix(
 
     if !should_adjust {
         operation_log.push_str(&format!(
-            "Ledger does not match use case for adjust_historic_incoming_invoices {:?}.\n",
-            balance_summary
+            "Ledger does not match use case for adjust_historic_incoming_invoices {balance_summary:?}.\n"
         ));
         return Ok(());
     }
 
     let mut iteration = 0;
     loop {
-        iteration = iteration + 1;
+        iteration += 1;
         if iteration > MAX_ITERATIONS {
             return LedgerFixError::other(
                 "Too many iterations, breaking to avoid infinite loop.\n",
             );
         }
         let ledger_lines = StockLineLedgerRepository::new(connection).query_by_filter(
-            StockLineLedgerFilter::new().stock_line_id(EqualFilter::equal_to(stock_line_id)),
+            StockLineLedgerFilter::new()
+                .stock_line_id(EqualFilter::equal_to(stock_line_id.to_string())),
         )?;
 
         if ledger_lines.is_empty() {
@@ -86,8 +87,7 @@ pub(crate) fn fix(
             (ledger_line_to_adjust, backdate_datetime)
         else {
             operation_log.push_str(&format!(
-                "No invoice to adjust found and backdate date is {:?}.\n",
-                backdate_datetime
+                "No invoice to adjust found and backdate date is {backdate_datetime:?}.\n"
             ));
             break;
         };
@@ -148,12 +148,12 @@ pub(crate) mod test {
     use super::*;
     use crate::{
         ledger_fix::is_ledger_fixed,
-        test_helpers::{
-            make_movements, setup_all_with_data_and_service_provider, ServiceTestContext,
-        },
+        test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
     };
     use repository::{
-        mock::{mock_item_a, mock_store_a, MockData, MockDataInserts},
+        mock::{
+            mock_item_a, mock_store_a, test_helpers::make_movements, MockData, MockDataInserts,
+        },
         KeyValueStoreRepository, StockLineRow,
     };
 
@@ -171,7 +171,7 @@ pub(crate) mod test {
             ..single_historic_negative_balance.clone()
         };
 
-        let mock_data = MockData {
+        MockData {
             stock_lines: vec![
                 single_historic_negative_balance.clone(),
                 multiple_historic_negative_balances.clone(),
@@ -186,9 +186,7 @@ pub(crate) mod test {
         .join(make_movements(
             multiple_historic_negative_balances,
             vec![(3, -2), (5, -5), (7, 6), (25, -1), (30, 2)],
-        ));
-
-        mock_data
+        ))
     }
 
     #[actix_rt::test]

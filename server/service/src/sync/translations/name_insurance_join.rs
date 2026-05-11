@@ -1,36 +1,21 @@
 use chrono::NaiveDate;
 use repository::{
     name_insurance_join_row::{
-        InsurancePolicyType, NameInsuranceJoinRow, NameInsuranceJoinRowRepository,
+        InsurancePolicyType, NameInsuranceJoinRow,
     },
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
-use util::sync_serde::empty_str_as_option_string;
+use util::sync_serde::{empty_str_as_option_string, object_fields_as_option};
 
 use crate::sync::translations::{
     insurance_provider::InsuranceProviderTranslator, name::NameTranslation,
+
 };
 
-use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
-
-/*
-{
-    "ID": "194EDEC801F3457B814EA2549F713DEC",
-    "discountRate": 30,
-    "enteredByID": "",
-    "expiryDate": "2026-01-23",
-    "insuranceProviderID": "3CB14F143AFF4232889615B52EC56A1D",
-    "isActive": true,
-    "nameID": "87E06FEF0D424D9F8F639565E2E54A4A",
-    "policyNumberFamily": "888",
-    "policyNumberFull": "888",
-    "policyNumberPerson": "",
-    "type": "personal"
-}
-*/
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyInsurancePolicyType {
@@ -38,6 +23,13 @@ pub enum LegacyInsurancePolicyType {
     Personal,
     #[serde(rename = "business")]
     Business,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct LegacyNameInsuranceJoinRowOmsFields {
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub name_of_insured: Option<String>,
 }
 
 impl LegacyInsurancePolicyType {
@@ -67,6 +59,9 @@ pub struct LegacyNameInsuranceJoinRow {
     pub policyNumberPerson: Option<String>,
     #[serde(rename = "type")]
     pub policyType: LegacyInsurancePolicyType,
+    #[serde(default)]
+    #[serde(deserialize_with = "object_fields_as_option")]
+    pub oms_fields: Option<LegacyNameInsuranceJoinRowOmsFields>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -108,11 +103,12 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
             policyNumberFull,
             policyNumberPerson,
             policyType,
-        } = serde_json::from_str::<LegacyNameInsuranceJoinRow>(&sync_record.data)?;
+            oms_fields,
+        } = sync_record.deserialize()?;
 
         let result = NameInsuranceJoinRow {
             id: ID,
-            name_link_id: nameID,
+            name_id: nameID,
             insurance_provider_id: insuranceProviderID,
             policy_number_person: policyNumberPerson,
             policy_number_family: policyNumberFamily,
@@ -122,6 +118,7 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
             expiry_date: expiryDate,
             is_active: isActive,
             entered_by_id: enteredByID,
+            name_of_insured: oms_fields.and_then(|f| f.name_of_insured),
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -142,12 +139,17 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
-        changelog: &repository::ChangelogRow,
-    ) -> Result<super::PushTranslateResult, anyhow::Error> {
+        _connection: &StorageConnection,
+        changelog: &ChangelogRow,
+        row: Row,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::NameInsuranceJoin(name_insurance_join_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let NameInsuranceJoinRow {
             id,
-            name_link_id,
+            name_id,
             insurance_provider_id,
             policy_number_person,
             policy_number_family,
@@ -157,18 +159,18 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
             expiry_date,
             is_active,
             entered_by_id,
-        } = NameInsuranceJoinRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or_else(|| {
-                anyhow::Error::msg(format!(
-                    "NameInsuranceJoin row ({}) not found",
-                    changelog.record_id
-                ))
-            })?;
+            name_of_insured,
+        } = name_insurance_join_row;
+
+        let oms_fields = if name_of_insured.is_some() {
+            Some(LegacyNameInsuranceJoinRowOmsFields { name_of_insured })
+        } else {
+            None
+        };
 
         let legacy_row = LegacyNameInsuranceJoinRow {
             ID: id,
-            nameID: name_link_id,
+            nameID: name_id,
             insuranceProviderID: insurance_provider_id,
             discountRate: discount_percentage,
             enteredByID: entered_by_id,
@@ -181,13 +183,10 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
                 InsurancePolicyType::Personal => LegacyInsurancePolicyType::Personal,
                 InsurancePolicyType::Business => LegacyInsurancePolicyType::Business,
             },
+            oms_fields,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 }
 

@@ -178,11 +178,7 @@ impl ProgramsQueries {
         let service_provider = ctx.service_provider();
         let context = service_provider.basic_context()?;
 
-        let sync_settings = service_provider.settings.sync_settings(&context)?.ok_or(
-            StandardGraphqlError::InternalError("Missing sync settings".to_string()).extend(),
-        )?;
-
-        let result = patient_search_central(&sync_settings, input.to_domain()).await;
+        let result = patient_search_central(service_provider, &context, input.to_domain()).await;
         map_central_patient_search_result(result)
     }
 

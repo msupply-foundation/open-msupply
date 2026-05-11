@@ -3,7 +3,7 @@ import { ButtonProps } from '@mui/material';
 import { ButtonWithIcon } from './ButtonWithIcon';
 import { PlusCircleIcon } from '@common/icons';
 import { useRegisterActions } from 'kbar';
-import { EnvUtils } from '@common/utils';
+import { ALT_KEY } from '@common/utils';
 
 export interface AddButtonProps extends ButtonProps {
   onClick: () => void;
@@ -30,12 +30,10 @@ export const AddButton = React.forwardRef<HTMLButtonElement, AddButtonProps>(
     },
     ref
   ) => {
-    const altOrOptionString = EnvUtils.os === 'Mac OS' ? 'Option' : 'Alt';
-
     useRegisterActions([
       {
         id: 'add',
-        name: `${label} (${altOrOptionString}+N)`,
+        name: `${label} (${ALT_KEY}+N)`,
         shortcut: ['Alt+KeyN'],
         perform: onClick,
       },

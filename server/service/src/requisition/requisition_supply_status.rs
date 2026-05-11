@@ -101,4 +101,11 @@ impl RequisitionLineSupplyStatus {
             .filter(|status| status.remaining_quantity() > 0.0)
             .collect()
     }
+
+    pub fn requested_minus_supply_quantity(&self) -> f64 {
+        self.requisition_line
+            .requisition_line_row
+            .requested_quantity
+            - self.requisition_line.requisition_line_row.supply_quantity
+    }
 }

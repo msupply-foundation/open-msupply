@@ -16,7 +16,8 @@ pub(crate) fn fix(
     operation_log.push_str("Starting adjust_all_to_match_available\n");
 
     let ledger_lines = StockLineLedgerRepository::new(connection).query_by_filter(
-        StockLineLedgerFilter::new().stock_line_id(EqualFilter::equal_to(stock_line_id)),
+        StockLineLedgerFilter::new()
+            .stock_line_id(EqualFilter::equal_to(stock_line_id.to_string())),
     )?;
 
     let balance_summary = ledger_balance_summary(connection, &ledger_lines, stock_line_id)?;
@@ -35,8 +36,7 @@ pub(crate) fn fix(
 
     if !should_adjust {
         operation_log.push_str(&format!(
-            "Ledger does not match use case for adjust_all_to_match_available {:?}.\n",
-            balance_summary
+            "Ledger does not match use case for adjust_all_to_match_available {balance_summary:?}.\n"
         ));
         return Ok(());
     }
@@ -77,12 +77,12 @@ pub(crate) mod test {
     use super::*;
     use crate::{
         ledger_fix::is_ledger_fixed,
-        test_helpers::{
-            make_movements, setup_all_with_data_and_service_provider, ServiceTestContext,
-        },
+        test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
     };
     use repository::{
-        mock::{mock_item_a, mock_store_a, MockData, MockDataInserts},
+        mock::{
+            mock_item_a, mock_store_a, test_helpers::make_movements, MockData, MockDataInserts,
+        },
         InvoiceStatus, KeyValueStoreRepository, StockLineRow,
     };
 
@@ -119,7 +119,12 @@ pub(crate) mod test {
     async fn adjust_all_to_match_available_test() {
         let ServiceTestContext { connection, .. } = setup_all_with_data_and_service_provider(
             "adjust_all_to_match_available",
-            MockDataInserts::none().names().stores().units().items(),
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .units()
+                .items()
+                .currencies(),
             mock_data(),
         )
         .await;
@@ -154,7 +159,7 @@ pub(crate) mod test {
             StockLineLedgerRepository::new(&connection)
                 .query_by_filter(
                     StockLineLedgerFilter::new()
-                        .stock_line_id(EqualFilter::equal_to("nothing_matches"))
+                        .stock_line_id(EqualFilter::equal_to("nothing_matches".to_string()))
                 )
                 .unwrap()
                 .into_iter()

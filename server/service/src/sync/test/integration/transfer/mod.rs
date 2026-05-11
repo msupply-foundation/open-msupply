@@ -5,7 +5,7 @@ use super::{
     central_server_configurations::{ConfigureCentralServer, SiteConfiguration},
     create_site, init_test_context, FullSiteConfig,
 };
-use crate::{service_provider::ServiceProvider, sync::synchroniser::Synchroniser};
+use crate::{service_provider::ServiceProvider, sync::synchroniser::SynchroniserV5V6};
 use repository::{CurrencyRow, ItemRow, ItemType, StorageConnection, StoreRow, StoreRowRepository};
 use serde_json::json;
 use std::{sync::Arc, time::Duration};
@@ -17,7 +17,7 @@ struct SiteContext {
     service_provider: Arc<ServiceProvider>,
     store: StoreRow,
     config: SiteConfiguration,
-    synchroniser: Synchroniser,
+    synchroniser: SynchroniserV5V6,
 }
 
 struct SyncIntegrationTransferContext {

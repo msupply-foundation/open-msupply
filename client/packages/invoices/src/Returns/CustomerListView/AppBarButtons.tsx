@@ -1,35 +1,36 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
-  DownloadIcon,
   PlusCircleIcon,
   AppBarButtonsPortal,
   ButtonWithIcon,
   Grid,
   useTranslation,
-  LoadingButton,
   ToggleState,
   useNotification,
   FnUtils,
-  UserPermission,
-  useCallbackWithPermission,
   useNavigate,
   RouteBuilder,
-  useExportCSV,
-  usePreferences,
 } from '@openmsupply-client/common';
-import { CustomerSearchModal } from '@openmsupply-client/system';
+import {
+  CustomerSearchModal,
+  ExportSelector,
+} from '@openmsupply-client/system';
 import { useReturns } from '../api';
 import { customerReturnsToCsv } from '../../utils';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 
-export const AppBarButtonsComponent: FC<{
+interface AppBarButtonsProps {
   modalController: ToggleState;
-}> = ({ modalController }) => {
+  onNew: () => void;
+}
+
+export const AppBarButtonsComponent = ({
+  modalController,
+  onNew,
+}: AppBarButtonsProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { error, info } = useNotification();
-  const exportCSV = useExportCSV();
-  const { disableManualReturns } = usePreferences();
+  const { error } = useNotification();
 
   const { mutateAsync: onCreate } = useReturns.document.insertCustomerReturn();
   const { fetchAsync, isLoading } = useReturns.document.listAllCustomer({
@@ -38,27 +39,9 @@ export const AppBarButtonsComponent: FC<{
     isDesc: true,
   });
 
-  const csvExport = async () => {
+  const getCsvData = async () => {
     const data = await fetchAsync();
-    if (!data || !data?.nodes.length) {
-      error(t('error.no-data'))();
-      return;
-    }
-    const csv = customerReturnsToCsv(data.nodes, t);
-    exportCSV(csv, t('filename.customer-returns'));
-  };
-
-  const openModal = useCallbackWithPermission(
-    UserPermission.CustomerReturnMutate,
-    modalController.toggleOn
-  );
-
-  const handleClick = (): void => {
-    if (disableManualReturns) {
-      info(t('messages.manual-returns-preferences-disabled'))();
-      return;
-    }
-    openModal();
+    return data?.nodes?.length ? customerReturnsToCsv(data.nodes, t) : null;
   };
 
   return (
@@ -67,14 +50,12 @@ export const AppBarButtonsComponent: FC<{
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-return')}
-          onClick={handleClick}
+          onClick={onNew}
         />
-        <LoadingButton
-          startIcon={<DownloadIcon />}
+        <ExportSelector
+          getCsvData={getCsvData}
+          filename={t('filename.customer-returns')}
           isLoading={isLoading}
-          variant="outlined"
-          onClick={csvExport}
-          label={t('button.export')}
         />
       </Grid>
       <CustomerSearchModal

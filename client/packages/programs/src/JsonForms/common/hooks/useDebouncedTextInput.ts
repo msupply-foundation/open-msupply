@@ -57,7 +57,7 @@ export const useDebouncedTextInput = (
     if (Date.now() > latestKey.current + 500) setText(data);
   }, [data]);
 
-  const onChange = (value: string) => {
+  const onChange = (value: string | undefined) => {
     latestKey.current = Date.now();
     setText(value);
   };

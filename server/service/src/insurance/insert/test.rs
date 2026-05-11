@@ -40,7 +40,7 @@ mod insert {
         // Insert the insurance record
         let input = InsertInsurance {
             id: "insurance_a".to_string(),
-            name_link_id: mock_name_a().id.clone(),
+            name_id: mock_name_a().id.clone(),
             insurance_provider_id: "insurance_provider_id".to_string(),
             policy_number_family: "123".to_string(),
             policy_number_person: "ABC".to_string(),
@@ -48,6 +48,7 @@ mod insert {
             discount_percentage: 10.0,
             expiry_date: NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date"),
             is_active: true,
+            name_of_insured: Some("D".to_string()),
         };
 
         let result = service.insert_insurance(&context, input.clone()).unwrap();
@@ -84,7 +85,7 @@ mod insert {
 
         let input = InsertInsurance {
             id: "insurance_a".to_string(),
-            name_link_id: mock_name_a().id.clone(),
+            name_id: mock_name_a().id.clone(),
             insurance_provider_id: "insurance_provider_id".to_string(),
             policy_number_family: "123".to_string(),
             policy_number_person: "ABC".to_string(),
@@ -92,6 +93,7 @@ mod insert {
             discount_percentage: 10.0,
             expiry_date: NaiveDate::from_ymd_opt(2025, 12, 31).expect("Invalid date"),
             is_active: true,
+            name_of_insured: Some("D".to_string()),
         };
 
         let result = service.insert_insurance(&context, input.clone()).unwrap();

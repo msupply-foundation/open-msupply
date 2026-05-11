@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import {
   Box,
   ButtonWithIcon,
@@ -7,63 +7,38 @@ import {
   useTranslation,
   AppFooterPortal,
   useBreadcrumbs,
-  InvoiceNodeStatus,
   Action,
   DeleteIcon,
   ActionsFooter,
+  usePreferences,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
+import { getStatusTranslator } from '../../../utils';
+import { createStatusLog, getStatusSequence } from '../../../statuses';
 import {
-  getStatusTranslator,
-  customerReturnStatuses,
-  manualCustomerReturnStatuses,
-  inboundStatuses,
-} from '../../../utils';
-import { CustomerReturnFragment, useReturns } from '../../api';
+  CustomerReturnLineFragment,
+  useReturns,
+} from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
 
-const createStatusLog = (invoice: CustomerReturnFragment) => {
-  const statusIdx = inboundStatuses.findIndex(s => invoice.status === s);
-  const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
-    [InvoiceNodeStatus.New]: null,
-    [InvoiceNodeStatus.Picked]: null,
-    [InvoiceNodeStatus.Shipped]: null,
-    [InvoiceNodeStatus.Received]: null,
-    [InvoiceNodeStatus.Verified]: null,
-    // Not used for returns
-    [InvoiceNodeStatus.Delivered]: null,
-    [InvoiceNodeStatus.Allocated]: null,
-    [InvoiceNodeStatus.Cancelled]: null,
-  };
-  if (statusIdx >= 0) {
-    statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
-  }
-  if (statusIdx >= 1) {
-    statusLog[InvoiceNodeStatus.Picked] = invoice.pickedDatetime;
-  }
-  if (statusIdx >= 2) {
-    statusLog[InvoiceNodeStatus.Shipped] = invoice.shippedDatetime;
-  }
-  // Skipping delivered
-  if (statusIdx >= 4) {
-    statusLog[InvoiceNodeStatus.Received] = invoice.receivedDatetime;
-  }
-  if (statusIdx >= 5) {
-    statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
-  }
-  return statusLog;
-};
-
-export const FooterComponent: FC = () => {
+export const FooterComponent = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: CustomerReturnLineFragment[];
+  resetRowSelection: () => void;
+}) => {
   const t = useTranslation();
+  const { invoiceStatusOptions } = usePreferences();
+  const { navigateUpOne } = useBreadcrumbs();
   const { data } = useReturns.document.customerReturn();
   const { id } = data ?? { id: '' };
-  const { navigateUpOne } = useBreadcrumbs();
-  const { confirmAndDelete } = useReturns.lines.deleteSelectedCustomerLines({
+
+  const confirmAndDelete = useReturns.lines.deleteSelectedCustomerLines({
     returnId: id,
-  });
-  const { selectedIds } = useReturns.lines.deleteSelectedCustomerLines({
-    returnId: id,
+    selectedRows,
+    resetRowSelection,
   });
 
   const isManuallyCreated = !data?.linkedShipment?.id;
@@ -76,17 +51,24 @@ export const FooterComponent: FC = () => {
     },
   ];
 
+  const statuses = getStatusSequence(InvoiceNodeType.CustomerReturn, {
+    isManuallyCreated,
+  }).filter(status =>
+    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
+  );
+
   return (
     <AppFooterPortal
       Content={
         <>
-          {selectedIds.length !== 0 && (
+          {selectedRows.length !== 0 && (
             <ActionsFooter
               actions={actions}
-              selectedRowCount={selectedIds.length}
+              selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
-          {data && selectedIds.length === 0 && (
+          {data && selectedRows.length === 0 && (
             <Box
               gap={2}
               display="flex"
@@ -96,12 +78,8 @@ export const FooterComponent: FC = () => {
             >
               <OnHoldButton />
               <StatusCrumbs
-                statuses={
-                  isManuallyCreated
-                    ? manualCustomerReturnStatuses
-                    : customerReturnStatuses
-                }
-                statusLog={createStatusLog(data)}
+                statuses={statuses}
+                statusLog={createStatusLog(data, statuses)}
                 statusFormatter={getStatusTranslator(t)}
               />
               <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>

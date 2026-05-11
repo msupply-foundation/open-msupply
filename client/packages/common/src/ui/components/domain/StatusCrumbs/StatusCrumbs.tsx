@@ -5,7 +5,7 @@ import Box from '@mui/material/Box';
 import { ChevronDownIcon } from '@common/icons';
 import { useTranslation, useFormatDateTime } from '@common/intl';
 import { VerticalStepper } from '../../steppers/VerticalStepper';
-import { PaperHoverPopover, PaperPopoverSection } from '../../popover';
+import { PaperPopover, PaperPopoverSection } from '../../popover';
 import { styled } from '@mui/material/styles';
 import { useMediaQuery } from '@mui/material';
 import { Breakpoints, useAppTheme } from '@common/styles';
@@ -14,6 +14,7 @@ interface StatusCrumbsProps<StatusType extends string> {
   statuses: StatusType[];
   statusLog: Record<StatusType, string | null | undefined>;
   statusFormatter: (status: StatusType) => string;
+  width?: number;
 }
 
 const StyledText = styled(Typography)({
@@ -41,7 +42,7 @@ export const StatusCrumbs = <StatusType extends string>(
   const t = useTranslation();
   const theme = useAppTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.md));
-  const { statuses, statusLog, statusFormatter } = props;
+  const { statuses, statusLog, statusFormatter, width = 250 } = props;
 
   const steps = useSteps(props);
 
@@ -73,9 +74,13 @@ export const StatusCrumbs = <StatusType extends string>(
   }
 
   return (
-    <PaperHoverPopover
-      placement="top"
-      width={250}
+    <PaperPopover
+      mode="hover"
+      placement={{
+        vertical: 'top',
+        horizontal: 'center',
+      }}
+      width={width}
       Content={
         <PaperPopoverSection label={t('label.order-history')}>
           <VerticalStepper activeStep={currentStep} steps={steps} />
@@ -106,6 +111,6 @@ export const StatusCrumbs = <StatusType extends string>(
           {Crumbs}
         </Breadcrumbs>
       </Box>
-    </PaperHoverPopover>
+    </PaperPopover>
   );
 };

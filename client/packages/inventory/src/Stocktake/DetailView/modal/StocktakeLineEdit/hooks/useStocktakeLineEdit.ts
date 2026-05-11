@@ -7,23 +7,27 @@ import { useStocktakeOld } from './../../../../api';
 import { DraftStocktakeLine, DraftLine } from '../utils';
 import { useNextItem } from './useNextItem';
 import { useDraftStocktakeLines } from './useDraftStocktakeLines';
+import { StocktakeSummaryItem } from '../../../../../types';
+import { StocktakeLineFragment } from '../../../../api';
+
 interface useStocktakeLineEditController {
   draftLines: DraftStocktakeLine[];
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
-  addLine: () => void;
+  addLine: (initialPatch?: Partial<DraftStocktakeLine>) => void;
   save: () => Promise<{ errorMessages?: string[] }>;
   isSaving: boolean;
   nextItem: DraftStocktakeLine['item'] | null;
 }
 
 export const useStocktakeLineEdit = (
-  item: DraftStocktakeLine['item'] | null
+  item: DraftStocktakeLine['item'] | null,
+  items: StocktakeSummaryItem[],
+  lines?: StocktakeLineFragment[]
 ): useStocktakeLineEditController => {
   const { id } = useStocktakeOld.document.fields('id');
-  const { items } = useStocktakeOld.line.rows();
   const filteredItems = items.filter(item => item.item?.id === item?.id);
   const nextItem = useNextItem(filteredItems, item?.id);
-  const [draftLines, setDraftLines] = useDraftStocktakeLines(item);
+  const [draftLines, setDraftLines] = useDraftStocktakeLines(item, lines);
   const { saveAndMapStructuredErrors: upsertLines, isLoading: isSaving } =
     useStocktakeOld.line.save();
 
@@ -43,9 +47,11 @@ export const useStocktakeLineEdit = (
     }
   };
 
-  const addLine = () => {
+  const addLine = (initialPatch?: Partial<DraftStocktakeLine>) => {
     if (item) {
-      setDraftLines(lines => [DraftLine.fromItem(id, item), ...lines]);
+      const newLine = DraftLine.fromItem(id, item);
+      const line = initialPatch ? { ...newLine, ...initialPatch } : newLine;
+      setDraftLines(lines => [line, ...lines]);
     }
   };
 

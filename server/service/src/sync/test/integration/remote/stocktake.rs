@@ -5,13 +5,13 @@ use crate::sync::{
     translations::IntegrationOperation,
 };
 use chrono::NaiveDate;
-use rand::{thread_rng, Rng};
+use rand::RngExt;
 use repository::*;
 use serde_json::json;
 use util::uuid::uuid;
 
 fn gen_f64() -> f64 {
-    format!("{:.6}", thread_rng().gen::<f64>()).parse().unwrap()
+    format!("{:.6}", rand::rng().random::<f64>()).parse().unwrap()
 }
 pub(crate) struct StocktakeRecordTester;
 impl SyncRecordTester for StocktakeRecordTester {
@@ -27,6 +27,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             on_hold: false,
             store_id: store_id.to_string(),
             location_type_id: None,
+            ..Default::default()
         };
         let currency_row = CurrencyRow {
             id: uuid(),
@@ -56,6 +57,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             program_id: None,
             counted_by: None,
             verified_by: None,
+            ..Default::default()
         };
         let stocktake_line_row = StocktakeLineRow {
             id: uuid(),
@@ -75,6 +77,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             note: None,
             reason_option_id: None,
             item_variant_id: None,
+            ..Default::default()
         };
         result.push(TestStepData {
             central_upsert: json!({"item": [{
@@ -97,7 +100,7 @@ impl SyncRecordTester for StocktakeRecordTester {
         // STEP 2 - mutate
         let invoice_row = InvoiceRow {
             id: uuid(),
-            name_link_id: new_site_properties.name_id.clone(),
+            name_id: new_site_properties.name_id.clone(),
             store_id: store_id.clone(),
             name_store_id: Some(store_id.clone()),
             tax_percentage: Some(0.0),

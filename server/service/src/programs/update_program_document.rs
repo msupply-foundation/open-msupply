@@ -54,24 +54,21 @@ fn extract_events(
                     active_start_datetime = active_start_datetime
                         .checked_add_months(Months::new(months as u32))
                         .ok_or(UpdateProgramDocumentError::InternalError(format!(
-                            "Invalid schedule months value: {}",
-                            months
+                            "Invalid schedule months value: {months}"
                         )))?;
                 }
                 if let Some(days) = schedule_config.config.schedule_in.days {
                     active_start_datetime = active_start_datetime
                         .checked_add_signed(Duration::days(days))
                         .ok_or(UpdateProgramDocumentError::InternalError(format!(
-                            "Invalid schedule days value: {}",
-                            days
+                            "Invalid schedule days value: {days}"
                         )))?;
                 }
                 if let Some(minutes) = schedule_config.config.schedule_in.minutes {
                     active_start_datetime = active_start_datetime
                         .checked_add_signed(Duration::minutes(minutes))
                         .ok_or(UpdateProgramDocumentError::InternalError(format!(
-                            "Invalid schedule minutes value: {}",
-                            minutes
+                            "Invalid schedule minutes value: {minutes}"
                         )))?;
                 }
 

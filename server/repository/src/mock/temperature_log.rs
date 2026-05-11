@@ -4,8 +4,8 @@ use chrono::{Duration, NaiveDate};
 // hot breach, sensor 1 in store a
 pub fn mock_temperature_log_1a() -> TemperatureLogRow {
     TemperatureLogRow {
-        id: "temperature_log_1a".to_owned(),
-        sensor_id: "sensor_1".to_owned(),
+        id: "temperature_log_1a".to_string(),
+        sensor_id: "sensor_1".to_string(),
         store_id: "store_a".to_string(),
         temperature: 10.6,
         location_id: None,
@@ -20,8 +20,8 @@ pub fn mock_temperature_log_1a() -> TemperatureLogRow {
 
 pub fn mock_temperature_log_1b() -> TemperatureLogRow {
     TemperatureLogRow {
-        id: "temperature_log_1b".to_owned(),
-        sensor_id: "sensor_1".to_owned(),
+        id: "temperature_log_1b".to_string(),
+        sensor_id: "sensor_1".to_string(),
         store_id: "store_a".to_string(),
         temperature: 8.6,
         location_id: None,
@@ -37,8 +37,8 @@ pub fn mock_temperature_log_1b() -> TemperatureLogRow {
 // no breach sensor 1 in store a
 pub fn mock_temperature_log_2() -> TemperatureLogRow {
     TemperatureLogRow {
-        id: "temperature_log_2".to_owned(),
-        sensor_id: "sensor_1".to_owned(),
+        id: "temperature_log_2".to_string(),
+        sensor_id: "sensor_1".to_string(),
         store_id: "store_a".to_string(),
         temperature: 5.6,
         location_id: None,
@@ -54,8 +54,8 @@ pub fn mock_temperature_log_2() -> TemperatureLogRow {
 // cold breach sensor 2 in store b
 pub fn mock_temperature_log_3a() -> TemperatureLogRow {
     TemperatureLogRow {
-        id: "temperature_log_3a".to_owned(),
-        sensor_id: "sensor_2".to_owned(),
+        id: "temperature_log_3a".to_string(),
+        sensor_id: "sensor_2".to_string(),
         store_id: "store_b".to_string(),
         temperature: -1.6,
         location_id: None,
@@ -69,8 +69,8 @@ pub fn mock_temperature_log_3a() -> TemperatureLogRow {
 }
 pub fn mock_temperature_log_3b() -> TemperatureLogRow {
     TemperatureLogRow {
-        id: "temperature_log_3b".to_owned(),
-        sensor_id: "sensor_2".to_owned(),
+        id: "temperature_log_3b".to_string(),
+        sensor_id: "sensor_2".to_string(),
         store_id: "store_b".to_string(),
         temperature: 1.6,
         location_id: None,
@@ -86,8 +86,8 @@ pub fn mock_temperature_log_3b() -> TemperatureLogRow {
 // no breach sensor 2 in store b
 pub fn mock_temperature_log_4() -> TemperatureLogRow {
     TemperatureLogRow {
-        id: "temperature_log_4".to_owned(),
-        sensor_id: "sensor_2".to_owned(),
+        id: "temperature_log_4".to_string(),
+        sensor_id: "sensor_2".to_string(),
         store_id: "store_b".to_string(),
         temperature: 4.6,
         location_id: None,

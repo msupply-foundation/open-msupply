@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 // See README.md for description of when this API version needs to be updated
-pub(crate) static SYNC_V5_VERSION: u32 = 12; // bumped for v2.9 (https://github.com/msupply-foundation/msupply/pull/16900)
-pub(crate) static SYNC_V6_VERSION: u32 = 5; // bumped for 2.9.02 (adding new types to system log)
+pub(crate) static SYNC_V5_VERSION: u32 = 14; // bumped for v2.13.0 OG version 8.06
 
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Default)]
 pub struct SyncSettings {

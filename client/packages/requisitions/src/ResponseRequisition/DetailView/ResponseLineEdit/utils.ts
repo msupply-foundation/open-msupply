@@ -9,10 +9,21 @@ export const useStockCalculations = (draft?: DraftResponseLine | null) => {
       (draft?.lossInUnits ?? 0) + (draft?.outgoingUnits ?? 0);
     const available =
       (draft?.initialStockOnHandUnits ?? 0) + incomingStock - outgoingStock;
-    const mos =
-      draft?.averageMonthlyConsumption !== 0
-        ? available / (draft?.averageMonthlyConsumption ?? 1)
-        : 0;
+    const mos = () => {
+      if (draft?.linkedRequisitionLine) {
+        return draft.linkedRequisitionLine.itemStats
+          .availableMonthsOfStockOnHand;
+      }
+
+      if (
+        draft?.averageMonthlyConsumption &&
+        draft.averageMonthlyConsumption > 0
+      ) {
+        return available / draft.averageMonthlyConsumption;
+      }
+
+      return 0;
+    };
 
     return {
       available,

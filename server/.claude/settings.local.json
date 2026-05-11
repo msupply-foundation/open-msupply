@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__cmd-deck__join_task",
+      "mcp__cmd-deck__get_card_details",
+      "mcp__cmd-deck__list_projects",
+      "Bash(docker build:*)"
+    ]
+  }
+}

@@ -1,5 +1,4 @@
 use std::io::ErrorKind;
-use std::sync::Arc;
 
 use actix_files as fs;
 use actix_multipart::form::tempfile::TempFile;
@@ -14,8 +13,10 @@ use actix_web::{delete, get, guard, post, web, Error, HttpRequest, HttpResponse}
 use fs::NamedFile;
 use repository::sync_file_reference_row::SyncFileReferenceRowRepository;
 use repository::sync_file_reference_row::SyncFileStatus;
-use repository::RepositoryError;
 use repository::SyncFileDirection;
+use repository::{
+    EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderStatus, RepositoryError,
+};
 use serde::Deserialize;
 
 use repository::sync_file_reference_row::SyncFileReferenceRow;
@@ -25,10 +26,6 @@ use service::service_provider::ServiceProvider;
 use service::settings::Settings;
 use service::static_files::StaticFile;
 use service::static_files::{StaticFileCategory, StaticFileService};
-use service::sync::file_sync_driver::get_sync_settings;
-use service::sync::file_synchroniser;
-use service::sync::file_synchroniser::FileSynchroniser;
-use service::sync::CentralServerConfig;
 use service::usize_to_i32;
 use thiserror::Error;
 use util::format_error;
@@ -52,6 +49,44 @@ pub fn config_static_files(cfg: &mut web::ServiceConfig) {
             .service(upload_sync_file)
             .wrap(limit_content_length()),
     );
+}
+
+/// Returns an error response if the record is a purchase order in Sent or Finalised status,
+/// meaning documents cannot be uploaded or deleted.
+fn check_purchase_order_document_editable(
+    service_provider: &ServiceProvider,
+    table_name: &str,
+    record_id: &str,
+) -> Result<(), actix_web::Error> {
+    if table_name != "purchase_order" {
+        return Ok(());
+    }
+
+    let connection = service_provider
+        .connection()
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
+
+    let purchase_order = PurchaseOrderRepository::new(&connection)
+        .query_by_filter(
+            PurchaseOrderFilter::new().id(EqualFilter::equal_to(record_id.to_string())),
+        )
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
+        .pop();
+
+    if let Some(po) = purchase_order {
+        if matches!(
+            po.purchase_order_row.status,
+            PurchaseOrderStatus::Sent | PurchaseOrderStatus::Finalised
+        ) {
+            return Err(InternalError::new(
+                "Cannot upload or delete documents for a sent or finalised purchase order",
+                StatusCode::BAD_REQUEST,
+            )
+            .into());
+        }
+    }
+
+    Ok(())
 }
 
 #[derive(Debug, Deserialize)]
@@ -99,6 +134,9 @@ async fn delete_sync_file(
     })?;
 
     let (table_name, record_id, file_id) = path.into_inner();
+
+    check_purchase_order_document_editable(&service_provider, &table_name, &record_id)?;
+
     let static_file_category = StaticFileCategory::SyncFile(table_name, record_id);
 
     // delete local file, if it exists
@@ -123,7 +161,7 @@ async fn delete_sync_file(
     match repo.delete(&file_id) {
         Ok(_) => Ok(HttpResponse::Ok().body("file deleted")),
         Err(err) => {
-            log::error!("Error deleting file reference: {}", err);
+            log::error!("Error deleting file reference: {err}");
             Err(InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR).into())
         }
     }
@@ -149,6 +187,8 @@ async fn upload_sync_file(
     })?;
 
     let path_inner = path.into_inner();
+
+    check_purchase_order_document_editable(&service_provider, &path_inner.0, &path_inner.1)?;
 
     let mut static_file_ids: Vec<String> = vec![];
 
@@ -221,7 +261,6 @@ async fn upload_sync_file_inner(
 async fn download_sync_file(
     req: HttpRequest,
     settings: Data<Settings>,
-    service_provider: Data<ServiceProvider>,
     path: web::Path<(String, String, String)>,
     auth_data: Data<AuthData>,
 ) -> Result<HttpResponse, Error> {
@@ -235,8 +274,7 @@ async fn download_sync_file(
         )
     })?;
 
-    let error = match download_sync_file_inner(service_provider, &settings, path.into_inner()).await
-    {
+    let error = match download_sync_file_inner(&settings, path.into_inner()).await {
         Ok((named_file, file_name)) => {
             let response = named_file
                 .set_content_disposition(ContentDisposition {
@@ -251,7 +289,7 @@ async fn download_sync_file(
     };
 
     let error = match error {
-        DownloadFileError::NotFoundLocallyAndThisIsCentralServer => InternalError::new(
+        DownloadFileError::NotFoundLocally => InternalError::new(
             "File not found, it may not have been synced from the remote site yet...",
             StatusCode::NOT_FOUND,
         ),
@@ -270,16 +308,13 @@ enum DownloadFileError {
     DatabaseError(#[from] RepositoryError),
     #[error("File IO error")]
     FileIOError(#[from] std::io::Error),
-    #[error("File not found locally and it's central server")]
-    NotFoundLocallyAndThisIsCentralServer,
-    #[error("Error downloading file from central")]
-    ErrorDownloadingFile(#[from] file_synchroniser::DownloadFileError),
+    #[error("File not found locally")]
+    NotFoundLocally,
     #[error("Other")]
     Other(#[from] anyhow::Error),
 }
 
 async fn download_sync_file_inner(
-    service_provider: Data<ServiceProvider>,
     settings: &Settings,
     (table_name, parent_record_id, file_id): (String, String, String),
 ) -> Result<(NamedFile, /* file_name */ String), DownloadFileError> {
@@ -290,22 +325,5 @@ async fn download_sync_file_inner(
         return Ok((NamedFile::open(file.path)?, file.name));
     }
 
-    let CentralServerConfig::CentralServerUrl(url) = CentralServerConfig::get() else {
-        // Not found locally and is central server
-        return Err(DownloadFileError::NotFoundLocallyAndThisIsCentralServer);
-    };
-
-    // File not found locally, download from central
-    let file_synchroniser = FileSynchroniser::new(
-        &url,
-        get_sync_settings(&service_provider),
-        service_provider.into_inner(),
-        Arc::new(file_service),
-    )?;
-
-    let file = file_synchroniser
-        .download_file_from_central(&file_id)
-        .await?;
-
-    Ok((NamedFile::open(file.path)?, file.name))
+    Err(DownloadFileError::NotFoundLocally)
 }

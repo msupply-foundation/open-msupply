@@ -67,6 +67,7 @@ fragment ResponseLine on RequisitionLineNode {
   itemId
   itemName
   requestedQuantity
+  pricePerUnit
   supplyQuantity
   remainingQuantityToSupply
   alreadyIssued
@@ -92,7 +93,7 @@ fragment ResponseLine on RequisitionLineNode {
     averageMonthlyConsumption
   }
   item {
-    ...ItemWithStats
+    ...ItemWithAvailableStock
   }
   approvedQuantity
   approvalComment
@@ -107,6 +108,21 @@ fragment ResponseLine on RequisitionLineNode {
   reason {
     ...ReasonOptionRow
   }
+
+  availableVolumeAtLocationType {
+    ...AvailableVolumeAtLocationType
+  }
+  forecastTotalUnits
+  forecastTotalDoses
+  vaccineCourses
+}
+
+fragment AvailableVolumeAtLocationType on AvailableVolumeAtLocationTypeNode {
+  locationType {
+    name
+  }
+  availableVolume
+  itemVolumePerUnit
 }
 
 fragment Response on RequisitionNode {
@@ -126,7 +142,12 @@ fragment Response on RequisitionNode {
   maxMonthsOfStock
   minMonthsOfStock
   approvalStatus
-
+  documents {
+    __typename
+    nodes {
+      ...SyncFileReference
+    }
+  }
   user {
     __typename
     username
@@ -165,6 +186,19 @@ fragment Response on RequisitionNode {
   }
 
   otherParty(storeId: $storeId) {
+    __typename
+    id
+    code
+    isCustomer
+    isSupplier
+    isOnHold
+    name
+    store {
+      id
+      code
+    }
+  }
+  destinationCustomer(storeId: $storeId) {
     __typename
     id
     code
@@ -231,6 +265,14 @@ fragment ResponseRow on RequisitionNode {
   otherPartyId
   approvalStatus
   programName
+  maxMonthsOfStock
+  minMonthsOfStock
+  documents {
+    __typename
+    nodes {
+      ...SyncFileReference
+    }
+  }
   period {
     name
     startDate
@@ -446,6 +488,32 @@ mutation createOutboundFromResponse($responseId: String!, $storeId: String!) {
   }
 }
 
+mutation responseAddFromMasterList(
+  $storeId: String!
+  $responseId: String!
+  $masterListId: String!
+) {
+  responseAddFromMasterList(
+    input: { responseRequisitionId: $responseId, masterListId: $masterListId }
+    storeId: $storeId
+  ) {
+    ... on RequisitionLineConnector {
+      __typename
+      totalCount
+    }
+    ... on ResponseAddFromMasterListError {
+      __typename
+      error {
+        description
+        ... on MasterListNotFoundForThisStore {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
 mutation supplyRequestedQuantity($responseId: String!, $storeId: String!) {
   supplyRequestedQuantity(
     input: { responseRequisitionId: $responseId }
@@ -601,4 +669,40 @@ mutation updateIndicatorValue(
       }
     }
   }
+}
+
+mutation insertRequestFromResponseRequisition(
+  $storeId: String!
+  $input: InsertFromResponseRequisitionInput!
+) {
+  insertRequestFromResponseRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+    }
+    ... on InsertFromResponseRequisitionError {
+      __typename
+      error {
+        description
+        ... on OtherPartyNotASupplier {
+          __typename
+          description
+        }
+        ... on OtherPartyNotVisible {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
+query hasCustomerProgramRequisitionSettings(
+  $storeId: String!
+  $customerNameIds: [String!]!
+) {
+  hasCustomerProgramRequisitionSettings(
+    storeId: $storeId
+    customerNameIds: $customerNameIds
+  )
 }

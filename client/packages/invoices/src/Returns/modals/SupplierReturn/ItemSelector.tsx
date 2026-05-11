@@ -40,12 +40,10 @@ export const ItemSelector: FC<ItemSelectorProps> = ({
             disabled={disabled}
             currentItemId={itemId}
             onChange={newItem => newItem && onChangeItemId(newItem.id)}
-            filter={{ hasStockOnHand: true }}
-            extraFilter={
-              disabled
-                ? undefined
-                : item => !existingItemIds?.some(id => id === item.id)
-            }
+            filter={{
+              hasStockOnHand: true,
+              id: { notEqualAll: existingItemIds },
+            }}
           />
         </Grid>
       </ModalRow>

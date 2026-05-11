@@ -30,7 +30,7 @@ module.exports = {
   settings: { react: { version: 'detect' } },
   plugins: ['react', '@typescript-eslint'],
   rules: {
-    camelcase: ['error', { allow: ['_ONLY_FOR_TESTING'] }],
+    camelcase: ['error', { allow: ['_ONLY_FOR_TESTING', 'MRT_'] }],
     'require-jsdoc': 'off',
     'valid-jsdoc': 'off',
     'react/display-name': 'off',

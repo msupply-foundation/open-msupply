@@ -19,13 +19,13 @@ import {
   SupplierReturnRowFragment,
   Sdk,
 } from './operations.generated';
-import { FilterByWithBoolean, SortBy } from '@common/hooks';
+import { FilterBy, SortBy } from '@common/hooks';
 
 type ListParams<T> = {
   first: number;
   offset: number;
   sortBy: SortBy<T>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
 export type SupplierListParams = ListParams<SupplierReturnRowFragment>;

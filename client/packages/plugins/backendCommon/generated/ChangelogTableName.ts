@@ -13,11 +13,9 @@ export type ChangelogTableName =
   | 'Requisition'
   | 'RequisitionLine'
   | 'ActivityLog'
-  | 'InventoryAdjustmentReason'
   | 'Barcode'
   | 'Clinician'
   | 'ClinicianStoreJoin'
-  | 'LocationType'
   | 'Name'
   | 'NameStoreJoin'
   | 'Document'
@@ -49,6 +47,7 @@ export type ChangelogTableName =
   | 'VaccineCourseItem'
   | 'VaccineCourseDose'
   | 'Vaccination'
+  | 'Encounter'
   | 'ItemVariant'
   | 'PackagingVariant'
   | 'IndicatorValue'
@@ -65,4 +64,7 @@ export type ChangelogTableName =
   | 'Preference'
   | 'VVMStatusLog'
   | 'Campaign'
-  | 'SyncMessage';
+  | 'SyncMessage'
+  | 'PurchaseOrder'
+  | 'PurchaseOrderLine'
+  | 'MasterList';

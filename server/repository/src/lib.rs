@@ -1,16 +1,17 @@
 #[macro_use]
 extern crate diesel;
-use diesel_migrations::{
-    embed_migrations, EmbeddedMigrations, HarnessWithOutput, MigrationHarness,
-};
 
 pub mod database_settings;
 pub mod db_diesel;
 pub mod diesel_extensions;
+pub(crate) mod diesel_helper_types;
 pub mod diesel_macros;
+pub(crate) mod dynamic_query_filter;
+pub use dynamic_query_filter::FilterBuilder;
 pub mod migrations;
 pub mod mock;
 mod repository_error;
+pub mod syncv7;
 pub mod test_db;
 pub use self::db_diesel::*;
 pub use self::repository_error::RepositoryError;
@@ -23,35 +24,29 @@ mod tests;
 
 define_sql_function!(fn lower(x: Text) -> Text);
 
-#[cfg(feature = "postgres")]
-pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations/postgres");
-#[cfg(not(feature = "postgres"))]
-pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations/sqlite");
-
-pub fn run_db_migrations(connection: &StorageConnection) -> Result<(), String> {
-    let mut boxed_buffer = Box::<Vec<u8>>::default();
-
-    HarnessWithOutput::new(connection.lock().connection(), &mut boxed_buffer)
-        .run_pending_migrations(MIGRATIONS)
-        .map_err(|e| e.to_string())?;
-
-    log::info!(
-        "{}",
-        str::from_utf8(&boxed_buffer).map_err(|e| e.to_string())?
-    );
-    Ok(())
-}
-
 use std::fmt::Debug as DebugTrait;
 pub trait Delete: DebugTrait {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError>;
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError>;
     // Test only
     fn assert_deleted(&self, con: &StorageConnection);
 }
 
+#[derive(Debug)]
+pub enum ChangelogSyncType {
+    SyncTypeV5V6 { source_site_id: Option<i32> },
+    SyncTypeV7 { changelog_row: ChangeLogInsertRow },
+}
+
 pub trait Upsert: DebugTrait {
-    // Upsert returns a changelog id if the table is tracked in changelog
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError>;
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError>;
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection);
