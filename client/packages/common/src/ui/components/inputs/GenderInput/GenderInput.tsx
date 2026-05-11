@@ -36,6 +36,7 @@ export const GenderInput = ({
       options={genderOptions.map(mapGenderToOption)}
       disabled={disabled}
       sx={{ width }}
+      clearable
     />
   );
 };
