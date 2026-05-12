@@ -58,12 +58,6 @@ impl SyncTranslation for UserStorePermissionTranslation {
             can_login,
             can_action_replenishments: _,
         } = serde_json::from_value::<LegacyUserStorePermissionTable>(sync_record.data.0.clone())?;
-        if StoreRepository::new(connection)
-            .query_one(StoreFilter::new().id(EqualFilter::equal_to(store_id.to_owned())))?
-            .is_none()
-        {
-            return Ok(PullTranslateResult::NotMatched);
-        }
         let mut integration_operations: Vec<IntegrationOperation> = Vec::new();
 
         // Login code may hit OG API if online. If it does, it drops all permissions and regenerates them with new PKs.
