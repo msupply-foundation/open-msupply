@@ -41,6 +41,14 @@ pub struct ServerSettings {
     // Option to set server mode as central server, should only be used in testing, demo and development
     #[serde(default)]
     pub override_is_central_server: bool,
+
+    // Standalone central initialisation; requires `override_is_central_server: true`
+    #[serde(default)]
+    pub standalone_store_name: Option<String>,
+    #[serde(default)]
+    pub standalone_admin_username: Option<String>,
+    #[serde(default)]
+    pub standalone_admin_password: Option<String>,
 }
 
 fn default_base_dir() -> String {

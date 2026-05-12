@@ -156,6 +156,17 @@ impl CentralServerConfig {
         info!("Running as standalone central");
         *CENTRAL_SERVER_CONFIG.write().unwrap() = CentralServerConfig::StandaloneCentral;
     }
+
+    pub fn restore_central_standalone(
+        connection: &StorageConnection,
+    ) -> Result<(), RepositoryError> {
+        if let Some(true) =
+            KeyValueStoreRepository::new(connection).get_bool(KeyType::IsStandaloneCentral)?
+        {
+            Self::set_standalone_central();
+        }
+        Ok(())
+    }
 }
 pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
     // We cache the initialised state to avoid having to check the database every time. This stops
