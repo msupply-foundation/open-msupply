@@ -67,6 +67,7 @@ use crate::{
     settings_service::{SettingsService, SettingsServiceTrait},
     shipping_method::{ShippingMethodService, ShippingMethodServiceTrait},
     site::{SiteService, SiteServiceTrait},
+    standalone_central::{StandaloneCentralService, StandaloneCentralServiceTrait},
     standard_reports::StandardReports,
     stock_line::{StockLineService, StockLineServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
@@ -150,6 +151,7 @@ pub struct ServiceProvider {
     pub site_auth_service: Box<dyn SiteAuthTrait>,
     pub sync_status_service: Box<dyn SyncStatusTrait>,
     pub sync_status_v7_service: Box<dyn SyncStatusV7Trait>,
+    pub standalone_central_service: Box<dyn StandaloneCentralServiceTrait>,
     // Triggers
     processors_trigger: ProcessorsTrigger,
     pub sync_trigger: SyncTrigger,
@@ -283,6 +285,7 @@ impl ServiceProvider {
             site_auth_service: Box::new(SiteAuthService),
             sync_status_service: Box::new(SyncStatusService),
             sync_status_v7_service: Box::new(SyncStatusV7Service),
+            standalone_central_service: Box::new(StandaloneCentralService),
             processors_trigger,
             sync_trigger,
             site_is_initialised_trigger,
