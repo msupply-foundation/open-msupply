@@ -9,6 +9,7 @@ import {
   MaterialTable,
   ColumnDef,
   ColumnType,
+  ExpiryDateCell,
   usePaginatedMaterialTable,
   useTranslation,
   useUrlQueryParams,
@@ -94,6 +95,7 @@ const ItemLedgerTable = ({
         accessorKey: 'expiryDate',
         header: t('label.expiry'),
         columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
         size: 100,
       },
       {
