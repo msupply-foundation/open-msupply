@@ -210,7 +210,7 @@ pub enum ParsingResponseError {
 pub(crate) async fn to_json<T: DeserializeOwned>(
     response: Response,
 ) -> Result<T, ParsingResponseError> {
-    let url = response.url().to_string();
+    let url = util::redact_url_for_log(response.url());
     let started = std::time::Instant::now();
     // TODO not owned (to avoid double parsing)
     let response_text = response.text().await?;

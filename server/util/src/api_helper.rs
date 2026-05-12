@@ -2,6 +2,16 @@ use std::time::{Duration, Instant};
 
 use reqwest::*;
 
+/// Returns the URL with the query string and fragment stripped, so it can be
+/// safely written to logs. Some endpoints (e.g. PatientApiV4) include patient
+/// names, DOB, policy number, etc. in the query string — never log those.
+pub fn redact_url_for_log(url: &Url) -> String {
+    let mut redacted = url.clone();
+    redacted.set_query(None);
+    redacted.set_fragment(None);
+    redacted.to_string()
+}
+
 pub struct RetrySeconds(Vec<u64>);
 
 impl Default for RetrySeconds {
@@ -49,12 +59,17 @@ where
         let elapsed = started.elapsed();
 
         let (status, is_connect_error, is_timeout_error, url) = match result.as_ref() {
-            Ok(r) => (Some(r.status()), false, false, Some(r.url().to_string())),
+            Ok(r) => (
+                Some(r.status()),
+                false,
+                false,
+                Some(redact_url_for_log(r.url())),
+            ),
             Err(e) => (
                 e.status(),
                 e.is_connect(),
                 e.is_timeout(),
-                e.url().map(|u| u.to_string()),
+                e.url().map(redact_url_for_log),
             ),
         };
 
@@ -77,10 +92,9 @@ where
             }
         };
 
-        let will_retry = (is_connect_error
-            || is_timeout_error
-            || status == Some(StatusCode::REQUEST_TIMEOUT))
-            && (index + 1) < connection_timeouts.0.len();
+        let will_retry =
+            (is_connect_error || is_timeout_error || status == Some(StatusCode::REQUEST_TIMEOUT))
+                && (index + 1) < connection_timeouts.0.len();
 
         if let Ok(response) = result.as_ref() {
             let content_length_display = response
@@ -89,7 +103,7 @@ where
                 .unwrap_or_else(|| "unknown".to_string());
             log::info!(
                 "API response: url '{}', status {}, content-length {}, headers in {:.1}s",
-                response.url(),
+                redact_url_for_log(response.url()),
                 response.status().as_u16(),
                 content_length_display,
                 elapsed.as_secs_f64(),
@@ -109,7 +123,7 @@ where
             } else {
                 "not retrying".to_string()
             };
-            log::info!(
+            log::warn!(
                 "API request failed: url '{}', {}, attempt {}/{} after {:.1}s (request body: {}); {}",
                 url_display,
                 failure,
