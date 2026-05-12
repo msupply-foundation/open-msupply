@@ -46,12 +46,19 @@ export const Initialise = () => {
 
   const onSaveLog = async () => {
     if (!isAndroid) return;
-    const log = await nativeClient.readLog();
-    if (!log || log === 'log unavailable') {
+
+    try {
+      const log = await nativeClient.readLog();
+
+      if (!log?.trim()) {
+        warning(t('error.unable-to-load-server-log'))();
+        return;
+      }
+
+      await exportLog(log, 'remote_server');
+    } catch (error) {
       warning(t('error.unable-to-load-server-log'))();
-      return;
     }
-    await exportLog(log, 'remote_server');
   };
 
   const syncError =
