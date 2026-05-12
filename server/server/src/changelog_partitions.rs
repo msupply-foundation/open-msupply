@@ -8,21 +8,17 @@ pub fn spawn(
 ) -> JoinHandle<()> {
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(settings.interval.as_duration());
-        #[cfg(feature = "postgres")]
         let partition_config = settings.to_migration_config();
         loop {
             interval.tick().await;
             match service_provider.basic_context() {
-                Ok(_ctx) => {
-                    // if postgres - check if we need to create new partitions on the changelog table, and do so if needed
-                    #[cfg(feature = "postgres")]
+                // `ensure_partition_lookahead` is a no-op under SQLite (no partitions
+                // to top up); under Postgres it adds partitions when headroom is low.
+                Ok(ctx) => {
+                    if let Err(e) =
+                        repository::ensure_partition_lookahead(&ctx.connection, &partition_config)
                     {
-                        use repository::ensure_partition_lookahead;
-                        if let Err(e) =
-                            ensure_partition_lookahead(&_ctx.connection, &partition_config)
-                        {
-                            log::error!("changelog partition top-up: {e:?}");
-                        }
+                        log::error!("changelog partition top-up: {e:?}");
                     }
                 }
                 Err(e) => log::error!("changelog partition top-up: failed to get context: {e:?}"),

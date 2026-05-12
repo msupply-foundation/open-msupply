@@ -1,38 +1,22 @@
-#[cfg(feature = "postgres")]
-use crate::{migrations::ChangelogPartitionConfig, RepositoryError, StorageConnection};
-#[cfg(feature = "postgres")]
-use diesel::{prelude::*, sql_types::BigInt};
+use crate::{
+    migrations::ChangelogPartitionConfig, ChangelogRepository, RepositoryError, StorageConnection,
+};
+use diesel::{prelude::*, sql_types::Text};
 
 /// Ensure enough future cursor-range partitions exist on `changelog` to keep
 /// `lookahead_partitions * partition_size` rows of headroom above `max(cursor)`.
 ///
-/// Postgres feature only - does nothing if `changelog` isn't partitioned. Idempotent.
-/// Returns the number of partitions created.
-#[cfg(feature = "postgres")]
+/// Postgres-only behaviour. Under SQLite the function returns immediately —
+/// SQLite has no partitions to top up.
 pub fn ensure_partition_lookahead(
     connection: &StorageConnection,
     config: &ChangelogPartitionConfig,
 ) -> Result<usize, RepositoryError> {
-    #[derive(QueryableByName)]
-    struct Bigint {
-        #[diesel(sql_type = BigInt)]
-        value: i64,
+    if !cfg!(feature = "postgres") {
+        return Ok(0);
     }
 
-    // Highest upper bound across `changelog`'s partitions. Each partition's bound
-    // expression looks like `FOR VALUES FROM ('1') TO ('5000001')` — extract the
-    // upper number with `substring … FROM '…'` (returns the captured group as text).
-    // Returns 0 if `changelog` isn't partitioned or has no children.
-    let max_upper = diesel::sql_query(
-        r#"
-        SELECT COALESCE(max(substring(pg_get_expr(c.relpartbound, c.oid) FROM 'TO \(''(\d+)''\)')::bigint), 0) AS value
-        FROM pg_inherits i
-        JOIN pg_class c ON c.oid = i.inhrelid
-        WHERE i.inhparent = 'changelog'::regclass
-        "#,
-    )
-    .get_result::<Bigint>(connection.lock().connection())?
-    .value;
+    let max_upper = max_partition_upper_bound(connection)?;
 
     if max_upper == 0 {
         // `changelog` isn't partitioned (pre-migration) or has no partitions —
@@ -41,10 +25,7 @@ pub fn ensure_partition_lookahead(
         return Ok(0);
     }
 
-    let current_max =
-        diesel::sql_query("SELECT COALESCE(max(cursor), 0)::bigint AS value FROM changelog")
-            .get_result::<Bigint>(connection.lock().connection())?
-            .value;
+    let current_max = ChangelogRepository::new(connection).max_cursor()? as i64;
 
     let size = config.partition_size;
     let lookahead = config.lookahead_partitions;
@@ -74,13 +55,100 @@ pub fn ensure_partition_lookahead(
     Ok(created)
 }
 
+/// Returns the highest cursor upper bound across `changelog`'s partitions, or
+/// 0 if `changelog` isn't partitioned. Each partition's bound expression is
+/// `FOR VALUES FROM ('<lower>') TO ('<upper>')`; we pull every expression then
+/// parse the `TO ('<upper>')` value in Rust.
+///
+/// Postgres-specific (uses `pg_inherits` / `pg_get_expr`). Only ever reached
+/// via `ensure_partition_lookahead`, which guards the postgres feature.
+fn max_partition_upper_bound(connection: &StorageConnection) -> Result<i64, RepositoryError> {
+    #[derive(QueryableByName)]
+    struct BoundExpr {
+        #[diesel(sql_type = Text)]
+        bound: String,
+    }
+
+    let bounds: Vec<BoundExpr> = diesel::sql_query(
+        r#"
+        SELECT pg_get_expr(c.relpartbound, c.oid) AS bound
+        FROM pg_inherits i
+        JOIN pg_class c ON c.oid = i.inhrelid
+        WHERE i.inhparent = 'changelog'::regclass
+        "#,
+    )
+    .get_results(connection.lock().connection())?;
+
+    let max_upper = bounds
+        .into_iter()
+        .filter_map(|b| parse_upper_bound(&b.bound))
+        .max()
+        .unwrap_or(0);
+
+    Ok(max_upper)
+}
+
+/// Extract the upper bound `N` from a partition bound expression of the shape
+/// `FOR VALUES FROM ('<lower>') TO ('<upper>')`. Returns `None` if the input
+/// doesn't match or the number doesn't parse.
+fn parse_upper_bound(expr: &str) -> Option<i64> {
+    let (_, after_to) = expr.rsplit_once("TO (")?;
+    let (number, _) = after_to.split_once(')')?;
+    number.trim().trim_matches('\'').parse().ok()
+}
+
 #[cfg(all(test, feature = "postgres"))]
 mod tests {
-    use super::ensure_partition_lookahead;
+    use super::{ensure_partition_lookahead, parse_upper_bound};
     use crate::{
         migrations::ChangelogPartitionConfig, mock::MockDataInserts, test_db, StorageConnection,
     };
-    use diesel::{prelude::*, sql_types::BigInt};
+    use diesel::{
+        prelude::*,
+        sql_types::{BigInt, Text},
+    };
+
+    /// Feeds the parser real `pg_get_expr(relpartbound, ...)` output from a
+    /// partitioned `changelog` so we're testing it against the exact string
+    /// shape Postgres emits, not what we *think* it emits.
+    #[actix_rt::test]
+    async fn parse_upper_bound_extracts_number_from_pg_expr() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "parse_upper_bound_extracts_from_pg",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        reset_to_tight_partition_layout(&connection);
+
+        #[derive(QueryableByName)]
+        struct BoundExpr {
+            #[diesel(sql_type = Text)]
+            bound: String,
+        }
+
+        let mut upper_bounds: Vec<i64> = diesel::sql_query(
+            r#"
+            SELECT pg_get_expr(c.relpartbound, c.oid) AS bound
+            FROM pg_inherits i
+            JOIN pg_class c ON c.oid = i.inhrelid
+            WHERE i.inhparent = 'changelog'::regclass
+            "#,
+        )
+        .get_results::<BoundExpr>(connection.lock().connection())
+        .unwrap()
+        .into_iter()
+        .filter_map(|b| parse_upper_bound(&b.bound))
+        .collect();
+        upper_bounds.sort();
+
+        // Tight layout = [1,3) and [3,5) → upper bounds 3 and 5.
+        assert_eq!(upper_bounds, vec![3, 5]);
+
+        // Defensive cases — inputs the parser must reject without panicking.
+        assert_eq!(parse_upper_bound("DEFAULT"), None);
+        assert_eq!(parse_upper_bound(""), None);
+    }
 
     /// 4 pre-seeded rows (cursors 1..=4) on a starting layout of two
     /// partitions [1,3), [3,5). With size=2, lookahead=2:
