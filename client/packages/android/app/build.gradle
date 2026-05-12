@@ -90,6 +90,31 @@ repositories {
     flatDir{
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
     }
+    // rustls-platform-verifier needs a small Kotlin component bundled with the app.
+    // The AAR is shipped inside the rustls-platform-verifier-android crate; locate it
+    // via `cargo metadata` so it stays in sync with the Rust dependency version.
+    maven {
+        url = findRustlsPlatformVerifierProject()
+        metadataSources.artifact()
+    }
+}
+
+String findRustlsPlatformVerifierProject() {
+    // Android Studio's Gradle process doesn't inherit the shell PATH, so resolve cargo
+    // explicitly from CARGO_HOME (defaults to ~/.cargo) or fall back to a `which`-style lookup.
+    def cargoHome = System.getenv("CARGO_HOME") ?: "${System.getProperty('user.home')}/.cargo"
+    def cargoBin = "$cargoHome/bin/cargo"
+    if (!file(cargoBin).exists()) {
+        cargoBin = "cargo"
+    }
+
+    def dependencyText = providers.exec {
+        commandLine(cargoBin, "metadata", "--format-version", "1", "--filter-platform", "aarch64-linux-android", "--manifest-path", "$rootDir/../../../server/android/Cargo.toml")
+    }.standardOutput.asText.get()
+
+    def dependencyJson = new JsonSlurper().parseText(dependencyText)
+    def manifestPath = file(dependencyJson.packages.find { it.name == "rustls-platform-verifier-android" }.manifest_path)
+    return new File(manifestPath.parentFile, "maven").path
 }
 
 // Exclude the unbundled Play Services barcode scanning dependency
@@ -114,6 +139,11 @@ dependencies {
     // Use bundled MLKit barcode scanning instead of unbundled Play Services version
     // This bundles the model with the app, avoiding runtime downloads
     implementation 'com.google.mlkit:barcode-scanning:17.3.0'
+
+    // Companion Kotlin classes for rustls-platform-verifier — required for outbound HTTPS
+    // (sync to the central server). Without this the verifier fails with
+    // "failed to call native verifier".
+    implementation 'rustls:rustls-platform-verifier:latest.release'
 }
 
 apply from: 'capacitor.build.gradle'

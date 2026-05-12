@@ -1,5 +1,7 @@
 package org.openmsupply.client;
 
+import android.content.Context;
+
 import com.getcapacitor.Logger;
 
 public class RemoteServer {
@@ -13,9 +15,9 @@ public class RemoteServer {
 
     }
 
-    public void start(int port, String filesDir, String cacheDir, String androidId) {
+    public void start(int port, String filesDir, String cacheDir, String androidId, Context context) {
         Logger.info("Starting OMS Rust Server");
-        startServer(port, filesDir, cacheDir, androidId);
+        startServer(port, filesDir, cacheDir, androidId, context);
     }
 
     public void stop() {
@@ -23,7 +25,8 @@ public class RemoteServer {
     }
 
     // Mapping to methods in server/android/src/android.lib
-    private static native void startServer(int port, String filesDir, String cacheDir, String androidId);
+    // The Context is required to initialise rustls-platform-verifier for outbound HTTPS.
+    private static native void startServer(int port, String filesDir, String cacheDir, String androidId, Context context);
 
     private static native void stopServer();
 }
