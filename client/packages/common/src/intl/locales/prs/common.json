@@ -1255,7 +1255,6 @@
   "label.line-total-local": "جمع سطر (محلی)",
   "label.lines": "خطوط",
   "label.linked-patient": "مراجعه کننده مرتبط",
-  "label.linked-po-requisition": "سفارش خرید/درخواست مرتبط",
   "label.listening": "در حال گوش دادن برای اسکن",
   "label.location": "مکان",
   "label.location-temperature-range": "{{locationName}} ({{minTemperature}}°C تا {{maxTemperature}}°C)",

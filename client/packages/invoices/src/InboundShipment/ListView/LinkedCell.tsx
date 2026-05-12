@@ -68,7 +68,7 @@ export const LinkedCell = ({ row }: LinkedCellProps) => {
             );
           }}
         >
-          {t('label.requisition-num', {
+          {t('label.internal-order-num', {
             number: String(requisition.requisitionNumber).padStart(3, '0'),
           })}
         </Link>
