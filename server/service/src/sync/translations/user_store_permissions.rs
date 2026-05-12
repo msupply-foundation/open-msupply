@@ -143,32 +143,139 @@ impl SyncTranslation for UserStorePermissionTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_store_a, mock_user_account_a, MockData, MockDataInserts},
+        sync_buffer::SyncRecordData,
+        test_db::setup_all_with_data,
+        SyncAction, SyncBufferRow,
+    };
+
+    const TABLE_NAME: &str = "user_store";
+
+    fn sync_record(data: serde_json::Value) -> SyncBufferRow {
+        SyncBufferRow {
+            table_name: TABLE_NAME.to_string(),
+            record_id: "record_id".to_string(),
+            data: SyncRecordData(data),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        }
+    }
+
+    // permissions vector with every flag false; translator should only insert StoreAccess
+    fn no_permissions() -> Vec<bool> {
+        vec![false; 600]
+    }
 
     #[actix_rt::test]
-    async fn test_user_permission_translation() {
-        use crate::sync::test::test_data::user_permission as test_data;
-        let translator = UserStorePermissionTranslation {};
+    async fn test_user_store_permission_translation_can_login() {
+        let join = UserStoreJoinRow {
+            id: "usj_test".to_string(),
+            user_id: mock_user_account_a().id,
+            store_id: mock_store_a().id,
+            is_default: false,
+        };
+        // StoreAccess matches the implicit permission the translator inserts,
+        // so it should be left alone. CreateRepack is not in the incoming
+        // permissions vec, so it should be deleted.
+        let keep = UserPermissionRow {
+            id: "up_keep".to_string(),
+            user_id: mock_user_account_a().id,
+            store_id: Some(mock_store_a().id),
+            permission: PermissionType::StoreAccess,
+            context_id: None,
+        };
+        let remove = UserPermissionRow {
+            id: "up_remove".to_string(),
+            user_id: mock_user_account_a().id,
+            store_id: Some(mock_store_a().id),
+            permission: PermissionType::CreateRepack,
+            context_id: None,
+        };
 
-        let (_, connection, _, _) =
-            setup_all("test_user_permission_translation", MockDataInserts::none()).await;
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_user_store_permission_translation_can_login",
+            MockDataInserts::none().user_accounts().stores(),
+            MockData {
+                user_store_joins: vec![join.clone()],
+                user_permissions: vec![keep.clone(), remove.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
 
-        for record in test_data::test_pull_upsert_records() {
-            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
-            let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
-                .unwrap();
+        let translator = UserStorePermissionTranslation;
+        let buffer_row = sync_record(serde_json::json!({
+            "ID": "incoming_id",
+            "user_ID": mock_user_account_a().id,
+            "store_ID": mock_store_a().id,
+            "permissions": no_permissions(),
+            "store_default": true,
+            "can_login": true,
+            "can_action_replenishments": false,
+        }));
 
-            assert_eq!(translation_result, record.translated_record);
-        }
+        assert!(translator.should_translate_from_sync_record(&buffer_row));
 
-        for record in test_data::test_pull_delete_records() {
-            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
-            let translation_result = translator
-                .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
-                .unwrap();
+        let expected_join = UserStoreJoinRow {
+            is_default: true,
+            ..join
+        };
+        let result = translator
+            .try_translate_from_upsert_sync_record(&connection, &buffer_row)
+            .unwrap();
+        let expected = PullTranslateResult::IntegrationOperations(vec![
+            IntegrationOperation::upsert(expected_join),
+            IntegrationOperation::delete(UserPermissionRowDelete(remove.id)),
+        ]);
+        assert_eq!(result, expected);
+    }
 
-            assert_eq!(translation_result, record.translated_record);
-        }
+    #[actix_rt::test]
+    async fn test_user_store_permission_translation_cannot_login() {
+        let join = UserStoreJoinRow {
+            id: "usj_test".to_string(),
+            user_id: mock_user_account_a().id,
+            store_id: mock_store_a().id,
+            is_default: true,
+        };
+        let permission = UserPermissionRow {
+            id: "up_test".to_string(),
+            user_id: mock_user_account_a().id,
+            store_id: Some(mock_store_a().id),
+            permission: PermissionType::StoreAccess,
+            context_id: None,
+        };
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_user_store_permission_translation_cannot_login",
+            MockDataInserts::none().user_accounts().stores(),
+            MockData {
+                user_store_joins: vec![join.clone()],
+                user_permissions: vec![permission.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let translator = UserStorePermissionTranslation;
+        let buffer_row = sync_record(serde_json::json!({
+            "ID": "incoming_id",
+            "user_ID": mock_user_account_a().id,
+            "store_ID": mock_store_a().id,
+            "permissions": no_permissions(),
+            "store_default": false,
+            "can_login": false,
+            "can_action_replenishments": false,
+        }));
+
+        let result = translator
+            .try_translate_from_upsert_sync_record(&connection, &buffer_row)
+            .unwrap();
+        let expected = PullTranslateResult::IntegrationOperations(vec![
+            IntegrationOperation::delete(UserStoreJoinRowDelete(join.id)),
+            IntegrationOperation::delete(UserPermissionRowDelete(permission.id)),
+        ]);
+        assert_eq!(result, expected);
     }
 }
