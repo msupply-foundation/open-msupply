@@ -127,7 +127,6 @@ async fn subscription_worker_loop(
             break;
         };
 
-        log::info!("Received subscription trigger: {trigger:#?}");
 
         match trigger {
             SubscriptionTrigger::SyncStatus(row) => {
@@ -156,13 +155,11 @@ async fn subscription_worker_loop(
                 }
                 last_status = Some(status.clone());
 
-                log::info!("Broadcasting sync status update: {status:#?} with push queue count {push_queue_count}");
                 let res = tx.send(ResolvedSubscription::SyncInfo {
                     status,
                     last_successful: last_successful.clone(),
                     push_queue_count,
                 });
-                log::info!("Sync status update broadcast complete with result: {res:#?}");
 
                 // Only emit a fresh InitialisationStatus when the site transitions
                 // from not-yet-initialised to initialised — i.e. the row we just
