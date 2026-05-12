@@ -51,7 +51,7 @@ export const AncillaryItemsBanner = () => {
           {hasPlan && (
             <PaperPopover
               mode="click"
-              width={400}
+              width={600}
               placement={{ vertical: 'bottom', horizontal: 'center' }}
               anchorEl={detailsAnchor}
               onAnchorElChange={setDetailsAnchor}
@@ -105,7 +105,7 @@ const PlanSection = ({
   showCurrent: boolean;
 }) => {
   const t = useTranslation();
-  const columns = showCurrent ? '1fr auto auto' : '1fr auto';
+  const columns = showCurrent ? 'auto 1fr auto auto' : 'auto 1fr auto';
   return (
     <Box
       display="grid"
@@ -114,7 +114,9 @@ const PlanSection = ({
       rowGap={0.5}
       alignItems="baseline"
     >
-      <Typography fontWeight={700}>{label}</Typography>
+      <Typography fontWeight={700} sx={{ gridColumn: 'span 2' }}>
+        {label}
+      </Typography>
       {showCurrent && (
         <Typography variant="caption" textAlign="right">
           {t('label.current')}
@@ -127,6 +129,13 @@ const PlanSection = ({
         const unit = d.item.unitName ?? t('label.unit').toLowerCase();
         return (
           <React.Fragment key={d.itemId}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              whiteSpace="nowrap"
+            >
+              {d.item.code}
+            </Typography>
             <Typography variant="body2">{d.item.name}</Typography>
             {showCurrent && (
               <Typography

@@ -342,6 +342,11 @@ export type AllocateProgramNumberInput = {
 
 export type AllocateProgramNumberResponse = NumberNode;
 
+export type AncillaryCycleDetected = UpsertAncillaryItemErrorInterface & {
+  __typename: 'AncillaryCycleDetected';
+  description: Scalars['String']['output'];
+};
+
 export type AncillaryDeltaNode = {
   __typename: 'AncillaryDeltaNode';
   /**
@@ -383,6 +388,13 @@ export type AncillaryItemNode = {
   itemId: Scalars['String']['output'];
   /** Left-hand side of the stored `x:y` ratio (principal count). */
   itemQuantity: Scalars['Float']['output'];
+};
+
+export type AncillaryMaxDepthExceeded = UpsertAncillaryItemErrorInterface & {
+  __typename: 'AncillaryMaxDepthExceeded';
+  actual: Scalars['Int']['output'];
+  description: Scalars['String']['output'];
+  max: Scalars['Int']['output'];
 };
 
 /**
@@ -2615,6 +2627,11 @@ export type DraftStockOutLineNode = {
 
 export type DraftStockOutLineNodeDonorArgs = {
   storeId: Scalars['String']['input'];
+};
+
+export type DuplicateAncillaryItem = UpsertAncillaryItemErrorInterface & {
+  __typename: 'DuplicateAncillaryItem';
+  description: Scalars['String']['output'];
 };
 
 export type EmergencyResponseRequisitionCounts = {

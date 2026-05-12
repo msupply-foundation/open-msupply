@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { FormLabel } from '@mui/material';
 import {
@@ -33,10 +33,32 @@ export const AncillarySupplyModal = ({
   const { Modal } = useDialog({ isOpen: true, onClose, disableBackdrop: true });
   const { success, error } = useNotification();
 
-  const { draft, isComplete, updateDraft, save } = useUpsertAncillaryItem({
-    principalItemId: item.id,
-    existing,
-  });
+  const { draft, isComplete, updateDraft, resetDraft, save } =
+    useUpsertAncillaryItem({
+      principalItemId: item.id,
+      existing,
+    });
+
+  // Bumped after a successful "OK & Next" save so the form (including the
+  // StockItemSearchInput's internal search text) re-mounts with a clean slate.
+  const [formKey, setFormKey] = useState(0);
+
+  const trySave = async (after: 'close' | 'reset') => {
+    try {
+      await save();
+      success(t('messages.ancillary-item-saved'))();
+      if (after === 'close') {
+        onClose();
+      } else {
+        resetDraft();
+        setFormKey(k => k + 1);
+      }
+    } catch (e) {
+      if (e instanceof Error && e.message) error(e.message)();
+    }
+  };
+
+  const isAdd = !existing;
 
   return (
     <Modal
@@ -46,20 +68,17 @@ export const AncillarySupplyModal = ({
         <DialogButton
           disabled={!isComplete}
           variant="ok"
-          onClick={async () => {
-            try {
-              await save();
-              success(t('messages.ancillary-item-saved'))();
-              onClose();
-            } catch (e) {
-              error(
-                e instanceof Error
-                  ? e.message
-                  : t('error.failed-to-save-ancillary-item')
-              )();
-            }
-          }}
+          onClick={() => trySave('close')}
         />
+      }
+      nextButton={
+        isAdd ? (
+          <DialogButton
+            disabled={!isComplete}
+            variant="next-and-ok"
+            onClick={() => trySave('reset')}
+          />
+        ) : undefined
       }
       height={300}
       width={700}
@@ -69,6 +88,7 @@ export const AncillarySupplyModal = ({
         createStore={createQueryParamsStore({ initialSortBy: { key: 'name' } })}
       >
         <AncillarySupplyForm
+          key={formKey}
           draft={draft}
           updateDraft={updateDraft}
           principalItemId={item.id}
