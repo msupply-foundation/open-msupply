@@ -50,7 +50,7 @@ impl SyncTranslation for UserStorePermissionTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyUserStorePermissionTable {
-            id: _,
+            id,
             user_id,
             store_id,
             permissions,
@@ -67,7 +67,7 @@ impl SyncTranslation for UserStorePermissionTranslation {
             .find_one_by_user_and_store(&user_id, &store_id)?
             .map_or_else(
                 || UserStoreJoinRow {
-                    id: uuid(), // generating a new id. The incoming ID might be a user_group_id, OMS does not support these as such so OG may send it multiple times, for each user in group.
+                    id,
                     user_id: user_id.clone(),
                     store_id: store_id.clone(),
                     is_default,
