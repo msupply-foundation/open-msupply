@@ -9,7 +9,7 @@ use repository::*;
 use std::collections::HashMap;
 use std::time::Instant;
 
-static PROGRESS_STEP_LEN: usize = 100;
+static PROGRESS_STEP_LEN: usize = 1000;
 
 pub(crate) struct TranslationAndIntegration<'a> {
     connection: &'a StorageConnection,
