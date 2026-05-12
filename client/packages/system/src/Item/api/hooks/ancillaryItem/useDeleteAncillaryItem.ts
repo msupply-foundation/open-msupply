@@ -24,7 +24,7 @@ export const useDeleteAncillaryItem = ({ itemId }: { itemId: string }) => {
         return result;
       }
     }
-    throw new Error(t('error.failed-to-delete-ancillary-item'));
+    throw new Error();
   };
 
   const { mutateAsync } = useMutation({
@@ -46,11 +46,10 @@ export const useDeleteAncillaryItem = ({ itemId }: { itemId: string }) => {
           await mutateAsync(id);
           success(t('messages.deleted-ancillary-item'))();
         } catch (e) {
-          error(
-            e instanceof Error
-              ? e.message
-              : t('error.failed-to-delete-ancillary-item')
-          )();
+          // Delete-button is only enabled in flows where every reachable
+          // error variant is a programming/connectivity failure; surface
+          // whatever the underlying layer reports.
+          error(e instanceof Error && e.message ? e.message : String(e))();
         }
       },
     });
