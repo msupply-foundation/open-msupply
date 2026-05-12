@@ -24,12 +24,12 @@
       {{ line.itemStats.stockOnHand | default(value=0.00) | round(precision=2) }}
     </td>
     <td>
-      {{ line.averageMonthlyConsumption | default(value=0.00) |
-      round(precision=2) }}
+      {{ line.averageMonthlyConsumption | default(value=0) |
+      round(method="ceil") }}
     </td>
     <td>
-      {{ line.linkedRequisitionLine.itemStats.availableMonthsOfStockOnHand | default(value=0.00) |
-      round(precision=2) }}
+      {{ line.linkedRequisitionLine.itemStats.availableMonthsOfStockOnHand | default(value=0) |
+      round(precision=1) }}
     </td>
     <td>{{ line.requestedQuantity }}</td>
     <td>{{ line.supplyQuantity }}</td>
