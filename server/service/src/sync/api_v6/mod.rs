@@ -239,7 +239,7 @@ async fn response_or_err<T: DeserializeOwned>(
         }
     };
 
-    let url = response.url().to_string();
+    let url = util::redact_url_for_log(response.url());
     let started = std::time::Instant::now();
     // Not checking for status, expecting 200 only, even if there is error
     let response_text = response
