@@ -219,9 +219,9 @@ async fn link_patient_to_store_v6(
             ))
         }
         // Don't need to push to central if we are central :)
-        CentralServerConfig::IsCentralServer | CentralServerConfig::ForcedCentralServer => {
-            return Ok(())
-        }
+        CentralServerConfig::IsCentralServer
+        | CentralServerConfig::ForcedCentralServer
+        | CentralServerConfig::StandaloneCentral => return Ok(()),
         CentralServerConfig::CentralServerUrl(url) => url,
     };
 
