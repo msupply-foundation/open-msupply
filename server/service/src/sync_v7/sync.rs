@@ -202,6 +202,7 @@ async fn load_or_request_auth<'a>(
             SiteAuthService
                 .request_and_set_site_auth(service_provider, settings)
                 .await
+                // TODO can it be more concrete error for SyncError ?
                 .map_err(|e| SyncError::RequestSiteAuthError(format_error(&e)))?;
             Common::load(service_provider)?
         }
