@@ -1,5 +1,16 @@
 use std::time::{Duration, Instant};
 
+pub fn log_body_read(url: &str, bytes: usize, elapsed: Duration) {
+    let kb_per_sec = (bytes as f64 / 1024.0) / elapsed.as_secs_f64().max(0.001);
+    log::info!(
+        "API body read: url '{}', {} bytes in {:.1}s ({:.1} KB/s)",
+        url,
+        bytes,
+        elapsed.as_secs_f64(),
+        kb_per_sec,
+    );
+}
+
 use reqwest::*;
 
 /// Returns the URL with the query string and fragment stripped, so it can be

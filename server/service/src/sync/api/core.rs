@@ -11,7 +11,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
 use url::ParseError;
-use util::{format_error, with_retries, RetrySeconds};
+use util::{format_error, log_body_read, with_retries, RetrySeconds};
 
 use super::*;
 
@@ -214,16 +214,7 @@ pub(crate) async fn to_json<T: DeserializeOwned>(
     let started = std::time::Instant::now();
     // TODO not owned (to avoid double parsing)
     let response_text = response.text().await?;
-    let elapsed = started.elapsed();
-    let bytes = response_text.len();
-    let kb_per_sec = (bytes as f64 / 1024.0) / elapsed.as_secs_f64().max(0.001);
-    log::info!(
-        "API body read: url '{}', {} bytes in {:.1}s ({:.1} KB/s)",
-        url,
-        bytes,
-        elapsed.as_secs_f64(),
-        kb_per_sec,
-    );
+    log_body_read(&url, response_text.len(), started.elapsed());
     let result = serde_json::from_str(&response_text).map_err(|source| {
         ParsingResponseError::ParseError {
             source,
