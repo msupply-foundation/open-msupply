@@ -29,6 +29,10 @@ use mutations::{
     display_settings::{
         update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsResponse,
     },
+    initialise_as_central_server::{
+        initialise_as_central_server, InitialiseAsCentralServerInputNode,
+        InitialiseAsCentralServerResponse,
+    },
     initialise_site::{initialise_site, InitialiseSiteResponse},
     insert_insurance::{insert_insurance, InsertInsuranceInput, InsertInsuranceResponse},
     label_printer_settings::{
@@ -686,6 +690,14 @@ impl InitialisationMutations {
         input: SyncSettingsInput,
     ) -> Result<InitialiseSiteResponse> {
         initialise_site(ctx, input).await
+    }
+
+    pub async fn initialise_as_central_server(
+        &self,
+        ctx: &Context<'_>,
+        input: InitialiseAsCentralServerInputNode,
+    ) -> Result<InitialiseAsCentralServerResponse> {
+        initialise_as_central_server(ctx, input).await
     }
 
     pub async fn manual_sync(
