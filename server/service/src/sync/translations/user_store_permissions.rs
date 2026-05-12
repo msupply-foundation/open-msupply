@@ -6,9 +6,9 @@ use crate::{
     sync::translations::{store::StoreTranslation, user::UserTranslation, IntegrationOperation},
 };
 use repository::{
-    EqualFilter, PermissionType, StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
-    UserPermissionFilter, UserPermissionRepository, UserPermissionRow, UserPermissionRowDelete,
-    UserStoreJoinRow, UserStoreJoinRowDelete, UserStoreJoinRowRepository,
+    EqualFilter, PermissionType, StorageConnection, SyncBufferRow, UserPermissionFilter,
+    UserPermissionRepository, UserPermissionRow, UserPermissionRowDelete, UserStoreJoinRow,
+    UserStoreJoinRowDelete, UserStoreJoinRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use util::uuid::uuid;
@@ -75,6 +75,9 @@ impl SyncTranslation for UserStorePermissionTranslation {
                 |r| UserStoreJoinRow { is_default, ..r },
             );
 
+        // Context-bound permissions (e.g. DocumentQuery/DocumentMutate) come from om_user_permission
+        // and are managed by the user_permission translator — filter them out here so we don't
+        // touch them.
         let existing_permissions = UserPermissionRepository::new(connection).query_by_filter(
             UserPermissionFilter::new()
                 .user_id(EqualFilter::equal_to(user_id.to_owned()))
@@ -124,10 +127,6 @@ impl SyncTranslation for UserStorePermissionTranslation {
                 }));
             }
         }
-
-        // Some prefs come from om_user_permission! They should be preserved so the `user_permission` translator can handle them
-        existing_permissions.remove(&PermissionType::DocumentQuery);
-        existing_permissions.remove(&PermissionType::DocumentMutate);
 
         for (_, row) in existing_permissions {
             integration_operations.push(IntegrationOperation::delete(UserPermissionRowDelete(
