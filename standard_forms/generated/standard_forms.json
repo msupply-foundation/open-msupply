@@ -167,7 +167,7 @@
       "excel_template_buffer": null
     },
     {
-      "id": "internal-order_2_6_7_false",
+      "id": "internal-order_2_6_8_false",
       "name": "Internal Order",
       "description": null,
       "template": {
@@ -204,7 +204,7 @@
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
-              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<table class=\"body_section\">\n  <thead>\n      <tr class=\"body_column_label\">\n          <th>{{ t(k=\"label.code\", f=\"Code\") }}</th>\n          <th>{{ t(k=\"report.item-name\", f=\"Item name\") }}</th>\n          <th>{{ t(k=\"label.unit\", f=\"Unit\") }}</th>\n          <th>{{ t(k=\"report.stock-on-hand\",f=\"Stock on hand\") }}</th>\n          <th>{{ t(k=\"label.amc\",f=\"AMC\") }}</th>\n          <th>{{ t(k=\"label.months-of-stock\", f=\"MOS\") }}</th>\n          <th style=\"width: 10%\">{{ t(k=\"label.requested-quantity\", f=\"Requested quantity\") }}</th>\n      </tr>\n  </thead>\n  {% for line in data.requisition.lines.nodes -%}\n  <tr class=\"body_value\">\n      <td>{{ line.item.code }}</td>\n      <td>{{ line.item.name }}</td>\n      <td>{{ line.item.unitName }}</td>\n      <td>{{ line.itemStats.availableStockOnHand | default(value=0.00) |\n        round(precision=2) }}</td>\n      <td>{{ line.itemStats.averageMonthlyConsumption | default(value=0.00) |\n        round(precision=2) }}</td>\n      <td>{{ line.itemStats.availableMonthsOfStockOnHand | default(value=0.00) |\n        round(precision=2) }}</td>\n      <td>{{ line.requestedQuantity }}</td>\n  </tr>\n  {%- endfor %}\n</table>"
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<table class=\"body_section\">\n  <thead>\n      <tr class=\"body_column_label\">\n          <th>{{ t(k=\"label.code\", f=\"Code\") }}</th>\n          <th>{{ t(k=\"report.item-name\", f=\"Item name\") }}</th>\n          <th>{{ t(k=\"label.unit\", f=\"Unit\") }}</th>\n          <th>{{ t(k=\"report.stock-on-hand\",f=\"Stock on hand\") }}</th>\n          <th>{{ t(k=\"label.amc\",f=\"AMC\") }}</th>\n          <th>{{ t(k=\"label.months-of-stock\", f=\"MOS\") }}</th>\n          <th style=\"width: 10%\">{{ t(k=\"label.requested-quantity\", f=\"Requested quantity\") }}</th>\n      </tr>\n  </thead>\n  {% for line in data.requisition.lines.nodes -%}\n  <tr class=\"body_value\">\n      <td>{{ line.item.code }}</td>\n      <td>{{ line.item.name }}</td>\n      <td>{{ line.item.unitName }}</td>\n      <td>{{ line.itemStats.availableStockOnHand | default(value=0.00) |\n        round(precision=2) }}</td>\n      <td>{{ line.itemStats.averageMonthlyConsumption | default(value=0) |\n        round(method=\"ceil\") }}</td>\n      <td>{{ line.itemStats.availableMonthsOfStockOnHand | default(value=0) |\n        round(precision=1) }}</td>\n      <td>{{ line.requestedQuantity }}</td>\n  </tr>\n  {%- endfor %}\n</table>"
             }
           }
         }
@@ -214,7 +214,7 @@
       "argument_schema_id": null,
       "comment": null,
       "is_custom": false,
-      "version": "2.6.7",
+      "version": "2.6.8",
       "code": "internal-order",
       "form_schema": null,
       "excel_template_buffer": null
@@ -778,7 +778,7 @@
       "excel_template_buffer": null
     },
     {
-      "id": "requisition_2_6_3_false",
+      "id": "requisition_2_6_4_false",
       "name": "Requisition",
       "description": null,
       "template": {
@@ -815,7 +815,7 @@
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
-              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<table class=\"body_section\">\n  <thead>\n    <tr class=\"body_column_label\">\n      <th>{{ t(k=\"label.code\", f=\"Code\") }}</th>\n      <th>{{ t(k=\"report.item-name\", f=\"Item name\") }}</th>\n      <th>{{ t(k=\"report.stock-on-hand\",f=\"Stock on hand\") }}</th>\n      <th>{{ t(k=\"label.amc\",f=\"AMC\") }}</th>\n      <th>{{ t(k=\"label.months-of-stock\", f=\"MOS\") }}</th>\n      <th style=\"width: 10%\">{{ t(k=\"label.requested-quantity\", f=\"Requested quantity\") }}</th>\n      <th style=\"width: 10%\">{{ t(k=\"label.supply-quantity\", f=\"Quantity to supply\") }}</th>\n      <th>{{ t(k=\"report.issued\", f=\"Issued\") }}</th>\n      <th>{{ t(k=\"label.remaining-to-supply\", f=\"Remaining\") }}</th>\n    </tr>\n  </thead>\n  {% for line in data.requisition.lines.nodes -%}\n  <tr class=\"body_value\">\n    <td>{{ line.item.code }}</td>\n    <td>{{ line.item.name }}</td>\n    <td>\n      {{ line.itemStats.stockOnHand | default(value=0.00) | round(precision=2) }}\n    </td>\n    <td>\n      {{ line.averageMonthlyConsumption | default(value=0.00) |\n      round(precision=2) }}\n    </td>\n    <td>\n      {{ line.linkedRequisitionLine.itemStats.availableMonthsOfStockOnHand | default(value=0.00) |\n      round(precision=2) }}\n    </td>\n    <td>{{ line.requestedQuantity }}</td>\n    <td>{{ line.supplyQuantity }}</td>\n    <td>{{ line.alreadyIssued }}</td>\n    <td>{{ line.remainingQuantityToSupply }}</td>\n  </tr>\n  {%- endfor %}\n</table>"
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<table class=\"body_section\">\n  <thead>\n    <tr class=\"body_column_label\">\n      <th>{{ t(k=\"label.code\", f=\"Code\") }}</th>\n      <th>{{ t(k=\"report.item-name\", f=\"Item name\") }}</th>\n      <th>{{ t(k=\"report.stock-on-hand\",f=\"Stock on hand\") }}</th>\n      <th>{{ t(k=\"label.amc\",f=\"AMC\") }}</th>\n      <th>{{ t(k=\"label.months-of-stock\", f=\"MOS\") }}</th>\n      <th style=\"width: 10%\">{{ t(k=\"label.requested-quantity\", f=\"Requested quantity\") }}</th>\n      <th style=\"width: 10%\">{{ t(k=\"label.supply-quantity\", f=\"Quantity to supply\") }}</th>\n      <th>{{ t(k=\"report.issued\", f=\"Issued\") }}</th>\n      <th>{{ t(k=\"label.remaining-to-supply\", f=\"Remaining\") }}</th>\n    </tr>\n  </thead>\n  {% for line in data.requisition.lines.nodes -%}\n  <tr class=\"body_value\">\n    <td>{{ line.item.code }}</td>\n    <td>{{ line.item.name }}</td>\n    <td>\n      {{ line.itemStats.stockOnHand | default(value=0.00) | round(precision=2) }}\n    </td>\n    <td>\n      {{ line.averageMonthlyConsumption | default(value=0) |\n      round(method=\"ceil\") }}\n    </td>\n    <td>\n      {{ line.linkedRequisitionLine.itemStats.availableMonthsOfStockOnHand | default(value=0) |\n      round(precision=1) }}\n    </td>\n    <td>{{ line.requestedQuantity }}</td>\n    <td>{{ line.supplyQuantity }}</td>\n    <td>{{ line.alreadyIssued }}</td>\n    <td>{{ line.remainingQuantityToSupply }}</td>\n  </tr>\n  {%- endfor %}\n</table>"
             }
           }
         }
@@ -825,7 +825,7 @@
       "argument_schema_id": null,
       "comment": null,
       "is_custom": false,
-      "version": "2.6.3",
+      "version": "2.6.4",
       "code": "requisition",
       "form_schema": null,
       "excel_template_buffer": null
