@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   useTranslation,
   LoadingButton,
@@ -11,6 +11,8 @@ import {
   EnvUtils,
   Platform,
   MuiLink,
+  Collapse,
+  Box,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { InitialiseLayout } from './InitialiseLayout';
@@ -34,15 +36,23 @@ export const Initialise = () => {
     password,
     url,
     username,
+    batchSize,
     onInitialise,
     onRetry,
     setPassword,
     setUsername,
     setUrl,
+    setBatchSize,
     siteCredentialsError: error,
     syncStatus,
     siteName,
   } = useInitialiseForm();
+
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  useEffect(() => {
+    if (batchSize != null) setShowAdvanced(true);
+  }, [batchSize]);
 
   const onSaveLog = async () => {
     if (!isAndroid) return;
@@ -138,6 +148,49 @@ export const Initialise = () => {
         if (isValid) await onInitialise();
       }}
       SiteInfo={<SiteInfo siteName={siteName} />}
+      AdvancedSection={
+        <Box sx={{ mt: '-24px !important' }}>
+          <Box display="flex" justifyContent="flex-end">
+            <MuiLink
+              component="button"
+              type="button"
+              onClick={() => setShowAdvanced(s => !s)}
+              underline="hover"
+              sx={{ fontSize: '0.8rem', color: 'gray.main' }}
+            >
+              {showAdvanced
+                ? t('label.hide-advanced-options')
+                : t('label.show-advanced-options')}
+            </MuiLink>
+          </Box>
+          <Collapse in={showAdvanced} unmountOnExit>
+            <Box pt={2}>
+              <LoginTextInput
+                fullWidth
+                type="number"
+                label={t('label.sync-batch-size')}
+                helperText={t('description.sync-batch-size')}
+                value={batchSize ?? ''}
+                disabled={isInputDisabled}
+                onChange={e => {
+                  const raw = e.target.value;
+                  if (raw === '') return setBatchSize(null);
+                  const parsed = parseInt(raw, 10);
+                  setBatchSize(
+                    Number.isFinite(parsed) && parsed > 0 ? parsed : null
+                  );
+                }}
+                slotProps={{
+                  htmlInput: {
+                    min: 1,
+                    inputMode: 'numeric',
+                  },
+                }}
+              />
+            </Box>
+          </Collapse>
+        </Box>
+      }
       SaveLogLink={
         isAndroid ? (
           <MuiLink

@@ -35,6 +35,8 @@ interface InitialiseForm {
   username: string;
   // set to settings value from api if isInitialising
   url: string;
+  // Optional sync batch size override; null = use server defaults
+  batchSize: number | null;
   // Used to enable polling of syncStatus and initialisationStatus
   // false by default and toggled to STATUS_POLLING_INTERVAL when isInitialising
   refetchInterval: number | false;
@@ -48,6 +50,7 @@ const useInitialiseFormState = () => {
     password: '',
     username: '',
     url: 'https://',
+    batchSize: null,
     refetchInterval: false,
   });
 
@@ -61,6 +64,8 @@ const useInitialiseFormState = () => {
     setPassword: (password: string) => set(state => ({ ...state, password })),
     setUsername: (username: string) => set(state => ({ ...state, username })),
     setUrl: (url: string) => set(state => ({ ...state, url })),
+    setBatchSize: (batchSize: number | null) =>
+      set(state => ({ ...state, batchSize })),
     // When sync is already ongoing either after initialise button is pressed
     // or when initialisation page is loaded while sync is ongoing
     // inputs should be disabled and polling for syncStatus should start
@@ -84,10 +89,12 @@ export const useInitialiseForm = () => {
     username,
     setSiteCredentialsError,
     url,
+    batchSize,
     refetchInterval,
     setIsInitialising,
     setUrl,
     setUsername,
+    setBatchSize,
   } = state;
   const t = useTranslation();
   const { mutateAsync: initialise } = useSync.sync.initialise();
@@ -110,6 +117,7 @@ export const useInitialiseForm = () => {
         password,
         url,
         username,
+        batchSize: batchSize ?? undefined,
       });
       // Map structured error
       if (response.__typename === 'SyncErrorNode') {
@@ -172,6 +180,7 @@ export const useInitialiseForm = () => {
     ) {
       setUsername(syncSettings.username);
       setUrl(syncSettings.url);
+      setBatchSize(syncSettings.batchSize ?? null);
     }
   }, [syncSettings, initStatus]);
 

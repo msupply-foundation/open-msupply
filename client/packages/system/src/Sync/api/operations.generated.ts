@@ -8,6 +8,7 @@ export type SyncSettingsFragment = {
   intervalSeconds: number;
   url: string;
   username: string;
+  batchSize?: number | null;
 };
 
 export type SyncSettingsQueryVariables = Types.Exact<{ [key: string]: never }>;
@@ -19,6 +20,7 @@ export type SyncSettingsQuery = {
     intervalSeconds: number;
     url: string;
     username: string;
+    batchSize?: number | null;
   } | null;
 };
 
@@ -45,6 +47,7 @@ export type InitialiseSiteMutation = {
         intervalSeconds: number;
         url: string;
         username: string;
+        batchSize?: number | null;
       };
 };
 
@@ -65,6 +68,7 @@ export type UpdateSyncSettingsMutation = {
         intervalSeconds: number;
         url: string;
         username: string;
+        batchSize?: number | null;
       };
 };
 
@@ -408,6 +412,7 @@ export const SyncSettingsFragmentDoc = gql`
     intervalSeconds
     url
     username
+    batchSize
   }
 `;
 export const SyncErrorFragmentDoc = gql`
