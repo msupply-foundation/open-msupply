@@ -146,9 +146,26 @@ impl Upsert for UserStoreJoinRow {
 #[derive(Debug, Clone)]
 pub struct UserStoreJoinRowDelete(pub String);
 impl Delete for UserStoreJoinRowDelete {
-    fn delete_sync(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                UserStoreJoinRow::generate_changelog(
+                    self.0.clone(),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
         UserStoreJoinRowRepository::new(con).delete_by_id(&self.0)?;
-        Ok(None) // Table not in Changelog
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
