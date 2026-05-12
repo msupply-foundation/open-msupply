@@ -72,6 +72,7 @@ export const AncillarySupplyModal = ({
           draft={draft}
           updateDraft={updateDraft}
           principalItemId={item.id}
+          ancillaryItems={item.ancillaryItems}
           isEdit={!!existing}
         />
       </QueryParamsProvider>
@@ -82,15 +83,21 @@ export const AncillarySupplyModal = ({
 const AncillarySupplyForm = ({
   draft,
   principalItemId,
+  ancillaryItems,
   updateDraft,
   isEdit,
 }: {
   draft: DraftAncillaryItem;
   principalItemId: string;
+  ancillaryItems: AncillaryItemFragment[];
   isEdit: boolean;
   updateDraft: (update: Partial<DraftAncillaryItem>) => void;
 }) => {
   const t = useTranslation();
+  const excludedIds = [
+    principalItemId,
+    ...ancillaryItems.map(a => a.ancillaryItemId),
+  ];
 
   const labelSx = {
     fontWeight: 'bold',
@@ -114,7 +121,7 @@ const AncillarySupplyForm = ({
         disabled={isEdit}
         onChange={selected => updateDraft({ ancillaryItemId: selected?.id })}
         currentItemId={draft.ancillaryItemId ?? undefined}
-        filter={{ id: { notEqualAll: [principalItemId] } }}
+        filter={{ id: { notEqualAll: excludedIds } }}
       />
 
       <FormLabel sx={labelSx}>{t('label.ratio')}:</FormLabel>
