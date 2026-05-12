@@ -1,7 +1,7 @@
-use crate::migrations::*;
-
-#[cfg(feature = "postgres")]
-use diesel::{prelude::*, sql_types::BigInt};
+use crate::{
+    migrations::{sql, MigrationConfig, MigrationFragment},
+    ChangelogRepository, StorageConnection,
+};
 
 pub(crate) struct Migrate;
 
@@ -10,48 +10,29 @@ impl MigrationFragment for Migrate {
         "partition_changelog_by_cursor"
     }
 
-    #[cfg(not(feature = "postgres"))]
-    fn migrate_with_config(
-        &self,
-        connection: &StorageConnection,
-        _config: &MigrationConfig,
-    ) -> anyhow::Result<()> {
-        // SQLite has no partitioning. Bring the SQLite schema into the same
-        // shape as the post-partition Postgres schema: drop `name_link_id`
-        // (no longer used on changelog), rename `patient_id` → `patient_link_id`,
-        // and rename the patient index to match.
-        sql!(
-            connection,
-            r#"
-            DROP INDEX IF EXISTS index_changelog_name_link_id_fkey;
-            ALTER TABLE changelog DROP COLUMN name_link_id;
-            ALTER TABLE changelog RENAME COLUMN patient_id TO patient_link_id;
-            DROP INDEX IF EXISTS index_changelog_patient_id;
-            CREATE INDEX index_changelog_patient_link_id
-                ON changelog (patient_link_id) WHERE patient_link_id IS NOT NULL;
-            "#
-        )?;
-        Ok(())
-    }
-
-    #[cfg(feature = "postgres")]
     fn migrate_with_config(
         &self,
         connection: &StorageConnection,
         config: &MigrationConfig,
     ) -> anyhow::Result<()> {
-        #[derive(QueryableByName)]
-        struct MaxCursor {
-            #[diesel(sql_type = BigInt)]
-            max_cursor: i64,
+        if !cfg!(feature = "postgres") {
+            // SQLite has no partitioning. Bring its schema in line with the
+            // post-partition Postgres shape: drop `name_link_id` (gone from the
+            // new partitioned table) and rename `patient_id` → `patient_link_id`.
+            // The matching index is created later in `create_changelog_indexes`.
+            sql!(
+                connection,
+                r#"
+                DROP INDEX IF EXISTS index_changelog_name_link_id_fkey;
+                ALTER TABLE changelog DROP COLUMN name_link_id;
+                ALTER TABLE changelog RENAME COLUMN patient_id TO patient_link_id;
+                DROP INDEX IF EXISTS index_changelog_patient_id;
+                "#
+            )?;
+            return Ok(());
         }
 
-        let max_cursor: i64 = diesel::sql_query(
-            "SELECT COALESCE(MAX(cursor), 0)::bigint AS max_cursor FROM changelog",
-        )
-        .get_result::<MaxCursor>(connection.lock().connection())?
-        .max_cursor;
-
+        let max_cursor = ChangelogRepository::new(connection).max_cursor()? as i64;
         let partition_size = config.changelog_partition.partition_size;
         let lookahead = config.changelog_partition.lookahead_partitions;
 
@@ -73,16 +54,18 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
-        // 3. Detach the sequence so we can re-own it on the new changelog.
+        // 3. Detach the sequence so it survives `DROP TABLE old_changelog`
+        //    (otherwise the sequence is owned by old_changelog.cursor and would
+        //    be dropped with the table).
         sql!(
             connection,
             "ALTER SEQUENCE changelog_cursor_seq OWNED BY NONE;"
         )?;
 
-        // 4. Create the fresh partitioned parent. Same column set + FK + PK.
-        //    Secondary indexes are created AFTER the bulk INSERT (step 9) so PG
-        //    builds them per-partition rather than maintaining them per row
-        //    during the copy.
+        // 4. Create the fresh partitioned parent. Same column set + PK.
+        //    Secondary indexes are deferred to the `create_changelog_indexes`
+        //    fragment so neither this bulk INSERT nor the central-table
+        //    populate fragment has to maintain them per-row.
         sql!(
             connection,
             r#"
@@ -128,40 +111,17 @@ impl MigrationFragment for Migrate {
         // 7. Drop the old table now that all data is in the partitioned changelog.
         sql!(connection, "DROP TABLE old_changelog;")?;
 
-        // 8. Re-own the sequence so it's tied to the new changelog.cursor, and
-        //    continue the sequence from max_cursor (next nextval = max_cursor+1).
-        //    GREATEST(.., 1) handles the empty-changelog case where setval(0) errors.
+        // 8. Re-own the sequence on the new changelog. The sequence's last_value
+        //    is already at max(cursor) from the old table's inserts
         sql!(
             connection,
             "ALTER SEQUENCE changelog_cursor_seq OWNED BY changelog.cursor;"
-        )?;
-        sql!(
-            connection,
-            "SELECT setval('changelog_cursor_seq', GREATEST({}, 1));",
-            max_cursor
-        )?;
-
-        // 9. Create the four partitioned indexes on the parent. PG builds them
-        //    across every partition in bulk.
-        sql!(
-            connection,
-            r#"
-            CREATE INDEX index_changelog_source_site_id
-                ON changelog (source_site_id);
-            CREATE INDEX index_changelog_store_id
-                ON changelog (store_id);
-            CREATE INDEX index_changelog_transfer_store_id
-                ON changelog (transfer_store_id) WHERE transfer_store_id IS NOT NULL;
-            CREATE INDEX index_changelog_patient_link_id
-                ON changelog (patient_link_id) WHERE patient_link_id IS NOT NULL;
-            "#
         )?;
 
         Ok(())
     }
 }
 
-#[cfg(feature = "postgres")]
 fn create_future_partitions(
     connection: &StorageConnection,
     start: i64,
@@ -215,6 +175,15 @@ mod tests {
         .execute(connection.lock().connection())
         .unwrap();
 
+        // Inserts above used explicit cursor values so the sequence wasn't
+        // advanced. Set it to match max(cursor) so the post-migration auto-
+        // cursor insert below picks up at 5 — mirroring how production
+        // changelog inserts (which always go through nextval) keep sequence
+        // and max(cursor) aligned.
+        diesel::sql_query("SELECT setval('changelog_cursor_seq', 4)")
+            .execute(connection.lock().connection())
+            .unwrap();
+
         let partition_size: i64 = 2;
         let lookahead: i64 = 2;
         let config = MigrationConfig {
@@ -246,11 +215,9 @@ mod tests {
         assert_insert_routes_to_partition(&connection, "u_new");
     }
 
-    /// Partition migration on an empty changelog. Exercises the max_cursor=0
-    /// path (setval(GREATEST(0,1)) keeps the sequence valid — PG rejects
-    /// setval(seq, 0)) and the partition count formula collapses to
-    /// `1 + lookahead`. New inserts after migration must still route to a
-    /// partition without error.
+    /// Partition migration on an empty changelog. The partition count formula
+    /// collapses to `1 + lookahead`. New inserts after migration must still
+    /// route to a partition without error and start at cursor 1.
     #[actix_rt::test]
     async fn test_partition_changelog_empty() {
         let connection = setup_pre_partition("migration_partition_changelog_empty").await;
