@@ -26,8 +26,7 @@ export const isSyncStatusV7 = (
 
 export const isSyncErrorV7 = (
   error: SyncErrorAny | null | undefined
-): error is SyncErrorV7Fragment =>
-  error?.__typename === 'SyncErrorV7Node';
+): error is SyncErrorV7Fragment => error?.__typename === 'SyncErrorV7Node';
 
 export const getSyncQueries = (sdk: Sdk) => ({
   get: {

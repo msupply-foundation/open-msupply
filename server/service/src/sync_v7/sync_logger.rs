@@ -87,14 +87,11 @@ impl<'a> SyncLogger<'a> {
 
     /// Persist current row to DB and notify subscribers.
     fn update(&self) -> Result<(), RepositoryError> {
-        log::info!("Updating sync log: {:?}", self.row);
         self.sync_log_repo.upsert_one(&self.row)?;
         if let Some(handle) = &self.subscription_trigger {
-            log::info!("Notifying subscribers about sync log update");
             handle.send(SubscriptionTrigger::SyncStatus(SyncLogRow::V7(
                 self.row.clone(),
             )));
-            log::info!("Subscribers notified");
         }
         Ok(())
     }
