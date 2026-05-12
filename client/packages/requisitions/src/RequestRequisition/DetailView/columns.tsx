@@ -317,12 +317,26 @@ const ItemNameCell = ({
                 >
                   {parents.map(p => (
                     <Typography component="li" key={p.id} variant="body2">
+                      <Box
+                        component="span"
+                        sx={{ color: 'text.secondary', mr: 0.5 }}
+                      >
+                        {p.code}
+                      </Box>
                       {p.name}
                     </Typography>
                   ))}
                 </Box>
               ) : (
-                <Typography variant="body2">{parents[0]?.name}</Typography>
+                <Typography variant="body2">
+                  <Box
+                    component="span"
+                    sx={{ color: 'text.secondary', mr: 0.5 }}
+                  >
+                    {parents[0]?.code}
+                  </Box>
+                  {parents[0]?.name}
+                </Typography>
               )}
             </Box>
           }
