@@ -6,9 +6,11 @@ use crate::{
 use chrono::Utc;
 use repository::{
     KeyType, KeyValueStoreRepository, NameRow, NameRowRepository, NameRowType,
-    NameStoreJoinRepository, NameStoreJoinRow, RepositoryError, SiteRow, SiteRowRepository,
-    StoreRow, StoreRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    NameStoreJoinRepository, NameStoreJoinRow, PermissionType, RepositoryError, SiteRow,
+    SiteRowRepository, StoreRow, StoreRowRepository, UserPermissionRow,
+    UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
+use strum::IntoEnumIterator;
 use util::uuid::uuid;
 
 const STANDALONE_CENTRAL_SITE_ID: i32 = 1;
@@ -114,6 +116,18 @@ impl StandaloneCentralServiceTrait for StandaloneCentralService {
                     is_default: true,
                 })?;
 
+                let perm_repo = UserPermissionRowRepository::new(con);
+                let all_perms = PermissionType::iter().collect::<Vec<_>>();
+                for permission in all_perms {
+                    perm_repo.upsert_one(&UserPermissionRow {
+                        id: uuid(),
+                        user_id: admin.id.clone(),
+                        store_id: Some(store_id.clone()),
+                        permission,
+                        context_id: None,
+                    })?;
+                }
+
                 Ok(())
             })
             .map_err(|error| error.to_inner_error())?;
@@ -142,10 +156,9 @@ fn validate_initialise(
         return Err(InitialiseAsCentralServerError::AdminPasswordRequired);
     }
 
-    let already_standalone = KeyValueStoreRepository::new(&ctx.connection)
-        .get_bool(KeyType::IsStandaloneCentral)?
-        == Some(true);
-    if already_standalone {
+    if let Some(true) =
+        KeyValueStoreRepository::new(&ctx.connection).get_bool(KeyType::IsStandaloneCentral)?
+    {
         return Err(InitialiseAsCentralServerError::AlreadyInitialised);
     }
 
