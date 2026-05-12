@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_is_standalone_central_pg_enum;
 mod add_sync_log_v7;
 mod add_sync_v7_cursor_pg_enum;
 mod add_sync_v7_token_pg_enum;
@@ -32,6 +33,7 @@ impl Migration for V3_00_00 {
             Box::new(create_site_table::Migrate),
             Box::new(rebuild_sync_buffer::Migrate),
             Box::new(populate_changelog_with_rows_for_sync_v7_tables::Migrate),
+            Box::new(add_is_standalone_central_pg_enum::Migrate),
         ]
     }
 }
