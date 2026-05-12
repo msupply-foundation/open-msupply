@@ -79,11 +79,17 @@ Adds patient routing on top of remote+transfer; an invoice also follows its pati
 
 Central data still served from legacy 4D. This bucket also acts as a catch-all for tables that exist in the changelog but haven't been classified into a more specific style yet.
 
-### Legacy, Central + Patient
+### Legacy + OMS-native, Central + Patient
 
 `Name`
 
-Names are central data — every site needs the full directory — but a patient-typed name additionally carries its own id as `patient_id` on the changelog. Non-patient names route via the Central clause; patient names route via the Patient clause to every site that knows the patient.
+Names are central data — every site needs the full directory — but a patient-typed name additionally carries its own id as `patient_id` on the changelog. Non-patient names route via the Central clause; patient names route via the Patient clause to every site that knows the patient. `Name` is the only table tagged as living on **both** transports: it's pulled on v6 (so OMS-native filters include it) and still pushed on v5 (so legacy filters include it too).
+
+### Legacy, Patient
+
+`Document`
+
+Pure patient-scoped data on the legacy transport. The changelog row carries only the patient, no store, so routing is purely by Patient and the record follows the patient across stores.
 
 ### Legacy, ToLegacyCentralOnly
 
@@ -108,12 +114,6 @@ Site-owned data on the OMS-native transport.
 `Encounter`, `Vaccination`
 
 Store-scoped clinical records that should also follow the patient. Each row carries the authoring store *and* the patient. The Remote clause delivers it to the owning site; the Patient clause delivers it to every other site that knows the patient. The Central clause never matches because `patient_id` is set.
-
-### OMS-native, Patient
-
-`Document`
-
-Pure patient-scoped data. The changelog carries only the patient, no store, so routing is purely by Patient and the record follows the patient across stores.
 
 ### OMS-native, File
 
@@ -184,7 +184,7 @@ Five filters compose the metadata above into "this site, this transport" predica
 | Filter | Used by | What it returns | Echo guard |
 | --- | --- | --- | --- |
 | **all-data-for-site** | v6 central pull (OMS-native tables only); v7 central pull (all tables) | Per sync style: Central / File → store-id is null **and** patient-id is null; Remote → store's site = this site; Transfer → transfer-store's site = this site; Patient → patient's site = this site (via name-store-join). ToLegacyCentralOnly and RemoteToCentral are skipped. | Once initialised, exclude rows whose source-site = this site. |
-| **patient-data-for-site** | v6 patient pull (used together with an explicit patient id) | Just the Patient clause from above, intersected with the requested patient id. | None at this layer — caller composes additional conditions. |
+| **patient-data-for-site** | v6 patient pull and v7 patient pull (used together with an explicit patient id) | Just the Patient clause from above, intersected with the requested patient id. | None at this layer — caller composes additional conditions. |
 | **all-data-for-legacy-central** | v5 push (remote → legacy 4D) | Legacy-only tables in styles ToLegacyCentralOnly, Remote, Transfer, Patient. Central, RemoteToCentral, File are excluded. | Exclude rows whose source-site is the legacy central server itself. |
 | **all-data-edited-on-site** | v7 push (remote → OMS central) | Just "rows whose source-site = this site". No per-style filtering, no transport-flag filtering — the per-table translators are not consulted because v7 has no per-table translation. | Implicit — the predicate itself is the echo guard. |
 | **data-for-store** | (defined, not yet used) | Remote + Transfer for a specific store, ignoring transport flags. | None. |
@@ -219,12 +219,12 @@ Notable special cases:
 
 | Table | Special behaviour |
 |---|---|
-| `Name`, `NameStoreJoin` | Legacy-classified, but their translators also opt in to push to OMS central, so they round-trip via OMS too — used to share patient details across sites. When the central server is processing `Name` or `NameStoreJoin`, the translator additionally guards against echoing rows that originated from a remote (avoids the central pushing a remote-authored update straight back to legacy 4D). |
+| `Name`, `NameStoreJoin` | Their translators opt in to push to OMS central, so they round-trip via OMS too — used to share patient details across sites. `Name` is tagged on both transports (v5 *and* v6), so it flows over both; `NameStoreJoin` is legacy-only by transport flag but its OMS push opt-in is what enables the round-trip. When the central server is processing `Name` or `NameStoreJoin`, the translator additionally guards against echoing rows that originated from a remote (avoids the central pushing a remote-authored update straight back to legacy 4D). |
 | `NameOmsFields` | Central-style (authored on OMS central) but its translator opts in to push to OMS central, allowing remote → central writebacks. |
 | Vaccine-course family (`VaccineCourse`, `VaccineCourseDose`, `VaccineCourseItem`) | Central-style on OMS, but a parallel set of legacy translators re-publishes them to legacy 4D when running on OMS central, so v5-only stores still receive them. |
 | `Encounter` | OMS-native, Remote + Patient. It has no main OMS translator on its own — the only translator is a companion legacy translator that re-publishes it to legacy 4D when running on OMS central, so v5-only stores still receive it. |
 | `Vaccination` | OMS-native, Remote + Patient. Its main translator opts in to OMS push/pull. A companion legacy translator re-publishes it to legacy 4D when running on OMS central, so v5-only stores still receive it. |
-| `Document` | OMS-native, classified as Patient only — the changelog row carries no store, so routing is purely by Patient. |
+| `Document` | Legacy-classified, Patient style — the changelog row carries no store, so routing is purely by Patient. |
 | `MasterList` | Legacy/Central, but the translator declares no changelog mapping, so nothing pushes on any transport — it only ever flows down from legacy 4D. |
 
 For v7 there is **no** per-table translation step — the database row is serialised directly and deserialised on the other side. As a consequence, v7 push for a given table works whether or not its translator has a v6 opt-in.
