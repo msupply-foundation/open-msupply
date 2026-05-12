@@ -35,14 +35,14 @@ impl SyncSettingsNode {
             remote_pull,
             remote_push,
             central_pull,
-        } = self.settings.batch_size;
+        } = &self.settings.batch_size;
         let defaults = BatchSize::default();
         let uniform = remote_pull == remote_push && remote_push == central_pull;
-        let is_default = remote_pull == defaults.remote_pull
-            && remote_push == defaults.remote_push
-            && central_pull == defaults.central_pull;
+        let is_default = remote_pull == &defaults.remote_pull
+            && remote_push == &defaults.remote_push
+            && central_pull == &defaults.central_pull;
         if uniform && !is_default {
-            Some(remote_pull)
+            Some(*remote_pull)
         } else {
             None
         }
