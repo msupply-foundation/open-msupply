@@ -211,35 +211,30 @@ impl<'a> ChangelogRepository<'a> {
                 }
             }
 
-            let mut rows_by_table: HashMap<ChangelogTableName, HashMap<String, Row>> =
-                HashMap::new();
+            let mut fetched_rows: HashMap<(ChangelogTableName, String), Row> = HashMap::new();
             for (table_name, ids) in upsert_ids_by_table {
-                let rows = fetch_rows_for_table(self.connection, &table_name, &ids)?;
-                rows_by_table.insert(table_name, rows);
+                for (id, row) in fetch_rows_for_table(self.connection, &table_name, &ids)? {
+                    fetched_rows.insert((table_name.clone(), id), row);
+                }
             }
 
             // Apply this batch to output_by_key, with cross-iteration supersession.
             for ((table_name, record_id), cl) in batch_dedup {
-                let key = (table_name.clone(), record_id.clone());
+                let key = (table_name, record_id);
                 match cl.row_action {
                     RowActionType::Delete => {
                         output_by_key.insert(key, RowOrDelete::Delete { changelog: cl });
                     }
-                    RowActionType::Upsert => {
-                        let row = rows_by_table
-                            .get_mut(&table_name)
-                            .and_then(|m| m.remove(&record_id));
-                        match row {
-                            Some(row) => {
-                                output_by_key.insert(key, RowOrDelete::Row { changelog: cl, row });
-                            }
-                            None => {
-                                // Latest changelog for this key is an Upsert pointing
-                                // at a missing row — supersedes any earlier output.
-                                output_by_key.remove(&key);
-                            }
+                    RowActionType::Upsert => match fetched_rows.remove(&key) {
+                        Some(row) => {
+                            output_by_key.insert(key, RowOrDelete::Row { changelog: cl, row });
                         }
-                    }
+                        None => {
+                            // Latest changelog for this key is an Upsert pointing
+                            // at a missing row — supersedes any earlier output.
+                            output_by_key.remove(&key);
+                        }
+                    },
                 }
             }
 
