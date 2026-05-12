@@ -203,6 +203,7 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
             details={error.detail || ''}
             error={loginError.error}
             hint={loginError.hint}
+            width="100%"
           />
         )
       }
