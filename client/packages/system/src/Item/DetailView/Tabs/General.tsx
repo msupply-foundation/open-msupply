@@ -11,7 +11,6 @@ import {
 } from '@openmsupply-client/common';
 import { ItemFragment } from '../../api';
 import { LocationTypeInput } from '../../Components';
-import { AncillarySupplies } from './AncillarySupplies';
 
 interface GeneralTabProps {
   item: ItemFragment;
@@ -196,7 +195,6 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
             ))}
           </DetailSection>
         )}
-        <AncillarySupplies item={item} />
       </Grid>
     </DetailContainer>
   );

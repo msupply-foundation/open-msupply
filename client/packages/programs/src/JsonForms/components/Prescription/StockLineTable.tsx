@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import {
   ColumnDef,
   ColumnType,
+  ExpiryDateCell,
   MaterialTable,
   useSimpleMaterialTable,
   useTranslation,
@@ -26,6 +27,7 @@ export const StockLineTable = ({
         accessorKey: 'expiryDate',
         header: t('label.expiry'),
         columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
         size: 60,
       },
       {

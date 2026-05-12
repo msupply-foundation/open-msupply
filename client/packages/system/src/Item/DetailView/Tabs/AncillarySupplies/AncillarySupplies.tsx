@@ -1,17 +1,17 @@
 import React, { useMemo } from 'react';
 import {
-  FlatButton,
+  AppBarButtonsPortal,
+  ButtonWithIcon,
   useTranslation,
   PlusCircleIcon,
   useEditModal,
   IconButton,
   DeleteIcon,
   MaterialTable,
-  useSimpleMaterialTable,
+  useNonPaginatedMaterialTable,
   ColumnDef,
   TextWithTooltipCell,
   useIsCentralServerApi,
-  DetailSection,
   NothingHere,
 } from '@openmsupply-client/common';
 import {
@@ -30,7 +30,7 @@ export const AncillarySupplies = ({ item }: { item: ItemFragment }) => {
     useEditModal<AncillaryItemFragment>();
 
   return (
-    <DetailSection title={t('title.ancillary-supplies')}>
+    <>
       {isOpen && (
         <AncillarySupplyModal
           onClose={onClose}
@@ -39,11 +39,21 @@ export const AncillarySupplies = ({ item }: { item: ItemFragment }) => {
         />
       )}
 
+      {isCentralServer && (
+        <AppBarButtonsPortal>
+          <ButtonWithIcon
+            Icon={<PlusCircleIcon />}
+            onClick={() => onOpen()}
+            label={t('label.add-ancillary-item')}
+          />
+        </AppBarButtonsPortal>
+      )}
+
       <AncillarySuppliesTable
         item={item}
         onOpen={isCentralServer ? onOpen : undefined}
       />
-    </DetailSection>
+    </>
   );
 };
 
@@ -65,6 +75,8 @@ const AncillarySuppliesTable = ({
           accessorFn: row => row.ancillaryItem?.name ?? '',
           header: t('label.ancillary-item'),
           Cell: TextWithTooltipCell,
+          enableSorting: true,
+          enableColumnFilter: true,
         },
         {
           id: 'code',
@@ -72,6 +84,8 @@ const AncillarySuppliesTable = ({
           header: t('label.code'),
           Cell: TextWithTooltipCell,
           size: 120,
+          enableSorting: true,
+          enableColumnFilter: true,
         },
         {
           id: 'ratio',
@@ -105,20 +119,18 @@ const AncillarySuppliesTable = ({
     [onOpen, deleteAncillaryItem, t]
   );
 
-  const table = useSimpleMaterialTable<AncillaryItemFragment>({
+  const { table } = useNonPaginatedMaterialTable<AncillaryItemFragment>({
     tableId: 'ancillary-supplies',
     data: item.ancillaryItems,
     columns,
     onRowClick: onOpen,
-    bottomToolbarContent: onOpen ? (
-      <FlatButton
-        label={t('label.add-ancillary-item')}
-        onClick={() => onOpen()}
-        startIcon={<PlusCircleIcon />}
-        color="primary"
+    enableRowSelection: false,
+    noDataElement: (
+      <NothingHere
+        body={t('messages.no-ancillary-items')}
+        onCreate={onOpen ? () => onOpen() : undefined}
       />
-    ) : undefined,
-    noDataElement: <NothingHere body={t('messages.no-ancillary-items')} />,
+    ),
   });
 
   return <MaterialTable table={table} />;

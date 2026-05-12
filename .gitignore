@@ -26,3 +26,4 @@ server/configuration/*.yaml
 # Keep the example and base configuration files
 !configuration/base.yaml
 !configuration/example.yaml
+server/target-postgres/
