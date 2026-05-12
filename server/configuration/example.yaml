@@ -8,6 +8,11 @@
 #   # debug_no_access_control: true # enable this if you want to ignore API authorisation (dummy user will be used for all operations)
 #   # danger_allow_http: true # allow http in production mode
 #   # override_is_central_server: true # set server mode as central server, should only be used in testing, demo and development, sync calls can override this back to normal
+#   # # Setting all three values below on a fresh DB initialises OMS central.
+#   # # Requires `override_is_central_server: true` above as well.
+#   # standalone_store_name: 'Central Config'
+#   # standalone_admin_username: 'admin'
+#   # standalone_admin_password: 'pass'
 #   cors_origins: [
 #       http://localhost:3003,
 #       https://demo-open.msupply.org,
