@@ -1,5 +1,16 @@
 use std::time::{Duration, Instant};
 
+pub fn log_body_read(url: &str, bytes: usize, elapsed: Duration) {
+    let kb_per_sec = (bytes as f64 / 1024.0) / elapsed.as_secs_f64().max(0.001);
+    log::info!(
+        "API body read: url '{}', {} bytes in {:.1}s ({:.1} KB/s)",
+        url,
+        bytes,
+        elapsed.as_secs_f64(),
+        kb_per_sec,
+    );
+}
+
 use reqwest::*;
 
 pub struct RetrySeconds(Vec<u64>);
@@ -77,48 +88,60 @@ where
             }
         };
 
-        let will_retry = (is_connect_error
-            || is_timeout_error
-            || status == Some(StatusCode::REQUEST_TIMEOUT))
-            && (index + 1) < connection_timeouts.0.len();
+        let will_retry =
+            (is_connect_error || is_timeout_error || status == Some(StatusCode::REQUEST_TIMEOUT))
+                && (index + 1) < connection_timeouts.0.len();
 
-        if let Ok(response) = result.as_ref() {
-            let content_length_display = response
-                .content_length()
-                .map(|n| format!("{} bytes", n))
-                .unwrap_or_else(|| "unknown".to_string());
-            log::info!(
-                "API response: url '{}', status {}, content-length {}, headers in {:.1}s",
-                response.url(),
-                response.status().as_u16(),
-                content_length_display,
-                elapsed.as_secs_f64(),
-            );
-        }
-
-        if let Some(failure) = attempt_failure {
-            let url_display = url.as_deref().unwrap_or("<unknown>");
-            let body_display = body_size
-                .map(|n| format!("{} bytes", n))
-                .unwrap_or_else(|| "unknown size".to_string());
-            let retry_note = if will_retry {
-                format!(
-                    "retrying (next connect timeout {}s)",
-                    connection_timeouts.0[index + 1]
-                )
-            } else {
-                "not retrying".to_string()
-            };
-            log::info!(
-                "API request failed: url '{}', {}, attempt {}/{} after {:.1}s (request body: {}); {}",
-                url_display,
-                failure,
-                index + 1,
-                connection_timeouts.0.len(),
-                elapsed.as_secs_f64(),
-                body_display,
-                retry_note,
-            );
+        match attempt_failure {
+            None => {
+                // Genuine success: log headers timing and content-length.
+                if let Ok(response) = result.as_ref() {
+                    let content_length_display = response
+                        .content_length()
+                        .map(|n| format!("{} bytes", n))
+                        .unwrap_or_else(|| "unknown".to_string());
+                    log::info!(
+                        "API response: url '{}', status {}, content-length {}, headers in {:.1}s",
+                        response.url(),
+                        response.status().as_u16(),
+                        content_length_display,
+                        elapsed.as_secs_f64(),
+                    );
+                }
+            }
+            Some(failure) => {
+                let url_display = url.as_deref().unwrap_or("<unknown>");
+                let body_display = body_size
+                    .map(|n| format!("{} bytes", n))
+                    .unwrap_or_else(|| "unknown size".to_string());
+                let retry_note = if will_retry {
+                    format!(
+                        "retrying (next connect timeout {}s)",
+                        connection_timeouts.0[index + 1]
+                    )
+                } else {
+                    "not retrying".to_string()
+                };
+                // For non-2xx responses, fold the content-length into the failure log
+                // to avoid emitting two lines for the same request.
+                let content_length_note = result
+                    .as_ref()
+                    .ok()
+                    .and_then(|r| r.content_length())
+                    .map(|n| format!(", content-length {} bytes", n))
+                    .unwrap_or_default();
+                log::info!(
+                    "API request failed: url '{}', {}, attempt {}/{} after {:.1}s (request body: {}{}); {}",
+                    url_display,
+                    failure,
+                    index + 1,
+                    connection_timeouts.0.len(),
+                    elapsed.as_secs_f64(),
+                    body_display,
+                    content_length_note,
+                    retry_note,
+                );
+            }
         }
 
         if will_retry {

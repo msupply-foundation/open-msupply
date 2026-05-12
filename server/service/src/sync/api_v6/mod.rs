@@ -5,7 +5,7 @@ use repository::RepositoryError;
 use reqwest::{Response, Url};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
-use util::format_error;
+use util::{format_error, log_body_read};
 
 use crate::i64_to_u64;
 
@@ -246,16 +246,7 @@ async fn response_or_err<T: DeserializeOwned>(
         .text()
         .await
         .map_err(ParsingResponseError::CannotGetTextResponse)?;
-    let elapsed = started.elapsed();
-    let bytes = response_text.len();
-    let kb_per_sec = (bytes as f64 / 1024.0) / elapsed.as_secs_f64().max(0.001);
-    log::info!(
-        "API body read: url '{}', {} bytes in {:.1}s ({:.1} KB/s)",
-        url,
-        bytes,
-        elapsed.as_secs_f64(),
-        kb_per_sec,
-    );
+    log_body_read(&url, response_text.len(), started.elapsed());
 
     let result = serde_json::from_str(&response_text).map_err(|source| {
         ParsingResponseError::ParseError {

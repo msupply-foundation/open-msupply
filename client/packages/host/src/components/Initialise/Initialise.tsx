@@ -13,6 +13,7 @@ import {
   MuiLink,
   Collapse,
   Box,
+  NumericTextInput,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { InitialiseLayout } from './InitialiseLayout';
@@ -165,27 +166,15 @@ export const Initialise = () => {
           </Box>
           <Collapse in={showAdvanced} unmountOnExit>
             <Box pt={2}>
-              <LoginTextInput
+              <NumericTextInput
                 fullWidth
-                type="number"
+                textAlign="left"
                 label={t('label.sync-batch-size')}
                 helperText={t('description.sync-batch-size')}
-                value={batchSize ?? ''}
+                value={batchSize ?? undefined}
                 disabled={isInputDisabled}
-                onChange={e => {
-                  const raw = e.target.value;
-                  if (raw === '') return setBatchSize(null);
-                  const parsed = parseInt(raw, 10);
-                  setBatchSize(
-                    Number.isFinite(parsed) && parsed > 0 ? parsed : null
-                  );
-                }}
-                slotProps={{
-                  htmlInput: {
-                    min: 1,
-                    inputMode: 'numeric',
-                  },
-                }}
+                onChange={value => setBatchSize(value ?? null)}
+                min={1}
               />
             </Box>
           </Collapse>
