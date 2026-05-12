@@ -1,4 +1,7 @@
-use std::time::{Duration, Instant};
+use std::{
+    sync::RwLock,
+    time::{Duration, Instant},
+};
 
 use reqwest::*;
 
@@ -12,11 +15,16 @@ impl Default for RetrySeconds {
     }
 }
 
+pub const DEFAULT_READ_IDLE_TIMEOUT: Duration = Duration::from_secs(60 * 5);
+
 // Idle read timeout: abort if no bytes arrive on the response for this long.
-// Replaces the previous 30-minute wall-clock cap so legitimate large pulls
-// (which can exceed 30 min on low bandwidth) still succeed as long as the
-// connection is making progress; a genuinely stalled socket still fails fast.
-const READ_IDLE_TIMEOUT: Duration = Duration::from_secs(60 * 5);
+// Configurable at runtime via set_read_idle_timeout so low-bandwidth sites
+// can tune it from the UI without editing the server config file.
+static READ_IDLE_TIMEOUT: RwLock<Duration> = RwLock::new(DEFAULT_READ_IDLE_TIMEOUT);
+
+pub fn set_read_idle_timeout(d: Duration) {
+    *READ_IDLE_TIMEOUT.write().unwrap() = d;
+}
 
 pub async fn with_retries<F>(connection_timeouts: RetrySeconds, f: F) -> Result<Response>
 where
@@ -26,7 +34,7 @@ where
     loop {
         let client = Client::builder()
             .connect_timeout(Duration::from_secs(connection_timeouts.0[index]))
-            .read_timeout(READ_IDLE_TIMEOUT)
+            .read_timeout(*READ_IDLE_TIMEOUT.read().unwrap())
             .build()
             .unwrap(); // This method fails if a TLS backend cannot be initialized, or the resolver cannot load the system configuration.
 

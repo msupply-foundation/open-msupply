@@ -47,6 +47,7 @@ pub trait SettingsServiceTrait: Sync + Send {
                 password_sha256: password_sha256?,
                 interval_seconds: interval_seconds? as u64,
                 batch_size: Default::default(),
+                read_idle_timeout_seconds: Default::default(),
                 disable_integration_transaction: false,
             })
         };

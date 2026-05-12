@@ -9866,6 +9866,11 @@ export type SyncSettingsInput = {
   intervalSeconds: Scalars['Int']['input'];
   /** Plain text password */
   password: Scalars['String']['input'];
+  /**
+   * Idle read timeout in seconds for sync HTTP requests. Leave unset to use
+   * the server default (300s).
+   */
+  readIdleTimeoutSeconds?: InputMaybe<Scalars['Int']['input']>;
   url: Scalars['String']['input'];
   username: Scalars['String']['input'];
 };
@@ -9874,6 +9879,11 @@ export type SyncSettingsNode = {
   __typename: 'SyncSettingsNode';
   /** How frequently central data is synced */
   intervalSeconds: Scalars['Int']['output'];
+  /**
+   * Configured idle read timeout in seconds. Returns None when using the
+   * server default so the UI input appears blank rather than pre-filled.
+   */
+  readIdleTimeoutSeconds?: Maybe<Scalars['Int']['output']>;
   /** Central server url */
   url: Scalars['String']['output'];
   /** Central server username */

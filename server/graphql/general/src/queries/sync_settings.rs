@@ -26,6 +26,12 @@ impl SyncSettingsNode {
     pub async fn interval_seconds(&self) -> u64 {
         self.settings.interval_seconds
     }
+
+    /// Configured idle read timeout in seconds. Returns None when using the
+    /// server default so the UI input appears blank rather than pre-filled.
+    pub async fn read_idle_timeout_seconds(&self) -> Option<u64> {
+        self.settings.read_idle_timeout_seconds
+    }
 }
 
 pub(crate) fn sync_settings(

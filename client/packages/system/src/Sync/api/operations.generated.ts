@@ -6,6 +6,7 @@ type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type SyncSettingsFragment = {
   __typename: 'SyncSettingsNode';
   intervalSeconds: number;
+  readIdleTimeoutSeconds?: number | null;
   url: string;
   username: string;
 };
@@ -17,6 +18,7 @@ export type SyncSettingsQuery = {
   syncSettings?: {
     __typename: 'SyncSettingsNode';
     intervalSeconds: number;
+    readIdleTimeoutSeconds?: number | null;
     url: string;
     username: string;
   } | null;
@@ -43,6 +45,7 @@ export type InitialiseSiteMutation = {
     | {
         __typename: 'SyncSettingsNode';
         intervalSeconds: number;
+        readIdleTimeoutSeconds?: number | null;
         url: string;
         username: string;
       };
@@ -63,6 +66,7 @@ export type UpdateSyncSettingsMutation = {
     | {
         __typename: 'SyncSettingsNode';
         intervalSeconds: number;
+        readIdleTimeoutSeconds?: number | null;
         url: string;
         username: string;
       };
@@ -406,6 +410,7 @@ export const SyncSettingsFragmentDoc = gql`
   fragment SyncSettings on SyncSettingsNode {
     __typename
     intervalSeconds
+    readIdleTimeoutSeconds
     url
     username
   }

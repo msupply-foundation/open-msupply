@@ -38,6 +38,8 @@ interface InitialiseForm {
   // Used to enable polling of syncStatus and initialisationStatus
   // false by default and toggled to STATUS_POLLING_INTERVAL when isInitialising
   refetchInterval: number | false;
+  // Optional idle read timeout override in seconds (null = use server default)
+  readIdleTimeoutSeconds: number | null;
 }
 
 const useInitialiseFormState = () => {
@@ -49,6 +51,7 @@ const useInitialiseFormState = () => {
     username: '',
     url: 'https://',
     refetchInterval: false,
+    readIdleTimeoutSeconds: null,
   });
 
   return {
@@ -61,6 +64,8 @@ const useInitialiseFormState = () => {
     setPassword: (password: string) => set(state => ({ ...state, password })),
     setUsername: (username: string) => set(state => ({ ...state, username })),
     setUrl: (url: string) => set(state => ({ ...state, url })),
+    setReadIdleTimeoutSeconds: (readIdleTimeoutSeconds: number | null) =>
+      set(state => ({ ...state, readIdleTimeoutSeconds })),
     // When sync is already ongoing either after initialise button is pressed
     // or when initialisation page is loaded while sync is ongoing
     // inputs should be disabled and polling for syncStatus should start
@@ -88,6 +93,7 @@ export const useInitialiseForm = () => {
     setIsInitialising,
     setUrl,
     setUsername,
+    readIdleTimeoutSeconds,
   } = state;
   const t = useTranslation();
   const { mutateAsync: initialise } = useSync.sync.initialise();
@@ -110,6 +116,7 @@ export const useInitialiseForm = () => {
         password,
         url,
         username,
+        readIdleTimeoutSeconds,
       });
       // Map structured error
       if (response.__typename === 'SyncErrorNode') {
@@ -172,6 +179,9 @@ export const useInitialiseForm = () => {
     ) {
       setUsername(syncSettings.username);
       setUrl(syncSettings.url);
+      state.setReadIdleTimeoutSeconds(
+        syncSettings.readIdleTimeoutSeconds ?? null
+      );
     }
   }, [syncSettings, initStatus]);
 

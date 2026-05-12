@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   useTranslation,
   LoadingButton,
@@ -11,6 +11,10 @@ import {
   EnvUtils,
   Platform,
   MuiLink,
+  NumericTextInput,
+  Collapse,
+  Box,
+  Typography,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { InitialiseLayout } from './InitialiseLayout';
@@ -34,15 +38,19 @@ export const Initialise = () => {
     password,
     url,
     username,
+    readIdleTimeoutSeconds,
     onInitialise,
     onRetry,
     setPassword,
     setUsername,
     setUrl,
+    setReadIdleTimeoutSeconds,
     siteCredentialsError: error,
     syncStatus,
     siteName,
   } = useInitialiseForm();
+
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const onSaveLog = async () => {
     if (!isAndroid) return;
@@ -106,6 +114,44 @@ export const Initialise = () => {
           disabled={isInputDisabled}
           onChange={e => setUrl(e.target.value)}
         />
+      }
+      AdvancedOptions={
+        <Box>
+          <Typography
+            component="button"
+            type="button"
+            onClick={() => setShowAdvanced(v => !v)}
+            sx={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '0.8rem',
+              color: 'gray.main',
+              p: 0,
+              textDecoration: 'underline',
+            }}
+          >
+            {showAdvanced
+              ? t('label.hide-advanced-options')
+              : t('label.show-advanced-options')}
+          </Typography>
+          <Collapse in={showAdvanced}>
+            <Box pt={1}>
+              <NumericTextInput
+                label={t('label.read-idle-timeout')}
+                value={readIdleTimeoutSeconds ?? undefined}
+                onChange={value =>
+                  setReadIdleTimeoutSeconds(
+                    value === undefined || value <= 0 ? null : Math.round(value)
+                  )
+                }
+                disabled={isInputDisabled}
+                min={1}
+                fullWidth
+              />
+            </Box>
+          </Collapse>
+        </Box>
       }
       SyncProgress={
         <SyncProgress

@@ -1,6 +1,7 @@
 fragment SyncSettings on SyncSettingsNode {
   __typename
   intervalSeconds
+  readIdleTimeoutSeconds
   url
   username
 }
