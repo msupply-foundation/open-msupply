@@ -239,11 +239,23 @@ async fn response_or_err<T: DeserializeOwned>(
         }
     };
 
+    let url = response.url().to_string();
+    let started = std::time::Instant::now();
     // Not checking for status, expecting 200 only, even if there is error
     let response_text = response
         .text()
         .await
         .map_err(ParsingResponseError::CannotGetTextResponse)?;
+    let elapsed = started.elapsed();
+    let bytes = response_text.len();
+    let kb_per_sec = (bytes as f64 / 1024.0) / elapsed.as_secs_f64().max(0.001);
+    log::info!(
+        "API body read: url '{}', {} bytes in {:.1}s ({:.1} KB/s)",
+        url,
+        bytes,
+        elapsed.as_secs_f64(),
+        kb_per_sec,
+    );
 
     let result = serde_json::from_str(&response_text).map_err(|source| {
         ParsingResponseError::ParseError {
