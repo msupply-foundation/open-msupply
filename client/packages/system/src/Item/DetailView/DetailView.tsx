@@ -19,6 +19,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { ItemVariantsTab } from './Tabs/ItemVariants';
 import { ItemLedgerTab } from './Tabs/ItemLedger';
 import { StoreTab } from './Tabs/Store';
+import { AncillarySupplies } from './Tabs/AncillarySupplies';
 
 export const ItemDetailView = () => {
   const t = useTranslation();
@@ -104,6 +105,10 @@ export const ItemDetailView = () => {
         <ItemLedgerTab itemId={data.id} onRowClick={onLedgerRowClick} />
       ),
       value: t('label.ledger'),
+    },
+    {
+      Component: <AncillarySupplies item={data} />,
+      value: t('title.ancillary-supplies'),
     },
   ];
 

@@ -16,7 +16,7 @@ impl MigrationFragment for Migrate {
                 -- e.g. "100:1" stays as (100, 1), "1:1.1" stays as (1, 1.1) — and we avoid
                 -- losing precision through a y/x round-trip. At order time the ancillary
                 -- count is computed as requested_quantity * ancillary_quantity / item_quantity.
-                CREATE TABLE ancillary_item (
+                CREATE TABLE IF NOT EXISTS ancillary_item (
                     id TEXT NOT NULL PRIMARY KEY,
                     item_link_id TEXT NOT NULL REFERENCES item_link(id),
                     ancillary_item_link_id TEXT NOT NULL REFERENCES item_link(id),
