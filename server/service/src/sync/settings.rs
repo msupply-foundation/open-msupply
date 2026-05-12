@@ -14,6 +14,11 @@ pub struct SyncSettings {
     // Number of records to pull or push in one API call
     #[serde(default)]
     pub batch_size: BatchSize,
+    /// Idle read timeout in seconds for each sync HTTP request. None means use
+    /// the built-in default (300s). Configurable so low-bandwidth sites can
+    /// tune it from the UI.
+    #[serde(default)]
+    pub read_idle_timeout_seconds: Option<u64>,
     /// Disable the outer transaction wrapping integration. Set to true if PostgreSQL runs out of
     /// shared memory (max_locks_per_transaction) during large initial syncs.
     #[serde(default)]

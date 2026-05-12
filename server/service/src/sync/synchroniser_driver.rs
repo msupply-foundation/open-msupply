@@ -121,11 +121,19 @@ impl SyncTrigger {
 
 fn get_sync_settings(service_provider: &ServiceProvider) -> SyncSettings {
     let ctx = service_provider.basic_context().unwrap();
-    service_provider
+    let settings = service_provider
         .settings
         .sync_settings(&ctx)
         .unwrap()
-        .expect("Sync settings should be in database after initialisation was started")
+        .expect("Sync settings should be in database after initialisation was started");
+
+    let timeout = settings
+        .read_idle_timeout_seconds
+        .map(std::time::Duration::from_secs)
+        .unwrap_or(util::DEFAULT_READ_IDLE_TIMEOUT);
+    util::set_read_idle_timeout(timeout);
+
+    settings
 }
 
 pub struct SiteIsInitialisedTrigger {

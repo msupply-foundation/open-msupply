@@ -48,7 +48,8 @@ const SyncSettingsForm = ({
     value: number | string
   ) => setSyncSettings({ ...settings, [property]: value });
 
-  const { url, username, password, intervalSeconds } = settings;
+  const { url, username, password, intervalSeconds, readIdleTimeoutSeconds } =
+    settings;
   const onChangeSyncInterval = (seconds: number | undefined): void => {
     if (seconds === undefined) return;
 
@@ -56,6 +57,14 @@ const SyncSettingsForm = ({
       'intervalSeconds',
       NumUtils.constrain(Math.round(seconds), 1, Number.MAX_SAFE_INTEGER)
     );
+  };
+
+  const onChangeReadIdleTimeout = (value: number | undefined): void => {
+    setSyncSettings({
+      ...settings,
+      readIdleTimeoutSeconds:
+        value === undefined || value <= 0 ? null : Math.round(value),
+    });
   };
 
   return (
@@ -106,6 +115,17 @@ const SyncSettingsForm = ({
             value={intervalSeconds}
             onChange={onChangeSyncInterval}
             disabled={isDisabled}
+          />
+        }
+      />
+      <Setting
+        title={t('label.read-idle-timeout')}
+        component={
+          <NumericTextInput
+            value={readIdleTimeoutSeconds ?? undefined}
+            onChange={onChangeReadIdleTimeout}
+            disabled={isDisabled}
+            min={1}
           />
         }
       />

@@ -45,8 +45,9 @@ function cleanSyncSettings({
   password,
   url,
   intervalSeconds,
+  readIdleTimeoutSeconds,
 }: SyncSettingsInput): SyncSettingsInput {
-  return { username, password, url, intervalSeconds };
+  return { username, password, url, intervalSeconds, readIdleTimeoutSeconds };
 }
 
 export function mapSyncError(

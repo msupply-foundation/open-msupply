@@ -21,6 +21,7 @@ type LoginLayoutProps = {
   SyncErrorMessage: ReactNode;
   SiteInfo: React.ReactNode;
   SaveLogLink?: ReactNode;
+  AdvancedOptions?: ReactNode;
   onInitialise: () => Promise<void>;
 };
 
@@ -34,6 +35,7 @@ export const InitialiseLayout = ({
   SiteInfo,
   SaveLogLink,
   SyncErrorMessage,
+  AdvancedOptions,
   onInitialise,
 }: LoginLayoutProps) => {
   const t = useTranslation();
@@ -142,6 +144,7 @@ export const InitialiseLayout = ({
                 {UrlInput}
                 {UsernameInput}
                 {PasswordInput}
+                {AdvancedOptions}
                 {ErrorMessage}
                 <Box display="flex" justifyContent="flex-end">
                   {Button}
