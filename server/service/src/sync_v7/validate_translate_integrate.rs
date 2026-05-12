@@ -149,7 +149,7 @@ fn validate_translate_integrate_one(
         SyncContext::Central {
             active_stores,
             source_site_store_ids,
-        } => validate_on_central(row, &table_name, active_stores, source_site_store_ids)?,
+        } => validate_on_central(row, &table_name, source_site_store_ids)?,
         SyncContext::Remote {
             is_initialising,
             active_stores,
