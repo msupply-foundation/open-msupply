@@ -1255,7 +1255,6 @@
   "label.line-total-local": "د کرښې ټولټال (سیمه ایز)",
   "label.lines": "کرښې",
   "label.linked-patient": "تړل شوی ناروغ",
-  "label.linked-po-requisition": "تړلی PO/غوښتنه",
   "label.listening": "د سکینونو لپاره اوریدل",
   "label.location": "ځای",
   "label.location-temperature-range": "{{locationName}} ({{minTemperature}}°C ته {{maxTemperature}}°C)",
