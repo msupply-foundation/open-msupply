@@ -15,8 +15,10 @@ export const useRefreshAncillaryItems = () => {
   const t = useTranslation();
   const { success, error } = useNotification();
 
-  const { mutateAsync, isLoading } = useMutation(api.refreshAncillaryItems, {
-    onSuccess: () => queryClient.invalidateQueries(api.keys.detail(requestId)),
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: api.refreshAncillaryItems,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: api.keys.detail(requestId) }),
   });
 
   const run = async (action: RefreshAncillaryItemsAction) => {
@@ -32,5 +34,9 @@ export const useRefreshAncillaryItems = () => {
     }
   };
 
-  return { add: () => run(RefreshAncillaryItemsAction.Add), update: () => run(RefreshAncillaryItemsAction.Update), isLoading };
+  return {
+    add: () => run(RefreshAncillaryItemsAction.Add),
+    update: () => run(RefreshAncillaryItemsAction.Update),
+    isPending,
+  };
 };
