@@ -22,8 +22,8 @@ use std::sync::RwLock;
 
 use log::info;
 use repository::{
-    EqualFilter, KeyValueStoreRepository, RepositoryError,
-    StorageConnection, Store, StoreFilter, StoreRepository,
+    EqualFilter, KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, Store,
+    StoreFilter, StoreRepository,
 };
 
 use serde::{Deserialize, Serialize};
@@ -88,6 +88,7 @@ pub enum CentralServerConfig {
     IsCentralServer,
     CentralServerUrl(String),
     ForcedCentralServer,
+    StandaloneCentral,
 }
 
 static CENTRAL_SERVER_CONFIG: RwLock<CentralServerConfig> =
@@ -96,7 +97,10 @@ static IS_INITIALISED: RwLock<bool> = RwLock::new(false);
 
 impl CentralServerConfig {
     fn inner_is_central_server(&self) -> bool {
-        matches!(self, Self::IsCentralServer | Self::ForcedCentralServer)
+        matches!(
+            self,
+            Self::IsCentralServer | Self::ForcedCentralServer | Self::StandaloneCentral
+        )
     }
 
     fn new(site_info: &SiteInfoV5) -> Self {
@@ -111,6 +115,13 @@ impl CentralServerConfig {
             .read()
             .unwrap()
             .inner_is_central_server()
+    }
+
+    pub fn is_standalone_central() -> bool {
+        matches!(
+            *CENTRAL_SERVER_CONFIG.read().unwrap(),
+            CentralServerConfig::StandaloneCentral
+        )
     }
 
     pub fn get() -> Self {
@@ -139,6 +150,11 @@ impl CentralServerConfig {
     pub fn set_is_central_server_on_startup() {
         info!("Running as central from override");
         *CENTRAL_SERVER_CONFIG.write().unwrap() = CentralServerConfig::ForcedCentralServer;
+    }
+
+    pub fn set_standalone_central() {
+        info!("Running as standalone central");
+        *CENTRAL_SERVER_CONFIG.write().unwrap() = CentralServerConfig::StandaloneCentral;
     }
 }
 pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
