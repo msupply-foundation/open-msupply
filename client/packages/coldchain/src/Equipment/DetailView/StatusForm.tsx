@@ -58,7 +58,7 @@ const Row = ({
     );
 
   return (
-    <Box paddingTop={1.5}>
+    <Box paddingTop={1.5} paddingX={2}>
       <Typography
         sx={{
           fontSize: '1em',

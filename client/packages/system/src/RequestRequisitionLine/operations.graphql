@@ -51,6 +51,11 @@ fragment RequestLine on RequisitionLineNode {
   item {
     ...ItemWithAvailableStock
   }
+  ancillaryParents {
+    id
+    name
+    code
+  }
   reason {
     ...ReasonOptionRow
   }
@@ -68,6 +73,32 @@ fragment Request on RequisitionNode {
   createdDatetime
   sentDatetime
   finalisedDatetime
+  ancillaryState {
+    state
+    count
+    toAdd {
+      itemId
+      requiredQuantity
+      currentQuantity
+      item {
+        id
+        name
+        code
+        unitName
+      }
+    }
+    toUpdate {
+      itemId
+      requiredQuantity
+      currentQuantity
+      item {
+        id
+        name
+        code
+        unitName
+      }
+    }
+  }
   requisitionNumber
   colour
   theirReference
