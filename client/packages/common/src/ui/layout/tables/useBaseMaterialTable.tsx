@@ -209,7 +209,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     : undefined;
 
   const hasRowSelection = !!enableRowSelection;
-  const hasGrouping = !!groupingInput;
+  const hasGrouping = !!groupingInput && grouping.state.length > 0;
 
   // ── Built-in columns — memoized with empty deps since header/cell fns
   //    receive fresh table/row from @tanstack at call time, no closures ───────
