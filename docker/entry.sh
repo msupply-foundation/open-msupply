@@ -2,19 +2,11 @@
 set -e
 
 # Hardware id setup.
-# If /etc/machine-id is already non-empty, the operator has bind-mounted it
-# from the host (or otherwise pre-populated it) and we leave it alone.
-# Otherwise we keep a per-deployment UUID in /database/machine-id — alongside
-# the database, but NOT inside it — and copy it into /etc/machine-id for the
-# server's machine_uid lookup. Logical dumps (sqlite .dump, pg_dump) don't
-# carry the file, so a restored dump on a new deployment generates a fresh
-# id and the central API can detect the mismatch.
+# If /etc/machine-id is already non-empty, the operator has bind-mounted a
+# stable id file and we leave it alone.
+# Otherwise generate a fresh UUID for this container instance.
 if [ ! -s /etc/machine-id ]; then
-    ID_FILE=/database/machine-id
-    if [ ! -s "$ID_FILE" ]; then
-        cat /proc/sys/kernel/random/uuid > "$ID_FILE"
-    fi
-    cat "$ID_FILE" > /etc/machine-id
+    cat /proc/sys/kernel/random/uuid > /etc/machine-id
 fi
 
 # Whey MSUPPLY_NO_TEST_DB_TEMPLATE ?
