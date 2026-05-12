@@ -102,24 +102,45 @@ docker run -v "$(pwd)/mydatabase":/database \
 
 ### Hardware id — default behaviour
 
-On first start the container generates a UUID and writes it to `/database/machine-id`, alongside your database but **not inside it**. On every subsequent start the same id is reused. This gives you:
+If `/etc/machine-id` is not mounted, the container generates a fresh UUID on every start. This means each new container instance has a unique hardware id, and a logical dump restored into a fresh container will automatically get a different id — the central API will detect the mismatch and reject an unauthorised sync.
 
-- **Protection against an accidental dump-and-restore.** A logical database dump (`sqlite .dump`, `pg_dump`) only contains rows — it does not contain `/database/machine-id`. If the dump is restored into a fresh deployment, that deployment generates its own hardware id, and the central API will see the mismatch and reject the unauthorised sync.
-- **A recovery path for legitimate moves.** If you need to rebuild the container or move the deployment to a new host and keep the existing site identity, copy `machine-id` along with the database. Be conscious of the risk — only do this for a true migration, never for cloning a database to test against the same central instance.
+This is fine for ephemeral or short-lived deployments. For production use where the container may be recreated (e.g. after an upgrade), you should mount a stable id file so the site identity is preserved across restarts.
 
-### Hardware id — using the host's `/etc/machine-id` instead
+### Hardware id — stable id across container restarts
 
-If you'd rather bind the deployment to the host machine (so a copied database directory taken to a different host is rejected), bind-mount the host's `/etc/machine-id` into the container. When `/etc/machine-id` is non-empty at startup, the container leaves it alone and `/database/machine-id` is ignored. Note: this doesn't provide protection for multiple deployments on the same host sharing the same hardware id, so only do this if you have one deployment per host!
+Create a file to hold the id and mount it to `/etc/machine-id`. The container will use it as-is and never overwrite it.
 
 ```bash
-docker run -v "$(pwd)/mydatabase":/database -v /etc/machine-id:/etc/machine-id:ro -p 9000:8000 msupplyfoundation/omsupply:v2.17.0
+# Generate a stable id (once, before first run)
+# Linux:
+cat /proc/sys/kernel/random/uuid > machine-id
+# macOS:
+uuidgen | tr '[:upper:]' '[:lower:]' > machine-id
+
+docker run -v "$(pwd)/mydatabase":/database \
+  -v "$(pwd)/machine-id":/etc/machine-id:ro \
+  -p 9000:8000 msupplyfoundation/omsupply:v2.17.0
 ```
 
-On macOS hosts, `/etc/machine-id` doesn't exist; you can synthesise an equivalent from the IOPlatformUUID:
+Keep this file separate from the database volume so that a database dump-and-restore to a new deployment does **not** carry the id with it — the new deployment will generate a fresh UUID and the central API will detect the mismatch.
+
+On Linux you can bind-mount the host's own `/etc/machine-id` to tie the deployment to that machine:
 
 ```bash
-echo $(ioreg -rd1 -c IOPlatformExpertDevice | awk '/IOPlatformUUID/ { print $3 }') > machine-id
-docker run -v "$(pwd)/mydatabase":/database -v "$(pwd)/machine-id":/etc/machine-id:ro -p 9000:8000 msupplyfoundation/omsupply:v2.17.0
+docker run -v "$(pwd)/mydatabase":/database \
+  -v /etc/machine-id:/etc/machine-id:ro \
+  -p 9000:8000 msupplyfoundation/omsupply:v2.17.0
+```
+
+Note: only do this if you have one deployment per host, otherwise multiple containers on the same host will share a hardware id.
+
+On macOS, `/etc/machine-id` doesn't exist; synthesise one from the IOPlatformUUID:
+
+```bash
+ioreg -rd1 -c IOPlatformExpertDevice | awk '/IOPlatformUUID/ { print $3 }' | tr -d '"' > machine-id
+docker run -v "$(pwd)/mydatabase":/database \
+  -v "$(pwd)/machine-id":/etc/machine-id:ro \
+  -p 9000:8000 msupplyfoundation/omsupply:v2.17.0
 ```
 
 ## Dev
