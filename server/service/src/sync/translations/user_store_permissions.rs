@@ -57,7 +57,7 @@ impl SyncTranslation for UserStorePermissionTranslation {
             is_default,
             can_login,
             can_action_replenishments: _,
-        } = serde_json::from_str::<LegacyUserStorePermissionTable>(&sync_record.data)?;
+        } = serde_json::from_value::<LegacyUserStorePermissionTable>(sync_record.data.0.clone())?;
         if StoreRepository::new(connection)
             .query_one(StoreFilter::new().id(EqualFilter::equal_to(store_id.to_owned())))?
             .is_none()
