@@ -1,9 +1,7 @@
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, NameRowRepository, NameStoreJoin,
-    NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete,
+    NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete, Row,
     StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
-    Row,
-
 };
 
 use serde::{Deserialize, Serialize};
@@ -11,10 +9,11 @@ use serde::{Deserialize, Serialize};
 use crate::sync::{
     translations::{name::NameTranslation, store::StoreTranslation},
     CentralServerConfig,
-
 };
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
+use super::{
+    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -163,8 +162,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
             name,
         } = NameStoreJoinRepository::new(connection)
             .query_by_filter(
-                NameStoreJoinFilter::new()
-                    .id(EqualFilter::equal_to(name_store_join_row.id)),
+                NameStoreJoinFilter::new().id(EqualFilter::equal_to(name_store_join_row.id)),
             )?
             .pop()
             .ok_or(anyhow::anyhow!("Name store join not found"))?;
@@ -178,7 +176,11 @@ impl SyncTranslation for NameStoreJoinTranslation {
             inactive: Some(false),
         };
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -199,11 +201,11 @@ mod tests {
     use super::*;
     use crate::sync::{
         test::merge_helpers::merge_all_name_links, translations::ToSyncRecordTranslationType,
-    
     };
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RowOrDelete,
-};
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
+        CursorAndLimit, FilterBuilder, RowOrDelete,
+    };
     use serde_json::json;
 
     #[actix_rt::test]
@@ -251,17 +253,21 @@ mod tests {
 
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let entries = ChangelogRepository::new(&connection).query_with_data(
-            ChangelogCondition::table_name::equal(ChangelogTableName::NameStoreJoin),
-            CursorAndLimit {
-                cursor: -1,
-                limit: 1_000_000,
-            },
-        )
-        .unwrap();
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::NameStoreJoin),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
+            )
+            .unwrap();
 
         let translator = NameStoreJoinTranslation {};
-        for entry in entries.rows { let RowOrDelete::Row { changelog, row } = entry else { panic!("expected upsert row") };
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
