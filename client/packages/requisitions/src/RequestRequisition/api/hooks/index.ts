@@ -35,6 +35,7 @@ export const useRequest = {
     deleteLine: Lines.useDeleteRequestLine,
     list: Lines.useRequestLines,
     save: Lines.useSaveRequestLines,
+    refreshAncillaryItems: Lines.useRefreshAncillaryItems,
   },
   utils: {
     api: Utils.useRequestApi,
