@@ -9,6 +9,12 @@ pub fn get_initialisation_status(
     service_provider: &ServiceProvider,
     ctx: &ServiceContext,
 ) -> Result<InitialisationStatus, RepositoryError> {
+    if CentralServerConfig::is_standalone_central() {
+        return Ok(InitialisationStatus::Initialised(
+            "Standalone Central".to_string(),
+        ));
+    }
+
     if CentralServerConfig::is_central_server() {
         service_provider
             .sync_status_service
