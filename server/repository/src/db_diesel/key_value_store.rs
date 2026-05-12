@@ -65,6 +65,8 @@ pub enum KeyType {
     LogFileName,
 
     LastLedgerFixRun,
+
+    IsStandaloneCentral,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
