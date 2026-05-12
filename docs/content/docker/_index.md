@@ -279,7 +279,7 @@ docker run -e LOAD_REFERENCE_FILE=reference1 -p 9000:8000 msupplyfoundation/omsu
 
 The postgres image runs its own PostgreSQL server inside the container. The container uses two mount points:
 
-- `/database` — persistent state. The postgres data directory lives at `/database/postgres/data` and the per-deployment hardware id at `/database/machine-id`. Mount a host directory or named volume here to persist across container recreations.
+- `/database` — persistent state. The postgres data directory lives at `/database/postgres/data`. Mount a host directory or named volume here to persist across container recreations.
 - `/import.dump` — optional one-shot mount point for a `pg_dump --format custom` dump. If present at startup, it's restored into the database before the server starts.
 
 Basic usage (ephemeral — empty database, lost when the container is removed):
@@ -319,6 +319,38 @@ docker run -v /path/to/data-dir:/database \
   -p 9000:8000 \
   -e APP_DATABASE__DATABASE_NAME="my-database" \
   msupplyfoundation/omsupply:v2.7.3-postgres
+```
+
+### Hardware id
+
+The hardware id is how the central server recognises a site. Without a stable id, a copied or restored database could accidentally sync as if it were the original site.
+
+By default, if `/etc/machine-id` is not mounted, the container generates a fresh UUID on every start. This means each new container instance has a unique hardware id — a logical database dump restored into a fresh container will automatically get a different id and the central server will detect the mismatch.
+
+For production deployments where the container may be recreated (e.g. after an upgrade), mount a stable id file so the site identity is preserved:
+
+```bash
+# Generate a stable id once, before first run
+# Linux:
+cat /proc/sys/kernel/random/uuid > machine-id
+# macOS:
+uuidgen | tr '[:upper:]' '[:lower:]' > machine-id
+
+docker run -v /path/to/data-dir:/database \
+  -v "$(pwd)/machine-id":/etc/machine-id:ro \
+  -p 9000:8000 \
+  msupplyfoundation/omsupply:v2.7.3
+```
+
+Keep this file separate from the database volume — a database dump does not contain it, so a restored dump on a new deployment will generate a fresh id as expected.
+
+On Linux you can bind-mount the host's own `/etc/machine-id` to tie the deployment to that machine (only suitable if you have one deployment per host):
+
+```bash
+docker run -v /path/to/data-dir:/database \
+  -v /etc/machine-id:/etc/machine-id:ro \
+  -p 9000:8000 \
+  msupplyfoundation/omsupply:v2.7.3
 ```
 
 ### Configuration overrides
