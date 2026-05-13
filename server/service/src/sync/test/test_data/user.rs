@@ -44,7 +44,8 @@ const USER1: (&str, &str) = (
     "tags": {},
     "type": {},
     "use_ldap": false,
-    "windows_user_name": ""
+    "windows_user_name": "",
+    "password_hash": "$2y$12$H.hz8ElIhJIU.0ZN6opwpuVDD8sSd1XOq8UzScofHjN/3yDBj03a."
 }"#,
 );
 
@@ -88,7 +89,8 @@ const USER2: (&str, &str) = (
     "tags": {},
     "type": {},
     "use_ldap": false,
-    "windows_user_name": ""
+    "windows_user_name": "",
+    "password_hash": "$2y$12$H.hz8ElIhJIU.0ZN6opwpuVDD8sSd1XOq8UzScofHjN/3yDBj03a."
 }"#,
 );
 
@@ -100,7 +102,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             UserAccountRow {
                 id: USER1.0.to_owned(),
                 username: "user1".to_string(),
-                hashed_password: "".to_string(),
+                hashed_password: "$2y$12$H.hz8ElIhJIU.0ZN6opwpuVDD8sSd1XOq8UzScofHjN/3yDBj03a."
+                    .to_string(),
                 email: Some("user1@test.com".to_string()),
                 language: LanguageType::English,
                 first_name: Some("User1".to_string()),
@@ -116,7 +119,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             UserAccountRow {
                 id: USER2.0.to_owned(),
                 username: "user2".to_string(),
-                hashed_password: "".to_string(),
+                hashed_password: "$2y$12$H.hz8ElIhJIU.0ZN6opwpuVDD8sSd1XOq8UzScofHjN/3yDBj03a."
+                    .to_string(),
                 email: Some("user2@test.com".to_string()),
                 language: LanguageType::French,
                 first_name: Some("User2".to_string()),
