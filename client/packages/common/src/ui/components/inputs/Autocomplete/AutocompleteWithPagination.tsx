@@ -82,6 +82,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   mapOptions,
   loadingInputOnly = false,
   sx,
+  textSx,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteWithPaginationProps<T>>) {
   const t = useTranslation();
@@ -127,6 +128,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
           disableUnderline: false,
           sx: {
             paddingY: '4px !important',
+            ...textSx,
           },
           endAdornment: (
             <>

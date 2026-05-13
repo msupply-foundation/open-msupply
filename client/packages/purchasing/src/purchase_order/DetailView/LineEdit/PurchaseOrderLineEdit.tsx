@@ -18,6 +18,7 @@ import {
   MultilineTextInput,
   DateInput,
   commonLabelProps,
+  inputSlotProps,
   InfoRow,
   Grid,
 } from '@openmsupply-client/common';
@@ -152,32 +153,22 @@ export const PurchaseOrderLineEdit = ({
                 }
               />
               <InputWithLabelRow
-                Input={
-                  <ManufacturerSearchInput
-                    disabled={
-                      disabled ||
-                      isFieldDisabled(status, StatusGroup.AfterConfirmed)
-                    }
-                    value={draft?.manufacturer ?? null}
-                    onChange={manufacturer =>
-                      update({ manufacturer: manufacturer || null })
-                    }
-                    textSx={
-                      disabled
-                        ? {
-                            backgroundColor: theme =>
-                              theme.palette.background.toolbar,
-                            boxShadow: 'none',
-                          }
-                        : {
-                            backgroundColor: theme =>
-                              theme.palette.background.white,
-                            boxShadow: theme => theme.shadows[2],
-                          }
-                    }
-                    width={185}
-                  />
-                }
+                Input={(() => {
+                  const isFieldDisabledHere =
+                    disabled ||
+                    isFieldDisabled(status, StatusGroup.AfterConfirmed);
+                  return (
+                    <ManufacturerSearchInput
+                      disabled={isFieldDisabledHere}
+                      value={draft?.manufacturer ?? null}
+                      onChange={manufacturer =>
+                        update({ manufacturer: manufacturer || null })
+                      }
+                      width={185}
+                      textSx={inputSlotProps(isFieldDisabledHere).input.sx}
+                    />
+                  );
+                })()}
                 label={t('label.manufacturer')}
                 labelProps={commonLabelProps()}
               />

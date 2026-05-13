@@ -13,7 +13,7 @@ import {
 } from '@common/hooks';
 import { AutocompleteWithPagination } from './AutocompleteWithPagination';
 import { AutocompleteOptionRenderer } from './types';
-import { FilterOptionsState } from '@mui/material';
+import { FilterOptionsState, SxProps, Theme } from '@mui/material';
 import { defaultOptionMapper } from './utils';
 import { CLEAR, RegexUtils } from '@common/utils';
 
@@ -79,10 +79,19 @@ export interface InfiniteSearchPickerProps<T extends HasId, TFilter> {
   autoFocus?: boolean;
   openOnFocus?: boolean;
   width?: number;
+  // Minimum width of the popper (dropdown). Defaults to `width`. Pass
+  // explicitly when the input is fullWidth but the popper should still
+  // have a usable minimum (e.g. inline pickers inside narrow table cells).
+  popperMinWidth?: number;
   // DOM id for the input. Defaults to a stable generated id so multiple
   // pickers can coexist on the same page without collisions.
   id?: string;
   noOptionsText?: ReactNode;
+  // sx applied to the input slot — used for the elevated-card style
+  // (boxShadow + white/toolbar bg) shared by modal forms like PO line edit.
+  // Pass `inputSlotProps(disabled).input.sx` from ModalInputs/utils for parity
+  // with other inputs in those forms.
+  textSx?: SxProps<Theme>;
 }
 
 export function InfiniteSearchPicker<T extends HasId, TFilter>({
@@ -104,8 +113,10 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
   autoFocus = false,
   openOnFocus = false,
   width,
+  popperMinWidth,
   id,
   noOptionsText,
+  textSx,
 }: InfiniteSearchPickerProps<T, TFilter>) {
   const selectControl = useToggle();
   const { filter, onFilter } = useStringFilter(searchKey);
@@ -315,7 +326,8 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
       renderOption={renderOption}
       getOptionDisabled={getOptionDisabled}
       width={width ? `${width}px` : '100%'}
-      popperMinWidth={width}
+      popperMinWidth={popperMinWidth ?? width}
+      textSx={textSx}
       isOptionEqualToValue={(option, val) => option?.id === val?.id}
       paginationDebounce={PAGINATION_DEBOUNCE_TIMEOUT}
       onPageChange={page => fetchNextPage({ pageParam: page })}

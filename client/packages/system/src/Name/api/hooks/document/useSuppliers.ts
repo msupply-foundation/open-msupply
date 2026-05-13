@@ -9,6 +9,7 @@ export const useSuppliers = (external?: boolean) => {
   return useQuery([...api.keys.paramList(params), 'suppliers'], () =>
     api.get.suppliers({
       ...params,
+      first: 1000,
       external,
     })
   );
