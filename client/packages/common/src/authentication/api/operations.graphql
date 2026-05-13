@@ -91,6 +91,10 @@ query isCentralServer {
   isCentralServer
 }
 
+query isCentralStandalone {
+  isCentralStandalone
+}
+
 query refreshToken {
   refreshToken {
     ... on RefreshToken {
