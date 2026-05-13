@@ -90,25 +90,27 @@ pub fn get_historical_stock_lines_available_quantity(
 
 /// Get historical stock lines for a given store and item at a given datetime.
 /// NOTE: Stock lines are only adjusted based on stock movements, changes to batch, expiry dates etc are not considered.
+///
+/// When `include_currently_unavailable` is true, lines that are empty *now* but
+/// had stock at the historical datetime are also returned. Callers that need
+/// to allocate against current stock (e.g. backdated outbound shipments)
+/// should pass false; callers that want to display historical availability for
+/// a specific line (e.g. backdated inventory adjustment) should pass true.
 pub fn get_historical_stock_lines(
     ctx: &ServiceContext,
     store_id: &str,
     item_id: &str,
     datetime: &NaiveDateTime,
+    include_currently_unavailable: bool,
 ) -> Result<ListResult<StockLine>, RepositoryError> {
-    // First get the current stock lines
-    let mut stock_lines = get_stock_lines(
-        ctx,
-        None,
-        Some(
-            StockLineFilter::new()
-                .store_id(EqualFilter::equal_to(store_id.to_string()))
-                .item_id(EqualFilter::equal_to(item_id.to_string()))
-                .is_available(true),
-        ),
-        None,
-        Some(store_id.to_string()),
-    )
+    let mut filter = StockLineFilter::new()
+        .store_id(EqualFilter::equal_to(store_id.to_string()))
+        .item_id(EqualFilter::equal_to(item_id.to_string()));
+    if !include_currently_unavailable {
+        filter = filter.is_available(true);
+    }
+
+    let mut stock_lines = get_stock_lines(ctx, None, Some(filter), None, Some(store_id.to_string()))
     .map_err(|e| match e {
         ListError::DatabaseError(e) => e,
         _ => RepositoryError::NotFound, // Shouldn't happen happen as we don't have any pagination in our request
