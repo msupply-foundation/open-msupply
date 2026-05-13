@@ -15,20 +15,10 @@ impl MigrationFragment for Migrate {
         connection: &StorageConnection,
         config: &MigrationConfig,
     ) -> anyhow::Result<()> {
+        // SQLite has no partitioning — the corresponding schema reshape lives
+        // in `alter_sqlite_changelog_table_for_syncv7`, which runs just before
+        // this fragment.
         if !cfg!(feature = "postgres") {
-            // SQLite has no partitioning. Bring its schema in line with the
-            // post-partition Postgres shape: drop `name_link_id` (gone from the
-            // new partitioned table) and rename `patient_id` → `patient_link_id`.
-            // The matching index is created later in `create_changelog_indexes`.
-            sql!(
-                connection,
-                r#"
-                DROP INDEX IF EXISTS index_changelog_name_link_id_fkey;
-                ALTER TABLE changelog DROP COLUMN name_link_id;
-                ALTER TABLE changelog RENAME COLUMN patient_id TO patient_link_id;
-                DROP INDEX IF EXISTS index_changelog_patient_id;
-                "#
-            )?;
             return Ok(());
         }
 
@@ -40,18 +30,12 @@ impl MigrationFragment for Migrate {
         //    table can reuse the `changelog` name.
         sql!(connection, "ALTER TABLE changelog RENAME TO old_changelog;")?;
 
-        // 2. Free the names the new table will reuse — `changelog_pkey` and
-        //    `index_changelog_*`. The old `name_link_id` FK and its index die
-        //    with the DROP TABLE in step 7; the new table has no such column.
+        // 2. Drop the old PK so the new partitioned table can reuse the
+        //    `changelog_pkey` name. All other constraints and secondary
+        //    indexes on old_changelog die with the DROP TABLE in step 7.
         sql!(
             connection,
-            r#"
-            ALTER TABLE old_changelog DROP CONSTRAINT changelog_pkey;
-            DROP INDEX IF EXISTS index_changelog_store_id_fkey;
-            DROP INDEX IF EXISTS index_changelog_table_name;
-            DROP INDEX IF EXISTS index_changelog_transfer_store_id;
-            DROP INDEX IF EXISTS index_changelog_patient_id;
-            "#
+            "ALTER TABLE old_changelog DROP CONSTRAINT changelog_pkey;"
         )?;
 
         // 3. Detach the sequence so it survives `DROP TABLE old_changelog`
