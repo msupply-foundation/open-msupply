@@ -47,23 +47,21 @@ export const Initialise = () => {
 
   const isInputDisabled = isInitialising || isLoading;
 
-  const state = isInitialising || isLoading;
-
   const ModeSelector = (
     <TabList
       value={mode}
-      onChange={(_, v) => !state && setMode(v as InitMode)}
+      onChange={(_, v) => !isInputDisabled && setMode(v as InitMode)}
       variant="fullWidth"
     >
       <Tab
         value="remote"
         label={t('initialise.remote-sync')}
-        disabled={state && mode !== 'remote'}
+        disabled={isInputDisabled}
       />
       <Tab
         value="central"
         label={t('initialise.central-standalone')}
-        disabled={state}
+        disabled={isInputDisabled}
       />
     </TabList>
   );
