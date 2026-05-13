@@ -848,24 +848,26 @@ mutation ManualSync {
         const SYNC_INFO_QUERY: &str = r#"
 query SyncInfo {
   latestSyncStatus {
-    isSyncing
-    push {
-      done
-    }
-    pushV6 {
-      done
-    }
-    pullV6 {
-      done
-    }
-    pullRemote {
-      done
-    }
-    pullCentral {
-      done
-    }
-    summary {
-      finished
+    ... on FullSyncStatusV5V6Node {
+      isSyncing
+      push {
+        done
+      }
+      pushV6 {
+        done
+      }
+      pullV6 {
+        done
+      }
+      pullRemote {
+        done
+      }
+      pullCentral {
+        done
+      }
+      summary {
+        finished
+      }
     }
   }
 }

@@ -256,9 +256,10 @@ mod test_sync_v7_client_api {
         let handle = server_handle.handle();
         tokio::spawn(server_handle);
 
+        let ctx = service_provider.basic_context().unwrap();
         let result = sync_v7(
             &service_provider,
-            &service_context,
+            &ctx,
             SyncSettings {
                 url: format!("http://{}/", addr),
                 username: "test_user".to_string(),

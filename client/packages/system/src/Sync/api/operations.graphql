@@ -46,7 +46,6 @@ mutation updateSyncSettings($syncSettings: SyncSettingsInput!) {
 fragment SyncStatus on SyncStatusNode {
   __typename
   finished
-  durationInSeconds
   started
 }
 
@@ -58,7 +57,7 @@ fragment SyncStatusWithProgress on SyncStatusWithProgressNode {
   total
 }
 
-fragment FullSyncStatus on FullSyncStatusNode {
+fragment FullSyncStatusV5V6 on FullSyncStatusV5V6Node {
   __typename
   error {
     ...SyncError
@@ -95,16 +94,76 @@ fragment FullSyncStatus on FullSyncStatusNode {
   warningThreshold
 }
 
+fragment SyncErrorV7 on SyncErrorV7Node {
+  __typename
+  variantV7: variant
+  fullError
+}
+
+fragment SyncStatusV7 on SyncStatusV7Node {
+  __typename
+  finished
+  started
+}
+
+fragment SyncStatusWithProgressV7 on SyncStatusWithProgressV7Node {
+  __typename
+  finished
+  started
+  done
+  total
+}
+
+fragment FullSyncStatusV7 on FullSyncStatusV7Node {
+  __typename
+  error {
+    ...SyncErrorV7
+  }
+  integration {
+    ...SyncStatusWithProgressV7
+  }
+  isSyncing
+  push {
+    ...SyncStatusWithProgressV7
+  }
+  pull {
+    ...SyncStatusWithProgressV7
+  }
+  waitingForIntegration {
+    ...SyncStatusV7
+  }
+  summary {
+    ...SyncStatusV7
+  }
+  lastSuccessfulSync {
+    ...SyncStatus
+  }
+  errorThreshold
+  warningThreshold
+}
+
 query syncInfo {
   syncStatus: latestSyncStatus {
-    ...FullSyncStatus
+    __typename
+    ... on FullSyncStatusV5V6Node {
+      ...FullSyncStatusV5V6
+    }
+    ... on FullSyncStatusV7Node {
+      ...FullSyncStatusV7
+    }
   }
   numberOfRecordsInPushQueue
 }
 
 query syncStatus {
   syncStatus: latestSyncStatus {
-    ...FullSyncStatus
+    __typename
+    ... on FullSyncStatusV5V6Node {
+      ...FullSyncStatusV5V6
+    }
+    ... on FullSyncStatusV7Node {
+      ...FullSyncStatusV7
+    }
   }
 }
 
@@ -115,7 +174,13 @@ mutation manualSync($fetchPatientId: String) {
 subscription syncInfoUpdated {
   syncInfoUpdated {
     syncStatus {
-      ...FullSyncStatus
+      __typename
+      ... on FullSyncStatusV5V6Node {
+        ...FullSyncStatusV5V6
+      }
+      ... on FullSyncStatusV7Node {
+        ...FullSyncStatusV7
+      }
     }
     numberOfRecordsInPushQueue
   }
