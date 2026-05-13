@@ -123,13 +123,15 @@ impl ProcessorFilter {
             ProcessorFilter::Compatibility(f) => {
                 changelog_repo.compatibility_query(cursor, CHANGELOG_BATCH_SIZE, Some(f.clone()))
             }
-            ProcessorFilter::Normal(f) => changelog_repo.query(
-                f.clone(),
-                CursorAndLimit {
-                    cursor: cursor as i64,
-                    limit: CHANGELOG_BATCH_SIZE as i64,
-                },
-            ),
+            ProcessorFilter::Normal(f) => changelog_repo
+                .query(
+                    f.clone(),
+                    CursorAndLimit {
+                        cursor: cursor as i64,
+                        limit: CHANGELOG_BATCH_SIZE as i64,
+                    },
+                )
+                .map(|q| q.rows),
         }
     }
 }

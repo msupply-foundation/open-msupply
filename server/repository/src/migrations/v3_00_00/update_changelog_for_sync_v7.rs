@@ -172,14 +172,16 @@ mod tests {
     };
     use diesel::{connection::SimpleConnection, prelude::*, RunQueryDsl};
 
-    // Minimal changelog columns needed for verification
+    // Minimal changelog columns needed for verification.
+    // The test runs the full v3_00_00 sequence, which includes the
+    // partition_changelog_by_cursor rename, so the helper sees `patient_link_id`.
     table! {
         changelog (cursor) {
             cursor -> BigInt,
             table_name -> Text,
             record_id -> Text,
             transfer_store_id -> Nullable<Text>,
-            patient_id -> Nullable<Text>,
+            patient_link_id -> Nullable<Text>,
         }
     }
 
@@ -310,7 +312,7 @@ mod tests {
         setup_test_data(&connection);
 
         // Run migration
-        migrate(&connection, Some(version.clone())).unwrap();
+        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
         assert_eq!(get_database_version(&connection), version);
 
         // Query changelog and verify backfilled fields
@@ -319,7 +321,7 @@ mod tests {
                 changelog::record_id,
                 changelog::table_name,
                 changelog::transfer_store_id,
-                changelog::patient_id,
+                changelog::patient_link_id,
             ))
             .order_by(changelog::cursor.asc())
             .load::<(String, String, Option<String>, Option<String>)>(

@@ -1,18 +1,55 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use repository::SyncLogRow;
+use repository::{SyncLogV5V6Row, SyncLogV7Row};
 use tokio::sync::{broadcast, mpsc};
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
 
 use crate::service_provider::ServiceProvider;
-use crate::sync::sync_status::status::{FullSyncStatus, InitialisationStatus};
+use crate::sync::sync_status::status::{
+    FullSyncStatus, FullSyncStatusV5V6, InitialisationStatus, SyncStatus,
+};
+use crate::sync_v7::sync_status::status::FullSyncStatusV7;
 
-const CHANNEL_BUFFER_SIZE: usize = 64;
+const CHANNEL_BUFFER_SIZE: usize = 1024;
 const PUSH_QUEUE_DEBOUNCE: Duration = Duration::from_secs(30);
 
 // ── Triggers (inbound to worker) ──
+
+/// Discriminated row carrying either v5_v6 or v7 sync log data.
+#[derive(Clone, Debug)]
+pub enum SyncLogRow {
+    V5V6(SyncLogV5V6Row),
+    V7(SyncLogV7Row),
+}
+
+impl SyncLogRow {
+    fn push_progress_total(&self) -> i32 {
+        match self {
+            SyncLogRow::V5V6(row) => row.push_progress_total.unwrap_or(0),
+            SyncLogRow::V7(row) => row.push_progress_total.unwrap_or(0),
+        }
+    }
+
+    fn push_progress_done(&self) -> i32 {
+        match self {
+            SyncLogRow::V5V6(row) => row.push_progress_done.unwrap_or(0),
+            SyncLogRow::V7(row) => row.push_progress_done.unwrap_or(0),
+        }
+    }
+
+    fn full_sync_status(self) -> FullSyncStatus {
+        match self {
+            SyncLogRow::V5V6(row) => {
+                FullSyncStatus::V5V6(FullSyncStatusV5V6::from_sync_log_row(row))
+            }
+            SyncLogRow::V7(row) => {
+                FullSyncStatus::V7(FullSyncStatusV7::from_sync_log_v7_row(row))
+            }
+        }
+    }
+}
 
 #[derive(Clone, Debug)]
 pub enum SubscriptionTrigger {
@@ -28,7 +65,9 @@ pub enum SubscriptionTrigger {
 pub enum ResolvedSubscription {
     SyncInfo {
         status: FullSyncStatus,
-        last_successful: Option<FullSyncStatus>,
+        /// Just the summary — both v5/v6 and v7 produce the same `SyncStatus`
+        /// shape so callers don't need to discriminate.
+        last_successful: Option<SyncStatus>,
         push_queue_count: u64,
     },
     InitialisationStatus(InitialisationStatus),
@@ -89,13 +128,13 @@ async fn subscription_worker_loop(
     tx: broadcast::Sender<ResolvedSubscription>,
     service_provider: Arc<ServiceProvider>,
 ) {
-    let mut last_successful: Option<FullSyncStatus> = None;
+    let mut last_successful: Option<SyncStatus> = None;
     let mut last_status: Option<FullSyncStatus> = None;
     // Once a sync has completed, the site is initialised. Don't emit
     // InitialisationStatus::Initialising during subsequent syncs, as that
     // would cause Host.tsx's PreInit to logout the user.
-    // Check DB at startup to see if there's already a completed sync.
-    let initialised = service_provider
+    // Check DB at startup to see if there's already a completed sync (either flow).
+    let mut initialised = service_provider
         .basic_context()
         .ok()
         .and_then(|ctx| {
@@ -117,39 +156,42 @@ async fn subscription_worker_loop(
 
         match trigger {
             SubscriptionTrigger::SyncStatus(row) => {
-                let status = FullSyncStatus::from_sync_log_row(row.clone());
+                let push_queue_count =
+                    (row.push_progress_total() - row.push_progress_done()) as u64;
+                let status = row.full_sync_status();
 
-                if status.summary.finished.is_some() && status.error.is_none() {
-                    last_successful = Some(status.clone());
+                let just_finished_successfully = status.is_finished_successfully();
+                if just_finished_successfully {
+                    last_successful = Some(status.summary());
                 }
                 last_status = Some(status.clone());
 
-                let push_queue_count = (row.push_progress_total.unwrap_or(0)
-                    - row.push_progress_done.unwrap_or(0))
-                    as u64;
-
-                let _ = tx.send(ResolvedSubscription::SyncInfo {
+                let res = tx.send(ResolvedSubscription::SyncInfo {
                     status,
                     last_successful: last_successful.clone(),
                     push_queue_count,
                 });
 
-                // Derive initialisation status from the same row.
-                if !initialised {
-                    match service_provider.basic_context() {
-                        Ok(ctx) => match service_provider
+                // Only emit a fresh InitialisationStatus when the site transitions
+                // from not-yet-initialised to initialised — i.e. the row we just
+                // observed shows a successful finish. Querying the DB on every
+                // progress trigger floods the worker (thousands of progress
+                // events per pull/integrate); this single-shot lookup runs once
+                // per sync at most.
+                if !initialised && just_finished_successfully {
+                    initialised = true;
+                    if let Ok(ctx) = service_provider.basic_context() {
+                        match service_provider
                             .sync_status_service
                             .get_initialisation_status(&ctx)
                         {
                             Ok(status) => {
-                                let _ = tx.send(ResolvedSubscription::InitialisationStatus(status));
+                                let res =
+                                    tx.send(ResolvedSubscription::InitialisationStatus(status));
                             }
                             Err(e) => {
                                 log::error!("Failed to get initialisation status: {e:?}");
                             }
-                        },
-                        Err(e) => {
-                            log::error!("Failed to get DB connection for initialisation status: {e:?}");
                         }
                     }
                 }

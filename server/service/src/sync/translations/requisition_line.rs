@@ -5,11 +5,8 @@ use util::sync_serde::{empty_str_as_option, empty_str_as_option_string, object_f
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository, RequisitionFilter,
-    RequisitionLineRow, RequisitionLineRowDelete,
-    RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository, StorageConnection,
-    SyncBufferRow,
-    Row,
-
+    RequisitionLineRow, RequisitionLineRowDelete, RequisitionRepository, RnRFormLineFilter,
+    RnRFormLineRepository, Row, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
@@ -91,7 +88,6 @@ pub struct LegacyRequisitionLineRow {
 
     #[serde(default, deserialize_with = "object_fields_as_option")]
     pub oms_fields: Option<RequisitionLineOmsFields>,
-
 }
 // Needs to be added to all_translators()
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
@@ -298,7 +294,11 @@ impl SyncTranslation for RequisitionLineTranslation {
             oms_fields,
         };
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -314,13 +314,13 @@ impl SyncTranslation for RequisitionLineTranslation {
 mod tests {
     use crate::sync::{
         test::merge_helpers::merge_all_item_links, translations::ToSyncRecordTranslationType,
-    
     };
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RowOrDelete,
-};
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
+        CursorAndLimit, FilterBuilder, RowOrDelete,
+    };
     use serde_json::json;
 
     #[actix_rt::test]
@@ -362,17 +362,21 @@ mod tests {
 
         merge_all_item_links(&connection, &mock_data).unwrap();
 
-        let entries = ChangelogRepository::new(&connection).query_with_data(
-            ChangelogCondition::table_name::equal(ChangelogTableName::RequisitionLine),
-            CursorAndLimit {
-                cursor: -1,
-                limit: 1_000_000,
-            },
-        )
-        .unwrap();
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::RequisitionLine),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
+            )
+            .unwrap();
 
         let translator = RequisitionLineTranslation;
-        for entry in entries { let RowOrDelete::Row { changelog, row } = entry else { panic!("expected upsert row") };
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral

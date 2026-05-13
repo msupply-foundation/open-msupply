@@ -50,10 +50,6 @@ impl FullSyncStatusV7 {
             error,
             summary: SyncStatus {
                 started: started_datetime,
-                duration_in_seconds: finished_datetime
-                    .unwrap_or_else(|| Utc::now().naive_utc())
-                    .signed_duration_since(started_datetime)
-                    .num_seconds() as i32,
                 finished: finished_datetime,
             },
             integration: integration_started_datetime.map(|started| SyncStatusWithProgress {
@@ -65,10 +61,6 @@ impl FullSyncStatusV7 {
             waiting_for_integration: wait_for_integration_started_datetime.map(|started| {
                 SyncStatus {
                     started,
-                    duration_in_seconds: wait_for_integration_finished_datetime
-                        .unwrap_or_else(|| Utc::now().naive_utc())
-                        .signed_duration_since(started)
-                        .num_seconds() as i32,
                     finished: wait_for_integration_finished_datetime,
                 }
             }),
@@ -88,66 +80,3 @@ impl FullSyncStatusV7 {
     }
 }
 
-pub trait SyncStatusV7Trait: Sync + Send {
-    fn get_latest_sync_status_v7(
-        &self,
-        ctx: &ServiceContext,
-    ) -> Result<Option<FullSyncStatusV7>, RepositoryError> {
-        get_latest_sync_status_v7(ctx)
-    }
-
-    fn get_latest_successful_sync_status_v7(
-        &self,
-        ctx: &ServiceContext,
-    ) -> Result<Option<FullSyncStatusV7>, RepositoryError> {
-        get_latest_successful_sync_status_v7(ctx)
-    }
-
-    fn get_initialisation_status_v7(
-        &self,
-        ctx: &ServiceContext,
-    ) -> Result<InitialisationStatus, RepositoryError> {
-        get_initialisation_status_v7(ctx)
-    }
-}
-
-pub(crate) struct SyncStatusV7Service;
-
-impl SyncStatusV7Trait for SyncStatusV7Service {}
-
-// Returns the most recent sync log row (sorted by started_datetime desc in the repository)
-fn get_latest_sync_status_v7(
-    ctx: &ServiceContext,
-) -> Result<Option<FullSyncStatusV7>, RepositoryError> {
-    let row = SyncLogV7Repository::new(&ctx.connection).query_one(SyncLogV7Condition::TRUE)?;
-    Ok(row.map(FullSyncStatusV7::from_sync_log_v7_row))
-}
-
-// Returns the most recent successful sync log row (sorted by started_datetime desc in the repository)
-fn get_latest_successful_sync_status_v7(
-    ctx: &ServiceContext,
-) -> Result<Option<FullSyncStatusV7>, RepositoryError> {
-    let row =
-        SyncLogV7Repository::new(&ctx.connection).query_one(SyncLogV7Condition::And(vec![
-            SyncLogV7Condition::FinishedDatetime::is_not_null(),
-            SyncLogV7Condition::Error::is_null(),
-        ]))?;
-    Ok(row.map(FullSyncStatusV7::from_sync_log_v7_row))
-}
-
-fn get_initialisation_status_v7(
-    ctx: &ServiceContext,
-) -> Result<InitialisationStatus, RepositoryError> {
-    let filter = SyncLogV7Condition::And(vec![
-        SyncLogV7Condition::FinishedDatetime::is_not_null(),
-        SyncLogV7Condition::Error::is_null(),
-    ]);
-
-    match SyncLogV7Repository::new(&ctx.connection).query_one(filter)? {
-        Some(_) => {
-            let site_name = SettingsService.sync_settings(ctx)?.unwrap().username;
-            Ok(InitialisationStatus::Initialised(site_name))
-        }
-        None => Ok(InitialisationStatus::PreInitialisation),
-    }
-}

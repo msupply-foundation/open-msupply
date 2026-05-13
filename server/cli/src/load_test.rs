@@ -488,6 +488,7 @@ impl LoadTest {
             mail: None,
             sync: None,
             features: None,
+            changelog_partition: None,
         };
         let base_config_path = self.output_dir.join("base.yaml");
         std::fs::write(base_config_path, serde_yml::to_string(&base_config)?)?;
@@ -589,6 +590,7 @@ impl LoadTest {
                 backup: None,
                 mail: None,
                 features: None,
+                changelog_partition: None,
             };
 
             let full_site = TestSite {
@@ -852,24 +854,26 @@ mutation ManualSync {
         const SYNC_INFO_QUERY: &str = r#"
 query SyncInfo {
   latestSyncStatus {
-    isSyncing
-    push {
-      done
-    }
-    pushV6 {
-      done
-    }
-    pullV6 {
-      done
-    }
-    pullRemote {
-      done
-    }
-    pullCentral {
-      done
-    }
-    summary {
-      finished
+    ... on FullSyncStatusV5V6Node {
+      isSyncing
+      push {
+        done
+      }
+      pushV6 {
+        done
+      }
+      pullV6 {
+        done
+      }
+      pullRemote {
+        done
+      }
+      pullCentral {
+        done
+      }
+      summary {
+        finished
+      }
     }
   }
 }
