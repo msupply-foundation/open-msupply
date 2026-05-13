@@ -7657,6 +7657,7 @@ export type Queries = {
   invoiceLines: InvoiceLinesResponse;
   invoices: InvoicesResponse;
   isCentralServer: Scalars['Boolean']['output'];
+  isCentralStandalone: Scalars['Boolean']['output'];
   itemCounts: ItemCounts;
   itemLedger: ItemLedgerResponse;
   itemPrice: ItemPriceResponse;
