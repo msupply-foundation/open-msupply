@@ -84,9 +84,8 @@
   "postCreateCommand": "sudo sh -c 'printf \"#!/bin/sh\\nif ! /usr/local/bin/init-firewall.sh; then\\n  echo FIREWALL FAILED - STOPPING CONTAINER >&2\\n  kill -9 1\\nfi\\n\" > /usr/local/bin/firewall-or-die.sh && chmod 0755 /usr/local/bin/firewall-or-die.sh && for f in /etc/sudoers /etc/sudoers.d/*; do sed -i \"/NOPASSWD.*ALL$/d\" \"$f\" 2>/dev/null || true; done && printf \"vscode ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh, /usr/local/bin/firewall-or-die.sh\\n\" > /etc/sudoers.d/99-firewall-only && chmod 0440 /etc/sudoers.d/99-firewall-only'",
   // on every container start, apply the firewall - kill the container if it fails
   "postStartCommand": "sudo /usr/local/bin/firewall-or-die.sh",
-  // drop CAP_NET_RAW (raw sockets can bypass iptables OUTPUT rules)
-  // keep NET_ADMIN - required for iptables management by the firewall feature
-  "runArgs": [
-    "--cap-drop=NET_RAW"
-  ]
+  // NET_ADMIN is required for iptables management by the firewall feature
+  // NET_RAW is also required by the firewall feature (podman errors if you drop and add the same cap)
+  // tmpfs on /tmp ensures world-writable permissions (feature build scripts chmod it to 755)
+  "runArgs": ["--tmpfs", "/tmp:rw,mode=1777,exec"]
 }
