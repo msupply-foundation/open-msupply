@@ -29,7 +29,6 @@ To-Do: if we find we need to run this script on a Linux machine, we should updat
 auto-detect the current system and modify cross-compilation instructions accordingly
 -->
 
-
 The rest of this page documents the CI pipeline and manual steps if you need more control over the process.
 
 ## CI/CD (GitHub Actions)
@@ -325,7 +324,7 @@ docker run -v /path/to/data-dir:/database \
 
 ### Hardware id
 
-The hardware id is how the central server recognises a site. Without a stable id, a copied or restored database could accidentally sync as if it were the original site.
+The hardware id is used to verify a connection is coming from the same host on the central server. Without a stable id, a copied or restored database could accidentally sync as if it were the original site.
 
 By default, if `/etc/machine-id` is not mounted, the container generates a fresh UUID on every start. This means each new container instance has a unique hardware id — a logical database dump restored into a fresh container will automatically get a different id and the central server will detect the mismatch.
 
@@ -342,17 +341,15 @@ There are two ways to use the mount:
 ```bash
 # Linux:
 cat /proc/sys/kernel/random/uuid > machine-id
-# macOS (either works):
+# macOS:
 uuidgen | tr '[:upper:]' '[:lower:]' > machine-id
-ioreg -rd1 -c IOPlatformExpertDevice | awk '/IOPlatformUUID/ { print $3 }' | tr -d '"' > machine-id
+
 
 docker run -v /path/to/data-dir:/database \
   -v "$(pwd)/machine-id":/etc/machine-id:ro \
   -p 9000:8000 \
   msupplyfoundation/omsupply:v2.7.3
 ```
-
-The macOS `IOPlatformUUID` variant ties the id to the host machine; the `uuidgen` variant is a fresh random UUID.
 
 **Option B — let the container generate and persist the id.** Create an empty file with `touch`, then mount it read-write (no `:ro`). On first run the container writes a fresh UUID into the mounted file; subsequent runs reuse it:
 
@@ -366,6 +363,8 @@ docker run -v /path/to/data-dir:/database \
 
 Either way, keep this file separate from the `/database` volume — a database dump does not contain it, so a restored dump on a new deployment will generate a fresh id as expected.
 
+**Option C - use the host's own machine-id (not recommended if you have multiple deployments on the same host).**
+
 On Linux you can bind-mount the host's own `/etc/machine-id` to tie the deployment to that machine (only suitable if you have one deployment per host, otherwise multiple containers on the same host will share a hardware id):
 
 ```bash
@@ -373,6 +372,12 @@ docker run -v /path/to/data-dir:/database \
   -v /etc/machine-id:/etc/machine-id:ro \
   -p 9000:8000 \
   msupplyfoundation/omsupply:v2.7.3
+```
+
+For macOS you can generate a `machine-id` file from the host's `IOPlatformUUID`:
+
+```bash
+ioreg -rd1 -c IOPlatformExpertDevice | awk '/IOPlatformUUID/ { print $3 }' | tr -d '"' > machine-id
 ```
 
 ### Running CLI commands
