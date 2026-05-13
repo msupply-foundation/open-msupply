@@ -180,3 +180,142 @@ impl From<CreateUserAccountError> for InitialiseAsCentralServerError {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{service_provider::ServiceProvider, user_account::UserAccountService};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, EqualFilter, NameRowRepository,
+        SiteRowRepository, StoreRowRepository, UserAccountRowRepository, UserPermissionFilter,
+        UserPermissionRepository,
+    };
+    use util::assert_matches;
+
+    fn input() -> InitialiseAsCentralServerInput {
+        InitialiseAsCentralServerInput {
+            store_name: "Central Config".to_string(),
+            admin_username: "admin".to_string(),
+            admin_password: "pass".to_string(),
+        }
+    }
+
+    #[actix_rt::test]
+    async fn standalone_error() {
+        let (_, _, connection_manager, _) =
+            setup_all("standalone_error", MockDataInserts::none()).await;
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+        let service = StandaloneCentralService;
+
+        for store_name in ["", "   "] {
+            let err = service
+                .initialise(
+                    &ctx,
+                    InitialiseAsCentralServerInput {
+                        store_name: store_name.to_string(),
+                        ..input()
+                    },
+                )
+                .unwrap_err();
+            assert_matches!(err, InitialiseAsCentralServerError::StoreNameRequired);
+        }
+
+        for username in ["", "   "] {
+            let err = service
+                .initialise(
+                    &ctx,
+                    InitialiseAsCentralServerInput {
+                        admin_username: username.to_string(),
+                        ..input()
+                    },
+                )
+                .unwrap_err();
+            assert_matches!(err, InitialiseAsCentralServerError::AdminUsernameRequired);
+        }
+
+        let err = service
+            .initialise(
+                &ctx,
+                InitialiseAsCentralServerInput {
+                    admin_password: String::new(),
+                    ..input()
+                },
+            )
+            .unwrap_err();
+        assert_matches!(err, InitialiseAsCentralServerError::AdminPasswordRequired);
+
+        service.initialise(&ctx, input()).unwrap();
+        let err = service
+            .initialise(
+                &ctx,
+                InitialiseAsCentralServerInput {
+                    admin_username: "admin2".to_string(),
+                    ..input()
+                },
+            )
+            .unwrap_err();
+        assert_matches!(err, InitialiseAsCentralServerError::AlreadyInitialised);
+    }
+
+    #[actix_rt::test]
+    async fn standalone_central_success() {
+        let (_, connection, connection_manager, _) =
+            setup_all("standalone_central_success", MockDataInserts::none()).await;
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+
+        StandaloneCentralService.initialise(&ctx, input()).unwrap();
+
+        let kv = KeyValueStoreRepository::new(&connection);
+        assert_eq!(
+            kv.get_bool(KeyType::IsStandaloneCentral).unwrap(),
+            Some(true)
+        );
+        assert_eq!(
+            kv.get_i32(KeyType::SettingsSyncSiteId).unwrap(),
+            Some(STANDALONE_CENTRAL_SITE_ID)
+        );
+        assert_eq!(
+            kv.get_i32(KeyType::SettingsSyncCentralServerSiteId)
+                .unwrap(),
+            Some(STANDALONE_CENTRAL_SITE_ID)
+        );
+
+        let site = SiteRowRepository::new(&connection)
+            .find_one_by_id(STANDALONE_CENTRAL_SITE_ID)
+            .unwrap()
+            .unwrap();
+        assert_eq!(site.name, "Central Config");
+
+        let name = NameRowRepository::new(&connection)
+            .find_one_by_code("CENTRAL_CONFIG")
+            .unwrap()
+            .unwrap();
+        assert_eq!(name.name, "Central Config");
+        let store = StoreRowRepository::new(&connection)
+            .find_one_by_name_id(&name.id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(store.site_id, STANDALONE_CENTRAL_SITE_ID);
+
+        let admin = UserAccountRowRepository::new(&connection)
+            .find_one_by_user_name("admin")
+            .unwrap()
+            .unwrap();
+        UserAccountService::new(&connection)
+            .verify_password("admin", "pass")
+            .unwrap();
+
+        let permissions = UserPermissionRepository::new(&connection)
+            .query_by_filter(
+                UserPermissionFilter::new().user_id(EqualFilter::equal_to(admin.id.clone())),
+            )
+            .unwrap();
+        let expected = PermissionType::iter().count();
+        assert_eq!(permissions.len(), expected);
+        assert!(permissions
+            .iter()
+            .all(|p| p.store_id.as_deref() == Some(store.id.as_str())));
+    }
+}
