@@ -7,6 +7,7 @@ use crate::{
 use diesel::prelude::*;
 
 use diesel_derive_enum::DbEnum;
+use util::uuid::{deterministic_uuid, Uuid};
 
 table! {
   user_permission (id) {
@@ -117,6 +118,22 @@ pub struct UserPermissionRow {
     /// An optional resource associated with this permission.
     /// The resource value is only used for certain Permission variants.
     pub context_id: Option<String>,
+}
+
+impl UserPermissionRow {
+    /// Stable id for a non-context-bound permission keyed by `(user_id, store_id,
+    /// permission)`. Context-bound permissions (synced from `om_user_permission`)
+    /// keep using the legacy OG id — see the `user_permission` translator.
+    pub fn deterministic_id(
+        user_id: &str,
+        store_id: Option<&str>,
+        permission: &PermissionType,
+    ) -> String {
+        // Project-local namespace; do not change without a migration plan.
+        const NAMESPACE: Uuid = Uuid::from_u128(0x5d8e2b1a_4f3c_4a6e_9b7d_0c1e2f3a4b5c);
+        let store = store_id.unwrap_or("");
+        deterministic_uuid(&NAMESPACE, &format!("{user_id}:{store}:{permission:?}"))
+    }
 }
 
 pub struct UserPermissionRowRepository<'a> {
