@@ -19,7 +19,8 @@ use thiserror::Error as ThisError;
 use util::format_error;
 
 use crate::{
-    queries_mutations::INSTALL_PLUGINS, run_command_with_error, Api, ApiError, CommandError, YARN_COMMAND,
+    queries_mutations::INSTALL_PLUGINS, run_command_with_error, Api, ApiError, CommandError,
+    YARN_COMMAND,
 };
 
 #[derive(ThisError, Debug)]
@@ -145,7 +146,11 @@ fn generate_bundle_recursive(
     manifest_name: &OsStr,
     path: &PathBuf,
 ) -> Result<(), Error> {
-    if let Some(_) = ignore_paths.iter().find(|p| Some(**p) == path.file_name()) {
+    if ignore_paths
+        .iter()
+        .find(|p| Some(**p) == path.file_name())
+        .is_some()
+    {
         return Ok(());
     }
 
@@ -164,7 +169,7 @@ fn generate_bundle_recursive(
         let next_path = file_or_folder
             .map_err(|e| Error::FailedToGetFileOrDir(path.clone(), e))?
             .path();
-        generate_bundle_recursive(bundle, &ignore_paths, manifest_name, &next_path)?;
+        generate_bundle_recursive(bundle, ignore_paths, manifest_name, &next_path)?;
     }
 
     Ok(())
@@ -198,7 +203,7 @@ fn process_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Result<(), Err
     run_command_with_error(
         Command::new(YARN_COMMAND)
             .args(["install", "--cwd"])
-            .arg(&plugin_root),
+            .arg(plugin_root),
     )
     .map_err(|e| Error::FailedToYarnInstall(plugin_root.to_path_buf(), e))?;
 
@@ -206,7 +211,7 @@ fn process_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Result<(), Err
     run_command_with_error(
         Command::new(YARN_COMMAND)
             .arg("--cwd")
-            .arg(&plugin_root)
+            .arg(plugin_root)
             .arg("build-plugin"),
     )
     .map_err(|e| Error::FailedToBuildPlugin(plugin_root.to_path_buf(), e))?;
@@ -242,7 +247,7 @@ fn bundle_backend_plugin(
 
     bundle.backend_plugins.push(BackendPluginRow {
         id: format!("backend_{code}_{version_id}"),
-        bundle_base64: bundle_base64,
+        bundle_base64,
         variant_type,
         types,
         code,

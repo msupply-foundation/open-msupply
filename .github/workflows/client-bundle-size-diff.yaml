@@ -3,7 +3,10 @@ name: Bundle size diff - Build
 on:
   pull_request:
     paths:
-      - "client/**"
+      - 'client/**'
+  merge_group:
+    branches:
+      - develop
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -27,15 +30,24 @@ jobs:
       - name: Use Node.js (.nvmrc)
         uses: actions/setup-node@v1
         with:
-          node-version: "${{ steps.nvm.outputs.NVMRC }}"
+          node-version: '${{ steps.nvm.outputs.NVMRC }}'
 
+      # Install/Build tolerate failure so a broken base branch doesn't fail
+      # the PR check. The compare job detects the missing artifact and posts
+      # a warning comment instead of a diff.
       - name: Install dependencies
+        id: install
+        continue-on-error: true
         run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
 
       - name: Build
+        id: build
+        if: ${{ steps.install.outcome == 'success' }}
+        continue-on-error: true
         run: cd ./client && yarn build-stats
 
       - name: Upload base stats.json
+        if: ${{ steps.build.outcome == 'success' }}
         uses: actions/upload-artifact@v4
         with:
           name: base
@@ -57,7 +69,7 @@ jobs:
       - name: Use Node.js (.nvmrc)
         uses: actions/setup-node@v1
         with:
-          node-version: "${{ steps.nvm.outputs.NVMRC }}"
+          node-version: '${{ steps.nvm.outputs.NVMRC }}'
 
       - name: Install dependencies
         run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
@@ -81,6 +93,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download base stats
+        id: download-base
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: base
@@ -93,25 +107,32 @@ jobs:
           path: pr
 
       - name: Calculate diff
+        if: ${{ steps.download-base.outcome == 'success' }}
         id: get-diff
         uses: NejcZdovc/bundle-size-diff@v1
         with:
-          base_path: "./base/stats.json"
-          pr_path: "./pr/stats.json"
+          base_path: './base/stats.json'
+          pr_path: './pr/stats.json'
 
       - name: Save comparison data
         run: |
           echo "${{ github.event.pull_request.number }}" > pr_number
-          cat > result.txt << 'EOF'
-          📊 **Bundle Size Comparison**
-          
-          | Metric | Value |
-          |--------|-------|
-          | Base Size | ${{ steps.get-diff.outputs.base_file_string }} |
-          | PR Size | ${{ steps.get-diff.outputs.pr_file_string }} |
-          | Difference | ${{ steps.get-diff.outputs.diff_file_string }} |
-          | Change | ${{ steps.get-diff.outputs.percent }}% |
+          if [ "${{ steps.download-base.outcome }}" = "success" ]; then
+            cat > result.txt << 'EOF'
+          ## Bundle size difference
+          Comparing this PR to `main`
+
+          |Old size      | New size     | Diff                     |
+          |:------------ |:-------------|:-------------------------|
+          |${{ steps.get-diff.outputs.base_file_string }}         |${{ steps.get-diff.outputs.pr_file_string }}         | ${{ steps.get-diff.outputs.diff_file_string }} (${{ steps.get-diff.outputs.percent }}%) |
           EOF
+          else
+            cat > result.txt << 'EOF'
+          ## Bundle size difference
+
+          ⚠️ Unable to run bundle size diff check due to failing base branch build.
+          EOF
+          fi
 
       - name: Upload comparison artifact
         uses: actions/upload-artifact@v4

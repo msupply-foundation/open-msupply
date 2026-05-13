@@ -55,7 +55,7 @@ pub fn insert_prescription(
                 None,
             )?;
 
-            get_invoice(ctx, None, &new_invoice.id)
+            get_invoice(ctx, None, &new_invoice.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
@@ -118,7 +118,7 @@ mod test {
         fn not_a_patient_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "not_a_patient_join".to_string(),
-                name_link_id: not_a_patient().id.clone(),
+                name_id: not_a_patient().id.clone(),
                 store_id: mock_store_a().id.clone(),
                 name_is_supplier: false,
                 ..Default::default()
@@ -181,7 +181,7 @@ mod test {
         fn patient_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "patient_join".to_string(),
-                name_link_id: patient().id.clone(),
+                name_id: patient().id.clone(),
                 store_id: mock_store_a().id.clone(),
                 name_is_customer: true,
                 ..Default::default()
@@ -225,7 +225,7 @@ mod test {
         assert_eq!(
             invoice,
             InvoiceRow {
-                name_link_id: patient().id,
+                name_id: patient().id,
                 user_id: Some(mock_user_account_a().id),
                 ..invoice.clone()
             }

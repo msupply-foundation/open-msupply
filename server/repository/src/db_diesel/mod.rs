@@ -1,5 +1,3 @@
-pub mod goods_received;
-pub mod goods_received_row;
 use crate::repository_error::RepositoryError;
 
 pub mod abbreviation;
@@ -7,6 +5,8 @@ pub mod abbreviation_row;
 pub mod activity_log;
 pub mod activity_log_row;
 pub mod adjustment;
+pub mod ancillary_item;
+pub mod ancillary_item_row;
 pub mod assets;
 pub mod backend_plugin_row;
 pub mod barcode;
@@ -49,9 +49,7 @@ mod filter_restriction;
 mod filter_sort_pagination;
 pub mod form_schema;
 mod form_schema_row;
-mod frontend_plugin_row;
-pub mod goods_received_line;
-pub mod goods_received_line_row;
+pub mod frontend_plugin_row;
 pub mod indicator_column;
 mod indicator_column_row;
 pub mod indicator_line;
@@ -102,7 +100,7 @@ mod number_row;
 pub mod patient;
 pub mod period;
 pub mod plugin_data;
-mod plugin_data_row;
+pub mod plugin_data_row;
 pub mod preference;
 mod preference_row;
 pub mod printer;
@@ -182,6 +180,8 @@ pub mod warning_row;
 pub use abbreviation_row::*;
 pub use activity_log_row::*;
 pub use adjustment::*;
+pub use ancillary_item::*;
+pub use ancillary_item_row::*;
 pub use assets::*;
 pub use backend_plugin_row::*;
 pub use barcode_row::*;
@@ -213,9 +213,6 @@ pub use filter_sort_pagination::*;
 pub use form_schema::*;
 pub use form_schema_row::*;
 pub use frontend_plugin_row::*;
-pub use goods_received::*;
-pub use goods_received_line::*;
-pub use goods_received_line_row::*;
 pub use indicator_column_row::*;
 pub use indicator_line_row::*;
 pub use indicator_value_row::*;
@@ -398,7 +395,7 @@ impl From<DieselError> for RepositoryError {
             }
             _ => {
                 // try to get a more detailed diesel msg:
-                let diesel_msg = format!("{}", err);
+                let diesel_msg = format!("{err}");
                 Error::as_db_error("DIESEL_UNKNOWN", diesel_msg)
             }
         }

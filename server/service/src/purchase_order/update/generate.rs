@@ -51,11 +51,11 @@ pub fn generate(
 
     set_new_status_datetime(&mut updated_order, status.clone());
 
-    updated_order.supplier_name_link_id =
-        supplier_id.unwrap_or(updated_order.supplier_name_link_id);
-    updated_order.donor_link_id = donor_id
+    updated_order.supplier_name_id =
+        supplier_id.unwrap_or(updated_order.supplier_name_id);
+    updated_order.donor_id = donor_id
         .map(|d| d.value)
-        .unwrap_or(updated_order.donor_link_id);
+        .unwrap_or(updated_order.donor_id);
     updated_order.status = status.clone().unwrap_or(updated_order.status);
 
     updated_order.confirmed_datetime =
@@ -74,7 +74,7 @@ pub fn generate(
 
     updated_order.currency_id = currency_id.or(updated_order.currency_id);
     updated_order.foreign_exchange_rate =
-        foreign_exchange_rate.or(updated_order.foreign_exchange_rate);
+        foreign_exchange_rate.unwrap_or(updated_order.foreign_exchange_rate);
     updated_order.shipping_method = shipping_method.or(updated_order.shipping_method);
     updated_order.reference = reference.or(updated_order.reference);
     updated_order.comment = comment.or(updated_order.comment);
@@ -111,11 +111,10 @@ pub fn generate(
             .map(|stats| stats.order_total_before_discount)
             .unwrap_or(0.0);
 
-        updated_order.supplier_discount_percentage = if total_before_tax > 0.0 {
-            Some((supplier_discount_amount / total_before_tax) * 100.0)
-        } else {
-            Some(0.0)
-        };
+        if total_before_tax > 0.0 {
+            updated_order.supplier_discount_percentage =
+                Some((supplier_discount_amount / total_before_tax) * 100.0);
+        }
     }
 
     let requested_delivery_date_value = nullable_update(

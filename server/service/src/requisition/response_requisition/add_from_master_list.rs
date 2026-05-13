@@ -171,6 +171,9 @@ fn generate(
                 approval_comment: None,
                 available_volume: None,
                 location_type_id: None,
+                forecast_total_units: None,
+                forecast_total_doses: None,
+                vaccine_courses: None,
             }
         })
         .collect();
@@ -308,7 +311,7 @@ mod test {
                 joins: vec![MasterListNameJoinRow {
                     id: join1,
                     master_list_id: id.clone(),
-                    name_link_id: mock_name_store_a().id,
+                    name_id: mock_name_store_a().id,
                 }],
                 lines: vec![
                     MasterListLineRow {

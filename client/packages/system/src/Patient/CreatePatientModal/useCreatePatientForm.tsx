@@ -25,11 +25,6 @@ export const useCreatePatientForm = (
   const { JsonForm, save, isSaving, isLoading, validationError, isDirty } =
     useUpsertPatient(createNewPatient?.id ?? '', confirmOnLeaving);
 
-  const handleSave = () => {
-    save();
-    setCurrentTab(Tabs.Form);
-  };
-
   const patientSteps = [
     {
       description: '',
@@ -97,7 +92,7 @@ export const useCreatePatientForm = (
     setCurrentTab,
     setCreateNewPatient,
     getActiveStep,
-    handleSave,
+    handleSave: save,
     tabs,
     currentTab,
     patientSteps,

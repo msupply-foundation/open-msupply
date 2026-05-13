@@ -20,8 +20,10 @@ import {
 } from '@openmsupply-client/common';
 import { MultiChoice, getMultiChoiceOptions } from '../Components/MultiChoice';
 import { EditCustomTranslations } from '../Components/CustomTranslations/CustomTranslationsModal';
+import { EditBackdating } from '../Components/EditBackdating';
 import { EditWarningWhenMissingRecentStocktakeData } from '../Components/EditWarningWhenMissingRecentStocktakeData';
 import { PreferenceLabelRow } from './PreferenceLabelRow';
+import { ColorPickerPreference } from '../Components/ColorPickerPreference';
 
 interface EditPreferenceProps {
   preference: PreferenceDescriptionNode;
@@ -30,6 +32,7 @@ interface EditPreferenceProps {
   ) => Promise<boolean>;
   label?: string;
   isLast?: boolean;
+  disabled?: boolean;
 }
 
 export const EditPreference = ({
@@ -37,6 +40,7 @@ export const EditPreference = ({
   update,
   label,
   isLast = false,
+  disabled: disabledProp,
 }: EditPreferenceProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -44,7 +48,9 @@ export const EditPreference = ({
   const isCentralServer = useIsCentralServerApi();
 
   const disabled =
-    !isCentralServer || !userHasPermission(UserPermission.EditCentralData);
+    disabledProp ||
+    !isCentralServer ||
+    !userHasPermission(UserPermission.EditCentralData);
 
   const preferenceLabel =
     label ?? t(`preference.${preference.key}` as LocaleKey);
@@ -93,6 +99,7 @@ export const EditPreference = ({
       );
 
     case PreferenceValueNodeType.Integer:
+    case PreferenceValueNodeType.Float:
       if (!isNumber(preference.value)) {
         return t('error.something-wrong');
       }
@@ -105,6 +112,11 @@ export const EditPreference = ({
               onChange={handleChange}
               onBlur={() => {}}
               disabled={disabled}
+              decimalLimit={
+                preference.valueType === PreferenceValueNodeType.Float
+                  ? 2
+                  : 0
+              }
             />
           }
           isLast={isLast}
@@ -140,6 +152,24 @@ export const EditPreference = ({
         />
       );
 
+    case PreferenceValueNodeType.Colour:
+      if (!isString(preference.value)) {
+        return t('error.something-wrong');
+      }
+      return (
+        <PreferenceLabelRow
+          label={preferenceLabel}
+          Input={
+            <ColorPickerPreference
+              value={value}
+              onChange={handleChange}
+              disabled={disabled}
+            />
+          }
+          isLast={isLast}
+        />
+      );
+
     case PreferenceValueNodeType.MultiChoice:
       if (!Array.isArray(value)) {
         return t('error.something-wrong');
@@ -155,6 +185,7 @@ export const EditPreference = ({
               options={options}
               value={value}
               onChange={handleChange}
+              preferenceKey={preference.key}
             />
           }
           isLast={isLast}
@@ -185,6 +216,14 @@ export const EditPreference = ({
           update={handleChange}
           disabled={disabled}
           label={preferenceLabel}
+        />
+      );
+    case PreferenceValueNodeType.BackdatingData:
+      return (
+        <EditBackdating
+          value={value}
+          update={handleChange}
+          disabled={disabled}
         />
       );
     default:

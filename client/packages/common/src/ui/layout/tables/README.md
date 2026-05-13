@@ -1,5 +1,4 @@
 # Data Table implementation
 
-This folder contains all the relevant code for implementing **Data Tables** throughout the app. This implementation uses the [**Material React Table**](https://www.material-react-table.com/) library, which is Material-UI wrapper around [**Tanstack Table**](https://tanstack.com/table/latest) — **Tanstack Table** provides a powerful (though headless) table framework, and **Material React Table** provides Material UI components to work with it.
-
-Please consult [this wiki page](https://github.com/msupply-foundation/open-msupply/wiki/Dev-%E2%80%90-Table-implementation) for full developer guide
+- **Docs site**: https://dev-docs.msupply.foundation/client/packages/common/ui/layout/tables/
+- **Source**: [docs/content/client/packages/common/ui/layout/tables/_index.md](../../../../../../../docs/content/client/packages/common/ui/layout/tables/_index.md)

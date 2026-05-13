@@ -66,7 +66,7 @@ impl SyncUser {
                     )))
                 }
                 FetchUserError::ConnectionError(_) => return Err(LoginError::FetchUserError(err)),
-                FetchUserError::InternalError(_) => info!("{:?}", err),
+                FetchUserError::InternalError(_) => info!("{err:?}"),
             },
         };
 

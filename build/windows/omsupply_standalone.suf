@@ -1917,7 +1917,7 @@ Screen.Back();
 <Script>-- These actions are performed when the Next button is clicked.
 -- Launch omSupply
 if (cbStartOmSupply) then
-	File.Run(SessionVar.Expand("%AppFolder%\\open mSupply.exe"));
+	File.Run(SessionVar.Expand("%AppFolder%\\open mSupply.exe"), "--standalone", "");
 end
 -- advance to the next screen
 Screen.Next();
@@ -3407,7 +3407,7 @@ if not hasOmsupplyStandaloneInstalled then
 	Registry.CreateKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone");
 	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone", "Path", omSupplyDesktopPath, REG_SZ);
 
-	Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop", omSupplyDesktopPath, "", "", "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
+	Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "Open mSupply Desktop", omSupplyDesktopPath, "--standalone", "", "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
 end
 </Script>
 <BookMarks count="0">

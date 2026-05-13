@@ -112,7 +112,7 @@ pub fn validate(
 
             ValidateResult::ChangeToGiven(ChangeToGiven {
                 existing_vaccination: vaccination_row,
-                patient_id: encounter.patient_link_id,
+                patient_id: encounter.patient_id,
                 new_stock_line: validate_new_stock_line(
                     connection,
                     store_id,
@@ -142,7 +142,7 @@ pub fn validate(
 
                 ValidateResult::ChangeStockLine(ChangeStockLine {
                     existing_vaccination: vaccination_row.clone(),
-                    patient_id: encounter.patient_link_id,
+                    patient_id: encounter.patient_id,
                     existing_prescription: validate_existing_prescription(
                         connection,
                         &vaccination_row.invoice_id,

@@ -41,8 +41,8 @@ export const EditStorePreferences = ({
               preference={pref}
               update={value => {
                 const finalValue =
-                  pref.valueType === PreferenceValueNodeType.Integer &&
-                  value === undefined
+                  ((pref.valueType === PreferenceValueNodeType.Integer || pref.valueType === PreferenceValueNodeType.Float) &&
+                    value === undefined)
                     ? 0
                     : value;
                 return update({

@@ -31,7 +31,9 @@ mod query {
         let service = service_provider.location_service;
 
         let locations_not_in_store = location_repository
-            .query_by_filter(LocationFilter::new().store_id(EqualFilter::not_equal_to("store_a".to_string())))
+            .query_by_filter(
+                LocationFilter::new().store_id(EqualFilter::not_equal_to("store_a".to_string())),
+            )
             .unwrap();
 
         // Location does not exist
@@ -66,7 +68,8 @@ mod query {
             .unwrap();
         let invoice_lines = invoice_line_repository
             .query_by_filter(
-                InvoiceLineFilter::new().location_id(EqualFilter::equal_to(location_id.to_string())),
+                InvoiceLineFilter::new()
+                    .location_id(EqualFilter::equal_to(location_id.to_string())),
             )
             .unwrap();
 
@@ -88,7 +91,8 @@ mod query {
             .unwrap();
         let invoice_lines = invoice_line_repository
             .query_by_filter(
-                InvoiceLineFilter::new().location_id(EqualFilter::equal_to(location_id.to_string())),
+                InvoiceLineFilter::new()
+                    .location_id(EqualFilter::equal_to(location_id.to_string())),
             )
             .unwrap();
 
@@ -125,7 +129,9 @@ mod query {
 
         assert_eq!(
             location_repository
-                .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to("location_2".to_string())))
+                .query_by_filter(
+                    LocationFilter::new().id(EqualFilter::equal_to("location_2".to_string()))
+                )
                 .unwrap(),
             vec![]
         );

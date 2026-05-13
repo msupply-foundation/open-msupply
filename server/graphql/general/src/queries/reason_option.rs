@@ -93,7 +93,7 @@ impl ReasonOptionFilterInput {
 
         ReasonOptionFilter {
             id: id.map(EqualFilter::from),
-            r#type: r#type.map(|t| map_filter!(t, |r| ReasonOptionType::from(r))),
+            r#type: r#type.map(|t| map_filter!(t, ReasonOptionType::from)),
             is_active,
         }
     }

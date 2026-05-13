@@ -1,6 +1,6 @@
 use super::{
     assets::asset_internal_location_row::asset_internal_location, item_link_row::item_link,
-    name_link_row::name_link, store_row::store, RepositoryError, StorageConnection,
+    store_row::store, RepositoryError, StorageConnection,
 };
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{Delete, Upsert};
@@ -20,7 +20,6 @@ table! {
 
 joinable!(location -> store (store_id));
 allow_tables_to_appear_in_same_query!(location, item_link);
-allow_tables_to_appear_in_same_query!(location, name_link);
 allow_tables_to_appear_in_same_query!(location, asset_internal_location);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
@@ -65,7 +64,7 @@ impl<'a> LocationRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

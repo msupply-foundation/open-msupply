@@ -18,7 +18,7 @@ async fn custom_translations(
     service_provider: Data<ServiceProvider>,
 ) -> Result<HttpResponse, Error> {
     let connection = service_provider.connection().map_err(|err| {
-        log::error!("Couldn't get database connection: {}", err);
+        log::error!("Couldn't get database connection: {err}");
         InternalError::new(
             "Could not connect to database",
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -26,7 +26,7 @@ async fn custom_translations(
     })?;
 
     let translations = CustomTranslations.load(&connection, None).map_err(|err| {
-        log::error!("Failed to load custom preferences: {}", err);
+        log::error!("Failed to load custom preferences: {err}");
         InternalError::new(
             "Could not load preference",
             StatusCode::INTERNAL_SERVER_ERROR,

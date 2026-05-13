@@ -9,6 +9,7 @@ fragment Outbound on InvoiceNode {
   pickedDatetime
   shippedDatetime
   verifiedDatetime
+  backdatedDatetime
   invoiceNumber
   colour
   onHold
@@ -212,15 +213,13 @@ query outboundByNumber($invoiceNumber: Int!, $storeId: String!) {
   }
 }
 
-query invoiceCounts($storeId: String!, $timezoneOffset: Int) {
-  invoiceCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
-    outbound {
-      created {
-        today
-        thisWeek
-      }
-      notShipped
+query outboundShipmentCounts($storeId: String!, $timezoneOffset: Int) {
+  outboundShipmentCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
+    created {
+      today
+      thisWeek
     }
+    notShipped
   }
 }
 
@@ -838,6 +837,17 @@ mutation insertBarcode($storeId: String!, $input: InsertBarcodeInput!) {
   insertBarcode(input: $input, storeId: $storeId) {
     ... on BarcodeNode {
       ...Barcode
+    }
+  }
+}
+
+query outboundStocktakeCountAfterDate(
+  $storeId: String!
+  $filter: StocktakeFilterInput
+) {
+  stocktakes(storeId: $storeId, filter: $filter) {
+    ... on StocktakeConnector {
+      totalCount
     }
   }
 }

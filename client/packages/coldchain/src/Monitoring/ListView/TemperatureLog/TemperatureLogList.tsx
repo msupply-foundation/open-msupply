@@ -91,6 +91,7 @@ export const TemperatureLogList: FC = () => {
     data: data?.nodes,
     totalCount: data?.totalCount ?? 0,
     noDataElement: <NothingHere body={t('error.no-temperature-logs')} />,
+    enableRowSelection: false,
   });
 
   return (

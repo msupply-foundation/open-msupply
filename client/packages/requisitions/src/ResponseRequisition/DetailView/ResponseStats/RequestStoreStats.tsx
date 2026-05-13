@@ -15,6 +15,7 @@ import {
 import { calculatePercentage } from './utils';
 import { AvailableVolumeAtLocationTypeFragment } from '../../api';
 import { VolumeInformation } from './VolumeInfo';
+import ForecastCalculationDisplay from '../../../common/ForecastCalculationDisplay';
 
 export interface RequestStoreStatsProps {
   representation: RepresentationValue;
@@ -26,6 +27,8 @@ export interface RequestStoreStatsProps {
   averageMonthlyConsumption: number;
   availableVolumeAtLocationType?: AvailableVolumeAtLocationTypeFragment | null;
   itemVolume: number;
+  displayForecasting: boolean;
+  vaccineCourses?: string | null;
 }
 
 const MIN_MC_WIDTH_TO_SHOW_TEXT = 5;
@@ -126,6 +129,8 @@ export const RequestStoreStats = ({
   averageMonthlyConsumption,
   availableVolumeAtLocationType,
   itemVolume,
+  displayForecasting,
+  vaccineCourses,
 }: RequestStoreStatsProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -170,59 +175,65 @@ export const RequestStoreStats = ({
         p: '16px 16px',
       }}
     >
-      {formattedAmc === 0 && <CalculationError isAmcZero />}
-      {formattedSuggested === 0 && formattedSoh === 0 && (
-        <CalculationError isSohAndQtyZero />
-      )}
-      <Typography variant="body1" fontWeight={700} fontSize={12}>
-        {t('heading.target-quantity')} ({display})
-      </Typography>
-      <Box
-        display="flex"
-        alignItems="flex-start"
-        width={`${monthlyConsumptionPercent}%`}
-        style={{ paddingBottom: 7 }}
-      >
-        <MonthlyBar
-          flexBasis="1px"
-          label={
-            monthlyConsumptionPercent > MIN_MC_WIDTH_TO_SHOW_TEXT ? '0' : ''
-          }
-          left={true}
-        />
+      {displayForecasting ? (
+        <ForecastCalculationDisplay vaccineCourses={vaccineCourses} />
+      ) : (
+        <>
+          {formattedAmc === 0 && <CalculationError isAmcZero />}
+          {formattedSuggested === 0 && formattedSoh === 0 && (
+            <CalculationError isSohAndQtyZero />
+          )}
+          <Typography variant="body1" fontWeight={700} fontSize={12}>
+            {t('heading.target-quantity')} ({display})
+          </Typography>
+          <Box
+            display="flex"
+            alignItems="flex-start"
+            width={`${monthlyConsumptionPercent}%`}
+            style={{ paddingBottom: 7 }}
+          >
+            <MonthlyBar
+              flexBasis="1px"
+              label={
+                monthlyConsumptionPercent > MIN_MC_WIDTH_TO_SHOW_TEXT ? '0' : ''
+              }
+              left={true}
+            />
 
-        {Array.from({ length: maxMonthsOfStock }, (_, i) => (
-          <MonthlyConsumption
-            key={i}
-            month={i + 1}
-            flexBasis={`${100 / maxMonthsOfStock}%`}
-            averageMonthlyConsumption={formattedAmc}
-            showText={monthlyConsumptionPercent > MIN_MC_WIDTH_TO_SHOW_TEXT}
-          />
-        ))}
-      </Box>
+            {Array.from({ length: maxMonthsOfStock }, (_, i) => (
+              <MonthlyConsumption
+                key={i}
+                month={i + 1}
+                flexBasis={`${100 / maxMonthsOfStock}%`}
+                averageMonthlyConsumption={formattedAmc}
+                showText={monthlyConsumptionPercent > MIN_MC_WIDTH_TO_SHOW_TEXT}
+              />
+            ))}
+          </Box>
 
-      <Box display="flex" alignItems="flex-start" width="100%">
-        <ValueBar
-          value={formattedSoh}
-          total={targetQuantity}
-          label={t('label.stock-on-hand')}
-          colour="gray.main"
-          startDivider
-        />
-        <ValueBar
-          value={formattedSuggested}
-          total={targetQuantity}
-          label={t('label.suggested-order-quantity')}
-          colour="primary.light"
-        />
-      </Box>
+          <Box display="flex" alignItems="flex-start" width="100%">
+            <ValueBar
+              value={formattedSoh}
+              total={targetQuantity}
+              label={t('label.stock-on-hand')}
+              colour="gray.main"
+              startDivider
+            />
+            <ValueBar
+              value={formattedSuggested}
+              total={targetQuantity}
+              label={t('label.suggested-order-quantity')}
+              colour="primary.light"
+            />
+          </Box>
 
-      {!!availableVolumeAtLocationType && (
-        <VolumeInformation
-          availableVolumeAtLocationType={availableVolumeAtLocationType}
-          itemVolume={itemVolume}
-        />
+          {!!availableVolumeAtLocationType && (
+            <VolumeInformation
+              availableVolumeAtLocationType={availableVolumeAtLocationType}
+              itemVolume={itemVolume}
+            />
+          )}
+        </>
       )}
     </Box>
   );

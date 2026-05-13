@@ -26,7 +26,7 @@ use crate::{
     requisition::{
         program_settings::customer_program_settings::has_customer_program_requisition_settings,
         request_requisition::{
-            insert_from_response_requisition, InsertFromResponseRequisition,
+            insert_request_from_response_requisition, InsertFromResponseRequisition,
             InsertFromResponseRequisitionError,
         },
     },
@@ -129,12 +129,12 @@ pub trait RequisitionServiceTrait: Sync + Send {
         delete_request_requisition(ctx, input)
     }
 
-    fn insert_from_response_requisition(
+    fn insert_request_from_response_requisition(
         &self,
         ctx: &ServiceContext,
         input: InsertFromResponseRequisition,
     ) -> Result<Requisition, InsertFromResponseRequisitionError> {
-        insert_from_response_requisition(ctx, input)
+        insert_request_from_response_requisition(ctx, input)
     }
 
     fn use_suggested_quantity(

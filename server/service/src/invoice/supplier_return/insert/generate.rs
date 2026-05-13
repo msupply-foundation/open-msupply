@@ -20,6 +20,7 @@ pub fn generate(
         id,
         other_party_id,
         inbound_shipment_id,
+        their_reference,
         supplier_return_lines,
     }: InsertSupplierReturn,
     other_party: Name,
@@ -40,7 +41,7 @@ pub fn generate(
     let supplier_return = InvoiceRow {
         id,
         user_id: Some(user_id.to_string()),
-        name_link_id: other_party_id,
+        name_id: other_party_id,
         r#type: InvoiceType::SupplierReturn,
         invoice_number: next_number(connection, &NumberRowType::SupplierReturn, store_id)?,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
@@ -54,7 +55,7 @@ pub fn generate(
         on_hold: false,
         colour: None,
         comment: None,
-        their_reference: None,
+        their_reference,
         tax_percentage: None,
         transport_reference: None,
         allocated_datetime: None,
@@ -75,9 +76,11 @@ pub fn generate(
         insurance_discount_percentage: None,
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_link_id: None,
-        goods_received_id: None,
+        default_donor_id: None,
+        purchase_order_id: None,
         shipping_method_id: None,
+        charges_local_currency: 0.0,
+        charges_foreign_currency: 0.0,
     };
 
     let lines_with_packs: Vec<&SupplierReturnLineInput> = supplier_return_lines
@@ -110,6 +113,7 @@ pub fn generate(
             volume_per_pack: None,
             item_variant_id: None,
             donor_id: None,
+            manufacturer_id: None,
         })
         .collect();
 

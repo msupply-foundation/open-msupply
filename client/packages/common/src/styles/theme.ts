@@ -101,6 +101,11 @@ declare module '@mui/material/styles/createPalette' {
       unserviceable: string;
       text: string;
     };
+    invoiceLineStatus: {
+      passed: string;
+      pending: string;
+      rejected: string;
+    };
     chart: {
       cold: PaletteColor;
       hot: PaletteColor;
@@ -263,6 +268,11 @@ export const themeOptions = {
       notInUse: '#b0b0b0',
       unserviceable: '#555555',
       text: '#fff',
+    },
+    invoiceLineStatus: {
+      passed: '#69a607',
+      pending: '#f2a001',
+      rejected: '#de0001',
     },
     vaccinationStatus: {
       given: 'success.light',

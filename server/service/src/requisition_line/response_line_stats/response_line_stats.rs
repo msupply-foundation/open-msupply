@@ -137,7 +137,7 @@ pub fn response_store_stats(
     let current_line_quantity = calculate_line_quantity(requisition_line);
     let other_requested_quantity = other_response_requisition_lines
         .iter()
-        .map(|line| calculate_line_quantity(line))
+        .map(calculate_line_quantity)
         .sum::<f64>()
         .max(0.0); // Normalises negative values (-0 to 0) to zero
 

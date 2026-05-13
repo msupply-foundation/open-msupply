@@ -22,6 +22,12 @@ pub struct LocalisationsService {
     localisations: Localisations,
 }
 
+impl Default for LocalisationsService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LocalisationsService {
     pub fn new() -> Self {
         let mut localisations = Localisations {
@@ -68,9 +74,7 @@ impl Localisations {
                 let translations: HashMap<String, String> = serde_json::from_slice(&json_data)
                     .unwrap_or_else(|e| {
                         log::error!(
-                            "Failed to parse JSON localisations file {:?}. Backend/report translations will be unavailable due to: {:?}",
-                            file,
-                            e
+                            "Failed to parse JSON localisations file {file:?}. Backend/report translations will be unavailable due to: {e:?}"
                         );
                         HashMap::new()
                     });
@@ -132,7 +136,7 @@ impl Localisations {
             // then look for key in common.json in en
             (&default_language, &default_namespace, &key),
         ] {
-            match self.find_key(language, &namespace, &key) {
+            match self.find_key(language, namespace, key) {
                 Some(string) => return Ok(string),
                 None => continue,
             }

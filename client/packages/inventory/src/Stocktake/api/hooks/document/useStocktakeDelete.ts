@@ -5,9 +5,13 @@ export const useStocktakeDelete = () => {
   const queryClient = useQueryClient();
   const api = useStocktakeApi();
 
-  return useMutation(api.deleteStocktakes, {
+  return useMutation({
+    mutationFn: api.deleteStocktakes,
+
     onSuccess: () => {
-      queryClient.invalidateQueries(api.keys.base());
-    },
+      queryClient.invalidateQueries({
+        queryKey: api.keys.base()
+      });
+    }
   });
 };

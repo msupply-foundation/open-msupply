@@ -7,12 +7,14 @@ import {
 import { getSavedState, updateSavedState, differentOrUndefined } from './utils';
 import { ColumnDef } from '../types';
 import { useSimplifiedTabletUI } from '@common/hooks';
+import { useGlobalTableDefaults } from './useGlobalTableConfig';
 
 export const useColumnVisibility = <T extends MRT_RowData>(
   tableId: string,
   columns: ColumnDef<T>[],
   isMobile?: boolean
 ) => {
+  const globalDefaults = useGlobalTableDefaults(tableId);
   const simplifiedMobileView = useSimplifiedTabletUI();
 
   const initial = useMemo(() => {
@@ -29,17 +31,16 @@ export const useColumnVisibility = <T extends MRT_RowData>(
   }, [simplifiedMobileView, isMobile]);
 
   const [state, setState] = useState<MRT_VisibilityState>(
-    getSavedState(tableId).columnVisibility ?? initial
-  );
-  const [hasSavedState, setHasSavedState] = useState(
-    !!getSavedState(tableId).columnVisibility
+    getSavedState(tableId)?.columnVisibility ??
+      globalDefaults?.columnVisibility ??
+      initial
   );
 
   // If initial state changes (due to simplified mobile view turning on/off)
   // And no custom visibility has been saved
   // Update the visibility to the new default
   useEffect(() => {
-    if (!getSavedState(tableId).columnVisibility) setState(initial);
+    if (!getSavedState(tableId)?.columnVisibility) setState(initial);
   }, [initial]);
 
   const update = useCallback<
@@ -52,14 +53,10 @@ export const useColumnVisibility = <T extends MRT_RowData>(
             ? updaterOrValue(prev)
             : updaterOrValue;
 
-        const savedColumnVisibility = differentOrUndefined(
-          newColumnVisibility,
-          initial
-        );
         updateSavedState(tableId, {
-          columnVisibility: savedColumnVisibility,
+          columnVisibility: differentOrUndefined(newColumnVisibility, initial),
         });
-        if (savedColumnVisibility) setHasSavedState(true);
+
         return newColumnVisibility;
       }),
     [initial]
@@ -69,7 +66,5 @@ export const useColumnVisibility = <T extends MRT_RowData>(
     initial,
     state,
     update,
-    hasSavedState,
-    resetHasSavedState: () => setHasSavedState(false),
   };
 };

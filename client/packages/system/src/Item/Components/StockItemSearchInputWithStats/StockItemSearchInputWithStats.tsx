@@ -113,7 +113,7 @@ export const StockItemSearchInputWithStats = ({
         '.MuiBox-root': { justifyContent: 'flex-start' },
         paddingX: '25px',
       }}
-      onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
+      onPageChange={() => fetchNextPage()}
       inputValue={search}
       inputProps={{
         onChange: e => {

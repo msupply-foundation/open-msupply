@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from 'react';
 import currency from 'currency.js';
 import { useAuthContext } from '../../authentication';
 import { MAX_FRACTION_DIGITS, useIntlUtils } from '../utils';
@@ -243,7 +244,7 @@ export const currencyOptions = (locale: string, code?: Currencies) => {
         precision: 2,
         format,
       };
-    }    
+    }
     case 'AFN': {
       return {
         // separator: "," decimal = "."
@@ -273,19 +274,27 @@ export const useCurrency = (code?: Currencies) => {
   const { currentLanguage: language } = useIntlUtils();
   const currencyCode = code ? code : (store?.homeCurrencyCode as Currencies);
 
-  const options = currencyOptions(language, currencyCode);
-  return {
-    c: (value: currency.Any, precision?: number) =>
+  const options = useMemo(
+    () => currencyOptions(language, currencyCode),
+    [language, currencyCode]
+  );
+
+  const c = useCallback(
+    (value: currency.Any, precision?: number) =>
       currency(value, {
         ...options,
         precision: precision ?? options.precision,
       }),
-    options,
-    currencyCode,
-  };
+    [options]
+  );
+
+  return { c, options, currencyCode };
 };
 
 export const useFormatCurrency = (code?: Currencies) => {
   const { c } = useCurrency(code);
-  return (value: currency.Any) => c(value).format();
+  return useCallback(
+    (value: currency.Any) => c(value).format(),
+    [c]
+  );
 };

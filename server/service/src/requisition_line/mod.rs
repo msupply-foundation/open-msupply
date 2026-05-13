@@ -25,12 +25,17 @@ use self::{
 use super::{ListError, ListResult};
 use crate::service_provider::ServiceContext;
 
-use repository::{RequisitionLine, RequisitionLineFilter};
+use ancillary_items::{
+    get_ancillary_plan, refresh_ancillary_items, AncillaryPlan, GetAncillaryPlanError,
+    RefreshAncillaryItems, RefreshAncillaryItemsError,
+};
+use repository::{RequisitionLine, RequisitionLineFilter, RequisitionLineRow};
 use response_requisition_line::{
     delete_response_requisition_line, DeleteResponseRequisitionLine,
     DeleteResponseRequisitionLineError,
 };
 
+pub mod ancillary_items;
 pub mod chart;
 pub mod common;
 pub mod query;
@@ -116,6 +121,22 @@ pub trait RequisitionLineServiceTrait: Sync + Send {
         input: DeleteResponseRequisitionLine,
     ) -> Result<String, DeleteResponseRequisitionLineError> {
         delete_response_requisition_line(ctx, input)
+    }
+
+    fn get_ancillary_plan(
+        &self,
+        ctx: &ServiceContext,
+        requisition_id: &str,
+    ) -> Result<AncillaryPlan, GetAncillaryPlanError> {
+        get_ancillary_plan(&ctx.connection, requisition_id)
+    }
+
+    fn refresh_ancillary_items(
+        &self,
+        ctx: &ServiceContext,
+        input: RefreshAncillaryItems,
+    ) -> Result<Vec<RequisitionLineRow>, RefreshAncillaryItemsError> {
+        refresh_ancillary_items(ctx, input)
     }
 }
 

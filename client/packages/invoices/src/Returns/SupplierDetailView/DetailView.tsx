@@ -11,7 +11,6 @@ import {
   NothingHere,
   useNonPaginatedMaterialTable,
   MaterialTable,
-  Groupable,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -48,13 +47,13 @@ export const SupplierReturnsDetailView = () => {
   const columns = useSupplierReturnColumns();
 
   const { table, selectedRows } =
-    useNonPaginatedMaterialTable<Groupable<SupplierReturnLineFragment>>({
+    useNonPaginatedMaterialTable<SupplierReturnLineFragment>({
       tableId: 'supplier-return-detail',
       onRowClick: row => onOpen(row.itemId),
       columns,
       isLoading,
       data: lines,
-      grouping: { enabled: true },
+      grouping: { field: 'itemCode' },
       enableRowSelection: !isDisabled,
       noDataElement: (
         <NothingHere

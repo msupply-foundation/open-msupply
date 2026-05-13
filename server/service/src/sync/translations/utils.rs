@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
     system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
-    RepositoryError, StorageConnection,
+    LocationRowRepository, RepositoryError, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -54,4 +54,18 @@ where
     }
 
     Ok(None)
+}
+
+pub(crate) fn clear_invalid_location_id(
+    connection: &StorageConnection,
+    location_id: Option<String>,
+) -> Result<Option<String>, RepositoryError> {
+    let location_id = if let Some(id) = location_id {
+        LocationRowRepository::new(connection)
+            .find_one_by_id(&id)?
+            .map(|it| it.id)
+    } else {
+        None
+    };
+    Ok(location_id)
 }

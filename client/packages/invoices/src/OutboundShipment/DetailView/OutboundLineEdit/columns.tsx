@@ -14,6 +14,7 @@ import {
   Box,
   Tooltip,
   TextWithTooltipCell,
+  Currencies,
   CurrencyValueCell,
   ExpiryDateCell,
   NumberInputCell,
@@ -174,7 +175,7 @@ export const useOutboundLineEditColumns = ({
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
         Cell: props => (
-          <CurrencyValueCell {...props} currencyCode={currency?.code} />
+          <CurrencyValueCell {...props} currencyCode={currency?.code as Currencies} />
         ),
         accessorFn: rowData =>
           currency ? rowData.sellPricePerPack / currency.rate : undefined,
@@ -232,6 +233,7 @@ export const useOutboundLineEditColumns = ({
           <NumberInputCell
             id={getStockOutQuantityCellId(row.original.batch)} // Used by when adding by barcode scanner
             cell={cell}
+            debounceTime={500}
             updateFn={value =>
               allocate(row.original.id, value, {
                 preventPartialPacks: true,

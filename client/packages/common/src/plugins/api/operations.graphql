@@ -2,6 +2,7 @@ query frontendPluginMetadata {
   frontendPluginMetadata {
     code
     path
+    hash
   }
 }
 

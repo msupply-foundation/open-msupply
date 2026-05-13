@@ -1,108 +1,159 @@
-use crate::sync::{
-    test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
-    translations::goods_received_line::LegacyGoodsReceivedLineRow,
-};
-use chrono::NaiveDate;
-use repository::{GoodsReceivedLineDelete, GoodsReceivedLineRow};
-use serde_json::json;
+use crate::sync::test::TestSyncIncomingRecord;
+use repository::mock::MockData;
+use repository::*;
 
 const TABLE_NAME: &str = "Goods_received_line";
 
-const GOODS_RECEIVED_LINE: (&str, &str) = (
-    "917BA6AEC9984FF09F6DB8599CA426B0",
+// Line for a non-finalized GR — should create an invoice line
+const GR_LINE_NON_FINALISED: (&str, &str) = (
+    "gr_line_test_1",
     r#"{
-        "ID": "917BA6AEC9984FF09F6DB8599CA426B0",
-        "authorised_comment": "",
-        "batch_received": "sal_bat_one",
-        "comment": "",
-        "cost_price": 0,
-        "custom_stock_field_1": "",
-        "custom_stock_field_2": "",
-        "custom_stock_field_3": "",
-        "custom_stock_field_4": "",
-        "expiry_date": "2018-03-19",
-        "goods_received_ID": "3486239A597646B2B7259D91A24988E8",
-        "is_authorised": true,
-        "item_ID": "8F252B5884B74888AAB73A0D42C09E7A", 
-        "item_name": "Salbutamol Inhaler",
-        "kit_data": null,
-        "line_number": 3,
-        "location_ID": "cf5812e0c33911eb9757779d39ae2bdb",
-        "manufacturer_ID": "1FB32324AF8049248D929CFB35F255BA",
-        "order_line_ID": "sync_test_purchase_order_1_line_1",
-        "pack_inners_in_outer": 0,
-        "pack_quan_in_inner": 0,
-        "pack_received": 5,
-        "quantity_received": 50,
-        "remoteCustomerInvoiceLineID": "",
-        "spare_note_has_been_actioned": false,
-        "volume_per_pack": 0,
-        "weight_per_pack": 1
+        "ID": "gr_line_test_1",
+        "goods_received_ID": "gr_non_finalised_test",
+        "item_ID": "item_a",
+        "item_name": "Item A",
+        "pack_received": 10.0,
+        "quantity_received": 5.0,
+        "cost_price": 2.5,
+        "batch_received": "BATCH001",
+        "expiry_date": "2025-12-31",
+        "comment": "line comment",
+        "location_ID": "",
+        "volume_per_pack": 0.5,
+        "order_line_ID": "po_line_1"
     }"#,
 );
 
-fn goods_received_line_pull_record() -> TestSyncIncomingRecord {
-    TestSyncIncomingRecord::new_pull_upsert(
+// Line for a finalized GR — should update existing invoice line with purchase_order_line_id
+const GR_LINE_FINALISED: (&str, &str) = (
+    "gr_line_finalised_test",
+    r#"{
+        "ID": "gr_line_finalised_test",
+        "goods_received_ID": "gr_finalised_test",
+        "item_ID": "item_a",
+        "item_name": "Item A",
+        "pack_received": 10.0,
+        "quantity_received": 5.0,
+        "cost_price": 2.5,
+        "batch_received": "",
+        "expiry_date": "0000-00-00",
+        "comment": "",
+        "location_ID": "",
+        "volume_per_pack": 0.0,
+        "order_line_ID": "po_line_1"
+    }"#,
+);
+
+fn gr_line_non_finalised_pull_record() -> TestSyncIncomingRecord {
+    let mut record = TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
-        GOODS_RECEIVED_LINE,
-        GoodsReceivedLineRow {
-            id: "917BA6AEC9984FF09F6DB8599CA426B0".to_string(),
-            goods_received_id: "3486239A597646B2B7259D91A24988E8".to_string(),
-            purchase_order_line_id: "sync_test_purchase_order_1_line_1".to_string(),
-            received_pack_size: 5.0,
-            number_of_packs_received: 50.0,
-            batch: Some("sal_bat_one".to_string()),
-            weight_per_pack: Some(1.0),
-            expiry_date: Some(NaiveDate::from_ymd_opt(2018, 3, 19).unwrap()),
-            line_number: 3,
-            item_link_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
-            item_name: "Salbutamol Inhaler".to_string(),
-            location_id: Some("cf5812e0c33911eb9757779d39ae2bdb".to_string()),
-            volume_per_pack: None,
-            manufacturer_link_id: Some("1FB32324AF8049248D929CFB35F255BA".to_string()),
-            status: repository::GoodsReceivedLineStatus::Authorised,
-            comment: None,
+        GR_LINE_NON_FINALISED,
+        InvoiceLineRow {
+            id: "gr_line_test_1".to_string(),
+            invoice_id: "gr_non_finalised_test".to_string(),
+            item_link_id: "item_a".to_string(),
+            item_name: "Item A".to_string(),
+            item_code: "item_a_code".to_string(),
+            pack_size: 10.0,
+            cost_price_per_pack: 2.5,
+            sell_price_per_pack: 2.5,
+            total_before_tax: 12.5,
+            total_after_tax: 12.5,
+            r#type: InvoiceLineType::StockIn,
+            number_of_packs: 5.0,
+            note: Some("line comment".to_string()),
+            volume_per_pack: 0.5,
+            batch: Some("BATCH001".to_string()),
+            expiry_date: chrono::NaiveDate::from_ymd_opt(2025, 12, 31),
+            purchase_order_line_id: Some("po_line_1".to_string()),
+            ..Default::default()
         },
-    )
+    );
+    // Need parent GR in sync_buffer (non-finalized, status "nw")
+    record.extra_data = Some(MockData {
+        sync_buffer_rows: vec![SyncBufferRow {
+            record_id: "gr_non_finalised_test".to_string(),
+            table_name: "Goods_received".to_string(),
+            data: r#"{"status": "nw"}"#.to_string(),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        }],
+        ..Default::default()
+    });
+    record
 }
 
-fn goods_received_line_push_record() -> TestSyncOutgoingRecord {
-    TestSyncOutgoingRecord {
-        table_name: TABLE_NAME.to_string(),
-        record_id: GOODS_RECEIVED_LINE.0.to_string(),
-        push_data: json!(LegacyGoodsReceivedLineRow {
-            ID: GOODS_RECEIVED_LINE.0.to_string(),
-            goods_received_ID: "3486239A597646B2B7259D91A24988E8".to_string(),
-            order_line_ID: "sync_test_purchase_order_1_line_1".to_string(),
-            pack_received: 5.0,
-            quantity_received: 50.0,
-            batch_received: Some("sal_bat_one".to_string()),
-            weight_per_pack: Some(1.0),
-            expiry_date: Some(NaiveDate::from_ymd_opt(2018, 3, 19).unwrap()),
-            line_number: 3,
-            item_ID: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
-            item_name: "Salbutamol Inhaler".to_string(),
-            location_ID: Some("cf5812e0c33911eb9757779d39ae2bdb".to_string()),
-            volume_per_pack: None,
-            manufacturer_ID: Some("1FB32324AF8049248D929CFB35F255BA".to_string()),
-            is_authorised: true,
-            comment: None,
-        }),
-    }
+fn gr_line_finalised_pull_record() -> TestSyncIncomingRecord {
+    let existing_invoice = InvoiceRow {
+        id: "gr_existing_si".to_string(),
+        name_id: "name_a".to_string(),
+        store_id: "store_a".to_string(),
+        invoice_number: 99,
+        r#type: InvoiceType::InboundShipment,
+        status: InvoiceStatus::Verified,
+        created_datetime: chrono::NaiveDate::from_ymd_opt(2024, 3, 10)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
+        ..Default::default()
+    };
+
+    let existing_line = InvoiceLineRow {
+        id: "gr_existing_line".to_string(),
+        invoice_id: "gr_existing_si".to_string(),
+        item_link_id: "item_a".to_string(),
+        item_name: "Item A".to_string(),
+        item_code: "item_a_code".to_string(),
+        pack_size: 10.0,
+        cost_price_per_pack: 2.5,
+        sell_price_per_pack: 2.5,
+        total_before_tax: 12.5,
+        total_after_tax: 12.5,
+        r#type: InvoiceLineType::StockIn,
+        number_of_packs: 5.0,
+        ..Default::default()
+    };
+
+    let mut expected_line = existing_line.clone();
+    expected_line.purchase_order_line_id = Some("po_line_1".to_string());
+
+    let mut record =
+        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, GR_LINE_FINALISED, expected_line);
+    record.extra_data = Some(MockData {
+        invoices: vec![existing_invoice],
+        invoice_lines: vec![existing_line],
+        sync_buffer_rows: vec![
+            // Parent GR in sync_buffer (finalized, status "fn")
+            SyncBufferRow {
+                record_id: "gr_finalised_test".to_string(),
+                table_name: "Goods_received".to_string(),
+                data: r#"{"status": "fn"}"#.to_string(),
+                action: SyncAction::Upsert,
+                ..Default::default()
+            },
+            // trans_line sync_buffer record linking the existing invoice line to the GR line
+            SyncBufferRow {
+                record_id: "gr_existing_line".to_string(),
+                table_name: "trans_line".to_string(),
+                data: r#"{"goods_received_lines_ID": "gr_line_finalised_test"}"#.to_string(),
+                action: SyncAction::Upsert,
+                integration_datetime: Some(
+                    chrono::NaiveDate::from_ymd_opt(2024, 1, 1)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                ),
+                ..Default::default()
+            },
+        ],
+        ..Default::default()
+    });
+    record
 }
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
-    vec![goods_received_line_pull_record()]
-}
-
-pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
-    vec![goods_received_line_push_record()]
-}
-
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
-    vec![TestSyncIncomingRecord::new_pull_delete(
-        TABLE_NAME,
-        GOODS_RECEIVED_LINE.0,
-        GoodsReceivedLineDelete(GOODS_RECEIVED_LINE.0.to_string()),
-    )]
+    vec![
+        gr_line_non_finalised_pull_record(),
+        gr_line_finalised_pull_record(),
+    ]
 }

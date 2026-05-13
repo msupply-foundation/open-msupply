@@ -9,7 +9,6 @@ import {
   BufferedTextInput,
   Tooltip,
   BasicTextInput,
-  usePreferences,
   SearchBar,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
@@ -36,7 +35,6 @@ export const Toolbar = () => {
     'programName',
     'destinationCustomer',
   ]);
-  const { selectDestinationStoreForAnInternalOrder } = usePreferences();
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
 
   return (
@@ -70,17 +68,19 @@ export const Toolbar = () => {
                 label={t('label.customer-ref')}
                 Input={
                   <Tooltip title={theirReference} placement="bottom-start">
-                    <BufferedTextInput
-                      disabled={isDisabled}
-                      size="small"
-                      sx={{ width: 250 }}
-                      value={theirReference}
-                      onChange={e => update({ theirReference: e.target.value })}
-                    />
+                    <Box>
+                      <BufferedTextInput
+                        disabled={isDisabled}
+                        size="small"
+                        sx={{ width: 250 }}
+                        value={theirReference}
+                        onChange={e => update({ theirReference: e.target.value })}
+                      />
+                    </Box>
                   </Tooltip>
                 }
               />
-              {selectDestinationStoreForAnInternalOrder && (
+              {!!destinationCustomer && (
                 <InputWithLabelRow
                   label={t('label.destination-customer')}
                   Input={

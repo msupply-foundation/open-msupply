@@ -1,7 +1,7 @@
 use super::{
     item_category_row::item_category_join, item_link_row::item_link, item_row::item,
     master_list_line_row::master_list_line, master_list_name_join::master_list_name_join,
-    master_list_row::master_list, program_row::program, stock_on_hand::stock_on_hand,
+    master_list_row::master_list, program_row::program, stock_on_hand::store_stock_on_hand,
     store_row::store, unit_row::unit, DBType, ItemRow, ItemType, StorageConnection, UnitRow,
 };
 
@@ -296,7 +296,10 @@ impl<'a> ItemRepository<'a> {
                 // has been merged, we only need to find by the category of the
                 // kept item, not the one that was "deleted"
                 let item_ids_for_category_id = item_category_join::table
-                    .select(item_category_join::item_id)
+                    .inner_join(
+                        item_link::table.on(item_link::id.eq(item_category_join::item_link_id)),
+                    )
+                    .select(item_link::item_id)
                     .filter(item_category_join::category_id.eq(category_id.clone()))
                     .into_boxed();
 
@@ -305,10 +308,13 @@ impl<'a> ItemRepository<'a> {
 
             if let Some(category_name) = category_name {
                 let item_ids_for_category_name = item_category_join::table
-                    .select(item_category_join::item_id)
+                    .inner_join(
+                        item_link::table.on(item_link::id.eq(item_category_join::item_link_id)),
+                    )
                     .inner_join(
                         category::table.on(category::id.eq(item_category_join::category_id)),
                     )
+                    .select(item_link::item_id)
                     .filter(category::name.eq(category_name.clone()))
                     .into_boxed();
 
@@ -328,19 +334,19 @@ impl<'a> ItemRepository<'a> {
                         .on(master_list_name_join::master_list_id.eq(master_list::id)),
                 )
                 .inner_join(
-                    store::table.on(store::name_link_id
-                        .eq(master_list_name_join::name_link_id)
+                    store::table.on(store::name_id
+                        .eq(master_list_name_join::name_id)
                         .and(store::id.eq(store_id.clone()))),
                 )
                 .filter(store::id.eq(store_id.clone()));
 
             let item_ids_with_stock_on_hand = item_link::table
                 .select(item_link::item_id)
-                .inner_join(stock_on_hand::table)
+                .inner_join(store_stock_on_hand::table)
                 .filter(
-                    stock_on_hand::available_stock_on_hand
+                    store_stock_on_hand::available_stock_on_hand
                         .gt(0.0)
-                        .and(stock_on_hand::store_id.eq(store_id.clone())),
+                        .and(store_stock_on_hand::store_id.eq(store_id.clone())),
                 )
                 .group_by(item_link::item_id);
 
@@ -805,13 +811,13 @@ mod tests {
 
         let store_row = StoreRow {
             id: "name1_store".to_string(),
-            name_link_id: "name1".to_string(),
+            name_id: "name1".to_string(),
             ..Default::default()
         };
 
         let master_list_name_join_1 = MasterListNameJoinRow {
             id: "id1".to_string(),
-            name_link_id: "name1".to_string(),
+            name_id: "name1".to_string(),
             master_list_id: "master_list1".to_string(),
         };
 
