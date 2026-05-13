@@ -8,13 +8,11 @@ export const useIndicators = (
   enabled: boolean
 ) => {
   const api = useRequestApi();
-  return useQuery(
-    api.keys.indicators(),
-    () => api.getIndicators(customerNameLinkId, periodId, programId),
-    {
-      refetchOnMount: false,
-      cacheTime: 0,
-      enabled,
-    }
-  );
+  return useQuery({
+    queryKey: api.keys.indicators(),
+    queryFn: () => api.getIndicators(customerNameLinkId, periodId, programId),
+    refetchOnMount: false,
+    gcTime: 0,
+    enabled
+  });
 };
