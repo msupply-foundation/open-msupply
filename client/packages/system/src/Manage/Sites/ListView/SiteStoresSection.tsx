@@ -98,6 +98,7 @@ export const SiteStoresSection = ({
           key={searchKey}
           clearable
           fullWidth
+          excludeStoreIds={stores.map(s => s.id)}
           onChange={handleSelect}
           onInputChange={() => {}}
         />
