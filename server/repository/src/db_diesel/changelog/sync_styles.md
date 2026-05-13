@@ -83,7 +83,7 @@ Central data still served from legacy 4D. This bucket also acts as a catch-all f
 
 `Name`
 
-Names are central data — every site needs the full directory — but a patient-typed name additionally carries its own id as `patient_id` on the changelog. Non-patient names route via the Central clause; patient names route via the Patient clause to every site that knows the patient. `Name` is the only table tagged as living on **both** transports: it's pulled on v6 (so OMS-native filters include it) and still pushed on v5 (so legacy filters include it too).
+Names are central data — every site needs the full directory — but a patient-typed name additionally carries its own id as `patient_link_id` on the changelog. Non-patient names route via the Central clause; patient names route via the Patient clause to every site that knows the patient. `Name` is the only table tagged as living on **both** transports: it's pulled on v6 (so OMS-native filters include it) and still pushed on v5 (so legacy filters include it too).
 
 ### Legacy, Patient
 
@@ -113,7 +113,13 @@ Site-owned data on the OMS-native transport.
 
 `Encounter`, `Vaccination`
 
-Store-scoped clinical records that should also follow the patient. Each row carries the authoring store *and* the patient. The Remote clause delivers it to the owning site; the Patient clause delivers it to every other site that knows the patient. The Central clause never matches because `patient_id` is set.
+Store-scoped clinical records that should also follow the patient. Each row carries the authoring store *and* the patient. The Remote clause delivers it to the owning site; the Patient clause delivers it to every other site that knows the patient. The Central clause never matches because `patient_link_id` is set.
+
+### OMS-native, Patient
+
+`Document`
+
+Pure patient-scoped data. The changelog carries only the patient, no store, so routing is purely by Patient and the record follows the patient across stores.
 
 ### OMS-native, File
 
@@ -150,7 +156,7 @@ Each changelog row carries a small set of metadata fields. Each filter joins thr
 | **row_action** | Upsert or Delete. | Controls whether the receiver upserts or deletes. |
 | **store_id** | The store this record belongs to (optional). | Remote routing (joined to the store's site). For Central / File rows this must be null, to disambiguate hybrid tables. |
 | **transfer_store_id** | The "other party" store for cross-store records. | Transfer routing (joined to the counterpart store's site). |
-| **patient_id** | The patient this record refers to. | Patient routing (joined via name-store-join → store → site, so any site that knows the patient receives the record). |
+| **patient_link_id** | The patient this record refers to. | Patient routing (joined via name-store-join → store → site, so any site that knows the patient receives the record). |
 | **source_site_id** | The site that originally caused this changelog row. | Echo guards (don't push back to where it came from); also the v7 push filter ("rows authored here"). |
 
 The source-site field is always populated. When a record is authored locally, it's the current site. When a record is integrated from another site, the original source is preserved. This is what powers every echo guard.
@@ -171,7 +177,7 @@ When a record is mutated, a changelog row is generated. The patterns differ by w
 | Patient only | `Document` | The changelog row has no store; routing is purely by Patient. The record follows the patient across stores. |
 | Cross-table store lookup | `AssetLog` (looks up the asset's store), `AssetInternalLocation` (looks up the location's store, falls back to the asset's store) | The record itself doesn't carry a store directly, so the generator queries a related row to find one. |
 | `record_id` only | All Central-style tables (`Property`, `Demographic`, `VaccineCourse*`, `Abbreviation`, etc.) and a handful of legacy reference tables (`Clinician`, `Currency`, `Barcode`, `MasterList`, …) | No row metadata beyond table+id is needed — these tables filter purely by table name and route to everyone. |
-| `record_id` only, with patient flag | `Name` | Same as `record_id` only, except that when the name's type is *patient* the changelog row also carries the name's own id as `patient_id`. Non-patient names match the Central clause (store and patient both null) and route to every site; patient names fail the Central clause and instead match the Patient clause, so they fan out to every site that knows the patient. |
+| `record_id` only, with patient flag | `Name` | Same as `record_id` only, except that when the name's type is *patient* the changelog row also carries the name's own id as `patient_link_id`. Non-patient names match the Central clause (store and patient both null) and route to every site; patient names fail the Central clause and instead match the Patient clause, so they fan out to every site that knows the patient. |
 
 For deletes, the same generator is used; only the `row_action` field changes.
 
@@ -193,8 +199,8 @@ Five filters compose the metadata above into "this site, this transport" predica
 
 | Sync style | Predicate added |
 |---|---|
-| Central | `store_id IS NULL AND patient_id IS NULL` (so hybrid tables only match the central half here, and rows that carry a patient never match this clause) |
-| File | `store_id IS NULL AND patient_id IS NULL` |
+| Central | `store_id IS NULL AND patient_link_id IS NULL` (so hybrid tables only match the central half here, and rows that carry a patient never match this clause) |
+| File | `store_id IS NULL AND patient_link_id IS NULL` |
 | Remote | `store.site_id == this site` |
 | Transfer | `transfer_store.site_id == this site` |
 | Patient | `patient_store.site_id == this site` (via name-store-join) |

@@ -5,11 +5,14 @@ mod add_sync_log_v7;
 mod add_sync_v7_cursor_pg_enum;
 mod add_sync_v7_token_pg_enum;
 mod alter_changelog_table_for_sync_v7;
+mod alter_sqlite_changelog_table_for_syncv7;
 mod alter_sync_buffer_for_sync_v7;
-mod update_changelog_for_sync_v7;
+mod create_changelog_indexes;
 mod create_site_table;
+mod partition_changelog_by_cursor;
 mod populate_changelog_with_rows_for_sync_v7_tables;
 mod rebuild_sync_buffer;
+mod update_changelog_for_sync_v7;
 
 pub(crate) struct V3_00_00;
 impl Migration for V3_00_00 {
@@ -31,7 +34,10 @@ impl Migration for V3_00_00 {
             Box::new(update_changelog_for_sync_v7::Migrate),
             Box::new(create_site_table::Migrate),
             Box::new(rebuild_sync_buffer::Migrate),
+            Box::new(alter_sqlite_changelog_table_for_syncv7::Migrate),
+            Box::new(partition_changelog_by_cursor::Migrate),
             Box::new(populate_changelog_with_rows_for_sync_v7_tables::Migrate),
+            Box::new(create_changelog_indexes::Migrate),
         ]
     }
 }
@@ -56,7 +62,12 @@ mod test {
         .await;
 
         // Run this migration
-        migrate(&connection, Some(version.clone())).unwrap();
+        migrate(
+            &connection,
+            Some(version.clone()),
+            MigrationConfig::default(),
+        )
+        .unwrap();
         assert_eq!(get_database_version(&connection), version);
     }
 }
