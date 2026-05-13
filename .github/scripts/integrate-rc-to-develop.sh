@@ -127,7 +127,8 @@ create_new_pull_request() {
         --title "$pr_title" \
         --body "$pr_body" \
         --base develop \
-        --head "$MERGE_BRANCH"); then
+        --head "$MERGE_BRANCH" \
+        --label "no linked issue"); then
         echo "PR created successfully for $MERGE_BRANCH"
         local pr_number
         pr_number=$(echo "$pr_url" | grep -oE '[0-9]+$')
