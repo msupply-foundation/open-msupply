@@ -25,6 +25,7 @@ use crate::{
     auth_data::AuthData,
     service_provider::{ServiceContext, ServiceProvider},
     settings::is_develop,
+    sync::CentralServerConfig,
     token::{JWTIssuingError, TokenPair, TokenService},
     user_account::{StorePermissions, UserAccountService, VerifyPasswordError},
 };
@@ -117,30 +118,33 @@ impl LoginService {
     ) -> Result<TokenPair, LoginError> {
         let mut username = input.username.clone();
         let mut connection_failure = false;
-        match LoginService::fetch_user_from_central(service_provider, &input).await {
-            Ok(user_info) => {
-                let service_ctx =
-                    service_provider.context("".to_string(), user_info.user.id.clone())?;
-                username.clone_from(&user_info.user.name);
-                LoginService::update_user(&service_ctx, &input.password, user_info)
-                    .map_err(LoginError::UpdateUserError)?;
-            }
-            Err(err) => match err {
-                FetchUserError::Unauthenticated => {
-                    return Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+
+        if !CentralServerConfig::is_standalone_central() {
+            match LoginService::fetch_user_from_central(service_provider, &input).await {
+                Ok(user_info) => {
+                    let service_ctx =
+                        service_provider.context("".to_string(), user_info.user.id.clone())?;
+                    username.clone_from(&user_info.user.name);
+                    LoginService::update_user(&service_ctx, &input.password, user_info)
+                        .map_err(LoginError::UpdateUserError)?;
                 }
-                FetchUserError::AccountBlocked(timeout_remaining) => {
-                    return Err(LoginError::LoginFailure(LoginFailure::AccountBlocked(
-                        timeout_remaining,
-                    )))
-                }
-                FetchUserError::ConnectionError(_) => {
-                    info!("{err:?}");
-                    connection_failure = true;
-                }
-                FetchUserError::InternalError(_) => info!("{err:?}"),
-            },
-        };
+                Err(err) => match err {
+                    FetchUserError::Unauthenticated => {
+                        return Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+                    }
+                    FetchUserError::AccountBlocked(timeout_remaining) => {
+                        return Err(LoginError::LoginFailure(LoginFailure::AccountBlocked(
+                            timeout_remaining,
+                        )))
+                    }
+                    FetchUserError::ConnectionError(_) => {
+                        info!("{err:?}");
+                        connection_failure = true;
+                    }
+                    FetchUserError::InternalError(_) => info!("{err:?}"),
+                },
+            };
+        }
         let mut service_ctx = service_provider.basic_context()?;
         let user_service = UserAccountService::new(&service_ctx.connection);
         let user_account = match user_service.verify_password(&username, &input.password) {
