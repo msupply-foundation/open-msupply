@@ -89,6 +89,7 @@ pub mod settings;
 pub mod settings_service;
 pub mod shipping_method;
 pub mod site;
+pub mod standalone_central;
 pub mod standard_reports;
 pub mod static_files;
 pub mod stock_line;

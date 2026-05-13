@@ -1,12 +1,10 @@
 use super::StorageConnection;
-
 use crate::repository_error::RepositoryError;
-use crate::{
-    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert,
-};
+use crate::{ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert};
 use diesel::prelude::*;
-
 use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
+use strum::EnumIter;
 
 table! {
   user_permission (id) {
@@ -18,8 +16,7 @@ table! {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(test, derive(strum::EnumIter))]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, EnumIter)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum PermissionType {
     ServerAdmin,
@@ -106,7 +103,9 @@ pub enum PermissionType {
     MutateClinician,
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = user_permission)]
 pub struct UserPermissionRow {
