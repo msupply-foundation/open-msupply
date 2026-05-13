@@ -9,13 +9,11 @@ import {
   BoxedErrorWithDetails,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
-import { InitialiseLayout } from './InitialiseLayout';
+import { InitialiseLayout, InitMode } from './InitialiseLayout';
 import { useInitialiseForm } from './hooks';
 import { SyncProgress } from '../SyncProgress';
 import { SiteInfo } from '../SiteInfo';
 import { mapSyncError } from 'packages/system/src';
-
-type InitMode = 'sync' | 'standalone';
 
 export const Initialise = () => {
   const t = useTranslation();
@@ -72,6 +70,7 @@ export const Initialise = () => {
 
   return (
     <InitialiseLayout
+      mode={mode}
       ModeSelector={ModeSelector}
       UsernameInput={
         <LoginTextInput
