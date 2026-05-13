@@ -38,7 +38,9 @@ pub fn upsert_campaign(
             repo.upsert_one(&new_campaign)?;
 
             CampaignRepository::new(connection)
-                .query_one(CampaignFilter::new().id(EqualFilter::equal_to(new_campaign.id.to_string())))?
+                .query_one(
+                    CampaignFilter::new().id(EqualFilter::equal_to(new_campaign.id.to_string())),
+                )?
                 .ok_or(UpsertCampaignError::CreatedRecordNotFound)
         })
         .map_err(|error| error.to_inner_error())?;

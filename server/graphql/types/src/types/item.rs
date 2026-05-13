@@ -1,6 +1,6 @@
 use super::{
-    ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode, StockLineConnector,
-    WarningNode,
+    AncillaryItemNode, ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode,
+    StockLineConnector, WarningNode,
 };
 use crate::types::{program_node::ProgramNode, ItemStorePropertiesNode, LocationTypeNode};
 
@@ -9,18 +9,19 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     loader::{
-        ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemStoreJoinLoader,
-        ItemStoreJoinLoaderInput, ItemVariantsByItemIdLoader, ItemsStatsForItemLoader,
-        ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput, LocationTypeLoader,
-        MasterListByItemIdLoader, MasterListByItemIdLoaderInput, ProgramsByItemIdLoader,
-        ProgramsByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
+        AncillaryItemsByAncillaryIdLoader, AncillaryItemsByItemIdLoader,
+        ItemCategoryLoader, ItemDirectionsByItemIdLoader, ItemStatsLoaderInput,
+        ItemStoreJoinLoader, ItemStoreJoinLoaderInput, ItemVariantsByItemIdLoader,
+        ItemsStatsForItemLoader, ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput,
+        LocationTypeLoader, MasterListByItemIdLoader, MasterListByItemIdLoaderInput,
+        ProgramsByItemIdLoader, ProgramsByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
         StockLineByItemAndStoreIdLoaderInput, WarningLoader,
     },
     simple_generic_errors::InternalError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{Item, ItemRow};
+use repository::{category_row::CategoryRow, Item, ItemRow};
 use serde_json::json;
 use service::ListResult;
 
@@ -152,14 +153,7 @@ impl ItemNode {
         let result = loader
             .load_one(ItemsStockOnHandLoaderInput::new(&store_id, &self.row().id))
             .await?
-            .ok_or(
-                StandardGraphqlError::InternalError(format!(
-                    "Cannot calculate stock on hand for item {} at store {}",
-                    &self.row().id,
-                    store_id
-                ))
-                .extend(),
-            )?;
+            .unwrap_or(0);
 
         Ok(result)
     }
@@ -172,6 +166,30 @@ impl ItemNode {
             .unwrap_or_default();
 
         Ok(ItemVariantNode::from_vec(result))
+    }
+
+    /// Ancillary items configured against this item — i.e. items that should be
+    /// ordered alongside it (e.g. syringes that go with a vaccine).
+    pub async fn ancillary_items(&self, ctx: &Context<'_>) -> Result<Vec<AncillaryItemNode>> {
+        let loader = ctx.get_loader::<DataLoader<AncillaryItemsByItemIdLoader>>();
+        let result = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(AncillaryItemNode::from_vec(result))
+    }
+
+    /// Ancillary item links where this item is the ancillary supply for some
+    /// other (principal) item.
+    pub async fn ancillary_for(&self, ctx: &Context<'_>) -> Result<Vec<AncillaryItemNode>> {
+        let loader = ctx.get_loader::<DataLoader<AncillaryItemsByAncillaryIdLoader>>();
+        let result = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(AncillaryItemNode::from_vec(result))
     }
 
     pub async fn item_directions(&self, ctx: &Context<'_>) -> Result<Vec<ItemDirectionNode>> {
@@ -192,6 +210,16 @@ impl ItemNode {
             .unwrap_or_default();
 
         Ok(WarningNode::from_vec(result))
+    }
+
+    pub async fn categories(&self, ctx: &Context<'_>) -> Result<Vec<ItemCategoryNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemCategoryLoader>>();
+        let result = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(result.into_iter().map(ItemCategoryNode::from_domain).collect())
     }
 
     #[graphql(deprecation = "Since 2.16.0. Use universalCode instead")]
@@ -324,6 +352,28 @@ pub enum VenCategoryType {
     E,
     N,
     NotAssigned,
+}
+
+#[derive(PartialEq, Debug)]
+pub struct ItemCategoryNode {
+    category_row: CategoryRow,
+}
+
+#[Object]
+impl ItemCategoryNode {
+    pub async fn id(&self) -> &str {
+        &self.category_row.id
+    }
+
+    pub async fn name(&self) -> &str {
+        &self.category_row.name
+    }
+}
+
+impl ItemCategoryNode {
+    pub fn from_domain(category_row: CategoryRow) -> Self {
+        ItemCategoryNode { category_row }
+    }
 }
 
 #[derive(Union)]

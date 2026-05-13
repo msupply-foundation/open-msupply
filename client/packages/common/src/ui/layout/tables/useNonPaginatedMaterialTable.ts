@@ -2,8 +2,9 @@ import { MRT_RowData } from 'material-react-table';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
 import { useMemo } from 'react';
 
-interface NonPaginatedTableConfig<T extends MRT_RowData>
-  extends BaseTableConfig<T> {}
+interface NonPaginatedTableConfig<
+  T extends MRT_RowData,
+> extends BaseTableConfig<T> {}
 
 export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
   ...tableOptions
@@ -15,10 +16,10 @@ export const useNonPaginatedMaterialTable = <T extends MRT_RowData>({
 
   const selectedRows = useMemo(() => {
     return table
-      .getExpandedRowModel()
+      .getRowModel()
       .flatRows.filter(row => !row.subRows?.length && row.getIsSelected())
       .map(row => row.original);
-  }, [table.getState().rowSelection, table.getExpandedRowModel().flatRows]);
+  }, [table.getState().rowSelection, table.getRowModel().flatRows]);
 
   return {
     table,

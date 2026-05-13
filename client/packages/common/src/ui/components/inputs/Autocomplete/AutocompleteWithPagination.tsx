@@ -1,5 +1,4 @@
 import React, {
-  FC,
   PropsWithChildren,
   SyntheticEvent,
   useState,
@@ -11,9 +10,9 @@ import {
   Autocomplete as MuiAutocomplete,
   AutocompleteRenderInputParams,
   createFilterOptions,
-  PopperProps,
   CircularProgress,
   Box,
+  IconButton,
 } from '@mui/material';
 import { BasicTextInput } from '../TextInput';
 import { useDebounceCallback } from '@common/hooks';
@@ -23,11 +22,13 @@ import { ArrayUtils } from '@common/utils';
 import { RecordWithId } from '@common/types';
 import { useOpenStateWithKeyboard } from '@common/components';
 import { useTranslation } from '@common/intl';
+import { CloseIcon } from '@common/icons';
 
 const LOADER_HIDE_TIMEOUT = 500;
 
-export interface AutocompleteWithPaginationProps<T extends RecordWithId>
-  extends Omit<AutocompleteProps<T>, 'options'> {
+export interface AutocompleteWithPaginationProps<
+  T extends RecordWithId,
+> extends Omit<AutocompleteProps<T>, 'options'> {
   pageNumber: number;
   rowsPerPage: number;
   totalRows: number;
@@ -35,6 +36,11 @@ export interface AutocompleteWithPaginationProps<T extends RecordWithId>
   pages: { data: { nodes: T[] } }[];
   onPageChange?: (page: number) => void;
   mapOptions?: (items: T[]) => (T & { label: string })[];
+  // Called when the user clears typed text via the X button shown while
+  // they have typed input but no option is selected. MUI's built-in clear
+  // only renders when `value` is non-null, so the wrapper provides this
+  // path for the "typed but unselected" state.
+  onClear?: () => void;
 }
 
 export function AutocompleteWithPagination<T extends RecordWithId>({
@@ -66,6 +72,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   inputProps,
   paginationDebounce,
   onPageChange,
+  onClear,
   mapOptions,
   sx,
   ...restOfAutocompleteProps
@@ -115,6 +122,16 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
               {isLoading || loading ? (
                 <CircularProgress color="primary" size={18} />
               ) : null}
+              {clearable && onClear && !!inputValue && value == null ? (
+                <IconButton
+                  size="small"
+                  aria-label={t('button.clear-results')}
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={onClear}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              ) : null}
               {props.InputProps.endAdornment}
             </>
           ),
@@ -126,7 +143,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
     />
   );
 
-  const DefaultRenderOption: FC = (
+  const DefaultRenderOption = (
     props: React.HTMLAttributes<HTMLLIElement>,
     option: { id?: string; label?: string } & T
   ) => (
@@ -167,16 +184,6 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
         },
       };
 
-  const CustomPopper = (props: PopperProps) => (
-    <StyledPopper
-      {...props}
-      placement="bottom-start"
-      style={{ minWidth: popperMinWidth, width: 'auto' }}
-    />
-  );
-
-  const popper = popperMinWidth ? CustomPopper : StyledPopper;
-
   useEffect(() => {
     setTimeout(() => setIsLoading(false), LOADER_HIDE_TIMEOUT);
   }, [options]);
@@ -210,9 +217,15 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
         ...sx,
       }}
       slots={{
-        popper: popper,
+        popper: StyledPopper,
       }}
       slotProps={{
+        popper: popperMinWidth
+          ? {
+              placement: 'bottom-start' as const,
+              style: { minWidth: popperMinWidth, width: 'auto' },
+            }
+          : undefined,
         listbox: {
           ...listboxProps,
           sx: {

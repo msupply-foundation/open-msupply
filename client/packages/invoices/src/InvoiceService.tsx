@@ -1,5 +1,10 @@
 import React, { FC } from 'react';
-import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
+import {
+  RouteBuilder,
+  Routes,
+  Route,
+  Navigate,
+} from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { DetailView, OutboundShipmentListView } from './OutboundShipment';
 import {
@@ -29,6 +34,12 @@ const InvoiceService: FC = () => {
   ).build();
 
   const inboundShipmentRoute = RouteBuilder.create(AppRoute.InboundShipment)
+    .addPart(':invoiceId')
+    .build();
+
+  const inboundShipmentExternalRoute = RouteBuilder.create(
+    AppRoute.InboundShipmentExternal
+  )
     .addPart(':invoiceId')
     .build();
 
@@ -66,12 +77,24 @@ const InvoiceService: FC = () => {
         element={<OutboundShipmentListView />}
       />
       <Route path={outboundShipmentRoute} element={<DetailView />} />
-      <Route
-        path={inboundShipmentsRoute}
-        element={<InboundListView />}
-      />
+      <Route path={inboundShipmentsRoute} element={<InboundListView />} />
       <Route
         path={inboundShipmentRoute}
+        element={<InboundShipmentDetailView />}
+      />
+      <Route
+        path={RouteBuilder.create(AppRoute.InboundShipmentExternal).build()}
+        element={
+          <Navigate
+            to={RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.InboundShipment)
+              .build()}
+            replace
+          />
+        }
+      />
+      <Route
+        path={inboundShipmentExternalRoute}
         element={<InboundShipmentDetailView />}
       />
       <Route path={prescriptionsRoute} element={<PrescriptionListView />} />

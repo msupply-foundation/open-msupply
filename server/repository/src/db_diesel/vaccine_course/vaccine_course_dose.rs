@@ -119,7 +119,7 @@ fn create_filtered_query(filter: Option<VaccineCourseDoseFilter>) -> BoxedVaccin
     }
 
     // Filter out deleted rows, unless include_deleted is set to true
-    if !filter.map(|f| f.include_deleted).flatten().unwrap_or(false) {
+    if !filter.and_then(|f| f.include_deleted).unwrap_or(false) {
         query = query.filter(vaccine_course_dose::deleted_datetime.is_null());
     }
 

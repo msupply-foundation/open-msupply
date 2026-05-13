@@ -71,9 +71,9 @@ mod query {
             .get_bundled_items(
                 &context,
                 None,
-                Some(
-                    BundledItemFilter::new().id(EqualFilter::equal_to(test_bundled_item_record_id.to_string())),
-                ),
+                Some(BundledItemFilter::new().id(EqualFilter::equal_to(
+                    test_bundled_item_record_id.to_string(),
+                ))),
             )
             .unwrap();
 
@@ -99,9 +99,9 @@ mod query {
             .get_bundled_items(
                 &context,
                 None,
-                Some(
-                    BundledItemFilter::new().id(EqualFilter::equal_to(test_bundled_item_record_id.to_string())),
-                ),
+                Some(BundledItemFilter::new().id(EqualFilter::equal_to(
+                    test_bundled_item_record_id.to_string(),
+                ))),
             )
             .unwrap();
 

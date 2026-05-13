@@ -40,6 +40,7 @@ pub fn add_from_master_list(
     store_id: &str,
     input: AddToShipmentFromMasterListInput,
 ) -> Result<AddFromMasterListResponse> {
+    // Only available for internal inbound shipments, not external
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -68,7 +69,7 @@ pub fn add_from_master_list(
 
 fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -88,6 +89,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         // Standard Graphql Errors
         ServiceError::NotThisStoreShipment => BadUserInput(formatted_error),
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
+        ServiceError::NotAnInternalInboundShipment => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
@@ -103,7 +105,8 @@ mod test {
     };
     use repository::{
         mock::{mock_empty_draft_inbound_shipment, mock_item_a, MockDataInserts},
-        InvoiceLine, InvoiceLineRow, InvoiceLineType, StorageConnectionManager,
+        InvoiceLine, InvoiceLineRow, InvoiceLineStatsRow, InvoiceLineType,
+        StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -114,7 +117,6 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-    
 
     type DeleteLineMethod =
         dyn Fn(ServiceInput) -> Result<Vec<InvoiceLine>, ServiceError> + Sync + Send;
@@ -300,6 +302,7 @@ mod test {
                 },
                 invoice_row: mock_empty_draft_inbound_shipment(),
                 item_row: mock_item_a(),
+                invoice_line_stats_row: InvoiceLineStatsRow::default(),
                 location_row_option: None,
                 stock_line_option: None,
             }])

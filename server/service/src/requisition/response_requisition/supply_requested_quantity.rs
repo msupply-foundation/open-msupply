@@ -56,8 +56,9 @@ pub fn supply_requested_quantity(
             }
 
             match RequisitionLineRepository::new(connection).query_by_filter(
-                RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to(input.response_requisition_id.to_string())),
+                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(
+                    input.response_requisition_id.to_string(),
+                )),
             ) {
                 Ok(lines) => Ok(lines),
                 Err(error) => Err(OutError::DatabaseError(error)),

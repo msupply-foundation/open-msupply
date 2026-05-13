@@ -291,12 +291,16 @@ mod test {
         StorePreferenceRowRepository::new(&connection)
             .upsert_one(&store_pref)
             .unwrap();
-        let requisition_lines =
-            RequisitionLineRepository::new(&connection)
-                .query_by_filter(RequisitionLineFilter::new().requisition_id(
-                    EqualFilter::equal_to(mock_new_response_program_requisition().requisition.id.to_string()),
-                ))
-                .unwrap();
+        let requisition_lines = RequisitionLineRepository::new(&connection)
+            .query_by_filter(
+                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(
+                    mock_new_response_program_requisition()
+                        .requisition
+                        .id
+                        .to_string(),
+                )),
+            )
+            .unwrap();
 
         assert_eq!(
             service.update_response_requisition_line(

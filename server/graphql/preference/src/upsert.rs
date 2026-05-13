@@ -6,7 +6,10 @@ use graphql_types::types::{patient::GenderTypeNode, InvoiceNodeStatus};
 use repository::{GenderType, InvoiceStatus};
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    preference::{StorePrefUpdate, UpsertPreferences, WarnWhenMissingRecentStocktakeData},
+    preference::{
+        BackdatingData, StorePrefUpdate, UpsertPreferences,
+        WarnWhenMissingRecentStocktakeData,
+    },
 };
 
 #[derive(InputObject)]
@@ -22,9 +25,22 @@ pub struct IntegerStorePrefInput {
 }
 
 #[derive(InputObject)]
+pub struct FloatStorePrefInput {
+    pub store_id: String,
+    pub value: f64,
+}
+
+#[derive(InputObject)]
 pub struct StringStorePrefInput {
     pub store_id: String,
     pub value: String,
+}
+
+#[derive(InputObject)]
+pub struct BackdatingInput {
+    pub shipments_enabled: bool,
+    pub inventory_adjustments_enabled: bool,
+    pub max_days: i32,
 }
 
 #[derive(InputObject)]
@@ -51,7 +67,6 @@ pub struct UpsertPreferencesInput {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub authorise_purchase_order: Option<bool>,
-    pub authorise_goods_received: Option<bool>,
     pub custom_translations: Option<BTreeMap<String, String>>,
     pub gender_options: Option<Vec<GenderTypeNode>>,
     pub prevent_transfers_months_before_initialisation: Option<i32>,
@@ -64,6 +79,9 @@ pub struct UpsertPreferencesInput {
     pub expired_stock_issue_threshold: Option<i32>,
     pub item_margin_overrides_supplier_margin: Option<bool>,
     pub is_gaps: Option<bool>,
+    pub display_population_based_forecasting: Option<bool>,
+    pub global_table_configs: Option<serde_json::Value>,
+    pub backdating: Option<BackdatingInput>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
@@ -77,12 +95,13 @@ pub struct UpsertPreferencesInput {
     pub inbound_shipment_auto_verify: Option<Vec<BoolStorePrefInput>>,
     pub can_create_internal_order_from_a_requisition: Option<Vec<BoolStorePrefInput>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<BoolStorePrefInput>>,
+    pub external_inbound_shipment_lines_must_be_authorised: Option<Vec<BoolStorePrefInput>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         Option<Vec<IntegerStorePrefInput>>,
     pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
-        Option<Vec<IntegerStorePrefInput>>,
+        Option<Vec<FloatStorePrefInput>>,
     pub number_of_months_threshold_to_show_over_stock_alerts_for_products:
-        Option<Vec<IntegerStorePrefInput>>,
+        Option<Vec<FloatStorePrefInput>>,
     pub first_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub second_threshold_for_expiring_items: Option<Vec<IntegerStorePrefInput>>,
     pub warn_when_missing_recent_stocktake: Option<Vec<WarnWhenMissingRecentStocktakeInput>>,
@@ -118,7 +137,6 @@ impl UpsertPreferencesInput {
         let UpsertPreferencesInput {
             // Global preferences
             allow_tracking_of_stock_by_donor,
-            authorise_goods_received,
             authorise_purchase_order,
             custom_translations,
             prevent_transfers_months_before_initialisation,
@@ -132,6 +150,9 @@ impl UpsertPreferencesInput {
             expired_stock_issue_threshold,
             item_margin_overrides_supplier_margin,
             is_gaps,
+            display_population_based_forecasting,
+            global_table_configs,
+            backdating,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
@@ -152,13 +173,13 @@ impl UpsertPreferencesInput {
             warn_when_missing_recent_stocktake,
             store_custom_colour,
             invoice_status_options,
+            external_inbound_shipment_lines_must_be_authorised,
             show_indicative_price_in_requisitions,
         } = self;
 
         UpsertPreferences {
             // Global preferences
             allow_tracking_of_stock_by_donor: *allow_tracking_of_stock_by_donor,
-            authorise_goods_received: *authorise_goods_received,
             authorise_purchase_order: *authorise_purchase_order,
             custom_translations: custom_translations.clone(),
             gender_options: gender_options
@@ -174,8 +195,15 @@ impl UpsertPreferencesInput {
             expired_stock_prevent_issue: *expired_stock_prevent_issue,
             expired_stock_issue_threshold: *expired_stock_issue_threshold,
             item_margin_overrides_supplier_margin: *item_margin_overrides_supplier_margin,
-
             is_gaps: *is_gaps,
+            display_population_based_forecasting: *display_population_based_forecasting,
+
+            global_table_configs: global_table_configs.clone(),
+            backdating: backdating.as_ref().map(|b| BackdatingData {
+                shipments_enabled: b.shipments_enabled,
+                inventory_adjustments_enabled: b.inventory_adjustments_enabled,
+                max_days: b.max_days,
+            }),
             // Store preferences
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
@@ -239,6 +267,10 @@ impl UpsertPreferencesInput {
             invoice_status_options: invoice_status_options
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            external_inbound_shipment_lines_must_be_authorised:
+                external_inbound_shipment_lines_must_be_authorised
+                    .as_ref()
+                    .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             show_indicative_price_in_requisitions: show_indicative_price_in_requisitions
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
@@ -257,6 +289,15 @@ impl BoolStorePrefInput {
 
 impl IntegerStorePrefInput {
     pub fn to_domain(&self) -> StorePrefUpdate<i32> {
+        StorePrefUpdate {
+            store_id: self.store_id.clone(),
+            value: self.value,
+        }
+    }
+}
+
+impl FloatStorePrefInput {
+    pub fn to_domain(&self) -> StorePrefUpdate<f64> {
         StorePrefUpdate {
             store_id: self.store_id.clone(),
             value: self.value,

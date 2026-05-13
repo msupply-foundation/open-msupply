@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   useConfirmationModal,
+  useNotification,
   Box,
   useTranslation,
   BasicSpinner,
@@ -17,6 +18,7 @@ export const PatientDetailView = ({
   onEdit: (isDirty: boolean) => void;
 }) => {
   const t = useTranslation();
+  const { error } = useNotification();
   const { documentName } = usePatientStore();
 
   const {
@@ -29,13 +31,17 @@ export const PatientDetailView = ({
     inputData,
   } = useUpsertPatient(patientId);
 
-  const handleSave = async () => {
-    await save();
-  };
-
   useEffect(() => {
     onEdit(isDirty);
   }, [isDirty, onEdit]);
+
+  const handleSave = useCallback(async () => {
+    try {
+      await save();
+    } catch (e) {
+      error(t('error.failed-to-save-patient'))();
+    }
+  }, [save, error, t]);
 
   const showSaveConfirmation = useConfirmationModal({
     onConfirm: handleSave,

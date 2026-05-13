@@ -253,7 +253,7 @@ export const EquipmentImportModal = ({
     {
       label: t('label.review'),
       description: '',
-      clickable: true,
+      clickable: bufferedEquipment.length > 0,
       tab: Tabs.Review,
     },
     {

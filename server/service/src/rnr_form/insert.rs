@@ -207,7 +207,7 @@ fn generate(
         id,
         period_id,
         program_id: program_id.clone(),
-        name_link_id: supplier_id,
+        name_id: supplier_id,
         created_datetime: current_datetime,
         store_id: store_id.to_string(),
         // default

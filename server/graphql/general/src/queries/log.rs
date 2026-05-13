@@ -36,7 +36,7 @@ pub fn log_file_names(ctx: &Context<'_>) -> Result<LogNode> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryLog,
+            resource: Resource::ServerAdmin,
             store_id: None,
         },
     )?;
@@ -53,7 +53,7 @@ pub fn log_content(ctx: &Context<'_>, file_name: Option<String>) -> Result<LogNo
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryLog,
+            resource: Resource::ServerAdmin,
             store_id: None,
         },
     )?;
@@ -70,7 +70,7 @@ pub fn log_level(ctx: &Context<'_>) -> Result<LogLevelNode> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryLog,
+            resource: Resource::ServerAdmin,
             store_id: None,
         },
     )?;
@@ -81,8 +81,6 @@ pub fn log_level(ctx: &Context<'_>) -> Result<LogLevelNode> {
     let level = log_service.get_log_level(&service_context)?;
 
     Ok(LogLevelNode {
-        level: level
-            .map(|l| LogLevelEnum::from(l))
-            .unwrap_or(LogLevelEnum::Info),
+        level: level.map(LogLevelEnum::from).unwrap_or(LogLevelEnum::Info),
     })
 }

@@ -1,5 +1,5 @@
-use crate::{repository_error::RepositoryError, Delete, StorageConnection, Upsert};
-
+use super::item_link_row::item_link;
+use crate::{item_row::item, repository_error::RepositoryError, Delete, StorageConnection, Upsert};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
@@ -12,6 +12,9 @@ table! {
         deleted_datetime -> Nullable<Timestamp>,
     }
 }
+
+allow_tables_to_appear_in_same_query!(category, item_link);
+allow_tables_to_appear_in_same_query!(category, item);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
 #[diesel(table_name = category)]

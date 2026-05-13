@@ -5,7 +5,12 @@ use generate::generate;
 use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError};
 use validate::validate;
 
-use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
+use crate::{
+    invoice::inbound_shipment::InboundShipmentType,
+    invoice_line::query::get_invoice_line,
+    service_provider::ServiceContext,
+    WithDBError,
+};
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct InsertInboundShipmentServiceLine {
@@ -23,11 +28,13 @@ type OutError = InsertInboundShipmentServiceLineError;
 pub fn insert_inbound_shipment_service_line(
     ctx: &ServiceContext,
     input: InsertInboundShipmentServiceLine,
+    inbound_shipment_type: Option<InboundShipmentType>,
 ) -> Result<InvoiceLine, OutError> {
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (item_row, invoice_row) = validate(&input, &ctx.store_id, connection)?;
+            let (item_row, invoice_row) =
+                validate(&input, &ctx.store_id, connection, inbound_shipment_type)?;
             let new_line = generate(
                 connection,
                 input,
@@ -57,6 +64,7 @@ pub enum InsertInboundShipmentServiceLineError {
     NewlyCreatedLineDoesNotExist,
     CannotFindDefaultServiceItem,
     DatabaseError(RepositoryError),
+    WrongInboundShipmentType,
 }
 
 impl From<RepositoryError> for InsertInboundShipmentServiceLineError {
@@ -121,7 +129,7 @@ mod test {
                 InsertInboundShipmentServiceLine {
                     id: mock_draft_inbound_service_line().id,
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::LineAlreadyExists)
         );
@@ -133,7 +141,7 @@ mod test {
                 InsertInboundShipmentServiceLine {
                     invoice_id: "invalid".to_string(),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::InvoiceDoesNotExist)
         );
@@ -145,7 +153,7 @@ mod test {
                 InsertInboundShipmentServiceLine {
                     invoice_id: mock_draft_inbound_verified_with_service_lines().id,
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::CannotEditInvoice)
         );
@@ -158,7 +166,7 @@ mod test {
                     invoice_id: mock_draft_inbound_shipment_with_service_lines().id,
                     item_id: Some("invalid".to_string()),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::ItemNotFound)
         );
@@ -171,7 +179,7 @@ mod test {
                     invoice_id: mock_draft_inbound_shipment_with_service_lines().id,
                     item_id: Some(mock_item_a().id),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::NotAServiceItem)
         );
@@ -184,7 +192,7 @@ mod test {
                 InsertInboundShipmentServiceLine {
                     invoice_id: mock_outbound_shipment_c().id,
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::NotAnInboundShipment)
         );
@@ -198,7 +206,7 @@ mod test {
                     item_id: Some(mock_item_service_item().id),
                     note: Some("abc".to_string()),
                     ..Default::default()
-                },
+                }, None
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -226,7 +234,7 @@ mod test {
                     id: "new_line_id".to_string(),
                     invoice_id: mock_draft_inbound_shipment_with_service_lines().id,
                     ..Default::default()
-                },
+                }, None
             )
             .unwrap();
 
@@ -244,15 +252,12 @@ mod test {
             )
             .unwrap()
             .unwrap();
-        assert_eq!(
-            line,
-            {
-                let mut expected_line = line.clone();
-                expected_line.item_link_id = default_service_item.item_row.id;
-                expected_line.item_name = default_service_item.item_row.name;
-                expected_line
-            }
-        );
+        assert_eq!(line, {
+            let mut expected_line = line.clone();
+            expected_line.item_link_id = default_service_item.item_row.id;
+            expected_line.item_name = default_service_item.item_row.name;
+            expected_line
+        });
 
         // Specified service line
         service
@@ -266,7 +271,7 @@ mod test {
                     total_before_tax: 0.3,
                     tax_percentage: Some(10.0),
                     note: Some("note".to_string()),
-                },
+                }, None
             )
             .unwrap();
 
@@ -275,19 +280,16 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            line,
-            {
-                let mut expected_line = line.clone();
-                expected_line.id = "new_line2_id".to_string();
-                expected_line.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
-                expected_line.item_link_id = mock_item_service_item().id;
-                expected_line.item_name = "modified name".to_string();
-                expected_line.total_before_tax = 0.3;
-                expected_line.tax_percentage = Some(10.0);
-                expected_line.note = Some("note".to_string());
-                expected_line
-            }
-        );
+        assert_eq!(line, {
+            let mut expected_line = line.clone();
+            expected_line.id = "new_line2_id".to_string();
+            expected_line.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
+            expected_line.item_link_id = mock_item_service_item().id;
+            expected_line.item_name = "modified name".to_string();
+            expected_line.total_before_tax = 0.3;
+            expected_line.tax_percentage = Some(10.0);
+            expected_line.note = Some("note".to_string());
+            expected_line
+        });
     }
 }

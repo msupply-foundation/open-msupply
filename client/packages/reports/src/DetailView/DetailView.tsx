@@ -8,7 +8,6 @@ import {
   TypedTFunction,
   useBreadcrumbs,
   useDownloadFile,
-  useIntlUtils,
   useParams,
   useTranslation,
   useUrlQuery,
@@ -57,7 +56,6 @@ const DetailViewInner = ({
   t: TypedTFunction<LocaleKey>;
 }) => {
   const { setCustomBreadcrumbs } = useBreadcrumbs(['reports']);
-  const { translateDynamicKey } = useIntlUtils();
   const [state, setState] = useState<
     | { s: 'loading' }
     | { s: 'error'; errorMessage: string }
@@ -76,7 +74,8 @@ const DetailViewInner = ({
 
   useEffect(() => {
     setCustomBreadcrumbs({
-      1: translateDynamicKey(`report-code.${report.code}`, report.name),
+      // Cast is safe — i18next falls back to report.name if key doesn't exist
+      1: t(`report-code.${report.code}` as LocaleKey, report.name),
     });
 
     // Initial report generation
@@ -201,7 +200,7 @@ const DetailViewInner = ({
 
   return (
     <>
-      <Toolbar reportName={report.name} isCustom={report.isCustom} />
+      <Toolbar reportCode={report.code} />
       <AppBarButtons
         isFilterDisabled={!report?.argumentSchema}
         onFilterOpen={openReportArgumentsModal}

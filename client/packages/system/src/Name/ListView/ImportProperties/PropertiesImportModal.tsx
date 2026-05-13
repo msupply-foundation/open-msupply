@@ -162,7 +162,7 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
     {
       label: t('label.review'),
       description: '',
-      clickable: false,
+      clickable: bufferedFacilityProperties.length > 0,
       tab: Tabs.Review,
     },
     {

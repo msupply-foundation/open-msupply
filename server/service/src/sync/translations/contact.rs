@@ -55,7 +55,7 @@ impl SyncTranslation for ContactTranslation {
         let data = serde_json::from_str::<LegacyContactRow>(&sync_record.data)?;
         let result = ContactRow {
             id: data.ID,
-            name_link_id: data.name_ID,
+            name_id: data.name_ID,
             first_name: data.first,
             position: data.position,
             comment: data.comment,
