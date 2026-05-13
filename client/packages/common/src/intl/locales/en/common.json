@@ -745,6 +745,8 @@
   "info.server-restarting": "Server restarting...",
   "initialise.body": "To get started, we'll need to configure the settings to synchronise with mSupply. Please enter the values and click Save.\n\nIf you're not sure what to enter, contact support@msupply.foundation.",
   "initialise.heading": "Welcome!",
+  "initialise.mode-standalone": "Initialise as central",
+  "initialise.mode-sync": "Sync with central",
   "internal-order": "Internal Orders",
   "inventory": "Inventory",
   "inventory-addition": "Inventory Addition",

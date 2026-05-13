@@ -20,6 +20,7 @@ type LoginLayoutProps = {
   ErrorMessage: ReactNode;
   SyncErrorMessage: ReactNode;
   SiteInfo: React.ReactNode;
+  ModeSelector?: ReactNode;
   onInitialise: () => Promise<void>;
 };
 
@@ -32,6 +33,7 @@ export const InitialiseLayout = ({
   SyncProgress,
   SiteInfo,
   SyncErrorMessage,
+  ModeSelector,
   onInitialise,
 }: LoginLayoutProps) => {
   const t = useTranslation();
@@ -132,20 +134,23 @@ export const InitialiseLayout = ({
           flex={1}
         >
           <Box style={{ width: 285 }}>
-            <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>
-              <Stack spacing={isExtraSmallScreen ? 3 : 5}>
-                <Box display="flex" justifyContent="center">
-                  <LoginIcon small />
-                </Box>
-                {UrlInput}
-                {UsernameInput}
-                {PasswordInput}
-                {ErrorMessage}
-                <Box display="flex" justifyContent="flex-end">
-                  {Button}
-                </Box>
-              </Stack>
-            </form>
+            <Stack spacing={isExtraSmallScreen ? 2 : 3}>
+              <Box display="flex" justifyContent="center">
+                <LoginIcon small />
+              </Box>
+              {ModeSelector}
+              <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>
+                <Stack spacing={isExtraSmallScreen ? 3 : 5}>
+                  {UrlInput}
+                  {UsernameInput}
+                  {PasswordInput}
+                  {ErrorMessage}
+                  <Box display="flex" justifyContent="flex-end">
+                    {Button}
+                  </Box>
+                </Stack>
+              </form>
+            </Stack>
           </Box>
           <Box pt={2} width="100%">
             {SyncProgress}

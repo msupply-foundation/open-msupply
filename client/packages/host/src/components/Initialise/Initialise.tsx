@@ -1,5 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  Tab,
+  TabList,
   useTranslation,
   LoadingButton,
   useHostContext,
@@ -13,9 +15,12 @@ import { SyncProgress } from '../SyncProgress';
 import { SiteInfo } from '../SiteInfo';
 import { mapSyncError } from 'packages/system/src';
 
+type InitMode = 'sync' | 'standalone';
+
 export const Initialise = () => {
   const t = useTranslation();
   const { setPageTitle } = useHostContext();
+  const [mode, setMode] = useState<InitMode>('sync');
 
   const {
     isValid,
@@ -44,8 +49,30 @@ export const Initialise = () => {
 
   const isInputDisabled = isInitialising || isLoading;
 
+  const state = isInitialising || isLoading;
+
+  const ModeSelector = (
+    <TabList
+      value={mode}
+      onChange={(_, v) => !state && setMode(v as InitMode)}
+      variant="fullWidth"
+    >
+      <Tab
+        value="sync"
+        label={t('initialise.mode-sync')}
+        disabled={state && mode !== 'sync'}
+      />
+      <Tab
+        value="standalone"
+        label={t('initialise.mode-standalone')}
+        disabled={state}
+      />
+    </TabList>
+  );
+
   return (
     <InitialiseLayout
+      ModeSelector={ModeSelector}
       UsernameInput={
         <LoginTextInput
           fullWidth
