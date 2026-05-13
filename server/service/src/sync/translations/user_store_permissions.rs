@@ -170,7 +170,7 @@ mod tests {
         let user_id = mock_user_account_a().id;
         let store_id = mock_store_a().id;
         let join = UserStoreJoinRow {
-            id: "usj_test".to_string(),
+            id: "incoming_id".to_string(),
             user_id: user_id.clone(),
             store_id: store_id.clone(),
             is_default: false,
@@ -214,7 +214,7 @@ mod tests {
 
         let translator = UserStorePermissionTranslation;
         let buffer_row = sync_record(serde_json::json!({
-            "ID": "incoming_id",
+            "ID": join.id,
             "user_ID": user_id,
             "store_ID": store_id,
             "permissions": no_permissions(),
@@ -244,7 +244,7 @@ mod tests {
         let user_id = mock_user_account_a().id;
         let store_id = mock_store_a().id;
         let join = UserStoreJoinRow {
-            id: "usj_test".to_string(),
+            id: "incoming_id".to_string(),
             user_id: user_id.clone(),
             store_id: store_id.clone(),
             is_default: true,
@@ -274,7 +274,7 @@ mod tests {
 
         let translator = UserStorePermissionTranslation;
         let buffer_row = sync_record(serde_json::json!({
-            "ID": "incoming_id",
+            "ID": join.id,
             "user_ID": user_id,
             "store_ID": store_id,
             "permissions": no_permissions(),
