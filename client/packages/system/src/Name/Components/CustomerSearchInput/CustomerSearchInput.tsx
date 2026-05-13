@@ -30,7 +30,6 @@ export const CustomerSearchInput = ({
 
   return (
     <InfiniteSearchPicker<NameRowFragment, NameFilterInput>
-      id="customer-search-input"
       value={value}
       onChange={onChange}
       currentId={currentId}
@@ -38,6 +37,7 @@ export const CustomerSearchInput = ({
       useGetById={useName.document.get}
       apiFilter={filterBy as NameFilterInput | undefined}
       getOptionLabel={option => option.name}
+      getOptionCode={option => option.code}
       renderOption={NameOptionRenderer}
       getOptionDisabled={option => option.isOnHold}
       extraFilter={extraFilter}

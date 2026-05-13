@@ -1,4 +1,11 @@
-import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  ReactNode,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   useDebouncedValueCallback,
   useStringFilter,
@@ -11,6 +18,7 @@ import { defaultOptionMapper } from './utils';
 import { CLEAR, RegexUtils } from '@common/utils';
 
 const SEARCH_DEBOUNCE_TIMEOUT = 500;
+const POPPER_REPOSITION_DELAY = 500;
 const PAGINATION_DEBOUNCE_TIMEOUT = 100;
 const ROWS_PER_PAGE = 100;
 
@@ -43,18 +51,22 @@ export interface InfiniteSearchPickerProps<T extends HasId, TFilter> {
   value?: T | null;
   onChange: (entity: T | null) => void;
   currentId?: string;
-  // Fire `onChange` once after `currentId` resolves to an entity. Useful for
-  // parents that pass an id but don't have the full entity loaded yet.
-  notifyOnLoad?: boolean;
 
   // Filter
   apiFilter?: TFilter;
+  // Server filter key for the search string (default `codeOrName`). Must match
+  // a `{ [searchKey]: { like: string } }` field on TFilter.
+  searchKey?: string;
   // For input strings like "1234 Item Name" — strip the prefix before sending
-  // to the server's codeOrName filter. Defaults to identity.
+  // to the server's search filter. Defaults to identity.
   searchToFilter?: (search: string) => string;
 
   // Rendering
   getOptionLabel: (option: T) => string;
+  // Optional secondary string to match client-side (e.g. an item code that
+  // isn't part of getOptionLabel). Lets users see instant results for
+  // codes during the debounce window.
+  getOptionCode?: (option: T) => string | undefined;
   renderOption?: AutocompleteOptionRenderer<T>;
   getOptionDisabled?: (option: T) => boolean;
   // Client-side post-filter applied to each loaded page (e.g. exclude on-hold)
@@ -66,16 +78,10 @@ export interface InfiniteSearchPickerProps<T extends HasId, TFilter> {
   autoFocus?: boolean;
   openOnFocus?: boolean;
   width?: number;
+  // DOM id for the input. Defaults to a stable generated id so multiple
+  // pickers can coexist on the same page without collisions.
   id?: string;
   noOptionsText?: ReactNode;
-
-  // Called when the visual search string changes (e.g. after the user selects
-  // an item, parent can react to the displayed text). Optional.
-  onSearchChange?: (search: string) => void;
-  // Fires when the picker's displayed entity changes — either because the
-  // user picked something or because `currentId` resolved to a new entity.
-  // Useful for parents that need to track selection-derived state.
-  onDisplayValueChange?: (entity: T | null) => void;
 }
 
 export function InfiniteSearchPicker<T extends HasId, TFilter>({
@@ -84,10 +90,11 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
   value = null,
   onChange,
   currentId,
-  notifyOnLoad = false,
   apiFilter,
+  searchKey = 'codeOrName',
   searchToFilter = s => s,
   getOptionLabel,
+  getOptionCode,
   renderOption,
   getOptionDisabled,
   extraFilter,
@@ -98,17 +105,12 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
   width,
   id,
   noOptionsText,
-  onSearchChange,
-  onDisplayValueChange,
 }: InfiniteSearchPickerProps<T, TFilter>) {
   const selectControl = useToggle();
-  const { filter, onFilter } = useStringFilter('codeOrName');
+  const { filter, onFilter } = useStringFilter(searchKey);
   const [search, setSearch] = useState('');
-
-  const updateSearch = (next: string) => {
-    setSearch(next);
-    onSearchChange?.(next);
-  };
+  const generatedId = useId();
+  const inputId = id ?? `infinite-search-picker-${generatedId}`;
 
   const debounceOnFilter = useDebouncedValueCallback(
     (text: string) => onFilter(text),
@@ -146,48 +148,42 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
   // picker just displays the resolved entity.
   const displayValue = value ?? currentEntity;
 
-  // Keep the displayed search string in sync with the resolved entity, and
-  // surface the resolved entity via onDisplayValueChange so the parent can
-  // track selection-derived state (e.g. items' selectedCode).
+  // Keep the displayed search string in sync with the resolved entity.
   useEffect(() => {
-    if (displayValue && search === '') updateSearch(getOptionLabel(displayValue));
-    onDisplayValueChange?.(displayValue);
+    if (displayValue && search === '') setSearch(getOptionLabel(displayValue));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayValue]);
 
-  // Optionally notify the parent on first load (some consumers pass
-  // `currentId` without having the full entity yet — they need to be told
-  // what was resolved so they can populate their own state).
   useEffect(() => {
-    if (notifyOnLoad && currentEntity && !value) onChange(currentEntity);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentEntity]);
-
-  useEffect(() => {
-    if (openOnFocus) {
-      // openOnFocus prop mispositions the popper inside a Dialog; toggle open
-      // manually after a tick.
-      setTimeout(() => selectControl.toggleOn(), SEARCH_DEBOUNCE_TIMEOUT);
-    }
-    if (autoFocus && id) {
-      setTimeout(() => {
-        const input = document.querySelector<HTMLInputElement>(
-          `input[id="${id}"]`
-        );
-        input?.focus();
-      }, 50);
-    }
+    // openOnFocus prop mispositions the popper inside a Dialog; toggle open
+    // manually after a tick.
+    const openTimer = openOnFocus
+      ? setTimeout(() => selectControl.toggleOn(), POPPER_REPOSITION_DELAY)
+      : undefined;
+    const focusTimer = autoFocus
+      ? setTimeout(() => {
+          const input = document.querySelector<HTMLInputElement>(
+            `input[id="${inputId}"]`
+          );
+          input?.focus();
+        }, 50)
+      : undefined;
+    return () => {
+      if (openTimer) clearTimeout(openTimer);
+      if (focusTimer) clearTimeout(focusTimer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const pageNumber = data?.pages[data.pages.length - 1]?.pageNumber ?? 0;
 
-  // Server filter currently in flight is `filter.codeOrName.like`. While the
+  // Server filter currently in flight is `filter[searchKey].like`. While the
   // user is mid-type it hasn't caught up — client-side narrowing can flicker
   // to empty before the server responds. Hold onto the last non-empty set
   // and return it during that window so the dropdown doesn't say "no results".
   const serverFilterText =
-    (filter as { codeOrName?: { like?: string } })?.codeOrName?.like ?? '';
+    (filter as Record<string, { like?: string } | undefined>)[searchKey]
+      ?.like ?? '';
   const fetchPending =
     serverFilterText !== searchToFilter(search) && serverFilterText !== search;
   const lastNonEmpty = useRef<T[] | null>(null);
@@ -198,13 +194,19 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
   ): T[] => {
     const escaped = RegexUtils.escapeChars(state.inputValue);
     const matchValue = searchToFilter(escaped);
+    // Precompute regexes once per invocation rather than per option — with
+    // multiple loaded pages this would otherwise allocate a RegExp for every
+    // option on every keystroke.
+    const escapedRe = new RegExp(escaped, 'i');
+    const matchValueRe =
+      matchValue === escaped ? escapedRe : new RegExp(matchValue, 'i');
     const narrowed = options.filter(option => {
       const label = getOptionLabel(option);
-      const code = (option as { code?: string }).code ?? '';
+      const code = getOptionCode?.(option);
       const matches =
-        RegexUtils.includes(escaped, label) ||
-        RegexUtils.includes(matchValue, label) ||
-        (!!code && RegexUtils.includes(escaped, code));
+        escapedRe.test(label) ||
+        matchValueRe.test(label) ||
+        (!!code && escapedRe.test(code));
       return matches && (!extraFilter || extraFilter(option));
     });
     if (narrowed.length > 0) {
@@ -222,7 +224,7 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
 
   return (
     <AutocompleteWithPagination<T>
-      id={id}
+      id={inputId}
       autoFocus={autoFocus}
       disabled={disabled}
       clearable={clearable}
@@ -238,7 +240,7 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
       onClose={selectControl.toggleOff}
       open={selectControl.isOn}
       onChange={(_, entity) => {
-        updateSearch(entity ? getOptionLabel(entity) : '');
+        setSearch(entity ? getOptionLabel(entity) : '');
         onChange(entity);
       }}
       onInputChange={(_event, _value, reason) => {
@@ -247,13 +249,18 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
       inputValue={search}
       clearOnBlur={false}
       onClear={() => {
-        updateSearch('');
+        setSearch('');
+        // Cancel any pending debounced filter — otherwise an in-flight
+        // keystroke would re-apply the prior search a moment after clearing.
+        (
+          debounceOnFilter as unknown as { cancel?: () => void }
+        ).cancel?.();
         onFilter('');
       }}
       inputProps={{
         onChange: e => {
           const { value: next } = e.target;
-          updateSearch(next);
+          setSearch(next);
           debounceOnFilter(searchToFilter(next));
         },
       }}
