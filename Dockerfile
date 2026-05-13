@@ -39,8 +39,11 @@ COPY --chmod=755 server/target-postgres/release/remote_server_cli .
 RUN apt-get update && apt-get install -y postgresql-17 libpq5 gosu && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 # dbus (pulled in by postgresql-17) bakes a machine-id into the image at build
-# time. Clear it so entry.sh generates a fresh per-container UUID at runtime.
-RUN truncate -s 0 /etc/machine-id
+# time. The machine_uid crate reads /var/lib/dbus/machine-id before
+# /etc/machine-id, so symlink them and truncate so entry.sh's runtime UUID
+# (or an operator's bind-mounted /etc/machine-id) is what gets read.
+RUN ln -sf /etc/machine-id /var/lib/dbus/machine-id && \
+    truncate -s 0 /etc/machine-id
 ENV PATH="/usr/lib/postgresql/17/bin:$PATH"
 COPY docker/local.postgres.yaml /usr/src/omsupply/server/configuration/local.yaml
 COPY --chmod=755 docker/entry-postgres.sh /usr/src/omsupply/server/entry-postgres.sh
