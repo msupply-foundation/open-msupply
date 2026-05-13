@@ -12,7 +12,6 @@ use repository::{
 };
 use reqwest::{ClientBuilder, Url};
 use serde::{Deserialize, Serialize};
-use util::uuid::uuid;
 
 use crate::{
     activity_log::activity_log_entry,
@@ -334,7 +333,11 @@ impl LoginService {
                 let permissions = permission_set
                     .into_iter()
                     .map(|permission| UserPermissionRow {
-                        id: uuid(),
+                        id: UserPermissionRow::deterministic_id(
+                            &user_store_join.user_id,
+                            Some(&user_store_join.store_id),
+                            &permission,
+                        ),
                         user_id: user_store_join.user_id.clone(),
                         store_id: Some(user_store_join.store_id.clone()),
                         permission,

@@ -11,7 +11,6 @@ use repository::{
     UserStoreJoinRowDelete, UserStoreJoinRowRepository,
 };
 use serde::{Deserialize, Serialize};
-use util::uuid::uuid;
 
 use super::{PullTranslateResult, SyncTranslation};
 
@@ -118,7 +117,7 @@ impl SyncTranslation for UserStorePermissionTranslation {
         for permission in new_permission_set {
             if existing_permissions.remove(&permission).is_none() {
                 integration_operations.push(IntegrationOperation::upsert(UserPermissionRow {
-                    id: uuid(),
+                    id: UserPermissionRow::deterministic_id(&user_id, Some(&store_id), &permission),
                     user_id: user_id.clone(),
                     store_id: Some(store_id.clone()),
                     permission: permission.clone(),
@@ -168,26 +167,36 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_user_store_permission_translation_can_login() {
+        let user_id = mock_user_account_a().id;
+        let store_id = mock_store_a().id;
         let join = UserStoreJoinRow {
             id: "usj_test".to_string(),
-            user_id: mock_user_account_a().id,
-            store_id: mock_store_a().id,
+            user_id: user_id.clone(),
+            store_id: store_id.clone(),
             is_default: false,
         };
         // StoreAccess matches the implicit permission the translator inserts,
         // so it should be left alone. CreateRepack is not in the incoming
         // permissions vec, so it should be deleted.
         let keep = UserPermissionRow {
-            id: "up_keep".to_string(),
-            user_id: mock_user_account_a().id,
-            store_id: Some(mock_store_a().id),
+            id: UserPermissionRow::deterministic_id(
+                &user_id,
+                Some(&store_id),
+                &PermissionType::StoreAccess,
+            ),
+            user_id: user_id.clone(),
+            store_id: Some(store_id.clone()),
             permission: PermissionType::StoreAccess,
             context_id: None,
         };
         let remove = UserPermissionRow {
-            id: "up_remove".to_string(),
-            user_id: mock_user_account_a().id,
-            store_id: Some(mock_store_a().id),
+            id: UserPermissionRow::deterministic_id(
+                &user_id,
+                Some(&store_id),
+                &PermissionType::CreateRepack,
+            ),
+            user_id: user_id.clone(),
+            store_id: Some(store_id.clone()),
             permission: PermissionType::CreateRepack,
             context_id: None,
         };
@@ -206,8 +215,8 @@ mod tests {
         let translator = UserStorePermissionTranslation;
         let buffer_row = sync_record(serde_json::json!({
             "ID": "incoming_id",
-            "user_ID": mock_user_account_a().id,
-            "store_ID": mock_store_a().id,
+            "user_ID": user_id,
+            "store_ID": store_id,
             "permissions": no_permissions(),
             "store_default": true,
             "can_login": true,
@@ -232,16 +241,22 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_user_store_permission_translation_cannot_login() {
+        let user_id = mock_user_account_a().id;
+        let store_id = mock_store_a().id;
         let join = UserStoreJoinRow {
             id: "usj_test".to_string(),
-            user_id: mock_user_account_a().id,
-            store_id: mock_store_a().id,
+            user_id: user_id.clone(),
+            store_id: store_id.clone(),
             is_default: true,
         };
         let permission = UserPermissionRow {
-            id: "up_test".to_string(),
-            user_id: mock_user_account_a().id,
-            store_id: Some(mock_store_a().id),
+            id: UserPermissionRow::deterministic_id(
+                &user_id,
+                Some(&store_id),
+                &PermissionType::StoreAccess,
+            ),
+            user_id: user_id.clone(),
+            store_id: Some(store_id.clone()),
             permission: PermissionType::StoreAccess,
             context_id: None,
         };
@@ -260,8 +275,8 @@ mod tests {
         let translator = UserStorePermissionTranslation;
         let buffer_row = sync_record(serde_json::json!({
             "ID": "incoming_id",
-            "user_ID": mock_user_account_a().id,
-            "store_ID": mock_store_a().id,
+            "user_ID": user_id,
+            "store_ID": store_id,
             "permissions": no_permissions(),
             "store_default": false,
             "can_login": false,
