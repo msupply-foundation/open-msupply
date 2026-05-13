@@ -8,8 +8,8 @@ import {
   Divider,
   InputWithLabelRow,
   BasicTextInput,
-  // PasswordTextInput,
-  // IconButton,
+  PasswordTextInput,
+  IconButton,
   XCircleIcon,
   LoadingButton,
   Typography,
@@ -18,7 +18,6 @@ import {
 import { DraftSite, useSiteStoresDraft } from '../api';
 import { SiteStoresSection } from './SiteStoresSection';
 
-// TODO: Edit/delete is disabled for now and will be revisited in the future.
 interface SiteEditModalProps {
   site: DraftSite;
   isOpen: boolean;
@@ -26,8 +25,9 @@ interface SiteEditModalProps {
   updateDraft: (patch: Partial<DraftSite>) => void;
   clearSyncToken: (siteId: number) => Promise<unknown>;
   isClearingSyncToken: boolean;
-  // upsert: (afterUpsert: () => Promise<void>) => Promise<void>;
-  // onDelete: () => void;
+  upsert: (afterUpsert: () => Promise<void>) => Promise<void>;
+  onDelete: () => void;
+  isEditable: boolean;
 }
 
 export const SiteEditModal = ({
@@ -37,20 +37,21 @@ export const SiteEditModal = ({
   updateDraft,
   clearSyncToken,
   isClearingSyncToken,
-}: // upsert,
-  // onDelete,
-  SiteEditModalProps) => {
+  upsert,
+  onDelete,
+  isEditable,
+}: SiteEditModalProps) => {
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const { id, code, name, clearHardwareId, hardwareId, isNew } = site;
+  const { id, code, name, password, clearHardwareId, hardwareId, isNew } = site;
   const isExisting = !isNew;
 
-  // const isValidCode = code.trim().length > 0 || (isExisting && code === '');
-  // const isValidName = name.trim().length > 0;
-  // const isValidPassword =
-  //   password.trim().length > 0 || (isExisting && password === '');
-  // const canSave = isValidName && isValidCode && isValidPassword;
+  const isValidCode = code.trim().length > 0 || (isExisting && code === '');
+  const isValidName = name.trim().length > 0;
+  const isValidPassword =
+    password.trim().length > 0 || (isExisting && password === '');
+  const canSave = isValidName && isValidCode && isValidPassword;
 
   const storesDraft = useSiteStoresDraft(id, isNew);
 
@@ -64,22 +65,24 @@ export const SiteEditModal = ({
     onConfirm: () => clearSyncToken(id),
   });
 
-  // const handleOk = async () => {
-  //   await upsert(storesDraft.save);
-  // };
+  const handleOk = async () => {
+    await upsert(storesDraft.save);
+  };
 
   return (
     <Modal
       title={isExisting ? t('title.edit-site') : t('title.create-site')}
       cancelButton={<DialogButton variant="cancel" onClick={handleClose} />}
-    // deleteButton={
-    //   isExisting ? (
-    //     <DialogButton variant="delete" onClick={onDelete} />
-    //   ) : undefined
-    // }
-    // okButton={
-    //   <DialogButton variant="ok" onClick={handleOk} disabled={!canSave} />
-    // }
+      deleteButton={
+        isEditable && isExisting ? (
+          <DialogButton variant="delete" onClick={onDelete} />
+        ) : undefined
+      }
+      okButton={
+        isEditable ? (
+          <DialogButton variant="ok" onClick={handleOk} disabled={!canSave} />
+        ) : undefined
+      }
     >
       <DetailContainer>
         <Box display="flex" flexDirection="column" gap={2}>
@@ -90,7 +93,7 @@ export const SiteEditModal = ({
               <BasicTextInput
                 fullWidth
                 value={code}
-                disabled
+                disabled={!isEditable}
                 onChange={e => updateDraft({ code: e.target.value })}
                 onBlur={e => updateDraft({ code: e.target.value.trim() })}
               />
@@ -103,27 +106,29 @@ export const SiteEditModal = ({
               <BasicTextInput
                 fullWidth
                 value={name}
-                disabled
+                disabled={!isEditable}
                 autoComplete="off"
                 onChange={e => updateDraft({ name: e.target.value })}
                 onBlur={e => updateDraft({ name: e.target.value.trim() })}
               />
             }
           />
-          {/* <InputWithLabelRow
-            key="password"
-            label={t('label.settings-password')}
-            Input={
-              <PasswordTextInput
-                fullWidth
-                value={password}
-                required={!isValidPassword}
-                placeholder={isExisting ? '••••••••' : undefined}
-                autoComplete="new-password"
-                onChange={e => updateDraft({ password: e.target.value })}
-              />
-            }
-          /> */}
+          {isEditable && (
+            <InputWithLabelRow
+              key="password"
+              label={t('label.settings-password')}
+              Input={
+                <PasswordTextInput
+                  fullWidth
+                  value={password}
+                  required={!isValidPassword}
+                  placeholder={isExisting ? '••••••••' : undefined}
+                  autoComplete="new-password"
+                  onChange={e => updateDraft({ password: e.target.value })}
+                />
+              }
+            />
+          )}
           {isExisting && (
             <InputWithLabelRow
               key="hardware-id"
@@ -137,20 +142,20 @@ export const SiteEditModal = ({
                   flex={1}
                 >
                   <Typography textAlign="right">
-                    {clearHardwareId ? '' : hardwareId ?? ''}
+                    {clearHardwareId ? '' : (hardwareId ?? '')}
                   </Typography>
-                  {/* {!clearHardwareId && !!hardwareId && (
+                  {isEditable && !clearHardwareId && !!hardwareId && (
                     <IconButton
                       icon={<XCircleIcon fontSize="small" />}
                       label={t('label.clear-hardware-id')}
                       onClick={() => updateDraft({ clearHardwareId: true })}
                     />
-                  )} */}
+                  )}
                 </Box>
               }
             />
           )}
-          {isExisting && (
+          {isEditable && isExisting && (
             <InputWithLabelRow
               key="sync-token"
               label={t('label.clear-sync-token')}
@@ -175,6 +180,7 @@ export const SiteEditModal = ({
             isFetching={storesDraft.isFetching}
             onAddStore={storesDraft.addStore}
             onRemoveStore={storesDraft.removeStore}
+            isEditable={isEditable}
           />
         </Box>
       </DetailContainer>
