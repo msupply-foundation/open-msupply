@@ -52,6 +52,7 @@ export const LoginTextInput = React.forwardRef<
           padding: '4px 8px',
         },
       },
+      htmlInput: slotProps?.htmlInput,
     },
     ...props,
   };
