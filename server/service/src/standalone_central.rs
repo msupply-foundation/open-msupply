@@ -25,6 +25,7 @@ pub struct InitialiseAsCentralServerInput {
 #[derive(Debug)]
 pub enum InitialiseAsCentralServerError {
     AlreadyInitialised,
+    NotSupportedOnAndroid,
     StoreNameRequired,
     AdminUsernameRequired,
     AdminPasswordRequired,
@@ -143,6 +144,10 @@ fn validate_initialise(
     admin_username: &str,
     admin_password: &str,
 ) -> Result<(), InitialiseAsCentralServerError> {
+    if cfg!(target_os = "android") {
+        return Err(InitialiseAsCentralServerError::NotSupportedOnAndroid);
+    }
+
     if store_name.is_empty() {
         return Err(InitialiseAsCentralServerError::StoreNameRequired);
     }
