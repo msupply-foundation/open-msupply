@@ -362,22 +362,12 @@ pub async fn start_server(
     }
 
     if settings.server.override_is_central_server {
+        let non_empty =
+            |s: &Option<String>| s.as_deref().filter(|s| !s.is_empty()).map(str::to_owned);
         if let (Some(store_name), Some(admin_username), Some(admin_password)) = (
-            settings
-                .server
-                .standalone_store_name
-                .clone()
-                .filter(|s| !s.is_empty()),
-            settings
-                .server
-                .standalone_admin_username
-                .clone()
-                .filter(|s| !s.is_empty()),
-            settings
-                .server
-                .standalone_admin_password
-                .clone()
-                .filter(|s| !s.is_empty()),
+            non_empty(&settings.server.standalone_store_name),
+            non_empty(&settings.server.standalone_admin_username),
+            non_empty(&settings.server.standalone_admin_password),
         ) {
             match service_provider
                 .sync_status_service

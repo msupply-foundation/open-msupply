@@ -117,8 +117,7 @@ impl StandaloneCentralServiceTrait for StandaloneCentralService {
                 })?;
 
                 let perm_repo = UserPermissionRowRepository::new(con);
-                let all_perms = PermissionType::iter().collect::<Vec<_>>();
-                for permission in all_perms {
+                for permission in PermissionType::iter() {
                     perm_repo.upsert_one(&UserPermissionRow {
                         id: uuid(),
                         user_id: admin.id.clone(),
