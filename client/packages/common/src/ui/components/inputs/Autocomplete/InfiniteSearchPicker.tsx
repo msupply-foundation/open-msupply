@@ -110,6 +110,11 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
   const selectControl = useToggle();
   const { filter, onFilter } = useStringFilter(searchKey);
   const [search, setSearch] = useState('');
+  // Tracks whether the user has typed into the input. Once true, an empty
+  // `search` is treated as "user cleared the field" rather than "input is
+  // unedited, show the selected label" — so backspacing the field to empty
+  // doesn't snap back to the previously-selected label.
+  const [hasEdited, setHasEdited] = useState(false);
   const generatedId = useId();
   const inputId = id ?? `infinite-search-picker-${generatedId}`;
 
@@ -118,6 +123,14 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
     [onFilter],
     SEARCH_DEBOUNCE_TIMEOUT
   );
+
+  // Cancel any pending debounced filter and reset the GraphQL filter so the
+  // dropdown returns to full results. Called from every clear path (MUI's X,
+  // CLEAR onInputChange, and our custom typed-but-unselected X).
+  const resetFilter = () => {
+    (debounceOnFilter as unknown as { cancel?: () => void }).cancel?.();
+    onFilter('');
+  };
 
   const fullFilter = useMemo(
     () => ({ ...(filter as object), ...(apiFilter as object) }) as TFilter,
@@ -150,8 +163,12 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
 
   // Fall back to the resolved entity's label while the user hasn't typed
   // anything, so async currentId resolution surfaces without a state-sync effect.
+  // Once the user has edited, an empty `search` means "user cleared it";
+  // don't snap back to the label.
   const inputValue =
-    search === '' && displayValue ? getOptionLabel(displayValue) : search;
+    search === '' && displayValue && !hasEdited
+      ? getOptionLabel(displayValue)
+      : search;
 
   useEffect(() => {
     // openOnFocus prop mispositions the popper inside a Dialog; toggle open
@@ -241,32 +258,58 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
       open={selectControl.isOn}
       onChange={(_, entity) => {
         setSearch(entity ? getOptionLabel(entity) : '');
+        setHasEdited(false);
+        // Selecting null (e.g. MUI's built-in X with a value present) also
+        // resets the GraphQL filter so the dropdown shows full results on
+        // the next open. Otherwise the prior `codeOrName` filter sticks.
+        if (!entity) resetFilter();
         onChange(entity);
       }}
       onInputChange={(_event, _value, reason) => {
-        if (reason === CLEAR) onChange(null);
+        if (reason === CLEAR) {
+          resetFilter();
+          onChange(null);
+        }
       }}
       inputValue={inputValue}
       clearOnBlur={false}
       onClear={() => {
         setSearch('');
-        // Cancel any pending debounced filter — otherwise an in-flight
-        // keystroke would re-apply the prior search a moment after clearing.
-        (
-          debounceOnFilter as unknown as { cancel?: () => void }
-        ).cancel?.();
-        onFilter('');
+        setHasEdited(false);
+        resetFilter();
       }}
       inputProps={{
         onChange: e => {
           const { value: next } = e.target;
           setSearch(next);
+          setHasEdited(true);
           debounceOnFilter(searchToFilter(next));
         },
         // Re-open on focus/click — `openOnFocus` on the underlying autocomplete
         // mispositions the popper inside a Dialog, so we open manually.
-        onFocus: () => selectControl.toggleOn(),
-        onClick: () => selectControl.toggleOn(),
+        // Also select-all the input text when focusing a field that's
+        // showing a previously-selected value, so typing replaces it
+        // instead of appending — standard searchbox UX, important for
+        // clearable={false} inline pickers (manufacturer/supplier toolbars).
+        //
+        // The disabled guard matters here because click events on a disabled
+        // TextField's outer wrapper still bubble (only the inner <input>
+        // suppresses events when disabled), so without it the popper opens
+        // on a disabled field.
+        onFocus: e => {
+          if (disabled) return;
+          selectControl.toggleOn();
+          if (
+            displayValue &&
+            e.target.value === getOptionLabel(displayValue)
+          ) {
+            e.target.select();
+          }
+        },
+        onClick: () => {
+          if (disabled) return;
+          selectControl.toggleOn();
+        },
       }}
       getOptionLabel={getOptionLabel}
       renderOption={renderOption}
