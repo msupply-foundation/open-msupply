@@ -302,6 +302,8 @@
   "error.all-purchase-order-lines-added": "All lines from the purchase order have already been added to this shipment",
   "error.amc-is-zero": "No Average Monthly Consumption value",
   "error.an-error-occurred": "An error occurred: {{message}}",
+  "error.ancillary-cycle-detected": "This link would create a cycle through existing ancillary item links",
+  "error.ancillary-max-depth-exceeded": "This link would exceed the maximum allowed depth of ancillary item chains ({{actual}} > {{max}})",
   "error.asset-not-found": "Asset not found",
   "error.authentication-error": "The server has returned an error",
   "error.barcode-scanner-auto-save-failed": "Unable to auto save line, please try again.",
@@ -337,6 +339,7 @@
   "error.dose-ages-out-of-order": "Each dose needs a higher minimum age than the previous dose",
   "error.dose-configuration-not-allowed": "Cannot set doses for this item because it is not a vaccine.",
   "error.dose-max-lower-than-min": "Dose {{doseIndex}} must have a higher maximum age than minimum age",
+  "error.duplicate-ancillary-item": "This ancillary item link already exists",
   "error.duplicate-asset-number": "duplicate asset number in csv",
   "error.duplicate-item-variant-name": "Item variant with the same name already exists for this item",
   "error.duplicated-code": "Duplicated code: {{code}}",
@@ -1260,9 +1263,9 @@
   "label.line-total": "Line total",
   "label.line-total-local": "Line total (local)",
   "label.lines": "Lines",
-  "label.linked-patient": "Linked patient",
   "label.linked-order": "Linked order",
   "label.linked-order-number": "Linked order number",
+  "label.linked-patient": "Linked patient",
   "label.listening": "Listening for scans",
   "label.location": "Location",
   "label.location-temperature-range": " {{locationName}} ({{minTemperature}}°C to {{maxTemperature}}°C)",
@@ -2849,8 +2852,5 @@
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an internal order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
-  "error.duplicate-ancillary-item": "This ancillary item link already exists",
-  "error.ancillary-cycle-detected": "This link would create a cycle through existing ancillary item links",
-  "error.ancillary-max-depth-exceeded": "This link would exceed the maximum allowed depth of ancillary item chains ({{actual}} > {{max}})"
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
 }
