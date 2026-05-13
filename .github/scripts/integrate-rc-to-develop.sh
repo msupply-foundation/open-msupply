@@ -15,25 +15,28 @@ merge_develop_into_branch() {
 
     echo "Merging develop into $MERGE_BRANCH to detect conflicts"
     if git merge origin/develop --no-commit --no-ff 2>/dev/null; then
-        echo "Clean merge - no conflicts detected"
-        if git diff --cached --quiet; then
-            echo "Nothing to commit - develop is already up to date"
-            git merge --abort 2>/dev/null || true
-        else
+        if [[ -f .git/MERGE_HEAD ]]; then
+            echo "Clean merge - no conflicts detected"
             git commit -m "Merge develop into $MERGE_BRANCH"
+        else
+            echo "Nothing to commit - develop is already up to date"
         fi
     else
         echo "Merge conflicts detected"
-        if git status --porcelain | grep -q "package.json"; then
+
+        if [[ -n "$(git ls-files -u -- package.json)" ]]; then
             echo "Conflicts in package.json detected, auto-resolving"
-            git checkout --theirs package.json
-            git add package.json
+            git checkout --theirs -- package.json
+            git add -- package.json
         fi
 
-        if git status --porcelain | grep -q "^UU\|^AA\|^DD"; then
+        local unmerged_files
+        unmerged_files=$(git diff --name-only --diff-filter=U)
+
+        if [[ -n "$unmerged_files" ]]; then
             echo "There are unresolved conflicts that need manual resolution"
-            CONFLICTED_FILE_COUNT=$(git status --porcelain | grep -cE "^(UU|AA|DD)")
-            CONFLICTED_FILES=$(git status --porcelain | grep -E "^(UU|AA|DD)" | awk '{print $2}')
+            CONFLICTED_FILES="$unmerged_files"
+            CONFLICTED_FILE_COUNT=$(echo "$unmerged_files" | wc -l | tr -d ' ')
             git merge --abort
             HAS_UNRESOLVED_CONFLICTS=true
         else
