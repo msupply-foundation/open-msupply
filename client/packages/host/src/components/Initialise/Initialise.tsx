@@ -7,6 +7,8 @@ import {
   useHostContext,
   SaveIcon,
   BoxedErrorWithDetails,
+  EnvUtils,
+  Platform,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { InitialiseLayout, InitMode } from './InitialiseLayout';
@@ -46,8 +48,9 @@ export const Initialise = () => {
   }, [setPageTitle, t]);
 
   const isInputDisabled = isInitialising || isLoading;
+  const isAndroid = EnvUtils.platform === Platform.Android;
 
-  const ModeSelector = (
+  const ModeSelector = isAndroid ? undefined : (
     <TabList
       value={mode}
       onChange={(_, v) => !isInputDisabled && setMode(v as InitMode)}
