@@ -94,12 +94,12 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
     let auth_data = ctx.get_auth_data();
-    let sync_settings = service_provider
+
+    let central_server_url = service_provider
         .settings
         .sync_settings(&service_context)?
-        .ok_or(StandardGraphqlError::InternalError(
-            "Sync settings not available".to_string(),
-        ))?;
+        .map(|s| s.url)
+        .unwrap_or_default();
 
     let pair = match LoginService::login(
         service_provider,
@@ -107,7 +107,7 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
         LoginInput {
             username: username.to_string(),
             password: password.to_string(),
-            central_server_url: sync_settings.url.clone(),
+            central_server_url,
         },
         MIN_ERR_RESPONSE_TIME_SEC,
     )
