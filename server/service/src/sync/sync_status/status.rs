@@ -1,8 +1,9 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    ChangelogRepository, DatetimeFilter, EqualFilter, FilterBuilder, KeyType, Pagination,
-    RepositoryError, Sort, SyncLogV5V6Filter, SyncLogV5V6Repository, SyncLogV5V6Row,
-    SyncLogV5V6SortField, SyncLogV7Condition, SyncLogV7Repository, SyncLogV7SortField,
+    ChangelogRepository, DatetimeFilter, EqualFilter, FilterBuilder, KeyType,
+    KeyValueStoreRepository, Pagination, RepositoryError, SiteRowRepository, Sort,
+    SyncLogV5V6Filter, SyncLogV5V6Repository, SyncLogV5V6Row, SyncLogV5V6SortField,
+    SyncLogV7Condition, SyncLogV7Repository, SyncLogV7SortField,
 };
 
 use crate::{
@@ -10,7 +11,7 @@ use crate::{
     i32_to_u32,
     service_provider::ServiceContext,
     settings_service::{SettingsService, SettingsServiceTrait},
-
+    standalone_central::STANDALONE_CENTRAL_SITE_ID,
     sync_v7::sync_status::status::FullSyncStatusV7,
 };
 
@@ -239,6 +240,18 @@ impl SyncStatusTrait for SyncStatusService {}
 fn get_initialisation_status(
     ctx: &ServiceContext,
 ) -> Result<InitialisationStatus, RepositoryError> {
+    // Standalone central never syncs, so can't tell initialisation from sync logs.
+    if KeyValueStoreRepository::new(&ctx.connection)
+        .get_bool(KeyType::IsStandaloneCentral)?
+        .unwrap_or(false)
+    {
+        let site_name = SiteRowRepository::new(&ctx.connection)
+            .find_one_by_id(STANDALONE_CENTRAL_SITE_ID)?
+            .map(|s| s.name)
+            .unwrap_or_default();
+        return Ok(InitialisationStatus::Initialised(site_name));
+    }
+
     let v7_repo = SyncLogV7Repository::new(&ctx.connection);
     let v7_has_any = v7_repo.query_one(SyncLogV7Condition::TRUE)?.is_some();
     let v7_has_success = v7_repo

@@ -13,7 +13,7 @@ use repository::{
 use strum::IntoEnumIterator;
 use util::uuid::uuid;
 
-const STANDALONE_CENTRAL_SITE_ID: i32 = 1;
+pub const STANDALONE_CENTRAL_SITE_ID: i32 = 1;
 const CENTRAL_CONFIG_STORE_CODE: &str = "CENTRAL_CONFIG";
 
 pub struct InitialiseAsCentralServerInput {
