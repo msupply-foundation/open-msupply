@@ -24,7 +24,7 @@ const PROGRESS_INTERVAL: i64 = 1000;
 
 pub(crate) enum SyncContext {
     Central {
-        active_stores: ActiveStoresOnSite,
+        source_site_active_store_ids: Vec<String>,
     },
     Remote {
         is_initialising: bool,
@@ -145,9 +145,9 @@ fn validate_translate_integrate_one(
     let table_name = parse_table_name(&row.table_name)?;
 
     match sync_context {
-        SyncContext::Central { active_stores } => {
-            validate_on_central(row, &table_name, active_stores)?
-        }
+        SyncContext::Central {
+            source_site_active_store_ids: source_site_store_ids,
+        } => validate_on_central(row, &table_name, source_site_store_ids)?,
         SyncContext::Remote {
             is_initialising,
             active_stores,
@@ -286,6 +286,7 @@ fn validate_translate_integrate_inner<'a>(
 
         // Refresh active stores after any Store batch (upsert or delete)
         // so downstream Remote records validate against fresh state.
+        // Central path doesn't need refresh — Store rows are Central records
         if had_store_records {
             if let SyncContext::Remote {
                 is_initialising: _,
