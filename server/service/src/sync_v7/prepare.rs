@@ -15,7 +15,7 @@ pub(crate) fn prepare(row_or_delete: RowOrDelete) -> Result<SyncRecordV7, SyncEr
                 data,
                 store_id: changelog.store_id,
                 transfer_store_id: changelog.transfer_store_id,
-                patient_id: changelog.patient_link_id,
+                patient_id: changelog.patient_id,
             })
         }
         RowOrDelete::Delete { changelog } => Ok(SyncRecordV7 {
@@ -26,7 +26,7 @@ pub(crate) fn prepare(row_or_delete: RowOrDelete) -> Result<SyncRecordV7, SyncEr
             data: serde_json::Value::Null,
             store_id: changelog.store_id,
             transfer_store_id: changelog.transfer_store_id,
-            patient_id: changelog.patient_link_id,
+            patient_id: changelog.patient_id,
         }),
     }
 }

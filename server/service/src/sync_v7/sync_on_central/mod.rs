@@ -239,7 +239,7 @@ pub async fn patient_data_for_site(
 
     let filter = ChangelogCondition::And(vec![
         ChangelogFilter::patient_data_for_site(site.id, None),
-        ChangelogCondition::patient_link_id::equal(patient_id),
+        ChangelogCondition::patient_id::equal(patient_id),
     ]);
 
     let batch = SyncBatchV7::generate(&ctx.connection, filter, 0, None)?;
