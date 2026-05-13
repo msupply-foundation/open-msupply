@@ -2,6 +2,16 @@ use std::time::{Duration, Instant};
 
 use reqwest::*;
 
+/// Returns the URL with the query string and fragment stripped, so it can be
+/// safely written to logs. Some endpoints (e.g. PatientApiV4) include patient
+/// names, DOB, policy number, etc. in the query string — never log those.
+pub fn redact_url_for_log(url: &Url) -> String {
+    let mut redacted = url.clone();
+    redacted.set_query(None);
+    redacted.set_fragment(None);
+    redacted.to_string()
+}
+
 pub struct RetrySeconds(Vec<u64>);
 
 impl Default for RetrySeconds {
@@ -12,12 +22,11 @@ impl Default for RetrySeconds {
     }
 }
 
-// If a request burns more than this on a single attempt and times out, do not
-// retry it — the overall request timeout has effectively been hit and another
-// 30-minute attempt is unlikely to succeed where the first didn't, and we don't
-// want a single sync to block for ~90 minutes. Fast timeouts (connect-phase,
-// kernel TCP retransmit, etc.) still retry as before.
-const SLOW_TIMEOUT_RETRY_CUTOFF: Duration = Duration::from_secs(60 * 25);
+// Idle read timeout: abort if no bytes arrive on the response for this long.
+// Replaces the previous 30-minute wall-clock cap so legitimate large pulls
+// (which can exceed 30 min on low bandwidth) still succeed as long as the
+// connection is making progress; a genuinely stalled socket still fails fast.
+const READ_IDLE_TIMEOUT: Duration = Duration::from_secs(60 * 5);
 
 pub async fn with_retries<F>(connection_timeouts: RetrySeconds, f: F) -> Result<Response>
 where
@@ -27,9 +36,7 @@ where
     loop {
         let client = Client::builder()
             .connect_timeout(Duration::from_secs(connection_timeouts.0[index]))
-            // generous because some sync records may have big payloads like reports that take a long time to sync on low bandwidth
-            // we also had issues with batch size = 500 taking more then 5 minutes to generate during testing, maybe due to 4d flushing
-            .timeout(Duration::from_secs(60 * 30))
+            .read_timeout(READ_IDLE_TIMEOUT)
             .build()
             .unwrap(); // This method fails if a TLS backend cannot be initialized, or the resolver cannot load the system configuration.
 
@@ -52,12 +59,17 @@ where
         let elapsed = started.elapsed();
 
         let (status, is_connect_error, is_timeout_error, url) = match result.as_ref() {
-            Ok(r) => (Some(r.status()), false, false, Some(r.url().to_string())),
+            Ok(r) => (
+                Some(r.status()),
+                false,
+                false,
+                Some(redact_url_for_log(r.url())),
+            ),
             Err(e) => (
                 e.status(),
                 e.is_connect(),
                 e.is_timeout(),
-                e.url().map(|u| u.to_string()),
+                e.url().map(redact_url_for_log),
             ),
         };
 
@@ -72,7 +84,7 @@ where
                 let kind = if is_connect_error {
                     "connection error"
                 } else if is_timeout_error {
-                    "request timeout"
+                    "idle timeout"
                 } else {
                     "request error"
                 };
@@ -80,11 +92,23 @@ where
             }
         };
 
-        let timeout_was_slow = is_timeout_error && elapsed >= SLOW_TIMEOUT_RETRY_CUTOFF;
-        let will_retry = (is_connect_error
-            || (is_timeout_error && !timeout_was_slow)
-            || status == Some(StatusCode::REQUEST_TIMEOUT))
-            && (index + 1) < connection_timeouts.0.len();
+        let will_retry =
+            (is_connect_error || is_timeout_error || status == Some(StatusCode::REQUEST_TIMEOUT))
+                && (index + 1) < connection_timeouts.0.len();
+
+        if let Ok(response) = result.as_ref() {
+            let content_length_display = response
+                .content_length()
+                .map(|n| format!("{} bytes", n))
+                .unwrap_or_else(|| "unknown".to_string());
+            log::info!(
+                "API response: url '{}', status {}, content-length {}, headers in {:.1}s",
+                redact_url_for_log(response.url()),
+                response.status().as_u16(),
+                content_length_display,
+                elapsed.as_secs_f64(),
+            );
+        }
 
         if let Some(failure) = attempt_failure {
             let url_display = url.as_deref().unwrap_or("<unknown>");
@@ -99,7 +123,7 @@ where
             } else {
                 "not retrying".to_string()
             };
-            log::info!(
+            log::warn!(
                 "API request failed: url '{}', {}, attempt {}/{} after {:.1}s (request body: {}); {}",
                 url_display,
                 failure,
