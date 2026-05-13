@@ -147,6 +147,11 @@ impl CentralServerConfig {
         {
             let current_config = CENTRAL_SERVER_CONFIG.read().unwrap();
 
+            // Standalone central never syncs upstream
+            if matches!(*current_config, CentralServerConfig::StandaloneCentral) {
+                return;
+            }
+
             if new_config == *current_config {
                 return;
             }

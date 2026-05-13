@@ -5,6 +5,7 @@ use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 use http2::header::SET_COOKIE;
 use service::{
     login::{LoginError, LoginFailure, LoginInput, LoginService},
+    sync::CentralServerConfig,
     token::TokenPair,
 };
 
@@ -95,11 +96,17 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
     let service_context = service_provider.basic_context()?;
     let auth_data = ctx.get_auth_data();
 
-    let central_server_url = service_provider
-        .settings
-        .sync_settings(&service_context)?
-        .map(|s| s.url)
-        .unwrap_or_default();
+    let central_server_url = if CentralServerConfig::is_standalone_central() {
+        String::new()
+    } else {
+        service_provider
+            .settings
+            .sync_settings(&service_context)?
+            .ok_or(StandardGraphqlError::InternalError(
+                "Sync settings not available".to_string(),
+            ))?
+            .url
+    };
 
     let pair = match LoginService::login(
         service_provider,
