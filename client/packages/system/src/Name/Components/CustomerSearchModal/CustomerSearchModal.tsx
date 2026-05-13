@@ -1,53 +1,46 @@
 import React, { FC } from 'react';
 import {
-  AutocompleteList,
-  AutocompleteListProps,
-  createQueryParamsStore,
-  ListSearch,
-  QueryParamsProvider,
+  BasicModal,
+  ModalTitle,
   useTranslation,
+  useWindowDimensions,
+  Box,
 } from '@openmsupply-client/common';
-import { useName, NameRowFragment } from '../../api';
-import { filterByNameAndCode, NameSearchProps } from '../../utils';
-import { getNameOptionRenderer } from '../NameOptionRenderer';
+import { NameSearchProps } from '../../utils';
+import { CustomerSearchInput } from '../CustomerSearchInput';
 
 const CustomerSearchComponent: FC<NameSearchProps> = props => {
-  const { data, isLoading } = useName.document.customers();
   const t = useTranslation();
-  const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
+  const { height } = useWindowDimensions();
+  const modalHeight = height * 0.8;
 
-  const listProps: AutocompleteListProps<NameRowFragment> = {
-    loading: isLoading,
-    filterOptions: filterByNameAndCode,
-    getOptionLabel: option => option.name,
-    renderOption: NameOptionRenderer,
-    onChange: (_, name) => {
-      if (name && !(name instanceof Array)) props.onChange(name);
-    },
-    options: data?.nodes ?? [],
-    getOptionDisabled: option => option.isOnHold,
-  };
+  const input = (
+    <CustomerSearchInput
+      value={null}
+      onChange={name => {
+        if (name) props.onChange(name);
+      }}
+      width={500}
+      clearable={false}
+      autoFocus
+      openOnFocus
+    />
+  );
 
-  if ('isList' in props) return <AutocompleteList {...listProps} />;
+  if ('isList' in props) {
+    return <Box padding={2}>{input}</Box>;
+  }
 
   const { open, onClose } = props;
 
   return (
-    <ListSearch
-      open={open}
-      onClose={onClose}
-      title={t('customers')}
-      {...listProps}
-    />
+    <BasicModal open={open} onClose={onClose} height={modalHeight}>
+      <ModalTitle title={t('customers')} />
+      <Box padding={2}>{input}</Box>
+    </BasicModal>
   );
 };
 
 export const CustomerSearchModal: FC<NameSearchProps> = props => (
-  <QueryParamsProvider
-    createStore={createQueryParamsStore<NameRowFragment>({
-      initialSortBy: { key: 'name' },
-    })}
-  >
-    <CustomerSearchComponent {...props} />
-  </QueryParamsProvider>
+  <CustomerSearchComponent {...props} />
 );
