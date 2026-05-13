@@ -30,7 +30,7 @@ pub async fn initialise_as_central_server(
 
     match service_provider
         .standalone_central_service
-        .initialise(&service_context, input.to_domain())
+        .initialise(service_provider, input.to_domain())
     {
         Ok(()) => {
             service_provider.site_is_initialised_trigger.trigger();
@@ -191,6 +191,7 @@ fn map_error(error: ServiceError) -> Result<InitialiseAsCentralServerErrorInterf
             )
         }
         // Standard Graphql Errors
+        ServiceError::FailedToGetHardwareId(_) => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
