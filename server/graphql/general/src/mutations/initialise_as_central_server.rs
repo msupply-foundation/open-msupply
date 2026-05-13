@@ -88,6 +88,7 @@ pub enum InitialiseAsCentralServerResponse {
 #[graphql(field(name = "description", ty = "&str"))]
 pub enum InitialiseAsCentralServerErrorInterface {
     AlreadyInitialised(AlreadyInitialised),
+    NotSupportedOnAndroid(NotSupportedOnAndroid),
     StoreNameRequired(StoreNameRequired),
     AdminUsernameRequired(AdminUsernameRequired),
     AdminPasswordRequired(AdminPasswordRequired),
@@ -99,6 +100,14 @@ pub struct AlreadyInitialised;
 impl AlreadyInitialised {
     pub async fn description(&self) -> &str {
         "Server is already initialised"
+    }
+}
+
+pub struct NotSupportedOnAndroid;
+#[Object]
+impl NotSupportedOnAndroid {
+    pub async fn description(&self) -> &str {
+        "Initialising as central server is not supported on Android"
     }
 }
 
@@ -144,6 +153,13 @@ fn map_error(error: ServiceError) -> Result<InitialiseAsCentralServerErrorInterf
             return Ok(InitialiseAsCentralServerErrorInterface::AlreadyInitialised(
                 AlreadyInitialised,
             ))
+        }
+        ServiceError::NotSupportedOnAndroid => {
+            return Ok(
+                InitialiseAsCentralServerErrorInterface::NotSupportedOnAndroid(
+                    NotSupportedOnAndroid,
+                ),
+            )
         }
         ServiceError::StoreNameRequired => {
             return Ok(InitialiseAsCentralServerErrorInterface::StoreNameRequired(
