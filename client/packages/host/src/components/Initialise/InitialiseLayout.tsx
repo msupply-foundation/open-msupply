@@ -10,8 +10,12 @@ import { LoginIcon } from '../Login/LoginIcon';
 import { Theme } from '@common/styles';
 import { AppVersion } from '../AppVersion';
 import { LanguageButton } from '../LanguageButton';
+import { StandaloneCentralTab } from './StandaloneCentralTab';
+
+export type InitMode = 'sync' | 'standalone';
 
 type LoginLayoutProps = {
+  mode: InitMode;
   UsernameInput: ReactNode;
   PasswordInput: ReactNode;
   UrlInput: ReactNode;
@@ -25,6 +29,7 @@ type LoginLayoutProps = {
 };
 
 export const InitialiseLayout = ({
+  mode,
   UsernameInput,
   PasswordInput,
   UrlInput,
@@ -139,17 +144,21 @@ export const InitialiseLayout = ({
                 <LoginIcon small />
               </Box>
               {ModeSelector}
-              <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>
-                <Stack spacing={isExtraSmallScreen ? 3 : 5}>
-                  {UrlInput}
-                  {UsernameInput}
-                  {PasswordInput}
-                  {ErrorMessage}
-                  <Box display="flex" justifyContent="flex-end">
-                    {Button}
-                  </Box>
-                </Stack>
-              </form>
+              {mode === 'standalone' ? (
+                <StandaloneCentralTab />
+              ) : (
+                <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>
+                  <Stack spacing={isExtraSmallScreen ? 3 : 5}>
+                    {UrlInput}
+                    {UsernameInput}
+                    {PasswordInput}
+                    {ErrorMessage}
+                    <Box display="flex" justifyContent="flex-end">
+                      {Button}
+                    </Box>
+                  </Stack>
+                </form>
+              )}
             </Stack>
           </Box>
           <Box pt={2} width="100%">
