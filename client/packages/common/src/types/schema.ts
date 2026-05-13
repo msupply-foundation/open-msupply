@@ -306,6 +306,22 @@ export enum AdjustmentTypeInput {
   Reduction = 'REDUCTION',
 }
 
+export type AdminPasswordRequired = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'AdminPasswordRequired';
+  description: Scalars['String']['output'];
+};
+
+export type AdminUserCreationFailed =
+  InitialiseAsCentralServerErrorInterface & {
+    __typename: 'AdminUserCreationFailed';
+    description: Scalars['String']['output'];
+  };
+
+export type AdminUsernameRequired = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'AdminUsernameRequired';
+  description: Scalars['String']['output'];
+};
+
 export type AllocateOutboundShipmentUnallocatedLineError = {
   __typename: 'AllocateOutboundShipmentUnallocatedLineError';
   error: AllocateOutboundShipmentUnallocatedLineErrorInterface;
@@ -341,6 +357,11 @@ export type AllocateProgramNumberInput = {
 };
 
 export type AllocateProgramNumberResponse = NumberNode;
+
+export type AlreadyInitialised = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'AlreadyInitialised';
+  description: Scalars['String']['output'];
+};
 
 export enum ApplyToLinesInput {
   AssignIfNone = 'ASSIGN_IF_NONE',
@@ -3192,6 +3213,25 @@ export enum InitialisationStatusType {
   PreInitialisation = 'PRE_INITIALISATION',
 }
 
+export type InitialiseAsCentralServerError = {
+  __typename: 'InitialiseAsCentralServerError';
+  error: InitialiseAsCentralServerErrorInterface;
+};
+
+export type InitialiseAsCentralServerErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InitialiseAsCentralServerInputNode = {
+  adminPassword: Scalars['String']['input'];
+  adminUsername: Scalars['String']['input'];
+  storeName: Scalars['String']['input'];
+};
+
+export type InitialiseAsCentralServerResponse =
+  | InitialiseAsCentralServerError
+  | StandaloneCentralInitialisedNode;
+
 export type InitialiseSiteResponse = SyncErrorNode | SyncSettingsNode;
 
 export type InsertAssetCatalogueItemError = {
@@ -5447,6 +5487,7 @@ export type Mutations = {
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   deleteSupplierReturn: DeleteSupplierReturnResponse;
   finaliseRnrForm: FinaliseRnRFormResponse;
+  initialiseAsCentralServer: InitialiseAsCentralServerResponse;
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
   insertAssetLog: InsertAssetLogResponse;
@@ -5773,6 +5814,10 @@ export type MutationsDeleteSupplierReturnArgs = {
 export type MutationsFinaliseRnrFormArgs = {
   input: FinaliseRnRFormInput;
   storeId: Scalars['String']['input'];
+};
+
+export type MutationsInitialiseAsCentralServerArgs = {
+  input: InitialiseAsCentralServerInputNode;
 };
 
 export type MutationsInitialiseSiteArgs = {
@@ -6466,6 +6511,11 @@ export type NotEnoughStockForReduction =
 
 export type NotMostRecentGivenDose = UpdateVaccinationErrorInterface & {
   __typename: 'NotMostRecentGivenDose';
+  description: Scalars['String']['output'];
+};
+
+export type NotSupportedOnAndroid = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'NotSupportedOnAndroid';
   description: Scalars['String']['output'];
 };
 
@@ -9356,6 +9406,11 @@ export type SnapshotCountCurrentCountMismatchLine =
     stocktakeLine: StocktakeLineNode;
   };
 
+export type StandaloneCentralInitialisedNode = {
+  __typename: 'StandaloneCentralInitialisedNode';
+  success: Scalars['Boolean']['output'];
+};
+
 export type StockCounts = {
   __typename: 'StockCounts';
   expired: Scalars['Int']['output'];
@@ -9699,6 +9754,11 @@ export enum StoreModeNodeType {
   Dispensary = 'DISPENSARY',
   Store = 'STORE',
 }
+
+export type StoreNameRequired = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'StoreNameRequired';
+  description: Scalars['String']['output'];
+};
 
 export type StoreNode = {
   __typename: 'StoreNode';
