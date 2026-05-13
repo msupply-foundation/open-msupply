@@ -154,7 +154,6 @@ async fn subscription_worker_loop(
             break;
         };
 
-
         match trigger {
             SubscriptionTrigger::SyncStatus(row) => {
                 let push_queue_count =
@@ -189,7 +188,6 @@ async fn subscription_worker_loop(
                             Ok(status) => {
                                 let res =
                                     tx.send(ResolvedSubscription::InitialisationStatus(status));
-                                log::info!("Initialisation status broadcast complete with result: {res:#?}");
                             }
                             Err(e) => {
                                 log::error!("Failed to get initialisation status: {e:?}");

@@ -6,7 +6,8 @@ use std::{
 use actix_multipart::form::tempfile::TempFile;
 use repository::{
     ChangelogCondition, ChangelogFilter, ChangelogRepository, CursorAndLimit, FilterBuilder,
-    SyncBufferRepository, SyncFileReferenceRow, SyncFileReferenceRowRepository, SyncVersions,
+    QueryWithData, SyncBufferRepository, SyncFileReferenceRow, SyncFileReferenceRowRepository,
+    SyncVersions,
 };
 use util::format_error;
 
@@ -73,7 +74,6 @@ pub async fn pull(
     }
 
     let ctx = service_provider.basic_context()?;
-    let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
     // We don't need a filter here, as we are filtering in the repository layer
     let filter = ChangelogFilter::all_data_for_site(
@@ -84,22 +84,18 @@ pub async fn pull(
             is_v5: false,
         }),
     );
-    let rows = ChangelogRepository::new(&ctx.connection).query_with_data(
+    let QueryWithData {
+        rows,
+        remaining,
+        last_cursor_in_batch,
+        ..
+    } = ChangelogRepository::new(&ctx.connection).query_with_data(
         filter,
         CursorAndLimit {
             cursor: cursor as i64,
             limit: batch_size as i64,
         },
     )?;
-    let max_cursor = changelog_repo.max_cursor()?;
-
-    let end_cursor = rows
-        .last()
-        .map(|r| r.changelog().cursor as u64)
-        .unwrap_or(max_cursor);
-
-    // Total = remaining records to process based on max cursor
-    let total_records = max_cursor.saturating_sub(cursor);
 
     let records: Vec<SyncRecordV6> = translate_rows_to_sync_records(
         &ctx.connection,
@@ -118,11 +114,11 @@ pub async fn pull(
     );
     log::debug!("Sending records as central server: {records:#?}");
 
-    let is_last_batch = total_records <= batch_size as u64;
+    let is_last_batch = remaining == 0;
 
     Ok(SyncBatchV6 {
-        total_records,
-        end_cursor,
+        total_records: remaining,
+        end_cursor: last_cursor_in_batch,
         records,
         is_last_batch,
     })
@@ -244,7 +240,12 @@ pub async fn patient_pull(
         ),
         ChangelogCondition::patient_id::equal(fetch_patient_id),
     ]);
-    let rows = ChangelogRepository::new(&ctx.connection).query_with_data(
+    let QueryWithData {
+        rows,
+        last_cursor_in_batch,
+        remaining,
+        ..
+    } = ChangelogRepository::new(&ctx.connection).query_with_data(
         filter,
         CursorAndLimit {
             cursor: cursor as i64,
@@ -252,11 +253,6 @@ pub async fn patient_pull(
         },
     )?;
     let max_cursor = changelog_repo.max_cursor()?;
-
-    let end_cursor = rows
-        .last()
-        .map(|r| r.changelog().cursor as u64)
-        .unwrap_or(max_cursor);
 
     // Total = remaining records to process based on max cursor
     let total_records = max_cursor.saturating_sub(cursor);
@@ -282,7 +278,7 @@ pub async fn patient_pull(
 
     Ok(SyncBatchV6 {
         total_records,
-        end_cursor,
+        end_cursor: last_cursor_in_batch,
         records,
         is_last_batch,
     })

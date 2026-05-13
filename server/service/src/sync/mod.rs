@@ -4,6 +4,9 @@ pub(crate) mod test;
 pub mod api;
 pub mod api_v6;
 pub(crate) mod central_data_synchroniser;
+pub(crate) mod central_data_synchroniser_v6;
+pub mod file_sync_driver;
+pub mod file_synchroniser;
 mod integrate_document;
 pub(crate) mod remote_data_synchroniser;
 pub mod settings;
@@ -23,8 +26,8 @@ use std::sync::RwLock;
 
 use log::info;
 use repository::{
-    EqualFilter, KeyValueStoreRepository, RepositoryError,
-    StorageConnection, Store, StoreFilter, StoreRepository,
+    EqualFilter, KeyValueStoreRepository, RepositoryError, StorageConnection, Store, StoreFilter,
+    StoreRepository,
 };
 
 use serde::{Deserialize, Serialize};

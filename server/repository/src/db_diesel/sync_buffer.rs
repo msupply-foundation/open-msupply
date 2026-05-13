@@ -58,6 +58,21 @@ impl SyncVersion {
         KeyValueStoreRepository::new(connection)
             .set_string(KeyType::SettingsSyncVersion, Some(version.to_string()))
     }
+
+    /// Parse the free-text `sync_version` field from the legacy server (4D
+    /// site row, v5 site_info response, etc). Anything other than "v7"
+    /// (case-insensitive, trimmed) — including empty, missing, or unknown —
+    /// maps to V5V6.
+    pub fn from_legacy_string(raw: Option<&str>) -> SyncVersion {
+        match raw
+            .map(str::trim)
+            .map(str::to_ascii_lowercase)
+            .as_deref()
+        {
+            Some("v7") => SyncVersion::V7,
+            _ => SyncVersion::V5V6,
+        }
+    }
 }
 
 diesel_string_enum! {
