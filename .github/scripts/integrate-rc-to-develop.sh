@@ -115,6 +115,12 @@ create_new_pull_request() {
     git checkout "origin/$RC_BRANCH"
     git checkout -b "$MERGE_BRANCH"
     merge_develop_into_branch "$MERGE_BRANCH"
+
+    if git diff --quiet HEAD origin/develop; then
+        echo "No content diff between $MERGE_BRANCH and develop - previous merge PR likely already integrated. Skipping PR creation."
+        return 0
+    fi
+
     git push -u origin "$MERGE_BRANCH"
 
     local pr_title="Merge $RC_BRANCH to develop"
