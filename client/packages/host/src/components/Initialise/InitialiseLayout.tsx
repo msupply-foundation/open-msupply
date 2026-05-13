@@ -10,8 +10,12 @@ import { LoginIcon } from '../Login/LoginIcon';
 import { Theme } from '@common/styles';
 import { AppVersion } from '../AppVersion';
 import { LanguageButton } from '../LanguageButton';
+import { StandaloneCentralTab } from './StandaloneCentralTab';
+
+export type InitMode = 'remote' | 'central';
 
 type LoginLayoutProps = {
+  mode: InitMode;
   UsernameInput: ReactNode;
   PasswordInput: ReactNode;
   UrlInput: ReactNode;
@@ -20,10 +24,12 @@ type LoginLayoutProps = {
   ErrorMessage: ReactNode;
   SyncErrorMessage: ReactNode;
   SiteInfo: React.ReactNode;
+  ModeSelector?: ReactNode;
   onInitialise: () => Promise<void>;
 };
 
 export const InitialiseLayout = ({
+  mode,
   UsernameInput,
   PasswordInput,
   UrlInput,
@@ -32,6 +38,7 @@ export const InitialiseLayout = ({
   SyncProgress,
   SiteInfo,
   SyncErrorMessage,
+  ModeSelector,
   onInitialise,
 }: LoginLayoutProps) => {
   const t = useTranslation();
@@ -132,20 +139,27 @@ export const InitialiseLayout = ({
           flex={1}
         >
           <Box style={{ width: 285 }}>
-            <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>
-              <Stack spacing={isExtraSmallScreen ? 3 : 5}>
-                <Box display="flex" justifyContent="center">
-                  <LoginIcon small />
-                </Box>
-                {UrlInput}
-                {UsernameInput}
-                {PasswordInput}
-                {ErrorMessage}
-                <Box display="flex" justifyContent="flex-end">
-                  {Button}
-                </Box>
-              </Stack>
-            </form>
+            <Stack spacing={isExtraSmallScreen ? 2 : 3}>
+              <Box display="flex" justifyContent="center">
+                <LoginIcon small />
+              </Box>
+              {ModeSelector}
+              {mode === 'central' ? (
+                <StandaloneCentralTab />
+              ) : (
+                <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>
+                  <Stack spacing={isExtraSmallScreen ? 3 : 5}>
+                    {UrlInput}
+                    {UsernameInput}
+                    {PasswordInput}
+                    {ErrorMessage}
+                    <Box display="flex" justifyContent="flex-end">
+                      {Button}
+                    </Box>
+                  </Stack>
+                </form>
+              )}
+            </Stack>
           </Box>
           <Box pt={2} width="100%">
             {SyncProgress}

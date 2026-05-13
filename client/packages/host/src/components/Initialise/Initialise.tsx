@@ -1,13 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  Tab,
+  TabList,
   useTranslation,
   LoadingButton,
   useHostContext,
   SaveIcon,
   BoxedErrorWithDetails,
+  EnvUtils,
+  Platform,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
-import { InitialiseLayout } from './InitialiseLayout';
+import { InitialiseLayout, InitMode } from './InitialiseLayout';
 import { useInitialiseForm } from './hooks';
 import { SyncProgress } from '../SyncProgress';
 import { SiteInfo } from '../SiteInfo';
@@ -16,6 +20,7 @@ import { mapSyncError } from 'packages/system/src';
 export const Initialise = () => {
   const t = useTranslation();
   const { setPageTitle } = useHostContext();
+  const [mode, setMode] = useState<InitMode>('remote');
 
   const {
     isValid,
@@ -43,9 +48,31 @@ export const Initialise = () => {
   }, [setPageTitle, t]);
 
   const isInputDisabled = isInitialising || isLoading;
+  const isAndroid = EnvUtils.platform === Platform.Android;
+
+  const ModeSelector = isAndroid ? undefined : (
+    <TabList
+      value={mode}
+      onChange={(_, v) => !isInputDisabled && setMode(v as InitMode)}
+      variant="fullWidth"
+    >
+      <Tab
+        value="remote"
+        label={t('initialise.remote-sync')}
+        disabled={isInputDisabled}
+      />
+      <Tab
+        value="central"
+        label={t('initialise.central-standalone')}
+        disabled={isInputDisabled}
+      />
+    </TabList>
+  );
 
   return (
     <InitialiseLayout
+      mode={mode}
+      ModeSelector={ModeSelector}
       UsernameInput={
         <LoginTextInput
           fullWidth
