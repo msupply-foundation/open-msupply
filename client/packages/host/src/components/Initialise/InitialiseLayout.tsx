@@ -12,7 +12,7 @@ import { AppVersion } from '../AppVersion';
 import { LanguageButton } from '../LanguageButton';
 import { StandaloneCentralTab } from './StandaloneCentralTab';
 
-export type InitMode = 'sync' | 'standalone';
+export type InitMode = 'remote' | 'central';
 
 type LoginLayoutProps = {
   mode: InitMode;
@@ -144,7 +144,7 @@ export const InitialiseLayout = ({
                 <LoginIcon small />
               </Box>
               {ModeSelector}
-              {mode === 'standalone' ? (
+              {mode === 'central' ? (
                 <StandaloneCentralTab />
               ) : (
                 <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>

@@ -18,7 +18,7 @@ import { mapSyncError } from 'packages/system/src';
 export const Initialise = () => {
   const t = useTranslation();
   const { setPageTitle } = useHostContext();
-  const [mode, setMode] = useState<InitMode>('sync');
+  const [mode, setMode] = useState<InitMode>('remote');
 
   const {
     isValid,
@@ -56,13 +56,13 @@ export const Initialise = () => {
       variant="fullWidth"
     >
       <Tab
-        value="sync"
-        label={t('initialise.mode-sync')}
-        disabled={state && mode !== 'sync'}
+        value="remote"
+        label={t('initialise.remote-sync')}
+        disabled={state && mode !== 'remote'}
       />
       <Tab
-        value="standalone"
-        label={t('initialise.mode-standalone')}
+        value="central"
+        label={t('initialise.central-standalone')}
         disabled={state}
       />
     </TabList>
