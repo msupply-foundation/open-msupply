@@ -25,6 +25,7 @@ pub fn clear_site_token(ctx: &Context<'_>, site_id: i32) -> Result<ClearSiteToke
         &ResourceAccessRequest {
             resource: Resource::MutateSites,
             store_id: None,
+            require_central_standalone: true,
         },
     )?;
 
