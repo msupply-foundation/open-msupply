@@ -2,6 +2,8 @@ name: RC to Develop Integration
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * *" # Every day at 08:00 AM UTC - equivalent to 08:00 PM NZST (or 09:00 PM NZDT)
 
 jobs:
   integrate-rc-to-develop:
