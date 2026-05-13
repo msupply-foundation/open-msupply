@@ -1,5 +1,5 @@
 use crate::{
-    service_provider::ServiceContext,
+    service_provider::{ServiceContext, ServiceProvider},
     sync::CentralServerConfig,
     user_account::{CreateUserAccount, CreateUserAccountError, UserAccountService},
 };
@@ -30,13 +30,14 @@ pub enum InitialiseAsCentralServerError {
     AdminUsernameRequired,
     AdminPasswordRequired,
     AdminUserCreationFailed(CreateUserAccountError),
+    FailedToGetHardwareId(String),
     DatabaseError(RepositoryError),
 }
 
 pub trait StandaloneCentralServiceTrait: Sync + Send {
     fn initialise(
         &self,
-        ctx: &ServiceContext,
+        service_provider: &ServiceProvider,
         input: InitialiseAsCentralServerInput,
     ) -> Result<(), InitialiseAsCentralServerError>;
 }
@@ -45,13 +46,19 @@ pub struct StandaloneCentralService;
 impl StandaloneCentralServiceTrait for StandaloneCentralService {
     fn initialise(
         &self,
-        ctx: &ServiceContext,
+        service_provider: &ServiceProvider,
         input: InitialiseAsCentralServerInput,
     ) -> Result<(), InitialiseAsCentralServerError> {
+        let ctx = service_provider.basic_context()?;
         let store_name = input.store_name.trim().to_string();
         let admin_username = input.admin_username.trim().to_string();
         let admin_password = input.admin_password;
-        validate_initialise(ctx, &store_name, &admin_username, &admin_password)?;
+        validate_initialise(&ctx, &store_name, &admin_username, &admin_password)?;
+
+        let hardware_id = service_provider
+            .app_data_service
+            .get_hardware_id()
+            .map_err(|e| InitialiseAsCentralServerError::FailedToGetHardwareId(e.to_string()))?;
 
         ctx.connection
             .transaction_sync(|con| -> Result<(), InitialiseAsCentralServerError> {
@@ -70,6 +77,7 @@ impl StandaloneCentralServiceTrait for StandaloneCentralService {
                     id: STANDALONE_CENTRAL_SITE_ID,
                     code: CENTRAL_CONFIG_CODE.to_string(),
                     name: store_name.clone(),
+                    hardware_id: (!hardware_id.is_empty()).then(|| hardware_id.clone()),
                     ..Default::default()
                 })?;
 
@@ -210,13 +218,12 @@ mod test {
         let (_, _, connection_manager, _) =
             setup_all("standalone_error", MockDataInserts::none()).await;
         let service_provider = ServiceProvider::new(connection_manager);
-        let ctx = service_provider.basic_context().unwrap();
         let service = StandaloneCentralService;
 
         for store_name in ["", "   "] {
             let err = service
                 .initialise(
-                    &ctx,
+                    &service_provider,
                     InitialiseAsCentralServerInput {
                         store_name: store_name.to_string(),
                         ..input()
@@ -229,7 +236,7 @@ mod test {
         for username in ["", "   "] {
             let err = service
                 .initialise(
-                    &ctx,
+                    &service_provider,
                     InitialiseAsCentralServerInput {
                         admin_username: username.to_string(),
                         ..input()
@@ -241,7 +248,7 @@ mod test {
 
         let err = service
             .initialise(
-                &ctx,
+                &service_provider,
                 InitialiseAsCentralServerInput {
                     admin_password: String::new(),
                     ..input()
@@ -250,10 +257,10 @@ mod test {
             .unwrap_err();
         assert_matches!(err, InitialiseAsCentralServerError::AdminPasswordRequired);
 
-        service.initialise(&ctx, input()).unwrap();
+        service.initialise(&service_provider, input()).unwrap();
         let err = service
             .initialise(
-                &ctx,
+                &service_provider,
                 InitialiseAsCentralServerInput {
                     admin_username: "admin2".to_string(),
                     ..input()
@@ -268,9 +275,14 @@ mod test {
         let (_, connection, connection_manager, _) =
             setup_all("standalone_central_success", MockDataInserts::none()).await;
         let service_provider = ServiceProvider::new(connection_manager);
-        let ctx = service_provider.basic_context().unwrap();
+        service_provider
+            .app_data_service
+            .set_hardware_id("hw-id".to_string())
+            .unwrap();
 
-        StandaloneCentralService.initialise(&ctx, input()).unwrap();
+        StandaloneCentralService
+            .initialise(&service_provider, input())
+            .unwrap();
 
         let kv = KeyValueStoreRepository::new(&connection);
         assert_eq!(
@@ -292,6 +304,7 @@ mod test {
             .unwrap()
             .unwrap();
         assert_eq!(site.name, "Central Config");
+        assert_eq!(site.hardware_id.as_deref(), Some("hw-id"));
 
         let name = NameRowRepository::new(&connection)
             .find_one_by_code("CENTRAL_CONFIG")
