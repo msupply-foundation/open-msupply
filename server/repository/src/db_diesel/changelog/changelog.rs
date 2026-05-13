@@ -12,13 +12,31 @@ use ts_rs::TS;
 
 use super::sync_style::{ChangeLogSyncStyle, SyncVersions};
 
+// Underlying table — INSERTs target this. Carries raw `*_link_id` columns.
 table! {
+    #[sql_name = "changelog"]
+    changelog_with_links (cursor) {
+        cursor -> BigInt,
+        table_name -> Text,
+        record_id -> Text,
+        row_action -> Text,
+        store_id -> Nullable<Text>,
+        is_sync_update -> Bool,
+        source_site_id -> Nullable<Integer>,
+        transfer_store_id -> Nullable<Text>,
+        patient_link_id -> Nullable<Text>,
+    }
+}
+
+// View — SELECTs target this. Exposes resolved `patient_id`
+// (via LEFT JOIN name_link on the patient_link_id column).
+table! {
+    #[sql_name = "changelog_view"]
     changelog (cursor) {
         cursor -> BigInt,
         table_name -> Text,
         record_id -> Text,
         row_action -> Text,
-        name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
         source_site_id -> Nullable<Integer>,
@@ -228,7 +246,7 @@ impl SourceSiteId {
 }
 
 #[derive(Debug, Clone, PartialEq, Insertable, Default)]
-#[diesel(table_name = changelog)]
+#[diesel(table_name = changelog_with_links)]
 pub struct ChangeLogInsertRow {
     pub table_name: ChangelogTableName,
     pub record_id: String,
@@ -236,18 +254,20 @@ pub struct ChangeLogInsertRow {
     pub store_id: Option<String>,
     pub source_site_id: Option<i32>,
     pub transfer_store_id: Option<String>,
+    // At the time of inserts a patient_id is the patient_link_id. 
+    // If the patient info changes the changelog view will resolve to 
+    // the correct patient_id via name_link join.
+    #[diesel(column_name = "patient_link_id")]
     pub patient_id: Option<String>,
 }
 
-#[derive(Clone, Queryable, Debug, PartialEq, Insertable, Serialize, Deserialize, TS, Default)]
+#[derive(Clone, Queryable, Debug, PartialEq, Serialize, Deserialize, TS, Default)]
 #[diesel(table_name = changelog)]
 pub struct ChangelogRow {
     pub cursor: i64,
     pub table_name: ChangelogTableName,
     pub record_id: String,
     pub row_action: RowActionType,
-    #[diesel(column_name = "name_link_id")]
-    pub name_id: Option<String>,
     pub store_id: Option<String>,
     pub is_sync_update: bool,
     pub source_site_id: Option<i32>,
@@ -323,16 +343,18 @@ impl<'a> ChangelogRepository<'a> {
         })
     }
 
-    /// Returns latest/max change log cursor
+    /// Returns latest/max change log cursor. Queries the underlying table
+    /// (not the view) so it works during migrations, before `changelog_view`
+    /// gets rebuilt at the end of the migration run.
     pub fn max_cursor(&self) -> Result<u64, RepositoryError> {
-        let result = changelog::table
-            .select(diesel::dsl::max(changelog::cursor))
+        let result = changelog_with_links::table
+            .select(diesel::dsl::max(changelog_with_links::cursor))
             .first::<Option<i64>>(self.connection.lock().connection())?;
         Ok(result.unwrap_or(0) as u64)
     }
 
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(changelog::table)
+        diesel::insert_into(changelog_with_links::table)
             .values(row)
             .execute(self.connection.lock().connection())?;
         self.connection
@@ -342,7 +364,7 @@ impl<'a> ChangelogRepository<'a> {
 
     pub fn batch_insert(&self, rows: Vec<ChangeLogInsertRow>) -> Result<(), RepositoryError> {
         //TODO: Need to handle batch insert size limit
-        diesel::insert_into(changelog::table)
+        diesel::insert_into(changelog_with_links::table)
             .values(rows)
             .execute(self.connection.lock().connection())?;
         self.connection

@@ -3,11 +3,7 @@ use serde::Serialize;
 use crate::sync::CentralServerConfig;
 
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
-use repository::{
-    ChangelogRow, ChangelogTableName, StorageConnection,
-    Row,
-
-};
+use repository::{ChangelogRow, ChangelogTableName, Row, StorageConnection};
 
 /*
     This translator is only used to push Encounter rows to the legacy mSupply server.
@@ -99,7 +95,11 @@ impl SyncTranslation for EncounterLegacyTranslation {
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(PushTranslateResult::upsert(changelog, LEGACY_ENCOUNTER_TABLE_NAME, json_record))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            LEGACY_ENCOUNTER_TABLE_NAME,
+            json_record,
+        ))
     }
 }
 
@@ -110,11 +110,9 @@ mod tests {
     use repository::db_diesel::encounter_row::EncounterRowRepository;
     use repository::mock::{
         mock_encounter_a, mock_immunisation_program_enrolment_a, mock_store_a, mock_user_account_a,
-    
     };
     use repository::{
         encounter_row::EncounterRow, mock::MockDataInserts, test_db::setup_all, ChangelogRepository,
-    
     };
 
     #[actix_rt::test]
@@ -146,7 +144,14 @@ mod tests {
             .upsert_one(&encounter_row)
             .unwrap();
 
-        let entry = ChangelogRepository::new(&connection).query_with_data(repository::ChangelogCondition::True(), repository::CursorAndLimit { cursor: cursor as i64, limit: 100 })
+        let entry = ChangelogRepository::new(&connection)
+            .query_with_data(
+                repository::ChangelogCondition::True(),
+                repository::CursorAndLimit {
+                    cursor: cursor as i64,
+                    limit: 100,
+                },
+            )
             .unwrap()
             .rows
             .pop()

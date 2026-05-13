@@ -279,7 +279,7 @@ async fn migration_stock_volume() {
     )
     .unwrap();
 
-    migrate(&connection, Some(version.clone())).unwrap();
+    migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
 
     let stock_lines = stock_line::table
         .select((

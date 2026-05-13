@@ -1,4 +1,4 @@
-use crate::subscription::{SubscriptionTrigger, SubscriptionTriggerHandle};
+use crate::subscription::{SubscriptionTrigger, SubscriptionTriggerHandle, SyncLogRow};
 use log::{debug, error, info};
 use repository::{
     RepositoryError, StorageConnection, SyncApiErrorCode, SyncLogV5V6Row, SyncLogV5V6RowRepository,
@@ -100,9 +100,9 @@ impl<'a> SyncLogger<'a> {
     fn update(&self) -> Result<(), SyncLoggerError> {
         self.sync_log_repo.upsert_one(&self.row)?;
         if let Some(handle) = &self.subscription_trigger {
-            handle.send(SubscriptionTrigger::SyncStatus(
-                crate::subscription::SyncLogRow::V5V6(self.row.clone()),
-            ));
+            handle.send(SubscriptionTrigger::SyncStatus(SyncLogRow::V5V6(
+                self.row.clone(),
+            )));
         }
         Ok(())
     }
