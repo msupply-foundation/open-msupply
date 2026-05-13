@@ -12,6 +12,7 @@ mod alter_sqlite_changelog_table_for_syncv7;
 mod alter_sync_buffer_for_sync_v7;
 mod create_changelog_indexes;
 mod create_site_table;
+mod migrate_user_permission_to_deterministic_id;
 mod partition_changelog_by_cursor;
 mod populate_changelog_with_rows_for_sync_v7_tables;
 mod populate_sync_version;
@@ -42,6 +43,9 @@ impl Migration for V3_00_00 {
             Box::new(create_site_table::Migrate),
             Box::new(add_site_sync_version::Migrate),
             Box::new(rebuild_sync_buffer::Migrate),
+            // Must precede `populate_changelog_with_rows_for_sync_v7_tables` so
+            // the backfilled changelog rows reference the new deterministic ids.
+            Box::new(migrate_user_permission_to_deterministic_id::Migrate),
             Box::new(alter_sqlite_changelog_table_for_syncv7::Migrate),
             Box::new(partition_changelog_by_cursor::Migrate),
             Box::new(populate_changelog_with_rows_for_sync_v7_tables::Migrate),
