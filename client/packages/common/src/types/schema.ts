@@ -10021,8 +10021,7 @@ export type SyncSettingsInput = {
 
 export type SyncSettingsNode = {
   __typename: 'SyncSettingsNode';
-  /** Currently OG Central Server ID */
-  centralServerSiteId?: Maybe<Scalars['Int']['output']>;
+  centralServerSiteId: Scalars['Int']['output'];
   /** How frequently central data is synced */
   intervalSeconds: Scalars['Int']['output'];
   syncSiteId?: Maybe<Scalars['Int']['output']>;
