@@ -240,7 +240,7 @@ impl SyncStatusTrait for SyncStatusService {}
 fn get_initialisation_status(
     ctx: &ServiceContext,
 ) -> Result<InitialisationStatus, RepositoryError> {
-    // Standalone central never syncs, so can't tell initialisation from sync logs.
+    // Standalone central never syncs upstream, so can't tell initialisation from sync logs.
     if KeyValueStoreRepository::new(&ctx.connection)
         .get_bool(KeyType::IsStandaloneCentral)?
         .unwrap_or(false)
