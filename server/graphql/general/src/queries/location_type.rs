@@ -61,6 +61,7 @@ pub fn location_types(
         &ResourceAccessRequest {
             resource: Resource::QueryItems,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

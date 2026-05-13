@@ -77,6 +77,7 @@ pub fn clinicians(
         &ResourceAccessRequest {
             resource: Resource::QueryClinician,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

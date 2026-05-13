@@ -28,6 +28,7 @@ pub fn update_asset(
         &ResourceAccessRequest {
             resource: Resource::EditAsset,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

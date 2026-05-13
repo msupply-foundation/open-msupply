@@ -26,6 +26,7 @@ pub fn program_events(
         &ResourceAccessRequest {
             resource: Resource::QueryProgram,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();
@@ -72,6 +73,7 @@ pub fn active_program_events(
         &ResourceAccessRequest {
             resource: Resource::QueryProgram,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();

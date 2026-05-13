@@ -25,6 +25,7 @@ pub fn update_demographic_projection(
         &ResourceAccessRequest {
             resource: Resource::MutateDemographic,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();

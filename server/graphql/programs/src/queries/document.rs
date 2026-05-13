@@ -78,6 +78,7 @@ pub fn document(ctx: &Context<'_>, store_id: String, name: String) -> Result<Opt
         &ResourceAccessRequest {
             resource: Resource::QueryDocument,
             store_id: Some(store_id),
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();
@@ -108,6 +109,7 @@ pub fn documents(
         &ResourceAccessRequest {
             resource: Resource::QueryDocument,
             store_id: Some(store_id),
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();

@@ -135,6 +135,7 @@ pub fn invoice_lines(
         &ResourceAccessRequest {
             resource: Resource::QueryStocktake,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -186,6 +187,7 @@ pub fn draft_outbound_lines(
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

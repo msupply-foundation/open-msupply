@@ -45,6 +45,7 @@ pub fn update_other_party(
         &ResourceAccessRequest {
             resource: Resource::MutateSupplierReturn,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

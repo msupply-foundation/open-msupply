@@ -958,6 +958,8 @@ pub struct ResourceAccessRequest {
     pub resource: Resource,
     /// The store id if specified
     pub store_id: Option<String>,
+    /// For endpoints that configure central data in mixed configurations.
+    pub require_central_standalone: bool,
 }
 
 fn validate_resource_permissions(
@@ -1218,6 +1220,7 @@ mod validate_resource_permissions_test {
         let resource_request = ResourceAccessRequest {
             resource: Resource::MutateLocation,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         };
         let required_permissions = PermissionDSL::HasPermission(PermissionType::ServerAdmin);
 
@@ -1509,6 +1512,7 @@ mod permission_validation_test {
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: None,
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1531,6 +1535,7 @@ mod permission_validation_test {
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: None,
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1554,6 +1559,7 @@ mod permission_validation_test {
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: Some("store_a".to_string()),
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1577,6 +1583,7 @@ mod permission_validation_test {
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: Some("store_b".to_string()),
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1591,6 +1598,7 @@ mod permission_validation_test {
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: Some("store_a".to_string()),
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1691,7 +1699,8 @@ mod permission_validation_test {
                 &None,
                 &ResourceAccessRequest {
                     resource: Resource::MutateRequisition,
-                    store_id: Some(store().id)
+                    store_id: Some(store().id),
+                    require_central_standalone: false,
                 }
             )
             .is_ok());
@@ -1713,7 +1722,8 @@ mod permission_validation_test {
                 &None,
                 &ResourceAccessRequest {
                     resource: Resource::MutateRequisition,
-                    store_id: Some(store().id)
+                    store_id: Some(store().id),
+                    require_central_standalone: false,
                 }
             )
             .is_err());

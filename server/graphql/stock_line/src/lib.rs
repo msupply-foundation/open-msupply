@@ -111,6 +111,7 @@ impl StockLineQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryStockLine,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
 
@@ -154,6 +155,7 @@ impl StockLineQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryStockLine,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
 

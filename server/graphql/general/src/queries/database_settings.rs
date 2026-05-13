@@ -29,6 +29,7 @@ pub(crate) fn database_settings(ctx: &Context<'_>) -> Result<DatabaseSettingsNod
         &ResourceAccessRequest {
             resource: Resource::ServerAdmin,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

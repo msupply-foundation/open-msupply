@@ -40,6 +40,7 @@ pub fn generate_customer_return_lines(
         &ResourceAccessRequest {
             resource: Resource::MutateCustomerReturn,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

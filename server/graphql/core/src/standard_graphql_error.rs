@@ -4,6 +4,7 @@ use async_graphql::{Context, ErrorExtensions, Result};
 use repository::RepositoryError;
 use service::{
     auth::{AuthDeniedKind, AuthError, ResourceAccessRequest, ValidatedUser},
+    sync::CentralServerConfig,
     ListError,
 };
 use thiserror::Error;
@@ -76,6 +77,13 @@ pub fn validate_auth(
     ctx: &Context<'_>,
     access_request: &ResourceAccessRequest,
 ) -> Result<ValidatedUser> {
+    if access_request.require_central_standalone && !CentralServerConfig::is_standalone_central() {
+        return Err(StandardGraphqlError::Forbidden(
+            "Only available on standalone central servers".to_string(),
+        )
+        .extend());
+    }
+
     let service_provider = ctx.service_provider();
     let service_ctx = service_provider.basic_context()?;
 
