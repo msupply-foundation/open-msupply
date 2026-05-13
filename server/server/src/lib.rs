@@ -31,7 +31,8 @@ use log::info;
 use repository::{
     get_storage_connection_manager,
     migrations::{migrate, MigrationConfig},
-    system_log_row::SystemLogType, StorageConnection,
+    system_log_row::SystemLogType,
+    StorageConnection,
 };
 
 use scheduled_tasks::spawn_scheduled_task_runner;
@@ -378,7 +379,10 @@ pub async fn start_server(
                 .clone()
                 .filter(|s| !s.is_empty()),
         ) {
-            match get_initialisation_status(&service_provider, &service_context) {
+            match service_provider
+                .sync_status_service
+                .get_initialisation_status(&service_context)
+            {
                 Ok(InitialisationStatus::PreInitialisation) => {
                     match service_provider.standalone_central_service.initialise(
                         &service_context,
