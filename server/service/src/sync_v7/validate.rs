@@ -72,12 +72,12 @@ pub(crate) fn validate_on_remote(
 pub(crate) fn validate_on_central(
     sync_buffer_row: &SyncBufferRow,
     table_name: &ChangelogTableName,
-    source_site_store_ids: &[String],
+    source_site_active_store_ids: &[String],
 ) -> Result<(), ValidationError> {
     let (sync_styles, _) = table_name.sync_style();
     let mut last_err = ValidationError::UnexpectedSyncStyleForV7;
 
-    let store_active_on_source = |id: &String| source_site_store_ids.iter().any(|s| s == id);
+    let store_active_on_source = |id: &String| source_site_active_store_ids.iter().any(|s| s == id);
 
     for style in sync_styles {
         match style {
