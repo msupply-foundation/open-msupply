@@ -63,7 +63,7 @@ impl SyncTranslation for UserStorePermissionTranslation {
         // There should only be one join per user and store, so we just match on the user and store ids rather than relying on the PK.
         // If it doesn't exist just upsert a new one using the PK from OG Central.
         let user_store_join_row = UserStoreJoinRowRepository::new(connection)
-            .find_one_by_user_and_store(&user_id, &store_id)?
+            .find_one_by_id(&id)?
             .map_or_else(
                 || UserStoreJoinRow {
                     id,
