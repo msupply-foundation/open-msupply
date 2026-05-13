@@ -1,6 +1,6 @@
 use crate::{
-    migrations::{sql, MigrationConfig, MigrationFragment},
-    ChangelogRepository, StorageConnection,
+    migrations::{helpers::max_sequence, sql, MigrationConfig, MigrationFragment},
+    StorageConnection,
 };
 
 pub(crate) struct Migrate;
@@ -22,7 +22,7 @@ impl MigrationFragment for Migrate {
             return Ok(());
         }
 
-        let max_cursor = ChangelogRepository::new(connection).max_cursor()? as i64;
+        let max_cursor = max_sequence(connection)?;
         let partition_size = config.changelog_partition.partition_size;
         let lookahead = config.changelog_partition.lookahead_partitions;
 

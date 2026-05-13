@@ -1,5 +1,6 @@
 use crate::{
-    migrations::ChangelogPartitionConfig, ChangelogRepository, RepositoryError, StorageConnection,
+    migrations::{helpers::max_sequence, ChangelogPartitionConfig},
+    RepositoryError, StorageConnection,
 };
 use diesel::{prelude::*, sql_types::Text};
 
@@ -25,7 +26,7 @@ pub fn ensure_partition_lookahead(
         return Ok(0);
     }
 
-    let current_max = ChangelogRepository::new(connection).max_cursor()? as i64;
+    let current_max = max_sequence(connection)?;
 
     let size = config.partition_size;
     let lookahead = config.lookahead_partitions;
@@ -174,6 +175,10 @@ mod tests {
         )
         .execute(connection.lock().connection())
         .unwrap();
+        // Align sequence with the explicit cursors.
+        diesel::sql_query("SELECT setval('changelog_cursor_seq', 4)")
+            .execute(connection.lock().connection())
+            .unwrap();
 
         let config = ChangelogPartitionConfig {
             partition_size: 2,
@@ -239,6 +244,9 @@ mod tests {
         )
         .execute(connection.lock().connection())
         .unwrap();
+        diesel::sql_query("SELECT setval('changelog_cursor_seq', 2)")
+            .execute(connection.lock().connection())
+            .unwrap();
 
         let config = ChangelogPartitionConfig {
             partition_size: 2,
@@ -250,9 +258,8 @@ mod tests {
         assert_eq!(count_partitions(&connection), 4);
     }
 
-    /// Drop changelog's existing partitions (and their rows) and recreate just
-    /// two small ones [1,3), [3,5). Used to put the table into a known tight
-    /// state so the headroom math is easy to verify.
+    /// Drop existing partitions, recreate two small ones [1,3), [3,5), and
+    /// reset the sequence so `max_sequence` matches the empty changelog.
     fn reset_to_tight_partition_layout(connection: &StorageConnection) {
         diesel::sql_query(
             r#"
@@ -282,6 +289,10 @@ mod tests {
         )
         .execute(connection.lock().connection())
         .unwrap();
+
+        diesel::sql_query("SELECT setval('changelog_cursor_seq', 1, false)")
+            .execute(connection.lock().connection())
+            .unwrap();
     }
 
     fn count_partitions(connection: &StorageConnection) -> i64 {

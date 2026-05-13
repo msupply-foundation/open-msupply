@@ -1,9 +1,24 @@
-use diesel::prelude::*;
+use diesel::{prelude::*, sql_types::BigInt};
 
 use crate::{
     db_diesel::changelog::changelog::changelog as changelog_table, ChangelogRepository,
-    StorageConnection,
+    RepositoryError, StorageConnection,
 };
+
+/// Highest allocated changelog cursor, read from the sequence so it includes
+/// values handed out by uncommitted `nextval` calls. Postgres-only.
+pub(crate) fn max_sequence(connection: &StorageConnection) -> Result<i64, RepositoryError> {
+    #[derive(QueryableByName)]
+    struct Bigint {
+        #[diesel(sql_type = BigInt)]
+        value: i64,
+    }
+    let row: Bigint = diesel::sql_query(
+        "SELECT COALESCE(pg_sequence_last_value('changelog_cursor_seq'), 0) AS value",
+    )
+    .get_result(connection.lock().connection())?;
+    Ok(row.value)
+}
 
 /// For testing, it returns the change_log cursors as if the changelog would have been updated.
 pub(crate) fn run_without_change_log_updates<
