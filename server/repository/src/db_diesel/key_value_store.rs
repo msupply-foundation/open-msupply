@@ -50,6 +50,7 @@ pub enum KeyType {
     SettingsSyncSiteUuid,
     SettingsSyncIsDisabled,
     SettingsSyncV7Token,
+    SettingsSyncVersion,
     SettingsTokenSecret,
 
     DatabaseVersion,

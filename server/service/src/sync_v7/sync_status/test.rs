@@ -1,13 +1,13 @@
 use crate::{
     sync::settings::SyncSettings,
-    sync::sync_status::status::InitialisationStatus,
+    sync::sync_status::status::{FullSyncStatus, InitialisationStatus},
     test_helpers::{setup_all_and_service_provider, ServiceTestContext},
 };
 use chrono::Utc;
 use repository::{
     mock::{insert_extra_mock_data, MockData, MockDataInserts},
     syncv7::SyncError,
-    SyncLogV7Row,
+    SyncLogV7Row, SyncVersion,
 };
 use util::assert_matches;
 
@@ -20,15 +20,19 @@ async fn sync_status_v7() {
         ..
     } = setup_all_and_service_provider("sync_status_v7", MockDataInserts::none()).await;
 
-    let service = &service_provider.sync_status_v7_service;
+    let service = &service_provider.sync_status_service;
+
+    // Force this site onto v7 so the unified status helpers route through
+    // sync_log_v7. Without this they'd default to V5V6 and ignore v7 rows.
+    SyncVersion::set(&connection, SyncVersion::V7).unwrap();
 
     // Empty table
     assert_eq!(
-        service.get_initialisation_status_v7(&service_context),
+        service.get_initialisation_status(&service_context),
         Ok(InitialisationStatus::PreInitialisation)
     );
     assert!(service
-        .get_latest_sync_status_v7(&service_context)
+        .get_latest_sync_status(&service_context)
         .unwrap()
         .is_none());
 
@@ -46,13 +50,14 @@ async fn sync_status_v7() {
     );
 
     let status = service
-        .get_latest_sync_status_v7(&service_context)
+        .get_latest_sync_status(&service_context)
         .unwrap()
         .unwrap();
-    assert!(status.is_syncing);
+    assert_matches!(&status, FullSyncStatus::V7(_));
+    assert!(status.is_syncing());
     assert_eq!(
-        service.get_initialisation_status_v7(&service_context),
-        Ok(InitialisationStatus::PreInitialisation)
+        service.get_initialisation_status(&service_context),
+        Ok(InitialisationStatus::Initialising)
     );
 
     // Sync finished with error — not initialised
@@ -74,17 +79,20 @@ async fn sync_status_v7() {
     );
 
     let status = service
-        .get_latest_sync_status_v7(&service_context)
+        .get_latest_sync_status(&service_context)
         .unwrap()
         .unwrap();
-    assert!(!status.is_syncing);
-    assert!(status.error.is_some());
+    assert!(!status.is_syncing());
+    let FullSyncStatus::V7(v7) = &status else {
+        panic!("expected V7 variant");
+    };
+    assert!(v7.error.is_some());
     assert_eq!(
-        service.get_initialisation_status_v7(&service_context),
-        Ok(InitialisationStatus::PreInitialisation)
+        service.get_initialisation_status(&service_context),
+        Ok(InitialisationStatus::Initialising)
     );
     assert!(service
-        .get_latest_successful_sync_status_v7(&service_context)
+        .get_latest_successful_sync_status(&service_context)
         .unwrap()
         .is_none());
 
@@ -116,11 +124,11 @@ async fn sync_status_v7() {
         .unwrap();
 
     assert_matches!(
-        service.get_initialisation_status_v7(&service_context),
+        service.get_initialisation_status(&service_context),
         Ok(InitialisationStatus::Initialised(_))
     );
     assert!(service
-        .get_latest_successful_sync_status_v7(&service_context)
+        .get_latest_successful_sync_status(&service_context)
         .unwrap()
         .is_some());
 }

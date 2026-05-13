@@ -654,7 +654,7 @@ impl AssetRow {
 // ==========================================================================
 // Built from &self — patient-scoped
 // --------------------------------------------------------------------------
-// Patient-scoped records use patient_id so the changelog can
+// Patient-scoped records use patient_link_id so the changelog can
 // be filtered/sharded per patient.
 // ==========================================================================
 

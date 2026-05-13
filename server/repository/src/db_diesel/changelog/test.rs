@@ -1,4 +1,4 @@
-use super::changelog::changelog;
+use super::changelog::changelog_with_links;
 use diesel::prelude::*;
 
 use crate::{
@@ -19,7 +19,9 @@ use crate::{
 };
 
 fn delete_all_changelog(connection: &StorageConnection) {
-    diesel::delete(changelog::table)
+    // Delete via the underlying table — `changelog::table` now resolves to the
+    // changelog_view, which is read-only.
+    diesel::delete(changelog_with_links::table)
         .execute(connection.lock().connection())
         .unwrap();
 }
@@ -28,6 +30,7 @@ fn query_all(connection: &StorageConnection, cursor: i64, limit: i64) -> Vec<Cha
     ChangelogRepository::new(connection)
         .query(ChangelogCondition::True(), CursorAndLimit { cursor, limit })
         .unwrap()
+        .rows
 }
 
 #[actix_rt::test]
@@ -166,13 +169,11 @@ async fn test_changelog_iteration() {
 
 #[actix_rt::test]
 async fn test_changelog_filter() {
-    // changelog repository gets changelog.name_id from the related name_link
-    // name_link.name_id so we need to add names and name_links into the DB.
     let (_, connection, _, _) =
-        setup_all("test_changelog_filter", MockDataInserts::none().names()).await;
+        setup_all("test_changelog_filter", MockDataInserts::none()).await;
 
-    // But remove any names and name_links from change log so
-    // the cursors below don't conflict.
+    // Clear any changelog rows the migration sequence inserted, so the
+    // hard-coded cursors below don't conflict.
     delete_all_changelog(&connection);
 
     let log1 = ChangelogRow {
@@ -180,7 +181,6 @@ async fn test_changelog_filter() {
         table_name: ChangelogTableName::Invoice,
         record_id: "invoice1".to_string(),
         row_action: RowActionType::Upsert,
-        name_id: Some("name1".to_string()),
         store_id: Some("store1".to_string()),
         is_sync_update: false,
         source_site_id: None,
@@ -192,7 +192,6 @@ async fn test_changelog_filter() {
         table_name: ChangelogTableName::Requisition,
         record_id: "requisition1".to_string(),
         row_action: RowActionType::Upsert,
-        name_id: Some("name2".to_string()),
         store_id: Some("store2".to_string()),
         is_sync_update: false,
         source_site_id: None,
@@ -204,7 +203,6 @@ async fn test_changelog_filter() {
         table_name: ChangelogTableName::Invoice,
         record_id: "invoice2".to_string(),
         row_action: RowActionType::Upsert,
-        name_id: Some("name3".to_string()),
         store_id: Some("store3".to_string()),
         is_sync_update: false,
         source_site_id: None,
@@ -216,16 +214,38 @@ async fn test_changelog_filter() {
         table_name: ChangelogTableName::StocktakeLine,
         record_id: "stocktake_line1".to_string(),
         row_action: RowActionType::Upsert,
-        name_id: None,
         store_id: None,
         is_sync_update: false,
         source_site_id: None,
         ..Default::default()
     };
 
+    // Insert via the underlying table — `changelog::table` is the view
+    // (read-only). A small test-only Insertable lets us set an explicit cursor
+    // per row so the assertions below can compare against the `log{N}` fixtures.
+    #[derive(Insertable)]
+    #[diesel(table_name = changelog_with_links)]
+    struct TestChangelogInsert<'a> {
+        cursor: i64,
+        table_name: &'a ChangelogTableName,
+        record_id: &'a str,
+        row_action: &'a RowActionType,
+        store_id: Option<&'a str>,
+        is_sync_update: bool,
+        source_site_id: Option<i32>,
+    }
+
     for log in [&log1, &log2, &log3, &log4] {
-        diesel::insert_into(changelog::table)
-            .values(log)
+        diesel::insert_into(changelog_with_links::table)
+            .values(&TestChangelogInsert {
+                cursor: log.cursor,
+                table_name: &log.table_name,
+                record_id: &log.record_id,
+                row_action: &log.row_action,
+                store_id: log.store_id.as_deref(),
+                is_sync_update: log.is_sync_update,
+                source_site_id: log.source_site_id,
+            })
             .execute(connection.lock().connection())
             .unwrap();
     }
@@ -240,7 +260,8 @@ async fn test_changelog_filter() {
                     limit: 20
                 },
             )
-            .unwrap(),
+            .unwrap()
+            .rows,
         vec![log2.clone()]
     );
 
@@ -257,7 +278,8 @@ async fn test_changelog_filter() {
                     limit: 20
                 },
             )
-            .unwrap(),
+            .unwrap()
+            .rows,
         vec![log1.clone(), log3.clone(), log4.clone()]
     );
 
@@ -271,7 +293,8 @@ async fn test_changelog_filter() {
                     limit: 20
                 },
             )
-            .unwrap(),
+            .unwrap()
+            .rows,
         vec![log1.clone(), log2.clone()]
     );
 }
@@ -312,6 +335,7 @@ fn test_changelog_name_and_store_id<T, F>(
             },
         )
         .unwrap()
+        .rows
         .into_iter()
         .filter(|c| c.record_id == record.record_id)
         .collect::<Vec<_>>();
@@ -654,7 +678,8 @@ async fn test_changelog_outgoing_sync_records() {
                 limit: 10,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 0); // Nothing to send to the remote site yet...
 
     // Insert an asset_class variant (which should trigger a changelog record for Central Sync)
@@ -675,7 +700,8 @@ async fn test_changelog_outgoing_sync_records() {
                 limit: 1000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     // outgoing_results should contain the changelog record for the asset class
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
@@ -709,7 +735,8 @@ async fn test_changelog_outgoing_sync_records() {
                 limit: 1000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 2);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
     assert_eq!(outgoing_results[1].record_id, asset_id);
@@ -723,7 +750,8 @@ async fn test_changelog_outgoing_sync_records() {
                 limit: 1000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
 
@@ -736,7 +764,8 @@ async fn test_changelog_outgoing_sync_records() {
                 limit: 1000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
 
@@ -763,7 +792,8 @@ async fn test_changelog_outgoing_sync_records() {
                 limit: 1000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 2);
     assert_eq!(outgoing_results[1].record_id, req_id);
 
@@ -775,7 +805,8 @@ async fn test_changelog_outgoing_sync_records() {
                 limit: 1000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 2);
     assert_eq!(outgoing_results[1].record_id, req_id);
 }
@@ -819,7 +850,8 @@ async fn test_changelog_outgoing_patient_sync_records() {
                 limit: 1000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, vaccination.id);
 
@@ -835,7 +867,8 @@ async fn test_changelog_outgoing_patient_sync_records() {
                 limit: 1000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, vaccination.id);
 
@@ -852,6 +885,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
                 limit: 1000,
             },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 0);
 }

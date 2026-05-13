@@ -17,7 +17,7 @@ use super::{
 use log::info;
 use repository::{
     ChangelogFilter, ChangelogRepository, CursorAndLimit, KeyType, KeyValueStoreRepository,
-    LegacyDataFilterError, RepositoryError, StorageConnection, SyncBufferRepository,
+    LegacyDataFilterError, QueryWithData, RepositoryError, StorageConnection, SyncBufferRepository,
 };
 
 use thiserror::Error;
@@ -196,20 +196,20 @@ impl RemoteDataSynchroniser {
         loop {
             // TODO inside transaction
             let cursor = cursor_controller.get(connection)?;
-            let rows = changelog_repo.query_with_data(
+            let QueryWithData {
+                rows,
+                last_cursor_in_batch,
+                remaining,
+                ..
+            } = changelog_repo.query_with_data(
                 change_log_filter.clone(),
                 CursorAndLimit {
                     cursor: cursor as i64,
                     limit: batch_size as i64,
                 },
             )?;
-            // Total = remaining records to process based on max cursor
-            let max_cursor = changelog_repo.max_cursor()?;
-            let change_logs_total = max_cursor.saturating_sub(cursor);
 
-            logger.progress(SyncStepProgress::Push, change_logs_total)?;
-
-            let last_pushed_cursor = rows.last().map(|r| r.changelog().cursor);
+            logger.progress(SyncStepProgress::Push, remaining)?;
 
             let records = translate_rows_to_sync_records(
                 connection,
@@ -222,15 +222,12 @@ impl RemoteDataSynchroniser {
 
             let response = self
                 .sync_api_v5
-                .post_queued_records(change_logs_total, records)
+                .post_queued_records(remaining, records)
                 .await?;
 
-            // Update cursor only if record for that cursor has been pushed/processed
-            if let Some(last_pushed_cursor_id) = last_pushed_cursor {
-                cursor_controller.update(connection, last_pushed_cursor_id as u64 + 1)?;
-            };
+            cursor_controller.update(connection, last_cursor_in_batch)?;
 
-            match (response.integration_started, change_logs_total) {
+            match (response.integration_started, remaining) {
                 (true, 0) => break,
                 (false, 0) => return Err(RemotePushError::IntegrationNotStarted),
                 _ => continue,
@@ -250,8 +247,13 @@ impl RemoteDataSynchroniser {
         let poll_period = Duration::from_secs(poll_period_seconds);
         let timeout = Duration::from_secs(timeout_seconds);
         info!("Awaiting central server operation...");
+        let mut first_check = true;
+
         loop {
-            tokio::time::sleep(poll_period).await;
+            if !first_check {
+                tokio::time::sleep(poll_period).await;
+            }
+            first_check = false;
 
             let response = self.sync_api_v5.get_site_status().await?;
 
