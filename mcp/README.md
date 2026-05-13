@@ -4,7 +4,7 @@ A [Model Context Protocol](https://modelcontextprotocol.io) server that exposes 
 
 ## Highlights
 
-- **49 tools** — queries and mutations across stores, stock, invoices, requisitions, stocktakes, locations, purchase orders, names/patients, master lists, and dashboards.
+- **56 tools** — queries and mutations across stores, stock, invoices, requisitions, stocktakes, locations, purchase orders, names/patients, master lists, dashboards, reports, file download, and record documents.
 - **Browser-based first-run auth** — if credentials aren't set via env vars, the server opens a configuration page on `http://localhost:39101` on the first tool call. Values persist in browser `localStorage` across restarts; nothing is written to disk.
 - **Connection test built in** — the browser page calls the mSupply `authToken` mutation before handing credentials to the MCP, so you can't submit invalid creds.
 - **Preset permission modes** — pick `read-only`, `read-write`, or `safe-mutations` (everything except deletes) from the browser form or via `OMSUPPLY_MODE`.
@@ -15,7 +15,7 @@ A [Model Context Protocol](https://modelcontextprotocol.io) server that exposes 
 ## Install & Build
 
 ```bash
-cd mcp-server
+cd mcp
 yarn install
 yarn build
 ```
@@ -35,7 +35,7 @@ Commit this as `.mcp.json` at the repo root — no secrets, no per-machine tweak
   "mcpServers": {
     "open-msupply": {
       "command": "node",
-      "args": ["mcp-server/dist/index.js"]
+      "args": ["mcp/dist/index.js"]
     }
   }
 }
@@ -56,7 +56,7 @@ Set any subset of env vars. Anything set via env takes precedence over the brows
   "mcpServers": {
     "open-msupply": {
       "command": "node",
-      "args": ["mcp-server/dist/index.js"],
+      "args": ["mcp/dist/index.js"],
       "env": {
         "OMSUPPLY_URL": "http://localhost:8000",
         "OMSUPPLY_USERNAME": "admin",
@@ -84,6 +84,7 @@ If **all** of `OMSUPPLY_URL`, `OMSUPPLY_USERNAME`, and `OMSUPPLY_PASSWORD` are s
 | `OMSUPPLY_ALLOWED_CATEGORIES` | No | Comma-separated category allowlist. |
 | `OMSUPPLY_DISABLED_TOOLS` | No | Comma-separated per-tool blocklist (e.g. `delete_outbound_shipment,update_stock_line`). |
 | `OMSUPPLY_ENABLED_TOOLS` | No | Comma-separated per-tool allowlist — if set, **only** these tools are enabled. |
+| `OMSUPPLY_DOWNLOAD_DIR` | No | Where `download_file` writes fetched files. Defaults to `<os tmpdir>/open-msupply-mcp`. |
 
 ## Authentication & Session Flow
 
@@ -182,6 +183,19 @@ Permissions are checked **at call time**, not at tool registration. If you chang
 ### Dashboard (1)
 - `get_dashboard_summary` — combined stock + invoice + requisition overview.
 
+### Reports (3)
+- `list_reports` — list available reports for the store; filter by context (e.g. `OUTBOUND_SHIPMENT`, `STOCKTAKE`) or name.
+- `get_report` — fetch a single report's metadata + `argumentSchema` (JSON Schema describing the arguments the report accepts).
+- `generate_report` — run a report; returns a `fileId` to feed into `download_file`. Accepts `dataId` (record id for record-specific reports like an invoice), `format` (`PDF`/`HTML`/`EXCEL`), and report-specific `arguments`.
+
+### Files (1)
+- `download_file` — fetches `GET /files?id=<id>` over HTTP with the auth token and saves the response to disk. Returns the local path. Defaults to `<os tmpdir>/open-msupply-mcp`; override with `OMSUPPLY_DOWNLOAD_DIR`. Uses the server-provided filename (Content-Disposition) when available.
+
+### Documents (3)
+- `list_invoice_documents` — list attachments on an invoice.
+- `list_requisition_documents` — list attachments on a requisition (includes the linked requisition on the other side of a transfer).
+- `list_purchase_order_documents` — list attachments on a purchase order.
+
 ## Common Workflows
 
 ### First-time connect
@@ -217,6 +231,19 @@ Permissions are checked **at call time**, not at tool registration. If you chang
 ```
 1. search_patients                   → pick a patient ID
 2. insert_prescription               → create
+```
+
+### Generate and download a report
+
+```
+1. list_reports (context: STOCKTAKE) → pick a report ID
+2. get_report                        → inspect argumentSchema (optional)
+3. generate_report                   → returns a fileId
+   - reportId: <from step 1>
+   - dataId: <record id, e.g. stocktake id> (omit for non-record reports)
+   - format: PDF | HTML | EXCEL (optional)
+   - arguments: { ... } (matches argumentSchema)
+4. download_file                     → saves to OMSUPPLY_DOWNLOAD_DIR and returns the path
 ```
 
 ## Troubleshooting

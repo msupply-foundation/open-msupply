@@ -21,6 +21,9 @@ import { purchaseOrderMutationTools } from './purchase_orders/mutations.js';
 import { nameQueryTools } from './names/queries.js';
 import { masterListQueryTools } from './master_lists/queries.js';
 import { dashboardQueryTools } from './dashboard/queries.js';
+import { reportQueryTools } from './reports/queries.js';
+import { fileQueryTools } from './files/queries.js';
+import { documentQueryTools } from './documents/queries.js';
 
 export function registerAllTools(
   server: McpServer,
@@ -46,6 +49,9 @@ export function registerAllTools(
     ...nameQueryTools(client),
     ...masterListQueryTools(client),
     ...dashboardQueryTools(client),
+    ...reportQueryTools(client),
+    ...fileQueryTools(client),
+    ...documentQueryTools(client),
   ];
 
   console.error(

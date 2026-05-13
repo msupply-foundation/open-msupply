@@ -36,7 +36,7 @@ export interface McpConfig {
 const ALL_CATEGORIES = [
   'system', 'items', 'stock', 'invoices', 'requisitions',
   'stocktakes', 'locations', 'purchase_orders', 'names',
-  'master_lists', 'dashboard',
+  'master_lists', 'dashboard', 'reports', 'files', 'documents',
 ];
 
 function parseCsv(value: string | undefined): string[] {

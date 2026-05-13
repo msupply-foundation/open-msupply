@@ -250,4 +250,18 @@ export class OmSupplyClient {
     }
     return storeId;
   }
+
+  /** Base server URL (no /graphql suffix). Triggers credential setup if not yet configured. */
+  async getBaseUrl(): Promise<string> {
+    await this.ensureCredentials();
+    return this.config.url!;
+  }
+
+  /** Authenticated bearer token, refreshing if absent. Used by REST endpoints like /files. */
+  async getAuthToken(): Promise<string> {
+    if (!this.token) {
+      await this.authenticate();
+    }
+    return this.token!;
+  }
 }

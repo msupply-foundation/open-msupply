@@ -3,6 +3,11 @@ import { OmSupplyClient } from '../../client.js';
 import { z } from 'zod';
 import { gql } from 'graphql-request';
 import { paginationVars, formatListResult, formatRecord } from '../../types.js';
+import {
+  ListInvoicesDocument,
+  ListInvoicesQuery,
+  ListInvoicesQueryVariables,
+} from '../../generated/sdk.js';
 
 const INVOICE_TYPES = [
   'OUTBOUND_SHIPMENT',
@@ -122,71 +127,32 @@ export function invoiceQueryTools(client: OmSupplyClient): ToolDefinition[] {
         const first = (args.first as number) ?? 25;
         const offset = (args.offset as number) ?? 0;
 
-        const filter: Record<string, unknown> = {};
-        if (args.status) {
-          filter.status = { equalTo: args.status };
-        }
-        if (args.otherPartyName) {
-          filter.otherPartyName = { like: args.otherPartyName };
-        }
-
-        const sort = args.sortBy
-          ? { key: args.sortBy, desc: args.desc ?? false }
-          : undefined;
-
-        const typeArg = args.type ? [args.type] : undefined;
-
-        const query = gql`
-          query listInvoices(
-            $storeId: String!
-            $page: PaginationInput
-            $sort: [InvoiceSortInput!]
-            $filter: InvoiceFilterInput
-            $type: [InvoiceNodeType!]
-          ) {
-            invoices(
-              storeId: $storeId
-              page: $page
-              sort: $sort
-              filter: $filter
-              type: $type
-            ) {
-              ... on InvoiceConnector {
-                totalCount
-                nodes {
-                  id
-                  invoiceNumber
-                  type
-                  status
-                  otherPartyName
-                  createdDatetime
-                  allocatedDatetime
-                  shippedDatetime
-                  deliveredDatetime
-                  comment
-                  theirReference
-                  colour
-                  pricing {
-                    totalAfterTax
-                  }
-                }
-              }
-            }
-          }
-        `;
-
-        const data = await client.query<{
-          invoices: {
-            totalCount: number;
-            nodes: Record<string, unknown>[];
-          };
-        }>(query, {
+        const variables: ListInvoicesQueryVariables = {
           storeId,
           page: paginationVars(first, offset),
-          sort: sort ? [sort] : undefined,
-          filter: Object.keys(filter).length > 0 ? filter : undefined,
-          type: typeArg,
-        });
+          sort: args.sortBy
+            ? [{ key: args.sortBy as never, desc: (args.desc as boolean) ?? false }]
+            : undefined,
+          filter:
+            args.status || args.otherPartyName
+              ? {
+                  ...(args.status ? { status: { equalTo: args.status as never } } : {}),
+                  ...(args.otherPartyName
+                    ? { otherPartyName: { like: args.otherPartyName as string } }
+                    : {}),
+                }
+              : undefined,
+          type: args.type ? [args.type as never] : undefined,
+        };
+
+        const data = await client.query<ListInvoicesQuery>(ListInvoicesDocument, variables as unknown as Record<string, unknown>);
+        const invoices = data.invoices;
+        if (invoices.__typename !== 'InvoiceConnector') {
+          return {
+            content: [{ type: 'text' as const, text: 'Unexpected response from server.' }],
+            isError: true,
+          };
+        }
 
         return {
           content: [
@@ -194,8 +160,8 @@ export function invoiceQueryTools(client: OmSupplyClient): ToolDefinition[] {
               type: 'text' as const,
               text: formatListResult(
                 'invoices',
-                data.invoices.nodes,
-                data.invoices.totalCount,
+                invoices.nodes as unknown as Record<string, unknown>[],
+                invoices.totalCount,
                 first,
                 offset
               ),
