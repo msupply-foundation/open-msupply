@@ -1,7 +1,8 @@
 use log::{error, info};
-use repository::RepositoryError;
+use repository::{KeyType, KeyValueStoreRepository, RepositoryError};
 use thiserror::Error;
 use url::Url;
+use util::format_error;
 
 use crate::{
     apis::{
@@ -17,9 +18,27 @@ use crate::{
         settings::{SyncSettings, SYNC_V5_VERSION},
         ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
     },
+    sync_v7::{api::SyncApiV7, patient_lookup::pull_and_integrate_patient_data},
 };
 
-use super::PatientSearch;
+use super::{patient_search_to_filter, PatientSearch};
+
+// TODO: When standalone work done, also check OMS only central.
+fn is_v7_remote(ctx: &ServiceContext) -> Result<bool, RepositoryError> {
+    let token =
+        KeyValueStoreRepository::new(&ctx.connection).get_string(KeyType::SettingsSyncV7Token)?;
+    Ok(token.is_some())
+}
+
+fn map_v7_sync_error(err: repository::syncv7::SyncError) -> CentralPatientRequestError {
+    error!("v7 patient lookup failed: {err}");
+    match err {
+        repository::syncv7::SyncError::ConnectionError { .. } => {
+            CentralPatientRequestError::ConnectionError(format_error(&err))
+        }
+        _ => CentralPatientRequestError::InternalError(format_error(&err)),
+    }
+}
 
 #[derive(Error, Debug)]
 pub enum CentralPatientRequestError {
@@ -32,6 +51,25 @@ pub enum CentralPatientRequestError {
 }
 
 pub async fn patient_search_central(
+    service_provider: &ServiceProvider,
+    ctx: &ServiceContext,
+    params: PatientSearch,
+) -> Result<Vec<PatientV4>, CentralPatientRequestError> {
+    let sync_settings = service_provider
+        .settings
+        .sync_settings(ctx)?
+        .ok_or_else(|| {
+            CentralPatientRequestError::InternalError("Missing sync settings".to_string())
+        })?;
+
+    if is_v7_remote(ctx)? {
+        return patient_search_central_v7(service_provider, &sync_settings, params).await;
+    }
+
+    patient_search_central_v4(&sync_settings, params).await
+}
+
+async fn patient_search_central_v4(
     sync_settings: &SyncSettings,
     params: PatientSearch,
 ) -> Result<Vec<PatientV4>, CentralPatientRequestError> {
@@ -74,6 +112,18 @@ pub async fn patient_search_central(
     Ok(patients)
 }
 
+async fn patient_search_central_v7(
+    service_provider: &ServiceProvider,
+    sync_settings: &SyncSettings,
+    params: PatientSearch,
+) -> Result<Vec<PatientV4>, CentralPatientRequestError> {
+    let api = SyncApiV7::new(service_provider, &sync_settings.url).map_err(map_v7_sync_error)?;
+
+    api.patient_search(patient_search_to_filter(params))
+        .await
+        .map_err(map_v7_sync_error)
+}
+
 #[derive(Clone, Debug)]
 pub struct NameStoreJoin {
     pub id: String,
@@ -88,6 +138,10 @@ pub async fn link_patient_to_store(
     store_id: &str,
     name_id: &str,
 ) -> Result<NameStoreJoin, CentralPatientRequestError> {
+    if is_v7_remote(context)? {
+        return link_patient_to_store_v7(service_provider, store_id, name_id).await;
+    }
+
     let sync_settings = service_provider.settings.sync_settings(context)?.ok_or(
         CentralPatientRequestError::InternalError("Missing sync settings".to_string()),
     )?;
@@ -126,6 +180,25 @@ pub async fn link_patient_to_store(
     link_patient_to_store_v6(service_provider, &sync_settings, &result).await?;
 
     Ok(result)
+}
+
+async fn link_patient_to_store_v7(
+    service_provider: &ServiceProvider,
+    store_id: &str,
+    name_id: &str,
+) -> Result<NameStoreJoin, CentralPatientRequestError> {
+    let id = util::uuid::uuid();
+
+    // If nsj exists, then generated id is discarded.
+    let nsj_id = pull_and_integrate_patient_data(service_provider, name_id, store_id, &id)
+        .await
+        .map_err(map_v7_sync_error)?;
+
+    Ok(NameStoreJoin {
+        id: nsj_id,
+        name_id: name_id.to_string(),
+        store_id: store_id.to_string(),
+    })
 }
 
 /// Creates a name_store_join for the patient on Open mSupply Central Server
@@ -224,7 +297,7 @@ pub async fn add_patient_to_oms_central(
     info!("Created name_store_join for patient {name_id} and central store {central_store_id}");
 
     // TODO: possibly should check is not pre-initialisation here?
-    service_provider.sync_trigger.trigger(None);
+    service_provider.sync_trigger.trigger();
     info!("Sync cycle triggered to receive patient records");
 
     Ok(())

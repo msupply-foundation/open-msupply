@@ -119,7 +119,7 @@ impl RequisitionRow {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
-            transfer_store_id: transfer_store_id_for_name(con, &row.name_id)?,
+            transfer_store_id: row.name_store_id.clone(),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
@@ -654,7 +654,7 @@ impl AssetRow {
 // ==========================================================================
 // Built from &self — patient-scoped
 // --------------------------------------------------------------------------
-// Patient-scoped records use patient_id so the changelog can
+// Patient-scoped records use patient_link_id so the changelog can
 // be filtered/sharded per patient.
 // ==========================================================================
 
@@ -669,6 +669,7 @@ impl VaccinationRow {
             table_name: ChangelogTableName::Vaccination,
             record_id: self.id.clone(),
             row_action: action,
+            store_id: Some(self.store_id.clone()),
             patient_id: Some(self.patient_id.clone()),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
@@ -1200,15 +1201,25 @@ impl SystemLogRow {
 
 impl SyncMessageRow {
     pub(crate) fn generate_changelog(
-        record_id: String,
+        row_or_id: RowOrId<SyncMessageRow>,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = match row_or_id {
+            RowOrId::Row(row) => row,
+            RowOrId::Id(row_id) => &SyncMessageRowRepository::new(con)
+                .find_one_by_id(row_id)?
+                .ok_or(RepositoryError::NotFound)?,
+        };
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::SyncMessage,
-            record_id,
+            record_id: row.id.clone(),
             row_action: action,
+            // Hybrid Remote+Central routing: when `to_store_id` is set the
+            // row routes to the owning site only (Remote); when it's None it
+            // fans out to every site (Central).
+            store_id: row.to_store_id.clone(),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })

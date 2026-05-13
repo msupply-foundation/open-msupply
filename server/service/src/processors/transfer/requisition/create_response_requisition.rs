@@ -256,6 +256,7 @@ fn generate_response_requisition(
         id: uuid(),
         requisition_number,
         name_id: store_name.id,
+        name_store_id: Some(record_for_processing.requisition.store_row.id.clone()),
         store_id,
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,

@@ -14,12 +14,18 @@ use thiserror::Error;
 use util::format_error;
 
 use crate::{
+    apis::patient_v4::PatientV4,
+    programs::patient::patient_updated::create_patient_name_store_join,
     service_provider::{ServiceContext, ServiceProvider},
-    sync::{ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError},
+    sync::{
+        api::{SyncApiSettings, SyncApiV5},
+        settings::SYNC_V5_VERSION,
+        ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
+    },
     sync_v7::{
         api::{
             get_token::{GetTokenInput, GetTokenOutput},
-            pull, push,
+            patient_data_for_site, patient_search, pull, push,
             status::{self},
             Common,
         },
@@ -27,9 +33,23 @@ use crate::{
         validate_translate_integrate::{validate_translate_integrate, SyncContext},
     },
 };
+use repository::{
+    migrations::Version,
+    syncv7::{SiteLockError, SyncError},
+    ChangelogCondition, ChangelogFilter, EqualFilter, FilterBuilder, KeyType,
+    KeyValueStoreRepository, Pagination, RepositoryError, SiteFilter, SiteRepository, SiteRow,
+    SiteRowRepository, SourceSiteId, StorageConnection, StringFilter, SyncBufferRepository,
+    SyncVersion,
+};
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
+use thiserror::Error;
+use util::format_error;
 
 /// TODO: revisit token format
-pub fn get_token(
+pub async fn get_token(
     service_provider: &ServiceProvider,
     input: GetTokenInput,
 ) -> Result<GetTokenOutput, SyncError> {
@@ -49,17 +69,26 @@ pub fn get_token(
         .basic_context()
         .map_err(|e| SyncError::Other(e.to_string()))?;
 
+    // Authenticate first so a wrong-password caller never triggers a legacy
+    // server roundtrip via ensure_site_is_v7.
+    let site = get_site_by_name(&ctx.connection, &input.name)?
+        .ok_or(SyncError::InvalidSiteNameOrPassword)?;
+
+    let valid = bcrypt::verify(&input.password_sha256, &site.hashed_password)
+        .map_err(|e| SyncError::Other(e.to_string()))?;
+    if !valid {
+        return Err(SyncError::InvalidSiteNameOrPassword);
+    }
+
+    // Now that the caller is authenticated, gate on sync_version. If still
+    // v5/v6 locally, ask the legacy server: if it reports v7 (or
+    // v7_url_and_upgrade succeeds for a fresh remote), bump the local record
+    // and continue. Otherwise refuse with SiteIsNotV7.
+    let site = ensure_site_is_v7(&ctx.connection, site, &input).await?;
+
+    // Sync tx phase: hardware-id assignment + token allocation.
     ctx.connection
         .transaction_sync(|connection| {
-            let site = get_site_by_name(connection, &input.name)?
-                .ok_or(SyncError::InvalidSiteNameOrPassword)?;
-
-            let valid = bcrypt::verify(&input.password_sha256, &site.hashed_password)
-                .map_err(|e| SyncError::Other(e.to_string()))?;
-            if !valid {
-                return Err(SyncError::InvalidSiteNameOrPassword);
-            }
-
             if site.token.is_some() {
                 return Err(SyncError::TokenAlreadyAllocated);
             }
@@ -80,7 +109,7 @@ pub fn get_token(
             })?;
 
             let central_site_id = SourceSiteId::CurrentSiteId
-                .get_id(&ctx.connection)?
+                .get_id(connection)?
                 .ok_or(SyncError::SiteIdNotSet)?;
 
             Ok(GetTokenOutput {
@@ -90,6 +119,75 @@ pub fn get_token(
             })
         })
         .map_err(|e| e.to_inner_error())
+}
+
+/// If the site already shows v7 locally, returns it unchanged. Otherwise asks
+/// the legacy server: if `site_info` reports v7, or v7_url_and_upgrade succeeds
+/// (covers fresh remotes that haven't had a final v5+v6 sync yet), updates the
+/// local row to v7 and returns it. Returns SiteIsNotV7 only when the legacy
+/// server still says v5/v6 *and* v7_url_and_upgrade refuses.
+async fn ensure_site_is_v7(
+    connection: &StorageConnection,
+    site: SiteRow,
+    input: &GetTokenInput,
+) -> Result<SiteRow, SyncError> {
+    if site.sync_version == SyncVersion::V7 {
+        return Ok(site);
+    }
+
+    let api_v5 = build_v5_api_for_request(connection, input)?;
+
+    let info = api_v5.get_site_info().await.map_err(|error| {
+        if error.is_connection() {
+            SyncError::ConnectionError {
+                url: api_v5.url.to_string(),
+                e: format_error(&error),
+            }
+        } else {
+            SyncError::Other(format_error(&error))
+        }
+    })?;
+
+    // TODO revisit, do we really want to call v7_url_and_upgrade again ?
+    if info.sync_version != SyncVersion::V7 {
+        // Fresh remote that hasn't been transitioned yet on the legacy server.
+        // v7_url_and_upgrade flips sync_version=V7 server-side on success.
+        api_v5
+            .v7_url_and_upgrade()
+            .await
+            .map_err(|error| SyncError::Other(format_error(&error)))?;
+    };
+
+    let updated = SiteRow {
+        sync_version: SyncVersion::V7,
+        ..site
+    };
+    SiteRowRepository::new(connection).upsert(&updated)?;
+    Ok(updated)
+}
+
+/// Build a SyncApiV5 using the requesting site's credentials, the
+/// hardware_id from the request, and the sync URL configured locally on this
+/// OMS-central server (the legacy server's URL).
+fn build_v5_api_for_request(
+    connection: &StorageConnection,
+    input: &GetTokenInput,
+) -> Result<SyncApiV5, SyncError> {
+    let server_url = KeyValueStoreRepository::new(connection)
+        .get_string(KeyType::SettingsSyncUrl)?
+        .ok_or_else(|| SyncError::Other("Key Value Store missing legacy sync URL".to_string()))?;
+
+    let settings = SyncApiSettings {
+        server_url,
+        username: input.name.clone(),
+        password_sha256: input.password_sha256.clone(),
+        site_uuid: input.hardware_id.clone(),
+        app_version: input.version.to_string(),
+        app_name: "Open mSupply Central".to_string(),
+        sync_version: SYNC_V5_VERSION.to_string(),
+    };
+
+    SyncApiV5::new(settings).map_err(|e| SyncError::Other(format_error(&e)))
 }
 
 fn get_site_by_name(
@@ -144,6 +242,13 @@ fn validate(
         _ => return Err(SyncError::HardwareIdMismatch),
     }
 
+    // Defense in depth: any v7 endpoint must refuse a site that has not been
+    // transitioned to v7. Normally `get_token` already flipped this on first
+    // call, but a stale token from a downgraded site would otherwise sneak in.
+    if site.sync_version != SyncVersion::V7 {
+        return Err(SyncError::SiteIsNotV7);
+    }
+
     if let Some(lock) = check_site_lock(site.id) {
         return Err(SyncError::SiteLockError(lock));
     }
@@ -178,9 +283,80 @@ pub async fn pull(
         None => base,
     };
 
-    let batch = SyncBatchV7::generate(&ctx.connection, filter, input.cursor, input.batch_size)?;
+    let batch = SyncBatchV7::generate(
+        &ctx.connection,
+        filter,
+        input.cursor,
+        Some(input.batch_size),
+    )?;
 
     Ok(batch)
+}
+
+pub async fn patient_search(
+    service_provider: &ServiceProvider,
+    common: Common,
+    input: patient_search::Input,
+) -> patient_search::Response {
+    let (_, ctx) = validate(service_provider, &common)?;
+
+    let results =
+        service_provider
+            .patient_service
+            .get_patients(&ctx, None, Some(input), None, None)?;
+
+    Ok(results
+        .rows
+        .into_iter()
+        .map(name_row_to_patient_v4)
+        .collect())
+}
+
+fn name_row_to_patient_v4(name: repository::NameRow) -> PatientV4 {
+    PatientV4 {
+        id: name.id,
+        name: name.name,
+        phone: name.phone.unwrap_or_default(),
+        email: name.email.unwrap_or_default(),
+        code: name.code,
+        last: name.last_name.unwrap_or_default(),
+        first: name.first_name.unwrap_or_default(),
+        date_of_birth: name.date_of_birth,
+    }
+}
+
+/// Send patient records to a remote
+pub async fn patient_data_for_site(
+    service_provider: &ServiceProvider,
+    common: Common,
+    input: patient_data_for_site::Input,
+) -> patient_data_for_site::Response {
+    let (site, ctx) = validate(service_provider, &common)?;
+
+    let patient_data_for_site::Input {
+        patient_id,
+        store_id,
+        name_store_join_id,
+    } = input;
+
+    let nsj_id = ctx
+        .connection
+        .transaction_sync(|con| {
+            create_patient_name_store_join(con, &store_id, &patient_id, Some(name_store_join_id))
+        })
+        .map_err(|e| e.to_inner_error())?;
+
+    let filter = ChangelogCondition::And(vec![
+        ChangelogFilter::patient_data_for_site(site.id, None),
+        ChangelogCondition::patient_id::equal(patient_id),
+    ]);
+
+    let batch = SyncBatchV7::generate(&ctx.connection, filter, 0, None)?;
+
+    Ok(patient_data_for_site::Output {
+        batch,
+        name_store_join_id: nsj_id,
+    })
 }
 
 /// Receive Records from a remote open-mSupply Server
@@ -194,8 +370,9 @@ pub async fn push(
 
     let SyncBatchV7 {
         site_id: from_site_id,
-        max_cursor: _,
         records,
+        remaining,
+        ..
     } = input;
 
     if from_site_id != site_id {
@@ -219,10 +396,9 @@ pub async fn push(
         .transaction_sync(|t_con| SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows))
         .map_err(|e| e.to_inner_error())?;
 
-    // SyncBatchV7 has no `remaining` field, so we can't gate spawn on "is last batch".
-    // Spawn unconditionally; the site lock check inside `spawn_integration` makes
-    // redundant calls during a multi-batch push session a no-op.
-    spawn_integration(service_provider, site_id);
+    if remaining == 0 {
+        spawn_integration(service_provider, site_id);
+    }
 
     Ok(records_in_this_batch)
 }
@@ -262,14 +438,17 @@ async fn spawn_integration_inner(
 ) -> Result<(), SpawnIntegrationError> {
     let ctx = service_provider.basic_context()?;
 
-    let active_stores = ActiveStoresOnSite::get(&ctx.connection)?;
+    let source_site_active_store_ids =
+        ActiveStoresOnSite::store_ids_for_site(&ctx.connection, site_id)?;
 
     validate_translate_integrate(
         &ctx.connection,
         None,
         site_id,
         None,
-        SyncContext::Central { active_stores },
+        SyncContext::Central {
+            source_site_active_store_ids,
+        },
         false,
     )?;
     Ok(())
@@ -303,7 +482,10 @@ mod tests {
         sync::test_util_set_is_central_server,
         test_helpers::{setup_all_and_service_provider, ServiceTestContext},
     };
-    use repository::{migrations::Version, mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        migrations::Version, mock::MockDataInserts, test_db::setup_all, KeyType,
+        KeyValueStoreRepository,
+    };
 
     const SITE_NAME: &str = "test_site";
     const PASSWORD_SHA256: &str = "hashed_password_value";
@@ -319,6 +501,7 @@ mod tests {
             hashed_password: bcrypt::hash(PASSWORD_SHA256, bcrypt::DEFAULT_COST).unwrap(),
             hardware_id: None,
             token,
+            sync_version: repository::SyncVersion::V7,
         };
         SiteRowRepository::new(connection).upsert(&site).unwrap();
         KeyValueStoreRepository::new(connection)
@@ -346,7 +529,7 @@ mod tests {
             .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
             .unwrap();
         test_site(&context.connection, None);
-        let site_info = get_token(&context.service_provider, input()).unwrap();
+        let site_info = get_token(&context.service_provider, input()).await.unwrap();
         let common = Common {
             token: site_info.token,
             hardware_id: HARDWARE_ID.to_string(),
@@ -363,9 +546,12 @@ mod tests {
         )
         .await;
         test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
+            .unwrap();
         test_site(&connection, None);
         let service_provider = ServiceProvider::new(connection_manager);
-        let output = get_token(&service_provider, input()).unwrap();
+        let output = get_token(&service_provider, input()).await.unwrap();
 
         assert!(!output.token.is_empty());
         assert_eq!(output.site_id, 1);
@@ -379,7 +565,7 @@ mod tests {
         assert_eq!(stored.hardware_id.as_deref(), Some(HARDWARE_ID));
 
         // Using same valid credentials must not reallocate a new token or change hardware id.
-        let err = get_token(&service_provider, input()).unwrap_err();
+        let err = get_token(&service_provider, input()).await.unwrap_err();
         assert!(matches!(err, SyncError::TokenAlreadyAllocated));
         let site = SiteRowRepository::new(&connection)
             .find_one_by_id(1)
@@ -399,19 +585,23 @@ mod tests {
         // Site not found
         let mut unknown = input();
         unknown.name = "nonexistent".to_string();
-        let err = super::get_token(&service_provider, unknown).unwrap_err();
+        let err = super::get_token(&service_provider, unknown)
+            .await
+            .unwrap_err();
         assert!(matches!(err, SyncError::InvalidSiteNameOrPassword));
 
         // Bad password
         test_site(&connection, None);
         let mut bad = input();
         bad.password_sha256 = "wrong".to_string();
-        let err = super::get_token(&service_provider, bad).unwrap_err();
+        let err = super::get_token(&service_provider, bad).await.unwrap_err();
         assert!(matches!(err, SyncError::InvalidSiteNameOrPassword));
 
         // Token already set
         test_site(&connection, Some("existing_token".to_string()));
-        let err = super::get_token(&service_provider, input()).unwrap_err();
+        let err = super::get_token(&service_provider, input())
+            .await
+            .unwrap_err();
         assert!(matches!(err, SyncError::TokenAlreadyAllocated));
     }
 
@@ -423,10 +613,13 @@ mod tests {
         )
         .await;
         test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
+            .unwrap();
         test_site(&connection, None);
         let sp = ServiceProvider::new(connection_manager);
 
-        let allocated = get_token(&sp, input()).unwrap();
+        let allocated = get_token(&sp, input()).await.unwrap();
 
         let common = Common {
             token: allocated.token.clone(),
@@ -478,10 +671,16 @@ mod tests {
     async fn pull_returns_empty_batch_when_no_changelog() {
         let (
             ServiceTestContext {
-                service_provider, ..
+                service_provider,
+                connection_manager,
+                ..
             },
             common,
         ) = setup("sync_v7_pull_empty").await;
+
+        // Clear the central-table rows the v3 populate fragment seeds during
+        // migration so the "no changelog" precondition actually holds.
+        connection_manager.execute("DELETE FROM changelog").unwrap();
 
         let batch = pull(
             &service_provider,
@@ -515,6 +714,8 @@ mod tests {
             SyncBatchV7 {
                 site_id: authenticated_site_id,
                 max_cursor: 0,
+                last_cursor_in_batch: 0,
+                remaining: 0,
                 records: vec![],
             },
         )

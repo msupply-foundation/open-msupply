@@ -1,19 +1,15 @@
-use repository::{ClinicianLinkRow, ClinicianLinkRowRepository, StorageConnection, SyncBufferRow};
+use repository::{ChangelogTableName, StorageConnection, SyncBufferRow};
 
-use serde::Deserialize;
-
-use crate::sync::translations::{
-    clinician::ClinicianTranslation, PullTranslateResult, SyncTranslation,
-
+use crate::sync::{
+    translations::{
+        clinician::ClinicianTranslation,
+        special::merge::{
+            apply_clinician_merge, build_central_merge_message, MergeMessageBody, MergeOutcome,
+        },
+        IntegrationOperation, PullTranslateResult, SyncTranslation,
+    },
+    CentralServerConfig,
 };
-
-#[derive(Deserialize)]
-pub struct ClinicianMergeMessage {
-    #[serde(rename = "mergeIdToKeep")]
-    pub merge_id_to_keep: String,
-    #[serde(rename = "mergeIdToDelete")]
-    pub merge_id_to_delete: String,
-}
 
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
@@ -34,51 +30,31 @@ impl SyncTranslation for ClinicianMergeTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = sync_record.deserialize::<ClinicianMergeMessage>()?;
+        let data = sync_record.deserialize::<MergeMessageBody>()?;
 
-        let clinician_link_repo = ClinicianLinkRowRepository::new(connection);
-        let clinician_links =
-            clinician_link_repo.find_many_by_clinician_id(&data.merge_id_to_delete)?;
+        let mut ops = match apply_clinician_merge(connection, &data)? {
+            MergeOutcome::Operations(ops) => ops,
+            MergeOutcome::NothingToDo(reason) => {
+                return Ok(PullTranslateResult::Ignored(reason.to_string()))
+            }
+        };
 
-        if clinician_links.is_empty() {
-            return Ok(PullTranslateResult::Ignored(
-                "No mergeable clinician links found".to_string(),
-            ));
+        if CentralServerConfig::is_central_server() {
+            let row = build_central_merge_message(ChangelogTableName::Clinician, &data)?;
+            ops.push(IntegrationOperation::upsert(row));
         }
 
-        let indirect_link = clinician_link_repo
-            .find_one_by_id(&data.merge_id_to_keep)?
-            .ok_or_else(|| {
-                anyhow::anyhow!(
-                    "Could not find clinician link with id {}",
-                    data.merge_id_to_keep
-                )
-            })?;
-
-        let upsert_records: Vec<ClinicianLinkRow> = clinician_links
-            .into_iter()
-            .map(|ClinicianLinkRow { id, .. }| ClinicianLinkRow {
-                id,
-                clinician_id: indirect_link.clinician_id.clone(),
-            })
-            .collect();
-
-        Ok(PullTranslateResult::upserts(upsert_records))
+        Ok(PullTranslateResult::IntegrationOperations(ops))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::{
-        synchroniser::integrate_and_translate_sync_buffer,
-    };
+    use crate::sync::synchroniser::integrate_and_translate_sync_buffer;
 
-    use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, SyncAction, SyncBufferRepository,
-        SyncBufferRowInsert,
-        SyncRecordData,
-    
+        mock::MockDataInserts, test_db::setup_all, ClinicianLinkRow, ClinicianLinkRowRepository,
+        SyncAction, SyncBufferRepository, SyncBufferRowInsert, SyncRecordData,
     };
     use serde_json::json;
 
@@ -131,8 +107,7 @@ mod tests {
         SyncBufferRepository::new(&connection)
             .insert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, 0)
-            .unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, 0).unwrap();
 
         let clinician_link_repo = ClinicianLinkRowRepository::new(&connection);
         let mut clinician_links = clinician_link_repo
@@ -153,8 +128,7 @@ mod tests {
             .insert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, None, 0)
-            .unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, 0).unwrap();
 
         let clinician_link_repo = ClinicianLinkRowRepository::new(&connection);
         let mut clinician_links = clinician_link_repo

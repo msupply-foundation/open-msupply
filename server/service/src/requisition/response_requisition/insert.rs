@@ -8,8 +8,8 @@ use crate::{
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
-    ActivityLogType, NumberRowType, RepositoryError, Requisition, RequisitionRowRepository,
-    StorageConnection,
+    ActivityLogType, EqualFilter, NumberRowType, RepositoryError, Requisition,
+    RequisitionRowRepository, StorageConnection, StoreFilter, StoreRepository,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -101,11 +101,16 @@ fn generate(
         min_months_of_stock,
     }: InsertResponseRequisition,
 ) -> Result<RequisitionRow, RepositoryError> {
+    let other_party_store = StoreRepository::new(connection).query_one(
+        StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.clone())),
+    )?;
+
     let result = RequisitionRow {
         id,
         user_id: Some(user_id.to_string()),
         requisition_number: next_number(connection, &NumberRowType::ResponseRequisition, store_id)?,
         name_id: other_party_id,
+        name_store_id: other_party_store.map(|store| store.store_row.id),
         store_id: store_id.to_string(),
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,
