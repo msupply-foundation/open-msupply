@@ -1,0 +1,42 @@
+{
+  "features": {
+    "ghcr.io/devcontainers-extra/features/apt-get-packages:1": {
+      "version": "1.0.8",
+      "resolved": "ghcr.io/devcontainers-extra/features/apt-get-packages@sha256:776fa11c30c50fa91d5e1bf050444b0f130827457109c349db92e8e126b750ec",
+      "integrity": "sha256:776fa11c30c50fa91d5e1bf050444b0f130827457109c349db92e8e126b750ec"
+    },
+    "ghcr.io/devcontainers-extra/features/fish-apt-get:1": {
+      "version": "1.0.5",
+      "resolved": "ghcr.io/devcontainers-extra/features/fish-apt-get@sha256:d3c21bb6aec6e0f9d5348adee443c70c31d5f4372b8ad5f56a0ab925b2725108",
+      "integrity": "sha256:d3c21bb6aec6e0f9d5348adee443c70c31d5f4372b8ad5f56a0ab925b2725108"
+    },
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "version": "2.5.7",
+      "resolved": "ghcr.io/devcontainers/features/common-utils@sha256:dbf431d6b42d55cde50fa1df75c7f7c3999a90cde6d73f7a7071174b3c3d0cc4",
+      "integrity": "sha256:dbf431d6b42d55cde50fa1df75c7f7c3999a90cde6d73f7a7071174b3c3d0cc4"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "1.7.1",
+      "resolved": "ghcr.io/devcontainers/features/node@sha256:8c0de46939b61958041700ee89e3493f3b2e4131a06dc46b4d9423427d06e5f6",
+      "integrity": "sha256:8c0de46939b61958041700ee89e3493f3b2e4131a06dc46b4d9423427d06e5f6"
+    },
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "1.5.0",
+      "resolved": "ghcr.io/devcontainers/features/rust@sha256:0c55e65f2e3df736e478f26ee4d5ed41bae6b54dac1318c443e31444c8ed283c",
+      "integrity": "sha256:0c55e65f2e3df736e478f26ee4d5ed41bae6b54dac1318c443e31444c8ed283c"
+    },
+    "ghcr.io/nikobockerman/devcontainer-features/fish-persistent-data:2": {
+      "version": "2.0.3",
+      "resolved": "ghcr.io/nikobockerman/devcontainer-features/fish-persistent-data@sha256:dd058881255848fa7d00c60a8b591e912346f6b839189574e2dae80c623af89b",
+      "integrity": "sha256:dd058881255848fa7d00c60a8b591e912346f6b839189574e2dae80c623af89b"
+    },
+    "ghcr.io/w3cj/devcontainer-features/firewall:0.0.2": {
+      "version": "0.0.2",
+      "resolved": "ghcr.io/w3cj/devcontainer-features/firewall@sha256:f8ae63faf64094305ef247befc0a9c66eecd7a01768df0cc826c7d4a81a92bfc",
+      "integrity": "sha256:f8ae63faf64094305ef247befc0a9c66eecd7a01768df0cc826c7d4a81a92bfc",
+      "dependsOn": [
+        "ghcr.io/devcontainers-extra/features/apt-get-packages:1"
+      ]
+    }
+  }
+}
