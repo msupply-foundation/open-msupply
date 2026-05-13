@@ -375,7 +375,7 @@ pub async fn start_server(
             {
                 Ok(InitialisationStatus::PreInitialisation) => {
                     match service_provider.standalone_central_service.initialise(
-                        &service_context,
+                        &service_provider,
                         InitialiseAsCentralServerInput {
                             store_name,
                             admin_username,
