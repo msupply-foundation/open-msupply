@@ -37,6 +37,7 @@ pub fn update_encounter(
         &ResourceAccessRequest {
             resource: Resource::MutateEncounter,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();

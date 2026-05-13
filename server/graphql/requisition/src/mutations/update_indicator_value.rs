@@ -45,6 +45,7 @@ pub fn update(
         &ResourceAccessRequest {
             resource: Resource::MutateRequisition,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

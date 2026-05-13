@@ -23,6 +23,7 @@ pub fn document_history(
         &ResourceAccessRequest {
             resource: Resource::QueryDocument,
             store_id: Some(store_id),
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();

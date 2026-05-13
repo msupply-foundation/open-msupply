@@ -62,6 +62,7 @@ pub fn asset_types(
         &ResourceAccessRequest {
             resource: Resource::QueryAsset,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
     let connection_manager = ctx.get_connection_manager().connection()?;
@@ -85,6 +86,7 @@ pub fn asset_type(ctx: &Context<'_>, id: String) -> Result<AssetTypeResponse> {
         &ResourceAccessRequest {
             resource: Resource::QueryAsset,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
     let connection_manager = ctx.get_connection_manager().connection()?;

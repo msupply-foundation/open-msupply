@@ -25,6 +25,7 @@ pub fn update_vaccine_course(
         &ResourceAccessRequest {
             resource: Resource::MutateVaccineCourse,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

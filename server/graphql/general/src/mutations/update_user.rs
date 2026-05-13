@@ -51,6 +51,7 @@ pub async fn update_user(ctx: &Context<'_>) -> Result<UpdateResponse> {
         &ResourceAccessRequest {
             resource: Resource::ManualSync,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();

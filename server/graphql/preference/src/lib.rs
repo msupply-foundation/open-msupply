@@ -26,6 +26,7 @@ impl PreferenceQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryStorePreferences,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
 
@@ -58,6 +59,7 @@ impl PreferenceQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryStore,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
 

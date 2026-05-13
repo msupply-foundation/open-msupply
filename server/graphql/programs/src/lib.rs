@@ -171,6 +171,7 @@ impl ProgramsQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryPatient,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
 

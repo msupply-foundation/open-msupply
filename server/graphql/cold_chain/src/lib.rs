@@ -51,6 +51,7 @@ impl ColdChainQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryTemperatureLog,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
 
@@ -94,6 +95,7 @@ impl ColdChainQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryTemperatureBreach,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
 
@@ -135,6 +137,7 @@ impl ColdChainQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryTemperatureBreach,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
 
@@ -187,6 +190,7 @@ impl ColdChainQueries {
             &ResourceAccessRequest {
                 resource: Resource::QuerySensor,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
 

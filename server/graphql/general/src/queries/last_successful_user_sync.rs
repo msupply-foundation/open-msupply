@@ -13,6 +13,7 @@ pub fn last_successful_user_sync(ctx: &Context<'_>) -> Result<UpdateUserNode> {
         &ResourceAccessRequest {
             resource: Resource::SyncInfo,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

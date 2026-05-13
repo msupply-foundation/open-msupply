@@ -38,6 +38,7 @@ pub fn log_file_names(ctx: &Context<'_>) -> Result<LogNode> {
         &ResourceAccessRequest {
             resource: Resource::ServerAdmin,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 
@@ -55,6 +56,7 @@ pub fn log_content(ctx: &Context<'_>, file_name: Option<String>) -> Result<LogNo
         &ResourceAccessRequest {
             resource: Resource::ServerAdmin,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 
@@ -72,6 +74,7 @@ pub fn log_level(ctx: &Context<'_>) -> Result<LogLevelNode> {
         &ResourceAccessRequest {
             resource: Resource::ServerAdmin,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

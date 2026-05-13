@@ -30,6 +30,7 @@ pub fn insert_clinician(
         &ResourceAccessRequest {
             resource: Resource::MutateClinician,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

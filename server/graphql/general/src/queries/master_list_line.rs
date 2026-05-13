@@ -30,6 +30,7 @@ pub fn master_list_lines(
         &ResourceAccessRequest {
             resource: Resource::QueryMasterList,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 
