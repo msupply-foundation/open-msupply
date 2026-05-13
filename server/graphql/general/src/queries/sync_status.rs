@@ -146,12 +146,12 @@ pub fn latest_sync_status(
         .unwrap_or(None);
 
     Ok(Some(match sync_status {
-        FullSyncStatus::V5V6(s) => FullSyncStatusNode::V5V6(
-            FullSyncStatusV5V6Node::from_sync_status(s, last_successful),
-        ),
-        FullSyncStatus::V7(s) => FullSyncStatusNode::V7(
-            FullSyncStatusV7Node::from_sync_status(s, last_successful),
-        ),
+        FullSyncStatus::V5V6(s) => {
+            FullSyncStatusNode::V5V6(FullSyncStatusV5V6Node::from_sync_status(s, last_successful))
+        }
+        FullSyncStatus::V7(s) => {
+            FullSyncStatusNode::V7(FullSyncStatusV7Node::from_sync_status(s, last_successful))
+        }
     }))
 }
 
