@@ -106,7 +106,6 @@ impl SyncTranslation for UserStorePermissionTranslation {
         let mut new_permission_set = permissions_to_domain(new_permissions);
         new_permission_set.insert(PermissionType::StoreAccess);
 
-        // Similar to user_store_join, the login functionality will drop literally all the user's permissions and recreate them with new PKs.
         // If the sync record turns the permission on and it exists, do nothing, else upsert a new record.
         // If the sync record turns the permission off, delete the corresponding record.
         // We cannot drop them all and insert again as login does as sync operations execute all deletes after all inserts, so we'd wipe out our permissions
