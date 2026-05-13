@@ -8,7 +8,7 @@ use util::lock_file;
 use crate::{
     database_settings::DatabaseSettings,
     get_storage_connection_manager,
-    migrations::{migrate, Version},
+    migrations::{migrate, MigrationConfig, Version},
     mock::{all_mock_data, insert_all_mock_data, MockDataCollection, MockDataInserts},
     test_db::constants::{
         env_msupply_no_test_db_template, find_workspace_root, TEMPLATE_MARKER_FILE_POSTGRES,
@@ -53,7 +53,7 @@ fn create_template_db(
     // migrate the DB:
     let connection_manager = get_storage_connection_manager(&db_settings);
     let connection = connection_manager.connection().unwrap();
-    migrate(&connection, version).unwrap();
+    migrate(&connection, version, MigrationConfig::default()).unwrap();
 
     connection_manager
 }
@@ -107,7 +107,7 @@ async fn setup_with_version_no_template(
 
     let connection_manager = get_storage_connection_manager(&db_settings);
     let connection = connection_manager.connection().unwrap();
-    migrate(&connection, version).unwrap();
+    migrate(&connection, version, MigrationConfig::default()).unwrap();
 
     let collection = insert_all_mock_data(&connection, inserts).await;
     (connection_manager, collection)

@@ -1,13 +1,13 @@
 use repository::{
-    contact_form_row::ContactFormRow,
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
-    Row,
-
+    contact_form_row::ContactFormRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
+    SyncBufferRow,
 };
 
 use crate::sync::translations::{store::StoreTranslation, user::UserTranslation};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
+use super::{
+    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+};
 
 // Needs to be added to all_translations()
 #[deny(dead_code)]
@@ -33,7 +33,9 @@ impl SyncTranslation for ContactFormTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Ok(PullTranslateResult::upsert(serde_json::from_value::<
             ContactFormRow,
-        >(sync_record.data.0.clone())?))
+        >(
+            sync_record.data.0.clone()
+        )?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -65,7 +67,11 @@ impl SyncTranslation for ContactFormTranslation {
 
         let row = contact_form_row;
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(row)?,
+        ))
     }
 }
 
@@ -74,7 +80,6 @@ mod tests {
     use super::*;
     use crate::sync::{
         test::merge_helpers::merge_all_name_links, translations::ToSyncRecordTranslationType,
-    
     };
     use repository::{
         contact_form_row::ContactFormRow,
@@ -127,15 +132,14 @@ mod tests {
 
         let entry = ChangelogRepository::new(&connection)
             .query_with_data(
-                repository::ChangelogCondition::table_name::equal(
-                    ChangelogTableName::ContactForm,
-                ),
+                repository::ChangelogCondition::table_name::equal(ChangelogTableName::ContactForm),
                 repository::CursorAndLimit {
                     cursor: -1,
                     limit: 1,
                 },
             )
             .unwrap()
+            .rows
             .pop()
             .unwrap();
 

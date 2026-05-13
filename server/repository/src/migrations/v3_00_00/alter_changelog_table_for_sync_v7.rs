@@ -92,7 +92,7 @@ mod tests {
         .execute(connection.lock().connection())
         .unwrap();
 
-        migrate(&connection, Some(version.clone())).unwrap();
+        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
         assert_eq!(get_database_version(&connection), version);
 
         assert_eq!(row_action_data_type(&connection), "text");

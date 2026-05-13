@@ -85,7 +85,9 @@ mod tests {
     };
     use diesel::{connection::SimpleConnection, prelude::*, RunQueryDsl};
 
-    // Minimal changelog columns needed for verification
+    // Minimal changelog columns needed for verification.
+    // The test runs the full v3_00_00 sequence, which includes the
+    // partition_changelog_by_cursor rename, so the helper sees `patient_link_id`.
     table! {
         changelog (cursor) {
             cursor -> BigInt,
@@ -95,7 +97,7 @@ mod tests {
             store_id -> Nullable<Text>,
             source_site_id -> Nullable<Integer>,
             transfer_store_id -> Nullable<Text>,
-            patient_id -> Nullable<Text>,
+            patient_link_id -> Nullable<Text>,
         }
     }
 
@@ -159,7 +161,7 @@ mod tests {
         seed_central_site_id(&connection, 42);
 
         // Run all v3_00_00 migrations (this fragment + the others)
-        migrate(&connection, Some(version.clone())).unwrap();
+        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
         assert_eq!(get_database_version(&connection), version);
 
         // Helper: count changelog rows for a given (table_name, record_id)
@@ -191,7 +193,7 @@ mod tests {
                 changelog::store_id,
                 changelog::source_site_id,
                 changelog::transfer_store_id,
-                changelog::patient_id,
+                changelog::patient_link_id,
             ))
             .first::<(String, Option<String>, Option<i32>, Option<String>, Option<String>)>(
                 connection.lock().connection(),

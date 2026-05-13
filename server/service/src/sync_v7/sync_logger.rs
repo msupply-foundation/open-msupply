@@ -4,7 +4,9 @@ use repository::{
 };
 use util::format_error;
 
-#[derive(Debug)]
+use crate::subscription::{SubscriptionTrigger, SubscriptionTriggerHandle, SyncLogRow};
+
+#[derive(Debug, Clone)]
 pub(crate) enum SyncStep {
     Push,
     WaitForIntegration,
@@ -16,6 +18,27 @@ pub struct SyncLogger<'a> {
     sync_log_repo: SyncLogV7Repository<'a>,
     row: SyncLogV7Row,
     step: Option<SyncStep>,
+    subscription_trigger: Option<SubscriptionTriggerHandle>,
+}
+
+/// Connection-free state that can cross thread boundaries (e.g. into
+/// `tokio::task::spawn_blocking`). Re-attach with `with_connection`.
+pub struct SyncLoggerHandle {
+    row: SyncLogV7Row,
+    step: Option<SyncStep>,
+    subscription_trigger: Option<SubscriptionTriggerHandle>,
+}
+
+impl SyncLoggerHandle {
+    /// Attach a connection to make a usable `SyncLogger`.
+    pub fn with_connection<'a>(self, connection: &'a StorageConnection) -> SyncLogger<'a> {
+        SyncLogger {
+            sync_log_repo: SyncLogV7Repository::new(connection),
+            row: self.row,
+            step: self.step,
+            subscription_trigger: self.subscription_trigger,
+        }
+    }
 }
 
 impl<'a> SyncLogger<'a> {
@@ -27,13 +50,50 @@ impl<'a> SyncLogger<'a> {
             ..Default::default()
         };
 
-        let sync_log_repo = SyncLogV7Repository::new(connection);
-        sync_log_repo.upsert_one(&row)?;
-        Ok(SyncLogger {
-            sync_log_repo,
+        let logger = SyncLogger {
+            sync_log_repo: SyncLogV7Repository::new(connection),
             row,
             step: None,
-        })
+            subscription_trigger: None,
+        };
+        logger.update()?;
+        Ok(logger)
+    }
+
+    /// Attach a subscription trigger handle for sending sync status updates.
+    pub fn with_subscription_trigger(mut self, handle: SubscriptionTriggerHandle) -> Self {
+        self.subscription_trigger = Some(handle);
+        self
+    }
+
+    /// Detach the connection-bound logger into a `Send + 'static` handle so
+    /// it can cross a thread boundary (e.g. into `spawn_blocking`).
+    /// Pair with `SyncLoggerHandle::with_connection` on the other side.
+    pub fn into_handle(&self) -> SyncLoggerHandle {
+        SyncLoggerHandle {
+            row: self.row.clone(),
+            step: self.step.clone(),
+            subscription_trigger: self.subscription_trigger.clone(),
+        }
+    }
+
+    /// Replace this logger's state with a returned handle (e.g. after a
+    /// blocking task hands the handle back). Connection is unchanged.
+    pub fn restore(&mut self, handle: SyncLoggerHandle) {
+        self.row = handle.row;
+        self.step = handle.step;
+        self.subscription_trigger = handle.subscription_trigger;
+    }
+
+    /// Persist current row to DB and notify subscribers.
+    fn update(&self) -> Result<(), RepositoryError> {
+        self.sync_log_repo.upsert_one(&self.row)?;
+        if let Some(handle) = &self.subscription_trigger {
+            handle.send(SubscriptionTrigger::SyncStatus(SyncLogRow::V7(
+                self.row.clone(),
+            )));
+        }
+        Ok(())
     }
 
     fn finish_current_step(&mut self) -> Result<(), RepositoryError> {
@@ -68,8 +128,7 @@ impl<'a> SyncLogger<'a> {
             }
         };
 
-        self.sync_log_repo.upsert_one(&self.row)?;
-        Ok(())
+        self.update()
     }
 
     pub(crate) fn start_step(&mut self, step: SyncStep) -> Result<(), RepositoryError> {
@@ -106,8 +165,7 @@ impl<'a> SyncLogger<'a> {
 
         self.step = Some(step);
 
-        self.sync_log_repo.upsert_one(&self.row)?;
-        Ok(())
+        self.update()
     }
 
     pub(crate) fn finish(&mut self) -> Result<(), RepositoryError> {
@@ -120,8 +178,7 @@ impl<'a> SyncLogger<'a> {
             ..self.row.clone()
         };
 
-        self.sync_log_repo.upsert_one(&self.row)?;
-        Ok(())
+        self.update()
     }
 
     pub(crate) fn error(&mut self, error: &SyncError) -> Result<(), RepositoryError> {
@@ -136,8 +193,7 @@ impl<'a> SyncLogger<'a> {
             ..self.row.clone()
         };
 
-        self.sync_log_repo.upsert_one(&self.row)?;
-        Ok(())
+        self.update()
     }
 
     /// Updates progress of a sync step.
@@ -206,8 +262,6 @@ impl<'a> SyncLogger<'a> {
             }
         };
 
-        self.sync_log_repo.upsert_one(&self.row)?;
-
-        Ok(())
+        self.update()
     }
 }

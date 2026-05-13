@@ -2,22 +2,20 @@ use std::{future::Future, sync::Arc};
 
 use crate::service_provider::ServiceProvider;
 use crate::sync::is_initialised;
-use crate::sync::CentralServerConfig;
-use crate::sync_v7::synchroniser::SynchroniserV7;
 
-use super::{settings::SyncSettings, synchroniser::SynchroniserV5V6};
+use super::{settings::SyncSettings, synchroniser_runner::Synchroniser};
 use tokio::{
     sync::mpsc::{self, Receiver, Sender},
     time::Duration,
 };
 
 pub struct SynchroniserDriver {
-    receiver: Receiver<Option<String>>,
+    receiver: Receiver<()>,
 }
 
 #[derive(Clone)]
 pub struct SyncTrigger {
-    sender: Sender<Option<String>>,
+    sender: Sender<()>,
 }
 
 /// Used to 'drive' synchronisation, it's tasks:
@@ -47,59 +45,53 @@ impl SynchroniserDriver {
     ///    * do sync if any of the above were triggered
     pub async fn run(mut self, service_provider: Arc<ServiceProvider>, force_run: bool) {
         if force_run || is_initialised(&service_provider) {
-            self.sync(service_provider.clone(), None).await;
+            self.sync(service_provider.clone()).await;
         }
 
         loop {
             // Need to check is_initialsed from database on every iteration, since it could have been updated
-            let fetch_patient_id = if is_initialised(&service_provider) {
+            if is_initialised(&service_provider) {
                 tokio::select! {
                     // Wait for trigger
-                    Some(patient_id) = self.receiver.recv() => patient_id,
+                    Some(_) = self.receiver.recv() => {},
                     // OR wait for SyncSettings.interval_seconds
                     _ = async {
                         // Need to get interval_seconds from database on every iteration, since it could have been updated
                         let sync_settings = get_sync_settings(&service_provider);
                         let duration = Duration::from_secs(sync_settings.interval_seconds);
                         tokio::time::sleep(duration).await;
-                     } => None,
+                     } => {},
                     else => break,
-                }
+                };
             } else {
                 // If not initialised just wait for manual trigger
-                match self.receiver.recv().await {
-                    None => break,
-                    Some(patient_id) => patient_id,
+                if self.receiver.recv().await.is_none() {
+                    break;
                 }
-            };
+            }
 
-            self.sync(service_provider.clone(), fetch_patient_id).await;
+            self.sync(service_provider.clone()).await;
         }
     }
 
-    pub async fn sync(
-        &self,
-        service_provider: Arc<ServiceProvider>,
-        fetch_patient_id: Option<String>,
-    ) {
+    pub async fn sync(&self, service_provider: Arc<ServiceProvider>) {
         // Error is already logged inside the sync flow, keeping result with `_` to avoid compilation warning.
         // We initialise a new instance on every tick since SyncSettings could have changed.
         let settings = get_sync_settings(&service_provider);
-        if CentralServerConfig::is_central_server() {
-            let _ = SynchroniserV5V6::new(settings, service_provider)
-                .unwrap()
-                .sync(fetch_patient_id)
-                .await;
-        } else {
-            // V7 doesn't take fetch_patient_id (yet) — only V5/V6 uses it.
-            let _ = SynchroniserV7::new(settings, service_provider).sync().await;
+        match Synchroniser::new(settings, service_provider) {
+            Ok(synchroniser) => {
+                let _ = synchroniser.sync().await;
+            }
+            Err(error) => {
+                log::error!("Failed to construct synchroniser: {error:#?}");
+            }
         }
     }
 }
 
 impl SyncTrigger {
-    pub fn trigger(&self, fetch_patient_id: Option<String>) {
-        if let Err(error) = self.sender.try_send(fetch_patient_id) {
+    pub fn trigger(&self) {
+        if let Err(error) = self.sender.try_send(()) {
             log::error!("Problem triggering sync {error:#?}")
         }
     }

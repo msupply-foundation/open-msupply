@@ -4,18 +4,18 @@ use crate::{
     diesel_macros::{
         apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_first,
     },
-    DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, SyncLogRow,
+    DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, SyncLogV5V6Row,
 };
 
 use diesel::prelude::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct SyncLog {
-    pub sync_log_row: SyncLogRow,
+    pub sync_log_row: SyncLogV5V6Row,
 }
 
 #[derive(Debug, Clone, Default, PartialEq)]
-pub struct SyncLogFilter {
+pub struct SyncLogV5V6Filter {
     pub id: Option<EqualFilter<String>>,
     pub prepare_initial_finished_datetime: Option<DatetimeFilter>,
     pub integration_finished_datetime: Option<DatetimeFilter>,
@@ -24,51 +24,51 @@ pub struct SyncLogFilter {
 }
 
 #[derive(PartialEq, Debug)]
-pub enum SyncLogSortField {
+pub enum SyncLogV5V6SortField {
     StartedDatetime,
     DoneDatetime,
 }
 
-pub type SyncLogSort = Sort<SyncLogSortField>;
+pub type SyncLogV5V6Sort = Sort<SyncLogV5V6SortField>;
 
-pub struct SyncLogRepository<'a> {
+pub struct SyncLogV5V6Repository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> SyncLogRepository<'a> {
+impl<'a> SyncLogV5V6Repository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        SyncLogRepository { connection }
+        SyncLogV5V6Repository { connection }
     }
 
-    pub fn count(&self, filter: Option<SyncLogFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<SyncLogV5V6Filter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
         Ok(query
             .count()
             .get_result(self.connection.lock().connection())?)
     }
 
-    pub fn query_one(&self, filter: SyncLogFilter) -> Result<Option<SyncLog>, RepositoryError> {
+    pub fn query_one(&self, filter: SyncLogV5V6Filter) -> Result<Option<SyncLog>, RepositoryError> {
         Ok(self.query(Pagination::one(), Some(filter), None)?.pop())
     }
 
-    pub fn query_by_filter(&self, filter: SyncLogFilter) -> Result<Vec<SyncLog>, RepositoryError> {
+    pub fn query_by_filter(&self, filter: SyncLogV5V6Filter) -> Result<Vec<SyncLog>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
         &self,
         pagination: Pagination,
-        filter: Option<SyncLogFilter>,
-        sort: Option<SyncLogSort>,
+        filter: Option<SyncLogV5V6Filter>,
+        sort: Option<SyncLogV5V6Sort>,
     ) -> Result<Vec<SyncLog>, RepositoryError> {
         let mut query = create_filtered_query(filter);
         if let Some(sort) = sort {
             match sort.key {
-                SyncLogSortField::StartedDatetime => {
+                SyncLogV5V6SortField::StartedDatetime => {
                     // started_datetime is not nullable
                     apply_sort!(query, sort, sync_log::started_datetime)
                 }
-                SyncLogSortField::DoneDatetime => {
+                SyncLogV5V6SortField::DoneDatetime => {
                     // If nulls last on desc search and nulls first on asc search is more
                     // convenient for sync log rows datetimes that are nullable (see get_initialisation_status)
                     apply_sort_asc_nulls_first!(query, sort, sync_log::finished_datetime)
@@ -88,11 +88,11 @@ impl<'a> SyncLogRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<SyncLogRow>(self.connection.lock().connection())?;
+        let result = final_query.load::<SyncLogV5V6Row>(self.connection.lock().connection())?;
 
         Ok(result
             .into_iter()
-            .map(SyncLogRow::or_latest_row)
+            .map(SyncLogV5V6Row::or_latest_row)
             .map(to_domain)
             .collect())
     }
@@ -100,11 +100,11 @@ impl<'a> SyncLogRepository<'a> {
 
 type BoxedSyncLogQuery = sync_log::BoxedQuery<'static, DBType>;
 
-fn create_filtered_query(filter: Option<SyncLogFilter>) -> BoxedSyncLogQuery {
+fn create_filtered_query(filter: Option<SyncLogV5V6Filter>) -> BoxedSyncLogQuery {
     let mut query = sync_log::table.into_boxed();
 
     if let Some(f) = filter {
-        let SyncLogFilter {
+        let SyncLogV5V6Filter {
             id,
             integration_finished_datetime,
             prepare_initial_finished_datetime,
@@ -129,16 +129,16 @@ fn create_filtered_query(filter: Option<SyncLogFilter>) -> BoxedSyncLogQuery {
     query
 }
 
-fn to_domain(sync_log_row: SyncLogRow) -> SyncLog {
+fn to_domain(sync_log_row: SyncLogV5V6Row) -> SyncLog {
     SyncLog { sync_log_row }
 }
 
-impl SyncLogFilter {
-    pub fn new() -> SyncLogFilter {
-        SyncLogFilter::default()
+impl SyncLogV5V6Filter {
+    pub fn new() -> SyncLogV5V6Filter {
+        SyncLogV5V6Filter::default()
     }
 
-    pub fn prepare_initial_finished_datetime(mut self, value: DatetimeFilter) -> SyncLogFilter {
+    pub fn prepare_initial_finished_datetime(mut self, value: DatetimeFilter) -> SyncLogV5V6Filter {
         self.prepare_initial_finished_datetime = Some(value);
         self
     }
