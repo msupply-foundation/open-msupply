@@ -13,10 +13,7 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
         translation_and_integration::integrate,
-        translations::special::merge::{
-            apply_clinician_merge, apply_item_merge, apply_name_merge, MergeMessageBody,
-            MergeOutcome,
-        },
+        translations::special::merge::{apply_merge, MergeOutcome, MergeSyncMessageBody},
         CentralServerConfig,
     },
 };
@@ -61,31 +58,23 @@ impl Processor for MergeSyncMessageProcessor {
             return Ok(None);
         };
 
-        let merge_kind = match &message.r#type {
-            SyncMessageRowType::NameMerge
-            | SyncMessageRowType::ItemMerge
-            | SyncMessageRowType::ClinicianMerge => message.r#type.clone(),
-            _ => return Ok(None),
-        };
+        if message.r#type != SyncMessageRowType::Merge {
+            return Ok(None);
+        }
 
         if message.status == SyncMessageRowStatus::Processed {
             return Ok(None);
         }
 
-        let body: MergeMessageBody = serde_json::from_str(&message.body).map_err(|e| {
+        let body: MergeSyncMessageBody = serde_json::from_str(&message.body).map_err(|e| {
             ProcessorError::OtherError(format!(
                 "Invalid merge message body for {}: {e}",
                 message.id
             ))
         })?;
 
-        let outcome = match merge_kind {
-            SyncMessageRowType::NameMerge => apply_name_merge(&ctx.connection, &body),
-            SyncMessageRowType::ItemMerge => apply_item_merge(&ctx.connection, &body),
-            SyncMessageRowType::ClinicianMerge => apply_clinician_merge(&ctx.connection, &body),
-            _ => unreachable!(),
-        }
-        .map_err(|e| ProcessorError::OtherError(format!("Merge failed for {}: {e}", message.id)))?;
+        let outcome = apply_merge(&ctx.connection, &body)
+            .map_err(|e| ProcessorError::OtherError(format!("Merge failed for {}: {e}", message.id)))?;
 
         let summary = match outcome {
             MergeOutcome::Operations(ops) => {

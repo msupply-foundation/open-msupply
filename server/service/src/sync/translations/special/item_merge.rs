@@ -1,11 +1,9 @@
-use repository::{StorageConnection, SyncBufferRow, SyncMessageRowType};
+use repository::{ChangelogTableName, StorageConnection, SyncBufferRow};
 
 use crate::sync::{
     translations::{
         item::ItemTranslation,
-        special::merge::{
-            apply_item_merge, build_central_merge_message, MergeMessageBody, MergeOutcome,
-        },
+        special::merge::{apply_item_merge, build_central_merge_message, MergeMessageBody, MergeOutcome},
         IntegrationOperation, PullTranslateResult, SyncTranslation,
     },
     CentralServerConfig,
@@ -41,7 +39,7 @@ impl SyncTranslation for ItemMergeTranslation {
         };
 
         if CentralServerConfig::is_central_server() {
-            let row = build_central_merge_message("item", SyncMessageRowType::ItemMerge, &data)?;
+            let row = build_central_merge_message(ChangelogTableName::Item, &data)?;
             ops.push(IntegrationOperation::upsert(row));
         }
 

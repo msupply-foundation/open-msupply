@@ -1,11 +1,9 @@
-use repository::{StorageConnection, SyncBufferRow, SyncMessageRowType};
+use repository::{ChangelogTableName, StorageConnection, SyncBufferRow};
 
 use crate::sync::{
     translations::{
         name::NameTranslation,
-        special::merge::{
-            apply_name_merge, build_central_merge_message, MergeMessageBody, MergeOutcome,
-        },
+        special::merge::{apply_name_merge, build_central_merge_message, MergeMessageBody, MergeOutcome},
         IntegrationOperation, PullTranslateResult, SyncTranslation,
     },
     CentralServerConfig,
@@ -44,7 +42,7 @@ impl SyncTranslation for NameMergeTranslation {
         // for fanout, and the post-sync processor skips it when running on
         // central.
         if CentralServerConfig::is_central_server() {
-            let row = build_central_merge_message("name", SyncMessageRowType::NameMerge, &data)?;
+            let row = build_central_merge_message(ChangelogTableName::Name, &data)?;
             ops.push(IntegrationOperation::upsert(row));
         }
 

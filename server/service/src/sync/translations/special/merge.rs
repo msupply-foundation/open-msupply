@@ -1,16 +1,15 @@
 use chrono::Utc;
 use repository::{
-    ClinicianLinkRow, ClinicianLinkRowRepository, EqualFilter, ItemLinkRow, ItemLinkRowRepository,
-    NameLinkRow, NameLinkRowRepository, NameRowDelete, NameStoreJoinFilter, NameStoreJoinRepository,
-    NameStoreJoinRow, NameStoreJoinRowDelete, StorageConnection, StoreFilter, StoreRepository,
-    SyncMessageRow, SyncMessageRowStatus, SyncMessageRowType,
+    ChangelogTableName, ClinicianLinkRow, ClinicianLinkRowRepository, EqualFilter, ItemLinkRow,
+    ItemLinkRowRepository, NameLinkRow, NameLinkRowRepository, NameRowDelete, NameStoreJoinFilter,
+    NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete, StorageConnection,
+    StoreFilter, StoreRepository, SyncMessageRow, SyncMessageRowStatus, SyncMessageRowType,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::sync::translations::IntegrationOperation;
 
-/// Wire format shared by name/item/clinician merges. Field names match the
-/// legacy mSupply sync record body (`mergeIdToKeep` / `mergeIdToDelete`).
+/// Wire format of the legacy mSupply sync buffer Merge records.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct MergeMessageBody {
     #[serde(rename = "mergeIdToKeep")]
@@ -19,24 +18,35 @@ pub struct MergeMessageBody {
     pub merge_id_to_delete: String,
 }
 
+/// Body stored in `sync_message.body` for `SyncMessageRowType::Merge` messages.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MergeSyncMessageBody {
+    pub table_name: ChangelogTableName,
+    pub merge_id_to_keep: String,
+    pub merge_id_to_delete: String,
+}
+
 pub(crate) enum MergeOutcome {
     Operations(Vec<IntegrationOperation>),
     NothingToDo(&'static str),
 }
 
-/// Build the `sync_message` row that OMS central emits in place of doing the
-/// link rewrite locally. The deterministic id makes re-processing the same
-/// legacy merge idempotent (same id → same row → same changelog entry).
+/// Build the `sync_message` row that OMS central emits so v7 remotes can
+/// replay the merge. The deterministic id makes re-processing idempotent.
 pub(crate) fn build_central_merge_message(
-    table: &str,
-    type_: SyncMessageRowType,
+    table_name: ChangelogTableName,
     data: &MergeMessageBody,
 ) -> Result<SyncMessageRow, anyhow::Error> {
     let id = format!(
         "{}_merge_{}_{}",
-        table, data.merge_id_to_keep, data.merge_id_to_delete
+        table_name, data.merge_id_to_keep, data.merge_id_to_delete
     );
-    let body = serde_json::to_string(data)?;
+    let body = serde_json::to_string(&MergeSyncMessageBody {
+        table_name,
+        merge_id_to_keep: data.merge_id_to_keep.clone(),
+        merge_id_to_delete: data.merge_id_to_delete.clone(),
+    })?;
     Ok(SyncMessageRow {
         id,
         to_store_id: None,
@@ -44,9 +54,27 @@ pub(crate) fn build_central_merge_message(
         body,
         created_datetime: Utc::now().naive_utc(),
         status: SyncMessageRowStatus::New,
-        r#type: type_,
+        r#type: SyncMessageRowType::Merge,
         error_message: None,
     })
+}
+
+/// Dispatch a merge from a `SyncMessageRowType::Merge` body to the appropriate
+/// apply function based on `body.table_name`.
+pub(crate) fn apply_merge(
+    connection: &StorageConnection,
+    body: &MergeSyncMessageBody,
+) -> Result<MergeOutcome, anyhow::Error> {
+    let data = MergeMessageBody {
+        merge_id_to_keep: body.merge_id_to_keep.clone(),
+        merge_id_to_delete: body.merge_id_to_delete.clone(),
+    };
+    match body.table_name {
+        ChangelogTableName::Name => apply_name_merge(connection, &data),
+        ChangelogTableName::Item => apply_item_merge(connection, &data),
+        ChangelogTableName::Clinician => apply_clinician_merge(connection, &data),
+        _ => Err(anyhow::anyhow!("Unsupported merge table: {:?}", body.table_name)),
+    }
 }
 
 pub(crate) fn apply_name_merge(

@@ -1,4 +1,4 @@
-use repository::{StorageConnection, SyncBufferRow, SyncMessageRowType};
+use repository::{ChangelogTableName, StorageConnection, SyncBufferRow};
 
 use crate::sync::{
     translations::{
@@ -40,11 +40,7 @@ impl SyncTranslation for ClinicianMergeTranslation {
         };
 
         if CentralServerConfig::is_central_server() {
-            let row = build_central_merge_message(
-                "clinician",
-                SyncMessageRowType::ClinicianMerge,
-                &data,
-            )?;
+            let row = build_central_merge_message(ChangelogTableName::Clinician, &data)?;
             ops.push(IntegrationOperation::upsert(row));
         }
 
@@ -54,9 +50,7 @@ impl SyncTranslation for ClinicianMergeTranslation {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::{
-        synchroniser::integrate_and_translate_sync_buffer,
-    };
+    use crate::sync::synchroniser::integrate_and_translate_sync_buffer;
 
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ClinicianLinkRow, ClinicianLinkRowRepository,
@@ -113,8 +107,7 @@ mod tests {
         SyncBufferRepository::new(&connection)
             .insert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, 0)
-            .unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, 0).unwrap();
 
         let clinician_link_repo = ClinicianLinkRowRepository::new(&connection);
         let mut clinician_links = clinician_link_repo
@@ -135,8 +128,7 @@ mod tests {
             .insert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, None, 0)
-            .unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, 0).unwrap();
 
         let clinician_link_repo = ClinicianLinkRowRepository::new(&connection);
         let mut clinician_links = clinician_link_repo
