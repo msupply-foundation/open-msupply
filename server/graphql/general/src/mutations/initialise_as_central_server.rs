@@ -32,9 +32,12 @@ pub async fn initialise_as_central_server(
         .standalone_central_service
         .initialise(&service_context, input.to_domain())
     {
-        Ok(()) => Ok(InitialiseAsCentralServerResponse::Response(
-            StandaloneCentralInitialisedNode,
-        )),
+        Ok(()) => {
+            service_provider.site_is_initialised_trigger.trigger();
+            Ok(InitialiseAsCentralServerResponse::Response(
+                StandaloneCentralInitialisedNode,
+            ))
+        }
         Err(error) => Ok(InitialiseAsCentralServerResponse::Error(
             InitialiseAsCentralServerError {
                 error: map_error(error)?,
