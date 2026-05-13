@@ -4,6 +4,7 @@ import {
   Box,
   MaterialTable,
   RecordPatch,
+  useConfirmOnLeaving,
   useIntlUtils,
   useNotification,
   useSimpleMaterialTable,
@@ -26,7 +27,9 @@ export const IndicatorsDemographics = () => {
   useUrlQueryParams({ initialSort: { key: 'name', dir: 'asc' } });
   const [headerDraft, setHeaderDraft] = useState<HeaderData>();
   const [indexPopulation, setIndexPopulation] = useState(0);
-  const [isDirty, setIsDirty] = useState(false);
+  const { isDirty, setIsDirty } = useConfirmOnLeaving(
+    'indicators-demographics'
+  );
 
   const { error, success } = useNotification();
   const t = useTranslation();
@@ -140,12 +143,9 @@ export const IndicatorsDemographics = () => {
     }
   };
 
-  // save rows excluding generalRow
   const save = async () => {
     setIsDirty(false);
-    const rows = Object.values(draft).filter(
-      row => row.id !== GENERAL_POPULATION_ID
-    );
+    const rows = Object.values(draft);
 
     await Promise.all(
       rows.map(async indicator => {

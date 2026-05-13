@@ -17,7 +17,7 @@ pub mod generate_typescript_types {
 
     use super::*;
     use repository::{PluginDataFilter, PluginDataRow, StorePreferenceRow};
-    use ts_rs::TS;
+    use ts_rs::{Config, TS};
 
     #[derive(TS)]
     #[allow(unused)]
@@ -49,6 +49,6 @@ pub mod generate_typescript_types {
     }
     // Runs in CLI
     pub fn export_plugin_typescript(path: PathBuf) {
-        PluginTypes::export_all_to(path).unwrap();
+        PluginTypes::export_all(&Config::new().with_out_dir(path)).unwrap();
     }
 }

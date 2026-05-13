@@ -47,7 +47,7 @@ export type SupplierReturnFragment = {
   createdDatetime: string;
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
-  deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   verifiedDatetime?: string | null;
   otherPartyName: string;
   otherPartyId: string;
@@ -72,6 +72,7 @@ export type SupplierReturnFragment = {
     __typename: 'InvoiceNode';
     id: string;
     invoiceNumber: number;
+    purchaseOrderId?: string | null;
     createdDatetime: string;
     user?: { __typename: 'UserNode'; username: string } | null;
   } | null;
@@ -399,7 +400,7 @@ export type SupplierReturnByNumberQuery = {
         createdDatetime: string;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
-        deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         verifiedDatetime?: string | null;
         otherPartyName: string;
         otherPartyId: string;
@@ -447,6 +448,7 @@ export type SupplierReturnByNumberQuery = {
           __typename: 'InvoiceNode';
           id: string;
           invoiceNumber: number;
+          purchaseOrderId?: string | null;
           createdDatetime: string;
           user?: { __typename: 'UserNode'; username: string } | null;
         } | null;
@@ -473,7 +475,7 @@ export type SupplierReturnByIdQuery = {
         createdDatetime: string;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
-        deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         verifiedDatetime?: string | null;
         otherPartyName: string;
         otherPartyId: string;
@@ -521,6 +523,7 @@ export type SupplierReturnByIdQuery = {
           __typename: 'InvoiceNode';
           id: string;
           invoiceNumber: number;
+          purchaseOrderId?: string | null;
           createdDatetime: string;
           user?: { __typename: 'UserNode'; username: string } | null;
         } | null;
@@ -871,7 +874,7 @@ export const SupplierReturnFragmentDoc = gql`
     createdDatetime
     pickedDatetime
     shippedDatetime
-    deliveredDatetime
+    receivedDatetime
     verifiedDatetime
     otherPartyName
     otherPartyId
@@ -898,6 +901,7 @@ export const SupplierReturnFragmentDoc = gql`
     originalShipment {
       id
       invoiceNumber
+      purchaseOrderId
       createdDatetime
       user {
         username

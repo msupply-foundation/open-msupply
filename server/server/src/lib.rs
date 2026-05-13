@@ -1,13 +1,21 @@
+#![recursion_limit = "256"]
+
 #[cfg(not(target_os = "android"))]
 extern crate machine_uid;
 
 use crate::{
-    central::config_central, certs::Certificates, cold_chain::config_cold_chain,
+    central::config_central,
+    certs::Certificates,
+    cold_chain::config_cold_chain,
     configuration::{get_or_create_token_secret, save_token_secret},
     cors::cors_policy,
-    custom_translations::config_custom_translations, middleware::central_server_only,
-    print::config_print, serve_frontend::config_serve_frontend, static_files::config_static_files,
-    support::config_support, upload_fridge_tag::config_upload_fridge_tag,
+    custom_translations::config_custom_translations,
+    middleware::central_server_only,
+    print::config_print,
+    serve_frontend::config_serve_frontend,
+    static_files::config_static_files,
+    support::config_support,
+    upload_fridge_tag::config_upload_fridge_tag,
 };
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
@@ -114,7 +122,7 @@ pub async fn start_server(
     info!("Creating base directory if needed: {}", base_dir);
     std::fs::create_dir_all(base_dir)?;
 
-    // INITIALISE DATABASE AND CONNECTION
+    // INITIALISE DATABASE CONNECTION
     let mut connection_manager = get_storage_connection_manager(&settings.database);
     let connection = connection_manager.connection().unwrap();
 

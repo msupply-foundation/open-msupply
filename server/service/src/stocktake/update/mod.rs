@@ -281,13 +281,16 @@ mod test {
         }
 
         fn mock_existing_stock_line_b() -> StockLineRow {
+            // total_number_of_packs (5.0) deliberately differs from the linked
+            // stocktake line's snapshot_number_of_packs (10.0) so finalisation
+            // exercises the snapshot-mismatch path on an uncounted line.
             StockLineRow {
                 id: "existing_stock_b".to_string(),
                 item_link_id: "item_a".to_string(),
                 store_id: "store_a".to_string(),
-                available_number_of_packs: 10.0,
+                available_number_of_packs: 5.0,
                 pack_size: 2.0,
-                total_number_of_packs: 10.0,
+                total_number_of_packs: 5.0,
                 batch: Some("initial batch name".to_string()),
                 ..Default::default()
             }
@@ -656,7 +659,8 @@ mod test {
             mock_stock_line_b().supplier_id
         );
 
-        // success - prunes uncounted lines
+        // success - prunes uncounted lines, and a stale snapshot on an
+        // uncounted line does not block finalisation (regression for #11408)
         let result = service
             .update_stocktake(
                 &context,

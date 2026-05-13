@@ -1,3 +1,4 @@
+use crate::invoice::inbound_shipment::InboundShipmentType;
 use crate::{
     campaign::check_campaign_exists,
     check_item_variant_exists, check_location_exists, check_location_type_is_valid,
@@ -13,8 +14,8 @@ use crate::{
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate,
 };
-use crate::invoice::inbound_shipment::InboundShipmentType;
 use repository::{InvoiceLine, InvoiceRow, ItemRow, StorageConnection};
+use util::f64_approx_eq;
 
 use super::{UpdateStockInLine, UpdateStockInLineError};
 
@@ -83,7 +84,10 @@ pub fn validate(
         }
     }
 
-    if let Some(vvm_status_id) = &input.vvm_status_id {
+    if let Some(NullableUpdate {
+        value: Some(vvm_status_id),
+    }) = &input.vvm_status_id
+    {
         if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
             return Err(VVMStatusDoesNotExist);
         }
@@ -111,13 +115,9 @@ pub fn validate(
         ) {
             Ok(_) => {}
             Err(e) => match e {
-                OtherPartyErrors::OtherPartyDoesNotExist => {
-                    return Err(ManufacturerDoesNotExist)
-                }
+                OtherPartyErrors::OtherPartyDoesNotExist => return Err(ManufacturerDoesNotExist),
                 OtherPartyErrors::OtherPartyNotVisible => return Err(ManufacturerNotVisible),
-                OtherPartyErrors::TypeMismatched => {
-                    return Err(ManufacturerIsNotAManufacturer)
-                }
+                OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
                 OtherPartyErrors::DatabaseError(repository_error) => {
                     return Err(DatabaseError(repository_error))
                 }
@@ -161,14 +161,6 @@ pub fn validate(
     Ok((line, item, invoice))
 }
 
-/// Compare two f64 values for approximate equality using a relative tolerance.
-/// Uses a minimum absolute tolerance of 1e-8 to handle values near zero,
-/// scaled by the magnitude of the larger operand for large values.
-fn f64_approx_eq(a: f64, b: f64) -> bool {
-    let tolerance = f64::EPSILON * a.abs().max(b.abs()) * 10.0;
-    (a - b).abs() <= tolerance.max(1e-8)
-}
-
 fn check_item_option(
     item_id_option: &Option<String>,
     connection: &StorageConnection,
@@ -179,33 +171,5 @@ fn check_item_option(
         ))
     } else {
         Ok(None)
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::f64_approx_eq;
-
-    #[test]
-    fn test_f64_approx_eq() {
-        // Identical values
-        assert!(f64_approx_eq(1.0, 1.0));
-        assert!(f64_approx_eq(0.0, 0.0));
-
-        // Clearly different values
-        assert!(!f64_approx_eq(1.0, 2.0));
-        assert!(!f64_approx_eq(100.0, 100.01));
-
-        // Large values: difference within relative tolerance should be equal
-        let large = 1_000_000.0;
-        let drift = f64::EPSILON * large * 5.0;
-        assert!(f64_approx_eq(large, large + drift));
-
-        // Large values: meaningful difference should not be equal
-        assert!(!f64_approx_eq(large, large + 0.01));
-
-        // Near zero: uses minimum absolute tolerance of 1e-8
-        assert!(f64_approx_eq(0.0, 1e-9));
-        assert!(!f64_approx_eq(0.0, 1e-7));
     }
 }

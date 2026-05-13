@@ -37,12 +37,13 @@ use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::campaign::{CampaignMutations, CampaignQueries};
 use graphql_general::{
     CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
-    InitialisationMutations, InitialisationQueries, InitialisationSubscriptions,
-    MigrationQueries, SyncStatusSubscriptions,
+    InitialisationMutations, InitialisationQueries, InitialisationSubscriptions, MigrationQueries,
+    SyncStatusSubscriptions,
 };
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
+use graphql_ancillary_item::AncillaryItemMutations;
 use graphql_item_bundle::BundledItemMutations;
 use graphql_item_variant::{ItemVariantMutations, ItemVariantQueries};
 use graphql_location::{LocationMutations, LocationQueries};
@@ -95,6 +96,9 @@ impl CentralServerMutationNode {
     }
     async fn bundled_item(&self) -> BundledItemMutations {
         BundledItemMutations
+    }
+    async fn ancillary_item(&self) -> AncillaryItemMutations {
+        AncillaryItemMutations
     }
     async fn asset_catalogue(&self) -> AssetCatalogueMutations {
         AssetCatalogueMutations
@@ -385,6 +389,7 @@ impl GraphqlSchema {
             InitialisationSubscriptions::default(),
         )
         .data(service_provider.clone())
+        .data(subscription_broadcast.clone())
         .data(operational_status_ref.clone())
         .data(subscription_broadcast.clone())
         .extension(GraphQLRequestLogger);
@@ -478,10 +483,16 @@ async fn graphql_ws(
                 .on_connection_init(on_connection_init)
                 .start(&req, payload)
         }
-        OperationalStatus::Initialising | OperationalStatus::MigratingDatabase => {
+        OperationalStatus::Initialising => {
             GraphQLSubscription::new(schema.initialisation.clone())
                 .on_connection_init(on_connection_init)
                 .start(&req, payload)
+        }
+        OperationalStatus::MigratingDatabase => {
+            //TODO: add migration status subscription and route to that instead of returning an error here
+            Err(actix_web::error::ErrorServiceUnavailable(
+                "Subscriptions unavailable during database migration",
+            ))
         }
     }
 }

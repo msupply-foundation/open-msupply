@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { useUrlQuery } from '@common/hooks';
 import { Switch } from '@common/components';
 import { Box } from '@mui/material';
@@ -15,6 +15,10 @@ export const BooleanFilter: FC<{
   const { urlQuery, updateQuery } = useUrlQuery();
   const urlValue = urlQuery[urlParameter] as boolean;
   const [value, setValue] = useState(urlValue);
+
+  useEffect(() => {
+    setValue(urlValue);
+  }, [urlValue]);
 
   const handleChange = (
     _: React.SyntheticEvent<Element, Event>,

@@ -24,7 +24,6 @@ import {
   Typography,
   CopyIcon,
   StockIcon,
-  StatusChip,
   InvoiceLineStatusType,
   InvoiceNodeStatus,
   InfoIcon,
@@ -47,7 +46,6 @@ import { PatchDraftLineInput } from '../../../api';
 import { useInboundShipment } from '../../../api/hooks/document/useInboundShipment';
 import { isInboundPlaceholderRow } from '../../../../utils';
 import { useInvoiceLineStatusMap } from '../../..';
-import { usePurchaseOrder } from '@openmsupply-client/purchasing/src/purchase_order/api';
 
 interface CardProps {
   lines: DraftInboundLine[];
@@ -66,7 +64,7 @@ interface InboundLineEditCardsProps extends CardProps {
   duplicateDraftLine: (id: string) => void;
   removeDraftLine: (id: string) => void;
   isReceived?: boolean;
-  lastCardRef?: React.RefObject<HTMLDivElement>;
+  lastCardRef?: React.RefObject<HTMLDivElement | null>;
   actions?: React.ReactNode;
   /** The specific line ID to scroll into view when the modal opens */
   scrollToLineId?: string | null;
@@ -109,29 +107,8 @@ export const InboundLineEditCards = ({
     hasAuthorisePermission,
     isExternal,
   } = useInboundShipment();
-  const purchaseOrderId = inboundData?.purchaseOrder?.id;
   const isManualShipment =
     !inboundData?.purchaseOrder && !inboundData?.linkedShipment;
-  const { query: poQuery } = usePurchaseOrder(purchaseOrderId);
-
-  // Calculate outstanding packs for the current item from PO lines
-  // Outstanding = ordered packs - shipped packs, calculated per-line using requestedPackSize
-  const poOutstandingPacks = useMemo(() => {
-    if (!purchaseOrderId || !item?.id || !poQuery.data) return null;
-    let totalOutstandingPacks = 0;
-    for (const line of poQuery.data.lines.nodes) {
-      if (line.item.id === item.id) {
-        const orderedUnits =
-          line.adjustedNumberOfUnits ?? line.requestedNumberOfUnits;
-        const shippedUnits = line.shippedNumberOfUnits ?? 0;
-        const packSize = line.requestedPackSize || 1;
-        const orderedPacks = Math.ceil(orderedUnits / packSize);
-        const shippedPacks = Math.ceil(shippedUnits / packSize);
-        totalOutstandingPacks += orderedPacks - shippedPacks;
-      }
-    }
-    return totalOutstandingPacks;
-  }, [purchaseOrderId, item?.id, poQuery.data]);
 
   const showLineStatus =
     lines.some(line => line.status != null) ||
@@ -230,15 +207,6 @@ export const InboundLineEditCards = ({
                   {`${t('label.shipped-number-of-packs')}: ${shippedPacks}`}
                 </Typography>
               )}
-              {!!purchaseOrderId && poOutstandingPacks != null && (
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ mt: 0.5, display: 'block' }}
-                >
-                  {`${t('label.outstanding-packs')}: ${poOutstandingPacks}`}
-                </Typography>
-              )}
             </Box>
           );
         },
@@ -308,25 +276,22 @@ export const InboundLineEditCards = ({
             inboundData?.status === InvoiceNodeStatus.Received ||
             inboundData?.status === InvoiceNodeStatus.Verified;
 
-          if (isStatusDisabled) {
-            const entry = status ? statusMapRef.current[status] : undefined;
-            return entry ? (
-              <StatusChip label={entry.label} colour={entry.colour} />
-            ) : null;
-          }
-
           return (
             <Select
               value={status ?? ''}
               variant="standard"
               size="small"
               fullWidth
+              disabled={isStatusDisabled}
               sx={{
                 backgroundColor: theme => theme.palette.background.input.main,
                 borderRadius: 2,
                 px: 0.5,
                 '& .MuiSelect-select': {
                   py: 0.5,
+                },
+                '&::before, &::after': {
+                  display: 'none',
                 },
               }}
               onChange={e => {
@@ -335,12 +300,6 @@ export const InboundLineEditCards = ({
                   status: e.target.value as InvoiceLineStatusType,
                 });
               }}
-              renderValue={() => {
-                const entry = status ? statusMapRef.current[status] : undefined;
-                return entry ? (
-                  <StatusChip label={entry.label} colour={entry.colour} />
-                ) : null;
-              }}
             >
               {Object.entries(statusMapRef.current)
                 .filter(
@@ -348,9 +307,9 @@ export const InboundLineEditCards = ({
                     hasAuthorisePermission ||
                     key === InvoiceLineStatusType.Pending
                 )
-                .map(([key, { label, colour }]) => (
+                .map(([key, { label }]) => (
                   <MenuItem key={key} value={key}>
-                    <StatusChip label={label} colour={colour} />
+                    {label}
                   </MenuItem>
                 ))}
             </Select>
@@ -607,14 +566,14 @@ export const InboundLineEditCards = ({
         accessorFn: row => row.vvmStatus || '',
         Cell: ({
           row: {
-            original: { id, vvmStatus, stockLine },
+            original: { id, vvmStatus, stockLine, isCreated },
           },
         }) => (
           <VVMStatusSearchInput
             disabled={isDisabled}
             selected={vvmStatus ?? null}
             onChange={vvmStatus => updateDraftLine({ id, vvmStatus })}
-            useDefault={!stockLine}
+            useDefault={!stockLine && !!isCreated}
           />
         ),
         includeColumn: hasVvmStatusesEnabled && item?.isVaccine,
@@ -798,7 +757,6 @@ export const InboundLineEditCards = ({
     isManualShipment,
     item?.isVaccine,
     pluralisedUnitName,
-    poOutstandingPacks,
     removeDraftLine,
     restrictedToLocationTypeId,
     setPackRoundingMessage,

@@ -23,6 +23,8 @@ module.exports = {
   modulePathIgnorePatterns: [
     '[/\\\\]standard_reports[/\\\\].*[/\\\\]convert_data_js[/\\\\]',
     '[/\\\\]standard_forms[/\\\\].*[/\\\\]convert_data_js[/\\\\]',
+    // Ignore stale compiled JS in dist/ so only source .ts/.tsx tests run
+    '<rootDir>/dist',
   ],
   roots: ['../client', '../standard_reports', '../standard_forms'],
 };

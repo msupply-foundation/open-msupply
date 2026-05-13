@@ -2,40 +2,31 @@ import React from 'react';
 import { ButtonProps, Tooltip } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { StyledBaseButton, translateColor } from './BaseButton';
-import { useIntlUtils } from '@common/intl';
 import { useAppTheme, useMediaQuery } from '@common/styles';
 
 export const StyledShrinkableBaseButton = styled(StyledBaseButton, {
-  shouldForwardProp: prop => prop !== 'shrink' && prop !== 'isRtl',
-})<{ isRtl: boolean; shrink: boolean }>(
-  ({ color, isRtl, shrink, theme, disabled }) => ({
-    // These magic padding numbers give a little bit of space to the left and right when
-    // the button content is extra large, such as in the "Save & Confirm Allocation" button
-    // on an outbound shipment.
-    paddingLeft: '20px',
-    paddingRight: '20px',
-    width: shrink ? '64px' : 'auto',
-    minWidth: shrink ? '64px' : '115px',
-    transition: theme.transitions.create(['min-width'], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
-    }),
-    '& .MuiButton-startIcon': isRtl
-      ? {
-          marginRight: -2,
-          marginLeft: 8,
-        }
-      : {},
-    '&.MuiButton-outlined': {
-      '&.MuiButton-root:not(:hover) .MuiSvgIcon-root': {
-        color:
-          color === 'primary' && !disabled
-            ? translateColor(theme, color)
-            : undefined,
-      },
+  shouldForwardProp: prop => prop !== 'shrink',
+})<{ shrink: boolean }>(({ color, shrink, theme, disabled }) => ({
+  // These magic padding numbers give a little bit of space to the left and right when
+  // the button content is extra large, such as in the "Save & Confirm Allocation" button
+  // on an outbound shipment.
+  paddingLeft: '20px',
+  paddingRight: '20px',
+  width: shrink ? '64px' : 'auto',
+  minWidth: shrink ? '64px' : '115px',
+  transition: theme.transitions.create(['min-width'], {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  '&.MuiButton-outlined': {
+    '&.MuiButton-root:not(:hover) .MuiSvgIcon-root': {
+      color:
+        color === 'primary' && !disabled
+          ? translateColor(theme, color)
+          : undefined,
     },
-  })
-);
+  },
+}));
 
 interface ShrinkableBaseButtonProps extends ButtonProps {
   label: string;
@@ -51,7 +42,6 @@ export const ShrinkableBaseButton = React.forwardRef<
     { label, onClick, shrinkThreshold, shouldShrink, startIcon, ...props },
     ref
   ) => {
-    const { isRtl } = useIntlUtils();
     const theme = useAppTheme();
     const isShrinkThreshold = useMediaQuery(
       theme.breakpoints.down(shrinkThreshold)
@@ -70,7 +60,6 @@ export const ShrinkableBaseButton = React.forwardRef<
             ref={ref}
             shrink={shrink}
             size="small"
-            isRtl={isRtl}
             aria-label={label}
             onClick={onClick}
             startIcon={shrink ? null : startIcon}

@@ -91,7 +91,6 @@ fn find_callable_in_exports(
         path = path
             .get(js_string!(*name), context)?
             .as_object()
-            .cloned()
             .ok_or(BoaJsError::ExportMissing(name.to_string()))?;
     }
 

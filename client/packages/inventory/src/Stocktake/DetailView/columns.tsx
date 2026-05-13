@@ -4,6 +4,7 @@ import {
   usePreferences,
   ColumnDef,
   ColumnType,
+  ExpiryDateCell,
   UnitsAndDosesCell,
 } from '@openmsupply-client/common';
 import { StocktakeLineFragment } from '../api';
@@ -56,6 +57,7 @@ export const useStocktakeColumns = () => {
         header: t('label.expiry-date'),
         size: 110,
         columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
         defaultHideOnMobile: true,
         enableColumnFilter: true,
         enableSorting: true,
@@ -118,6 +120,20 @@ export const useStocktakeColumns = () => {
         enableSorting: true,
         aggregationFn: 'sum',
         getIsError: row => getIsError('StockLineReducedBelowZero', row),
+      },
+      {
+        id: 'dosesCounted',
+        header: t('label.doses-counted'),
+        columnType: ColumnType.Number,
+        enableSorting: true,
+        aggregationFn: 'sum',
+        includeColumn: manageVaccinesInDoses,
+        accessorFn: row => {
+          if (!row.item.isVaccine) return null;
+          const counted = row.countedNumberOfPacks;
+          if (counted === null || counted === undefined) return null;
+          return counted * (row.packSize ?? 1) * (row.item.doses ?? 1);
+        },
       },
       {
         id: 'difference',

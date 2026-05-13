@@ -8,6 +8,7 @@ export type DraftInventoryAdjustment = {
   reason: ReasonOptionRowFragment | null;
   adjustment: number;
   adjustmentType: AdjustmentTypeInput;
+  backdatedDatetime?: string | null;
 };
 
 export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
@@ -37,6 +38,10 @@ export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
       return 'error.reduced-below-zero';
     }
 
+    if (adjustmentError.__typename === 'LedgerWouldGoBelowZero') {
+      return 'error.ledger-would-go-below-zero';
+    }
+
     if (adjustmentError.__typename === 'AdjustmentReasonNotProvided') {
       return 'error.provide-reason-stock-adjustment';
     }
@@ -52,11 +57,12 @@ export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
 const useCreate = (stockLineId: string) => {
   const { stockApi, storeId, queryClient } = useStockGraphQL();
 
-  return useMutation(
-    async ({
+  return useMutation({
+    mutationFn: async ({
       adjustment,
       adjustmentType,
       reason,
+      backdatedDatetime,
     }: DraftInventoryAdjustment) => {
       // TODO: error helper to handle structured/standard errors
       return await stockApi.createInventoryAdjustment({
@@ -66,13 +72,15 @@ const useCreate = (stockLineId: string) => {
           adjustmentType,
           stockLineId,
           reasonOptionId: reason?.id,
+          backdatedDatetime,
         },
       });
     },
-    {
-      onSuccess: () =>
-        // Stock line needs to be re-fetched to refresh quantity
-        queryClient.invalidateQueries([STOCK_LINE]),
-    }
-  );
+
+    onSuccess: () =>
+      // Stock line needs to be re-fetched to refresh quantity
+      queryClient.invalidateQueries({
+        queryKey: [STOCK_LINE]
+      })
+  });
 };

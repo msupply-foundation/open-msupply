@@ -13,12 +13,10 @@ import {
   NameAndColorSetterCell,
   NothingHere,
   usePreferences,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
-import {
-  getStatusTranslator,
-  isOutboundDisabled,
-  outboundStatuses,
-} from '../../utils';
+import { getStatusTranslator, isOutboundDisabled } from '../../utils';
+import { getStatusSequence } from '../../statuses';
 import { AppBarButtons } from './AppBarButtons';
 import { useOutbound } from '../api';
 import { OutboundRowFragment } from '../api/operations.generated';
@@ -50,8 +48,8 @@ export const OutboundShipmentListView = () => {
 
   const { data, isFetching, isError } = useOutbound.document.list(queryParams);
   const { mutate: onUpdate } = useOutbound.document.update();
-  const statuses = outboundStatuses.filter(status =>
-    invoiceStatusOptions?.includes(status)
+  const statuses = getStatusSequence(InvoiceNodeType.OutboundShipment).filter(
+    status => invoiceStatusOptions?.includes(status)
   );
 
   const mrtColumns = useMemo(

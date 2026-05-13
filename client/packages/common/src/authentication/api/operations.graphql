@@ -20,6 +20,7 @@ fragment UserStoreNode on UserStoreNode {
     monthsItemsExpire
     stocktakeFrequency
     extraFieldsInRequisition
+    keepRequisitionLinesWithZeroRequestedQuantityOnFinalised
     manuallyLinkInternalOrderToInboundShipment
     useConsumptionAndStockFromCustomersForInternalOrders
     editPrescribedQuantityOnPrescription
@@ -227,6 +228,11 @@ query preferences($storeId: String!) {
     showIndicativePriceInRequisitions
     isGaps
     globalTableConfigs
+    backdating {
+      shipmentsEnabled
+      inventoryAdjustmentsEnabled
+      maxDays
+    }
   }
 }
 

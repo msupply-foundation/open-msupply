@@ -16,6 +16,7 @@ import {
   useSimpleMaterialTable,
   ColumnDef,
   ColumnType,
+  NaiveDateCell,
 } from '@openmsupply-client/common';
 import {
   PatientRowFragment,
@@ -128,6 +129,7 @@ const ModalContent: FC<ModalContentProps> = ({
         accessorKey: 'dateOfBirth',
         header: t('label.date-of-birth'),
         columnType: ColumnType.Date,
+        Cell: NaiveDateCell,
       },
       {
         accessorKey: 'gender',

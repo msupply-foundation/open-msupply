@@ -11,7 +11,6 @@ use crate::repository_error::RepositoryError;
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{Delete, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
-use diesel::dsl::max;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -51,7 +50,7 @@ define_linked_tables! {
         name_link_id -> name_id,
     },
     optional_links: {
-        destination_customer_link_id -> original_customer_id,
+        destination_customer_link_id -> destination_customer_id,
     }
 
 }
@@ -126,7 +125,7 @@ pub struct RequisitionRow {
     pub created_from_requisition_id: Option<String>, // for Internal Orders created from a Requisition
     // Resolved from name_link - must be last to match view column order
     pub name_id: String,
-    pub original_customer_id: Option<String>,
+    pub destination_customer_id: Option<String>,
 }
 
 pub struct RequisitionRowRepository<'a> {
@@ -195,7 +194,7 @@ impl<'a> RequisitionRowRepository<'a> {
                     .eq(r#type)
                     .and(requisition::store_id.eq(store_id)),
             )
-            .select(max(requisition::requisition_number))
+            .select(diesel::dsl::max(requisition::requisition_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
     }

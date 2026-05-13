@@ -1,3 +1,9 @@
+use crate::{
+    activity_log::{activity_log_entry, log_type_from_invoice_status},
+    invoice::{query::get_invoice, stock_effect::StockEffect},
+    service_provider::ServiceContext,
+    NullableUpdate,
+};
 use chrono::{Duration, NaiveDateTime, Utc};
 use repository::{
     EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository,
@@ -5,13 +11,6 @@ use repository::{
     StorageConnection,
 };
 use util::uuid::uuid;
-
-use crate::{
-    activity_log::{activity_log_entry, log_type_from_invoice_status},
-    invoice::query::get_invoice,
-    service_provider::ServiceContext,
-    NullableUpdate,
-};
 
 mod generate;
 mod validate;
@@ -74,6 +73,7 @@ pub fn update_prescription(
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
+                stock_effect,
             } = generate(invoice, patch.clone(), connection)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
@@ -94,7 +94,7 @@ pub fn update_prescription(
                     None,
                 )?;
 
-                if patch.status == Some(UpdatePrescriptionStatus::Cancelled) {
+                if stock_effect == Some(StockEffect::ReverseStock) {
                     create_reverse_prescription(connection, &update_invoice)?;
                 }
             }

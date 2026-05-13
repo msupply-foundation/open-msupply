@@ -49,12 +49,6 @@ const queryClient = new QueryClient({
     queries: {
       // Creates unnecessary requests
       refetchOnWindowFocus: false,
-      // This is the default in v4 which is currently in alpha as it is
-      // what most users think the default is.
-      // This will subscribe components of a query only to the data they
-      // destructure. I.e. if the component does not read the isLoading
-      // field, the component will not re-render when the state changes.
-      notifyOnChangeProps: 'tracked',
     },
   },
 });
@@ -70,13 +64,15 @@ const skipRequest = () =>
 
 const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { logout } = useAuthContext();
-  const data = useInitialisationStatus(false, true);
+  const data = useInitialisationStatus(false);
 
-  // Technically this should not fire before query is loaded because we are doing suspense
-  if (data?.data?.status == InitialisationStatusType.Initialised)
+  // Query still loading — don't render children yet, but don't logout either
+  if (!data?.data) return null;
+
+  if (data.data.status == InitialisationStatusType.Initialised)
     return children;
 
-  // Clear token
+  // Server is not initialised — clear token
   logout();
 
   return null;

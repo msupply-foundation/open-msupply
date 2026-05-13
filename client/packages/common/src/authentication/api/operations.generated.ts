@@ -29,6 +29,7 @@ export type UserStoreNodeFragment = {
     monthsItemsExpire: number;
     stocktakeFrequency: number;
     extraFieldsInRequisition: boolean;
+    keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
     manuallyLinkInternalOrderToInboundShipment: boolean;
     useConsumptionAndStockFromCustomersForInternalOrders: boolean;
     editPrescribedQuantityOnPrescription: boolean;
@@ -98,6 +99,7 @@ export type MeQuery = {
         monthsItemsExpire: number;
         stocktakeFrequency: number;
         extraFieldsInRequisition: boolean;
+        keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
         manuallyLinkInternalOrderToInboundShipment: boolean;
         useConsumptionAndStockFromCustomersForInternalOrders: boolean;
         editPrescribedQuantityOnPrescription: boolean;
@@ -132,6 +134,7 @@ export type MeQuery = {
           monthsItemsExpire: number;
           stocktakeFrequency: number;
           extraFieldsInRequisition: boolean;
+          keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
           manuallyLinkInternalOrderToInboundShipment: boolean;
           useConsumptionAndStockFromCustomersForInternalOrders: boolean;
           editPrescribedQuantityOnPrescription: boolean;
@@ -278,6 +281,12 @@ export type PreferencesQuery = {
       maxAge: number;
       minItems: number;
     };
+    backdating: {
+      __typename: 'BackdatingNode';
+      shipmentsEnabled: boolean;
+      inventoryAdjustmentsEnabled: boolean;
+      maxDays: number;
+    };
   };
 };
 
@@ -319,6 +328,7 @@ export const UserStoreNodeFragmentDoc = gql`
       monthsItemsExpire
       stocktakeFrequency
       extraFieldsInRequisition
+      keepRequisitionLinesWithZeroRequestedQuantityOnFinalised
       manuallyLinkInternalOrderToInboundShipment
       useConsumptionAndStockFromCustomersForInternalOrders
       editPrescribedQuantityOnPrescription
@@ -538,6 +548,11 @@ export const PreferencesDocument = gql`
       showIndicativePriceInRequisitions
       isGaps
       globalTableConfigs
+      backdating {
+        shipmentsEnabled
+        inventoryAdjustmentsEnabled
+        maxDays
+      }
     }
   }
 `;

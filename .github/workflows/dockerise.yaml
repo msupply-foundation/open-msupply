@@ -100,10 +100,6 @@ jobs:
           name: client-dist
           path: client/packages/host/dist
 
-      - name: Apply async-dataloader patch
-        run: |
-          git apply docker/async-dataloader.patch
-
       - name: Build server
         run: |
           RUST_IMAGE="rust:1.94-slim"

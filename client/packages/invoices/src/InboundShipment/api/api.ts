@@ -94,8 +94,6 @@ export const inboundParsers = {
       id: patch.id,
       colour: 'colour' in patch ? patch.colour : undefined,
       comment: 'comment' in patch ? patch.comment : undefined,
-      deliveredDatetime:
-        'deliveredDatetime' in patch ? patch.deliveredDatetime : undefined,
       status: inboundParsers.toStatus(patch),
       onHold: 'onHold' in patch ? patch.onHold : undefined,
       otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
@@ -117,6 +115,8 @@ export const inboundParsers = {
           : undefined,
       defaultDonor:
         'defaultDonorUpdate' in patch ? patch.defaultDonorUpdate : undefined,
+      receivedDatetime:
+        'receivedDatetime' in patch ? patch.receivedDatetime : undefined,
     };
   },
   toInsertLine: (line: DraftInboundLine): InsertInboundShipmentLineInput => {
@@ -158,7 +158,11 @@ export const inboundParsers = {
     id: line.id,
     itemId: line.item.id,
     batch: line.batch,
-    costPricePerPack: line.costPricePerPack,
+    // For PO-linked lines the cost cell is read-only on the UI and the stored
+    // value is authoritative (see issue #11186); omit so the server preserves it.
+    costPricePerPack: line.purchaseOrderLine?.id
+      ? undefined
+      : line.costPricePerPack,
     expiryDate: {
       value: line.expiryDate || null,
     },
@@ -170,7 +174,7 @@ export const inboundParsers = {
     numberOfPacks: line.numberOfPacks,
     location: setNullableInput('id', line.location),
     itemVariantId: setNullableInput('id', line.itemVariant),
-    vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : undefined,
+    vvmStatusId: setNullableInput('id', 'vvmStatus' in line ? (line.vvmStatus ?? null) : undefined),
     donorId: setNullableInput('donorId', { donorId: line.donor?.id ?? null }), // set to null if undefined, so value is cleared
     manufacturerId: setNullableInput('manufacturerId', {
       manufacturerId: line.manufacturer?.id ?? null,

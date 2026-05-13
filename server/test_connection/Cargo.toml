@@ -8,14 +8,11 @@ name = "test_connection"
 path = "src/main.rs"
 
 [dependencies]
-# fixed version of slint used to compile with rustc 1.88
-slint = "=1.13.1"
-tokio = { version = "1", features = ["rt", "macros"] }
+slint = "=1.15.1"
+tokio = { version = "1.50.0", features = ["rt", "macros"] }
 cli = { path = "../cli" }
-# smol_str and typed-index-collections are dependencies of slint
-# fixed versions are used to compile with rustc 1.88
-smol_str = "=0.2.2"
-typed-index-collections = "=3.3.0"
+smol_str = "=0.3.6"
+typed-index-collections = "=3.5.0"
 
 [build-dependencies]
-slint-build = "=1.13.1"
+slint-build = "=1.15.1"

@@ -9,13 +9,12 @@ export const PREFERENCE_GROUP_CONFIG: Partial<
     PreferenceKey.DaysInMonth,
     PreferenceKey.AdjustForNumberOfDaysOutOfStock,
   ],
-  'label.procurement': [
-    PreferenceKey.AuthorisePurchaseOrder,
-  ],
+  'label.procurement': [PreferenceKey.AuthorisePurchaseOrder],
   'label.expired-stock': [
     PreferenceKey.ExpiredStockPreventIssue,
     PreferenceKey.ExpiredStockIssueThreshold,
   ],
+  'label.backdating': [PreferenceKey.Backdating],
 };
 
 export const isAnyAmcPrefOn = (

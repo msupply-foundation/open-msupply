@@ -6,15 +6,16 @@ export const useInboundDelete = () => {
   const queryClient = useQueryClient();
   const api = useInboundApi();
 
-  return useMutation(
-    (invoices: InboundRowFragment[]) => {
+  return useMutation({
+    mutationFn: (invoices: InboundRowFragment[]) => {
       const isExternal = invoices.some(inv => !!inv.purchaseOrder);
       return api.delete(invoices, isExternal);
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(api.keys.base());
-      },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: api.keys.base()
+      });
     }
-  );
+  });
 };

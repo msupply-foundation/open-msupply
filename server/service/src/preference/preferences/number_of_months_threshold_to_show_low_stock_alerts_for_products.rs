@@ -3,7 +3,7 @@ use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType
 pub struct NumberOfMonthsThresholdToShowLowStockAlertsForProducts;
 
 impl Preference for NumberOfMonthsThresholdToShowLowStockAlertsForProducts {
-    type Value = i32;
+    type Value = f64;
 
     fn key(&self) -> PrefKey {
         PrefKey::NumberOfMonthsThresholdToShowLowStockAlertsForProducts
@@ -14,6 +14,6 @@ impl Preference for NumberOfMonthsThresholdToShowLowStockAlertsForProducts {
     }
 
     fn value_type(&self) -> PreferenceValueType {
-        PreferenceValueType::Integer
+        PreferenceValueType::Float
     }
 }

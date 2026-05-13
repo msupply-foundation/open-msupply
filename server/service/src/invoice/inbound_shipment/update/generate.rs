@@ -1,19 +1,23 @@
-use chrono::{NaiveDateTime, Utc};
+use chrono::Utc;
 
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 use repository::{
+    location_movement::{LocationMovementFilter, LocationMovementRepository},
     EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineStatus, InvoiceLineType,
     LocationMovementRow, Name, PurchaseOrderLineRowRepository, RepositoryError,
 };
 use repository::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, StockLineRow,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow,
     StorageConnection,
 };
 use util::uuid::uuid;
 
-use crate::invoice::common::{
-    calculate_foreign_currency_total, calculate_total_after_tax, generate_vvm_status_log,
-    GenerateVVMStatusLogInput,
+use crate::invoice::{
+    common::{
+        calculate_foreign_currency_total, calculate_total_after_tax, generate_vvm_status_log,
+        GenerateVVMStatusLogInput,
+    },
+    stock_effect::{stock_effects, StockEffect},
 };
 use crate::service_provider::ServiceContext;
 
@@ -33,6 +37,7 @@ pub(crate) struct GenerateResult {
     pub(crate) update_invoice: InvoiceRow,
     pub(crate) empty_lines_to_trim: Option<Vec<InvoiceLineRow>>,
     pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
+    pub(crate) backdate_location_movements: Option<Vec<LocationMovementRow>>,
     pub(crate) update_tax_for_lines: Option<Vec<InvoiceLineRow>>,
     pub(crate) update_currency_for_lines: Option<Vec<InvoiceLineRow>>,
     pub(crate) update_cost_price_for_lines: Option<Vec<InvoiceLineRow>>,
@@ -47,7 +52,14 @@ pub(crate) fn generate(
     patch: UpdateInboundShipment,
 ) -> Result<GenerateResult, UpdateInboundShipmentError> {
     let connection = &ctx.connection;
-    let should_create_batches = should_create_batches(&existing_invoice, &patch);
+    let should_create_batches = match &patch.status {
+        Some(new_status) => {
+            let to = new_status.full_status();
+            stock_effects(&InvoiceType::InboundShipment, &existing_invoice.status, &to)
+                == StockEffect::CreateStock
+        }
+        None => false,
+    };
     let mut update_invoice = existing_invoice.clone();
 
     set_new_status_datetime(&mut update_invoice, &patch);
@@ -87,9 +99,53 @@ pub(crate) fn generate(
         .unwrap_or(update_invoice.charges_foreign_currency);
 
     // Already validated in validate
-    if let Some(delivered_datetime) = patch.delivered_datetime {
-        update_invoice.delivered_datetime = Some(NaiveDateTime::from(delivered_datetime));
-    }
+    let backdate_location_movements = if let Some(received_datetime) = patch.received_datetime {
+        let new_received = received_datetime.naive_utc();
+        update_invoice.received_datetime = Some(new_received);
+
+        // Update location movements for stock lines from this invoice to reflect the new date
+        let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
+            InvoiceLineFilter::new()
+                .invoice_id(EqualFilter::equal_to(update_invoice.id.clone()))
+                .r#type(InvoiceLineType::StockIn.equal_to()),
+        )?;
+
+        let stock_line_ids: Vec<String> = invoice_lines
+            .iter()
+            .filter_map(|l| l.invoice_line_row.stock_line_id.clone())
+            .collect();
+
+        let movements = if stock_line_ids.is_empty() {
+            vec![]
+        } else {
+            LocationMovementRepository::new(connection).query(
+                Default::default(),
+                Some(
+                    LocationMovementFilter::new()
+                        .stock_line_id(EqualFilter::equal_any(stock_line_ids)),
+                ),
+                None,
+            )?
+        };
+
+        let movements_to_update: Vec<LocationMovementRow> = movements
+            .into_iter()
+            .map(|m| {
+                let mut row = m.location_movement_row;
+                row.enter_datetime = Some(new_received);
+                row.exit_datetime = row.exit_datetime.map(|_| new_received);
+                row
+            })
+            .collect();
+
+        if movements_to_update.is_empty() {
+            None
+        } else {
+            Some(movements_to_update)
+        }
+    } else {
+        None
+    };
 
     let batches_to_update = if should_create_batches {
         Some(generate_lines_and_stock_lines(
@@ -195,32 +251,13 @@ pub(crate) fn generate(
         empty_lines_to_trim: empty_lines_to_trim(connection, &existing_invoice, &patch.status)?,
         update_invoice,
         location_movements,
+        backdate_location_movements,
         update_tax_for_lines,
         update_currency_for_lines,
         update_cost_price_for_lines,
         vvm_status_logs_to_update,
         update_donor,
     })
-}
-
-pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment) -> bool {
-    let existing_status = &invoice.status;
-    let new_status = match changed_status(patch.status.to_owned(), existing_status) {
-        Some(status) => status,
-        None => return false, // Status has not been updated
-    };
-
-    match (existing_status, new_status) {
-        (
-            // From New/Picked/Shipped/Delivered to Received/Verified
-            InvoiceStatus::New
-            | InvoiceStatus::Picked
-            | InvoiceStatus::Shipped
-            | InvoiceStatus::Delivered,
-            UpdateInboundShipmentStatus::Received | UpdateInboundShipmentStatus::Verified,
-        ) => true,
-        _ => false,
-    }
 }
 
 fn generate_tax_update_for_lines(

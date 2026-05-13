@@ -4,6 +4,7 @@ import {
   useTranslation,
   useNotification,
   InvoiceNodeStatus,
+  InvoiceNodeType,
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
@@ -14,47 +15,12 @@ import {
 } from '@openmsupply-client/common';
 import {
   getPreviousStatus,
-  outboundStatuses,
   getButtonLabel,
   getNextStatusOption,
   getStatusTranslator,
 } from '../../../utils';
 import { useOutbound, useOutboundLines } from '../../api';
-
-const getStatusOptions = (
-  currentStatus: InvoiceNodeStatus,
-  getButtonLabel: (status: InvoiceNodeStatus) => string
-): SplitButtonOption<InvoiceNodeStatus>[] => {
-  const options = [
-    InvoiceNodeStatus.New,
-    InvoiceNodeStatus.Allocated,
-    InvoiceNodeStatus.Picked,
-    InvoiceNodeStatus.Shipped,
-    InvoiceNodeStatus.Delivered,
-    InvoiceNodeStatus.Verified,
-  ].map(status => ({
-    value: status,
-    label: getButtonLabel(status),
-    isDisabled: true,
-  }));
-
-  if (currentStatus === InvoiceNodeStatus.New) {
-    if (options[1]) options[1].isDisabled = false;
-    if (options[2]) options[2].isDisabled = false;
-    if (options[3]) options[3].isDisabled = false;
-  }
-
-  if (currentStatus === InvoiceNodeStatus.Allocated) {
-    if (options[2]) options[2].isDisabled = false;
-    if (options[3]) options[3].isDisabled = false;
-  }
-
-  if (currentStatus === InvoiceNodeStatus.Picked) {
-    if (options[3]) options[3].isDisabled = false;
-  }
-
-  return options;
-};
+import { getStatusOptions, getStatusSequence } from '../../../statuses';
 
 const useStatusChangeButton = () => {
   const t = useTranslation();
@@ -72,7 +38,11 @@ const useStatusChangeButton = () => {
     (data?.lines?.nodes ?? []).some(line => line.numberOfPacks === 0);
 
   const options = useMemo(() => {
-    let statusOptions = getStatusOptions(status, getButtonLabel(t));
+    let statusOptions = getStatusOptions(
+      InvoiceNodeType.OutboundShipment,
+      status,
+      getButtonLabel(t)
+    );
     if (invoiceStatusOptions) {
       statusOptions = statusOptions.filter(
         option => !!option.value && invoiceStatusOptions.includes(option.value)
@@ -86,7 +56,11 @@ const useStatusChangeButton = () => {
   const currentStatus =
     !invoiceStatusOptions || invoiceStatusOptions.includes(status)
       ? status
-      : getPreviousStatus(status, invoiceStatusOptions, outboundStatuses);
+      : getPreviousStatus(
+          status,
+          invoiceStatusOptions,
+          getStatusSequence(InvoiceNodeType.OutboundShipment)
+        );
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
@@ -94,24 +68,27 @@ const useStatusChangeButton = () => {
     );
 
   const onConfirmStatusChange = async () => {
-    if (!selectedOption) return null;
+    if (!selectedOption) return;
     try {
-      await update({
+      const responses = await update({
         id: data?.id ?? '',
         status: selectedOption.value,
-      }).then(res => {
-        res?.forEach(res => {
-          if (
-            res.__typename === 'UpdateOutboundShipmentError' &&
-            res.error.__typename ===
-              'CannotHaveEstimatedDeliveryDateBeforeShippedDate'
-          ) {
-            info(t('error.estimated-delivery-before-shipped-date'))();
-          } else {
-            success(t('messages.shipment-saved'))();
-          }
-        });
       });
+      const updateError = responses?.find(
+        res => res?.__typename === 'UpdateOutboundShipmentError'
+      );
+      if (updateError?.__typename === 'UpdateOutboundShipmentError') {
+        switch (updateError.error.__typename) {
+          case 'CannotHaveEstimatedDeliveryDateBeforeShippedDate':
+            info(t('error.estimated-delivery-before-shipped-date'))();
+            break;
+          default:
+            error(t('messages.error-saving-shipment'))();
+            break;
+        }
+      } else {
+        success(t('messages.shipment-saved'))();
+      }
     } catch (e) {
       error(t('messages.error-saving-shipment'))();
     }

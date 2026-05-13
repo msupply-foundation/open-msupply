@@ -1,10 +1,11 @@
 use chrono::Utc;
 
 use repository::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, Name, StockLineRow,
-    StockLineRowRepository, StorageConnection,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, Name,
+    StockLineRow, StockLineRowRepository, StorageConnection,
 };
 
+use crate::invoice::stock_effect::{stock_effects, StockEffect};
 use crate::invoice_line::stock_in_line::{generate_batch, StockLineInput};
 
 use super::{UpdateCustomerReturn, UpdateCustomerReturnError, UpdateCustomerReturnStatus};
@@ -48,7 +49,17 @@ pub(crate) fn generate(
         updated_return.status = status.as_invoice_row_status()
     }
 
-    let should_create_batches = should_create_batches(&existing_return.status, &patch);
+    let should_create_batches = match &patch.status {
+        Some(new_status) => {
+            let to = new_status.as_invoice_row_status();
+            stock_effects(
+                &InvoiceType::CustomerReturn,
+                &existing_return.status,
+                &to,
+            ) == StockEffect::CreateStock
+        }
+        None => false,
+    };
 
     let batches_to_update = if should_create_batches {
         Some(generate_lines_and_stock_lines(
@@ -79,25 +90,6 @@ fn changed_status(
     }
 
     Some(new_status)
-}
-
-pub fn should_create_batches(
-    existing_status: &InvoiceStatus,
-    patch: &UpdateCustomerReturn,
-) -> bool {
-    let new_status = match changed_status(patch.status.to_owned(), existing_status) {
-        Some(status) => status,
-        None => return false, // There's no status to update
-    };
-
-    match (existing_status, new_status) {
-        (
-            // From New/Picked/Shipped to Delivered/Verified
-            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
-            UpdateCustomerReturnStatus::Received | UpdateCustomerReturnStatus::Verified,
-        ) => true,
-        _ => false,
-    }
 }
 
 fn set_new_status_datetime(customer_return: &mut InvoiceRow, patch: &UpdateCustomerReturn) {

@@ -13,11 +13,7 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { ItemStockOnHandFragment } from '@openmsupply-client/system';
-import {
-  PurchaseOrderFragment,
-  usePurchaseOrderLine,
-  useUnitsOnOrderForItem,
-} from '../../api';
+import { PurchaseOrderFragment, usePurchaseOrderLine } from '../../api';
 import { PurchaseOrderLineEdit } from './PurchaseOrderLineEdit';
 import { createDraftPurchaseOrderLine } from './utils';
 
@@ -60,11 +56,6 @@ export const PurchaseOrderLineEditModal = React.memo(
       updatePatch,
     } = usePurchaseOrderLine(lineId);
     const unit = draft?.unit || t('label.unit', { count: 2 });
-
-    const { data: unitsOrderedInOthers = 0 } = useUnitsOnOrderForItem(
-      draft.item.id,
-      purchaseOrder.id
-    );
 
     const getMostRecentExpectedDate = () => {
       const dates = lines
@@ -176,8 +167,8 @@ export const PurchaseOrderLineEditModal = React.memo(
                 {t('label.ordered-in-others')}:
               </Typography>
               <Typography fontWeight={800}>
-                {round(unitsOrderedInOthers)}{' '}
-                {getPlural(unit, unitsOrderedInOthers)}
+                {round(draft.unitsOrderedInOthers)}{' '}
+                {getPlural(unit, draft.unitsOrderedInOthers)}
               </Typography>
             </Box>
           </>

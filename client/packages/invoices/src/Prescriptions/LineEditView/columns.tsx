@@ -35,7 +35,7 @@ export const usePrescriptionLineEditColumns = ({
   const { sortByVvmStatusThenExpiry, manageVvmStatusForStock } =
     usePreferences();
   const hasVvmStatusesEnabled =
-    manageVvmStatusForStock && sortByVvmStatusThenExpiry;
+    manageVvmStatusForStock || sortByVvmStatusThenExpiry;
   const pluralisedUnitName = getPlural(unit, 2);
   const displayInDoses = allocateIn === AllocateInType.Doses;
 

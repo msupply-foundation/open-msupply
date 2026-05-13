@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "2.14.0",
+  "version": "2.14.1",
   "code": "inventory_adjustments",
   "context": "REPORT",
   "sub_context": "StockAndItems",

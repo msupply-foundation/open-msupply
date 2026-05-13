@@ -32,6 +32,7 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS goods_received_line_view;  -- removed but keep drop for cleanup
                 DROP VIEW IF EXISTS item_variant_view;
                 DROP VIEW IF EXISTS program_event_view;
+                DROP VIEW IF EXISTS ancillary_item_view;
             "#
         )?;
 
@@ -100,7 +101,7 @@ impl ViewMigrationFragment for ViewMigration {
                 SELECT
                     requisition.*,
                     name_link.name_id as name_id,
-                    destination_customer_link.name_id as original_customer_id
+                    destination_customer_link.name_id as destination_customer_id
                 FROM
                     requisition
                 JOIN
@@ -260,6 +261,18 @@ impl ViewMigrationFragment for ViewMigration {
                     program_event
                 LEFT JOIN
                     name_link AS patient_link ON program_event.patient_link_id = patient_link.id;
+
+                CREATE VIEW ancillary_item_view AS
+                SELECT
+                    ancillary_item.*,
+                    principal_link.item_id as item_id,
+                    ancillary_link.item_id as ancillary_item_id
+                FROM
+                    ancillary_item
+                JOIN
+                    item_link AS principal_link ON ancillary_item.item_link_id = principal_link.id
+                JOIN
+                    item_link AS ancillary_link ON ancillary_item.ancillary_item_link_id = ancillary_link.id;
             "#
         )?;
 
