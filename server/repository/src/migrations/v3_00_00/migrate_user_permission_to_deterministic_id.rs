@@ -132,7 +132,12 @@ mod tests {
             )
             .unwrap();
 
-        migrate(&connection, Some(version.clone())).unwrap();
+        migrate(
+            &connection,
+            Some(version.clone()),
+            crate::migrations::MigrationConfig::default(),
+        )
+        .unwrap();
         assert_eq!(get_database_version(&connection), version);
 
         let ids: Vec<String> = user_permission::table
