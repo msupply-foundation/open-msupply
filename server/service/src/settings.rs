@@ -220,7 +220,7 @@ fn default_lookahead_partitions() -> i64 {
     DEFAULT_CHANGELOG_LOOKAHEAD_PARTITIONS
 }
 fn default_interval_mins() -> u64 {
-    1
+    30
 }
 
 impl Default for ChangelogPartitionSettings {
