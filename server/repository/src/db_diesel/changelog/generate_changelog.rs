@@ -93,7 +93,7 @@ impl InvoiceRow {
             store_id: Some(row.store_id.clone()),
             // For patient this will always be None
             transfer_store_id: row.name_store_id.clone(),
-            patient_link_id: (row.r#type == InvoiceType::Prescription).then_some(row.name_id.clone()),
+            patient_id: (row.r#type == InvoiceType::Prescription).then_some(row.name_id.clone()),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
@@ -670,7 +670,7 @@ impl VaccinationRow {
             record_id: self.id.clone(),
             row_action: action,
             store_id: Some(self.store_id.clone()),
-            patient_link_id: Some(self.patient_id.clone()),
+            patient_id: Some(self.patient_id.clone()),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
@@ -689,7 +689,7 @@ impl EncounterRow {
             record_id: self.id.clone(),
             row_action: action,
             store_id: self.store_id.clone(),
-            patient_link_id: Some(self.patient_id.clone()),
+            patient_id: Some(self.patient_id.clone()),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
@@ -783,7 +783,7 @@ impl NameRow {
             table_name: ChangelogTableName::Name,
             record_id: row.id.clone(),
             row_action: action,
-            patient_link_id: (row.r#type == NameRowType::Patient).then_some(row.id.clone()),
+            patient_id: (row.r#type == NameRowType::Patient).then_some(row.id.clone()),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
@@ -1175,7 +1175,7 @@ impl DocumentRow {
             table_name: ChangelogTableName::Document,
             record_id: self.id.clone(),
             row_action: action,
-            patient_link_id: self.owner_name_id.clone(),
+            patient_id: self.owner_name_id.clone(),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
