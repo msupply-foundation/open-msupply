@@ -5,9 +5,7 @@ use repository::SyncVersion;
 
 use crate::{service_provider::ServiceProvider, sync_v7::synchroniser::SynchroniserV7};
 
-use super::{
-    settings::SyncSettings, synchroniser::SynchroniserV5V6, CentralServerConfig,
-};
+use super::{settings::SyncSettings, synchroniser::SynchroniserV5V6, CentralServerConfig};
 
 /// Single dispatch point that picks v5_v6 or v7 sync based on the stored
 /// `SyncVersion` setting. Central servers are always v5_v6.
@@ -26,27 +24,15 @@ impl Synchroniser {
             .context("Failed to read sync version from key value store")?;
 
         Ok(match version {
-            SyncVersion::V5V6 => {
-                Self::V5V6(SynchroniserV5V6::new(settings, service_provider)?)
-            }
+            SyncVersion::V5V6 => Self::V5V6(SynchroniserV5V6::new(settings, service_provider)?),
             SyncVersion::V7 => Self::V7(SynchroniserV7::new(settings, service_provider)),
         })
     }
 
-    pub async fn sync(&self, fetch_patient_id: Option<String>) -> anyhow::Result<()> {
+    pub async fn sync(&self) -> anyhow::Result<()> {
         match self {
-            Synchroniser::V5V6(s) => s
-                .sync(fetch_patient_id)
-                .await
-                .map_err(|e| anyhow::anyhow!("{e:?}")),
-            Synchroniser::V7(s) => {
-                if fetch_patient_id.is_some() {
-                    log::warn!(
-                        "fetch_patient_id is not supported under v7 sync; ignoring"
-                    );
-                }
-                s.sync().await.map_err(|e| anyhow::anyhow!("{e:?}"))
-            }
+            Synchroniser::V5V6(s) => s.sync().await.map_err(|e| anyhow::anyhow!("{e:?}")),
+            Synchroniser::V7(s) => s.sync().await.map_err(|e| anyhow::anyhow!("{e:?}")),
         }
     }
 }

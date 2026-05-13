@@ -68,6 +68,7 @@ pub(crate) mod requisition_line;
 pub(crate) mod rnr_form;
 pub(crate) mod rnr_form_line;
 pub(crate) mod sensor;
+pub(crate) mod serde_utils;
 pub(crate) mod shipping_method;
 pub(crate) mod site;
 pub(crate) mod special;
@@ -302,7 +303,6 @@ impl PartialEq for PullTranslateResult {
     fn eq(&self, other: &Self) -> bool {
         format!("{self:?}") == format!("{other:?}")
     }
-
 }
 
 impl PullTranslateResult {
@@ -416,13 +416,11 @@ pub(crate) trait SyncTranslation {
     /// A single table name to match on, If there's just one table name to match on, use this function
     fn table_name(&self) -> &str {
         ""
-    
     }
 
     /// If you need to match on more than one table_name with the same translator, use this one...
     fn table_names(&self) -> Vec<&str> {
         vec![self.table_name()]
-    
     }
 
     /// By default matching by table name
@@ -552,8 +550,11 @@ fn translate_row_or_delete(
         }
 
         let translation_result = match &row_or_delete {
-            RowOrDelete::Row { row, .. } => translator
-                .try_translate_to_upsert_sync_record(connection, &changelog, row.clone())?,
+            RowOrDelete::Row { row, .. } => translator.try_translate_to_upsert_sync_record(
+                connection,
+                &changelog,
+                row.clone(),
+            )?,
             RowOrDelete::Delete { .. } => {
                 translator.try_translate_to_delete_sync_record(connection, &changelog)?
             }

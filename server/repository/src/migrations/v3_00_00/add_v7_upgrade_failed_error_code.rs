@@ -4,7 +4,7 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "add_sync_version"
+        "add_v7_upgrade_failed_error_code"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
@@ -12,7 +12,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    ALTER TYPE key_type ADD VALUE IF NOT EXISTS 'SETTINGS_SYNC_VERSION';
+                    ALTER TYPE sync_api_error_code ADD VALUE IF NOT EXISTS 'V7_UPGRADE_FAILED';
                 "#
             )?;
         }
