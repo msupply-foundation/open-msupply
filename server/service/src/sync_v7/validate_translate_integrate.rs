@@ -24,8 +24,7 @@ const PROGRESS_INTERVAL: i64 = 1000;
 
 pub(crate) enum SyncContext {
     Central {
-        active_stores: ActiveStoresOnSite,
-        source_site_store_ids: Vec<String>,
+        source_site_active_store_ids: Vec<String>,
     },
     Remote {
         is_initialising: bool,
@@ -147,8 +146,7 @@ fn validate_translate_integrate_one(
 
     match sync_context {
         SyncContext::Central {
-            active_stores,
-            source_site_store_ids,
+            source_site_active_store_ids: source_site_store_ids,
         } => validate_on_central(row, &table_name, source_site_store_ids)?,
         SyncContext::Remote {
             is_initialising,
