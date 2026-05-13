@@ -329,14 +329,17 @@ async fn spawn_integration_inner(
 ) -> Result<(), SpawnIntegrationError> {
     let ctx = service_provider.basic_context()?;
 
-    let active_stores = ActiveStoresOnSite::get(&ctx.connection)?;
+    let source_site_active_store_ids =
+        ActiveStoresOnSite::store_ids_for_site(&ctx.connection, site_id)?;
 
     validate_translate_integrate(
         &ctx.connection,
         None,
         site_id,
         None,
-        SyncContext::Central { active_stores },
+        SyncContext::Central {
+            source_site_active_store_ids,
+        },
         false,
     )?;
     Ok(())
