@@ -4,7 +4,7 @@ use crate::{
     check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        stock_in_line::{check_pack_size, check_program_visible_to_store},
+        stock_in_line::check_pack_size,
         validate::{check_item_exists, check_line_exists, check_number_of_packs},
     },
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
@@ -110,10 +110,6 @@ pub fn validate(
             },
         };
     };
-
-    if !check_program_visible_to_store(connection, store_id, &input.program_id)? {
-        return Err(ProgramNotVisible);
-    }
 
     // External inbound shipments (with purchase_order_id) require a purchase_order_line_id
     if invoice.purchase_order_id.is_some() {

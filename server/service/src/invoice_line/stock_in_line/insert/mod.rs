@@ -479,24 +479,24 @@ mod test {
             Err(ServiceError::ManufacturerIsNotAManufacturer)
         );
 
-        // ProgramNotVisible
-        assert_eq!(
-            insert_stock_in_line(
-                &context,
-                InsertStockInLine {
-                    id: "new invoice line id".to_string(),
-                    pack_size: 1.0,
-                    number_of_packs: 1.0,
-                    item_id: mock_item_a().id,
-                    invoice_id: mock_inbound_shipment_e().id,
-                    r#type: StockInType::InboundShipment,
-                    program_id: Some(mock_immunisation_program_a().id), // Not master list visible to store_b
-                    ..Default::default()
-                },
-                None
-            ),
-            Err(ServiceError::ProgramNotVisible)
-        );
+        // Program exists but is not visible to this store — accepted (see #11600).
+        // This represents stock that flowed in via an upstream shipment carrying a
+        // program_id the customer store doesn't have visible.
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "stock_in_line_with_invisible_program".to_string(),
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                item_id: mock_item_a().id,
+                invoice_id: mock_inbound_shipment_e().id,
+                r#type: StockInType::InboundShipment,
+                program_id: Some(mock_immunisation_program_a().id),
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
     }
 
     #[actix_rt::test]
