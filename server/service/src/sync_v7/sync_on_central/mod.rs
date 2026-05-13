@@ -122,31 +122,26 @@ async fn ensure_site_is_v7(
 
     let api_v5 = build_v5_api_for_request(connection, input)?;
 
-    let info = match api_v5.get_site_info().await {
-        Ok(info) => info,
-        Err(error) if error.is_connection() => {
-            return Err(SyncError::ConnectionError {
+    let info = api_v5.get_site_info().await.map_err(|error| {
+        if error.is_connection() {
+            SyncError::ConnectionError {
                 url: api_v5.url.to_string(),
                 e: format_error(&error),
-            });
+            }
+        } else {
+            SyncError::Other(format_error(&error))
         }
-        // Any other failure to reach/interpret the legacy server is treated as
-        // "we cannot confirm v7" — surface SiteIsNotV7 so the frontend can
-        // direct the user to finish the v5/v6 → v7 transition.
-        Err(_) => return Err(SyncError::SiteIsNotV7),
-    };
+    })?;
 
-    let is_v7 = if info.sync_version == SyncVersion::V7 {
-        true
-    } else {
+    // TODO revisit, do we really want to call v7_url_and_upgrade again ?
+    if info.sync_version != SyncVersion::V7 {
         // Fresh remote that hasn't been transitioned yet on the legacy server.
         // v7_url_and_upgrade flips sync_version=V7 server-side on success.
-        api_v5.v7_url_and_upgrade().await.is_ok()
+        api_v5
+            .v7_url_and_upgrade()
+            .await
+            .map_err(|error| SyncError::Other(format_error(&error)))?;
     };
-
-    if !is_v7 {
-        return Err(SyncError::SiteIsNotV7);
-    }
 
     let updated = SiteRow {
         sync_version: SyncVersion::V7,
@@ -424,14 +419,17 @@ async fn spawn_integration_inner(
 ) -> Result<(), SpawnIntegrationError> {
     let ctx = service_provider.basic_context()?;
 
-    let active_stores = ActiveStoresOnSite::get(&ctx.connection)?;
+    let source_site_active_store_ids =
+        ActiveStoresOnSite::store_ids_for_site(&ctx.connection, site_id)?;
 
     validate_translate_integrate(
         &ctx.connection,
         None,
         site_id,
         None,
-        SyncContext::Central { active_stores },
+        SyncContext::Central {
+            source_site_active_store_ids,
+        },
         false,
     )?;
     Ok(())

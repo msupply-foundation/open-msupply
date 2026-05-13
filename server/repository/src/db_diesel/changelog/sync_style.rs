@@ -207,7 +207,7 @@ impl ChangelogTableName {
             Name => (
                 vec![Central, Patient],
                 SyncVersions {
-                    is_v6: false,
+                    is_v6: true,
                     is_v5: true,
                 },
             ),
@@ -229,8 +229,8 @@ impl ChangelogTableName {
             Document => (
                 vec![Patient],
                 SyncVersions {
-                    is_v6: true,
-                    is_v5: false,
+                    is_v6: false,
+                    is_v5: true,
                 },
             ),
 

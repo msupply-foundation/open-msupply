@@ -1,5 +1,8 @@
 use crate::{
-    dynamic_query_filter::create_condition, syncv7::SyncError, RepositoryError, StorageConnection,
+    diesel_macros::apply_sort,
+    dynamic_query_filter::create_condition,
+    syncv7::SyncError,
+    DBType, Pagination, RepositoryError, Sort, StorageConnection,
 };
 
 use chrono::NaiveDateTime;
@@ -66,11 +69,17 @@ pub struct SyncLogV7Row {
     pub error: Option<SyncError>,
 }
 
+#[derive(Debug, PartialEq)]
+pub enum SyncLogV7SortField {
+    StartedDatetime,
+}
+
 pub struct SyncLogV7Repository<'a> {
     connection: &'a StorageConnection,
 }
 
 type Source = sync_log_v7::table;
+type BoxedQuery = sync_log_v7::BoxedQuery<'static, DBType>;
 
 create_condition!(
     SyncLogV7Condition,
@@ -107,17 +116,44 @@ impl<'a> SyncLogV7Repository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
-    // Sorts by started_datetime descending
     pub fn query_one(
         &self,
         filter: SyncLogV7Condition::Inner,
     ) -> Result<Option<SyncLogV7Row>, RepositoryError> {
-        let results = sync_log_v7::table
-            .filter(filter.to_boxed())
-            .order(sync_log_v7::started_datetime.desc())
-            .first::<SyncLogV7Row>(self.connection.lock().connection())
-            .optional()?;
-        Ok(results)
+        Ok(self
+            .query(
+                Pagination::one(),
+                filter,
+                Some(Sort {
+                    key: SyncLogV7SortField::StartedDatetime,
+                    desc: Some(true),
+                }),
+            )?
+            .pop())
+    }
+
+    pub fn query(
+        &self,
+        pagination: Pagination,
+        filter: SyncLogV7Condition::Inner,
+        sort: Option<Sort<SyncLogV7SortField>>,
+    ) -> Result<Vec<SyncLogV7Row>, RepositoryError> {
+        let mut query: BoxedQuery = sync_log_v7::table.filter(filter.to_boxed()).into_boxed();
+
+        if let Some(sort) = sort {
+            match sort.key {
+                SyncLogV7SortField::StartedDatetime => {
+                    apply_sort!(query, sort, sync_log_v7::started_datetime)
+                }
+            }
+        } else {
+            query = query.order(sync_log_v7::started_datetime.desc());
+        }
+
+        Ok(query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64)
+            .load::<SyncLogV7Row>(self.connection.lock().connection())?)
     }
 }
 

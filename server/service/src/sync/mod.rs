@@ -84,6 +84,15 @@ impl ActiveStoresOnSite {
     pub(crate) fn store_ids(&self) -> Vec<String> {
         self.stores.iter().map(|r| r.store_row.id.clone()).collect()
     }
+
+    pub(crate) fn store_ids_for_site(
+        connection: &StorageConnection,
+        site_id: i32,
+    ) -> Result<Vec<String>, RepositoryError> {
+        let stores = StoreRepository::new(connection)
+            .query_by_filter(StoreFilter::new().site_id(EqualFilter::equal_to(site_id)))?;
+        Ok(stores.into_iter().map(|s| s.store_row.id).collect())
+    }
 }
 
 #[derive(PartialEq, Clone)]

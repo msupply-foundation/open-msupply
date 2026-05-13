@@ -3,9 +3,7 @@ use repository::{
     requisition_row::{RequisitionStatus, RequisitionType},
     ApprovalStatusType, ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter,
     InvoiceRepository, ProgramRowRepository, Requisition, RequisitionFilter, RequisitionRepository,
-    RequisitionRow, RequisitionRowDelete, StorageConnection, SyncBufferRow,
-    Row,
-
+    RequisitionRow, RequisitionRowDelete, Row, StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -15,12 +13,10 @@ use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 use crate::sync::translations::{
     master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
     store::StoreTranslation,
-
 };
 use util::sync_serde::{
     date_and_time_to_datetime, date_from_date_time, date_option_to_isostring, date_to_isostring,
     empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
-
 };
 
 #[allow(non_snake_case)]
@@ -190,7 +186,6 @@ struct PartialLegacyRequisitionRow {
     pub r#type: LegacyRequisitionType,
     pub status: LegacyRequisitionStatus,
     pub om_status: Option<RequisitionStatus>,
-
 }
 
 fn sanitize_legacy_record(data: serde_json::Value) -> serde_json::Value {
@@ -455,7 +450,11 @@ impl SyncTranslation for RequisitionTranslation {
             oms_fields,
         };
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -636,15 +635,13 @@ mod tests {
     use crate::sync::{
         test::merge_helpers::merge_all_name_links,
         translations::{IntegrationOperation, ToSyncRecordTranslationType},
-    
     };
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RowOrDelete,
-        SyncAction, SyncBufferRow, SyncRecordData,
-
-};
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
+        CursorAndLimit, FilterBuilder, RowOrDelete, SyncAction, SyncBufferRow, SyncRecordData,
+    };
     use serde_json::json;
     use util::assert_variant;
 
@@ -750,17 +747,21 @@ mod tests {
 
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let entries = ChangelogRepository::new(&connection).query_with_data(
-            ChangelogCondition::table_name::equal(ChangelogTableName::Requisition),
-            CursorAndLimit {
-                cursor: -1,
-                limit: 1_000_000,
-            },
-        )
-        .unwrap();
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::Requisition),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
+            )
+            .unwrap();
 
         let translator = RequisitionTranslation {};
-        for entry in entries.rows { let RowOrDelete::Row { changelog, row } = entry else { panic!("expected upsert row") };
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
