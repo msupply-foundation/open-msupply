@@ -254,7 +254,11 @@ pub struct ChangeLogInsertRow {
     pub store_id: Option<String>,
     pub source_site_id: Option<i32>,
     pub transfer_store_id: Option<String>,
-    pub patient_link_id: Option<String>,
+    // At the time of inserts a patient_id is the patient_link_id. 
+    // If the patient info changes the changelog view will resolve to 
+    // the correct patient_id via name_link join.
+    #[diesel(column_name = "patient_link_id")]
+    pub patient_id: Option<String>,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Serialize, Deserialize, TS, Default)]
