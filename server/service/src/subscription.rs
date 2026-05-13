@@ -24,6 +24,33 @@ pub enum SyncLogRow {
     V7(SyncLogV7Row),
 }
 
+impl SyncLogRow {
+    fn push_progress_total(&self) -> i32 {
+        match self {
+            SyncLogRow::V5V6(row) => row.push_progress_total.unwrap_or(0),
+            SyncLogRow::V7(row) => row.push_progress_total.unwrap_or(0),
+        }
+    }
+
+    fn push_progress_done(&self) -> i32 {
+        match self {
+            SyncLogRow::V5V6(row) => row.push_progress_done.unwrap_or(0),
+            SyncLogRow::V7(row) => row.push_progress_done.unwrap_or(0),
+        }
+    }
+
+    fn full_sync_status(self) -> FullSyncStatus {
+        match self {
+            SyncLogRow::V5V6(row) => {
+                FullSyncStatus::V5V6(FullSyncStatusV5V6::from_sync_log_row(row))
+            }
+            SyncLogRow::V7(row) => {
+                FullSyncStatus::V7(FullSyncStatusV7::from_sync_log_v7_row(row))
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum SubscriptionTrigger {
     /// A sync log row was updated (step start/done, progress, error, completion)
@@ -129,24 +156,9 @@ async fn subscription_worker_loop(
 
         match trigger {
             SubscriptionTrigger::SyncStatus(row) => {
-                let (status, push_queue_count) = match row {
-                    SyncLogRow::V5V6(row) => {
-                        let push_queue_count = (row.push_progress_total.unwrap_or(0)
-                            - row.push_progress_done.unwrap_or(0))
-                            as u64;
-                        let status =
-                            FullSyncStatus::V5V6(FullSyncStatusV5V6::from_sync_log_row(row));
-                        (status, push_queue_count)
-                    }
-                    SyncLogRow::V7(row) => {
-                        let push_queue_count = (row.push_progress_total.unwrap_or(0)
-                            - row.push_progress_done.unwrap_or(0))
-                            as u64;
-                        let status =
-                            FullSyncStatus::V7(FullSyncStatusV7::from_sync_log_v7_row(row));
-                        (status, push_queue_count)
-                    }
-                };
+                let push_queue_count =
+                    (row.push_progress_total() - row.push_progress_done()) as u64;
+                let status = row.full_sync_status();
 
                 let just_finished_successfully = status.is_finished_successfully();
                 if just_finished_successfully {
