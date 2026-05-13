@@ -52,6 +52,7 @@ pub fn create_inventory_adjustment(
         &ResourceAccessRequest {
             resource: Resource::MutateInventoryAdjustment,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

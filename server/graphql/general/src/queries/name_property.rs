@@ -31,6 +31,7 @@ pub fn configure_name_properties(
         &ResourceAccessRequest {
             resource: Resource::ConfigureNameProperties,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

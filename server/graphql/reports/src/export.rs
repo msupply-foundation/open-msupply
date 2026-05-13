@@ -18,6 +18,7 @@ pub async fn csv_to_excel(
         &ResourceAccessRequest {
             resource: Resource::Report,
             store_id: Some(store_id),
+            require_central_standalone: false,
         },
     )?;
 

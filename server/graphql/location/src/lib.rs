@@ -31,6 +31,7 @@ impl LocationQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryLocation,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
 

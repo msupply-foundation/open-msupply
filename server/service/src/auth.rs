@@ -958,7 +958,7 @@ pub struct ResourceAccessRequest {
     pub resource: Resource,
     /// The store id if specified
     pub store_id: Option<String>,
-    /// For endpoints that configure central data.
+    /// For endpoints that configure central data in mixed configurations.
     pub require_central_standalone: bool,
 }
 

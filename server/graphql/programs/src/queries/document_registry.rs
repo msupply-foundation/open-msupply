@@ -64,6 +64,7 @@ pub fn document_registries(
         &ResourceAccessRequest {
             resource: Resource::QueryDocumentRegistry,
             store_id: Some(store_id),
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();

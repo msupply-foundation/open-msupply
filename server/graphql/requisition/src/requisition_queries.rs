@@ -108,6 +108,7 @@ pub fn get_requisition(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<Re
         &ResourceAccessRequest {
             resource: Resource::QueryRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -142,6 +143,7 @@ pub fn get_requisitions(
         &ResourceAccessRequest {
             resource: Resource::QueryRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -177,6 +179,7 @@ pub fn get_requisition_by_number(
         &ResourceAccessRequest {
             resource: Resource::QueryRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

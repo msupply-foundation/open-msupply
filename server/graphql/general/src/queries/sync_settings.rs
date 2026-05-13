@@ -3,7 +3,7 @@ use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use repository::{KeyType, KeyValueStoreRepository};
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    sync::settings::SyncSettings,
+    sync::{settings::SyncSettings, CentralServerConfig},
 };
 
 #[derive(Debug)]
@@ -44,6 +44,10 @@ impl SyncSettingsNode {
             .get_i32(KeyType::SettingsSyncSiteId)?;
         Ok(value)
     }
+
+    pub async fn is_central_standalone(&self) -> bool {
+        CentralServerConfig::is_standalone_central()
+    }
 }
 
 pub(crate) fn sync_settings(
@@ -56,6 +60,7 @@ pub(crate) fn sync_settings(
             &ResourceAccessRequest {
                 resource: Resource::ServerAdmin,
                 store_id: None,
+                require_central_standalone: false,
             },
         )?;
     }

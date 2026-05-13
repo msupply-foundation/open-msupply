@@ -57,6 +57,7 @@ pub fn asset_classes(
         &ResourceAccessRequest {
             resource: Resource::QueryAsset,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
     let connection_manager = ctx.get_connection_manager().connection()?;
@@ -80,6 +81,7 @@ pub fn asset_class(ctx: &Context<'_>, id: String) -> Result<AssetClassResponse> 
         &ResourceAccessRequest {
             resource: Resource::QueryAsset,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
     let connection_manager = ctx.get_connection_manager().connection()?;

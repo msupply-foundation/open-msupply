@@ -62,6 +62,7 @@ pub fn encounter_fields(
         &ResourceAccessRequest {
             resource: Resource::QueryEncounter,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();

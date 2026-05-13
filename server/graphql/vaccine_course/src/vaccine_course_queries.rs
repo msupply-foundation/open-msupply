@@ -52,6 +52,7 @@ pub fn vaccine_courses(
         &ResourceAccessRequest {
             resource: Resource::QueryVaccineCourse,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
     let connection = ctx.get_connection_manager().connection()?;

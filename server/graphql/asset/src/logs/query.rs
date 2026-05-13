@@ -22,6 +22,7 @@ pub fn asset_logs(
         &ResourceAccessRequest {
             resource: Resource::QueryAsset,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

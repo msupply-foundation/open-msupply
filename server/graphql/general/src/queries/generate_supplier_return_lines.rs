@@ -34,6 +34,7 @@ pub fn generate_supplier_return_lines(
         &ResourceAccessRequest {
             resource: Resource::MutateSupplierReturn,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 
