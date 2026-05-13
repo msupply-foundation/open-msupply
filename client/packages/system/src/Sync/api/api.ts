@@ -26,8 +26,7 @@ export const isSyncStatusV7 = (
 
 export const isSyncErrorV7 = (
   error: SyncErrorAny | null | undefined
-): error is SyncErrorV7Fragment =>
-  error?.__typename === 'SyncErrorV7Node';
+): error is SyncErrorV7Fragment => error?.__typename === 'SyncErrorV7Node';
 
 export const getSyncQueries = (sdk: Sdk) => ({
   get: {
@@ -101,6 +100,7 @@ function mapSyncErrorV5V6(
     [SyncErrorVariant.V6ApiVersionIncompatible]:
       'error.sync-v6-api-incompatible',
     [SyncErrorVariant.IntegrationError]: 'error.internal-error',
+    [SyncErrorVariant.V7UpgradeFailed]: 'error.v7-upgrade-failed',
     [SyncErrorVariant.Unknown]: defaultKey || 'error.unknown-sync-error',
   };
 
@@ -112,6 +112,8 @@ function mapSyncErrorV5V6(
         return t('error.v6-server-not-configured-hint');
       case SyncErrorVariant.V6ApiVersionIncompatible:
         return t('error.sync-v6-api-incompatible-hint');
+      case SyncErrorVariant.V7UpgradeFailed:
+        return t('error.v7-upgrade-failed-hint');
       default:
         return undefined;
     }
@@ -140,6 +142,7 @@ function mapSyncErrorV7(
     [SyncErrorVariantV7.IntegrationTimeoutReached]:
       'error.integration-timeout-reached',
     [SyncErrorVariantV7.Authentication]: 'error.site-auth-timeout',
+    [SyncErrorVariantV7.RequestSiteAuthError]: 'error.site-auth-timeout',
     [SyncErrorVariantV7.SyncVersionMismatch]: 'error.sync-api-incompatible',
     [SyncErrorVariantV7.NotACentralServer]: 'error.v6-server-not-configured',
     [SyncErrorVariantV7.DatabaseError]: 'error.internal-error',
@@ -154,6 +157,7 @@ function mapSyncErrorV7(
     [SyncErrorVariantV7.SiteIdNotSet]: 'error.internal-error',
     [SyncErrorVariantV7.GetCurrentSiteIdError]: 'error.internal-error',
     [SyncErrorVariantV7.SiteIdMismatch]: 'error.internal-error',
+    [SyncErrorVariantV7.SiteIsNotV7]: 'error.site-is-not-v7',
     [SyncErrorVariantV7.Other]: defaultKey || 'error.unknown-sync-error',
   };
 

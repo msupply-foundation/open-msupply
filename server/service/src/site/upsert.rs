@@ -73,6 +73,7 @@ fn generate(
     let existing_code = existing_site.as_ref().map(|s| s.code.clone());
     let existing_hardware_id = existing_site.as_ref().and_then(|s| s.hardware_id.clone());
     let existing_token = existing_site.as_ref().and_then(|s| s.token.clone());
+    let existing_sync_version = existing_site.as_ref().map(|s| s.sync_version);
 
     let hashed_password = match password {
         Some(pw) => hash(pw, DEFAULT_COST).expect("bcrypt hash failed"),
@@ -94,6 +95,7 @@ fn generate(
             existing_hardware_id
         },
         token: existing_token,
+        sync_version: existing_sync_version.unwrap_or_default(),
     }
 }
 

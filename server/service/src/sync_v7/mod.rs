@@ -3,6 +3,7 @@ use repository::{
 };
 
 pub mod api;
+pub mod patient_lookup;
 pub mod prepare;
 pub mod serde;
 pub mod sync;

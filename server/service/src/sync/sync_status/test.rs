@@ -354,6 +354,7 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
                 central_server_url: "".to_string(),
                 is_central_server: false,
                 msupply_central_site_id: 1,
+                sync_version: repository::SyncVersion::V5V6,
             };
 
             TestOutput {
@@ -497,6 +498,7 @@ fn get_push_and_error_sync_status_tester(service_provider: Arc<ServiceProvider>)
                 central_server_url: "".to_string(),
                 is_central_server: false,
                 msupply_central_site_id: 1,
+                sync_version: repository::SyncVersion::V5V6,
             };
 
             TestOutput {
@@ -590,7 +592,7 @@ async fn run_server_and_sync(
 
     let result = tokio::select! {
         _ = server_future => unreachable!("Sync should finish first"),
-        result = synchroniser.sync(None) => result
+        result = synchroniser.sync() => result
     };
 
     server_handle.stop(true).await;

@@ -15,8 +15,6 @@ pub struct CompatibilityChangelogFilter {
     #[ts(optional)]
     pub table_name: Option<EqualFilter<ChangelogTableName>>,
     #[ts(optional)]
-    pub name_id: Option<EqualFilter<String>>,
-    #[ts(optional)]
     pub store_id: Option<EqualFilter<String>>,
     #[ts(optional)]
     pub record_id: Option<EqualFilter<String>>,
@@ -67,7 +65,6 @@ fn create_filtered_query(
     if let Some(f) = filter {
         let CompatibilityChangelogFilter {
             table_name,
-            name_id,
             store_id,
             record_id,
             is_sync_update,
@@ -76,7 +73,6 @@ fn create_filtered_query(
         } = f;
 
         apply_equal_filter!(query, table_name, changelog::table_name);
-        apply_equal_filter!(query, name_id, changelog::name_link_id);
         apply_equal_filter!(query, store_id, changelog::store_id);
         apply_equal_filter!(query, record_id, changelog::record_id);
         apply_equal_filter!(query, action, changelog::row_action);
@@ -94,11 +90,6 @@ impl CompatibilityChangelogFilter {
 
     pub fn table_name(mut self, filter: EqualFilter<ChangelogTableName>) -> Self {
         self.table_name = Some(filter);
-        self
-    }
-
-    pub fn name_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.name_id = Some(filter);
         self
     }
 

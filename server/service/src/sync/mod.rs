@@ -4,6 +4,9 @@ pub(crate) mod test;
 pub mod api;
 pub mod api_v6;
 pub(crate) mod central_data_synchroniser;
+pub(crate) mod central_data_synchroniser_v6;
+pub mod file_sync_driver;
+pub mod file_synchroniser;
 mod integrate_document;
 pub(crate) mod remote_data_synchroniser;
 pub mod settings;
@@ -23,8 +26,8 @@ use std::sync::RwLock;
 
 use log::info;
 use repository::{
-    EqualFilter, KeyValueStoreRepository, RepositoryError,
-    StorageConnection, Store, StoreFilter, StoreRepository,
+    EqualFilter, KeyValueStoreRepository, RepositoryError, StorageConnection, Store, StoreFilter,
+    StoreRepository,
 };
 
 use serde::{Deserialize, Serialize};
@@ -35,7 +38,8 @@ use self::api::SiteInfoV5;
 
 #[derive(Serialize, Deserialize, TS, Debug)]
 pub(crate) struct ActiveStoresOnSite {
-    stores: Vec<Store>,
+    pub(crate) site_id: i32,
+    pub(crate) stores: Vec<Store>,
 }
 
 #[derive(Error, Debug)]
@@ -59,7 +63,11 @@ impl ActiveStoresOnSite {
         let stores = StoreRepository::new(connection)
             .query_by_filter(StoreFilter::new().site_id(EqualFilter::equal_to(site_id)))?;
 
-        Ok(ActiveStoresOnSite { stores })
+        Ok(ActiveStoresOnSite { site_id, stores })
+    }
+
+    pub(crate) fn site_id(&self) -> i32 {
+        self.site_id
     }
 
     pub(crate) fn name_ids(&self) -> Vec<String> {
@@ -75,6 +83,15 @@ impl ActiveStoresOnSite {
 
     pub(crate) fn store_ids(&self) -> Vec<String> {
         self.stores.iter().map(|r| r.store_row.id.clone()).collect()
+    }
+
+    pub(crate) fn store_ids_for_site(
+        connection: &StorageConnection,
+        site_id: i32,
+    ) -> Result<Vec<String>, RepositoryError> {
+        let stores = StoreRepository::new(connection)
+            .query_by_filter(StoreFilter::new().site_id(EqualFilter::equal_to(site_id)))?;
+        Ok(stores.into_iter().map(|s| s.store_row.id).collect())
     }
 }
 

@@ -12,13 +12,31 @@ use ts_rs::TS;
 
 use super::sync_style::{ChangeLogSyncStyle, SyncVersions};
 
+// Underlying table — INSERTs target this. Carries raw `*_link_id` columns.
 table! {
+    #[sql_name = "changelog"]
+    changelog_with_links (cursor) {
+        cursor -> BigInt,
+        table_name -> Text,
+        record_id -> Text,
+        row_action -> Text,
+        store_id -> Nullable<Text>,
+        is_sync_update -> Bool,
+        source_site_id -> Nullable<Integer>,
+        transfer_store_id -> Nullable<Text>,
+        patient_link_id -> Nullable<Text>,
+    }
+}
+
+// View — SELECTs target this. Exposes resolved `patient_id`
+// (via LEFT JOIN name_link on the patient_link_id column).
+table! {
+    #[sql_name = "changelog_view"]
     changelog (cursor) {
         cursor -> BigInt,
         table_name -> Text,
         record_id -> Text,
         row_action -> Text,
-        name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
         source_site_id -> Nullable<Integer>,
@@ -87,7 +105,7 @@ type Source = LeftJoinQuerySource<
 
 diesel_string_enum! {
     #[derive(Clone, Eq, Serialize, Deserialize, TS)]
-    #[strum(serialize_all = "snake_case")]
+    #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
     pub enum RowActionType {
         #[default]
         Upsert,
@@ -98,89 +116,70 @@ diesel_string_enum! {
 diesel_string_enum! {
     #[derive(Clone, Eq, Hash, Serialize, Deserialize, strum::EnumIter, TS)]
     #[strum(serialize_all = "snake_case")]
-    // Variants are grouped by `sync_style()` and sorted alphabetically within each group.
-    // Keep this layout in sync with the match in `sync_style` below.
+    // The set of tables tracked by the changelog. How each one syncs is
+    // defined separately in `sync_style.rs`.
     pub enum ChangelogTableName {
-        // ---- Legacy — Remote (not v6) ----
+        Abbreviation,
         ActivityLog,
-        Barcode,
-        Clinician,
-        ClinicianStoreJoin,
-        Currency,
-        Document,
-        IndicatorValue,
-        InsuranceProvider,
-        Location,
-        LocationMovement,
-        Name,
-        NameInsuranceJoin,
-        NameStoreJoin,
-        PurchaseOrder,
-        PurchaseOrderLine,
-        Sensor,
-        StockLine,
-        Stocktake,
-        StocktakeLine,
-        TemperatureBreach,
-        TemperatureLog,
-        VVMStatusLog,
-
-        // ---- Legacy — Remote + Transfer (not v6) ----
-        Requisition,
-        RequisitionLine,
-
-        // ---- Legacy — Remote + Transfer + Patient (not v6) ----
-        Invoice,
-        InvoiceLine,
-
-        // ---- Central (v6) ----
+        Asset,
         AssetCatalogueItem,
         AssetCatalogueType,
         AssetCategory,
         AssetClass,
+        AssetInternalLocation,
+        AssetLog,
         AssetLogReason,
         AssetProperty,
         BackendPlugin,
+        Barcode,
         BundledItem,
         Campaign,
-        Demographic,
-        FormSchema,
-        FrontendPlugin,
-        ItemVariant,
-        NameOmsFields,
-        NameProperty,
-        PackagingVariant,
-        Property,
-        Report,
-        VaccineCourse,
-        VaccineCourseDose,
-        VaccineCourseItem,
-        VaccineCourseStoreConfig,
-
-        // ---- Central (not v6) ----
-        Abbreviation,
         Category,
-        Item,
+        Clinician,
+        ClinicianStoreJoin,
         Contact,
+        ContactForm,
         ContactTrace,
         Context,
+        Currency,
+        Demographic,
         DemographicIndicator,
         Diagnosis,
+        Document,
         DocumentRegistry,
+        Encounter,
+        FormSchema,
+        FrontendPlugin,
         IndicatorColumn,
         IndicatorLine,
+        IndicatorValue,
+        InsuranceProvider,
+        Invoice,
+        InvoiceLine,
+        Item,
         ItemCategoryJoin,
         ItemDirection,
         ItemStoreJoin,
+        ItemVariant,
         ItemWarningJoin,
+        Location,
+        LocationMovement,
         LocationType,
         MasterList,
         MasterListLine,
         MasterListNameJoin,
+        Name,
+        NameInsuranceJoin,
+        NameOmsFields,
+        NameProperty,
+        NameStoreJoin,
         NameTag,
         NameTagJoin,
+        PackagingVariant,
         Period,
         PeriodSchedule,
+        PluginData,
+        Preference,
         Printer,
         Program,
         ProgramEnrolment,
@@ -188,45 +187,40 @@ diesel_string_enum! {
         ProgramIndicator,
         ProgramRequisitionOrderType,
         ProgramRequisitionSettings,
+        Property,
+        PurchaseOrder,
+        PurchaseOrderLine,
         ReasonOption,
+        Report,
+        Requisition,
+        RequisitionLine,
+        RnrForm,
+        RnrFormLine,
+        Sensor,
         ShippingMethod,
+        Site,
+        StockLine,
+        Stocktake,
+        StocktakeLine,
         Store,
         StorePreference,
+        #[default]
+        SyncFileReference,
+        SyncMessage,
+        SystemLog,
+        TemperatureBreach,
+        TemperatureLog,
         Unit,
         UserAccount,
         UserPermission,
         UserStoreJoin,
         VVMStatus,
-
-        // ---- ToLegacyCentralOnly (not v6) ----
-        Site,
-
-        // ---- Remote (v6) ----
-        Asset,
-        AssetInternalLocation,
-        AssetLog,
-        RnrForm,
-        RnrFormLine,
-        SyncMessage,
-
-        // ---- Remote + Patient (v6) ----
-        Encounter,
+        VVMStatusLog,
         Vaccination,
-
-        // ---- File (v6) ----
-        #[default]
-        SyncFileReference,
-
-        // ---- RemoteAndCentral (v6) ----
-        PluginData,
-        Preference,
-
-        // ---- RemoteToCentral (v6) ----
-        ContactForm,
-        SystemLog,
-
-        // ---- SyncRequest (central -> remote, store-scoped) ----
-        SyncRequest,
+        VaccineCourse,
+        VaccineCourseDose,
+        VaccineCourseItem,
+        VaccineCourseStoreConfig,
     }
 }
 
@@ -252,7 +246,7 @@ impl SourceSiteId {
 }
 
 #[derive(Debug, Clone, PartialEq, Insertable, Default)]
-#[diesel(table_name = changelog)]
+#[diesel(table_name = changelog_with_links)]
 pub struct ChangeLogInsertRow {
     pub table_name: ChangelogTableName,
     pub record_id: String,
@@ -260,18 +254,20 @@ pub struct ChangeLogInsertRow {
     pub store_id: Option<String>,
     pub source_site_id: Option<i32>,
     pub transfer_store_id: Option<String>,
+    // At the time of inserts a patient_id is the patient_link_id. 
+    // If the patient info changes the changelog view will resolve to 
+    // the correct patient_id via name_link join.
+    #[diesel(column_name = "patient_link_id")]
     pub patient_id: Option<String>,
 }
 
-#[derive(Clone, Queryable, Debug, PartialEq, Insertable, Serialize, Deserialize, TS, Default)]
+#[derive(Clone, Queryable, Debug, PartialEq, Serialize, Deserialize, TS, Default)]
 #[diesel(table_name = changelog)]
 pub struct ChangelogRow {
     pub cursor: i64,
     pub table_name: ChangelogTableName,
     pub record_id: String,
     pub row_action: RowActionType,
-    #[diesel(column_name = "name_link_id")]
-    pub name_id: Option<String>,
     pub store_id: Option<String>,
     pub is_sync_update: bool,
     pub source_site_id: Option<i32>,
@@ -283,6 +279,13 @@ pub struct ChangelogRepository<'a> {
     pub(super) connection: &'a StorageConnection,
 }
 
+pub struct ChangelogQuery {
+    pub rows: Vec<ChangelogRow>,
+    pub max_cursor: u64,
+    // Defaults to max cursor
+    pub last_cursor_in_batch: u64,
+}
+
 impl<'a> ChangelogRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         ChangelogRepository { connection }
@@ -292,7 +295,7 @@ impl<'a> ChangelogRepository<'a> {
         &self,
         filter: ChangelogCondition::Inner,
         CursorAndLimit { cursor, limit }: CursorAndLimit,
-    ) -> Result<Vec<ChangelogRow>, RepositoryError> {
+    ) -> Result<ChangelogQuery, RepositoryError> {
         // Each sub-query scans at most this many cursor values. Bounding the cursor
         // range gives the planner a tight window to drive an index scan on
         // changelog_pkey, instead of a full bitmap scan + sort across the whole table.
@@ -328,19 +331,30 @@ impl<'a> ChangelogRepository<'a> {
             current_cursor = window_end;
         }
 
-        Ok(results)
+        let last_cursor_in_batch = results
+            .last()
+            .map(|r| r.cursor as u64)
+            .unwrap_or(max_cursor as u64);
+
+        Ok(ChangelogQuery {
+            rows: results,
+            max_cursor: max_cursor as u64,
+            last_cursor_in_batch,
+        })
     }
 
-    /// Returns latest/max change log cursor
+    /// Returns latest/max change log cursor. Queries the underlying table
+    /// (not the view) so it works during migrations, before `changelog_view`
+    /// gets rebuilt at the end of the migration run.
     pub fn max_cursor(&self) -> Result<u64, RepositoryError> {
-        let result = changelog::table
-            .select(diesel::dsl::max(changelog::cursor))
+        let result = changelog_with_links::table
+            .select(diesel::dsl::max(changelog_with_links::cursor))
             .first::<Option<i64>>(self.connection.lock().connection())?;
         Ok(result.unwrap_or(0) as u64)
     }
 
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(changelog::table)
+        diesel::insert_into(changelog_with_links::table)
             .values(row)
             .execute(self.connection.lock().connection())?;
         self.connection
@@ -350,7 +364,7 @@ impl<'a> ChangelogRepository<'a> {
 
     pub fn batch_insert(&self, rows: Vec<ChangeLogInsertRow>) -> Result<(), RepositoryError> {
         //TODO: Need to handle batch insert size limit
-        diesel::insert_into(changelog::table)
+        diesel::insert_into(changelog_with_links::table)
             .values(rows)
             .execute(self.connection.lock().connection())?;
         self.connection
@@ -573,5 +587,15 @@ mod print_query_tests {
             .select(changelog::all_columns);
 
         println!("{}", debug_query::<DBType, _>(&q));
+    }
+
+    /// Locks the Rust↔DB contract for `row_action`: the column was the PG enum
+    /// `row_action_type` with labels 'UPSERT'/'DELETE' until v3.0.0, then cast
+    /// to TEXT preserving those labels. The strum serialization here must keep
+    /// matching them.
+    #[test]
+    fn row_action_type_serializes_uppercase() {
+        assert_eq!(RowActionType::Upsert.to_string(), "UPSERT");
+        assert_eq!(RowActionType::Delete.to_string(), "DELETE");
     }
 }

@@ -1,8 +1,7 @@
 use repository::{
     barcode::{Barcode, BarcodeFilter, BarcodeRepository},
-    BarcodeRow, ChangelogRow, ChangelogTableName, EqualFilter, StorageConnection, SyncBufferRow,
-    Row,
-
+    BarcodeRow, ChangelogRow, ChangelogTableName, EqualFilter, Row, StorageConnection,
+    SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -100,9 +99,7 @@ impl SyncTranslation for BarcodeTranslation {
                 },
             manufacturer_name_row,
         } = BarcodeRepository::new(connection)
-            .query_by_filter(
-                BarcodeFilter::new().id(EqualFilter::equal_to(barcode_row.id)),
-            )?
+            .query_by_filter(BarcodeFilter::new().id(EqualFilter::equal_to(barcode_row.id)))?
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Barcode not found"))?;
 
@@ -115,7 +112,11 @@ impl SyncTranslation for BarcodeTranslation {
             parent_id,
         };
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 }
 
@@ -123,13 +124,13 @@ impl SyncTranslation for BarcodeTranslation {
 mod tests {
     use crate::sync::{
         test::merge_helpers::merge_all_name_links, translations::ToSyncRecordTranslationType,
-    
     };
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RowOrDelete,
-};
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
+        CursorAndLimit, FilterBuilder, RowOrDelete,
+    };
     use serde_json::json;
 
     #[actix_rt::test]
@@ -157,17 +158,21 @@ mod tests {
 
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let entries = ChangelogRepository::new(&connection).query_with_data(
-            ChangelogCondition::table_name::equal(ChangelogTableName::Barcode),
-            CursorAndLimit {
-                cursor: -1,
-                limit: 1_000_000,
-            },
-        )
-        .unwrap();
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::Barcode),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
+            )
+            .unwrap();
 
         let translator = BarcodeTranslation;
-        for entry in entries { let RowOrDelete::Row { changelog, row } = entry else { panic!("expected upsert row") };
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral

@@ -62,11 +62,54 @@ use chrono::{NaiveDateTime, Utc};
 use diesel::connection::SimpleConnection;
 use thiserror::Error;
 
+/// Default partition size used by both the migration and the yaml-bound
+/// `ChangelogPartitionSettings` in `service::settings`.
+pub const DEFAULT_CHANGELOG_PARTITION_SIZE: i64 = 5_000_000;
+/// Default empty-future-partition headroom kept above max(cursor).
+pub const DEFAULT_CHANGELOG_LOOKAHEAD_PARTITIONS: i64 = 2;
+
+/// Migration-internal partition config — primitive values only, no serde. The
+/// yaml-bound counterpart (`ChangelogPartitionSettings`) lives in `service::settings`
+/// alongside the rest of the yaml settings; the server converts service → repository
+/// before calling `migrate()` because `repository` cannot depend on `service`.
+#[derive(Clone, Debug)]
+pub struct ChangelogPartitionConfig {
+    pub partition_size: i64,
+    pub lookahead_partitions: i64,
+}
+
+impl Default for ChangelogPartitionConfig {
+    fn default() -> Self {
+        Self {
+            partition_size: DEFAULT_CHANGELOG_PARTITION_SIZE,
+            lookahead_partitions: DEFAULT_CHANGELOG_LOOKAHEAD_PARTITIONS,
+        }
+    }
+}
+
+/// Slice of config that migrations may need at run-time. Constructed in the server
+/// layer from the full `Settings` struct and threaded through the migration runner
+/// so a fragment captures the values used at migrate-time rather than re-reading
+/// them from a code constant later.
+#[derive(Clone, Debug, Default)]
+pub struct MigrationConfig {
+    pub changelog_partition: ChangelogPartitionConfig,
+}
+
 pub(crate) trait Migration {
     fn version(&self) -> Version;
     // Will only run when database version < version
     fn migrate(&self, _: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+    // Override this if the one-time migration needs MigrationConfig. Default forwards
+    // to `migrate(conn)` so existing migrations are unchanged.
+    fn migrate_with_config(
+        &self,
+        connection: &StorageConnection,
+        _config: &MigrationConfig,
+    ) -> anyhow::Result<()> {
+        self.migrate(connection)
     }
     // Will run when database version <= migrate_fragments. And each fragment will run if it hasn't
     // yet run based on fragment identifiers (identifier can be changed to re-run migration, see README.md)
@@ -79,6 +122,15 @@ pub(crate) trait MigrationFragment {
     fn identifier(&self) -> &'static str;
     fn migrate(&self, _: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+    // Override this if the fragment needs MigrationConfig. Default forwards to
+    // `migrate(conn)` so existing fragments are unchanged.
+    fn migrate_with_config(
+        &self,
+        connection: &StorageConnection,
+        _config: &MigrationConfig,
+    ) -> anyhow::Result<()> {
+        self.migrate(connection)
     }
 }
 
@@ -110,6 +162,7 @@ pub enum MigrationError {
 pub fn migrate(
     connection: &StorageConnection,
     to_version: Option<Version>,
+    config: MigrationConfig,
 ) -> Result<(Version, Vec<(String, NaiveDateTime)>), MigrationError> {
     let migrations: Vec<Box<dyn Migration>> = vec![
         Box::new(v1_03_00::V1_03_00),
@@ -234,7 +287,7 @@ pub fn migrate(
         if migration_version > database_version {
             log::info!("Running one time database migration {migration_version}");
             migration
-                .migrate(connection)
+                .migrate_with_config(connection, &config)
                 .map_err(|source| MigrationError::MigrationError {
                     source,
                     version: migration_version.clone(),
@@ -261,7 +314,7 @@ pub fn migrate(
                 );
 
                 connection
-                    .transaction_sync(|connection| fragment.migrate(connection))
+                    .transaction_sync(|connection| fragment.migrate_with_config(connection, &config))
                     .map_err(|source| MigrationError::FragmentMigrationError {
                         source: source.to_inner_error(),
                         version: migration_version.clone(),

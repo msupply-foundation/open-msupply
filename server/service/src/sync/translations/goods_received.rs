@@ -210,7 +210,6 @@ impl SyncTranslation for GoodsReceivedTranslation {
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
-            transfer_store_id: None,
             default_donor_id: data.donor_id,
         };
 

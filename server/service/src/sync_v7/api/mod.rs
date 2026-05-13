@@ -8,6 +8,8 @@ use serde::{de::DeserializeOwned, Serialize};
 use util::{format_error, with_retries, RetrySeconds};
 
 pub mod get_token;
+pub mod patient_data_for_site;
+pub mod patient_search;
 pub mod pull;
 pub mod push;
 pub mod status;
@@ -106,6 +108,18 @@ pub(crate) struct SyncApiV7 {
 }
 
 impl SyncApiV7 {
+    pub fn new(service_provider: &ServiceProvider, sync_url: &str) -> Result<Self, SyncError> {
+        let common = Common::load(service_provider)?;
+        let auth_headers = common.to_auth_headers()?;
+        let url = sync_url
+            .parse()
+            .map_err(|e: url::ParseError| SyncError::ConnectionError {
+                url: sync_url.to_string(),
+                e: format!("Failed to parse central server url: {e}"),
+            })?;
+        Ok(SyncApiV7 { url, auth_headers })
+    }
+
     pub async fn op<I: Serialize, O: DeserializeOwned>(
         &self,
         route: &str,
