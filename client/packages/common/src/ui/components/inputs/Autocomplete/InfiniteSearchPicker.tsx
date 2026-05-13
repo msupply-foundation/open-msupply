@@ -34,6 +34,7 @@ interface InfiniteQueryPage<T> {
 interface InfiniteQueryResult<T> {
   data?: { pages: InfiniteQueryPage<T>[] };
   isLoading: boolean;
+  isFetching: boolean;
   isFetchingNextPage: boolean;
   fetchNextPage: (opts: { pageParam: number }) => unknown;
 }
@@ -123,12 +124,11 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
     [filter, apiFilter]
   );
 
-  const { data, isLoading, fetchNextPage, isFetchingNextPage } = useInfiniteData(
-    {
+  const { data, isLoading, isFetching, fetchNextPage, isFetchingNextPage } =
+    useInfiniteData({
       rowsPerPage: ROWS_PER_PAGE,
       filter: disabled ? undefined : fullFilter,
-    }
-  );
+    });
 
   // Cache-first lookup for currentId, falling back to a byId fetch if it isn't
   // on any loaded page (e.g. past the first page, or excluded by the filter).
@@ -148,11 +148,10 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
   // picker just displays the resolved entity.
   const displayValue = value ?? currentEntity;
 
-  // Keep the displayed search string in sync with the resolved entity.
-  useEffect(() => {
-    if (displayValue && search === '') setSearch(getOptionLabel(displayValue));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [displayValue]);
+  // Fall back to the resolved entity's label while the user hasn't typed
+  // anything, so async currentId resolution surfaces without a state-sync effect.
+  const inputValue =
+    search === '' && displayValue ? getOptionLabel(displayValue) : search;
 
   useEffect(() => {
     // openOnFocus prop mispositions the popper inside a Dialog; toggle open
@@ -233,7 +232,8 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
       pageNumber={pageNumber}
       rowsPerPage={ROWS_PER_PAGE}
       totalRows={data?.pages?.[0]?.data.totalCount ?? 0}
-      loading={isLoading || isFetchingNextPage}
+      loading={isLoading || isFetching || isFetchingNextPage}
+      loadingInputOnly
       noOptionsText={noOptionsText}
       filterOptions={filterOptions}
       onOpen={selectControl.toggleOn}
@@ -246,7 +246,7 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
       onInputChange={(_event, _value, reason) => {
         if (reason === CLEAR) onChange(null);
       }}
-      inputValue={search}
+      inputValue={inputValue}
       clearOnBlur={false}
       onClear={() => {
         setSearch('');
@@ -263,6 +263,10 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
           setSearch(next);
           debounceOnFilter(searchToFilter(next));
         },
+        // Re-open on focus/click — `openOnFocus` on the underlying autocomplete
+        // mispositions the popper inside a Dialog, so we open manually.
+        onFocus: () => selectControl.toggleOn(),
+        onClick: () => selectControl.toggleOn(),
       }}
       getOptionLabel={getOptionLabel}
       renderOption={renderOption}

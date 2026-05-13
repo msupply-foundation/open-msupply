@@ -40,6 +40,11 @@ export const useCustomersInfinite = ({
         data,
         pageNumber,
       };
-    }
+    },
+    // Keep the previous filter's pages on screen while a new filter is in
+    // flight, so the dropdown doesn't flash empty/"Loading..." between
+    // keystrokes — InfiniteSearchPicker also relies on this for its
+    // client-side narrowing fallback.
+    { keepPreviousData: true }
   );
 };
