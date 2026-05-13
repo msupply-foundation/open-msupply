@@ -78,7 +78,6 @@ use crate::{
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
-    sync_v7::sync_status::status::{SyncStatusV7Service, SyncStatusV7Trait},
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
     vaccination::{VaccinationService, VaccinationServiceTrait},
     vaccine_course::VaccineCourseServiceTrait,

@@ -62,4 +62,11 @@
 #   interval: 60 # in seconds
 # features:
 #   example_feature: true
+# changelog_partition: # postgres-only; controls partitioning of the changelog table
+#   partition_size: 5000000      # cursor values per partition
+#   lookahead_partitions: 2      # empty future partitions kept ahead of max(cursor)
+#   interval:                    # poll period for the runtime top-up task
+#     hours: 0
+#     mins: 1
+#     secs: 0
 

@@ -32,6 +32,7 @@ pub enum Variant {
     CentralV6NotConfigured,
     V6ApiVersionIncompatible,
     IntegrationError,
+    V7UpgradeFailed,
 }
 
 impl SyncErrorNode {
@@ -126,6 +127,7 @@ impl SyncErrorNode {
             from::CentralV6NotConfigured => to::CentralV6NotConfigured,
             from::V6ApiVersionIncompatible => to::V6ApiVersionIncompatible,
             from::IntegrationError => to::IntegrationError,
+            from::V7UpgradeFailed => to::V7UpgradeFailed,
         };
 
         Self::from_variant(variant, message)

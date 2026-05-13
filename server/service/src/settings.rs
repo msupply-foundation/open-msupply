@@ -3,7 +3,13 @@ use std::{
     fmt::{Display, Formatter, Result},
 };
 
-use repository::database_settings::DatabaseSettings;
+use repository::{
+    database_settings::DatabaseSettings,
+    migrations::{
+        ChangelogPartitionConfig, DEFAULT_CHANGELOG_LOOKAHEAD_PARTITIONS,
+        DEFAULT_CHANGELOG_PARTITION_SIZE,
+    },
+};
 use serde::{Deserialize, Serialize};
 
 use crate::sync::settings::SyncSettings;
@@ -17,7 +23,10 @@ pub struct Settings {
     pub backup: Option<BackupSettings>,
     pub mail: Option<MailSettings>,
     pub features: Option<HashMap<String, bool>>,
+    pub changelog_partition: Option<ChangelogPartitionSettings>,
 }
+
+
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct ServerSettings {
@@ -186,4 +195,75 @@ pub struct MailSettings {
     pub password: String,
     pub from: String,
     pub interval: u64,
+}
+
+/// yaml-bound config for the postgres `changelog` partitioned table. The
+/// migration-internal counterpart lives in `repository::migrations::ChangelogPartitionConfig`
+/// (no serde, primitive values only); the server converts service → repository
+/// before calling `migrate()`.
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct ChangelogPartitionSettings {
+    #[serde(default = "default_partition_size")]
+    pub partition_size: i64,
+    #[serde(default = "default_lookahead_partitions")]
+    pub lookahead_partitions: i64,
+    #[serde(default)]
+    pub interval: IntervalSettings,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct IntervalSettings {
+    #[serde(default)]
+    pub hours: u64,
+    #[serde(default = "default_interval_mins")]
+    pub mins: u64,
+    #[serde(default)]
+    pub secs: u64,
+}
+
+fn default_partition_size() -> i64 {
+    DEFAULT_CHANGELOG_PARTITION_SIZE
+}
+fn default_lookahead_partitions() -> i64 {
+    DEFAULT_CHANGELOG_LOOKAHEAD_PARTITIONS
+}
+fn default_interval_mins() -> u64 {
+    30
+}
+
+impl Default for ChangelogPartitionSettings {
+    fn default() -> Self {
+        Self {
+            partition_size: default_partition_size(),
+            lookahead_partitions: default_lookahead_partitions(),
+            interval: IntervalSettings::default(),
+        }
+    }
+}
+
+impl Default for IntervalSettings {
+    fn default() -> Self {
+        Self {
+            hours: 0,
+            mins: default_interval_mins(),
+            secs: 0,
+        }
+    }
+}
+
+impl IntervalSettings {
+    pub fn as_duration(&self) -> std::time::Duration {
+        std::time::Duration::from_secs(self.hours * 3600 + self.mins * 60 + self.secs)
+    }
+}
+
+impl ChangelogPartitionSettings {
+    /// Convert to the migration-internal primitive config that
+    /// `migrate()` and `ensure_partition_lookahead` accept.
+    pub fn to_migration_config(&self) -> ChangelogPartitionConfig {
+        ChangelogPartitionConfig {
+            partition_size: self.partition_size,
+            lookahead_partitions: self.lookahead_partitions,
+        }
+    }
 }

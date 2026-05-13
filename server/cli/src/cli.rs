@@ -10,10 +10,11 @@ use report_builder::{
     Format,
 };
 use repository::{
-    get_storage_connection_manager, migrations::migrate, schema_from_row, test_db, ContextType,
-    EqualFilter, FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository,
-    ReportFilter, ReportRepository, ReportRow, ReportRowRepository, SyncBufferRepository,
-    SyncBufferRowInsert,
+    get_storage_connection_manager,
+    migrations::{migrate, MigrationConfig},
+    schema_from_row, test_db, ContextType, EqualFilter, FormSchemaRow, FormSchemaRowRepository,
+    KeyType, KeyValueStoreRepository, ReportFilter, ReportRepository, ReportRow,
+    ReportRowRepository, SyncBufferRepository, SyncBufferRowInsert,
 };
 use serde::{Deserialize, Serialize};
 use server::{configuration, logging_init};
@@ -26,9 +27,8 @@ use service::{
     settings::Settings,
     standard_reports::{ReportData, ReportsData, StandardReports},
     sync::{
-        settings::SyncSettings,
-        sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
-        synchroniser_driver::SynchroniserDriver,
+        settings::SyncSettings, sync_status::logger::SyncLogger,
+        synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
     },
     token_bucket::TokenBucket,
 };
@@ -292,7 +292,7 @@ async fn initialise_from_central(
         .update_sync_settings(&service_context, &sync_settings)?;
 
     let (_, sync_driver) = SynchroniserDriver::init();
-    sync_driver.sync(service_provider.clone(), None).await;
+    sync_driver.sync(service_provider.clone()).await;
 
     info!("Syncing users");
     for user in users.split(',') {
@@ -331,9 +331,12 @@ async fn main() -> anyhow::Result<()> {
     match args.action {
         Action::ExportGraphqlSchema { path } => {
             info!("Exporting graphql schema");
-            let schema =
-                OperationalSchema::build(Queries::new(), Mutations::new(), Subscriptions::default())
-                    .finish();
+            let schema = OperationalSchema::build(
+                Queries::new(),
+                Mutations::new(),
+                Subscriptions::default(),
+            )
+            .finish();
             fs::write(
                 path.unwrap_or(PathBuf::from("schema.graphql")),
                 schema.sdl(),
@@ -351,8 +354,19 @@ async fn main() -> anyhow::Result<()> {
             if let Some(init_sql) = &settings.database.startup_sql() {
                 connection_manager.execute(init_sql).unwrap();
             }
-            migrate(&connection_manager.connection().unwrap(), None)
-                .expect("Failed to run DB migrations");
+            let migration_config = MigrationConfig {
+                changelog_partition: settings
+                    .changelog_partition
+                    .clone()
+                    .unwrap_or_default()
+                    .to_migration_config(),
+            };
+            migrate(
+                &connection_manager.connection().unwrap(),
+                None,
+                migration_config,
+            )
+            .expect("Failed to run DB migrations");
 
             info!("Finished applying database migrations");
         }
@@ -446,11 +460,7 @@ async fn main() -> anyhow::Result<()> {
             buffer_repo.insert_many(&buffer_rows)?;
 
             let mut logger = SyncLogger::start(&ctx.connection).unwrap();
-            integrate_and_translate_sync_buffer(
-                &ctx.connection,
-                Some(&mut logger),
-                0,
-            )?;
+            integrate_and_translate_sync_buffer(&ctx.connection, Some(&mut logger), 0)?;
 
             info!("Initialising users");
             for (input, user_info) in data.users {

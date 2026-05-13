@@ -39,7 +39,7 @@ async fn get_token(
     service_provider: Data<ServiceProvider>,
 ) -> actix_web::Result<impl Responder> {
     let response: api::get_token::Response =
-        handlers::get_token(&service_provider, request.into_inner());
+        handlers::get_token(&service_provider, request.into_inner()).await;
 
     Ok(web::Json(response))
 }
@@ -119,7 +119,7 @@ mod test_sync_v7_server_api {
     use assert_json_diff::assert_json_include;
     use repository::{
         migrations::Version, mock::MockDataInserts, test_db::setup_all, KeyType,
-        KeyValueStoreRepository, SiteRow, SiteRowRepository,
+        KeyValueStoreRepository, SiteRow, SiteRowRepository, SyncVersion,
     };
     use serde_json::json;
     use service::{
@@ -151,6 +151,7 @@ mod test_sync_v7_server_api {
                 hashed_password: HASHED_PASSWORD.into(),
                 hardware_id: hardware_id.map(str::to_string),
                 token: token.map(str::to_string),
+                sync_version: SyncVersion::V7,
             })
             .unwrap();
         let kv = KeyValueStoreRepository::new(&connection);
@@ -243,7 +244,13 @@ mod test_sync_v7_server_api {
         let app = setup!("sync_v7_http_push", Some("test_token"), Some("hw-1"));
 
         let req = authed_post("/sync_v7/push")
-            .set_json(json!({ "siteId": 1, "maxCursor": 0, "records": [] }))
+            .set_json(json!({
+                "siteId": 1,
+                "maxCursor": 0,
+                "lastCursorInBatch": 0,
+                "remaining": 0,
+                "records": []
+            }))
             .to_request();
         let body: serde_json::Value = test::call_and_read_body_json(&app, req).await;
 

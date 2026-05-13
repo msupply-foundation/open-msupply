@@ -1,6 +1,6 @@
 use crate::{
     db_diesel::changelog::ChangelogRepository, ChangelogSyncType, Delete, RepositoryError,
-    RowActionType, SourceSiteId, StorageConnection, Upsert,
+    RowActionType, SourceSiteId, StorageConnection, SyncVersion, Upsert,
 };
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -14,6 +14,7 @@ table! {
         hashed_password -> Text,
         hardware_id -> Nullable<Text>,
         token -> Nullable<Text>,
+        sync_version -> Text,
     }
 }
 
@@ -30,6 +31,7 @@ pub struct SiteRow {
     pub hashed_password: String,
     pub hardware_id: Option<String>,
     pub token: Option<String>,
+    pub sync_version: SyncVersion,
 }
 
 pub struct SiteRowRepository<'a> {
@@ -104,7 +106,11 @@ impl<'a> SiteRowRepository<'a> {
 }
 
 impl Upsert for SiteRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         SiteRowRepository::new(con)._upsert(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => SiteRow::generate_changelog(
@@ -131,7 +137,11 @@ impl Upsert for SiteRow {
 #[derive(Debug, Clone)]
 pub struct SiteRowDelete(pub String);
 impl Delete for SiteRowDelete {
-    fn delete_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         let repo = SiteRowRepository::new(con);
         let Some(site) = repo.find_one_by_og_id(&self.0)? else {
             return Ok(());
@@ -173,6 +183,7 @@ mod tests {
             hashed_password: "hash_a".to_string(),
             hardware_id: Some("hw-id-a".to_string()),
             token: None,
+            sync_version: SyncVersion::V5V6,
         }
     }
 
@@ -185,6 +196,7 @@ mod tests {
             hashed_password: "hash_b".to_string(),
             hardware_id: None,
             token: Some("token_b".to_string()),
+            sync_version: SyncVersion::V5V6,
         }
     }
 
