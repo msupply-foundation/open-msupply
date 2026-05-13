@@ -12,8 +12,7 @@ import {
 import { StoreRowFragment } from '../../../Store/api';
 import { StoreSearchInput } from '../../../Store/components';
 import { SiteStoreDraftRow } from '../api';
-
-const UNASSIGNED_SITE_ID = 1;
+import { useSyncSettings } from '../../../Sync/api/hooks/settings/useSyncSettings';
 
 interface SiteStoresSectionProps {
   siteId: number;
@@ -34,6 +33,8 @@ export const SiteStoresSection = ({
 }: SiteStoresSectionProps) => {
   const t = useTranslation();
   const [searchKey, setSearchKey] = useState(0);
+  const { data: syncSettings } = useSyncSettings();
+  const unassignedSiteId = syncSettings?.centralServerSiteId;
 
   const columns = useMemo((): ColumnDef<SiteStoreDraftRow>[] => {
     const baseColumns: ColumnDef<SiteStoreDraftRow>[] = [
@@ -63,13 +64,13 @@ export const SiteStoresSection = ({
           <IconButton
             icon={<DeleteIcon fontSize="small" />}
             label={t('label.remove')}
-            disabled={siteId === UNASSIGNED_SITE_ID}
+            disabled={siteId === unassignedSiteId}
             onClick={() => onRemoveStore(row.original.id)}
           />
         ),
       },
     ];
-  }, [t, isEditable, siteId, onRemoveStore]);
+  }, [t, isEditable, siteId, unassignedSiteId, onRemoveStore]);
 
   const { table } = useNonPaginatedMaterialTable<SiteStoreDraftRow>({
     tableId: 'site-stores-table',
@@ -100,7 +101,7 @@ export const SiteStoresSection = ({
           fullWidth
           excludeStoreIds={stores.map(s => s.id)}
           onChange={handleSelect}
-          onInputChange={() => {}}
+          onInputChange={() => { }}
         />
       )}
       <MaterialTable table={table} />
