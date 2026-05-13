@@ -17,7 +17,6 @@ mod partition_changelog_by_cursor;
 mod populate_changelog_with_rows_for_sync_v7_tables;
 mod populate_sync_version;
 mod rebuild_sync_buffer;
-mod strip_sync_message_type_quotes;
 mod update_changelog_for_sync_v7;
 
 pub(crate) struct V3_00_00;
@@ -48,7 +47,6 @@ impl Migration for V3_00_00 {
             Box::new(partition_changelog_by_cursor::Migrate),
             Box::new(populate_changelog_with_rows_for_sync_v7_tables::Migrate),
             Box::new(add_merge_sync_message_processor_cursor_pg_enum::Migrate),
-            Box::new(strip_sync_message_type_quotes::Migrate),
             Box::new(create_changelog_indexes::Migrate),
         ]
     }

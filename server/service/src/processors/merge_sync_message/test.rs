@@ -6,6 +6,8 @@ use repository::{
     SyncMessageRowStatus, SyncMessageRowType,
 };
 use serde_json::json;
+use crate::sync::translations::special::merge::MergeSyncMessageBody;
+use repository::ChangelogTableName;
 use util::uuid::uuid;
 
 use crate::{
@@ -29,11 +31,12 @@ async fn name_merge_sync_message_rewrites_name_links() {
     )
     .await;
 
-    let body = json!({
-        "mergeIdToKeep": "name_b",
-        "mergeIdToDelete": "name_a"
+    let body = serde_json::to_string(&MergeSyncMessageBody {
+        table_name: ChangelogTableName::Name,
+        merge_id_to_keep: "name_b".to_string(),
+        merge_id_to_delete: "name_a".to_string(),
     })
-    .to_string();
+    .unwrap();
 
     let message = SyncMessageRow {
         id: uuid(),
@@ -42,7 +45,7 @@ async fn name_merge_sync_message_rewrites_name_links() {
         body,
         created_datetime: Utc::now().naive_utc(),
         status: SyncMessageRowStatus::New,
-        r#type: SyncMessageRowType::NameMerge,
+        r#type: SyncMessageRowType::Merge,
         error_message: None,
     };
     SyncMessageRowRepository::new(&ctx.connection)
