@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { RegexUtils } from '../../utils/regex';
 import { useCurrency } from '../currency';
 import { MAX_FRACTION_DIGITS, SupportedLocales, useIntlUtils } from '../utils';
@@ -21,8 +22,8 @@ export const useFormatNumber = () => {
     options: { separator, decimal },
   } = useCurrency();
 
-  return {
-    format: (
+  const format = useCallback(
+    (
       value: number | undefined,
       options?: Intl.NumberFormatOptions & { locale?: SupportedLocales }
     ) => {
@@ -48,7 +49,11 @@ export const useFormatNumber = () => {
             : (maximumFractionDigits ?? MAX_FRACTION_DIGITS),
       }).format(value);
     },
-    round: (value?: number, dp?: number): string => {
+    [currentLanguage]
+  );
+
+  const round = useCallback(
+    (value?: number, dp?: number): string => {
       if (value === undefined || value === null || typeof value !== 'number')
         return '';
 
@@ -63,7 +68,11 @@ export const useFormatNumber = () => {
       });
       return intl.format(newVal ?? 0);
     },
-    roundUpToWholeNumber: (value?: number): string => {
+    [currentLanguage]
+  );
+
+  const roundUpToWholeNumber = useCallback(
+    (value?: number): string => {
       if (value === undefined || value === null || typeof value !== 'number')
         return '';
 
@@ -73,7 +82,11 @@ export const useFormatNumber = () => {
       });
       return intl.format(newVal ?? 0);
     },
-    parse: (numberString: string, decimalChar: string = decimal) => {
+    [currentLanguage]
+  );
+
+  const parse = useCallback(
+    (numberString: string, decimalChar: string = decimal) => {
       const negative = numberString.startsWith('-') ? -1 : 1;
 
       const num = RegexUtils.convertIndoArToArNumerals(numberString)
@@ -88,5 +101,8 @@ export const useFormatNumber = () => {
 
       return Number(num) * negative;
     },
-  };
+    [separator, decimal]
+  );
+
+  return { format, round, roundUpToWholeNumber, parse };
 };

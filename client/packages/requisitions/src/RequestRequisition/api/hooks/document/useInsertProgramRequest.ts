@@ -13,10 +13,14 @@ export const useInsertProgramRequest = () => {
   const t = useTranslation();
   const { error } = useNotification();
 
-  const { mutateAsync } = useMutation(api.insertProgram, {
+  const { mutateAsync } = useMutation({
+    mutationFn: api.insertProgram,
+
     onSettled: () => {
-      queryClient.invalidateQueries(api.keys.base());
-    },
+      queryClient.invalidateQueries({
+        queryKey: api.keys.base()
+      });
+    }
   });
 
   const insert = async (input: InsertProgramRequestRequisitionInput) => {

@@ -5,7 +5,7 @@ import { usePatientApi } from '../utils/usePatientApi';
 export const usePatientsAll = (sortBy: SortBy<PatientRowFragment>) => {
   const api = usePatientApi();
 
-  return useMutation(api.keys.sortedList(sortBy), () =>
-    api.get.listAll({ sortBy })
-  );
+  return useMutation({
+    mutationFn: () => api.get.listAll({ sortBy }),
+  });
 };

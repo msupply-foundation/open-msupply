@@ -72,7 +72,7 @@ export const useInfiniteAssets = ({
       : { ...queryParams?.filterBy, categoryId: { equalTo: categoryId } };
 
   const params = { ...queryParams, filter };
-  const queryFn = async ({ pageParam = 0 }) => {
+  const queryFn = async ({ pageParam }: { pageParam: number }) => {
     const pageNumber = Number(pageParam);
     const { assetCatalogueItems } = await assetApi.assetCatalogueItems({
       ...params,
@@ -82,7 +82,7 @@ export const useInfiniteAssets = ({
     });
 
     return {
-      data: assetCatalogueItems ?? [],
+      data: assetCatalogueItems ?? { nodes: [], totalCount: 0 },
       pageNumber,
     };
   };
@@ -90,6 +90,11 @@ export const useInfiniteAssets = ({
   const infiniteQuery = useInfiniteQuery({
     queryKey,
     queryFn,
+    initialPageParam: 0,
+    getNextPageParam: lastPage =>
+      (lastPage.pageNumber + 1) * rowsPerPage < lastPage.data.totalCount
+        ? lastPage.pageNumber + 1
+        : undefined,
   });
   return infiniteQuery;
 };

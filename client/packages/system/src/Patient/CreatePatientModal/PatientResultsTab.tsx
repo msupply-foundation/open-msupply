@@ -86,7 +86,7 @@ export const PatientResultsTab: FC<
   >(undefined);
   const searchEnabled = !!patient && active;
   const {
-    isLoading: isLoadingLocal,
+    isPending: isLoadingLocal,
     data: localSearchData,
     mutate: search,
   } = usePatient.utils.search();

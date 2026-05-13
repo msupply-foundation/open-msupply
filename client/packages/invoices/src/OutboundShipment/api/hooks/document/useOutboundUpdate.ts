@@ -4,9 +4,13 @@ import { useMutation, useQueryClient } from '@openmsupply-client/common';
 export const useOutboundUpdate = () => {
   const queryClient = useQueryClient();
   const api = useOutboundApi();
-  return useMutation(api.update, {
+  return useMutation({
+    mutationFn: api.update,
+
     onSuccess: () => {
-      queryClient.invalidateQueries(api.keys.base());
-    },
+      queryClient.invalidateQueries({
+        queryKey: api.keys.base()
+      });
+    }
   });
 };

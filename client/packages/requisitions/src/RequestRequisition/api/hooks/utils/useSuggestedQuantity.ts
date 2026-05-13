@@ -9,8 +9,12 @@ export const useSuggestedQuantity = () => {
   const requestId = useRequestId();
   const { id } = useRequestFields('id');
 
-  return useMutation(() => api.useSuggestedQuantity(id), {
+  return useMutation({
+    mutationFn: () => api.useSuggestedQuantity(id),
+
     onSettled: () =>
-      queryClient.invalidateQueries(api.keys.detail(requestId)),
+      queryClient.invalidateQueries({
+        queryKey: api.keys.detail(requestId)
+      })
   });
 };

@@ -15,10 +15,14 @@ export const useResponseAddFromMasterList = () => {
   const queryClient = useQueryClient();
   const api = useResponseApi();
   const { id: responseId } = useResponseFields('id');
-  const mutationState = useMutation(api.responseAddFromMasterList, {
+  const mutationState = useMutation({
+    mutationFn: api.responseAddFromMasterList,
+
     onSuccess: () => {
-      queryClient.invalidateQueries(api.keys.detail(responseId));
-    },
+      queryClient.invalidateQueries({
+        queryKey: api.keys.detail(responseId)
+      });
+    }
   });
 
   const getConfirmation = useConfirmationModal({
