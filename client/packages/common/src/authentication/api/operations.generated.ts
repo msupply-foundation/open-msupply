@@ -150,6 +150,15 @@ export type IsCentralServerQuery = {
   isCentralServer: boolean;
 };
 
+export type IsCentralStandaloneQueryVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type IsCentralStandaloneQuery = {
+  __typename: 'Queries';
+  isCentralStandalone: boolean;
+};
+
 export type RefreshTokenQueryVariables = Types.Exact<{ [key: string]: never }>;
 
 export type RefreshTokenQuery = {
@@ -405,6 +414,11 @@ export const IsCentralServerDocument = gql`
     isCentralServer
   }
 `;
+export const IsCentralStandaloneDocument = gql`
+  query isCentralStandalone {
+    isCentralStandalone
+  }
+`;
 export const RefreshTokenDocument = gql`
   query refreshToken {
     refreshToken {
@@ -636,6 +650,24 @@ export function getSdk(
             signal,
           }),
         'isCentralServer',
+        'query',
+        variables
+      );
+    },
+    isCentralStandalone(
+      variables?: IsCentralStandaloneQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<IsCentralStandaloneQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<IsCentralStandaloneQuery>({
+            document: IsCentralStandaloneDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'isCentralStandalone',
         'query',
         variables
       );
