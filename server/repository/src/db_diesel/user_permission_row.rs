@@ -19,9 +19,21 @@ table! {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    DbEnum,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+    strum::AsRefStr,
+)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+#[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
 pub enum PermissionType {
     ServerAdmin,
 
@@ -129,10 +141,26 @@ impl UserPermissionRow {
         store_id: Option<&str>,
         permission: &PermissionType,
     ) -> String {
+        Self::deterministic_id_from_db_form(user_id, store_id, permission.as_ref())
+    }
+
+    /// String-keyed variant used by migrations, which read `permission` as raw text
+    /// so they don't have to deserialize into the live `PermissionType` enum (which
+    /// may have evolved since the migration was written). Callers must pass the
+    /// `SCREAMING_SNAKE_CASE` form stored in the DB (e.g. `"STORE_ACCESS"`) so the
+    /// hash matches [`Self::deterministic_id`].
+    pub(crate) fn deterministic_id_from_db_form(
+        user_id: &str,
+        store_id: Option<&str>,
+        permission_db_form: &str,
+    ) -> String {
         // Project-local namespace; do not change without a migration plan.
         const NAMESPACE: Uuid = Uuid::from_u128(0x5d8e2b1a_4f3c_4a6e_9b7d_0c1e2f3a4b5c);
         let store = store_id.unwrap_or("");
-        deterministic_uuid(&NAMESPACE, &format!("{user_id}:{store}:{permission:?}"))
+        deterministic_uuid(
+            &NAMESPACE,
+            &format!("{user_id}:{store}:{permission_db_form}"),
+        )
     }
 }
 
