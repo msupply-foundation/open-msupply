@@ -25,6 +25,7 @@ pub fn delete_site(ctx: &Context<'_>, site_id: i32) -> Result<DeleteSiteNode> {
         &ResourceAccessRequest {
             resource: Resource::MutateSites,
             store_id: None,
+            require_central_standalone: true,
         },
     )?;
 

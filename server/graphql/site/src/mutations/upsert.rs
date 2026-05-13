@@ -67,6 +67,7 @@ pub fn upsert_site(ctx: &Context<'_>, input: UpsertSiteInput) -> Result<UpsertSi
         &ResourceAccessRequest {
             resource: Resource::MutateSites,
             store_id: None,
+            require_central_standalone: true,
         },
     )?;
 
