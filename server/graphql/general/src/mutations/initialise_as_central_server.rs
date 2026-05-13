@@ -1,7 +1,6 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 use service::{
-    initialisation_status::get_initialisation_status,
     standalone_central::{
         InitialiseAsCentralServerError as ServiceError, InitialiseAsCentralServerInput,
     },
@@ -15,7 +14,9 @@ pub async fn initialise_as_central_server(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    if get_initialisation_status(service_provider, &service_context)?
+    if service_provider
+        .sync_status_service
+        .get_initialisation_status(&service_context)?
         != InitialisationStatus::PreInitialisation
     {
         return Ok(InitialiseAsCentralServerResponse::Error(

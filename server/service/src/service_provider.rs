@@ -149,7 +149,6 @@ pub struct ServiceProvider {
     // Sync
     pub site_auth_service: Box<dyn SiteAuthTrait>,
     pub sync_status_service: Box<dyn SyncStatusTrait>,
-    pub sync_status_v7_service: Box<dyn SyncStatusV7Trait>,
     pub standalone_central_service: Box<dyn StandaloneCentralServiceTrait>,
     // Triggers
     processors_trigger: ProcessorsTrigger,
@@ -283,7 +282,6 @@ impl ServiceProvider {
             app_data_service: Box::new(AppDataService {}),
             site_auth_service: Box::new(SiteAuthService),
             sync_status_service: Box::new(SyncStatusService),
-            sync_status_v7_service: Box::new(SyncStatusV7Service),
             standalone_central_service: Box::new(StandaloneCentralService),
             processors_trigger,
             sync_trigger,
