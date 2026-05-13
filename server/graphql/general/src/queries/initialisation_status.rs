@@ -1,10 +1,7 @@
 use async_graphql::Enum;
 pub use async_graphql::*;
 use graphql_core::ContextExt;
-use service::{
-    initialisation_status::get_initialisation_status,
-    sync::sync_status::status::InitialisationStatus,
-};
+use service::sync::sync_status::status::InitialisationStatus;
 
 #[derive(SimpleObject)]
 pub struct InitialisationStatusNode {
@@ -25,7 +22,9 @@ pub enum InitialisationStatusType {
 pub(crate) fn initialisation_status(ctx: &Context<'_>) -> Result<InitialisationStatusNode> {
     let service_provider = ctx.service_provider();
     let ctx = service_provider.basic_context()?;
-    let status = get_initialisation_status(&service_provider, &ctx)?;
+    let status = service_provider
+        .sync_status_service
+        .get_initialisation_status(&ctx)?;
 
     Ok(InitialisationStatusNode::from_domain(status))
 }
