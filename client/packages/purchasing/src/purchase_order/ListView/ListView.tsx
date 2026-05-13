@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   useNavigate,
   useTranslation,
@@ -53,8 +53,7 @@ export const PurchaseOrderListView = () => {
     query: { data, isFetching },
   } = usePurchaseOrderList(listParams);
 
-  const columns = useMemo(
-    (): ColumnDef<PurchaseOrderRowFragment>[] => [
+  const columns: ColumnDef<PurchaseOrderRowFragment>[] = [
       {
         header: t('label.supplier'),
         id: 'supplier',
@@ -148,9 +147,7 @@ export const PurchaseOrderListView = () => {
         columnType: ColumnType.Comment,
         enableSorting: true,
       },
-    ],
-    []
-  );
+    ];
 
   const { table, selectedRows } =
     usePaginatedMaterialTable<PurchaseOrderRowFragment>({

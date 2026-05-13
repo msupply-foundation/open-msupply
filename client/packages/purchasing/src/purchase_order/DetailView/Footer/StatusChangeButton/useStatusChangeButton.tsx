@@ -34,6 +34,10 @@ export const useStatusChangeButton = () => {
   const preferences = usePreferences();
   const requiresAuthorisation = preferences?.authorisePurchaseOrder ?? false;
 
+  // Kept memoized: this array is a dep of a useEffect below, and the
+  // compiler doesn't memoize results of imported functions like
+  // getStatusOptions — without useMemo, a fresh array each render causes
+  // the effect to fire on every render → infinite update loop.
   const options = useMemo(
     () => getStatusOptions(status, getButtonLabel(t), requiresAuthorisation),
     [status, t, requiresAuthorisation]
@@ -100,13 +104,14 @@ export const useStatusChangeButton = () => {
   const isFinalising =
     selectedOption?.value === PurchaseOrderNodeStatus.Finalised;
 
-  const hasOutstandingLines = useMemo(() => {
-    if (!isFinalising || !lines?.nodes) return false;
-    return lines.nodes.some(line => {
-      const ordered = line.adjustedNumberOfUnits ?? line.requestedNumberOfUnits;
-      return line.receivedNumberOfUnits < ordered;
-    });
-  }, [isFinalising, lines]);
+  const hasOutstandingLines =
+    isFinalising && lines?.nodes
+      ? lines.nodes.some(line => {
+          const ordered =
+            line.adjustedNumberOfUnits ?? line.requestedNumberOfUnits;
+          return line.receivedNumberOfUnits < ordered;
+        })
+      : false;
 
   const getInfoMessage = () => {
     if (selectedOption?.value === PurchaseOrderNodeStatus.Confirmed) {

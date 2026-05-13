@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import {
   Box,
   ModalMode,
@@ -64,21 +64,18 @@ export const PurchaseOrderLineEditModal = React.memo(
       return dates?.[0] ?? null;
     };
 
-    const onChangeItem = useCallback(
-      (item: ItemStockOnHandFragment) => {
-        const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id, {
-          requestedDeliveryDate: purchaseOrder.requestedDeliveryDate,
-          expectedDeliveryDate: getMostRecentExpectedDate(),
+    const onChangeItem = (item: ItemStockOnHandFragment) => {
+      const draftLine = createDraftPurchaseOrderLine(item, purchaseOrder.id, {
+        requestedDeliveryDate: purchaseOrder.requestedDeliveryDate,
+        expectedDeliveryDate: getMostRecentExpectedDate(),
+      });
+      item &&
+        updatePatch({
+          ...draftLine,
+          requestedPackSize: item.defaultPackSize ?? 1,
+          itemId: item.id,
         });
-        item &&
-          updatePatch({
-            ...draftLine,
-            requestedPackSize: item.defaultPackSize ?? 1,
-            itemId: item.id,
-          });
-      },
-      [purchaseOrder.id, updatePatch]
-    );
+    };
 
     const handleSave = async (): Promise<boolean> => {
       if (!isDirty) return true;

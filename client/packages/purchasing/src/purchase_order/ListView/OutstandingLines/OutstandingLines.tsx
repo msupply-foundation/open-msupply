@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   useNavigate,
   useTranslation,
@@ -47,8 +47,7 @@ export const OutstandingLinesListView = () => {
     query: { data, isError, isLoading },
   } = usePurchaseOrderLineList(listParams);
 
-  const columns = useMemo(
-    (): ColumnDef<PurchaseOrderLineFragment>[] => [
+  const columns: ColumnDef<PurchaseOrderLineFragment>[] = [
       {
         header: t('label.purchase-order-number'),
         accessorKey: 'purchaseOrderNumber',
@@ -116,9 +115,7 @@ export const OutstandingLinesListView = () => {
           return adjusted - shipped;
         },
       },
-    ],
-    []
-  );
+    ];
 
   const { table } = usePaginatedMaterialTable<PurchaseOrderLineFragment>({
     tableId: 'outstanding-purchase-order-lines-list',

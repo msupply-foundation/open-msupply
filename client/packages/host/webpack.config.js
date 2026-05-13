@@ -72,10 +72,57 @@ module.exports = env => {
     },
     module: {
       rules: [
+        // React Compiler pilot (dev-only, scoped to packages/purchasing).
+        // Webpack runs `use` right-to-left, so babel-loader executes FIRST
+        // on the raw .tsx source — react-compiler needs to see JSX before
+        // it's transformed. @babel/preset-typescript strips type annotations
+        // so babel can parse; JSX is left intact via the default behavior
+        // (we don't run preset-react). swc-loader then handles the actual
+        // TS→JS + JSX→_jsx transform on the compiler-instrumented output.
+        //
+        // Prod (ts-loader) is intentionally untouched for this pilot — the
+        // canonical ts-loader + react-compiler integration requires
+        // jsx:"preserve" in tsconfig (a global change) plus moving type-
+        // checking off ts-loader. We'll revisit prod once the dev pilot
+        // proves the compiler is worth that bigger restructure.
+        !isProduction && {
+          test: /\.[t|j]sx?$/,
+          include: [path.resolve(__dirname, '..', 'purchasing')],
+          use: [
+            {
+              loader: 'swc-loader',
+              options: {
+                jsc: {
+                  parser: {
+                    dynamicImport: true,
+                    syntax: 'typescript',
+                    tsx: true,
+                  },
+                  target: 'es2015',
+                },
+              },
+            },
+            {
+              loader: 'babel-loader',
+              options: {
+                babelrc: false,
+                configFile: false,
+                presets: [
+                  ['@babel/preset-typescript', { isTSX: true, allExtensions: true }],
+                ],
+                plugins: [
+                  ['babel-plugin-react-compiler', { target: '19' }],
+                ],
+              },
+            },
+          ],
+        },
         {
           test: /\.[t|j]sx?$/,
           loader: isProduction ? 'ts-loader' : 'swc-loader',
-          exclude: /node_modules/,
+          exclude: isProduction
+            ? /node_modules/
+            : [/node_modules/, path.resolve(__dirname, '..', 'purchasing')],
           options: isProduction
             ? {
                 /* ts-loader options */
