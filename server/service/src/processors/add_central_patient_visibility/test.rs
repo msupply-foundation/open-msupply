@@ -30,7 +30,7 @@ async fn requests_link_patient_to_oms_central_store() {
 
     let central_store = StoreRow {
         id: uuid(),
-        name_link_id: central_store_name.id.clone(),
+        name_id: central_store_name.id.clone(),
         site_id: central_site_id,
         ..Default::default()
     };
@@ -71,7 +71,7 @@ async fn requests_link_patient_to_oms_central_store() {
 
     let nsj_non_visible_patient_remote = NameStoreJoinRow {
         id: uuid(),
-        name_link_id: non_visible_patient.id.clone(),
+        name_id: non_visible_patient.id.clone(),
         store_id: mock_store_a().id,
         ..Default::default()
     };

@@ -42,6 +42,7 @@ pub struct UserFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub site_id: Option<EqualFilter<i32>>,
     pub hashed_password: Option<EqualFilter<String>>,
+    pub is_active: Option<EqualFilter<bool>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -177,6 +178,7 @@ fn create_filtered_query(filter: Option<UserFilter>) -> BoxedUserQuery {
             store_id,
             site_id,
             hashed_password,
+            is_active,
         } = f;
 
         apply_equal_filter!(query, id, user_account::id);
@@ -184,6 +186,7 @@ fn create_filtered_query(filter: Option<UserFilter>) -> BoxedUserQuery {
         apply_equal_filter!(query, store_id, user_store_join::store_id);
         apply_equal_filter!(query, site_id, store::site_id);
         apply_equal_filter!(query, hashed_password, user_account::hashed_password);
+        apply_equal_filter!(query, is_active, user_account::is_active);
     }
 
     query
@@ -216,6 +219,11 @@ impl UserFilter {
 
     pub fn hashed_password(mut self, filter: EqualFilter<String>) -> Self {
         self.hashed_password = Some(filter);
+        self
+    }
+
+    pub fn is_active(mut self, filter: EqualFilter<bool>) -> Self {
+        self.is_active = Some(filter);
         self
     }
 }

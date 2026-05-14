@@ -43,6 +43,7 @@ table! {
         sell_price_per_pack -> Double,
         total_before_tax -> Nullable<Double>,
         number_of_packs -> Double,
+        user_id -> Nullable<Text>,
         running_balance -> Double,
     }
 }
@@ -68,6 +69,7 @@ pub struct StockLineLedgerRow {
     pub sell_price_per_pack: f64,
     pub total_before_tax: Option<f64>,
     pub number_of_packs: f64,
+    pub user_id: Option<String>,
     /// The running balance for the stock line at the time of this ledger entry
     pub running_balance: f64,
 }

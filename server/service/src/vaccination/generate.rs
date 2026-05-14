@@ -58,6 +58,7 @@ pub fn generate_create_prescription(
         program_id: None,
         item_variant_id: None,
         donor_id: None,
+        manufacturer_id: None,
     };
 
     let finalise_prescription = UpdatePrescription {

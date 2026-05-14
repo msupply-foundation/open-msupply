@@ -1,13 +1,13 @@
 use crate::activity_log::{activity_log_entry_with_store, log_type_from_invoice_status};
 use crate::invoice_line::ShipmentTaxUpdate;
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
-use chrono::NaiveDate;
+use chrono::{DateTime, Utc};
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRowRepository;
-use repository::{Invoice, LocationMovementRowRepository};
 use repository::{
-    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, RepositoryError,
-    StockLineRowRepository,
+    ActivityLogType, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus,
+    RepositoryError, StockLineRowRepository,
 };
+use repository::{Invoice, LocationMovementRowRepository};
 
 mod generate;
 mod validate;
@@ -17,9 +17,11 @@ use generate::generate;
 use validate::validate;
 
 use self::generate::LineAndStockLine;
+use super::InboundShipmentType;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum UpdateInboundShipmentStatus {
+    Shipped,
     Delivered,
     Received,
     Verified,
@@ -51,8 +53,10 @@ pub struct UpdateInboundShipment {
     pub tax: Option<ShipmentTaxUpdate>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
+    pub charges_local_currency: Option<f64>,
+    pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDefaultDonor>,
-    pub delivered_datetime: Option<NaiveDate>,
+    pub received_datetime: Option<DateTime<Utc>>,
 }
 
 type OutError = UpdateInboundShipmentError;
@@ -61,20 +65,27 @@ pub fn update_inbound_shipment(
     ctx: &ServiceContext,
     patch: UpdateInboundShipment,
     store_id: Option<&str>,
+    r#type: InboundShipmentType,
 ) -> Result<Invoice, OutError> {
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            log::info!("updating inbound shipment with id: {}", patch.id);
-            let (invoice, other_party, status_changed) =
-                validate(connection, store_id.unwrap_or(&ctx.store_id), &patch)?;
+            let (invoice, other_party, status_changed) = validate(
+                connection,
+                store_id.unwrap_or(&ctx.store_id),
+                &patch,
+                r#type,
+            )?;
+            let old_received_datetime = invoice.received_datetime;
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
                 empty_lines_to_trim,
                 location_movements,
+                backdate_location_movements,
                 update_tax_for_lines,
                 update_currency_for_lines,
+                update_cost_price_for_lines,
                 vvm_status_logs_to_update,
                 update_donor,
             } = generate(ctx, invoice, other_party, patch.clone())?;
@@ -125,6 +136,12 @@ pub fn update_inbound_shipment(
                 }
             }
 
+            if let Some(movements) = backdate_location_movements {
+                for movement in movements {
+                    LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
+                }
+            }
+
             if let Some(update_tax) = update_tax_for_lines {
                 for line in update_tax {
                     invoice_line_repository.update_tax(
@@ -142,6 +159,16 @@ pub fn update_inbound_shipment(
                 }
             }
 
+            if let Some(update_cost_price) = update_cost_price_for_lines {
+                for line in update_cost_price {
+                    invoice_line_repository.update_cost_price(
+                        &line.id,
+                        line.cost_price_per_pack,
+                        line.sell_price_per_pack,
+                    )?;
+                }
+            }
+
             if status_changed {
                 activity_log_entry_with_store(
                     ctx,
@@ -153,7 +180,20 @@ pub fn update_inbound_shipment(
                 )?;
             }
 
-            get_invoice(ctx, None, &update_invoice.id)
+            if patch.received_datetime.is_some() {
+                activity_log_entry_with_store(
+                    ctx,
+                    ActivityLogType::InvoiceDateBackdated,
+                    Some(update_invoice.id.to_string()),
+                    old_received_datetime.map(|d| d.format("%Y-%m-%d").to_string()),
+                    update_invoice
+                        .received_datetime
+                        .map(|d| d.format("%Y-%m-%d").to_string()),
+                    store_id.map(|id| id.to_string()),
+                )?;
+            }
+
+            get_invoice(ctx, None, &update_invoice.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
@@ -168,21 +208,26 @@ pub fn update_inbound_shipment(
 pub enum UpdateInboundShipmentError {
     InvoiceDoesNotExist,
     NotAnInboundShipment,
+    WrongInboundShipmentType,
     NotThisStoreInvoice,
     CannotReverseInvoiceStatus,
     CannotEditFinalised,
     CannotChangeStatusOfInvoiceOnHold,
     CannotIssueForeignCurrencyForInternalSuppliers,
     CannotUpdateStatusAndDonorAtTheSameTime,
-    CanOnlyChangeDateOfExternalInboundShipments,
-    CannotSetDeliveredDateInFuture,
-    CannotPutDeliveredDateAfterReceivedDate,
+    BackdatingNotEnabled,
+    CanOnlyBackdateReceivedShipments,
+    CannotMoveReceivedDateForward,
+    ExceedsMaximumBackdatingDays,
     CannotReceiveWithPendingLines,
+    CannotSetShippedStatusOnManualInboundShipment,
+    CurrencyRateMustBePositive,
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
     OtherPartyNotASupplier,
     // Internal
+    PreferenceError(String),
     DatabaseError(RepositoryError),
     UpdatedInvoiceDoesNotExist,
 }
@@ -190,6 +235,12 @@ pub enum UpdateInboundShipmentError {
 impl From<RepositoryError> for UpdateInboundShipmentError {
     fn from(error: RepositoryError) -> Self {
         UpdateInboundShipmentError::DatabaseError(error)
+    }
+}
+
+impl From<crate::preference::PreferenceError> for UpdateInboundShipmentError {
+    fn from(error: crate::preference::PreferenceError) -> Self {
+        UpdateInboundShipmentError::PreferenceError(format!("{error:?}"))
     }
 }
 
@@ -208,6 +259,7 @@ where
 impl UpdateInboundShipmentStatus {
     pub fn full_status(&self) -> InvoiceStatus {
         match self {
+            UpdateInboundShipmentStatus::Shipped => InvoiceStatus::Shipped,
             UpdateInboundShipmentStatus::Delivered => InvoiceStatus::Delivered,
             UpdateInboundShipmentStatus::Received => InvoiceStatus::Received,
             UpdateInboundShipmentStatus::Verified => InvoiceStatus::Verified,
@@ -244,7 +296,8 @@ mod test {
 
     use crate::{
         invoice::inbound_shipment::{
-            UpdateDefaultDonor, UpdateInboundShipment, UpdateInboundShipmentStatus,
+            InboundShipmentType, UpdateDefaultDonor, UpdateInboundShipment,
+            UpdateInboundShipmentStatus,
         },
         invoice_line::{
             query::get_invoice_lines,
@@ -277,7 +330,7 @@ mod test {
         fn not_a_supplier_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "not_a_supplier_join".to_string(),
-                name_link_id: not_a_supplier().id,
+                name_id: not_a_supplier().id,
                 store_id: mock_store_a().id,
                 name_is_supplier: false,
                 ..Default::default()
@@ -297,7 +350,7 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager);
         let mut context = service_provider
-            .context(mock_store_a().id, "".to_string())
+            .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.invoice_service;
 
@@ -309,7 +362,8 @@ mod test {
                     id: "invalid".to_string(),
                     other_party_id: Some(mock_name_a().id.clone()),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::InvoiceDoesNotExist)
         );
@@ -321,7 +375,8 @@ mod test {
                     id: mock_outbound_shipment_e().id.clone(),
                     other_party_id: Some(mock_name_a().id.clone()),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::NotAnInboundShipment)
         );
@@ -333,7 +388,8 @@ mod test {
                     id: mock_inbound_shipment_b().id.clone(),
                     comment: Some("comment update".to_string()),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::CannotEditFinalised)
         );
@@ -345,7 +401,8 @@ mod test {
                     id: mock_inbound_shipment_e().id.clone(),
                     status: Some(UpdateInboundShipmentStatus::Received),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::CannotChangeStatusOfInvoiceOnHold)
         );
@@ -357,7 +414,8 @@ mod test {
                     id: mock_inbound_shipment_a().id.clone(),
                     other_party_id: Some("invalid".to_string()),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
         );
@@ -369,7 +427,8 @@ mod test {
                     id: mock_inbound_shipment_a().id.clone(),
                     other_party_id: Some(not_visible().id),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::OtherPartyNotVisible)
         );
@@ -381,7 +440,8 @@ mod test {
                     id: mock_inbound_shipment_a().id.clone(),
                     other_party_id: Some(not_a_supplier().id),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::OtherPartyNotASupplier)
         );
@@ -393,7 +453,8 @@ mod test {
                 UpdateInboundShipment {
                     id: mock_inbound_shipment_c().id.clone(),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -412,7 +473,7 @@ mod test {
         fn supplier_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "supplier_join".to_string(),
-                name_link_id: supplier().id,
+                name_id: supplier().id,
                 store_id: mock_store_a().id,
                 name_is_supplier: true,
                 ..Default::default()
@@ -422,7 +483,7 @@ mod test {
         fn invoice_test() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice_test".to_string(),
-                name_link_id: "supplier".to_string(),
+                name_id: "supplier".to_string(),
                 store_id: "store_a".to_string(),
                 ..Default::default()
             }
@@ -497,6 +558,7 @@ mod test {
                     other_party_id: Some(supplier().id),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -508,7 +570,7 @@ mod test {
         assert_eq!(
             invoice,
             InvoiceRow {
-                name_link_id: supplier().id,
+                name_id: supplier().id,
                 user_id: Some(mock_user_account_a().id),
                 ..invoice.clone()
             }
@@ -525,6 +587,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -569,6 +632,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -626,6 +690,7 @@ mod test {
                     status: Some(UpdateInboundShipmentStatus::Received),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -682,6 +747,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -742,6 +808,7 @@ mod test {
                     currency_rate: Some(1.0),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -798,6 +865,7 @@ mod test {
                     currency_rate: Some(1.0),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -850,6 +918,7 @@ mod test {
                     currency_rate: Some(1.0),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -896,6 +965,7 @@ mod test {
                 vvm_status_id: Some(mock_vvm_status_a().id),
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
 
@@ -921,6 +991,7 @@ mod test {
                     status: Some(UpdateInboundShipmentStatus::Received),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -975,6 +1046,7 @@ mod test {
                     other_party_id: Some(supplier().id),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -992,9 +1064,10 @@ mod test {
                 &context,
                 UpdateInboundShipment {
                     id: mock_inbound_shipment_a().id,
-                    other_party_id: Some(mock_name_linked_to_store_join().name_link_id.clone()),
+                    other_party_id: Some(mock_name_linked_to_store_join().name_id.clone()),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1017,9 +1090,10 @@ mod test {
                 &context,
                 UpdateInboundShipment {
                     id: mock_inbound_shipment_a().id,
-                    other_party_id: Some(mock_name_not_linked_to_store_join().name_link_id.clone()),
+                    other_party_id: Some(mock_name_not_linked_to_store_join().name_id.clone()),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1041,6 +1115,7 @@ mod test {
                     on_hold: Some(true),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1080,7 +1155,7 @@ mod test {
             }
         );
         assert_eq!(log.r#type, ActivityLogType::InvoiceStatusVerified);
-        assert_eq!(Some(invoice.name_link_id), stock_line.supplier_link_id);
+        assert_eq!(Some(invoice.name_id), stock_line.supplier_id);
     }
 
     #[actix_rt::test]
@@ -1115,6 +1190,7 @@ mod test {
                     r#type: StockInType::InboundShipment,
                     ..Default::default()
                 },
+                None,
             )
             .unwrap();
         invoice_line_service
@@ -1130,6 +1206,7 @@ mod test {
                     r#type: StockInType::InboundShipment,
                     ..Default::default()
                 },
+                None,
             )
             .unwrap();
 
@@ -1145,6 +1222,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1154,13 +1232,13 @@ mod test {
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
         assert_eq!(
-            invoice.invoice_row.default_donor_link_id,
+            invoice.invoice_row.default_donor_id,
             Some(mock_donor_b().id)
         );
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].id, "new_invoice_line_id_a".to_string());
-        assert_eq!(result[0].donor_link_id, Some(mock_donor_a().id));
-        assert_eq!(result[1].donor_link_id, None);
+        assert_eq!(result[0].donor_id, Some(mock_donor_a().id));
+        assert_eq!(result[1].donor_id, None);
 
         // UpdateExistingDonor: updates donor_id on invoice lines that already have a donor,
         // and leaves invoice lines without a donor_id unchanged
@@ -1175,6 +1253,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1184,11 +1263,11 @@ mod test {
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
         assert_eq!(
-            invoice.invoice_row.default_donor_link_id,
+            invoice.invoice_row.default_donor_id,
             Some(mock_donor_b().id)
         );
-        assert_eq!(result[0].donor_link_id, Some(mock_donor_b().id));
-        assert_eq!(result[1].donor_link_id, None);
+        assert_eq!(result[0].donor_id, Some(mock_donor_b().id));
+        assert_eq!(result[1].donor_id, None);
 
         // AssignIfNone: assigns the default_donor_id to invoice lines that don't have a donor_id
         invoice_service
@@ -1202,6 +1281,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1210,8 +1290,8 @@ mod test {
             .unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
-        assert_eq!(result[0].donor_link_id, Some(mock_donor_b().id));
-        assert_eq!(result[1].donor_link_id, Some(mock_donor_a().id));
+        assert_eq!(result[0].donor_id, Some(mock_donor_b().id));
+        assert_eq!(result[1].donor_id, Some(mock_donor_a().id));
 
         // AssignToAll: assigns the default_donor_id to all invoice lines
         invoice_service
@@ -1225,6 +1305,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1233,7 +1314,7 @@ mod test {
             .unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
 
-        assert!(result.iter().all(|line| line.donor_link_id.is_none()));
+        assert!(result.iter().all(|line| line.donor_id.is_none()));
     }
 
     #[actix_rt::test]
@@ -1241,7 +1322,7 @@ mod test {
         fn delivered_invoice() -> InvoiceRow {
             InvoiceRow {
                 id: "delivered_invoice_with_pending".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::InboundShipment,
                 status: InvoiceStatus::Delivered,
@@ -1300,7 +1381,8 @@ mod test {
                     id: delivered_invoice().id,
                     status: Some(UpdateInboundShipmentStatus::Received),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::CannotReceiveWithPendingLines)
         );
@@ -1313,7 +1395,8 @@ mod test {
                     id: delivered_invoice().id,
                     status: Some(UpdateInboundShipmentStatus::Verified),
                     ..Default::default()
-                }
+                },
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::CannotReceiveWithPendingLines)
         );
@@ -1324,7 +1407,7 @@ mod test {
         fn delivered_invoice() -> InvoiceRow {
             InvoiceRow {
                 id: "delivered_invoice_line_status".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::InboundShipment,
                 status: InvoiceStatus::Delivered,
@@ -1350,7 +1433,7 @@ mod test {
                 id: "status_test_rejected_line".to_string(),
                 invoice_id: delivered_invoice().id,
                 item_link_id: mock_item_a().id,
-                r#type: InvoiceLineType::StockIn,
+                r#type: InvoiceLineType::UnallocatedStock,
                 pack_size: 1.0,
                 number_of_packs: 5.0,
                 status: Some(InvoiceLineStatus::Rejected),
@@ -1397,6 +1480,7 @@ mod test {
                     status: Some(UpdateInboundShipmentStatus::Received),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1441,5 +1525,848 @@ mod test {
             rejected.stock_line_id, None,
             "Rejected line should NOT have a stock line"
         );
+    }
+
+    #[actix_rt::test]
+    async fn update_inbound_shipment_cost_price_with_po() {
+        use repository::{PurchaseOrderLineRow, PurchaseOrderRow, PurchaseOrderStatus};
+
+        fn supplier() -> NameRow {
+            NameRow {
+                id: "cost_price_supplier".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn supplier_join() -> NameStoreJoinRow {
+            NameStoreJoinRow {
+                id: "cost_price_supplier_join".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: true,
+                ..Default::default()
+            }
+        }
+
+        fn purchase_order() -> PurchaseOrderRow {
+            PurchaseOrderRow {
+                id: "cost_price_test_po".to_string(),
+                store_id: mock_store_a().id,
+                supplier_name_id: mock_name_a().id,
+                purchase_order_number: 1,
+                status: PurchaseOrderStatus::Sent,
+                created_datetime: chrono::NaiveDateTime::default(),
+                foreign_exchange_rate: 1.0,
+                ..Default::default()
+            }
+        }
+
+        fn po_line_a() -> PurchaseOrderLineRow {
+            PurchaseOrderLineRow {
+                id: "cost_price_test_po_line_a".to_string(),
+                store_id: mock_store_a().id,
+                purchase_order_id: purchase_order().id,
+                line_number: 1,
+                item_link_id: mock_item_a().id,
+                item_name: "Item A".to_string(),
+                price_per_pack_after_discount: 10.0,
+                requested_pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        fn po_line_b() -> PurchaseOrderLineRow {
+            PurchaseOrderLineRow {
+                id: "cost_price_test_po_line_b".to_string(),
+                store_id: mock_store_a().id,
+                purchase_order_id: purchase_order().id,
+                line_number: 2,
+                item_link_id: mock_item_a().id,
+                item_name: "Item A".to_string(),
+                price_per_pack_after_discount: 20.0,
+                requested_pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        fn invoice_with_po() -> InvoiceRow {
+            InvoiceRow {
+                id: "cost_price_test_invoice".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                // Set to None for mock insert (invoices inserted before POs).
+                // Updated to Some after setup_all_with_data.
+                purchase_order_id: None,
+                currency_rate: 1.0,
+                charges_local_currency: 0.0,
+                charges_foreign_currency: 0.0,
+                ..Default::default()
+            }
+        }
+
+        fn invoice_line_a() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "cost_price_test_line_a".to_string(),
+                invoice_id: invoice_with_po().id,
+                item_link_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 5.0,
+                cost_price_per_pack: 10.0,
+                sell_price_per_pack: 10.0, // matches cost, should update together
+                r#type: InvoiceLineType::StockIn,
+                // Set to None for mock insert (invoice lines inserted before PO lines).
+                // Updated to Some after setup_all_with_data.
+                purchase_order_line_id: None,
+                ..Default::default()
+            }
+        }
+
+        fn invoice_line_b() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "cost_price_test_line_b".to_string(),
+                invoice_id: invoice_with_po().id,
+                item_link_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 10.0,
+                cost_price_per_pack: 20.0,
+                sell_price_per_pack: 25.0, // different from cost, should NOT update
+                r#type: InvoiceLineType::StockIn,
+                // Set to None for mock insert. Updated after setup_all_with_data.
+                purchase_order_line_id: None,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_inbound_shipment_cost_price_with_po",
+            MockDataInserts::all(),
+            MockData {
+                names: vec![supplier()],
+                name_store_joins: vec![supplier_join()],
+                purchase_order: vec![purchase_order()],
+                purchase_order_line: vec![po_line_a(), po_line_b()],
+                invoices: vec![invoice_with_po()],
+                invoice_lines: vec![invoice_line_a(), invoice_line_b()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        // Link invoice and lines to PO now that all exist in DB
+        // (invoices/lines are inserted before POs/PO lines in mock setup)
+        let mut invoice_row = invoice_with_po();
+        invoice_row.purchase_order_id = Some(purchase_order().id);
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&invoice_row)
+            .unwrap();
+
+        let invoice_line_repo = InvoiceLineRowRepository::new(&connection);
+        let mut line_a = invoice_line_a();
+        line_a.purchase_order_line_id = Some(po_line_a().id);
+        invoice_line_repo.upsert_one(&line_a).unwrap();
+        let mut line_b = invoice_line_b();
+        line_b.purchase_order_line_id = Some(po_line_b().id);
+        invoice_line_repo.upsert_one(&line_b).unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        // ============================================================
+        // Test 1: Charges update recalculates cost prices for PO invoice
+        // ============================================================
+        // PO line A: price_per_pack_after_discount = 10, 5 packs -> 50 local
+        // PO line B: price_per_pack_after_discount = 20, 10 packs -> 200 local
+        // total_goods_local = 50 + 200 = 250
+        // charges_local = 25 -> cost_adjustment_fraction = 25 / 250 = 0.1
+        // Line A new_cost = 10 * 1.1 = 11
+        // Line B new_cost = 20 * 1.1 = 22
+        service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice_with_po().id,
+                    charges_local_currency: Some(25.0),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let line_a = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_a().id)
+            .unwrap()
+            .unwrap();
+        let line_b = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_b().id)
+            .unwrap()
+            .unwrap();
+
+        assert!(
+            (line_a.cost_price_per_pack - 11.0).abs() < 0.0001,
+            "Line A cost should be 11.0, got {}",
+            line_a.cost_price_per_pack
+        );
+        // Line A sell price matched old cost price (10.0), so should be updated
+        assert!(
+            (line_a.sell_price_per_pack - 11.0).abs() < 0.0001,
+            "Line A sell price should update to 11.0 (was equal to old cost), got {}",
+            line_a.sell_price_per_pack
+        );
+
+        assert!(
+            (line_b.cost_price_per_pack - 22.0).abs() < 0.0001,
+            "Line B cost should be 22.0, got {}",
+            line_b.cost_price_per_pack
+        );
+        // Line B sell price did NOT match old cost price (25.0 != 20.0), so should be unchanged
+        assert!(
+            (line_b.sell_price_per_pack - 25.0).abs() < 0.0001,
+            "Line B sell price should remain 25.0 (was different from old cost), got {}",
+            line_b.sell_price_per_pack
+        );
+
+        // ============================================================
+        // Test 2: Idempotency - running again with same charges produces same result
+        // ============================================================
+        service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice_with_po().id,
+                    charges_local_currency: Some(25.0),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let line_a_again = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_a().id)
+            .unwrap()
+            .unwrap();
+        let line_b_again = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_b().id)
+            .unwrap()
+            .unwrap();
+
+        assert!(
+            (line_a_again.cost_price_per_pack - 11.0).abs() < 0.0001,
+            "Line A cost should still be 11.0 after second run, got {}",
+            line_a_again.cost_price_per_pack
+        );
+        assert!(
+            (line_b_again.cost_price_per_pack - 22.0).abs() < 0.0001,
+            "Line B cost should still be 22.0 after second run, got {}",
+            line_b_again.cost_price_per_pack
+        );
+
+        // ============================================================
+        // Test 3: Currency rate conversion
+        // ============================================================
+        // Reset charges to 0, set currency rate to 2.0
+        // Rate convention: home currency units per 1 foreign unit
+        // PO prices are in foreign currency, so local = po_price * rate
+        // Line A: 10 * 2 = 20, Line B: 20 * 2 = 40
+        // No charges, so no adjustment
+        service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice_with_po().id,
+                    currency_rate: Some(2.0),
+                    charges_local_currency: Some(0.0),
+                    charges_foreign_currency: Some(0.0),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let line_a = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_a().id)
+            .unwrap()
+            .unwrap();
+        let line_b = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_b().id)
+            .unwrap()
+            .unwrap();
+
+        assert!(
+            (line_a.cost_price_per_pack - 20.0).abs() < 0.0001,
+            "Line A cost should be 20.0 with rate 2.0, got {}",
+            line_a.cost_price_per_pack
+        );
+        assert!(
+            (line_b.cost_price_per_pack - 40.0).abs() < 0.0001,
+            "Line B cost should be 40.0 with rate 2.0, got {}",
+            line_b.cost_price_per_pack
+        );
+
+        // ============================================================
+        // Test 4: Foreign currency charges with rate conversion
+        // ============================================================
+        // rate = 2.0, charges_foreign = 50 (= 50 * 2 = 100 local), charges_local = 0
+        // total_goods_local = 20*5 + 40*10 = 100 + 400 = 500
+        // cost_adjustment = 100 / 500 = 0.2
+        // Line A: 20 * 1.2 = 24, Line B: 40 * 1.2 = 48
+        service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice_with_po().id,
+                    currency_rate: Some(2.0),
+                    charges_foreign_currency: Some(50.0),
+                    charges_local_currency: Some(0.0),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let line_a = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_a().id)
+            .unwrap()
+            .unwrap();
+        let line_b = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_b().id)
+            .unwrap()
+            .unwrap();
+
+        assert!(
+            (line_a.cost_price_per_pack - 24.0).abs() < 0.0001,
+            "Line A cost should be 24.0 with foreign charges, got {}",
+            line_a.cost_price_per_pack
+        );
+        assert!(
+            (line_b.cost_price_per_pack - 48.0).abs() < 0.0001,
+            "Line B cost should be 48.0 with foreign charges, got {}",
+            line_b.cost_price_per_pack
+        );
+
+        // ============================================================
+        // Test 5: Combined local and foreign charges
+        // ============================================================
+        // rate = 2.0, charges_foreign = 50 (= 100 local), charges_local = 25
+        // total_charges = 100 + 25 = 125
+        // total_goods_local = 100 + 400 = 500
+        // cost_adjustment = 125 / 500 = 0.25
+        // Line A: 20 * 1.25 = 25, Line B: 40 * 1.25 = 50
+        service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice_with_po().id,
+                    currency_rate: Some(2.0),
+                    charges_foreign_currency: Some(50.0),
+                    charges_local_currency: Some(25.0),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipmentExternal,
+            )
+            .unwrap();
+
+        let line_a = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_a().id)
+            .unwrap()
+            .unwrap();
+        let line_b = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line_b().id)
+            .unwrap()
+            .unwrap();
+
+        assert!(
+            (line_a.cost_price_per_pack - 25.0).abs() < 0.0001,
+            "Line A cost should be 25.0, got {}",
+            line_a.cost_price_per_pack
+        );
+        assert!(
+            (line_b.cost_price_per_pack - 50.0).abs() < 0.0001,
+            "Line B cost should be 50.0, got {}",
+            line_b.cost_price_per_pack
+        );
+    }
+
+    #[actix_rt::test]
+    async fn update_inbound_shipment_cost_price_without_po() {
+        fn supplier() -> NameRow {
+            NameRow {
+                id: "no_po_cost_supplier".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn supplier_join() -> NameStoreJoinRow {
+            NameStoreJoinRow {
+                id: "no_po_cost_supplier_join".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: true,
+                ..Default::default()
+            }
+        }
+
+        fn invoice_without_po() -> InvoiceRow {
+            InvoiceRow {
+                id: "no_po_cost_test_invoice".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                purchase_order_id: None, // No PO
+                currency_rate: 1.0,
+                charges_local_currency: 0.0,
+                charges_foreign_currency: 0.0,
+                ..Default::default()
+            }
+        }
+
+        fn invoice_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "no_po_cost_test_line".to_string(),
+                invoice_id: invoice_without_po().id,
+                item_link_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 5.0,
+                cost_price_per_pack: 10.0,
+                sell_price_per_pack: 10.0,
+                r#type: InvoiceLineType::StockIn,
+                purchase_order_line_id: None,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_inbound_shipment_cost_price_without_po",
+            MockDataInserts::all(),
+            MockData {
+                names: vec![supplier()],
+                name_store_joins: vec![supplier_join()],
+                invoices: vec![invoice_without_po()],
+                invoice_lines: vec![invoice_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        // Updating charges on a non-PO invoice should NOT change cost prices
+        service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice_without_po().id,
+                    charges_local_currency: Some(25.0),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            )
+            .unwrap();
+
+        let line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line().id)
+            .unwrap()
+            .unwrap();
+
+        assert!(
+            (line.cost_price_per_pack - 10.0).abs() < 0.0001,
+            "Cost price should remain 10.0 for non-PO invoice, got {}",
+            line.cost_price_per_pack
+        );
+        assert!(
+            (line.sell_price_per_pack - 10.0).abs() < 0.0001,
+            "Sell price should remain 10.0 for non-PO invoice, got {}",
+            line.sell_price_per_pack
+        );
+
+        // Also test currency rate change on non-PO invoice
+        service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice_without_po().id,
+                    currency_rate: Some(2.0),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            )
+            .unwrap();
+
+        let line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&invoice_line().id)
+            .unwrap()
+            .unwrap();
+
+        assert!(
+            (line.cost_price_per_pack - 10.0).abs() < 0.0001,
+            "Cost price should remain 10.0 after currency rate change on non-PO invoice, got {}",
+            line.cost_price_per_pack
+        );
+    }
+
+    #[actix_rt::test]
+    async fn update_inbound_shipment_backdate_received_errors() {
+        use chrono::DateTime;
+
+        let now = Utc::now();
+        let two_days_ago = now - Duration::days(2);
+        fn new_inbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "new_inbound_backdate".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                ..Default::default()
+            }
+        }
+
+        fn received_inbound(received_datetime: DateTime<Utc>) -> InvoiceRow {
+            let naive = received_datetime.naive_utc();
+            InvoiceRow {
+                id: "received_inbound_backdate".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Received,
+                received_datetime: Some(naive),
+                delivered_datetime: Some(naive - Duration::days(1)),
+                ..Default::default()
+            }
+        }
+
+        let (_, _connection, connection_manager, _) = setup_all_with_data(
+            "update_inbound_backdate_received_errors",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![new_inbound(), received_inbound(now)],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = &service_provider.invoice_service;
+
+        // BackdatingNotEnabled: preference not yet enabled
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: received_inbound(now).id,
+                    received_datetime: Some(two_days_ago),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(UpdateInboundShipmentError::BackdatingNotEnabled)
+        );
+
+        // Enable backdating preference
+        use repository::{PreferenceRow, PreferenceRowRepository};
+        PreferenceRowRepository::new(&_connection)
+            .upsert_one(&PreferenceRow {
+                id: "backdating_global".to_string(),
+                key: "backdating".to_string(),
+                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#.to_string(),
+                store_id: None,
+            })
+            .unwrap();
+
+        // CanOnlyBackdateReceivedShipments: invoice is New
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: new_inbound().id,
+                    received_datetime: Some(two_days_ago),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(UpdateInboundShipmentError::CanOnlyBackdateReceivedShipments)
+        );
+
+        // CannotMoveReceivedDateForward: future date
+        let future_date = now + Duration::days(5);
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: received_inbound(now).id,
+                    received_datetime: Some(future_date),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(UpdateInboundShipmentError::CannotMoveReceivedDateForward)
+        );
+
+        // CannotMoveReceivedDateForward: same datetime
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: received_inbound(now).id,
+                    received_datetime: Some(now),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(UpdateInboundShipmentError::CannotMoveReceivedDateForward)
+        );
+
+        // Setting received before delivered should succeed; delivered is left untouched
+        // so the out-of-order dates signal the received date was backdated.
+        let before_delivered = now - Duration::days(2);
+        let original_delivered = received_inbound(now).delivered_datetime;
+        let result = service.update_inbound_shipment(
+            &context,
+            UpdateInboundShipment {
+                id: received_inbound(now).id,
+                received_datetime: Some(before_delivered),
+                ..Default::default()
+            },
+            InboundShipmentType::InboundShipment,
+        );
+        assert!(result.is_ok(), "Not Ok(_) {:#?}", result);
+
+        let updated = InvoiceRowRepository::new(&_connection)
+            .find_one_by_id(&received_inbound(now).id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(updated.delivered_datetime, original_delivered);
+
+        // ExceedsMaximumBackdatingDays: tighten the cap and try a date older than max_days
+        PreferenceRowRepository::new(&_connection)
+            .upsert_one(&PreferenceRow {
+                id: "backdating_global".to_string(),
+                key: "backdating".to_string(),
+                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":1}"#.to_string(),
+                store_id: None,
+            })
+            .unwrap();
+
+        let three_days_ago = now - Duration::days(3);
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: received_inbound(now).id,
+                    received_datetime: Some(three_days_ago),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(UpdateInboundShipmentError::ExceedsMaximumBackdatingDays)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn update_inbound_shipment_backdate_received_success() {
+        use chrono::DateTime;
+        use repository::{
+            location_movement::{LocationMovementFilter, LocationMovementRepository},
+            LocationMovementRow, LocationMovementRowRepository,
+        };
+
+        let now = Utc::now();
+        let three_days_ago = now - Duration::days(3);
+
+        fn received_inbound(received_datetime: DateTime<Utc>) -> InvoiceRow {
+            let naive = received_datetime.naive_utc();
+            InvoiceRow {
+                id: "received_inbound_backdate_success".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Received,
+                created_datetime: naive,
+                received_datetime: Some(naive),
+                delivered_datetime: Some(naive),
+                ..Default::default()
+            }
+        }
+
+        fn invoice_line(stock_line_id: &str) -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "backdate_success_line".to_string(),
+                invoice_id: "received_inbound_backdate_success".to_string(),
+                item_link_id: mock_item_a().id,
+                stock_line_id: Some(stock_line_id.to_string()),
+                r#type: InvoiceLineType::StockIn,
+                number_of_packs: 10.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        fn stock_line() -> repository::StockLineRow {
+            repository::StockLineRow {
+                id: "backdate_success_stock_line".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                available_number_of_packs: 10.0,
+                total_number_of_packs: 10.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        fn location_movement(
+            stock_line_id: &str,
+            enter_datetime: chrono::NaiveDateTime,
+        ) -> LocationMovementRow {
+            LocationMovementRow {
+                id: "backdate_success_movement".to_string(),
+                store_id: mock_store_a().id,
+                stock_line_id: stock_line_id.to_string(),
+                location_id: None,
+                enter_datetime: Some(enter_datetime),
+                exit_datetime: None,
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_inbound_backdate_received_success",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![received_inbound(now)],
+                invoice_lines: vec![invoice_line(&stock_line().id)],
+                stock_lines: vec![stock_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        // Insert location movements manually (not in MockData)
+        // Previous movement (has exit_datetime - stock moved out of this location)
+        LocationMovementRowRepository::new(&connection)
+            .upsert_one(&LocationMovementRow {
+                id: "backdate_success_movement_prev".to_string(),
+                store_id: mock_store_a().id,
+                stock_line_id: stock_line().id.clone(),
+                location_id: None,
+                enter_datetime: Some(now.naive_utc()),
+                exit_datetime: Some(now.naive_utc()),
+            })
+            .unwrap();
+        // Current movement (no exit_datetime - stock still here)
+        LocationMovementRowRepository::new(&connection)
+            .upsert_one(&location_movement(&stock_line().id, now.naive_utc()))
+            .unwrap();
+
+        // Enable backdating preference
+        use repository::{PreferenceRow, PreferenceRowRepository};
+        PreferenceRowRepository::new(&connection)
+            .upsert_one(&PreferenceRow {
+                id: "backdating_global".to_string(),
+                key: "backdating".to_string(),
+                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#.to_string(),
+                store_id: None,
+            })
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = &service_provider.invoice_service;
+
+        let result = service.update_inbound_shipment(
+            &context,
+            UpdateInboundShipment {
+                id: received_inbound(now).id,
+                received_datetime: Some(three_days_ago),
+                ..Default::default()
+            },
+            InboundShipmentType::InboundShipment,
+        );
+
+        assert!(result.is_ok(), "Not Ok(_) {:#?}", result);
+
+        // Check received_datetime was updated
+        let updated = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&received_inbound(now).id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            updated.received_datetime,
+            Some(three_days_ago.naive_utc())
+        );
+
+        // delivered_datetime and created_datetime are intentionally left untouched
+        // so the resulting out-of-order dates make backdating visible.
+        assert_eq!(updated.delivered_datetime, Some(now.naive_utc()));
+        assert_eq!(updated.created_datetime, now.naive_utc());
+
+        // Check location movement enter_datetime was updated
+        let movements = LocationMovementRepository::new(&connection)
+            .query(
+                Default::default(),
+                Some(
+                    LocationMovementFilter::new()
+                        .stock_line_id(EqualFilter::equal_to(stock_line().id)),
+                ),
+                None,
+            )
+            .unwrap();
+
+        assert_eq!(movements.len(), 2);
+        for movement in &movements {
+            assert_eq!(
+                movement.location_movement_row.enter_datetime,
+                Some(three_days_ago.naive_utc())
+            );
+        }
+        // Previous movement: exit_datetime should also be backdated
+        let prev = movements
+            .iter()
+            .find(|m| m.location_movement_row.id == "backdate_success_movement_prev")
+            .unwrap();
+        assert_eq!(
+            prev.location_movement_row.exit_datetime,
+            Some(three_days_ago.naive_utc())
+        );
+        // Current movement: exit_datetime should remain None
+        let current = movements
+            .iter()
+            .find(|m| m.location_movement_row.id == "backdate_success_movement")
+            .unwrap();
+        assert_eq!(current.location_movement_row.exit_datetime, None);
+
+        // Check activity log entry was created for backdating
+        use repository::activity_log::{ActivityLogFilter, ActivityLogRepository};
+        let logs = ActivityLogRepository::new(&connection)
+            .query(
+                Default::default(),
+                Some(
+                    ActivityLogFilter::new()
+                        .r#type(ActivityLogType::InvoiceDateBackdated.equal_to()),
+                ),
+                None,
+            )
+            .unwrap();
+
+        assert_eq!(logs.len(), 1);
+        assert_eq!(
+            logs[0].activity_log_row.record_id,
+            Some(received_inbound(now).id)
+        );
+        assert!(logs[0].activity_log_row.changed_from.is_some());
+        assert!(logs[0].activity_log_row.changed_to.is_some());
     }
 }

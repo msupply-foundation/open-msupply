@@ -10,7 +10,7 @@ import {
 import { IconButton, useConfirmationModal } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { MRT_DensityState, MRT_TableInstance } from 'material-react-table';
-import { RefreshIcon, SettingsIcon, EyeIcon } from '@common/icons';
+import { RefreshIcon, SaveIcon, SettingsIcon, EyeIcon } from '@common/icons';
 import {
   useColumnDensity,
   useColumnOrder,
@@ -18,6 +18,7 @@ import {
   useColumnSizing,
   useColumnVisibility,
 } from '../tableState';
+import { ManagedTableState } from '../tableState/utils';
 // MRT uses these icons - match the column menu items/table default icons until icon library + table icons are updated
 import PushPinIcon from '@mui/icons-material/PushPin';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -36,6 +37,8 @@ export const SettingsMenu = ({
   columnPinning,
   columnOrder,
   resetTableState,
+  onSaveAsGlobalDefault,
+  globalDefaults,
 }: {
   table: MRT_TableInstance<any>;
   tableId: string;
@@ -45,6 +48,8 @@ export const SettingsMenu = ({
   columnPinning: ReturnType<typeof useColumnPinning>;
   columnOrder: ReturnType<typeof useColumnOrder>;
   resetTableState: () => void;
+  onSaveAsGlobalDefault?: () => void;
+  globalDefaults?: ManagedTableState;
 }) => {
   const t = useTranslation();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -58,7 +63,7 @@ export const SettingsMenu = ({
     !!state?.columnVisibility ||
     !!state?.columnOrder;
 
-  const getConfirmation = useConfirmationModal({
+  const getResetConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.reset-table-defaults'),
     onConfirm: resetTableState,
@@ -110,87 +115,109 @@ export const SettingsMenu = ({
         >
           <Typography fontWeight="bold">Settings</Typography>
         </MenuItem>
-        <>
+        <MenuItem
+          disabled={!state?.columnOrder}
+          onClick={() => {
+            if (globalDefaults?.columnOrder)
+              table.setColumnOrder(globalDefaults.columnOrder);
+            else table.resetColumnOrder();
+            columnOrder.update(columnOrder.initial);
+            setAnchorEl(null);
+          }}
+        >
+          <ListItemIcon>
+            <SwapHorizIcon />
+          </ListItemIcon>
+          <ListItemText>{t('label.reset-column-order')}</ListItemText>
+        </MenuItem>
+        <MenuItem
+          disabled={!state?.columnVisibility}
+          onClick={() => {
+            if (globalDefaults?.columnVisibility)
+              table.setColumnVisibility(globalDefaults.columnVisibility);
+            else table.resetColumnVisibility();
+            columnVisibility.update(columnVisibility.initial);
+            setAnchorEl(null);
+          }}
+        >
+          <ListItemIcon>
+            <EyeIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>{t('label.show-all-columns')}</ListItemText>
+        </MenuItem>
+        <MenuItem
+          disabled={!state?.columnSizing}
+          onClick={() => {
+            if (globalDefaults?.columnSizing)
+              table.setColumnSizing(globalDefaults.columnSizing);
+            else table.resetColumnSizing();
+            columnSizing.update(columnSizing.initial);
+            setAnchorEl(null);
+          }}
+        >
+          <ListItemIcon>
+            <RestartAltIcon />
+          </ListItemIcon>
+          <ListItemText>{t('label.reset-column-sizes')}</ListItemText>
+        </MenuItem>
+        <MenuItem
+          disabled={!state?.columnPinning}
+          onClick={() => {
+            if (globalDefaults?.columnPinning)
+              table.setColumnPinning(globalDefaults.columnPinning);
+            else table.resetColumnPinning();
+            columnPinning.update(columnPinning.initial);
+            setAnchorEl(null);
+          }}
+        >
+          <ListItemIcon>
+            <PushPinIcon />
+          </ListItemIcon>
+          <ListItemText>{t('label.reset-pinned-columns')}</ListItemText>
+        </MenuItem>
+        <Divider />
+        <MenuItem onClick={() => density.update(nextDensity)}>
+          <ListItemIcon>{densityIcon()}</ListItemIcon>
+          <ListItemText> {t('label.toggle-density')}</ListItemText>
+        </MenuItem>
+        {onSaveAsGlobalDefault && [
+          <Divider key="save-default-divider" />,
           <MenuItem
-            disabled={!state?.columnOrder}
+            key="save-default"
             onClick={() => {
-              table.resetColumnOrder();
-              columnOrder.update(columnOrder.initial);
+              onSaveAsGlobalDefault();
               setAnchorEl(null);
             }}
           >
             <ListItemIcon>
-              <SwapHorizIcon />
+              <SaveIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>{t('label.reset-column-order')}</ListItemText>
-          </MenuItem>
-          <MenuItem
-            disabled={!state?.columnVisibility}
-            onClick={() => {
-              table.resetColumnVisibility();
-              columnVisibility.update(columnVisibility.initial);
-              setAnchorEl(null);
-            }}
-          >
-            <ListItemIcon>
-              <EyeIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>{t('label.show-all-columns')}</ListItemText>
-          </MenuItem>
-          <MenuItem
-            disabled={!state?.columnSizing}
-            onClick={() => {
-              table.resetColumnSizing();
-              columnSizing.update(columnSizing.initial);
-              setAnchorEl(null);
-            }}
-          >
-            <ListItemIcon>
-              <RestartAltIcon />
-            </ListItemIcon>
-            <ListItemText>{t('label.reset-column-sizes')}</ListItemText>
-          </MenuItem>
-          <MenuItem
-            disabled={!state?.columnPinning}
-            onClick={() => {
-              table.resetColumnPinning();
-              columnPinning.update(columnPinning.initial);
-              setAnchorEl(null);
-            }}
-          >
-            <ListItemIcon>
-              <PushPinIcon />
-            </ListItemIcon>
-            <ListItemText>{t('label.reset-pinned-columns')}</ListItemText>
-          </MenuItem>
-          <Divider />
-          <MenuItem onClick={() => density.update(nextDensity)}>
-            <ListItemIcon>{densityIcon()}</ListItemIcon>
-            <ListItemText> {t('label.toggle-density')}</ListItemText>
-          </MenuItem>
-          <Divider />
-          <MenuItem
-            disabled={!hasAnySavedState}
-            onClick={() => {
-              table.resetColumnOrder();
-              getConfirmation();
-              setAnchorEl(null);
-            }}
-          >
-            <ListItemIcon>
-              <RefreshIcon fontSize="small" color={'error'} />
-            </ListItemIcon>
-            <ListItemText
-              sx={{
-                '& .MuiTypography-root': {
-                  color: 'error.main',
-                },
-              }}
-            >
-              {t('label.reset-table-defaults')}
+            <ListItemText>
+              {t('label.save-table-config-as-global-default')}
             </ListItemText>
-          </MenuItem>
-        </>
+          </MenuItem>,
+        ]}
+        <Divider />
+        <MenuItem
+          disabled={!hasAnySavedState}
+          onClick={() => {
+            getResetConfirmation();
+            setAnchorEl(null);
+          }}
+        >
+          <ListItemIcon>
+            <RefreshIcon fontSize="small" color={'error'} />
+          </ListItemIcon>
+          <ListItemText
+            sx={{
+              '& .MuiTypography-root': {
+                color: 'error.main',
+              },
+            }}
+          >
+            {t('label.reset-table-defaults')}
+          </ListItemText>
+        </MenuItem>
       </Menu>
     </>
   );

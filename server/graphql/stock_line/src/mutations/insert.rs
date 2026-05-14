@@ -26,6 +26,7 @@ pub struct InsertInput {
     pub batch: Option<String>,
     pub location: Option<NullableUpdateInput<String>>,
     pub expiry_date: Option<NaiveDate>,
+    pub manufacture_date: Option<NaiveDate>,
     #[graphql(deprecation = "Since 2.8.0. Use reason_option_id")]
     pub inventory_adjustment_reason_id: Option<String>,
     pub reason_option_id: Option<String>,
@@ -37,6 +38,7 @@ pub struct InsertInput {
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
     pub volume_per_pack: Option<f64>,
+    pub manufacturer_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -96,6 +98,7 @@ impl InsertInput {
             cost_price_per_pack,
             sell_price_per_pack,
             expiry_date,
+            manufacture_date,
             batch,
             on_hold,
             barcode,
@@ -110,6 +113,7 @@ impl InsertInput {
             campaign_id,
             program_id,
             volume_per_pack,
+            manufacturer_id,
         } = self;
 
         AddNewStockLine {
@@ -120,6 +124,7 @@ impl InsertInput {
             cost_price_per_pack,
             sell_price_per_pack,
             expiry_date,
+            manufacture_date,
             batch,
             on_hold,
             barcode,
@@ -133,6 +138,7 @@ impl InsertInput {
             campaign_id,
             program_id,
             volume_per_pack,
+            manufacturer_id,
         }
     }
 }

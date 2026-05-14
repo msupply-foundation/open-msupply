@@ -17,11 +17,13 @@ import { getNameOptionRenderer } from '../NameOptionRenderer';
 export const ManufacturerSearchInput = ({
   onChange,
   width = 250,
+  fullWidth,
   value,
   disabled = false,
   textSx = {},
 }: NullableNameSearchInputProps & {
   textSx?: SxProps<Theme>;
+  fullWidth?: boolean;
 }) => {
   const t = useTranslation();
   const { data, isLoading } = useName.document.manufacturers();
@@ -41,7 +43,7 @@ export const ManufacturerSearchInput = ({
       }}
       options={data?.nodes ?? []}
       renderOption={NameOptionRenderer}
-      width={`${width}px`}
+      width={fullWidth ? '100%' : `${width}px`}
       popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       getOptionDisabled={option => option.isOnHold}

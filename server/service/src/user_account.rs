@@ -366,7 +366,7 @@ mod user_account_test {
             user_service.verify_password(&mock_user_empty_hashed_password().username, "password");
         assert!(matches!(
             result,
-            Err(VerifyPasswordError::EmptyHashedPassword)
+            Err(VerifyPasswordError::UsernameDoesNotExist)
         ));
     }
 }

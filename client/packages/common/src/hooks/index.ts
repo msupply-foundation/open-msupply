@@ -31,6 +31,7 @@ export * from './usePathnameIncludes';
 export * from './useUserPreferencePagination';
 export * from './useStringFilter';
 export * from './useIsExtraSmallScreen';
+export * from './useIsLandscapeTablet';
 export * from './useKeyboardShortcut';
 export * from './useSimplifiedTabletUI';
 export * from './useFeatureFlags';

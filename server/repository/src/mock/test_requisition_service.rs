@@ -70,7 +70,7 @@ pub fn mock_requisition_for_number_test() -> RequisitionRow {
     RequisitionRow {
         id: "mock_requisition_for_number_test".to_string(),
         requisition_number: 111111111,
-        name_link_id: "name_a".to_string(),
+        name_id: "name_a".to_string(),
         store_id: mock_store_a().id,
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,
@@ -88,7 +88,7 @@ pub fn mock_draft_request_requisition_for_update_test() -> RequisitionRow {
     RequisitionRow {
         id: "mock_draft_request_requisition_for_update_test".to_string(),
         requisition_number: 3,
-        name_link_id: "name_a".to_string(),
+        name_id: "name_a".to_string(),
         store_id: mock_store_a().id,
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,
@@ -106,7 +106,7 @@ pub fn mock_sent_request_requisition() -> RequisitionRow {
     RequisitionRow {
         id: "mock_sent_request_requisition".to_string(),
         requisition_number: 3,
-        name_link_id: "name_a".to_string(),
+        name_id: "name_a".to_string(),
         store_id: mock_store_a().id,
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Sent,
@@ -137,7 +137,7 @@ pub fn mock_finalised_response_requisition() -> RequisitionRow {
     RequisitionRow {
         id: "mock_finalised_response_requisition".to_string(),
         requisition_number: 3,
-        name_link_id: "name_a".to_string(),
+        name_id: "name_a".to_string(),
         store_id: mock_store_a().id,
         r#type: RequisitionType::Response,
         status: RequisitionStatus::Finalised,
@@ -168,7 +168,7 @@ pub fn mock_new_response_requisition_for_update_test() -> RequisitionRow {
     RequisitionRow {
         id: "mock_new_response_requisition_for_update_test".to_string(),
         requisition_number: 3,
-        name_link_id: "name_a".to_string(),
+        name_id: "name_a".to_string(),
         store_id: mock_store_a().id,
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,
@@ -186,7 +186,7 @@ pub fn mock_new_response_requisition() -> RequisitionRow {
     RequisitionRow {
         id: "mock_new_response_requisition".to_string(),
         requisition_number: 3,
-        name_link_id: "name_a".to_string(),
+        name_id: "name_a".to_string(),
         store_id: mock_store_a().id,
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,
@@ -218,7 +218,7 @@ pub fn mock_full_new_response_requisition_for_update_test() -> FullMockRequisiti
         requisition: RequisitionRow {
             id: "mock_full_new_response_requisition_for_update_test".to_string(),
             requisition_number: 10,
-            name_link_id: "name_a".to_string(),
+            name_id: "name_a".to_string(),
             store_id: mock_store_a().id,
             r#type: RequisitionType::Response,
             status: RequisitionStatus::New,
@@ -253,7 +253,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
         requisition: RequisitionRow {
             id: requisition_id.clone(),
             requisition_number: 3,
-            name_link_id: mock_name_a().id,
+            name_id: mock_name_a().id,
             store_id: mock_store_a().id,
             r#type: RequisitionType::Request,
             status: RequisitionStatus::Draft,
@@ -334,7 +334,7 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
         requisition: RequisitionRow {
             id: requisition_id.clone(),
             requisition_number: 3,
-            name_link_id: mock_name_a().id,
+            name_id: mock_name_a().id,
             store_id: mock_store_a().id,
             r#type: RequisitionType::Response,
             status: RequisitionStatus::New,
@@ -380,7 +380,7 @@ pub fn mock_new_response_requisition_test_invoice() -> FullMockInvoice {
     FullMockInvoice {
         invoice: InvoiceRow {
             id: invoice_id.clone(),
-            name_link_id: mock_name_a().id,
+            name_id: mock_name_a().id,
             store_id: "store_a".to_string(),
             invoice_number: 20,
             requisition_id: Some(mock_new_response_requisition_test().requisition.id),
@@ -439,7 +439,7 @@ pub fn mock_request_program_requisition() -> RequisitionRow {
     RequisitionRow {
         id: "mock_request_program_requisition".to_string(),
         requisition_number: 3,
-        name_link_id: "name_a".to_string(),
+        name_id: "name_a".to_string(),
         store_id: mock_store_a().id,
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,
@@ -461,7 +461,7 @@ pub fn mock_response_program_requisition() -> FullMockRequisition {
         requisition: RequisitionRow {
             id: requisition_id.clone(),
             requisition_number: 10,
-            name_link_id: "name_a".to_string(),
+            name_id: "name_a".to_string(),
             store_id: mock_store_a().id,
             r#type: RequisitionType::Response,
             status: RequisitionStatus::New,
@@ -498,7 +498,7 @@ pub fn mock_new_response_program_requisition() -> FullMockRequisition {
         requisition: RequisitionRow {
             id: requisition_id.clone(),
             requisition_number: 11,
-            name_link_id: "name_a".to_string(),
+            name_id: "name_a".to_string(),
             store_id: mock_store_a().id,
             r#type: RequisitionType::Response,
             status: RequisitionStatus::New,

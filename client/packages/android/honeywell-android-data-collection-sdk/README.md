@@ -1,8 +1,4 @@
-The honeywell SDK include examples and libs along with these docs.
-You can find a copy on our google drive here:
-https://drive.google.com/drive/u/0/folders/14WZcRXdYW1D6XxzroHyafyZk_rreIvlX
+# honeywell-android-data-collection-sdk
 
-Or download from honeywell's website here:
-https://hsmftp.honeywell.com/ - The honeywell download server.
-
-The honeywell libary is included as `HoneywellScanner.aar` file in the android app's `libs` directory.
+- **Docs site**: https://dev-docs.msupply.foundation/client/packages/android/honeywell-android-data-collection-sdk/
+- **Source**: [docs/content/client/packages/android/honeywell-android-data-collection-sdk/_index.md](../../../../docs/content/client/packages/android/honeywell-android-data-collection-sdk/_index.md)

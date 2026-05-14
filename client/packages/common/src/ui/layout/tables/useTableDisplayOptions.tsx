@@ -20,6 +20,7 @@ import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { EnvUtils } from '@common/utils';
 import { SettingsMenu } from './components/SettingsMenu';
+import { ManagedTableState } from './tableState/utils';
 import {
   useColumnDensity,
   useColumnOrder,
@@ -27,6 +28,7 @@ import {
   useColumnSizing,
   useColumnVisibility,
 } from './tableState';
+import { useTableKeyboardNavigation } from './useTableKeyboardNavigation';
 
 export const useTableDisplayOptions = <T extends MRT_RowData>({
   tableId,
@@ -40,10 +42,13 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   isGrouped,
   toggleGrouped,
   hasColumnFilters,
+  groupByLabel,
   getIsPlaceholderRow = () => false,
   getIsRestrictedRow = () => false,
   muiTableBodyRowProps = {},
   isMobile = false,
+  onSaveAsGlobalDefault,
+  globalDefaults,
 }: {
   tableId: string;
   density: ReturnType<typeof useColumnDensity>;
@@ -56,15 +61,20 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   isGrouped: boolean;
   hasColumnFilters: boolean;
   toggleGrouped?: () => void;
+  groupByLabel?: string;
   getIsPlaceholderRow?: (row: MRT_Row<T>) => boolean;
   getIsRestrictedRow?: (row: MRT_Row<T>) => boolean;
   isMobile?: boolean;
+  onSaveAsGlobalDefault?: () => void;
+  globalDefaults?: ManagedTableState;
 
   // This object is merged with the default row props in muiTableBodyRowProps
   // below. We can do the same for other muiTable props if needed in future.
   muiTableBodyRowProps?: MRT_TableOptions<T>['muiTableBodyRowProps'];
 }): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
+  const { focusedRowId, containerRef, rowVirtualizerRef, handleKeyDown } =
+    useTableKeyboardNavigation<T>(onRowClick);
 
   // shared between the table body and head to ensure consistent padding
   const padding = (
@@ -82,6 +92,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           : '0.8rem';
 
   return {
+    rowVirtualizerInstanceRef: rowVirtualizerRef,
     // Add description to column menu
     renderColumnActionsMenuItems: ({ internalColumnMenuItems, column }) => {
       const { description, header } = column.columnDef as ColumnDef<T>; // MRT doesn't support typing custom column props, but we know it will be here
@@ -119,7 +130,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           <IconButton
             icon={isGrouped ? <ExpandIcon /> : <CollapseIcon />}
             onClick={toggleGrouped}
-            label={t('label.group-by-item')}
+            label={groupByLabel ?? t('label.group-by-item')}
             sx={iconButtonProps}
           />
         )}
@@ -136,6 +147,8 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           columnPinning={columnPinning}
           columnOrder={columnOrder}
           resetTableState={resetTableState}
+          onSaveAsGlobalDefault={onSaveAsGlobalDefault}
+          globalDefaults={globalDefaults}
         />
       </>
     ),
@@ -157,13 +170,17 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         boxShadow: 'none',
       },
     },
-    muiTableContainerProps: {
+    muiTableContainerProps: ({ table }) => ({
+      ref: containerRef,
+      tabIndex: 0,
+      onKeyDown: (e: React.KeyboardEvent) => handleKeyDown(e, table),
       sx: {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
+        outline: 'none',
       },
-    },
+    }),
     muiTableProps: ({ table }) => ({
       // Need to apply this here so that relative sizes (ems, %) within table
       // are correct
@@ -180,11 +197,11 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
 
     muiTableHeadCellProps: ({ column, table }) => ({
       sx: {
+        height: '100%',
         fontWeight: 600,
         fontSize: table.getState().density !== 'spacious' ? '0.9em' : '1em',
         lineHeight: 1.2,
-        verticalAlign: 'bottom',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end',
         opacity: 1,
         padding: padding(table.getState().density, column.getSize()),
         // needed to get resize handle to show in the right place (idk why it's hard coded in MRT)
@@ -197,6 +214,9 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           : undefined,
         '& .MuiTableSortLabel-root': {
           display: column.getIsSorted() ? undefined : 'none',
+        },
+        '& .Mui-TableHeadCell-Content-Wrapper': {
+          whiteSpace: 'normal',
         },
         // replace the action button with a full-width invisible button to make
         // the whole header clickable to display the action menu
@@ -223,6 +243,21 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           fontSize:
             table.getState().density === 'compact' ? '0.90em' : '0.95em',
         },
+        '& .MuiDivider-root': {
+          height: '100%',
+          borderWidth: 1,
+        },
+        '& .Mui-TableHeadCell-ResizeHandle-Wrapper': {
+          height: '100%',
+        },
+        '& .Mui-TableHeadCell-Content': {
+          alignItems: 'flex-end',
+          height: '100%',
+          '& .MuiIconButton-root': {
+            height: '100%',
+            marginTop: 0.25,
+          },
+        },
       },
     }),
 
@@ -247,13 +282,19 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           ? muiTableBodyRowProps(params)
           : muiTableBodyRowProps;
 
+      const isFocused = row.id === focusedRowId;
+
       const defaultProps: MRT_TableOptions<T>['muiTableBodyRowProps'] = {
-        onClick: e => {
-          const isCtrlClick = e.getModifierState(
-            EnvUtils.os === 'Mac OS' ? 'Meta' : 'Control'
-          );
-          if (onRowClick) onRowClick(row.original, isCtrlClick);
-        },
+        ...(onRowClick
+          ? {
+              onClick: (e: React.MouseEvent<HTMLTableRowElement>) => {
+                const isCtrlClick = e.getModifierState(
+                  EnvUtils.os === 'Mac OS' ? 'Meta' : 'Control'
+                );
+                onRowClick(row.original, isCtrlClick);
+              },
+            }
+          : {}),
         sx: {
           backgroundColor: 'inherit',
           minHeight: table.getState().density === 'compact' ? '32px' : '40px',
@@ -268,6 +309,12 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           },
           fontStyle: row.getCanExpand() ? 'italic' : 'normal',
           cursor: onRowClick ? 'pointer' : 'default',
+          ...(isFocused
+            ? {
+                backgroundColor: theme =>
+                  alpha(theme.palette.gray.main, 0.2) + '!important',
+              }
+            : {}),
         },
       };
       return {
@@ -285,6 +332,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
         fontWeight: 400,
         opacity: 1,
+        alignItems: 'flex-end',
         color: getIsPlaceholderRow(row)
           ? 'secondary.light'
           : getIsRestrictedRow(row)

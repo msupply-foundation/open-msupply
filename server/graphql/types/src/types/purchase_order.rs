@@ -68,7 +68,7 @@ impl PurchaseOrderNode {
         let name = loader
             .load_one(NameByIdLoaderInput::new(
                 &self.row().store_id,
-                &self.row().supplier_name_link_id,
+                &self.row().supplier_name_id,
             ))
             .await?
             .map(NameNode::from_domain);
@@ -93,7 +93,7 @@ impl PurchaseOrderNode {
 
     pub async fn donor(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
-        if let Some(donor_id) = self.row().donor_link_id.clone() {
+        if let Some(donor_id) = self.row().donor_id.clone() {
             return Ok(loader
                 .load_one(NameByIdLoaderInput::new(&self.row().store_id, &donor_id))
                 .await?
@@ -107,8 +107,8 @@ impl PurchaseOrderNode {
     pub async fn currency_id(&self) -> &Option<String> {
         &self.row().currency_id
     }
-    pub async fn foreign_exchange_rate(&self) -> &Option<f64> {
-        &self.row().foreign_exchange_rate
+    pub async fn foreign_exchange_rate(&self) -> f64 {
+        self.row().foreign_exchange_rate
     }
     pub async fn shipping_method(&self) -> &Option<String> {
         &self.row().shipping_method

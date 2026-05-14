@@ -45,7 +45,7 @@ pub fn generate(
         expected_delivery_date,
         price_per_pack_before_discount: price_per_pack_before_discount.unwrap_or(0.0),
         price_per_pack_after_discount: price_per_pack_after_discount.unwrap_or(0.0),
-        manufacturer_link_id: manufacturer_id,
+        manufacturer_id: manufacturer_id,
         note,
         unit,
         supplier_item_code,

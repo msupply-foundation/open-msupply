@@ -8,6 +8,8 @@ import {
   MRT_VisibilityState,
 } from 'material-react-table';
 
+export type ViewMode = 'table' | 'card';
+
 export interface ManagedTableState {
   density?: MRT_DensityState;
   columnVisibility?: MRT_VisibilityState;
@@ -15,9 +17,12 @@ export interface ManagedTableState {
   columnOrder?: MRT_ColumnOrderState;
   columnSizing?: MRT_ColumnSizingState;
   grouping?: string[];
+  viewMode?: ViewMode;
 }
 
-export const getSavedState = (tableId: string): ManagedTableState | undefined => {
+export const getSavedState = (
+  tableId: string
+): ManagedTableState | undefined => {
   const savedString = localStorage.getItem(
     `@openmsupply-client/tables/${tableId}`
   );

@@ -29,6 +29,7 @@ export type UserStoreNodeFragment = {
     monthsItemsExpire: number;
     stocktakeFrequency: number;
     extraFieldsInRequisition: boolean;
+    keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
     manuallyLinkInternalOrderToInboundShipment: boolean;
     useConsumptionAndStockFromCustomersForInternalOrders: boolean;
     editPrescribedQuantityOnPrescription: boolean;
@@ -98,6 +99,7 @@ export type MeQuery = {
         monthsItemsExpire: number;
         stocktakeFrequency: number;
         extraFieldsInRequisition: boolean;
+        keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
         manuallyLinkInternalOrderToInboundShipment: boolean;
         useConsumptionAndStockFromCustomersForInternalOrders: boolean;
         editPrescribedQuantityOnPrescription: boolean;
@@ -132,6 +134,7 @@ export type MeQuery = {
           monthsItemsExpire: number;
           stocktakeFrequency: number;
           extraFieldsInRequisition: boolean;
+          keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
           manuallyLinkInternalOrderToInboundShipment: boolean;
           useConsumptionAndStockFromCustomersForInternalOrders: boolean;
           editPrescribedQuantityOnPrescription: boolean;
@@ -264,16 +267,41 @@ export type PreferencesQuery = {
     useSimplifiedMobileUi: boolean;
     expiredStockPreventIssue: boolean;
     expiredStockIssueThreshold: number;
+    displayPopulationBasedForecasting: boolean;
     warningForExcessRequest: boolean;
+    externalInboundShipmentLinesMustBeAuthorised: boolean;
     invoiceStatusOptions: Array<Types.InvoiceNodeStatus>;
     itemMarginOverridesSupplierMargin: boolean;
     showIndicativePriceInRequisitions: boolean;
     isGaps: boolean;
+    globalTableConfigs: any;
     warnWhenMissingRecentStocktake: {
       __typename: 'WarnWhenMissingRecentStocktakeDataNode';
       enabled: boolean;
       maxAge: number;
       minItems: number;
+    };
+    backdating: {
+      __typename: 'BackdatingNode';
+      shipmentsEnabled: boolean;
+      inventoryAdjustmentsEnabled: boolean;
+      maxDays: number;
+    };
+  };
+};
+
+export type SaveGlobalTableConfigsMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpsertPreferencesInput;
+}>;
+
+export type SaveGlobalTableConfigsMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    preferences: {
+      __typename: 'PreferenceMutations';
+      upsertPreferences: { __typename: 'OkResponse'; ok: boolean };
     };
   };
 };
@@ -300,6 +328,7 @@ export const UserStoreNodeFragmentDoc = gql`
       monthsItemsExpire
       stocktakeFrequency
       extraFieldsInRequisition
+      keepRequisitionLinesWithZeroRequestedQuantityOnFinalised
       manuallyLinkInternalOrderToInboundShipment
       useConsumptionAndStockFromCustomersForInternalOrders
       editPrescribedQuantityOnPrescription
@@ -506,16 +535,38 @@ export const PreferencesDocument = gql`
       useSimplifiedMobileUi
       expiredStockPreventIssue
       expiredStockIssueThreshold
+      displayPopulationBasedForecasting
       warnWhenMissingRecentStocktake {
         enabled
         maxAge
         minItems
       }
       warningForExcessRequest
+      externalInboundShipmentLinesMustBeAuthorised
       invoiceStatusOptions
       itemMarginOverridesSupplierMargin
       showIndicativePriceInRequisitions
       isGaps
+      globalTableConfigs
+      backdating {
+        shipmentsEnabled
+        inventoryAdjustmentsEnabled
+        maxDays
+      }
+    }
+  }
+`;
+export const SaveGlobalTableConfigsDocument = gql`
+  mutation saveGlobalTableConfigs(
+    $storeId: String!
+    $input: UpsertPreferencesInput!
+  ) {
+    centralServer {
+      preferences {
+        upsertPreferences(storeId: $storeId, input: $input) {
+          ok
+        }
+      }
     }
   }
 `;
@@ -680,6 +731,24 @@ export function getSdk(
           }),
         'preferences',
         'query',
+        variables
+      );
+    },
+    saveGlobalTableConfigs(
+      variables: SaveGlobalTableConfigsMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<SaveGlobalTableConfigsMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<SaveGlobalTableConfigsMutation>({
+            document: SaveGlobalTableConfigsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'saveGlobalTableConfigs',
+        'mutation',
         variables
       );
     },

@@ -650,13 +650,13 @@ mod test {
         // Join same item as first masterlist -> check that one item will not be added to the stocktake twice
         let master_list_name_join = MasterListNameJoinRow {
             id: "A_program_b_Join".to_string(),
-            name_link_id: mock_program_master_list_test().id.clone(),
+            name_id: mock_program_master_list_test().id.clone(),
             master_list_id: mock_master_list_program_b().master_list.id.clone(),
         };
         // Join master list with two new items -> check the stocktake contains items from multiple master lists
         let filter_master_list_name_join = MasterListNameJoinRow {
             id: "Filter_program_b_Join".to_string(),
-            name_link_id: mock_program_master_list_test().id.clone(),
+            name_id: mock_program_master_list_test().id.clone(),
             master_list_id: mock_master_list_master_list_line_filter_test()
                 .master_list
                 .id

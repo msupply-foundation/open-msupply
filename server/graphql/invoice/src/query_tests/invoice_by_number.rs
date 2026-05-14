@@ -6,15 +6,14 @@ mod test {
     use graphql_core::test_helpers::setup_graphql_test;
     use repository::mock::MockDataInserts;
     use repository::mock::{mock_name_store_a, mock_outbound_shipment_a, mock_store_a};
-    use repository::InvoiceType;
-    use repository::{Invoice, RepositoryError, StorageConnectionManager};
+    use repository::{Invoice, InvoiceFilter, RepositoryError, StorageConnectionManager};
     use serde_json::json;
     use service::invoice::InvoiceServiceTrait;
     use service::service_provider::{ServiceContext, ServiceProvider};
 
     use crate::InvoiceQueries;
     type GetInvoiceByNumber =
-        dyn Fn(u32, InvoiceType) -> Result<Option<Invoice>, RepositoryError> + Sync + Send;
+        dyn Fn(u32) -> Result<Option<Invoice>, RepositoryError> + Sync + Send;
 
     pub struct TestService(pub Box<GetInvoiceByNumber>);
 
@@ -24,9 +23,9 @@ mod test {
             _: &ServiceContext,
             _: &str,
             invoice_number: u32,
-            r#type: InvoiceType,
+            _filter: InvoiceFilter,
         ) -> Result<Option<Invoice>, RepositoryError> {
-            self.0(invoice_number, r#type)
+            self.0(invoice_number)
         }
     }
 
@@ -65,7 +64,7 @@ mod test {
         "#;
 
         // Not found
-        let test_service = TestService(Box::new(|_, _| Ok(None)));
+        let test_service = TestService(Box::new(|_| Ok(None)));
 
         let expected = json!({
             "invoiceByNumber": {
@@ -85,7 +84,7 @@ mod test {
         );
 
         // Found
-        let test_service = TestService(Box::new(|_, _| {
+        let test_service = TestService(Box::new(|_| {
             Ok(Some(Invoice {
                 invoice_row: mock_outbound_shipment_a(),
                 name_row: mock_name_store_a(),

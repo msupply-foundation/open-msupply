@@ -130,13 +130,11 @@ impl SyncTranslation for NameMergeTranslation {
                             && nsj_delete.name_store_join.name_is_supplier)
                     {
                         operations.push(IntegrationOperation::upsert(NameStoreJoinRow {
-                            id: nsj_keep.name_store_join.id.clone(),
-                            name_link_id: nsj_keep.name_store_join.name_link_id.clone(),
-                            store_id: nsj_keep.name_store_join.store_id.clone(),
                             name_is_customer: nsj_keep.name_store_join.name_is_customer
                                 || nsj_delete.name_store_join.name_is_customer,
                             name_is_supplier: nsj_keep.name_store_join.name_is_supplier
                                 || nsj_delete.name_store_join.name_is_supplier,
+                            ..nsj_keep.name_store_join.clone()
                         }));
                     }
 
@@ -216,7 +214,7 @@ mod tests {
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0), true)
             .unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
@@ -234,7 +232,7 @@ mod tests {
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0), true)
             .unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
@@ -316,7 +314,7 @@ mod tests {
             .upsert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0), true)
             .unwrap();
 
         assert_eq!(count_name_store_join("name_a"), 0);

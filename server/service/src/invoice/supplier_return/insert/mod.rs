@@ -26,6 +26,7 @@ pub struct InsertSupplierReturn {
     pub id: String,
     pub other_party_id: String,
     pub inbound_shipment_id: Option<String>,
+    pub their_reference: Option<String>,
     pub supplier_return_lines: Vec<SupplierReturnLineInput>,
 }
 
@@ -119,7 +120,7 @@ pub fn insert_supplier_return(
                 None,
             )?;
 
-            get_invoice(ctx, None, &supplier_return.id)
+            get_invoice(ctx, None, &supplier_return.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
@@ -190,7 +191,7 @@ mod test {
         fn not_a_supplier_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "not_a_supplier_join".to_string(),
-                name_link_id: not_a_supplier().id,
+                name_id: not_a_supplier().id,
                 store_id: mock_store_a().id,
                 name_is_supplier: false,
                 ..Default::default()
@@ -377,7 +378,7 @@ mod test {
         fn supplier_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "supplier_join".to_string(),
-                name_link_id: supplier().id,
+                name_id: supplier().id,
                 store_id: mock_store_a().id,
                 name_is_supplier: true,
                 ..Default::default()
@@ -447,7 +448,7 @@ mod test {
         assert_eq!(invoice.id, "new_supplier_return_id");
         assert_eq!(invoice, {
             let mut u = invoice.clone();
-            u.name_link_id = supplier().id;
+            u.name_id = supplier().id;
             u.user_id = Some(mock_user_account_a().id);
             u.original_shipment_id = Some(mock_inbound_shipment_a().id);
             u.status = InvoiceStatus::Shipped;
@@ -491,7 +492,7 @@ mod test {
         assert_eq!(invoice.id, "new_supplier_return_id_2");
         assert_eq!(invoice, {
             let mut u = invoice.clone();
-            u.name_link_id = supplier().id;
+            u.name_id = supplier().id;
             u.user_id = Some(mock_user_account_a().id);
             u.status = InvoiceStatus::New;
             u

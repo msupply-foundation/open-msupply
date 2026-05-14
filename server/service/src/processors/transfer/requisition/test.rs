@@ -34,7 +34,7 @@ async fn requisition_transfer() {
 
     let request_store = StoreRow {
         id: uuid(),
-        name_link_id: request_store_name.id.clone(),
+        name_id: request_store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -47,7 +47,7 @@ async fn requisition_transfer() {
 
     let response_store = StoreRow {
         id: uuid(),
-        name_link_id: response_store_name.id.clone(),
+        name_id: response_store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -177,7 +177,7 @@ async fn stock_on_deleted_requisitions() {
 
     let store = StoreRow {
         id: uuid(),
-        name_link_id: store_name.id.clone(),
+        name_id: store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -185,7 +185,7 @@ async fn stock_on_deleted_requisitions() {
     let requisition = RequisitionRow {
         id: uuid(),
         requisition_number: 3,
-        name_link_id: store.name_link_id.clone(),
+        name_id: store.name_id.clone(),
         store_id: store.id.clone(),
         r#type: RequisitionType::Request,
         ..RequisitionRow::default()
@@ -251,7 +251,7 @@ impl RequisitionTransferTester {
         let request_requisition = RequisitionRow {
             id: format!("{}_request_requisition_{}", thread_number, uuid()),
             requisition_number: 3,
-            name_link_id: response_store.name_link_id.clone(),
+            name_id: response_store.name_id.clone(),
             store_id: request_store.id.clone(),
             r#type: RequisitionType::Request,
             status: RequisitionStatus::Draft,
@@ -372,8 +372,8 @@ impl RequisitionTransferTester {
         assert_eq!(response_requisition.status, RequisitionStatus::New);
         assert_eq!(response_requisition.store_id, self.response_store.id);
         assert_eq!(
-            response_requisition.name_link_id,
-            self.request_store.name_link_id
+            response_requisition.name_id,
+            self.request_store.name_id
         );
         assert_eq!(
             response_requisition.their_reference,
