@@ -157,6 +157,17 @@ impl MigrationFragment for Migrate {
                   AND changelog.record_id = d.id
                   AND d.owner_name_link_id IS NOT NULL
                   AND changelog.patient_id IS NULL;
+
+                -- For sync_message: copy `to_store_id` to changelog.store_id so the
+                -- new hybrid Remote+Central routing places addressed messages with
+                -- the owning site only, and unaddressed messages fan out to all sites.
+                UPDATE changelog
+                SET store_id = sm.to_store_id
+                FROM sync_message sm
+                WHERE changelog.table_name = 'sync_message'
+                  AND changelog.record_id = sm.id
+                  AND sm.to_store_id IS NOT NULL
+                  AND changelog.store_id IS NULL;
             "#
         )?;
 

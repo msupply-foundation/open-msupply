@@ -38,6 +38,7 @@ pub enum KeyType {
     AssignRequisitionNumberProcessorCursor,
     AddCentralPatientVisibilityProcessorCursor,
     RequisitionAutoFinaliseProcessorCursor,
+    MergeSyncMessageProcessorCursor,
     // Nested key value store to store dynamic cursor values as JSON text
     DynamicCursor,
 

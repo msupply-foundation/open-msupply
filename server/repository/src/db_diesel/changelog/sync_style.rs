@@ -51,8 +51,21 @@ impl ChangelogTableName {
             ActivityLog | Clinician | ClinicianStoreJoin | IndicatorValue | InsuranceProvider
             | Location | LocationMovement | NameInsuranceJoin | NameStoreJoin | PurchaseOrder
             | PurchaseOrderLine | Sensor | StockLine | Stocktake | StocktakeLine
-            | TemperatureBreach | TemperatureLog | SyncMessage | VVMStatusLog => (
+            | TemperatureBreach | TemperatureLog | VVMStatusLog => (
                 vec![Remote],
+                SyncVersions {
+                    is_v6: false,
+                    is_v5: true,
+                },
+            ),
+
+            // ----------------------------------------------------------
+            // Legacy — Remote + Central (hybrid, not v6)
+            // Routes to a single owning site when the row carries a store_id,
+            // otherwise fans out to every site.
+            // ----------------------------------------------------------
+            SyncMessage => (
+                vec![Remote, Central],
                 SyncVersions {
                     is_v6: false,
                     is_v5: true,

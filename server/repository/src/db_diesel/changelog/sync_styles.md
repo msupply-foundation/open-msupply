@@ -57,9 +57,15 @@ The classification below mirrors what's in the code. When a table appears in two
 
 ### Legacy, Remote
 
-`ActivityLog`, `Clinician`, `ClinicianStoreJoin`, `IndicatorValue`, `InsuranceProvider`, `Location`, `LocationMovement`, `NameInsuranceJoin`, `NameStoreJoin`, `PurchaseOrder`, `PurchaseOrderLine`, `Sensor`, `StockLine`, `Stocktake`, `StocktakeLine`, `SyncMessage`, `TemperatureBreach`, `TemperatureLog`, `VVMStatusLog`
+`ActivityLog`, `Clinician`, `ClinicianStoreJoin`, `IndicatorValue`, `InsuranceProvider`, `Location`, `LocationMovement`, `NameInsuranceJoin`, `NameStoreJoin`, `PurchaseOrder`, `PurchaseOrderLine`, `Sensor`, `StockLine`, `Stocktake`, `StocktakeLine`, `TemperatureBreach`, `TemperatureLog`, `VVMStatusLog`
 
 Site-owned data on the legacy transport. A remote pushes these up to legacy 4D central, which fans them back out via its own routing.
+
+### Legacy, Remote + Central (hybrid)
+
+`SyncMessage`
+
+Site-owned when the row carries a destination store, central-fanout when it doesn't. The changelog `store_id` is populated from the message's `to_store_id`, so the same routing rules as `PluginData` / `Preference` apply: with a destination store, only the owning site receives the message; without one, every site does. Used to ship cross-site instructions like name/item/clinician merges from OMS central down to v7 remotes (see translation notes in §7).
 
 ### Legacy, Remote + Transfer
 
@@ -171,6 +177,7 @@ When a record is mutated, a changelog row is generated. The patterns differ by w
 |---|---|---|
 | Store + transfer-store | `Invoice`, `Requisition`, `RnrForm`, `NameStoreJoin` | The row's own store, plus the store backing a referenced name (resolved from the name's home store). Used for both Remote and Transfer routing. `Invoice` additionally tags prescriptions with the patient id so they also route via Patient. |
 | Store only | `StockLine`, `Stocktake`, `Location`, `PurchaseOrder`, `Preference`, `Sensor`, `TemperatureLog`, `VVMStatusLog`, `LocationMovement`, `ActivityLog`, `ContactForm`, `Asset`, `PluginData`, `VaccineCourseStoreConfig` | Just the row's own store. |
+| Destination store | `SyncMessage` | The message's `to_store_id` (when set) is copied to the changelog's `store_id`, which makes the hybrid Remote + Central routing work — Remote for messages addressed to a specific store, Central for fanout messages. |
 | Line inherits parent | `InvoiceLine` ← `Invoice`, `StocktakeLine` ← `Stocktake`, `RequisitionLine` ← `Requisition`, `RnrFormLine` ← `RnrForm` | The line's changelog is built from the parent's, then `table_name` and `record_id` are overridden to point at the line. Guarantees parent and line stay aligned for store / transfer-store / patient / source-site, so they route together. |
 | Line emits parent **and** child | `PurchaseOrderLine` → `PurchaseOrder` (upsert) + `PurchaseOrderLine` | Mutating a line also emits a changelog for the parent, so the parent re-syncs and is always at least as fresh as its children on the receiver. The parent entry is always an upsert, even when the line is a delete. |
 | Patient + store | `Encounter`, `Vaccination` | Carries both, so the Remote clause delivers to the owning site and the Patient clause fans out to every other site that knows the patient. |
@@ -230,7 +237,8 @@ Notable special cases:
 | Vaccine-course family (`VaccineCourse`, `VaccineCourseDose`, `VaccineCourseItem`) | Central-style on OMS, but a parallel set of legacy translators re-publishes them to legacy 4D when running on OMS central, so v5-only stores still receive them. |
 | `Encounter` | OMS-native, Remote + Patient. It has no main OMS translator on its own — the only translator is a companion legacy translator that re-publishes it to legacy 4D when running on OMS central, so v5-only stores still receive it. |
 | `Vaccination` | OMS-native, Remote + Patient. Its main translator opts in to OMS push/pull. A companion legacy translator re-publishes it to legacy 4D when running on OMS central, so v5-only stores still receive it. |
-| `Document` | Legacy-classified, Patient style — the changelog row carries no store, so routing is purely by Patient. |
+| `Document` | OMS-native, classified as Patient only — the changelog row carries no store, so routing is purely by Patient. |
+| `Name`, `Item`, `Clinician` merges | Legacy-format `Merge` records continue to flow up to legacy 4D and down to v5 remote sites as before. The merge translator rewrites the local `name_link` / `item_link` / `clinician_link` tables in-line, exactly as it always has — so central stays consistent regardless of any post-sync processing. **Additionally**, when the translator runs on OMS central it also emits a `SyncMessage` of type `NameMerge` / `ItemMerge` / `ClinicianMerge` (with no destination store, so it fans out as Central) so v7 remotes — which never receive the legacy `Merge` record — can replay the same link rewrite via a post-sync processor. The processor is a no-op on central, since the translator already did the work. |
 | `MasterList` | Legacy/Central, but the translator declares no changelog mapping, so nothing pushes on any transport — it only ever flows down from legacy 4D. |
 
 For v7 there is **no** per-table translation step — the database row is serialised directly and deserialised on the other side. As a consequence, v7 push for a given table works whether or not its translator has a v6 opt-in.

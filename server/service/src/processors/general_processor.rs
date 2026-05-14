@@ -22,7 +22,8 @@ use crate::{
 use super::{
     add_central_patient_visibility::AddPatientVisibilityForCentral,
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
-    load_plugin::LoadPlugin, plugin_processor::PluginProcessor,
+    load_plugin::LoadPlugin, merge_sync_message::MergeSyncMessageProcessor,
+    plugin_processor::PluginProcessor,
     requisition_auto_finalise::RequisitionAutoFinaliseProcessor,
 };
 
@@ -54,6 +55,7 @@ pub enum ProcessorType {
     AddPatientVisibilityForCentral,
     Plugins,
     RequisitionAutoFinalise,
+    MergeSyncMessage,
 }
 
 impl ProcessorType {
@@ -70,6 +72,7 @@ impl ProcessorType {
             ProcessorType::RequisitionAutoFinalise => {
                 vec![Box::new(RequisitionAutoFinaliseProcessor)]
             }
+            ProcessorType::MergeSyncMessage => vec![Box::new(MergeSyncMessageProcessor)],
         }
     }
 
