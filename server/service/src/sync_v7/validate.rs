@@ -42,7 +42,16 @@ pub(crate) fn validate_on_remote(
                 (None, None) => return Ok(()),
                 _ => last_err = ValidationError::UnexpectedSyncStyleForV7,
             },
+            // Central stores may also edit these, so accept post-initialisation pushes.
             Remote => match &sync_buffer_row.store_id {
+                None => last_err = ValidationError::NoStoreId,
+                Some(id) if !active_store_ids.iter().any(|s| s == id) => {
+                    last_err = ValidationError::InactiveStore
+                }
+                Some(_) => return Ok(()),
+            },
+            // Post-initialisation, any row for our own store is a stale echo — reject.
+            RemoteOwned => match &sync_buffer_row.store_id {
                 None => last_err = ValidationError::NoStoreId,
                 Some(id) if !active_store_ids.iter().any(|s| s == id) => {
                     last_err = ValidationError::InactiveStore
@@ -84,7 +93,7 @@ pub(crate) fn validate_on_central(
             Central => last_err = ValidationError::CentralOnlyEditableByCentral,
             // Accept only if the row's store belongs to the source site —
             // this also rejects rows referencing central's own stores.
-            Remote | Transfer => match &sync_buffer_row.store_id {
+            Remote | RemoteOwned | Transfer => match &sync_buffer_row.store_id {
                 None => last_err = ValidationError::NoStoreId,
                 Some(id) if store_active_on_source(id) => return Ok(()),
                 Some(_) => last_err = ValidationError::StoreNotActiveOnSourceSite,
@@ -168,7 +177,7 @@ mod tests {
             Err(ValidationError::UnexpectedSyncStyleForV7)
         );
 
-        // Sync style: Remote — store must be active; post-init, own echoes are rejected.
+        // Sync style: RemoteOwned — store must be active; post-initialisation, own echoes are rejected.
         assert_eq!(
             validate_on_remote(
                 &SyncBufferRow {
@@ -220,6 +229,34 @@ mod tests {
                 false,
             ),
             Err(ValidationError::SiteAlreadyInitialised)
+        );
+
+        // Sync style: Remote — post-initialisation pushes for our own store are accepted.
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    store_id: Some("store_a".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &NameStoreJoin,
+                &site(),
+                false,
+            ),
+            Ok(())
+        );
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    store_id: Some("inactive_store".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &NameStoreJoin,
+                &site(),
+                false,
+            ),
+            Err(ValidationError::InactiveStore)
         );
 
         // Sync style: Transfer — transfer_store must be active.

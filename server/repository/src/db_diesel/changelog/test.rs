@@ -769,10 +769,8 @@ async fn test_changelog_outgoing_sync_records() {
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
 
-    // A requisition at store_a addressed to the name backing store_b should
-    // reach site 1 via store_id (Remote) and site 2 via transfer_store_id (Transfer).
-    // `RequisitionRow::generate_changelog` reads `transfer_store_id` directly
-    // from `name_store_id`, so set it explicitly here.
+    // A requisition at store_a addressed to the name backing store_b is
+    // RemoteOwned + Transfer.
     let req_id = "req_transfer".to_string();
     RequisitionRowRepository::new(&connection)
         .upsert_one(&RequisitionRow {
@@ -784,6 +782,7 @@ async fn test_changelog_outgoing_sync_records() {
         })
         .unwrap();
 
+    // Site 1 post-initialisation: RemoteOwned arm skips, so only asset_class.
     let outgoing_results = ChangelogRepository::new(&connection)
         .query(
             ChangelogFilter::all_data_for_site(site1_id, false, None),
@@ -794,9 +793,24 @@ async fn test_changelog_outgoing_sync_records() {
         )
         .unwrap()
         .rows;
-    assert_eq!(outgoing_results.len(), 2);
-    assert_eq!(outgoing_results[1].record_id, req_id);
+    assert_eq!(outgoing_results.len(), 1);
+    assert_eq!(outgoing_results[0].record_id, asset_class_id);
 
+    // Site 1 during initialisation: RemoteOwned relays, requisition included.
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(site1_id, true, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert_eq!(outgoing_results.len(), 3);
+    assert_eq!(outgoing_results[2].record_id, req_id);
+
+    // Site 2 post-initialisation: reaches via Transfer routing.
     let outgoing_results = ChangelogRepository::new(&connection)
         .query(
             ChangelogFilter::all_data_for_site(site2_id, false, None),
