@@ -126,7 +126,7 @@ When `formError` is set, `NumericTextInput` skips its usual clamp-to-`min`/`max`
 
 #### Special case: `DateTimePickerInput`
 
-`error` was widened from `ReactNode` to `boolean`. Use the new `errorText: ReactNode` prop where you previously passed a string into `error` to drive the `helperText` display.
+`error` was widened from `ReactNode` to `boolean`. Use the new `errorText: ReactNode` prop where you previously passed a string into `error` to drive the `helperText` display. A truthy `errorText` automatically implies `error: true` (red border + helper text together), so callers usually only need one of the two.
 
 ---
 
@@ -254,7 +254,26 @@ If your input component runs validation logic itself (like `NumericTextInput`'s 
 
 A common pitfall: don't call `form.resetRequired()` on every `updatePatch` / keystroke. Once the user has attempted Save, the summary should remain visible — individual entries drop out as their fields get filled in (because the per-field requiredError naturally clears when the value becomes non-empty). Only call `resetRequired()` if you have an explicit "reset/clear form" affordance.
 
-### 7. (Optional) opt out of cleanup
+### 7. Don't swallow cleared values in `onChange`
+
+Several inputs (`NumericTextInput`, `DateTimePickerInput`) can be cleared by the user — they call `onChange(undefined)` or `onChange(null)` respectively. If your handler ignores those values:
+
+```tsx
+// Bug: clearing the field is silently dropped
+onChange={value => {
+  if (value !== undefined) updatePatch({ rate: value });
+}}
+```
+
+…the draft retains the old value while the UI shows empty. Required validation can never fire because the underlying value never becomes "missing." Always pass the cleared value through (and let `required` + the form-error system handle the empty state):
+
+```tsx
+onChange={value => updatePatch({ rate: value })}
+```
+
+The corresponding `value` prop also needs to let `undefined`/`null` pass through — avoid `value={draft.rate ?? 0}` fallbacks that re-coerce cleared inputs back to a default, since they fight the clearing and the input's internal buffer-sync will undo the user's clear.
+
+### 8. (Optional) opt out of cleanup
 
 For modals and short-lived forms, the default cleanup-on-unmount behaviour is what you want. For a long-lived page where errors should persist through navigation:
 
