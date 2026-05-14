@@ -72,7 +72,7 @@ jobs:
             if (!issue) {
               const regex = new RegExp(/#(\d+)/);
               const bodyMatch = pullRequest.body && pullRequest.body.match(regex)
-              const issueNumber = bodyMatch ? Number(bodyMatch[1]) : null
+              const issueNumber = bodyMatch?.[1] ? Number(bodyMatch[1]) : null
 
               if (!issueNumber) {
                 if (hasNoLinkedIssueLabel) {

@@ -9,6 +9,9 @@ on:
 
 name: Integration Test Compile Check
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
