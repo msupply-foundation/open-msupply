@@ -441,10 +441,6 @@ impl ChangelogFilter {
                 Transfer => C::transfer_site_id::equal(site_id),
                 Patient => C::patient_site_id::equal(site_id),
                 SyncRequest => {
-                    // Routed to whichever site currently has the row's store
-                    // active. Skipped entirely during initialisation — the
-                    // remote should fully bootstrap before the runner starts
-                    // executing requests.
                     if is_initialising {
                         continue;
                     }
@@ -556,15 +552,27 @@ impl ChangelogFilter {
     pub fn all_data_edited_on_site(site_id: i32) -> ChangelogCondition::Inner {
         use ChangeLogSyncStyle::*;
         use ChangelogCondition as C;
-        // SyncRequest is central->remote only; rows authored on this remote
-        // (e.g. self-resync sync_request during init) must never be pushed up.
-        // Restrict push to tables whose sync style is not SyncRequest.
-        let pushable_tables: Vec<ChangelogTableName> = ChangelogTableName::iter()
-            .filter(|t| !t.sync_style().0.contains(&SyncRequest))
-            .collect();
+        let mut inner_or_conditions = vec![];
+        for sync_style in ChangeLogSyncStyle::iter() {
+            let table_names = sync_style.get_table_names_for_sync_style(None);
+
+            if table_names.is_empty() {
+                continue;
+            }
+
+            match sync_style {
+                Remote | File | Patient | RemoteToCentral => {
+                    inner_or_conditions.push(C::table_name::any(table_names))
+                }
+                Central | ToLegacyCentralOnly | SyncRequest | Transfer => {
+                    // Don't sync
+                }
+            };
+        }
+
         C::And(vec![
+            C::Or(inner_or_conditions),
             C::source_site_id::equal(site_id),
-            C::table_name::any(pushable_tables),
         ])
     }
 }
