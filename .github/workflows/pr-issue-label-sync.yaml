@@ -72,6 +72,7 @@ jobs:
             if (!issue) {
               const regex = new RegExp(/#(\d+)/);
               const bodyMatch = pullRequest.body && pullRequest.body.match(regex)
+              // Merge note: kept optional-chaining (bodyMatch?.[1]) from prior merge for null-safety.
               const issueNumber = bodyMatch?.[1] ? Number(bodyMatch[1]) : null
 
               if (!issueNumber) {
