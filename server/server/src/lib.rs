@@ -431,7 +431,6 @@ pub async fn start_server(
         .sync_status_service
         .is_initialised(&service_context)
         .unwrap()
-        || !force_trigger_sync_on_startup
     {
         graphql_schema
             .set_operational_status(OperationalStatus::Operational)

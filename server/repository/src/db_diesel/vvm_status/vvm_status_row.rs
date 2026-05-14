@@ -91,6 +91,15 @@ impl<'a> VVMStatusRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, vvm_status_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = vvm_status
+            .filter(id.eq(vvm_status_id))
+            .select(id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn delete(&self, vvm_status_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(vvm_status.filter(id.eq(vvm_status_id)))
             .execute(self.connection.lock().connection())?;

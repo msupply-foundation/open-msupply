@@ -220,6 +220,37 @@ export type BundledItemFragment = {
   } | null;
 };
 
+export type AncillaryItemRowFragment = {
+  __typename: 'ItemNode';
+  id: string;
+  name: string;
+  code: string;
+  unitName?: string | null;
+};
+
+export type AncillaryItemFragment = {
+  __typename: 'AncillaryItemNode';
+  id: string;
+  itemQuantity: number;
+  ancillaryQuantity: number;
+  itemId: string;
+  ancillaryItemId: string;
+  item?: {
+    __typename: 'ItemNode';
+    id: string;
+    name: string;
+    code: string;
+    unitName?: string | null;
+  } | null;
+  ancillaryItem?: {
+    __typename: 'ItemNode';
+    id: string;
+    name: string;
+    code: string;
+    unitName?: string | null;
+  } | null;
+};
+
 export type ItemVariantFragment = {
   __typename: 'ItemVariantNode';
   id: string;
@@ -490,6 +521,28 @@ export type ItemFragment = {
       } | null;
     }>;
   }>;
+  ancillaryItems: Array<{
+    __typename: 'AncillaryItemNode';
+    id: string;
+    itemQuantity: number;
+    ancillaryQuantity: number;
+    itemId: string;
+    ancillaryItemId: string;
+    item?: {
+      __typename: 'ItemNode';
+      id: string;
+      name: string;
+      code: string;
+      unitName?: string | null;
+    } | null;
+    ancillaryItem?: {
+      __typename: 'ItemNode';
+      id: string;
+      name: string;
+      code: string;
+      unitName?: string | null;
+    } | null;
+  }>;
   itemDirections: Array<{
     __typename: 'ItemDirectionNode';
     directions: string;
@@ -711,6 +764,28 @@ export type ItemsWithStockLinesQuery = {
             itemName: string;
           } | null;
         }>;
+      }>;
+      ancillaryItems: Array<{
+        __typename: 'AncillaryItemNode';
+        id: string;
+        itemQuantity: number;
+        ancillaryQuantity: number;
+        itemId: string;
+        ancillaryItemId: string;
+        item?: {
+          __typename: 'ItemNode';
+          id: string;
+          name: string;
+          code: string;
+          unitName?: string | null;
+        } | null;
+        ancillaryItem?: {
+          __typename: 'ItemNode';
+          id: string;
+          name: string;
+          code: string;
+          unitName?: string | null;
+        } | null;
       }>;
       itemDirections: Array<{
         __typename: 'ItemDirectionNode';
@@ -1051,6 +1126,28 @@ export type ItemByIdQuery = {
             itemName: string;
           } | null;
         }>;
+      }>;
+      ancillaryItems: Array<{
+        __typename: 'AncillaryItemNode';
+        id: string;
+        itemQuantity: number;
+        ancillaryQuantity: number;
+        itemId: string;
+        ancillaryItemId: string;
+        item?: {
+          __typename: 'ItemNode';
+          id: string;
+          name: string;
+          code: string;
+          unitName?: string | null;
+        } | null;
+        ancillaryItem?: {
+          __typename: 'ItemNode';
+          id: string;
+          name: string;
+          code: string;
+          unitName?: string | null;
+        } | null;
       }>;
       itemDirections: Array<{
         __typename: 'ItemDirectionNode';
@@ -1451,6 +1548,74 @@ export type DeleteBundledItemMutation = {
   };
 };
 
+export type UpsertAncillaryItemMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpsertAncillaryItemInput;
+}>;
+
+export type UpsertAncillaryItemMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    ancillaryItem: {
+      __typename: 'AncillaryItemMutations';
+      upsertAncillaryItem:
+        | {
+            __typename: 'AncillaryItemNode';
+            id: string;
+            itemQuantity: number;
+            ancillaryQuantity: number;
+            itemId: string;
+            ancillaryItemId: string;
+            item?: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            } | null;
+            ancillaryItem?: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            } | null;
+          }
+        | {
+            __typename: 'UpsertAncillaryItemError';
+            error:
+              | { __typename: 'AncillaryCycleDetected'; description: string }
+              | {
+                  __typename: 'AncillaryMaxDepthExceeded';
+                  max: number;
+                  actual: number;
+                  description: string;
+                }
+              | { __typename: 'DatabaseError'; description: string }
+              | { __typename: 'DuplicateAncillaryItem'; description: string }
+              | { __typename: 'InternalError'; description: string };
+          };
+    };
+  };
+};
+
+export type DeleteAncillaryItemMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.DeleteAncillaryItemInput;
+}>;
+
+export type DeleteAncillaryItemMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    ancillaryItem: {
+      __typename: 'AncillaryItemMutations';
+      deleteAncillaryItem: { __typename: 'DeleteResponse'; id: string };
+    };
+  };
+};
+
 export type ItemLedgerFragment = {
   __typename: 'ItemLedgerNode';
   id: string;
@@ -1463,6 +1628,7 @@ export type ItemLedgerFragment = {
   invoiceId: string;
   invoiceStatus: Types.InvoiceNodeStatus;
   invoiceType: Types.InvoiceNodeType;
+  isExternal: boolean;
   name: string;
   packSize: number;
   movementInUnits: number;
@@ -1497,6 +1663,7 @@ export type ItemLedgerQuery = {
       invoiceId: string;
       invoiceStatus: Types.InvoiceNodeStatus;
       invoiceType: Types.InvoiceNodeType;
+      isExternal: boolean;
       name: string;
       packSize: number;
       movementInUnits: number;
@@ -1727,6 +1894,32 @@ export const ItemVariantFragmentDoc = gql`
   ${PackagingVariantFragmentDoc}
   ${BundledItemFragmentDoc}
 `;
+export const AncillaryItemRowFragmentDoc = gql`
+  fragment AncillaryItemRow on ItemNode {
+    __typename
+    id
+    name
+    code
+    unitName
+  }
+`;
+export const AncillaryItemFragmentDoc = gql`
+  fragment AncillaryItem on AncillaryItemNode {
+    __typename
+    id
+    itemQuantity
+    ancillaryQuantity
+    itemId
+    ancillaryItemId
+    item {
+      ...AncillaryItemRow
+    }
+    ancillaryItem {
+      ...AncillaryItemRow
+    }
+  }
+  ${AncillaryItemRowFragmentDoc}
+`;
 export const ItemFragmentDoc = gql`
   fragment Item on ItemNode {
     __typename
@@ -1773,6 +1966,9 @@ export const ItemFragmentDoc = gql`
     variants {
       ...ItemVariant
     }
+    ancillaryItems {
+      ...AncillaryItem
+    }
     itemDirections {
       ...ItemDirection
     }
@@ -1784,6 +1980,7 @@ export const ItemFragmentDoc = gql`
   ${LocationTypeFragmentDoc}
   ${StockLineFragmentDoc}
   ${ItemVariantFragmentDoc}
+  ${AncillaryItemFragmentDoc}
   ${ItemDirectionFragmentDoc}
 `;
 export const ItemsWithStatsFragmentDoc = gql`
@@ -1820,6 +2017,7 @@ export const ItemLedgerFragmentDoc = gql`
     invoiceId
     invoiceStatus
     invoiceType
+    isExternal
     name
     packSize
     movementInUnits
@@ -2111,6 +2309,52 @@ export const DeleteBundledItemDocument = gql`
     }
   }
 `;
+export const UpsertAncillaryItemDocument = gql`
+  mutation upsertAncillaryItem(
+    $storeId: String!
+    $input: UpsertAncillaryItemInput!
+  ) {
+    centralServer {
+      ancillaryItem {
+        upsertAncillaryItem(storeId: $storeId, input: $input) {
+          __typename
+          ... on AncillaryItemNode {
+            ...AncillaryItem
+          }
+          ... on UpsertAncillaryItemError {
+            error {
+              __typename
+              description
+              ... on AncillaryMaxDepthExceeded {
+                max
+                actual
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  ${AncillaryItemFragmentDoc}
+`;
+export const DeleteAncillaryItemDocument = gql`
+  mutation deleteAncillaryItem(
+    $storeId: String!
+    $input: DeleteAncillaryItemInput!
+  ) {
+    centralServer {
+      ancillaryItem {
+        deleteAncillaryItem(storeId: $storeId, input: $input) {
+          __typename
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
+      }
+    }
+  }
+`;
 export const ItemLedgerDocument = gql`
   query itemLedger(
     $first: Int
@@ -2385,6 +2629,42 @@ export function getSdk(
             signal,
           }),
         'deleteBundledItem',
+        'mutation',
+        variables
+      );
+    },
+    upsertAncillaryItem(
+      variables: UpsertAncillaryItemMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UpsertAncillaryItemMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpsertAncillaryItemMutation>({
+            document: UpsertAncillaryItemDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'upsertAncillaryItem',
+        'mutation',
+        variables
+      );
+    },
+    deleteAncillaryItem(
+      variables: DeleteAncillaryItemMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<DeleteAncillaryItemMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteAncillaryItemMutation>({
+            document: DeleteAncillaryItemDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'deleteAncillaryItem',
         'mutation',
         variables
       );

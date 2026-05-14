@@ -173,19 +173,26 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
     console.error(result.error);
   };
 
-  const { mutate: connectToServer } = useMutation({
+  const { mutate: connectToServer, isPending } = useMutation({
     mutationFn: connect,
     onSuccess: handleConnectionResult,
-
     onError: (e: Error) =>
-      handleConnectionResult({ success: false, error: e.message })
+      handleConnectionResult({ success: false, error: e.message }),
   });
 
   return (
-    <MenuItem onClick={() => connectToServer(server)} sx={{ color: 'inherit' }}>
+    <MenuItem
+      onClick={() => !isPending && connectToServer(server)}
+      disabled={isPending}
+      sx={{ color: 'inherit' }}
+    >
       <Box alignItems="center" display="flex" gap={2}>
-        <Box flex={0}>
-          <CheckboxEmptyIcon fontSize="small" color="primary" />
+        <Box flex={0} display="flex" alignItems="center">
+          {isPending ? (
+            <InlineSpinner />
+          ) : (
+            <CheckboxEmptyIcon fontSize="small" color="primary" />
+          )}
         </Box>
         <Box flexShrink={0} flexBasis="200px">
           <Typography sx={{ fontSize: 14, fontWeight: 'bold' }}>

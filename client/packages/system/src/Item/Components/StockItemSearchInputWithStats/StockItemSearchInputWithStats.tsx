@@ -15,7 +15,8 @@ import {
 } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
 
-const DEBOUNCE_TIMEOUT = 300;
+const SEARCH_DEBOUNCE_TIMEOUT = 500;
+const PAGINATION_DEBOUNCE_TIMEOUT = 100;
 const ROWS_PER_PAGE = 20;
 
 export const StockItemSearchInputWithStats = ({
@@ -38,7 +39,7 @@ export const StockItemSearchInputWithStats = ({
   const debounceOnFilter = useDebouncedValueCallback(
     (searchText: string) => onFilter(searchText),
     [onFilter],
-    DEBOUNCE_TIMEOUT
+    SEARCH_DEBOUNCE_TIMEOUT
   );
 
   const { data, isLoading, fetchNextPage, isFetchingNextPage } =
@@ -62,7 +63,7 @@ export const StockItemSearchInputWithStats = ({
 
   useEffect(() => {
     if (openOnFocus && !disabled) {
-      setTimeout(() => selectControl.toggleOn(), DEBOUNCE_TIMEOUT);
+      setTimeout(() => selectControl.toggleOn(), SEARCH_DEBOUNCE_TIMEOUT);
     }
   }, [openOnFocus, disabled, selectControl]);
 
@@ -106,7 +107,7 @@ export const StockItemSearchInputWithStats = ({
         t('label.units'),
         formatNumber.format
       )}
-      paginationDebounce={DEBOUNCE_TIMEOUT}
+      paginationDebounce={PAGINATION_DEBOUNCE_TIMEOUT}
       sx={{
         '.MuiInputBase-root': { paddingLeft: disabled ? 0 : undefined },
         '.MuiBox-root': { justifyContent: 'flex-start' },
