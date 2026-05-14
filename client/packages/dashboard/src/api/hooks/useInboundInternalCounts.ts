@@ -12,8 +12,8 @@ export const useInboundInternalCounts = () => {
       api.inboundInternalCounts({
         storeId,
       }),
-
-    retry: false
+    enabled: !!storeId,
+    retry: false,
   });
 
   if (!data?.inboundShipmentCounts) {

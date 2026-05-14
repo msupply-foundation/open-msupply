@@ -6,7 +6,6 @@ import {
   Box,
   AppThemeProvider,
   QueryClient,
-  // ReactQueryDevtools,
   QueryClientProvider,
   RouteBuilder,
   ErrorBoundary,
@@ -31,6 +30,7 @@ import {
   InitialisationStatusType,
   useAuthContext,
 } from '@openmsupply-client/common';
+// import { ReactQueryDevtools } from 'react-query/devtools';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
 import { MigrationInfoProvider } from './components/Migration';
@@ -47,10 +47,8 @@ const appVersion = require('../../../../package.json').version; // eslint-disabl
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // These are disabled during development because they're
-      // annoying to have constantly refetching.
-      refetchOnWindowFocus: EnvUtils.isProduction(),
-      retry: EnvUtils.isProduction(),
+      // Creates unnecessary requests
+      refetchOnWindowFocus: false,
     },
   },
 });
@@ -66,7 +64,7 @@ const skipRequest = () =>
 
 const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { logout } = useAuthContext();
-  const data = useInitialisationStatus(false, true);
+  const data = useInitialisationStatus(false);
 
   // Query still loading — don't render children yet, but don't logout either
   if (!data?.data) return null;
@@ -185,7 +183,7 @@ const Host = () => (
                       </ConfirmationModalProvider>
                     </AuthProvider>
                   </MigrationInfoProvider>
-                  {/* <ReactQueryDevtools initialIsOpen /> */}
+                  {/* <ReactQueryDevtools initialIsOpen={false} /> */}
                 </GqlProvider>
               </QueryClientProvider>
             </ErrorBoundary>

@@ -7,9 +7,9 @@ export const useSupplierReturnDelete = () => {
 
   return useMutation({
     mutationFn: api.deleteSupplier,
-
-    onSuccess: () => queryClient.invalidateQueries({
-      queryKey: api.keys.base()
-    })
+    // `void` is load-bearing: returning the invalidateQueries promise would make
+    // mutateAsync await the refetch of the just-deleted detail query and hang.
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: api.keys.base() }),
   });
 };

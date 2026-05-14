@@ -202,41 +202,67 @@ export const InboundLineEdit = ({
   }, [effectiveItem?.id]);
 
   useEffect(() => {
-    if (mode !== ModalMode.Create) return;
     if (!hasVariants || draftLines.length === 0) return;
     if (variantShownForItem === effectiveItem?.id) return;
+
+    // Pop the panel for fresh items (Create) and for master-list-seeded
+    // placeholder lines the user is opening for the first time.
+    const allFreshPlaceholders = draftLines.every(
+      line =>
+        isInboundPlaceholderRow(line) &&
+        !line.itemVariantId &&
+        !line.isUpdated &&
+        !line.linkedInvoiceId
+    );
+    if (mode !== ModalMode.Create && !allFreshPlaceholders) return;
 
     setVariantShownForItem(effectiveItem?.id ?? null);
     setVariantAction('first');
   }, [
     mode,
     hasVariants,
-    draftLines.length,
+    draftLines,
     effectiveItem?.id,
     variantShownForItem,
   ]);
 
   const onVariantSelected = useCallback(
     (variant: ItemVariantFragment) => {
-      const packSize = draftLines[0]?.item.defaultPackSize ?? 1;
-      const variantPatch = {
-        itemVariantId: variant.id,
-        itemVariant: variant,
-        manufacturer: variant.manufacturer ?? null,
-        volumePerPack:
-          getVolumePerPackFromVariant({
-            packSize,
-            itemVariant: variant,
-          }) ?? 0,
-      };
-
       if (variantAction === 'first' && draftLines.length > 0) {
+        const target = draftLines[0]!;
+        // Master-list placeholders come in with packSize=1; reset to the
+        // item default so the variant's volume-per-pack lines up with the
+        // line's pack size. Don't clobber packSize on lines the user has
+        // already shaped.
+        const isFresh =
+          isInboundPlaceholderRow(target) && !target.itemVariantId;
+        const packSize = isFresh
+          ? (target.item.defaultPackSize ?? target.packSize)
+          : target.packSize;
         updateDraftLine({
-          id: draftLines[0]!.id,
-          ...variantPatch,
+          id: target.id,
+          itemVariantId: variant.id,
+          itemVariant: variant,
+          manufacturer: variant.manufacturer ?? null,
+          ...(isFresh && { packSize }),
+          volumePerPack:
+            getVolumePerPackFromVariant({
+              packSize,
+              itemVariant: variant,
+            }) ?? 0,
         });
       } else {
-        addDraftLine(variantPatch);
+        const packSize = draftLines[0]?.item.defaultPackSize ?? 1;
+        addDraftLine({
+          itemVariantId: variant.id,
+          itemVariant: variant,
+          manufacturer: variant.manufacturer ?? null,
+          volumePerPack:
+            getVolumePerPackFromVariant({
+              packSize,
+              itemVariant: variant,
+            }) ?? 0,
+        });
       }
       setVariantAction(null);
     },
