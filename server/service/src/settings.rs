@@ -41,10 +41,18 @@ pub struct ServerSettings {
     // Option to set server mode as central server, should only be used in testing, demo and development
     #[serde(default)]
     pub override_is_central_server: bool,
+    /// Auto-spawn webpack-dev-server in macOS/Linux debug builds (default: true).
+    /// Set to false in local.yaml to disable; the embedded frontend bundle will be served instead.
+    #[serde(default = "default_true")]
+    pub dev_server: bool,
 }
 
 fn default_base_dir() -> String {
     "app_data".to_string()
+}
+
+fn default_true() -> bool {
+    true
 }
 
 impl ServerSettings {

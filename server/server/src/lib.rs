@@ -12,7 +12,6 @@ use crate::{
     custom_translations::config_custom_translations,
     middleware::central_server_only,
     print::config_print,
-    serve_frontend::config_serve_frontend,
     static_files::config_static_files,
     support::config_support,
     upload_fridge_tag::config_upload_fridge_tag,
@@ -69,14 +68,11 @@ mod logging;
 pub mod middleware;
 mod schedule_plugin;
 mod scheduled_tasks;
-#[cfg(not(all(debug_assertions, any(target_os = "macos", target_os = "linux"))))]
 mod serve_frontend;
 #[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
 mod dev_server;
 #[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
 mod serve_frontend_dev;
-#[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
-use serve_frontend_dev as serve_frontend;
 pub mod static_files;
 pub mod support;
 mod upload_fridge_tag;
@@ -292,12 +288,16 @@ pub async fn start_server(
     // In dev mode, spawn webpack-dev-server for frontend hot reloading
     #[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
     let (dev_server, dev_server_process) = {
-        match dev_server::spawn(settings.server.port).await {
-            Ok((ds, proc)) => (Some(Data::new(ds)), Some(proc)),
-            Err(e) => {
-                log::warn!("Failed to start webpack dev server: {e}. Frontend will not be available.");
-                (None, None)
+        if settings.server.dev_server {
+            match dev_server::spawn(settings.server.port).await {
+                Ok((ds, proc)) => (Some(Data::new(ds)), Some(proc)),
+                Err(e) => {
+                    log::warn!("Failed to start webpack dev server: {e}. Falling back to embedded frontend.");
+                    (None, None)
+                }
             }
+        } else {
+            (None, None)
         }
     };
 
@@ -330,7 +330,7 @@ pub async fn start_server(
             .configure(config_custom_translations)
             .configure(config_upload);
 
-        // In dev mode, add dev server data and proxy; in release, serve embedded frontend.
+        // In dev mode proxy to webpack-dev-server; otherwise serve the embedded frontend bundle.
         // The awc Client is !Send (internal Rc), so it can't go through Data<T> — register
         // it per worker via app_data and pull it out with req.app_data::<awc::Client>() in
         // the handler. One Client per worker means the connection pool is reused.
@@ -339,15 +339,16 @@ pub async fn start_server(
             if let Some(ref ds) = dev_server {
                 app.app_data(ds.clone())
                     .app_data(awc::Client::new())
-                    .configure(config_serve_frontend)
+                    .configure(serve_frontend_dev::config_serve_frontend)
             } else {
-                app
+                // dev_server: false or spawn failed — fall back to embedded bundle
+                app.configure(serve_frontend::config_serve_frontend)
             }
         };
         #[cfg(not(all(debug_assertions, any(target_os = "macos", target_os = "linux"))))]
         let app = app
             // Needs to be last to capture all unmatched routes
-            .configure(config_serve_frontend);
+            .configure(serve_frontend::config_serve_frontend);
 
         app
     })
