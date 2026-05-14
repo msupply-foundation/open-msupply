@@ -105,6 +105,13 @@ export const ReceivedDateInput = () => {
     if (Formatter.naiveDate(newDate) === Formatter.naiveDate(dateValue)) return;
 
     const formattedDate = newDate.toLocaleDateString();
+    // Incoming stock: snap backdated days to 00:00 so the entry sorts before any
+    // other same-day transactions and is available all day. For today, send the
+    // actual moment — startOfDay would be in the past beyond the max-backdating
+    // window in some timezones, and we want today to mean "now".
+    const receivedDatetime = DateUtils.isToday(newDate)
+      ? newDate.toISOString()
+      : Formatter.toIsoString(DateUtils.startOfDay(newDate));
 
     const doUpdate = async () => {
       const hasStocktakeAfter = await checkStocktakeAfterDate(newDate);
@@ -114,18 +121,14 @@ export const ReceivedDateInput = () => {
             date: formattedDate,
           }),
           onConfirm: async () => {
-            await update({
-              receivedDatetime: newDate.toISOString(),
-            });
+            await update({ receivedDatetime });
           },
           onCancel: () => setDateValue(previousValue),
         });
         return;
       }
 
-      await update({
-        receivedDatetime: newDate.toISOString(),
-      });
+      await update({ receivedDatetime });
     };
 
     getBackdateConfirmation({

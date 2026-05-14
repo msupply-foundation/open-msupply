@@ -106,6 +106,15 @@ impl<'a> StoreRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, store_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = store::table
+            .filter(store::id.eq(store_id))
+            .select(store::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<StoreRow>, RepositoryError> {
         let result = store::table
             .filter(store::id.eq_any(ids))

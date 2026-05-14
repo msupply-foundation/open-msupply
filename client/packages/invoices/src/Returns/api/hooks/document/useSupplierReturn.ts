@@ -20,13 +20,11 @@ export const useSupplierReturn = () => {
   const { invoiceId = '' } = useParams();
   const api = useReturnsApi();
 
-  const query = useQuery(
-    api.keys.supplierDetail(invoiceId ?? ''),
-    () => api.get.supplierReturnById(invoiceId),
-    {
-      enabled: !!isSupplierReturnPage,
-    }
-  );
+  const query = useQuery({
+    queryKey: api.keys.supplierDetail(invoiceId ?? ''),
+    queryFn: () => api.get.supplierReturnById(invoiceId),
+    enabled: !!isSupplierReturnPage
+  });
 
   const [bufferedState, setBufferedState] = useState(query.data);
 

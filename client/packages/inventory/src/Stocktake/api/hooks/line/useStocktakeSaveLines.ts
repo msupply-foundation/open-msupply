@@ -17,9 +17,13 @@ export const useSaveStocktakeLines = () => {
   const t = useTranslation();
   const errorsContext = useStocktakeLineErrorContext();
 
-  const mutation = useMutation(api.updateLines, {
+  const mutation = useMutation({
+    mutationFn: api.updateLines,
+
     onSuccess: () =>
-      queryClient.invalidateQueries(api.keys.detail(stocktakeId)),
+      queryClient.invalidateQueries({
+        queryKey: api.keys.detail(stocktakeId)
+      })
   });
 
   const saveAndMapStructuredErrors = async (lines: DraftStocktakeLine[]) => {

@@ -288,6 +288,7 @@ const LogFilters = ({
       gap={2}
       paddingX={8}
       paddingTop={2}
+      paddingBottom={2}
       alignItems="center"
       flexWrap="wrap"
       sx={theme => ({
@@ -302,36 +303,48 @@ const LogFilters = ({
         <Typography sx={{ fontWeight: 'bold', fontSize: '14px' }}>
           {t('label.from-date')}:
         </Typography>
-        <DateTimePickerInput
-          value={fromDate}
-          format="P"
-          onChange={onFromDateChange}
-          width={180}
-        />
+        <Box sx={{ flex: 1, minWidth: { sm: '180px' }, maxWidth: { sm: '180px' } }}>
+          <DateTimePickerInput
+            value={fromDate}
+            format="P"
+            onChange={onFromDateChange}
+            width="100%"
+          />
+        </Box>
       </Box>
       <Box display="flex" alignItems="center" gap={1}>
         <Typography sx={{ fontWeight: 'bold', fontSize: '14px' }}>
           {t('label.to-date')}:
         </Typography>
-        <DateTimePickerInput
-          value={toDate}
-          format="P"
-          onChange={onToDateChange}
-          width={180}
-        />
+        <Box sx={{ flex: 1, minWidth: { sm: '180px' }, maxWidth: { sm: '180px' } }}>
+          <DateTimePickerInput
+            value={toDate}
+            format="P"
+            onChange={onToDateChange}
+            width="100%"
+          />
+        </Box>
       </Box>
       <Box display="flex" alignItems="center" gap={1}>
         <Typography sx={{ fontWeight: 'bold', fontSize: '14px' }}>
           {t('label.event')}:
         </Typography>
-        <Autocomplete
-          value={selectedEvent}
-          options={eventOptions}
-          onChange={(_, option) => onEventChange(option ?? null)}
-          isOptionEqualToValue={(a, b) => a.value === b.value}
-          width="280px"
-          clearable
-        />
+        <Box
+          sx={{
+            flex: 1,
+            minWidth: { sm: '280px' },
+            maxWidth: { sm: '280px' },
+          }}
+        >
+          <Autocomplete
+            value={selectedEvent}
+            options={eventOptions}
+            onChange={(_, option) => onEventChange(option ?? null)}
+            isOptionEqualToValue={(a, b) => a.value === b.value}
+            width="100%"
+            clearable
+          />
+        </Box>
       </Box>
     </Box>
   );

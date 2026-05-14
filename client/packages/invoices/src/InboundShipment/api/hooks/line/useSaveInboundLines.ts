@@ -15,8 +15,8 @@ export const useSaveInboundLines = (isExternal: boolean) => {
   const { invoiceId = '' } = useParams();
   const api = useInboundApi();
 
-  return useMutation(
-    async (lines: DraftInboundLine[]): Promise<{ errorMessage?: string }> => {
+  return useMutation({
+    mutationFn: async (lines: DraftInboundLine[]): Promise<{ errorMessage?: string }> => {
       const result = await api.updateLines(lines, isExternal);
 
       const allResults = [
@@ -54,9 +54,9 @@ export const useSaveInboundLines = (isExternal: boolean) => {
       return { errorMessage: undefined };
     },
 
-    {
-      onSettled: () =>
-        queryClient.invalidateQueries([INBOUND, INBOUND_LINE, invoiceId]),
-    }
-  );
+    onSettled: () =>
+      queryClient.invalidateQueries({
+        queryKey: [INBOUND, INBOUND_LINE, invoiceId]
+      })
+  });
 };

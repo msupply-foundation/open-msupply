@@ -148,6 +148,7 @@ fn map_error(error: ServiceError) -> Result<InsertAssetErrorInterface> {
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::SerialNumberAlreadyExists => BadUserInput(formatted_error),
         ServiceError::AssetNumberAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::InvalidMappingDate { .. } => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
