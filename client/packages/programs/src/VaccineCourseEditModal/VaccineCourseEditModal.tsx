@@ -312,6 +312,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             formId={FORM_ID}
             fieldId="vaccineItems"
             label={t('label.vaccine-items')}
+            required
             // Coerce empty array → undefined so the required-error
             // logic (which treats undefined/null/'' as missing) fires.
             value={draft.vaccineCourseItems?.length || undefined}
