@@ -45,7 +45,9 @@ export const StockLevelsSummary = ({
   );
 
   useEffect(() => {
-    queryClient.invalidateQueries([DASHBOARD, ITEMS]);
+    queryClient.invalidateQueries({
+      queryKey: [DASHBOARD, ITEMS]
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     outOfStockProducts,
@@ -57,7 +59,7 @@ export const StockLevelsSummary = ({
 
   return (
     <StatsPanel
-      error={error as ApiException}
+      error={error as unknown as ApiException}
       isError={isError}
       isLoading={isLoading}
       title={t('heading.stock-levels')}

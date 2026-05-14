@@ -24,7 +24,7 @@ type AncillaryDelta = NonNullable<
 export const AncillaryItemsBanner = () => {
   const t = useTranslation();
   const { data } = useRequest.document.get();
-  const { add, update, isLoading } = useRequest.line.refreshAncillaryItems();
+  const { add, update, isPending } = useRequest.line.refreshAncillaryItems();
   const [detailsAnchor, setDetailsAnchor] = useState<HTMLElement | null>(null);
 
   const ancillaryState = data?.ancillaryState;
@@ -84,7 +84,7 @@ export const AncillaryItemsBanner = () => {
           <FlatButton
             label={isAdd ? t('button.add') : t('button.update')}
             onClick={() => (isAdd ? add() : update())}
-            disabled={isLoading}
+            disabled={isPending}
             color="primary"
           />
         </Box>

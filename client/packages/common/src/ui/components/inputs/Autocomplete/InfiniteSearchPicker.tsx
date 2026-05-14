@@ -36,7 +36,7 @@ interface InfiniteQueryResult<T> {
   isLoading: boolean;
   isFetching: boolean;
   isFetchingNextPage: boolean;
-  fetchNextPage: (opts: { pageParam: number }) => unknown;
+  fetchNextPage: () => unknown;
 }
 
 export interface InfiniteSearchPickerProps<T extends HasId, TFilter> {
@@ -275,7 +275,7 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
       popperMinWidth={width}
       isOptionEqualToValue={(option, val) => option?.id === val?.id}
       paginationDebounce={PAGINATION_DEBOUNCE_TIMEOUT}
-      onPageChange={page => fetchNextPage({ pageParam: page })}
+      onPageChange={() => fetchNextPage()}
       mapOptions={items =>
         defaultOptionMapper(
           items.map(i => ({ ...i, label: getOptionLabel(i) })),

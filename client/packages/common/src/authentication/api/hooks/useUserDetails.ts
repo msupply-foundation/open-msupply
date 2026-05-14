@@ -1,26 +1,30 @@
-import { useMutation, useQuery } from 'react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuthApi } from './useAuthApi';
 
 export const useGetUserDetails = () => {
   const api = useAuthApi();
-  return useMutation(api.get.me);
+  return useMutation({ mutationFn: api.get.me });
 };
 
 export const useUserDetails = (token: string) => {
   const api = useAuthApi();
-  return useQuery(api.keys.me(token), () => api.get.me(token), {
+  return useQuery({
+    queryKey: api.keys.me(token),
+    queryFn: () => api.get.me(token),
     enabled: !!token,
   });
 };
 
 export const useUserPermissions = () => {
   const api = useAuthApi();
-  return useMutation(api.get.permissions);
+  return useMutation({ mutationFn: api.get.permissions });
 };
 
 export const useLastSuccessfulUserSync = () => {
   const api = useAuthApi();
-  return useQuery(api.keys.userSync(), api.get.lastSuccessfulUserSync, {
-    cacheTime: 0,
+  return useQuery({
+    queryKey: api.keys.userSync(),
+    queryFn: api.get.lastSuccessfulUserSync,
+    gcTime: 0,
   });
 };

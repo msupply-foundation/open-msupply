@@ -3,7 +3,7 @@ import { PropsWithChildrenOnly } from '@common/types';
 import {
   QueryClient,
   QueryClientProvider as ReactQueryClientProvider,
-} from 'react-query';
+} from '@tanstack/react-query';
 import { createRegisteredContext } from 'react-singleton-context';
 
 const QueryClientContext = createRegisteredContext<{ client: QueryClient }>(

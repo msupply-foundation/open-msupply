@@ -5,6 +5,7 @@ import {
   SortBy,
   useMutation,
   useQuery,
+  keepPreviousData,
 } from '@openmsupply-client/common';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { PURCHASE_ORDER } from './keys';
@@ -68,7 +69,7 @@ export const usePurchaseOrderList = (queryParams?: ListParams) => {
   const { data, isFetching, isError } = useQuery({
     queryKey,
     queryFn,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   const deleteMutationFn = async (ids: string[]) => {
@@ -87,12 +88,14 @@ export const usePurchaseOrderList = (queryParams?: ListParams) => {
 
   const {
     mutate: deletePurchaseOrders,
-    isLoading: isDeleting,
+    isPending: isDeleting,
     isError: deleteError,
   } = useMutation({
     mutationFn: deleteMutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([PURCHASE_ORDER, LIST_KEY]);
+      queryClient.invalidateQueries({
+        queryKey: [PURCHASE_ORDER, LIST_KEY]
+      });
     },
   });
 
