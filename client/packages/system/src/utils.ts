@@ -1,4 +1,4 @@
-import { LocaleKey, TypedTFunction } from '@common/intl';
+import { DateUtils, LocaleKey, TypedTFunction } from '@common/intl';
 import { Formatter } from '@common/utils';
 import { AssetPropertyFragment, MasterListRowFragment } from '.';
 import { LocationRowFragment } from './Location/api';
@@ -132,6 +132,27 @@ export const processProperties = <
             value.toLowerCase() === 'true' || value.toLowerCase() === 'yes';
           importRow.properties[property.key] = isTrue ? 'true' : 'false';
           break;
+        case 'DATE': {
+          // CSV template documents date columns as DD/MM/YYYY; reject anything
+          // else so we don't silently push unparseable strings into properties
+          // (the server stores YYYY-MM-DD and would lose the value otherwise).
+          const hasFourDigitYear = value.split('/')[2]?.length === 4;
+          const parsed = hasFourDigitYear
+            ? DateUtils.getDateOrNull(value, 'dd/MM/yyyy')
+            : null;
+          const normalised = parsed ? Formatter.naiveDate(parsed) : null;
+          if (!normalised) {
+            rowErrors.push(
+              t('error.invalid-field-value', {
+                field: property.name,
+                value: value,
+              })
+            );
+            break;
+          }
+          importRow.properties[property.key] = normalised;
+          break;
+        }
         default:
           importRow.properties[property.key] = value;
       }

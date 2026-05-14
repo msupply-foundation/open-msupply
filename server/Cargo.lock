@@ -4456,6 +4456,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "futures",
+ "graphql_ancillary_item",
  "graphql_asset",
  "graphql_asset_catalogue",
  "graphql_batch_mutations",
@@ -4497,6 +4498,24 @@ dependencies = [
  "service",
  "tokio",
  "util",
+]
+
+[[package]]
+name = "graphql_ancillary_item"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde",
+ "serde_json",
+ "service",
 ]
 
 [[package]]
@@ -5066,6 +5085,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "graphql_core",
+ "graphql_general",
  "graphql_types",
  "repository",
  "serde",

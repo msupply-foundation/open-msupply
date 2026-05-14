@@ -28,6 +28,7 @@ import {
   useColumnSizing,
   useColumnVisibility,
 } from './tableState';
+import { useTableKeyboardNavigation } from './useTableKeyboardNavigation';
 
 export const useTableDisplayOptions = <T extends MRT_RowData>({
   tableId,
@@ -72,6 +73,8 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   muiTableBodyRowProps?: MRT_TableOptions<T>['muiTableBodyRowProps'];
 }): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
+  const { focusedRowId, containerRef, rowVirtualizerRef, handleKeyDown } =
+    useTableKeyboardNavigation<T>(onRowClick);
 
   // shared between the table body and head to ensure consistent padding
   const padding = (
@@ -89,6 +92,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           : '0.8rem';
 
   return {
+    rowVirtualizerInstanceRef: rowVirtualizerRef,
     // Add description to column menu
     renderColumnActionsMenuItems: ({ internalColumnMenuItems, column }) => {
       const { description, header } = column.columnDef as ColumnDef<T>; // MRT doesn't support typing custom column props, but we know it will be here
@@ -166,13 +170,17 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         boxShadow: 'none',
       },
     },
-    muiTableContainerProps: {
+    muiTableContainerProps: ({ table }) => ({
+      ref: containerRef,
+      tabIndex: 0,
+      onKeyDown: (e: React.KeyboardEvent) => handleKeyDown(e, table),
       sx: {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
+        outline: 'none',
       },
-    },
+    }),
     muiTableProps: ({ table }) => ({
       // Need to apply this here so that relative sizes (ems, %) within table
       // are correct
@@ -241,15 +249,15 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
       // Make the NothingHere component vertically centred when there are no rows
       table.getRowCount() === 0
         ? {
-          sx: { height: '100%' },
-        }
+            sx: { height: '100%' },
+          }
         : {
-          sx: () => ({
-            '& tr:nth-of-type(odd)': {
-              backgroundColor: 'background.row',
-            },
-          }),
-        },
+            sx: () => ({
+              '& tr:nth-of-type(odd)': {
+                backgroundColor: 'background.row',
+              },
+            }),
+          },
 
     muiTableBodyRowProps: params => {
       const { row, table } = params;
@@ -257,6 +265,8 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         typeof muiTableBodyRowProps === 'function'
           ? muiTableBodyRowProps(params)
           : muiTableBodyRowProps;
+
+      const isFocused = row.id === focusedRowId;
 
       const defaultProps: MRT_TableOptions<T>['muiTableBodyRowProps'] = {
         ...(onRowClick
@@ -283,6 +293,12 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           },
           fontStyle: row.getCanExpand() ? 'italic' : 'normal',
           cursor: onRowClick ? 'pointer' : 'default',
+          ...(isFocused
+            ? {
+                backgroundColor: theme =>
+                  alpha(theme.palette.gray.main, 0.2) + '!important',
+              }
+            : {}),
         },
       };
       return {
@@ -314,25 +330,25 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           !row.getIsGrouped() && table.getState().grouping?.length
             ? '2em'
             : // Little bit of extra padding for first column, unless it's the "Select" checkbox column
-            column.getIndex() === 0 && column.id !== 'mrt-row-select'
+              column.getIndex() === 0 && column.id !== 'mrt-row-select'
               ? '1em'
               : undefined,
         backgroundColor:
           column.getIsPinned() || row.getIsSelected()
             ? // Remove transparency from pinned backgrounds
-            'rgba(252, 252, 252, 1)'
+              'rgba(252, 252, 252, 1)'
             : undefined,
 
         ...((column.columnDef as ColumnDef<T>).getIsError?.(row.original)
           ? {
-            border: '2px solid',
-            borderColor: 'error.main',
-            borderRadius: '8px',
-          }
+              border: '2px solid',
+              borderColor: 'error.main',
+              borderRadius: '8px',
+            }
           : {
-            borderBottom: '1px solid',
-            borderColor: 'border',
-          }),
+              borderBottom: '1px solid',
+              borderColor: 'border',
+            }),
       },
     }),
 

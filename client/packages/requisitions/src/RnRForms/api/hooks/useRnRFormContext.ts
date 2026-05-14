@@ -12,7 +12,7 @@ import { isLineError } from '../../DetailView/helpers';
 
 type SetLine = (line: RecordWithId & Partial<RnRFormLineFragment>) => void;
 interface RnRFormContext {
-  listRef?: React.RefObject<ViewportListRef>;
+  listRef?: React.RefObject<ViewportListRef | null>;
   rnrFormId: string;
   foundIds: { [id: string]: boolean };
   baseLines: { [id: string]: RnRFormLineFragment };
@@ -26,7 +26,7 @@ interface RnRFormContext {
   clearAllDirtyLines: () => void;
   getAllDirtyLines: (ignoreError?: boolean) => RnRFormLineFragment[];
   setInitial: (rnrFormId: string, _: RnRFormLineFragment[]) => void;
-  setListRef: (_: React.RefObject<ViewportListRef>) => void;
+  setListRef: (_: React.RefObject<ViewportListRef | null>) => void;
   scrollToIndex: (_: number) => void;
   search: (_: string) => number;
   resetSearch: () => void;

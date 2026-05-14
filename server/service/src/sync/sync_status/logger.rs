@@ -190,10 +190,22 @@ impl<'a> SyncLogger<'a> {
                     ..self.row.clone()
                 }
             }
-            SyncStep::Integrate => SyncLogRow {
-                integration_finished_datetime: Some(chrono::Utc::now().naive_utc()),
-                ..self.row.clone()
-            },
+            SyncStep::Integrate => {
+                let duration = self
+                    .row
+                    .integration_started_datetime
+                    .map(|started| (chrono::Utc::now().naive_utc() - started).num_seconds())
+                    .unwrap_or(0);
+                info!(
+                    "Integrated ({}) records in {}s",
+                    self.row.integration_progress_done.as_ref().unwrap_or(&0),
+                    duration
+                );
+                SyncLogRow {
+                    integration_finished_datetime: Some(chrono::Utc::now().naive_utc()),
+                    ..self.row.clone()
+                }
+            }
             SyncStep::PullCentralV6 => {
                 Self::log(
                     self.row.pull_v6_progress_done.unwrap_or(0),

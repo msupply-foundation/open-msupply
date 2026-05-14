@@ -1,14 +1,14 @@
 use crate::sync::{
     translations::{
-        name::NameTranslation, store::StoreTranslation, PullTranslateResult, PushTranslateResult,
-        SyncTranslation,
+        name::NameTranslation, store::StoreTranslation, utils::clear_invalid_fk,
+        PullTranslateResult, PushTranslateResult, SyncTranslation,
     },
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, PurchaseOrderDelete, PurchaseOrderFilter,
-    PurchaseOrderRepository, PurchaseOrderRow, PurchaseOrderStatsRow, PurchaseOrderStatus,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, CurrencyRowRepository, EqualFilter, PurchaseOrderDelete,
+    PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderRow, PurchaseOrderStatsRow,
+    PurchaseOrderStatus, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -187,7 +187,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyPurchaseOrderRow {
@@ -267,6 +267,16 @@ impl SyncTranslation for PurchaseOrderTranslation {
             .clone()
             .map(|oms_field| oms_field.status)
             .unwrap_or_else(|| from_legacy_status(&status, sent_datetime));
+
+        let currency_id = clear_invalid_fk(
+            connection,
+            "purchase_order",
+            &id,
+            "currency_id",
+            currency_id,
+            |c, id| CurrencyRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let result = PurchaseOrderRow {
             id,
@@ -501,7 +511,7 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_purchase_order_translation",
-            MockDataInserts::none().purchase_order(),
+            MockDataInserts::none().purchase_order().currencies(),
         )
         .await;
 
@@ -527,7 +537,7 @@ mod tests {
     async fn test_purchase_order_translation_to_sync_record() {
         let (_, connection, _, _) = setup_all(
             "test_purchase_order_translation_to_sync_record",
-            MockDataInserts::none().purchase_order(),
+            MockDataInserts::none().purchase_order().currencies(),
         )
         .await;
 

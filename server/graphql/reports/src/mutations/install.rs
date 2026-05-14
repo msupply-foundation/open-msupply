@@ -22,9 +22,12 @@ pub fn install_uploaded_reports(ctx: &Context<'_>, file_id: String) -> Result<Ve
 
     let service_provider = ctx.service_provider();
     let settings = ctx.get_settings();
+    let service_ctx = service_provider
+        .basic_context()
+        .map_err(|e| StandardGraphqlError::InternalError(format_error(&e)).extend())?;
 
     service_provider
         .report_service
-        .install_uploaded_reports(settings, UploadedFile { file_id })
+        .install_uploaded_reports(&service_ctx, settings, UploadedFile { file_id })
         .map_err(|e| StandardGraphqlError::InternalError(format_error(&e)).extend())
 }

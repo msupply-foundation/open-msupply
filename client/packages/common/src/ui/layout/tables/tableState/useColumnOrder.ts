@@ -17,6 +17,8 @@ export const useColumnOrder = <T extends MRT_RowData>(
   enableExpanding: MRT_TableOptions<T>['enableExpanding']
 ) => {
   const globalDefaults = useGlobalTableDefaults(tableId);
+  const hasRowSelection = !!enableRowSelection;
+  const hasExpanding = !!enableExpanding;
   const initial = useMemo(() => {
     for (const col of columns) {
       // if column has a custom columnIndex, remove it from its current position
@@ -33,24 +35,46 @@ export const useColumnOrder = <T extends MRT_RowData>(
     return getDefaultColumnOrderIds({
       columns,
       state: {},
-      enableRowSelection, // adds `mrt-row-select`
-      enableExpanding, // adds `mrt-row-expand`
+      enableRowSelection: hasRowSelection, // adds `mrt-row-select`
+      enableExpanding: hasExpanding, // adds `mrt-row-expand`
     } as MRT_StatefulTableOptions<MRT_RowData>);
-  }, [columns, enableRowSelection, enableExpanding]);
+  }, [columns, hasRowSelection, hasExpanding]);
+
+  // Saved/global column orders may have been persisted before
+  // `enableExpanding` flipped on (e.g. before the user toggled grouping).
+  // Such orders won't contain `mrt-row-expand`, and MRT renders unknown
+  // columns at the tail — putting the expand chevron at the END of the
+  // table. Splice it in just after `mrt-row-select` so it sits with the
+  // other built-in display columns on the left.
+  const withExpandColumn = useCallback(
+    (order: MRT_ColumnOrderState): MRT_ColumnOrderState => {
+      if (!enableExpanding || order.includes('mrt-row-expand')) return order;
+      const insertAt = order.indexOf('mrt-row-select');
+      const next = [...order];
+      next.splice(insertAt === -1 ? 0 : insertAt + 1, 0, 'mrt-row-expand');
+      return next;
+    },
+    [enableExpanding]
+  );
 
   const [state, setState] = useState<MRT_ColumnOrderState>(
-    getSavedState(tableId)?.columnOrder ??
-      globalDefaults?.columnOrder ??
-      initial
+    withExpandColumn(
+      getSavedState(tableId)?.columnOrder ??
+        globalDefaults?.columnOrder ??
+        initial
+    )
   );
 
   // If initial state changes (due to plugin column loading, for example) and no
   // custom column order has been saved, update the column order to the new
-  // default
+  // default. globalDefaults?.columnOrder is included so the saved global order
+  // applies when preferences load after this hook has already mounted.
+  // Also re-runs when `enableExpanding` flips so the saved order gets the
+  // expand column spliced in.
   useEffect(() => {
-    if (!getSavedState(tableId)?.columnOrder)
-      setState(globalDefaults?.columnOrder ?? initial);
-  }, [initial, enableExpanding]);
+    const saved = getSavedState(tableId)?.columnOrder;
+    setState(withExpandColumn(saved ?? globalDefaults?.columnOrder ?? initial));
+  }, [initial, globalDefaults?.columnOrder, enableExpanding, withExpandColumn]);
 
   const update = useCallback<
     NonNullable<MRT_TableOptions<MRT_RowData>['onColumnOrderChange']>

@@ -40,7 +40,7 @@ export const AppBarButtonsComponent = ({
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
 
-  const { fetchAsync, isLoading } = useAssets.document.listAll();
+  const { fetchAsync, isPending: isLoading } = useAssets.document.listAll();
   const { data: properties } = useAssetProperties();
 
   const navigate = useNavigate();
@@ -48,7 +48,7 @@ export const AppBarButtonsComponent = ({
   const { mutateAsync: fetchFromGS1 } = useAssets.document.gs1();
   const { mutateAsync: saveNewAsset } = useAssets.document.insert();
   const { insertLog, invalidateQueries } = useAssets.log.insert();
-  const newAssetData = useRef<DraftAsset>();
+  const newAssetData = useRef<DraftAsset | undefined>(undefined);
 
   const equipmentRoute = RouteBuilder.create(AppRoute.Coldchain).addPart(
     AppRoute.Equipment

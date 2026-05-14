@@ -50,6 +50,7 @@ export function AutocompleteMulti<
   slotProps,
   loadingText,
   noOptionsText,
+  inputProps,
   ...restOfAutocompleteProps
 }: PropsWithChildren<
   AutocompleteMultiProps<T, true, DisableClearable, FreeSolo, ChipComponent>
@@ -58,6 +59,7 @@ export function AutocompleteMulti<
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       {...props}
+      {...inputProps}
       autoFocus={autoFocus}
       slotProps={{
         input: {

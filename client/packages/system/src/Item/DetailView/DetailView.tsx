@@ -40,7 +40,11 @@ export const ItemDetailView = () => {
       case InvoiceNodeType.InboundShipment:
         navigate(
           RouteBuilder.create(AppRoute.Replenishment)
-            .addPart(AppRoute.InboundShipment)
+            .addPart(
+              ledger.isExternal
+                ? AppRoute.InboundShipmentExternal
+                : AppRoute.InboundShipment
+            )
             .addPart(String(ledger.invoiceId))
             .build()
         );

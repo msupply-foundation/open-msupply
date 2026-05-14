@@ -21,9 +21,8 @@ export const usePreferences = (): Partial<PreferencesNode> => {
     },
     // Only refetch when explicitly invalidated (on sync/updating preferences)
     // Or when switching stores
-    cacheTime: Infinity,
+    gcTime: Infinity,
     staleTime: Infinity,
-    suspense: true,
     enabled: !!storeId,
   });
 
