@@ -130,7 +130,9 @@ pub trait PluginServiceTrait: Sync + Send {
                 code: row.code,
                 version: row.version,
                 kind: InstalledPluginKind::Backend,
-                types: row.types.0.iter().map(|t| format!("{:?}", t)).collect(),
+                types: row.types.0.iter().filter_map(|t| {
+                    serde_json::to_value(t).ok().and_then(|v| v.as_str().map(ToString::to_string))
+                }).collect(),
             });
         }
 
@@ -345,8 +347,80 @@ mod test {
     };
     use repository::{
         mock::{MockData, MockDataInserts},
-        BackendPluginRow, BackendPluginRowRepository,
+        BackendPluginRow, BackendPluginRowRepository, FrontendPluginRow,
+        FrontendPluginRowRepository, FrontendPluginTypes, PluginType, PluginTypes,
     };
+
+    use super::InstalledPluginKind;
+
+    #[actix_rt::test]
+    async fn installed_plugins() {
+        let backend_row = BackendPluginRow {
+            id: "backend-1".to_string(),
+            code: "my_backend_plugin".to_string(),
+            version: "1.2.3".to_string(),
+            types: PluginTypes(vec![
+                PluginType::AverageMonthlyConsumption,
+                PluginType::GetConsumption,
+            ]),
+            ..Default::default()
+        };
+
+        let ServiceTestContext {
+            service_provider,
+            service_context,
+            connection,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "installed_plugins",
+            MockDataInserts::none(),
+            MockData {
+                backend_plugin: vec![backend_row.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        // Insert a frontend plugin directly (no MockData field for frontend plugins)
+        let frontend_row = FrontendPluginRow {
+            id: "frontend-1".to_string(),
+            code: "my_frontend_plugin".to_string(),
+            version: "2.0.0".to_string(),
+            types: FrontendPluginTypes(vec!["report".to_string(), "dashboard".to_string()]),
+            ..Default::default()
+        };
+        FrontendPluginRowRepository::new(&connection)
+            .upsert_one(frontend_row.clone())
+            .unwrap();
+
+        let mut plugins = service_provider
+            .plugin_service
+            .installed_plugins(&service_context)
+            .unwrap();
+
+        // Sort for deterministic ordering
+        plugins.sort_by(|a, b| a.id.cmp(&b.id));
+
+        assert_eq!(plugins.len(), 2);
+
+        let backend = &plugins[0];
+        assert_eq!(backend.id, "backend-1");
+        assert_eq!(backend.code, "my_backend_plugin");
+        assert_eq!(backend.version, "1.2.3");
+        assert_eq!(backend.kind, InstalledPluginKind::Backend);
+        // Verify serde snake_case formatting, not Rust Debug (e.g. not "AverageMonthlyConsumption")
+        assert_eq!(
+            backend.types,
+            vec!["average_monthly_consumption", "get_consumption"]
+        );
+
+        let frontend = &plugins[1];
+        assert_eq!(frontend.id, "frontend-1");
+        assert_eq!(frontend.code, "my_frontend_plugin");
+        assert_eq!(frontend.version, "2.0.0");
+        assert_eq!(frontend.kind, InstalledPluginKind::Frontend);
+        assert_eq!(frontend.types, vec!["report", "dashboard"]);
+    }
 
     #[actix_rt::test]
     async fn install_uploaded_plugin() {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FileList } from '../../../../../coldchain/src/Equipment/Components';
 import { Environment } from '@openmsupply-client/config';
 import {
   useTranslation,
@@ -15,42 +16,42 @@ interface PluginUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   install: (fileId: string) => Promise<unknown>;
-}
-
-interface UploadedFile {
-  name: string;
-  file: File;
+  isInstalling: boolean;
 }
 
 export const PluginUploadModal = ({
   isOpen,
   onClose,
   install,
+  isInstalling,
 }: PluginUploadModalProps) => {
   const t = useTranslation();
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
   const { error, success } = useNotification();
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const onUpload = (files: File[]) => {
-    const invalidFiles = files.filter(f => !f.name.endsWith('.json'));
+  const onUpload = (newFiles: File[]) => {
+    const invalidFiles = newFiles.filter(f => !f.name.endsWith('.json'));
     if (invalidFiles.length > 0) {
       error(t('error.plugin-invalid-file'))();
       return;
     }
-    setUploadedFiles(files.map(file => ({ name: file.name, file })));
+    setFiles(newFiles);
+  };
+
+  const removeFile = (name: string) => {
+    setFiles(prev => prev.filter(f => f.name !== name));
   };
 
   const onOk = async () => {
-    if (!uploadedFiles.length) return;
+    if (!files.length) return;
 
-    const url = `${Environment.REPORT_UPLOAD_URL}`;
     try {
-      for (const { file } of uploadedFiles) {
+      for (const file of files) {
         const formData = new FormData();
         formData.append('files', file);
-        const response = await fetch(url, {
+        const response = await fetch(Environment.REPORT_UPLOAD_URL, {
           method: 'POST',
           headers: {
             Accept: 'application/json',
@@ -58,6 +59,9 @@ export const PluginUploadModal = ({
           credentials: 'include',
           body: formData,
         });
+        if (!response.ok) {
+          throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+        }
         const result = await response.json();
         await install(result['file-id']);
       }
@@ -69,15 +73,17 @@ export const PluginUploadModal = ({
     }
   };
 
-  const removeFile = (name: string) => {
-    setUploadedFiles(prev => prev.filter(f => f.name !== name));
-  };
-
   return (
     <Modal
       title={t('title.upload-plugin')}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-      okButton={<DialogButton variant="ok" onClick={onOk} />}
+      okButton={
+        <DialogButton
+          variant="ok"
+          onClick={onOk}
+          disabled={isInstalling || !files.length}
+        />
+      }
     >
       <DetailContainer>
         <Box flex={1} display="flex" alignItems="flex-end">
@@ -95,35 +101,16 @@ export const PluginUploadModal = ({
             justifyContent: 'center',
           }}
         >
-          <UploadFile
-            onUpload={onUpload}
-            files={uploadedFiles.map(f => f.file)}
+          <UploadFile onUpload={onUpload} files={files} />
+        </Box>
+        <Box sx={{ display: 'flex', width: '300px' }}>
+          <FileList
+            assetId={'plugin-data'}
+            files={files}
+            padding={0.5}
+            removeFile={removeFile}
           />
         </Box>
-        {uploadedFiles.length > 0 && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', mt: 2 }}>
-            {uploadedFiles.map(({ name }) => (
-              <Box
-                key={name}
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: 0.5,
-                }}
-              >
-                <Typography variant="body2">{name}</Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ cursor: 'pointer', color: 'error.main' }}
-                  onClick={() => removeFile(name)}
-                >
-                  x
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-        )}
       </DetailContainer>
     </Modal>
   );

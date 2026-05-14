@@ -20,7 +20,7 @@ export const PluginsList = () => {
 
   const {
     query: { data, isError, isFetching },
-    install: { installMutation },
+    install: { installMutation, installLoading },
   } = useInstalledPlugins();
 
   const { isOpen, onClose, onOpen } = useEditModal();
@@ -73,6 +73,7 @@ export const PluginsList = () => {
           isOpen={isOpen}
           onClose={onClose}
           install={installMutation}
+          isInstalling={installLoading}
         />
       )}
       <MaterialTable table={table} />
