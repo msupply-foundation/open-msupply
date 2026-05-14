@@ -1,4 +1,4 @@
-import { useMutation } from '@openmsupply-client/common';
+import { useMutation, useTranslation } from '@openmsupply-client/common';
 import { useLocationGraphQL } from '../useLocationGraphQL';
 import { LOCATION } from './keys';
 import { LocationRowFragment } from '../operations.generated';
@@ -12,14 +12,14 @@ export const useLocation = () => {
   // CREATE
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreateLocation();
 
   // UPDATE
   const {
     mutateAsync: update,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     error: updateError,
   } = useUpdateLocation();
 
@@ -35,11 +35,12 @@ export const useLocation = () => {
 
 const useCreateLocation = () => {
   const { locationApi, queryClient, storeId } = useLocationGraphQL();
+  const t = useTranslation();
 
   const mutationFn = async (input: LocationRowFragment) => {
     const { id, code, name, onHold, locationType, volume } = input;
 
-    await locationApi.insertLocation({
+    const result = await locationApi.insertLocation({
       input: {
         id,
         code,
@@ -50,12 +51,25 @@ const useCreateLocation = () => {
       },
       storeId,
     });
+
+    const { insertLocation } = result;
+    if (insertLocation.__typename === 'InsertLocationError') {
+      const { error } = insertLocation;
+      if (error.__typename === 'UniqueValueViolation') {
+        throw new Error(
+          t('error.unique-value-violation', { field: error.field })
+        );
+      }
+      throw new Error(error.description);
+    }
   };
 
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([LOCATION]);
+      queryClient.invalidateQueries({
+        queryKey: [LOCATION]
+      });
     },
     onError: e => {
       console.error(e);
@@ -65,11 +79,12 @@ const useCreateLocation = () => {
 
 const useUpdateLocation = () => {
   const { locationApi, queryClient, storeId } = useLocationGraphQL();
+  const t = useTranslation();
 
   const mutationFn = async (input: LocationRowFragment) => {
     const { id, code, name, onHold, locationType, volume } = input;
 
-    await locationApi.updateLocation({
+    const result = await locationApi.updateLocation({
       input: {
         id,
         code,
@@ -80,12 +95,25 @@ const useUpdateLocation = () => {
       },
       storeId,
     });
+
+    const { updateLocation } = result;
+    if (updateLocation.__typename === 'UpdateLocationError') {
+      const { error } = updateLocation;
+      if (error.__typename === 'UniqueValueViolation') {
+        throw new Error(
+          t('error.unique-value-violation', { field: error.field })
+        );
+      }
+      throw new Error(error.description);
+    }
   };
 
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([LOCATION]);
+      queryClient.invalidateQueries({
+        queryKey: [LOCATION]
+      });
     },
     onError: e => {
       console.error(e);
@@ -107,7 +135,9 @@ const useDeleteLocation = () => {
   const { mutateAsync: deleteMutation } = useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([LOCATION]);
+      queryClient.invalidateQueries({
+        queryKey: [LOCATION]
+      });
     },
   });
 

@@ -2148,6 +2148,30 @@ mod test {
             .unwrap()
             .unwrap();
         assert_eq!(updated.delivered_datetime, original_delivered);
+
+        // ExceedsMaximumBackdatingDays: tighten the cap and try a date older than max_days
+        PreferenceRowRepository::new(&_connection)
+            .upsert_one(&PreferenceRow {
+                id: "backdating_global".to_string(),
+                key: "backdating".to_string(),
+                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":1}"#.to_string(),
+                store_id: None,
+            })
+            .unwrap();
+
+        let three_days_ago = now - Duration::days(3);
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: received_inbound(now).id,
+                    received_datetime: Some(three_days_ago),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(UpdateInboundShipmentError::ExceedsMaximumBackdatingDays)
+        );
     }
 
     #[actix_rt::test]

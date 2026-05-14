@@ -11,6 +11,7 @@ pub enum PropertyNodeValueType {
     Boolean,
     Integer,
     Float,
+    Date,
 }
 
 #[derive(PartialEq, Debug)]

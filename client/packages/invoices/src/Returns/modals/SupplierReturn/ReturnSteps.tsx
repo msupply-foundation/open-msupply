@@ -7,6 +7,10 @@ import {
   RecordPatch,
   Alert,
   AlertColor,
+  Box,
+  BasicTextInput,
+  InputWithLabelRow,
+  Typography,
 } from '@openmsupply-client/common';
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
 import { ReturnReasonsTable } from '../ReturnReasonsTable';
@@ -25,7 +29,10 @@ interface ReturnStepsProps {
   setZeroQuantityAlert: React.Dispatch<
     React.SetStateAction<AlertColor | undefined>
   >;
-
+  theirReference: string;
+  onTheirReferenceChange: (value: string) => void;
+  isDisabled: boolean;
+  returnToName?: string;
   returnId?: string;
 }
 
@@ -35,10 +42,14 @@ export const ReturnSteps = ({
   update,
   zeroQuantityAlert,
   setZeroQuantityAlert,
+  theirReference,
+  onTheirReferenceChange,
+  isDisabled,
+  returnToName,
   returnId,
 }: ReturnStepsProps) => {
   const t = useTranslation();
-  const isDisabled = useReturns.utils.supplierIsDisabled();
+  const { data } = useReturns.document.supplierReturn();
 
   const returnsSteps = [
     { tab: Tabs.Quantity, label: t('label.select-quantity'), description: '' },
@@ -60,6 +71,35 @@ export const ReturnSteps = ({
   return (
     <TabContext value={currentTab}>
       <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 8,
+          py: 2,
+          px: 2,
+        }}
+      >
+        <InputWithLabelRow
+          label={t('label.return-to')}
+          Input={
+            <Typography>
+              {returnToName ?? data?.otherPartyName ?? ''}
+            </Typography>
+          }
+        />
+        <InputWithLabelRow
+          label={t('label.supplier-ref')}
+          labelWidth={null}
+          labelProps={{ sx: { whiteSpace: 'nowrap' } }}
+          Input={
+            <BasicTextInput
+              disabled={isDisabled}
+              value={theirReference}
+              onChange={e => onTheirReferenceChange(e.target.value)}
+            />
+          }
+        />
+      </Box>
       <TabPanel value={Tabs.Quantity}>
         {zeroQuantityAlert && (
           <Alert severity={zeroQuantityAlert}>{alertMessage}</Alert>

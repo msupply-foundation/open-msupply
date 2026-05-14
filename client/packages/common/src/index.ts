@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useShallow } from 'zustand/react/shallow';
 
 export {
   KBarProvider,
@@ -18,7 +19,8 @@ export {
   useQuery,
   UseQueryResult,
   QueryClient,
-} from 'react-query';
+  keepPreviousData,
+} from '@tanstack/react-query';
 
 export {
   matchPath,
@@ -48,4 +50,4 @@ export * from './api';
 export * from './authentication';
 export * from './plugins';
 
-export { create };
+export { create, useShallow };

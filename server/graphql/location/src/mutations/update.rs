@@ -2,7 +2,7 @@ use async_graphql::*;
 
 use graphql_core::{
     simple_generic_errors::{
-        DatabaseError, InternalError, RecordBelongsToAnotherStore, RecordNotFound,
+        DatabaseError, InternalError, RecordBelongsToAnotherStore, RecordNotFound, UniqueValueKey,
         UniqueValueViolation,
     },
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -101,10 +101,25 @@ fn map_error(error: ServiceError) -> Result<UpdateLocationErrorInterface> {
     let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
+        // Structured Errors
+        ServiceError::LocationDoesNotExist => {
+            return Ok(UpdateLocationErrorInterface::LocationNotFound(
+                RecordNotFound,
+            ))
+        }
+        ServiceError::CodeAlreadyExists => {
+            return Ok(UpdateLocationErrorInterface::UniqueValueViolation(
+                UniqueValueViolation(UniqueValueKey::Code),
+            ))
+        }
+        ServiceError::LocationDoesNotBelongToCurrentStore => {
+            return Ok(
+                UpdateLocationErrorInterface::RecordBelongsToAnotherStore(
+                    RecordBelongsToAnotherStore,
+                ),
+            )
+        }
         // Standard Graphql Errors
-        ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::CodeAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::LocationDoesNotBelongToCurrentStore => BadUserInput(formatted_error),
         ServiceError::UpdatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };

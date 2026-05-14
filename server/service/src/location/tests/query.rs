@@ -162,6 +162,72 @@ mod query {
     }
 
     #[actix_rt::test]
+    async fn location_service_sort_by_name_secondary_sort_by_code() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "test_location_sort_name_then_code",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        // Insert three locations with the same name but different codes,
+        // in an order that wouldn't sort correctly by chance (id or insertion order)
+        LocationRow {
+            id: "loc_a".to_string(),
+            name: "Same Name".to_string(),
+            code: "code_c".to_string(),
+            store_id: "store_a".to_string(),
+            ..Default::default()
+        }
+        .upsert(&connection)
+        .unwrap();
+
+        LocationRow {
+            id: "loc_b".to_string(),
+            name: "Same Name".to_string(),
+            code: "code_a".to_string(),
+            store_id: "store_a".to_string(),
+            ..Default::default()
+        }
+        .upsert(&connection)
+        .unwrap();
+
+        LocationRow {
+            id: "loc_c".to_string(),
+            name: "Same Name".to_string(),
+            code: "code_b".to_string(),
+            store_id: "store_a".to_string(),
+            ..Default::default()
+        }
+        .upsert(&connection)
+        .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.location_service;
+
+        // Sort by name ascending — secondary sort by code should put code_a first
+        let result = service
+            .get_locations(
+                &context,
+                None,
+                None,
+                Some(Sort {
+                    key: LocationSortField::Name,
+                    desc: None,
+                }),
+            )
+            .unwrap();
+
+        let result_codes: Vec<String> = result
+            .rows
+            .into_iter()
+            .map(|l| l.location_row.code)
+            .collect();
+
+        assert_eq!(result_codes, vec!["code_a", "code_b", "code_c"]);
+    }
+
+    #[actix_rt::test]
     async fn location_service_assigned_to_asset() {
         let (_mock_data, _, connection_manager, _) =
             setup_all("test_location_asset_assigned", MockDataInserts::all()).await;
