@@ -2,11 +2,41 @@ import { useState } from 'react';
 import {
   FnUtils,
   isEmpty,
+  LocaleKey,
+  TypedTFunction,
   useMutation,
   useTranslation,
 } from '@openmsupply-client/common';
-import { AncillaryItemFragment } from '../../operations.generated';
+import {
+  AncillaryItemFragment,
+  UpsertAncillaryItemMutation,
+} from '../../operations.generated';
 import { useItemApi, useItemGraphQL } from '../useItemApi';
+
+type UpsertAncillaryItemError = Extract<
+  UpsertAncillaryItemMutation['centralServer']['ancillaryItem']['upsertAncillaryItem'],
+  { __typename: 'UpsertAncillaryItemError' }
+>['error'];
+
+function translateError(
+  error: UpsertAncillaryItemError,
+  t: TypedTFunction<LocaleKey>
+): string {
+  switch (error.__typename) {
+    case 'DuplicateAncillaryItem':
+      return t('error.duplicate-ancillary-item');
+    case 'AncillaryCycleDetected':
+      return t('error.ancillary-cycle-detected');
+    case 'AncillaryMaxDepthExceeded':
+      return t('error.ancillary-max-depth-exceeded', {
+        max: error.max,
+        actual: error.actual,
+      });
+    default:
+      // InternalError / DatabaseError — surface server description, not translated
+      return error.description;
+  }
+}
 
 export type DraftAncillaryItem = {
   ancillaryItemId: string | null;
@@ -47,18 +77,20 @@ export function useUpsertAncillaryItem({
           ancillaryQuantity: draft.ancillaryQuantity,
         },
       });
-      // empty when permission denied or similar generic error
-      if (!isEmpty(apiResult)) {
-        const result =
-          apiResult.centralServer.ancillaryItem.upsertAncillaryItem;
-        if (result.__typename === 'AncillaryItemNode') {
-          return result;
-        }
+      if (isEmpty(apiResult)) {
+        // permission denied or similar — surfaced upstream by the error toast
+        throw new Error();
       }
-      throw new Error(t('error.failed-to-save-ancillary-item'));
+      const result = apiResult.centralServer.ancillaryItem.upsertAncillaryItem;
+      if (result.__typename === 'AncillaryItemNode') {
+        return result;
+      }
+      throw new Error(translateError(result.error, t));
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(keys.detail(principalItemId));
+      queryClient.invalidateQueries({
+        queryKey: keys.detail(principalItemId),
+      });
     },
   });
 
@@ -67,6 +99,12 @@ export function useUpsertAncillaryItem({
     isComplete: isComplete(draft, principalItemId),
     updateDraft: (update: Partial<DraftAncillaryItem>) =>
       setDraft(currentDraft => ({ ...currentDraft, ...update })),
+    resetDraft: () =>
+      setDraft({
+        ancillaryItemId: null,
+        itemQuantity: 1,
+        ancillaryQuantity: 1,
+      }),
     save: mutateAsync,
   };
 }

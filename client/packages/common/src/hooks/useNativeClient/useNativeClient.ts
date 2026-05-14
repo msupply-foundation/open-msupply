@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { uniqWith } from '@common/utils';
 import { KeepAwake } from '@capacitor-community/keep-awake';
@@ -41,7 +41,8 @@ type NativeClientState = {
 export const useNativeClient = ({
   autoconnect,
   discovery,
-}: { discovery?: boolean; autoconnect?: boolean } = {}) => {
+  standalone,
+}: { discovery?: boolean; autoconnect?: boolean; standalone?: boolean } = {}) => {
   const nativeAPI = getNativeAPI();
   const { token } = useAuthContext();
 
@@ -104,14 +105,13 @@ export const useNativeClient = ({
     nativeAPI.startServerDiscovery();
   }, [discovery, nativeAPI]);
 
-  const readLog = async () => {
-    const noResult = 'log unavailable';
+  const readLog = async (): Promise<string | null> => {
     const result = await nativeAPI?.readLog();
 
-    if (!result) return noResult;
+    if (!result) return null;
     if (result.error) console.error(result.error);
 
-    return result.log || noResult;
+    return result.log || null;
   };
 
   const allowSleep = async () => {
@@ -210,20 +210,44 @@ export const useNativeClient = ({
     });
   }, [startDiscovery]);
 
-  // Auto connect if autoconnect=true and server found matching previousConnectedServer
+  // Guard against re-firing the autoconnect on every state update — `state`
+  // is a dep of the effect below and changes each mDNS poll.
+  const hasAutoConnectedRef = useRef(false);
+
+  // Auto connect if autoconnect=true and server found matching previousConnectedServer.
+  // In standalone mode, also auto-connect directly to the bundled local server
+  // at DEFAULT_LOCAL_SERVER when no server is configured (issue #10036).
   useEffect(() => {
     const { previousServer } = state;
     if (!nativeAPI) return;
     if (!autoconnect) return;
+    if (hasAutoConnectedRef.current) return;
 
     getPreference('manualServer').then(manualServer => {
       if (manualServer) {
+        hasAutoConnectedRef.current = true;
         connectToServer(manualServer).then(handleConnectionResult);
-      } else if (previousServer !== null) {
+        return;
+      }
+      if (previousServer !== null) {
+        hasAutoConnectedRef.current = true;
         connectToPrevious(previousServer);
+        return;
+      }
+      if (standalone) {
+        hasAutoConnectedRef.current = true;
+        connectToServer({ ...DEFAULT_LOCAL_SERVER }).then(
+          handleConnectionResult
+        );
       }
     });
-  }, [state.previousServer, autoconnect, nativeAPI, connectToPrevious]);
+  }, [
+    state.previousServer,
+    autoconnect,
+    standalone,
+    nativeAPI,
+    connectToPrevious,
+  ]);
 
   return {
     ...state,

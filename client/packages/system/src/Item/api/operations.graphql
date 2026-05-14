@@ -542,6 +542,16 @@ mutation upsertAncillaryItem(
         ... on AncillaryItemNode {
           ...AncillaryItem
         }
+        ... on UpsertAncillaryItemError {
+          error {
+            __typename
+            description
+            ... on AncillaryMaxDepthExceeded {
+              max
+              actual
+            }
+          }
+        }
       }
     }
   }

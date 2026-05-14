@@ -1582,7 +1582,20 @@ export type UpsertAncillaryItemMutation = {
               unitName?: string | null;
             } | null;
           }
-        | { __typename: 'UpsertAncillaryItemError' };
+        | {
+            __typename: 'UpsertAncillaryItemError';
+            error:
+              | { __typename: 'AncillaryCycleDetected'; description: string }
+              | {
+                  __typename: 'AncillaryMaxDepthExceeded';
+                  max: number;
+                  actual: number;
+                  description: string;
+                }
+              | { __typename: 'DatabaseError'; description: string }
+              | { __typename: 'DuplicateAncillaryItem'; description: string }
+              | { __typename: 'InternalError'; description: string };
+          };
     };
   };
 };
@@ -2307,6 +2320,16 @@ export const UpsertAncillaryItemDocument = gql`
           __typename
           ... on AncillaryItemNode {
             ...AncillaryItem
+          }
+          ... on UpsertAncillaryItemError {
+            error {
+              __typename
+              description
+              ... on AncillaryMaxDepthExceeded {
+                max
+                actual
+              }
+            }
           }
         }
       }
