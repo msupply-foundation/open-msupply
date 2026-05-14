@@ -37,7 +37,17 @@ export const InputWithLabelRow = ({
         sx={{ width: labelWidth, fontWeight: 'bold', ...labelSx }}
         {...labelPropsRest}
       >
-        {label}
+        {/* Split on '/' and insert <wbr /> so browsers can wrap at slashes without visible whitespace */}
+        {label.split('/').map((part, i) => (
+          <React.Fragment key={i}>
+            {i > 0 && (
+              <>
+                /<wbr />
+              </>
+            )}
+            {part}
+          </React.Fragment>
+        ))}
         {labelRight ? '' : ':'}
       </FormLabel>
       {Input}

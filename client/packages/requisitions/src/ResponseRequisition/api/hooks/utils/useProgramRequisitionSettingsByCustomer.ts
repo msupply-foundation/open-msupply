@@ -6,7 +6,8 @@ export const useProgramRequisitionSettingsByCustomer = (
 ) => {
   const api = useResponseApi();
 
-  return useQuery(api.keys.programSettings(customerNameId), () =>
-    api.programRequisitionSettingsByCustomer(customerNameId)
-  );
+  return useQuery({
+    queryKey: api.keys.programSettings(customerNameId),
+    queryFn: () => api.programRequisitionSettingsByCustomer(customerNameId),
+  });
 };

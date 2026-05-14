@@ -40,7 +40,14 @@ export const ErrorAlert = () => {
       RouteBuilder.create(AppRoute.Initialise).addWildCard().build(),
       location.pathname
     ) ||
-    matchPath(RouteBuilder.create(AppRoute.Android).build(), location.pathname)
+    matchPath(
+      RouteBuilder.create(AppRoute.Android).build(),
+      location.pathname
+    ) ||
+    matchPath(
+      RouteBuilder.create(AppRoute.Discovery).addWildCard().build(),
+      location.pathname
+    )
   ) {
     return null;
   }

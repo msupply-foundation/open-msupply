@@ -7,13 +7,20 @@ export const useAssetUpdate = () => {
   const queryClient = useQueryClient();
   const api = useAssetApi();
 
-  return useMutation(async (asset: Partial<DraftAsset>) => api.update(asset), {
+  return useMutation({
+    mutationFn: async (asset: Partial<DraftAsset>) => api.update(asset),
+
     onSuccess: id => {
-      queryClient.invalidateQueries([LOCATION]);
-      queryClient.invalidateQueries(api.keys.detail(id));
+      queryClient.invalidateQueries({
+        queryKey: [LOCATION]
+      });
+      queryClient.invalidateQueries({
+        queryKey: api.keys.detail(id)
+      });
     },
+
     onError: e => {
       console.error(e);
-    },
+    }
   });
 };

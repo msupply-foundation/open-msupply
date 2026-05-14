@@ -22,7 +22,7 @@ import { useIsColdRoom } from '../utils';
 
 type ActionValue = 'update-status' | 'record-mapping';
 
-const ColdRoomActionButton = ({
+export const ColdRoomActionButton = ({
   assetId,
 }: {
   assetId: string;
