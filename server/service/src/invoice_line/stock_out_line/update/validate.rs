@@ -1,11 +1,13 @@
+use std::convert::TryFrom;
+
 use super::{UpdateStockOutLine, UpdateStockOutLineError};
 use crate::{
     check_vvm_status_exists,
-    invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
+    invoice::{check_invoice_exists, check_invoice_is_editable, check_store},
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_existing_stock_line, check_location_on_hold,
         invoice_backdated_date,
-        stock_out_line::{adjust_for_residual_packs, BatchPair},
+        stock_out_line::{adjust_for_residual_packs, BatchPair, StockOutType},
         validate::{check_line_belongs_to_invoice, check_line_exists, check_number_of_packs},
         LocationIsOnHoldError,
     },
@@ -48,14 +50,8 @@ pub fn validate(
         return Err(StockLineAlreadyExistsInInvoice(existing_stock.id));
     }
 
-    let stock_out_type = if let Some(r#type) = &input.r#type {
-        if !check_invoice_type(&invoice, r#type.to_domain()) {
-            return Err(InvoiceTypeDoesNotMatch);
-        }
-        r#type
-    } else {
-        return Err(NoInvoiceType);
-    };
+    let stock_out_type = StockOutType::try_from(&invoice.r#type)
+        .map_err(|_| InvoiceTypeDoesNotMatch)?;
 
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
@@ -71,10 +67,10 @@ pub fn validate(
 
     let item = line.item_row.clone();
 
-    if !check_batch_on_hold(&batch_pair.main_batch, stock_out_type) {
+    if !check_batch_on_hold(&batch_pair.main_batch, &stock_out_type) {
         return Err(BatchIsOnHold);
     }
-    check_location_on_hold(&batch_pair.main_batch.location_row, stock_out_type).map_err(
+    check_location_on_hold(&batch_pair.main_batch.location_row, &stock_out_type).map_err(
         |e| match e {
             LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
         },

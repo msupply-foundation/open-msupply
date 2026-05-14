@@ -1,3 +1,5 @@
+use std::convert::TryFrom;
+
 use chrono::NaiveDateTime;
 use repository::InvoiceRow;
 use repository::InvoiceType;
@@ -33,6 +35,20 @@ impl StockOutType {
             StockOutType::Prescription => InvoiceType::Prescription,
             StockOutType::SupplierReturn => InvoiceType::SupplierReturn,
             StockOutType::InventoryReduction => InvoiceType::InventoryReduction,
+        }
+    }
+}
+
+impl TryFrom<&InvoiceType> for StockOutType {
+    type Error = ();
+
+    fn try_from(invoice_type: &InvoiceType) -> Result<Self, Self::Error> {
+        match invoice_type {
+            InvoiceType::OutboundShipment => Ok(StockOutType::OutboundShipment),
+            InvoiceType::Prescription => Ok(StockOutType::Prescription),
+            InvoiceType::SupplierReturn => Ok(StockOutType::SupplierReturn),
+            InvoiceType::InventoryReduction => Ok(StockOutType::InventoryReduction),
+            _ => Err(()),
         }
     }
 }

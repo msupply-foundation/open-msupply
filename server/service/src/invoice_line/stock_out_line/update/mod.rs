@@ -1,4 +1,3 @@
-use super::StockOutType;
 use crate::{
     invoice::update_picked_date::{update_picked_date, UpdatePickedDateError},
     invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
@@ -18,7 +17,6 @@ use validate::validate;
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct UpdateStockOutLine {
     pub id: String,
-    pub r#type: Option<StockOutType>,
     pub stock_line_id: Option<String>,
     pub number_of_packs: Option<f64>,
     pub prescribed_quantity: Option<f64>,
@@ -36,7 +34,6 @@ pub enum UpdateStockOutLineError {
     DatabaseError(RepositoryError),
     InvoiceDoesNotExist,
     InvoiceTypeDoesNotMatch,
-    NoInvoiceType,
     NotThisStoreInvoice,
     NotThisInvoiceLine(String),
     CannotEditFinalised,
@@ -148,7 +145,7 @@ mod test {
             mock_item_a, mock_item_b_lines, mock_name_store_a, mock_outbound_shipment_a,
             mock_outbound_shipment_a_invoice_lines, mock_outbound_shipment_b_invoice_lines,
             mock_outbound_shipment_c, mock_outbound_shipment_c_invoice_lines,
-            mock_outbound_shipment_no_stock_line, mock_patient, mock_prescription_a_invoice_lines,
+            mock_outbound_shipment_no_stock_line, mock_patient,
             mock_stock_line_b, mock_stock_line_location_is_on_hold, mock_stock_line_on_hold,
             mock_store_a, mock_store_b, mock_store_c, stock_line_with_volume, MockDataInserts,
         },
@@ -188,7 +185,6 @@ mod test {
                 &context,
                 UpdateStockOutLine {
                     id: "invalid".to_string(),
-                    r#type: Some(StockOutType::OutboundShipment),
                     ..Default::default()
                 },
             ),
@@ -202,25 +198,10 @@ mod test {
                 UpdateStockOutLine {
                     id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
                     number_of_packs: Some(10.0),
-                    r#type: Some(StockOutType::OutboundShipment),
                     ..Default::default()
                 },
             ),
             Err(ServiceError::NotThisStoreInvoice)
-        );
-
-        // InvoiceTypeDoesNotMatch
-        assert_eq!(
-            service.update_stock_out_line(
-                &context,
-                UpdateStockOutLine {
-                    id: mock_prescription_a_invoice_lines()[0].id.clone(),
-                    number_of_packs: Some(10.0),
-                    r#type: Some(StockOutType::OutboundShipment),
-                    ..Default::default()
-                },
-            ),
-            Err(ServiceError::InvoiceTypeDoesNotMatch)
         );
 
         context.store_id = mock_store_c().id;
@@ -230,7 +211,6 @@ mod test {
                 &context,
                 UpdateStockOutLine {
                     id: mock_outbound_shipment_b_invoice_lines()[0].id.clone(),
-                    r#type: Some(StockOutType::OutboundShipment),
                     ..Default::default()
                 },
             ),
@@ -243,7 +223,6 @@ mod test {
                 &context,
                 UpdateStockOutLine {
                     id: mock_outbound_shipment_no_stock_line()[0].id.clone(),
-                    r#type: Some(StockOutType::OutboundShipment),
                     ..Default::default()
                 },
             ),
@@ -259,7 +238,6 @@ mod test {
                 UpdateStockOutLine {
                     id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
                     stock_line_id: Some("invalid".to_string()),
-                    r#type: Some(StockOutType::OutboundShipment),
                     ..Default::default()
                 },
             ),
@@ -273,7 +251,6 @@ mod test {
                 UpdateStockOutLine {
                     id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
                     number_of_packs: Some(-1.0),
-                    r#type: Some(StockOutType::OutboundShipment),
                     ..Default::default()
                 },
             ),
@@ -287,7 +264,6 @@ mod test {
                 UpdateStockOutLine {
                     id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
                     stock_line_id: Some(mock_stock_line_location_is_on_hold()[0].id.clone()),
-                    r#type: Some(StockOutType::OutboundShipment),
                     ..Default::default()
                 },
             ),
@@ -301,7 +277,6 @@ mod test {
                 UpdateStockOutLine {
                     id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
                     stock_line_id: Some(mock_stock_line_on_hold()[0].id.clone()),
-                    r#type: Some(StockOutType::OutboundShipment),
                     ..Default::default()
                 },
             ),
@@ -315,7 +290,6 @@ mod test {
                 UpdateStockOutLine {
                     id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
                     number_of_packs: Some(100.0),
-                    r#type: Some(StockOutType::OutboundShipment),
                     ..Default::default()
                 },
             ),
@@ -335,7 +309,6 @@ mod test {
                 UpdateStockOutLine {
                     id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
                     stock_line_id: Some(mock_item_b_lines()[0].id.clone()),
-                    r#type: Some(StockOutType::OutboundShipment),
                     ..Default::default()
                 },
             ),
@@ -371,7 +344,6 @@ mod test {
                 &context,
                 UpdateStockOutLine {
                     id: mock_outbound_shipment_c_invoice_lines()[0].id.clone(),
-                    r#type: Some(StockOutType::OutboundShipment),
                     note: Some("new note".to_string()),
                     ..Default::default()
                 },
@@ -416,7 +388,6 @@ mod test {
                     id: mock_outbound_shipment_c_invoice_lines()[0].id.clone(),
                     number_of_packs: Some(2.0),
                     total_before_tax: Some(18.00),
-                    r#type: Some(StockOutType::OutboundShipment),
                     ..Default::default()
                 },
             )
@@ -486,7 +457,6 @@ mod test {
                     stock_line_id: Some(mock_stock_line_b().id.clone()),
                     number_of_packs: Some(2.0),
                     total_before_tax: Some(10.99),
-                    r#type: Some(StockOutType::OutboundShipment),
                     ..Default::default()
                 },
             )
@@ -532,7 +502,6 @@ mod test {
                     id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
                     number_of_packs: Some(15.0),
                     total_before_tax: Some(10.99),
-                    r#type: Some(StockOutType::OutboundShipment),
                     ..Default::default()
                 },
             )
@@ -585,7 +554,6 @@ mod test {
                 &context,
                 UpdateStockOutLine {
                     id: "new_stock_out_line".to_string(),
-                    r#type: Some(StockOutType::OutboundShipment),
                     number_of_packs: Some(10.0),
                     ..Default::default()
                 },
@@ -755,7 +723,6 @@ mod test {
                 &context,
                 UpdateStockOutLine {
                     id: "prescription_stock_out_line1".to_string(),
-                    r#type: Some(StockOutType::Prescription),
                     number_of_packs: Some(10.0),
                     ..Default::default()
                 },
@@ -784,7 +751,6 @@ mod test {
                 &context,
                 UpdateStockOutLine {
                     id: "prescription_stock_out_line1".to_string(),
-                    r#type: Some(StockOutType::Prescription),
                     number_of_packs: Some(11.0),
                     ..Default::default()
                 }
@@ -853,7 +819,6 @@ mod test {
         // update the stock out line again, check that the picked date is not updated as it's been updated recently
         let stock_out_line = UpdateStockOutLine {
             id: "prescription_invoice-0-1".to_string(),
-            r#type: Some(StockOutType::Prescription),
             number_of_packs: Some(2.0),
             ..Default::default()
         };
@@ -990,7 +955,6 @@ mod test {
                 &context,
                 UpdateStockOutLine {
                     id: "prescription_invoice-0-1".to_string(),
-                    r#type: Some(StockOutType::Prescription),
                     prescribed_quantity: updated_prescribed_quantity,
                     ..Default::default()
                 },
