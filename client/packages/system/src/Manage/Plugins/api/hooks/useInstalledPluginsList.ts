@@ -1,32 +1,21 @@
-import {
-  useQuery,
-  useTranslation,
-  useNotification,
-  LIST_KEY,
-  useMutation,
-} from '@openmsupply-client/common';
+import { useQuery, LIST_KEY, useMutation } from '@openmsupply-client/common';
 import { INSTALLED_PLUGINS } from './keys';
 import { usePluginsGraphQL } from '../usePluginsGraphQL';
 
 export const useInstalledPlugins = () => {
   const { data, isError, isFetching } = useGetList();
 
-  const {
-    mutateAsync: installMutation,
-    isLoading: installLoading,
-    error: installError,
-  } = useInstallUploadedPlugin();
+  const { mutateAsync: installMutation, isPending: installLoading } =
+    useInstallUploadedPlugin();
 
   return {
     query: { data, isFetching, isError },
-    install: { installMutation, installLoading, installError },
+    install: { installMutation, installLoading },
   };
 };
 
 const useGetList = () => {
   const { pluginApi } = usePluginsGraphQL();
-  const { error } = useNotification();
-  const t = useTranslation();
 
   const queryKey = [INSTALLED_PLUGINS, LIST_KEY];
 
@@ -40,10 +29,6 @@ const useGetList = () => {
         totalCount: result.totalCount,
       };
     },
-    onError: (e: Error) => {
-      error(`${t('error.unable-to-load-plugins')}: ${e.message}`)();
-    },
-    keepPreviousData: true,
   });
 };
 
@@ -57,6 +42,7 @@ const useInstallUploadedPlugin = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([INSTALLED_PLUGINS]),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [INSTALLED_PLUGINS] }),
   });
 };

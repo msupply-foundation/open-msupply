@@ -3,19 +3,13 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-
-export enum InstalledPluginKindType {
-  Backend = 'BACKEND',
-  Frontend = 'FRONTEND',
-}
-
 export type InstalledPluginNodeFragment = {
   __typename: 'InstalledPluginNode';
   id: string;
   code: string;
   version: string;
-  kind: InstalledPluginKindType;
-  types: string[];
+  kind: Types.InstalledPluginKindType;
+  types: Array<string>;
 };
 
 export type InstalledPluginsQueryVariables = Types.Exact<{
@@ -31,7 +25,14 @@ export type InstalledPluginsQuery = {
       installedPlugins: {
         __typename: 'InstalledPluginConnector';
         totalCount: number;
-        nodes: Array<InstalledPluginNodeFragment>;
+        nodes: Array<{
+          __typename: 'InstalledPluginNode';
+          id: string;
+          code: string;
+          version: string;
+          kind: Types.InstalledPluginKindType;
+          types: Array<string>;
+        }>;
       };
     };
   };
@@ -47,10 +48,7 @@ export type InstallUploadedPluginMutation = {
     __typename: 'CentralServerMutationNode';
     plugins: {
       __typename: 'CentralPluginMutations';
-      installUploadedPlugin: {
-        __typename: 'PluginInfoNode';
-        pluginInfo: Types.Scalars['JSON']['output'];
-      };
+      installUploadedPlugin: { __typename: 'PluginInfoNode'; pluginInfo: any };
     };
   };
 };
@@ -65,7 +63,6 @@ export const InstalledPluginNodeFragmentDoc = gql`
     types
   }
 `;
-
 export const InstalledPluginsDocument = gql`
   query installedPlugins {
     centralServer {
@@ -82,7 +79,6 @@ export const InstalledPluginsDocument = gql`
   }
   ${InstalledPluginNodeFragmentDoc}
 `;
-
 export const InstallUploadedPluginDocument = gql`
   mutation installUploadedPlugin($fileId: String!) {
     centralServer {

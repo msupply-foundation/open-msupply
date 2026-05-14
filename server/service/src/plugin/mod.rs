@@ -99,7 +99,6 @@ pub enum FrontendPluginFileRequestError {
     CannotFindFile,
 }
 
-// TODO should really pass through StaticFileService
 /// A unified view of an installed plugin (backend or frontend)
 #[derive(Clone, Debug)]
 pub struct InstalledPlugin {
@@ -116,6 +115,7 @@ pub enum InstalledPluginKind {
     Frontend,
 }
 
+// TODO should really pass through StaticFileService
 pub trait PluginServiceTrait: Sync + Send {
     fn installed_plugins(
         &self,
