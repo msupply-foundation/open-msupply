@@ -24,8 +24,5 @@ jobs:
       - name: Update PATH
         run: echo "$HOME/.cargo/bin:/opt/homebrew/bin" >> $GITHUB_PATH
       - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
       - name: cargo check --features integration_test --tests
         run: cargo check --features integration_test --tests --manifest-path server/Cargo.toml
