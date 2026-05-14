@@ -541,7 +541,7 @@ mod test {
             },
             stock_out_line::{
                 DeleteStockOutLine, DeleteStockOutLineError, InsertStockOutLine,
-                InsertStockOutLineError, StockOutType, UpdateStockOutLine, UpdateStockOutLineError,
+                InsertStockOutLineError, UpdateStockOutLine, UpdateStockOutLineError,
             },
         },
         service_provider::{ServiceContext, ServiceProvider},
@@ -1062,7 +1062,6 @@ mod test {
                 update_line: vec![InputWithResult {
                     input: UpdateStockOutLine {
                         id: "id3".to_string(),
-                        r#type: Some(StockOutType::OutboundShipment),
                         ..Default::default()
                     },
                     result: Ok(InvoiceLine {

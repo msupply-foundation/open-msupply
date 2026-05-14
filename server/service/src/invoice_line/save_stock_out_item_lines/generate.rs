@@ -129,7 +129,6 @@ pub fn generate(
                 id,
                 stock_line_id: Some(stock_line_id),
                 number_of_packs: Some(number_of_packs),
-                r#type: Some(stock_out_type.clone()),
                 campaign_id,
                 program_id,
                 vvm_status_id,

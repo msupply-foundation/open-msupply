@@ -11,7 +11,7 @@ use graphql_types::types::InvoiceLineNode;
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::stock_out_line::{
-    StockOutType, UpdateStockOutLine as ServiceInput, UpdateStockOutLineError as ServiceError,
+    UpdateStockOutLine as ServiceInput, UpdateStockOutLineError as ServiceError,
 };
 use service::invoice_line::ShipmentTaxUpdate;
 
@@ -100,7 +100,6 @@ impl UpdateInput {
         } = self;
         ServiceInput {
             id,
-            r#type: Some(StockOutType::OutboundShipment),
             stock_line_id,
             number_of_packs,
             prescribed_quantity,
@@ -173,7 +172,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         // Standard Graphql Errors
         NotThisStoreInvoice
         | InvoiceTypeDoesNotMatch
-        | NoInvoiceType
         | NumberOfPacksBelowZero
         | ItemNotFound
         | ItemDoesNotMatchStockLine
@@ -205,7 +203,7 @@ mod test {
     use service::{
         invoice_line::{
             stock_out_line::{
-                StockOutType, UpdateStockOutLine as ServiceInput,
+                UpdateStockOutLine as ServiceInput,
                 UpdateStockOutLineError as ServiceError,
             },
             InvoiceLineServiceTrait, ShipmentTaxUpdate,
@@ -551,7 +549,6 @@ mod test {
                 input,
                 ServiceInput {
                     id: "id input".to_string(),
-                    r#type: Some(StockOutType::OutboundShipment),
                     stock_line_id: Some("stock_line_id input".to_string()),
                     number_of_packs: Some(1.0),
                     tax: Some(ShipmentTaxUpdate {

@@ -10,7 +10,7 @@ use graphql_types::types::InvoiceLineNode;
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::stock_out_line::{
-    StockOutType, UpdateStockOutLine as ServiceInput, UpdateStockOutLineError as ServiceError,
+    UpdateStockOutLine as ServiceInput, UpdateStockOutLineError as ServiceError,
 };
 
 use crate::mutations::outbound_shipment_line::line::{
@@ -94,7 +94,6 @@ impl UpdateInput {
         } = self;
         ServiceInput {
             id,
-            r#type: Some(StockOutType::Prescription),
             stock_line_id,
             number_of_packs,
             note,
@@ -165,7 +164,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         // Standard Graphql Errors
         NotThisStoreInvoice
         | InvoiceTypeDoesNotMatch
-        | NoInvoiceType
         | NumberOfPacksBelowZero
         | ItemNotFound
         | ItemDoesNotMatchStockLine
@@ -197,7 +195,7 @@ mod test {
     use service::{
         invoice_line::{
             stock_out_line::{
-                StockOutType, UpdateStockOutLine as ServiceInput,
+                UpdateStockOutLine as ServiceInput,
                 UpdateStockOutLineError as ServiceError,
             },
             InvoiceLineServiceTrait,
@@ -541,7 +539,6 @@ mod test {
                 input,
                 ServiceInput {
                     id: "id input".to_string(),
-                    r#type: Some(StockOutType::Prescription),
                     stock_line_id: Some("stock_line_id input".to_string()),
                     number_of_packs: Some(1.0),
                     note: Some("some note".to_string()),

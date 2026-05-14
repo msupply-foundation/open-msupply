@@ -214,7 +214,6 @@ fn try_allocate_existing_line(
             let line_row = line.invoice_line_row.clone();
             UpdateStockOutLine {
                 id: line_row.id,
-                r#type: Some(StockOutType::OutboundShipment),
                 number_of_packs: Some(line_row.number_of_packs + number_of_packs_to_add),
                 campaign_id: line_row.campaign_id,
                 program_id: line_row.program_id,

@@ -309,7 +309,7 @@ mod test {
         invoice_line::stock_out_line::{
             DeleteStockOutLine, DeleteStockOutLineError, InsertStockOutLine,
             InsertStockOutLineError, SetPrescribedQuantity, SetPrescribedQuantityError,
-            StockOutType, UpdateStockOutLine, UpdateStockOutLineError,
+            UpdateStockOutLine, UpdateStockOutLineError,
         },
         service_provider::{ServiceContext, ServiceProvider},
         InputWithResult,
@@ -605,7 +605,6 @@ mod test {
                 update_line: vec![InputWithResult {
                     input: UpdateStockOutLine {
                         id: "id3".to_string(),
-                        r#type: Some(StockOutType::Prescription),
                         ..Default::default()
                     },
                     result: Ok(InvoiceLine {
