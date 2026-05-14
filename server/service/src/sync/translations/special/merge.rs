@@ -11,10 +11,9 @@ use crate::sync::translations::IntegrationOperation;
 
 /// Wire format of the legacy mSupply sync buffer Merge records.
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MergeMessageBody {
-    #[serde(rename = "mergeIdToKeep")]
     pub merge_id_to_keep: String,
-    #[serde(rename = "mergeIdToDelete")]
     pub merge_id_to_delete: String,
 }
 
