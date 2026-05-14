@@ -73,7 +73,7 @@ impl ChangelogTableName {
                 vec![Remote, Central],
                 SyncVersions {
                     is_v6: false,
-                    is_v5: false,
+                    is_v5: true,
                 },
             ),
 
@@ -278,7 +278,7 @@ impl ChangelogTableName {
             // (Pattern and style share the variant name, so qualify both.)
             // ----------------------------------------------------------
             ChangelogTableName::SyncRequest => (
-                vec![ChangeLogSyncStyle::SyncRequest],
+                vec![ChangeLogSyncStyle::SyncRequest, Central],
                 SyncVersions {
                     is_v6: false,
                     is_v5: false,
