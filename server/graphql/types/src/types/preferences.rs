@@ -1,7 +1,9 @@
 use std::collections::BTreeMap;
 
 use crate::types::{
-    invoice_query::InvoiceNodeStatus, patient::GenderTypeNode,
+    backdating::BackdatingNode,
+    invoice_query::InvoiceNodeStatus,
+    patient::GenderTypeNode,
     warn_when_missing_recent_stocktake::WarnWhenMissingRecentStocktakeDataNode,
 };
 use async_graphql::*;
@@ -86,6 +88,20 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.is_gaps)
     }
 
+    pub async fn display_population_based_forecasting(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.display_population_based_forecasting)
+    }
+
+    pub async fn global_table_configs(&self) -> Result<serde_json::Value> {
+        self.load_preference(&self.preferences.global_table_configs)
+    }
+
+    pub async fn backdating(&self) -> Result<BackdatingNode> {
+        Ok(BackdatingNode::from_domain(
+            self.load_preference(&self.preferences.backdating)?,
+        ))
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -139,6 +155,14 @@ impl PreferencesNode {
         )
     }
 
+    pub async fn external_inbound_shipment_lines_must_be_authorised(&self) -> Result<bool> {
+        self.load_preference(
+            &self
+                .preferences
+                .external_inbound_shipment_lines_must_be_authorised,
+        )
+    }
+
     pub async fn number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products(
         &self,
     ) -> Result<i32> {
@@ -151,7 +175,7 @@ impl PreferencesNode {
 
     pub async fn number_of_months_threshold_to_show_low_stock_alerts_for_products(
         &self,
-    ) -> Result<i32> {
+    ) -> Result<f64> {
         self.load_preference(
             &self
                 .preferences
@@ -161,7 +185,7 @@ impl PreferencesNode {
 
     pub async fn number_of_months_threshold_to_show_over_stock_alerts_for_products(
         &self,
-    ) -> Result<i32> {
+    ) -> Result<f64> {
         self.load_preference(
             &self
                 .preferences
@@ -258,6 +282,9 @@ pub enum PreferenceKey {
     ExpiredStockIssueThreshold,
     ItemMarginOverridesSupplierMargin,
     IsGaps,
+    DisplayPopulationBasedForecasting,
+    GlobalTableConfigs,
+    Backdating,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -296,9 +323,11 @@ pub enum PreferenceNodeType {
 pub enum PreferenceValueNodeType {
     Boolean,
     Integer,
+    Float,
     MultiChoice,
     CustomTranslations, // Specific type for CustomTranslations preference
     WarnWhenMissingRecentStocktakeData,
+    BackdatingData,
     String,
     Colour,
 }

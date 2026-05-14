@@ -8,7 +8,7 @@ import {
   UserPermission,
   useCallbackWithPermission,
 } from '@openmsupply-client/common';
-import { XCircleIcon } from '@common/icons';
+import { SaveIcon, XCircleIcon } from '@common/icons';
 
 interface DemographicsFooterProps {
   isDirty: boolean;
@@ -50,6 +50,7 @@ export const FooterComponent = ({
             isLoading={false}
             color="secondary"
             label={t('button.save')}
+            startIcon={<SaveIcon />}
           />
         </Box>
       }

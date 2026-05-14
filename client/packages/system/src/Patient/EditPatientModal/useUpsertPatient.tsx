@@ -3,8 +3,8 @@ import {
   UpdatePatientInput,
   DocumentRegistryCategoryNode,
   InsertPatientInput,
-  useNotification,
   useQueryClient,
+  useNotification,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import {
@@ -72,8 +72,8 @@ export const useUpsertPatient = (
   patientId: string,
   confirmOnLeaving?: boolean
 ) => {
-  const { error } = useNotification();
   const queryClient = useQueryClient();
+  const { error } = useNotification();
 
   const {
     documentName,
@@ -217,7 +217,9 @@ export const useUpsertPatient = (
     try {
       const savedDocument = await saveData();
       setCreateNewPatient(undefined);
-      queryClient.invalidateQueries([PRESCRIPTION]);
+      queryClient.invalidateQueries({
+        queryKey: [PRESCRIPTION]
+      });
       if (savedDocument) {
         setDocumentName(savedDocument.name);
       }

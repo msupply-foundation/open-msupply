@@ -8,7 +8,7 @@ use crate::{
         check_snapshot_matches_current_count, check_stock_line_reduced_below_zero,
         check_stocktake_line_exist, stocktake_reduction_amount,
     },
-    validate::check_store_id_matches,
+    validate::{check_other_party, check_store_id_matches, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate,
 };
 use repository::{RepositoryError, StocktakeLine, StorageConnection};
@@ -85,7 +85,10 @@ pub fn validate(
         }
     }
 
-    if let Some(vvm_status_id) = &input.vvm_status_id {
+    if let Some(NullableUpdate {
+        value: Some(vvm_status_id),
+    }) = &input.vvm_status_id
+    {
         if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
             return Err(VvmStatusDoesNotExist);
         }
@@ -126,6 +129,28 @@ pub fn validate(
             return Err(SnapshotCountCurrentCountMismatchLine(stocktake_line));
         }
     }
+
+    if let Some(NullableUpdate {
+        value: Some(ref manufacturer_id),
+    }) = &input.manufacturer_id
+    {
+        match check_other_party(
+            connection,
+            store_id,
+            manufacturer_id,
+            CheckOtherPartyType::Manufacturer,
+        ) {
+            Ok(_) => {}
+            Err(e) => match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => return Err(ManufacturerDoesNotExist),
+                OtherPartyErrors::OtherPartyNotVisible => return Err(ManufacturerNotVisible),
+                OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    return Err(DatabaseError(repository_error))
+                }
+            },
+        };
+    };
 
     if let Some(NullableUpdate {
         value: Some(ref campaign_id),

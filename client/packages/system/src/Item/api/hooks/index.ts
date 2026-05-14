@@ -9,4 +9,5 @@ export * from './useItemStockOnHand';
 export * from './useItemApi';
 export * from './useItemVariant';
 export * from './bundledItem';
+export * from './ancillaryItem';
 export * from './useItemLedger';

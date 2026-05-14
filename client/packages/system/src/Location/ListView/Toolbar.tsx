@@ -27,6 +27,11 @@ export const Toolbar = () => {
               urlParameter: 'name',
             },
             {
+              type: 'text',
+              name: t('label.code'),
+              urlParameter: 'code',
+            },
+            {
               type: 'boolean',
               name: t('label.on-hold'),
               urlParameter: 'onHold',

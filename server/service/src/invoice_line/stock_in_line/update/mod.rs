@@ -5,7 +5,9 @@ use crate::{
 };
 use chrono::NaiveDate;
 use repository::{
-    InvoiceLine, InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRowRepository, RepositoryError, StockLineRowRepository, vvm_status::vvm_status_log_row::VVMStatusLogRowRepository
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLine,
+    InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRowRepository, RepositoryError,
+    StockLineRowRepository,
 };
 
 mod generate;
@@ -13,6 +15,8 @@ mod validate;
 
 use generate::{generate, GenerateResult};
 use validate::validate;
+
+use crate::invoice::inbound_shipment::InboundShipmentType;
 
 use super::StockInType;
 
@@ -27,13 +31,15 @@ pub struct UpdateStockInLine {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NullableUpdate<NaiveDate>>,
+    pub manufacture_date: Option<NullableUpdate<NaiveDate>>,
     pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<ShipmentTaxUpdate>,
     pub r#type: StockInType,
     pub item_variant_id: Option<NullableUpdate<String>>,
-    pub vvm_status_id: Option<String>,
+    pub vvm_status_id: Option<NullableUpdate<String>>,
     pub donor_id: Option<NullableUpdate<String>>,
+    pub manufacturer_id: Option<NullableUpdate<String>>,
     pub campaign_id: Option<NullableUpdate<String>>,
     pub program_id: Option<NullableUpdate<String>>,
     pub shipped_number_of_packs: Option<f64>,
@@ -47,11 +53,13 @@ type OutError = UpdateStockInLineError;
 pub fn update_stock_in_line(
     ctx: &ServiceContext,
     input: UpdateStockInLine,
+    inbound_shipment_type: Option<InboundShipmentType>,
 ) -> Result<InvoiceLine, OutError> {
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (line, item, invoice) = validate(&input, &ctx.store_id, connection)?;
+            let (line, item, invoice) =
+                validate(&input, &ctx.store_id, connection, inbound_shipment_type)?;
 
             let GenerateResult {
                 invoice_row_option,
@@ -106,10 +114,15 @@ pub enum UpdateStockInLineError {
     BatchIsReserved,
     UpdatedLineDoesNotExist,
     NotThisInvoiceLine(String),
+    ManufacturerDoesNotExist,
+    ManufacturerNotVisible,
+    ManufacturerIsNotAManufacturer,
     VVMStatusDoesNotExist,
     ProgramNotVisible,
     IncorrectLocationType,
     CampaignDoesNotExist,
+    WrongInboundShipmentType,
+    CannotEditCostPrice,
 }
 
 impl From<RepositoryError> for UpdateStockInLineError {
@@ -164,7 +177,7 @@ mod test {
             InvoiceRow {
                 id: "verified_return".to_string(),
                 store_id: mock_store_b().id,
-                name_link_id: mock_name_store_b().id,
+                name_id: mock_name_store_b().id,
                 r#type: InvoiceType::CustomerReturn,
                 status: InvoiceStatus::Verified,
                 ..Default::default()
@@ -217,6 +230,7 @@ mod test {
                     id: "invalid".to_string(),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::LineDoesNotExist)
         );
@@ -232,6 +246,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::LocationDoesNotExist)
         );
@@ -247,6 +262,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::ItemVariantDoesNotExist)
         );
@@ -260,6 +276,7 @@ mod test {
                     pack_size: Some(0.0),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::PackSizeBelowOne)
         );
@@ -274,6 +291,7 @@ mod test {
                     number_of_packs: Some(-1.0),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::NumberOfPacksBelowZero)
         );
@@ -289,6 +307,7 @@ mod test {
                     number_of_packs: Some(1.0),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::ItemNotFound)
         );
@@ -303,6 +322,7 @@ mod test {
                     number_of_packs: Some(1.0),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::NotAStockIn)
         );
@@ -318,6 +338,7 @@ mod test {
                     number_of_packs: Some(1.0),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::CannotEditFinalised)
         );
@@ -333,6 +354,7 @@ mod test {
                     number_of_packs: Some(1.0),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::BatchIsReserved)
         );
@@ -348,8 +370,25 @@ mod test {
                     }), // Master list not visible to store_b
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::ProgramNotVisible)
+        );
+
+        // ManufacturerDoesNotExist
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    manufacturer_id: Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    }),
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(ServiceError::ManufacturerDoesNotExist)
         );
 
         // NotThisStoreInvoice
@@ -364,6 +403,7 @@ mod test {
                     number_of_packs: Some(1.0),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
@@ -380,6 +420,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::IncorrectLocationType)
         );
@@ -405,6 +446,7 @@ mod test {
                 number_of_packs: Some(3.0),
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
 
@@ -436,6 +478,7 @@ mod test {
                 cost_price_per_pack: Some(60.0),
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
 
@@ -462,6 +505,7 @@ mod test {
                 vvm_status_id: Some(mock_vvm_status_a().id),
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
 
@@ -483,10 +527,13 @@ mod test {
             &context,
             UpdateStockInLine {
                 id: "delivered_invoice_line_with_vvm_status".to_string(),
-                vvm_status_id: Some(mock_vvm_status_b().id),
+                vvm_status_id: Some(NullableUpdate {
+                    value: Some(mock_vvm_status_b().id),
+                }),
                 r#type: StockInType::InboundShipment,
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
         assert_eq!(
@@ -516,6 +563,7 @@ mod test {
                 expiry_date: NaiveDate::from_ymd_opt(2023, 10, 1),
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
         let result = update_stock_in_line(
@@ -528,6 +576,7 @@ mod test {
                 expiry_date: Some(NullableUpdate { value: None }),
                 ..Default::default()
             },
+            None,
         )
         .unwrap();
         assert_eq!(result.invoice_line_row.volume_per_pack, 10.0);
@@ -551,7 +600,7 @@ mod test {
             InvoiceRow {
                 id: "received_inbound_for_line_status".to_string(),
                 store_id: mock_store_b().id,
-                name_link_id: mock_name_store_b().id,
+                name_id: mock_name_store_b().id,
                 r#type: InvoiceType::InboundShipment,
                 status: InvoiceStatus::Received,
                 ..Default::default()
@@ -599,6 +648,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::CannotChangeLineStatusOfReceivedInvoice)
         );
@@ -615,6 +665,7 @@ mod test {
                     }),
                     ..Default::default()
                 },
+                None
             ),
             Err(ServiceError::CannotChangeLineStatusOfReceivedInvoice)
         );
@@ -630,6 +681,106 @@ mod test {
                 }),
                 ..Default::default()
             },
+            None
+        )
+        .is_ok());
+    }
+
+    #[actix_rt::test]
+    async fn update_stock_in_line_cannot_edit_cost_price() {
+        fn internal_supplier_inbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "internal_supplier_inbound".to_string(),
+                store_id: mock_store_b().id,
+                name_id: mock_name_store_b().id,
+                name_store_id: Some(mock_store_b().id),
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                ..Default::default()
+            }
+        }
+
+        fn internal_supplier_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "internal_supplier_line".to_string(),
+                invoice_id: internal_supplier_inbound().id,
+                item_link_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                cost_price_per_pack: 100_000.0,
+                number_of_packs: 1.0,
+                pack_size: 1.0,
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "update_stock_in_line_cannot_edit_cost_price",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![internal_supplier_inbound()],
+                invoice_lines: vec![internal_supplier_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        // CannotEditCostPrice: changing cost price on internal supplier invoice
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: internal_supplier_line().id,
+                    r#type: StockInType::InboundShipment,
+                    cost_price_per_pack: Some(999.0),
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(ServiceError::CannotEditCostPrice)
+        );
+
+        // Submitting the same cost price should succeed (not a real change)
+        assert!(update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: internal_supplier_line().id,
+                r#type: StockInType::InboundShipment,
+                cost_price_per_pack: Some(100_000.0),
+                ..Default::default()
+            },
+            None
+        )
+        .is_ok());
+
+        // A value within floating-point tolerance of the original should also succeed
+        // (simulates round-trip through JSON serialization)
+        let nearly_same = 100_000.0 + (f64::EPSILON * 100_000.0 * 5.0);
+        assert!(update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: internal_supplier_line().id,
+                r#type: StockInType::InboundShipment,
+                cost_price_per_pack: Some(nearly_same),
+                ..Default::default()
+            },
+            None
+        )
+        .is_ok());
+
+        // No cost_price_per_pack in input should skip the check entirely
+        assert!(update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: internal_supplier_line().id,
+                r#type: StockInType::InboundShipment,
+                ..Default::default()
+            },
+            None
         )
         .is_ok());
     }

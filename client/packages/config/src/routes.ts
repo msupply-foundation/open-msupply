@@ -30,6 +30,7 @@ export enum AppRoute {
   Replenishment = 'replenishment',
   PurchaseOrder = 'purchase-order',
   InboundShipment = 'inbound-shipment',
+  InboundShipmentExternal = 'inbound-shipment-external',
   InternalOrder = 'internal-order',
   Suppliers = 'suppliers',
   SupplierReturn = 'supplier-return',

@@ -5,6 +5,8 @@ pub mod abbreviation_row;
 pub mod activity_log;
 pub mod activity_log_row;
 pub mod adjustment;
+pub mod ancillary_item;
+pub mod ancillary_item_row;
 pub mod assets;
 pub mod backend_plugin_row;
 pub mod barcode;
@@ -47,7 +49,7 @@ mod filter_restriction;
 mod filter_sort_pagination;
 pub mod form_schema;
 mod form_schema_row;
-mod frontend_plugin_row;
+pub mod frontend_plugin_row;
 pub mod indicator_column;
 mod indicator_column_row;
 pub mod indicator_line;
@@ -98,7 +100,7 @@ mod number_row;
 pub mod patient;
 pub mod period;
 pub mod plugin_data;
-mod plugin_data_row;
+pub mod plugin_data_row;
 pub mod preference;
 mod preference_row;
 pub mod printer;
@@ -178,6 +180,8 @@ pub mod warning_row;
 pub use abbreviation_row::*;
 pub use activity_log_row::*;
 pub use adjustment::*;
+pub use ancillary_item::*;
+pub use ancillary_item_row::*;
 pub use assets::*;
 pub use backend_plugin_row::*;
 pub use barcode_row::*;
@@ -401,9 +405,47 @@ impl From<DieselError> for RepositoryError {
 fn get_connection(
     pool: &Pool<ConnectionManager<DBBackendConnection>>,
 ) -> Result<DBConnection, RepositoryError> {
-    pool.get().map_err(|error| RepositoryError::DBError {
-        msg: "Failed to open Connection".to_string(),
-        extra: format!("{error:?}"),
+    let state = pool.state();
+    let available = state.idle_connections;
+    let total = state.connections;
+    let max = pool.max_size();
+
+    if available == 0 {
+        log::warn!(
+            "DB pool exhausted: {}/{} connections in use, max={}",
+            total - available,
+            total,
+            max,
+        );
+    }
+
+    let start = std::time::Instant::now();
+    let result = pool.get();
+    let wait_ms = start.elapsed().as_millis();
+
+    if wait_ms > 500 {
+        log::warn!(
+            "DB pool: waited {}ms for connection (available={}, total={}, max={})",
+            wait_ms,
+            available,
+            total,
+            max,
+        );
+    }
+
+    result.map_err(|error| {
+        log::error!(
+            "DB pool: failed to get connection after {}ms (available={}, total={}, max={}): {:?}",
+            wait_ms,
+            available,
+            total,
+            max,
+            error,
+        );
+        RepositoryError::DBError {
+            msg: "Failed to open Connection".to_string(),
+            extra: format!("{:?}", error),
+        }
     })
 }
 

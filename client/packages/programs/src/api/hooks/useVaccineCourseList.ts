@@ -5,14 +5,14 @@ import {
   VaccineCourseSortFieldInput,
   VaccineCourseNode,
 } from '@openmsupply-client/common';
-import { VaccineCourseFragment } from '../operations.generated';
+import { VaccineCourseRowFragment } from '../operations.generated';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { VACCINE, LIST } from './keys';
 
 export type CourseListParams = {
   first?: number;
   offset?: number;
-  sortBy?: SortBy<VaccineCourseFragment>;
+  sortBy?: SortBy<VaccineCourseRowFragment>;
   filterBy?: FilterBy | null;
 };
 
@@ -31,13 +31,13 @@ export const useVaccineCourseList = (queryParams: CourseListParams) => {
 
   const queryKey = [VACCINE, LIST, sortBy, first, offset, filterBy];
   const queryFn = async (): Promise<{
-    nodes: VaccineCourseFragment[];
+    nodes: VaccineCourseRowFragment[];
     totalCount: number;
   }> => {
     const filter = {
       ...filterBy,
     };
-    const query = await api.vaccineCourses({
+    const query = await api.vaccineCourseList({
       first: first,
       offset: offset,
       key: toSortField(sortBy),

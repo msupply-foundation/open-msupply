@@ -18,10 +18,17 @@ import {
   useColumnSizing,
   useColumnVisibility,
   useColumnPinning,
+  useSaveGlobalTableConfig,
+  useGlobalTableDefaults,
   useColumnGrouping,
 } from './tableState';
-import { clearSavedState } from './tableState/utils';
+import { clearSavedState, getSavedState } from './tableState/utils';
 import { DataError, NothingHere } from '@common/components';
+import {
+  useIsCentralServerApi,
+  useAuthContext,
+  UserPermission,
+} from '@openmsupply-client/common';
 
 export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
   MRT_TableOptions<T>,
@@ -38,9 +45,13 @@ export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
   grouping?: {
     field: string;
     groupedByDefault?: boolean;
+    label?: string;
+    /** Fires when the user toggles grouping on/off. */
+    onToggle?: (isGrouped: boolean) => void;
   };
   columns: ColumnDef<T>[];
-  noUrlFiltering?: boolean;
+  /** Keep sorting and filtering in local component state instead of syncing to URL query params. Use for tables in modals, popovers, or anywhere the table state shouldn't affect the URL. */
+  localStateOnly?: boolean;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
   noDataElement?: React.ReactNode;
   isMobile?: boolean;
@@ -59,7 +70,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   grouping: groupingInput,
   enableColumnResizing = true,
   manualFiltering = false,
-  noUrlFiltering = false,
+  localStateOnly = false,
   initialSort,
   noDataElement,
   muiTableBodyRowProps,
@@ -70,21 +81,41 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const t = useTranslation();
   const { getTableLocalisations } = useIntlUtils();
   const localization = getTableLocalisations();
+  const isCentralServer = useIsCentralServerApi();
+  const { userHasPermission } = useAuthContext();
+  const canEditGlobalDefaults =
+    isCentralServer && userHasPermission(UserPermission.EditCentralData);
+  const { saveGlobalTableConfig } = useSaveGlobalTableConfig();
+  const globalDefaults = useGlobalTableDefaults(tableId);
+  // Admins reset to hard-coded defaults so they can undo their global config;
+  // non-admins reset to global defaults.
+  const resetDefaults = canEditGlobalDefaults ? undefined : globalDefaults;
 
   const { columns } = useMaterialTableColumns(omsColumns);
 
   // Filter needs to be applied after columns are processed
   const { columnFilters, onColumnFiltersChange } = useTableFiltering(
     columns,
-    noUrlFiltering
+    localStateOnly
   );
-  const { sorting, onSortingChange } = useUrlSortManagement(initialSort);
+  const { sorting, onSortingChange } = useUrlSortManagement(
+    initialSort,
+    localStateOnly
+  );
 
   const density = useColumnDensity(tableId);
   const columnSizing = useColumnSizing(tableId);
   const columnVisibility = useColumnVisibility(tableId, columns, isMobile);
   const columnPinning = useColumnPinning(tableId, columns);
   const grouping = useColumnGrouping(tableId, groupingInput);
+
+  // Notify parent of the initial grouping state (read from localStorage)
+  // so it can enable the correct data query before the first toggle click.
+  React.useEffect(() => {
+    groupingInput?.onToggle?.(grouping.state.length > 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const columnOrder = useColumnOrder(
     tableId,
     columns,
@@ -95,7 +126,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   const resetTableState = () => {
     clearSavedState(tableId);
 
-    // We have to call each of these reset fns, as MRT's general
+    // We have to call each of these reset/set fns, as MRT's general
     // reset function doesn't fire the onChange handlers (needed to trigger our
     // state handlers).
     // Seeing as local storage has already been cleared,
@@ -104,13 +135,22 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     table.resetColumnSizing();
     table.resetGrouping();
 
-    // column order doesn't need resetting - state reset directly from clearing
-    // local storage
+    if (resetDefaults?.columnSizing)
+      table.setColumnSizing(resetDefaults.columnSizing);
+    else table.resetColumnSizing();
+
+    if (resetDefaults?.columnOrder)
+      table.setColumnOrder(resetDefaults.columnOrder);
+    else table.resetColumnOrder();
+
+    table.resetGrouping();
 
     // Visibility `initial` could change if prefs have come on/screen size
     // changed so reset to latest initial value rather than default initial
     // mount state
-    table.setColumnVisibility(columnVisibility.initial);
+    table.setColumnVisibility(
+      resetDefaults?.columnVisibility ?? columnVisibility.initial
+    );
 
     // Density doesn't have a `reset` function
     table.setDensity(density.initial);
@@ -118,6 +158,10 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
   // hiding all table filter related options for now
   const hasColumnFilters = false;
+
+  const onSaveAsGlobalDefault = canEditGlobalDefaults
+    ? () => saveGlobalTableConfig(tableId, getSavedState(tableId) ?? {})
+    : undefined;
 
   const displayOptions = useTableDisplayOptions({
     tableId,
@@ -130,11 +174,19 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     hasColumnFilters,
     onRowClick,
     isGrouped: !!grouping.state.length,
-    toggleGrouped: grouping.enabled ? grouping.toggle : undefined,
+    toggleGrouped: grouping.enabled
+      ? () => {
+          grouping.toggle();
+          groupingInput?.onToggle?.(!grouping.state.length);
+        }
+      : undefined,
+    groupByLabel: groupingInput?.label,
     getIsPlaceholderRow,
     getIsRestrictedRow,
     muiTableBodyRowProps,
     isMobile,
+    onSaveAsGlobalDefault,
+    globalDefaults: resetDefaults,
   });
 
   const table = useMaterialReactTable<T>({

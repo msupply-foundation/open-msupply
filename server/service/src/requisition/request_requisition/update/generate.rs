@@ -33,7 +33,7 @@ pub fn generate(
         max_months_of_stock: update_max_months_of_stock,
         min_months_of_stock: update_threshold_months_of_stock,
         expected_delivery_date: update_expected_delivery_date,
-        original_customer_id,
+        destination_customer_id,
     }: UpdateRequestRequisition,
 ) -> Result<GenerateResult, RepositoryError> {
     let keep_requisition_lines_with_zero_requested_quantity_on_finalised =
@@ -66,11 +66,11 @@ pub fn generate(
         their_reference: update_their_reference.or(existing.their_reference.clone()),
         min_months_of_stock: update_threshold_months_of_stock,
         max_months_of_stock: update_max_months_of_stock,
-        name_link_id: update_other_party_id.unwrap_or(existing.name_link_id.clone()),
+        name_id: update_other_party_id.unwrap_or(existing.name_id.clone()),
         expected_delivery_date: update_expected_delivery_date.or(existing.expected_delivery_date),
-        original_customer_id: nullable_update(
-            &original_customer_id,
-            existing.original_customer_id.clone(),
+        destination_customer_id: nullable_update(
+            &destination_customer_id,
+            existing.destination_customer_id.clone(),
         ),
         ..existing.clone()
     };

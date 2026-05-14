@@ -9,10 +9,10 @@ export const useStockItemsWithStats = ({ rowsPerPage = 20, filter = {} }) => {
     filterBy: { ...filter, type: { equalTo: ItemNodeType.Stock } },
   };
   const api = useItemApi();
-  return useInfiniteQuery(
-    api.keys.paramList({ ...queryParams, first: 0, offset: 0 }),
-    async ({ pageParam }) => {
-      const pageNumber = Number(pageParam ?? 0);
+  return useInfiniteQuery({
+    queryKey: api.keys.paramList({ ...queryParams, first: 0, offset: 0 }),
+    queryFn: async ({ pageParam }) => {
+      const pageNumber = Number(pageParam);
       const data = await api.get.stockItemsWithStats({
         ...queryParams,
         first: rowsPerPage,
@@ -23,9 +23,12 @@ export const useStockItemsWithStats = ({ rowsPerPage = 20, filter = {} }) => {
         pageNumber,
       };
     },
-    {
-      refetchOnWindowFocus: false,
-      cacheTime: 0,
-    }
-  );
+    initialPageParam: 0,
+    getNextPageParam: lastPage =>
+      (lastPage.pageNumber + 1) * rowsPerPage < (lastPage.data?.totalCount ?? 0)
+        ? lastPage.pageNumber + 1
+        : undefined,
+    refetchOnWindowFocus: false,
+    gcTime: 0,
+  });
 };

@@ -20,6 +20,7 @@ fragment UserStoreNode on UserStoreNode {
     monthsItemsExpire
     stocktakeFrequency
     extraFieldsInRequisition
+    keepRequisitionLinesWithZeroRequestedQuantityOnFinalised
     manuallyLinkInternalOrderToInboundShipment
     useConsumptionAndStockFromCustomersForInternalOrders
     editPrescribedQuantityOnPrescription
@@ -214,15 +215,36 @@ query preferences($storeId: String!) {
     useSimplifiedMobileUi
     expiredStockPreventIssue
     expiredStockIssueThreshold
+    displayPopulationBasedForecasting
     warnWhenMissingRecentStocktake {
       enabled
       maxAge
       minItems
     }
     warningForExcessRequest
+    externalInboundShipmentLinesMustBeAuthorised
     invoiceStatusOptions
     itemMarginOverridesSupplierMargin
     showIndicativePriceInRequisitions
     isGaps
+    globalTableConfigs
+    backdating {
+      shipmentsEnabled
+      inventoryAdjustmentsEnabled
+      maxDays
+    }
+  }
+}
+
+mutation saveGlobalTableConfigs(
+  $storeId: String!
+  $input: UpsertPreferencesInput!
+) {
+  centralServer {
+    preferences {
+      upsertPreferences(storeId: $storeId, input: $input) {
+        ok
+      }
+    }
   }
 }

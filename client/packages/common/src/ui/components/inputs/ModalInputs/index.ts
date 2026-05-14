@@ -1,5 +1,5 @@
 export * from './DateInputRow';
-export * from './DosesCaption';
+export * from './DosesOrUnitsCaption';
 export * from './InfoRow';
 export * from './MultilineTextInputRow';
 export * from './NumInputRow';

@@ -8,7 +8,8 @@ use graphql_core::simple_generic_errors::{
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 
-use service::auth::{Resource, ResourceAccessRequest};
+use graphql_core::generic_inputs::InboundShipmentType;
+use service::auth::ResourceAccessRequest;
 use service::invoice_line::stock_in_line::{DeleteStockInLine as ServiceInput, StockInType};
 
 #[derive(InputObject)]
@@ -30,11 +31,16 @@ pub enum DeleteResponse {
     Response(GenericDeleteResponse),
 }
 
-pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<DeleteResponse> {
+pub fn delete(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: DeleteInput,
+    r#type: InboundShipmentType,
+) -> Result<DeleteResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateInboundShipment,
+            resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -45,7 +51,7 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
     map_response(
         service_provider
             .invoice_line_service
-            .delete_inbound_shipment_service_line(&service_context, input.to_domain()),
+            .delete_inbound_shipment_service_line(&service_context, input.to_domain(), Some(r#type.to_domain())),
     )
 }
 
@@ -101,6 +107,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         // Standard Graphql Errors
         ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
+        ServiceError::WrongInboundShipmentType => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
@@ -139,6 +146,7 @@ mod test {
             &self,
             _: &ServiceContext,
             input: ServiceInput,
+            _: Option<service::invoice::inbound_shipment::InboundShipmentType>,
         ) -> Result<String, ServiceError> {
             self.0(input)
         }

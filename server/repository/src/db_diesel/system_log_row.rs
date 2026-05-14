@@ -28,6 +28,7 @@ pub enum SystemLogType {
     LedgerFix,
     Migration,
     ServerStatus,
+    SyncTranslationFkError,
 }
 
 impl SystemLogType {
@@ -38,6 +39,7 @@ impl SystemLogType {
             SystemLogType::LedgerFix => false,
             SystemLogType::Migration => false,
             SystemLogType::ServerStatus => false,
+            SystemLogType::SyncTranslationFkError => true,
         }
     }
 }
@@ -83,7 +85,7 @@ impl<'a> SystemLogRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: None,
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

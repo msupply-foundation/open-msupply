@@ -6,7 +6,7 @@ pub fn mock_program_enrolment_a() -> ProgramEnrolmentRow {
     ProgramEnrolmentRow {
         id: "program_enrolment_a".to_string(),
         program_id: mock_program_a().id,
-        patient_link_id: mock_patient().id,
+        patient_id: mock_patient().id,
         ..Default::default()
     }
 }
@@ -15,7 +15,7 @@ pub fn mock_immunisation_program_enrolment_a() -> ProgramEnrolmentRow {
     ProgramEnrolmentRow {
         id: "immunisation_program_enrolment_a".to_string(),
         program_id: mock_immunisation_program_a().id,
-        patient_link_id: mock_patient().id,
+        patient_id: mock_patient().id,
         ..Default::default()
     }
 }

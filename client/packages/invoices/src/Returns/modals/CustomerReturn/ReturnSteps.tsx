@@ -31,6 +31,8 @@ interface ReturnStepsProps {
   setZeroQuantityAlert: React.Dispatch<
     React.SetStateAction<AlertColor | undefined>
   >;
+  packSizeAlert: boolean;
+  setPackSizeAlert: React.Dispatch<React.SetStateAction<boolean>>;
   theirReference: string;
   onTheirReferenceChange: (value: string) => void;
   isDisabled: boolean;
@@ -44,6 +46,8 @@ export const ReturnSteps = ({
   addDraftLine,
   zeroQuantityAlert,
   setZeroQuantityAlert,
+  packSizeAlert,
+  setPackSizeAlert,
   theirReference,
   onTheirReferenceChange,
   isDisabled,
@@ -82,7 +86,7 @@ export const ReturnSteps = ({
         }}
       >
         <InputWithLabelRow
-          label={t('label.return-to')}
+          label={t('label.return-from')}
           Input={
             <Typography>
               {returnToStoreName ?? data?.otherPartyName ?? ''}
@@ -109,13 +113,26 @@ export const ReturnSteps = ({
         />
       )}
       <TabPanel value={Tabs.Quantity}>
-        {zeroQuantityAlert && (
-          <Alert severity={zeroQuantityAlert}>{alertMessage}</Alert>
-        )}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {packSizeAlert && (
+            <Alert severity="error">
+              {t('messages.alert-invalid-pack-size')}
+            </Alert>
+          )}
+          {zeroQuantityAlert && (
+            <Alert severity={zeroQuantityAlert}>{alertMessage}</Alert>
+          )}
+        </Box>
         <QuantityReturnedTable
           lines={lines}
           isDisabled={disabledLinked}
           updateLine={line => {
+            if (
+              packSizeAlert &&
+              'packSize' in line &&
+              (line.packSize ?? 0) >= 1
+            )
+              setPackSizeAlert(false);
             if (zeroQuantityAlert) setZeroQuantityAlert(undefined);
             update(line);
           }}

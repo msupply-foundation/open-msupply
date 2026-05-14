@@ -10,6 +10,7 @@ import {
   useFormatDateTime,
   Breadcrumb,
   useIntlUtils,
+  useNotification,
 } from '@openmsupply-client/common';
 import {
   useJsonFormsHandler,
@@ -37,6 +38,7 @@ export const DetailView: FC<DetailViewProps> = ({
   createPatientId,
 }) => {
   const t = useTranslation();
+  const { error } = useNotification();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs, urlParts } = useBreadcrumbs();
   const dateFormat = useFormatDateTime();
@@ -192,7 +194,13 @@ export const DetailView: FC<DetailViewProps> = ({
 
       <Footer
         documentName={contactData?.documentName}
-        onSave={saveData}
+        onSave={async () => {
+          try {
+            await saveData();
+          } catch (e) {
+            error(t('error.failed-to-save-contact-trace'))();
+          }
+        }}
         isSaving={isSaving}
         onCancel={revert}
         isDisabled={!isDirty || !!validationError}

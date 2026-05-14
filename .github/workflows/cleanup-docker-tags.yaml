@@ -1,0 +1,39 @@
+name: Cleanup Docker Hub Tags
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_age_days:
+        description: "Delete non-release tags older than this many days"
+        required: false
+        default: "30"
+        type: string
+      dry_run:
+        description: "If true, only list tags that would be deleted"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+  schedule:
+    - cron: "0 7 * * *" # Daily at 07:00 UTC (30 min after nightly build tag creation)
+
+jobs:
+  cleanup:
+    name: Cleanup old non-release Docker tags
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run cleanup script
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+        run: |
+          ARGS="--max-age-days ${{ inputs.max_age_days || '30' }}"
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+          bash .github/scripts/cleanup-docker-tags.sh $ARGS

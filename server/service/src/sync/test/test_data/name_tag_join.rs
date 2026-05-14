@@ -19,7 +19,7 @@ fn name_tag_join_1() -> TestSyncIncomingRecord {
         NAME_TAG_JOIN_1,
         NameTagJoinRow {
             id: NAME_TAG_JOIN_1.0.to_owned(),
-            name_link_id: "name_store_a".to_string(),
+            name_id: "name_store_a".to_string(),
             name_tag_id: "59F2635D22B346ADA0088D6261926465".to_string(),
         },
     )
@@ -40,7 +40,7 @@ fn name_tag_join_2() -> TestSyncIncomingRecord {
         NAME_TAG_JOIN_2,
         NameTagJoinRow {
             id: NAME_TAG_JOIN_2.0.to_owned(),
-            name_link_id: "name_store_a".to_string(),
+            name_id: "name_store_a".to_string(),
             name_tag_id: "1A3B380E37F741729DAC4761AF3549F9".to_string(),
         },
     )

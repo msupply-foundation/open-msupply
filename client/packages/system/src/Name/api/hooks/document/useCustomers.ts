@@ -4,9 +4,12 @@ import { useNameApi } from '../utils/useNameApi';
 export const useCustomers = (filterBy?: FilterBy | null) => {
   const api = useNameApi();
 
-  return useQuery([...api.keys.list(), 'customers'], () =>
-    api.get.customers({
-      filterBy,
-    })
-  );
+  return useQuery({
+    queryKey: [...api.keys.list(), 'customers'],
+
+    queryFn: () =>
+      api.get.customers({
+        filterBy,
+      })
+  });
 };

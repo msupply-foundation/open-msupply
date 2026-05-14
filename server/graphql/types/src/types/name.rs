@@ -73,9 +73,7 @@ impl NameNode {
     }
 
     pub async fn gender(&self) -> Option<GenderTypeNode> {
-        Some(GenderTypeNode::from(
-            self.row().gender.clone().unwrap_or_default(),
-        ))
+        self.row().gender.clone().map(GenderTypeNode::from)
     }
 
     pub async fn phone(&self) -> &Option<String> {
@@ -209,7 +207,7 @@ mod test {
     use async_graphql::Object;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::mock::MockDataInserts;
-    use repository::{GenderType as GenderRepo, NameLinkRow, NameRowType};
+    use repository::{GenderType as GenderRepo, NameRowType};
     use serde_json::json;
 
     use super::*;
@@ -258,10 +256,6 @@ mod test {
                             date_of_birth: Some(NaiveDate::from_ymd_opt(1995, 5, 15).unwrap()),
                             custom_data_string: Some(r#"{"check": "check"}"#.to_string()),
                             ..Default::default()
-                        },
-                        name_link_row: NameLinkRow {
-                            id: "test_id".to_string(),
-                            name_id: "test_id".to_string(),
                         },
                         name_store_join_row: None,
                         store_row: None,

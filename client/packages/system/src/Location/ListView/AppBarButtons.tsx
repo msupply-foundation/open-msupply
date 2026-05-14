@@ -4,25 +4,26 @@ import {
   AppBarButtonsPortal,
   ButtonWithIcon,
   Grid,
+  SortBy,
   useTranslation,
 } from '@openmsupply-client/common';
 import { ExportSelector } from '@openmsupply-client/system';
-import { LocationRowFragment } from '..';
+import { LocationRowFragment, useExportLocationList } from '../api';
 import { locationsToCsv } from '../../utils';
 
 interface AppBarButtonsProps {
   onCreate: () => void;
-  locations?: LocationRowFragment[];
-  reportIsLoading: boolean;
+  sortBy: SortBy<LocationRowFragment>;
 }
 
-export const AppBarButtons = ({
-  onCreate,
-  locations,
-  reportIsLoading,
-}: AppBarButtonsProps) => {
+export const AppBarButtons = ({ onCreate, sortBy }: AppBarButtonsProps) => {
   const t = useTranslation();
-  const getCsvData = () => (locations ? locationsToCsv(locations, t) : null);
+  const { fetchLocations, isLoading } = useExportLocationList(sortBy);
+
+  const getCsvData = async () => {
+    const { data } = await fetchLocations();
+    return data?.nodes?.length ? locationsToCsv(data.nodes, t) : null;
+  };
 
   return (
     <AppBarButtonsPortal>
@@ -35,7 +36,7 @@ export const AppBarButtons = ({
         <ExportSelector
           getCsvData={getCsvData}
           filename={t('filename.locations')}
-          isLoading={reportIsLoading}
+          isLoading={isLoading}
         />
       </Grid>
     </AppBarButtonsPortal>

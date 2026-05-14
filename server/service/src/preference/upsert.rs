@@ -1,7 +1,10 @@
 use std::collections::BTreeMap;
 
 use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPreferenceError};
-use crate::{preference::WarnWhenMissingRecentStocktakeData, service_provider::ServiceContext};
+use crate::{
+    preference::{BackdatingData, WarnWhenMissingRecentStocktakeData},
+    service_provider::ServiceContext,
+};
 use repository::{GenderType, InvoiceStatus, StorageConnection, TransactionError};
 
 #[derive(Debug, PartialEq, Clone)]
@@ -26,8 +29,10 @@ pub struct UpsertPreferences {
     pub expired_stock_prevent_issue: Option<bool>,
     pub expired_stock_issue_threshold: Option<i32>,
     pub item_margin_overrides_supplier_margin: Option<bool>,
-
     pub is_gaps: Option<bool>,
+    pub display_population_based_forecasting: Option<bool>,
+    pub global_table_configs: Option<serde_json::Value>,
+    pub backdating: Option<BackdatingData>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
@@ -45,9 +50,9 @@ pub struct UpsertPreferences {
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         Option<Vec<StorePrefUpdate<i32>>>,
     pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
-        Option<Vec<StorePrefUpdate<i32>>>,
+        Option<Vec<StorePrefUpdate<f64>>>,
     pub number_of_months_threshold_to_show_over_stock_alerts_for_products:
-        Option<Vec<StorePrefUpdate<i32>>>,
+        Option<Vec<StorePrefUpdate<f64>>>,
     pub first_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
     pub second_threshold_for_expiring_items: Option<Vec<StorePrefUpdate<i32>>>,
     pub warn_when_missing_recent_stocktake:
@@ -75,6 +80,9 @@ pub fn upsert_preferences(
         expired_stock_issue_threshold: expired_stock_issue_threshold_input,
         item_margin_overrides_supplier_margin: item_margin_overrides_supplier_margin_input,
         is_gaps: is_gaps_input,
+        display_population_based_forecasting: display_population_based_forecasting_input,
+        global_table_configs: global_table_configs_input,
+        backdating: backdating_input,
 
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
@@ -121,6 +129,9 @@ pub fn upsert_preferences(
         expired_stock_issue_threshold,
         item_margin_overrides_supplier_margin,
         is_gaps,
+        display_population_based_forecasting,
+        global_table_configs,
+        backdating,
 
         // Store preferences
         manage_vaccines_in_doses,
@@ -203,6 +214,18 @@ pub fn upsert_preferences(
             
             if let Some(input) = item_margin_overrides_supplier_margin_input {
                 item_margin_overrides_supplier_margin.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = display_population_based_forecasting_input {
+                display_population_based_forecasting.upsert(connection, input, None)?;
+            }
+            
+            if let Some(input) = global_table_configs_input {
+                global_table_configs.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = backdating_input {
+                backdating.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...

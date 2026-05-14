@@ -333,7 +333,7 @@ mod test {
                 id: new_stock.id.clone(),
                 item_link_id: mock_stock_line_a().item_link_id,
                 store_id: mock_stock_line_a().store_id,
-                supplier_link_id: mock_stock_line_a().supplier_link_id,
+                supplier_id: mock_stock_line_a().supplier_id,
                 available_number_of_packs: 4.0,
                 total_number_of_packs: 4.0,
                 pack_size: 2.0,

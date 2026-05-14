@@ -19,6 +19,7 @@ use repository::{
 };
 
 use super::UpdateStockInLine;
+use crate::NullableUpdate;
 
 pub struct GenerateResult {
     pub invoice_row_option: Option<InvoiceRow>,
@@ -53,11 +54,9 @@ pub fn generate(
         update_line = convert_invoice_line_to_single_pack(update_line);
     }
 
-    // Only update stock when the invoice status has reached a status that effect stock and the line
-    // hasn't be rejected. The current logic makes it so lines can't be rejected after being accepted as
-    // in that case the stock could have already been assigned so it mightn't be possible to then
-    // remove the stock line. This does mean that new lines added when received will be stuck in pending
-    // and can't go into stock.
+    // Only update stock when the invoice status has reached a status that affects stock and the
+    // line is passed (not rejected or pending). Line status changes are blocked once the invoice
+    // reaches Received, so at Delivered status no stock lines exist yet and all transitions are safe.
     let (upsert_batch_option, vvm_status_log_option) = if should_update_stock(&existing_invoice_row)
         && matches!(update_line.status, None | Some(InvoiceLineStatus::Passed))
     {
@@ -74,7 +73,7 @@ pub fn generate(
             StockLineInput {
                 stock_line_id,
                 store_id: existing_invoice_row.store_id.clone(),
-                supplier_link_id: existing_invoice_row.name_link_id.clone(),
+                supplier_id: existing_invoice_row.name_id.clone(),
                 on_hold: false,
                 barcode_id: None,
                 overwrite_stock_levels: true,
@@ -82,7 +81,10 @@ pub fn generate(
         )?;
         update_line.stock_line_id = Some(new_batch.id.clone());
 
-        let vvm_status_log_option = if let Some(vvm_status_id) = input.vvm_status_id {
+        let vvm_status_log_option = if let Some(NullableUpdate {
+            value: Some(vvm_status_id),
+        }) = input.vvm_status_id
+        {
             let existing_log_id =
                 get_existing_vvm_status_log_id(connection, &new_batch.id, &update_line.id)?;
 
@@ -136,6 +138,7 @@ fn generate_line(
         cost_price_per_pack,
         sell_price_per_pack,
         expiry_date,
+        manufacture_date,
         number_of_packs,
         note,
         location,
@@ -144,6 +147,7 @@ fn generate_line(
         item_variant_id,
         vvm_status_id,
         donor_id,
+        manufacturer_id,
         campaign_id,
         program_id,
         shipped_number_of_packs,
@@ -168,6 +172,9 @@ fn generate_line(
     update_line.expiry_date = expiry_date
         .map(|expiry_date| expiry_date.value)
         .unwrap_or(update_line.expiry_date);
+    update_line.manufacture_date = manufacture_date
+        .map(|manufacture_date| manufacture_date.value)
+        .unwrap_or(update_line.manufacture_date);
     update_line.sell_price_per_pack =
         sell_price_per_pack.unwrap_or(update_line.sell_price_per_pack);
     update_line.cost_price_per_pack =
@@ -186,11 +193,15 @@ fn generate_line(
         .map(|v| v.value)
         .unwrap_or(update_line.item_variant_id);
 
-    update_line.donor_link_id = donor_id
-        .map(|d| d.value)
-        .unwrap_or(update_line.donor_link_id);
+    update_line.donor_id = donor_id.map(|d| d.value).unwrap_or(update_line.donor_id);
 
-    update_line.vvm_status_id = vvm_status_id.or(update_line.vvm_status_id);
+    update_line.manufacturer_id = manufacturer_id
+        .map(|m| m.value)
+        .unwrap_or(update_line.manufacturer_id);
+
+    update_line.vvm_status_id = vvm_status_id
+        .map(|v| v.value)
+        .unwrap_or(update_line.vvm_status_id);
 
     if let Some(status) = status {
         use InvoiceLineStatus::*;

@@ -4,6 +4,7 @@ import {
   usePreferences,
   ColumnDef,
   ColumnType,
+  ExpiryDateCell,
   UnitsAndDosesCell,
 } from '@openmsupply-client/common';
 import { StocktakeLineFragment } from '../api';
@@ -54,6 +55,18 @@ export const useStocktakeColumns = () => {
         // expiryDate from backend is a string - use accessorFn to convert to Date object for sort and filtering
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         header: t('label.expiry-date'),
+        size: 110,
+        columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
+        defaultHideOnMobile: true,
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        id: 'manufactureDate',
+        accessorFn: row =>
+          row.manufactureDate ? new Date(row.manufactureDate) : null,
+        header: t('label.manufacture-date'),
         size: 110,
         columnType: ColumnType.Date,
         defaultHideOnMobile: true,
@@ -109,6 +122,20 @@ export const useStocktakeColumns = () => {
         getIsError: row => getIsError('StockLineReducedBelowZero', row),
       },
       {
+        id: 'dosesCounted',
+        header: t('label.doses-counted'),
+        columnType: ColumnType.Number,
+        enableSorting: true,
+        aggregationFn: 'sum',
+        includeColumn: manageVaccinesInDoses,
+        accessorFn: row => {
+          if (!row.item.isVaccine) return null;
+          const counted = row.countedNumberOfPacks;
+          if (counted === null || counted === undefined) return null;
+          return counted * (row.packSize ?? 1) * (row.item.doses ?? 1);
+        },
+      },
+      {
         id: 'difference',
         accessorFn: row =>
           (row.countedNumberOfPacks ?? row.snapshotNumberOfPacks) -
@@ -130,6 +157,12 @@ export const useStocktakeColumns = () => {
         enableSorting: true,
         accessorFn: row => row.donorName,
         includeColumn: allowTrackingOfStockByDonor,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        accessorFn: row => row.manufacturer?.name ?? '',
         defaultHideOnMobile: true,
       },
       {

@@ -2,6 +2,7 @@ import {
   SortBy,
   FilterBy,
   AssetSortFieldInput,
+  AssetLogFilterInput,
   InsertAssetInput,
   UpdateAssetInput,
   setNullableInput,
@@ -80,6 +81,7 @@ const assetParsers = {
     id: input.id ?? '',
     assetId: input.assetId ?? '',
     comment: input.comment,
+    logDatetime: input.logDatetime,
     reasonId: input.reasonId,
     status: input.status,
     type: input.type,
@@ -147,8 +149,14 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
 
       return items;
     },
-    logs: async (assetId: string) => {
-      const filter = { assetId: { equalTo: assetId } };
+    logs: async (
+      assetId: string,
+      additionalFilter?: Partial<AssetLogFilterInput>
+    ) => {
+      const filter: AssetLogFilterInput = {
+        assetId: { equalTo: assetId },
+        ...additionalFilter,
+      };
       const sort = { key: AssetLogSortFieldInput.LogDatetime, desc: true };
       const result = await sdk.assetLogs({ filter, sort, storeId });
 

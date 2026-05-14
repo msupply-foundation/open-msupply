@@ -18,7 +18,7 @@ export const usePeriodList = (
   const queryFn = async ({
     pageParam,
   }: {
-    pageParam?: number;
+    pageParam: number;
   }): Promise<{
     data: {
       nodes: PeriodFragment[];
@@ -26,7 +26,7 @@ export const usePeriodList = (
     };
     pageNumber: number;
   }> => {
-    const pageNumber = Number(pageParam ?? 0);
+    const pageNumber = Number(pageParam);
 
     const query = await api.periods({
       storeId,
@@ -44,6 +44,15 @@ export const usePeriodList = (
     return { data: { nodes, totalCount }, pageNumber };
   };
 
-  const query = useInfiniteQuery({ queryKey, queryFn, enabled });
+  const query = useInfiniteQuery({
+    queryKey,
+    queryFn,
+    enabled,
+    initialPageParam: 0,
+    getNextPageParam: lastPage =>
+      (lastPage.pageNumber + 1) * rowsPerPage < lastPage.data.totalCount
+        ? lastPage.pageNumber + 1
+        : undefined,
+  });
   return query;
 };

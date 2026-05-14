@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
-  DosesCaption,
+  DosesOrUnitsCaption,
   NumericTextInput,
   Select,
   Typography,
@@ -11,7 +11,11 @@ import {
   Representation,
   RepresentationValue,
 } from '@openmsupply-client/common';
-import { getCurrentValue, getUpdatedRequest } from './utils';
+import {
+  unitsToRepresentation,
+  getUpdatedRequest,
+  representationToUnits,
+} from './utils';
 import { DraftRequestLine } from '../hooks';
 
 interface Option {
@@ -29,7 +33,7 @@ interface RequestedSelectionProps {
   setRepresentation: (rep: RepresentationValue) => void;
   unitName: string;
   showExtraFields?: boolean;
-  displayVaccinesInDoses?: boolean;
+  isDosesEnabled?: boolean;
   dosesPerUnit?: number;
   setIsEditingRequested: (isEditingRequested: boolean) => void;
 }
@@ -43,7 +47,7 @@ export const RequestedSelection = ({
   representation,
   setRepresentation,
   unitName,
-  displayVaccinesInDoses = false,
+  isDosesEnabled = false,
   dosesPerUnit = 1,
   setIsEditingRequested,
 }: RequestedSelectionProps) => {
@@ -52,13 +56,16 @@ export const RequestedSelection = ({
 
   const currentValue = useMemo(
     (): number =>
-      getCurrentValue(
+      // Display the saved requestedQuantity in the input field in correct representation
+      unitsToRepresentation(
+        draft?.requestedQuantity ?? 0,
         representation,
-        draft?.requestedQuantity,
-        defaultPackSize
+        defaultPackSize,
+        dosesPerUnit
       ),
-    [representation, draft?.requestedQuantity, defaultPackSize]
+    [representation, draft?.requestedQuantity, defaultPackSize, dosesPerUnit]
   );
+
   const [value, setValue] = useState(currentValue);
 
   useEffect(() => {
@@ -69,22 +76,29 @@ export const RequestedSelection = ({
     const displayValue = value === 1 ? 1 : 2;
     const unitPlural = getPlural(unitName.toLowerCase(), displayValue);
     const packPlural = getPlural(t('label.pack'), displayValue).toLowerCase();
+    const dosePlural = getPlural(t('label.dose').toLowerCase(), displayValue);
 
-    if (!isPacksEnabled)
-      return [{ label: unitName, value: Representation.UNITS }];
-    return [
-      { label: unitPlural, value: Representation.UNITS },
-      { label: packPlural, value: Representation.PACKS },
-    ];
-  }, [unitName, currentValue, isPacksEnabled]);
+    const opts: Option[] = [{ label: unitPlural, value: Representation.UNITS }];
+
+    if (isPacksEnabled)
+      opts.push({ label: packPlural, value: Representation.PACKS });
+
+    if (isDosesEnabled && dosesPerUnit > 0) {
+      opts.push({ label: dosePlural, value: Representation.DOSES });
+    }
+
+    return opts;
+  }, [unitName, currentValue, isPacksEnabled, isDosesEnabled, dosesPerUnit]);
 
   const debouncedUpdate = useDebounceCallback(
     (value?: number) => {
+      // Save the input value to the draft in units
       const updatedRequest = getUpdatedRequest(
         value,
         representation,
         defaultPackSize,
-        draft?.suggestedQuantity
+        draft?.suggestedQuantity,
+        dosesPerUnit
       );
       update(updatedRequest);
       setIsEditingRequested(false);
@@ -138,15 +152,17 @@ export const RequestedSelection = ({
               },
             }}
           />
-          {displayVaccinesInDoses && !!value && (
-            <DosesCaption
-              value={
-                representation === Representation.PACKS
-                  ? value * (defaultPackSize ?? 1)
-                  : value
-              }
+          {isDosesEnabled && !!value && (
+            <DosesOrUnitsCaption
+              value={representationToUnits(
+                value,
+                representation,
+                defaultPackSize,
+                dosesPerUnit
+              )}
               dosesPerUnit={dosesPerUnit}
-              displayVaccinesInDoses={displayVaccinesInDoses}
+              dosesSelected={representation === Representation.DOSES}
+              unitsLabel={unitName}
             />
           )}
         </Box>

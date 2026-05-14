@@ -27,6 +27,7 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
         init_sql: None,
         database_path: None,
         connection_pool_max_connections: None,
+        connection_pool_min_idle: None,
         connection_pool_timeout_seconds: None,
     }
 }
@@ -67,6 +68,7 @@ table! {
 
 #[derive(QueryableByName)]
 #[diesel(table_name = pg_database)]
+#[allow(dead_code)]
 struct PgDatabaseRow {
     #[allow(dead_code)]
     oid: i64,

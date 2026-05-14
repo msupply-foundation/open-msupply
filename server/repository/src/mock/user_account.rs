@@ -109,6 +109,26 @@ pub fn mock_user_permission_a3() -> UserPermissionRow {
     }
 }
 
+pub fn mock_user_permission_a4() -> UserPermissionRow {
+    UserPermissionRow {
+        id: "user_permission_a4".to_string(),
+        user_id: "user_account_a".to_string(),
+        store_id: Some("store_a".to_string()),
+        permission: PermissionType::InboundShipmentMutate,
+        context_id: None,
+    }
+}
+
+pub fn mock_user_permission_a5() -> UserPermissionRow {
+    UserPermissionRow {
+        id: "user_permission_a5".to_string(),
+        user_id: "user_account_a".to_string(),
+        store_id: Some("store_a".to_string()),
+        permission: PermissionType::InboundShipmentVerify,
+        context_id: None,
+    }
+}
+
 pub fn mock_user_permission_b1() -> UserPermissionRow {
     UserPermissionRow {
         id: "user_permission_b1".to_string(),
@@ -142,6 +162,8 @@ pub fn mock_user_permissions() -> Vec<UserPermissionRow> {
         mock_user_permission_a1(),
         mock_user_permission_a2(),
         mock_user_permission_a3(),
+        mock_user_permission_a4(),
+        mock_user_permission_a5(),
         mock_user_permission_b1(),
     ]
 }

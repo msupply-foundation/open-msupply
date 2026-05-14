@@ -190,8 +190,8 @@ impl LoginService {
             auth_data.auth_token_secret.as_bytes(),
             !is_develop(),
         );
-        let max_age_token = chrono::Duration::minutes(60).num_seconds() as usize;
-        let max_age_refresh = chrono::Duration::hours(6).num_seconds() as usize;
+        let max_age_token = crate::auth_data::TOKEN_LIFETIME_SEC;
+        let max_age_refresh = crate::auth_data::REFRESH_TOKEN_LIFETIME_SEC;
 
         let pair = match token_service.jwt_token(
             &user_account.id,
@@ -315,6 +315,7 @@ impl LoginService {
             phone_number: user_info.user.phone1,
             job_title: user_info.user.job_title,
             last_successful_sync: Some(Utc::now().naive_utc()),
+            is_active: user_info.user.active,
         };
         let stores_permissions: Vec<StorePermissions> = user_info
             .user_stores
@@ -471,14 +472,20 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionTyp
             Permissions::AuthorisePurchaseOrders => {
                 output.insert(PermissionType::PurchaseOrderAuthorise);
             }
+            Permissions::FinalisePurchaseOrders => {
+                output.insert(PermissionType::PurchaseOrderFinalise);
+            }
             // goods received
-            Permissions::ViewInboundShipmentExternal => {
+            Permissions::ViewGoodsReceived => {
                 output.insert(PermissionType::InboundShipmentExternalQuery);
             }
-            Permissions::AddEditInboundShipmentExternal => {
+            Permissions::AddEditGoodsReceived => {
                 output.insert(PermissionType::InboundShipmentExternalMutate);
             }
-            Permissions::AuthoriseInboundShipmentExternal => {
+            Permissions::FinaliseGoodsReceived => {
+                output.insert(PermissionType::InboundShipmentExternalVerify);
+            }
+            Permissions::AuthoriseGoodsReceived => {
                 output.insert(PermissionType::InboundShipmentExternalAuthorise);
             }
             // reports
@@ -561,7 +568,7 @@ mod test {
         EqualFilter, KeyType, KeyValueStoreRepository, UserFilter, UserPermissionFilter,
         UserPermissionRepository, UserRepository,
     };
-    use util::{assert_matches, assert_variant};
+    use util::assert_matches;
 
     use crate::{
         apis::login_v4::LoginResponseV4,
@@ -694,7 +701,7 @@ mod test {
 
             assert!(result.is_ok());
         }
-        // check login error handling when empty password hash and can't connect to mSupply
+
         {
             let mock_server = MockServer::start();
             mock_server.mock(|when, then| {
@@ -716,10 +723,12 @@ mod test {
             )
             .await;
 
-            assert_matches!(result, Err(LoginError::MSupplyCentralNotReached));
+            assert_matches!(
+                result,
+                Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+            );
         }
 
-        // check login error handling when empty password hash and can connect to mSupply
         {
             let mock_server = MockServer::start();
             mock_server.mock(|when, then| {
@@ -744,13 +753,12 @@ mod test {
                 },
                 0,
             )
-            .await
-            .inspect_err(|e| {
-                let err_message = assert_variant!(e, LoginError::InternalError(err) => err);
-                assert_eq!(err_message, "Corrupted credentials")
-            });
+            .await;
 
-            assert!(result.is_err());
+            assert_matches!(
+                result,
+                Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+            );
         }
         // If server password has changed, and trying to login with old password, return LoginError::LoginFailure
         {

@@ -93,7 +93,7 @@ fn purchase_order_1_pull_record() -> TestSyncIncomingRecord {
             id: PURCHASE_ORDER_1.0.to_string(),
             store_id: "store_b".to_string(),
             created_by: Some("some user".to_string()),
-            supplier_name_link_id: "name_store_b".to_string(),
+            supplier_name_id: "name_store_b".to_string(),
             purchase_order_number: 1,
             status: PurchaseOrderStatus::Finalised,
             created_datetime: NaiveDate::from_ymd_opt(2021, 1, 22)
@@ -108,10 +108,10 @@ fn purchase_order_1_pull_record() -> TestSyncIncomingRecord {
             ),
             target_months: Some(2.1),
             comment: Some("some test comment".to_string()),
-            donor_link_id: Some("donor_a".to_string()),
+            donor_id: Some("donor_a".to_string()),
             reference: Some("test reference".to_string()),
             currency_id: Some("currency_a".to_string()),
-            foreign_exchange_rate: Some(1.6),
+            foreign_exchange_rate: 1.6,
             shipping_method: Some("sea".to_string()),
             sent_datetime: Some(
                 NaiveDate::from_ymd_opt(2025, 1, 15)
@@ -298,7 +298,7 @@ fn purchase_order_2_migration_pull_record() -> TestSyncIncomingRecord {
             id: "FA9FFB5F474E4EE998ADA2632E41E6BF".to_string(),
             store_id: "store_a".to_string(),
             created_by: Some("user_account_a".to_string()),
-            supplier_name_link_id: "donor_a".to_string(),
+            supplier_name_id: "donor_a".to_string(),
             purchase_order_number: 1,
             status: PurchaseOrderStatus::Sent,
             created_datetime: NaiveDate::from_ymd_opt(2021, 3, 15)
@@ -313,10 +313,10 @@ fn purchase_order_2_migration_pull_record() -> TestSyncIncomingRecord {
             ),
             target_months: Some(0.0),
             comment: None,
-            donor_link_id: None,
+            donor_id: None,
             reference: None,
             currency_id: Some("currency_a".to_string()),
-            foreign_exchange_rate: Some(1.0),
+            foreign_exchange_rate: 1.0,
             shipping_method: None,
             sent_datetime: Some(
                 NaiveDate::from_ymd_opt(2021, 3, 15)
@@ -438,7 +438,7 @@ fn purchase_order_3_empty_string_pull_record() -> TestSyncIncomingRecord {
             id: PURCHASE_ORDER_3.0.to_string(),
             store_id: "store_b".to_string(),
             created_by: None,
-            supplier_name_link_id: "name_store_b".to_string(),
+            supplier_name_id: "name_store_b".to_string(),
             purchase_order_number: 1,
             status: PurchaseOrderStatus::New,
             created_datetime: NaiveDate::from_ymd_opt(2021, 1, 22)
@@ -448,10 +448,10 @@ fn purchase_order_3_empty_string_pull_record() -> TestSyncIncomingRecord {
             confirmed_datetime: None,
             target_months: None,
             comment: None,
-            donor_link_id: None,
+            donor_id: None,
             reference: None,
             currency_id: None,
-            foreign_exchange_rate: Some(1.0),
+            foreign_exchange_rate: 1.0,
             shipping_method: None,
             sent_datetime: None,
             contract_signed_date: None,
@@ -557,7 +557,7 @@ fn purchase_order_4_empty_object_pull_record() -> TestSyncIncomingRecord {
             id: PURCHASE_ORDER_4.0.to_string(),
             store_id: "store_b".to_string(),
             created_by: None,
-            supplier_name_link_id: "name_store_b".to_string(),
+            supplier_name_id: "name_store_b".to_string(),
             purchase_order_number: 1,
             status: PurchaseOrderStatus::New,
             created_datetime: NaiveDate::from_ymd_opt(2020, 1, 22)
@@ -567,10 +567,10 @@ fn purchase_order_4_empty_object_pull_record() -> TestSyncIncomingRecord {
             confirmed_datetime: None,
             target_months: None,
             comment: None,
-            donor_link_id: None,
+            donor_id: None,
             reference: None,
             currency_id: None,
-            foreign_exchange_rate: Some(1.0),
+            foreign_exchange_rate: 1.0,
             shipping_method: None,
             sent_datetime: None,
             contract_signed_date: None,
@@ -673,10 +673,10 @@ fn purchase_order_5_null_pull_record() -> TestSyncIncomingRecord {
             id: PURCHASE_ORDER_5.0.to_string(),
             store_id: "store_b".to_string(),
             created_by: None,
-            supplier_name_link_id: "name_store_b".to_string(),
+            supplier_name_id: "name_store_b".to_string(),
             purchase_order_number: 1,
             status: PurchaseOrderStatus::New,
-            foreign_exchange_rate: Some(1.0),
+            foreign_exchange_rate: 1.0,
             created_datetime: NaiveDate::from_ymd_opt(2020, 1, 22)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -764,10 +764,10 @@ fn purchase_order_6_no_fields_pull_record() -> TestSyncIncomingRecord {
             id: PURCHASE_ORDER_6.0.to_string(),
             store_id: "store_b".to_string(),
             created_by: None,
-            supplier_name_link_id: "name_store_b".to_string(),
+            supplier_name_id: "name_store_b".to_string(),
             purchase_order_number: 1,
             status: PurchaseOrderStatus::New,
-            foreign_exchange_rate: Some(1.0),
+            foreign_exchange_rate: 1.0,
             created_datetime: NaiveDate::from_ymd_opt(2020, 1, 22)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)

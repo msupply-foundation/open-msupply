@@ -15,7 +15,7 @@ const appVersion = require('../../../../../../package.json').version; // eslint-
 declare const LANG_VERSION: string;
 
 export const CUSTOM_TRANSLATIONS_NAMESPACE = 'custom-translations';
-const defaultNS = 'common';
+export const DEFAULT_TRANSLATIONS_NAMESPACE = 'common';
 const minuteInMilliseconds = 60 * 1000;
 const isDevelopment = process.env['NODE_ENV'] === 'development';
 
@@ -60,14 +60,13 @@ export function initialiseI18n({
           {
             languageVersion,
             endpointByNamespace: {
-              common: defaultTranslationsLoadPath,
+              [DEFAULT_TRANSLATIONS_NAMESPACE]: defaultTranslationsLoadPath,
               [CUSTOM_TRANSLATIONS_NAMESPACE]: customTranslationsLoadPath,
             },
           },
         ],
       },
       debug: isDevelopment,
-      defaultNS,
       detection: {
         order: [
           'querystring',
@@ -78,10 +77,10 @@ export function initialiseI18n({
           'htmlTag',
         ],
       },
-
-      ns: defaultNS, // behaving as I expect defaultNS should. Without specifying ns here, a request is made to 'translation.json'
+      defaultNS: CUSTOM_TRANSLATIONS_NAMESPACE,
+      ns: [CUSTOM_TRANSLATIONS_NAMESPACE, DEFAULT_TRANSLATIONS_NAMESPACE],
+      fallbackNS: DEFAULT_TRANSLATIONS_NAMESPACE,
       fallbackLng: 'en',
-      fallbackNS: 'common',
       // the following option was used to assist the browser language detection; but it prevents regional variations, so has been removed
       // load: 'languageOnly', // if requested language is 'en-US' then we load 'en'; change to the default value of 'all' to load 'en-US' and 'en'
       interpolation: {

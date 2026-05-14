@@ -1,10 +1,13 @@
 import React, { useMemo } from 'react';
 import {
-  ModalRow,
+  Autocomplete,
   ModalLabel,
   Grid,
+  Box,
+  Typography,
   useTranslation,
   BasicTextInput,
+  PurchaseOrderLineStatusNode,
 } from '@openmsupply-client/common';
 import {
   ItemRowFragment,
@@ -14,18 +17,26 @@ import {
 import { useInboundShipment } from '../../../api/hooks/document/useInboundShipment';
 import { isA } from '../../../../utils';
 import { usePurchaseOrder } from '@openmsupply-client/purchasing/src/purchase_order/api';
+import { PurchaseOrderLineFragment } from '@openmsupply-client/purchasing/src/purchase_order/api/operations.generated';
 
-interface InboundLineEditProps {
+interface InboundLineEditFormProps {
   item: ItemRowFragment | null;
   disabled: boolean;
   onChangeItem: (item: ItemStockOnHandFragment | null) => void;
+  // External (PO line) mode props
+  hasPurchaseOrder?: boolean;
+  selectedPOLine: PurchaseOrderLineFragment | null;
+  onChangePOLine: (line: PurchaseOrderLineFragment | null) => void;
 }
 
 export const InboundLineEditForm = ({
   item,
   disabled,
   onChangeItem,
-}: InboundLineEditProps) => {
+  hasPurchaseOrder = false,
+  selectedPOLine,
+  onChangePOLine,
+}: InboundLineEditFormProps) => {
   const t = useTranslation();
   const {
     query: { data },
@@ -39,18 +50,95 @@ export const InboundLineEditForm = ({
   }, [data]);
 
   const { query } = usePurchaseOrder(purchaseOrder?.id);
+
+  // For internal mode: filter items
   const filter = {
     id: {
       notEqualAll: existingItemIds,
-      ...purchaseOrder && {
-        equalAny: query.data?.lines.nodes.map(line => line.item.id) || []
-      },
-    }
+      ...(purchaseOrder && {
+        equalAny: query.data?.lines.nodes.map(line => line.item.id) || [],
+      }),
+    },
   };
 
+  // For external mode: available PO lines
+  const availablePOLines = useMemo(() => {
+    if (!hasPurchaseOrder || !query.data) return [];
+
+    const existingPolIds = new Set(
+      data?.lines.nodes
+        .filter(isA.stockInLine)
+        .map(line => line.purchaseOrderLine?.id)
+        .filter(Boolean) ?? []
+    );
+
+    return query.data.lines.nodes.filter(
+      pol =>
+        pol.status !== PurchaseOrderLineStatusNode.Closed &&
+        (!existingPolIds.has(pol.id) || pol.id === selectedPOLine?.id)
+    );
+  }, [query.data, data, selectedPOLine?.id, hasPurchaseOrder]);
+
+  const remainingUnits =
+    hasPurchaseOrder && selectedPOLine
+      ? (selectedPOLine.adjustedNumberOfUnits ??
+          selectedPOLine.requestedNumberOfUnits) -
+        (selectedPOLine.shippedNumberOfUnits ?? 0)
+      : null;
+
+  if (hasPurchaseOrder) {
+    return (
+      <>
+        <Box display="flex" flexWrap="wrap" alignItems="center" gap={1}>
+          <Box
+            display="flex"
+            alignItems="center"
+            flex={1}
+            minWidth={300}
+            gap={1}
+          >
+            <ModalLabel
+              label={t('label.purchase-order-line')}
+              justifyContent="flex-end"
+              minWidth="fit-content"
+            />
+            <Grid flex={1}>
+              <Autocomplete
+                autoFocus={!selectedPOLine}
+                disabled={disabled}
+                options={availablePOLines}
+                value={selectedPOLine}
+                getOptionLabel={(option: PurchaseOrderLineFragment) =>
+                  `#${option.lineNumber} ${option.item.name} (${option.item.code}) - ${t('label.pack-size')} ${option.requestedPackSize}`
+                }
+                isOptionEqualToValue={(a, b) => a.id === b.id}
+                onChange={(_, line) => onChangePOLine(line ?? null)}
+                width="100%"
+              />
+            </Grid>
+          </Box>
+        </Box>
+        {selectedPOLine && (
+          <Box display="flex" justifyContent="space-between" sx={{ mt: 1, ml: 1 }}>
+            {remainingUnits != null && (
+              <Typography variant="body2" color="text.secondary">
+                {t('label.remaining-quantity-to-receive', {
+                  count: remainingUnits,
+                })}
+              </Typography>
+            )}
+            <Typography variant="body2" color="text.secondary">
+              {`${t('label.unit')}: ${selectedPOLine.unit ?? selectedPOLine.item.unitName ?? ''}`}
+            </Typography>
+          </Box>
+        )}
+      </>
+    );
+  }
+
   return (
-    <>
-      <ModalRow>
+    <Box display="flex" flexWrap="wrap" alignItems="center" gap={1}>
+      <Box display="flex" alignItems="center" flex={1} minWidth={300} gap={1}>
         <ModalLabel
           label={t('label.item', { count: 1 })}
           justifyContent="flex-end"
@@ -69,17 +157,17 @@ export const InboundLineEditForm = ({
             initialUpdate={!item?.name}
           />
         </Grid>
-      </ModalRow>
+      </Box>
       {item && (
-        <ModalRow margin={3}>
+        <Box display="flex" alignItems="center" gap={1}>
           <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
           <BasicTextInput
             disabled
             sx={{ width: 150 }}
             value={item.unitName ?? ''}
           />
-        </ModalRow>
+        </Box>
       )}
-    </>
+    </Box>
   );
 };

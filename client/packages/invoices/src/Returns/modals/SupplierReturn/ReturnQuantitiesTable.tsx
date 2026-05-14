@@ -6,6 +6,7 @@ import {
   useTranslation,
   RequiredNumberInputCell,
   ColumnType,
+  CheckCell,
 } from '@openmsupply-client/common';
 import { GenerateSupplierReturnLineFragment } from '../../api';
 
@@ -63,6 +64,13 @@ export const QuantityToReturnTableComponent = ({
         size: 100,
       },
       {
+        id: 'onHold',
+        header: t('label.on-hold'),
+        size: 70,
+        accessorFn: row => row.onHold,
+        Cell: CheckCell,
+      },
+      {
         accessorKey: 'numberOfPacksToReturn',
         header: t('label.quantity-to-return'),
         description: t('description.pack-quantity'),
@@ -71,7 +79,7 @@ export const QuantityToReturnTableComponent = ({
         Cell: ({ cell, row: { original: row } }) => (
           <RequiredNumberInputCell
             cell={cell}
-            disabled={isDisabled}
+            disabled={isDisabled || row.onHold}
             updateFn={value =>
               updateLine({ id: row.id, numberOfPacksToReturn: value })
             }
@@ -80,7 +88,7 @@ export const QuantityToReturnTableComponent = ({
             max={Math.floor(row.availableNumberOfPacks)}
           />
         ),
-      }
+      },
     ],
     []
   );

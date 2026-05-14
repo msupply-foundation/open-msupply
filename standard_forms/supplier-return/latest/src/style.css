@@ -1,6 +1,12 @@
 @media print {
   @page {
-    size: A4 landscape;
+    @bottom-right {
+      font-family: Tahoma;
+      font-size: 8pt;
+      /* do not allow formatter to add a line break in the content */
+      /* prettier-ignore*/
+      content: '{{t(k="report.page",f="Page")}} ' counter(page) ' {{t(k="report.of",f="of")}} ' counter(pages);
+    }
   }
 }
 
@@ -14,7 +20,7 @@
 .header_date_section,
 .body_section,
 .body_total_section {
-  margin-left: 8px;
+  margin-inline-start: 8px;
   width: 100%;
 }
 
@@ -48,13 +54,13 @@
 }
 
 .header_section_field_right {
-  text-align: right;
+  text-align: end;
   font-family: Tahoma;
   font-size: 8pt;
 }
 
 .header_section_field_left {
-  text-align: left;
+  text-align: start;
   font-family: Tahoma;
   font-size: 8pt;
 }
@@ -62,7 +68,6 @@
 .line_number,
 .quantity,
 .pack,
-.expiry,
 .sell_price,
 .cost_price,
 .total_quantity,
@@ -72,10 +77,16 @@
   font-size: 8pt;
 }
 
+.expiry {
+  text-align: end;
+  font-family: Tahoma;
+  font-size: 8pt;
+}
+
 .item_code,
 .item_name,
 .batch {
-  text-align: left;
+  text-align: start;
   font-family: Tahoma;
   font-size: 8pt;
 }
@@ -100,7 +111,7 @@
 
 hr {
   width: 100%;
-  margin-left: 8px;
+  margin-inline-start: 8px;
   border: 0.1px solid black;
 }
 

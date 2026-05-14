@@ -17,6 +17,15 @@ impl MaxOrdersReachedForPeriod {
     }
 }
 
+pub struct SupplierNotValid;
+
+#[Object]
+impl SupplierNotValid {
+    pub async fn description(&self) -> &str {
+        "Supplier is not valid for this program"
+    }
+}
+
 // response requisition errors
 
 pub struct FinalisedRequisition;

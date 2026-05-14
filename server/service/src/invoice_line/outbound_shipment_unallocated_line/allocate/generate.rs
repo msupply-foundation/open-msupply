@@ -198,6 +198,7 @@ fn generate_new_line(
         program_id: None,
         item_variant_id: None,
         donor_id: None,
+        manufacturer_id: None,
     }
 }
 

@@ -107,7 +107,7 @@ impl<'a> SyncMessageRowRepository<'a> {
             table_name: ChangelogTableName::SyncMessage,
             record_id: id.to_string(),
             row_action: RowActionType::Upsert,
-            name_link_id: None,
+            name_id: None,
             store_id: None,
         };
 

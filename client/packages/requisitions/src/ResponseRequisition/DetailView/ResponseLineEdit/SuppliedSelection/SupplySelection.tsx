@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
-  DosesCaption,
+  DosesOrUnitsCaption,
   NumericTextInput,
   Select,
   Typography,
@@ -28,7 +28,7 @@ interface SupplySelectionProps {
   representation: RepresentationValue;
   setRepresentation: (rep: RepresentationValue) => void;
   unitName: string;
-  displayVaccinesInDoses?: boolean;
+  isDosesEnabled?: boolean;
   dosesPerUnit: number;
   setIsEditingSupply: (isEditingSupply: boolean) => void;
 }
@@ -42,7 +42,7 @@ export const SupplySelection = ({
   representation,
   setRepresentation,
   unitName,
-  displayVaccinesInDoses = false,
+  isDosesEnabled = false,
   dosesPerUnit,
   setIsEditingSupply,
 }: SupplySelectionProps) => {
@@ -134,15 +134,14 @@ export const SupplySelection = ({
               },
             }}
           />
-          {displayVaccinesInDoses && !!value && (
-            <DosesCaption
+          {isDosesEnabled && !!value && (
+            <DosesOrUnitsCaption
               value={
                 representation === Representation.PACKS
                   ? value * (defaultPackSize ?? 1)
                   : value
               }
               dosesPerUnit={dosesPerUnit}
-              displayVaccinesInDoses={displayVaccinesInDoses}
             />
           )}
         </Box>

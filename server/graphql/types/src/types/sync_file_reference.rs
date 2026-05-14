@@ -1,5 +1,5 @@
 use async_graphql::*;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use graphql_core::simple_generic_errors::NodeError;
 use repository::sync_file_reference::SyncFileReference;
 use service::{usize_to_u32, ListResult};
@@ -37,8 +37,11 @@ impl SyncFileReferenceNode {
         &self.row().sync_file_reference_row.mime_type
     }
 
-    pub async fn created_datetime(&self) -> &NaiveDateTime {
-        &self.row().sync_file_reference_row.created_datetime
+    pub async fn created_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_naive_utc_and_offset(
+            self.row().sync_file_reference_row.created_datetime,
+            Utc,
+        )
     }
 }
 

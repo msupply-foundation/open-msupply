@@ -39,7 +39,7 @@ impl InsertInsuranceInput {
 
         ServiceInput {
             id,
-            name_link_id: name_id,
+            name_id,
             insurance_provider_id,
             policy_number_family,
             policy_number_person,

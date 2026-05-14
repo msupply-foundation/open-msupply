@@ -20,6 +20,7 @@ export enum ColumnKey {
   Reason = 'reason',
   Number = 'number',
   Balance = 'runningBalance',
+  User = 'user',
 }
 
 export const useLedgerColumns = () => {
@@ -71,6 +72,11 @@ export const useLedgerColumns = () => {
         accessorKey: ColumnKey.Reason,
         header: t('label.reason'),
         enableSorting: true,
+      },
+      {
+        accessorKey: ColumnKey.User,
+        header: t('label.user'),
+        accessorFn: row => row.user?.username,
       },
     ],
     [getInvoiceLocalisationKey]

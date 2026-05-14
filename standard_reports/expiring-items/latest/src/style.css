@@ -19,7 +19,7 @@
   width: 100%;
   font-size: inherit;
   font-family: inherit;
-  text-align: left;
+  text-align: start;
   margin-top: 10;
   margin-bottom: 15;
   border-collapse: separate;
@@ -62,7 +62,7 @@ body,
   height: 10px;
   border-radius: 50%;
   background-color: rgba(245, 5, 1, 0.6);
-  margin-right: 5px;
+  margin-inline-end: 5px;
 }
 
 .container table td.expiry-date span.expired {
@@ -78,7 +78,7 @@ body,
   height: 10px;
   border-radius: 50%;
   background-color: rgba(248, 154, 1, 0.6);
-  margin-right: 5px;
+  margin-inline-end: 5px;
 }
 
 .container table td.expiry-date span.soon {
@@ -94,7 +94,7 @@ body,
   height: 10px;
   border-radius: 50%;
   background-color: rgba(51, 169, 1, 0.6);
-  margin-right: 5px;
+  margin-inline-end: 5px;
 }
 
 .container table td.expiry-date span.all-good {
@@ -110,7 +110,7 @@ body,
   height: 10px;
   border-radius: 50%;
   background-color: rgba(143, 144, 166, 0.6);
-  margin-right: 5px;
+  margin-inline-end: 5px;
 }
 
 .container table td.expiry-date span.na {

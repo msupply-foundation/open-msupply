@@ -13,8 +13,8 @@ export const useInboundDeleteSelectedLines = (
   resetRowSelection: () => void
 ): (() => void) => {
   const t = useTranslation();
-  const { mutateAsync } = useDeleteInboundLines();
-  const { isDisabled } = useInboundShipment();
+  const { isDisabled, isExternal } = useInboundShipment();
+  const { mutateAsync } = useDeleteInboundLines(isExternal);
   const errorsContext = useInboundShipmentLineErrorContext();
 
   const onDelete = async () => {

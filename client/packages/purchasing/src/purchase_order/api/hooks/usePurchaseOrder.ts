@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   FnUtils,
   InsertPurchaseOrderInput,
@@ -45,15 +45,21 @@ export const usePurchaseOrder = (id?: string) => {
     if (data) setDraft(data);
   }, [data]);
 
-  const handleDraftChange = (input: Partial<PurchaseOrderFragment>) => {
-    if (!draft) return;
-    setDraft({ ...draft, ...input });
-  };
+  // Ref avoids draft in useCallback deps (unstable reference on every state change)
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+
+  const handleDraftChange = useCallback(
+    (input: Partial<PurchaseOrderFragment>) => {
+      setDraft(prev => (prev ? { ...prev, ...input } : prev));
+    },
+    []
+  );
 
   // UPDATE
   const {
     mutateAsync: updateMutation,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     error: updateError,
   } = useUpdate();
 
@@ -65,18 +71,32 @@ export const usePurchaseOrder = (id?: string) => {
     return updatePurchaseOrder;
   };
 
-  const handleDebounceUpdate = useDebounceCallback(update, [], DEBOUNCED_TIME);
+  const pendingChanges = useRef<Partial<PurchaseOrderFragment>>({});
 
-  const handleChange = (input: Partial<PurchaseOrderFragment>) => {
-    if (!draft) return;
-    handleDraftChange(input);
-    handleDebounceUpdate(input);
-  };
+  const debouncedFlush = useDebounceCallback(
+    () => {
+      const changes = pendingChanges.current;
+      pendingChanges.current = {};
+      return update(changes);
+    },
+    [],
+    DEBOUNCED_TIME
+  );
+
+  const handleChange = useCallback(
+    (input: Partial<PurchaseOrderFragment>) => {
+      if (!draftRef.current) return;
+      handleDraftChange(input);
+      pendingChanges.current = { ...pendingChanges.current, ...input };
+      debouncedFlush();
+    },
+    [handleDraftChange, debouncedFlush]
+  );
 
   // CREATE
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreate();
 
@@ -86,7 +106,7 @@ export const usePurchaseOrder = (id?: string) => {
     return result;
   };
 
-  const { addFromMasterList, isLoading: isAdding } = useAddFromMasterList();
+  const { addFromMasterList, isPending: isAdding } = useAddFromMasterList();
 
   return {
     query: { data, isFetching, isError, isLoading },
@@ -97,7 +117,9 @@ export const usePurchaseOrder = (id?: string) => {
     isDisabled,
     draft,
     handleChange,
-    invalidateQueries: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
+    invalidateQueries: () => queryClient.invalidateQueries({
+      queryKey: [PURCHASE_ORDER]
+    }),
   };
 };
 
@@ -136,7 +158,9 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [PURCHASE_ORDER]
+    }),
   });
 };
 
@@ -152,7 +176,9 @@ const useUpdate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [PURCHASE_ORDER]
+    }),
   });
 };
 
@@ -166,12 +192,13 @@ const useAddFromMasterList = () => {
     message: t('messages.confirm-add-from-master-list'),
   });
 
-  const mutationState = useMutation(
-    purchaseOrderApi.addToPurchaseOrderFromMasterList,
-    {
-      onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
-    }
-  );
+  const mutationState = useMutation({
+    mutationFn: (vars: Parameters<typeof purchaseOrderApi.addToPurchaseOrderFromMasterList>[0]) => purchaseOrderApi.addToPurchaseOrderFromMasterList(vars),
+
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [PURCHASE_ORDER]
+    })
+  });
 
   const addFromMasterList = async (
     masterListId: string,

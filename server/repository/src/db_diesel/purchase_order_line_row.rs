@@ -1,13 +1,14 @@
 use crate::{
     db_diesel::{item_link_row::item_link, item_row::item, purchase_order_row::purchase_order},
-    name_link, Delete, PurchaseOrderRowRepository, Upsert,
+    diesel_macros::define_linked_tables,
+    Delete, PurchaseOrderRowRepository, Upsert,
 };
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
     StorageConnection,
 };
 use chrono::NaiveDate;
-use diesel::{dsl::max, prelude::*};
+use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
@@ -15,6 +16,8 @@ table! {
     purchase_order_line_stats (purchase_order_line_id) {
         purchase_order_line_id -> Text,
         shipped_number_of_units -> Double,
+        in_transit_number_of_units -> Double,
+        received_number_of_units -> Double,
     }
 }
 
@@ -23,11 +26,16 @@ table! {
 pub struct PurchaseOrderLineStatsRow {
     pub purchase_order_line_id: String,
     pub shipped_number_of_units: f64,
+    pub in_transit_number_of_units: f64,
+    pub received_number_of_units: f64,
 }
 
-table! {
-    purchase_order_line (id) {
-        id ->  Text,
+define_linked_tables! {
+    view: purchase_order_line = "purchase_order_line_view",
+    core: purchase_order_line_with_links = "purchase_order_line",
+    struct: PurchaseOrderLineRow,
+    repo: PurchaseOrderLineRowRepository,
+    shared: {
         store_id -> Text,
         purchase_order_id -> Text,
         line_number -> BigInt,
@@ -43,17 +51,20 @@ table! {
         price_per_pack_before_discount -> Double,
         price_per_pack_after_discount -> Double,
         comment -> Nullable<Text>,
-        manufacturer_link_id -> Nullable<Text>,
         note -> Nullable<Text>,
         unit -> Nullable<Text>,
         status -> crate::db_diesel::purchase_order_line_row::PurchaseOrderLineStatusMapping,
+    },
+    links: {
+    },
+    optional_links: {
+        manufacturer_link_id -> manufacturer_id,
     }
 }
 
 joinable!(purchase_order_line -> purchase_order_line_stats (id));
 joinable!(purchase_order_line -> item_link (item_link_id));
 joinable!(purchase_order_line -> purchase_order (purchase_order_id));
-joinable!(purchase_order_line -> name_link (manufacturer_link_id));
 allow_tables_to_appear_in_same_query!(purchase_order_line, purchase_order_line_stats);
 allow_tables_to_appear_in_same_query!(purchase_order_line, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order_line, item);
@@ -62,10 +73,7 @@ allow_tables_to_appear_in_same_query!(purchase_order_line_stats, item_link);
 allow_tables_to_appear_in_same_query!(purchase_order_line_stats, item);
 allow_tables_to_appear_in_same_query!(purchase_order_line_stats, purchase_order);
 
-#[derive(
-    Clone, Insertable, Queryable, Debug, AsChangeset, Serialize, Deserialize, Default, PartialEq,
-)]
-#[diesel(treat_none_as_null = true)]
+#[derive(Clone, Queryable, Debug, Serialize, Deserialize, Default, PartialEq)]
 #[diesel(table_name = purchase_order_line)]
 pub struct PurchaseOrderLineRow {
     pub id: String,
@@ -84,10 +92,11 @@ pub struct PurchaseOrderLineRow {
     pub price_per_pack_before_discount: f64,
     pub price_per_pack_after_discount: f64,
     pub comment: Option<String>,
-    pub manufacturer_link_id: Option<String>,
     pub note: Option<String>,
     pub unit: Option<String>,
     pub status: PurchaseOrderLineStatus,
+    // Resolved from name_link - must be last to match view column order
+    pub manufacturer_id: Option<String>,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -111,12 +120,7 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &PurchaseOrderLineRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(purchase_order_line::table)
-            .values(row)
-            .on_conflict(purchase_order_line::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         self.insert_changelog(row, RowActionType::Upsert)
     }
 
@@ -138,7 +142,7 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(purchase_order.store_id.clone()),
-            name_link_id: None,
+            name_id: None,
         };
 
         let purchase_order_row = ChangeLogInsertRow {
@@ -146,7 +150,7 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
             record_id: purchase_order.id,
             row_action: RowActionType::Upsert,
             store_id: Some(purchase_order.store_id),
-            name_link_id: None,
+            name_id: None,
         };
 
         let _ = ChangelogRepository::new(self.connection).insert(&row);
@@ -165,7 +169,8 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         };
 
         diesel::delete(
-            purchase_order_line::table.filter(purchase_order_line::id.eq(purchase_order_line_id)),
+            purchase_order_line_with_links::table
+                .filter(purchase_order_line_with_links::id.eq(purchase_order_line_id)),
         )
         .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
@@ -211,7 +216,7 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
     ) -> Result<Option<i64>, RepositoryError> {
         let result = purchase_order_line::table
             .filter(purchase_order_line::purchase_order_id.eq(purchase_order_id))
-            .select(max(purchase_order_line::line_number))
+            .select(diesel::dsl::max(purchase_order_line::line_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
     }
@@ -272,7 +277,7 @@ mod tests {
         let purchase_order_id = "test-po-1";
         let row = PurchaseOrderRow {
             id: purchase_order_id.to_string(),
-            supplier_name_link_id: mock_name_c().id,
+            supplier_name_id: mock_name_c().id,
             status: PurchaseOrderStatus::New,
             store_id: mock_store_a().id.clone(),
             created_datetime: chrono::Utc::now().naive_utc(),
