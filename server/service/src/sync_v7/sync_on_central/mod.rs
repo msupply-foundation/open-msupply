@@ -6,9 +6,10 @@ use std::{
 use repository::{
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
-    ChangelogCondition, ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination,
-    RepositoryError, SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId,
-    StorageConnection, StringFilter, SyncBufferRepository,
+    ChangelogCondition, ChangelogFilter, EqualFilter, FilterBuilder, KeyType,
+    KeyValueStoreRepository, Pagination, RepositoryError, SiteFilter, SiteRepository, SiteRow,
+    SiteRowRepository, SourceSiteId, StorageConnection, StringFilter, SyncBufferRepository,
+    SyncVersion,
 };
 use thiserror::Error;
 use util::format_error;
@@ -33,20 +34,6 @@ use crate::{
         validate_translate_integrate::{validate_translate_integrate, SyncContext},
     },
 };
-use repository::{
-    migrations::Version,
-    syncv7::{SiteLockError, SyncError},
-    ChangelogCondition, ChangelogFilter, EqualFilter, FilterBuilder, KeyType,
-    KeyValueStoreRepository, Pagination, RepositoryError, SiteFilter, SiteRepository, SiteRow,
-    SiteRowRepository, SourceSiteId, StorageConnection, StringFilter, SyncBufferRepository,
-    SyncVersion,
-};
-use std::{
-    collections::HashMap,
-    sync::{Arc, RwLock},
-};
-use thiserror::Error;
-use util::format_error;
 
 /// TODO: revisit token format
 pub async fn get_token(

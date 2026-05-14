@@ -2024,3 +2024,21 @@ impl SiteRow {
         })
     }
 }
+
+impl SyncRequestRow {
+    pub(crate) fn generate_changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::SyncRequest,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: self.store_id.clone(),
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
