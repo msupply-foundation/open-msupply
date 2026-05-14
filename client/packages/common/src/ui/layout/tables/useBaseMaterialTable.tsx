@@ -103,6 +103,19 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     localStateOnly
   );
 
+  // The URL `sort` param is shared across tabs, but each tab's table may have
+  // different columns. Hand MRT only sort entries whose column exists in this
+  // table; otherwise TanStack Table logs a dev-time "Column with id 'X' does
+  // not exist" error. The URL itself is left untouched so the sort still
+  // applies when the user navigates back to a tab where the column exists.
+  const validSorting = React.useMemo(
+    () =>
+      sorting.filter(s =>
+        columns.some(c => (c.id ?? ('accessorKey' in c ? c.accessorKey : undefined)) === s.id)
+      ),
+    [sorting, columns]
+  );
+
   const density = useColumnDensity(tableId);
   const columnSizing = useColumnSizing(tableId);
   const columnVisibility = useColumnVisibility(tableId, columns, isMobile);
@@ -277,7 +290,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     state: {
       showLoadingOverlay: isLoading,
       columnFilters,
-      sorting,
+      sorting: validSorting,
       density: density.state,
       columnSizing: columnSizing.state,
       columnVisibility: columnVisibility.state,
