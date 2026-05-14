@@ -142,7 +142,11 @@ export type InboundFragment = {
   chargesForeignCurrency: number;
   inboundType: Types.InboundNodeType;
   defaultDonor?: { __typename: 'NameNode'; id: string; name: string } | null;
-  linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
+  linkedShipment?: {
+    __typename: 'InvoiceNode';
+    id: string;
+    invoiceNumber: number;
+  } | null;
   user?: {
     __typename: 'UserNode';
     username: string;
@@ -483,7 +487,11 @@ export type InvoiceQuery = {
           id: string;
           name: string;
         } | null;
-        linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
+        linkedShipment?: {
+          __typename: 'InvoiceNode';
+          id: string;
+          invoiceNumber: number;
+        } | null;
         user?: {
           __typename: 'UserNode';
           username: string;
@@ -739,7 +747,11 @@ export type InboundByNumberQuery = {
           id: string;
           name: string;
         } | null;
-        linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
+        linkedShipment?: {
+          __typename: 'InvoiceNode';
+          id: string;
+          invoiceNumber: number;
+        } | null;
         user?: {
           __typename: 'UserNode';
           username: string;
@@ -1880,6 +1892,7 @@ export const InboundFragmentDoc = gql`
     linkedShipment {
       __typename
       id
+      invoiceNumber
     }
     user {
       __typename

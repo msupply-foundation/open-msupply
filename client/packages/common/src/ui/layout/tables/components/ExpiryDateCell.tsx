@@ -14,8 +14,9 @@ export const ExpiryDateCell = <T extends MRT_RowData>({
   const expiryDate = cell.getValue<string>();
   const { localisedDate } = useFormatDateTime();
 
-  const isExpired = expiryDate
-    ? DateUtils.isAlmostExpired(new Date(expiryDate))
+  const naiveExpiryDate = DateUtils.getNaiveDate(expiryDate);
+  const isExpired = naiveExpiryDate
+    ? DateUtils.isAlmostExpired(naiveExpiryDate)
     : false;
 
   return (
@@ -32,7 +33,7 @@ export const ExpiryDateCell = <T extends MRT_RowData>({
           textAlign: 'right',
         }}
       >
-        {expiryDate ? localisedDate(new Date(expiryDate)) || '' : ''}
+        {naiveExpiryDate ? localisedDate(naiveExpiryDate) || '' : ''}
       </Typography>
     </Box>
   );

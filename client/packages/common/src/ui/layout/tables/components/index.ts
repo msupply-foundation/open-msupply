@@ -5,6 +5,7 @@ export * from './ChipTableCell';
 export * from './CurrencyInputCell';
 export * from './CurrencyValueCell';
 export * from './ExpiryDateCell';
+export * from './NaiveDateCell';
 export * from './NameAndColorSetterCell';
 export * from './PopoverCell';
 export * from './RadioCell';

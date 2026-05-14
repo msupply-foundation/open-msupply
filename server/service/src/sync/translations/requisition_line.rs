@@ -1,13 +1,15 @@
-use crate::sync::translations::{item::ItemTranslation, requisition::RequisitionTranslation};
+use crate::sync::translations::{
+    item::ItemTranslation, requisition::RequisitionTranslation, utils::clear_invalid_fk,
+};
 
 use util::sync_serde::{empty_str_as_option, empty_str_as_option_string, object_fields_as_option};
 
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository, RequisitionFilter,
-    RequisitionLineRow, RequisitionLineRowDelete, RequisitionLineRowRepository,
-    RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository,
+    ReasonOptionRowRepository, RequisitionFilter, RequisitionLineRow, RequisitionLineRowDelete,
+    RequisitionLineRowRepository, RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository,
+    StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
@@ -114,7 +116,7 @@ impl SyncTranslation for RequisitionLineTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyRequisitionLineRow>(&sync_record.data)?;
@@ -139,6 +141,27 @@ impl SyncTranslation for RequisitionLineTranslation {
             (None, None, None, None, None, None)
         };
 
+        let option_id = clear_invalid_fk(
+            connection,
+            "requisition_line",
+            &data.ID,
+            "option_id",
+            data.option_id,
+            |c, id| ReasonOptionRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+    
+        let location_type_id = clear_invalid_fk(
+            connection,
+            "requisition_line",
+            &data.ID,
+            "location_type_id",
+            location_type_id,
+            |c, id| repository::LocationTypeRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+
+
         let result = RequisitionLineRow {
             id: data.ID.to_string(),
             requisition_id: data.requisition_ID,
@@ -162,7 +185,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             addition_in_units: data.addition_in_units,
             expiring_units: data.expiring_units,
             days_out_of_stock: data.days_out_of_stock,
-            option_id: data.option_id,
+            option_id,
             price_per_unit,
             available_volume,
             location_type_id,
@@ -319,7 +342,10 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+        mock::MockDataInserts,
+        system_log_row::{SystemLogRowRepository, SystemLogType},
+        test_db::setup_all,
+        ChangelogFilter, ChangelogRepository, SyncAction,
     };
     use serde_json::json;
 
@@ -392,5 +418,78 @@ mod tests {
 
             assert_eq!(translated[0].record.record_data["item_ID"], json!("item_a"));
         }
+    }
+
+    #[actix_rt::test]
+    async fn test_requisition_line_clears_invalid_optional_fks_and_writes_system_log() {
+        let translator = RequisitionLineTranslation {};
+        let (_, connection, _, _) = setup_all(
+            "test_requisition_line_clears_invalid_optional_fks_and_writes_system_log",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let sync_record = SyncBufferRow {
+            table_name: "requisition_line".to_string(),
+            record_id: "REQ_LINE_FK_INVALID".to_string(),
+            data: r#"{
+                "ID": "REQ_LINE_FK_INVALID",
+                "requisition_ID": "req_a",
+                "item_ID": "item_a",
+                "Cust_stock_order": 0,
+                "suggested_quantity": 0,
+                "actualQuan": 0,
+                "stock_on_hand": 0,
+                "daily_usage": 0,
+                "approved_quantity": 0,
+                "authoriser_comment": "",
+                "comment": "",
+                "om_snapshot_datetime": "",
+                "itemName": "Item A",
+                "Cust_prev_stock_balance": 0,
+                "Cust_stock_received": 0,
+                "Cust_stock_issued": 0,
+                "stockLosses": 0,
+                "stockAdditions": 0,
+                "stockExpiring": 0,
+                "days_out_or_new_demand": 0,
+                "optionID": "does_not_exist_option",
+                "Cust_loss_adjust": 0,
+                "oms_fields": {
+                    "rnr_form_line_id": null,
+                    "expiry_date": null,
+                    "price_per_unit": null,
+                    "available_volume": null,
+                    "location_type_id": "does_not_exist_location_type"
+                }
+            }"#
+            .to_string(),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        let result = translator
+            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .unwrap();
+        let debug = format!("{result:?}");
+        assert!(
+            debug.contains("option_id: None"),
+            "{}",
+            format!("expected option_id None; got:\n{debug}")
+        );
+        assert!(
+            debug.contains("location_type_id: None"),
+            "{}",
+            format!("expected location_type_id None; got:\n{debug}")
+        );
+
+        let logs = SystemLogRowRepository::new(&connection)
+            .find_all()
+            .unwrap();
+        let fk_errors: Vec<_> = logs
+            .iter()
+            .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
+            .collect();
+        assert_eq!(fk_errors.len(), 2, "got {fk_errors:?}");
     }
 }

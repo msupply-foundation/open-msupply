@@ -342,6 +342,87 @@ export type AllocateProgramNumberInput = {
 
 export type AllocateProgramNumberResponse = NumberNode;
 
+export type AncillaryCycleDetected = UpsertAncillaryItemErrorInterface & {
+  __typename: 'AncillaryCycleDetected';
+  description: Scalars['String']['output'];
+};
+
+export type AncillaryDeltaNode = {
+  __typename: 'AncillaryDeltaNode';
+  /**
+   * Current quantity on the existing requisition line. `None` for items that
+   * don't yet have a line (i.e. entries in `toAdd`).
+   */
+  currentQuantity?: Maybe<Scalars['Float']['output']>;
+  item: ItemNode;
+  itemId: Scalars['String']['output'];
+  requiredQuantity: Scalars['Float']['output'];
+};
+
+export type AncillaryItemMutations = {
+  __typename: 'AncillaryItemMutations';
+  deleteAncillaryItem: DeleteAncillaryItemResponse;
+  upsertAncillaryItem: UpsertAncillaryItemResponse;
+};
+
+export type AncillaryItemMutationsDeleteAncillaryItemArgs = {
+  input: DeleteAncillaryItemInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type AncillaryItemMutationsUpsertAncillaryItemArgs = {
+  input: UpsertAncillaryItemInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type AncillaryItemNode = {
+  __typename: 'AncillaryItemNode';
+  /** The ancillary item — the item to be added to the order as a supply for the principal. */
+  ancillaryItem?: Maybe<ItemNode>;
+  ancillaryItemId: Scalars['String']['output'];
+  /** Right-hand side of the stored `x:y` ratio (ancillary count). */
+  ancillaryQuantity: Scalars['Float']['output'];
+  id: Scalars['String']['output'];
+  /** The principal item — the item this ancillary supply should be ordered alongside. */
+  item?: Maybe<ItemNode>;
+  itemId: Scalars['String']['output'];
+  /** Left-hand side of the stored `x:y` ratio (principal count). */
+  itemQuantity: Scalars['Float']['output'];
+};
+
+export type AncillaryMaxDepthExceeded = UpsertAncillaryItemErrorInterface & {
+  __typename: 'AncillaryMaxDepthExceeded';
+  actual: Scalars['Int']['output'];
+  description: Scalars['String']['output'];
+  max: Scalars['Int']['output'];
+};
+
+/**
+ * Whether a request requisition has outstanding ancillary-item work to do.
+ * `NeedsAdd` takes priority over `NeedsUpdate`: once the user has added the
+ * missing lines, any remaining stale quantities surface as `NeedsUpdate`.
+ */
+export enum AncillaryStateNode {
+  NeedsAdd = 'NEEDS_ADD',
+  NeedsUpdate = 'NEEDS_UPDATE',
+  None = 'NONE',
+}
+
+export type AncillaryStateResponse = {
+  __typename: 'AncillaryStateResponse';
+  /** Number of ancillary items in the banner-worthy state. Zero when state is `None`. */
+  count: Scalars['Int']['output'];
+  state: AncillaryStateNode;
+  /**
+   * Items missing from the requisition that need to be added. Always populated
+   * from the underlying plan, regardless of `state` — the client can show the
+   * full breakdown even when the banner-relevant state is `NeedsUpdate`.
+   */
+  toAdd: Array<AncillaryDeltaNode>;
+  /** Items present on the requisition with stale quantities. */
+  toUpdate: Array<AncillaryDeltaNode>;
+};
+
 export enum ApplyToLinesInput {
   AssignIfNone = 'ASSIGN_IF_NONE',
   AssignToAll = 'ASSIGN_TO_ALL',
@@ -514,6 +595,7 @@ export type AssetLogFilterInput = {
   logDatetime?: InputMaybe<DatetimeFilterInput>;
   reasonId?: InputMaybe<EqualFilterStringInput>;
   status?: InputMaybe<EqualFilterStatusInput>;
+  type?: InputMaybe<EqualFilterAssetLogTypeInput>;
   user?: InputMaybe<StringFilterInput>;
 };
 
@@ -521,12 +603,13 @@ export type AssetLogNode = {
   __typename: 'AssetLogNode';
   assetId: Scalars['String']['output'];
   comment?: Maybe<Scalars['String']['output']>;
+  createdDatetime: Scalars['NaiveDateTime']['output'];
   documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
-  logDatetime: Scalars['NaiveDateTime']['output'];
+  logDatetime: Scalars['DateTime']['output'];
   reason?: Maybe<AssetLogReasonNode>;
   status?: Maybe<AssetLogStatusNodeType>;
-  type?: Maybe<Scalars['String']['output']>;
+  type: AssetLogTypeNodeType;
   user?: Maybe<UserNode>;
 };
 
@@ -604,6 +687,11 @@ export enum AssetLogStatusNodeType {
   Unserviceable = 'UNSERVICEABLE',
 }
 
+export enum AssetLogTypeNodeType {
+  StatusUpdate = 'STATUS_UPDATE',
+  TemperatureMapping = 'TEMPERATURE_MAPPING',
+}
+
 export type AssetLogsResponse = AssetLogConnector;
 
 export type AssetNode = {
@@ -616,7 +704,7 @@ export type AssetNode = {
   catalogProperties?: Maybe<Scalars['String']['output']>;
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
-  createdDatetime: Scalars['NaiveDateTime']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
   documents: SyncFileReferenceConnector;
   donor?: Maybe<NameNode>;
   donorNameId?: Maybe<Scalars['String']['output']>;
@@ -624,7 +712,7 @@ export type AssetNode = {
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
   locations: LocationConnector;
   lockedFields: LockedAssetFieldsNode;
-  modifiedDatetime: Scalars['NaiveDateTime']['output'];
+  modifiedDatetime: Scalars['DateTime']['output'];
   needsReplacement?: Maybe<Scalars['Boolean']['output']>;
   notes?: Maybe<Scalars['String']['output']>;
   /** Returns a JSON string of the asset properties (defined on the asset itself) e.g {"property_key": "value"} */
@@ -1199,6 +1287,7 @@ export type CannotEditRequisition = AddFromMasterListErrorInterface &
   DeleteResponseRequisitionLineErrorInterface &
   InsertRequestRequisitionLineErrorInterface &
   InsertResponseRequisitionLineErrorInterface &
+  RefreshAncillaryItemsErrorInterface &
   SupplyRequestedQuantityErrorInterface &
   UpdateRequestRequisitionErrorInterface &
   UpdateRequestRequisitionLineErrorInterface &
@@ -1322,6 +1411,7 @@ export type CentralReportMutationsInstallUploadedReportsArgs = {
 
 export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
+  ancillaryItem: AncillaryItemMutations;
   assetCatalogue: AssetCatalogueMutations;
   bundledItem: BundledItemMutations;
   campaign: CampaignMutations;
@@ -1700,6 +1790,7 @@ export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   UpdateDemographicProjectionErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
+  UpsertAncillaryItemErrorInterface &
   UpsertBundledItemErrorInterface &
   UpsertCampaignErrorInterface &
   UpsertItemVariantErrorInterface & {
@@ -1729,6 +1820,12 @@ export type DatetimeFilterInput = {
   beforeOrEqualTo?: InputMaybe<Scalars['DateTime']['input']>;
   equalTo?: InputMaybe<Scalars['DateTime']['input']>;
 };
+
+export type DeleteAncillaryItemInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteAncillaryItemResponse = DeleteResponse;
 
 export type DeleteAssetCatalogueItemError = {
   __typename: 'DeleteAssetCatalogueItemError';
@@ -2532,6 +2629,11 @@ export type DraftStockOutLineNodeDonorArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type DuplicateAncillaryItem = UpsertAncillaryItemErrorInterface & {
+  __typename: 'DuplicateAncillaryItem';
+  description: Scalars['String']['output'];
+};
+
 export type EmergencyResponseRequisitionCounts = {
   __typename: 'EmergencyResponseRequisitionCounts';
   new: Scalars['Int']['output'];
@@ -2665,6 +2767,13 @@ export type EqualFilterActivityLogTypeInput = {
   equalTo?: InputMaybe<ActivityLogNodeType>;
   notEqualAll?: InputMaybe<Array<ActivityLogNodeType>>;
   notEqualTo?: InputMaybe<ActivityLogNodeType>;
+};
+
+export type EqualFilterAssetLogTypeInput = {
+  equalAny?: InputMaybe<Array<AssetLogTypeNodeType>>;
+  equalTo?: InputMaybe<AssetLogTypeNodeType>;
+  notEqualAll?: InputMaybe<Array<AssetLogTypeNodeType>>;
+  notEqualTo?: InputMaybe<AssetLogTypeNodeType>;
 };
 
 export type EqualFilterBigFloatingNumberInput = {
@@ -2884,6 +2993,7 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface &
   InsertPurchaseOrderLineErrorInterface &
   InsertRequestRequisitionLineErrorInterface &
   InsertResponseRequisitionLineErrorInterface &
+  RefreshAncillaryItemsErrorInterface &
   SetPrescribedQuantityErrorInterface &
   UpdateInboundShipmentLineErrorInterface &
   UpdateInboundShipmentServiceLineErrorInterface &
@@ -3164,9 +3274,10 @@ export type InsertAssetLogInput = {
   assetId: Scalars['String']['input'];
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
+  logDatetime?: InputMaybe<Scalars['DateTime']['input']>;
   reasonId?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<AssetLogStatusNodeType>;
-  type?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<AssetLogTypeNodeType>;
 };
 
 export type InsertAssetLogReasonError = {
@@ -4198,6 +4309,7 @@ export type InternalError = InsertAssetCatalogueItemErrorInterface &
   UpdateDemographicProjectionErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
+  UpsertAncillaryItemErrorInterface &
   UpsertBundledItemErrorInterface &
   UpsertCampaignErrorInterface &
   UpsertItemVariantErrorInterface & {
@@ -4494,6 +4606,7 @@ export type InvoiceNode = {
   program?: Maybe<ProgramNode>;
   programId?: Maybe<Scalars['String']['output']>;
   purchaseOrder?: Maybe<PurchaseOrderNode>;
+  purchaseOrderId?: Maybe<Scalars['String']['output']>;
   receivedDatetime?: Maybe<Scalars['DateTime']['output']>;
   /**
    * Response Requisition that is the origin of this Outbound Shipment
@@ -4735,6 +4848,13 @@ export type ItemLedgerNode = {
   invoiceNumber: Scalars['Int']['output'];
   invoiceStatus: InvoiceNodeStatus;
   invoiceType: InvoiceNodeType;
+  /**
+   * True when the invoice is an external inbound shipment (i.e. linked to a
+   * purchase order). The client uses this to route to the correct detail
+   * page, since internal and external inbound shipments live on separate
+   * routes.
+   */
+  isExternal: Scalars['Boolean']['output'];
   itemId: Scalars['String']['output'];
   movementInUnits: Scalars['Float']['output'];
   name: Scalars['String']['output'];
@@ -4751,6 +4871,16 @@ export type ItemLedgerResponse = ItemLedgerConnector;
 
 export type ItemNode = {
   __typename: 'ItemNode';
+  /**
+   * Ancillary item links where this item is the ancillary supply for some
+   * other (principal) item.
+   */
+  ancillaryFor: Array<AncillaryItemNode>;
+  /**
+   * Ancillary items configured against this item — i.e. items that should be
+   * ordered alongside it (e.g. syringes that go with a vaccine).
+   */
+  ancillaryItems: Array<AncillaryItemNode>;
   atcCategory: Scalars['String']['output'];
   availableBatches: StockLineConnector;
   availableStockOnHand: Scalars['Int']['output'];
@@ -5408,6 +5538,7 @@ export type Mutations = {
   /** Links a patient to a store and thus effectively to a site */
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
+  refreshAncillaryItems: RefreshAncillaryItemsResponse;
   responseAddFromMasterList: ResponseAddFromMasterListResponse;
   saveOutboundShipmentItemLines: InvoiceNode;
   savePrescriptionItemLines: InvoiceNode;
@@ -5915,6 +6046,11 @@ export type MutationsLinkPatientToStoreArgs = {
 
 export type MutationsManualSyncArgs = {
   fetchPatientId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type MutationsRefreshAncillaryItemsArgs = {
+  input: RefreshAncillaryItemsInput;
+  storeId: Scalars['String']['input'];
 };
 
 export type MutationsResponseAddFromMasterListArgs = {
@@ -7211,6 +7347,7 @@ export type PropertyNode = {
 
 export enum PropertyNodeValueType {
   Boolean = 'BOOLEAN',
+  Date = 'DATE',
   Float = 'FLOAT',
   Integer = 'INTEGER',
   String = 'STRING',
@@ -7504,6 +7641,15 @@ export type Queries = {
   itemVariantsConfigured: Scalars['Boolean']['output'];
   /** Query omSupply "item" entries */
   items: ItemsResponse;
+  /**
+   * Query for items that have at least one stock_line matching `filter`
+   * in `store_id`, sorted/paginated by item attributes. Companion to
+   * `stockLines`: same filter shape, but the result is one row per item
+   * (suitable for an aggregated/grouped stock view). Because the predicate
+   * is identical to what `stockLines` uses, an item appears here iff at
+   * least one of its stock lines would appear in `stockLines`.
+   */
+  itemsByStockLineFilter: ItemsResponse;
   labelPrinterSettings?: Maybe<LabelPrinterSettingNode>;
   lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
@@ -7963,6 +8109,13 @@ export type QueriesItemVariantsConfiguredArgs = {
 
 export type QueriesItemsArgs = {
   filter?: InputMaybe<ItemFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ItemSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesItemsByStockLineFilterArgs = {
+  filter?: InputMaybe<StockLineFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ItemSortInput>>;
   storeId: Scalars['String']['input'];
@@ -8483,6 +8636,37 @@ export type RecordProgramCombinationAlreadyExists =
       description: Scalars['String']['output'];
     };
 
+export enum RefreshAncillaryItemsAction {
+  /** Insert lines for every ancillary item that's missing from the requisition. */
+  Add = 'ADD',
+  /** Overwrite the quantity on every existing ancillary line whose quantity is stale. */
+  Update = 'UPDATE',
+}
+
+export type RefreshAncillaryItemsError = {
+  __typename: 'RefreshAncillaryItemsError';
+  error: RefreshAncillaryItemsErrorInterface;
+};
+
+export type RefreshAncillaryItemsErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type RefreshAncillaryItemsInput = {
+  action: RefreshAncillaryItemsAction;
+  requisitionId: Scalars['String']['input'];
+};
+
+export type RefreshAncillaryItemsResponse =
+  | RefreshAncillaryItemsError
+  | RefreshAncillaryItemsSuccess;
+
+export type RefreshAncillaryItemsSuccess = {
+  __typename: 'RefreshAncillaryItemsSuccess';
+  /** Lines that were inserted (Add) or whose quantity was updated (Update). */
+  lines: Array<RequisitionLineNode>;
+};
+
 export type RefreshToken = {
   __typename: 'RefreshToken';
   /** New Bearer token */
@@ -8678,6 +8862,14 @@ export type RequisitionLineNode = {
   additionInUnits: Scalars['Float']['output'];
   /** Quantity already issued in outbound shipments */
   alreadyIssued: Scalars['Float']['output'];
+  /**
+   * Items that have this line's item configured as an ancillary. Empty when
+   * the line is not an ancillary of anything. Used by the UI to flag
+   * ancillary lines and surface their parents in a popover. Batched per
+   * request via dataloader so a 200-line requisition issues two queries
+   * (link rows + parent items), not 400.
+   */
+  ancillaryParents: Array<ItemNode>;
   approvalComment?: Maybe<Scalars['String']['output']>;
   approvedQuantity: Scalars['Float']['output'];
   availableStockOnHand: Scalars['Float']['output'];
@@ -8756,6 +8948,12 @@ export type RequisitionLineWithItemIdExists =
 
 export type RequisitionNode = {
   __typename: 'RequisitionNode';
+  /**
+   * Whether this request requisition has ancillary items that need adding
+   * or updating, so the client can render the "add"/"update" banner.
+   * Always returns `None` for non-request requisitions.
+   */
+  ancillaryState: AncillaryStateResponse;
   approvalStatus: RequisitionNodeApprovalStatus;
   colour?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
@@ -9583,6 +9781,7 @@ export type StorePreferenceNode = {
   extraFieldsInRequisition: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
   issueInForeignCurrency: Scalars['Boolean']['output'];
+  keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: Scalars['Boolean']['output'];
   manuallyLinkInternalOrderToInboundShipment: Scalars['Boolean']['output'];
   monthlyConsumptionLookBackPeriod: Scalars['Float']['output'];
   monthsItemsExpire: Scalars['Float']['output'];
@@ -9678,6 +9877,7 @@ export type SupplierReturnInput = {
   inboundShipmentId?: InputMaybe<Scalars['String']['input']>;
   supplierId: Scalars['String']['input'];
   supplierReturnLines: Array<SupplierReturnLineInput>;
+  theirReference?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type SupplierReturnLineConnector = {
@@ -9760,7 +9960,7 @@ export type SyncFileReferenceConnector = {
 
 export type SyncFileReferenceNode = {
   __typename: 'SyncFileReferenceNode';
-  createdDatetime: Scalars['NaiveDateTime']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
   fileName: Scalars['String']['output'];
   id: Scalars['String']['output'];
   mimeType?: Maybe<Scalars['String']['output']>;
@@ -11114,6 +11314,29 @@ export enum UploadedPluginErrorVariant {
 
 export type UploadedPluginInfoResponse = PluginInfoNode | UploadedPluginError;
 
+export type UpsertAncillaryItemError = {
+  __typename: 'UpsertAncillaryItemError';
+  error: UpsertAncillaryItemErrorInterface;
+};
+
+export type UpsertAncillaryItemErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpsertAncillaryItemInput = {
+  ancillaryItemId: Scalars['String']['input'];
+  /** Right-hand side of the user-entered `x:y` ratio (ancillary count). */
+  ancillaryQuantity: Scalars['Float']['input'];
+  id: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  /** Left-hand side of the user-entered `x:y` ratio (principal count). */
+  itemQuantity: Scalars['Float']['input'];
+};
+
+export type UpsertAncillaryItemResponse =
+  | AncillaryItemNode
+  | UpsertAncillaryItemError;
+
 export type UpsertBundledItemError = {
   __typename: 'UpsertBundledItemError';
   error: UpsertBundledItemErrorInterface;
@@ -11335,6 +11558,7 @@ export enum UserPermission {
   PrescriptionMutate = 'PRESCRIPTION_MUTATE',
   PrescriptionQuery = 'PRESCRIPTION_QUERY',
   PurchaseOrderAuthorise = 'PURCHASE_ORDER_AUTHORISE',
+  PurchaseOrderFinalise = 'PURCHASE_ORDER_FINALISE',
   PurchaseOrderMutate = 'PURCHASE_ORDER_MUTATE',
   PurchaseOrderQuery = 'PURCHASE_ORDER_QUERY',
   Report = 'REPORT',
