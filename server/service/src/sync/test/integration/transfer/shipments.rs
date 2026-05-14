@@ -16,6 +16,7 @@ async fn integration_sync_transfer_shipment_normal() {
         site_2_processors_task: inbound_and_request_site_processors_task,
         item1,
         item2,
+        item3,
         service_item,
     } = initialise_transfer_sites("sync_shipment_transfers_normal").await;
 
@@ -27,6 +28,7 @@ async fn integration_sync_transfer_shipment_normal() {
             None,
             &item1,
             &item2,
+            &item3,
             &service_item,
         );
 
@@ -156,6 +158,7 @@ async fn integration_sync_transfer_shipment_delete() {
         site_2_processors_task: inbound_and_request_site_processors_task,
         item1,
         item2,
+        item3,
         service_item,
     } = initialise_transfer_sites("shipment_transfers_delete").await;
 
@@ -167,6 +170,7 @@ async fn integration_sync_transfer_shipment_delete() {
             None,
             &item1,
             &item2,
+            &item3,
             &service_item,
         );
 
@@ -242,6 +246,7 @@ async fn integration_sync_transfer_shipment_initialise() {
         site_2_processors_task: inbound_and_request_site_processors_task,
         item1,
         item2,
+        item3,
         service_item,
     } = initialise_transfer_sites(identifier).await;
 
@@ -253,6 +258,7 @@ async fn integration_sync_transfer_shipment_initialise() {
             None,
             &item1,
             &item2,
+            &item3,
             &service_item,
         );
 

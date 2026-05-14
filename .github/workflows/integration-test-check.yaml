@@ -1,0 +1,31 @@
+on:
+  pull_request:
+    paths:
+      - "server/**"
+  merge_group:
+    branches:
+      - develop
+  workflow_dispatch:
+
+name: Integration Test Compile Check
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: cargo check --features integration_test
+    runs-on: self-hosted
+    timeout-minutes: 15
+    env:
+      CARGO_TARGET_DIR: /tmp/target/integration_test
+    steps:
+      - name: Update PATH
+        run: echo "$HOME/.cargo/bin:/opt/homebrew/bin" >> $GITHUB_PATH
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: cargo check --features integration_test --tests
+        run: cargo check --features integration_test --tests --manifest-path server/Cargo.toml
