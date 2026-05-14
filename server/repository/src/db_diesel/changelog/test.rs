@@ -169,8 +169,7 @@ async fn test_changelog_iteration() {
 
 #[actix_rt::test]
 async fn test_changelog_filter() {
-    let (_, connection, _, _) =
-        setup_all("test_changelog_filter", MockDataInserts::none()).await;
+    let (_, connection, _, _) = setup_all("test_changelog_filter", MockDataInserts::none()).await;
 
     // Clear any changelog rows the migration sequence inserted, so the
     // hard-coded cursors below don't conflict.
@@ -769,8 +768,11 @@ async fn test_changelog_outgoing_sync_records() {
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
 
-    // A requisition at store_a addressed to the name backing store_b is
-    // RemoteOwned + Transfer.
+    // A requisition at store_a addressed to the name backing store_b should
+    // reach site 1 via store_id (RemoteOwned, during initialisation only) and
+    // site 2 via transfer_store_id (Transfer).
+    // `RequisitionRow::generate_changelog` reads `transfer_store_id` directly
+    // from `name_store_id`, so set it explicitly here.
     let req_id = "req_transfer".to_string();
     RequisitionRowRepository::new(&connection)
         .upsert_one(&RequisitionRow {
@@ -823,6 +825,35 @@ async fn test_changelog_outgoing_sync_records() {
         .rows;
     assert_eq!(outgoing_results.len(), 2);
     assert_eq!(outgoing_results[1].record_id, req_id);
+
+    // A second asset for site 1's store, originated by central (Remote).
+    let central_asset_id = "central_asset_id".to_string();
+    AssetRow {
+        id: central_asset_id.clone(),
+        store_id: Some(site1_store_id.clone()),
+        ..Default::default()
+    }
+    .upsert_sync(
+        &connection,
+        ChangelogSyncType::SyncTypeV5V6 {
+            source_site_id: Some(central_site_id),
+        },
+    )
+    .unwrap();
+
+    // Site 1 post-initialisation: Remote arm relays the central-edited asset.
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(site1_id, false, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert_eq!(outgoing_results.len(), 2);
+    assert_eq!(outgoing_results[1].record_id, central_asset_id);
 }
 
 #[actix_rt::test]
