@@ -35,12 +35,21 @@ function screenshot(page: Page, name: string) {
   return page.screenshot({ path: path.join(screenshotDir, `${name}.png`) });
 }
 
+interface PermissionDenial {
+  /** The permission the server reported as missing, e.g. "SensorQuery". */
+  permission: string;
+  /** GraphQL response path, e.g. ["temperatureLogs"]. */
+  path: string[];
+}
+
 interface ErrorTracker {
   errors: string[];
   warnings: string[];
   /** Total console messages (all types) — used to detect rapid accumulation. */
   messageCount: number;
   hasInfiniteLoop: boolean;
+  /** GraphQL Forbidden responses keyed by missing permission + query path. */
+  permissionDenials: PermissionDenial[];
 }
 
 function setupErrorTracking(page: Page): ErrorTracker {
@@ -49,6 +58,7 @@ function setupErrorTracking(page: Page): ErrorTracker {
     warnings: [],
     messageCount: 0,
     hasInfiniteLoop: false,
+    permissionDenials: [],
   };
   page.on('console', msg => {
     tracker.messageCount++;
@@ -72,6 +82,33 @@ function setupErrorTracking(page: Page): ErrorTracker {
   page.on('pageerror', err => {
     tracker.errors.push(err.message);
   });
+  // GraphQL Forbidden responses are silently swallowed by the GQL client (it
+  // returns an empty object), so they surface downstream as either a generic
+  // "Query data cannot be undefined" console error or a 30s timeout when the
+  // auth-error dialog blocks subsequent clicks. Capture them at the network
+  // layer so we can name the missing permission in the failure message.
+  page.on('response', response => {
+    if (!response.url().includes('/graphql')) return;
+    response
+      .json()
+      .then(body => {
+        const errors = body?.errors;
+        if (!Array.isArray(errors)) return;
+        for (const err of errors) {
+          if (err?.message !== 'Forbidden') continue;
+          const details = err?.extensions?.details ?? '';
+          const match =
+            typeof details === 'string'
+              ? details.match(/Missing permission:\s*(\w+)/)
+              : null;
+          tracker.permissionDenials.push({
+            permission: match?.[1] ?? 'unknown',
+            path: Array.isArray(err.path) ? err.path : [],
+          });
+        }
+      })
+      .catch(() => {});
+  });
   return tracker;
 }
 
@@ -80,9 +117,16 @@ function resetTracker(tracker: ErrorTracker) {
   tracker.warnings = [];
   tracker.messageCount = 0;
   tracker.hasInfiniteLoop = false;
+  tracker.permissionDenials = [];
 }
 
 function reportErrors(tracker: ErrorTracker, label: string) {
+  if (tracker.permissionDenials.length > 0) {
+    console.log(`  PERMISSION DENIED in ${label}:`);
+    tracker.permissionDenials.slice(0, 5).forEach(d => {
+      console.log(`    Missing ${d.permission} (path: ${d.path.join('.')})`);
+    });
+  }
   if (tracker.errors.length > 0) {
     console.log(`  ERRORS in ${label}:`);
     tracker.errors
@@ -99,6 +143,21 @@ function reportErrors(tracker: ErrorTracker, label: string) {
     console.log(`  !!! INFINITE LOOP in ${label}`);
   }
 
+  // Assert permission denials first so the failure message names the missing
+  // permission rather than the downstream "Query data cannot be undefined"
+  // console error or 30s timeout.
+  const denialSummary = tracker.permissionDenials
+    .map(d => `${d.permission} (path: ${d.path.join('.')})`)
+    .join(', ');
+  expect
+    .soft(
+      tracker.permissionDenials,
+      `Permission denied in ${label}: ${denialSummary}. ` +
+        `Server returned Forbidden; the GQL client swallowed the error, so this ` +
+        `usually presents downstream as "Query data cannot be undefined" or a ` +
+        `30s timeout from the auth-error dialog blocking clicks.`
+    )
+    .toHaveLength(0);
   expect.soft(tracker.errors, `Console errors in ${label}`).toHaveLength(0);
   expect.soft(tracker.warnings, `Console warnings in ${label}`).toHaveLength(0);
   expect
@@ -113,7 +172,14 @@ function reportErrors(tracker: ErrorTracker, label: string) {
 async function dismissOpenDialog(page: Page) {
   const dialog = page.locator('.MuiDialog-root');
   if (!(await dialog.isVisible({ timeout: 500 }).catch(() => false))) return;
-  await page.keyboard.press('Escape');
+  // The auth-error AlertModal omits onClose, so Escape is a no-op; try the OK
+  // button first, fall back to Escape for dialogs that do honour it.
+  const okButton = dialog.locator('button:has-text("OK")').first();
+  if (await okButton.isVisible({ timeout: 200 }).catch(() => false)) {
+    await okButton.click({ timeout: 1000 }).catch(() => {});
+  } else {
+    await page.keyboard.press('Escape');
+  }
   await dialog.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
 }
 
@@ -157,6 +223,11 @@ async function clickFirstRowAndCheck(
   tracker: ErrorTracker,
   label: string
 ): Promise<boolean> {
+  // A leftover auth-error dialog from a prior test in this serial section
+  // would intercept the row click and produce a 30s timeout. Permission
+  // denials are already captured at the network layer, so dismissing here
+  // surfaces the underlying issue without masking it.
+  await dismissOpenDialog(page);
   resetTracker(tracker);
 
   const row = page.locator('tbody tr').first();
@@ -187,6 +258,9 @@ async function clickTabsAndCheck(
     const tab = tabs.nth(i);
     const tabName = (await tab.textContent()) ?? `tab-${i}`;
 
+    // Clear any dialog opened by the previous tab (e.g. an auth-error dialog
+    // from a permission-denied query) so it doesn't intercept this click.
+    await dismissOpenDialog(page);
     resetTracker(tracker);
     await tab.click();
     await page.waitForTimeout(RENDER_WAIT_MS);
