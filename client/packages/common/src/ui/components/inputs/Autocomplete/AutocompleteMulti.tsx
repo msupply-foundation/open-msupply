@@ -50,6 +50,7 @@ export function AutocompleteMulti<
   slotProps,
   loadingText,
   noOptionsText,
+  inputProps,
   ...restOfAutocompleteProps
 }: PropsWithChildren<
   AutocompleteMultiProps<T, true, DisableClearable, FreeSolo, ChipComponent>

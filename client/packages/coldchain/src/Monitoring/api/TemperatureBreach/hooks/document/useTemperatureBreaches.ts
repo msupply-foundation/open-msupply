@@ -5,5 +5,8 @@ import { ListParams } from '../../api';
 export const useTemperatureBreaches = (queryParams: ListParams) => {
   const api = useTemperatureBreachApi();
 
-  return useQuery(api.keys.paramList(queryParams), api.get.list(queryParams));
+  return useQuery({
+    queryKey: api.keys.paramList(queryParams),
+    queryFn: api.get.list(queryParams)
+  });
 };

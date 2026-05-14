@@ -42,7 +42,7 @@ const AppBarButtonsComponent = ({
 
   const { mutateAsync: onCreate } = useResponse.document.insert();
   const { insert: onProgramCreate } = useResponse.document.insertProgram();
-  const { mutateAsync, isLoading } = useResponse.document.listAll({
+  const { mutateAsync, isPending: isLoading } = useResponse.document.listAll({
     key: 'createdDatetime',
     direction: 'desc',
     isDesc: true,

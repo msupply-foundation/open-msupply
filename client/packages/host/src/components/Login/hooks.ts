@@ -35,7 +35,7 @@ export const useLoginFormState = create<LoginForm>(set => ({
 }));
 
 export const useLoginForm = (
-  passwordRef: React.RefObject<HTMLInputElement>,
+  passwordRef: React.RefObject<HTMLInputElement | null>,
   navigateOnSuccess = true
 ) => {
   const state = useLoginFormState();

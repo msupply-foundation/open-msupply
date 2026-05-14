@@ -80,7 +80,7 @@ export function Autocomplete<T>({
   options,
   renderInput,
   renderOption,
-  width = 'auto',
+  width,
   value,
   isOptionEqualToValue,
   clearable = true,
@@ -242,9 +242,9 @@ export function Autocomplete<T>({
         ...restOfAutocompleteProps.slotProps,
         popper: popperMinWidth
           ? {
-              placement: 'bottom-start',
-              style: { minWidth: popperMinWidth, width: 'auto' },
-            }
+            placement: 'bottom-start',
+            style: { minWidth: popperMinWidth, width: 'auto' },
+          }
           : undefined,
       }}
       sx={{

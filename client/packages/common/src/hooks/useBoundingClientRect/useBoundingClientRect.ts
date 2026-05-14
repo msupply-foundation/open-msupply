@@ -22,7 +22,7 @@ const getRect = (element: HTMLElement | null): DOMRect => {
 };
 
 export const useBoundingClientRect = <T extends HTMLElement>(
-  ref: RefObject<T>,
+  ref: RefObject<T | null>,
   debouncedTimer = 500
 ): DOMRect => {
   const [rect, setRect] = useState(
@@ -56,7 +56,7 @@ export const useBoundingClientRect = <T extends HTMLElement>(
 
 export const useBoundingClientRectRef = <T extends HTMLElement>(
   callback?: (rect: DOMRect) => void
-): { ref: RefObject<T>; rect: DOMRect } => {
+): { ref: RefObject<T | null>; rect: DOMRect } => {
   const ref = useRef<T>(null);
   const rect = useBoundingClientRect<T>(ref);
 
