@@ -47,8 +47,9 @@ export const PluginUploadModal = ({
   const onOk = async () => {
     if (!files.length) return;
 
-    try {
-      for (const file of files) {
+    for (const file of files) {
+      let fileId: string;
+      try {
         const formData = new FormData();
         formData.append('files', file);
         const response = await fetch(Environment.REPORT_UPLOAD_URL, {
@@ -60,17 +61,28 @@ export const PluginUploadModal = ({
           body: formData,
         });
         if (!response.ok) {
-          throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+          throw new Error(
+            `Upload failed: ${response.status} ${response.statusText}`
+          );
         }
         const result = await response.json();
-        await install(result['file-id']);
+        fileId = result['file-id'];
+      } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        error(`${t('error.unable-to-upload-plugin')}: ${message}`)();
+        return;
       }
-      success(t('messages.plugin-uploaded-successfully'))();
-      onClose();
-    } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
-      error(`${t('error.unable-to-upload-plugin')}: ${message}`)();
+
+      try {
+        await install(fileId);
+      } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        error(`${t('error.unable-to-install-plugin')}: ${message}`)();
+        return;
+      }
     }
+    success(t('messages.plugin-uploaded-successfully'))();
+    onClose();
   };
 
   return (

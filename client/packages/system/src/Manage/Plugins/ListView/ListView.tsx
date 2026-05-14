@@ -6,14 +6,11 @@ import {
   useNonPaginatedMaterialTable,
   ColumnDef,
   MaterialTable,
+  InstalledPluginKindType,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
-import { useInstalledPlugins } from '../api/hooks/useInstalledPluginsList';
 import { PluginUploadModal } from './PluginUploadModal';
-import {
-  InstalledPluginNodeFragment,
-  InstalledPluginKindType,
-} from '../api/operations.generated';
+import { InstalledPluginNodeFragment, useInstalledPlugins } from '../api';
 
 export const PluginsList = () => {
   const t = useTranslation();
@@ -52,7 +49,7 @@ export const PluginsList = () => {
         accessorFn: row => row.types.join(', '),
       },
     ],
-    []
+    [t]
   );
 
   const { table } = useNonPaginatedMaterialTable({

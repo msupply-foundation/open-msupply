@@ -576,6 +576,7 @@
   "error.unable-to-scan-barcode": "Unable to scan barcode: {{error}}",
   "error.unable-to-start-scanning": "Unable to start scanning: {{error}}",
   "error.unable-to-update-immunisation-program": "Unable to update immunisation program",
+  "error.unable-to-install-plugin": "Unable to install plugin",
   "error.unable-to-load-plugins": "Unable to load plugins",
   "error.unable-to-upload-plugin": "Unable to upload plugin",
   "error.unable-to-upload-reports": "Unable to upload reports",

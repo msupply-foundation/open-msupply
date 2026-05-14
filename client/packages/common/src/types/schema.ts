@@ -1393,6 +1393,7 @@ export type CentralPluginMutationsInstallUploadedPluginArgs = {
 
 export type CentralPluginQueries = {
   __typename: 'CentralPluginQueries';
+  installedPlugins: InstalledPluginConnector;
   uploadedPluginInfo: UploadedPluginInfoResponse;
 };
 
@@ -4222,6 +4223,26 @@ export type InsertVaccineCourseResponse =
   | InsertVaccineCourseError
   | VaccineCourseNode;
 
+export type InstalledPluginConnector = {
+  __typename: 'InstalledPluginConnector';
+  nodes: Array<InstalledPluginNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export enum InstalledPluginKindType {
+  Backend = 'BACKEND',
+  Frontend = 'FRONTEND',
+}
+
+export type InstalledPluginNode = {
+  __typename: 'InstalledPluginNode';
+  code: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  kind: InstalledPluginKindType;
+  types: Array<Scalars['String']['output']>;
+  version: Scalars['String']['output'];
+};
+
 export type InsuranceConnector = {
   __typename: 'InsuranceConnector';
   nodes: Array<InsurancePolicyNode>;
@@ -4410,6 +4431,7 @@ export type InvoiceFilterInput = {
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
   isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
   linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
+  linkedOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
   nameId?: InputMaybe<EqualFilterStringInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
