@@ -1,0 +1,37 @@
+{
+  "name": "@openmsupply/mcp-server",
+  "version": "0.2.0",
+  "description": "MCP server for Open mSupply with granular permissions",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "omsupply-mcp-server": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "check": "tsc --noEmit",
+    "codegen": "graphql-codegen --config codegen.yml",
+    "generate": "cd ../server && cargo run --bin remote_server_cli -- export-graphql-schema && cd ../mcp && yarn codegen"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "graphql": "^16.10.0",
+    "graphql-request": "^7.1.2",
+    "graphql-tag": "^2.12.6",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^5.0.0",
+    "@graphql-codegen/near-operation-file-preset": "^3.0.0",
+    "@graphql-codegen/typescript": "^4.0.1",
+    "@graphql-codegen/typescript-graphql-request": "^6.2.0",
+    "@graphql-codegen/typescript-operations": "^4.0.1",
+    "@types/node": "^22.15.3",
+    "typescript": "^5.8.3"
+  }
+}

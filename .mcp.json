@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "open-msupply": {
+      "command": "/opt/homebrew/bin/node",
+      "args": [
+        "./mcp/dist/index.js"
+      ]
+    }
+  }
+}

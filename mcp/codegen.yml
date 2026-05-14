@@ -1,0 +1,21 @@
+overwrite: true
+# Default to the exported schema file. Produced by `yarn generate` in this
+# package, which runs `cargo run --bin remote_server_cli -- export-graphql-schema`
+# in ../server. Set OMSUPPLY_CODEGEN_SCHEMA to a running server's /graphql
+# URL to use introspection instead (useful if you don't have a cargo build).
+schema: ${OMSUPPLY_CODEGEN_SCHEMA:../server/schema.graphql}
+documents:
+  - ./src/tools/**/*.graphql
+generates:
+  ./src/generated/sdk.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+      - typescript-graphql-request
+    config:
+      nonOptionalTypename: true
+      gqlImport: 'graphql-request#gql'
+      scalars:
+        DateTime: string
+        NaiveDate: string
+        NaiveDateTime: string

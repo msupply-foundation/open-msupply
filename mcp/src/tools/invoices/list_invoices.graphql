@@ -1,0 +1,36 @@
+query ListInvoices(
+  $storeId: String!
+  $page: PaginationInput
+  $sort: [InvoiceSortInput!]
+  $filter: InvoiceFilterInput
+  $type: [InvoiceTypeInput!]
+) {
+  invoices(
+    storeId: $storeId
+    page: $page
+    sort: $sort
+    filter: $filter
+    type: $type
+  ) {
+    ... on InvoiceConnector {
+      totalCount
+      nodes {
+        id
+        invoiceNumber
+        type
+        status
+        otherPartyName
+        createdDatetime
+        allocatedDatetime
+        shippedDatetime
+        deliveredDatetime
+        comment
+        theirReference
+        colour
+        pricing {
+          totalAfterTax
+        }
+      }
+    }
+  }
+}
