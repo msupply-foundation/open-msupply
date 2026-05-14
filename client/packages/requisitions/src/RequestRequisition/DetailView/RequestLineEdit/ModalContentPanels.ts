@@ -18,6 +18,7 @@ export const getLeftPanel = (
     {
       label: t(showAsAreaAmc ? 'label.area-amc' : 'label.amc/amd'),
       value: draft?.itemStats.averageMonthlyConsumption,
+      roundUp: true,
     },
   ];
 

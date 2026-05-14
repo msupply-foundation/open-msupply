@@ -6,8 +6,8 @@ import { DraftStockOutLineFragment } from '../../../StockOut';
 export const useSavePrescriptionItemLineData = (invoiceId: string) => {
   const { prescriptionApi, storeId, queryClient } = usePrescriptionGraphQL();
 
-  return useMutation(
-    async ({
+  return useMutation({
+    mutationFn: async ({
       itemId,
       lines,
       prescribedUnits,
@@ -34,14 +34,15 @@ export const useSavePrescriptionItemLineData = (invoiceId: string) => {
         },
       });
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries([
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [
           PRESCRIPTION,
           PRESCRIPTION_LINE,
           invoiceId,
-        ]);
-      },
+        ]
+      });
     }
-  );
+  });
 };
