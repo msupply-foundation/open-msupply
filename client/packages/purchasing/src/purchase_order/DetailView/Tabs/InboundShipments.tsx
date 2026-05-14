@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   NothingHere,
   useNavigate,
@@ -39,8 +39,7 @@ export const InboundShipments = () => {
     query: { data, isFetching },
   } = useInboundList(queryParams);
 
-  const columns = useMemo(
-    (): ColumnDef<InboundRowFragment>[] => [
+  const columns: ColumnDef<InboundRowFragment>[] = [
       {
         header: t('label.number'),
         accessorKey: 'invoiceNumber',
@@ -84,9 +83,7 @@ export const InboundShipments = () => {
         enableSorting: true,
         size: 100,
       },
-    ],
-    [t]
-  );
+    ];
 
   const handleRowClick = (row: InboundRowFragment) => {
     const path = RouteBuilder.create(AppRoute.Replenishment)

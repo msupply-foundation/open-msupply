@@ -2,6 +2,7 @@ import React from 'react';
 import {
   MRT_Row,
   MRT_RowData,
+  MRT_TableInstance,
   MRT_TableOptions,
   useMaterialReactTable,
 } from 'material-react-table';
@@ -308,5 +309,36 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     ...tableOptions,
   });
 
-  return table;
+  return useReactiveTableInstance(table);
 };
+
+// React Compiler / MRT bridge.
+//
+// MRT's table instance is stored in a `useState` initializer inside
+// useReactTable and therefore has a stable identity across renders. Its
+// internal components read state inline via `getState()` during their own
+// render — they don't declare a React dep — and rely on their parent
+// component re-rendering on each tick to pull fresh state.
+//
+// When a compiled caller does `<MaterialTable table={table} />`, the
+// compiler memoizes that JSX against the stable `table` identity. React
+// reconciliation sees the same element reference and skips re-rendering
+// MRT's subtree, so `getState()` is never called again and the UI freezes
+// on the first render's state (most visibly: the loading overlay never
+// clears after data arrives).
+//
+// Fix: return a fresh `Proxy` each render that forwards all reads (and
+// `this`-bound method calls) to the real table. The proxy has a new
+// identity each render so the compiler can't cache the JSX; MRT's subtree
+// re-renders normally and picks up state changes. This lives in the
+// un-compiled `common` package, so creating a new proxy per render isn't
+// itself subject to compiler memoization.
+const useReactiveTableInstance = <T extends MRT_RowData>(
+  table: MRT_TableInstance<T>
+): MRT_TableInstance<T> =>
+  new Proxy(table, {
+    get(target, prop, receiver) {
+      const value = Reflect.get(target, prop, receiver);
+      return typeof value === 'function' ? value.bind(target) : value;
+    },
+  });

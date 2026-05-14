@@ -28,7 +28,7 @@ module.exports = {
   },
 
   settings: { react: { version: 'detect' } },
-  plugins: ['react', '@typescript-eslint'],
+  plugins: ['react', '@typescript-eslint', 'react-compiler'],
   rules: {
     camelcase: ['error', { allow: ['_ONLY_FOR_TESTING', 'MRT_'] }],
     'require-jsdoc': 'off',
@@ -51,6 +51,7 @@ module.exports = {
       { markers: ['#', '/'], exceptions: ['-'] },
     ],
     'react-hooks/exhaustive-deps': 'warn',
+    'react-compiler/react-compiler': 'warn',
     '@typescript-eslint/no-explicit-any': 'warn',
     'no-console': ['error', { allow: ['info', 'warn', 'error'] }],
     'prefer-const': [

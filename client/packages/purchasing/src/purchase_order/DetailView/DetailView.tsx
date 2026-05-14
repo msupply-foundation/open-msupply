@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   AlertModal,
   DetailTabs,
@@ -64,19 +64,16 @@ const DetailViewInner = () => {
     isOpen,
   } = useEditModal<string | null>();
 
-  const onRowClick = useCallback(
-    (line: PurchaseOrderLineFragment) => {
+  const onRowClick = (line: PurchaseOrderLineFragment) => {
       onOpen(line.id);
-    },
-    [onOpen]
-  );
+  };
 
-  const openNext = useCallback(() => {
+  const openNext = () => {
     const currentIndex = lines?.findIndex(line => line.id === lineId);
     const nextLine = lines[currentIndex + 1];
     if (!nextLine) return;
     onOpen(nextLine.id);
-  }, [lines, onOpen, lineId]);
+  };
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.number.toString() ?? '' });
