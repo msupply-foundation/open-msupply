@@ -8,6 +8,7 @@ import {
   useNotification,
   LIST_KEY,
   useMutation,
+  keepPreviousData,
   isEnumValue,
 } from '@openmsupply-client/common';
 import { ALLREPORTVERSIONS } from './keys';
@@ -32,7 +33,7 @@ export const useCentralReports = ({
   // INSTALL
   const {
     mutateAsync: installMutation,
-    isLoading: installLoading,
+    isPending: installLoading,
     error: installError,
   } = useInstallUploadedReports();
 
@@ -109,11 +110,7 @@ const useGetList = (queryParams?: ReportListParams) => {
   return useQuery({
     queryKey,
     queryFn,
-    onError: (e: Error) => {
-      if (/HasPermission\(Report\)/.test(e.message)) return null;
-      return [];
-    },
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 };
 
@@ -127,7 +124,9 @@ const useInstallUploadedReports = () => {
 
   const mutation = useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([ALLREPORTVERSIONS]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [ALLREPORTVERSIONS]
+    }),
     onError: e => console.error(e),
   });
 

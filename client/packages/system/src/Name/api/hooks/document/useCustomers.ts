@@ -4,7 +4,12 @@ import { useNameApi } from '../utils/useNameApi';
 export const useCustomers = () => {
   const api = useNameApi();
 
-  return useQuery([...api.keys.list(), 'customers'], () =>
-    api.get.customers({ first: 1000 })
-  );
+  return useQuery({
+    queryKey: [...api.keys.list(), 'customers'],
+
+    queryFn: () =>
+      api.get.customers({
+        first: 1000,
+      })
+  });
 };

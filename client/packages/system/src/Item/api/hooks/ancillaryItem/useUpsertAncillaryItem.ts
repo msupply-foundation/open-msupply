@@ -88,7 +88,9 @@ export function useUpsertAncillaryItem({
       throw new Error(translateError(result.error, t));
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(keys.detail(principalItemId));
+      queryClient.invalidateQueries({
+        queryKey: keys.detail(principalItemId),
+      });
     },
   });
 
