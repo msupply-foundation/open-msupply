@@ -5,9 +5,7 @@ use repository::{
     NameLinkRow, NameLinkRowRepository, SyncMessageRow, SyncMessageRowRepository,
     SyncMessageRowStatus, SyncMessageRowType,
 };
-use serde_json::json;
 use crate::sync::translations::special::merge::MergeSyncMessageBody;
-use repository::ChangelogTableName;
 use util::uuid::uuid;
 
 use crate::{

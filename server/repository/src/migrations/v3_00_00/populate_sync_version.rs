@@ -71,7 +71,7 @@ mod tests {
             .unwrap();
         }
 
-        migrate(&connection, Some(version.clone())).unwrap();
+        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
 
         let result: Vec<StringResult> = sql_query(
             "SELECT value_string FROM key_value_store WHERE id = 'SETTINGS_SYNC_VERSION';",
