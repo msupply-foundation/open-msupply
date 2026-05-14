@@ -288,7 +288,7 @@ pub async fn start_server(
     // In dev mode, spawn webpack-dev-server for frontend hot reloading
     #[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
     let (dev_server, dev_server_process) = {
-        if settings.server.dev_server {
+        if settings.server.frontend_dev_server {
             match dev_server::spawn(settings.server.port).await {
                 Ok((ds, proc)) => (Some(Data::new(ds)), Some(proc)),
                 Err(e) => {
@@ -341,7 +341,7 @@ pub async fn start_server(
                     .app_data(awc::Client::new())
                     .configure(serve_frontend_dev::config_serve_frontend)
             } else {
-                // dev_server: false or spawn failed — fall back to embedded bundle
+                // frontend_dev_server: false or spawn failed — fall back to embedded bundle
                 app.configure(serve_frontend::config_serve_frontend)
             }
         };

@@ -44,7 +44,7 @@ pub struct ServerSettings {
     /// Auto-spawn webpack-dev-server in macOS/Linux debug builds (default: true).
     /// Set to false in local.yaml to disable; the embedded frontend bundle will be served instead.
     #[serde(default = "default_true")]
-    pub dev_server: bool,
+    pub frontend_dev_server: bool,
 }
 
 fn default_base_dir() -> String {

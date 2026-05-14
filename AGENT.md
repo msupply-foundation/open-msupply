@@ -3,7 +3,7 @@
 ## Commands
 - **Build:** `yarn build` (builds both client and server)
 - **Test:** `yarn test` (runs all tests), `cd server && cargo nextest run` (server only), `cd client && yarn test` (client only)
-- **Start:** `yarn start` (which runs `cd ./server && cargo run`). On macOS/Linux dev builds the backend auto-spawns webpack-dev-server and proxies to it — browse to :8000. On Windows or in release builds the embedded frontend is served (run `yarn build` in `client/` first to produce `dist/`). To disable auto-spawn on macOS/Linux, set `dev_server: false` under `server:` in `configuration/local.yaml`; the embedded bundle will be served instead.
+- **Start:** `yarn start` (which runs `cd ./server && cargo run`). On macOS/Linux dev builds the backend auto-spawns webpack-dev-server and proxies to it — browse to :8000. On Windows or in release builds the embedded frontend is served (run `yarn build` in `client/` first to produce `dist/`). To disable auto-spawn on macOS/Linux, set `frontend_dev_server: false` under `server:` in `configuration/local.yaml`; the embedded bundle will be served instead.
 - **Generate Types From Graphql** `yarn generate`
 - **Lint:** `cd client && yarn eslint` (client), `cd server && cargo fmt` (server)
 - **Single test:** `cargo nextest run test_name` (server), `yarn test --testNamePattern="test_name"` (client)
