@@ -192,6 +192,7 @@ export const DateTimePickerInput = ({
             },
             error:
               !!errorProp ||
+              !!errorText ||
               (!!formError && storeError) ||
               (!isInitialEntry && !!internalError),
             helperText:

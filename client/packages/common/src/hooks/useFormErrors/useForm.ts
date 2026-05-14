@@ -4,7 +4,12 @@ import { useFormErrorStore } from './store';
 export type UseFormResult = {
   /** Reveal `kind: 'required'` errors in the summary and on inputs. */
   showRequired: () => void;
-  /** Hide them again (typically called on user input). */
+  /**
+   * Hide already-shown required errors again — only for explicit "Reset
+   * form" affordances. Don't call from input handlers; required errors
+   * should stay visible after a Save attempt and clear per-field as their
+   * values are filled in.
+   */
   resetRequired: () => void;
   /** True if the form currently has at least one visible error. */
   hasErrors: () => boolean;
@@ -59,17 +64,8 @@ export const useForm = (
 
 /**
  * Reactive subscription to whether a form has any visible errors. Useful for
- * disabling a Save button.
+ * disabling a Save button. Delegates to the store's `hasVisibleErrors` so
+ * precedence/visibility rules are defined in exactly one place.
  */
 export const useHasErrors = (formId: string): boolean =>
-  useFormErrorStore(state => {
-    const form = state.forms[formId];
-    if (!form) return false;
-    const showRequired = form.showRequired;
-    return Object.values(form.fields).some(entry => {
-      if (entry.customError) return true;
-      if (entry.validationError) return true;
-      if (showRequired && entry.requiredError) return true;
-      return false;
-    });
-  });
+  useFormErrorStore(state => state.hasVisibleErrors(formId));
