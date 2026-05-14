@@ -133,11 +133,10 @@ impl<'a> SyncRequestRepository<'a> {
     /// transferred store, or a remote queueing post-init backfill).
     pub fn upsert_one(&self, row: &SyncRequestRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = SyncRequestRow::generate_changelog(
-            row,
+        let changelog = row.generate_changelog(
+            self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
-            self.connection,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
@@ -184,27 +183,6 @@ impl<'a> SyncRequestRepository<'a> {
 
 }
 
-impl SyncRequestRow {
-    /// Build the changelog row for a sync_request upsert/delete. `store_id` is
-    /// copied across so the SyncRequest sync style can route to the site
-    /// currently hosting that store.
-    pub(crate) fn generate_changelog(
-        row: &SyncRequestRow,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-        connection: &StorageConnection,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::SyncRequest,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: row.store_id.clone(),
-            source_site_id: source_site_id.get_id(connection)?,
-            ..Default::default()
-        })
-    }
-}
-
 impl Upsert for SyncRequestRow {
     fn upsert_sync(
         &self,
@@ -214,11 +192,10 @@ impl Upsert for SyncRequestRow {
         SyncRequestRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self,
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
+                con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),
-                con,
             )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };

@@ -242,7 +242,7 @@ fn validate_translate_integrate_inner<'a>(
         let rows = repo.pending_ordered_by_cursor(PendingQuery {
             source_site_id,
             sync_version: SyncVersion::V7,
-            reference,
+            reference_id,
             table_name: table.as_ref(),
             action: action.clone(),
             direction,

@@ -277,8 +277,6 @@ impl<'a> SyncV7<'a> {
 
             logger.progress(remaining as i64)?;
 
-            cursor_controller.update(self.connection, next_cursor)?;
-
             cursor_controller.update(self.connection, last_cursor_in_batch)?;
 
             if remaining == 0 {

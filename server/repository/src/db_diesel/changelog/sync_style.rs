@@ -73,7 +73,7 @@ impl ChangelogTableName {
                 vec![Remote, Central],
                 SyncVersions {
                     is_v6: false,
-                    is_v5: true,
+                    is_v5: false,
                 },
             ),
 
