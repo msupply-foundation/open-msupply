@@ -24,35 +24,24 @@ export const useInstalledPlugins = () => {
 };
 
 const useGetList = () => {
-  const t = useTranslation();
-  const { pluginApi, storeId } = usePluginsGraphQL();
+  const { pluginApi } = usePluginsGraphQL();
   const { error } = useNotification();
+  const t = useTranslation();
 
-  const queryKey = [INSTALLED_PLUGINS, storeId, LIST_KEY];
-
-  const queryFn = async () => {
-    try {
-      const query = await pluginApi.installedPlugins();
-      const result = query?.centralServer?.plugin?.installedPlugins;
-      if (result) {
-        return {
-          nodes: result.nodes,
-          totalCount: result.totalCount,
-        };
-      }
-    } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
-      error(`${t('error.unable-to-load-plugins')}: ${message}`)();
-      console.error(e);
-    }
-  };
+  const queryKey = [INSTALLED_PLUGINS, LIST_KEY];
 
   return useQuery({
     queryKey,
-    queryFn,
+    queryFn: async () => {
+      const query = await pluginApi.installedPlugins();
+      const result = query?.centralServer?.plugin?.installedPlugins;
+      return {
+        nodes: result.nodes,
+        totalCount: result.totalCount,
+      };
+    },
     onError: (e: Error) => {
-      if (/HasPermission\(ConfigurePlugin\)/.test(e.message)) return null;
-      return [];
+      error(`${t('error.unable-to-load-plugins')}: ${e.message}`)();
     },
     keepPreviousData: true,
   });
@@ -66,11 +55,8 @@ const useInstallUploadedPlugin = () => {
     return result?.centralServer?.plugins?.installUploadedPlugin;
   };
 
-  const mutation = useMutation({
+  return useMutation({
     mutationFn,
     onSuccess: () => queryClient.invalidateQueries([INSTALLED_PLUGINS]),
-    onError: e => console.error(e),
   });
-
-  return mutation;
 };
