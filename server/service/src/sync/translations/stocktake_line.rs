@@ -485,7 +485,7 @@ mod tests {
             comment: None,
             snapshot_number_of_packs: 1.0,
             counted_number_of_packs: None,
-            item_link_id: "item_a".to_string(),
+            item_id: "item_a".to_string(),
             item_name: "Item A".to_string(),
             batch: None,
             expiry_date: None,

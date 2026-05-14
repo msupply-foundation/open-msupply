@@ -439,7 +439,7 @@ mod tests {
         let expected = PullTranslateResult::upsert(StockLineRow {
             id: "ITEM_LINE_FK_INVALID".to_string(),
             store_id: "store_a".to_string(),
-            item_link_id: "item_a".to_string(),
+            item_id: "item_a".to_string(),
             location_id: None,
             batch: None,
             pack_size: 1.0,

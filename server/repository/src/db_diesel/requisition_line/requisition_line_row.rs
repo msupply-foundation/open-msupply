@@ -2,7 +2,7 @@ use crate::db_diesel::item_row::item;
 use crate::db_diesel::requisition_row::requisition;
 use crate::diesel_macros::define_linked_tables;
 use crate::repository_error::RepositoryError;
-use crate::{RequisitionRowRepository, StorageConnection};
+use crate::{ItemLinkRowRepository, RequisitionRowRepository, StorageConnection};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -113,12 +113,17 @@ impl<'a> RequisitionLineRowRepository<'a> {
         item_id_param: &str,
         approved_quantity: f64,
     ) -> Result<(), RepositoryError> {
-        // Use core table for updates
+        let item_link_ids: Vec<String> = ItemLinkRowRepository::new(self.connection)
+            .find_many_by_item_id(item_id_param)?
+            .into_iter()
+            .map(|l| l.id)
+            .collect();
+
         diesel::update(requisition_line_with_links::table)
             .filter(
                 requisition_line_with_links::requisition_id
                     .eq(requisition_id_param)
-                    .and(requisition_line_with_links::item_link_id.eq(item_id_param)),
+                    .and(requisition_line_with_links::item_link_id.eq_any(item_link_ids)),
             )
             .set(requisition_line_with_links::approved_quantity.eq(approved_quantity))
             .execute(self.connection.lock().connection())?;
