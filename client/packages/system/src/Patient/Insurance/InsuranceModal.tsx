@@ -217,10 +217,11 @@ export const InsuranceModal = ({
                     date && date < today ? t('error.date-in-past') : null
                   }
                   onChange={date => {
-                    if (date)
-                      updatePatch({
-                        expiryDate: formatDateTime.customDate(date, 'yyyy-MM-dd'),
-                      });
+                    updatePatch({
+                      expiryDate: date
+                        ? formatDateTime.customDate(date, 'yyyy-MM-dd')
+                        : '',
+                    });
                   }}
                 />
               }
@@ -272,15 +273,11 @@ export const InsuranceModal = ({
                   min={0}
                   max={100}
                   decimalLimit={2}
-                  value={draft.discountPercentage ?? 0}
+                  value={draft.discountPercentage}
                   endAdornment="%"
-                  onChange={value => {
-                    if (value !== undefined) {
-                      updatePatch({
-                        discountPercentage: value,
-                      });
-                    }
-                  }}
+                  onChange={value =>
+                    updatePatch({ discountPercentage: value })
+                  }
                 />
               }
             />
