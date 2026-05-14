@@ -3,12 +3,12 @@ use crate::{
     invoice::common::{
         calculate_total_after_tax, generate_vvm_status_log, GenerateVVMStatusLogInput,
     },
-    invoice_line::{stock_in_line::get_existing_vvm_status_log_id, stock_out_line::StockOutType},
+    invoice_line::stock_in_line::get_existing_vvm_status_log_id,
     service_provider::ServiceContext,
 };
 use repository::{
     vvm_status::vvm_status_log_row::VVMStatusLogRow, InvoiceLineRow, InvoiceRow, InvoiceStatus,
-    ItemRow, StockLine, StockLineRow,
+    InvoiceType, ItemRow, StockLine, StockLineRow,
 };
 
 pub struct GenerateResult {
@@ -48,6 +48,7 @@ pub fn generate(
         existing_line,
         item_row,
         batch_pair.main_batch.stock_line_row.clone(),
+        invoice.r#type == InvoiceType::OutboundShipment,
     );
 
     let vvm_status_log_option = if let Some(vvm_status_id) = input.vvm_status_id {
@@ -161,6 +162,7 @@ fn generate_line(
         volume_per_pack,
         ..
     }: StockLineRow,
+    is_outbound_shipment: bool,
 ) -> InvoiceLineRow {
     // Cost & sell prices shouldn't need adjusting when the invoice line is being updated
     let cost_price_per_pack = invoice_line_cost_price_per_pack;
@@ -231,7 +233,7 @@ fn generate_line(
         update_line.prescribed_quantity = Some(prescribed_quantity);
     }
 
-    if matches!(input.r#type, Some(StockOutType::OutboundShipment)) {
+    if is_outbound_shipment {
         update_line.shipped_number_of_packs = Some(update_line.number_of_packs);
         update_line.shipped_pack_size = Some(update_line.pack_size);
     }

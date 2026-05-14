@@ -20,7 +20,7 @@ use crate::{
         outbound_shipment::update::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
         supplier_return::update::{UpdateSupplierReturn, UpdateSupplierReturnStatus},
     },
-    invoice_line::stock_out_line::{StockOutType, UpdateStockOutLine},
+    invoice_line::stock_out_line::UpdateStockOutLine,
     processors::{test_helpers::exec_concurrent, transfer::invoice::common::get_cost_plus_margin},
     requisition::request_requisition::{UpdateRequestRequisition, UpdateRequestRequisitionStatus},
     service_provider::ServiceProvider,
@@ -1089,7 +1089,6 @@ impl InvoiceTransferTester {
                 UpdateStockOutLine {
                     id: self.outbound_shipment_line2.id.clone(),
                     number_of_packs: Some(21.0),
-                    r#type: Some(StockOutType::OutboundShipment),
                     ..Default::default()
                 },
             )
@@ -1378,7 +1377,6 @@ impl InvoiceTransferTester {
                 UpdateStockOutLine {
                     id: self.supplier_return_line.id.clone(),
                     number_of_packs: Some(21.0),
-                    r#type: Some(StockOutType::SupplierReturn),
                     ..Default::default()
                 },
             )
