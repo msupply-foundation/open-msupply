@@ -73,6 +73,7 @@ use crate::{
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
     sync::{
+        settings::BatchSize,
         site_auth::{SiteAuthService, SiteAuthTrait},
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
@@ -232,6 +233,7 @@ impl ServiceProvider {
             SiteIsInitialisedTrigger::new_void(),
             None, // Mail not required for test/CLI setups
             SubscriptionTriggerHandle::new_void(),
+            BatchSize::default(),
         )
     }
 
@@ -243,6 +245,7 @@ impl ServiceProvider {
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
         mail_settings: Option<MailSettings>,
         subscription_trigger: SubscriptionTriggerHandle,
+        batch_size: BatchSize,
     ) -> Self {
         ServiceProvider {
             connection_manager: connection_manager.clone(),
@@ -266,7 +269,7 @@ impl ServiceProvider {
             clinician_service: Box::new(ClinicianService {}),
             general_service: Box::new(GeneralService {}),
             report_service: Box::new(ReportService {}),
-            settings: Box::new(SettingsService),
+            settings: Box::new(SettingsService::new(batch_size)),
             document_service: Box::new(DocumentService {}),
             document_registry_service: Box::new(DocumentRegistryService {}),
             form_schema_service: Box::new(FormSchemaService {}),

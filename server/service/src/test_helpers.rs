@@ -13,7 +13,10 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
     settings::{DiscoveryMode, MailSettings, ServerSettings, Settings},
     subscription::SubscriptionTriggerHandle,
-    sync::synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
+    sync::{
+        settings::BatchSize,
+        synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
+    },
 };
 
 pub(crate) struct ServiceTestContext {
@@ -74,6 +77,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         site_is_initialise_trigger,
         settings.mail.clone(),
         SubscriptionTriggerHandle::new_void(),
+        BatchSize::default(),
     ));
 
     let processors_task = processors.spawn(service_provider.clone());
