@@ -1,3 +1,4 @@
+use crate::common::check_program_exists;
 use crate::invoice::inbound_shipment::InboundShipmentType;
 use crate::{
     check_item_variant_exists, check_location_exists, check_location_type_is_valid,
@@ -110,6 +111,12 @@ pub fn validate(
             },
         };
     };
+
+    if let Some(program_id) = &input.program_id {
+        if check_program_exists(connection, program_id)?.is_none() {
+            return Err(ProgramDoesNotExist);
+        }
+    }
 
     // External inbound shipments (with purchase_order_id) require a purchase_order_line_id
     if invoice.purchase_order_id.is_some() {

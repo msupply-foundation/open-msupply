@@ -119,7 +119,7 @@ pub enum InsertStockInLineError {
     ManufacturerNotVisible,
     ManufacturerIsNotAManufacturer,
     VVMStatusDoesNotExist,
-    ProgramNotVisible,
+    ProgramDoesNotExist,
     IncorrectLocationType,
     PurchaseOrderLineIdRequired,
     PurchaseOrderLineDoesNotExist,
@@ -477,6 +477,25 @@ mod test {
                 None
             ),
             Err(ServiceError::ManufacturerIsNotAManufacturer)
+        );
+
+        // ProgramDoesNotExist
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "new invoice line id".to_string(),
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    item_id: mock_item_a().id,
+                    invoice_id: mock_inbound_shipment_e().id,
+                    r#type: StockInType::InboundShipment,
+                    program_id: Some("does-not-exist".to_string()),
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(ServiceError::ProgramDoesNotExist)
         );
 
         // Program exists but is not visible to this store — accepted (see #11600).

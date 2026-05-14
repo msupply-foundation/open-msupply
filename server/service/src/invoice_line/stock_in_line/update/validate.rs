@@ -1,3 +1,4 @@
+use crate::common::check_program_exists;
 use crate::invoice::inbound_shipment::InboundShipmentType;
 use crate::{
     campaign::check_campaign_exists,
@@ -95,6 +96,15 @@ pub fn validate(
 
     if !check_line_belongs_to_invoice(line_row, &invoice) {
         return Err(NotThisInvoiceLine(line.invoice_line_row.invoice_id));
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(program_id),
+    }) = &input.program_id
+    {
+        if check_program_exists(connection, program_id)?.is_none() {
+            return Err(ProgramDoesNotExist);
+        }
     }
 
     if let Some(NullableUpdate {

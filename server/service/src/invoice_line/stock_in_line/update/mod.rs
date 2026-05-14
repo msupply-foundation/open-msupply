@@ -118,7 +118,7 @@ pub enum UpdateStockInLineError {
     ManufacturerNotVisible,
     ManufacturerIsNotAManufacturer,
     VVMStatusDoesNotExist,
-    ProgramNotVisible,
+    ProgramDoesNotExist,
     IncorrectLocationType,
     CampaignDoesNotExist,
     WrongInboundShipmentType,
@@ -357,6 +357,22 @@ mod test {
                 None
             ),
             Err(ServiceError::BatchIsReserved)
+        );
+
+        // ProgramDoesNotExist
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    program_id: Some(NullableUpdate {
+                        value: Some("does-not-exist".to_string()),
+                    }),
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(ServiceError::ProgramDoesNotExist)
         );
 
         // Program exists but is not visible to this store — accepted (see #11600).
