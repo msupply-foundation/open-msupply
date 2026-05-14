@@ -158,7 +158,7 @@ fn generate_ancillary_lines(
     for delta in to_add {
         let pos = generated
             .iter()
-            .position(|l| l.item_link_id == delta.item_link_id)
+            .position(|l| l.item_id == delta.item_link_id)
             .ok_or_else(|| {
                 RefreshAncillaryItemsError::CannotGenerateAncillaryLine(delta.item_link_id.clone())
             })?;

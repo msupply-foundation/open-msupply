@@ -89,12 +89,12 @@ pub fn compute_ancillary_plan(
     // other line's item. Walking from every line would double-count: after the
     // first Add the ancillary items themselves become lines, and if we walked
     // from them too they'd add to demand again via the chain.
-    let line_items: HashSet<&str> = lines.iter().map(|l| l.item_link_id.as_str()).collect();
+    let line_items: HashSet<&str> = lines.iter().map(|l| l.item_id.as_str()).collect();
     let mut dependent_items: HashSet<&str> = HashSet::new();
     for line in lines {
         let mut visited: HashSet<&str> = HashSet::new();
         collect_reachable_line_items(
-            &line.item_link_id,
+            &line.item_id,
             &graph,
             &line_items,
             &mut dependent_items,
@@ -107,12 +107,12 @@ pub fn compute_ancillary_plan(
     // ancillary item down its chain.
     let mut required: HashMap<String, f64> = HashMap::new();
     for line in lines {
-        if dependent_items.contains(line.item_link_id.as_str()) {
+        if dependent_items.contains(line.item_id.as_str()) {
             continue;
         }
         let mut visited: HashSet<&str> = HashSet::new();
         chase(
-            &line.item_link_id,
+            &line.item_id,
             line.requested_quantity,
             &graph,
             &mut required,
@@ -121,11 +121,11 @@ pub fn compute_ancillary_plan(
         );
     }
 
-    // Group existing lines by item_link_id so we can tell if the ancillary
+    // Group existing lines by item_id so we can tell if the ancillary
     // already has a line — and compare its quantity to what's required.
     let mut existing: HashMap<&str, &RequisitionLineRow> = HashMap::new();
     for line in lines {
-        existing.insert(&line.item_link_id, line);
+        existing.insert(&line.item_id, line);
     }
 
     let mut plan = AncillaryPlan::default();
@@ -230,7 +230,7 @@ mod tests {
     fn line(id: &str, item: &str, qty: f64) -> RequisitionLineRow {
         RequisitionLineRow {
             id: id.to_string(),
-            item_link_id: item.to_string(),
+            item_id: item.to_string(),
             requested_quantity: qty,
             ..Default::default()
         }
