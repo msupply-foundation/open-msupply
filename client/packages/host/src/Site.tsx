@@ -48,6 +48,7 @@ import { EasterEggModalProvider } from './components';
 import { Help } from './Help/Help';
 import { SyncModalProvider } from './components/Sync';
 import { MobileNavBar } from './components/MobileNavBar';
+import { usePluginRoutes } from './PluginRoutes';
 
 const NotifyOnLogin = () => {
   const { success } = useNotification();
@@ -84,6 +85,7 @@ export const Site: FC = () => {
   const { isRtl } = useIntlUtils();
   const { storeCustomColour } = usePreferences();
   const theme = useTheme();
+  const pluginRoutes = usePluginRoutes();
 
   useEffect(() => {
     setPageTitle(pageTitle);
@@ -249,6 +251,7 @@ export const Site: FC = () => {
                           </React.Suspense>
                         }
                       />
+                      {pluginRoutes}
                       <Route
                         path="/"
                         element={

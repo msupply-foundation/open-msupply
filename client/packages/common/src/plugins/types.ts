@@ -1,4 +1,9 @@
-import { ColumnDef, UsePluginEvents } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
+import {
+  ColumnDef,
+  LocalizedString,
+  UsePluginEvents,
+} from '@openmsupply-client/common';
 import {
   ItemFragment,
   MasterListRowFragment,
@@ -9,6 +14,39 @@ import {
 import { InboundFragment } from '@openmsupply-client/invoices';
 import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
 import { DraftRequestLine } from 'packages/requisitions/src/RequestRequisition/DetailView/RequestLineEdit';
+import { UserPermission } from '../types/schema';
+
+/**
+ * Icon for a plugin menu item. Resolution priority:
+ *   1. React component  - rendered directly
+ *   2. String           - looked up in the host `pluginIconRegistry`
+ *   3. Default          - falls back to PluginIcon
+ */
+export type PluginIcon = React.ComponentType | string;
+
+export type PluginPageMenu = {
+  label: LocalizedString;
+  icon?: PluginIcon;
+  permissions?: UserPermission[];
+  category:
+    | { type: 'existing'; appRoute: AppRoute }
+    | {
+        type: 'new';
+        key: string;
+        label: LocalizedString;
+        icon?: PluginIcon;
+        order?: number;
+      };
+};
+
+export type PluginPage = {
+  route: string;
+  Component: React.ComponentType;
+  menu: PluginPageMenu;
+  // Stamped by the host in pluginProvider.ts#addPluginBundle. Plugins should
+  // not set this; it is optional on the type only so plugin bundles compile.
+  pluginCode?: string;
+};
 
 export type Plugins = {
   prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];
@@ -67,6 +105,7 @@ export type Plugins = {
     }>[];
     tableColumn: ColumnDef<MasterListRowFragment>[];
   };
+  pages?: PluginPage[];
 };
 
 type PluginData<D> = { relatedRecordId?: string | null; data: D };
