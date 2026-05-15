@@ -2659,6 +2659,7 @@
   "report.program-id": "Program ID",
   "report.quan": "Quan",
   "report.quantity-to-order": "Quantity to order (packs)",
+  "report.received-date": "Received date",
   "report.received-from": "Received from",
   "report.requested-from": "Requested from",
   "report.requested-qty": "Requested qty",
@@ -2852,9 +2853,5 @@
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an internal order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
-  "error.duplicate-ancillary-item": "This ancillary item link already exists",
-  "error.ancillary-cycle-detected": "This link would create a cycle through existing ancillary item links",
-  "error.ancillary-max-depth-exceeded": "This link would exceed the maximum allowed depth of ancillary item chains ({{actual}} > {{max}})",
-  "report.received-date": "Received date"
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
 }
