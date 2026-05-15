@@ -9,6 +9,11 @@ on:
 
 name: Integration Test Compile Check
 
+# Merge note: added explicit permissions (CodeQL security recommendation).
+# develop's version of this file didn't have it yet.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
