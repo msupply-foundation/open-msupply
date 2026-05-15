@@ -143,14 +143,14 @@ pub fn validate(
             Err(OrderTypeNotFoundError::OrderTypeNotFound) => {
                 // If order types are edited in mSupply this check will fail.
                 // We don't want to block the operation, just log it.
-                log::error!("Order type not found when checking emergency order item limit");
-            }
-            Err(OrderTypeNotFoundError::DatabaseError(e)) => {
-                log::error!(
-                    "Database error checking emergency order item limit: {:?}",
-                    e
+                log::warn!(
+                    "Order type not found when checking emergency order item limit (requisition_id={}, program_id={}, order_type={})",
+                    requisition_row.id,
+                    program_id,
+                    order_type,
                 );
             }
+            Err(OrderTypeNotFoundError::DatabaseError(e)) => return Err(e.into()),
         }
     }
 
