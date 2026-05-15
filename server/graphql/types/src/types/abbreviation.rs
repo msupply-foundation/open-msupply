@@ -18,6 +18,12 @@ impl AbbreviationNode {
     pub async fn expansion(&self) -> &String {
         &self.abbreviation.expansion
     }
+
+    // [TEST - DO NOT MERGE] Field added to verify graphql-schema-compatibility
+    // workflow allows additive (non-breaking) changes.
+    pub async fn test_field_do_not_merge(&self) -> Option<String> {
+        None
+    }
 }
 
 impl AbbreviationNode {
