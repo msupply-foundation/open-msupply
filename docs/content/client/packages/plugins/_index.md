@@ -41,7 +41,9 @@ Two helpers from the host work around this by re-publishing their state through 
 - `ThemeProviderProxy`
 - `QueryClientProviderProxy`
 
-Wrap the root of every plugin component (or every plugin page) in both, and the standard hooks (`useTranslation`, `useAuthContext`, `useTheme`, `useQuery`, etc.) will work in production. Forgetting this is the most common reason a plugin works in dev and breaks in prod.
+For **slot plugins** (dashboard widgets, app-bar buttons, list-view columns, etc.) the plugin must wrap the root of its contributed component in both, otherwise the standard hooks (`useTranslation`, `useAuthContext`, `useTheme`, `useQuery`, etc.) silently break in production. Forgetting this is the most common reason a plugin works in dev and breaks in prod.
+
+For **plugin pages** the host applies both wrappers automatically — the page component can use those hooks directly without any boilerplate.
 
 ## Plugin identity
 
@@ -170,38 +172,30 @@ Child menu items have no icon (matching the built-in nav). The `icon` field exis
 
 ### Layouts and chrome
 
-A `PluginPage` is a single component. To match the standard page layout, import the portal components from `@openmsupply-client/common` and render into them — exactly as built-in pages do:
+A `PluginPage` is a single component. The host wraps every plugin page in `ThemeProviderProxy` and `QueryClientProviderProxy` automatically, so you can use standard hooks (`useTranslation`, `useAuthContext`, `useQuery`, etc.) directly — there's no proxy-provider boilerplate to write at the page root.
+
+The breadcrumb shown in the app bar is also set automatically from the `menu.label` (and `menu.category.label` for `new` categories), so the page title in the chrome matches the menu entry without any extra wiring.
+
+To match the standard page layout, import the portal components from `@openmsupply-client/common` and render into them — exactly as built-in pages do:
 
 ```tsx
 import {
   AppBarButtonsPortal,
   AppBarContentPortal,
   AppFooterPortal,
-  QueryClientProviderProxy,
-  ThemeProviderProxy,
 } from '@openmsupply-client/common';
 
-const Inner = () => (
+export const MyPage = () => (
   <>
     <AppBarButtonsPortal>{/* action buttons */}</AppBarButtonsPortal>
-    <AppBarContentPortal>{/* title / breadcrumbs */}</AppBarContentPortal>
+    <AppBarContentPortal>{/* heading / extra content */}</AppBarContentPortal>
     {/* page body */}
     <AppFooterPortal Content={/* footer */} />
   </>
 );
-
-export const MyPage = () => (
-  <ThemeProviderProxy>
-    <QueryClientProviderProxy>
-      <Inner />
-    </QueryClientProviderProxy>
-  </ThemeProviderProxy>
-);
 ```
 
-A plugin page can also render zero chrome — just a plain body — and the surrounding app bar and footer will stay empty. There is no host-supplied layout wrapper, and no automatic title from the menu label.
-
-State sharing across the chrome is automatic because everything lives in a single component tree.
+A plugin page can also render zero chrome — just a plain body — and the surrounding app bar and footer will stay empty. State sharing across the chrome is automatic because everything lives in a single component tree.
 
 ### Localised labels
 
