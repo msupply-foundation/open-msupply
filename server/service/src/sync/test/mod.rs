@@ -46,25 +46,6 @@ impl TestSyncIncomingRecord {
     {
         Self::new_pull_deletes(table_name, id, vec![result])
     }
-
-    /// For mark-deleted tables: the incoming sync record has action = Delete,
-    /// but the translator routes it through Upsert (deleted_datetime / is_active=false).
-    fn new_pull_mark_deleted<U>(table_name: &str, id: &str, result: U) -> TestSyncIncomingRecord
-    where
-        U: Upsert + 'static,
-    {
-        TestSyncIncomingRecord {
-            translated_record: PullTranslateResult::upsert(result),
-            sync_buffer_row: SyncBufferRow {
-                table_name: table_name.to_string(),
-                record_id: id.to_string(),
-                data: SyncRecordData(serde_json::json!({})),
-                action: SyncAction::Delete,
-                ..Default::default()
-            },
-            extra_data: None,
-        }
-    }
     fn new_pull_deletes<U>(table_name: &str, id: &str, deletes: Vec<U>) -> TestSyncIncomingRecord
     where
         U: Delete + Clone + 'static,

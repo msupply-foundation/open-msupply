@@ -2,14 +2,12 @@ use repository::{
     EqualFilter, NameLinkRow, NameLinkRowRepository, NameRowDelete, NameStoreJoinFilter,
     NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete, StorageConnection,
     StoreFilter, StoreRepository, SyncBufferRow,
-
 };
 
 use serde::Deserialize;
 
 use crate::sync::translations::{
     name::NameTranslation, IntegrationOperation, PullTranslateResult, SyncTranslation,
-
 };
 
 #[derive(Deserialize)]
@@ -64,7 +62,7 @@ impl SyncTranslation for NameMergeTranslation {
             })
             .collect();
         // soft-delete the merged name
-        operations.push(IntegrationOperation::upsert(NameRowDelete(
+        operations.push(IntegrationOperation::delete(NameRowDelete(
             data.merge_id_to_delete.clone(),
         )));
 
@@ -156,9 +154,7 @@ impl SyncTranslation for NameMergeTranslation {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::{
-        synchroniser::integrate_and_translate_sync_buffer,
-    };
+    use crate::sync::synchroniser::integrate_and_translate_sync_buffer;
 
     use super::*;
     use repository::{
@@ -216,8 +212,7 @@ mod tests {
         SyncBufferRepository::new(&connection)
             .insert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, 0)
-            .unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, 0).unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
         let mut name_links = name_link_repo.find_many_by_name_id("name_c").unwrap();
@@ -234,8 +229,7 @@ mod tests {
         SyncBufferRepository::new(&connection)
             .insert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, 0)
-            .unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, 0).unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
         let mut name_links = name_link_repo.find_many_by_name_id("name_c").unwrap();
@@ -313,8 +307,7 @@ mod tests {
             .insert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, None, 0)
-            .unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, 0).unwrap();
 
         assert_eq!(count_name_store_join("name_a"), 0);
         assert_eq!(count_name_store_join("name2"), 0);

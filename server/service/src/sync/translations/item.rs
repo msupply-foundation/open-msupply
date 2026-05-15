@@ -1,9 +1,9 @@
 use chrono::Utc;
 use repository::{
     item_category::{ItemCategoryFilter, ItemCategoryRepository},
-    item_category_row::ItemCategoryJoinRow, ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete,
-    ItemType, Row, StorageConnection, SyncBufferRow, VENCategory,
-
+    item_category_row::ItemCategoryJoinRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemType, Row,
+    StorageConnection, SyncBufferRow, VENCategory,
 };
 use serde::{Deserialize, Serialize};
 
@@ -13,7 +13,6 @@ use crate::sync::{
         unit::UnitTranslation,
     },
     CentralServerConfig,
-
 };
 
 use util::sync_serde::empty_str_as_option_string;
@@ -160,7 +159,7 @@ impl SyncTranslation for ItemTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(ItemRowDelete(
+        Ok(PullTranslateResult::delete(ItemRowDelete(
             sync_record.record_id.clone(),
         )))
     }
@@ -225,7 +224,11 @@ impl SyncTranslation for ItemTranslation {
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), json_record))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            json_record,
+        ))
     }
 }
 

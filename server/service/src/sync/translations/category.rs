@@ -1,7 +1,6 @@
 use repository::{
     category_row::{CategoryRow, CategoryRowDelete},
     StorageConnection, SyncBufferRow,
-
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::empty_str_as_option_string;
@@ -61,7 +60,7 @@ impl SyncTranslation for CategoryTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(CategoryRowDelete(
+        Ok(PullTranslateResult::delete(CategoryRowDelete(
             sync_record.record_id.clone(),
         )))
     }

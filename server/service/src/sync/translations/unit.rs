@@ -54,7 +54,7 @@ impl SyncTranslation for UnitTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(UnitRowDelete(
+        Ok(PullTranslateResult::delete(UnitRowDelete(
             sync_record.record_id.clone(),
         )))
     }

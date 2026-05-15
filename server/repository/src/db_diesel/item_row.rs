@@ -1,12 +1,12 @@
 use crate::{
-    db_diesel::changelog::ChangelogRepository,
-    ChangelogSyncType, ChangelogTableName, RowActionType, SourceSiteId, Upsert,
+    db_diesel::changelog::ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete,
+    RowActionType, SourceSiteId, Upsert,
 };
 
 use super::{
     clinician_link_row::clinician_link, item_link_row::item_link, item_row::item::dsl::*,
-    location_type_row::location_type, unit_row::unit, ItemLinkRow,
-    ItemLinkRowRepository, RepositoryError, StorageConnection,
+    location_type_row::location_type, unit_row::unit, ItemLinkRow, ItemLinkRowRepository,
+    RepositoryError, StorageConnection,
 };
 
 use diesel::prelude::*;
@@ -253,8 +253,8 @@ impl<'a> ItemRowRepository<'a> {
 
 #[derive(Debug, Clone)]
 pub struct ItemRowDelete(pub String);
-impl Upsert for ItemRowDelete {
-    fn upsert_sync(
+impl Delete for ItemRowDelete {
+    fn delete_sync(
         &self,
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
@@ -275,7 +275,7 @@ impl Upsert for ItemRowDelete {
         Ok(())
     }
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &StorageConnection) {
         assert!(matches!(
             ItemRowRepository::new(con).find_one_by_id(&self.0),
             Ok(Some(ItemRow {
@@ -287,7 +287,11 @@ impl Upsert for ItemRowDelete {
 }
 
 impl Upsert for ItemRow {
-    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         ItemRowRepository::new(con)._upsert_one(self)?;
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => ItemRow::generate_changelog(

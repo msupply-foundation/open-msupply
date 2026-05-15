@@ -58,7 +58,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
 }
 
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
-    vec![TestSyncIncomingRecord::new_pull_mark_deleted(
+    vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         CURRENCY_1.0,
         CurrencyRowDelete(CURRENCY_1.0.to_string()),

@@ -1,7 +1,7 @@
 use super::item_link_row::item_link;
 use crate::{
     item_row::item, repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType,
-    RowActionType, SourceSiteId, StorageConnection, Upsert,
+    Delete, RowActionType, SourceSiteId, StorageConnection, Upsert,
 };
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -19,7 +19,18 @@ table! {
 allow_tables_to_appear_in_same_query!(category, item_link);
 allow_tables_to_appear_in_same_query!(category, item);
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Insertable,
+    Queryable,
+    Debug,
+    PartialEq,
+    AsChangeset,
+    Eq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = category)]
 pub struct CategoryRow {
     pub id: String,
@@ -130,8 +141,8 @@ impl Upsert for CategoryRow {
 
 #[derive(Debug, Clone)]
 pub struct CategoryRowDelete(pub String);
-impl Upsert for CategoryRowDelete {
-    fn upsert_sync(
+impl Delete for CategoryRowDelete {
+    fn delete_sync(
         &self,
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
@@ -153,7 +164,7 @@ impl Upsert for CategoryRowDelete {
         Ok(())
     }
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &StorageConnection) {
         assert!(matches!(
             CategoryRowRepository::new(con).find_one_by_id(&self.0),
             Ok(Some(CategoryRow {

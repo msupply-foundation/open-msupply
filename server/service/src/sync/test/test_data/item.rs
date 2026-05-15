@@ -330,7 +330,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
 }
 
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
-    vec![TestSyncIncomingRecord::new_pull_mark_deleted(
+    vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         ITEM_1.0,
         ItemRowDelete(ITEM_1.0.to_string()),
