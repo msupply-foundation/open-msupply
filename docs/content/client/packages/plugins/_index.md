@@ -10,149 +10,296 @@ source = "code"
 
 # Front end plugin framework
 
-Plugins are a way of extending front end functionality without altering the base code. Some examples of possible plugin usages:
+Plugins extend the front end without modifying the base code. They are written as React components, bundled with Webpack, copied to the central server, and synced from there to every site that connects to it. A plugin can:
 
-- Adding a button to a toolbar of a detail view which performs an external action like looking up shipping details from an external API. The plugin is provided with details of the object being viewed (e.g. draft shipment object) and can use that data when performing actions.
-- Adding a new widget to the dashboard
-- Adding a column to a list view for particular objects, and adding editing support for that new field
+- Render its own page (route + menu item)
+- Inject a component into a pre-defined "slot" inside a built-in page (a dashboard widget, an app-bar button on a detail view, a custom column on a list view, etc.)
+- Use any shared UI component, hook, theme, translation, or GraphQL client from the host
+- Store and read its own data via the `plugin_data` GraphQL endpoints
 
-Plugins are written as [react](https://react.dev/) components and compiled to distributable packages. These are copied to the server and then are available to all clients using that server. See `testing production build` below
+See the [example plugins repo](https://github.com/msupply-foundation/open-msupply-plugins) for working samples, and the in-repo [core-plugins package](https://github.com/msupply-foundation/open-msupply/tree/develop/client/packages/plugins/core-plugins) for the reference plugin bundled with this codebase.
 
-A plugin can interact with the app framework, access language translations, call the data API or use the current theme. For example, a plugin can use shared UI components and utility functions from the app framework.
+## How plugins are loaded
 
-Note that the plugins do need to be implemented for a given area of the app - currently a plugin can be created to add a column to a list view, but only the Stock list view has implemented this functionality and is the only area of the site for which this plugin will operate. It is a simple task to support plugins in other areas, however we are only implementing plugin support as required.
+When the app starts, every available plugin is read and added to a Zustand store (the [`usePluginProvider`](https://github.com/msupply-foundation/open-msupply/blob/develop/client/packages/common/src/plugins/pluginProvider.ts)). Each plugin exports a default object that conforms to the [`Plugins` type](https://github.com/msupply-foundation/open-msupply/blob/develop/client/packages/common/src/plugins/types.ts) — that object is deep-merged into the store, with array-valued slots concatenated. So multiple plugins can contribute to the same slot.
 
-For some working examples, see the [plugin repo](https://github.com/msupply-foundation/open-msupply-plugins) which has some examples.
+The loading mechanism differs between dev and prod:
 
-## Plugin structure
+| Mode | Source | Hot reload |
+|------|--------|------------|
+| Development | Local files under `client/packages/plugins/*/frontend/latest`, discovered at webpack start time | Yes for code changes inside a plugin; restart frontend when **adding** a new plugin |
+| Production | Server endpoint listing compatible plugin bundles, fetched per-bundle via Webpack module federation at runtime | No |
 
-When the app is loaded, all available plugins are read (the process differs slightly between development and production mode, see more below) and stored within a centrally accessible plugin provider.
+In production the client fetches the plugin list on startup, downloads each bundle as a separate `<script>` tag, initialises it against the shared scope via `__webpack_init_sharing__`, then adds the resulting `Plugins` object to the provider.
 
-Plugin can implement any interfaces defined in [Plugins type](../common/src/plugins/types.ts), for examples a React component a simple function or an object, and can implement multiple instances of the same interface. Plugins are accessed by core frontend functionality with usePluginProvider hook, and any related data is passed to that plugin as props.
+### React context across the federation boundary
 
-Like data an event can be provided to a plugin component, to allow event driven interaction between the core and the plugins, for example being able to set isDirty state or invoke plugin action when save button is pressed, see more on events below.
+This is the single most important thing to understand. In **dev mode** a plugin lives inside the host's webpack build, so React context (theme, query client, i18n, auth) flows in naturally. In **prod mode** the plugin runs as a separately compiled bundle and only the modules listed as `shared` in its webpack config are singletons across the boundary; everything else has its own copy. That means most React contexts are **not** shared.
 
-Webpack module federation is used to bundle and serve the plugins.
+Two helpers from the host work around this by re-publishing their state through `react-singleton-context`:
 
-When running in development mode, the required plugin files are loaded directly from disk. HMR / fast reload is available and the plugins have access to the full application context. All plugins are available in the PluginProvider - with no need to fetch additional files or components.
+- `ThemeProviderProxy`
+- `QueryClientProviderProxy`
 
-In production mode the process differs:
+Wrap the root of every plugin component (or every plugin page) in both, and the standard hooks (`useTranslation`, `useAuthContext`, `useTheme`, `useQuery`, etc.) will work in production. Forgetting this is the most common reason a plugin works in dev and breaks in prod.
 
-- the server provides an endpoint to fetch the list of compatible plugins. This list is filtered to contain the latest version of each plugin that is supported by the remote server.
-- the client app fetches this list on startup, then individually fetches each plugin bundle
-- Using federation module and webpack low level api the plugin is dynamically added to scope
-- When plugin and it's dependencies are resolved it's added to PluginProvider and it becomes available to be used by the core functionality
+## Plugin identity
 
-### Plugin definitions
+Each plugin's `name` field in its `package.json` is its **plugin code** — the Webpack module-federation name. It must be unique across all plugins, must be valid as a URL segment (`^[a-z0-9_-]+$`), and is also what the server uses to identify a bundle on upload.
 
-Plugin version and plugin code are defined in package.json of the plugin, code should be unique across all plugins, so it's a good idea to have something unique in the code.
+Plugin versioning is tied to the minimum host version it supports — see [Compatibility / versioning](#compatibility-versioning) below.
 
-Plugin's type is derived from [interfaces](../common/src/plugins/types.ts) that it implements and exposes in plugin.tsx.
+## Available injection points
 
-### Events
+The full, authoritative list lives in [`Plugins` type](https://github.com/msupply-foundation/open-msupply/blob/develop/client/packages/common/src/plugins/types.ts) — what follows is a reference summary of each slot, what it receives, and where the host currently renders it. Each top-level key on the `Plugins` object is optional, so a plugin contributes only the slots it cares about.
 
-Sometimes extra state needs to be shared between plugin and core component, in cases where plugin needs to update the core state or core component needs to trigger an action in plugin, [usePluginEvents](https://github.com/msupply-foundation/open-msupply/blob/1b1d8f6c1c79bcf07ab048eb1e95f666aba1d7a1/client/packages/common/src/plugins/usePluginEvents.ts#L8) hook is [bound in the core component](https://github.com/msupply-foundation/open-msupply/blob/73289fc25807543f164900020d284e9f6b2a6697/client/packages/system/src/Stock/DetailView/DetailView.tsx#L37) and [passed to the plugin](https://github.com/msupply-foundation/open-msupply/blob/1b1d8f6c1c79bcf07ab048eb1e95f666aba1d7a1/client/packages/system/src/Stock/Components/StockLineForm.tsx#L172). Plugin can then [set various state](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorEditInput.tsx#L54) which can be used in [core component](https://github.com/msupply-foundation/open-msupply/blob/73289fc25807543f164900020d284e9f6b2a6697/client/packages/system/src/Stock/DetailView/DetailView.tsx#L110) and plugin can [mount an event listener](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorEditInput.tsx#L38-L39) which is [triggered from within core component](https://github.com/msupply-foundation/open-msupply/blob/73289fc25807543f164900020d284e9f6b2a6697/client/packages/system/src/Stock/DetailView/DetailView.tsx#L56).
+> Adding a new injection point requires changes to both `types.ts` and the host page that consumes it. See [Adding a new injection point](#adding-a-new-injection-point) below.
 
-`usePluginEvents` helper can store any state and provide any type to event listener which in turn can return any type, for example if you want to set `isReady` state and trigger an event `onSave` that passes in a `string` to be validated, expecting `error` if not valid then:
+### Whole-page plugins — `pages`
+
+Register a complete page with its own route and menu item. The plugin chooses whether the menu entry sits under an existing top-level category (Inventory, Manage, etc.) or contributes a brand-new top-level category that several plugins can share. See [Authoring a plugin page](#authoring-a-plugin-page) below for the full schema and URL scheme.
+
+### Dashboard — `dashboard`
+
+| Sub-slot | Purpose |
+|---|---|
+| `widget` | Top-level dashboard widget. Accepts `hiddenWidgets` to suppress built-in widgets by id. |
+| `panel` | Panel inside a widget. Receives `widgetContext` prop identifying the parent widget. |
+| `statistic` | Statistic inside a panel. Receives `panelContext` prop identifying the parent panel. |
+
+### Inbound shipment — `inboundShipmentAppBar`
+
+Array of components rendered in the app bar of the inbound-shipment detail view. Each receives the current `shipment: InboundFragment` as a prop.
+
+### Prescription — `prescriptionPaymentForm`
+
+Array of components rendered inside the prescription payment dialog. Receives props described by `PrescriptionPaymentComponentProps`.
+
+### Item detail — `item.detailViewField`
+
+Extra fields appended to the item detail view. Each receives `item: ItemFragment`.
+
+### Stock lines — `stockLine`
+
+| Sub-slot | Purpose |
+|---|---|
+| `tableStateLoader` | Renders nothing visually; receives the currently displayed `stockLines: StockLineRowFragment[]`. Used to pre-fetch any plugin-specific data for the visible page of rows and stash it in zustand state so column cells can look it up synchronously. |
+| `tableColumn` | A `ColumnDef<StockLineRowFragment>` added to the stock-line list view. |
+| `editViewField` | A form field rendered inside the stock-line edit view, with `events: UsePluginEvents<{ isDirty: boolean }>` to signal dirty state and respond to save events. |
+
+### Request requisition lines — `requestRequisitionLine`
+
+| Sub-slot | Purpose |
+|---|---|
+| `tableStateLoader` | Same pattern as `stockLine.tableStateLoader` but for request requisition lines. |
+| `tableColumn` | A `ColumnDef<RequestLineFragment>` for the list view. |
+| `editViewField` | A field rendered inside the line-edit modal, with optional `draft` and `unitName`. |
+| `editViewInfo` | An info panel rendered alongside the edit modal. |
+| `hideInfo` | List of built-in info panel ids to suppress. |
+
+### Request requisition — `requestRequisition.sidePanelSection`
+
+Section appended to the request-requisition detail view's side panel; receives the `RequestFragment`.
+
+### Master lists — `masterLists`
+
+| Sub-slot | Purpose |
+|---|---|
+| `tableStateLoader` | Same pattern; receives `masterLists: MasterListRowFragment[]`. |
+| `tableColumn` | A `ColumnDef<MasterListRowFragment>` for the list view. |
+
+## Authoring a plugin page
+
+A plugin page contributes one entry to the `pages?: PluginPage[]` slot. The shape:
 
 ```typescript
-// In Core
-// When defining plugin interface
+import { AppRoute } from '@openmsupply-client/config';
+import { Plugins, ReportsIcon } from '@openmsupply-client/common';
+
+const myPlugin: Plugins = {
+  pages: [
+    {
+      route: 'stock-aging',                            // single URL segment, [a-z0-9_-]+
+      Component: StockAgingPage,                       // React component
+      menu: {
+        label: { en: 'Stock aging', fr: 'Vieillissement' },
+        // (optional) gate behind permission(s); ALL must be held to see the page
+        permissions: [UserPermission.StockMutate],
+        category: {
+          type: 'existing',                            // attach under built-in Inventory
+          appRoute: AppRoute.Inventory,
+        },
+      },
+    },
+    {
+      route: 'daily',
+      Component: ReportingDailyPage,
+      menu: {
+        label: { en: 'Daily', fr: 'Quotidien' },
+        category: {
+          type: 'new',                                 // contribute a new top-level section
+          key: 'reporting',                            // URL segment + grouping key
+          label: { en: 'Reporting' },
+          icon: ReportsIcon,                           // any icon from @openmsupply-client/common
+          order: 500,                                  // lower = earlier in drawer; default 1000
+        },
+      },
+    },
+  ],
+};
+```
+
+### URL scheme
+
+Every page mounts at `/<categoryKey>/<route>`:
+
+- For `type: 'existing'`, `categoryKey` is the `AppRoute` string value (e.g. `inventory`)
+- For `type: 'new'`, `categoryKey` is the plugin-supplied `key`
+
+So the examples above resolve to `/inventory/stock-aging` and `/reporting/daily`. React Router picks these specific paths over the wildcard category routers, so `/inventory/stock-aging` is preferred over `/inventory/*` automatically. **It is the plugin author's responsibility** to choose a `route` that doesn't shadow a built-in sub-path of the same category. Plugin-supplied `new` category keys cannot equal any existing `AppRoute` value (the registration logic rejects these with a console warning).
+
+If two plugins register the same `(categoryKey, route)` tuple, the later registration is dropped with a console warning.
+
+### Menu placement and grouping
+
+For an `existing` category, the link appears inside that category's collapsible section in the drawer, beneath the built-in items.
+
+For a `new` category, all plugins that share the same `key` are grouped under one collapsible section. Category-level metadata (`label`, `icon`, `order`) is taken from the first page that declared the category — subsequent pages with the same key contribute only their own menu entry.
+
+Child menu items have no icon (matching the built-in nav). The `icon` field exists only on the new-category declaration and is rendered themed (`color="primary" fontSize="small"`); omit it to use the default plug icon.
+
+### Layouts and chrome
+
+A `PluginPage` is a single component. To match the standard page layout, import the portal components from `@openmsupply-client/common` and render into them — exactly as built-in pages do:
+
+```tsx
+import {
+  AppBarButtonsPortal,
+  AppBarContentPortal,
+  AppFooterPortal,
+  QueryClientProviderProxy,
+  ThemeProviderProxy,
+} from '@openmsupply-client/common';
+
+const Inner = () => (
+  <>
+    <AppBarButtonsPortal>{/* action buttons */}</AppBarButtonsPortal>
+    <AppBarContentPortal>{/* title / breadcrumbs */}</AppBarContentPortal>
+    {/* page body */}
+    <AppFooterPortal Content={/* footer */} />
+  </>
+);
+
+export const MyPage = () => (
+  <ThemeProviderProxy>
+    <QueryClientProviderProxy>
+      <Inner />
+    </QueryClientProviderProxy>
+  </ThemeProviderProxy>
+);
+```
+
+A plugin page can also render zero chrome — just a plain body — and the surrounding app bar and footer will stay empty. There is no host-supplied layout wrapper, and no automatic title from the menu label.
+
+State sharing across the chrome is automatic because everything lives in a single component tree.
+
+### Localised labels
+
+Labels (both page and category) are `LocalizedString` maps with `en` required and any other locales optional. The resolver picks the active locale via `useIntlUtils().currentLanguage`, then falls back to the language stem (e.g. `fr-DJ` → `fr`), then to `en`.
+
+### Permissions
+
+`menu.permissions` is an optional list of `UserPermission` values; **all** must be held by the current user for the menu item to be shown. The route is also guarded — direct navigation by a user who lacks the permission renders `NotFound`.
+
+## Events between core and plugin
+
+Some slots need to share state both ways. For example, an `editViewField` may need to (a) tell the host page when it has unsaved changes, and (b) run validation/save logic when the host's save button is pressed. The [`usePluginEvents`](https://github.com/msupply-foundation/open-msupply/blob/develop/client/packages/common/src/plugins/usePluginEvents.ts) hook handles both: it stores arbitrary state plus a set of event listeners that the host can dispatch synchronously.
+
+Declare the interface on the slot's prop type:
+
+```typescript
+// In types.ts (host side)
 events: UsePluginEvents<
   { isReady: boolean },
   { validateThisString: string },
-  'ok' | { error: 'string' }
+  'ok' | { error: string }
 >;
+```
 
+Bind it in the host component:
+
+```typescript
 const CoreComponent = () => {
-  //  Bind to component
   const pluginEvents = usePluginEvents<
-    _,
+    { isReady: boolean },
     { validateThisString: string },
-    'ok' | { error: 'string' }
+    'ok' | { error: string }
   >({ isReady: false });
-  // When asking for validation
-  const validate = async (validateThisString: string) => {
-    let validationResult = await pluginEvents.dispatchEvent({
-      validateThisString: 'good',
-    });
-    if (validationResult == 'ok') {
-      closeModal();
-    }
-    error(validationResult.error); // This is a toast
-    setError(validationResult.error);
-  };
 
-  ...
+  // Trigger validation from the host:
+  const validate = async (value: string) => {
+    const result = await pluginEvents.dispatchEvent({ validateThisString: value });
+    if (result === 'ok') closeModal();
+    else setError(result.error);
+  };
 
   return (
     <>
-      ...
-
-      // Checking for isReady
-      {pluginEvents.state.isReady && <div>I am ready</div>}
+      {pluginEvents.state.isReady && <div>Ready</div>}
+      <PluginSlot events={pluginEvents} />
     </>
   );
 };
 ```
 
+Consume it in the plugin:
+
 ```typescript
-// In Plugin
 const PluginComponent = ({ events }) => {
-// events should come as a parameter to component
+  // Listen for events from the host:
   useEffect(() => {
-    const unmountEvent = events.mountEvent(({ validateThisString }) => {
-      // types should be know by typescript at this stage
-      if (validateThisString == 'good') {
-        return 'ok';
-      }
-      return { error: 'string is not good' };
+    return events.mountEvent(({ validateThisString }) => {
+      return validateThisString === 'good' ? 'ok' : { error: 'string is not good' };
     });
-    return unmountEvent; // mountEvent return a handler to unmountEvent
   }, []);
 
-  // Setting isReady
+  // Push state up to the host:
   useEffect(() => {
     events.setState({ isReady: true });
   }, [somethingChanged]);
 
   return <div>Plugin display content...</div>;
-}
+};
 ```
 
-Of course in above example the types should be defined once and shared (even though typescript guarantees they are valid it's a bit verbose)
-
-TODO actually tried to share types but had typescript error when doing `const pluginEvents: SomeConcreteTypeOfUsePluginEvent = usePluginEvents>({ isReady: false });` <- said that (boolean is not false ¯\_(ツ)\_/¯)
-
-When mounting event it's a good idea to reduce number of dependencies of the method that is mounted and triggered, useRef() can be used for this reason to pass non reactive but up to date state to the plugin:
+When you mount an event handler, prefer `useRef` for up-to-date but non-reactive values so that listener re-mounting (which would briefly drop events) is avoided:
 
 ```typescript
-const [value, setValue] = useEffect('')
-
-const valueRef = useRef('')
-const valueRef.current = value
-
-// ...
+const [value, setValue] = useState('');
+const valueRef = useRef(value);
+valueRef.current = value;
 
 useEffect(() => {
-  const unmountEvent = events.mountEvent(() => {
-  console.log(`this will be the current value ${valueRef.current} this will be stale value ${value}`)
-
-  return unmountEvent;
-}, [/* can also just listen to value here but on every value change we are mounting event and unmounting even */])
+  return events.mountEvent(() => {
+    // `valueRef.current` is always fresh; closing over `value` would be stale.
+    console.log(valueRef.current);
+  });
+}, []); // mount once, never re-mount on `value` change
 ```
 
-### Plugin data
+> TODO: example sharing the `UsePluginEvents` generic types between host and plugin without re-declaring them.
 
-TODO update this
+## Plugin data
 
-Plugins can store data in the `plugin_data` table. The following methods are available in the graphQL API for interacting with plugin data:
+Plugins can persist their own records in the shared `plugin_data` table via the GraphQL API. There are three operations:
 
-- `pluginData`
-- `insertPluginData`
-- `updatePluginData`
+- `pluginData` — query
+- `insertPluginData` — insert
+- `updatePluginData` — update
 
-The querying and mutating of data follows the standard pattern used throughout open mSupply:
+Records are scoped by plugin code (so two plugins can't read each other's data) and optionally tied to a `relatedRecordId` so a plugin can attach data to a specific stock line, master list, etc.
+
+The querying / mutation pattern matches the rest of the app:
 
 ```typescript
 const { data } = usePluginData.data(stockLine?.id ?? '');
@@ -160,132 +307,56 @@ const { mutate: insert } = usePluginData.insert();
 const { mutate: update } = usePluginData.update();
 ```
 
-These functions can be implemented within your plugin and used to fetch and update data.
+> TODO: full reference for the data shape and how to scope queries.
 
 ## Creating a plugin
 
-You can watch [this video for example](https://drive.google.com/file/d/1JnmPU9hRaQD4R1hTDKbbNj78FnM2l00A/view?usp=drive_link) TODO make public
+You can watch [this video for example](https://drive.google.com/file/d/1JnmPU9hRaQD4R1hTDKbbNj78FnM2l00A/view?usp=drive_link) (TODO: make public).
 
-The simplest way to begin is by cloning (forking for now or just copy and create new repo, until we have a template), this repository https://github.com/msupply-foundation/open-msupply-plugins, then add it as a submodule to `client/packages/plugins/`. From the root of this repository, run:
+The simplest way to begin is by forking or copy-pasting [this template repo](https://github.com/msupply-foundation/open-msupply-plugins), then adding it as a submodule under `client/packages/plugins/`:
 
 ```
 git submodule add [your-plugin-bundle-repo-url] client/packages/plugins/myPluginBundle
 ```
 
-> You will need to have github authentication set up to add restricted access repos from command line. [github cli](https://cli.github.com/) can conveniently set up github command line authentication access. Other [alternative methods](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-authentication-to-github) are also available.
+> You will need GitHub authentication set up to add a private repo from the command line — [github cli](https://cli.github.com/) is the easiest, or use one of the [alternative methods](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-authentication-to-github).
 
-Note the `myPluginBundle` can be anything. The inner repository and core will be treated as two different repositories, changes in them will only be reflected in relative repositories (i.e. you can add the inner repository as local repository https://cli.github.com/in github desktop). Make sure that you don't commit the `.gitmodules` file or the files under `client/packages/plugins/{your plugin bundle name}` to the main app.
+The `myPluginBundle` directory name can be anything. The submodule and the main repo are treated as separate git repositories — changes in each only affect that repo. Make sure you don't commit the `.gitmodules` file or anything under `client/packages/plugins/<your bundle>/` to the main app.
 
-You would need to change [name](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/package.json#L3) in package.json, which is also the plugin code and unique identifier (every plugin should have unique code). You should also add types that are implemented, in the future those will be displayed before plugin is installed, for validation form the user, for frontend plugins they are not essential though. TODO these types can be looked up when building, both for front end and backed plugin, by running ts-node and inspecting import { plugins } from './plugins.tsx' or '.ts'.
+Once added:
 
-Hot reloading will be working on dev mode but frontend needs to be restarted when adding a new plugin because local plugins are only discovered when webpack starts
+1. Change `name` in `package.json` — this becomes the plugin code and unique identifier
+2. Update the `omSupplyPlugin.types` array to declare which slots the plugin implements (currently informational only, but will be validated on install)
+3. Hot reloading works in dev once the bundle is registered. Restart the frontend after **adding** a new plugin so webpack picks it up.
+
+> TODO: `omSupplyPlugin.types` could be derived automatically by inspecting `plugin.tsx` with ts-node — both for front-end and back-end plugins.
 
 ### Developing on branches of plugins
 
-Different branches of plugins can be selected by adding a -b flag to the adding submodule command:
+To pin a submodule to a specific branch, add `-b` when first adding it:
 
 ```
 git submodule add [your-plugin-bundle-repo-url] -b [your-branch] client/packages/plugins/myPluginBundle
 ```
 
-This will add a branch field to the .gitmodules file in the root project dir to include a specific branch field:
+This adds a `branch` field to `.gitmodules`:
 
 ```.gitmodules
   [submodule "client/packages/plugins/myPluginBundle"]
-	path = client/packages/plugins/myPluginBundle
-	url = https://github.com/msupply-foundation/civ-plugins.git
-	branch = fix-plugin-data-saving
+    path = client/packages/plugins/myPluginBundle
+    url = https://github.com/msupply-foundation/civ-plugins.git
+    branch = fix-plugin-data-saving
 ```
 
-The command can be re-run with a different branch to change the branch of the submodule.
-
-Alternatively, the .gitmodules file can be edited to a different branch name manually, and then updated to the remote of that branch with the following command:
+Re-running the command with a different branch updates it. Alternatively, edit `.gitmodules` by hand and pull:
 
 ```
 git submodule update --remote
 ```
 
-> Note that the branch flag support branch names only and not SHA or Tags.
+> Note: the `branch` field accepts branch names only, not SHAs or tags.
 
-## Testing production build
-
-You can work on plugins as if they were part of the app (types should be shared, autocompletion and hot reload should work). If you want to test plugin in production, you can bundle it and deploy to server via:
-
-```bash
-# From server directory
-cargo run --bin remote_server_cli -- generate-plugin-bundle -i ../client/packages/plugins/myPluginBundle/frontend -o pluginbundle.json
-```
-
-Above will generate `pluginbundle.json` with all backend and frontend plugins in the directory specified by `-i`. This bundle includes metadata, like code, version, plugin types and base64 contents of all of the files in the `dist` directory which was generated with `yarn build` command that was executed in every plugin directory.
-
-This can now be uploaded to the server via
-
-```bash
-# From server directory
-cargo run --bin remote_server_cli -- install-plugin-bundle -p pluginbundle.json --url 'http://localhost:8000' --username admin --password pass
-```
-
-Note you must be uploading plugins to central server for this to work
-
-Alternatively one command can be used for both:
-
-```bash
-cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i '../client/packages/plugins/myPluginBundle/frontend' --url 'http://localhost:8000' --username admin --password pass
-```
-
-In order to test this plugins in front end, you will need to start front end by running `yarn build` in the root directory then restarting the backend. You then have to access the frontend via the backend <http://localhost:8000>. The frontend will now fetch plugins from the server rather then serving them from local directory, this is how plugins will be loaded in production (and plugins will sync and be served by remote site servers).
-
-## Example plugin types
-
-**ShippingStatus**
-This adds a simple toolbar button to the detail view of Inbound Shipments. The plugin demonstrates:
-
-- creating a plugin
-- receiving data from the host environment
-- using standard app components
-- use of the app theme
-
-**Dashboard**
-This example adds two widgets to the standard dashboard. It demonstrates:
-
-- creating a plugin
-- using standard app components
-- use of the app theme
-- the export of two plugin components
-- fetching data using the graphQL API
-- utilising utility functions from the app
-
-**Stock Donor**
-This example adds a new field to a stock line, displaying the stored data in a new column within the list view and allowing editing of the field in the detail view. It demonstrates:
-
-- creating a plugin
-- using standard app components
-- use of the app theme
-- implementing a column plugin
-- fetching data using the graphQL API
-- inserting and updating data using graphQL
-- utilising utility functions from the app
-- using plugin events to
-  - trigger validation in the host page
-  - save data when the host page is saving
-- store data which is specific to the plugin
-
-Stock Donor example fetched data for all of the columns with [StateLoader component](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorColumn.tsx#L26-L30), which expects StockRowFragment array so that only pluginData for those rows is queried, and then [shares](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorColumn.tsx#L34) this data using [zustand state](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorColumn.tsx#L15-L22), [columns can then be populated](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/src/StockDonor/StockDonorColumn.tsx#L42-L44) based on the StockRowFragment id they belong to
-
-TODO about column order
-
-### Things to note
-
-When plugins are running in 'production' mode, the standard react contexts are not available. The package `react-singleton-context` is used instead of the standard react context in order to share the context across the two app environments. It requires the use of proxy providers:
-
-- ThemeProviderProxy
-- QueryClientProviderProxy
-
-which are storing the provider state locally and providing that to an instance of the Provider which the child components are then accessing.
-
-When using private repository submodule you will have to be logged in as the user with adequate permissions to the repository.
-
-When removing submodule, you will need to delete `.gitmodules` file, the plugin folder and git cache for submodule, for example:
+### Removing a submodule
 
 ```bash
 rm -rf .gitmodules
@@ -293,31 +364,80 @@ rm -rf client/packages/plugins/myPluginBundle/
 rm -rf .git/modules/client/packages/plugins/myPluginBundle/
 ```
 
-NOTE: When running some plugins in the backend in dev mode you may get a stack overflow error. To resolve this increase your stack size e.g. export RUST_MIN_STACK=8388608; cargo run
+When using a private repo, you'll need to be logged in as a user with read access.
 
-### Compatibility/versioning
+## Testing the production build
 
-TODO explain why the folder structure is the way it is, that versioning will be linked to min version of omSupply, and when making new version previous version is copied from latest to say `2_6` (when `2_7` is the new version with feature added to API that plugin uses). And then we can checkout older version of omSupply, with current version of plugin, and only load `2_6` with exclude and include in [getLocalPlugin.js](https://github.com/msupply-foundation/open-msupply/blob/73289fc25807543f164900020d284e9f6b2a6697/client/packages/host/getLocalPlugins.js#L11-L12)
+You can work on a plugin as if it were part of the app — types are shared, autocomplete and hot reload work. To test it as a production bundle:
 
-### Adding new plugin interface
+```bash
+# From the server directory
+cargo run --bin remote_server_cli -- generate-plugin-bundle \
+  -i ../client/packages/plugins/myPluginBundle/frontend \
+  -o pluginbundle.json
+```
 
-There is this video that shows extending front end plugins https://drive.google.com/file/d/1kEEvJ9Pk6wpQGpBfKP1z2UmCw5EwztzV/view?usp=drive_link
-And this commit in the fork of plugins: https://drive.google.com/file/d/1kEEvJ9Pk6wpQGpBfKP1z2UmCw5EwztzV/view?usp=drive_link and this commit in front end: https://github.com/msupply-foundation/open-msupply/commit/86b6447eb970a32cd7d4e7d8f178a34619dffa71, although front end fails compilation and has a lot of extra changes relocating API types.
+This generates `pluginbundle.json` containing metadata (code, version, declared types) plus base64-encoded contents of every file in the `dist` directory that `yarn build` produced. Upload it:
 
-TODO explain more about extending front end interface
+```bash
+cargo run --bin remote_server_cli -- install-plugin-bundle \
+  -p pluginbundle.json \
+  --url 'http://localhost:8000' \
+  --username admin --password pass
+```
 
-TODO make video and explanation about back end plugin interface extension
+Note: upload only works against a central server.
+
+Or do both in one step:
+
+```bash
+cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle \
+  -i '../client/packages/plugins/myPluginBundle/frontend' \
+  --url 'http://localhost:8000' \
+  --username admin --password pass
+```
+
+To exercise the plugin via the production path: `yarn build` the client from the repo root, restart the backend, and visit the app via the backend at `http://localhost:8000`. The frontend will then fetch plugins from the server (as it does in real deployments — central syncs them to remote site servers) rather than from local disk.
+
+> Note: when running some backend plugins in dev mode you may hit a stack overflow. Increase the stack size: `export RUST_MIN_STACK=8388608; cargo run`.
+
+## Reference plugin examples
+
+The in-repo [core-plugins](https://github.com/msupply-foundation/open-msupply/tree/develop/client/packages/plugins/core-plugins/frontend/latest) bundle ships several examples:
+
+- **ShippingStatus** — adds an app-bar button to the inbound-shipment detail view. Demonstrates: receiving data from the host, using standard UI components, using the theme.
+- **Dashboard** (`Replenishment`, `SyncStatus`) — adds two dashboard widgets. Demonstrates: exporting multiple components, fetching data via GraphQL, using utility functions.
+- **Stock Donor** — adds a custom field to a stock line, showing the stored value as a list-view column and providing an edit input in the detail view. Demonstrates: column plugin, plugin data via GraphQL (insert/update), `usePluginEvents` for triggering validation and save, table state loader, `react-singleton-context` proxies.
+- **Aggregate AMC** — adds a column + edit field + info panel to request requisition lines.
+- **Stock aging** — a full plugin page mounted at `/inventory/stock-aging`, demonstrating a page that uses the standard `AppBarButtons` + `AppBarContent` + `AppFooter` portal chrome plus a `Toolbar`.
+- **Reporting / Daily** — a bare-bones plugin page under a new "Reporting" top-level category at `/reporting/daily`, demonstrating a page that opts out of all chrome.
+
+The Stock Donor example uses the `tableStateLoader` slot to bulk-fetch plugin data for all currently visible stock rows in one go, stash it in a zustand store, and let column cells look it up synchronously — this avoids per-row fetches in the column render path.
+
+> TODO: notes on plugin column ordering once it's been added to the framework.
+
+## Compatibility / versioning
+
+> TODO: explain the folder structure (`frontend/latest`, `frontend/2_6`, …), how versions are linked to the minimum host version a plugin supports, and how older hosts can be tested with a newer plugin via the `include`/`exclude` lists in [getLocalPlugins.js](https://github.com/msupply-foundation/open-msupply/blob/develop/client/packages/host/getLocalPlugins.js).
+
+## Adding a new injection point
+
+When a built-in page needs to be made extensible, you have to update both the type definition and the host that consumes it:
+
+1. Add an optional field to the `Plugins` type in [client/packages/common/src/plugins/types.ts](https://github.com/msupply-foundation/open-msupply/blob/develop/client/packages/common/src/plugins/types.ts). For an array-valued slot, contributions from multiple plugins will be concatenated automatically by the provider's merge logic.
+2. In the consuming host component, call `usePluginProvider()` and read your new field — typically rendering each entry in a list.
+3. If the slot needs two-way state, attach a `UsePluginEvents` instance per [the events docs above](#events-between-core-and-plugin).
+
+> TODO: short video walkthrough — the existing [video](https://drive.google.com/file/d/1kEEvJ9Pk6wpQGpBfKP1z2UmCw5EwztzV/view?usp=drive_link) shows extending the front-end plugin interface; this [commit in a plugin fork](https://drive.google.com/file/d/1kEEvJ9Pk6wpQGpBfKP1z2UmCw5EwztzV/view?usp=drive_link) and this [commit on the front end](https://github.com/msupply-foundation/open-msupply/commit/86b6447eb970a32cd7d4e7d8f178a34619dffa71) show one such change end-to-end (note that commit fails compilation and includes unrelated type relocations).
 
 # Backend plugins
 
-This video touches a little bit on backend plugins: https://drive.google.com/file/d/1JnmPU9hRaQD4R1hTDKbbNj78FnM2l00A/view?usp=drive_link
+> TODO: full description. The [intro video](https://drive.google.com/file/d/1JnmPU9hRaQD4R1hTDKbbNj78FnM2l00A/view?usp=drive_link) touches on backend plugins briefly.
 
-TODO full description about backend plugins
+## More about bundling
 
-### More about bundling
+> TODO: how a bundle should be deployed in production.
 
-TODO more about how bundle should be used in production
+## Signing
 
-### Signing
-
-TOD When signing is re-instated talk about the process
+> TODO: signing process, once signing is re-instated.
