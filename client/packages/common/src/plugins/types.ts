@@ -16,17 +16,16 @@ import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
 import { DraftRequestLine } from 'packages/requisitions/src/RequestRequisition/DetailView/RequestLineEdit';
 import { UserPermission } from '../types/schema';
 
-/**
- * Icon for a plugin menu item. Resolution priority:
- *   1. React component  - rendered directly
- *   2. String           - looked up in the host `pluginIconRegistry`
- *   3. Default          - falls back to PluginIcon
- */
-export type PluginIcon = React.ComponentType | string;
+// Plugins import any icon they want from `@openmsupply-client/common` (e.g.
+// `StockIcon`) and pass it directly. The host renders it themed to match the
+// built-in navigation; if omitted, a default plugin icon is used.
+export type PluginIcon = React.ComponentType<{
+  color?: 'primary' | 'inherit';
+  fontSize?: 'small' | 'medium' | 'large' | 'inherit';
+}>;
 
 export type PluginPageMenu = {
   label: LocalizedString;
-  icon?: PluginIcon;
   permissions?: UserPermission[];
   category:
     | { type: 'existing'; appRoute: AppRoute }

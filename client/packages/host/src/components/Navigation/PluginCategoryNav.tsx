@@ -45,7 +45,6 @@ export const PluginCategoryNav: React.FC<{ category: PluginNewCategory }> = ({
               key={`${page.pluginCode}/${page.route}`}
               to={pluginPagePath(category.key, page)}
               label={page.menu.label}
-              icon={page.menu.icon}
             />
           ))}
         </List>
