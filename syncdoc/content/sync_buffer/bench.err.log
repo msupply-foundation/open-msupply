@@ -1,0 +1,1106 @@
+[init] Ensuring database 'sync_buffer_bench' on localhost:5432
+[init] Connecting to 'sync_buffer_bench'
+[init] Connected. Running 4 scenario(s), output: results.csv
+[scenario] Starting: basic (basic)
+[scenario] Schema created
+[round 1] Inserting 500000 rows to grow table...
+[round 1] Table now has 500000 rows
+[round 1] Insert bench: 5 x 10000 rows
+[round 1]   insert iter 5/5: 135.4ms
+[round 1] Query bench: 1 iterations x 5 queries x 2 ops
+[round 1]   query iter 1/1 done
+[round 1] Update bench: leaving 5000000 pending...
+[round 1]   integrated 0 rows in 273.2ms
+[round 2] Inserting 500000 rows to grow table...
+[round 2] Table now has 1050000 rows
+[round 2] Insert bench: 5 x 10000 rows
+[round 2]   insert iter 5/5: 155.5ms
+[round 2] Query bench: 1 iterations x 5 queries x 2 ops
+[round 2]   query iter 1/1 done
+[round 2] Update bench: leaving 5000000 pending...
+[round 2]   integrated 0 rows in 720.0ms
+[round 3] Inserting 500000 rows to grow table...
+[round 3] Table now has 1600000 rows
+[round 3] Insert bench: 5 x 10000 rows
+[round 3]   insert iter 5/5: 136.7ms
+[round 3] Query bench: 1 iterations x 5 queries x 2 ops
+[round 3]   query iter 1/1 done
+[round 3] Update bench: leaving 5000000 pending...
+[round 3]   integrated 0 rows in 1128.0ms
+[round 4] Inserting 500000 rows to grow table...
+[round 4] Table now has 2150000 rows
+[round 4] Insert bench: 5 x 10000 rows
+[round 4]   insert iter 5/5: 156.2ms
+[round 4] Query bench: 1 iterations x 5 queries x 2 ops
+[round 4]   query iter 1/1 done
+[round 4] Update bench: leaving 5000000 pending...
+[round 4]   integrated 0 rows in 687.3ms
+[round 5] Inserting 500000 rows to grow table...
+[round 5] Table now has 2700000 rows
+[round 5] Insert bench: 5 x 10000 rows
+[round 5]   insert iter 5/5: 278.1ms
+[round 5] Query bench: 1 iterations x 5 queries x 2 ops
+[round 5]   query iter 1/1 done
+[round 5] Update bench: leaving 5000000 pending...
+[round 5]   integrated 0 rows in 882.0ms
+[round 6] Inserting 500000 rows to grow table...
+[round 6] Table now has 3250000 rows
+[round 6] Insert bench: 5 x 10000 rows
+[round 6]   insert iter 5/5: 176.0ms
+[round 6] Query bench: 1 iterations x 5 queries x 2 ops
+[round 6]   query iter 1/1 done
+[round 6] Update bench: leaving 5000000 pending...
+[round 6]   integrated 0 rows in 1047.3ms
+[round 7] Inserting 500000 rows to grow table...
+[round 7] Table now has 3800000 rows
+[round 7] Insert bench: 5 x 10000 rows
+[round 7]   insert iter 5/5: 169.7ms
+[round 7] Query bench: 1 iterations x 5 queries x 2 ops
+[round 7]   query iter 1/1 done
+[round 7] Update bench: leaving 5000000 pending...
+[round 7]   integrated 0 rows in 1144.5ms
+[round 8] Inserting 500000 rows to grow table...
+[round 8] Table now has 4350000 rows
+[round 8] Insert bench: 5 x 10000 rows
+[round 8]   insert iter 5/5: 149.3ms
+[round 8] Query bench: 1 iterations x 5 queries x 2 ops
+[round 8]   query iter 1/1 done
+[round 8] Update bench: leaving 5000000 pending...
+[round 8]   integrated 0 rows in 1301.0ms
+[round 9] Inserting 500000 rows to grow table...
+[round 9] Table now has 4900000 rows
+[round 9] Insert bench: 5 x 10000 rows
+[round 9]   insert iter 5/5: 155.6ms
+[round 9] Query bench: 1 iterations x 5 queries x 2 ops
+[round 9]   query iter 1/1 done
+[round 9] Update bench: leaving 5000000 pending...
+[round 9]   integrated 0 rows in 1448.4ms
+[round 10] Inserting 500000 rows to grow table...
+[round 10] Table now has 5450000 rows
+[round 10] Insert bench: 5 x 10000 rows
+[round 10]   insert iter 5/5: 160.0ms
+[round 10] Query bench: 1 iterations x 5 queries x 2 ops
+[round 10]   query iter 1/1 done
+[round 10] Update bench: leaving 5000000 pending...
+[round 10]   integrated 500000 rows in 10014.2ms
+[round 11] Inserting 500000 rows to grow table...
+[round 11] Table now has 6000000 rows
+[round 11] Insert bench: 5 x 10000 rows
+[round 11]   insert iter 5/5: 156.7ms
+[round 11] Query bench: 1 iterations x 5 queries x 2 ops
+[round 11]   query iter 1/1 done
+[round 11] Update bench: leaving 5000000 pending...
+[round 11]   integrated 550000 rows in 11550.1ms
+[round 12] Inserting 500000 rows to grow table...
+[round 12] Table now has 6550000 rows
+[round 12] Insert bench: 5 x 10000 rows
+[round 12]   insert iter 5/5: 179.2ms
+[round 12] Query bench: 1 iterations x 5 queries x 2 ops
+[round 12]   query iter 1/1 done
+[round 12] Update bench: leaving 5000000 pending...
+[round 12]   integrated 550000 rows in 11120.6ms
+[round 13] Inserting 500000 rows to grow table...
+[round 13] Table now has 7100000 rows
+[round 13] Insert bench: 5 x 10000 rows
+[round 13]   insert iter 5/5: 159.6ms
+[round 13] Query bench: 1 iterations x 5 queries x 2 ops
+[round 13]   query iter 1/1 done
+[round 13] Update bench: leaving 5000000 pending...
+[round 13]   integrated 550000 rows in 8295.5ms
+[round 14] Inserting 500000 rows to grow table...
+[round 14] Table now has 7650000 rows
+[round 14] Insert bench: 5 x 10000 rows
+[round 14]   insert iter 5/5: 150.8ms
+[round 14] Query bench: 1 iterations x 5 queries x 2 ops
+[round 14]   query iter 1/1 done
+[round 14] Update bench: leaving 5000000 pending...
+[round 14]   integrated 550000 rows in 11413.4ms
+[round 15] Inserting 500000 rows to grow table...
+[round 15] Table now has 8200000 rows
+[round 15] Insert bench: 5 x 10000 rows
+[round 15]   insert iter 5/5: 144.8ms
+[round 15] Query bench: 1 iterations x 5 queries x 2 ops
+[round 15]   query iter 1/1 done
+[round 15] Update bench: leaving 5000000 pending...
+[round 15]   integrated 550000 rows in 14194.1ms
+[round 16] Inserting 500000 rows to grow table...
+[round 16] Table now has 8750000 rows
+[round 16] Insert bench: 5 x 10000 rows
+[round 16]   insert iter 5/5: 152.8ms
+[round 16] Query bench: 1 iterations x 5 queries x 2 ops
+[round 16]   query iter 1/1 done
+[round 16] Update bench: leaving 5000000 pending...
+[round 16]   integrated 550000 rows in 13137.3ms
+[round 17] Inserting 500000 rows to grow table...
+[round 17] Table now has 9300000 rows
+[round 17] Insert bench: 5 x 10000 rows
+[round 17]   insert iter 5/5: 150.4ms
+[round 17] Query bench: 1 iterations x 5 queries x 2 ops
+[round 17]   query iter 1/1 done
+[round 17] Update bench: leaving 5000000 pending...
+[round 17]   integrated 550000 rows in 13162.3ms
+[round 18] Inserting 500000 rows to grow table...
+[round 18] Table now has 9850000 rows
+[round 18] Insert bench: 5 x 10000 rows
+[round 18]   insert iter 5/5: 213.9ms
+[round 18] Query bench: 1 iterations x 5 queries x 2 ops
+[round 18]   query iter 1/1 done
+[round 18] Update bench: leaving 5000000 pending...
+[round 18]   integrated 550000 rows in 9924.3ms
+[round 19] Inserting 500000 rows to grow table...
+[round 19] Table now has 10400000 rows
+[round 19] Insert bench: 5 x 10000 rows
+[round 19]   insert iter 5/5: 151.1ms
+[round 19] Query bench: 1 iterations x 5 queries x 2 ops
+[round 19]   query iter 1/1 done
+[round 19] Update bench: leaving 5000000 pending...
+[round 19]   integrated 550000 rows in 9977.2ms
+[round 20] Inserting 500000 rows to grow table...
+[round 20] Table now has 10950000 rows
+[round 20] Insert bench: 5 x 10000 rows
+[round 20]   insert iter 5/5: 148.3ms
+[round 20] Query bench: 1 iterations x 5 queries x 2 ops
+[round 20]   query iter 1/1 done
+[round 20] Update bench: leaving 5000000 pending...
+[round 20]   integrated 550000 rows in 10933.1ms
+[round 21] Inserting 500000 rows to grow table...
+[round 21] Table now has 11500000 rows
+[round 21] Insert bench: 5 x 10000 rows
+[round 21]   insert iter 5/5: 161.0ms
+[round 21] Query bench: 1 iterations x 5 queries x 2 ops
+[round 21]   query iter 1/1 done
+[round 21] Update bench: leaving 5000000 pending...
+[round 21]   integrated 550000 rows in 8513.9ms
+[round 22] Inserting 500000 rows to grow table...
+[round 22] Table now has 12050000 rows
+[round 22] Insert bench: 5 x 10000 rows
+[round 22]   insert iter 5/5: 164.1ms
+[round 22] Query bench: 1 iterations x 5 queries x 2 ops
+[round 22]   query iter 1/1 done
+[round 22] Update bench: leaving 5000000 pending...
+[round 22]   integrated 550000 rows in 13085.4ms
+[round 23] Inserting 500000 rows to grow table...
+[round 23] Table now has 12600000 rows
+[round 23] Insert bench: 5 x 10000 rows
+[round 23]   insert iter 5/5: 145.3ms
+[round 23] Query bench: 1 iterations x 5 queries x 2 ops
+[round 23]   query iter 1/1 done
+[round 23] Update bench: leaving 5000000 pending...
+[round 23]   integrated 550000 rows in 10427.6ms
+[round 24] Inserting 500000 rows to grow table...
+[round 24] Table now has 13150000 rows
+[round 24] Insert bench: 5 x 10000 rows
+[round 24]   insert iter 5/5: 156.0ms
+[round 24] Query bench: 1 iterations x 5 queries x 2 ops
+[round 24]   query iter 1/1 done
+[round 24] Update bench: leaving 5000000 pending...
+[round 24]   integrated 550000 rows in 13377.6ms
+[round 25] Inserting 500000 rows to grow table...
+[round 25] Table now has 13700000 rows
+[round 25] Insert bench: 5 x 10000 rows
+[round 25]   insert iter 5/5: 152.3ms
+[round 25] Query bench: 1 iterations x 5 queries x 2 ops
+[round 25]   query iter 1/1 done
+[round 25] Update bench: leaving 5000000 pending...
+[round 25]   integrated 550000 rows in 14599.6ms
+[round 26] Inserting 500000 rows to grow table...
+[round 26] Table now has 14250000 rows
+[round 26] Insert bench: 5 x 10000 rows
+[round 26]   insert iter 5/5: 141.9ms
+[round 26] Query bench: 1 iterations x 5 queries x 2 ops
+[round 26]   query iter 1/1 done
+[round 26] Update bench: leaving 5000000 pending...
+[round 26]   integrated 550000 rows in 14125.2ms
+[round 27] Inserting 500000 rows to grow table...
+[round 27] Table now has 14800000 rows
+[round 27] Insert bench: 5 x 10000 rows
+[round 27]   insert iter 5/5: 156.8ms
+[round 27] Query bench: 1 iterations x 5 queries x 2 ops
+[round 27]   query iter 1/1 done
+[round 27] Update bench: leaving 5000000 pending...
+[round 27]   integrated 550000 rows in 14337.5ms
+[round 28] Inserting 500000 rows to grow table...
+[round 28] Table now has 15350000 rows
+[round 28] Insert bench: 5 x 10000 rows
+[round 28]   insert iter 5/5: 181.7ms
+[round 28] Query bench: 1 iterations x 5 queries x 2 ops
+[round 28]   query iter 1/1 done
+[round 28] Update bench: leaving 5000000 pending...
+[round 28]   integrated 550000 rows in 14489.9ms
+[round 29] Inserting 500000 rows to grow table...
+[round 29] Table now has 15900000 rows
+[round 29] Insert bench: 5 x 10000 rows
+[round 29]   insert iter 5/5: 196.7ms
+[round 29] Query bench: 1 iterations x 5 queries x 2 ops
+[round 29]   query iter 1/1 done
+[round 29] Update bench: leaving 5000000 pending...
+[round 29]   integrated 550000 rows in 15486.9ms
+[round 30] Inserting 500000 rows to grow table...
+[round 30] Table now has 16450000 rows
+[round 30] Insert bench: 5 x 10000 rows
+[round 30]   insert iter 5/5: 169.0ms
+[round 30] Query bench: 1 iterations x 5 queries x 2 ops
+[round 30]   query iter 1/1 done
+[round 30] Update bench: leaving 5000000 pending...
+[round 30]   integrated 550000 rows in 11906.1ms
+[round 31] Inserting 500000 rows to grow table...
+[round 31] Table now has 17000000 rows
+[round 31] Insert bench: 5 x 10000 rows
+[round 31]   insert iter 5/5: 156.9ms
+[round 31] Query bench: 1 iterations x 5 queries x 2 ops
+[round 31]   query iter 1/1 done
+[round 31] Update bench: leaving 5000000 pending...
+[round 31]   integrated 550000 rows in 14426.2ms
+[round 32] Inserting 500000 rows to grow table...
+[round 32] Table now has 17550000 rows
+[round 32] Insert bench: 5 x 10000 rows
+[round 32]   insert iter 5/5: 151.1ms
+[round 32] Query bench: 1 iterations x 5 queries x 2 ops
+[round 32]   query iter 1/1 done
+[round 32] Update bench: leaving 5000000 pending...
+[round 32]   integrated 550000 rows in 14065.5ms
+[round 33] Inserting 500000 rows to grow table...
+[round 33] Table now has 18100000 rows
+[round 33] Insert bench: 5 x 10000 rows
+[round 33]   insert iter 5/5: 151.5ms
+[round 33] Query bench: 1 iterations x 5 queries x 2 ops
+[round 33]   query iter 1/1 done
+[round 33] Update bench: leaving 5000000 pending...
+[round 33]   integrated 550000 rows in 14283.5ms
+[round 34] Inserting 500000 rows to grow table...
+[round 34] Table now has 18650000 rows
+[round 34] Insert bench: 5 x 10000 rows
+[round 34]   insert iter 5/5: 178.2ms
+[round 34] Query bench: 1 iterations x 5 queries x 2 ops
+[round 34]   query iter 1/1 done
+[round 34] Update bench: leaving 5000000 pending...
+[round 34]   integrated 550000 rows in 16365.2ms
+[round 35] Inserting 500000 rows to grow table...
+[round 35] Table now has 19200000 rows
+[round 35] Insert bench: 5 x 10000 rows
+[round 35]   insert iter 5/5: 156.2ms
+[round 35] Query bench: 1 iterations x 5 queries x 2 ops
+[round 35]   query iter 1/1 done
+[round 35] Update bench: leaving 5000000 pending...
+[round 35]   integrated 550000 rows in 16108.1ms
+[round 36] Inserting 500000 rows to grow table...
+[round 36] Table now has 19750000 rows
+[round 36] Insert bench: 5 x 10000 rows
+[round 36]   insert iter 5/5: 194.6ms
+[round 36] Query bench: 1 iterations x 5 queries x 2 ops
+[round 36]   query iter 1/1 done
+[round 36] Update bench: leaving 5000000 pending...
+[round 36]   integrated 550000 rows in 15188.3ms
+[round 37] Inserting 500000 rows to grow table...
+[round 37] Table now has 20300000 rows
+[round 37] Insert bench: 5 x 10000 rows
+[round 37]   insert iter 5/5: 147.7ms
+[round 37] Query bench: 1 iterations x 5 queries x 2 ops
+[round 37]   query iter 1/1 done
+[round 37] Update bench: leaving 5000000 pending...
+[round 37]   integrated 550000 rows in 13042.7ms
+[round 38] Inserting 500000 rows to grow table...
+[round 38] Table now has 20850000 rows
+[round 38] Insert bench: 5 x 10000 rows
+[round 38]   insert iter 5/5: 147.7ms
+[round 38] Query bench: 1 iterations x 5 queries x 2 ops
+[round 38]   query iter 1/1 done
+[round 38] Update bench: leaving 5000000 pending...
+[round 38]   integrated 550000 rows in 12753.8ms
+[round 39] Inserting 500000 rows to grow table...
+[round 39] Table now has 21400000 rows
+[round 39] Insert bench: 5 x 10000 rows
+[round 39]   insert iter 5/5: 152.4ms
+[round 39] Query bench: 1 iterations x 5 queries x 2 ops
+[round 39]   query iter 1/1 done
+[round 39] Update bench: leaving 5000000 pending...
+[round 39]   integrated 550000 rows in 16449.9ms
+[round 40] Inserting 500000 rows to grow table...
+[round 40] Table now has 21950000 rows
+[round 40] Insert bench: 5 x 10000 rows
+[round 40]   insert iter 5/5: 156.2ms
+[round 40] Query bench: 1 iterations x 5 queries x 2 ops
+[round 40]   query iter 1/1 done
+[round 40] Update bench: leaving 5000000 pending...
+[round 40]   integrated 550000 rows in 16633.8ms
+[round 41] Inserting 500000 rows to grow table...
+[round 41] Table now has 22500000 rows
+[round 41] Insert bench: 5 x 10000 rows
+[round 41]   insert iter 5/5: 153.7ms
+[round 41] Query bench: 1 iterations x 5 queries x 2 ops
+[round 41]   query iter 1/1 done
+[round 41] Update bench: leaving 5000000 pending...
+[round 41]   integrated 550000 rows in 16323.3ms
+[round 42] Inserting 500000 rows to grow table...
+[round 42] Table now has 23050000 rows
+[round 42] Insert bench: 5 x 10000 rows
+[round 42]   insert iter 5/5: 166.7ms
+[round 42] Query bench: 1 iterations x 5 queries x 2 ops
+[round 42]   query iter 1/1 done
+[round 42] Update bench: leaving 5000000 pending...
+[round 42]   integrated 550000 rows in 17079.9ms
+[round 43] Inserting 500000 rows to grow table...
+[round 43] Table now has 23600000 rows
+[round 43] Insert bench: 5 x 10000 rows
+[round 43]   insert iter 5/5: 148.2ms
+[round 43] Query bench: 1 iterations x 5 queries x 2 ops
+[round 43]   query iter 1/1 done
+[round 43] Update bench: leaving 5000000 pending...
+[round 43]   integrated 550000 rows in 15752.8ms
+[round 44] Inserting 500000 rows to grow table...
+[round 44] Table now has 24150000 rows
+[round 44] Insert bench: 5 x 10000 rows
+[round 44]   insert iter 5/5: 150.8ms
+[round 44] Query bench: 1 iterations x 5 queries x 2 ops
+[round 44]   query iter 1/1 done
+[round 44] Update bench: leaving 5000000 pending...
+[round 44]   integrated 550000 rows in 14222.6ms
+[round 45] Inserting 500000 rows to grow table...
+[round 45] Table now has 24700000 rows
+[round 45] Insert bench: 5 x 10000 rows
+[round 45]   insert iter 5/5: 150.6ms
+[round 45] Query bench: 1 iterations x 5 queries x 2 ops
+[round 45]   query iter 1/1 done
+[round 45] Update bench: leaving 5000000 pending...
+[round 45]   integrated 550000 rows in 16470.5ms
+[round 46] Inserting 500000 rows to grow table...
+[round 46] Table now has 25250000 rows
+[round 46] Insert bench: 5 x 10000 rows
+[round 46]   insert iter 5/5: 160.4ms
+[round 46] Query bench: 1 iterations x 5 queries x 2 ops
+[round 46]   query iter 1/1 done
+[round 46] Update bench: leaving 5000000 pending...
+[round 46]   integrated 550000 rows in 15698.3ms
+[round 47] Inserting 500000 rows to grow table...
+[round 47] Table now has 25800000 rows
+[round 47] Insert bench: 5 x 10000 rows
+[round 47]   insert iter 5/5: 159.1ms
+[round 47] Query bench: 1 iterations x 5 queries x 2 ops
+[round 47]   query iter 1/1 done
+[round 47] Update bench: leaving 5000000 pending...
+[round 47]   integrated 550000 rows in 15689.9ms
+[round 48] Inserting 500000 rows to grow table...
+[round 48] Table now has 26350000 rows
+[round 48] Insert bench: 5 x 10000 rows
+[round 48]   insert iter 5/5: 197.1ms
+[round 48] Query bench: 1 iterations x 5 queries x 2 ops
+[round 48]   query iter 1/1 done
+[round 48] Update bench: leaving 5000000 pending...
+[round 48]   integrated 550000 rows in 17029.4ms
+[round 49] Inserting 500000 rows to grow table...
+[round 49] Table now has 26900000 rows
+[round 49] Insert bench: 5 x 10000 rows
+[round 49]   insert iter 5/5: 153.2ms
+[round 49] Query bench: 1 iterations x 5 queries x 2 ops
+[round 49]   query iter 1/1 done
+[round 49] Update bench: leaving 5000000 pending...
+[round 49]   integrated 550000 rows in 18221.7ms
+[round 50] Inserting 500000 rows to grow table...
+[round 50] Table now has 27450000 rows
+[round 50] Insert bench: 5 x 10000 rows
+[round 50]   insert iter 5/5: 151.0ms
+[round 50] Query bench: 1 iterations x 5 queries x 2 ops
+[round 50]   query iter 1/1 done
+[round 50] Update bench: leaving 5000000 pending...
+[round 50]   integrated 550000 rows in 16144.6ms
+[round 51] Inserting 500000 rows to grow table...
+[round 51] Table now has 28000000 rows
+[round 51] Insert bench: 5 x 10000 rows
+[round 51]   insert iter 5/5: 151.2ms
+[round 51] Query bench: 1 iterations x 5 queries x 2 ops
+[round 51]   query iter 1/1 done
+[round 51] Update bench: leaving 5000000 pending...
+[round 51]   integrated 550000 rows in 15297.2ms
+[round 52] Inserting 500000 rows to grow table...
+[round 52] Table now has 28550000 rows
+[round 52] Insert bench: 5 x 10000 rows
+[round 52]   insert iter 5/5: 155.3ms
+[round 52] Query bench: 1 iterations x 5 queries x 2 ops
+[round 52]   query iter 1/1 done
+[round 52] Update bench: leaving 5000000 pending...
+[round 52]   integrated 550000 rows in 20707.9ms
+[round 53] Inserting 500000 rows to grow table...
+[round 53] Table now has 29100000 rows
+[round 53] Insert bench: 5 x 10000 rows
+[round 53]   insert iter 5/5: 158.8ms
+[round 53] Query bench: 1 iterations x 5 queries x 2 ops
+[round 53]   query iter 1/1 done
+[round 53] Update bench: leaving 5000000 pending...
+[round 53]   integrated 550000 rows in 18770.1ms
+[round 54] Inserting 500000 rows to grow table...
+[round 54] Table now has 29650000 rows
+[round 54] Insert bench: 5 x 10000 rows
+[round 54]   insert iter 5/5: 161.0ms
+[round 54] Query bench: 1 iterations x 5 queries x 2 ops
+[round 54]   query iter 1/1 done
+[round 54] Update bench: leaving 5000000 pending...
+[round 54]   integrated 550000 rows in 18797.6ms
+[round 55] Inserting 500000 rows to grow table...
+[round 55] Table now has 30200000 rows
+[round 55] Insert bench: 5 x 10000 rows
+[round 55]   insert iter 5/5: 143.4ms
+[round 55] Query bench: 1 iterations x 5 queries x 2 ops
+[round 55]   query iter 1/1 done
+[round 55] Update bench: leaving 5000000 pending...
+[round 55]   integrated 550000 rows in 17200.7ms
+[round 56] Inserting 500000 rows to grow table...
+[round 56] Table now has 30750000 rows
+[round 56] Insert bench: 5 x 10000 rows
+[round 56]   insert iter 5/5: 147.4ms
+[round 56] Query bench: 1 iterations x 5 queries x 2 ops
+[round 56]   query iter 1/1 done
+[round 56] Update bench: leaving 5000000 pending...
+[round 56]   integrated 550000 rows in 17651.9ms
+[round 57] Inserting 500000 rows to grow table...
+[round 57] Table now has 31300000 rows
+[round 57] Insert bench: 5 x 10000 rows
+[round 57]   insert iter 5/5: 156.0ms
+[round 57] Query bench: 1 iterations x 5 queries x 2 ops
+[round 57]   query iter 1/1 done
+[round 57] Update bench: leaving 5000000 pending...
+[round 57]   integrated 550000 rows in 14569.3ms
+[round 58] Inserting 500000 rows to grow table...
+[round 58] Table now has 31850000 rows
+[round 58] Insert bench: 5 x 10000 rows
+[round 58]   insert iter 5/5: 208.9ms
+[round 58] Query bench: 1 iterations x 5 queries x 2 ops
+[round 58]   query iter 1/1 done
+[round 58] Update bench: leaving 5000000 pending...
+[round 58]   integrated 550000 rows in 22213.7ms
+[round 59] Inserting 500000 rows to grow table...
+[round 59] Table now has 32400000 rows
+[round 59] Insert bench: 5 x 10000 rows
+[round 59]   insert iter 5/5: 169.6ms
+[round 59] Query bench: 1 iterations x 5 queries x 2 ops
+[round 59]   query iter 1/1 done
+[round 59] Update bench: leaving 5000000 pending...
+[round 59]   integrated 550000 rows in 23567.0ms
+[round 60] Inserting 500000 rows to grow table...
+[round 60] Table now has 32950000 rows
+[round 60] Insert bench: 5 x 10000 rows
+[round 60]   insert iter 5/5: 282.5ms
+[round 60] Query bench: 1 iterations x 5 queries x 2 ops
+[round 60]   query iter 1/1 done
+[round 60] Update bench: leaving 5000000 pending...
+[round 60]   integrated 550000 rows in 20067.3ms
+[round 61] Inserting 500000 rows to grow table...
+[round 61] Table now has 33500000 rows
+[round 61] Insert bench: 5 x 10000 rows
+[round 61]   insert iter 5/5: 156.0ms
+[round 61] Query bench: 1 iterations x 5 queries x 2 ops
+[round 61]   query iter 1/1 done
+[round 61] Update bench: leaving 5000000 pending...
+[round 61]   integrated 550000 rows in 18825.2ms
+[round 62] Inserting 500000 rows to grow table...
+[round 62] Table now has 34050000 rows
+[round 62] Insert bench: 5 x 10000 rows
+[round 62]   insert iter 5/5: 153.2ms
+[round 62] Query bench: 1 iterations x 5 queries x 2 ops
+[round 62]   query iter 1/1 done
+[round 62] Update bench: leaving 5000000 pending...
+[round 62]   integrated 550000 rows in 17746.2ms
+[round 63] Inserting 500000 rows to grow table...
+[round 63] Table now has 34600000 rows
+[round 63] Insert bench: 5 x 10000 rows
+[round 63]   insert iter 5/5: 152.4ms
+[round 63] Query bench: 1 iterations x 5 queries x 2 ops
+[round 63]   query iter 1/1 done
+[round 63] Update bench: leaving 5000000 pending...
+[round 63]   integrated 550000 rows in 16042.1ms
+[round 64] Inserting 500000 rows to grow table...
+[round 64] Table now has 35150000 rows
+[round 64] Insert bench: 5 x 10000 rows
+[round 64]   insert iter 5/5: 156.0ms
+[round 64] Query bench: 1 iterations x 5 queries x 2 ops
+[round 64]   query iter 1/1 done
+[round 64] Update bench: leaving 5000000 pending...
+[round 64]   integrated 550000 rows in 20659.9ms
+[round 65] Inserting 500000 rows to grow table...
+[round 65] Table now has 35700000 rows
+[round 65] Insert bench: 5 x 10000 rows
+[round 65]   insert iter 5/5: 153.2ms
+[round 65] Query bench: 1 iterations x 5 queries x 2 ops
+[round 65]   query iter 1/1 done
+[round 65] Update bench: leaving 5000000 pending...
+[round 65]   integrated 550000 rows in 20598.2ms
+[round 66] Inserting 500000 rows to grow table...
+[round 66] Table now has 36250000 rows
+[round 66] Insert bench: 5 x 10000 rows
+[round 66]   insert iter 5/5: 227.8ms
+[round 66] Query bench: 1 iterations x 5 queries x 2 ops
+[round 66]   query iter 1/1 done
+[round 66] Update bench: leaving 5000000 pending...
+[round 66]   integrated 550000 rows in 20391.5ms
+[round 67] Inserting 500000 rows to grow table...
+[round 67] Table now has 36800000 rows
+[round 67] Insert bench: 5 x 10000 rows
+[round 67]   insert iter 5/5: 142.4ms
+[round 67] Query bench: 1 iterations x 5 queries x 2 ops
+[round 67]   query iter 1/1 done
+[round 67] Update bench: leaving 5000000 pending...
+[round 67]   integrated 550000 rows in 19848.2ms
+[round 68] Inserting 500000 rows to grow table...
+[round 68] Table now has 37350000 rows
+[round 68] Insert bench: 5 x 10000 rows
+[round 68]   insert iter 5/5: 143.4ms
+[round 68] Query bench: 1 iterations x 5 queries x 2 ops
+[round 68]   query iter 1/1 done
+[round 68] Update bench: leaving 5000000 pending...
+[round 68]   integrated 550000 rows in 20047.7ms
+[round 69] Inserting 500000 rows to grow table...
+[round 69] Table now has 37900000 rows
+[round 69] Insert bench: 5 x 10000 rows
+[round 69]   insert iter 5/5: 179.0ms
+[round 69] Query bench: 1 iterations x 5 queries x 2 ops
+[round 69]   query iter 1/1 done
+[round 69] Update bench: leaving 5000000 pending...
+[round 69]   integrated 550000 rows in 19593.9ms
+[round 70] Inserting 500000 rows to grow table...
+[round 70] Table now has 38450000 rows
+[round 70] Insert bench: 5 x 10000 rows
+[round 70]   insert iter 5/5: 157.2ms
+[round 70] Query bench: 1 iterations x 5 queries x 2 ops
+[round 70]   query iter 1/1 done
+[round 70] Update bench: leaving 5000000 pending...
+[round 70]   integrated 550000 rows in 15279.5ms
+[round 71] Inserting 500000 rows to grow table...
+[round 71] Table now has 39000000 rows
+[round 71] Insert bench: 5 x 10000 rows
+[round 71]   insert iter 5/5: 158.5ms
+[round 71] Query bench: 1 iterations x 5 queries x 2 ops
+[round 71]   query iter 1/1 done
+[round 71] Update bench: leaving 5000000 pending...
+[round 71]   integrated 550000 rows in 17780.5ms
+[round 72] Inserting 500000 rows to grow table...
+[round 72] Table now has 39550000 rows
+[round 72] Insert bench: 5 x 10000 rows
+[round 72]   insert iter 5/5: 189.9ms
+[round 72] Query bench: 1 iterations x 5 queries x 2 ops
+[round 72]   query iter 1/1 done
+[round 72] Update bench: leaving 5000000 pending...
+[round 72]   integrated 550000 rows in 18752.6ms
+[round 73] Inserting 500000 rows to grow table...
+[round 73] Table now has 40100000 rows
+[round 73] Insert bench: 5 x 10000 rows
+[round 73]   insert iter 5/5: 153.4ms
+[round 73] Query bench: 1 iterations x 5 queries x 2 ops
+[round 73]   query iter 1/1 done
+[round 73] Update bench: leaving 5000000 pending...
+[round 73]   integrated 550000 rows in 20843.0ms
+[round 74] Inserting 500000 rows to grow table...
+[round 74] Table now has 40650000 rows
+[round 74] Insert bench: 5 x 10000 rows
+[round 74]   insert iter 5/5: 192.7ms
+[round 74] Query bench: 1 iterations x 5 queries x 2 ops
+[round 74]   query iter 1/1 done
+[round 74] Update bench: leaving 5000000 pending...
+[round 74]   integrated 550000 rows in 21760.9ms
+[round 75] Inserting 500000 rows to grow table...
+[round 75] Table now has 41200000 rows
+[round 75] Insert bench: 5 x 10000 rows
+[round 75]   insert iter 5/5: 149.3ms
+[round 75] Query bench: 1 iterations x 5 queries x 2 ops
+[round 75]   query iter 1/1 done
+[round 75] Update bench: leaving 5000000 pending...
+[round 75]   integrated 550000 rows in 19208.0ms
+[round 76] Inserting 500000 rows to grow table...
+[round 76] Table now has 41750000 rows
+[round 76] Insert bench: 5 x 10000 rows
+[round 76]   insert iter 5/5: 167.6ms
+[round 76] Query bench: 1 iterations x 5 queries x 2 ops
+[round 76]   query iter 1/1 done
+[round 76] Update bench: leaving 5000000 pending...
+[round 76]   integrated 550000 rows in 19545.8ms
+[round 77] Inserting 500000 rows to grow table...
+[round 77] Table now has 42300000 rows
+[round 77] Insert bench: 5 x 10000 rows
+[round 77]   insert iter 5/5: 148.0ms
+[round 77] Query bench: 1 iterations x 5 queries x 2 ops
+[round 77]   query iter 1/1 done
+[round 77] Update bench: leaving 5000000 pending...
+[round 77]   integrated 550000 rows in 22084.3ms
+[round 78] Inserting 500000 rows to grow table...
+[round 78] Table now has 42850000 rows
+[round 78] Insert bench: 5 x 10000 rows
+[round 78]   insert iter 5/5: 171.7ms
+[round 78] Query bench: 1 iterations x 5 queries x 2 ops
+[round 78]   query iter 1/1 done
+[round 78] Update bench: leaving 5000000 pending...
+[round 78]   integrated 550000 rows in 25092.6ms
+[round 79] Inserting 500000 rows to grow table...
+[round 79] Table now has 43400000 rows
+[round 79] Insert bench: 5 x 10000 rows
+[round 79]   insert iter 5/5: 155.0ms
+[round 79] Query bench: 1 iterations x 5 queries x 2 ops
+[round 79]   query iter 1/1 done
+[round 79] Update bench: leaving 5000000 pending...
+[round 79]   integrated 550000 rows in 23289.9ms
+[round 80] Inserting 500000 rows to grow table...
+[round 80] Table now has 43950000 rows
+[round 80] Insert bench: 5 x 10000 rows
+[round 80]   insert iter 5/5: 144.7ms
+[round 80] Query bench: 1 iterations x 5 queries x 2 ops
+[round 80]   query iter 1/1 done
+[round 80] Update bench: leaving 5000000 pending...
+[round 80]   integrated 550000 rows in 20037.5ms
+[round 81] Inserting 500000 rows to grow table...
+[round 81] Table now has 44500000 rows
+[round 81] Insert bench: 5 x 10000 rows
+[round 81]   insert iter 5/5: 147.4ms
+[round 81] Query bench: 1 iterations x 5 queries x 2 ops
+[round 81]   query iter 1/1 done
+[round 81] Update bench: leaving 5000000 pending...
+[round 81]   integrated 550000 rows in 20244.4ms
+[round 82] Inserting 500000 rows to grow table...
+[round 82] Table now has 45050000 rows
+[round 82] Insert bench: 5 x 10000 rows
+[round 82]   insert iter 5/5: 151.4ms
+[round 82] Query bench: 1 iterations x 5 queries x 2 ops
+[round 82]   query iter 1/1 done
+[round 82] Update bench: leaving 5000000 pending...
+[round 82]   integrated 550000 rows in 20297.1ms
+[round 83] Inserting 500000 rows to grow table...
+[round 83] Table now has 45600000 rows
+[round 83] Insert bench: 5 x 10000 rows
+[round 83]   insert iter 5/5: 181.8ms
+[round 83] Query bench: 1 iterations x 5 queries x 2 ops
+[round 83]   query iter 1/1 done
+[round 83] Update bench: leaving 5000000 pending...
+[round 83]   integrated 550000 rows in 21537.3ms
+[round 84] Inserting 500000 rows to grow table...
+[round 84] Table now has 46150000 rows
+[round 84] Insert bench: 5 x 10000 rows
+[round 84]   insert iter 5/5: 167.2ms
+[round 84] Query bench: 1 iterations x 5 queries x 2 ops
+[round 84]   query iter 1/1 done
+[round 84] Update bench: leaving 5000000 pending...
+[round 84]   integrated 550000 rows in 21297.8ms
+[round 85] Inserting 500000 rows to grow table...
+[round 85] Table now has 46700000 rows
+[round 85] Insert bench: 5 x 10000 rows
+[round 85]   insert iter 5/5: 146.9ms
+[round 85] Query bench: 1 iterations x 5 queries x 2 ops
+[round 85]   query iter 1/1 done
+[round 85] Update bench: leaving 5000000 pending...
+[round 85]   integrated 550000 rows in 21922.7ms
+[round 86] Inserting 500000 rows to grow table...
+[round 86] Table now has 47250000 rows
+[round 86] Insert bench: 5 x 10000 rows
+[round 86]   insert iter 5/5: 149.6ms
+[round 86] Query bench: 1 iterations x 5 queries x 2 ops
+[round 86]   query iter 1/1 done
+[round 86] Update bench: leaving 5000000 pending...
+[round 86]   integrated 550000 rows in 21231.1ms
+[round 87] Inserting 500000 rows to grow table...
+[round 87] Table now has 47800000 rows
+[round 87] Insert bench: 5 x 10000 rows
+[round 87]   insert iter 5/5: 153.4ms
+[round 87] Query bench: 1 iterations x 5 queries x 2 ops
+[round 87]   query iter 1/1 done
+[round 87] Update bench: leaving 5000000 pending...
+[round 87]   integrated 550000 rows in 25137.0ms
+[round 88] Inserting 500000 rows to grow table...
+[round 88] Table now has 48350000 rows
+[round 88] Insert bench: 5 x 10000 rows
+[round 88]   insert iter 5/5: 173.9ms
+[round 88] Query bench: 1 iterations x 5 queries x 2 ops
+[round 88]   query iter 1/1 done
+[round 88] Update bench: leaving 5000000 pending...
+[round 88]   integrated 550000 rows in 23698.8ms
+[round 89] Inserting 500000 rows to grow table...
+[round 89] Table now has 48900000 rows
+[round 89] Insert bench: 5 x 10000 rows
+[round 89]   insert iter 5/5: 177.8ms
+[round 89] Query bench: 1 iterations x 5 queries x 2 ops
+[round 89]   query iter 1/1 done
+[round 89] Update bench: leaving 5000000 pending...
+[round 89]   integrated 550000 rows in 24088.5ms
+[round 90] Inserting 500000 rows to grow table...
+[round 90] Table now has 49450000 rows
+[round 90] Insert bench: 5 x 10000 rows
+[round 90]   insert iter 5/5: 181.1ms
+[round 90] Query bench: 1 iterations x 5 queries x 2 ops
+[round 90]   query iter 1/1 done
+[round 90] Update bench: leaving 5000000 pending...
+[round 90]   integrated 550000 rows in 23292.6ms
+[round 91] Inserting 500000 rows to grow table...
+[round 91] Table now has 50000000 rows
+[round 91] Insert bench: 5 x 10000 rows
+[round 91]   insert iter 5/5: 143.0ms
+[round 91] Query bench: 1 iterations x 5 queries x 2 ops
+[round 91]   query iter 1/1 done
+[round 91] Update bench: leaving 5000000 pending...
+[round 91]   integrated 550000 rows in 22988.7ms
+[round 92] Inserting 500000 rows to grow table...
+[round 92] Table now has 50550000 rows
+[round 92] Insert bench: 5 x 10000 rows
+[round 92]   insert iter 5/5: 142.0ms
+[round 92] Query bench: 1 iterations x 5 queries x 2 ops
+[round 92]   query iter 1/1 done
+[round 92] Update bench: leaving 5000000 pending...
+[round 92]   integrated 550000 rows in 23112.0ms
+[round 93] Inserting 500000 rows to grow table...
+[round 93] Table now has 51100000 rows
+[round 93] Insert bench: 5 x 10000 rows
+[round 93]   insert iter 5/5: 142.8ms
+[round 93] Query bench: 1 iterations x 5 queries x 2 ops
+[round 93]   query iter 1/1 done
+[round 93] Update bench: leaving 5000000 pending...
+[round 93]   integrated 550000 rows in 21768.4ms
+[round 94] Inserting 500000 rows to grow table...
+[round 94] Table now has 51650000 rows
+[round 94] Insert bench: 5 x 10000 rows
+[round 94]   insert iter 5/5: 186.1ms
+[round 94] Query bench: 1 iterations x 5 queries x 2 ops
+[round 94]   query iter 1/1 done
+[round 94] Update bench: leaving 5000000 pending...
+[round 94]   integrated 550000 rows in 21709.3ms
+[round 95] Inserting 500000 rows to grow table...
+[round 95] Table now has 52200000 rows
+[round 95] Insert bench: 5 x 10000 rows
+[round 95]   insert iter 5/5: 153.4ms
+[round 95] Query bench: 1 iterations x 5 queries x 2 ops
+[round 95]   query iter 1/1 done
+[round 95] Update bench: leaving 5000000 pending...
+[round 95]   integrated 550000 rows in 21796.1ms
+[round 96] Inserting 500000 rows to grow table...
+[round 96] Table now has 52750000 rows
+[round 96] Insert bench: 5 x 10000 rows
+[round 96]   insert iter 5/5: 162.1ms
+[round 96] Query bench: 1 iterations x 5 queries x 2 ops
+[round 96]   query iter 1/1 done
+[round 96] Update bench: leaving 5000000 pending...
+[round 96]   integrated 550000 rows in 21894.9ms
+[round 97] Inserting 500000 rows to grow table...
+[round 97] Table now has 53300000 rows
+[round 97] Insert bench: 5 x 10000 rows
+[round 97]   insert iter 5/5: 168.6ms
+[round 97] Query bench: 1 iterations x 5 queries x 2 ops
+[round 97]   query iter 1/1 done
+[round 97] Update bench: leaving 5000000 pending...
+[round 97]   integrated 550000 rows in 23466.5ms
+[round 98] Inserting 500000 rows to grow table...
+[round 98] Table now has 53850000 rows
+[round 98] Insert bench: 5 x 10000 rows
+[round 98]   insert iter 5/5: 159.0ms
+[round 98] Query bench: 1 iterations x 5 queries x 2 ops
+[round 98]   query iter 1/1 done
+[round 98] Update bench: leaving 5000000 pending...
+[round 98]   integrated 550000 rows in 24366.8ms
+[round 99] Inserting 500000 rows to grow table...
+[round 99] Table now has 54400000 rows
+[round 99] Insert bench: 5 x 10000 rows
+[round 99]   insert iter 5/5: 153.6ms
+[round 99] Query bench: 1 iterations x 5 queries x 2 ops
+[round 99]   query iter 1/1 done
+[round 99] Update bench: leaving 5000000 pending...
+[round 99]   integrated 550000 rows in 23284.1ms
+[round 100] Inserting 500000 rows to grow table...
+[round 100] Table now has 54950000 rows
+[round 100] Insert bench: 5 x 10000 rows
+[round 100]   insert iter 5/5: 153.2ms
+[round 100] Query bench: 1 iterations x 5 queries x 2 ops
+[round 100]   query iter 1/1 done
+[round 100] Update bench: leaving 5000000 pending...
+[round 100]   integrated 550000 rows in 22900.7ms
+[round 101] Inserting 500000 rows to grow table...
+[round 101] Table now has 55500000 rows
+[round 101] Insert bench: 5 x 10000 rows
+[round 101]   insert iter 5/5: 156.1ms
+[round 101] Query bench: 1 iterations x 5 queries x 2 ops
+[round 101]   query iter 1/1 done
+[round 101] Update bench: leaving 5000000 pending...
+[round 101]   integrated 550000 rows in 23048.8ms
+[round 102] Inserting 500000 rows to grow table...
+[round 102] Table now has 56050000 rows
+[round 102] Insert bench: 5 x 10000 rows
+[round 102]   insert iter 5/5: 162.3ms
+[round 102] Query bench: 1 iterations x 5 queries x 2 ops
+[round 102]   query iter 1/1 done
+[round 102] Update bench: leaving 5000000 pending...
+[round 102]   integrated 550000 rows in 23734.0ms
+[round 103] Inserting 500000 rows to grow table...
+[round 103] Table now has 56600000 rows
+[round 103] Insert bench: 5 x 10000 rows
+[round 103]   insert iter 5/5: 150.2ms
+[round 103] Query bench: 1 iterations x 5 queries x 2 ops
+[round 103]   query iter 1/1 done
+[round 103] Update bench: leaving 5000000 pending...
+[round 103]   integrated 550000 rows in 23294.9ms
+[round 104] Inserting 500000 rows to grow table...
+[round 104] Table now has 57150000 rows
+[round 104] Insert bench: 5 x 10000 rows
+[round 104]   insert iter 5/5: 139.8ms
+[round 104] Query bench: 1 iterations x 5 queries x 2 ops
+[round 104]   query iter 1/1 done
+[round 104] Update bench: leaving 5000000 pending...
+[round 104]   integrated 550000 rows in 23632.4ms
+[round 105] Inserting 500000 rows to grow table...
+[round 105] Table now has 57700000 rows
+[round 105] Insert bench: 5 x 10000 rows
+[round 105]   insert iter 5/5: 185.6ms
+[round 105] Query bench: 1 iterations x 5 queries x 2 ops
+[round 105]   query iter 1/1 done
+[round 105] Update bench: leaving 5000000 pending...
+[round 105]   integrated 550000 rows in 23519.5ms
+[round 106] Inserting 500000 rows to grow table...
+[round 106] Table now has 58250000 rows
+[round 106] Insert bench: 5 x 10000 rows
+[round 106]   insert iter 5/5: 166.7ms
+[round 106] Query bench: 1 iterations x 5 queries x 2 ops
+[round 106]   query iter 1/1 done
+[round 106] Update bench: leaving 5000000 pending...
+[round 106]   integrated 550000 rows in 23866.7ms
+[round 107] Inserting 500000 rows to grow table...
+[round 107] Table now has 58800000 rows
+[round 107] Insert bench: 5 x 10000 rows
+[round 107]   insert iter 5/5: 158.6ms
+[round 107] Query bench: 1 iterations x 5 queries x 2 ops
+[round 107]   query iter 1/1 done
+[round 107] Update bench: leaving 5000000 pending...
+[round 107]   integrated 550000 rows in 24373.5ms
+[round 108] Inserting 500000 rows to grow table...
+[round 108] Table now has 59350000 rows
+[round 108] Insert bench: 5 x 10000 rows
+[round 108]   insert iter 5/5: 228.0ms
+[round 108] Query bench: 1 iterations x 5 queries x 2 ops
+[round 108]   query iter 1/1 done
+[round 108] Update bench: leaving 5000000 pending...
+[round 108]   integrated 550000 rows in 23870.1ms
+[round 109] Inserting 500000 rows to grow table...
+[round 109] Table now has 59900000 rows
+[round 109] Insert bench: 5 x 10000 rows
+[round 109]   insert iter 5/5: 160.2ms
+[round 109] Query bench: 1 iterations x 5 queries x 2 ops
+[round 109]   query iter 1/1 done
+[round 109] Update bench: leaving 5000000 pending...
+[round 109]   integrated 550000 rows in 23602.0ms
+[round 110] Inserting 500000 rows to grow table...
+[round 110] Table now has 60450000 rows
+[round 110] Insert bench: 5 x 10000 rows
+[round 110]   insert iter 5/5: 154.5ms
+[round 110] Query bench: 1 iterations x 5 queries x 2 ops
+[round 110]   query iter 1/1 done
+[round 110] Update bench: leaving 5000000 pending...
+[round 110]   integrated 550000 rows in 21738.7ms
+[round 111] Inserting 500000 rows to grow table...
+[round 111] Table now has 61000000 rows
+[round 111] Insert bench: 5 x 10000 rows
+[round 111]   insert iter 5/5: 155.5ms
+[round 111] Query bench: 1 iterations x 5 queries x 2 ops
+[round 111]   query iter 1/1 done
+[round 111] Update bench: leaving 5000000 pending...
+[round 111]   integrated 550000 rows in 24278.3ms
+[round 112] Inserting 500000 rows to grow table...
+[round 112] Table now has 61550000 rows
+[round 112] Insert bench: 5 x 10000 rows
+[round 112]   insert iter 5/5: 229.4ms
+[round 112] Query bench: 1 iterations x 5 queries x 2 ops
+[round 112]   query iter 1/1 done
+[round 112] Update bench: leaving 5000000 pending...
+[round 112]   integrated 550000 rows in 25981.8ms
+[round 113] Inserting 500000 rows to grow table...
+[round 113] Table now has 62100000 rows
+[round 113] Insert bench: 5 x 10000 rows
+[round 113]   insert iter 5/5: 156.7ms
+[round 113] Query bench: 1 iterations x 5 queries x 2 ops
+[round 113]   query iter 1/1 done
+[round 113] Update bench: leaving 5000000 pending...
+[round 113]   integrated 550000 rows in 25594.3ms
+[round 114] Inserting 500000 rows to grow table...
+[round 114] Table now has 62650000 rows
+[round 114] Insert bench: 5 x 10000 rows
+[round 114]   insert iter 5/5: 209.0ms
+[round 114] Query bench: 1 iterations x 5 queries x 2 ops
+[round 114]   query iter 1/1 done
+[round 114] Update bench: leaving 5000000 pending...
+[round 114]   integrated 550000 rows in 26535.8ms
+[round 115] Inserting 500000 rows to grow table...
+[round 115] Table now has 63200000 rows
+[round 115] Insert bench: 5 x 10000 rows
+[round 115]   insert iter 5/5: 151.3ms
+[round 115] Query bench: 1 iterations x 5 queries x 2 ops
+[round 115]   query iter 1/1 done
+[round 115] Update bench: leaving 5000000 pending...
+[round 115]   integrated 550000 rows in 23483.2ms
+[round 116] Inserting 500000 rows to grow table...
+[round 116] Table now has 63750000 rows
+[round 116] Insert bench: 5 x 10000 rows
+[round 116]   insert iter 5/5: 144.5ms
+[round 116] Query bench: 1 iterations x 5 queries x 2 ops
+[round 116]   query iter 1/1 done
+[round 116] Update bench: leaving 5000000 pending...
+[round 116]   integrated 550000 rows in 24539.0ms
+[round 117] Inserting 500000 rows to grow table...
+[round 117] Table now has 64300000 rows
+[round 117] Insert bench: 5 x 10000 rows
+[round 117]   insert iter 5/5: 156.6ms
+[round 117] Query bench: 1 iterations x 5 queries x 2 ops
+[round 117]   query iter 1/1 done
+[round 117] Update bench: leaving 5000000 pending...
+[round 117]   integrated 550000 rows in 28048.3ms
+[round 118] Inserting 500000 rows to grow table...
+[round 118] Table now has 64850000 rows
+[round 118] Insert bench: 5 x 10000 rows
+[round 118]   insert iter 5/5: 184.3ms
+[round 118] Query bench: 1 iterations x 5 queries x 2 ops
+[round 118]   query iter 1/1 done
+[round 118] Update bench: leaving 5000000 pending...
+[round 118]   integrated 550000 rows in 28786.1ms
+[round 119] Inserting 500000 rows to grow table...
+[round 119] Table now has 65400000 rows
+[round 119] Insert bench: 5 x 10000 rows
+[round 119]   insert iter 5/5: 149.7ms
+[round 119] Query bench: 1 iterations x 5 queries x 2 ops
+[round 119]   query iter 1/1 done
+[round 119] Update bench: leaving 5000000 pending...
+[round 119]   integrated 550000 rows in 26813.5ms
+[round 120] Inserting 500000 rows to grow table...
+[round 120] Table now has 65950000 rows
+[round 120] Insert bench: 5 x 10000 rows
+[round 120]   insert iter 5/5: 154.0ms
+[round 120] Query bench: 1 iterations x 5 queries x 2 ops
+[round 120]   query iter 1/1 done
+[round 120] Update bench: leaving 5000000 pending...
+[round 120]   integrated 550000 rows in 26329.0ms
+[round 121] Inserting 500000 rows to grow table...
+[round 121] Table now has 66500000 rows
+[round 121] Insert bench: 5 x 10000 rows
+[round 121]   insert iter 5/5: 140.9ms
+[round 121] Query bench: 1 iterations x 5 queries x 2 ops
+[round 121]   query iter 1/1 done
+[round 121] Update bench: leaving 5000000 pending...
+[round 121]   integrated 550000 rows in 26058.6ms
+[round 122] Inserting 500000 rows to grow table...
+[round 122] Table now has 67050000 rows
+[round 122] Insert bench: 5 x 10000 rows
+[round 122]   insert iter 5/5: 156.6ms
+[round 122] Query bench: 1 iterations x 5 queries x 2 ops
+[round 122]   query iter 1/1 done
+[round 122] Update bench: leaving 5000000 pending...
+[round 122]   integrated 550000 rows in 25576.1ms
+[round 123] Inserting 500000 rows to grow table...
+[round 123] Table now has 67600000 rows
+[round 123] Insert bench: 5 x 10000 rows
+[round 123]   insert iter 5/5: 144.4ms
+[round 123] Query bench: 1 iterations x 5 queries x 2 ops
+[round 123]   query iter 1/1 done
+[round 123] Update bench: leaving 5000000 pending...
+[round 123]   integrated 550000 rows in 25664.3ms
+[round 124] Inserting 500000 rows to grow table...
+[round 124] Table now has 68150000 rows
+[round 124] Insert bench: 5 x 10000 rows
+[round 124]   insert iter 5/5: 150.3ms
+[round 124] Query bench: 1 iterations x 5 queries x 2 ops
+[round 124]   query iter 1/1 done
+[round 124] Update bench: leaving 5000000 pending...
+[round 124]   integrated 550000 rows in 25561.8ms
+[round 125] Inserting 500000 rows to grow table...
+[round 125] Table now has 68700000 rows
+[round 125] Insert bench: 5 x 10000 rows
+[round 125]   insert iter 5/5: 150.8ms
+[round 125] Query bench: 1 iterations x 5 queries x 2 ops
+[round 125]   query iter 1/1 done
+[round 125] Update bench: leaving 5000000 pending...
+[round 125]   integrated 550000 rows in 24768.2ms
+[round 126] Inserting 500000 rows to grow table...
+[round 126] Table now has 69250000 rows
+[round 126] Insert bench: 5 x 10000 rows
+[round 126]   insert iter 5/5: 218.0ms
+[round 126] Query bench: 1 iterations x 5 queries x 2 ops
+[round 126]   query iter 1/1 done
+[round 126] Update bench: leaving 5000000 pending...
+[round 126]   integrated 550000 rows in 26321.2ms
+[round 127] Inserting 500000 rows to grow table...
+[round 127] Table now has 69800000 rows
+[round 127] Insert bench: 5 x 10000 rows
+[round 127]   insert iter 5/5: 146.1ms
+[round 127] Query bench: 1 iterations x 5 queries x 2 ops
+[round 127]   query iter 1/1 done
+[round 127] Update bench: leaving 5000000 pending...
+[round 127]   integrated 550000 rows in 27296.5ms
+[round 128] Inserting 500000 rows to grow table...
+[round 128] Table now has 70350000 rows
+[round 128] Insert bench: 5 x 10000 rows
+[round 128]   insert iter 5/5: 144.6ms
+[round 128] Query bench: 1 iterations x 5 queries x 2 ops
+[round 128]   query iter 1/1 done
+[round 128] Update bench: leaving 5000000 pending...
+[round 128]   integrated 550000 rows in 27463.2ms
+[round 129] Inserting 500000 rows to grow table...
+[round 129] Table now has 70900000 rows
+[round 129] Insert bench: 5 x 10000 rows
+[round 129]   insert iter 5/5: 145.9ms
+[round 129] Query bench: 1 iterations x 5 queries x 2 ops
+[round 129]   query iter 1/1 done
+[round 129] Update bench: leaving 5000000 pending...
+[round 129]   integrated 550000 rows in 28721.3ms
+[round 130] Inserting 500000 rows to grow table...
+[round 130] Table now has 71450000 rows
+[round 130] Insert bench: 5 x 10000 rows
+[round 130]   insert iter 5/5: 201.4ms
+[round 130] Query bench: 1 iterations x 5 queries x 2 ops
+[round 130]   query iter 1/1 done
+[round 130] Update bench: leaving 5000000 pending...
+[round 130]   integrated 550000 rows in 27399.0ms
+[round 131] Inserting 500000 rows to grow table...
+[round 131] Table now has 72000000 rows
+[round 131] Insert bench: 5 x 10000 rows
+[round 131]   insert iter 5/5: 166.2ms
+[round 131] Query bench: 1 iterations x 5 queries x 2 ops
+[round 131]   query iter 1/1 done
+[round 131] Update bench: leaving 5000000 pending...
+[round 131]   integrated 550000 rows in 26748.6ms
+[round 132] Inserting 500000 rows to grow table...
+[round 132] Table now has 72550000 rows
+[round 132] Insert bench: 5 x 10000 rows
+[round 132]   insert iter 5/5: 255.4ms
+[round 132] Query bench: 1 iterations x 5 queries x 2 ops
+[round 132]   query iter 1/1 done
+[round 132] Update bench: leaving 5000000 pending...
+[round 132]   integrated 550000 rows in 27100.5ms
+[round 133] Inserting 500000 rows to grow table...
+[round 133] Table now has 73100000 rows
+[round 133] Insert bench: 5 x 10000 rows
+[round 133]   insert iter 5/5: 146.7ms
+[round 133] Query bench: 1 iterations x 5 queries x 2 ops
+[round 133]   query iter 1/1 done
+[round 133] Update bench: leaving 5000000 pending...
+[round 133]   integrated 550000 rows in 28930.1ms
+[round 134] Inserting 500000 rows to grow table...
+[round 134] Table now has 73650000 rows
+[round 134] Insert bench: 5 x 10000 rows
+[round 134]   insert iter 5/5: 155.8ms
+[round 134] Query bench: 1 iterations x 5 queries x 2 ops
+[round 134]   query iter 1/1 done
+[round 134] Update bench: leaving 5000000 pending...
+[round 134]   integrated 550000 rows in 28238.9ms
+[round 135] Inserting 500000 rows to grow table...
+[round 135] Table now has 74200000 rows
+[round 135] Insert bench: 5 x 10000 rows
+[round 135]   insert iter 5/5: 158.6ms
+[round 135] Query bench: 1 iterations x 5 queries x 2 ops
+[round 135]   query iter 1/1 done
+[round 135] Update bench: leaving 5000000 pending...
+[round 135]   integrated 550000 rows in 27287.5ms
+[round 136] Inserting 500000 rows to grow table...
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Documents\GitHub\open-msupply\syncdoc\content\sync_buffer\bench_sync_buffer.py", line 643, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Administrator\Documents\GitHub\open-msupply\syncdoc\content\sync_buffer\bench_sync_buffer.py", line 634, in main
+    run_scenario(conn, writer, out_handle, scenario, global_cfg)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Documents\GitHub\open-msupply\syncdoc\content\sync_buffer\bench_sync_buffer.py", line 448, in run_scenario
+    bulk_insert_with_generate_series(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        conn, insert_between, global_cfg.weighted_table_names, global_cfg.weighted_source_site_ids
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Administrator\Documents\GitHub\open-msupply\syncdoc\content\sync_buffer\bench_sync_buffer.py", line 349, in bulk_insert_with_generate_series
+    cur.execute(sql, (table_names, source_site_ids, count))
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.DiskFull: could not extend file "base/69613/70007.2": No space left on device
+HINT:  Check free disk space.
+
