@@ -67,7 +67,7 @@ export const InboundListView = () => {
       { key: 'status', condition: 'equalAny' },
       { key: 'theirReference' },
       {
-        key: 'purchaseOrderNumber',
+        key: 'linkedOrderNumber',
         condition: 'equalTo',
         isNumber: true,
       },
@@ -131,8 +131,8 @@ export const InboundListView = () => {
         enableSorting: true,
       },
       {
-        header: t('label.linked-po-requisition'),
-        id: 'purchaseOrderNumber',
+        header: t('label.linked-order'),
+        id: 'linkedOrderNumber',
         size: 180,
         align: 'right',
         enableColumnFilter: true,

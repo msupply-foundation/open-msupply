@@ -1289,7 +1289,6 @@
   "label.line-total-local": "Coût total (monnaie locale)",
   "label.lines": "Lignes",
   "label.linked-patient": "Patient Associé",
-  "label.linked-po-requisition": "BC/Requisition associé(e)",
   "label.listening": "Écoute des scans en cours",
   "label.location": "Emplacement",
   "label.location-temperature-range": " {{locationName}} ({{minTemperature}}°C to {{maxTemperature}}°C)",
