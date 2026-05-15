@@ -1,4 +1,5 @@
-import { Plugins } from '@openmsupply-client/common';
+import { Plugins, ReportsIcon } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import ShippingStatus from './ShippingStatus/ShippingStatus';
 import Replenishment from './Dashboard/Replenishment';
 import SyncStatus from './Dashboard/SyncStatus';
@@ -6,6 +7,8 @@ import StockDonorEdit from './StockDonor/StockDonorEdit';
 import * as stockDonor from './StockDonor/StockDonorColumn';
 import * as aggregateAmc from './AggregateAmc/AggregateAmcColumn';
 import { Info } from './AggregateAmc/AggregateAmcInfo';
+import { StockAgingPage } from './Pages/StockAgingPage';
+import { ReportingDailyPage } from './Pages/ReportingDailyPage';
 
 const ReplenishmentAndSyncStatus: Plugins = {
   inboundShipmentAppBar: [ShippingStatus],
@@ -21,6 +24,30 @@ const ReplenishmentAndSyncStatus: Plugins = {
     editViewField: [aggregateAmc.AggregateAmcEditView],
     editViewInfo: [Info],
   },
+  pages: [
+    {
+      route: 'stock-aging',
+      Component: StockAgingPage,
+      menu: {
+        label: { en: 'Stock aging', fr: "Vieillissement du stock" },
+        category: { type: 'existing', appRoute: AppRoute.Inventory },
+      },
+    },
+    {
+      route: 'daily',
+      Component: ReportingDailyPage,
+      menu: {
+        label: { en: 'Daily', fr: 'Quotidien' },
+        category: {
+          type: 'new',
+          key: 'reporting',
+          label: { en: 'Reporting', fr: 'Rapports' },
+          icon: ReportsIcon,
+          order: 500,
+        },
+      },
+    },
+  ],
 };
 
 export default ReplenishmentAndSyncStatus;
