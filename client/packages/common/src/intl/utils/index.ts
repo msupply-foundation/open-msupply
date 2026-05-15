@@ -3,3 +3,4 @@
 export const MAX_FRACTION_DIGITS = 20;
 export * from './IntlUtils';
 export * from './DateUtils';
+export * from './useLocalizedString';

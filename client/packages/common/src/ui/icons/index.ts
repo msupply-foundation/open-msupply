@@ -83,6 +83,7 @@ export { UserCircleIcon } from './UserCircle';
 export { UserIcon } from './User';
 export { XCircleIcon } from './XCircle';
 export { ZapIcon } from './Zap';
+export { pluginIconRegistry } from './pluginIconRegistry';
 
 type Color =
   | 'inherit'
