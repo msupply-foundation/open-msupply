@@ -1,7 +1,11 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_ancillary_item_table;
 mod add_purchase_order_finalise_permission;
+mod add_storage_capacity_5c_to_insulated_containers;
+mod add_user_is_active;
+mod fix_po_linked_inbound_line_prices;
 
 pub(crate) struct V2_19_00;
 impl Migration for V2_19_00 {
@@ -14,7 +18,13 @@ impl Migration for V2_19_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(add_purchase_order_finalise_permission::Migrate)]
+        vec![
+            Box::new(add_ancillary_item_table::Migrate),
+            Box::new(add_purchase_order_finalise_permission::Migrate),
+            Box::new(add_user_is_active::Migrate),
+            Box::new(add_storage_capacity_5c_to_insulated_containers::Migrate),
+            Box::new(fix_po_linked_inbound_line_prices::Migrate),
+        ]
     }
 }
 

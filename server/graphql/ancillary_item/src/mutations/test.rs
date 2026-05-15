@@ -78,12 +78,22 @@ mod test {
 
         let query = r#"mutation UpsertAncillaryItem($storeId: String!, $input: UpsertAncillaryItemInput!) {
             upsertAncillaryItem(storeId: $storeId, input: $input) {
+                __typename
                 ... on AncillaryItemNode {
                     id
                     itemQuantity
                     ancillaryQuantity
                     itemId
                     ancillaryItemId
+                }
+                ... on UpsertAncillaryItemError {
+                    error {
+                        __typename
+                        ... on AncillaryMaxDepthExceeded {
+                            max
+                            actual
+                        }
+                    }
                 }
             }
         }"#;
@@ -99,17 +109,71 @@ mod test {
             }
         }));
 
-        // Cycle error → "Bad user input"
+        // Cycle error → typed AncillaryCycleDetected error variant
         let test_service = TestService {
             upsert: Some(Box::new(|_, _| Err(UpsertAncillaryItemError::CycleDetected))),
             ..Default::default()
         };
-        assert_standard_graphql_error!(
+        let expected_cycle = json!({
+            "upsertAncillaryItem": {
+                "__typename": "UpsertAncillaryItemError",
+                "error": { "__typename": "AncillaryCycleDetected" }
+            }
+        });
+        assert_graphql_query!(
             &settings,
             &query,
             &variables,
-            "Bad user input",
-            None,
+            &expected_cycle,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // Duplicate → typed DuplicateAncillaryItem error variant
+        let test_service = TestService {
+            upsert: Some(Box::new(|_, _| {
+                Err(UpsertAncillaryItemError::DuplicateAncillaryItem)
+            })),
+            ..Default::default()
+        };
+        let expected_duplicate = json!({
+            "upsertAncillaryItem": {
+                "__typename": "UpsertAncillaryItemError",
+                "error": { "__typename": "DuplicateAncillaryItem" }
+            }
+        });
+        assert_graphql_query!(
+            &settings,
+            &query,
+            &variables,
+            &expected_duplicate,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // MaxDepthExceeded → typed AncillaryMaxDepthExceeded error variant with max/actual
+        let test_service = TestService {
+            upsert: Some(Box::new(|_, _| {
+                Err(UpsertAncillaryItemError::MaxDepthExceeded {
+                    max: 5,
+                    actual: 6,
+                })
+            })),
+            ..Default::default()
+        };
+        let expected_max_depth = json!({
+            "upsertAncillaryItem": {
+                "__typename": "UpsertAncillaryItemError",
+                "error": {
+                    "__typename": "AncillaryMaxDepthExceeded",
+                    "max": 5,
+                    "actual": 6
+                }
+            }
+        });
+        assert_graphql_query!(
+            &settings,
+            &query,
+            &variables,
+            &expected_max_depth,
             Some(service_provider(test_service, &connection_manager))
         );
 

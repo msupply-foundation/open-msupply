@@ -54,10 +54,10 @@ export const PatientDetailsComponent = () => {
   const displayValue =
     selected === undefined
       ? {
-          label: diagnosis?.description ?? '',
-          value: diagnosis?.id ?? '',
-          id: diagnosis?.id ?? '',
-        }
+        label: diagnosis?.description ?? '',
+        value: diagnosis?.id ?? '',
+        id: diagnosis?.id ?? '',
+      }
       : selected;
 
   return (
