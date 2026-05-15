@@ -1,14 +1,12 @@
 import React, { useEffect } from 'react';
 import {
   DetailLoadingSkeleton,
-  LocalizedString,
   PluginPage,
   QueryClientProviderProxy,
   Route,
   ThemeProviderProxy,
   useAuthContext,
   useBreadcrumbs,
-  useLocalizedString,
   usePluginProvider,
   UserPermission,
 } from '@openmsupply-client/common';
@@ -31,21 +29,18 @@ const categoryKeyFor = (page: PluginPage): string =>
     : page.menu.category.key;
 
 /**
- * Set the breadcrumb shown in the AppBar to the plugin's localized page
- * label, so we render e.g. "Stock aging" instead of the raw URL segment.
- * useBreadcrumbs skips the first URL segment for shallow routes (the same
- * way built-in pages show "Stock" rather than "Inventory > Stock"), so the
- * single visible crumb sits at index 0.
+ * Set the breadcrumb shown in the AppBar to the plugin's page label, so we
+ * render e.g. "Stock aging" instead of the raw URL segment. useBreadcrumbs
+ * skips the first URL segment for shallow routes (the same way built-in
+ * pages show "Stock" rather than "Inventory > Stock"), so the single
+ * visible crumb sits at index 0.
  */
-const PluginBreadcrumbs: React.FC<{ pageLabel: LocalizedString }> = ({
-  pageLabel,
-}) => {
+const PluginBreadcrumbs: React.FC<{ pageLabel: string }> = ({ pageLabel }) => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const localizedPage = useLocalizedString(pageLabel);
 
   useEffect(() => {
-    setCustomBreadcrumbs({ 0: localizedPage });
-  }, [localizedPage, setCustomBreadcrumbs]);
+    setCustomBreadcrumbs({ 0: pageLabel });
+  }, [pageLabel, setCustomBreadcrumbs]);
 
   return null;
 };

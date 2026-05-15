@@ -1,9 +1,5 @@
 import { AppRoute } from '@openmsupply-client/config';
-import {
-  ColumnDef,
-  LocalizedString,
-  UsePluginEvents,
-} from '@openmsupply-client/common';
+import { ColumnDef, UsePluginEvents } from '@openmsupply-client/common';
 import {
   ItemFragment,
   MasterListRowFragment,
@@ -25,14 +21,14 @@ export type PluginIcon = React.ComponentType<{
 }>;
 
 export type PluginPageMenu = {
-  label: LocalizedString;
+  label: string;
   permissions?: UserPermission[];
   category:
     | { type: 'existing'; appRoute: AppRoute }
     | {
         type: 'new';
         key: string;
-        label: LocalizedString;
+        label: string;
         icon?: PluginIcon;
         order?: number;
       };

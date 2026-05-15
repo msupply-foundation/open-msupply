@@ -4,7 +4,6 @@ import {
   PluginIcon,
   PluginPage,
   useAuthContext,
-  useLocalizedString,
   usePluginProvider,
   UserPermission,
 } from '@openmsupply-client/common';
@@ -18,13 +17,10 @@ const hasAllPermissions = (
   userHasPermission: (p: UserPermission) => boolean
 ) => !permissions?.length || permissions.every(userHasPermission);
 
-const PluginNavLink: React.FC<{
-  to: string;
-  label: PluginPage['menu']['label'];
-}> = ({ to, label }) => {
-  const text = useLocalizedString(label);
-  return <AppNavLink to={to} text={text} />;
-};
+const PluginNavLink: React.FC<{ to: string; label: string }> = ({
+  to,
+  label,
+}) => <AppNavLink to={to} text={label} />;
 
 /**
  * Plugin nav links targeting an existing category. Render inside that
@@ -55,7 +51,7 @@ export const usePluginNavLinksForCategory = (
 
 export type PluginNewCategory = {
   key: string;
-  label: PluginPage['menu']['label'];
+  label: string;
   icon?: PluginIcon;
   order: number;
   pages: PluginPage[];
