@@ -124,7 +124,7 @@ const myPlugin: Plugins = {
       route: 'stock-aging',                            // single URL segment, [a-z0-9_-]+
       Component: StockAgingPage,                       // React component
       menu: {
-        label: { en: 'Stock aging', fr: 'Vieillissement' },
+        label: 'Stock aging',
         // (optional) gate behind permission(s); ALL must be held to see the page
         permissions: [UserPermission.StockMutate],
         category: {
@@ -137,11 +137,11 @@ const myPlugin: Plugins = {
       route: 'daily',
       Component: ReportingDailyPage,
       menu: {
-        label: { en: 'Daily', fr: 'Quotidien' },
+        label: 'Daily',
         category: {
           type: 'new',                                 // contribute a new top-level section
           key: 'reporting',                            // URL segment + grouping key
-          label: { en: 'Reporting' },
+          label: 'Reporting',
           icon: ReportsIcon,                           // any icon from @openmsupply-client/common
           order: 500,                                  // lower = earlier in drawer; default 1000
         },
@@ -196,10 +196,6 @@ export const MyPage = () => (
 ```
 
 A plugin page can also render zero chrome — just a plain body — and the surrounding app bar and footer will stay empty. State sharing across the chrome is automatic because everything lives in a single component tree.
-
-### Localised labels
-
-Labels (both page and category) are `LocalizedString` maps with `en` required and any other locales optional. The resolver picks the active locale via `useIntlUtils().currentLanguage`, then falls back to the language stem (e.g. `fr-DJ` → `fr`), then to `en`.
 
 ### Permissions
 

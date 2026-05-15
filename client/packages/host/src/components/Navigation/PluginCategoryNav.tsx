@@ -6,7 +6,6 @@ import {
   List,
   resolvePluginIcon,
   useAuthContext,
-  useLocalizedString,
 } from '@openmsupply-client/common';
 import { useNestedNav } from './useNestedNav';
 import {
@@ -23,7 +22,6 @@ export const PluginCategoryNav: React.FC<{ category: PluginNewCategory }> = ({
   const visiblePages = category.pages.filter(page =>
     hasAllPermissions(page.menu.permissions, userHasPermission)
   );
-  const categoryLabel = useLocalizedString(category.label);
   const { isActive } = useNestedNav(`/${category.key}/*`);
 
   if (!visiblePages.length) return null;
@@ -36,7 +34,7 @@ export const PluginCategoryNav: React.FC<{ category: PluginNewCategory }> = ({
         isParent
         to={firstPagePath}
         icon={resolvePluginIcon(category.icon)}
-        text={categoryLabel}
+        text={category.label}
       />
       <Collapse in={isActive}>
         <List>
