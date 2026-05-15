@@ -45,6 +45,11 @@ export type InitialiseSiteMutation = {
         fullError: string;
       }
     | {
+        __typename: 'SyncErrorV7Node';
+        fullError: string;
+        variantV7: Types.SyncErrorVariantV7;
+      }
+    | {
         __typename: 'SyncSettingsNode';
         intervalSeconds: number;
         url: string;
@@ -65,6 +70,11 @@ export type UpdateSyncSettingsMutation = {
         __typename: 'SyncErrorNode';
         variant: Types.SyncErrorVariant;
         fullError: string;
+      }
+    | {
+        __typename: 'SyncErrorV7Node';
+        fullError: string;
+        variantV7: Types.SyncErrorVariantV7;
       }
     | {
         __typename: 'SyncSettingsNode';
@@ -760,10 +770,14 @@ export const InitialiseSiteDocument = gql`
       ... on SyncErrorNode {
         ...SyncError
       }
+      ... on SyncErrorV7Node {
+        ...SyncErrorV7
+      }
     }
   }
   ${SyncSettingsFragmentDoc}
   ${SyncErrorFragmentDoc}
+  ${SyncErrorV7FragmentDoc}
 `;
 export const UpdateSyncSettingsDocument = gql`
   mutation updateSyncSettings($syncSettings: SyncSettingsInput!) {
@@ -775,10 +789,14 @@ export const UpdateSyncSettingsDocument = gql`
       ... on SyncErrorNode {
         ...SyncError
       }
+      ... on SyncErrorV7Node {
+        ...SyncErrorV7
+      }
     }
   }
   ${SyncSettingsFragmentDoc}
   ${SyncErrorFragmentDoc}
+  ${SyncErrorV7FragmentDoc}
 `;
 export const SyncInfoDocument = gql`
   query syncInfo {

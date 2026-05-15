@@ -159,9 +159,19 @@ async fn response_or_err<T: DeserializeOwned>(
         Err(error) => {
             let formatted_error = format_error(&error);
             if error.is_connect() {
+                // InvalidContentType is rustls signalling it received plaintext instead of a TLS
+                // handshake — happens when the URL uses https:// but the server is HTTP only.
+                let e = if formatted_error.contains("InvalidContentType") {
+                    format!(
+                        "Server is not configured for HTTPS — try http:// instead. ({})",
+                        formatted_error
+                    )
+                } else {
+                    formatted_error
+                };
                 return Err(SyncError::ConnectionError {
                     url: url.to_string(),
-                    e: formatted_error,
+                    e,
                 });
             } else {
                 return Err(SyncError::Other(formatted_error));
