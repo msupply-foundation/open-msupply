@@ -59,10 +59,10 @@ const stampAndValidatePages = (
       categoryKey = newKey;
     }
 
-    const dedupeKey = `${categoryKey}/${code}/${page.route}`;
+    const dedupeKey = `${categoryKey}/${page.route}`;
     if (seen.has(dedupeKey)) {
       console.warn(
-        `Plugin "${code}" page "${dedupeKey}" already registered; skipping duplicate.`
+        `Plugin "${code}" page "${dedupeKey}" already registered by another plugin; skipping.`
       );
       continue;
     }

@@ -3,7 +3,6 @@ import {
   AppNavLink,
   PluginIcon,
   PluginPage,
-  resolvePluginIcon,
   useAuthContext,
   useLocalizedString,
   usePluginProvider,
@@ -12,7 +11,7 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 
 const pluginPagePath = (categoryKey: string, page: PluginPage) =>
-  `/${categoryKey}/${page.pluginCode}/${page.route}`;
+  `/${categoryKey}/${page.route}`;
 
 const hasAllPermissions = (
   permissions: UserPermission[] | undefined,
@@ -22,10 +21,9 @@ const hasAllPermissions = (
 const PluginNavLink: React.FC<{
   to: string;
   label: PluginPage['menu']['label'];
-  icon?: PluginIcon;
-}> = ({ to, label, icon }) => {
+}> = ({ to, label }) => {
   const text = useLocalizedString(label);
-  return <AppNavLink to={to} text={text} icon={resolvePluginIcon(icon)} />;
+  return <AppNavLink to={to} text={text} />;
 };
 
 /**
@@ -51,7 +49,6 @@ export const usePluginNavLinksForCategory = (
         key={`${page.pluginCode}/${page.route}`}
         to={pluginPagePath(appRoute, page)}
         label={page.menu.label}
-        icon={page.menu.icon}
       />
     ));
 };

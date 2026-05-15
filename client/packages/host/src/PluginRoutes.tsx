@@ -20,9 +20,6 @@ const PluginPageGuard: React.FC<{
   return <>{children}</>;
 };
 
-const pluginPagePath = (categoryKey: string, page: PluginPage) =>
-  `/${categoryKey}/${page.pluginCode}/${page.route}`;
-
 const categoryKeyFor = (page: PluginPage): string =>
   page.menu.category.type === 'existing'
     ? page.menu.category.appRoute
@@ -39,7 +36,7 @@ export const usePluginRoutes = (): React.ReactNode => {
   return (plugins.pages ?? [])
     .filter(page => !!page.pluginCode)
     .map(page => {
-      const path = pluginPagePath(categoryKeyFor(page), page).slice(1);
+      const path = `${categoryKeyFor(page)}/${page.route}`;
       const Component = page.Component;
       return (
         <Route
