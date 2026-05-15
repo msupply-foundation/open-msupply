@@ -12,13 +12,31 @@ use ts_rs::TS;
 
 use super::sync_style::{ChangeLogSyncStyle, SyncVersions};
 
+// Underlying table — INSERTs target this. Carries raw `*_link_id` columns.
 table! {
+    #[sql_name = "changelog"]
+    changelog_with_links (cursor) {
+        cursor -> BigInt,
+        table_name -> Text,
+        record_id -> Text,
+        row_action -> Text,
+        store_id -> Nullable<Text>,
+        is_sync_update -> Bool,
+        source_site_id -> Nullable<Integer>,
+        transfer_store_id -> Nullable<Text>,
+        patient_link_id -> Nullable<Text>,
+    }
+}
+
+// View — SELECTs target this. Exposes resolved `patient_id`
+// (via LEFT JOIN name_link on the patient_link_id column).
+table! {
+    #[sql_name = "changelog_view"]
     changelog (cursor) {
         cursor -> BigInt,
         table_name -> Text,
         record_id -> Text,
         row_action -> Text,
-        name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
         source_site_id -> Nullable<Integer>,
@@ -228,7 +246,7 @@ impl SourceSiteId {
 }
 
 #[derive(Debug, Clone, PartialEq, Insertable, Default)]
-#[diesel(table_name = changelog)]
+#[diesel(table_name = changelog_with_links)]
 pub struct ChangeLogInsertRow {
     pub table_name: ChangelogTableName,
     pub record_id: String,
@@ -236,18 +254,20 @@ pub struct ChangeLogInsertRow {
     pub store_id: Option<String>,
     pub source_site_id: Option<i32>,
     pub transfer_store_id: Option<String>,
+    // At the time of inserts a patient_id is the patient_link_id. 
+    // If the patient info changes the changelog view will resolve to 
+    // the correct patient_id via name_link join.
+    #[diesel(column_name = "patient_link_id")]
     pub patient_id: Option<String>,
 }
 
-#[derive(Clone, Queryable, Debug, PartialEq, Insertable, Serialize, Deserialize, TS, Default)]
+#[derive(Clone, Queryable, Debug, PartialEq, Serialize, Deserialize, TS, Default)]
 #[diesel(table_name = changelog)]
 pub struct ChangelogRow {
     pub cursor: i64,
     pub table_name: ChangelogTableName,
     pub record_id: String,
     pub row_action: RowActionType,
-    #[diesel(column_name = "name_link_id")]
-    pub name_id: Option<String>,
     pub store_id: Option<String>,
     pub is_sync_update: bool,
     pub source_site_id: Option<i32>,
@@ -259,6 +279,13 @@ pub struct ChangelogRepository<'a> {
     pub(super) connection: &'a StorageConnection,
 }
 
+pub struct ChangelogQuery {
+    pub rows: Vec<ChangelogRow>,
+    pub max_cursor: u64,
+    // Defaults to max cursor
+    pub last_cursor_in_batch: u64,
+}
+
 impl<'a> ChangelogRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         ChangelogRepository { connection }
@@ -268,7 +295,7 @@ impl<'a> ChangelogRepository<'a> {
         &self,
         filter: ChangelogCondition::Inner,
         CursorAndLimit { cursor, limit }: CursorAndLimit,
-    ) -> Result<Vec<ChangelogRow>, RepositoryError> {
+    ) -> Result<ChangelogQuery, RepositoryError> {
         // Each sub-query scans at most this many cursor values. Bounding the cursor
         // range gives the planner a tight window to drive an index scan on
         // changelog_pkey, instead of a full bitmap scan + sort across the whole table.
@@ -304,19 +331,30 @@ impl<'a> ChangelogRepository<'a> {
             current_cursor = window_end;
         }
 
-        Ok(results)
+        let last_cursor_in_batch = results
+            .last()
+            .map(|r| r.cursor as u64)
+            .unwrap_or(max_cursor as u64);
+
+        Ok(ChangelogQuery {
+            rows: results,
+            max_cursor: max_cursor as u64,
+            last_cursor_in_batch,
+        })
     }
 
-    /// Returns latest/max change log cursor
+    /// Returns latest/max change log cursor. Queries the underlying table
+    /// (not the view) so it works during migrations, before `changelog_view`
+    /// gets rebuilt at the end of the migration run.
     pub fn max_cursor(&self) -> Result<u64, RepositoryError> {
-        let result = changelog::table
-            .select(diesel::dsl::max(changelog::cursor))
+        let result = changelog_with_links::table
+            .select(diesel::dsl::max(changelog_with_links::cursor))
             .first::<Option<i64>>(self.connection.lock().connection())?;
         Ok(result.unwrap_or(0) as u64)
     }
 
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(changelog::table)
+        diesel::insert_into(changelog_with_links::table)
             .values(row)
             .execute(self.connection.lock().connection())?;
         self.connection
@@ -326,7 +364,7 @@ impl<'a> ChangelogRepository<'a> {
 
     pub fn batch_insert(&self, rows: Vec<ChangeLogInsertRow>) -> Result<(), RepositoryError> {
         //TODO: Need to handle batch insert size limit
-        diesel::insert_into(changelog::table)
+        diesel::insert_into(changelog_with_links::table)
             .values(rows)
             .execute(self.connection.lock().connection())?;
         self.connection
@@ -399,6 +437,13 @@ impl ChangelogFilter {
                     continue;
                 }
                 Remote => C::site_id::equal(site_id),
+                RemoteOwned => {
+                    // Central never has edits to push back — relay only during initialisation.
+                    if !is_initialising {
+                        continue;
+                    }
+                    C::site_id::equal(site_id)
+                }
                 Transfer => C::transfer_site_id::equal(site_id),
                 Patient => C::patient_site_id::equal(site_id),
             };
@@ -437,12 +482,13 @@ impl ChangelogFilter {
         use ChangeLogSyncStyle::*;
         use ChangelogCondition as C;
 
-        let remote_table_names = Remote.get_table_names_for_sync_style(None);
+        let mut store_scoped_table_names = Remote.get_table_names_for_sync_style(None);
+        store_scoped_table_names.extend(RemoteOwned.get_table_names_for_sync_style(None));
         let transfer_table_names = Transfer.get_table_names_for_sync_style(None);
 
         C::Or(vec![
             C::And(vec![
-                C::table_name::any(remote_table_names),
+                C::table_name::any(store_scoped_table_names),
                 C::store_id::equal(store_id.to_string()),
             ]),
             C::And(vec![
@@ -487,7 +533,7 @@ impl ChangelogFilter {
             }
 
             match sync_style {
-                ToLegacyCentralOnly | Remote | Transfer | Patient => {
+                ToLegacyCentralOnly | Remote | RemoteOwned | Transfer | Patient => {
                     inner_or_conditions.push(C::table_name::any(table_names))
                 }
                 Central | RemoteToCentral | File => continue,

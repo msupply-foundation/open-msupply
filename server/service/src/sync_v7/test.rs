@@ -103,6 +103,8 @@ mod test_sync_v7_client_api {
             "Ok": {
                 "siteId": 1,
                 "maxCursor": 6,
+                "lastCursorInBatch": 6,
+                "remaining": 0,
                 "records": [
                     { "cursor": 1, "recordId": "unit_test_1",       "tableName": "Unit",       "action": "Upsert", "data": unit(),       "storeId": null,            "transferStoreId": null, "patientId": null },
                     { "cursor": 2, "recordId": "currency_test_1",   "tableName": "Currency",   "action": "Upsert", "data": currency(),   "storeId": null,            "transferStoreId": null, "patientId": null },
@@ -122,6 +124,8 @@ mod test_sync_v7_client_api {
             "Ok": {
                 "siteId": 1,
                 "maxCursor": 3,
+                "lastCursorInBatch": 3,
+                "remaining": 0,
                 "records": [
                     { "cursor": 1, "recordId": "store_test_1", "tableName": "Store", "action": "Upsert", "data": store(), "storeId": null, "transferStoreId": null, "patientId": null },
                     { "cursor": 2, "recordId": "name_test_1",  "tableName": "Name",  "action": "Upsert", "data": name(),  "storeId": null, "transferStoreId": null, "patientId": null },
@@ -175,7 +179,7 @@ mod test_sync_v7_client_api {
         match data.get_ref() {
             Some(value) => actix_web::HttpResponse::Ok().json(value),
             None => actix_web::HttpResponse::Ok().json(json!({
-                "Ok": { "siteId": 1, "maxCursor": 0, "records": [] }
+                "Ok": { "siteId": 1, "maxCursor": 0, "lastCursorInBatch": 0, "remaining": 0, "records": [] }
             })),
         }
     }
@@ -256,9 +260,10 @@ mod test_sync_v7_client_api {
         let handle = server_handle.handle();
         tokio::spawn(server_handle);
 
+        let ctx = service_provider.basic_context().unwrap();
         let result = sync_v7(
             &service_provider,
-            &service_context,
+            &ctx,
             SyncSettings {
                 url: format!("http://{}/", addr),
                 username: "test_user".to_string(),
@@ -386,7 +391,8 @@ mod test_sync_v7_client_api {
                     limit: 100,
                 },
             )
-            .unwrap();
+            .unwrap()
+            .rows;
         assert_eq!(changelogs.len(), 6);
         // Changelog rows are written in INTEGRATION_ORDER (FK-dependency order),
         // not the order records arrived in the pull batch.

@@ -30,6 +30,8 @@ pub enum SyncErrorVariantV7 {
     SiteIdNotSet,
     GetCurrentSiteIdError,
     SiteIdMismatch,
+    SiteIsNotV7,
+    RequestSiteAuthError,
     Other,
 }
 
@@ -42,9 +44,7 @@ impl SyncErrorV7Node {
             SyncError::SyncVersionMismatch { .. } => SyncErrorVariantV7::SyncVersionMismatch,
             SyncError::NotACentralServer => SyncErrorVariantV7::NotACentralServer,
             SyncError::Authentication => SyncErrorVariantV7::Authentication,
-            SyncError::InvalidSiteNameOrPassword => {
-                SyncErrorVariantV7::InvalidSiteNameOrPassword
-            }
+            SyncError::InvalidSiteNameOrPassword => SyncErrorVariantV7::InvalidSiteNameOrPassword,
             SyncError::TokenAlreadyAllocated => SyncErrorVariantV7::TokenAlreadyAllocated,
             SyncError::TokenNotFound => SyncErrorVariantV7::TokenNotFound,
             SyncError::HardwareIdMismatch => SyncErrorVariantV7::HardwareIdMismatch,
@@ -57,6 +57,8 @@ impl SyncErrorV7Node {
             SyncError::SiteIdNotSet => SyncErrorVariantV7::SiteIdNotSet,
             SyncError::GetCurrentSiteIdError(_) => SyncErrorVariantV7::GetCurrentSiteIdError,
             SyncError::SiteIdMismatch { .. } => SyncErrorVariantV7::SiteIdMismatch,
+            SyncError::SiteIsNotV7 => SyncErrorVariantV7::SiteIsNotV7,
+            SyncError::RequestSiteAuthError(_) => SyncErrorVariantV7::RequestSiteAuthError,
             SyncError::Other(_) => SyncErrorVariantV7::Other,
         };
 

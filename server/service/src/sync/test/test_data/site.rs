@@ -1,4 +1,4 @@
-use repository::{SiteRow, SiteRowDelete};
+use repository::{SiteRow, SiteRowDelete, SyncVersion};
 
 use super::TestSyncIncomingRecord;
 
@@ -96,6 +96,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 hardware_id: Some("hw-uuid-aaa".to_string()),
                 code: "code1".to_string(),
                 token: None,
+                sync_version: SyncVersion::V5V6,
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -109,6 +110,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 hardware_id: None,
                 code: "code2".to_string(),
                 token: None,
+                sync_version: SyncVersion::V5V6,
             },
         ),
     ]

@@ -1,22 +1,15 @@
-use repository::{
-    EqualFilter, NameLinkRow, NameLinkRowRepository, NameRowDelete, NameStoreJoinFilter,
-    NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete, StorageConnection,
-    StoreFilter, StoreRepository, SyncBufferRow,
+use repository::{ChangelogTableName, StorageConnection, SyncBufferRow};
+
+use crate::sync::{
+    translations::{
+        name::NameTranslation,
+        special::merge::{
+            apply_name_merge, build_central_merge_message, MergeMessageBody, MergeOutcome,
+        },
+        IntegrationOperation, PullTranslateResult, SyncTranslation,
+    },
+    CentralServerConfig,
 };
-
-use serde::Deserialize;
-
-use crate::sync::translations::{
-    name::NameTranslation, IntegrationOperation, PullTranslateResult, SyncTranslation,
-};
-
-#[derive(Deserialize)]
-pub struct NameMergeMessage {
-    #[serde(rename = "mergeIdToKeep")]
-    pub merge_id_to_keep: String,
-    #[serde(rename = "mergeIdToDelete")]
-    pub merge_id_to_delete: String,
-}
 
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
@@ -36,119 +29,26 @@ impl SyncTranslation for NameMergeTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = sync_record.deserialize::<NameMergeMessage>()?;
+        let data = sync_record.deserialize::<MergeMessageBody>()?;
 
-        let name_link_repo = NameLinkRowRepository::new(connection);
-        let name_links = name_link_repo.find_many_by_name_id(&data.merge_id_to_delete)?;
-        if name_links.is_empty() {
-            return Ok(PullTranslateResult::Ignored(
-                "No mergeable name links found".to_string(),
-            ));
+        let mut ops = match apply_name_merge(connection, &data)? {
+            MergeOutcome::Operations(ops) => ops,
+            MergeOutcome::NothingToDo(reason) => {
+                return Ok(PullTranslateResult::Ignored(reason.to_string()))
+            }
+        };
+
+        // On OMS central, also emit a `sync_message` so v7 remotes can replay
+        // the same merge against their local link tables. The link rewrite
+        // above already keeps central itself consistent — the message is purely
+        // for fanout, and the post-sync processor skips it when running on
+        // central.
+        if CentralServerConfig::is_central_server() {
+            let row = build_central_merge_message(ChangelogTableName::Name, &data)?;
+            ops.push(IntegrationOperation::upsert(row));
         }
-        let indirect_link = name_link_repo
-            .find_one_by_id(&data.merge_id_to_keep)?
-            .ok_or(anyhow::anyhow!(
-                "Could not find name link with id {}",
-                data.merge_id_to_keep
-            ))?;
 
-        let mut operations: Vec<IntegrationOperation> = name_links
-            .into_iter()
-            .map(|NameLinkRow { id, .. }| {
-                IntegrationOperation::upsert(NameLinkRow {
-                    id,
-                    name_id: indirect_link.name_id.clone(),
-                })
-            })
-            .collect();
-        // soft-delete the merged name
-        operations.push(IntegrationOperation::delete(NameRowDelete(
-            data.merge_id_to_delete.clone(),
-        )));
-
-        let name_store_join_repo = NameStoreJoinRepository::new(connection);
-        let name_store_joins_for_delete = name_store_join_repo.query_by_filter(
-            NameStoreJoinFilter::new()
-                .name_id(EqualFilter::equal_to(data.merge_id_to_delete.to_owned())),
-        )?;
-        let name_store_joins_for_keep = name_store_join_repo.query_by_filter(
-            NameStoreJoinFilter::new()
-                .name_id(EqualFilter::equal_to(data.merge_id_to_keep.to_owned())),
-        )?;
-
-        // We need to delete the name_store_joins that are no longer needed after the merge
-        // Situation A: ("Joined to" meaning store->nsj->name_link->name)
-        // storeA joined to nameK
-        // storeA joined to nameD
-        // storeB joined to nameD
-        // nameD merged into nameK
-        // storeA joined to nameK
-        // storeA joined to nameK (delete this join to avoid showing twice in lists seemingly as a duplicate)
-        // storeB joined to nameK (make sure we don't accidentally delete this one, or visibility of nameK will be lost for storeB)
-        //
-        // We must also consider nsj.name_is_customer and nsj.name_is_supplier.
-        // The remaining NSJ that we keep must logically OR each of these fields with the corresponding field in the deleted NSJs.
-        // We prefer making the name visible to stores rather than losing visibility as it allows users to still make invoices and orders
-        let store_repo = StoreRepository::new(connection);
-        let store = store_repo.query_one(
-            StoreFilter::new().name_id(EqualFilter::equal_to(data.merge_id_to_keep.to_owned())),
-        )?;
-        let mut deletes = name_store_joins_for_delete
-            .iter()
-            .filter_map(|nsj_delete| {
-                // delete nsj_delete if it points to the store that belongs to the "keep" name. Avoids:
-                // storeK.name_id == nameK.id
-                // storeK joined to nameD
-                // nameD merged into nameK
-                // storeK joined to nameK (delete the join before this happens, stores shouldn't be visible to themselves)
-                if let Some(store) = &store {
-                    if nsj_delete.name_store_join.store_id == store.store_row.id {
-                        return Some(IntegrationOperation::delete(NameStoreJoinRowDelete(
-                            nsj_delete.name_store_join.id.clone(),
-                        )));
-                    }
-                }
-
-                // Delete duplicate name_store_joins. Avoids:
-                // ("joined to" meaning store->nsj->name_link->name)
-                // storeA joined to nameK
-                // storeA joined to nameD
-                // storeB joined to nameD
-                // nameD merged into nameK
-                // storeA joined to nameK
-                // storeA joined to nameK (delete this join to avoid showing twice in lists seemingly as a duplicate)
-                // storeB joined to nameK (make sure we don't accidentally delete this one, or visibility of nameK will be lost for storeB)
-                if let Some(nsj_keep) = name_store_joins_for_keep.iter().find(|nsj_keep| {
-                    nsj_keep.name_store_join.store_id == nsj_delete.name_store_join.store_id
-                }) {
-                    // We must also consider nsj_delete.name_is_customer and nsj_delete.name_is_supplier.
-                    // The remaining NSJ that we keep must logically OR each of these fields with the corresponding field in the deleted NSJs.
-                    // We prefer making the name visible to stores rather than losing visibility as it allows users to still make invoices and orders
-                    if (!nsj_keep.name_store_join.name_is_customer
-                        && nsj_delete.name_store_join.name_is_customer)
-                        || (!nsj_keep.name_store_join.name_is_supplier
-                            && nsj_delete.name_store_join.name_is_supplier)
-                    {
-                        operations.push(IntegrationOperation::upsert(NameStoreJoinRow {
-                            name_is_customer: nsj_keep.name_store_join.name_is_customer
-                                || nsj_delete.name_store_join.name_is_customer,
-                            name_is_supplier: nsj_keep.name_store_join.name_is_supplier
-                                || nsj_delete.name_store_join.name_is_supplier,
-                            ..nsj_keep.name_store_join.clone()
-                        }));
-                    }
-
-                    return Some(IntegrationOperation::delete(NameStoreJoinRowDelete(
-                        nsj_delete.name_store_join.id.clone(),
-                    )));
-                }
-
-                None
-            })
-            .collect::<Vec<_>>();
-        operations.append(&mut deletes);
-
-        Ok(PullTranslateResult::IntegrationOperations(operations))
+        Ok(PullTranslateResult::IntegrationOperations(ops))
     }
 }
 
@@ -156,9 +56,9 @@ impl SyncTranslation for NameMergeTranslation {
 mod tests {
     use crate::sync::synchroniser::integrate_and_translate_sync_buffer;
 
-    use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, SyncAction, SyncBufferRepository,
+        mock::MockDataInserts, test_db::setup_all, EqualFilter, NameLinkRow, NameLinkRowRepository,
+        NameStoreJoinFilter, NameStoreJoinRepository, SyncAction, SyncBufferRepository,
         SyncBufferRowInsert, SyncRecordData,
     };
     use serde_json::json;

@@ -6,14 +6,16 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    sync::sync_status::status::{FullSyncStatus, SyncStatus, SyncStatusWithProgress},
+    sync::sync_status::status::{
+        FullSyncStatus, FullSyncStatusV5V6, SyncStatus, SyncStatusWithProgress,
+    },
 };
 
 use crate::sync_api_error::SyncErrorNode;
+use crate::sync_v7::sync_status::FullSyncStatusV7Node;
 
 pub struct SyncStatusNode {
     started: NaiveDateTime,
-    duration_in_seconds: i32,
     finished: Option<NaiveDateTime>,
 }
 
@@ -23,13 +25,18 @@ impl SyncStatusNode {
         DateTime::<Utc>::from_naive_utc_and_offset(self.started, Utc)
     }
 
-    async fn duration_in_seconds(&self) -> i32 {
-        self.duration_in_seconds
-    }
-
     async fn finished(&self) -> Option<DateTime<Utc>> {
         self.finished
             .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
+    }
+}
+
+impl SyncStatusNode {
+    pub fn from_sync_status(s: SyncStatus) -> Self {
+        Self {
+            started: s.started,
+            finished: s.finished,
+        }
     }
 }
 
@@ -61,7 +68,7 @@ impl SyncStatusWithProgressNode {
 }
 
 #[derive(SimpleObject)]
-pub struct FullSyncStatusNode {
+pub struct FullSyncStatusV5V6Node {
     is_syncing: bool,
     error: Option<SyncErrorNode>,
     summary: SyncStatusNode,
@@ -77,16 +84,12 @@ pub struct FullSyncStatusNode {
     error_threshold: i64,
 }
 
-impl FullSyncStatusNode {
+impl FullSyncStatusV5V6Node {
     pub fn from_sync_status(
-        status: FullSyncStatus,
-        last_successful_sync: Option<FullSyncStatus>,
+        status: FullSyncStatusV5V6,
+        last_successful_sync: Option<SyncStatus>,
     ) -> Self {
-        let to_node = |s: SyncStatus| SyncStatusNode {
-            started: s.started,
-            duration_in_seconds: s.duration_in_seconds,
-            finished: s.finished,
-        };
+        let to_node = SyncStatusNode::from_sync_status;
         let to_progress_node = |s: SyncStatusWithProgress| SyncStatusWithProgressNode {
             started: s.started,
             finished: s.finished,
@@ -94,7 +97,7 @@ impl FullSyncStatusNode {
             done: s.done,
         };
 
-        FullSyncStatusNode {
+        FullSyncStatusV5V6Node {
             is_syncing: status.is_syncing,
             error: status.error.map(SyncErrorNode::from_sync_log_error),
             summary: to_node(status.summary),
@@ -105,11 +108,19 @@ impl FullSyncStatusNode {
             push: status.push.map(to_progress_node),
             pull_v6: status.pull_v6.map(to_progress_node),
             push_v6: status.push_v6.map(to_progress_node),
-            last_successful_sync: last_successful_sync.map(|s| to_node(s.summary)),
+            last_successful_sync: last_successful_sync.map(to_node),
             warning_threshold: 1,
             error_threshold: 3,
         }
     }
+}
+
+/// Discriminated union covering both v5_v6 and v7 sync statuses.
+/// The frontend dispatches on `__typename`.
+#[derive(Union)]
+pub enum FullSyncStatusNode {
+    V5V6(FullSyncStatusV5V6Node),
+    V7(FullSyncStatusV7Node),
 }
 
 pub fn latest_sync_status(
@@ -121,23 +132,27 @@ pub fn latest_sync_status(
     };
 
     let service_provider = ctx.service_provider();
-    let ctx = service_provider.basic_context()?;
-    let sync_status = match service_provider
+    let basic_ctx = service_provider.basic_context()?;
+
+    let Some(sync_status) = service_provider
         .sync_status_service
-        .get_latest_sync_status(&ctx)?
-    {
-        Some(sync_status) => sync_status,
-        None => return Ok(None),
+        .get_latest_sync_status(&basic_ctx)?
+    else {
+        return Ok(None);
     };
-    let last_successful_sync_status = service_provider
+    let last_successful = service_provider
         .sync_status_service
-        .get_latest_successful_sync_status(&ctx)
+        .get_latest_successful_sync_status(&basic_ctx)
         .unwrap_or(None);
 
-    Ok(Some(FullSyncStatusNode::from_sync_status(
-        sync_status,
-        last_successful_sync_status,
-    )))
+    Ok(Some(match sync_status {
+        FullSyncStatus::V5V6(s) => {
+            FullSyncStatusNode::V5V6(FullSyncStatusV5V6Node::from_sync_status(s, last_successful))
+        }
+        FullSyncStatus::V7(s) => {
+            FullSyncStatusNode::V7(FullSyncStatusV7Node::from_sync_status(s, last_successful))
+        }
+    }))
 }
 
 pub fn number_of_records_in_push_queue(ctx: &Context<'_>) -> Result<u64> {
