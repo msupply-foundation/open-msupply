@@ -2852,5 +2852,6 @@
   "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
   "error.duplicate-ancillary-item": "This ancillary item link already exists",
   "error.ancillary-cycle-detected": "This link would create a cycle through existing ancillary item links",
-  "error.ancillary-max-depth-exceeded": "This link would exceed the maximum allowed depth of ancillary item chains ({{actual}} > {{max}})"
+  "error.ancillary-max-depth-exceeded": "This link would exceed the maximum allowed depth of ancillary item chains ({{actual}} > {{max}})",
+  "report.received-date": "Received date"
 }
