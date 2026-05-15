@@ -1,5 +1,5 @@
 use super::StorageConnection;
-use crate::{ChangelogSyncType, SourceSiteId, Upsert};
+use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
 
 use crate::repository_error::RepositoryError;
 use crate::{ChangelogRepository, RowActionType};
@@ -108,8 +108,8 @@ impl<'a> CurrencyRowRepository<'a> {
 
 #[derive(Debug, Clone)]
 pub struct CurrencyRowDelete(pub String);
-impl Upsert for CurrencyRowDelete {
-    fn upsert_sync(
+impl Delete for CurrencyRowDelete {
+    fn delete_sync(
         &self,
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
@@ -131,7 +131,7 @@ impl Upsert for CurrencyRowDelete {
         Ok(())
     }
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &StorageConnection) {
         assert!(matches!(
             CurrencyRowRepository::new(con).find_one_by_id(&self.0),
             Ok(Some(CurrencyRow {

@@ -1,7 +1,6 @@
 use chrono::NaiveDate;
 use repository::{
     CurrencyRow, CurrencyRowDelete, CurrencyRowRepository, StorageConnection, SyncBufferRow,
-
 };
 use serde::{Deserialize, Serialize};
 
@@ -70,7 +69,7 @@ impl SyncTranslation for CurrencyTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(CurrencyRowDelete(
+        Ok(PullTranslateResult::delete(CurrencyRowDelete(
             sync_record.record_id.clone(),
         )))
     }

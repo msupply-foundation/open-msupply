@@ -1,7 +1,6 @@
 use repository::{
     reason_option_row::{ReasonOptionRow, ReasonOptionRowDelete, ReasonOptionType},
     StorageConnection, SyncBufferRow,
-
 };
 use serde::{Deserialize, Serialize};
 
@@ -88,7 +87,7 @@ impl SyncTranslation for ReasonTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(ReasonOptionRowDelete(
+        Ok(PullTranslateResult::delete(ReasonOptionRowDelete(
             sync_record.record_id.clone(),
         )))
     }

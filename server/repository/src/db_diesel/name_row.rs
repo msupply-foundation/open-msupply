@@ -5,8 +5,8 @@ use super::{
     StorageConnection,
 };
 use crate::{
-    item_link, name_link, repository_error::RepositoryError, ChangelogRepository, EqualFilter,
-    NameLinkRow, NameLinkRowRepository, RowActionType,
+    item_link, name_link, repository_error::RepositoryError, ChangelogRepository, Delete,
+    EqualFilter, NameLinkRow, NameLinkRowRepository, RowActionType,
 };
 use crate::{ChangelogSyncType, RowOrId, SourceSiteId, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
@@ -368,8 +368,8 @@ impl From<NameRowType> for NameType {
 
 #[derive(Debug, Clone)]
 pub struct NameRowDelete(pub String);
-impl Upsert for NameRowDelete {
-    fn upsert_sync(
+impl Delete for NameRowDelete {
+    fn delete_sync(
         &self,
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
@@ -389,7 +389,7 @@ impl Upsert for NameRowDelete {
         Ok(())
     }
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &StorageConnection) {
         assert!(matches!(
             NameRowRepository::new(con).find_one_by_id(&self.0),
             Ok(Some(NameRow {

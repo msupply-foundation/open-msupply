@@ -2,7 +2,7 @@ use super::asset_row::asset::dsl::*;
 use crate::asset_log_row::latest_asset_log;
 use crate::db_diesel::store_row::store;
 use crate::{
-    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
+    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
     StorageConnection, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
@@ -186,8 +186,8 @@ impl Upsert for AssetRow {
 
 #[derive(Debug, Clone)]
 pub struct AssetRowDelete(pub String);
-impl Upsert for AssetRowDelete {
-    fn upsert_sync(
+impl Delete for AssetRowDelete {
+    fn delete_sync(
         &self,
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
@@ -214,7 +214,7 @@ impl Upsert for AssetRowDelete {
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &StorageConnection) {
         assert!(matches!(
             AssetRowRepository::new(con).find_one_by_id(&self.0),
             Ok(Some(AssetRow {

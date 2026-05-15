@@ -1,7 +1,8 @@
 use super::StorageConnection;
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, Upsert,
+    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, Delete,
+    RowActionType, SourceSiteId, Upsert,
 };
 
 use diesel::prelude::*;
@@ -42,7 +43,17 @@ pub enum ReasonOptionType {
     RequisitionLineVariance,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = reason_option)]
 pub struct ReasonOptionRow {
@@ -91,10 +102,7 @@ impl<'a> ReasonOptionRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(
-        &self,
-        ids: &[String],
-    ) -> Result<Vec<ReasonOptionRow>, RepositoryError> {
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ReasonOptionRow>, RepositoryError> {
         Ok(reason_option::table
             .filter(reason_option::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
@@ -123,8 +131,8 @@ impl<'a> ReasonOptionRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct ReasonOptionRowDelete(pub String);
 
-impl Upsert for ReasonOptionRowDelete {
-    fn upsert_sync(
+impl Delete for ReasonOptionRowDelete {
+    fn delete_sync(
         &self,
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
@@ -149,7 +157,7 @@ impl Upsert for ReasonOptionRowDelete {
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &StorageConnection) {
         assert!(matches!(
             ReasonOptionRowRepository::new(con).find_one_by_id(&self.0),
             Ok(Some(ReasonOptionRow {

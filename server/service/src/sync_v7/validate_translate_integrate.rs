@@ -9,8 +9,8 @@ use crate::{
 };
 
 use super::validate::*;
-use repository::syncv7::{SyncRecordSerializeError, INTEGRATION_ORDER};
 use repository::*;
+use repository::syncv7::{SyncRecordSerializeError, INTEGRATION_ORDER};
 use serde::de::Error as _;
 use thiserror::Error;
 use util::{datetime_now, format_error};
@@ -136,10 +136,16 @@ fn translate_delete(
         ChangelogTableName::UserPermission => Box::new(UserPermissionRowDelete(id)),
         ChangelogTableName::VVMStatus => Box::new(VVMStatusRowDelete(id)),
         ChangelogTableName::VVMStatusLog => Box::new(VVMStatusLogRowDelete(id)),
-        // Tables without a delete translator:
-        // These either use mark_deleted via Upsert trait, or have no delete path at all
-        ChangelogTableName::Asset
-        | ChangelogTableName::AssetCatalogueItem
+        ChangelogTableName::Unit => Box::new(UnitRowDelete(id)),
+        ChangelogTableName::Program => Box::new(ProgramRowDelete(id)),
+        ChangelogTableName::Asset => Box::new(AssetRowDelete(id)),
+        ChangelogTableName::Category => Box::new(CategoryRowDelete(id)),
+        ChangelogTableName::Currency => Box::new(CurrencyRowDelete(id)),
+        ChangelogTableName::Item => Box::new(ItemRowDelete(id)),
+        ChangelogTableName::Name => Box::new(NameRowDelete(id)),
+        ChangelogTableName::Sensor => Box::new(SensorRowDelete(id)),
+        // Tables without a delete translator / do not delete
+        ChangelogTableName::AssetCatalogueItem
         | ChangelogTableName::AssetCatalogueType
         | ChangelogTableName::AssetCategory
         | ChangelogTableName::AssetClass
@@ -149,12 +155,10 @@ fn translate_delete(
         | ChangelogTableName::Barcode
         | ChangelogTableName::BundledItem
         | ChangelogTableName::Campaign
-        | ChangelogTableName::Category
         | ChangelogTableName::Clinician
         | ChangelogTableName::ContactForm
         | ChangelogTableName::ContactTrace
         | ChangelogTableName::Context
-        | ChangelogTableName::Currency
         | ChangelogTableName::Demographic
         | ChangelogTableName::DemographicIndicator
         | ChangelogTableName::Document
@@ -163,7 +167,6 @@ fn translate_delete(
         | ChangelogTableName::IndicatorColumn
         | ChangelogTableName::IndicatorLine
         | ChangelogTableName::InsuranceProvider
-        | ChangelogTableName::Item
         | ChangelogTableName::ItemCategoryJoin
         | ChangelogTableName::ItemStoreJoin
         | ChangelogTableName::ItemVariant
@@ -171,7 +174,6 @@ fn translate_delete(
         | ChangelogTableName::LocationMovement
         | ChangelogTableName::LocationType
         | ChangelogTableName::MasterList
-        | ChangelogTableName::Name
         | ChangelogTableName::NameInsuranceJoin
         | ChangelogTableName::NameOmsFields
         | ChangelogTableName::NameProperty
@@ -180,13 +182,11 @@ fn translate_delete(
         | ChangelogTableName::PeriodSchedule
         | ChangelogTableName::PluginData
         | ChangelogTableName::Printer
-        | ChangelogTableName::Program
         | ChangelogTableName::ProgramEnrolment
         | ChangelogTableName::ProgramEvent
         | ChangelogTableName::ProgramIndicator
         | ChangelogTableName::Property
         | ChangelogTableName::ReasonOption
-        | ChangelogTableName::Sensor
         | ChangelogTableName::ShippingMethod
         | ChangelogTableName::Store
         | ChangelogTableName::StorePreference
@@ -195,7 +195,6 @@ fn translate_delete(
         | ChangelogTableName::SystemLog
         | ChangelogTableName::TemperatureBreach
         | ChangelogTableName::TemperatureLog
-        | ChangelogTableName::Unit
         | ChangelogTableName::UserStoreJoin
         | ChangelogTableName::Vaccination
         | ChangelogTableName::VaccineCourse

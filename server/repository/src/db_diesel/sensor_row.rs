@@ -1,8 +1,6 @@
 use super::{location_row::location, store_row::store, StorageConnection};
 
-use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, SourceSiteId, Upsert,
-};
+use crate::{repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert};
 use crate::{ChangelogRepository, RowActionType};
 
 use chrono::NaiveDateTime;
@@ -123,8 +121,8 @@ impl<'a> SensorRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct SensorRowDelete(pub String);
 
-impl Upsert for SensorRowDelete {
-    fn upsert_sync(
+impl Delete for SensorRowDelete {
+    fn delete_sync(
         &self,
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
@@ -133,9 +131,9 @@ impl Upsert for SensorRowDelete {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                let row = repo.find_one_by_id(&self.0)?.ok_or_else(|| {
-                    RepositoryError::NotFound
-                })?;
+                let row = repo
+                    .find_one_by_id(&self.0)?
+                    .ok_or_else(|| RepositoryError::NotFound)?;
                 row.generate_changelog(
                     con,
                     RowActionType::Upsert,
@@ -151,7 +149,7 @@ impl Upsert for SensorRowDelete {
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &StorageConnection) {
         let row = SensorRowRepository::new(con)
             .find_one_by_id(&self.0)
             .expect("sensor lookup");

@@ -1,20 +1,20 @@
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, GenderType, NameRow, NameRowDelete,
-    NameRowType, Row, StorageConnection, SyncBufferRow,
-
+    ChangelogRow, ChangelogTableName, GenderType, NameRow, NameRowDelete, NameRowType, Row,
+    StorageConnection, SyncBufferRow,
 };
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
-
 };
 
 use serde::{Deserialize, Serialize};
 
 use crate::sync::{translations::currency::CurrencyTranslation, CentralServerConfig};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
+use super::{
+    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyNameRowType {
@@ -338,7 +338,7 @@ impl SyncTranslation for NameTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(NameRowDelete(
+        Ok(PullTranslateResult::delete(NameRowDelete(
             sync_record.record_id.clone(),
         )))
     }
@@ -447,7 +447,11 @@ impl SyncTranslation for NameTranslation {
             custom_data: None,
         };
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 
     // TODO soft delete

@@ -7,7 +7,7 @@ use crate::{
         master_list_row::master_list,
     },
     repository_error::RepositoryError,
-    ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, StorageConnection,
+    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, StorageConnection,
     Upsert,
 };
 
@@ -30,7 +30,18 @@ joinable!(program -> context (context_id));
 allow_tables_to_appear_in_same_query!(program, document);
 allow_tables_to_appear_in_same_query!(program, item_link);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Eq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = program)]
 #[diesel(treat_none_as_null = true)]
 pub struct ProgramRow {
@@ -140,8 +151,8 @@ impl Upsert for ProgramRow {
 
 #[derive(Debug, Clone)]
 pub struct ProgramRowDelete(pub String);
-impl Upsert for ProgramRowDelete {
-    fn upsert_sync(
+impl Delete for ProgramRowDelete {
+    fn delete_sync(
         &self,
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
@@ -164,7 +175,7 @@ impl Upsert for ProgramRowDelete {
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &StorageConnection) {
         assert!(matches!(
             ProgramRowRepository::new(con).find_one_by_id(&self.0),
             Ok(Some(ProgramRow {
