@@ -13,6 +13,10 @@ on:
         required: true
         default: "develop"
 
+concurrency:
+  group: build-standard-reports-${{ github.event.pull_request.base.ref || inputs.branch }}
+  cancel-in-progress: true
+
 jobs:
   build-reports:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
