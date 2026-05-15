@@ -15,9 +15,9 @@ jobs:
     name: Detect breaking GraphQL schema changes
     runs-on: self-hosted
     timeout-minutes: 30
-    # Add the `breaking-api-change` label to a PR to acknowledge an intentional
+    # Add the `Breaking API change` label to a PR to acknowledge an intentional
     # breaking change and skip this check.
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'breaking-api-change') }}
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'Breaking API change') }}
     env:
       CARGO_TARGET_DIR: /tmp/target/schema-diff
       PR_SCHEMA: /tmp/schema-diff/pr-schema.graphql
