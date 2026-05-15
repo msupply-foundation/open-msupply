@@ -14,10 +14,6 @@ impl AbbreviationNode {
     pub async fn text(&self) -> &String {
         &self.abbreviation.text
     }
-
-    pub async fn expansion(&self) -> &String {
-        &self.abbreviation.expansion
-    }
 }
 
 impl AbbreviationNode {
