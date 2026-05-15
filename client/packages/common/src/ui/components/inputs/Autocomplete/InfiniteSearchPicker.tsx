@@ -275,10 +275,10 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
         onChange(entity);
       }}
       onInputChange={(_event, _value, reason) => {
-        if (reason === CLEAR) {
-          resetFilter();
-          onChange(null);
-        }
+        // MUI fires both `onChange(_, null)` and `onInputChange(_, '', CLEAR)`
+        // when the built-in X is clicked, so the parent `onChange` is already
+        // notified above. Only reset the filter here.
+        if (reason === CLEAR) resetFilter();
       }}
       inputValue={inputValue}
       clearOnBlur={false}

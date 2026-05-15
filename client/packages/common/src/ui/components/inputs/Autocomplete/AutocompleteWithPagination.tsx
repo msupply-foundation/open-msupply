@@ -127,8 +127,14 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       autoFocus={autoFocus}
       // Outer MuiAutocomplete `sx={{ width }}` alone doesn't survive inside a
       // shrinking flex parent (e.g. PO line edit) — without an inner minWidth
-      // the TextField collapses to content size.
-      sx={{ minWidth: width }}
+      // the TextField collapses to content size. Merge with any caller sx
+      // (passed via inputProps) so this shared component doesn't clobber it.
+      sx={[
+        { minWidth: width },
+        ...(Array.isArray(inputProps?.sx)
+          ? inputProps.sx
+          : [inputProps?.sx]),
+      ]}
       slotProps={{
         input: {
           ...props.InputProps,

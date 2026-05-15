@@ -8,7 +8,14 @@ import { NameRowFragment, useName } from '../../api';
 import { NameSearchInputProps } from '../../utils';
 import { getNameOptionRenderer } from '../NameOptionRenderer';
 
-export const InternalSupplierSearchInput: FC<NameSearchInputProps> = ({
+interface InternalSupplierSearchInputExtraProps {
+  autoFocus?: boolean;
+  openOnFocus?: boolean;
+}
+
+export const InternalSupplierSearchInput: FC<
+  NameSearchInputProps & InternalSupplierSearchInputExtraProps
+> = ({
   onChange,
   width,
   value,
@@ -17,6 +24,8 @@ export const InternalSupplierSearchInput: FC<NameSearchInputProps> = ({
   currentId,
   extraFilter,
   filterBy,
+  autoFocus = false,
+  openOnFocus = false,
 }) => {
   const t = useTranslation();
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
@@ -36,6 +45,8 @@ export const InternalSupplierSearchInput: FC<NameSearchInputProps> = ({
       extraFilter={extraFilter}
       disabled={disabled}
       clearable={clearable}
+      autoFocus={autoFocus}
+      openOnFocus={openOnFocus}
       width={width}
       noOptionsText={t('label.no-options')}
     />

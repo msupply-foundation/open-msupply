@@ -153,22 +153,25 @@ export const PurchaseOrderLineEdit = ({
                 }
               />
               <InputWithLabelRow
-                Input={(() => {
-                  const isFieldDisabledHere =
-                    disabled ||
-                    isFieldDisabled(status, StatusGroup.AfterConfirmed);
-                  return (
-                    <ManufacturerSearchInput
-                      disabled={isFieldDisabledHere}
-                      value={draft?.manufacturer ?? null}
-                      onChange={manufacturer =>
-                        update({ manufacturer: manufacturer || null })
-                      }
-                      width={185}
-                      textSx={inputSlotProps(isFieldDisabledHere).input.sx}
-                    />
-                  );
-                })()}
+                Input={
+                  <ManufacturerSearchInput
+                    disabled={
+                      disabled ||
+                      isFieldDisabled(status, StatusGroup.AfterConfirmed)
+                    }
+                    value={draft?.manufacturer ?? null}
+                    onChange={manufacturer =>
+                      update({ manufacturer: manufacturer || null })
+                    }
+                    width={185}
+                    textSx={
+                      inputSlotProps(
+                        disabled ||
+                          isFieldDisabled(status, StatusGroup.AfterConfirmed)
+                      ).input.sx
+                    }
+                  />
+                }
                 label={t('label.manufacturer')}
                 labelProps={commonLabelProps()}
               />

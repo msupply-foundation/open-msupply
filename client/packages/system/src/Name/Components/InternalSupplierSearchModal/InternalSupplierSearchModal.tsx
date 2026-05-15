@@ -25,6 +25,8 @@ export const InternalSupplierSearchModal: FC<NameSearchProps> = props => {
       }}
       width={isList ? undefined : 500}
       clearable={false}
+      autoFocus
+      openOnFocus
     />
   );
 
