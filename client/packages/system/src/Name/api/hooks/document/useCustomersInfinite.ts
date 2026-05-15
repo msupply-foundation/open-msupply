@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   NameFilterInput,
   useInfiniteQuery,
 } from '@openmsupply-client/common';
@@ -20,14 +21,14 @@ export const useCustomersInfinite = ({
     filter,
   };
 
-  return useInfiniteQuery(
-    [
+  return useInfiniteQuery({
+    queryKey: [
       ...api.keys.list(),
       'customers',
       'infinite',
       filter,
     ],
-    async ({ pageParam }) => {
+    queryFn: async ({ pageParam }) => {
       const pageNumber = Number(pageParam ?? 0);
 
       const data = await api.get.customers({
@@ -41,10 +42,15 @@ export const useCustomersInfinite = ({
         pageNumber,
       };
     },
+    initialPageParam: 0,
+    getNextPageParam: lastPage =>
+      (lastPage.pageNumber + 1) * rowsPerPage < (lastPage.data?.totalCount ?? 0)
+        ? lastPage.pageNumber + 1
+        : undefined,
     // Keep the previous filter's pages on screen while a new filter is in
     // flight, so the dropdown doesn't flash empty/"Loading..." between
     // keystrokes — InfiniteSearchPicker also relies on this for its
     // client-side narrowing fallback.
-    { keepPreviousData: true }
-  );
+    placeholderData: keepPreviousData,
+  });
 };

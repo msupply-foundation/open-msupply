@@ -27,7 +27,7 @@ export const AppBarButtons = ({
 }: AppBarButtonsProps) => {
   const t = useTranslation();
   const modalController = useToggle();
-  const { isLoading, fetchAsync } = useStocktakeOld.document.listAll({
+  const { isPending: isLoading, fetchAsync } = useStocktakeOld.document.listAll({
     key: 'createdDatetime',
     direction: 'desc',
     isDesc: true,

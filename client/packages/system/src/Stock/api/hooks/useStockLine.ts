@@ -57,12 +57,12 @@ export function useStockLine(id?: string) {
   const { data, isLoading, error } = useGet(id ?? '');
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreate();
   const {
     mutateAsync: updateMutation,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     error: updateError,
   } = useUpdate(id ?? '');
 
@@ -172,7 +172,9 @@ const useCreate = () => {
     mutationFn,
     onSuccess: () =>
       // Stock line list needs to be re-fetched to include the new stock line
-      queryClient.invalidateQueries([STOCK_LINE]),
+      queryClient.invalidateQueries({
+        queryKey: [STOCK_LINE]
+      }),
   });
 };
 
@@ -234,8 +236,12 @@ const useUpdate = (id: string) => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([STOCK_LINE, id]);
-      queryClient.invalidateQueries([LOCATION]); // Invalidate location queries to update available volume
+      queryClient.invalidateQueries({
+        queryKey: [STOCK_LINE, id]
+      });
+      queryClient.invalidateQueries({
+        queryKey: [LOCATION]
+      }); // Invalidate location queries to update available volume
     },
   });
 };
