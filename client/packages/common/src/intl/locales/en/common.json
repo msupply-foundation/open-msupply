@@ -530,7 +530,7 @@
   "error.site-auth-timeout": "Site authentication timed out, please try again later",
   "error.site-has-no-store": "Site has no store",
   "error.site-incorrect-hardware-id": "Incorrect hardware ID",
-  "error.site-incorrect-password": "Incorrect password",
+  "error.site-incorrect-password": "Incorrect credentials",
   "error.site-is-not-v7": "This site has not been upgraded to V7 sync yet. Run a sync to complete the upgrade.",
   "error.site-mismatch": "Site mismatch",
   "error.site-name-not-found": "Site name not found",

@@ -161,12 +161,26 @@ function mapSyncErrorV7(
     [SyncErrorVariantV7.Other]: defaultKey || 'error.unknown-sync-error',
   };
 
+  const getHint = () => {
+    switch (error.variantV7) {
+      case SyncErrorVariantV7.SyncVersionMismatch:
+        return t('error.sync-api-incompatible-hint');
+      case SyncErrorVariantV7.NotACentralServer:
+        return t('error.v6-server-not-configured-hint');
+      case SyncErrorVariantV7.ConnectionError:
+        return t('error.connection-error-hint');
+      default:
+        return undefined;
+    }
+  };
+
   return {
     error:
       t(errorMapping[error.variantV7]) ||
       defaultKey ||
       'error.unknown-sync-error',
     details: error.fullError,
+    hint: getHint(),
   };
 }
 
