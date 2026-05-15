@@ -29,7 +29,7 @@ const ReplenishmentAndSyncStatus: Plugins = {
       route: 'stock-aging',
       Component: StockAgingPage,
       menu: {
-        label: { en: 'Stock aging', fr: "Vieillissement du stock" },
+        label: 'Stock aging',
         category: { type: 'existing', appRoute: AppRoute.Inventory },
       },
     },
@@ -37,11 +37,11 @@ const ReplenishmentAndSyncStatus: Plugins = {
       route: 'daily',
       Component: ReportingDailyPage,
       menu: {
-        label: { en: 'Daily', fr: 'Quotidien' },
+        label: 'Daily',
         category: {
           type: 'new',
           key: 'reporting',
-          label: { en: 'Reporting', fr: 'Rapports' },
+          label: 'Reporting',
           icon: ReportsIcon,
           order: 500,
         },
