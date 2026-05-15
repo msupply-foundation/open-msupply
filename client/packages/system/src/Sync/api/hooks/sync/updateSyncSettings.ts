@@ -3,5 +3,7 @@ import { useSyncApi } from '../utils/useSyncApi';
 
 export const useUpdateSyncSettings = () => {
   const api = useSyncApi();
-  return useMutation(api.update);
+  return useMutation({
+    mutationFn: api.update
+  });
 };
