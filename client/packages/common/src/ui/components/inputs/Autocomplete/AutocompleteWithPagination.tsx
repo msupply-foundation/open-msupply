@@ -95,7 +95,14 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
     if (!pages) {
       return lastOptions.current;
     }
-    const records = ArrayUtils.flatMap(pages, page => page.data?.nodes ?? []);
+    const flat = ArrayUtils.flatMap(pages, page => page.data?.nodes ?? []);
+    const seen = new Set<string>();
+    // De-dup across pages, which can happen apparently
+    const records = flat.filter(r => {
+      if (seen.has(r.id)) return false;
+      seen.add(r.id);
+      return true;
+    });
 
     if (!!value && !records.some(r => r.id === value.id)) {
       records.unshift(value);

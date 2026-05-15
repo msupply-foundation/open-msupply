@@ -215,10 +215,7 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
     serverFilterText !== searchToFilter(search) && serverFilterText !== search;
   const lastNonEmpty = useRef<T[] | null>(null);
 
-  const filterOptions = (
-    options: T[],
-    state: FilterOptionsState<T>
-  ): T[] => {
+  const filterOptions = (options: T[], state: FilterOptionsState<T>): T[] => {
     const escaped = RegexUtils.escapeChars(state.inputValue);
     const matchValue = searchToFilter(escaped);
     // Precompute regexes once per invocation rather than per option — with
@@ -236,6 +233,7 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
         (!!code && escapedRe.test(code));
       return matches && (!extraFilter || extraFilter(option));
     });
+
     if (narrowed.length > 0) {
       lastNonEmpty.current = narrowed;
       return narrowed;
@@ -310,10 +308,7 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
         onFocus: e => {
           if (disabled) return;
           selectControl.toggleOn();
-          if (
-            displayValue &&
-            e.target.value === getOptionLabel(displayValue)
-          ) {
+          if (displayValue && e.target.value === getOptionLabel(displayValue)) {
             e.target.select();
           }
         },
