@@ -127,6 +127,7 @@ export enum ActivityLogNodeType {
   DemographicProjectionUpdated = 'DEMOGRAPHIC_PROJECTION_UPDATED',
   InventoryAdjustment = 'INVENTORY_ADJUSTMENT',
   InvoiceCreated = 'INVOICE_CREATED',
+  InvoiceDateBackdated = 'INVOICE_DATE_BACKDATED',
   InvoiceDeleted = 'INVOICE_DELETED',
   InvoiceNumberAllocated = 'INVOICE_NUMBER_ALLOCATED',
   InvoiceStatusAllocated = 'INVOICE_STATUS_ALLOCATED',
@@ -748,6 +749,17 @@ export type AvailableVolumeAtLocationTypeNode = {
   availableVolume: Scalars['Float']['output'];
   itemVolumePerUnit: Scalars['Float']['output'];
   locationType: LocationTypeNode;
+};
+
+export type BackdatingInput = {
+  enabled: Scalars['Boolean']['input'];
+  maxDays: Scalars['Int']['input'];
+};
+
+export type BackdatingNode = {
+  __typename: 'BackdatingNode';
+  enabled: Scalars['Boolean']['output'];
+  maxDays: Scalars['Int']['output'];
 };
 
 export type BarcodeNode = {
@@ -6750,6 +6762,7 @@ export enum PreferenceKey {
   AdjustForNumberOfDaysOutOfStock = 'adjustForNumberOfDaysOutOfStock',
   AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
   AuthorisePurchaseOrder = 'authorisePurchaseOrder',
+  Backdating = 'backdating',
   CanCreateInternalOrderFromARequisition = 'canCreateInternalOrderFromARequisition',
   CustomTranslations = 'customTranslations',
   DaysInMonth = 'daysInMonth',
@@ -6803,6 +6816,7 @@ export enum PreferenceNodeType {
 }
 
 export enum PreferenceValueNodeType {
+  BackdatingData = 'BACKDATING_DATA',
   Boolean = 'BOOLEAN',
   Colour = 'COLOUR',
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
@@ -6818,6 +6832,7 @@ export type PreferencesNode = {
   adjustForNumberOfDaysOutOfStock: Scalars['Boolean']['output'];
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
   authorisePurchaseOrder: Scalars['Boolean']['output'];
+  backdating: BackdatingNode;
   canCreateInternalOrderFromARequisition: Scalars['Boolean']['output'];
   customTranslations: Scalars['JSONObject']['output'];
   daysInMonth: Scalars['Float']['output'];
@@ -9599,6 +9614,14 @@ export type StringStorePrefInput = {
   value: Scalars['String']['input'];
 };
 
+export type Subscriptions = {
+  __typename: 'Subscriptions';
+  initialisationStatusUpdated: InitialisationStatusNode;
+  /** Simple subscription to verify WebSocket connectivity */
+  ping: Scalars['String']['output'];
+  syncInfoUpdated: SyncInfoUpdatedNode;
+};
+
 export type Success = {
   __typename: 'Success';
   success: Scalars['Boolean']['output'];
@@ -9727,6 +9750,12 @@ export type SyncFileReferenceNode = {
   mimeType?: Maybe<Scalars['String']['output']>;
   recordId: Scalars['String']['output'];
   tableName: Scalars['String']['output'];
+};
+
+export type SyncInfoUpdatedNode = {
+  __typename: 'SyncInfoUpdatedNode';
+  numberOfRecordsInPushQueue: Scalars['Int']['output'];
+  syncStatus?: Maybe<FullSyncStatusNode>;
 };
 
 export type SyncSettingsInput = {
@@ -10124,10 +10153,10 @@ export type UpdateInboundShipmentInput = {
   currencyId?: InputMaybe<Scalars['String']['input']>;
   currencyRate?: InputMaybe<Scalars['Float']['input']>;
   defaultDonor?: InputMaybe<UpdateDonorInput>;
-  deliveredDatetime?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
+  receivedDatetime?: InputMaybe<Scalars['DateTime']['input']>;
   status?: InputMaybe<UpdateInboundShipmentStatusInput>;
   tax?: InputMaybe<TaxInput>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
@@ -10165,7 +10194,7 @@ export type UpdateInboundShipmentLineInput = {
   tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
   volumePerPack?: InputMaybe<Scalars['Float']['input']>;
-  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
+  vvmStatusId?: InputMaybe<NullableStringUpdate>;
 };
 
 export type UpdateInboundShipmentLineResponse =
@@ -10903,7 +10932,7 @@ export type UpdateStocktakeLineInput = {
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   snapshotNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   volumePerPack?: InputMaybe<Scalars['Float']['input']>;
-  vvmStatusId?: InputMaybe<Scalars['String']['input']>;
+  vvmStatusId?: InputMaybe<NullableStringUpdate>;
 };
 
 export type UpdateStocktakeLineResponse =
@@ -11142,6 +11171,7 @@ export type UpsertPreferencesInput = {
   adjustForNumberOfDaysOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
   authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
+  backdating?: InputMaybe<BackdatingInput>;
   canCreateInternalOrderFromARequisition?: InputMaybe<
     Array<BoolStorePrefInput>
   >;

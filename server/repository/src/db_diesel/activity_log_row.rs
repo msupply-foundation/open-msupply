@@ -119,6 +119,7 @@ pub enum ActivityLogType {
     PurchaseOrderLineStatusChangedFromSentToNew,
     PatientUpdated,
     PatientCreated,
+    InvoiceDateBackdated,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
@@ -163,6 +164,7 @@ impl<'a> ActivityLogRowRepository<'a> {
             row_action: action,
             store_id: row.store_id.clone(),
             name_id: None,
+            ..Default::default()
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

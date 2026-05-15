@@ -1,7 +1,9 @@
 use std::collections::BTreeMap;
 
 use crate::types::{
-    invoice_query::InvoiceNodeStatus, patient::GenderTypeNode,
+    backdating::BackdatingNode,
+    invoice_query::InvoiceNodeStatus,
+    patient::GenderTypeNode,
     warn_when_missing_recent_stocktake::WarnWhenMissingRecentStocktakeDataNode,
 };
 use async_graphql::*;
@@ -92,6 +94,12 @@ impl PreferencesNode {
 
     pub async fn global_table_configs(&self) -> Result<serde_json::Value> {
         self.load_preference(&self.preferences.global_table_configs)
+    }
+
+    pub async fn backdating(&self) -> Result<BackdatingNode> {
+        Ok(BackdatingNode::from_domain(
+            self.load_preference(&self.preferences.backdating)?,
+        ))
     }
 
     // Store preferences
@@ -276,6 +284,7 @@ pub enum PreferenceKey {
     IsGaps,
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
+    Backdating,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -318,6 +327,7 @@ pub enum PreferenceValueNodeType {
     MultiChoice,
     CustomTranslations, // Specific type for CustomTranslations preference
     WarnWhenMissingRecentStocktakeData,
+    BackdatingData,
     String,
     Colour,
 }

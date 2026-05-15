@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   AppBarContentPortal,
+  Box,
   InputWithLabelRow,
   BufferedTextInput,
   Grid,
@@ -89,13 +90,15 @@ export const Toolbar = () => {
             label={t('label.supplier-ref')}
             Input={
               <Tooltip title={theirReference} placement="bottom-start">
-                <BufferedTextInput
-                  disabled={isDisabled}
-                  size="small"
-                  sx={{ width: 250 }}
-                  value={theirReference ?? ''}
-                  onChange={e => update({ theirReference: e.target.value })}
-                />
+                <Box>
+                  <BufferedTextInput
+                    disabled={isDisabled}
+                    size="small"
+                    sx={{ width: 250 }}
+                    value={theirReference ?? ''}
+                    onChange={e => update({ theirReference: e.target.value })}
+                  />
+                </Box>
               </Tooltip>
             }
           />

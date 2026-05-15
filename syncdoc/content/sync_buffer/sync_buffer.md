@@ -1,253 +1,138 @@
-# Sync Buffer Scaling Research
+# Sync buffer scaling benchmark — summary
 
 Issue: [#11090](https://github.com/msupply-foundation/open-msupply/issues/11090)
 
-## The problem
+Full test methodology: see [./bench/README.md](./bench/README.md).
+Raw results and charts: [results/results-basic-server-2/](./results/results-basic-server-2/).
 
-The `sync_buffer` table is designed to be an upsert-only log of all sync records
-received from remote sites. It never deletes records, and instead relies on the
-`integration_datetime` field to mark which records have been processed by sync.
-The concern is that the performance of both reads and writes will degrade as the
-table grows, especially for deployments with millions of records.
+## TL;DR
 
-## Approach
+**The hot working set for `sync_buffer` queries is bounded by the number of *pending* rows (rows with `integrated_datetime IS NULL`), not the total table size — as long as the plan only has to touch pending rows. A partial index alone gets you most of the way there, but query latency still creeps up as the table grows because heap fetches are scattered across a bigger and bigger table. LIST-partitioning on `(integrated_datetime IS NULL)` keeps the pending rows co-located in their own small partition, which holds query latency flat.**
 
-The sync buffer will be tested at scale with realistic data and workloads to
-understand the actual performance. We will benchmark both reads and writes
-across a range of table sizes from 1K to 30M rows, both with and without a
-partial index on unintegrated records. We will also evaluate LIST partitioning
-by integration status as a way to keep queries fast at scale, and measure
-the operational overhead of large tables.
+**Recommended strategy: keep `sync_buffer` append-only (insert per sync record, no upsert), using `cursor` as the primary key. `record_id` is no longer unique. The only in-place mutations are setting `integrated_datetime` and `integration_error` after a record is processed. Partition by `is_integrated` (boolean), and order queries by `cursor` (not `received_datetime`).**
 
-## Standard Benchmark Results
+## What was tested
 
-Setup: Table populated with 99% integrated records, 1% unintegrated. 10
-different table_names, 10 source_site_ids. Each record's `data` field contains a
-mock trans_line JSON payload.
+Four scenarios, inserting into `sync_buffer` up to ~75M rows. After each bench round, all pending rows are integrated except the newest 5M — so the pending partition always holds about 5M rows, while the done partition grows across the run. Each round measures insert throughput (10K-row batches), a filtered pending-rows query, and a bulk mark-integrated UPDATE.
 
-Benchmarks tested both **raw** and **in tx**.
+| Scenario | Partitioning | Index |
+| --- | --- | --- |
+| `basic` | none | partial index on `(table_name, operation_type, source_site_id, cursor DESC) WHERE integrated_datetime IS NULL` |
+| `partitioned-both-indexed` | LIST by `(integrated_datetime IS NULL)` | partial index on parent, propagates to both partitions |
+| `partitioned-pending-indexed-only` | LIST by `(integrated_datetime IS NULL)` | partial index on the pending partition only |
+| `partitioned-done-cursor-10m` | LIST by `(integrated_datetime IS NULL)`; done partition further sub-partitioned by `cursor` range (10M per sub-partition) | partial index on parent, propagates everywhere |
 
-> **Note**: These numbers are from the standalone Python script
-> (`bench_sync_buffer.py`), which sends raw SQL via psycopg2. Production uses
-> diesel, which adds ~20-30% overhead per statement for ORM row mapping, type
-> checking, and connection lock acquisition. Expect production numbers to be
-> proportionally slower.
+Schema (common columns):
 
-### Without Partial Index (existing indexes only)
+```sql
+cursor               BIGINT GENERATED ALWAYS AS IDENTITY,
+record_id            TEXT NOT NULL,
+received_datetime    TIMESTAMP NOT NULL,
+integrated_datetime  TIMESTAMP,
+integration_error    TEXT,
+table_name           TEXT NOT NULL,
+operation_type       TEXT NOT NULL,
+data                 TEXT NOT NULL,
+source_site_id       INTEGER NOT NULL
+```
 
-`Filter: action = 'UPSERT' AND table_name = 'transact' AND source_site_id = 1
-AND integration_datetime IS NULL.`
+Run on a single host (`server-2`): Windows Server 2025, Xeon Cascadelake, 3 logical cores, 24 GB RAM, OpenStack. See [results/results-basic-server-2/server_specs.json](./results/results-basic-server-2/server_specs.json).
 
-| Operation                     | 1K       | 10K      | 100K     | 1M       | 30M      |
-| ----------------------------- | -------- | -------- | -------- | -------- | -------- |
-| Upsert 1K new (raw)           | 135ms    | 131ms    | 146ms    | 147ms    | 166ms    |
-| Upsert 1K existing (raw)      | 79ms     | 79ms     | 86ms     | 86ms     | 97ms     |
-| Upsert 1K new (in tx)         | **60ms** | **60ms** | **64ms** | **77ms** | **84ms** |
-| Upsert 1K existing (in tx)    | **60ms** | **63ms** | **64ms** | **66ms** | **71ms** |
-| Query unintegrated (filtered) | <1ms     | <1ms     | <1ms     | <1ms     | 360ms    |
-| Query unintegrated (all)      | <1ms     | <1ms     | 2ms      | 25ms     | 600ms    |
-| Mark N integrated (raw)       | 1ms      | 5ms      | 46ms     | 498ms    | —        |
-| Mark N integrated (in tx)     | <1ms     | 3ms      | 33ms     | 381ms    | 11ms     |
-| Re-sync 100 (in tx)           | 7ms      | 8ms      | 8ms      | 9ms      | 10ms     |
+## Results
 
-### With Partial Index
+Approximate medians across the run (pending partition stable at ~5M, done partition growing to 60–70M).
 
-| Operation                     | 1K   | 10K  | 100K | 1M   | 30M     |
-| ----------------------------- | ---- | ---- | ---- | ---- | ------- |
-| Query unintegrated (filtered) | <1ms | <1ms | 1ms  | <1ms | **2ms** |
-| Upsert 1K new (in tx)         | 66ms | 75ms | 78ms | 78ms | 95ms    |
+| Scenario | Query latency @ 500K | Query latency @ ~60–75M | Insert rate | Bulk mark-integrated @ ~60–75M |
+| --- | --- | --- | --- | --- |
+| `basic` | 1.9 ms | **~76–96 ms** (still trending up) | ~35–50K rows/s | ~30–35 s |
+| `partitioned-both-indexed` | 1.1 ms | **~40–50 ms** (flat) | ~45–55K rows/s | ~12 s |
+| `partitioned-pending-indexed-only` | 1.1 ms | **~40–45 ms** (flat) | ~45–55K rows/s | ~15–16 s |
+| `partitioned-done-cursor-10m` | 1.1 ms | **~40–50 ms** (flat) | ~45–55K rows/s | ~12–16 s |
 
-## Analysis
+Charts: `scenario_<name>.png` per scenario and `combined_scenarios.png` in the results folder.
 
-### Reads Scale Well Up to 1M, Degrade at 30M
+### What the shapes tell us
 
-Filtered queries for unintegrated records remain constant from 1K to 1M (<1ms).
-At 30M, however, the filtered query degrades to ~360ms because it must scan the
-entire table to find the 300K unintegrated rows. The "Query unintegrated (all)"
-results show the cost of deserializing large result sets: ~600ms for 300K rows at
-30M table size.
+- **`basic` query latency creeps up.** The partial index itself stays small (~5M entries — one per pending row), so the index scan is cheap. The slow part is the heap fetches: pending rows are interleaved with integrated rows across the whole 60M+ heap, so each row read is likely a different page. The bigger the table, the more scattered those pages are, and the more misses in cache. This is subtle — a partial index *looks* like it should be equivalent to partitioning for this workload, but it isn't.
+- **All three partitioned variants are flat.** The pending partition is its own physical table. Its heap contains only pending rows, and with ~5M of them they stay dense and cache-friendly. Partition pruning at plan time ensures the done partition is never touched by the query. Total table size stops mattering.
+- **Done-side sub-partitioning (`partitioned-done-cursor-10m`) didn't measurably help.** For the bench query it's irrelevant — partition pruning already excludes the done side. It would matter for operations that do scan the done partition (reintegration, archival), but those weren't the bottleneck here.
+- **Bulk mark-integrated is ~2–3× faster under partitioning** (12–16 s vs 30–35 s) because finding the pending rows to update is a partition scan rather than an index-driven scan across a 60M+ heap.
 
-### Writes Remain Stable
+### Indexes don't grow unbounded for the queries we care about
 
-Benchmarks test both raw and in-transaction.
+The thing to check before recommending "let the table grow forever" was whether the indexes supporting our hot queries grow without bound. They don't:
 
-|            | Raw   | In transaction         |
-| ---------- | ----- | ---------------------- |
-| 1K table   | 135ms | **60ms** (2.3x faster) |
-| 10K table  | 131ms | **60ms** (2.2x faster) |
-| 100K table | 146ms | **64ms** (2.3x faster) |
-| 1M table   | 147ms | **77ms** (1.9x faster) |
-| 30M table  | 169ms | **83ms** (2.0x faster) |
+- The partial index in `basic` is bounded by *pending* rows, which is stable at the target pending size (5M in the bench, whatever the deployment's steady-state is in practice).
+- Under partitioning, the pending partition's indexes are likewise bounded by pending size.
+- The PK on `cursor` (a monotonically increasing bigint) grows linearly with total rows, but inserts concentrate at the end of the index, so that growth doesn't hurt insert speed (same reasoning as the `pk_only` scenario in the [changelog bench](../changelog/results/bench_summary.md)).
 
-Transaction wrapping provides a consistent ~2x improvement across all sizes.
+So the storage-side concern is not "will indexes get pathologically slow", it's just "will total on-disk size be manageable" — a capacity/retention question, not a performance one.
 
-### Partial Index Required at 30M
+## Recommendation
 
-At 1M and below, the partial index showed no significant improvement. Filtered
-queries are already sub-millisecond. **At 30M, the difference is dramatic:**
-~360ms without → **2ms** with the partial index (~180x improvement).
+### Append-only, `cursor` as primary key
 
-## Operational Overhead at 30M Rows
+Every sync record received is a fresh INSERT. `record_id` is not unique — if the same record arrives again, another row is added. `cursor` (BIGINT auto-increment) is the primary key. The only in-place mutations on sync_buffer are:
 
-Beyond query/write performance, large tables impose operational costs. Here are
-measurements from the 30M test database:
+- Setting `integrated_datetime` when the row is successfully (or unsuccessfully) integrated.
+- Setting `integration_error` if integration failed.
 
-### Storage Breakdown
+Why append-only:
 
-_Measured with ~1.2 KB invoice-line JSON payloads at 30M rows._
+- Upserts on `record_id` under partitioning need a CTE delete-then-insert to keep uniqueness across partitions, which is ~20–30% slower on write. Append-only avoids that penalty entirely.
+- It preserves full sync history for free — every version of every record that was ever received is there, which is useful for diagnostics and for re-integrating fields after remote-site upgrades (see [Historic records](../v7.md#historic-records) in the v7 spec).
+- Keeps the write path lean: no lookup, no conflict resolution, no delete.
 
-| Component                                                                   | Size     | Notes                                                             |
-| --------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------- |
-| Table data (heap)                                                           | 38 GB    | ~1.3 KB/row average                                               |
-| Primary key index (`record_id` TEXT)                                        | 1,551 MB | 4% of data size — TEXT PKs are expensive                          |
-| Combined index `(action, table_name, integration_datetime, source_site_id)` | 189 MB   | Covers all hot-path queries when single-column indexes are absent |
-| `index_sync_buffer_action`                                                  | 184 MB   | Redundant — combined index leads with `action`                    |
-| `index_sync_buffer_integration_error`                                       | 184 MB   | Only used by one-time migration reintegration queries             |
-| `index_sync_buffer_integration_datetime`                                    | 184 MB   | Overlaps with combined index (3rd column)                         |
-| **All indexes total**                                                       | 2,293 MB | 6% of total relation size                                         |
-| **Total (data + indexes)**                                                  | 40 GB    | ~40 GB for 30M rows                                               |
+The cost is that reads need to pick the latest entry per `record_id`. That's fine because:
 
-**Key finding**: The heap dominates storage at 38 GB — indexes are only 6% of
-the total. Three of the five indexes (`action`, `integration_error`,
-`integration_datetime`) are redundant with the combined index. When all indexes
-are present, the planner _does_ use the single-column indexes — e.g.
-`integration_datetime` for the hot path (because `IS NULL` is highly selective
-at 1% of rows) and `action` for `DELETE`/`MERGE` queries (because those enum
-values match 0 rows). However, after dropping them and running `ANALYZE`, the
-combined index handles all queries with sub-ms read performance, while **upserts
-improve by ~42%** (22ms vs 38ms for 1K upserts at 1M rows) due to fewer indexes
-to maintain. Removing the three redundant indexes would:
+- The hot path (integration) iterates by `cursor` in order, not by `record_id`, so it naturally sees the latest version last.
+- Debugging / re-integration queries can use a `DISTINCT ON (record_id) ... ORDER BY cursor DESC` pattern.
 
-- Save ~552 MB disk
-- **Speed up upserts ~42%** (fewer indexes to maintain per write)
-- Reduce WAL generation per write
-
-### Operational Notes
-
-- **VACUUM**: Autovacuum handles the workload well — dead tuple ratio stays very
-  low (~0.01% on 30M rows). ANALYZE takes ~3.5s on 30M rows.
-- **WAL**: 1K upserts with ~1.2 KB payloads generate ~1.7 MB of WAL.
-- **TOAST**: The ~1.2 KB test payloads don't trigger TOAST (threshold is ~2 KB).
-  Production payloads larger than 2 KB will be automatically TOASTed, which
-  would reduce heap size but add indirection for reads.
-
-## Approaches Evaluated
-
-| Approach                           | Recommendation                        | Rationale                                                                                                                                                                                                                                                                                                                                                                |
-| ---------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Archive table**                  | Not needed up to 1M+                  | Reads and writes scale well up to 1M.                                                                                                                                                                                                                                                                                                                                    |
-| **LIST partition (is_integrated)** | **Recommended for scale**             | Native PG partitioning with `is_integrated BOOLEAN`. Upserts ~30% slower due to CTE delete-then-insert for cross-partition correctness, if we are okay with having duplicate entries, then ignore upsert comment, but queries are dramatically faster at scale (0.4ms vs 360ms at 30M). PG 11+ handles cross-partition row movement automatically. See benchmarks below. |
-| **Periodic deletion**              | Not recommended                       | Destroys data needed for debugging and migration re-integration.                                                                                                                                                                                                                                                                                                         |
-| **Drop redundant indexes**         | **Recommended**                       | Three single-column indexes are redundant with the combined index. The planner does use them when present, but the combined index covers all queries after `ANALYZE`. Dropping them improves upsert throughput ~42% and saves ~552 MB at 30M.                                                                                                                            |
-| **Partial index**                  | **Recommended** (if not partitioning) | Low cost, improves cold-cache queries at scale. Not needed if using LIST partitioning since the pending partition is inherently small.                                                                                                                                                                                                                                   |
-
-## Partitioning by Integration Status
-
-### Recommended approach: `is_integrated BOOLEAN` partition key
-
-Native PostgreSQL LIST partitioning using an `is_integrated BOOLEAN` column as the partition key. The PK becomes `(record_id, is_integrated)`. PostgreSQL requires the partition key in any unique constraint, just like any partitioned table:
+### Partition by `is_integrated` (boolean)
 
 ```sql
 CREATE TABLE sync_buffer (
+    cursor               BIGINT GENERATED ALWAYS AS IDENTITY,
     record_id            TEXT NOT NULL,
     received_datetime    TIMESTAMP NOT NULL,
     is_integrated        BOOLEAN NOT NULL DEFAULT FALSE,
-    integration_datetime TIMESTAMP,
+    integrated_datetime  TIMESTAMP,
     integration_error    TEXT,
     table_name           TEXT NOT NULL,
-    action               sync_action NOT NULL,
+    operation_type       TEXT NOT NULL,
     data                 TEXT NOT NULL,
-    source_site_id       INTEGER,
-    PRIMARY KEY (record_id, is_integrated)
+    source_site_id       INTEGER NOT NULL,
+    PRIMARY KEY (cursor, is_integrated)
 ) PARTITION BY LIST (is_integrated);
 
 CREATE TABLE sync_buffer_pending PARTITION OF sync_buffer FOR VALUES IN (FALSE);
 CREATE TABLE sync_buffer_done    PARTITION OF sync_buffer FOR VALUES IN (TRUE);
+
+CREATE INDEX idx_sb_pending_query ON sync_buffer
+    (table_name, operation_type, source_site_id, cursor DESC)
+    WHERE is_integrated = FALSE;
 ```
 
-**How it works:**
+- New rows are inserted with `is_integrated = FALSE` → pending partition.
+- Marking integrated is `UPDATE SET is_integrated = TRUE, integrated_datetime = NOW()` — PG 11+ moves the row across partitions automatically.
+- Integration workers read from the pending partition, ordered by `cursor` ascending (see below).
+- Partition key is a BOOLEAN (not nullable, 1 byte) because PG doesn't allow nullable columns in PKs, so `integrated_datetime IS NULL` can't be used directly.
 
-- New records are inserted with `is_integrated = FALSE` → routed to `sync_buffer_pending`
-- Mark integrated: `UPDATE SET is_integrated = TRUE, integration_datetime = NOW()` → PostgreSQL 11+ **automatically moves the row** from `pending` to `done` (cross-partition row movement)
-- Re-sync: `UPDATE SET is_integrated = FALSE, integration_datetime = NULL, data = ...` → automatically moves back from `done` to `pending`
-- Queries for unintegrated records use `WHERE is_integrated = FALSE` → PostgreSQL prunes to the `pending` partition only
-- Upserts for new records: `INSERT ... ON CONFLICT (record_id, is_integrated) DO UPDATE` works within the pending partition
-- _(NOTE: This isn't a valid statement anymore if we want all history of sync
-  i.e. inserts of every instance of a record instead of upserting)_ Upserts for already-integrated records: A CTE deletes the integrated
-  row before inserting the pending replacement, since the conflict key
-  `(record_id, is_integrated)` won't match across partitions:
+### Order by `cursor`, not `received_datetime`
 
-```sql
-WITH moved AS (
-    DELETE FROM sync_buffer
-    WHERE record_id = $1 AND is_integrated = TRUE
-    RETURNING record_id
-)
-INSERT INTO sync_buffer (record_id, ..., is_integrated, ...)
-VALUES ($1, ..., FALSE, ...)
-ON CONFLICT (record_id, is_integrated) DO UPDATE SET ...;
-```
+- `cursor` is the PK, strictly monotonically increasing, and cheap to scan in order.
+- `received_datetime` depends on wall-clock time and can go backwards if the system clock moves; it also requires its own index to be useful for ordering.
+- For the integration hot path ("give me the next batch of pending rows in order"), `ORDER BY cursor` uses the PK directly and matches the insertion order closely enough for all practical purposes.
 
-**Why `is_integrated BOOLEAN` instead of `integration_datetime IS NULL`:**
+### Notes
 
-- `integration_datetime` is nullable, and PostgreSQL does not allow nullable columns in primary keys — so it cannot be used as a partition key in a composite PK
-- A `BOOLEAN` column is non-nullable, small (1 byte), and maps directly to the two partitions
+- Index choices for the pending partition can stay the same as today's design. The done partition doesn't need secondary indexes for the hot path, since queries filter on `is_integrated = FALSE` and prune it.
+- Done-side cursor sub-partitioning was tested and didn't help the measured workload. It's worth revisiting only if we add an operation that scans across the done partition (e.g. reintegration sweeps, archival drops).
+- Cross-partition foreign keys to `sync_buffer` are restricted in PG and awkward in diesel — same consideration as the changelog partitioning plan.
+- Storage is dominated by the `data` JSON payload (~1.3 KB/row in prior measurements at ~1.2 KB payloads). Indexes are a small fraction of total size. If storage becomes a retention problem, the fix is dropping / archiving old done sub-partitions as whole tables, not deleting rows.
 
-### Benchmark: Partitioned vs Standard
+## Conclusion
 
-Three variants are compared:
+At scale, query latency against `sync_buffer` only stays flat if the plan can isolate pending rows to a small, dense region of the table. A partial index alone is not enough — it keeps index size bounded but leaves heap fetches scattered. LIST-partitioning on `is_integrated` gives us that isolation and holds query latency flat across the full 75M-row run, with no measurable downside to inserts.
 
-- **standard** — current single-table design
-- **partitioned** — LIST-partitioned with CTE delete-then-insert to guarantee uniqueness by `record_id` across partitions
-- **partitioned-naive** — LIST-partitioned with plain `INSERT ... ON CONFLICT (record_id, is_integrated)`. Cheaper, but the same `record_id` can exist in both pending and done partitions.
-
-At 1M rows (10K pending, 990K integrated):
-
-| Operation                     | standard | partitioned | partitioned-naive |
-| ----------------------------- | -------- | ----------- | ----------------- |
-| Upsert 1K new (in tx)         | 79ms     | 92ms        | **74ms**          |
-| Upsert 1K existing (in tx)    | 65ms     | 90ms        | **64ms**          |
-| Upsert 100 integrated         | 22ms     | 22ms        | **11ms**          |
-| Query unintegrated (filtered) | 3.7ms    | **0.14ms**  | 0.2ms             |
-| Query all unintegrated        | 23ms     | 25ms        | **20ms**          |
-| Mark 100 integrated (in tx)   | 9ms      | 7ms         | **6ms**           |
-| Re-sync 100 (in tx)           | 10ms     | 10ms        | **7ms**           |
-
-At 30M rows (300K pending, 29.7M integrated):
-
-| Operation                     | standard | partitioned | partitioned-naive |
-| ----------------------------- | -------- | ----------- | ----------------- |
-| Upsert 1K new (in tx)         | **99ms** | 114ms       | 100ms             |
-| Upsert 1K existing (in tx)    | 92ms     | 97ms        | 94ms              |
-| Upsert 100 integrated         | 54ms     | 53ms        | **11ms**          |
-| Query unintegrated (filtered) | 375ms    | **0.7ms**   | 1.4ms             |
-| Query all unintegrated        | 736ms    | 748ms       | **544ms**         |
-| Mark 100 integrated (in tx)   | **12ms** | **11ms**    | 72ms              |
-| Re-sync 100 (in tx)           | **12ms** | 14ms        | 15ms              |
-
-### Analysis
-
-**Keeping one record in the between partitions is ~20-30% slower** due to the CTE delete-then-insert. The extra DELETE is a no-op for pending rows but must still be executed (114ms vs 99ms for new rows at 30M).
-
-**Naive partitioned upserts match standard on writes** (no CTE overhead) while gaining partition-pruned queries. Trade-off: duplicate `record_id`s accumulate across partitions — acceptable if we want full sync history, a problem if upsert semantics are required. `upsert_100_integrated` is ~5x faster (11ms vs 54ms at 30M) because the naive path doesn't scan the done partition to delete.
-
-**Query performance is the major win for both partitioned variants**: filtered queries are 0.7-1.4ms vs 375ms (standard) at 30M — a **~270-530x improvement** via partition pruning.
-
-**Mark-integrated is slow for naive at 30M** (72ms vs 12ms): `UPDATE SET is_integrated = TRUE` triggers cross-partition row movement that can collide with existing duplicates in the done partition.
-
-### Schema changes required
-
-1. Add `is_integrated BOOLEAN NOT NULL DEFAULT FALSE` column
-2. Change PK from `(record_id)` to `(record_id, is_integrated)`
-3. Convert to partitioned table with two partitions
-4. Update mark-integrated to `UPDATE SET is_integrated = TRUE`
-5. Update queries to filter on `is_integrated = FALSE` instead of
-   `integration_datetime IS NULL`
-
-### Drawbacks of partitioning
-
-- **Queries must include the partition key to benefit from pruning.** This is already handled for the current `is_integrated` key. However, any future change to the partition key requires reviewing every query on `sync_buffer`, queries that don't filter on the new key will scan all partitions, and lookups by non-partition-key columns (e.g. `record_id` alone) will need to probe every partition instead of one.
-- **Every schema change must be applied to every partition.** Adding a column, index, or constraint on the parent table propagates to children in PG 11+, but partition-specific indexes (e.g. `idx_pt_pending_combined`) must be managed explicitly.
-- **Uneven partition sizes.** The split is 1% pending / 99% done, which is the whole point for reads. But the `done` partition grows unbounded. The same storage-growth concern as the current single-table design, just scoped to one partition. No rebalancing is needed since the split is by boolean.
-- **Foreign keys referencing the partitioned table are restricted.** PG supports this from 12+, but some tooling and ORMs (including diesel) may need workarounds.
-- **Operational tooling.** Backups, VACUUM, and monitoring all need to handle multiple relations per logical table. Most tools handle this, but it's extra surface area.
+Combined with the append-only design (cursor-PK, no upsert on `record_id`, mutations only for `integrated_datetime` / `integration_error`), this gives us a write path that's lean, a hot-read path that doesn't degrade with history size, and full historic sync data to work with for diagnostics and upgrades.

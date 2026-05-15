@@ -278,6 +278,11 @@ export type PreferencesQuery = {
       maxAge: number;
       minItems: number;
     };
+    backdating: {
+      __typename: 'BackdatingNode';
+      enabled: boolean;
+      maxDays: number;
+    };
   };
 };
 
@@ -538,6 +543,10 @@ export const PreferencesDocument = gql`
       showIndicativePriceInRequisitions
       isGaps
       globalTableConfigs
+      backdating {
+        enabled
+        maxDays
+      }
     }
   }
 `;

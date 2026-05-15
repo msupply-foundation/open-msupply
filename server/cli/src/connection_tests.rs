@@ -3,7 +3,6 @@ use async_trait::async_trait;
 use log::info;
 use repository::{get_storage_connection_manager, migrations::Version};
 use reqwest::{Client, Url};
-use serde::{Deserialize, Serialize};
 use server::configuration;
 use service::{
     apis::login_v4::{LoginApiV4, LoginInputV4, LoginUserTypeV4},
@@ -13,7 +12,6 @@ use service::{
     settings::is_develop,
     sync::{
         api::{SyncApiSettings, SyncApiV5},
-        api_v6::SyncApiV6,
         settings::SyncSettings,
     },
 };
@@ -211,71 +209,6 @@ impl Test for SyncTest {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct SiteInfoV5 {
-    #[serde(rename = "omSupplyCentralServerUrl")]
-    pub central_server_url: String,
-    #[serde(rename = "isOmSupplyCentralServer")]
-    pub is_central_server: bool,
-}
-
-pub struct SyncV6Test;
-
-#[async_trait]
-impl Test for SyncV6Test {
-    fn name(&self) -> &str {
-        "Sync V6"
-    }
-
-    async fn run(&self, test_data: &mut TestData) -> Result<String> {
-        let sync_v5 = test_data
-            .sync_api_v5
-            .as_ref()
-            .ok_or(anyhow!("No sync API V5"))?;
-
-        let url = sync_v5
-            .url
-            .join("/sync/v5/site")
-            .map_err(|err| anyhow!("Failed to join URL: {err:?}"))?;
-
-        let config = test_data
-            .server_config
-            .as_ref()
-            .ok_or(anyhow!("No config loaded"))?;
-
-        let v5_settings = get_sync_settings(config)?;
-
-        let response = Client::new()
-            .get(url.clone())
-            .header("msupply-site-uuid", &sync_v5.settings.site_uuid)
-            .header("app-version", &sync_v5.settings.app_version)
-            .header("app-name", &sync_v5.settings.app_name)
-            .header("version", &sync_v5.settings.sync_version)
-            .basic_auth(&v5_settings.username, Some(&v5_settings.password_sha256))
-            .send()
-            .await
-            .map_err(|err| anyhow!("Failed to send request: {err:?}"))?;
-
-        let info_v5: SiteInfoV5 = response
-            .json()
-            .await
-            .map_err(|err| anyhow!("Failed to parse response: {err:?}"))?;
-
-        let v6_url = Url::parse(&info_v5.central_server_url)
-            .map_err(|err| anyhow!("Failed to parse URL: {err:?}"))?;
-
-        let sync_v6 = SyncApiV6::new(v6_url.as_str(), &sync_v5.settings, 1)
-            .map_err(|err| anyhow!("Failed to create sync API V6: {err:?}"))?;
-
-        let _status = sync_v6
-            .get_site_status()
-            .await
-            .map_err(|err| anyhow!("Failed to get site status from sync API V6: {err:?}"))?;
-
-        Ok("Successfully connected to sync server V6".to_string())
-    }
-}
-
 pub struct MailConnectionTest;
 
 #[async_trait]
@@ -312,7 +245,6 @@ pub fn all_tests() -> Vec<Box<dyn Test + Send>> {
         Box::new(DatabaseTest),
         Box::new(LoginTest),
         Box::new(SyncTest),
-        Box::new(SyncV6Test),
         Box::new(MailConnectionTest),
     ]
 }

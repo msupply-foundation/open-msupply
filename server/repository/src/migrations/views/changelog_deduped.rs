@@ -33,7 +33,9 @@ impl ViewMigrationFragment for ViewMigration {
         name_link.name_id,
         c.store_id,
         c.is_sync_update,
-        c.source_site_id
+        c.source_site_id,
+        c.transfer_store_id,
+        c.patient_id
     FROM (
         SELECT record_id, store_id, MAX(cursor) AS max_cursor
         FROM changelog

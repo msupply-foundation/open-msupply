@@ -182,7 +182,7 @@ export const RelatedDocumentsSection: FC<RelatedDocumentsSectionProps> = ({
 
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
-      <Grid direction="column" gap={0.5}>
+      <Grid container direction="column" gap={0.5}>
         {!shipments?.totalCount && (
           <PanelLabel>{t('messages.no-shipments-yet')}</PanelLabel>
         )}

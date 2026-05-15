@@ -34,7 +34,7 @@ sha2 = "0.10.9"
 simple-log = { version = "=2.4.0" }
 strum = { version = "0.28.0", features = ["derive"] }
 thiserror = "2.0.18"
-tokio = { version = "1.50.0", features = ["macros", "process"] }
+tokio = { version = "1.50.0", features = ["macros", "process", "sync"] }
 # dev dependencies used in graphql crates:
 anyhow = "1.0.102"
 actix-rt = "2.10.0"

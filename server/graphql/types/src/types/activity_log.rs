@@ -111,6 +111,7 @@ pub enum ActivityLogNodeType {
     // Patients
     PatientCreated,
     PatientUpdated,
+    InvoiceDateBackdated,
 }
 
 #[Object]

@@ -3,10 +3,12 @@ use crate::invoice::{
     check_status_change, check_store, common::check_can_issue_in_foreign_currency,
     inbound_shipment::UpdateInboundShipmentStatus, InvoiceRowStatusError,
 };
+use crate::preference::{preferences::Backdating, Preference};
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
-use chrono::{NaiveDateTime, Utc};
+use chrono::{Duration, Utc};
 use repository::{
-    InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRow, InvoiceType, Name, StorageConnection,
+    InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRow, InvoiceStatus, InvoiceType, Name,
+    StorageConnection,
 };
 
 use super::{super::InboundShipmentType, UpdateInboundShipment, UpdateInboundShipmentError};
@@ -63,22 +65,34 @@ pub fn validate(
         }
     }
 
-    // Delivered datetime is only editable for external inbound shipments (those created from a
-    // purchase order). It must not be in the future and must not be after the received datetime,
-    // as the goods can't have been delivered after they were received.
-    if let Some(delivered_datetime) = patch.delivered_datetime {
-        if invoice.purchase_order_id.is_none() {
-            return Err(CanOnlyChangeDateOfExternalInboundShipments);
+    // Received datetime can only be backdated (moved earlier) on shipments that are already
+    // in Received or Verified status. Once moved back it cannot be moved forward again.
+    if let Some(received_datetime) = patch.received_datetime {
+        let backdating = Backdating.load(connection, None)?;
+        if !backdating.enabled {
+            return Err(BackdatingNotEnabled);
         }
 
-        let delivered_datetime = NaiveDateTime::from(delivered_datetime);
-        if delivered_datetime > Utc::now().naive_utc() {
-            return Err(CannotSetDeliveredDateInFuture);
+        // Must already be received
+        if !matches!(
+            invoice.status,
+            InvoiceStatus::Received | InvoiceStatus::Verified
+        ) {
+            return Err(CanOnlyBackdateReceivedShipments);
         }
 
-        if let Some(received_datetime) = invoice.received_datetime {
-            if delivered_datetime > received_datetime {
-                return Err(CannotPutDeliveredDateAfterReceivedDate);
+        // Can only move the date earlier, never forward
+        if let Some(current_received) = invoice.received_datetime {
+            if received_datetime.naive_utc() >= current_received {
+                return Err(CannotMoveReceivedDateForward);
+            }
+        }
+
+        // Check maximum backdating days preference
+        if backdating.max_days > 0 {
+            let earliest_allowed = Utc::now() - Duration::days(backdating.max_days as i64);
+            if received_datetime < earliest_allowed {
+                return Err(ExceedsMaximumBackdatingDays);
             }
         }
     }

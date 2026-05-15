@@ -126,6 +126,7 @@ impl<'a> StocktakeLineRowRepository<'a> {
             row_action: action,
             store_id: Some(stocktake.store_id.clone()),
             name_id: None,
+            ..Default::default()
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

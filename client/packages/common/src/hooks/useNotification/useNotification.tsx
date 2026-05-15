@@ -20,6 +20,7 @@ export const useNotification = (): NotificationHook => {
   const action = (key: SnackbarKey) => (
     <IconButton
       size="small"
+      sx={{ marginInlineStart: 2 }}
       onClick={() => {
         closeSnackbar(key);
       }}

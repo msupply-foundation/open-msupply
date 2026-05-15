@@ -109,7 +109,6 @@ mod tests {
     use crate::{
         migrations::{v2_16_00::V2_16_00, v2_17_00::V2_17_00},
         test_db::*,
-        ChangelogTableName,
     };
     use diesel::{sql_query, ExpressionMethods, QueryDsl, RunQueryDsl};
     use util::uuid::uuid;
@@ -289,8 +288,10 @@ mod tests {
             .unwrap();
         assert_eq!(remaining_frontend_plugin_count, 0);
 
+        // table_name filter omitted: at this migration level Postgres still uses the
+        // changelog_table_name enum, but Rust code now sends TEXT (diesel_string_enum).
+        // record_id alone is sufficient to verify the rows were deleted.
         let backend_plugin_changelog_count_after: i64 = changelog::changelog::table
-            .filter(changelog::changelog::table_name.eq(ChangelogTableName::BackendPlugin))
             .filter(changelog::changelog::record_id.eq("forecasting_plugin_id"))
             .count()
             .get_result(connection.lock().connection())
@@ -298,7 +299,6 @@ mod tests {
         assert_eq!(backend_plugin_changelog_count_after, 0);
 
         let frontend_plugin_changelog_count_after: i64 = changelog::changelog::table
-            .filter(changelog::changelog::table_name.eq(ChangelogTableName::FrontendPlugin))
             .filter(changelog::changelog::record_id.eq("forecasting_frontend_plugin_id"))
             .count()
             .get_result(connection.lock().connection())

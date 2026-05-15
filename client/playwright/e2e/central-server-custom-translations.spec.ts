@@ -1,7 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
-import { login } from '../helpers/login';
 
 // Note: right now this test primarily just takes screenshots, it doesn't correctly test functionality...
 
@@ -28,7 +27,6 @@ async function dismissDialogs(page: Page) {
 
 test.describe('Translation Import/Export', () => {
   test.beforeEach(async ({ page }) => {
-    await login(page);
     await navigateToPreferences(page);
     await dismissDialogs(page);
   });

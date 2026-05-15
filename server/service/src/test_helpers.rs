@@ -12,10 +12,8 @@ use crate::{
     processors::Processors,
     service_provider::{ServiceContext, ServiceProvider},
     settings::{DiscoveryMode, MailSettings, ServerSettings, Settings},
-    sync::{
-        file_sync_driver::FileSyncDriver,
-        synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
-    },
+    subscription::SubscriptionTriggerHandle,
+    sync::synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
 };
 
 pub(crate) struct ServiceTestContext {
@@ -63,8 +61,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         }),
         features: None,
     };
-    let (file_sync_trigger, _) = FileSyncDriver::init(&settings);
-    let (sync_trigger, _) = SynchroniserDriver::init(file_sync_trigger);
+    let (sync_trigger, _) = SynchroniserDriver::init();
     let (ledger_fix_trigger, _) = LedgerFixDriver::init();
     let (site_is_initialise_trigger, _) = SiteIsInitialisedCallback::init();
 
@@ -75,6 +72,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         ledger_fix_trigger,
         site_is_initialise_trigger,
         settings.mail.clone(),
+        SubscriptionTriggerHandle::new_void(),
     ));
 
     let processors_task = processors.spawn(service_provider.clone());

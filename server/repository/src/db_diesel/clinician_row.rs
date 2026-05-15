@@ -112,6 +112,7 @@ impl<'a> ClinicianRowRepository<'a> {
             row_action: action,
             store_id: None,
             name_id: None,
+            ..Default::default()
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

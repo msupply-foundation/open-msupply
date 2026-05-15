@@ -15,7 +15,10 @@ export type StockListParams = {
   filterBy?: StockLineFilterInput;
 };
 
-export const useStockList = (queryParams: StockListParams) => {
+export const useStockList = (
+  queryParams: StockListParams,
+  options?: { enabled?: boolean }
+) => {
   const { stockApi, storeId } = useStockGraphQL();
 
   const {
@@ -55,6 +58,7 @@ export const useStockList = (queryParams: StockListParams) => {
     queryFn,
 
     keepPreviousData: true,
+    enabled: options?.enabled,
   });
   return query;
 };

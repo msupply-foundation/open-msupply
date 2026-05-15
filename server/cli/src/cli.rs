@@ -1,9 +1,8 @@
 use anyhow::anyhow;
-use async_graphql::EmptySubscription;
 use chrono::Utc;
 use clap::{ArgAction, Parser};
 use colored::Colorize;
-use graphql::{Mutations, OperationalSchema, Queries};
+use graphql::{Mutations, OperationalSchema, Queries, Subscriptions};
 use log::info;
 
 use report_builder::{
@@ -26,7 +25,7 @@ use service::{
     settings::Settings,
     standard_reports::{ReportData, ReportsData, StandardReports},
     sync::{
-        file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_buffer::SyncBufferSource,
+        settings::SyncSettings, sync_buffer::SyncBufferSource,
         sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
         synchroniser_driver::SynchroniserDriver,
     },
@@ -291,9 +290,7 @@ async fn initialise_from_central(
         .settings
         .update_sync_settings(&service_context, &sync_settings)?;
 
-    // file_sync_trigger is not used here, but easier to just create it rather than making file sync trigger optional
-    let (file_sync_trigger, _file_sync_driver) = FileSyncDriver::init(&settings);
-    let (_, sync_driver) = SynchroniserDriver::init(file_sync_trigger);
+    let (_, sync_driver) = SynchroniserDriver::init();
     sync_driver.sync(service_provider.clone(), None).await;
 
     info!("Syncing users");
@@ -334,7 +331,7 @@ async fn main() -> anyhow::Result<()> {
         Action::ExportGraphqlSchema { path } => {
             info!("Exporting graphql schema");
             let schema =
-                OperationalSchema::build(Queries::new(), Mutations::new(), EmptySubscription)
+                OperationalSchema::build(Queries::new(), Mutations::new(), Subscriptions::default())
                     .finish();
             fs::write(
                 path.unwrap_or(PathBuf::from("schema.graphql")),

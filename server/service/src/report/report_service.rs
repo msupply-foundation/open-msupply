@@ -176,22 +176,28 @@ pub trait ReportServiceTrait: Sync + Send {
             report_data,
             arguments,
             localisations,
-            current_language,
+            current_language.clone(),
         )?;
 
         match format {
-            Some(PrintFormat::Html) => {
-                generate_html_report_to_html(base_dir, document, report.name.clone())
-            }
+            Some(PrintFormat::Html) => generate_html_report_to_html(
+                base_dir,
+                document,
+                report.name.clone(),
+                &current_language,
+            ),
             Some(PrintFormat::Excel) => export_html_report_to_excel(
                 base_dir,
                 document,
                 report.name.clone(),
                 &report.excel_template_buffer,
             ),
-            Some(PrintFormat::Pdf) | None => {
-                generate_html_report_to_pdf(base_dir, document, report.name.clone())
-            }
+            Some(PrintFormat::Pdf) | None => generate_html_report_to_pdf(
+                base_dir,
+                document,
+                report.name.clone(),
+                &current_language,
+            ),
         }
     }
 
@@ -237,10 +243,11 @@ fn generate_html_report_to_pdf(
     base_dir: &str,
     document: GeneratedReport,
     report_name: String,
+    language: &Option<String>,
 ) -> Result<String, ReportError> {
     let id = uuid();
     // TODO use a proper tmp dir here instead of base_dir?
-    let pdf = html_to_pdf(base_dir, &format_html_document(document), &id)
+    let pdf = html_to_pdf(base_dir, &format_html_document(document, language), &id)
         .map_err(|err| ReportError::HTMLToPDFError(format!("{err}")))?;
 
     let file_service = StaticFileService::new(base_dir)
@@ -261,6 +268,7 @@ fn generate_html_report_to_html(
     base_dir: &str,
     document: GeneratedReport,
     report_name: String,
+    language: &Option<String>,
 ) -> Result<String, ReportError> {
     let file_service = StaticFileService::new(base_dir)
         .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
@@ -269,20 +277,40 @@ fn generate_html_report_to_html(
         .store_file(
             &format!("{}_{}.html", now.format("%Y%m%d_%H%M%S"), report_name),
             StaticFileCategory::Temporary,
-            format_html_document(document).as_bytes(),
+            format_html_document(document, language).as_bytes(),
         )
         .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
     Ok(file.id)
 }
 
+const RTL_LOCALES: &[&str] = &["ar", "prs", "ps"];
+
+fn is_rtl_locale(language: &Option<String>) -> bool {
+    language
+        .as_ref()
+        .map(|lang| RTL_LOCALES.contains(&lang.as_str()))
+        .unwrap_or(false)
+}
+
 /// Puts the document content, header and footer into a <html> template.
 /// This assumes that the document contains the html body.
-fn format_html_document(document: GeneratedReport) -> String {
+fn format_html_document(document: GeneratedReport, language: &Option<String>) -> String {
+    let dir = if is_rtl_locale(language) {
+        "rtl"
+    } else {
+        "ltr"
+    };
     // ensure that <html> is at the start of the text
     // if not, the cordova printer plugin renders as text not HTML!
     // The table structure is a formatting hack to show the footer on every page
+    let rtl_style = if dir == "rtl" {
+        "<style>body, table, th, td { direction: rtl; }</style>"
+    } else {
+        ""
+    };
     format!(
-        "<html>
+        "<html dir=\"{dir}\">
+    <head>{rtl_style}</head>
     <body>
         <table class=\"paging\">
             <thead>
@@ -589,6 +617,7 @@ fn generate_report(
     })?;
     // TODO: Validate if used and if needed
     context.insert("res", &report.resources);
+    context.insert("isRtl", &is_rtl_locale(&current_language));
 
     let mut tera = tera::Tera::default();
 
