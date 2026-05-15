@@ -437,6 +437,13 @@ impl ChangelogFilter {
                     continue;
                 }
                 Remote => C::site_id::equal(site_id),
+                RemoteOwned => {
+                    // Central never has edits to push back — relay only during initialisation.
+                    if !is_initialising {
+                        continue;
+                    }
+                    C::site_id::equal(site_id)
+                }
                 Transfer => C::transfer_site_id::equal(site_id),
                 Patient => C::patient_site_id::equal(site_id),
             };
@@ -475,12 +482,13 @@ impl ChangelogFilter {
         use ChangeLogSyncStyle::*;
         use ChangelogCondition as C;
 
-        let remote_table_names = Remote.get_table_names_for_sync_style(None);
+        let mut store_scoped_table_names = Remote.get_table_names_for_sync_style(None);
+        store_scoped_table_names.extend(RemoteOwned.get_table_names_for_sync_style(None));
         let transfer_table_names = Transfer.get_table_names_for_sync_style(None);
 
         C::Or(vec![
             C::And(vec![
-                C::table_name::any(remote_table_names),
+                C::table_name::any(store_scoped_table_names),
                 C::store_id::equal(store_id.to_string()),
             ]),
             C::And(vec![
@@ -525,7 +533,7 @@ impl ChangelogFilter {
             }
 
             match sync_style {
-                ToLegacyCentralOnly | Remote | Transfer | Patient => {
+                ToLegacyCentralOnly | Remote | RemoteOwned | Transfer | Patient => {
                     inner_or_conditions.push(C::table_name::any(table_names))
                 }
                 Central | RemoteToCentral | File => continue,

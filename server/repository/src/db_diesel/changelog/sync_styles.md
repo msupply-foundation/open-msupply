@@ -25,17 +25,20 @@ Coexistence:
 
 ## 2. Sync styles — who is an eligible recipient
 
-A "sync style" classifies what a changelog row *means* in routing terms. A single table may have **more than one** style at once (e.g. an invoice is `Remote + Transfer + Patient`).
+A "sync style" classifies what a changelog row *means* in routing terms. A single table may have **more than one** style at once (e.g. an invoice is `RemoteOwned + Transfer + Patient`).
 
 | Sync style | Plain English | Recipient rule |
 |---|---|---|
 | **Central** | Authored centrally; everyone needs a copy. | Every site, but only when the changelog row carries no store and no patient (so hybrid tables don't double-deliver). |
-| **Remote** | Site-owned data. | The site that owns the store the record belongs to. |
+| **Remote** | Site-owned data that central may also edit. | The site that owns the store the record belongs to. |
+| **RemoteOwned** | Site-owned data that only the owning site can edit. | The site that owns the store. On the central → remote return path, only delivered when the site is initialising — outside initialisation, central never has edits to push back. |
 | **File** | Sync file references (the file blob is shipped separately). | Every site, when the row carries no store. |
 | **Transfer** | Cross-store record (requisitions, invoices). | The site that owns the *other* store referenced by the record. |
 | **Patient** | Patient-scoped record. | Every site that has the patient registered (via name-store-join). |
 | **ToLegacyCentralOnly** | Pushed up to legacy 4D central but never re-distributed. | None on remote pulls; only flows up to legacy. |
 | **RemoteToCentral** | Pushed up to OMS central but never sent back to remotes. | None — deliberately one-way so a re-init doesn't resurrect them. |
+
+The split between `Remote` and `RemoteOwned` is about write authority, not routing. Both styles use the same "owning site" predicate to pick a recipient. The difference shows up on the central → remote return path: for `Remote` tables central may legitimately have authored an edit on behalf of the site, so those rows are forwarded every cycle; for `RemoteOwned` tables central can't author edits, so the return path is suppressed except during initialisation (when the site needs a full snapshot to start from).
 
 ### Transport-flag per table
 
@@ -57,9 +60,15 @@ The classification below mirrors what's in the code. When a table appears in two
 
 ### Legacy, Remote
 
-`ActivityLog`, `Clinician`, `ClinicianStoreJoin`, `IndicatorValue`, `InsuranceProvider`, `Location`, `LocationMovement`, `NameInsuranceJoin`, `NameStoreJoin`, `PurchaseOrder`, `PurchaseOrderLine`, `Sensor`, `StockLine`, `Stocktake`, `StocktakeLine`, `TemperatureBreach`, `TemperatureLog`, `VVMStatusLog`
+`NameInsuranceJoin`, `NameStoreJoin`
 
-Site-owned data on the legacy transport. A remote pushes these up to legacy 4D central, which fans them back out via its own routing.
+Store-scoped tables that central legitimately edits — `NameStoreJoin` in particular is rewritten on central whenever a name's patient visibility changes. Because central authors edits, the return path is on every cycle (not just at initialisation).
+
+### Legacy, RemoteOwned
+
+`ActivityLog`, `Clinician`, `ClinicianStoreJoin`, `IndicatorValue`, `InsuranceProvider`, `Location`, `LocationMovement`, `PurchaseOrder`, `PurchaseOrderLine`, `Sensor`, `StockLine`, `Stocktake`, `StocktakeLine`, `TemperatureBreach`, `TemperatureLog`, `VVMStatusLog`
+
+Site-owned data on the legacy transport. A remote pushes these up to legacy 4D central, which fans them back out via its own routing. From the OMS central perspective there is nothing to send back, so the OMS-side return path is suppressed except at initialisation.
 
 ### Legacy, Remote + Central (hybrid)
 
@@ -67,17 +76,17 @@ Site-owned data on the legacy transport. A remote pushes these up to legacy 4D c
 
 Site-owned when the row carries a destination store, central-fanout when it doesn't. The changelog `store_id` is populated from the message's `to_store_id`, so the same routing rules as `PluginData` / `Preference` apply: with a destination store, only the owning site receives the message; without one, every site does. Used to ship cross-site instructions like name/item/clinician merges from OMS central down to v7 remotes (see translation notes in §7).
 
-### Legacy, Remote + Transfer
+### Legacy, RemoteOwned + Transfer
 
 `Requisition`, `RequisitionLine`
 
-Same as above, but the changelog also records a *transfer* store, so the row can also be routed to the counterpart store on the same site.
+Site-owned plus a transfer counterpart store. The changelog records the row's own store and a *transfer* store, so the row routes to the owning site (RemoteOwned) and to the counterpart site (Transfer).
 
-### Legacy, Remote + Transfer + Patient
+### Legacy, RemoteOwned + Transfer + Patient
 
 `Invoice`, `InvoiceLine`
 
-Adds patient routing on top of remote+transfer; an invoice also follows its patient through name-store-join.
+Adds patient routing on top of RemoteOwned+Transfer; an invoice also follows its patient (prescriptions only) through name-store-join.
 
 ### Legacy, Central
 
@@ -111,21 +120,21 @@ Authored on OMS central, fans out to every v6 site. A few of these (notably `Nam
 
 ### OMS-native, Remote
 
-`Asset`, `AssetInternalLocation`, `AssetLog`, `RnrForm`, `RnrFormLine`
+`Asset`, `AssetInternalLocation`
 
-Site-owned data on the OMS-native transport.
+Site-owned data that central may also edit, on the OMS-native transport.
+
+### OMS-native, RemoteOwned
+
+`AssetLog`, `RnrForm`, `RnrFormLine`
+
+Site-owned data on the OMS-native transport. Central does not author edits; the return path is suppressed except at initialisation.
 
 ### OMS-native, Remote + Patient
 
 `Encounter`, `Vaccination`
 
 Store-scoped clinical records that should also follow the patient. Each row carries the authoring store *and* the patient. The Remote clause delivers it to the owning site; the Patient clause delivers it to every other site that knows the patient. The Central clause never matches because `patient_link_id` is set.
-
-### OMS-native, Patient
-
-`Document`
-
-Pure patient-scoped data. The changelog carries only the patient, no store, so routing is purely by Patient and the record follows the patient across stores.
 
 ### OMS-native, File
 
@@ -160,7 +169,7 @@ Each changelog row carries a small set of metadata fields. Each filter joins thr
 | **table_name** | Which table the row refers to. | Every filter — "table is in the set of tables I care about". |
 | **record_id** | Primary key of the source row. | Used to fetch the actual record when batching. |
 | **row_action** | Upsert or Delete. | Controls whether the receiver upserts or deletes. |
-| **store_id** | The store this record belongs to (optional). | Remote routing (joined to the store's site). For Central / File rows this must be null, to disambiguate hybrid tables. |
+| **store_id** | The store this record belongs to (optional). | Remote / RemoteOwned routing (joined to the store's site). For Central / File rows this must be null, to disambiguate hybrid tables. |
 | **transfer_store_id** | The "other party" store for cross-store records. | Transfer routing (joined to the counterpart store's site). |
 | **patient_link_id** | The patient this record refers to. | Patient routing (joined via name-store-join → store → site, so any site that knows the patient receives the record). |
 | **source_site_id** | The site that originally caused this changelog row. | Echo guards (don't push back to where it came from); also the v7 push filter ("rows authored here"). |
@@ -175,7 +184,7 @@ When a record is mutated, a changelog row is generated. The patterns differ by w
 
 | Pattern | Tables (examples) | What the changelog records |
 |---|---|---|
-| Store + transfer-store | `Invoice`, `Requisition`, `RnrForm`, `NameStoreJoin` | The row's own store, plus the store backing a referenced name (resolved from the name's home store). Used for both Remote and Transfer routing. `Invoice` additionally tags prescriptions with the patient id so they also route via Patient. |
+| Store + transfer-store | `Invoice`, `Requisition`, `RnrForm`, `NameStoreJoin` | The row's own store, plus the store backing a referenced name (resolved from the name's home store). Used for both store-owner routing and Transfer routing. `Invoice` additionally tags prescriptions with the patient id so they also route via Patient. |
 | Store only | `StockLine`, `Stocktake`, `Location`, `PurchaseOrder`, `Preference`, `Sensor`, `TemperatureLog`, `VVMStatusLog`, `LocationMovement`, `ActivityLog`, `ContactForm`, `Asset`, `PluginData`, `VaccineCourseStoreConfig` | Just the row's own store. |
 | Destination store | `SyncMessage` | The message's `to_store_id` (when set) is copied to the changelog's `store_id`, which makes the hybrid Remote + Central routing work — Remote for messages addressed to a specific store, Central for fanout messages. |
 | Line inherits parent | `InvoiceLine` ← `Invoice`, `StocktakeLine` ← `Stocktake`, `RequisitionLine` ← `Requisition`, `RnrFormLine` ← `RnrForm` | The line's changelog is built from the parent's, then `table_name` and `record_id` are overridden to point at the line. Guarantees parent and line stay aligned for store / transfer-store / patient / source-site, so they route together. |
@@ -196,11 +205,11 @@ Five filters compose the metadata above into "this site, this transport" predica
 
 | Filter | Used by | What it returns | Echo guard |
 | --- | --- | --- | --- |
-| **all-data-for-site** | v6 central pull (OMS-native tables only); v7 central pull (all tables) | Per sync style: Central / File → store-id is null **and** patient-id is null; Remote → store's site = this site; Transfer → transfer-store's site = this site; Patient → patient's site = this site (via name-store-join). ToLegacyCentralOnly and RemoteToCentral are skipped. | Once initialised, exclude rows whose source-site = this site. |
+| **all-data-for-site** | v6 central pull (OMS-native tables only); v7 central pull (all tables) | Per sync style: Central / File → store-id is null **and** patient-id is null; Remote → store's site = this site (every cycle); RemoteOwned → store's site = this site, but only during this site's initialisation; Transfer → transfer-store's site = this site; Patient → patient's site = this site (via name-store-join). ToLegacyCentralOnly and RemoteToCentral are skipped. | Once initialised, exclude rows whose source-site = this site. |
 | **patient-data-for-site** | v6 patient pull and v7 patient pull (used together with an explicit patient id) | Just the Patient clause from above, intersected with the requested patient id. | None at this layer — caller composes additional conditions. |
-| **all-data-for-legacy-central** | v5 push (remote → legacy 4D) | Legacy-only tables in styles ToLegacyCentralOnly, Remote, Transfer, Patient. Central, RemoteToCentral, File are excluded. | Exclude rows whose source-site is the legacy central server itself. |
+| **all-data-for-legacy-central** | v5 push (remote → legacy 4D) | Legacy-only tables in styles ToLegacyCentralOnly, Remote, RemoteOwned, Transfer, Patient. Central, RemoteToCentral, File are excluded. | Exclude rows whose source-site is the legacy central server itself. |
 | **all-data-edited-on-site** | v7 push (remote → OMS central) | Just "rows whose source-site = this site". No per-style filtering, no transport-flag filtering — the per-table translators are not consulted because v7 has no per-table translation. | Implicit — the predicate itself is the echo guard. |
-| **data-for-store** | (defined, not yet used) | Remote + Transfer for a specific store, ignoring transport flags. | None. |
+| **data-for-store** | (defined, not yet used) | Remote + RemoteOwned + Transfer for a specific store, ignoring transport flags. | None. |
 
 ### Per-style behaviour inside `all-data-for-site`
 
@@ -208,7 +217,8 @@ Five filters compose the metadata above into "this site, this transport" predica
 |---|---|
 | Central | `store_id IS NULL AND patient_link_id IS NULL` (so hybrid tables only match the central half here, and rows that carry a patient never match this clause) |
 | File | `store_id IS NULL AND patient_link_id IS NULL` |
-| Remote | `store.site_id == this site` |
+| Remote | `store.site_id == this site` (every cycle) |
+| RemoteOwned | `store.site_id == this site`, **but only when the site is initialising** — otherwise skipped, because central never authors edits to push back |
 | Transfer | `transfer_store.site_id == this site` |
 | Patient | `patient_store.site_id == this site` (via name-store-join) |
 | ToLegacyCentralOnly | skipped |
@@ -232,12 +242,12 @@ Notable special cases:
 
 | Table | Special behaviour |
 |---|---|
-| `Name`, `NameStoreJoin` | Their translators opt in to push to OMS central, so they round-trip via OMS too — used to share patient details across sites. `Name` is tagged on both transports (v5 *and* v6), so it flows over both; `NameStoreJoin` is legacy-only by transport flag but its OMS push opt-in is what enables the round-trip. When the central server is processing `Name` or `NameStoreJoin`, the translator additionally guards against echoing rows that originated from a remote (avoids the central pushing a remote-authored update straight back to legacy 4D). |
+| `Name`, `NameStoreJoin` | Their translators opt in to push to OMS central, so they round-trip via OMS too — used to share patient details across sites. `Name` is tagged on both transports (v5 *and* v6), so it flows over both; `NameStoreJoin` is legacy-only by transport flag but its OMS push opt-in is what enables the round-trip. `NameStoreJoin` is also why its sync style is `Remote` rather than `RemoteOwned`: central legitimately authors edits to it — both when a patient's visibility changes (remote-patient-lookup, and the `AddPatientVisibilityForCentral` processor) and when customer/supplier flags on a name change (the `name_to_name_store_join` translator cascades the update to every NSJ for that name, including rows owned by other sites). When the central server is processing `Name` or `NameStoreJoin`, the translator additionally guards against echoing rows that originated from a remote (avoids the central pushing a remote-authored update straight back to legacy 4D). |
 | `NameOmsFields` | Central-style (authored on OMS central) but its translator opts in to push to OMS central, allowing remote → central writebacks. |
 | Vaccine-course family (`VaccineCourse`, `VaccineCourseDose`, `VaccineCourseItem`) | Central-style on OMS, but a parallel set of legacy translators re-publishes them to legacy 4D when running on OMS central, so v5-only stores still receive them. |
 | `Encounter` | OMS-native, Remote + Patient. It has no main OMS translator on its own — the only translator is a companion legacy translator that re-publishes it to legacy 4D when running on OMS central, so v5-only stores still receive it. |
 | `Vaccination` | OMS-native, Remote + Patient. Its main translator opts in to OMS push/pull. A companion legacy translator re-publishes it to legacy 4D when running on OMS central, so v5-only stores still receive it. |
-| `Document` | OMS-native, classified as Patient only — the changelog row carries no store, so routing is purely by Patient. |
+| `Document` | Legacy, classified as Patient only — the changelog row carries no store, so routing is purely by Patient. |
 | `Name`, `Item`, `Clinician` merges | Legacy-format `Merge` records continue to flow up to legacy 4D and down to v5 remote sites as before. The merge translator rewrites the local `name_link` / `item_link` / `clinician_link` tables in-line, exactly as it always has — so central stays consistent regardless of any post-sync processing. **Additionally**, when the translator runs on OMS central it also emits a `SyncMessage` of type `NameMerge` / `ItemMerge` / `ClinicianMerge` (with no destination store, so it fans out as Central) so v7 remotes — which never receive the legacy `Merge` record — can replay the same link rewrite via a post-sync processor. The processor is a no-op on central, since the translator already did the work. |
 | `MasterList` | Legacy/Central, but the translator declares no changelog mapping, so nothing pushes on any transport — it only ever flows down from legacy 4D. |
 
