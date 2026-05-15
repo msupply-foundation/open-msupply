@@ -105,14 +105,13 @@ export const useNativeClient = ({
     nativeAPI.startServerDiscovery();
   }, [discovery, nativeAPI]);
 
-  const readLog = async () => {
-    const noResult = 'log unavailable';
+  const readLog = async (): Promise<string | null> => {
     const result = await nativeAPI?.readLog();
 
-    if (!result) return noResult;
+    if (!result) return null;
     if (result.error) console.error(result.error);
 
-    return result.log || noResult;
+    return result.log || null;
   };
 
   const allowSleep = async () => {

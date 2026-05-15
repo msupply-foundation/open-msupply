@@ -6,6 +6,7 @@ import {
   MRT_StatefulTableOptions,
   MRT_TableOptions,
 } from 'material-react-table';
+import { isEqual } from '@common/utils';
 import { getSavedState, updateSavedState, differentOrUndefined } from './utils';
 import { ColumnDef } from '../types';
 import { useGlobalTableDefaults } from './useGlobalTableConfig';
@@ -73,8 +74,15 @@ export const useColumnOrder = <T extends MRT_RowData>(
   // expand column spliced in.
   useEffect(() => {
     const saved = getSavedState(tableId)?.columnOrder;
-    setState(withExpandColumn(saved ?? globalDefaults?.columnOrder ?? initial));
-  }, [initial, globalDefaults?.columnOrder, enableExpanding, withExpandColumn]);
+    const next = withExpandColumn(
+      saved ?? globalDefaults?.columnOrder ?? initial
+    );
+    // Bail out if the resulting order is content-equal to the previous —
+    // withExpandColumn returns a fresh array whenever it splices, so
+    // without this guard every effect run commits a new ref and triggers
+    // a render even when nothing has actually changed.
+    setState(prev => (isEqual(prev, next) ? prev : next));
+  }, [tableId, initial, globalDefaults?.columnOrder, enableExpanding, withExpandColumn]);
 
   const update = useCallback<
     NonNullable<MRT_TableOptions<MRT_RowData>['onColumnOrderChange']>
