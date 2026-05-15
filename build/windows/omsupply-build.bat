@@ -20,24 +20,13 @@ start /b /wait build\windows\omsupply-prepare.bat
     exit /b %errorlevel%
 )
 
-@cd server 
+@cd server
 
-@ECHO ##### Building all sqlite binaries #####
-cargo build --release --bin omsupply_service --bin remote_server --bin remote_server_cli --bin test_connection
-@if %errorlevel% neq 0 ( exit /b %errorlevel% )
-
-copy "target\release\omsupply_service.exe" "..\omSupply\Server\omSupply-sqlite.exe"
-copy "target\release\remote_server.exe"    "..\omSupply\Server\omSupply-server-sqlite.exe"
-copy "target\release\remote_server_cli.exe" "..\omSupply\Server\omSupply-cli-sqlite.exe"
-copy "target\release\test_connection.exe"  "..\omSupply\Server\test-connection-sqlite.exe"
-
-@ECHO ##### Building all postgres binaries #####
-cargo build --release --bin omsupply_service --bin remote_server_cli --bin test_connection --features postgres
+@ECHO ##### Building postgres server binary #####
+cargo build --release --bin omsupply_service --no-default-features --features postgres
 @if %errorlevel% neq 0 ( exit /b %errorlevel% )
 
 copy "target\release\omsupply_service.exe" "..\omSupply\Server\omSupply-postgres.exe"
-copy "target\release\remote_server_cli.exe" "..\omSupply\Server\omSupply-cli-postgres.exe"
-copy "target\release\test_connection.exe"  "..\omSupply\Server\test-connection-postgres.exe"
 
 @cd..
 
