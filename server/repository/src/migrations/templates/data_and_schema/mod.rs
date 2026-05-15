@@ -203,7 +203,7 @@ async fn migration_2_15_01() {
     // Migrate to this version
     // Since this test refers to a migration we don't want it production, we can't use the main migration to this version.
     // So manually run just this test migration...
-    // In a real example you'd use `migrate(&connection, Some(version.clone())).unwrap();` instead
+    // In a real example you'd use `migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();` instead
     V2_15_01.migrate(&connection).unwrap();
     // In a real test, you'd check the version was updated correctly
     // e.g. assert_eq!(get_database_version(&connection), version);

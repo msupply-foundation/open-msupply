@@ -11,7 +11,6 @@ use std::collections::HashMap;
 pub use self::queries::sync_status::*;
 use self::queries::*;
 pub use self::subscriptions::{InitialisationSubscriptions, SyncStatusSubscriptions};
-use self::sync_v7::sync_status::{latest_sync_status_v7, FullSyncStatusV7Node};
 
 use abbreviation::abbreviations;
 use diagnosis::diagnoses_active;
@@ -299,13 +298,6 @@ impl GeneralQueries {
         latest_sync_status(ctx, true)
     }
 
-    pub async fn latest_sync_status_v7(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<Option<FullSyncStatusV7Node>> {
-        latest_sync_status_v7(ctx, true)
-    }
-
     pub async fn number_of_records_in_push_queue(&self, ctx: &Context<'_>) -> Result<u64> {
         number_of_records_in_push_queue(ctx)
     }
@@ -567,9 +559,10 @@ impl GeneralMutations {
     pub async fn manual_sync(
         &self,
         ctx: &Context<'_>,
-        fetch_patient_id: Option<String>,
+        // TODO remove
+        _fetch_patient_id: Option<String>,
     ) -> Result<String> {
-        manual_sync(ctx, true, fetch_patient_id)
+        manual_sync(ctx, true)
     }
 
     pub async fn update_display_settings(
@@ -662,13 +655,6 @@ impl InitialisationQueries {
         latest_sync_status(ctx, false)
     }
 
-    pub async fn latest_sync_status_v7(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<Option<FullSyncStatusV7Node>> {
-        latest_sync_status_v7(ctx, false)
-    }
-
     /// Available without authorisation in all states
     pub async fn migration_status(&self, ctx: &Context<'_>) -> Result<MigrationStatusNode> {
         migration_status(ctx).await
@@ -691,9 +677,10 @@ impl InitialisationMutations {
     pub async fn manual_sync(
         &self,
         ctx: &Context<'_>,
+        // TODO remove
         _fetch_patient_id: Option<String>,
     ) -> Result<String> {
-        manual_sync(ctx, false, None)
+        manual_sync(ctx, false)
     }
 }
 

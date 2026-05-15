@@ -14,12 +14,16 @@ use util::format_error;
 
 use super::{
     api::{SyncApiError, SyncApiSettings, SyncApiV5},
+    api_v6::SyncApiV6CreatingError,
     central_data_synchroniser::{CentralDataSynchroniser, CentralPullError},
+    central_data_synchroniser_v6::{
+        CentralPullErrorV6, RemotePushErrorV6, SynchroniserV6, WaitForSyncOperationErrorV6,
+    },
     remote_data_synchroniser::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
         WaitForSyncOperationError,
     },
-    settings::{SyncSettings, SYNC_V5_VERSION},
+    settings::{SyncSettings, SYNC_V5_VERSION, SYNC_V6_VERSION},
     sync_buffer::get_ordered_sync_buffer_records,
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
@@ -32,27 +36,39 @@ pub struct SynchroniserV5V6 {
     settings: SyncSettings,
     service_provider: Arc<ServiceProvider>,
     central: CentralDataSynchroniser,
-    #[allow(dead_code)]
-    sync_v5_settings: SyncApiSettings,
+    pub(crate) sync_v5_settings: SyncApiSettings,
     remote: RemoteDataSynchroniser,
+    sync_v6_version: u32,
 }
 
 #[derive(Error)]
 pub(crate) enum SyncError {
     #[error(transparent)]
     SyncApiError(#[from] SyncApiError),
+    #[error("V6 Not configured")]
+    V6NotConfigured,
+    #[error("Failed to create Sync v6 Url")]
+    SyncApiV6CreatingError(#[from] SyncApiV6CreatingError),
     #[error("Database error while syncing")]
     DatabaseError(#[from] RepositoryError),
     #[error(transparent)]
     SyncLoggerError(#[from] SyncLoggerError),
+    #[error("Failed to upgrade site to v7 via legacy server")]
+    V7UpgradeFailed(#[source] SyncApiError),
     #[error("Error while requesting initialisation from central server")]
     PostInitialisationError(#[from] PostInitialisationError),
     #[error("Error while pushing remote records")]
     RemotePushError(#[from] RemotePushError),
     #[error("Error while awaiting remote record integration")]
     WaitForIntegrationError(#[from] WaitForSyncOperationError),
+    #[error("Error while awaiting v6 remote record integration")]
+    WaitForIntegrationErrorV6(#[from] WaitForSyncOperationErrorV6),
     #[error("Error while pulling central records")]
     CentralPullError(#[from] CentralPullError),
+    #[error("Error while pulling central v6 records")]
+    CentralPullErrorV6(#[from] CentralPullErrorV6),
+    #[error("Error while pushing remote v6 records")]
+    RemotePushErrorV6(#[from] RemotePushErrorV6),
     #[error("Error while pulling remote records")]
     RemotePullError(#[from] RemotePullError),
     #[error("Error while integrating records")]
@@ -97,13 +113,14 @@ impl SynchroniserV5V6 {
         settings: SyncSettings,
         service_provider: Arc<ServiceProvider>,
     ) -> anyhow::Result<Self> {
-        Self::new_with_version(settings, service_provider, SYNC_V5_VERSION)
+        Self::new_with_version(settings, service_provider, SYNC_V5_VERSION, SYNC_V6_VERSION)
     }
 
     pub(crate) fn new_with_version(
         settings: SyncSettings,
         service_provider: Arc<ServiceProvider>,
         sync_version: u32,
+        sync_v6_version: u32,
     ) -> anyhow::Result<Self> {
         let sync_v5_settings = SyncApiV5::new_settings(&settings, &service_provider, sync_version)?;
         let sync_api_v5 = SyncApiV5::new(sync_v5_settings.clone())?;
@@ -115,10 +132,11 @@ impl SynchroniserV5V6 {
             service_provider,
             central: CentralDataSynchroniser { sync_api_v5 },
             sync_v5_settings,
+            sync_v6_version,
         })
     }
 
-    pub(crate) async fn sync(&self, _fetch_patient_id: Option<String>) -> Result<(), SyncError> {
+    pub(crate) async fn sync(&self) -> Result<(), SyncError> {
         let ctx = self.service_provider.basic_context()?;
         let mut logger = SyncLogger::start(&ctx.connection)?
             .with_subscription_trigger(self.service_provider.subscription_trigger.clone());
@@ -178,6 +196,41 @@ impl SynchroniserV5V6 {
         // First push before pulling, this avoids records being pulled from central server
         // and overwriting existing records waiting to be pulled
 
+        // We'll push records to open-mSupply first, then push to Legacy mSupply.
+        // V6 push/pull only happens on remote sites; central OMS handles its own
+        // mirror via the v5/v6 server endpoints, not the v6 client.
+        let v6_sync = if CentralServerConfig::is_central_server() {
+            None
+        } else {
+            match CentralServerConfig::get() {
+                CentralServerConfig::NotConfigured => return Err(SyncError::V6NotConfigured),
+                CentralServerConfig::IsCentralServer | CentralServerConfig::ForcedCentralServer => {
+                    None
+                }
+                CentralServerConfig::CentralServerUrl(url) => Some(SynchroniserV6::new(
+                    &url,
+                    &self.sync_v5_settings,
+                    self.sync_v6_version,
+                )?),
+            }
+        };
+
+        // PUSH V6
+        logger.start_step(SyncStep::PushCentralV6)?;
+        if let (true, Some(v6_sync)) = (is_initialised, &v6_sync) {
+            v6_sync
+                .push(&ctx.connection, batch_size.remote_push, logger)
+                .await?;
+
+            v6_sync
+                .wait_for_sync_operation(
+                    INTEGRATION_POLL_PERIOD_SECONDS,
+                    INTEGRATION_TIMEOUT_SECONDS,
+                )
+                .await?;
+        }
+        logger.done_step(SyncStep::PushCentralV6)?;
+
         // PUSH
         // Only push if initialised (site data was initialised on central and successfully pulled)
         logger.start_step(SyncStep::Push)?;
@@ -209,6 +262,22 @@ impl SynchroniserV5V6 {
 
         logger.done_step(SyncStep::PullRemote)?;
 
+        // PULL V6
+        if let Some(v6_sync) = &v6_sync {
+            logger.start_step(SyncStep::PullCentralV6)?;
+
+            v6_sync
+                .pull(
+                    &ctx.connection,
+                    batch_size.central_pull,
+                    is_initialised,
+                    logger,
+                )
+                .await?;
+
+            logger.done_step(SyncStep::PullCentralV6)?;
+        }
+
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
@@ -231,10 +300,51 @@ impl SynchroniserV5V6 {
 
         if !is_initialised {
             self.remote.advance_push_cursor(&ctx.connection)?;
+            if let Some(v6_sync) = &v6_sync {
+                v6_sync.advance_push_cursor(&ctx.connection)?;
+            }
         }
 
         run_post_sync_triggers(ctx, &self.service_provider, is_initialised);
 
+        // After a successful v5+v6 sync on a remote, ask the legacy server
+        // for the v7 URL. On success, persist KV + carry cursors over and
+        // kick off a v7 get_token in the background. On failure, surface the
+        // error so the sync log records it and the frontend can show it.
+        if !CentralServerConfig::is_central_server() {
+            self.try_upgrade_to_v7(ctx).await?;
+        }
+
+        Ok(())
+    }
+
+    async fn try_upgrade_to_v7(&self, ctx: &ServiceContext) -> Result<(), SyncError> {
+        use crate::cursor_controller::CursorController;
+        use repository::SyncVersion;
+
+        let response = match self.remote.sync_api_v5.v7_url_and_upgrade().await {
+            Ok(r) => r,
+            // Treat any v7_url_and_upgrade error (e.g. 503 stores_not_migrated
+            // while a fleet is mid-migration) as a sync failure. The next sync
+            // cycle will retry; meanwhile the frontend can show the error.
+            Err(error) => return Err(SyncError::V7UpgradeFailed(error)),
+        };
+
+        let kv = KeyValueStoreRepository::new(&ctx.connection);
+        kv.set_string(KeyType::SettingsSyncUrl, Some(response.v7_url))?;
+        SyncVersion::set(&ctx.connection, SyncVersion::V7)?;
+
+        // Carry v6 cursors over to v7. Both index the same `changelog` table
+        // so copying the values preserves position.
+        let v6_push = CursorController::new(KeyType::SyncPushCursorV6).get(&ctx.connection)?;
+        CursorController::new(KeyType::SyncPushCursorV7).update(&ctx.connection, v6_push)?;
+        let v6_pull = CursorController::new(KeyType::SyncPullCursorV6).get(&ctx.connection)?;
+        CursorController::new(KeyType::SyncPullCursorV7).update(&ctx.connection, v6_pull)?;
+
+        // The v7 token is acquired lazily at the start of the next sync cycle
+        // (see `SynchroniserV7::sync`), so any get_token failure surfaces
+        // through the v7 sync log instead of being lost here.
+        log::info!("v7 upgrade complete; switching to v7 on next sync cycle");
         Ok(())
     }
 }
@@ -270,6 +380,9 @@ pub(crate) fn run_post_sync_triggers(
 
     ctx.processors_trigger
         .trigger_processor(ProcessorType::RequisitionAutoFinalise);
+
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::MergeSyncMessage);
 }
 
 /// Translation And Integration of sync buffer, pub since used in CLI
@@ -394,10 +507,10 @@ mod tests {
         .unwrap();
 
         // First check that synch fails (due to wrong url)
-        assert!(s.sync(None).await.is_err());
+        assert!(s.sync().await.is_err());
 
         // Check that disabling return Ok(())
         service.disable_sync(&ctx).unwrap();
-        assert!(s.sync(None).await.is_ok());
+        assert!(s.sync().await.is_ok());
     }
 }

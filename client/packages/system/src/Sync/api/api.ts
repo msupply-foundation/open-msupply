@@ -4,9 +4,29 @@ import {
   SyncSettingsInput,
   ErrorWithDetailsProps,
   SyncErrorVariant,
+  SyncErrorVariantV7,
 } from '@openmsupply-client/common';
 
-import { Sdk, SyncErrorFragment } from './operations.generated';
+import {
+  Sdk,
+  SyncErrorFragment,
+  SyncErrorV7Fragment,
+  FullSyncStatusV5V6Fragment,
+  FullSyncStatusV7Fragment,
+} from './operations.generated';
+
+export type SyncStatus = FullSyncStatusV5V6Fragment | FullSyncStatusV7Fragment;
+export type SyncErrorAny = SyncErrorFragment | SyncErrorV7Fragment;
+
+/// `latestSyncStatus` is now a union; use this guard to narrow.
+export const isSyncStatusV7 = (
+  status: SyncStatus | null | undefined
+): status is FullSyncStatusV7Fragment =>
+  status?.__typename === 'FullSyncStatusV7Node';
+
+export const isSyncErrorV7 = (
+  error: SyncErrorAny | null | undefined
+): error is SyncErrorV7Fragment => error?.__typename === 'SyncErrorV7Node';
 
 export const getSyncQueries = (sdk: Sdk) => ({
   get: {
@@ -51,6 +71,16 @@ function cleanSyncSettings({
 
 export function mapSyncError(
   t: TypedTFunction<LocaleKey>,
+  error: SyncErrorAny,
+  defaultKey?: LocaleKey
+): ErrorWithDetailsProps {
+  return isSyncErrorV7(error)
+    ? mapSyncErrorV7(t, error, defaultKey)
+    : mapSyncErrorV5V6(t, error, defaultKey);
+}
+
+function mapSyncErrorV5V6(
+  t: TypedTFunction<LocaleKey>,
   error: SyncErrorFragment,
   defaultKey?: LocaleKey
 ): ErrorWithDetailsProps {
@@ -70,6 +100,7 @@ export function mapSyncError(
     [SyncErrorVariant.V6ApiVersionIncompatible]:
       'error.sync-v6-api-incompatible',
     [SyncErrorVariant.IntegrationError]: 'error.internal-error',
+    [SyncErrorVariant.V7UpgradeFailed]: 'error.v7-upgrade-failed',
     [SyncErrorVariant.Unknown]: defaultKey || 'error.unknown-sync-error',
   };
 
@@ -81,6 +112,8 @@ export function mapSyncError(
         return t('error.v6-server-not-configured-hint');
       case SyncErrorVariant.V6ApiVersionIncompatible:
         return t('error.sync-v6-api-incompatible-hint');
+      case SyncErrorVariant.V7UpgradeFailed:
+        return t('error.v7-upgrade-failed-hint');
       default:
         return undefined;
     }
@@ -95,3 +128,54 @@ export function mapSyncError(
     hint: getHint(),
   };
 }
+
+function mapSyncErrorV7(
+  t: TypedTFunction<LocaleKey>,
+  error: SyncErrorV7Fragment,
+  defaultKey?: LocaleKey
+): ErrorWithDetailsProps {
+  const errorMapping: { [key in SyncErrorVariantV7]: LocaleKey } = {
+    [SyncErrorVariantV7.ConnectionError]: 'error.connection-error',
+    [SyncErrorVariantV7.HardwareIdMismatch]: 'error.site-incorrect-hardware-id',
+    [SyncErrorVariantV7.InvalidSiteNameOrPassword]:
+      'error.site-incorrect-password',
+    [SyncErrorVariantV7.IntegrationTimeoutReached]:
+      'error.integration-timeout-reached',
+    [SyncErrorVariantV7.Authentication]: 'error.site-auth-timeout',
+    [SyncErrorVariantV7.RequestSiteAuthError]: 'error.site-auth-timeout',
+    [SyncErrorVariantV7.SyncVersionMismatch]: 'error.sync-api-incompatible',
+    [SyncErrorVariantV7.NotACentralServer]: 'error.v6-server-not-configured',
+    [SyncErrorVariantV7.DatabaseError]: 'error.internal-error',
+    [SyncErrorVariantV7.SyncRecordSerializeError]: 'error.internal-error',
+    [SyncErrorVariantV7.RecordNotFound]: 'error.internal-error',
+    [SyncErrorVariantV7.TokenAlreadyAllocated]: 'error.internal-error',
+    [SyncErrorVariantV7.TokenNotFound]: 'error.internal-error',
+    [SyncErrorVariantV7.FailedToGetHardwareId]: 'error.internal-error',
+    [SyncErrorVariantV7.MissingAuthHeader]: 'error.internal-error',
+    [SyncErrorVariantV7.SiteLockError]: 'error.internal-error',
+    [SyncErrorVariantV7.ParsingError]: 'error.internal-error',
+    [SyncErrorVariantV7.SiteIdNotSet]: 'error.internal-error',
+    [SyncErrorVariantV7.GetCurrentSiteIdError]: 'error.internal-error',
+    [SyncErrorVariantV7.SiteIdMismatch]: 'error.internal-error',
+    [SyncErrorVariantV7.SiteIsNotV7]: 'error.site-is-not-v7',
+    [SyncErrorVariantV7.Other]: defaultKey || 'error.unknown-sync-error',
+  };
+
+  return {
+    error:
+      t(errorMapping[error.variantV7]) ||
+      defaultKey ||
+      'error.unknown-sync-error',
+    details: error.fullError,
+  };
+}
+
+/// Identify connection errors regardless of which sync variant produced them.
+export const isSyncConnectionError = (
+  error: SyncErrorAny | null | undefined
+): boolean => {
+  if (!error) return false;
+  return isSyncErrorV7(error)
+    ? error.variantV7 === SyncErrorVariantV7.ConnectionError
+    : error.variant === SyncErrorVariant.ConnectionError;
+};

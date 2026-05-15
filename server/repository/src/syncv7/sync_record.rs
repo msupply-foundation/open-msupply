@@ -52,6 +52,10 @@ diesel_json_type! {
         GetCurrentSiteIdError(#[from] GetCurrentSiteIdError),
         #[error("Site id mismatch, expected: {expected}, found: {found}")]
         SiteIdMismatch { expected: i32, found: i32 },
+        #[error("Site has not been transitioned to v7 on the legacy server")]
+        SiteIsNotV7,
+        #[error("Request site authentication error: {0}")]
+        RequestSiteAuthError(String),
         #[error("Unmatched error {0}")]
         Other(String),
     }
