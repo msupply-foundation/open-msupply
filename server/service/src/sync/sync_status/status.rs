@@ -10,7 +10,6 @@ use crate::{
     i32_to_u32,
     service_provider::ServiceContext,
     settings_service::{SettingsService, SettingsServiceTrait},
-
     sync_v7::sync_status::status::FullSyncStatusV7,
 };
 
@@ -267,10 +266,7 @@ fn get_initialisation_status(
     let v5_has_any = v5_latest.is_some();
 
     if v7_has_success || v5_has_success {
-        let site_name = SettingsService
-            .sync_settings(ctx)?
-            .unwrap()
-            .username;
+        let site_name = SettingsService.sync_settings(ctx)?.unwrap().username;
         return Ok(InitialisationStatus::Initialised(site_name));
     }
     if v7_has_any || v5_has_any {
