@@ -30,6 +30,11 @@ use crate::{
 
 const CONNECTION_TIMEOUT_SEC: u64 = 10;
 
+/// Minimum response time on a failed login. Disguises whether the username
+/// exists by making "wrong password" and "no such user" indistinguishable by
+/// latency. Must be longer than the worst-case bcrypt verify time.
+pub const MIN_ERR_RESPONSE_TIME_SEC: u64 = 6;
+
 #[derive(Debug)]
 pub enum FetchUserError {
     Unauthenticated,
@@ -107,6 +112,45 @@ impl LoginService {
                 Err(err)
             }
         }
+    }
+
+    /// Local credential check for the OMS Central REST login endpoint.
+    ///
+    /// Returns `Ok(true)` on a valid match, `Ok(false)` on any credential
+    /// failure (unknown user, wrong password, empty stored hash), and `Err`
+    /// for genuine server errors. The failure path is padded to
+    /// `min_err_response_time_sec` to match the GraphQL login's
+    /// timing-attack mitigation.
+    pub async fn verify_credentials_on_central(
+        service_provider: &ServiceProvider,
+        username: &str,
+        password: &str,
+        min_err_response_time_sec: u64,
+    ) -> Result<bool, LoginError> {
+        let now = SystemTime::now();
+        let result = (|| {
+            let service_ctx = service_provider.basic_context()?;
+            let user_service = UserAccountService::new(&service_ctx.connection);
+            match user_service.verify_password(username, password) {
+                Ok(_) => Ok(true),
+                Err(VerifyPasswordError::UsernameDoesNotExist)
+                | Err(VerifyPasswordError::InvalidCredentials)
+                | Err(VerifyPasswordError::EmptyHashedPassword) => Ok(false),
+                Err(VerifyPasswordError::DatabaseError(e)) => Err(LoginError::DatabaseError(e)),
+                Err(VerifyPasswordError::InvalidCredentialsBackend(_)) => Err(
+                    LoginError::InternalError("Failed to read credentials".to_string()),
+                ),
+            }
+        })();
+
+        if matches!(&result, Ok(false) | Err(_)) {
+            let elapsed = now.elapsed().unwrap_or(Duration::from_secs(0));
+            let minimum = Duration::from_secs(min_err_response_time_sec);
+            if elapsed < minimum {
+                tokio::time::sleep(minimum - elapsed).await;
+            }
+        }
+        result
     }
 
     async fn do_login(
@@ -846,5 +890,79 @@ mod test {
         //         result
         //     );
         // }
+    }
+
+    #[actix_rt::test]
+    async fn verify_credentials_on_central_test() {
+        use std::time::{Duration, Instant};
+
+        use crate::user_account::{CreateUserAccount, UserAccountService};
+
+        let (_, _, connection_manager, _) = setup_all(
+            "verify_credentials_on_central_test",
+            MockDataInserts::none().user_accounts(),
+        )
+        .await;
+        let service_provider = ServiceProvider::new(connection_manager);
+
+        // Seed a user with a real bcrypt-hashed password.
+        let context = service_provider.basic_context().unwrap();
+        UserAccountService::new(&context.connection)
+            .create_user(CreateUserAccount {
+                username: "alice".to_string(),
+                password: "correct-horse".to_string(),
+                email: None,
+            })
+            .unwrap();
+        drop(context);
+
+        // Valid credentials -> Ok(true), no padding required
+        let ok = LoginService::verify_credentials_on_central(
+            &service_provider,
+            "alice",
+            "correct-horse",
+            0,
+        )
+        .await
+        .unwrap();
+        assert!(ok);
+
+        // Wrong password -> Ok(false), padded to min response time
+        let started = Instant::now();
+        let bad = LoginService::verify_credentials_on_central(
+            &service_provider,
+            "alice",
+            "wrong",
+            1,
+        )
+        .await
+        .unwrap();
+        assert!(!bad);
+        assert!(
+            started.elapsed() >= Duration::from_secs(1),
+            "expected min response time padding on failed login"
+        );
+
+        // Unknown user -> Ok(false)
+        let unknown = LoginService::verify_credentials_on_central(
+            &service_provider,
+            "no-such-user",
+            "whatever",
+            0,
+        )
+        .await
+        .unwrap();
+        assert!(!unknown);
+
+        // Empty stored hash (synced user with no password yet) -> Ok(false)
+        let empty = LoginService::verify_credentials_on_central(
+            &service_provider,
+            &mock_user_empty_hashed_password().username,
+            "anything",
+            0,
+        )
+        .await
+        .unwrap();
+        assert!(!empty);
     }
 }
