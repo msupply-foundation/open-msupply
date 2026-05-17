@@ -59,6 +59,14 @@ pub async fn get_token(
     let site = get_site_by_name(&ctx.connection, &input.name)?
         .ok_or(SyncError::InvalidSiteNameOrPassword)?;
 
+    // Reject before password check — a remote must not authenticate as the central site itself.
+    let central_site_id = SourceSiteId::CurrentSiteId
+        .get_id(&ctx.connection)?
+        .ok_or(SyncError::SiteIdNotSet)?;
+    if site.id == central_site_id {
+        return Err(SyncError::InvalidSiteNameOrPassword);
+    }
+
     let valid = bcrypt::verify(&input.password_sha256, &site.hashed_password)
         .map_err(|e| SyncError::Other(e.to_string()))?;
     if !valid {
