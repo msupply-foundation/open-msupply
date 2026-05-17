@@ -8,11 +8,15 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        // demographic and demographic_indicator are synced/user-editable, so a row
+        // with these ids may already exist on the site (e.g. synced down from
+        // central before the migration runs, see issue #11709). Skip in that case.
         sql!(
             connection,
             r#"
                 INSERT INTO demographic (id, name, population_percentage)
-                VALUES ('general_population', 'General Population', 100);
+                VALUES ('general_population', 'General Population', 100)
+                ON CONFLICT (id) DO NOTHING;
             "#,
         )?;
 
@@ -41,7 +45,8 @@ impl MigrationFragment for Migrate {
                     100,
                     0, 0, 0, 0, 0
                 FROM (SELECT 1) AS dummy
-                LEFT JOIN (SELECT * FROM demographic_indicator LIMIT 1) di on TRUE;
+                LEFT JOIN (SELECT * FROM demographic_indicator LIMIT 1) di on TRUE
+                ON CONFLICT (id) DO NOTHING;
             "#,
         )?;
 
