@@ -38,7 +38,7 @@ jobs:
       - name: Install dependencies
         id: install
         continue-on-error: true
-        run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
+        run: corepack enable && cd ./client && yarn install --immutable
 
       - name: Build
         id: build
@@ -72,7 +72,7 @@ jobs:
           node-version: '${{ steps.nvm.outputs.NVMRC }}'
 
       - name: Install dependencies
-        run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
+        run: corepack enable && cd ./client && yarn install --immutable
 
       - name: Build
         run: cd ./client && yarn build-stats
