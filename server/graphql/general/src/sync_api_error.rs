@@ -8,6 +8,8 @@ use service::sync::{
 };
 use util::format_error;
 
+use crate::sync_v7::sync_api_error::SyncErrorV7Node;
+
 #[derive(SimpleObject)]
 pub struct SyncErrorNode {
     pub variant: Variant,
@@ -64,25 +66,6 @@ impl SyncErrorNode {
         }
     }
 
-    pub fn map_error(error: RequestAndSetSiteAuthError) -> Result<Self> {
-        use RequestAndSetSiteAuthError as from;
-
-        let error = match &error {
-            // Structured error
-            from::RequestSiteAuthError(api_error) => Self::from_sync_api_error(api_error),
-            from::SiteUUIDIsBeingChanged(_, _) => {
-                Self::from_error_variant(Variant::SiteUUIDIsBeingChanged, &error)
-            }
-            from::SyncApiV5CreatingError(SyncApiV5CreatingError::CannotParseSyncUrl(_, _)) => {
-                Self::from_error_variant(Variant::InvalidUrl, &error)
-            }
-            // Standard Graphql Errors
-            _ => return Err(StandardGraphqlError::from_error(&error)),
-        };
-
-        Ok(error)
-    }
-
     pub fn from_sync_api_error(error: &SyncApiError) -> Self {
         let sync_v5_error_code = match &error.source {
             SyncApiErrorVariantV5::ParsedError { source, .. } => &source.code,
@@ -132,6 +115,33 @@ impl SyncErrorNode {
 
         Self::from_variant(variant, message)
     }
+}
+
+pub enum SyncErrorEither {
+    V5V6(SyncErrorNode),
+    V7(SyncErrorV7Node),
+}
+
+pub fn map_request_auth_error(error: RequestAndSetSiteAuthError) -> Result<SyncErrorEither> {
+    use RequestAndSetSiteAuthError as from;
+
+    let mapped = match &error {
+        from::RequestSiteAuthError(api_error) => {
+            SyncErrorEither::V5V6(SyncErrorNode::from_sync_api_error(api_error))
+        }
+        from::SiteUUIDIsBeingChanged(_, _) => SyncErrorEither::V5V6(
+            SyncErrorNode::from_error_variant(Variant::SiteUUIDIsBeingChanged, &error),
+        ),
+        from::SyncApiV5CreatingError(SyncApiV5CreatingError::CannotParseSyncUrl(_, _)) => {
+            SyncErrorEither::V5V6(SyncErrorNode::from_error_variant(Variant::InvalidUrl, &error))
+        }
+        from::SyncV7Error(sync_error) => {
+            SyncErrorEither::V7(SyncErrorV7Node::from_sync_error(sync_error.clone()))
+        }
+        _ => return Err(StandardGraphqlError::from_error(&error)),
+    };
+
+    Ok(mapped)
 }
 
 #[cfg(test)]

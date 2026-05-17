@@ -3,7 +3,11 @@ use async_graphql::*;
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 use service::sync::sync_status::status::InitialisationStatus;
 
-use crate::{queries::sync_settings::SyncSettingsNode, sync_api_error::SyncErrorNode};
+use crate::{
+    queries::sync_settings::SyncSettingsNode,
+    sync_api_error::{map_request_auth_error, SyncErrorEither, SyncErrorNode},
+    sync_v7::sync_api_error::SyncErrorV7Node,
+};
 
 use super::common::SyncSettingsInput;
 
@@ -11,6 +15,7 @@ use super::common::SyncSettingsInput;
 pub enum InitialiseSiteResponse {
     Response(SyncSettingsNode),
     Error(SyncErrorNode),
+    ErrorV7(SyncErrorV7Node),
 }
 
 pub async fn initialise_site(
@@ -36,9 +41,10 @@ pub async fn initialise_site(
         .request_and_set_site_auth(service_provider, &sync_settings)
         .await
     {
-        return Ok(InitialiseSiteResponse::Error(SyncErrorNode::map_error(
-            error,
-        )?));
+        return Ok(match map_request_auth_error(error)? {
+            SyncErrorEither::V5V6(node) => InitialiseSiteResponse::Error(node),
+            SyncErrorEither::V7(node) => InitialiseSiteResponse::ErrorV7(node),
+        });
     }
 
     // request_and_set_site_auth above should validate settings, can consider all error in update_sync_settings as internal error
