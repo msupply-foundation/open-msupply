@@ -9,6 +9,7 @@ import {
   ExternalLinkIcon,
   getNativeAPI,
   getPreference,
+  MonitorIcon,
   NativeMode,
   RouteBuilder,
   Stack,
@@ -70,23 +71,28 @@ const SubHeading = ({ text }: { text: string }) => (
 );
 
 const ModeOption = ({
+  icon,
   label,
   mode,
   message,
   setMode,
+  color,
 }: {
+  icon: React.ReactNode;
   label: string;
   mode: NativeMode;
   message: string;
   setMode: (mode: NativeMode) => void;
+  color?: 'primary' | 'secondary';
 }) => (
   <Box display="flex" gap={3} alignItems="center" padding=".5em 1em">
     <Box flex={0}>
       <ButtonWithIcon
         onClick={() => setMode(mode)}
-        Icon={<ExternalLinkIcon fontStyle="small" />}
+        Icon={icon}
         label={label}
         shouldShrink={false}
+        color={color}
       />
     </Box>
 
@@ -193,16 +199,20 @@ export const Android = () => {
           </Box>
           <Stack spacing={3} maxWidth={400}>
             <ModeOption
-              label={t('label.client')}
+              icon={<ExternalLinkIcon fontSize="small" />}
+              label={t('label.connect')}
               mode={NativeMode.Client}
               message={t('messages.native-mode-client')}
               setMode={handleSetMode}
+              color="secondary"
             />
             <ModeOption
-              label={t('label.server')}
+              icon={<MonitorIcon fontSize="small" />}
+              label={t('label.local')}
               mode={NativeMode.Server}
               message={t('messages.native-mode-server')}
               setMode={handleSetMode}
+              color="primary"
             />
           </Stack>
         </Stack>
