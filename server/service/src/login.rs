@@ -389,6 +389,28 @@ mod test {
             assert!(result.is_ok(), "expected local-hash fallback to succeed");
         }
 
+        // Central genuinely unreachable (connection refused) + correct local
+        // hash → succeeds via fallback.
+        // Port 1 is privileged and reliably refuses on POSIX systems.
+        {
+            let result = LoginService::login(
+                &service_provider,
+                &auth_data,
+                LoginInput {
+                    username: username.clone(),
+                    password: "password".to_string(),
+                    central_server_url: "http://127.0.0.1:1".to_string(),
+                },
+                0,
+            )
+            .await;
+
+            assert!(
+                result.is_ok(),
+                "expected local-hash fallback to succeed when central is refused"
+            );
+        }
+
         // Central unreachable + wrong local password → InvalidCredentials
         {
             let mock_server = MockServer::start();
