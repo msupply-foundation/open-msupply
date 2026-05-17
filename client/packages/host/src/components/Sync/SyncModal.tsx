@@ -122,13 +122,12 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
     isLoading,
     onManualSync,
   } = useHostSync(open);
-  const { updateUserIsLoading, updateUser, setStore, store } = useAuthContext();
+  const { setStore, store } = useAuthContext();
   const error =
     syncStatus?.error &&
     mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
 
   const sync = async () => {
-    await updateUser();
     await onManualSync();
     if (!!store) {
       await setStore(store);
@@ -265,7 +264,7 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
           <LoadingButton
             shouldShrink={false}
             autoFocus
-            isLoading={isLoading || updateUserIsLoading}
+            isLoading={isLoading}
             startIcon={<RadioIcon />}
             variant="contained"
             disabled={false}
