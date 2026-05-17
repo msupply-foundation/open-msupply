@@ -350,9 +350,6 @@ async fn main() -> anyhow::Result<()> {
         } => {
             let (service_provider, ctx) = initialise_from_central(settings).await?;
 
-            // User accounts (including password_hash) and user_store_permissions
-            // now flow through the sync buffer, so we no longer need to fetch
-            // them separately from legacy mSupply.
             let data = InitialisationData {
                 sync_buffer_rows: SyncBufferRepository::new(&ctx.connection).get_all()?,
                 site_id: service_provider
