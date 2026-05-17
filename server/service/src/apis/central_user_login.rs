@@ -1,16 +1,15 @@
 use std::time::Duration;
 
 use reqwest::{ClientBuilder, StatusCode, Url};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 const CONNECTION_TIMEOUT_SEC: u64 = 10;
 
 #[derive(Debug)]
 pub enum CentralUserLoginError {
-    /// Central responded that the credentials are wrong.
-    /// (HTTP 200 with `success: false`, or HTTP 401.)
+    /// Central responded that the credentials are wrong (HTTP 401).
     InvalidCredentials,
-    /// Anything else — network failure, parse failure, 4xx/5xx other than 401.
+    /// Anything else — network failure, 4xx/5xx other than 401, etc.
     /// The caller should fall back to local hash verification.
     Unreachable(String),
 }
@@ -22,15 +21,11 @@ struct CentralUserLoginInput<'a> {
     password: &'a str,
 }
 
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct CentralUserLoginOutput {
-    success: bool,
-}
-
 /// POSTs to `{central_server_url}/central/user/login`.
+///
 /// `Ok(())` means credentials are valid; `Err` distinguishes "central said no"
-/// from "couldn't ask central."
+/// from "couldn't ask central." The verdict is carried by the HTTP status
+/// alone — the response body is ignored.
 pub async fn central_user_login(
     central_server_url: &str,
     username: &str,
@@ -53,17 +48,7 @@ pub async fn central_user_login(
         .map_err(|e| CentralUserLoginError::Unreachable(format!("send failed: {e}")))?;
 
     match response.status() {
-        StatusCode::OK => {
-            let body: CentralUserLoginOutput = response
-                .json()
-                .await
-                .map_err(|e| CentralUserLoginError::Unreachable(format!("parse failed: {e}")))?;
-            if body.success {
-                Ok(())
-            } else {
-                Err(CentralUserLoginError::InvalidCredentials)
-            }
-        }
+        StatusCode::OK => Ok(()),
         StatusCode::UNAUTHORIZED => Err(CentralUserLoginError::InvalidCredentials),
         other => Err(CentralUserLoginError::Unreachable(format!(
             "unexpected status: {other}"

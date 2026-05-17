@@ -314,32 +314,6 @@ mod test {
             .unwrap();
         }
 
-        // Central confirms with success:false → InvalidCredentials
-        {
-            let mock_server = MockServer::start();
-            mock_server.mock(|when, then| {
-                when.method(POST).path("/central/user/login");
-                then.status(200).body(r#"{"success":false}"#);
-            });
-
-            let result = LoginService::login(
-                &service_provider,
-                &auth_data,
-                LoginInput {
-                    username: username.clone(),
-                    password: "password".to_string(),
-                    central_server_url: mock_server.base_url(),
-                },
-                0,
-            )
-            .await;
-
-            assert_matches!(
-                result,
-                Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
-            );
-        }
-
         // Central responds with HTTP 401 → InvalidCredentials
         {
             let mock_server = MockServer::start();
