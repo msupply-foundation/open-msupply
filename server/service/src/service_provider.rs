@@ -208,6 +208,7 @@ pub struct ServiceProvider {
     // Subscription trigger handle — used by SyncLogger and changelog callbacks
     // to send events to the shared subscription worker.
     pub subscription_trigger: SubscriptionTriggerHandle,
+    pub(crate) batch_size: BatchSize,
 }
 
 pub struct ServiceContext {
@@ -216,6 +217,7 @@ pub struct ServiceContext {
     pub(crate) frontend_plugins_cache: FrontendPluginCache,
     pub user_id: String,
     pub store_id: String,
+    pub batch_size: BatchSize,
 }
 
 impl ServiceProvider {
@@ -269,7 +271,8 @@ impl ServiceProvider {
             clinician_service: Box::new(ClinicianService {}),
             general_service: Box::new(GeneralService {}),
             report_service: Box::new(ReportService {}),
-            settings: Box::new(SettingsService::new(batch_size)),
+            settings: Box::new(SettingsService),
+            batch_size,
             document_service: Box::new(DocumentService {}),
             document_registry_service: Box::new(DocumentRegistryService {}),
             form_schema_service: Box::new(FormSchemaService {}),
@@ -336,6 +339,7 @@ impl ServiceProvider {
             user_id: "".to_string(),
             store_id: "".to_string(),
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
+            batch_size: self.batch_size.clone(),
         })
     }
 
@@ -349,6 +353,7 @@ impl ServiceProvider {
             user_id: SYSTEM_USER_ID.to_string(),
             store_id: store_id.unwrap_or("".to_string()),
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
+            batch_size: self.batch_size.clone(),
         })
     }
 
@@ -363,6 +368,7 @@ impl ServiceProvider {
             user_id,
             store_id,
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
+            batch_size: self.batch_size.clone(),
         })
     }
 
@@ -381,6 +387,7 @@ impl ServiceContext {
             user_id: "".to_string(),
             store_id: "".to_string(),
             frontend_plugins_cache: FrontendPluginCache::new(),
+            batch_size: BatchSize::default(),
         }
     }
 }

@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use crate::{
     service_provider::ServiceContext,
-    sync::settings::{BatchSize, SyncSettings},
+    sync::settings::SyncSettings,
 };
 
 #[derive(Debug, Error)]
@@ -32,13 +32,7 @@ fn validate(settings: &SyncSettings) -> Result<(), UpdateSettingsError> {
 }
 
 pub trait SettingsServiceTrait: Sync + Send {
-    /// Batch sizes for sync. Sourced from YAML configuration at startup,
-    /// or `BatchSize::default()` when no YAML value is set.
-    fn batch_size(&self) -> BatchSize {
-        BatchSize::default()
-    }
-
-    /// Loads sync settings from the DB. Batch sizes come from `batch_size()`
+    /// Loads sync settings from the DB. Batch sizes come from `ctx.batch_size`
     /// (YAML or defaults), not from the DB.
     fn sync_settings(&self, ctx: &ServiceContext) -> Result<Option<SyncSettings>, RepositoryError> {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
@@ -48,7 +42,7 @@ pub trait SettingsServiceTrait: Sync + Send {
         let password_sha256 = key_value_store.get_string(KeyType::SettingsSyncPasswordSha256)?;
         let interval_seconds = key_value_store.get_i64(KeyType::SettingsSyncIntervalSeconds)?;
 
-        let batch_size = self.batch_size();
+        let batch_size = ctx.batch_size.clone();
 
         // `?` inside this closure would result in closure returning `None`
         let make_settings = || {
@@ -105,18 +99,6 @@ pub trait SettingsServiceTrait: Sync + Send {
     }
 }
 
-pub struct SettingsService {
-    batch_size: BatchSize,
-}
+pub struct SettingsService;
 
-impl SettingsService {
-    pub fn new(batch_size: BatchSize) -> Self {
-        Self { batch_size }
-    }
-}
-
-impl SettingsServiceTrait for SettingsService {
-    fn batch_size(&self) -> BatchSize {
-        self.batch_size.clone()
-    }
-}
+impl SettingsServiceTrait for SettingsService {}
