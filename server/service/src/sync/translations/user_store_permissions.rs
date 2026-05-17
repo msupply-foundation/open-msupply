@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    apis::permissions::map_api_permissions,
-    login::permissions_to_domain,
+    apis::permissions::{map_api_permissions, permissions_to_domain},
     sync::translations::{store::StoreTranslation, user::UserTranslation, IntegrationOperation},
 };
 use repository::{

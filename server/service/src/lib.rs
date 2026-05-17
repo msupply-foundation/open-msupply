@@ -110,8 +110,6 @@ pub mod vvm;
 pub mod warning;
 
 #[cfg(test)]
-mod login_mock_data;
-#[cfg(test)]
 mod test_helpers;
 
 #[derive(PartialEq, Debug)]
