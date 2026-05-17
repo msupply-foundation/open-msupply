@@ -19,13 +19,10 @@ if (!fs.existsSync(screenshotDir)) {
   fs.mkdirSync(screenshotDir, { recursive: true });
 }
 
-// Wait time after navigation/click for infinite render loops to manifest and be detected via console messages.
-// Can be reduced once we update to React 19 as it is much stricter about infinite updates and will throw an error instead of trying to recover with degraded performance.
+// Wait time after navigation/click for infinite render loops to manifest.
+// React 19 hard-throws "Maximum update depth exceeded" on real loops, which
+// surfaces through the console-error / pageerror listeners below.
 const RENDER_WAIT_MS = 2000;
-
-// If a single navigation/action produces more than this many console messages
-// (of any type), treat it as excessive logging and fail.
-const EXCESSIVE_LOG_THRESHOLD = 30;
 
 function toSafeName(label: string) {
   return label.replace(/[^a-z0-9]/gi, '-').toLowerCase();
@@ -38,8 +35,6 @@ function screenshot(page: Page, name: string) {
 interface ErrorTracker {
   errors: string[];
   warnings: string[];
-  /** Total console messages (all types) — used to detect rapid accumulation. */
-  messageCount: number;
   hasInfiniteLoop: boolean;
 }
 
@@ -47,11 +42,9 @@ function setupErrorTracking(page: Page): ErrorTracker {
   const tracker: ErrorTracker = {
     errors: [],
     warnings: [],
-    messageCount: 0,
     hasInfiniteLoop: false,
   };
   page.on('console', msg => {
-    tracker.messageCount++;
     const text = msg.text();
     if (msg.type() === 'error') {
       tracker.errors.push(text);
@@ -78,7 +71,6 @@ function setupErrorTracking(page: Page): ErrorTracker {
 function resetTracker(tracker: ErrorTracker) {
   tracker.errors = [];
   tracker.warnings = [];
-  tracker.messageCount = 0;
   tracker.hasInfiniteLoop = false;
 }
 
@@ -89,6 +81,8 @@ function reportErrors(tracker: ErrorTracker, label: string) {
       .slice(0, 5)
       .forEach(e => console.log(`    ${e.substring(0, 200)}`));
   }
+  // Warnings are logged for visibility but not asserted on — dev-mode noise
+  // (e.g. i18next missingKey, deprecation notices) doesn't indicate a break.
   if (tracker.warnings.length > 0) {
     console.log(`  WARNINGS in ${label}:`);
     tracker.warnings
@@ -100,13 +94,6 @@ function reportErrors(tracker: ErrorTracker, label: string) {
   }
 
   expect.soft(tracker.errors, `Console errors in ${label}`).toHaveLength(0);
-  expect.soft(tracker.warnings, `Console warnings in ${label}`).toHaveLength(0);
-  expect
-    .soft(
-      tracker.messageCount,
-      `Excessive logging in ${label} (${tracker.messageCount} messages)`
-    )
-    .toBeLessThan(EXCESSIVE_LOG_THRESHOLD);
 }
 
 /** Dismiss any open MUI dialog that may intercept clicks. */
@@ -157,14 +144,13 @@ async function clickFirstRowAndCheck(
   tracker: ErrorTracker,
   label: string
 ): Promise<boolean> {
-  resetTracker(tracker);
-
   const row = page.locator('tbody tr').first();
   if (!(await row.isVisible({ timeout: 3000 }).catch(() => false))) {
     console.log(`  No rows in ${label}, skipping detail`);
     return false;
   }
 
+  resetTracker(tracker);
   await row.click();
   await page.waitForLoadState('networkidle').catch(() => {});
   await page.waitForTimeout(RENDER_WAIT_MS);
@@ -392,6 +378,7 @@ function lineEditSuite(
         }
         await dismissOpenDialog(page);
 
+        resetTracker(tracker);
         await lineRow.click();
         await page.waitForTimeout(RENDER_WAIT_MS);
 
