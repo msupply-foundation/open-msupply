@@ -40,6 +40,6 @@ impl RepackMutations {
         store_id: String,
         input: InsertRepackInput,
     ) -> Result<InsertResponse> {
-        insert_repack(ctx, &store_id, input)
+        insert_repack(ctx, &store_id, input).await
     }
 }

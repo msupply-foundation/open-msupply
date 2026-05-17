@@ -69,6 +69,12 @@ impl StandardGraphqlError {
     pub fn from_debug<E: std::fmt::Debug>(error: E) -> async_graphql::Error {
         StandardGraphqlError::InternalError(format!("{error:#?}")).extend()
     }
+
+    /// Maps a `tokio::task::JoinError` (e.g. from a panicked or cancelled
+    /// `spawn_blocking` task) into a GraphQL internal error.
+    pub fn from_join_error(error: tokio::task::JoinError) -> async_graphql::Error {
+        StandardGraphqlError::InternalError(format!("Blocking task failed: {error}")).extend()
+    }
 }
 
 /// Validates current user is authenticated and authorized

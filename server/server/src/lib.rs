@@ -57,6 +57,7 @@ use service::{
 
 use actix_web::{web, web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
+use std::time::Duration;
 use util::format_error;
 
 mod authentication;
@@ -263,7 +264,8 @@ pub async fn start_server(
 
     info!("Starting discovery graphql server",);
     let closure_service_provider = service_provider.clone();
-    // See attach_discovery_graphql_schema for more details
+    // See attach_discovery_graphql_schema for more details. Discovery only
+    // serves a tiny status query; a single worker is enough.
     tokio::spawn(
         HttpServer::new(move || {
             App::new()
@@ -272,6 +274,7 @@ pub async fn start_server(
                     closure_service_provider.clone(),
                 ))
         })
+        .workers(1)
         .bind(settings.server.discovery_address())?
         .run(),
     );
@@ -285,6 +288,32 @@ pub async fn start_server(
     let closure_settings = settings.clone();
     let closure_service_provider = service_provider.clone();
     let closure_schema = graphql_schema.clone();
+
+    // Compute worker / connection counts. Default to 2 * available cores: each
+    // worker spends most of its time awaiting `spawn_blocking` for DB work, so
+    // oversubscribing the CPU is fine and lets bursts of small handlers run
+    // concurrently.
+    let available_cores = std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(4);
+    let http_workers = settings
+        .server
+        .http_workers
+        .unwrap_or(available_cores.saturating_mul(2).max(2));
+    let http_backlog = settings.server.http_backlog.unwrap_or(2048);
+    let http_max_connections = settings.server.http_max_connections.unwrap_or(25_000);
+    let http_keep_alive = Duration::from_secs(settings.server.http_keep_alive_seconds.unwrap_or(75));
+    let http_client_request_timeout = Duration::from_secs(
+        settings
+            .server
+            .http_client_request_timeout_seconds
+            .unwrap_or(30),
+    );
+    info!(
+        "HTTP server tuning: workers={}, backlog={}, max_connections={}, keep_alive={:?}",
+        http_workers, http_backlog, http_max_connections, http_keep_alive,
+    );
+
     let mut http_server = HttpServer::new(move || {
         App::new()
             .app_data(Data::new(closure_settings.clone()))
@@ -313,6 +342,11 @@ pub async fn start_server(
             // Needs to be last to capture all unmatches routes
             .configure(config_serve_frontend)
     })
+    .workers(http_workers)
+    .backlog(http_backlog)
+    .max_connections(http_max_connections)
+    .keep_alive(http_keep_alive)
+    .client_request_timeout(http_client_request_timeout)
     .disable_signals();
 
     http_server = match certificates.config() {

@@ -15,8 +15,12 @@ const SQLITE_LOCKWAIT_MS: u32 = 30 * 1000;
 #[cfg(not(feature = "postgres"))]
 const SQLITE_WAL_PRAGMA: &str = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;";
 
-const DEFAULT_CONNECTION_POOL_MAX_CONNECTIONS: u32 = 10;
-const DEFAULT_CONNECTION_POOL_TIMEOUT_SECONDS: u64 = 30;
+const DEFAULT_CONNECTION_POOL_MAX_CONNECTIONS: u32 = 32;
+// Fail fast on pool exhaustion rather than masking saturation behind a 30s wait.
+const DEFAULT_CONNECTION_POOL_TIMEOUT_SECONDS: u64 = 5;
+// Recycle pooled connections regularly so stale backends don't accumulate.
+const DEFAULT_POOL_IDLE_TIMEOUT_SECONDS: u64 = 300;
+const DEFAULT_POOL_MAX_LIFETIME_SECONDS: u64 = 1800;
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct DatabaseSettings {
@@ -111,6 +115,51 @@ impl DatabaseSettings {
     }
 }
 
+// feature postgres
+#[cfg(feature = "postgres")]
+#[derive(Debug, Clone)]
+pub struct PgConnectionOptions {
+    /// `statement_timeout` in milliseconds — caps any single query.
+    pub statement_timeout_ms: u32,
+    /// `idle_in_transaction_session_timeout` in milliseconds — caps a backend
+    /// that has begun a transaction but is no longer doing work.
+    pub idle_in_transaction_timeout_ms: u32,
+    /// `lock_timeout` in milliseconds — fail fast when an explicit `LOCK` or
+    /// row lock can't be acquired.
+    pub lock_timeout_ms: u32,
+}
+
+#[cfg(feature = "postgres")]
+impl Default for PgConnectionOptions {
+    fn default() -> Self {
+        Self {
+            statement_timeout_ms: 30_000,
+            idle_in_transaction_timeout_ms: 60_000,
+            lock_timeout_ms: 10_000,
+        }
+    }
+}
+
+#[cfg(feature = "postgres")]
+impl diesel::r2d2::CustomizeConnection<diesel::PgConnection, diesel::r2d2::Error>
+    for PgConnectionOptions
+{
+    fn on_acquire(&self, conn: &mut diesel::PgConnection) -> Result<(), diesel::r2d2::Error> {
+        let sql = format!(
+            "SET statement_timeout = {}; SET idle_in_transaction_session_timeout = {}; SET lock_timeout = {};",
+            self.statement_timeout_ms,
+            self.idle_in_transaction_timeout_ms,
+            self.lock_timeout_ms,
+        );
+        // Use batch_execute so a SET failure surfaces as a retryable acquire
+        // error rather than poisoning the connection in r2d2.
+        if let Err(e) = conn.batch_execute(&sql) {
+            log::warn!("Postgres on_acquire SET failed: {e}");
+        }
+        Ok(())
+    }
+}
+
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
 #[derive(Debug)]
@@ -186,6 +235,13 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
                 .connection_pool_timeout_seconds
                 .unwrap_or(DEFAULT_CONNECTION_POOL_TIMEOUT_SECONDS),
         ))
+        // r2d2 defaults to `true`, which sends a `SELECT 1` round-trip on every
+        // `pool.get()`. Combined with `max_lifetime`/`idle_timeout`, recycling
+        // alone is enough to detect dead connections without a per-acquire ping.
+        .test_on_check_out(false)
+        .idle_timeout(Some(Duration::from_secs(DEFAULT_POOL_IDLE_TIMEOUT_SECONDS)))
+        .max_lifetime(Some(Duration::from_secs(DEFAULT_POOL_MAX_LIFETIME_SECONDS)))
+        .connection_customizer(Box::new(PgConnectionOptions::default()))
         .build(connection_manager)
         .expect("Failed to connect to database");
     StorageConnectionManager::new(pool)
@@ -212,6 +268,11 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
                 .connection_pool_timeout_seconds
                 .unwrap_or(DEFAULT_CONNECTION_POOL_TIMEOUT_SECONDS),
         ))
+        // Skip the per-acquire `SELECT 1` ping. SQLite connections rarely die
+        // unexpectedly; if they do, the customizer above will run on re-create.
+        .test_on_check_out(false)
+        .idle_timeout(Some(Duration::from_secs(DEFAULT_POOL_IDLE_TIMEOUT_SECONDS)))
+        .max_lifetime(Some(Duration::from_secs(DEFAULT_POOL_MAX_LIFETIME_SECONDS)))
         .build(connection_manager)
         .expect("Failed to connect to database");
 

@@ -468,6 +468,11 @@ impl LoadTest {
                 base_dir: "app_data".to_string(),
                 machine_uid: None,
                 override_is_central_server: false,
+                http_workers: None,
+                http_backlog: None,
+                http_max_connections: None,
+                http_keep_alive_seconds: None,
+                http_client_request_timeout_seconds: None,
             },
             database: DatabaseSettings {
                 username: "postgres".to_string(),
@@ -557,6 +562,11 @@ impl LoadTest {
                     base_dir: database_path.to_string(),
                     machine_uid: Some("1337_test".to_string()),
                     override_is_central_server: false,
+                    http_workers: None,
+                    http_backlog: None,
+                    http_max_connections: None,
+                    http_keep_alive_seconds: None,
+                    http_client_request_timeout_seconds: None,
                 },
                 database: DatabaseSettings {
                     username: "postgres".to_string(),

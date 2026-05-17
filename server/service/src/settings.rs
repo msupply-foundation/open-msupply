@@ -41,6 +41,20 @@ pub struct ServerSettings {
     // Option to set server mode as central server, should only be used in testing, demo and development
     #[serde(default)]
     pub override_is_central_server: bool,
+    /// Number of Actix HTTP worker threads. Defaults to `2 * num_cpus`.
+    /// Each worker runs its own async runtime; tuning higher than `num_cpus`
+    /// is appropriate because resolver bodies are dispatched to the blocking
+    /// pool, so workers spend most of their time waiting on I/O rather than
+    /// burning CPU.
+    pub http_workers: Option<usize>,
+    /// TCP backlog passed to `HttpServer::backlog`. Defaults to 2048.
+    pub http_backlog: Option<u32>,
+    /// Max concurrent connections per worker. Defaults to 25_000.
+    pub http_max_connections: Option<usize>,
+    /// Per-request keep-alive in seconds. Defaults to 75.
+    pub http_keep_alive_seconds: Option<u64>,
+    /// Request header read timeout in seconds. Defaults to 30.
+    pub http_client_request_timeout_seconds: Option<u64>,
 }
 
 fn default_base_dir() -> String {

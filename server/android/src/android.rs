@@ -54,6 +54,12 @@ pub mod android {
                 base_dir: files_dir.to_str().unwrap().to_string(),
                 machine_uid: Some(android_id),
                 override_is_central_server: false,
+                // Use code defaults; Android runs a single shared instance.
+                http_workers: None,
+                http_backlog: None,
+                http_max_connections: None,
+                http_keep_alive_seconds: None,
+                http_client_request_timeout_seconds: None,
             },
             database: DatabaseSettings {
                 username: "n/a".to_string(),

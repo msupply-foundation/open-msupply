@@ -10,15 +10,25 @@ server:
       http://localhost:8000,
     ] # Used to set the allowed Origin in Cross Origin Request Security
   base_dir: "app_data"
+  # HTTP server tuning. Leave commented to use code defaults
+  # (workers = 2 * cores, backlog = 2048, max_connections = 25000,
+  #  keep_alive = 75s, client_request_timeout = 30s).
+  # http_workers: 16
+  # http_backlog: 2048
+  # http_max_connections: 25000
+  # http_keep_alive_seconds: 75
+  # http_client_request_timeout_seconds: 30
 database:
   host: "localhost"
   port: 5432
   username: "postgres"
   password: "password"
   database_name: "omsupply-database"
-  connection_pool_max_connections: 10
-  connection_pool_min_idle: 2
-  connection_pool_timeout_seconds: 30
+  # Pool sizing. Aim for ~2x the configured http_workers so each worker can
+  # check out a connection without contention while a few sit idle for sync.
+  connection_pool_max_connections: 32
+  connection_pool_min_idle: 4
+  connection_pool_timeout_seconds: 5
 logging:
   #   one of: All | Console | File
   mode: File

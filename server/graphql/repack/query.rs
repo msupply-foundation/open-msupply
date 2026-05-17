@@ -1,8 +1,11 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::NodeError, standard_graphql_error::validate_auth, ContextExt,
+    simple_generic_errors::NodeError,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
 };
 use graphql_types::types::{RepackConnector, RepackNode};
+use repository::RepositoryError;
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Union)]
@@ -24,15 +27,19 @@ pub async fn get_repack(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
-    let repack_service = &service_provider.repack_service;
+    let service_provider = ctx.service_provider_data();
+    let invoice_id = invoice_id.to_string();
 
-    let repack = repack_service.get_repack(&service_context, invoice_id)?;
+    let repack = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        service_provider
+            .repack_service
+            .get_repack(&service_context, &invoice_id)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
-    let response = RepackResponse::Response(RepackNode::from_domain(repack));
-
-    Ok(response)
+    Ok(RepackResponse::Response(RepackNode::from_domain(repack)))
 }
 
 pub async fn get_repacks_by_stock_line(
@@ -48,13 +55,17 @@ pub async fn get_repacks_by_stock_line(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
-    let repack_service = &service_provider.repack_service;
+    let service_provider = ctx.service_provider_data();
+    let stock_line_id = stock_line_id.to_string();
 
-    let repacks = repack_service.get_repacks_by_stock_line(&service_context, stock_line_id)?;
+    let repacks = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        service_provider
+            .repack_service
+            .get_repacks_by_stock_line(&service_context, &stock_line_id)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
-    let response = RepackConnector::from_vec(repacks);
-
-    Ok(response)
+    Ok(RepackConnector::from_vec(repacks))
 }

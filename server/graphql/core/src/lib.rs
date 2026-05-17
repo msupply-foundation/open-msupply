@@ -39,6 +39,10 @@ pub trait ContextExt {
     fn get_connection_manager(&self) -> &StorageConnectionManager;
     fn get_loader<T: anymap::any::Any + Send + Sync>(&self) -> &T;
     fn service_provider(&self) -> &ServiceProvider;
+    /// Returns a cheap (`Arc`) clone of the `ServiceProvider` `Data` handle.
+    /// Use this when the `ServiceProvider` must outlive the current borrow,
+    /// e.g. when moved into a `tokio::task::spawn_blocking` closure.
+    fn service_provider_data(&self) -> Data<ServiceProvider>;
     fn get_auth_data(&self) -> &AuthData;
     fn get_auth_token(&self) -> Option<String>;
     fn get_override_user_id(&self) -> Option<String>;
@@ -60,6 +64,10 @@ impl<'a> ContextExt for Context<'a> {
 
     fn service_provider(&self) -> &ServiceProvider {
         self.data_unchecked::<Data<ServiceProvider>>()
+    }
+
+    fn service_provider_data(&self) -> Data<ServiceProvider> {
+        self.data_unchecked::<Data<ServiceProvider>>().clone()
     }
 
     fn get_auth_data(&self) -> &AuthData {

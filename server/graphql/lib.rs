@@ -350,10 +350,18 @@ impl GraphqlSchema {
         } = data;
         let subscription_broadcast = Data::new(subscription_broadcast);
 
+        // Cap query depth and complexity to protect workers from pathologically
+        // nested or fanned-out queries. Numbers are deliberately generous so
+        // legitimate report queries still pass; tighten after profiling.
+        const MAX_QUERY_DEPTH: usize = 20;
+        const MAX_QUERY_COMPLEXITY: usize = 5000;
+
         // Self requester schema is a copy of operational schema, used for reports
         // needs to be available as data in operational schema
         let self_requester_schema =
             OperationalSchema::build(Queries::new(), Mutations::new(), Subscriptions::default())
+                .limit_depth(MAX_QUERY_DEPTH)
+                .limit_complexity(MAX_QUERY_COMPLEXITY)
                 .data(connection_manager.clone())
                 .data(loader_registry.clone())
                 .data(service_provider.clone())
@@ -370,6 +378,8 @@ impl GraphqlSchema {
         // Operational schema
         let operational_builder =
             OperationalSchema::build(Queries::new(), Mutations::new(), Subscriptions::default())
+                .limit_depth(MAX_QUERY_DEPTH)
+                .limit_complexity(MAX_QUERY_COMPLEXITY)
                 .data(connection_manager.clone())
                 .data(loader_registry.clone())
                 .data(service_provider.clone())
@@ -388,6 +398,8 @@ impl GraphqlSchema {
             InitialisationMutations,
             InitialisationSubscriptions::default(),
         )
+        .limit_depth(MAX_QUERY_DEPTH)
+        .limit_complexity(MAX_QUERY_COMPLEXITY)
         .data(service_provider.clone())
         .data(subscription_broadcast.clone())
         .data(operational_status_ref.clone())
@@ -396,6 +408,8 @@ impl GraphqlSchema {
 
         let migration_builder =
             MigrationSchema::build(MigrationQueries, EmptyMutation, EmptySubscription)
+                .limit_depth(MAX_QUERY_DEPTH)
+                .limit_complexity(MAX_QUERY_COMPLEXITY)
                 .data(service_provider.clone())
                 .data(operational_status_ref.clone())
                 .extension(GraphQLRequestLogger);
