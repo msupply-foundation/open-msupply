@@ -64,6 +64,12 @@ pub async fn get_token(
         .get_id(&ctx.connection)?
         .ok_or(SyncError::SiteIdNotSet)?;
     if site.id == central_site_id {
+        log::warn!(
+            "Device with hardware_id: {} attempted to authenticate as the central site (name: {}, id: {}). Rejecting.",
+            input.hardware_id,
+            input.name,
+            site.id
+        );
         return Err(SyncError::InvalidSiteNameOrPassword);
     }
 
