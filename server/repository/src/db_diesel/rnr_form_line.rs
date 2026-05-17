@@ -1,11 +1,11 @@
 use super::{
-    item_link_row::item_link, item_row::item, requisition_line_row::requisition_line,
-    rnr_form_line_row::rnr_form_line, DBType, RepositoryError, StorageConnection,
+    item_row::item, requisition_line_row::requisition_line, rnr_form_line_row::rnr_form_line,
+    DBType, RepositoryError, StorageConnection,
 };
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
-    EqualFilter, ItemLinkRow, ItemRow, Pagination, RequisitionLineRow, RnRFormLineRow, Sort,
+    EqualFilter, ItemRow, Pagination, RequisitionLineRow, RnRFormLineRow, Sort,
 };
 
 use diesel::{
@@ -35,11 +35,7 @@ pub struct RnRFormLineRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-type RnRFormLineJoin = (
-    RnRFormLineRow,
-    (ItemLinkRow, ItemRow),
-    Option<RequisitionLineRow>,
-);
+type RnRFormLineJoin = (RnRFormLineRow, ItemRow, Option<RequisitionLineRow>);
 
 impl<'a> RnRFormLineRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -96,7 +92,7 @@ impl<'a> RnRFormLineRepository<'a> {
 }
 
 fn to_domain(
-    (rnr_form_line_row, (_, item_row), requisition_line_row): RnRFormLineJoin,
+    (rnr_form_line_row, item_row, requisition_line_row): RnRFormLineJoin,
 ) -> RnRFormLine {
     RnRFormLine {
         rnr_form_line_row,
@@ -106,16 +102,13 @@ fn to_domain(
 }
 type BoxedRnRFormLineQuery = IntoBoxed<
     'static,
-    LeftJoin<
-        InnerJoin<rnr_form_line::table, InnerJoin<item_link::table, item::table>>,
-        requisition_line::table,
-    >,
+    LeftJoin<InnerJoin<rnr_form_line::table, item::table>, requisition_line::table>,
     DBType,
 >;
 
 fn create_filtered_query(filter: Option<RnRFormLineFilter>) -> BoxedRnRFormLineQuery {
     let mut query = rnr_form_line::table
-        .inner_join(item_link::table.inner_join(item::table))
+        .inner_join(item::table)
         .left_join(requisition_line::table)
         .into_boxed();
 

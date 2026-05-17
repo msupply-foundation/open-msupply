@@ -253,7 +253,7 @@ mod test {
         let mut item_ids: Vec<String> = result
             .clone()
             .into_iter()
-            .map(|purchase_order_line| purchase_order_line.item_link_id)
+            .map(|purchase_order_line| purchase_order_line.item_id)
             .collect();
         item_ids.sort();
 
@@ -263,7 +263,7 @@ mod test {
 
         let line = result
             .iter()
-            .find(|line| line.item_link_id == item_query_test1().id)
+            .find(|line| line.item_id == item_query_test1().id)
             .unwrap();
 
         assert_eq!(line.item_name, item_query_test1().name);

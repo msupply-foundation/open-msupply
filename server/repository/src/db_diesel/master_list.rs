@@ -1,7 +1,7 @@
 use super::{
-    item_link_row::item_link, master_list_line_row::master_list_line,
-    master_list_name_join::master_list_name_join, master_list_row::master_list, name_row::name,
-    program_row::program, store_row::store, DBType, MasterListRow, StorageConnection,
+    master_list_line_row::master_list_line, master_list_name_join::master_list_name_join,
+    master_list_row::master_list, name_row::name, program_row::program, store_row::store, DBType,
+    MasterListRow, StorageConnection,
 };
 
 use crate::{
@@ -136,11 +136,10 @@ impl<'a> MasterListRepository<'a> {
             if f.item_id.is_some() {
                 let mut master_list_line_query = master_list_line::table
                     .select(master_list_line::master_list_id)
-                    .left_join(item_link::table)
                     .distinct()
                     .into_boxed::<DBType>();
 
-                apply_equal_filter!(master_list_line_query, f.item_id, item_link::item_id);
+                apply_equal_filter!(master_list_line_query, f.item_id, master_list_line::item_id);
 
                 query = query.filter(master_list::id.eq_any(master_list_line_query));
             }

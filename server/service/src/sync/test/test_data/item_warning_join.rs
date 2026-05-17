@@ -45,7 +45,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             ItemWarningJoinRow {
                 id: ITEMWARNINGLINK_1.0.to_owned(),
                 warning_id: "WARNING_1".to_string(),
-                item_link_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
+                item_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
                 priority: false.to_owned(),
             },
         ),
@@ -55,7 +55,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             ItemWarningJoinRow {
                 id: ITEMWARNINGLINK_2.0.to_owned(),
                 warning_id: "WARNING_2".to_string(),
-                item_link_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
+                item_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
                 priority: true.to_owned(),
             },
         ),
@@ -65,7 +65,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             ItemWarningJoinRow {
                 id: ITEMWARNINGLINK_3.0.to_owned(),
                 warning_id: "WARNING_3".to_string(),
-                item_link_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
+                item_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
                 priority: false.to_owned(),
             },
         ),

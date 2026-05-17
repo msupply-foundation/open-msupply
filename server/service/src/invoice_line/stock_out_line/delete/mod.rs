@@ -190,7 +190,7 @@ mod test {
             InvoiceLineRow {
                 id: String::from("outbound_shipment_no_lines_a"),
                 invoice_id: mock_outbound_shipment_no_lines().id,
-                item_link_id: String::from("item_a"),
+                item_id: String::from("item_a"),
                 item_name: String::from("Item A"),
                 item_code: String::from("item_a_code"),
                 stock_line_id: Some(String::from("item_a_line_a")),

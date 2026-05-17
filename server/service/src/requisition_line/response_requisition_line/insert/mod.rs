@@ -63,7 +63,7 @@ pub fn insert_response_requisition_line(
             };
             let new_requisition_line_row = RequisitionLineRow {
                 id: input.id.clone(),
-                item_link_id: item_row.id.clone(),
+                item_id: item_row.id.clone(),
                 item_name: item_row.name.clone(),
                 requisition_id: requisition_row.id,
                 snapshot_datetime: Some(Utc::now().naive_utc()),
@@ -132,7 +132,7 @@ mod test {
         RequisitionLineRow {
             id: "new requisition line id".to_string(),
             requisition_id: new_response_requisition().id,
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             ..Default::default()
         }
     }

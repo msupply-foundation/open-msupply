@@ -92,7 +92,7 @@ fn validate(
 
     // Check that item_ids are not the same
     // Technically this has a problem if the item is merged but should be very rare...
-    if principal_item_variant.item_link_id == bundled_item_variant.item_link_id {
+    if principal_item_variant.item_id == bundled_item_variant.item_id {
         return Err(UpsertBundledItemError::CanNotBundleItemWithItself);
     }
 

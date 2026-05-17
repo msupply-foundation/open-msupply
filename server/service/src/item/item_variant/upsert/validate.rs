@@ -26,9 +26,9 @@ pub fn validate(
         // Query Item Link to check if the item_id is the same
         // If items have been merged, the item_id could be different, but we still want to update the row so we have the latest id
         let old_item_id = ItemLinkRowRepository::new(connection)
-            .find_one_by_id(&existing_item_variant.item_variant_row.item_link_id)?
+            .find_one_by_id(&existing_item_variant.item_variant_row.item_id)?
             .map(|v| v.item_id)
-            .unwrap_or_else(|| existing_item_variant.item_variant_row.item_link_id.clone());
+            .unwrap_or_else(|| existing_item_variant.item_variant_row.item_id.clone());
 
         if old_item_id != input.item_id {
             return Err(CantChangeItem);

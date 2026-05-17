@@ -65,7 +65,7 @@ impl SyncTranslation for MasterListLineTranslation {
 
         let result = MasterListLineRow {
             id: data.ID,
-            item_link_id: data.item_ID,
+            item_id: data.item_ID,
             master_list_id: data.item_master_ID,
             price_per_unit: data.price,
         };

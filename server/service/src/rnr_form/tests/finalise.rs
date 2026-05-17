@@ -21,7 +21,7 @@ mod finalise {
             RnRFormLineRow {
                 id: "negative_line".to_string(),
                 rnr_form_id: mock_rnr_form_b().id,
-                item_link_id: mock_item_c().id,
+                item_id: mock_item_c().id,
                 final_balance: -5.0,
                 ..Default::default()
             }
@@ -98,7 +98,7 @@ mod finalise {
             RnRFormLineRow {
                 id: "auto_populated_line".to_string(),
                 rnr_form_id: mock_rnr_form_b().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 snapshot_quantity_received: 5.0,
                 snapshot_quantity_consumed: 7.0,
                 snapshot_adjustments: 1.0,
@@ -110,7 +110,7 @@ mod finalise {
             RnRFormLineRow {
                 id: "manually_entered_line".to_string(),
                 rnr_form_id: mock_rnr_form_b().id,
-                item_link_id: mock_item_b().id,
+                item_id: mock_item_b().id,
                 entered_quantity_received: Some(10.0),
                 entered_quantity_consumed: Some(14.0),
                 entered_adjustments: Some(5.0),
@@ -195,7 +195,7 @@ mod finalise {
         let auto_populated_line = &requisition_lines
             .iter()
             .find(|line| {
-                line.requisition_line_row.item_link_id == auto_populated_line().item_link_id
+                line.requisition_line_row.item_id == auto_populated_line().item_id
             })
             .unwrap()
             .requisition_line_row;
@@ -209,7 +209,7 @@ mod finalise {
         let manually_entered_line = &requisition_lines
             .iter()
             .find(|line| {
-                line.requisition_line_row.item_link_id == manually_entered_line().item_link_id
+                line.requisition_line_row.item_id == manually_entered_line().item_id
             })
             .unwrap()
             .requisition_line_row;

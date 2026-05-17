@@ -50,7 +50,7 @@ impl SyncTranslation for ItemWarningJoinTranslation {
 
         let result = ItemWarningJoinRow {
             id,
-            item_link_id,
+            item_id: item_link_id,
             warning_id,
             priority,
         };

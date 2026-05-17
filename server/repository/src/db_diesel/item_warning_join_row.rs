@@ -1,34 +1,41 @@
-use super::{item_link, item_row::item, warning_row::warning};
+use super::{item_row::item, warning_row::warning};
+use crate::diesel_macros::define_linked_tables;
 use crate::{RepositoryError, StorageConnection, Upsert};
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    item_warning_join (id) {
-        id -> Text,
-        item_link_id -> Text,
+define_linked_tables! {
+    view: item_warning_join = "item_warning_join_view",
+    core: item_warning_join_with_links = "item_warning_join",
+    struct: ItemWarningJoinRow,
+    repo: ItemWarningJoinRowRepository,
+    shared: {
         warning_id -> Text,
         priority -> Bool,
+    },
+    links: {
+        item_link_id -> item_id,
+    },
+    optional_links: {
     }
 }
 
 joinable!(item_warning_join -> warning (warning_id));
-joinable!(item_warning_join -> item_link (item_link_id));
-allow_tables_to_appear_in_same_query!(item_warning_join, item_link);
+joinable!(item_warning_join -> item (item_id));
 allow_tables_to_appear_in_same_query!(item_warning_join, item);
 allow_tables_to_appear_in_same_query!(item_warning_join, warning);
 
 #[derive(
-    Clone, Default, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
+    Clone, Default, Queryable, Debug, PartialEq, Eq, Serialize, Deserialize,
 )]
 #[diesel(table_name = item_warning_join)]
-#[diesel(treat_none_as_null = true)]
 pub struct ItemWarningJoinRow {
     pub id: String,
-    pub item_link_id: String,
     pub warning_id: String,
     pub priority: bool,
+    // Resolved from item_link - must be last to match view column order
+    pub item_id: String,
 }
 
 pub struct ItemWarningJoinRowRepository<'a> {
@@ -41,12 +48,7 @@ impl<'a> ItemWarningJoinRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &ItemWarningJoinRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(item_warning_join::table)
-            .values(row)
-            .on_conflict(item_warning_join::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         Ok(())
     }
 
@@ -65,10 +67,9 @@ impl<'a> ItemWarningJoinRowRepository<'a> {
 impl Upsert for ItemWarningJoinRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         ItemWarningJoinRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+        Ok(None)
     }
 
-    // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             ItemWarningJoinRowRepository::new(con).find_one_by_id(&self.id),

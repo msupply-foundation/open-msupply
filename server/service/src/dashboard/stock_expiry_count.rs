@@ -56,7 +56,7 @@ mod stock_count_test {
     fn expired_stock_a() -> StockLineRow {
         StockLineRow {
             id: "expired_stock_a".to_string(),
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             store_id: mock_store_a().id,
             available_number_of_packs: 100.0,
             total_number_of_packs: 100.0,
@@ -71,7 +71,7 @@ mod stock_count_test {
     fn expired_stock_b() -> StockLineRow {
         StockLineRow {
             id: "expired_stock_b".to_string(),
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             store_id: mock_store_a().id,
             available_number_of_packs: 500.0,
             total_number_of_packs: 500.0,

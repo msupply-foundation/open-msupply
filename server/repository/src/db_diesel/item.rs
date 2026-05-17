@@ -292,14 +292,8 @@ impl<'a> ItemRepository<'a> {
             }
 
             if let Some(category_id) = category_id {
-                // Don't need to consider merged items (item_link) here - if item
-                // has been merged, we only need to find by the category of the
-                // kept item, not the one that was "deleted"
                 let item_ids_for_category_id = item_category_join::table
-                    .inner_join(
-                        item_link::table.on(item_link::id.eq(item_category_join::item_link_id)),
-                    )
-                    .select(item_link::item_id)
+                    .select(item_category_join::item_id)
                     .filter(item_category_join::category_id.eq(category_id.clone()))
                     .into_boxed();
 
@@ -309,23 +303,17 @@ impl<'a> ItemRepository<'a> {
             if let Some(category_name) = category_name {
                 let item_ids_for_category_name = item_category_join::table
                     .inner_join(
-                        item_link::table.on(item_link::id.eq(item_category_join::item_link_id)),
-                    )
-                    .inner_join(
                         category::table.on(category::id.eq(item_category_join::category_id)),
                     )
-                    .select(item_link::item_id)
+                    .select(item_category_join::item_id)
                     .filter(category::name.eq(category_name.clone()))
                     .into_boxed();
 
                 query = query.filter(item::id.eq_any(item_ids_for_category_name));
             }
 
-            let visible_item_ids = item_link::table
-                .select(item_link::item_id)
-                .inner_join(
-                    master_list_line::table.on(master_list_line::item_link_id.eq(item_link::id)),
-                )
+            let visible_item_ids = master_list_line::table
+                .select(master_list_line::item_id)
                 .inner_join(
                     master_list::table.on(master_list::id.eq(master_list_line::master_list_id)),
                 )
@@ -399,12 +387,8 @@ impl<'a> ItemRepository<'a> {
                     .distinct()
                     .into_boxed();
 
-                let program_item_ids = item_link::table
-                    .select(item_link::item_id)
-                    .inner_join(
-                        master_list_line::table
-                            .on(master_list_line::item_link_id.eq(item_link::id)),
-                    )
+                let program_item_ids = master_list_line::table
+                    .select(master_list_line::item_id)
                     .filter(
                         master_list_line::master_list_id
                             .nullable()
@@ -421,12 +405,8 @@ impl<'a> ItemRepository<'a> {
             }
 
             if let Some(master_list_id_filter) = master_list_id {
-                let mut sub_query = item_link::table
-                    .select(item_link::item_id)
-                    .inner_join(
-                        master_list_line::table
-                            .on(master_list_line::item_link_id.eq(item_link::id)),
-                    )
+                let mut sub_query = master_list_line::table
+                    .select(master_list_line::item_id)
                     .into_boxed();
                 apply_equal_filter!(
                     sub_query,
@@ -437,11 +417,8 @@ impl<'a> ItemRepository<'a> {
             };
 
             if let Some(ignore_for_orders) = ignore_for_orders {
-                let item_ids_for_ignore_for_orders = item_link::table
-                    .select(item_link::item_id)
-                    .inner_join(
-                        item_store_join::table.on(item_store_join::item_link_id.eq(item_link::id)),
-                    )
+                let item_ids_for_ignore_for_orders = item_store_join::table
+                    .select(item_store_join::item_id)
                     .filter(item_store_join::store_id.eq(store_id.clone()))
                     .filter(item_store_join::ignore_for_orders.eq(ignore_for_orders))
                     .into_boxed();
@@ -776,25 +753,25 @@ mod tests {
         let master_list_line_rows = vec![
             MasterListLineRow {
                 id: "id1".to_string(),
-                item_link_id: "item1".to_string(),
+                item_id: "item1".to_string(),
                 master_list_id: "master_list1".to_string(),
                 ..Default::default()
             },
             MasterListLineRow {
                 id: "id2".to_string(),
-                item_link_id: "item2".to_string(),
+                item_id: "item2".to_string(),
                 master_list_id: "master_list1".to_string(),
                 ..Default::default()
             },
             MasterListLineRow {
                 id: "id3".to_string(),
-                item_link_id: "item3".to_string(),
+                item_id: "item3".to_string(),
                 master_list_id: "master_list2".to_string(),
                 ..Default::default()
             },
             MasterListLineRow {
                 id: "id4".to_string(),
-                item_link_id: "item4".to_string(),
+                item_id: "item4".to_string(),
                 master_list_id: "master_list2".to_string(),
                 ..Default::default()
             },
@@ -893,7 +870,7 @@ mod tests {
         StockLineRowRepository::new(&storage_connection)
             .upsert_one(&StockLineRow {
                 id: "stock_line_for_item_3".to_string(),
-                item_link_id: "item3".to_string(),
+                item_id: "item3".to_string(),
                 store_id: "name1_store".to_string(),
                 available_number_of_packs: 5.0,
                 pack_size: 1.0,

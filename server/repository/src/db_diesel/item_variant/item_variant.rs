@@ -2,9 +2,8 @@ use super::item_variant_row::{item_variant, ItemVariantRow};
 use crate::{
     db_diesel::{item_row::item, location_type_row::location_type, name_row::name},
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
-    item_link,
     repository_error::RepositoryError,
-    DBType, EqualFilter, ItemLinkRow, ItemRow, LocationTypeRow, NameRow, Pagination, Sort,
+    DBType, EqualFilter, ItemRow, LocationTypeRow, NameRow, Pagination, Sort,
     StorageConnection, StringFilter,
 };
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -26,7 +25,7 @@ pub type ItemVariantSort = Sort<ItemVariantSortField>;
 type ItemVariantJoin = (
     ItemVariantRow,
     Option<NameRow>,
-    (ItemLinkRow, ItemRow),
+    ItemRow,
     Option<LocationTypeRow>,
 );
 
@@ -34,7 +33,7 @@ type ItemVariantJoin = (
 fn query() -> _ {
     item_variant::table
         .left_join(name::table)
-        .inner_join(item_link::table.inner_join(item::table))
+        .inner_join(item::table)
         .left_join(location_type::table)
 }
 
@@ -134,7 +133,7 @@ impl<'a> ItemVariantRepository<'a> {
 }
 
 fn to_domain(
-    (item_variant_row, manufacturer_row, (_, item_row), location_type_row): ItemVariantJoin,
+    (item_variant_row, manufacturer_row, item_row, location_type_row): ItemVariantJoin,
 ) -> ItemVariant {
     ItemVariant {
         item_variant_row,
@@ -193,7 +192,7 @@ mod tests {
             .upsert_one(&ItemVariantRow {
                 id: id.clone(),
                 name: name.clone(),
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 location_type_id: None,
                 deleted_datetime: None,
                 vvm_type: None,

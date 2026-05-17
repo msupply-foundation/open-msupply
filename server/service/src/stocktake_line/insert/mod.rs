@@ -393,7 +393,7 @@ mod stocktake_line_test {
         fn mock_stock_line_for_donor_test() -> StockLineRow {
             StockLineRow {
                 id: String::from("mock_stock_line_for_donor_test"),
-                item_link_id: String::from("item_a"),
+                item_id: String::from("item_a"),
                 location_id: None,
                 store_id: String::from("store_a"),
                 batch: Some(String::from("item_a_batch_b")),
@@ -477,7 +477,7 @@ mod stocktake_line_test {
         fn mock_stock_line_c() -> StockLineRow {
             StockLineRow {
                 id: "mock_stock_line_c".to_string(),
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 store_id: "store_a".to_string(),
                 available_number_of_packs: 50.0,
                 pack_size: 1.0,
@@ -492,7 +492,7 @@ mod stocktake_line_test {
         fn mock_stock_line_d() -> StockLineRow {
             StockLineRow {
                 id: "mock_stock_line_d".to_string(),
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 store_id: "store_a".to_string(),
                 available_number_of_packs: 20.0,
                 pack_size: 1.0,
@@ -595,7 +595,7 @@ mod stocktake_line_test {
                 counted_number_of_packs: Some(50.0),
                 stock_line_id: Some(stock_line.id),
                 snapshot_number_of_packs: 30.0,
-                item_link_id: stock_line.item_link_id,
+                item_id: stock_line.item_id,
                 item_name: "Item A".to_string(),
                 reason_option_id: Some(positive_reason().id),
                 ..Default::default()
@@ -660,7 +660,7 @@ mod stocktake_line_test {
                 stocktake_id: stocktake_a.id,
                 stock_line_id: Some(stock_line.id),
                 snapshot_number_of_packs: 30.0,
-                item_link_id: stock_line.item_link_id,
+                item_id: stock_line.item_id,
                 item_name: "Item A".to_string(),
                 comment: Some("Some comment".to_string()),
                 ..Default::default()

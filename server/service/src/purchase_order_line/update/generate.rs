@@ -23,7 +23,7 @@ pub fn generate(
     }: UpdatePurchaseOrderLineInput,
 ) -> Result<PurchaseOrderLineRow, RepositoryError> {
     Ok(PurchaseOrderLineRow {
-        item_link_id: item_id.clone().unwrap_or(purchase_order_line.item_link_id),
+        item_id: item_id.clone().unwrap_or(purchase_order_line.item_id),
         requested_pack_size: requested_pack_size.unwrap_or(purchase_order_line.requested_pack_size),
         requested_number_of_units: requested_number_of_units
             .unwrap_or(purchase_order_line.requested_number_of_units),

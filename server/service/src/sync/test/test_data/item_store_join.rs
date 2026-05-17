@@ -86,12 +86,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             ITEM_STORE_JOIN_INVALID_LOCATION,
             ItemStoreJoinRow {
                 id: ITEM_STORE_JOIN_INVALID_LOCATION.0.to_owned(),
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 store_id: "store_b".to_string(),
                 default_sell_price_per_pack: 5.0,
                 ignore_for_orders: true,
                 margin: 0.0,
-                default_location_id: None, // Invalid location cleared
+                default_location_id: None,
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -99,7 +99,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             ITEM_STORE_JOIN_1,
             ItemStoreJoinRow {
                 id: ITEM_STORE_JOIN_1.0.to_owned(),
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 store_id: "store_b".to_string(),
                 default_sell_price_per_pack: 10.0,
                 ignore_for_orders: false,

@@ -120,7 +120,7 @@ mod test {
         RequisitionLineRow {
             id: "requisition_line_test".to_string(),
             requisition_id: requisition_test().id,
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             requested_quantity: 5.0,
             ..Default::default()
         }
@@ -174,7 +174,7 @@ mod test {
             RequisitionLineRow {
                 id: "requisition_line_not_linked_to_invoice".to_string(),
                 requisition_id: requisition_not_linked_to_invoice().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 requested_quantity: 5.0,
                 ..Default::default()
             }

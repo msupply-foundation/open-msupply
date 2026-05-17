@@ -119,9 +119,9 @@ fn generate(
     let available_volume_by_type = get_available_volume_by_location_type(
         &ctx.connection,
         &ctx.store_id,
-        &[existing.item_link_id.clone()],
+        &[existing.item_id.clone()],
     )?
-    .get(&existing.item_link_id)
+    .get(&existing.item_id)
     .cloned()
     .unwrap_or_default();
 
@@ -165,7 +165,7 @@ mod test {
         RequisitionLineRow {
             id: "program_request_line".to_string(),
             requisition_id: mock_request_program_requisition().id.clone(),
-            item_link_id: mock_item_a().id.clone(),
+            item_id: mock_item_a().id.clone(),
             suggested_quantity: 10.0,
             ..Default::default()
         }

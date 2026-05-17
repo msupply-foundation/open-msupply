@@ -16,7 +16,7 @@ pub fn generate(
         invoice_id,
         item_name: item.name,
         item_code: item.code,
-        item_link_id: item_id,
+        item_id: item_id,
         r#type: InvoiceLineType::UnallocatedStock,
         prescribed_quantity: Some(prescribed_quantity),
 

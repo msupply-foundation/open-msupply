@@ -166,7 +166,7 @@ mod test {
                 invoice_lines: vec![InvoiceLineRow {
                     id: format!("{invoice_id}line"),
                     invoice_id: invoice_id.clone(),
-                    item_link_id: mock_item_a().id,
+                    item_id: mock_item_a().id,
                     r#type: InvoiceLineType::StockOut,
                     pack_size: 1.0,
                     ..Default::default()
@@ -281,7 +281,7 @@ mod test {
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
                 );
-                u.invoice_lines[0].item_link_id = mock_item_b().id;
+                u.invoice_lines[0].item_id = mock_item_b().id;
                 u.invoice_lines[0].r#type = InvoiceLineType::StockIn;
                 u.invoice_lines[0].number_of_packs = 50.0;
                 u

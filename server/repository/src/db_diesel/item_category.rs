@@ -1,6 +1,5 @@
 use super::{
     item_category_row::{item_category_join, ItemCategoryJoinRow},
-    item_link_row::item_link,
     item_row::item,
     DBType, StorageConnection,
 };
@@ -11,8 +10,8 @@ use diesel::{
 };
 
 use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter, ItemLinkRow,
-    ItemRow, Pagination,
+    diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter, ItemRow,
+    Pagination,
 };
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -20,7 +19,7 @@ pub struct ItemCategory {
     pub item_category_join_row: ItemCategoryJoinRow,
 }
 
-type ItemCategoryJoin = (ItemCategoryJoinRow, (ItemLinkRow, ItemRow));
+type ItemCategoryJoin = (ItemCategoryJoinRow, ItemRow);
 
 #[derive(Clone, Default)]
 pub struct ItemCategoryFilter {
@@ -99,7 +98,7 @@ impl<'a> ItemCategoryRepository<'a> {
     }
 }
 
-fn to_domain((item_category_join_row, (_, _)): ItemCategoryJoin) -> ItemCategory {
+fn to_domain((item_category_join_row, _): ItemCategoryJoin) -> ItemCategory {
     ItemCategory {
         item_category_join_row,
     }
@@ -107,13 +106,13 @@ fn to_domain((item_category_join_row, (_, _)): ItemCategoryJoin) -> ItemCategory
 
 type BoxedItemCategoryQuery = IntoBoxed<
     'static,
-    InnerJoin<item_category_join::table, InnerJoin<item_link::table, item::table>>,
+    InnerJoin<item_category_join::table, item::table>,
     DBType,
 >;
 
 fn create_filtered_query(filter: Option<ItemCategoryFilter>) -> BoxedItemCategoryQuery {
     let mut query = item_category_join::table
-        .inner_join(item_link::table.inner_join(item::table))
+        .inner_join(item::table)
         .into_boxed();
 
     if let Some(f) = filter {

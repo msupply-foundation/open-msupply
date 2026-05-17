@@ -159,7 +159,7 @@ pub fn save_stock_out_item_lines(
 
             if let Some(note) = input.note {
                 let repo = InvoiceLineRowRepository::new(connection);
-                // Pretty sure that item_id is ok as item_link_id here, as we're saving a new record?
+                // Pretty sure that item_id is ok as item_id here, as we're saving a new record?
                 repo.update_note_by_invoice_and_item_id(
                     &input.invoice_id,
                     &input.item_id,
@@ -237,7 +237,7 @@ mod test {
             InvoiceLineRow {
                 id: "wrong_store_shipment_line".to_string(),
                 invoice_id: wrong_store().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 ..Default::default()
             }
         }
@@ -361,7 +361,7 @@ mod test {
             InvoiceLineRow {
                 id: "line_to_update".to_string(),
                 invoice_id: outbound_to_edit().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 stock_line_id: Some(mock_stock_line_a().id),
                 number_of_packs: 5.0,
                 ..Default::default()
@@ -371,7 +371,7 @@ mod test {
             InvoiceLineRow {
                 id: "line_to_delete".to_string(),
                 invoice_id: outbound_to_edit().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 number_of_packs: 5.0,
                 ..Default::default()
             }
