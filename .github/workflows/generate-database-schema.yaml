@@ -1,0 +1,125 @@
+name: Generate Database Schema
+
+# Generates static database schema documentation using SchemaSpy and publishes
+# it to the open-msupply-database-schema repository (GitHub Pages).
+#
+# Required secret: DATABASE_SCHEMA_REPO_TOKEN
+#   A GitHub Personal Access Token (PAT) with write access to
+#   msupply-foundation/open-msupply-database-schema.
+#
+# The published schema is accessible at:
+#   https://msupply-foundation.github.io/open-msupply-database-schema/<version>/
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*.[0-9]*.[0-9]*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 2.9.0). Defaults to the tag name when triggered by a tag push.'
+        required: false
+        type: string
+
+jobs:
+  generate-schema:
+    name: Generate and Publish Database Schema
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: omsupply-database
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            echo "Error: No version specified and no tag found"
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libpq-dev
+
+      - name: Set up Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Cache Rust build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            server/target
+          key: ${{ runner.os }}-cargo-postgres-schema-${{ hashFiles('server/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-postgres-schema-
+
+      - name: Initialise database
+        working-directory: server
+        run: cargo run --bin remote_server_cli --features postgres -- initialise-database
+
+      - name: Create SchemaSpy output directory
+        run: mkdir -p schemaspy/output && chmod 777 schemaspy/output
+
+      - name: Create schemaspy.properties
+        run: |
+          {
+            echo "schemaspy.t=pgsql"
+            echo "schemaspy.host=localhost"
+            echo "schemaspy.port=5432"
+            echo "schemaspy.db=omsupply-database"
+            echo "schemaspy.u=postgres"
+            echo "schemaspy.p=password"
+            echo "schemaspy.s=public"
+            echo "schemaspy.norows=true"
+          } > schemaspy.properties
+
+      - name: Run SchemaSpy
+        run: |
+          docker run --network=host \
+            -v "$PWD/schemaspy/output:/output" \
+            -v "$PWD/schemaspy.properties:/schemaspy.properties" \
+            schemaspy/schemaspy:latest
+
+      - name: Publish schema to open-msupply-database-schema
+        env:
+          DATABASE_SCHEMA_REPO_TOKEN: ${{ secrets.DATABASE_SCHEMA_REPO_TOKEN }}
+        run: |
+          git clone https://x-access-token:${DATABASE_SCHEMA_REPO_TOKEN}@github.com/msupply-foundation/open-msupply-database-schema.git /tmp/schema-repo
+          mkdir -p /tmp/schema-repo/docs/${VERSION}
+          cp -r schemaspy/output/. /tmp/schema-repo/docs/${VERSION}/
+          cd /tmp/schema-repo
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add docs/${VERSION}/
+          if git diff --cached --quiet; then
+            echo "No schema changes for version ${VERSION}, skipping commit."
+          else
+            git commit -m "Add schema documentation for version ${VERSION}"
+            git push
+          fi
