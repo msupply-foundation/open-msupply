@@ -10,7 +10,6 @@ use crate::{
     i32_to_u32,
     service_provider::ServiceContext,
     settings_service::{SettingsService, SettingsServiceTrait},
-
     sync_v7::sync_status::status::FullSyncStatusV7,
 };
 
