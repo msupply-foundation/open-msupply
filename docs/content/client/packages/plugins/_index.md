@@ -166,74 +166,112 @@ These functions can be implemented within your plugin and used to fetch and upda
 
 You can watch [this video for example](https://drive.google.com/file/d/1JnmPU9hRaQD4R1hTDKbbNj78FnM2l00A/view?usp=drive_link) TODO make public
 
-The simplest way to begin is by cloning (forking for now or just copy and create new repo, until we have a template), this repository https://github.com/msupply-foundation/open-msupply-plugins, then add it as a submodule to `client/packages/plugins/`. From the root of this repository, run:
+The simplest way to begin is by cloning (forking for now or just copy and create new repo, until we have a template), this repository https://github.com/msupply-foundation/open-msupply-plugins, then add it as a submodule to `client/packages/plugins/`.
+
+### Using the `yarn plugin` helper
+
+The repo includes a `yarn plugin` command that wraps the submodule and bundle workflow. First-time setup, from the repo root:
 
 ```
-git submodule add [your-plugin-bundle-repo-url] client/packages/plugins/myPluginBundle
+cp scripts/plugin-management/pluginRepoMap.example.json scripts/plugin-management/pluginRepoMap.json
 ```
+
+`pluginRepoMap.json` is gitignored — edit it to add short names for the repos you work with, e.g.:
+
+```json
+{
+  "core": "https://github.com/msupply-foundation/open-msupply-plugins",
+  "civ": "https://github.com/msupply-foundation/civ-plugins"
+}
+```
+
+Then:
+
+```
+yarn plugin get <name>            # reset any current plugin submodule and add the named one
+yarn plugin get <name> -b <branch> # same, but check out a specific branch
+yarn plugin reset                 # remove all plugin submodules (no replacement)
+yarn plugin install               # build and install both frontend and backend
+yarn plugin install frontend      # only the frontend
+yarn plugin install backend       # only the backend
+yarn plugin open                  # open the current plugin submodule in GitHub Desktop
+```
+
+`yarn plugin install` defaults to `http://localhost:8000` with credentials `admin`/`pass`. Override with `--url`, `--username`, `--password`. Any override gets persisted to a gitignored `scripts/plugin-management/.pluginAuth` file and reused on subsequent runs — so you only have to type them when they change. Pass the defaults explicitly to clear a stored override. Reset aborts if any plugin submodule has uncommitted changes — commit or stash inside it first.
 
 > You will need to have github authentication set up to add restricted access repos from command line. [github cli](https://cli.github.com/) can conveniently set up github command line authentication access. Other [alternative methods](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-authentication-to-github) are also available.
 
-Note the `myPluginBundle` can be anything. The inner repository and core will be treated as two different repositories, changes in them will only be reflected in relative repositories (i.e. you can add the inner repository as local repository https://cli.github.com/in github desktop). Make sure that you don't commit the `.gitmodules` file or the files under `client/packages/plugins/{your plugin bundle name}` to the main app.
+### What `yarn plugin get` does under the hood
+
+It runs the equivalent of:
+
+```
+git submodule add [-b <branch>] <repo-url> client/packages/plugins/<repo-basename>
+```
+
+The inner repository and core will be treated as two different repositories, changes in them will only be reflected in relative repositories (i.e. you can add the inner repository as local repository in github desktop). The `.gitmodules` file and the files under `client/packages/plugins/{plugin folder}` are gitignored — they are intentionally not committed to the main app.
 
 You would need to change [name](https://github.com/andreievg/open-msupply-plugins-andrei/blob/433e662e4b69a947681e437e66b5ea957e8d8042/frontend/latest/package.json#L3) in package.json, which is also the plugin code and unique identifier (every plugin should have unique code). You should also add types that are implemented, in the future those will be displayed before plugin is installed, for validation form the user, for frontend plugins they are not essential though. TODO these types can be looked up when building, both for front end and backed plugin, by running ts-node and inspecting import { plugins } from './plugins.tsx' or '.ts'.
 
-Hot reloading will be working on dev mode but frontend needs to be restarted when adding a new plugin because local plugins are only discovered when webpack starts
+Hot reloading will be working on dev mode but frontend needs to be restarted when adding a new plugin because local plugins are only discovered when webpack starts.
 
 ### Developing on branches of plugins
 
-Different branches of plugins can be selected by adding a -b flag to the adding submodule command:
+Use the `-b` flag with `yarn plugin get`:
 
 ```
-git submodule add [your-plugin-bundle-repo-url] -b [your-branch] client/packages/plugins/myPluginBundle
+yarn plugin get <name> -b <branch>
 ```
 
-This will add a branch field to the .gitmodules file in the root project dir to include a specific branch field:
+This adds a `branch` field to the .gitmodules entry:
 
 ```.gitmodules
-  [submodule "client/packages/plugins/myPluginBundle"]
-	path = client/packages/plugins/myPluginBundle
+  [submodule "client/packages/plugins/civ-plugins"]
+	path = client/packages/plugins/civ-plugins
 	url = https://github.com/msupply-foundation/civ-plugins.git
 	branch = fix-plugin-data-saving
 ```
 
-The command can be re-run with a different branch to change the branch of the submodule.
-
-Alternatively, the .gitmodules file can be edited to a different branch name manually, and then updated to the remote of that branch with the following command:
+To change branch, either re-run `yarn plugin get <name> -b <other-branch>`, or edit .gitmodules and run:
 
 ```
 git submodule update --remote
 ```
 
-> Note that the branch flag support branch names only and not SHA or Tags.
+> Note that the branch flag supports branch names only, not SHA or Tags.
 
 ## Testing production build
 
-You can work on plugins as if they were part of the app (types should be shared, autocompletion and hot reload should work). If you want to test plugin in production, you can bundle it and deploy to server via:
+You can work on plugins as if they were part of the app (types should be shared, autocompletion and hot reload should work). To test the plugin in production mode, bundle and install it with:
 
-```bash
-# From server directory
-cargo run --bin remote_server_cli -- generate-plugin-bundle -i ../client/packages/plugins/myPluginBundle/frontend -o pluginbundle.json
+```
+yarn plugin install
 ```
 
-Above will generate `pluginbundle.json` with all backend and frontend plugins in the directory specified by `-i`. This bundle includes metadata, like code, version, plugin types and base64 contents of all of the files in the `dist` directory which was generated with `yarn build` command that was executed in every plugin directory.
+This delegates to the rust CLI, which walks the plugin directory recursively and runs `yarn install` + `yarn build-plugin` for every `package.json` it finds under `frontend/` and `backend/`, then bundles and uploads to the local server (defaults: `http://localhost:8000`, `admin`/`pass`). Override with `--url`, `--username`, `--password`. Pass `frontend` or `backend` as the first positional argument to limit the install to one half.
 
-This can now be uploaded to the server via
+Under the hood this is equivalent to:
+
+```bash
+# From server directory — installs both halves
+cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i '../client/packages/plugins/<plugin folder>' --url 'http://localhost:8000' --username admin --password pass
+# Or for just the frontend / backend
+cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i '../client/packages/plugins/<plugin folder>/frontend' --url 'http://localhost:8000' --username admin --password pass
+```
+
+If you want the intermediate bundle file, you can still run the lower-level commands by hand:
 
 ```bash
 # From server directory
+cargo run --bin remote_server_cli -- generate-plugin-bundle -i ../client/packages/plugins/<plugin folder>/frontend -o pluginbundle.json
 cargo run --bin remote_server_cli -- install-plugin-bundle -p pluginbundle.json --url 'http://localhost:8000' --username admin --password pass
 ```
 
-Note you must be uploading plugins to central server for this to work
+The bundle includes metadata, like code, version, plugin types and base64 contents of all of the files in the `dist` directory generated by `yarn build-plugin` in every plugin version directory.
 
-Alternatively one command can be used for both:
+Note you must be uploading plugins to a central server for this to work.
 
-```bash
-cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i '../client/packages/plugins/myPluginBundle/frontend' --url 'http://localhost:8000' --username admin --password pass
-```
-
-In order to test this plugins in front end, you will need to start front end by running `yarn build` in the root directory then restarting the backend. You then have to access the frontend via the backend <http://localhost:8000>. The frontend will now fetch plugins from the server rather then serving them from local directory, this is how plugins will be loaded in production (and plugins will sync and be served by remote site servers).
+In order to test these plugins in the front end, you will need to start the front end by running `yarn build` in the root directory then restarting the backend. You then have to access the frontend via the backend <http://localhost:8000>. The frontend will now fetch plugins from the server rather than serving them from the local directory; this is how plugins will be loaded in production (and plugins will sync and be served by remote site servers).
 
 ## Example plugin types
 
@@ -285,7 +323,9 @@ which are storing the provider state locally and providing that to an instance o
 
 When using private repository submodule you will have to be logged in as the user with adequate permissions to the repository.
 
-When removing submodule, you will need to delete `.gitmodules` file, the plugin folder and git cache for submodule, for example:
+To remove a plugin submodule, run `yarn plugin reset` from the repo root. It handles the full cleanup (deinit, working tree, `.gitmodules`, and `.git/modules/...` cache) — doing this by hand is error-prone, and leaving any of those behind silently breaks the next `git submodule add`.
+
+If you ever need to do it manually, the equivalent commands are:
 
 ```bash
 rm -rf .gitmodules
