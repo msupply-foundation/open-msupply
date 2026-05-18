@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+# Hardware id setup.
+# If /etc/machine-id is already non-empty, the operator has bind-mounted a
+# stable id file and we leave it alone.
+# Otherwise generate a fresh UUID for this container instance.
+if [ ! -s /etc/machine-id ]; then
+    cat /proc/sys/kernel/random/uuid > /etc/machine-id
+fi
+
 # Whey MSUPPLY_NO_TEST_DB_TEMPLATE ?
 # Initialise uses testdb to setup database and migrated it, by default we create templates
 # which allows for faster testing, but requires finding workspace

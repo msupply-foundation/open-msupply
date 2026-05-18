@@ -131,6 +131,9 @@ export const OutboundLineEditTable = ({
     tableId: 'outbound-line-edit',
     columns,
     data: lines,
+    // Modal table state should not be synced to URL (would otherwise clobber
+    // the parent detail view's sort/filter URL params on open/close).
+    localStateOnly: true,
     getIsRestrictedRow: row => getIsDisabled(row.original),
     bottomToolbarContent: (
       <PlaceholderAndTotal

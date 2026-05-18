@@ -239,7 +239,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::ManufacturerDoesNotExist
         | ServiceError::ManufacturerNotVisible
         | ServiceError::ManufacturerIsNotAManufacturer
-        | ServiceError::ProgramNotVisible
+        | ServiceError::ProgramDoesNotExist
         | ServiceError::CampaignDoesNotExist
         | ServiceError::CannotEditCostPrice
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
