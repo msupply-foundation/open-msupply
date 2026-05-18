@@ -191,7 +191,9 @@ Then:
 yarn plugin get <name>            # reset any current plugin submodule and add the named one
 yarn plugin get <name> -b <branch> # same, but check out a specific branch
 yarn plugin reset                 # remove all plugin submodules (no replacement)
-yarn plugin install               # build the current plugin and install it into the local server
+yarn plugin install               # build and install both frontend and backend
+yarn plugin install frontend      # only the frontend
+yarn plugin install backend       # only the backend
 ```
 
 `yarn plugin install` defaults to `http://localhost:8000` with credentials `admin`/`pass`. Override with `--url`, `--username`, `--password`. Reset aborts if any plugin submodule has uncommitted changes — commit or stash inside it first.
@@ -245,12 +247,14 @@ You can work on plugins as if they were part of the app (types should be shared,
 yarn plugin install
 ```
 
-This runs `yarn install` + `yarn build-plugin` in each `frontend/*` version directory, then bundles and uploads to the local server (defaults: `http://localhost:8000`, `admin`/`pass`). Override with `--url`, `--username`, `--password`.
+This delegates to the rust CLI, which walks the plugin directory recursively and runs `yarn install` + `yarn build-plugin` for every `package.json` it finds under `frontend/` and `backend/`, then bundles and uploads to the local server (defaults: `http://localhost:8000`, `admin`/`pass`). Override with `--url`, `--username`, `--password`. Pass `frontend` or `backend` as the first positional argument to limit the install to one half.
 
 Under the hood this is equivalent to:
 
 ```bash
-# From server directory
+# From server directory — installs both halves
+cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i '../client/packages/plugins/<plugin folder>' --url 'http://localhost:8000' --username admin --password pass
+# Or for just the frontend / backend
 cargo run --bin remote_server_cli -- generate-and-install-plugin-bundle -i '../client/packages/plugins/<plugin folder>/frontend' --url 'http://localhost:8000' --username admin --password pass
 ```
 

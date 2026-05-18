@@ -231,38 +231,31 @@ function cmdInstall(args) {
   let url = 'http://localhost:8000';
   let username = 'admin';
   let password = 'pass';
+  let target = null; // null = both, 'frontend', or 'backend'
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === '--url') url = args[++i];
     else if (a === '--username') username = args[++i];
     else if (a === '--password') password = args[++i];
-    else die(`unknown flag for install: ${a}`);
+    else if (a === 'frontend' || a === 'backend') {
+      if (target) die(`install target already set to "${target}"`);
+      target = a;
+    } else die(`unknown argument for install: ${a}`);
   }
 
   const pluginPath = findCurrentPlugin();
-  const frontendDir = path.join(REPO_ROOT, pluginPath, 'frontend');
-  if (!fs.existsSync(frontendDir)) {
-    die(`expected ${pluginPath}/frontend directory, not found`);
+  if (target && !fs.existsSync(path.join(REPO_ROOT, pluginPath, target))) {
+    die(`expected ${pluginPath}/${target} directory, not found`);
   }
 
-  const versionDirs = fs
-    .readdirSync(frontendDir, { withFileTypes: true })
-    .filter(e => e.isDirectory())
-    .map(e => path.join(frontendDir, e.name))
-    .filter(d => fs.existsSync(path.join(d, 'package.json')));
+  // The rust CLI walks the input dir recursively, running yarn install and
+  // yarn build-plugin for every package.json it finds, then bundles the dist
+  // output. So no pre-build is needed here — just point it at the right level.
+  const inputPath = target
+    ? path.posix.join('..', pluginPath, target)
+    : path.posix.join('..', pluginPath);
 
-  if (versionDirs.length === 0) {
-    die(`no version directories with package.json under ${pluginPath}/frontend`);
-  }
-
-  for (const dir of versionDirs) {
-    info(`\n>>> yarn install in ${path.relative(REPO_ROOT, dir)}`);
-    run('yarn', ['install'], { cwd: dir });
-    info(`\n>>> yarn build-plugin in ${path.relative(REPO_ROOT, dir)}`);
-    run('yarn', ['build-plugin'], { cwd: dir });
-  }
-
-  info(`\n>>> generate-and-install-plugin-bundle against ${url}`);
+  info(`\n>>> generate-and-install-plugin-bundle (-i ${inputPath}) against ${url}`);
   const cargoArgs = [
     'run',
     '--bin',
@@ -270,7 +263,7 @@ function cmdInstall(args) {
     '--',
     'generate-and-install-plugin-bundle',
     '-i',
-    path.posix.join('..', pluginPath, 'frontend'),
+    inputPath,
     '--url',
     url,
     '--username',
@@ -285,8 +278,9 @@ function cmdInstall(args) {
 function usage() {
   console.log(`usage:
   yarn plugin get <name> [-b <branch>]   add a plugin submodule (resets any existing first)
-  yarn plugin install [--url U] [--username U] [--password P]
+  yarn plugin install [frontend|backend] [--url U] [--username U] [--password P]
                                           build and install the current plugin into the local server
+                                          (omit target to install both frontend and backend)
   yarn plugin reset                       remove all plugin submodules under ${PLUGINS_DIR}/`);
 }
 
