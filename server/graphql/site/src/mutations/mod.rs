@@ -7,5 +7,5 @@ pub use assign_stores::{
     assign_stores_to_site, AssignStoresToSiteInput, AssignStoresToSiteNode,
 };
 pub use clear_token::{clear_site_token, ClearSiteTokenNode};
-pub use delete::{delete_site, DeleteSiteNode};
+pub use delete::{delete_site, DeleteSiteResponse};
 pub use upsert::{upsert_site, UpsertSiteInput, UpsertSiteResponse};

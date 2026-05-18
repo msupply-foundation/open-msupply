@@ -19,7 +19,32 @@ impl DeleteSiteNode {
     }
 }
 
-pub fn delete_site(ctx: &Context<'_>, site_id: i32) -> Result<DeleteSiteNode> {
+pub struct SiteHasStores;
+#[Object]
+impl SiteHasStores {
+    pub async fn description(&self) -> &str {
+        "Cannot delete a site that has stores assigned to it"
+    }
+}
+
+#[derive(Interface)]
+#[graphql(field(name = "description", ty = "String"))]
+pub enum DeleteSiteErrorInterface {
+    SiteHasStores(SiteHasStores),
+}
+
+#[derive(SimpleObject)]
+pub struct DeleteSiteError {
+    pub error: DeleteSiteErrorInterface,
+}
+
+#[derive(Union)]
+pub enum DeleteSiteResponse {
+    Error(DeleteSiteError),
+    Response(DeleteSiteNode),
+}
+
+pub fn delete_site(ctx: &Context<'_>, site_id: i32) -> Result<DeleteSiteResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -32,22 +57,28 @@ pub fn delete_site(ctx: &Context<'_>, site_id: i32) -> Result<DeleteSiteNode> {
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    let id = service_provider
+    match service_provider
         .site_service
         .delete_site(&service_context, site_id)
-        .map_err(map_error)?;
-
-    Ok(DeleteSiteNode { id })
+    {
+        Ok(id) => Ok(DeleteSiteResponse::Response(DeleteSiteNode { id })),
+        Err(error) => Ok(DeleteSiteResponse::Error(DeleteSiteError {
+            error: map_error(error)?,
+        })),
+    }
 }
 
-fn map_error(error: ServiceError) -> async_graphql::Error {
+fn map_error(error: ServiceError) -> Result<DeleteSiteErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
+        ServiceError::SiteHasStores => {
+            return Ok(DeleteSiteErrorInterface::SiteHasStores(SiteHasStores))
+        }
         ServiceError::SiteDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
-    graphql_error.extend()
+    Err(graphql_error.extend())
 }
