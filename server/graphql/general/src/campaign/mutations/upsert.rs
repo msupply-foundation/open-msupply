@@ -39,7 +39,7 @@ pub enum UpsertCampaignErrorInterface {
     DatabaseError(DatabaseError),
 }
 
-pub fn upsert_campaign(
+pub async fn upsert_campaign(
     ctx: &Context<'_>,
     input: UpsertCampaignInput,
 ) -> Result<UpsertCampaignResponse> {
@@ -51,12 +51,17 @@ pub fn upsert_campaign(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
+    let domain_input = input.to_domain();
 
-    let result = service_provider
-        .campaign_service
-        .upsert_campaign(&service_context, input.to_domain());
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.basic_context()?;
+        Ok(service_provider
+            .campaign_service
+            .upsert_campaign(&service_context, domain_input))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     map_response(result)
 }

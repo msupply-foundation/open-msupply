@@ -28,7 +28,7 @@ pub async fn get_campaigns(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
+    let service_provider = ctx.service_provider_data();
     let pagination = page.map(PaginationOption::from);
 
     let sort = sort
@@ -36,14 +36,14 @@ pub async fn get_campaigns(
         .flatten()
         .map(|sort| sort.to_domain());
 
-    let service_context = service_provider.basic_context()?;
+    let domain_filter = filter.map(CampaignFilter::from);
 
-    let result = service_get_campaigns(
-        &service_context,
-        pagination,
-        filter.map(CampaignFilter::from),
-        sort,
-    )
+    let result = tokio::task::spawn_blocking(move || -> Result<_, service::ListError> {
+        let service_context = service_provider.basic_context()?;
+        service_get_campaigns(&service_context, pagination, domain_filter, sort)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
     .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(CampaignsResponse::Response(CampaignConnector::from_domain(

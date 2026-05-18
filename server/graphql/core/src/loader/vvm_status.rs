@@ -15,14 +15,23 @@ impl Loader<String> for VVMStatusByIdLoader {
     type Error = RepositoryError;
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = VVMStatusRowRepository::new(&connection);
+        let connection_manager = self.connection_manager.clone();
+        let ids = ids.to_vec();
 
-        let result = repo.find_many_by_ids(ids)?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, VVMStatusRow>, RepositoryError> {
+                let connection = connection_manager.connection()?;
+                let repo = VVMStatusRowRepository::new(&connection);
 
-        Ok(result
-            .into_iter()
-            .map(|vvm_status| (vvm_status.id.clone(), vvm_status))
-            .collect())
+                let result = repo.find_many_by_ids(&ids)?;
+
+                Ok(result
+                    .into_iter()
+                    .map(|vvm_status| (vvm_status.id.clone(), vvm_status))
+                    .collect())
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

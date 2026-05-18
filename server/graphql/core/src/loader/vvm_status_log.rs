@@ -15,17 +15,26 @@ impl Loader<String> for VVMStatusLogByStockLineIdLoader {
     type Error = RepositoryError;
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
+        let connection_manager = self.connection_manager.clone();
+        let ids = ids.to_vec();
 
-        let result =
-            VVMStatusLogRowRepository::new(&connection).find_many_by_stock_line_id(&ids[0])?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Vec<VVMStatusLogRow>>, RepositoryError> {
+                let connection = connection_manager.connection()?;
 
-        let mut map: HashMap<String, Vec<VVMStatusLogRow>> = HashMap::new();
-        for vvm_status_log in result {
-            let list = map.entry(vvm_status_log.stock_line_id.clone()).or_default();
-            list.push(vvm_status_log);
-        }
+                let result = VVMStatusLogRowRepository::new(&connection)
+                    .find_many_by_stock_line_id(&ids[0])?;
 
-        Ok(map)
+                let mut map: HashMap<String, Vec<VVMStatusLogRow>> = HashMap::new();
+                for vvm_status_log in result {
+                    let list = map.entry(vvm_status_log.stock_line_id.clone()).or_default();
+                    list.push(vvm_status_log);
+                }
+
+                Ok(map)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

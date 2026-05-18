@@ -37,7 +37,7 @@ pub enum DeleteCampaignResponse {
     Response(DeleteCampaignSuccess),
 }
 
-pub fn delete_campaign(
+pub async fn delete_campaign(
     ctx: &Context<'_>,
     input: DeleteCampaignInput,
 ) -> Result<DeleteCampaignResponse> {
@@ -49,12 +49,16 @@ pub fn delete_campaign(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
-    let result = service_provider
-        .campaign_service
-        .delete_campaign(&service_context, DeleteCampaign { id: input.id });
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.basic_context()?;
+        Ok(service_provider
+            .campaign_service
+            .delete_campaign(&service_context, DeleteCampaign { id: input.id }))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     map_response(result)
 }

@@ -33,7 +33,7 @@ impl BarcodeInput {
     }
 }
 
-pub fn insert_barcode(
+pub async fn insert_barcode(
     ctx: &Context<'_>,
     store_id: &str,
     input: BarcodeInput,
@@ -46,13 +46,19 @@ pub fn insert_barcode(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
-    map_response(
-        service_provider
+    let service_provider = ctx.service_provider_data();
+    let domain_input = input.to_domain();
+
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.basic_context()?;
+        Ok(service_provider
             .barcode_service
-            .upsert_barcode(&service_context, input.to_domain()),
-    )
+            .upsert_barcode(&service_context, domain_input))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    map_response(result)
 }
 
 pub fn map_response(from: Result<Barcode, ServiceError>) -> Result<InsertResponse> {

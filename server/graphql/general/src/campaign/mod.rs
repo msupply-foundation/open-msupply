@@ -34,7 +34,7 @@ impl CampaignMutations {
         ctx: &Context<'_>,
         input: UpsertCampaignInput,
     ) -> Result<UpsertCampaignResponse> {
-        upsert_campaign(ctx, input)
+        upsert_campaign(ctx, input).await
     }
 
     async fn delete_campaign(
@@ -42,6 +42,6 @@ impl CampaignMutations {
         ctx: &Context<'_>,
         input: DeleteCampaignInput,
     ) -> Result<DeleteCampaignResponse> {
-        delete_campaign(ctx, input)
+        delete_campaign(ctx, input).await
     }
 }

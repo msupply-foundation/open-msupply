@@ -319,7 +319,7 @@ impl GeneralQueries {
         store_id: String,
         requisition_line_id: String,
     ) -> Result<RequisitionStatsResponse> {
-        response_requisition_stats(ctx, &store_id, &requisition_line_id)
+        response_requisition_stats(ctx, &store_id, &requisition_line_id).await
     }
 
     #[graphql(deprecation = "Since 2.8.0. Use reason_options instead")]
@@ -389,7 +389,7 @@ impl GeneralQueries {
         &self,
         ctx: &Context<'_>,
     ) -> Result<update_user::UpdateUserNode> {
-        last_successful_user_sync(ctx)
+        last_successful_user_sync(ctx).await
     }
 
     pub async fn frontend_plugin_metadata(

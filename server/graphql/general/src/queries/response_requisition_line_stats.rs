@@ -32,7 +32,7 @@ pub enum RequisitionStatsResponse {
     Error(RequisitionStatsError),
 }
 
-pub fn response_requisition_stats(
+pub async fn response_requisition_stats(
     ctx: &Context<'_>,
     store_id: &str,
     requisition_line_id: &str,
@@ -45,20 +45,29 @@ pub fn response_requisition_stats(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), "".to_string())?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let requisition_line_id = requisition_line_id.to_string();
 
-    let result = match service_provider
-        .requisition_line_service
-        .get_response_requisition_line_stats(&service_context, requisition_line_id)
-    {
-        Ok(result) => {
-            RequisitionStatsResponse::Response(ResponseRequisitionStatsNode::from_domain(result))
-        }
-        Err(error) => RequisitionStatsResponse::Error(RequisitionStatsError {
-            error: map_error(error)?,
-        }),
-    };
+    let result = tokio::task::spawn_blocking(move || -> Result<RequisitionStatsResponse> {
+        let service_context = service_provider
+            .context(store_id, "".to_string())
+            .map_err(StandardGraphqlError::from_repository_error)?;
+
+        Ok(match service_provider
+            .requisition_line_service
+            .get_response_requisition_line_stats(&service_context, &requisition_line_id)
+        {
+            Ok(result) => RequisitionStatsResponse::Response(
+                ResponseRequisitionStatsNode::from_domain(result),
+            ),
+            Err(error) => RequisitionStatsResponse::Error(RequisitionStatsError {
+                error: map_error(error)?,
+            }),
+        })
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     Ok(result)
 }
