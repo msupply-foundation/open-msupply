@@ -210,25 +210,6 @@ pub struct SyncDownloadFileRequestV6 {
     pub(crate) sync_v6_version: u32,
 }
 
-#[derive(Deserialize, Debug, Serialize)]
-pub struct SyncUploadFileRequestV6 {
-    pub file_id: String,
-    pub sync_v5_settings: SyncApiSettings,
-    #[serde(default)]
-    pub(crate) sync_v6_version: u32,
-    #[serde(default)]
-    pub record_id: Option<String>,
-    #[serde(default)]
-    pub table_name: Option<String>,
-}
-
-#[derive(Deserialize, Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub enum SyncUploadFileResponseV6 {
-    Data(()),
-    Error(SyncParsedErrorV6),
-}
-
 async fn response_or_err<T: DeserializeOwned>(
     result: Result<Response, reqwest::Error>,
 ) -> Result<T, SyncApiErrorVariantV6> {

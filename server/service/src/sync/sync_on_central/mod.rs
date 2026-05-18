@@ -3,13 +3,7 @@ use std::{
     vec,
 };
 
-use actix_multipart::form::tempfile::TempFile;
-use chrono::Utc;
-use repository::SyncFileDirection;
-use repository::{
-    ChangelogRepository, SyncBufferRowRepository, SyncFileReferenceRow,
-    SyncFileReferenceRowRepository, SyncFileStatus,
-};
+use repository::{ChangelogRepository, SyncBufferRowRepository};
 use util::format_error;
 
 use crate::{
@@ -31,7 +25,7 @@ use super::{
     api_v6::{
         SiteStatusRequestV6, SyncBatchV6, SyncDownloadFileRequestV6, SyncParsedErrorV6,
         SyncPatientPullRequestV6, SyncPullRequestV6, SyncPushRequestV6, SyncPushSuccessV6,
-        SyncRecordV6, SyncUploadFileRequestV6,
+        SyncRecordV6,
     },
     translations::translate_changelogs_to_sync_records,
 };
@@ -388,101 +382,6 @@ pub async fn download_file(
     let named_file =
         actix_files::NamedFile::open(&file_description.path).map_err(|e| Error::from_error(&e))?;
     Ok((named_file, file_description))
-}
-
-/// Accept a file from a remote open-mSupply Server
-/// This is the endpoint that the remote server will call to upload a file
-pub async fn upload_file(
-    settings: &Settings,
-    service_provider: &ServiceProvider,
-    SyncUploadFileRequestV6 {
-        file_id,
-        sync_v5_settings,
-        sync_v6_version,
-        record_id,
-        table_name,
-    }: SyncUploadFileRequestV6,
-    file_part: TempFile,
-) -> Result<(), SyncParsedErrorV6> {
-    use SyncParsedErrorV6 as Error;
-
-    log::info!("Receiving a file via sync : {file_id}");
-
-    if !CentralServerConfig::is_central_server() {
-        return Err(Error::NotACentralServer);
-    }
-
-    if !is_sync_version_compatible(sync_v6_version) {
-        return Err(Error::SyncVersionMismatch(
-            MIN_VERSION,
-            MAX_VERSION,
-            sync_v6_version,
-        ));
-    }
-
-    let ctx = service_provider.basic_context()?;
-    validate_site_auth(&ctx, &sync_v5_settings)
-        .await
-        .map_err(|e| Error::OtherServerError(format_error(&e)))?;
-
-    let file_service = StaticFileService::new(&settings.server.base_dir)?;
-    let ctx = service_provider.basic_context()?;
-
-    let repo = SyncFileReferenceRowRepository::new(&ctx.connection);
-    let sync_file_reference = match repo.find_one_by_id(&file_id) {
-        Ok(Some(file)) => file,
-        Ok(None) => {
-            // If we have a table_name and record_id, we can create a new SyncFileReferenceRow
-            match (table_name.clone(), record_id.clone()) {
-                // Newer clients will send the record_id and table_name when uploading,
-                // This allows us to create the SyncFileReferenceRow if it doesn't already exist
-                // This will be overwritten later when the sync file ref row is upserted via sync
-                // Status should be correct at that time, as the remote server updates the status after upload
-                (Some(table_name), Some(record_id)) => SyncFileReferenceRow {
-                    id: file_id.clone(),
-                    file_name: file_part.file_name.clone().unwrap_or("unknown".to_string()),
-                    table_name,
-                    record_id,
-                    uploaded_bytes: 0,
-                    downloaded_bytes: 0,
-                    total_bytes: 0, // Will be updated later
-                    status: SyncFileStatus::Done,
-                    error: None,
-                    mime_type: None,
-                    retries: 0,
-                    retry_at: None,
-                    direction: SyncFileDirection::Upload,
-                    created_datetime: Utc::now().naive_utc(),
-                    deleted_datetime: None,
-                },
-                _ => {
-                    return Err(Error::SyncFileNotFound(file_id.clone()));
-                }
-            }
-        }
-        Err(e) => return Err(Error::OtherServerError(format_error(&e))),
-    };
-
-    file_service.move_temp_file(
-        &file_part,
-        &StaticFileCategory::SyncFile(
-            sync_file_reference.table_name.clone(),
-            sync_file_reference.record_id.clone(),
-        ),
-        Some(file_id),
-    )?;
-
-    // Use update_status (no changelog) so this local bookkeeping update doesn't sync back to
-    // other sites. uploaded_bytes is local-only, and propagating a changelog from here would
-    // echo central's stale `status` back to the remote and risk overwriting the remote's
-    // authoritative Done / Error transition. The remote's own upsert_one for the terminal
-    // transition is the source of truth and reaches central via the normal sync push.
-    repo.update_status(&SyncFileReferenceRow {
-        uploaded_bytes: sync_file_reference.total_bytes,
-        ..sync_file_reference
-    })?;
-
-    Ok(())
 }
 
 static SITES_BEING_INTEGRATED: RwLock<Vec<i32>> = RwLock::new(vec![]);
