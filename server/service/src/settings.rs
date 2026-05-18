@@ -55,6 +55,10 @@ pub struct ServerSettings {
     pub standalone_admin_username: Option<String>,
     #[serde(default)]
     pub standalone_admin_password: Option<String>,
+
+    /// Number of actix-web worker threads. Defaults to the number of logical CPUs.
+    /// Increase if 408 timeouts are observed under load.
+    pub workers: Option<usize>,
 }
 
 fn default_base_dir() -> String {
