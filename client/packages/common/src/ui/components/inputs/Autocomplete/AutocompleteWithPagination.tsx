@@ -82,6 +82,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   mapOptions,
   loadingInputOnly = false,
   sx,
+  textSx,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteWithPaginationProps<T>>) {
   const t = useTranslation();
@@ -94,7 +95,14 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
     if (!pages) {
       return lastOptions.current;
     }
-    const records = ArrayUtils.flatMap(pages, page => page.data?.nodes ?? []);
+    const flat = ArrayUtils.flatMap(pages, page => page.data?.nodes ?? []);
+    const seen = new Set<string>();
+    // De-dup across pages, which can happen apparently
+    const records = flat.filter(r => {
+      if (seen.has(r.id)) return false;
+      seen.add(r.id);
+      return true;
+    });
 
     if (!!value && !records.some(r => r.id === value.id)) {
       records.unshift(value);
@@ -117,12 +125,23 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       {...props}
       {...inputProps}
       autoFocus={autoFocus}
+      // Outer MuiAutocomplete `sx={{ width }}` alone doesn't survive inside a
+      // shrinking flex parent (e.g. PO line edit) — without an inner minWidth
+      // the TextField collapses to content size. Merge with any caller sx
+      // (passed via inputProps) so this shared component doesn't clobber it.
+      sx={[
+        { minWidth: width },
+        ...(Array.isArray(inputProps?.sx)
+          ? inputProps.sx
+          : [inputProps?.sx]),
+      ]}
       slotProps={{
         input: {
           ...props.InputProps,
           disableUnderline: false,
           sx: {
             paddingY: '4px !important',
+            ...textSx,
           },
           endAdornment: (
             <>
@@ -192,8 +211,13 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       };
 
   useEffect(() => {
-    setTimeout(() => setIsLoading(false), LOADER_HIDE_TIMEOUT);
-  }, [options]);
+    if (loading) {
+      setIsLoading(true);
+      return;
+    }
+    const timer = setTimeout(() => setIsLoading(false), LOADER_HIDE_TIMEOUT);
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   return (
     <MuiAutocomplete
