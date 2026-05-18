@@ -10,7 +10,14 @@ const PLUGINS_DIR = path.join('client', 'packages', 'plugins');
 const MAP_DIR = path.join('scripts', 'plugin-management');
 const MAP_FILE = path.join(REPO_ROOT, MAP_DIR, 'pluginRepoMap.json');
 const EXAMPLE_MAP_FILE = path.join(MAP_DIR, 'pluginRepoMap.example.json');
+const AUTH_FILE = path.join(REPO_ROOT, MAP_DIR, '.pluginAuth');
 const GITMODULES = path.join(REPO_ROOT, '.gitmodules');
+
+const INSTALL_DEFAULTS = {
+  url: 'http://localhost:8000',
+  username: 'admin',
+  password: 'pass',
+};
 
 function die(msg) {
   console.error(`error: ${msg}`);
@@ -227,21 +234,49 @@ function findCurrentPlugin() {
   return existing[0];
 }
 
+function readStoredAuth() {
+  if (!fs.existsSync(AUTH_FILE)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(AUTH_FILE, 'utf8')) || {};
+  } catch {
+    return {};
+  }
+}
+
+function writeStoredAuth(effective) {
+  // Persist only fields that differ from the hard-coded defaults, so passing the
+  // default value explicitly clears a previously-stored override.
+  const overrides = {};
+  for (const k of Object.keys(INSTALL_DEFAULTS)) {
+    if (effective[k] !== INSTALL_DEFAULTS[k]) overrides[k] = effective[k];
+  }
+  if (Object.keys(overrides).length === 0) {
+    if (fs.existsSync(AUTH_FILE)) fs.rmSync(AUTH_FILE, { force: true });
+    return;
+  }
+  fs.writeFileSync(AUTH_FILE, JSON.stringify(overrides, null, 2) + '\n');
+}
+
 function cmdInstall(args) {
-  let url = 'http://localhost:8000';
-  let username = 'admin';
-  let password = 'pass';
+  const flags = {};
   let target = null; // null = both, 'frontend', or 'backend'
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
-    if (a === '--url') url = args[++i];
-    else if (a === '--username') username = args[++i];
-    else if (a === '--password') password = args[++i];
+    if (a === '--url') flags.url = args[++i];
+    else if (a === '--username') flags.username = args[++i];
+    else if (a === '--password') flags.password = args[++i];
     else if (a === 'frontend' || a === 'backend') {
       if (target) die(`install target already set to "${target}"`);
       target = a;
     } else die(`unknown argument for install: ${a}`);
   }
+
+  // Precedence: CLI flag > stored override > hard-coded default.
+  const stored = readStoredAuth();
+  const effective = { ...INSTALL_DEFAULTS, ...stored, ...flags };
+  writeStoredAuth(effective);
+
+  const { url, username, password } = effective;
 
   const pluginPath = findCurrentPlugin();
   if (target && !fs.existsSync(path.join(REPO_ROOT, pluginPath, target))) {
@@ -255,7 +290,7 @@ function cmdInstall(args) {
     ? path.posix.join('..', pluginPath, target)
     : path.posix.join('..', pluginPath);
 
-  info(`\n>>> generate-and-install-plugin-bundle (-i ${inputPath}) against ${url}`);
+  info(`\n>>> generate-and-install-plugin-bundle (-i ${inputPath}) against ${url} as ${username}`);
   const cargoArgs = [
     'run',
     '--bin',

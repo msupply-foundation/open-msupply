@@ -196,7 +196,7 @@ yarn plugin install frontend      # only the frontend
 yarn plugin install backend       # only the backend
 ```
 
-`yarn plugin install` defaults to `http://localhost:8000` with credentials `admin`/`pass`. Override with `--url`, `--username`, `--password`. Reset aborts if any plugin submodule has uncommitted changes — commit or stash inside it first.
+`yarn plugin install` defaults to `http://localhost:8000` with credentials `admin`/`pass`. Override with `--url`, `--username`, `--password`. Any override gets persisted to a gitignored `scripts/plugin-management/.pluginAuth` file and reused on subsequent runs — so you only have to type them when they change. Pass the defaults explicitly to clear a stored override. Reset aborts if any plugin submodule has uncommitted changes — commit or stash inside it first.
 
 > You will need to have github authentication set up to add restricted access repos from command line. [github cli](https://cli.github.com/) can conveniently set up github command line authentication access. Other [alternative methods](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-authentication-to-github) are also available.
 
