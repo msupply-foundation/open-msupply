@@ -17,6 +17,8 @@ const useStocktakeLineErrors = () => {
   const [errors, setErrors] = useState<{
     [stocktakeLineId: string]: StocktakeLineError | undefined;
   }>({});
+  const [stocktakeErrors, setStocktakeErrors] = useState<string[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const getError = ({ id }: RecordWithId): StocktakeLineError | undefined => {
     return errors[id];
@@ -32,9 +34,25 @@ const useStocktakeLineErrors = () => {
 
   const unsetAll = () => {
     setErrors({});
+    setStocktakeErrors([]);
   };
 
-  return { errors, setError, setErrors, getError, unsetError, unsetAll };
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+
+  return {
+    errors,
+    setError,
+    setErrors,
+    getError,
+    unsetError,
+    unsetAll,
+    stocktakeErrors,
+    setStocktakeErrors,
+    isModalOpen,
+    openModal,
+    closeModal,
+  };
 };
 export type UseStocktakeLineErrors = ReturnType<typeof useStocktakeLineErrors>;
 

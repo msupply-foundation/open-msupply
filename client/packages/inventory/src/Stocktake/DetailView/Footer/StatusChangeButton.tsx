@@ -1,5 +1,4 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { keyBy, mapKeys, mapValues } from '@common/utils';
 import {
   ArrowRightIcon,
   useTranslation,
@@ -19,9 +18,9 @@ import { useStocktakeLineErrorContext } from '../../context';
 const getStatusOptions = (
   getButtonLabel: (status: StocktakeNodeStatus) => string
 ): [
-  SplitButtonOption<StocktakeNodeStatus>,
-  SplitButtonOption<StocktakeNodeStatus>,
-] => {
+    SplitButtonOption<StocktakeNodeStatus>,
+    SplitButtonOption<StocktakeNodeStatus>,
+  ] => {
   return [
     {
       value: StocktakeNodeStatus.New,
@@ -49,11 +48,11 @@ const getNextStatusOption = (
 
 const getButtonLabel =
   (t: ReturnType<typeof useTranslation>) =>
-  (invoiceStatus: StocktakeNodeStatus): string => {
-    return t('button.save-and-confirm-status', {
-      status: t(getStatusTranslation(invoiceStatus)),
-    });
-  };
+    (invoiceStatus: StocktakeNodeStatus): string => {
+      return t('button.save-and-confirm-status', {
+        status: t(getStatusTranslation(invoiceStatus)),
+      });
+    };
 
 const useStatusChangeButton = () => {
   const { id, lines, status } = useStocktakeOld.document.fields([
@@ -77,74 +76,61 @@ const useStatusChangeButton = () => {
       getNextStatusOption(status, options)
     );
 
-  const mapStructuredErrors = (
-    result: Awaited<ReturnType<typeof save>>
-  ): /* error */ string | /* OK */ undefined => {
-    if (result.__typename === 'StocktakeNode') {
-      return /* OK */ undefined;
-    }
-
-    const { error } = result;
-
-    // General errors
-    if (error.__typename === 'CannotEditStocktake')
-      return t('error.not-editable');
-
-    if (error.__typename === 'StocktakeIsLocked') return t('error.is-locked');
-
-    // By line errors
-    switch (error.__typename) {
-      case 'StockLinesReducedBelowZero':
-        // StockLinesReducedBelowZero.errors contains an array of StockLineReducedBelowZero which have StockLines
-        // we want to match StocktakeLine ids for those errors
-
-        // ids = { stockLineId: stocktakeLineId }
-        const ids = mapValues(
-          mapKeys(lines.nodes, line => line.stockLine?.id),
-          'id'
-        );
-        // mappedErrors = { stockLineId: StockLineReducedBelowZero }
-        const mappedErrors = mapKeys(
-          error.errors,
-          line => ids[line.stockLine.id]
-        );
-
-        errorsContext.setErrors(mappedErrors);
-        return t('error.stocktake-has-stock-reduced-below-zero');
-
-      case 'SnapshotCountCurrentCountMismatch':
-        const lineId = mapValues(
-          keyBy(lines.nodes, lines => lines.id),
-          'id'
-        );
-        const mappedE = mapKeys(
-          error.lines,
-          line => lineId[line.stocktakeLine.id]
-        );
-        errorsContext.setErrors(mappedE);
-
-        return t('error.stocktake-snapshot-total-mismatch');
-
-      default:
-        noOtherVariants(error);
-    }
-  };
-
   const onConfirmStatusChange = async () => {
     if (!selectedOption) return null;
 
     errorsContext.unsetAll();
-    let result;
     try {
-      result = await save({ id, status: selectedOption.value });
+      const result = await save({ id, status: selectedOption.value });
 
-      const errorMessage = mapStructuredErrors(result);
-
-      if (errorMessage) {
-        error(errorMessage)();
-      } else {
+      if (result.__typename === 'StocktakeNode') {
         success(t('messages.saved'))();
+        return;
       }
+
+      const { error: structured } = result;
+
+      if (structured.__typename === 'CannotEditStocktake') {
+        errorsContext.setStocktakeErrors([t('error.not-editable')]);
+        errorsContext.openModal();
+        return;
+      }
+      if (structured.__typename === 'StocktakeIsLocked') {
+        errorsContext.setStocktakeErrors([t('error.is-locked')]);
+        errorsContext.openModal();
+        return;
+      }
+
+      switch (structured.__typename) {
+        case 'StockLinesReducedBelowZero': {
+          const stocktakeLineIdByStockLineId = new Map<string, string>();
+          for (const l of lines.nodes) {
+            if (l.stockLine?.id)
+              stocktakeLineIdByStockLineId.set(l.stockLine.id, l.id);
+          }
+          errorsContext.setErrors(
+            Object.fromEntries(
+              structured.errors.map(e => [
+                stocktakeLineIdByStockLineId.get(e.stockLine.id) ??
+                e.stockLine.id,
+                e,
+              ])
+            )
+          );
+          break;
+        }
+        case 'SnapshotCountCurrentCountMismatch': {
+          errorsContext.setErrors(
+            Object.fromEntries(
+              structured.lines.map(e => [e.stocktakeLine.id, e])
+            )
+          );
+          break;
+        }
+        default:
+          noOtherVariants(structured);
+      }
+      errorsContext.openModal();
     } catch (e) {
       error(getErrorMessage(e))();
     }
