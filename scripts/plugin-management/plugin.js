@@ -12,6 +12,7 @@ const MAP_FILE = path.join(REPO_ROOT, MAP_DIR, 'pluginRepoMap.json');
 const EXAMPLE_MAP_FILE = path.join(MAP_DIR, 'pluginRepoMap.example.json');
 const AUTH_FILE = path.join(REPO_ROOT, MAP_DIR, '.pluginAuth');
 const GITMODULES = path.join(REPO_ROOT, '.gitmodules');
+const GIT_LOCAL_EXCLUDE = path.join(REPO_ROOT, '.git', 'info', 'exclude');
 
 const INSTALL_DEFAULTS = {
   url: 'http://localhost:8000',
@@ -91,8 +92,33 @@ function isSubmoduleDirty(submodulePath) {
   }
 }
 
+function addLocalExclude(submodulePath) {
+  // .git/info/exclude is git's per-clone ignore list — never committed, never
+  // appears in diffs. Hides the submodule directory from `git status` without
+  // touching the tracked .gitignore.
+  const entry = submodulePath.split(path.sep).join('/');
+  let lines = [];
+  if (fs.existsSync(GIT_LOCAL_EXCLUDE)) {
+    lines = fs.readFileSync(GIT_LOCAL_EXCLUDE, 'utf8').split('\n');
+  }
+  if (lines.some(l => l.trim() === entry)) return;
+  lines.push(entry);
+  fs.writeFileSync(GIT_LOCAL_EXCLUDE, lines.join('\n'));
+}
+
+function removeLocalExclude(submodulePath) {
+  if (!fs.existsSync(GIT_LOCAL_EXCLUDE)) return;
+  const entry = submodulePath.split(path.sep).join('/');
+  const lines = fs.readFileSync(GIT_LOCAL_EXCLUDE, 'utf8').split('\n');
+  const filtered = lines.filter(l => l.trim() !== entry);
+  if (filtered.length !== lines.length) {
+    fs.writeFileSync(GIT_LOCAL_EXCLUDE, filtered.join('\n'));
+  }
+}
+
 function removeSubmodule(submodulePath) {
   info(`removing submodule ${submodulePath}`);
+  removeLocalExclude(submodulePath);
   // Best-effort git cleanup — stay quiet if these don't apply. With .gitmodules
   // gitignored the submodule is usually not in the git index, so deinit/rm error
   // out; that's fine, the filesystem cleanup below is what actually matters.
@@ -205,12 +231,13 @@ function cmdGet(args) {
   run('git', submoduleArgs);
   // `git submodule add --force` stages .gitmodules and the submodule path. The
   // project's convention is that neither should be committed, so unstage them —
-  // .gitmodules is gitignored and will disappear from git status, the submodule
-  // path will reappear as an untracked directory.
+  // .gitmodules is gitignored and disappears from git status, and the submodule
+  // path is added to .git/info/exclude below so it doesn't appear as untracked.
   spawnSync('git', ['reset', 'HEAD', '--', '.gitmodules', submodulePath], {
     cwd: REPO_ROOT,
     stdio: 'ignore',
   });
+  addLocalExclude(submodulePath);
   info(`done. plugin available at ${submodulePath}`);
 }
 
