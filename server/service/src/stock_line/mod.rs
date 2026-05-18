@@ -58,9 +58,14 @@ pub trait StockLineServiceTrait: Sync + Send {
         store_id: String,
         item_id: String,
         datetime: NaiveDateTime,
+        include_currently_unavailable: bool,
     ) -> Result<ListResult<StockLine>, ListError> {
         Ok(get_historical_stock_lines(
-            ctx, &store_id, &item_id, &datetime,
+            ctx,
+            &store_id,
+            &item_id,
+            &datetime,
+            include_currently_unavailable,
         )?)
     }
 }

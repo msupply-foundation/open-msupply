@@ -5,6 +5,12 @@ import {
   useHostContext,
   SaveIcon,
   BoxedErrorWithDetails,
+  useNativeClient,
+  useExportLog,
+  useNotification,
+  EnvUtils,
+  Platform,
+  MuiLink,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { InitialiseLayout } from './InitialiseLayout';
@@ -16,6 +22,10 @@ import { mapSyncError } from 'packages/system/src';
 export const Initialise = () => {
   const t = useTranslation();
   const { setPageTitle } = useHostContext();
+  const nativeClient = useNativeClient();
+  const exportLog = useExportLog();
+  const { warning } = useNotification();
+  const isAndroid = EnvUtils.platform === Platform.Android;
 
   const {
     isValid,
@@ -33,6 +43,16 @@ export const Initialise = () => {
     syncStatus,
     siteName,
   } = useInitialiseForm();
+
+  const onSaveLog = async () => {
+    if (!isAndroid) return;
+    const log = await nativeClient.readLog();
+    if (!log?.trim()) {
+      warning(t('error.unable-to-load-server-log'))();
+      return;
+    }
+    await exportLog(log, 'remote_server');
+  };
 
   const syncError =
     syncStatus?.error &&
@@ -118,6 +138,19 @@ export const Initialise = () => {
         if (isValid) await onInitialise();
       }}
       SiteInfo={<SiteInfo siteName={siteName} />}
+      SaveLogLink={
+        isAndroid ? (
+          <MuiLink
+            component="button"
+            type="button"
+            onClick={onSaveLog}
+            underline="hover"
+            sx={{ fontSize: '0.8rem', color: 'gray.main' }}
+          >
+            {t('button.save-log')}
+          </MuiLink>
+        ) : undefined
+      }
     />
   );
 };
