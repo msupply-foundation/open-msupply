@@ -1,7 +1,7 @@
 use std::time::{Duration, SystemTime};
 
 use log::info;
-use repository::{ActivityLogType, RepositoryError};
+use repository::{ActivityLogType, RepositoryError, UserAccountRowRepository};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -130,16 +130,16 @@ impl LoginService {
         auth_data: &AuthData,
         input: LoginInput,
     ) -> Result<TokenPair, LoginError> {
-        // Ask OMS Central whether the credentials are valid. If central is
-        // reachable and replies, that's authoritative. If it's not reachable
-        // (network error, legacy mSupply at the configured URL with no such
-        // endpoint, etc.), fall back to local hash verification — the user's
-        // `password_hash` flows in via the user sync translation, so the local
-        // hash is current.
+        // Ask OMS Central whether the credentials are valid. If central says
+        // yes, that's authoritative — we don't re-verify the password locally
+        // (the local hash could be transiently stale between a legacy-side
+        // change and the next user sync).
         //
-        // On the central server itself we *are* the source of truth, so skip
-        // the round-trip (we'd just be hitting our upstream legacy mSupply,
-        // which 404s, or worse, looping through our own endpoint).
+        // On the central server we *are* the source of truth, so skip the
+        // round-trip (legacy at the configured URL 404s; worse, hitting our
+        // own endpoint would loop). Same for any genuine connection failure
+        // — fall through to the local hash, which sync keeps current.
+        let mut central_verified = false;
         let mut connection_failure = false;
         if !CentralServerConfig::is_central_server() {
             match central_user_login(
@@ -149,7 +149,7 @@ impl LoginService {
             )
             .await
             {
-                Ok(()) => {}
+                Ok(()) => central_verified = true,
                 Err(CentralUserLoginError::InvalidCredentials) => {
                     return Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials));
                 }
@@ -162,28 +162,42 @@ impl LoginService {
 
         let mut service_ctx = service_provider.basic_context()?;
         let user_service = UserAccountService::new(&service_ctx.connection);
-        let user_account = match user_service.verify_password(&input.username, &input.password) {
-            Ok(user) => user,
-            Err(err) => {
-                return Err(match err {
-                    VerifyPasswordError::UsernameDoesNotExist => {
-                        LoginError::LoginFailure(LoginFailure::InvalidCredentials)
-                    }
-                    VerifyPasswordError::InvalidCredentials => {
-                        LoginError::LoginFailure(LoginFailure::InvalidCredentials)
-                    }
-                    VerifyPasswordError::InvalidCredentialsBackend(_) => {
-                        LoginError::InternalError("Failed to read credentials".to_string())
-                    }
-                    VerifyPasswordError::DatabaseError(e) => LoginError::DatabaseError(e),
-                    VerifyPasswordError::EmptyHashedPassword => {
-                        if connection_failure {
-                            LoginError::MSupplyCentralNotReached
-                        } else {
-                            LoginError::InternalError("Corrupted credentials".to_string())
+        let user_account = if central_verified {
+            // Central already vetted the password. Just look up the local
+            // user row so we have the id for site-access / token / activity
+            // log. If sync hasn't propagated the user yet, surface as
+            // InvalidCredentials — they can retry once sync catches up.
+            UserAccountRowRepository::new(&service_ctx.connection)
+                .find_one_by_user_name(&input.username)
+                .map_err(LoginError::DatabaseError)?
+                .ok_or(LoginError::LoginFailure(LoginFailure::InvalidCredentials))?
+        } else {
+            // Either we are central, or central was unreachable. Verify
+            // against the local hash, which the user sync translation keeps
+            // current.
+            match user_service.verify_password(&input.username, &input.password) {
+                Ok(user) => user,
+                Err(err) => {
+                    return Err(match err {
+                        VerifyPasswordError::UsernameDoesNotExist => {
+                            LoginError::LoginFailure(LoginFailure::InvalidCredentials)
                         }
-                    }
-                });
+                        VerifyPasswordError::InvalidCredentials => {
+                            LoginError::LoginFailure(LoginFailure::InvalidCredentials)
+                        }
+                        VerifyPasswordError::InvalidCredentialsBackend(_) => {
+                            LoginError::InternalError("Failed to read credentials".to_string())
+                        }
+                        VerifyPasswordError::DatabaseError(e) => LoginError::DatabaseError(e),
+                        VerifyPasswordError::EmptyHashedPassword => {
+                            if connection_failure {
+                                LoginError::MSupplyCentralNotReached
+                            } else {
+                                LoginError::InternalError("Corrupted credentials".to_string())
+                            }
+                        }
+                    });
+                }
             }
         };
 
@@ -324,6 +338,43 @@ mod test {
             )
             .await
             .unwrap();
+        }
+
+        // Central confirms credentials, but the local bcrypt hash is stale
+        // (the user changed their password upstream and the sync hasn't yet
+        // updated the local hash). Login must still succeed — central is
+        // authoritative.
+        {
+            let mock_server = MockServer::start();
+            mock_server.mock(|when, then| {
+                when.method(POST).path("/central/user/login");
+                then.status(200);
+            });
+
+            // Overwrite the local hash with one that does NOT match
+            // "password".
+            let stale_hash = UserAccountService::hash_password("something-else").unwrap();
+            let mut user = mock_user_account_a();
+            user.hashed_password = stale_hash;
+            UserAccountRowRepository::new(&context.connection)
+                .upsert_one(&user)
+                .unwrap();
+
+            LoginService::login(
+                &service_provider,
+                &auth_data,
+                LoginInput {
+                    username: username.clone(),
+                    password: "password".to_string(),
+                    central_server_url: mock_server.base_url(),
+                },
+                0,
+            )
+            .await
+            .unwrap();
+
+            // Restore the matching hash for subsequent test blocks.
+            seed_user_with_real_hash(&service_provider);
         }
 
         // Central responds with HTTP 401 → InvalidCredentials
