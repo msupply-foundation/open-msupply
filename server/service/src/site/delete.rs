@@ -37,19 +37,27 @@ impl From<RepositoryError> for DeleteSiteError {
 
 #[cfg(test)]
 mod tests {
-    use repository::{mock::MockDataInserts, test_db::setup_all, SiteRowRepository};
-
+    use super::*;
     use crate::{
         service_provider::ServiceProvider,
-        site::upsert::{upsert_site, UpsertSite},
+        site::{
+            assign_stores::{assign_stores_to_site, AssignStoresToSite},
+            upsert::{upsert_site, UpsertSite},
+        },
     };
-
-    use super::*;
+    use repository::{
+        mock::{mock_store_a, MockDataInserts},
+        test_db::setup_all,
+        SiteRowRepository,
+    };
 
     #[actix_rt::test]
     async fn delete_site_errors() {
-        let (_, _, connection_manager, _) =
-            setup_all("delete_site_errors", MockDataInserts::none()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "delete_site_errors",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
@@ -57,6 +65,31 @@ mod tests {
         assert_eq!(
             delete_site(&context, 999),
             Err(DeleteSiteError::SiteDoesNotExist)
+        );
+
+        upsert_site(
+            &context,
+            UpsertSite {
+                id: 5,
+                code: Some("test".to_string()),
+                name: "test".to_string(),
+                password: Some("password".to_string()),
+                clear_hardware_id: false,
+            },
+        )
+        .unwrap();
+        assign_stores_to_site(
+            &context,
+            AssignStoresToSite {
+                site_id: 5,
+                store_ids: vec![mock_store_a().id],
+            },
+        )
+        .unwrap();
+
+        assert_eq!(
+            delete_site(&context, 5),
+            Err(DeleteSiteError::SiteHasStores)
         );
     }
 
