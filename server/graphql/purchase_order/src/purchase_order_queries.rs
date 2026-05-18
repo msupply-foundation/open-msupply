@@ -11,10 +11,14 @@ use graphql_core::{
 };
 use graphql_types::types::{PurchaseOrderConnector, PurchaseOrderNode, PurchaseOrderNodeStatus};
 use repository::{
-    DateFilter, DatetimeFilter, EqualFilter, PaginationOption, PurchaseOrderStatus, StringFilter,
+    DateFilter, DatetimeFilter, EqualFilter, PaginationOption, PurchaseOrderStatus, RepositoryError,
+    StringFilter,
 };
 use repository::{PurchaseOrderFilter, PurchaseOrderSort, PurchaseOrderSortField};
-use service::auth::{Resource, ResourceAccessRequest};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    ListError,
+};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -64,7 +68,7 @@ pub enum PurchaseOrderResponse {
     Response(PurchaseOrderNode),
 }
 
-pub fn get_purchase_order(
+pub async fn get_purchase_order(
     ctx: &Context<'_>,
     store_id: &str,
     id: &str,
@@ -77,28 +81,31 @@ pub fn get_purchase_order(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let id = id.to_string();
 
-    match service_provider
-        .purchase_order_service
-        .get_purchase_order(&service_context, Some(store_id), id)
-        .map_err(StandardGraphqlError::from_repository_error)
-    {
-        Ok(order) => {
-            let result = match order {
-                Some(purchase_order) => {
-                    PurchaseOrderResponse::Response(PurchaseOrderNode::from_domain(purchase_order))
-                }
-                None => PurchaseOrderResponse::Error(RecordNotFound {}),
-            };
-            Ok(result)
+    let order = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider.purchase_order_service.get_purchase_order(
+            &service_context,
+            Some(&store_id),
+            &id,
+        )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    let result = match order {
+        Some(purchase_order) => {
+            PurchaseOrderResponse::Response(PurchaseOrderNode::from_domain(purchase_order))
         }
-        Err(err) => Err(err),
-    }
+        None => PurchaseOrderResponse::Error(RecordNotFound {}),
+    };
+    Ok(result)
 }
 
-pub fn get_purchase_orders(
+pub async fn get_purchase_orders(
     ctx: &Context<'_>,
     store_id: &str,
     page: Option<PaginationInput>,
@@ -113,20 +120,27 @@ pub fn get_purchase_orders(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let pagination = page.map(PaginationOption::from);
+    let domain_filter = filter.map(|filter| filter.to_domain());
+    let domain_sort = sort
+        .and_then(|mut sort_list| sort_list.pop())
+        .map(|sort| sort.to_domain());
 
-    let result = service_provider
-        .purchase_order_service
-        .get_purchase_orders(
+    let result = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider.purchase_order_service.get_purchase_orders(
             &service_context,
-            Some(store_id),
-            page.map(PaginationOption::from),
-            filter.map(|filter| filter.to_domain()),
-            sort.and_then(|mut sort_list| sort_list.pop())
-                .map(|sort| sort.to_domain()),
+            Some(&store_id),
+            pagination,
+            domain_filter,
+            domain_sort,
         )
-        .map_err(StandardGraphqlError::from_list_error)?;
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(PurchaseOrdersResponse::Response(
         PurchaseOrderConnector::from_domain(result),

@@ -11,7 +11,7 @@ use service::{
     auth::{Resource, ResourceAccessRequest},
 };
 
-pub fn delete_log_reason(
+pub async fn delete_log_reason(
     ctx: &Context<'_>,
     reason_id: &str,
 ) -> Result<DeleteAssetLogReasonResponse> {
@@ -23,13 +23,19 @@ pub fn delete_log_reason(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context("".to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let reason_id = reason_id.to_string();
 
-    match service_provider
-        .asset_service
-        .delete_log_reason(&service_context, reason_id.to_string())
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, ServiceError> {
+        let service_context = service_provider.context("".to_string(), user.user_id)?;
+        service_provider
+            .asset_service
+            .delete_log_reason(&service_context, reason_id)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    match result {
         Ok(reason_id) => Ok(DeleteAssetLogReasonResponse::Response(DeleteResponse(
             reason_id,
         ))),

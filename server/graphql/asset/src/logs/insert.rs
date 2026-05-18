@@ -14,7 +14,7 @@ use service::{
 
 use crate::types::AssetLogNode;
 
-pub fn insert_asset_log(
+pub async fn insert_asset_log(
     ctx: &Context<'_>,
     store_id: &str,
     input: InsertAssetLogInput,
@@ -27,13 +27,19 @@ pub fn insert_asset_log(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
 
-    match service_provider
-        .asset_service
-        .insert_asset_log(&service_context, input.into())
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, ServiceError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        service_provider
+            .asset_service
+            .insert_asset_log(&service_context, input.into())
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    match result {
         Ok(asset_log) => Ok(InsertAssetLogResponse::Response(AssetLogNode::from_domain(
             asset_log,
         ))),

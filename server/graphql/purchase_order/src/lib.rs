@@ -27,7 +27,7 @@ impl PurchaseOrderQueries {
         store_id: String,
         id: String,
     ) -> Result<PurchaseOrderResponse, async_graphql::Error> {
-        get_purchase_order(ctx, &store_id, &id)
+        get_purchase_order(ctx, &store_id, &id).await
     }
 
     pub async fn purchase_orders(
@@ -38,7 +38,7 @@ impl PurchaseOrderQueries {
         filter: Option<PurchaseOrderFilterInput>,
         sort: Option<Vec<PurchaseOrderSortInput>>,
     ) -> Result<PurchaseOrdersResponse, async_graphql::Error> {
-        get_purchase_orders(ctx, &store_id, page, filter, sort)
+        get_purchase_orders(ctx, &store_id, page, filter, sort).await
     }
 }
 
@@ -53,7 +53,7 @@ impl PurchaseOrderMutations {
         store_id: String,
         input: InsertInput,
     ) -> Result<InsertResponse> {
-        insert_purchase_order(ctx, &store_id, input)
+        insert_purchase_order(ctx, &store_id, input).await
     }
 
     pub async fn add_to_purchase_order_from_master_list(
@@ -62,7 +62,7 @@ impl PurchaseOrderMutations {
         store_id: String,
         input: AddToPurchaseOrderFromMasterListInput,
     ) -> Result<AddFromMasterListResponse> {
-        add_from_master_list(ctx, &store_id, input)
+        add_from_master_list(ctx, &store_id, input).await
     }
 
     pub async fn update_purchase_order(
@@ -71,7 +71,7 @@ impl PurchaseOrderMutations {
         store_id: String,
         input: UpdateInput,
     ) -> Result<UpdateResponse> {
-        update_purchase_order(ctx, &store_id, input)
+        update_purchase_order(ctx, &store_id, input).await
     }
 
     pub async fn delete_purchase_order(
@@ -80,6 +80,6 @@ impl PurchaseOrderMutations {
         store_id: String,
         id: String,
     ) -> Result<DeleteResponse> {
-        delete(ctx, &store_id, id)
+        delete(ctx, &store_id, id).await
     }
 }

@@ -18,6 +18,7 @@ graphql_asset = { path = "../asset" }
 async-graphql = { workspace = true }
 chrono = { workspace = true }
 regex = { workspace = true }
+tokio = { workspace = true }
 
 [dev-dependencies]
 actix-rt = { workspace = true }

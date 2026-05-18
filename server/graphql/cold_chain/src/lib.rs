@@ -54,26 +54,31 @@ impl ColdChainQueries {
             },
         )?;
 
-        let service_provider = ctx.service_provider();
-        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        let service_provider = ctx.service_provider_data();
 
         // always filter by store_id
         let filter = filter
             .map(TemperatureLogFilter::from)
             .unwrap_or_default()
             .store_id(EqualFilter::equal_to(store_id.to_string()));
+        let pagination = page.map(PaginationOption::from);
+        // Currently only one sort option is supported, use the first from the list.
+        let domain_sort = sort
+            .and_then(|mut sort_list| sort_list.pop())
+            .map(|sort| sort.to_domain());
 
-        let temperature_logs = service_provider
-            .cold_chain_service
-            .get_temperature_logs(
+        let temperature_logs = tokio::task::spawn_blocking(move || -> Result<_, service::ListError> {
+            let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+            service_provider.cold_chain_service.get_temperature_logs(
                 &service_context.connection,
-                page.map(PaginationOption::from),
+                pagination,
                 Some(filter),
-                // Currently only one sort option is supported, use the first from the list.
-                sort.and_then(|mut sort_list| sort_list.pop())
-                    .map(|sort| sort.to_domain()),
+                domain_sort,
             )
-            .map_err(StandardGraphqlError::from_list_error)?;
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)?
+        .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(TemperatureLogsResponse::Response(
             TemperatureLogConnector::from_domain(temperature_logs),
@@ -97,26 +102,31 @@ impl ColdChainQueries {
             },
         )?;
 
-        let service_provider = ctx.service_provider();
-        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        let service_provider = ctx.service_provider_data();
 
         // always filter by store_id
         let filter = filter
             .map(TemperatureBreachFilter::from)
             .unwrap_or_default()
             .store_id(EqualFilter::equal_to(store_id.to_string()));
+        let pagination = page.map(PaginationOption::from);
+        // Currently only one sort option is supported, use the first from the list.
+        let domain_sort = sort
+            .and_then(|mut sort_list| sort_list.pop())
+            .map(|sort| sort.to_domain());
 
-        let temperature_breaches = service_provider
-            .cold_chain_service
-            .temperature_breaches(
+        let temperature_breaches = tokio::task::spawn_blocking(move || -> Result<_, service::ListError> {
+            let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+            service_provider.cold_chain_service.temperature_breaches(
                 &service_context.connection,
-                page.map(PaginationOption::from),
+                pagination,
                 Some(filter),
-                // Currently only one sort option is supported, use the first from the list.
-                sort.and_then(|mut sort_list| sort_list.pop())
-                    .map(|sort| sort.to_domain()),
+                domain_sort,
             )
-            .map_err(StandardGraphqlError::from_list_error)?;
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)?
+        .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(TemperatureBreachesResponse::Response(
             TemperatureBreachConnector::from_domain(temperature_breaches),
@@ -138,31 +148,40 @@ impl ColdChainQueries {
             },
         )?;
 
-        let service_provider = ctx.service_provider();
-        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        let service_provider = ctx.service_provider_data();
 
         // construct filter
         let filter = TemperatureBreachFilter::new()
             .store_id(EqualFilter::equal_to(store_id.to_string()))
             .unacknowledged(true);
+        let pagination = page.map(PaginationOption::from);
 
-        let temperature_breaches = service_provider
-            .cold_chain_service
-            .temperature_breaches(
-                &service_context.connection,
-                page.map(PaginationOption::from),
-                Some(filter),
-                Some(TemperatureBreachSort {
-                    key: TemperatureBreachSortField::StartDatetime,
-                    desc: Some(true),
-                }),
-            )
+        let (temperature_breaches, temperature_excursions) =
+            tokio::task::spawn_blocking(move || -> Result<_, service::ListError> {
+                let service_context =
+                    service_provider.context(store_id.clone(), user.user_id)?;
+
+                let temperature_breaches = service_provider
+                    .cold_chain_service
+                    .temperature_breaches(
+                        &service_context.connection,
+                        pagination,
+                        Some(filter),
+                        Some(TemperatureBreachSort {
+                            key: TemperatureBreachSortField::StartDatetime,
+                            desc: Some(true),
+                        }),
+                    )?;
+
+                let temperature_excursions = service_provider
+                    .temperature_excursion_service
+                    .excursions(&service_context.connection, &store_id)?;
+
+                Ok((temperature_breaches, temperature_excursions))
+            })
+            .await
+            .map_err(StandardGraphqlError::from_join_error)?
             .map_err(StandardGraphqlError::from_list_error)?;
-
-        let temperature_excursions = service_provider
-            .temperature_excursion_service
-            .excursions(&service_context.connection, &store_id)
-            .map_err(StandardGraphqlError::from_repository_error)?;
 
         Ok(TemperatureNotificationsResponse::Response(
             TemperatureNotificationConnector::from_domain(
@@ -190,26 +209,31 @@ impl ColdChainQueries {
             },
         )?;
 
-        let service_provider = ctx.service_provider();
-        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        let service_provider = ctx.service_provider_data();
 
         // always filter by store_id
         let filter = filter
             .map(SensorFilter::from)
             .unwrap_or_default()
             .store_id(EqualFilter::equal_to(store_id.to_string()));
+        let pagination = page.map(PaginationOption::from);
+        // Currently only one sort option is supported, use the first from the list.
+        let domain_sort = sort
+            .and_then(|mut sort_list| sort_list.pop())
+            .map(|sort| sort.to_domain());
 
-        let sensors = service_provider
-            .sensor_service
-            .get_sensors(
+        let sensors = tokio::task::spawn_blocking(move || -> Result<_, service::ListError> {
+            let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+            service_provider.sensor_service.get_sensors(
                 &service_context,
-                page.map(PaginationOption::from),
+                pagination,
                 Some(filter),
-                // Currently only one sort option is supported, use the first from the list.
-                sort.and_then(|mut sort_list| sort_list.pop())
-                    .map(|sort| sort.to_domain()),
+                domain_sort,
             )
-            .map_err(StandardGraphqlError::from_list_error)?;
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)?
+        .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(SensorsResponse::Response(SensorConnector::from_domain(
             sensors,
@@ -228,7 +252,7 @@ impl ColdChainMutations {
         store_id: String,
         input: mutations::temperature_breach::UpdateInput,
     ) -> Result<mutations::temperature_breach::UpdateResponse> {
-        mutations::temperature_breach::update(ctx, &store_id, input)
+        mutations::temperature_breach::update(ctx, &store_id, input).await
     }
 
     async fn update_sensor(
@@ -237,7 +261,7 @@ impl ColdChainMutations {
         store_id: String,
         input: UpdateSensorInput,
     ) -> Result<UpdateSensorResponse> {
-        update_sensor(ctx, &store_id, input)
+        update_sensor(ctx, &store_id, input).await
     }
 }
 

@@ -1,6 +1,7 @@
 use async_graphql::*;
-use graphql_core::standard_graphql_error::validate_auth;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
+use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::ContextExt;
 use graphql_types::types::IdResponse;
 use repository::PurchaseOrderRow;
@@ -30,7 +31,7 @@ pub enum InsertResponse {
     Response(IdResponse),
 }
 
-pub fn insert_purchase_order(
+pub async fn insert_purchase_order(
     ctx: &Context<'_>,
     store_id: &str,
     input: InsertInput,
@@ -42,14 +43,22 @@ pub fn insert_purchase_order(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input = input.to_domain();
 
-    map_response(
-        service_provider
-            .purchase_order_service
-            .insert_purchase_order(&service_context, store_id, input.to_domain()),
-    )
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        Ok(service_provider.purchase_order_service.insert_purchase_order(
+            &service_context,
+            &store_id,
+            domain_input,
+        ))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    map_response(result)
 }
 
 fn map_response(from: Result<PurchaseOrderRow, ServiceError>) -> Result<InsertResponse> {

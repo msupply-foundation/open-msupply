@@ -15,6 +15,6 @@ impl AssetPropertiesQueries {
         ctx: &Context<'_>,
         #[graphql(desc = "Filter options")] filter: Option<AssetPropertyFilterInput>,
     ) -> Result<AssetPropertiesResponse> {
-        asset_properties(ctx, filter)
+        asset_properties(ctx, filter).await
     }
 }

@@ -11,7 +11,7 @@ use service::{
     auth::{Resource, ResourceAccessRequest},
 };
 
-pub fn delete_asset(
+pub async fn delete_asset(
     ctx: &Context<'_>,
     store_id: &str,
     asset_id: &str,
@@ -24,13 +24,20 @@ pub fn delete_asset(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let asset_id = asset_id.to_string();
 
-    match service_provider
-        .asset_service
-        .delete_asset(&service_context, asset_id.to_string())
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, ServiceError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        service_provider
+            .asset_service
+            .delete_asset(&service_context, asset_id)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    match result {
         Ok(asset_id) => Ok(DeleteAssetResponse::Response(DeleteResponse(asset_id))),
         Err(error) => Ok(DeleteAssetResponse::Error(DeleteAssetError {
             error: map_error(error)?,

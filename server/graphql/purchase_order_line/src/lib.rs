@@ -21,7 +21,7 @@ impl PurchaseOrderLineQueries {
         store_id: String,
         id: String,
     ) -> Result<PurchaseOrderLineResponse, async_graphql::Error> {
-        get_purchase_order_line(ctx, &store_id, &id)
+        get_purchase_order_line(ctx, &store_id, &id).await
     }
 
     pub async fn purchase_order_lines(
@@ -32,7 +32,7 @@ impl PurchaseOrderLineQueries {
         filter: Option<PurchaseOrderLineFilterInput>,
         sort: Option<Vec<PurchaseOrderLineSortInput>>,
     ) -> Result<PurchaseOrderLinesResponse, async_graphql::Error> {
-        get_purchase_order_lines(ctx, &store_id, page, filter, sort)
+        get_purchase_order_lines(ctx, &store_id, page, filter, sort).await
     }
 
     pub async fn units_ordered_in_other_purchase_orders(
@@ -48,6 +48,7 @@ impl PurchaseOrderLineQueries {
             &item_id,
             &exclude_purchase_order_id,
         )
+        .await
     }
 }
 
@@ -62,7 +63,7 @@ impl PurchaseOrderLineMutations {
         store_id: String,
         input: InsertInput,
     ) -> Result<InsertResponse> {
-        insert_purchase_order_line(ctx, &store_id, input)
+        insert_purchase_order_line(ctx, &store_id, input).await
     }
 
     pub async fn update_purchase_order_line(
@@ -71,7 +72,7 @@ impl PurchaseOrderLineMutations {
         store_id: String,
         input: UpdateInput,
     ) -> Result<UpdateResponse> {
-        update_purchase_order_line(ctx, &store_id, input)
+        update_purchase_order_line(ctx, &store_id, input).await
     }
 
     pub async fn delete_purchase_order_lines(
@@ -80,6 +81,6 @@ impl PurchaseOrderLineMutations {
         store_id: String,
         ids: Vec<String>,
     ) -> Result<Vec<DeleteResponseWithId>> {
-        delete_purchase_order_lines(ctx, &store_id, ids)
+        delete_purchase_order_lines(ctx, &store_id, ids).await
     }
 }

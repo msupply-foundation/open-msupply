@@ -45,7 +45,11 @@ pub enum InsertResponse {
     Error(InsertError),
     Response(RequisitionLineNode),
 }
-pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
+pub async fn insert(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: InsertInput,
+) -> Result<InsertResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -54,14 +58,22 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input = input.to_domain();
 
-    map_response(
-        service_provider
-            .requisition_line_service
-            .insert_request_requisition_line(&service_context, input.to_domain()),
-    )
+    tokio::task::spawn_blocking(move || -> Result<InsertResponse> {
+        let service_context = service_provider
+            .context(store_id, user.user_id)
+            .map_err(StandardGraphqlError::from_repository_error)?;
+        map_response(
+            service_provider
+                .requisition_line_service
+                .insert_request_requisition_line(&service_context, domain_input),
+        )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
 }
 
 pub fn map_response(from: Result<RequisitionLine, ServiceError>) -> Result<InsertResponse> {

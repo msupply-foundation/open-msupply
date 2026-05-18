@@ -3,7 +3,7 @@ use chrono::{NaiveDate, NaiveDateTime};
 use graphql_core::{
     generic_inputs::NullableUpdateInput,
     standard_graphql_error::{
-        validate_auth,
+        validate_auth, StandardGraphqlError,
         StandardGraphqlError::{BadUserInput, InternalError},
     },
     ContextExt,
@@ -166,7 +166,7 @@ pub enum UpdateResponse {
     Error(UpdateError),
 }
 
-pub fn update_purchase_order(
+pub async fn update_purchase_order(
     ctx: &Context<'_>,
     store_id: &str,
     input: UpdateInput,
@@ -180,7 +180,7 @@ pub fn update_purchase_order(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id.clone())?;
 
     super::validate_purchase_order_update_authorisation(
         ctx,
@@ -190,11 +190,22 @@ pub fn update_purchase_order(
         &input.status,
     )?;
 
-    map_response(
-        service_provider
-            .purchase_order_service
-            .update_purchase_order(&service_context, store_id, input.to_domain()),
-    )
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input = input.to_domain();
+
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        Ok(service_provider.purchase_order_service.update_purchase_order(
+            &service_context,
+            &store_id,
+            domain_input,
+        ))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    map_response(result)
 }
 
 fn map_response(from: Result<PurchaseOrderRow, ServiceError>) -> Result<UpdateResponse> {

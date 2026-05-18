@@ -13,7 +13,7 @@ use service::{
 
 use crate::types::{AssetLogReasonNode, AssetLogStatusNodeType};
 
-pub fn insert_asset_log_reason(
+pub async fn insert_asset_log_reason(
     ctx: &Context<'_>,
     input: InsertAssetLogReasonInput,
 ) -> Result<InsertAssetLogReasonResponse> {
@@ -25,13 +25,18 @@ pub fn insert_asset_log_reason(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context("".to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
 
-    match service_provider
-        .asset_service
-        .insert_asset_log_reason(&service_context, input.into())
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, ServiceError> {
+        let service_context = service_provider.context("".to_string(), user.user_id)?;
+        service_provider
+            .asset_service
+            .insert_asset_log_reason(&service_context, input.into())
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    match result {
         Ok(asset_log_reason) => Ok(InsertAssetLogReasonResponse::Response(
             AssetLogReasonNode::from_domain(asset_log_reason),
         )),

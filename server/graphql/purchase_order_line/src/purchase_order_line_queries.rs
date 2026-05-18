@@ -12,9 +12,12 @@ use graphql_types::types::{
 };
 use repository::{
     DateFilter, EqualFilter, PaginationOption, PurchaseOrderLineFilter, PurchaseOrderLineSort,
-    PurchaseOrderLineSortField, PurchaseOrderLineStatus, StringFilter,
+    PurchaseOrderLineSortField, PurchaseOrderLineStatus, RepositoryError, StringFilter,
 };
-use service::auth::{Resource, ResourceAccessRequest};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    ListError,
+};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -65,7 +68,7 @@ pub enum PurchaseOrderLineResponse {
     Response(PurchaseOrderLineNode),
 }
 
-pub fn get_purchase_order_line(
+pub async fn get_purchase_order_line(
     ctx: &Context<'_>,
     store_id: &str,
     id: &str,
@@ -77,28 +80,30 @@ pub fn get_purchase_order_line(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let id = id.to_string();
 
-    match service_provider
-        .purchase_order_line_service
-        .get_purchase_order_line(&service_context, Some(store_id), id)
-        .map_err(StandardGraphqlError::from_repository_error)
-    {
-        Ok(line) => {
-            let result = match line {
-                Some(purchase_order_line) => PurchaseOrderLineResponse::Response(
-                    PurchaseOrderLineNode::from_domain(purchase_order_line),
-                ),
-                None => PurchaseOrderLineResponse::Error(RecordNotFound {}),
-            };
-            Ok(result)
-        }
-        Err(err) => Err(err),
-    }
+    let line = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider
+            .purchase_order_line_service
+            .get_purchase_order_line(&service_context, Some(&store_id), &id)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_repository_error)?;
+
+    let result = match line {
+        Some(purchase_order_line) => PurchaseOrderLineResponse::Response(
+            PurchaseOrderLineNode::from_domain(purchase_order_line),
+        ),
+        None => PurchaseOrderLineResponse::Error(RecordNotFound {}),
+    };
+    Ok(result)
 }
 
-pub fn get_purchase_order_lines(
+pub async fn get_purchase_order_lines(
     ctx: &Context<'_>,
     store_id: &str,
     page: Option<PaginationInput>,
@@ -112,27 +117,36 @@ pub fn get_purchase_order_lines(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let pagination = page.map(PaginationOption::from);
+    let domain_filter = filter.map(|filter| filter.to_domain());
+    let domain_sort = sort
+        .and_then(|mut sort_list| sort_list.pop())
+        .map(|sort| sort.to_domain());
 
-    let list_result = service_provider
-        .purchase_order_line_service
-        .get_purchase_order_lines(
-            &service_context,
-            Some(store_id),
-            page.map(PaginationOption::from),
-            filter.map(|filter| filter.to_domain()),
-            sort.and_then(|mut sort_list| sort_list.pop())
-                .map(|sort| sort.to_domain()),
-        )
-        .map_err(StandardGraphqlError::from_list_error)?;
+    let list_result = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider
+            .purchase_order_line_service
+            .get_purchase_order_lines(
+                &service_context,
+                Some(&store_id),
+                pagination,
+                domain_filter,
+                domain_sort,
+            )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(PurchaseOrderLinesResponse::Response(
         PurchaseOrderLineConnector::from_domain(list_result),
     ))
 }
 
-pub fn get_units_ordered_in_other_purchase_orders(
+pub async fn get_units_ordered_in_other_purchase_orders(
     ctx: &Context<'_>,
     store_id: &str,
     item_id: &str,
@@ -145,18 +159,25 @@ pub fn get_units_ordered_in_other_purchase_orders(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let item_id = item_id.to_string();
+    let exclude_purchase_order_id = exclude_purchase_order_id.to_string();
 
-    service_provider
-        .purchase_order_line_service
-        .get_units_ordered_in_other_purchase_orders(
-            &service_context,
-            store_id,
-            item_id,
-            exclude_purchase_order_id,
-        )
-        .map_err(StandardGraphqlError::from_repository_error)
+    tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider
+            .purchase_order_line_service
+            .get_units_ordered_in_other_purchase_orders(
+                &service_context,
+                &store_id,
+                &item_id,
+                &exclude_purchase_order_id,
+            )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_repository_error)
 }
 
 impl PurchaseOrderLineFilterInput {

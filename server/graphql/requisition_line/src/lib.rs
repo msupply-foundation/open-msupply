@@ -15,7 +15,7 @@ impl RequisitionLineMutations {
         store_id: String,
         input: InsertInput,
     ) -> Result<InsertResponse> {
-        insert(ctx, &store_id, input)
+        insert(ctx, &store_id, input).await
     }
 
     async fn update_request_requisition_line(
@@ -24,7 +24,7 @@ impl RequisitionLineMutations {
         store_id: String,
         input: UpdateInput,
     ) -> Result<UpdateResponse> {
-        update(ctx, &store_id, input)
+        update(ctx, &store_id, input).await
     }
 
     async fn delete_request_requisition_line(
@@ -33,7 +33,7 @@ impl RequisitionLineMutations {
         store_id: String,
         input: DeleteInput,
     ) -> Result<DeleteResponse> {
-        delete(ctx, &store_id, input)
+        delete(ctx, &store_id, input).await
     }
 
     async fn refresh_ancillary_items(
@@ -42,7 +42,7 @@ impl RequisitionLineMutations {
         store_id: String,
         input: RefreshAncillaryItemsInput,
     ) -> Result<RefreshAncillaryItemsResponse> {
-        refresh_ancillary_items(ctx, &store_id, input)
+        refresh_ancillary_items(ctx, &store_id, input).await
     }
 
     async fn insert_response_requisition_line(
@@ -51,7 +51,7 @@ impl RequisitionLineMutations {
         store_id: String,
         input: response_requisition_line::InsertInput,
     ) -> Result<response_requisition_line::InsertResponse> {
-        response_requisition_line::insert(ctx, &store_id, input)
+        response_requisition_line::insert(ctx, &store_id, input).await
     }
 
     async fn update_response_requisition_line(
@@ -60,7 +60,7 @@ impl RequisitionLineMutations {
         store_id: String,
         input: response_requisition_line::UpdateInput,
     ) -> Result<response_requisition_line::UpdateResponse> {
-        response_requisition_line::update(ctx, &store_id, input)
+        response_requisition_line::update(ctx, &store_id, input).await
     }
 
     async fn delete_response_requisition_line(
@@ -69,6 +69,6 @@ impl RequisitionLineMutations {
         store_id: String,
         input: response_requisition_line::delete::DeleteInput,
     ) -> Result<response_requisition_line::delete::DeleteResponse> {
-        response_requisition_line::delete::delete(ctx, &store_id, input)
+        response_requisition_line::delete::delete(ctx, &store_id, input).await
     }
 }

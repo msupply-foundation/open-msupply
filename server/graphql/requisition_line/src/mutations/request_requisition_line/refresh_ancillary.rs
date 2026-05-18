@@ -61,7 +61,7 @@ pub enum RefreshAncillaryItemsResponse {
     Response(RefreshAncillaryItemsSuccess),
 }
 
-pub fn refresh_ancillary_items(
+pub async fn refresh_ancillary_items(
     ctx: &Context<'_>,
     store_id: &str,
     input: RefreshAncillaryItemsInput,
@@ -74,19 +74,23 @@ pub fn refresh_ancillary_items(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
-
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
     let service_input = ServiceInput {
         requisition_id: input.requisition_id,
         action: input.action.into(),
     };
 
-    map_response(
-        service_provider
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        Ok(service_provider
             .requisition_line_service
-            .refresh_ancillary_items(&service_context, service_input),
-    )
+            .refresh_ancillary_items(&service_context, service_input))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    map_response(result)
 }
 
 fn map_response(

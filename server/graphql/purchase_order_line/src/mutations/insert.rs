@@ -2,6 +2,7 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::simple_generic_errors::{CannotEditPurchaseOrder, ForeignKey, ForeignKeyError};
 use graphql_core::standard_graphql_error::validate_auth;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
 use graphql_core::ContextExt;
 use graphql_types::types::IdResponse;
@@ -97,7 +98,7 @@ pub enum InsertResponse {
     Response(IdResponse),
 }
 
-pub fn insert_purchase_order_line(
+pub async fn insert_purchase_order_line(
     ctx: &Context<'_>,
     store_id: &str,
     input: InsertInput,
@@ -110,14 +111,20 @@ pub fn insert_purchase_order_line(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input = input.to_domain();
 
-    map_response(
-        service_provider
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        Ok(service_provider
             .purchase_order_line_service
-            .insert_purchase_order_line(&service_context, input.to_domain()),
-    )
+            .insert_purchase_order_line(&service_context, domain_input))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    map_response(result)
 }
 
 pub fn map_response(from: Result<PurchaseOrderLineRow, ServiceError>) -> Result<InsertResponse> {

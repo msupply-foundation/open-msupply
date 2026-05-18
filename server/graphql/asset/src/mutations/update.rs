@@ -18,7 +18,7 @@ use service::{
 
 use crate::types::AssetNode;
 
-pub fn update_asset(
+pub async fn update_asset(
     ctx: &Context<'_>,
     store_id: &str,
     input: UpdateAssetInput,
@@ -31,13 +31,19 @@ pub fn update_asset(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
 
-    match service_provider
-        .asset_service
-        .update_asset(&service_context, input.into())
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, ServiceError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        service_provider
+            .asset_service
+            .update_asset(&service_context, input.into())
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    match result {
         Ok(asset) => Ok(UpdateAssetResponse::Response(AssetNode::from_domain(asset))),
         Err(error) => Ok(UpdateAssetResponse::Error(UpdateAssetError {
             error: map_error(error)?,

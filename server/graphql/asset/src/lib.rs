@@ -11,7 +11,10 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{assets::asset::AssetFilter, PaginationOption};
-use service::auth::{Resource, ResourceAccessRequest};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    ListError,
+};
 
 use types::{
     map_parse_error, AssetConnector, AssetFilterInput, AssetNode, AssetParseResponse,
@@ -41,20 +44,26 @@ impl AssetQueries {
             },
         )?;
 
-        let service_provider = ctx.service_provider();
-        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        let service_provider = ctx.service_provider_data();
+        let pagination = page.map(PaginationOption::from);
+        let domain_filter = filter.map(AssetFilter::from);
+        // Currently only one sort option is supported, use the first from the list.
+        let domain_sort = sort
+            .and_then(|mut sort_list| sort_list.pop())
+            .map(|sort| sort.to_domain());
 
-        let assets = service_provider
-            .asset_service
-            .get_assets(
+        let assets = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+            let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+            service_provider.asset_service.get_assets(
                 &service_context.connection,
-                page.map(PaginationOption::from),
-                filter.map(AssetFilter::from),
-                // Currently only one sort option is supported, use the first from the list.
-                sort.and_then(|mut sort_list| sort_list.pop())
-                    .map(|sort| sort.to_domain()),
+                pagination,
+                domain_filter,
+                domain_sort,
             )
-            .map_err(StandardGraphqlError::from_list_error)?;
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)?
+        .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(AssetsResponse::Response(AssetConnector::from_domain(
             assets,
@@ -75,13 +84,17 @@ impl AssetQueries {
             },
         )?;
 
-        let service_provider = ctx.service_provider();
-        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        let service_provider = ctx.service_provider_data();
+        let domain_gs1: Vec<_> = gs1.into_iter().map(GS1DataElement::to_domain).collect();
 
-        let result = service_provider.asset_service.asset_from_gs1_data(
-            &service_context,
-            gs1.into_iter().map(GS1DataElement::to_domain).collect(),
-        );
+        let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+            let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+            Ok(service_provider
+                .asset_service
+                .asset_from_gs1_data(&service_context, domain_gs1))
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)??;
 
         match result {
             Ok(asset) => Ok(AssetParseResponse::Response(AssetNode::from_domain(asset))),
@@ -103,7 +116,7 @@ impl AssetMutations {
         store_id: String,
         input: InsertAssetInput,
     ) -> Result<InsertAssetResponse> {
-        insert_asset(ctx, &store_id, input)
+        insert_asset(ctx, &store_id, input).await
     }
 
     async fn update_asset(
@@ -112,7 +125,7 @@ impl AssetMutations {
         store_id: String,
         input: UpdateAssetInput,
     ) -> Result<UpdateAssetResponse> {
-        update_asset(ctx, &store_id, input)
+        update_asset(ctx, &store_id, input).await
     }
 
     async fn delete_asset(
@@ -121,7 +134,7 @@ impl AssetMutations {
         store_id: String,
         asset_id: String,
     ) -> Result<DeleteAssetResponse> {
-        delete_asset(ctx, &store_id, &asset_id)
+        delete_asset(ctx, &store_id, &asset_id).await
     }
 }
 

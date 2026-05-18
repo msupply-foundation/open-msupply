@@ -31,7 +31,7 @@ impl AssetLogQueries {
         filter: Option<AssetLogFilterInput>,
         sort: Option<Vec<AssetLogSortInput>>,
     ) -> Result<AssetLogsResponse> {
-        asset_logs(ctx, store_id, page, filter, sort)
+        asset_logs(ctx, store_id, page, filter, sort).await
     }
 }
 
@@ -46,7 +46,7 @@ impl AssetLogMutations {
         store_id: String,
         input: InsertAssetLogInput,
     ) -> Result<InsertAssetLogResponse> {
-        insert_asset_log(ctx, &store_id, input)
+        insert_asset_log(ctx, &store_id, input).await
     }
 }
 
@@ -63,7 +63,7 @@ impl AssetLogReasonQueries {
         filter: Option<AssetLogReasonFilterInput>,
         sort: Option<Vec<AssetLogReasonSortInput>>,
     ) -> Result<AssetLogReasonsResponse> {
-        asset_log_reasons(ctx, store_id, page, filter, sort)
+        asset_log_reasons(ctx, store_id, page, filter, sort).await
     }
 }
 
@@ -77,13 +77,13 @@ impl AssetLogReasonMutations {
         ctx: &Context<'_>,
         input: InsertAssetLogReasonInput,
     ) -> Result<InsertAssetLogReasonResponse> {
-        insert_asset_log_reason(ctx, input)
+        insert_asset_log_reason(ctx, input).await
     }
     async fn delete_log_reason(
         &self,
         ctx: &Context<'_>,
         reason_id: String,
     ) -> Result<DeleteAssetLogReasonResponse> {
-        delete_log_reason(ctx, &reason_id)
+        delete_log_reason(ctx, &reason_id).await
     }
 }

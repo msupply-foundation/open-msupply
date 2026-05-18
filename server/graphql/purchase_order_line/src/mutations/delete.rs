@@ -9,6 +9,7 @@ use service::{
     auth::{Resource, ResourceAccessRequest},
     purchase_order_line::delete::DeletePurchaseOrderLineError as ServiceError,
 };
+use repository::RepositoryError;
 
 #[derive(Interface)]
 #[graphql(name = "DeletePurchaseOrderLineInterface")]
@@ -37,7 +38,7 @@ pub struct DeleteResponseWithId {
     pub response: DeleteResponse,
 }
 
-pub fn delete_purchase_order_lines(
+pub async fn delete_purchase_order_lines(
     ctx: &Context<'_>,
     store_id: &str,
     ids: Vec<String>,
@@ -50,21 +51,31 @@ pub fn delete_purchase_order_lines(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+
+    let service_results = tokio::task::spawn_blocking(
+        move || -> Result<Vec<(String, Result<String, ServiceError>)>, RepositoryError> {
+            let service_context = service_provider.context(store_id, user.user_id)?;
+
+            let mut results = Vec::new();
+            for id in ids {
+                let result = service_provider
+                    .purchase_order_line_service
+                    .delete_purchase_order_line(&service_context, id.clone());
+                results.push((id, result));
+            }
+            Ok(results)
+        },
+    )
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     let mut results = Vec::new();
-
-    for id in ids {
-        let result = map_response(
-            service_provider
-                .purchase_order_line_service
-                .delete_purchase_order_line(&service_context, id.clone()),
-        );
-
+    for (id, service_result) in service_results {
         results.push(DeleteResponseWithId {
             id,
-            response: result?,
+            response: map_response(service_result)?,
         });
     }
 
