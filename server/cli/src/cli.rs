@@ -19,9 +19,6 @@ use repository::{
 use serde::{Deserialize, Serialize};
 use server::{configuration, logging_init};
 use service::{
-    apis::login_v4::LoginUserInfoV4,
-    auth_data::AuthData,
-    login::{LoginInput, LoginService},
     plugin::validation::sign_plugin,
     service_provider::{ServiceContext, ServiceProvider},
     settings::Settings,
@@ -30,7 +27,6 @@ use service::{
         settings::SyncSettings, sync_status::logger::SyncLogger,
         synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
     },
-    token_bucket::TokenBucket,
 };
 use std::{
     env::current_dir,
@@ -38,7 +34,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
     process::Command,
-    sync::{Arc, RwLock},
+    sync::Arc,
 };
 use tokio::task::spawn_blocking;
 
@@ -79,12 +75,8 @@ enum Action {
     /// Apply any pending migrations to the database, drop and build views
     Migrate,
     /// Initialise from running mSupply server (uses configuration/.*yaml for sync credentials), drops existing database, creates new database with latest schema and initialises (syncs) initial data from central server (including users)
-    /// Can use env variables to override .yaml configurations, i.e. to override sync username `APP_SYNC__USERNAME='demo' remote_server_cli initialise-from-central -u "user1:user1password,user2:user2password" -p "sync_site_password"
-    InitialiseFromCentral {
-        /// Users to sync, in format "username:password,username2:password2"
-        #[clap(short, long)]
-        users: String,
-    },
+    /// Can use env variables to override .yaml configurations, i.e. to override sync username: `APP_SYNC__USERNAME='demo' remote_server_cli initialise-from-central -p "sync_site_password"`
+    InitialiseFromCentral,
     /// Export initialisation data from running mSupply server (uses configuration/.*yaml for sync credentials).
     /// Can use env variables to override .yaml configurations, i.e. to override sync username `APP_SYNC__USERNAME='demo' remote_server_cli export-initialisation -u "user1:user1password,user2:user2password" -n "demoexport"
     /// IMPORTANT: Should not be used on large data files
@@ -253,13 +245,11 @@ enum Action {
 #[derive(Serialize, Deserialize)]
 struct InitialisationData {
     sync_buffer_rows: Vec<repository::SyncBufferRow>,
-    users: Vec<(LoginInput, LoginUserInfoV4)>,
     site_id: i32,
 }
 
 async fn initialise_from_central(
     settings: Settings,
-    users: &str,
 ) -> anyhow::Result<(Arc<ServiceProvider>, ServiceContext)> {
     info!("Reseting database");
     test_db::setup(&settings.database).await;
@@ -272,14 +262,6 @@ async fn initialise_from_central(
         .clone()
         .sync
         .ok_or(anyhow!("sync settings not set in yaml configurations"))?;
-    let central_server_url = sync_settings.url.clone();
-
-    let auth_data = AuthData {
-        auth_token_secret: "secret".to_string(),
-        token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
-        no_ssl: true,
-        debug_no_access_control: false,
-    };
 
     let service_context = service_provider.basic_context()?;
     info!("Initialising from central");
@@ -294,18 +276,6 @@ async fn initialise_from_central(
     let (_, sync_driver) = SynchroniserDriver::init();
     sync_driver.sync(service_provider.clone()).await;
 
-    info!("Syncing users");
-    for user in users.split(',') {
-        let user = user.split(':').collect::<Vec<&str>>();
-        let input = LoginInput {
-            username: user[0].to_string(),
-            password: user[1].to_string(),
-            central_server_url: central_server_url.clone(),
-        };
-        LoginService::login(&service_provider, &auth_data, input.clone(), 0)
-            .await
-            .map_err(|_| anyhow!("Cannot login with user {input:?}"))?;
-    }
     info!("Initialisation finished");
     Ok((service_provider, service_context))
 }
@@ -370,42 +340,18 @@ async fn main() -> anyhow::Result<()> {
 
             info!("Finished applying database migrations");
         }
-        Action::InitialiseFromCentral { users } => {
-            initialise_from_central(settings, &users).await?;
+        Action::InitialiseFromCentral => {
+            initialise_from_central(settings).await?;
         }
         Action::ExportInitialisation {
             name,
             users,
             pretty,
         } => {
-            let url = settings
-                .sync
-                .clone()
-                .ok_or(anyhow!("sync settings not set in yaml configurations"))?
-                .url;
-            let (service_provider, ctx) = initialise_from_central(settings, &users).await?;
-
-            info!("Syncing users");
-            let mut synced_user_info_rows = Vec::new();
-            for user in users.split(',') {
-                let user = user.split(':').collect::<Vec<&str>>();
-                let input = LoginInput {
-                    username: user[0].to_string(),
-                    password: user[1].to_string(),
-                    central_server_url: url.to_string(),
-                };
-                synced_user_info_rows.push((
-                    input.clone(),
-                    LoginService::fetch_user_from_central(&service_provider.clone(), &input)
-                        .await
-                        .unwrap_or_else(|_| panic!("Cannot find user {:?}", input)),
-                ));
-            }
+            let (service_provider, ctx) = initialise_from_central(settings).await?;
 
             let data = InitialisationData {
-                // Sync Buffer Rows
                 sync_buffer_rows: SyncBufferRepository::new(&ctx.connection).get_all()?,
-                users: synced_user_info_rows,
                 site_id: service_provider
                     .site_auth_service
                     .get_site_id(&ctx)?
@@ -461,11 +407,6 @@ async fn main() -> anyhow::Result<()> {
 
             let mut logger = SyncLogger::start(&ctx.connection).unwrap();
             integrate_and_translate_sync_buffer(&ctx.connection, Some(&mut logger), 0)?;
-
-            info!("Initialising users");
-            for (input, user_info) in data.users {
-                LoginService::update_user(&ctx, &input.password, user_info).unwrap();
-            }
 
             if refresh {
                 info!("Refreshing dates");

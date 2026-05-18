@@ -1,53 +1,24 @@
-use std::{
-    collections::HashSet,
-    time::{Duration, SystemTime},
-};
+use std::time::{Duration, SystemTime};
 
-use bcrypt::BcryptError;
-use chrono::Utc;
 use log::info;
-use repository::{
-    ActivityLogType, LanguageType, PermissionType, RepositoryError, UserAccountRow,
-    UserPermissionRow, UserStoreJoinRow,
-};
-use reqwest::{ClientBuilder, Url};
+use repository::{ActivityLogType, RepositoryError, UserAccountRowRepository};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     activity_log::activity_log_entry,
-    apis::{
-        login_v4::{
-            LoginApiV4, LoginInputV4, LoginStatusV4, LoginUserInfoV4, LoginUserTypeV4, LoginV4Error,
-        },
-        permissions::{map_api_permissions, Permissions},
-    },
+    apis::central_user_login::{central_user_login, CentralUserLoginError},
     auth_data::AuthData,
-    service_provider::{ServiceContext, ServiceProvider},
+    service_provider::ServiceProvider,
     settings::is_develop,
+    sync::CentralServerConfig,
     token::{JWTIssuingError, TokenPair, TokenService},
-    user_account::{StorePermissions, UserAccountService, VerifyPasswordError},
+    user_account::{UserAccountService, VerifyPasswordError},
 };
-
-const CONNECTION_TIMEOUT_SEC: u64 = 10;
 
 /// Minimum response time on a failed login. Disguises whether the username
 /// exists by making "wrong password" and "no such user" indistinguishable by
 /// latency. Must be longer than the worst-case bcrypt verify time.
 pub const MIN_ERR_RESPONSE_TIME_SEC: u64 = 6;
-
-#[derive(Debug)]
-pub enum FetchUserError {
-    Unauthenticated,
-    AccountBlocked(u64),
-    ConnectionError(String),
-    InternalError(String),
-}
-#[derive(Debug)]
-pub enum UpdateUserError {
-    MissingCredentials,
-    PasswordHashError(BcryptError),
-    DatabaseError(RepositoryError),
-}
 
 pub struct LoginService {}
 
@@ -55,7 +26,10 @@ pub struct LoginService {}
 pub enum LoginFailure {
     /// Either user does not exist or wrong password
     InvalidCredentials,
-    /// User account is blocked due to too many failed login attempts
+    /// User account is blocked due to too many failed login attempts.
+    /// No longer produced by the login flow (the OMS Central REST endpoint
+    /// does not surface lockouts) but kept as a defensive variant for
+    /// downstream consumers.
     AccountBlocked(u64),
     /// User account does not have login rights to any stores on this site
     NoSiteAccess,
@@ -65,8 +39,6 @@ pub enum LoginFailure {
 pub enum LoginError {
     LoginFailure(LoginFailure),
     FailedToGenerateToken(JWTIssuingError),
-    FetchUserError(FetchUserError),
-    UpdateUserError(UpdateUserError),
     InternalError(String),
     DatabaseError(RepositoryError),
     MSupplyCentralNotReached,
@@ -158,56 +130,74 @@ impl LoginService {
         auth_data: &AuthData,
         input: LoginInput,
     ) -> Result<TokenPair, LoginError> {
-        let mut username = input.username.clone();
+        // Ask OMS Central whether the credentials are valid. If central says
+        // yes, that's authoritative — we don't re-verify the password locally
+        // (the local hash could be transiently stale between a legacy-side
+        // change and the next user sync).
+        //
+        // On the central server we *are* the source of truth, so skip the
+        // round-trip (legacy at the configured URL 404s; worse, hitting our
+        // own endpoint would loop). Same for any genuine connection failure
+        // — fall through to the local hash, which sync keeps current.
+        let mut central_verified = false;
         let mut connection_failure = false;
-        match LoginService::fetch_user_from_central(service_provider, &input).await {
-            Ok(user_info) => {
-                let service_ctx =
-                    service_provider.context("".to_string(), user_info.user.id.clone())?;
-                username.clone_from(&user_info.user.name);
-                LoginService::update_user(&service_ctx, &input.password, user_info)
-                    .map_err(LoginError::UpdateUserError)?;
-            }
-            Err(err) => match err {
-                FetchUserError::Unauthenticated => {
-                    return Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+        if !CentralServerConfig::is_central_server() {
+            match central_user_login(
+                &input.central_server_url,
+                &input.username,
+                &input.password,
+            )
+            .await
+            {
+                Ok(()) => central_verified = true,
+                Err(CentralUserLoginError::InvalidCredentials) => {
+                    return Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials));
                 }
-                FetchUserError::AccountBlocked(timeout_remaining) => {
-                    return Err(LoginError::LoginFailure(LoginFailure::AccountBlocked(
-                        timeout_remaining,
-                    )))
-                }
-                FetchUserError::ConnectionError(_) => {
-                    info!("{err:?}");
+                Err(CentralUserLoginError::Unreachable(reason)) => {
+                    info!("central user login unreachable, falling back to local: {reason}");
                     connection_failure = true;
                 }
-                FetchUserError::InternalError(_) => info!("{err:?}"),
-            },
-        };
+            }
+        }
+
         let mut service_ctx = service_provider.basic_context()?;
         let user_service = UserAccountService::new(&service_ctx.connection);
-        let user_account = match user_service.verify_password(&username, &input.password) {
-            Ok(user) => user,
-            Err(err) => {
-                return Err(match err {
-                    VerifyPasswordError::UsernameDoesNotExist => {
-                        LoginError::LoginFailure(LoginFailure::InvalidCredentials)
-                    }
-                    VerifyPasswordError::InvalidCredentials => {
-                        LoginError::LoginFailure(LoginFailure::InvalidCredentials)
-                    }
-                    VerifyPasswordError::InvalidCredentialsBackend(_) => {
-                        LoginError::InternalError("Failed to read credentials".to_string())
-                    }
-                    VerifyPasswordError::DatabaseError(e) => LoginError::DatabaseError(e),
-                    VerifyPasswordError::EmptyHashedPassword => {
-                        if connection_failure {
-                            LoginError::MSupplyCentralNotReached
-                        } else {
-                            LoginError::InternalError("Corrupted credentials".to_string())
+        let user_account = if central_verified {
+            // Central already vetted the password. Just look up the local
+            // user row so we have the id for site-access / token / activity
+            // log. If sync hasn't propagated the user yet, surface as
+            // InvalidCredentials — they can retry once sync catches up.
+            UserAccountRowRepository::new(&service_ctx.connection)
+                .find_one_by_user_name(&input.username)
+                .map_err(LoginError::DatabaseError)?
+                .ok_or(LoginError::LoginFailure(LoginFailure::InvalidCredentials))?
+        } else {
+            // Either we are central, or central was unreachable. Verify
+            // against the local hash, which the user sync translation keeps
+            // current.
+            match user_service.verify_password(&input.username, &input.password) {
+                Ok(user) => user,
+                Err(err) => {
+                    return Err(match err {
+                        VerifyPasswordError::UsernameDoesNotExist => {
+                            LoginError::LoginFailure(LoginFailure::InvalidCredentials)
                         }
-                    }
-                });
+                        VerifyPasswordError::InvalidCredentials => {
+                            LoginError::LoginFailure(LoginFailure::InvalidCredentials)
+                        }
+                        VerifyPasswordError::InvalidCredentialsBackend(_) => {
+                            LoginError::InternalError("Failed to read credentials".to_string())
+                        }
+                        VerifyPasswordError::DatabaseError(e) => LoginError::DatabaseError(e),
+                        VerifyPasswordError::EmptyHashedPassword => {
+                            if connection_failure {
+                                LoginError::MSupplyCentralNotReached
+                            } else {
+                                LoginError::InternalError("Corrupted credentials".to_string())
+                            }
+                        }
+                    });
+                }
             }
         };
 
@@ -247,161 +237,6 @@ impl LoginService {
         };
         Ok(pair)
     }
-
-    pub async fn fetch_user_from_central(
-        service_provider: &ServiceProvider,
-        input: &LoginInput,
-    ) -> Result<LoginUserInfoV4, FetchUserError> {
-        // Prepare central login query
-        let central_server_url = Url::parse(&input.central_server_url).map_err(|err| {
-            FetchUserError::InternalError(format!("Failed to parse central server url: {err}"))
-        })?;
-        let client = ClientBuilder::new()
-            .connect_timeout(Duration::from_secs(CONNECTION_TIMEOUT_SEC))
-            .build()
-            .map_err(|err| FetchUserError::ConnectionError(format!("{err:?}")))?;
-        let login_api = LoginApiV4::new(client, central_server_url.clone());
-        let username = &input.username;
-        let password = &input.password;
-
-        let service_ctx = service_provider.basic_context().map_err(|err| {
-            FetchUserError::InternalError(format!("Failed to get service context: {err}"))
-        })?;
-        let settings = service_provider
-            .settings
-            .sync_settings(&service_ctx)
-            .map_err(|err| {
-                FetchUserError::InternalError(format!("Failed to get sync settings: {err}"))
-            })?;
-
-        // Try login with central
-        let login_result = login_api
-            .login(LoginInputV4 {
-                username: username.clone(),
-                password: password.clone(),
-                login_type: LoginUserTypeV4::User,
-                site_name: settings.map(|x| x.username),
-            })
-            .await;
-
-        let user_data = match login_result {
-            Ok(user_data) => user_data,
-            Err(err) => match err {
-                LoginV4Error::Unauthorised => {
-                    return Err(FetchUserError::Unauthenticated);
-                }
-                LoginV4Error::AccountBlocked(timeout_remaining) => {
-                    return Err(FetchUserError::AccountBlocked(timeout_remaining));
-                }
-                LoginV4Error::ConnectionError(_) => {
-                    return Err(FetchUserError::ConnectionError(format!(
-                        "Failed to reach the central server to fetch data for {username}: {err:?}"
-                    )))
-                }
-                LoginV4Error::ParseError(_) => {
-                    return Err(FetchUserError::InternalError(format!(
-                        "Failed to parse central server response for {username}: {err:?}"
-                    )))
-                }
-            },
-        };
-
-        if user_data.status == LoginStatusV4::Error {
-            return Err(FetchUserError::ConnectionError(
-                "Failed to fetch user from central server".to_string(),
-            ));
-        }
-        if user_data.status != LoginStatusV4::Success {
-            return Err(FetchUserError::InternalError(format!(
-                "Unexpected central server status: {:?}",
-                user_data.status
-            )));
-        }
-
-        let user_info = match user_data.user_info {
-            Some(user_info) => user_info,
-            None => {
-                return Err(FetchUserError::InternalError(
-                    "Missing user info in returned central server login data".to_string(),
-                ));
-            }
-        };
-
-        Ok(user_info)
-    }
-
-    pub fn update_user(
-        service_ctx: &ServiceContext,
-        password: &str,
-        user_info: LoginUserInfoV4,
-    ) -> Result<(), UpdateUserError> {
-        // convert user_info to internal format
-        let user = UserAccountRow {
-            id: user_info.user.id,
-            username: user_info.user.name.to_string(),
-            hashed_password: UserAccountService::hash_password(password)
-                .map_err(UpdateUserError::PasswordHashError)?,
-            email: user_info.user.e_mail,
-            language: match user_info.user.language {
-                0 => LanguageType::English,
-                1 => LanguageType::French,
-                2 => LanguageType::Spanish,
-                3 => LanguageType::Laos,
-                4 => LanguageType::Khmer,
-                5 => LanguageType::Portuguese,
-                6 => LanguageType::Russian,
-                7 => LanguageType::Tetum,
-                _ => LanguageType::English,
-            },
-            first_name: user_info.user.first_name,
-            last_name: user_info.user.last_name,
-            phone_number: user_info.user.phone1,
-            job_title: user_info.user.job_title,
-            last_successful_sync: Some(Utc::now().naive_utc()),
-        };
-        let stores_permissions: Vec<StorePermissions> = user_info
-            .user_stores
-            .into_iter()
-            .filter(|store| store.can_login)
-            .map(|user_store| {
-                let user_store_join = UserStoreJoinRow {
-                    id: user_store.id,
-                    user_id: user_store.user_id,
-                    store_id: user_store.store_id,
-                    is_default: user_store.store_default,
-                };
-                let permissions = map_api_permissions(user_store.permissions);
-                let mut permission_set = permissions_to_domain(permissions);
-                // Give the user access to the store
-                permission_set.insert(PermissionType::StoreAccess);
-                let permissions = permission_set
-                    .into_iter()
-                    .map(|permission| UserPermissionRow {
-                        id: UserPermissionRow::deterministic_id(
-                            &user_store_join.user_id,
-                            Some(&user_store_join.store_id),
-                            &permission,
-                        ),
-                        user_id: user_store_join.user_id.clone(),
-                        store_id: Some(user_store_join.store_id.clone()),
-                        permission,
-                        context_id: None,
-                    })
-                    .collect();
-
-                StorePermissions {
-                    user_store_join,
-                    permissions,
-                }
-            })
-            .collect();
-
-        let service = UserAccountService::new(&service_ctx.connection);
-        service
-            .upsert_user(user.clone(), stores_permissions)
-            .map_err(UpdateUserError::DatabaseError)?;
-        Ok(())
-    }
 }
 
 impl From<RepositoryError> for LoginError {
@@ -410,231 +245,57 @@ impl From<RepositoryError> for LoginError {
     }
 }
 
-pub fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionType> {
-    let mut output = HashSet::new();
-    for per in permissions {
-        match per {
-            // admin
-            Permissions::AccessServerAdministration => {
-                output.insert(PermissionType::ServerAdmin);
-            }
-            // location
-            Permissions::ManageLocations => {
-                output.insert(PermissionType::LocationMutate);
-            }
-            // sensor
-            Permissions::EditSensorLocation => {
-                output.insert(PermissionType::SensorMutate);
-            }
-            Permissions::ViewSensorDetails => {
-                output.insert(PermissionType::SensorQuery);
-            }
-            // stock line
-            // stock line & stocktake lines
-            Permissions::ViewStock => {
-                output.insert(PermissionType::StockLineQuery);
-                output.insert(PermissionType::StocktakeQuery);
-            }
-            Permissions::EditStock => {
-                output.insert(PermissionType::StockLineMutate);
-            }
-            Permissions::CreateRepacksOrSplitStock => {
-                output.insert(PermissionType::CreateRepack);
-            }
-            // stocktake
-            Permissions::CreateStocktake => {
-                output.insert(PermissionType::StocktakeMutate);
-            }
-            Permissions::DeleteStocktake => {
-                output.insert(PermissionType::StocktakeMutate);
-            }
-            Permissions::AddStocktakeLines => {
-                output.insert(PermissionType::StocktakeMutate);
-            }
-            Permissions::EditStocktakeLines => {
-                output.insert(PermissionType::StocktakeMutate);
-            }
-            Permissions::DeleteStocktakeLines => {
-                output.insert(PermissionType::StocktakeMutate);
-            }
-            // inventory adjustments
-            Permissions::EnterInventoryAdjustments => {
-                output.insert(PermissionType::InventoryAdjustmentMutate);
-            }
-            // customer invoices
-            Permissions::ViewCustomerInvoices => {
-                output.insert(PermissionType::OutboundShipmentQuery);
-                output.insert(PermissionType::CustomerReturnQuery);
-                output.insert(PermissionType::PrescriptionQuery);
-            }
-            Permissions::CreateCustomerInvoices => {
-                output.insert(PermissionType::OutboundShipmentMutate);
-                output.insert(PermissionType::PrescriptionMutate);
-            }
-            Permissions::EditCustomerInvoices => {
-                output.insert(PermissionType::OutboundShipmentMutate);
-                output.insert(PermissionType::PrescriptionMutate);
-            }
-            // supplier invoices
-            Permissions::ViewSupplierInvoices => {
-                output.insert(PermissionType::InboundShipmentQuery);
-                output.insert(PermissionType::SupplierReturnQuery);
-            }
-            Permissions::EditSupplierInvoices => {
-                output.insert(PermissionType::InboundShipmentMutate);
-            }
-            Permissions::CreateSupplierInvoices => {
-                output.insert(PermissionType::InboundShipmentMutate);
-            }
-            // returns
-            Permissions::ReturnStockFromSupplierInvoices => {
-                output.insert(PermissionType::SupplierReturnMutate);
-            }
-            Permissions::ReturnStockFromCustomerInvoices => {
-                output.insert(PermissionType::CustomerReturnMutate);
-            }
-            // requisitions
-            Permissions::ViewRequisitions => {
-                output.insert(PermissionType::RequisitionQuery);
-                output.insert(PermissionType::RnrFormQuery);
-            }
-            Permissions::CreateAndEditRequisitions => {
-                output.insert(PermissionType::RequisitionMutate);
-                output.insert(PermissionType::RnrFormMutate);
-            }
-            Permissions::ConfirmInternalOrderSent => {
-                output.insert(PermissionType::RequisitionSend);
-            }
-            Permissions::CreateCustomerInvoicesFromRequisitions => {
-                output.insert(PermissionType::RequisitionCreateOutboundShipment);
-            }
-            // purchase orders
-            Permissions::ViewPurchaseOrders => {
-                output.insert(PermissionType::PurchaseOrderQuery);
-            }
-            Permissions::EditPurchaseOrders => {
-                output.insert(PermissionType::PurchaseOrderMutate);
-            }
-            Permissions::AuthorisePurchaseOrders => {
-                output.insert(PermissionType::PurchaseOrderAuthorise);
-            }
-            // goods received
-            Permissions::ViewGoodsReceived => {
-                output.insert(PermissionType::InboundShipmentExternalQuery);
-            }
-            Permissions::AddEditGoodsReceived => {
-                output.insert(PermissionType::InboundShipmentExternalMutate);
-            }
-            Permissions::FinaliseGoodsReceived => {
-                output.insert(PermissionType::InboundShipmentExternalVerify);
-            }
-            Permissions::AuthoriseGoodsReceived => {
-                output.insert(PermissionType::InboundShipmentExternalAuthorise);
-            }
-            // reports
-            Permissions::ViewReports => {
-                output.insert(PermissionType::Report);
-            }
-            // log
-            Permissions::ViewLog => {
-                output.insert(PermissionType::LogQuery);
-            }
-            // patient
-            Permissions::AddPatients => {
-                output.insert(PermissionType::PatientMutate);
-            }
-            Permissions::EditPatientDetails => {
-                output.insert(PermissionType::PatientMutate);
-            }
-            Permissions::ViewPatients => {
-                output.insert(PermissionType::PatientQuery);
-            }
-            // items
-            Permissions::EditItems => {
-                output.insert(PermissionType::ItemMutate);
-            }
-            Permissions::EditItemNamesCodesAndUnits => {
-                output.insert(PermissionType::ItemNamesCodesAndUnitsMutate);
-            }
-            // cold chain
-            Permissions::ColdChainApi => {
-                output.insert(PermissionType::ColdChainApi);
-            }
-            // assets
-            Permissions::ViewAssets => {
-                output.insert(PermissionType::AssetQuery);
-            }
-            Permissions::AddEditAssets => {
-                output.insert(PermissionType::AssetMutate);
-            }
-            Permissions::AddAssetsViaDataMatrix => {
-                output.insert(PermissionType::AssetMutateViaDataMatrix);
-            }
-            Permissions::SetupAssets => {
-                output.insert(PermissionType::AssetCatalogueItemMutate);
-            }
-            Permissions::ChangeAssetStatus => {
-                output.insert(PermissionType::AssetStatusMutate);
-            }
-            Permissions::EditCustomerSupplierManufacturerNames => {
-                output.insert(PermissionType::NamePropertiesMutate);
-            }
-            Permissions::EditCentralData => {
-                output.insert(PermissionType::EditCentralData);
-            }
-            Permissions::ViewAndEditVaccineVialMonitorStatus => {
-                output.insert(PermissionType::ViewAndEditVvmStatus);
-            }
-            Permissions::AddEditPrescribers => {
-                output.insert(PermissionType::MutateClinician);
-            }
-            Permissions::CancelFinalisedInvoices => {
-                output.insert(PermissionType::CancelFinalisedInvoices);
-            }
-            Permissions::FinaliseSupplierInvoices => {
-                output.insert(PermissionType::InboundShipmentVerify);
-            }
-            _ => continue,
-        }
-    }
-    output
-}
-
 #[cfg(test)]
 mod test {
     use std::sync::{Arc, RwLock};
 
     use httpmock::{Method::POST, MockServer};
     use repository::{
-        mock::{mock_store_a, mock_user_empty_hashed_password, MockDataInserts},
+        mock::{
+            mock_user_account_a, mock_user_empty_hashed_password, mock_user_store_join_a_store_a,
+            MockDataInserts,
+        },
         test_db::setup_all,
-        EqualFilter, KeyType, KeyValueStoreRepository, UserFilter, UserPermissionFilter,
-        UserPermissionRepository, UserRepository,
+        KeyType, KeyValueStoreRepository, UserAccountRowRepository,
     };
-    use util::{assert_matches, assert_variant};
+    use util::assert_matches;
 
     use crate::{
-        apis::login_v4::LoginResponseV4,
         auth_data::AuthData,
         login::{LoginError, LoginFailure, LoginInput},
-        login_mock_data::LOGIN_V4_RESPONSE_1,
         service_provider::ServiceProvider,
         token_bucket::TokenBucket,
+        user_account::{CreateUserAccount, UserAccountService},
     };
 
     use super::LoginService;
+
+    /// Bcrypt-hash "password" and write it onto mock_user_account_a so that
+    /// `verify_password` can succeed locally. user_account_a already has a
+    /// store join on store_a (site_id 100) via mock_user_store_join_a_store_a.
+    fn seed_user_with_real_hash(service_provider: &ServiceProvider) {
+        let ctx = service_provider.basic_context().unwrap();
+        let hashed = UserAccountService::hash_password("password").unwrap();
+        let mut user = mock_user_account_a();
+        user.hashed_password = hashed;
+        UserAccountRowRepository::new(&ctx.connection)
+            .upsert_one(&user)
+            .unwrap();
+    }
 
     #[actix_rt::test]
     async fn central_login_test() {
         let (_, _, connection_manager, _) = setup_all(
             "login_test",
-            MockDataInserts::none().names().stores().user_accounts(),
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .user_accounts()
+                .user_store_joins(),
         )
         .await;
         let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider
-            .context("".to_string(), "".to_string())
-            .unwrap();
+        let context = service_provider.basic_context().unwrap();
 
         let auth_data = AuthData {
             auth_token_secret: "secret".to_string(),
@@ -643,73 +304,94 @@ mod test {
             debug_no_access_control: false,
         };
 
-        let expected: LoginResponseV4 = serde_json::from_str(LOGIN_V4_RESPONSE_1).unwrap();
-        let expected_user_info = expected.user_info.unwrap();
-
+        seed_user_with_real_hash(&service_provider);
+        let username = mock_user_account_a().username;
+        let store_site_id = mock_user_store_join_a_store_a();
+        // mock_user_store_join_a_store_a joins user_account_a to store_a
+        // (site_id 100 via mock_store_a). Configure this site as that one.
+        let _ = store_site_id;
         let key_value_store = KeyValueStoreRepository::new(&context.connection);
+        key_value_store
+            .set_i32(
+                KeyType::SettingsSyncSiteId,
+                Some(repository::mock::mock_store_a().site_id),
+            )
+            .unwrap();
 
+        // Valid credentials, central confirms with success:true → Ok
         {
             let mock_server = MockServer::start();
             mock_server.mock(|when, then| {
-                when.method(POST).path("/api/v4/login".to_string());
-                then.status(200).body(LOGIN_V4_RESPONSE_1);
+                when.method(POST).path("/central/user/login");
+                then.status(200).body(r#"{"success":true}"#);
             });
 
-            let central_server_url = mock_server.base_url();
+            LoginService::login(
+                &service_provider,
+                &auth_data,
+                LoginInput {
+                    username: username.clone(),
+                    password: "password".to_string(),
+                    central_server_url: mock_server.base_url(),
+                },
+                0,
+            )
+            .await
+            .unwrap();
+        }
 
-            key_value_store
-                .set_i32(KeyType::SettingsSyncSiteId, Some(mock_store_a().site_id))
+        // Central confirms credentials, but the local bcrypt hash is stale
+        // (the user changed their password upstream and the sync hasn't yet
+        // updated the local hash). Login must still succeed — central is
+        // authoritative.
+        {
+            let mock_server = MockServer::start();
+            mock_server.mock(|when, then| {
+                when.method(POST).path("/central/user/login");
+                then.status(200);
+            });
+
+            // Overwrite the local hash with one that does NOT match
+            // "password".
+            let stale_hash = UserAccountService::hash_password("something-else").unwrap();
+            let mut user = mock_user_account_a();
+            user.hashed_password = stale_hash;
+            UserAccountRowRepository::new(&context.connection)
+                .upsert_one(&user)
                 .unwrap();
 
             LoginService::login(
                 &service_provider,
                 &auth_data,
                 LoginInput {
-                    username: "Gryffindor".to_string(),
+                    username: username.clone(),
                     password: "password".to_string(),
-                    central_server_url,
+                    central_server_url: mock_server.base_url(),
                 },
                 0,
             )
             .await
             .unwrap();
 
-            let user = UserRepository::new(&context.connection)
-                .query_one(UserFilter::new().id(EqualFilter::equal_to(
-                    expected_user_info.user.id.to_string(),
-                )))
-                .unwrap()
-                .unwrap();
-            assert_eq!(expected_user_info.user.name, user.user_row.username);
-            assert_eq!(
-                expected_user_info.user_stores.first().unwrap().store_id,
-                user.stores.first().unwrap().store_row.id
-            );
-
-            let permissions = UserPermissionRepository::new(&context.connection)
-                .query_by_filter(UserPermissionFilter::new().user_id(EqualFilter::equal_to(
-                    expected_user_info.user.id.to_string(),
-                )))
-                .unwrap();
-            assert!(!permissions.is_empty());
+            // Restore the matching hash for subsequent test blocks.
+            seed_user_with_real_hash(&service_provider);
         }
-        // If server password has changed, and trying to login with other then old password, return LoginFailure
+
+        // Central responds with HTTP 401 → InvalidCredentials
         {
             let mock_server = MockServer::start();
             mock_server.mock(|when, then| {
-                when.method(POST).path("/api/v4/login".to_string());
+                when.method(POST).path("/central/user/login");
                 then.status(401);
             });
-
-            let central_server_url = mock_server.base_url();
 
             let result = LoginService::login(
                 &service_provider,
                 &auth_data,
                 LoginInput {
-                    username: "Gryffindor".to_string(),
-                    password: "password2".to_string(),
-                    central_server_url,
+                    username: username.clone(),
+                    password: "password".to_string(),
+                    central_server_url: mock_server.base_url(),
                 },
                 0,
             )
@@ -720,47 +402,93 @@ mod test {
                 Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
             );
         }
-        // Old password should still work in offline mode or if central return an error
+
+        // Central unreachable (5xx) + correct local hash → succeeds via fallback
         {
             let mock_server = MockServer::start();
             mock_server.mock(|when, then| {
-                when.method(POST).path("/api/v4/login".to_string());
+                when.method(POST).path("/central/user/login");
                 then.status(500);
             });
-
-            let central_server_url = mock_server.base_url();
 
             let result = LoginService::login(
                 &service_provider,
                 &auth_data,
                 LoginInput {
-                    username: "Gryffindor".to_string(),
+                    username: username.clone(),
                     password: "password".to_string(),
-                    central_server_url,
+                    central_server_url: mock_server.base_url(),
                 },
                 0,
             )
             .await;
 
-            assert!(result.is_ok());
+            assert!(result.is_ok(), "expected local-hash fallback to succeed");
         }
-        // check login error handling when empty password hash and can't connect to mSupply
+
+        // Central genuinely unreachable (connection refused) + correct local
+        // hash → succeeds via fallback.
+        // Port 1 is privileged and reliably refuses on POSIX systems.
+        {
+            let result = LoginService::login(
+                &service_provider,
+                &auth_data,
+                LoginInput {
+                    username: username.clone(),
+                    password: "password".to_string(),
+                    central_server_url: "http://127.0.0.1:1".to_string(),
+                },
+                0,
+            )
+            .await;
+
+            assert!(
+                result.is_ok(),
+                "expected local-hash fallback to succeed when central is refused"
+            );
+        }
+
+        // Central unreachable + wrong local password → InvalidCredentials
         {
             let mock_server = MockServer::start();
             mock_server.mock(|when, then| {
-                when.method(POST).path("/api/v4/login".to_string());
+                when.method(POST).path("/central/user/login");
                 then.status(500);
             });
 
-            let central_server_url = mock_server.base_url();
+            let result = LoginService::login(
+                &service_provider,
+                &auth_data,
+                LoginInput {
+                    username: username.clone(),
+                    password: "wrong".to_string(),
+                    central_server_url: mock_server.base_url(),
+                },
+                0,
+            )
+            .await;
+
+            assert_matches!(
+                result,
+                Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+            );
+        }
+
+        // Central unreachable + empty local hash → MSupplyCentralNotReached
+        {
+            let mock_server = MockServer::start();
+            mock_server.mock(|when, then| {
+                when.method(POST).path("/central/user/login");
+                then.status(500);
+            });
 
             let result = LoginService::login(
                 &service_provider,
                 &auth_data,
                 LoginInput {
                     username: mock_user_empty_hashed_password().username,
-                    password: "password".to_string(),
-                    central_server_url,
+                    password: "anything".to_string(),
+                    central_server_url: mock_server.base_url(),
                 },
                 0,
             )
@@ -769,88 +497,25 @@ mod test {
             assert_matches!(result, Err(LoginError::MSupplyCentralNotReached));
         }
 
-        // check login error handling when empty password hash and can connect to mSupply
+        // Valid creds but no store join on this site → NoSiteAccess
         {
-            let mock_server = MockServer::start();
-            mock_server.mock(|when, then| {
-                when.method(POST).path("/api/v4/login".to_string());
-                then.status(200).body(
-                    // mSupply was reached, but there are non-parse-able contents
-                    // so fetch_central_user results in InternalError
-                    // Therefore password not updated - we'll get the empty password error
-                    r#"{"cannot": "parse"}"#,
-                );
-            });
-
-            let central_server_url = mock_server.base_url();
-
-            let result = LoginService::login(
-                &service_provider,
-                &auth_data,
-                LoginInput {
-                    username: mock_user_empty_hashed_password().username,
-                    password: "password".to_string(),
-                    central_server_url,
-                },
-                0,
-            )
-            .await
-            .inspect_err(|e| {
-                let err_message = assert_variant!(e, LoginError::InternalError(err) => err);
-                assert_eq!(err_message, "Corrupted credentials")
-            });
-
-            assert!(result.is_err());
-        }
-        // If server password has changed, and trying to login with old password, return LoginError::LoginFailure
-        {
-            let mock_server = MockServer::start();
-            mock_server.mock(|when, then| {
-                when.method(POST).path("/api/v4/login".to_string());
-                then.status(401);
-            });
-
-            let central_server_url = mock_server.base_url();
-
-            let result = LoginService::login(
-                &service_provider,
-                &auth_data,
-                LoginInput {
-                    username: "Gryffindor".to_string(),
-                    password: "password2".to_string(),
-                    central_server_url,
-                },
-                0,
-            )
-            .await;
-
-            assert_matches!(
-                result,
-                Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
-            );
-        }
-        // If login is correct but user is not active on this site, get NoSiteAccess error
-        {
-            // Login user only has access to store_a, which has site_id 100
             key_value_store
-                .set_i32(KeyType::SettingsSyncSiteId, Some(1))
+                .set_i32(KeyType::SettingsSyncSiteId, Some(999))
                 .unwrap();
 
             let mock_server = MockServer::start();
             mock_server.mock(|when, then| {
-                when.method(POST).path("/api/v4/login".to_string());
-                then.status(200).body(LOGIN_V4_RESPONSE_1);
+                when.method(POST).path("/central/user/login");
+                then.status(200).body(r#"{"success":true}"#);
             });
-
-            let central_server_url = mock_server.base_url();
 
             let result = LoginService::login(
                 &service_provider,
                 &auth_data,
                 LoginInput {
-                    username: "Gryffindor".to_string(),
+                    username: username.clone(),
                     password: "password".to_string(),
-                    central_server_url,
+                    central_server_url: mock_server.base_url(),
                 },
                 0,
             )
@@ -861,42 +526,71 @@ mod test {
                 Err(LoginError::LoginFailure(LoginFailure::NoSiteAccess))
             );
         }
-        // If central server is not accessible after trying to login with old password, make sure old password does not work
-        // Issue #1101 in remote-server: Extra login protection when user password has changed
-        // {
-        //     let mock_server = MockServer::start();
-        //     mock_server.mock(|when, then| {
-        //         when.method(POST).path("/api/v4/login".to_string());
-        //         then.status(500);
-        //     });
+    }
 
-        //     let central_server_url = mock_server.base_url();
+    /// On the central server we are the source of truth, so `do_login` should
+    /// skip the round-trip to `central_user_login` entirely and verify against
+    /// the local hash directly.
+    #[actix_rt::test]
+    async fn central_server_short_circuits_central_user_login() {
+        use crate::sync::test_util_set_is_central_server;
 
-        //     let result = LoginService::login(
-        //         &service_provider,
-        //         &auth_data,
-        //         LoginInput {
-        //             username: "Gryffindor".to_string(),
-        //             password: "password".to_string(),
-        //             central_server_url,
-        //         },
-        //         0,
-        //     )
-        //     .await;
+        let (_, _, connection_manager, _) = setup_all(
+            "central_server_short_circuits_central_user_login",
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .user_accounts()
+                .user_store_joins(),
+        )
+        .await;
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
 
-        //     assert!(
-        //         matches!(result, Err(LoginError::LoginFailure)),
-        //         "expected LoginFailure, got {:#?}",
-        //         result
-        //     );
-        // }
+        let auth_data = AuthData {
+            auth_token_secret: "secret".to_string(),
+            token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
+            no_ssl: true,
+            debug_no_access_control: false,
+        };
+
+        seed_user_with_real_hash(&service_provider);
+        KeyValueStoreRepository::new(&context.connection)
+            .set_i32(
+                KeyType::SettingsSyncSiteId,
+                Some(repository::mock::mock_store_a().site_id),
+            )
+            .unwrap();
+
+        test_util_set_is_central_server(true);
+
+        // Deliberately unreachable URL: if the short-circuit didn't fire,
+        // `central_user_login` would attempt to connect and we'd see latency
+        // up to the 10s connect timeout. Since we're on central, this URL
+        // must never be touched.
+        let result = LoginService::login(
+            &service_provider,
+            &auth_data,
+            LoginInput {
+                username: mock_user_account_a().username,
+                password: "password".to_string(),
+                central_server_url: "http://this-host-should-never-be-contacted.invalid"
+                    .to_string(),
+            },
+            0,
+        )
+        .await;
+
+        assert!(
+            result.is_ok(),
+            "expected local-only verify on central, got {:?}",
+            result
+        );
     }
 
     #[actix_rt::test]
     async fn verify_credentials_on_central_test() {
         use std::time::{Duration, Instant};
-
-        use crate::user_account::{CreateUserAccount, UserAccountService};
 
         let (_, _, connection_manager, _) = setup_all(
             "verify_credentials_on_central_test",
@@ -929,14 +623,10 @@ mod test {
 
         // Wrong password -> Ok(false), padded to min response time
         let started = Instant::now();
-        let bad = LoginService::verify_credentials_on_central(
-            &service_provider,
-            "alice",
-            "wrong",
-            1,
-        )
-        .await
-        .unwrap();
+        let bad =
+            LoginService::verify_credentials_on_central(&service_provider, "alice", "wrong", 1)
+                .await
+                .unwrap();
         assert!(!bad);
         assert!(
             started.elapsed() >= Duration::from_secs(1),

@@ -1482,8 +1482,7 @@ export type ConfigureNamePropertyInput = {
 };
 
 export type ConnectionError = CentralPatientSearchErrorInterface &
-  LinkPatientPatientToStoreErrorInterface &
-  UpdateUserErrorInterface & {
+  LinkPatientPatientToStoreErrorInterface & {
     __typename: 'ConnectionError';
     description: Scalars['String']['output'];
   };
@@ -4304,11 +4303,10 @@ export type InternalError = InsertAssetCatalogueItemErrorInterface &
     fullError: Scalars['String']['output'];
   };
 
-export type InvalidCredentials = AuthTokenErrorInterface &
-  UpdateUserErrorInterface & {
-    __typename: 'InvalidCredentials';
-    description: Scalars['String']['output'];
-  };
+export type InvalidCredentials = AuthTokenErrorInterface & {
+  __typename: 'InvalidCredentials';
+  description: Scalars['String']['output'];
+};
 
 export type InvalidStockSelection = UpdatePrescriptionErrorInterface & {
   __typename: 'InvalidStockSelection';
@@ -5390,11 +5388,6 @@ export type MigrationStatusNode = {
   version?: Maybe<Scalars['String']['output']>;
 };
 
-export type MissingCredentials = UpdateUserErrorInterface & {
-  __typename: 'MissingCredentials';
-  description: Scalars['String']['output'];
-};
-
 export type Mutations = {
   __typename: 'Mutations';
   /** Add requisition lines from master item master list */
@@ -5563,7 +5556,6 @@ export type Mutations = {
   updateSupplierReturnOtherParty: UpdateSupplierReturnOtherPartyResponse;
   updateSyncSettings: UpdateSyncSettingsResponse;
   updateTemperatureBreach: UpdateTemperatureBreachResponse;
-  updateUser: UpdateUserResponse;
   updateVaccination: UpdateVaccinationResponse;
   updateVvmStatusLog: UpdateVvmStatusResponse;
   /** Set requested for each line in request requisition to calculated */
@@ -7614,7 +7606,6 @@ export type Queries = {
   /** Query omSupply "item" entries */
   items: ItemsResponse;
   labelPrinterSettings?: Maybe<LabelPrinterSettingNode>;
-  lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
   ledger: LedgerResponse;
   /** Query omSupply "location_type" entries */
@@ -11212,22 +11203,6 @@ export type UpdateTemperatureBreachInput = {
 };
 
 export type UpdateTemperatureBreachResponse = TemperatureBreachNode;
-
-export type UpdateUserError = {
-  __typename: 'UpdateUserError';
-  error: UpdateUserErrorInterface;
-};
-
-export type UpdateUserErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type UpdateUserNode = {
-  __typename: 'UpdateUserNode';
-  lastSuccessfulSync?: Maybe<Scalars['DateTime']['output']>;
-};
-
-export type UpdateUserResponse = UpdateUserError | UpdateUserNode;
 
 export type UpdateVvmStatusLogInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
