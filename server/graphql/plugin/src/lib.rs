@@ -21,7 +21,7 @@ impl PluginQueries {
         filter: Option<PluginDataFilterInput>,
         sort: Option<Vec<PluginDataSortInput>>,
     ) -> Result<PluginDataResponse> {
-        plugin_data::query::get_plugin_data(ctx, &store_id, &plugin_code, filter, sort)
+        plugin_data::query::get_plugin_data(ctx, &store_id, &plugin_code, filter, sort).await
     }
 
     async fn plugin_graphql_query(
@@ -31,7 +31,7 @@ impl PluginQueries {
         plugin_code: String,
         input: serde_json::Value,
     ) -> Result<serde_json::Value> {
-        plugin_graphql::query::plugin_graphql_query(ctx, &store_id, &plugin_code, input)
+        plugin_graphql::query::plugin_graphql_query(ctx, &store_id, &plugin_code, input).await
     }
 }
 
@@ -44,7 +44,7 @@ impl CentralPluginQueries {
         ctx: &Context<'_>,
         file_id: String,
     ) -> Result<queries::uploaded_info::UploadedPluginInfoResponse> {
-        queries::uploaded_info::uploaded_plugin_info(ctx, file_id)
+        queries::uploaded_info::uploaded_plugin_info(ctx, file_id).await
     }
 }
 
@@ -57,7 +57,7 @@ impl CentralPluginMutations {
         ctx: &Context<'_>,
         file_id: String,
     ) -> Result<PluginInfoNode> {
-        mutations::install::install_uploaded_plugin(ctx, file_id)
+        mutations::install::install_uploaded_plugin(ctx, file_id).await
     }
 }
 
@@ -72,7 +72,7 @@ impl PluginMutations {
         store_id: String,
         input: plugin_data::mutations::insert::InsertPluginDataInput,
     ) -> Result<plugin_data::mutations::insert::InsertResponse> {
-        plugin_data::mutations::insert::insert_plugin_data(ctx, &store_id, input)
+        plugin_data::mutations::insert::insert_plugin_data(ctx, &store_id, input).await
     }
 
     async fn update_plugin_data(
@@ -81,6 +81,6 @@ impl PluginMutations {
         store_id: String,
         input: plugin_data::mutations::update::UpdatePluginDataInput,
     ) -> Result<plugin_data::mutations::update::UpdateResponse> {
-        plugin_data::mutations::update::update_plugin_data(ctx, &store_id, input)
+        plugin_data::mutations::update::update_plugin_data(ctx, &store_id, input).await
     }
 }

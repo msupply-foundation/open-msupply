@@ -21,7 +21,7 @@ pub enum UploadedPluginInfoResponse {
     Error(UploadedPluginError),
 }
 
-pub fn uploaded_plugin_info(
+pub async fn uploaded_plugin_info(
     ctx: &Context<'_>,
     file_id: String,
 ) -> Result<UploadedPluginInfoResponse> {
@@ -33,14 +33,18 @@ pub fn uploaded_plugin_info(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let settings = ctx.get_settings();
+    let service_provider = ctx.service_provider_data();
+    let settings = ctx.get_settings().clone();
 
-    map_response(
+    let from = tokio::task::spawn_blocking(move || {
         service_provider
             .plugin_service
-            .get_uploaded_plugin_info(settings, UploadedFile { file_id }),
-    )
+            .get_uploaded_plugin_info(&settings, UploadedFile { file_id })
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    map_response(from)
 }
 
 pub fn map_response(

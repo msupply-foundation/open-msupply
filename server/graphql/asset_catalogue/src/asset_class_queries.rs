@@ -8,10 +8,11 @@ use graphql_core::{
 };
 
 use repository::asset_class::{AssetClassFilter, AssetClassSort, AssetClassSortField};
-use repository::{EqualFilter, PaginationOption, StringFilter};
+use repository::{EqualFilter, PaginationOption, RepositoryError, StringFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     catalogue::query_class::{get_asset_class, get_asset_classes},
+    ListError,
 };
 
 use crate::types::asset_class::{
@@ -46,7 +47,7 @@ impl From<AssetClassFilterInput> for AssetClassFilter {
     }
 }
 
-pub fn asset_classes(
+pub async fn asset_classes(
     ctx: &Context<'_>,
     page: Option<PaginationInput>,
     filter: Option<AssetClassFilterInput>,
@@ -59,14 +60,20 @@ pub fn asset_classes(
             store_id: None,
         },
     )?;
-    let connection_manager = ctx.get_connection_manager().connection()?;
-    let classes = get_asset_classes(
-        &connection_manager,
-        page.map(PaginationOption::from),
-        filter.map(|filter| filter.to_domain()),
-        sort.and_then(|mut sort_list| sort_list.pop())
-            .map(|sort| sort.to_domain()),
-    )
+
+    let service_provider = ctx.service_provider_data();
+    let pagination = page.map(PaginationOption::from);
+    let domain_filter = filter.map(|filter| filter.to_domain());
+    let domain_sort = sort
+        .and_then(|mut sort_list| sort_list.pop())
+        .map(|sort| sort.to_domain());
+
+    let classes = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+        let connection = service_provider.connection()?;
+        get_asset_classes(&connection, pagination, domain_filter, domain_sort)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
     .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(AssetClassesResponse::Response(
@@ -74,7 +81,7 @@ pub fn asset_classes(
     ))
 }
 
-pub fn asset_class(ctx: &Context<'_>, id: String) -> Result<AssetClassResponse> {
+pub async fn asset_class(ctx: &Context<'_>, id: String) -> Result<AssetClassResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -82,8 +89,15 @@ pub fn asset_class(ctx: &Context<'_>, id: String) -> Result<AssetClassResponse> 
             store_id: None,
         },
     )?;
-    let connection_manager = ctx.get_connection_manager().connection()?;
-    let class = get_asset_class(&connection_manager, id)?;
+
+    let service_provider = ctx.service_provider_data();
+
+    let class = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let connection = service_provider.connection()?;
+        get_asset_class(&connection, id)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     let response = match class {
         Some(class) => AssetClassResponse::Response(AssetClassNode::from_domain(class)),

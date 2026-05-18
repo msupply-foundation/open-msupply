@@ -10,7 +10,7 @@ use service::{
     catalogue::delete::DeleteAssetCatalogueItemError as ServiceError,
 };
 
-pub fn delete_asset_catalogue_item(
+pub async fn delete_asset_catalogue_item(
     ctx: &Context<'_>,
     asset_catalogue_item_id: &str,
 ) -> Result<DeleteAssetCatalogueItemResponse> {
@@ -22,13 +22,19 @@ pub fn delete_asset_catalogue_item(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context("".to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let asset_catalogue_item_id = asset_catalogue_item_id.to_string();
 
-    match service_provider
-        .catalogue_service
-        .delete_asset_catalogue_item(&service_context, asset_catalogue_item_id.to_string())
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context("".to_string(), user.user_id)?;
+        Ok(service_provider
+            .catalogue_service
+            .delete_asset_catalogue_item(&service_context, asset_catalogue_item_id))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    match result {
         Ok(asset_catalogue_item_id) => Ok(DeleteAssetCatalogueItemResponse::Response(
             DeleteResponse(asset_catalogue_item_id),
         )),

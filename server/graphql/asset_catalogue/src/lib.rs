@@ -35,7 +35,7 @@ impl AssetCatalogueQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<AssetCatalogueItemSortInput>>,
     ) -> Result<AssetCatalogueItemsResponse> {
-        asset_catalogue_items(ctx, page, filter, sort)
+        asset_catalogue_items(ctx, page, filter, sort).await
     }
 
     pub async fn asset_catalogue_item(
@@ -43,7 +43,7 @@ impl AssetCatalogueQueries {
         ctx: &Context<'_>,
         id: String,
     ) -> Result<AssetCatalogueItemResponse> {
-        asset_catalogue_item(ctx, id)
+        asset_catalogue_item(ctx, id).await
     }
 
     // asset class queries
@@ -55,11 +55,11 @@ impl AssetCatalogueQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<AssetClassSortInput>>,
     ) -> Result<AssetClassesResponse> {
-        asset_classes(ctx, page, filter, sort)
+        asset_classes(ctx, page, filter, sort).await
     }
 
     pub async fn asset_class(&self, ctx: &Context<'_>, id: String) -> Result<AssetClassResponse> {
-        asset_class(ctx, id)
+        asset_class(ctx, id).await
     }
 
     // asset category queries
@@ -71,7 +71,7 @@ impl AssetCatalogueQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<AssetCategorySortInput>>,
     ) -> Result<AssetCategoriesResponse> {
-        asset_categories(ctx, page, filter, sort)
+        asset_categories(ctx, page, filter, sort).await
     }
 
     pub async fn asset_category(
@@ -79,7 +79,7 @@ impl AssetCatalogueQueries {
         ctx: &Context<'_>,
         id: String,
     ) -> Result<AssetCategoryResponse> {
-        asset_category(ctx, id)
+        asset_category(ctx, id).await
     }
 
     // asset type queries
@@ -91,11 +91,11 @@ impl AssetCatalogueQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<AssetTypeSortInput>>,
     ) -> Result<AssetTypesResponse> {
-        asset_types(ctx, page, filter, sort)
+        asset_types(ctx, page, filter, sort).await
     }
 
     pub async fn asset_type(&self, ctx: &Context<'_>, id: String) -> Result<AssetTypeResponse> {
-        asset_type(ctx, id)
+        asset_type(ctx, id).await
     }
 }
 
@@ -110,7 +110,7 @@ impl AssetCatalogueMutations {
         store_id: String,
         input: InsertAssetCatalogueItemInput,
     ) -> Result<InsertAssetCatalogueItemResponse> {
-        insert_asset_catalogue_item(ctx, &store_id, input)
+        insert_asset_catalogue_item(ctx, &store_id, input).await
     }
 
     async fn delete_asset_catalogue_item(
@@ -118,6 +118,6 @@ impl AssetCatalogueMutations {
         ctx: &Context<'_>,
         asset_catalogue_item_id: String,
     ) -> Result<DeleteAssetCatalogueItemResponse> {
-        delete_asset_catalogue_item(ctx, &asset_catalogue_item_id)
+        delete_asset_catalogue_item(ctx, &asset_catalogue_item_id).await
     }
 }

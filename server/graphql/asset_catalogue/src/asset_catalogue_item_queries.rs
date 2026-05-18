@@ -9,10 +9,11 @@ use graphql_core::{
 use repository::asset_catalogue_item::{
     AssetCatalogueItemFilter, AssetCatalogueItemSort, AssetCatalogueItemSortField,
 };
-use repository::{EqualFilter, PaginationOption, StringFilter};
+use repository::{EqualFilter, PaginationOption, RepositoryError, StringFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     catalogue::query_catalogue_item::{get_asset_catalogue_item, get_asset_catalogue_items},
+    ListError,
 };
 
 use crate::types::asset_catalogue_item::{
@@ -73,7 +74,7 @@ impl From<AssetCatalogueItemFilterInput> for AssetCatalogueItemFilter {
     }
 }
 
-pub fn asset_catalogue_items(
+pub async fn asset_catalogue_items(
     ctx: &Context<'_>,
     page: Option<PaginationInput>,
     filter: Option<AssetCatalogueItemFilterInput>,
@@ -86,14 +87,20 @@ pub fn asset_catalogue_items(
             store_id: None,
         },
     )?;
-    let connection_manager = ctx.get_connection_manager().connection()?;
-    let items = get_asset_catalogue_items(
-        &connection_manager,
-        page.map(PaginationOption::from),
-        filter.map(|filter| filter.to_domain()),
-        sort.and_then(|mut sort_list| sort_list.pop())
-            .map(|sort| sort.to_domain()),
-    )
+
+    let service_provider = ctx.service_provider_data();
+    let pagination = page.map(PaginationOption::from);
+    let domain_filter = filter.map(|filter| filter.to_domain());
+    let domain_sort = sort
+        .and_then(|mut sort_list| sort_list.pop())
+        .map(|sort| sort.to_domain());
+
+    let items = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+        let connection = service_provider.connection()?;
+        get_asset_catalogue_items(&connection, pagination, domain_filter, domain_sort)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
     .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(AssetCatalogueItemsResponse::Response(
@@ -101,9 +108,18 @@ pub fn asset_catalogue_items(
     ))
 }
 
-pub fn asset_catalogue_item(ctx: &Context<'_>, id: String) -> Result<AssetCatalogueItemResponse> {
-    let connection_manager = ctx.get_connection_manager().connection()?;
-    let item = get_asset_catalogue_item(&connection_manager, id)?;
+pub async fn asset_catalogue_item(
+    ctx: &Context<'_>,
+    id: String,
+) -> Result<AssetCatalogueItemResponse> {
+    let service_provider = ctx.service_provider_data();
+
+    let item = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let connection = service_provider.connection()?;
+        get_asset_catalogue_item(&connection, id)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     let response = match item {
         Some(item) => {

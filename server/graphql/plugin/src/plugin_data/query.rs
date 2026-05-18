@@ -5,7 +5,9 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::{EqualFilter, PluginDataFilter, PluginDataSort, PluginDataSortField};
+use repository::{
+    EqualFilter, PluginDataFilter, PluginDataSort, PluginDataSortField, RepositoryError,
+};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Union)]
@@ -37,7 +39,7 @@ pub struct PluginDataSortInput {
     desc: Option<bool>,
 }
 
-pub fn get_plugin_data(
+pub async fn get_plugin_data(
     ctx: &Context<'_>,
     store_id: &str,
     plugin_code: &str,
@@ -52,22 +54,27 @@ pub fn get_plugin_data(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
+    let plugin_code = plugin_code.to_string();
 
     // Filter by plugin_code
     let mut filter = filter.map(|f| f.to_domain()).unwrap_or_default();
-    filter.plugin_code = Some(EqualFilter::equal_to(plugin_code.to_owned()));
+    filter.plugin_code = Some(EqualFilter::equal_to(plugin_code));
 
-    let plugin_data = service_provider
-        .plugin_data_service
-        .get_plugin_data(
+    let domain_sort = sort
+        .and_then(|mut sort_list| sort_list.pop())
+        .map(|s| s.to_domain());
+
+    let plugin_data = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let service_context = service_provider.basic_context()?;
+        service_provider.plugin_data_service.get_plugin_data(
             &service_context,
             Some(filter),
-            sort.and_then(|mut sort_list| sort_list.pop())
-                .map(|s| s.to_domain()),
+            domain_sort,
         )
-        .map_err(StandardGraphqlError::from_repository_error)?;
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     Ok(PluginDataResponse::Response(
         PluginDataConnector::from_domain(plugin_data),

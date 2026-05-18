@@ -32,7 +32,7 @@ pub struct UpdatePluginDataError {
     pub error: String,
 }
 
-pub fn update_plugin_data(
+pub async fn update_plugin_data(
     ctx: &Context<'_>,
     store_id: &str,
     input: UpdatePluginDataInput,
@@ -45,13 +45,20 @@ pub fn update_plugin_data(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), "".to_string())?;
-    map_response(
-        service_provider
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input = input.to_domain();
+
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, "".to_string())?;
+        Ok(service_provider
             .plugin_data_service
-            .update(&service_context, input.to_domain()),
-    )
+            .update(&service_context, domain_input))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    map_response(result)
 }
 
 pub fn map_response(from: Result<PluginData, ServiceError>) -> Result<UpdateResponse> {

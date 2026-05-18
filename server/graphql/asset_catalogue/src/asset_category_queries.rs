@@ -8,10 +8,11 @@ use graphql_core::{
 };
 
 use repository::asset_category::{AssetCategoryFilter, AssetCategorySort, AssetCategorySortField};
-use repository::{EqualFilter, PaginationOption, StringFilter};
+use repository::{EqualFilter, PaginationOption, RepositoryError, StringFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     catalogue::query_category::{get_asset_categories, get_asset_category},
+    ListError,
 };
 
 use crate::types::asset_category::{
@@ -48,7 +49,7 @@ impl From<AssetCategoryFilterInput> for AssetCategoryFilter {
     }
 }
 
-pub fn asset_categories(
+pub async fn asset_categories(
     ctx: &Context<'_>,
     page: Option<PaginationInput>,
     filter: Option<AssetCategoryFilterInput>,
@@ -61,14 +62,20 @@ pub fn asset_categories(
             store_id: None,
         },
     )?;
-    let connection_manager = ctx.get_connection_manager().connection()?;
-    let categories = get_asset_categories(
-        &connection_manager,
-        page.map(PaginationOption::from),
-        filter.map(|filter| filter.to_domain()),
-        sort.and_then(|mut sort_list| sort_list.pop())
-            .map(|sort| sort.to_domain()),
-    )
+
+    let service_provider = ctx.service_provider_data();
+    let pagination = page.map(PaginationOption::from);
+    let domain_filter = filter.map(|filter| filter.to_domain());
+    let domain_sort = sort
+        .and_then(|mut sort_list| sort_list.pop())
+        .map(|sort| sort.to_domain());
+
+    let categories = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+        let connection = service_provider.connection()?;
+        get_asset_categories(&connection, pagination, domain_filter, domain_sort)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
     .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(AssetCategoriesResponse::Response(
@@ -76,7 +83,7 @@ pub fn asset_categories(
     ))
 }
 
-pub fn asset_category(ctx: &Context<'_>, id: String) -> Result<AssetCategoryResponse> {
+pub async fn asset_category(ctx: &Context<'_>, id: String) -> Result<AssetCategoryResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -84,8 +91,15 @@ pub fn asset_category(ctx: &Context<'_>, id: String) -> Result<AssetCategoryResp
             store_id: None,
         },
     )?;
-    let connection_manager = ctx.get_connection_manager().connection()?;
-    let category = get_asset_category(&connection_manager, id)?;
+
+    let service_provider = ctx.service_provider_data();
+
+    let category = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let connection = service_provider.connection()?;
+        get_asset_category(&connection, id)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     let response = match category {
         Some(category) => AssetCategoryResponse::Response(AssetCategoryNode::from_domain(category)),

@@ -13,7 +13,7 @@ use service::{
 
 use crate::types::asset_catalogue_item::AssetCatalogueItemNode;
 
-pub fn insert_asset_catalogue_item(
+pub async fn insert_asset_catalogue_item(
     ctx: &Context<'_>,
     store_id: &str,
     input: InsertAssetCatalogueItemInput,
@@ -26,13 +26,20 @@ pub fn insert_asset_catalogue_item(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input = input.into();
 
-    match service_provider
-        .catalogue_service
-        .insert_asset_catalogue_item(&service_context, input.into())
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        Ok(service_provider
+            .catalogue_service
+            .insert_asset_catalogue_item(&service_context, domain_input))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    match result {
         Ok(asset) => Ok(InsertAssetCatalogueItemResponse::Response(
             AssetCatalogueItemNode::from_domain(asset),
         )),
