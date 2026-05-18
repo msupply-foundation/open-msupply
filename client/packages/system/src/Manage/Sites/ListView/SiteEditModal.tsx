@@ -54,6 +54,7 @@ export const SiteEditModal = ({
   const canSave = isValidName && isValidCode && isValidPassword;
 
   const storesDraft = useSiteStoresDraft(id, isNew);
+  const hasStores = storesDraft.stores.length > 0;
 
   const handleClose = () => {
     onClose();
@@ -75,7 +76,11 @@ export const SiteEditModal = ({
       cancelButton={<DialogButton variant="cancel" onClick={handleClose} />}
       deleteButton={
         isEditable && isExisting ? (
-          <DialogButton variant="delete" onClick={onDelete} />
+          <DialogButton
+            variant="delete"
+            onClick={onDelete}
+            disabled={hasStores}
+          />
         ) : undefined
       }
       okButton={

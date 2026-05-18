@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   NothingHere,
   useUrlQueryParams,
@@ -25,6 +25,7 @@ import {
 export const SitesList = () => {
   const t = useTranslation();
   const isCentralStandalone = useIsCentralStandalone();
+  const [failedDeleteIds, setFailedDeleteIds] = useState<number[]>([]);
   const {
     filter,
     queryParams: { sortBy, first, offset },
@@ -88,6 +89,7 @@ export const SitesList = () => {
         accessorKey: 'code',
         header: t('label.code'),
         enableSorting: true,
+        getIsError: row => failedDeleteIds.includes(row.id),
       },
       {
         accessorKey: 'name',
@@ -99,7 +101,7 @@ export const SitesList = () => {
         header: t('label.hardware-id'),
       },
     ],
-    []
+    [failedDeleteIds]
   );
 
   const onRowClick = (row: SiteRowFragment) => {
@@ -153,6 +155,7 @@ export const SitesList = () => {
           selectedRows={selectedRows}
           resetRowSelection={table.resetRowSelection}
           deleteSite={deleteSite}
+          setFailedDeleteIds={setFailedDeleteIds}
         />
       )}
     </>
