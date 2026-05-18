@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_core::standard_graphql_error::validate_auth;
+use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -19,7 +19,7 @@ pub struct UpsertLogLevelResponse {
     pub level: LogLevelEnum,
 }
 
-pub fn update_log_level(
+pub async fn update_log_level(
     ctx: &Context<'_>,
     store_id: String,
     input: LogLevelInput,
@@ -40,12 +40,18 @@ pub fn update_log_level(
         LogLevelEnum::Trace => Level::Trace,
     };
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
-    service_provider
-        .log_service
-        .update_log_level(&service_context, level.clone());
+    tokio::task::spawn_blocking(move || -> Result<(), repository::RepositoryError> {
+        let service_context = service_provider.basic_context()?;
+        service_provider
+            .log_service
+            .update_log_level(&service_context, level.clone());
+        Ok(())
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_repository_error)?;
 
     Ok(UpsertLogLevelResponse { level: input.level })
 }
