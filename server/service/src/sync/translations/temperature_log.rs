@@ -11,7 +11,7 @@ use util::sync_serde::{
 };
 
 use repository::{
-    ChangelogRow, ChangelogTableName, LocationRowRepository, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, LocationRowRepository, StorageConnection, SyncBufferRow, SyncRecordData,
     TemperatureBreachRowRepository, TemperatureLogRow, Row,
 
 };
@@ -201,7 +201,7 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "temperature_log".to_string(),
             record_id: "TEMP_LOG_FK_INVALID".to_string(),
-            data: r#"{
+            data: SyncRecordData(serde_json::from_str(r#"{
                 "ID": "TEMP_LOG_FK_INVALID",
                 "temperature": 5.0,
                 "sensor_ID": "sensor_a",
@@ -211,8 +211,7 @@ mod tests {
                 "time": "12:00:00",
                 "temperature_breach_ID": "does_not_exist_breach",
                 "om_datetime": "2024-01-01T12:00:00"
-            }"#
-            .to_string(),
+            }"#).unwrap()),
             action: SyncAction::Upsert,
             ..Default::default()
         };

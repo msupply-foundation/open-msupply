@@ -2,7 +2,7 @@ use chrono::Utc;
 use repository::{
     item_category::{ItemCategoryFilter, ItemCategoryRepository},
     item_category_row::ItemCategoryJoinRow, ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete,
-    ItemType, LocationTypeRowRepository, Row, StorageConnection, SyncBufferRow, UnitRowRepository,
+    ItemType, LocationTypeRowRepository, Row, StorageConnection, SyncBufferRow, SyncRecordData, UnitRowRepository,
     VENCategory,
 
 };
@@ -358,7 +358,7 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "item".to_string(),
             record_id: "ITEM_FK_INVALID".to_string(),
-            data: r#"{
+            data: SyncRecordData(serde_json::from_str(r#"{
                 "ID": "ITEM_FK_INVALID",
                 "item_name": "Bad FK Item",
                 "code": "code",
@@ -373,8 +373,7 @@ mod tests {
                 "restricted_location_type_ID": "does_not_exist_location_type",
                 "volume_per_pack": 0,
                 "universalcodes_code": ""
-            }"#
-            .to_string(),
+            }"#).unwrap()),
             action: SyncAction::Upsert,
             ..Default::default()
         };

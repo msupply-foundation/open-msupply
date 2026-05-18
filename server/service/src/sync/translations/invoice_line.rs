@@ -12,7 +12,7 @@ use repository::{
     InvoiceLineRowDelete, InvoiceLineStatus, InvoiceLineType, InvoiceRowRepository, InvoiceType,
     ItemRowRepository,
     LocationRowRepository, ProgramRowRepository, ReasonOptionRowRepository, Row,
-    StockLineRowRepository, StorageConnection, SyncBufferRow,
+    StockLineRowRepository, StorageConnection, SyncBufferRow, SyncRecordData,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -751,7 +751,7 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "trans_line".to_string(),
             record_id: "TRANS_LINE_FK_INVALID".to_string(),
-            data: r#"{
+            data: SyncRecordData(serde_json::from_str(r#"{
                 "ID": "TRANS_LINE_FK_INVALID",
                 "transaction_ID": "outbound_shipment_a",
                 "item_ID": "item_a",
@@ -780,8 +780,7 @@ mod tests {
                     "campaign_id": "does_not_exist_campaign",
                     "program_id": "does_not_exist_program"
                 }
-            }"#
-            .to_string(),
+            }"#).unwrap()),
             action: SyncAction::Upsert,
             ..Default::default()
         };

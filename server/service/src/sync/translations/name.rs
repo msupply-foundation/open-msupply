@@ -2,7 +2,7 @@ use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyRowRepository, GenderType, NameRow, NameRowDelete,
-    NameRowType, Row, StorageConnection, SyncBufferRow,
+    NameRowType, Row, StorageConnection, SyncBufferRow, SyncRecordData,
 
 };
 use util::sync_serde::{
@@ -552,7 +552,7 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "name".to_string(),
             record_id: "NAME_FK_INVALID".to_string(),
-            data: r#"{
+            data: SyncRecordData(serde_json::from_str(r#"{
                 "ID": "NAME_FK_INVALID",
                 "name": "Bad FK Name",
                 "code": "code",
@@ -583,8 +583,7 @@ mod tests {
                 "om_created_datetime": "",
                 "om_gender": "",
                 "currency_ID": "does_not_exist_currency"
-            }"#
-            .to_string(),
+            }"#).unwrap()),
             action: SyncAction::Upsert,
             ..Default::default()
         };
