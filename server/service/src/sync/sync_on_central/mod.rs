@@ -472,7 +472,12 @@ pub async fn upload_file(
         Some(file_id),
     )?;
 
-    repo.upsert_one(&SyncFileReferenceRow {
+    // Use update_status (no changelog) so this local bookkeeping update doesn't sync back to
+    // other sites. uploaded_bytes is local-only, and propagating a changelog from here would
+    // echo central's stale `status` back to the remote and risk overwriting the remote's
+    // authoritative Done / Error transition. The remote's own upsert_one for the terminal
+    // transition is the source of truth and reaches central via the normal sync push.
+    repo.update_status(&SyncFileReferenceRow {
         uploaded_bytes: sync_file_reference.total_bytes,
         ..sync_file_reference
     })?;

@@ -11,6 +11,7 @@ use std::time::{Duration, SystemTime};
 use tokio::fs::File;
 use util::uuid::uuid;
 use util::{move_file, sanitize_filename};
+
 #[derive(Debug, PartialEq, Serialize)]
 pub struct StaticFile {
     pub id: String,
