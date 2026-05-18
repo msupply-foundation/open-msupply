@@ -142,7 +142,7 @@ fn generate_ancillary_lines(
     requisition_row: &RequisitionRow,
     to_add: &[AncillaryDelta],
 ) -> Result<Vec<RequisitionLineRow>, RefreshAncillaryItemsError> {
-    let item_ids: Vec<String> = to_add.iter().map(|d| d.item_link_id.clone()).collect();
+    let item_ids: Vec<String> = to_add.iter().map(|d| d.item_id.clone()).collect();
 
     // `generate_requisition_lines` fills in stats, pricing, forecasting for
     // each item. Some items might not resolve (e.g. item made invisible for
@@ -152,15 +152,15 @@ fn generate_ancillary_lines(
         generate_requisition_lines(ctx, store_id, requisition_row, item_ids, None)?;
 
     // Overlay the computed ancillary quantity onto each generated line,
-    // matching by item_link_id. If a generator missed an item, surface it as a
+    // matching by item_id. If a generator missed an item, surface it as a
     // user-facing error so the GUI can explain why a refresh didn't land.
     let mut out = Vec::with_capacity(to_add.len());
     for delta in to_add {
         let pos = generated
             .iter()
-            .position(|l| l.item_id == delta.item_link_id)
+            .position(|l| l.item_id == delta.item_id)
             .ok_or_else(|| {
-                RefreshAncillaryItemsError::CannotGenerateAncillaryLine(delta.item_link_id.clone())
+                RefreshAncillaryItemsError::CannotGenerateAncillaryLine(delta.item_id.clone())
             })?;
         let mut row = generated.swap_remove(pos);
         row.id = uuid();

@@ -25,7 +25,7 @@ pub enum AncillaryState {
 /// A single ancillary item that either needs adding or updating.
 #[derive(Debug, Clone, PartialEq)]
 pub struct AncillaryDelta {
-    pub item_link_id: String,
+    pub item_id: String,
     pub required_quantity: f64,
     /// The existing requisition line for this ancillary, if any. Present for
     /// updates, absent for adds.
@@ -129,10 +129,10 @@ pub fn compute_ancillary_plan(
     }
 
     let mut plan = AncillaryPlan::default();
-    for (item_link_id, required_quantity) in required {
-        match existing.get(item_link_id.as_str()) {
+    for (item_id, required_quantity) in required {
+        match existing.get(item_id.as_str()) {
             None => plan.to_add.push(AncillaryDelta {
-                item_link_id,
+                item_id,
                 required_quantity,
                 existing_line_id: None,
                 current_quantity: None,
@@ -140,7 +140,7 @@ pub fn compute_ancillary_plan(
             Some(line) => {
                 if !f64_approx_eq(line.requested_quantity, required_quantity) {
                     plan.to_update.push(AncillaryDelta {
-                        item_link_id,
+                        item_id,
                         required_quantity,
                         existing_line_id: Some(line.id.clone()),
                         current_quantity: Some(line.requested_quantity),
@@ -151,9 +151,9 @@ pub fn compute_ancillary_plan(
     }
 
     // Stable ordering for deterministic results
-    plan.to_add.sort_by(|a, b| a.item_link_id.cmp(&b.item_link_id));
+    plan.to_add.sort_by(|a, b| a.item_id.cmp(&b.item_id));
     plan.to_update
-        .sort_by(|a, b| a.item_link_id.cmp(&b.item_link_id));
+        .sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
     plan
 }
@@ -263,7 +263,7 @@ mod tests {
         assert_eq!(plan.state(), AncillaryState::NeedsAdd { count: 1 });
         assert_eq!(plan.to_add.len(), 1);
         let delta = &plan.to_add[0];
-        assert_eq!(delta.item_link_id, "safety_box");
+        assert_eq!(delta.item_id, "safety_box");
         assert!(f64_approx_eq(delta.required_quantity, 1.0));
     }
 
@@ -291,7 +291,7 @@ mod tests {
         assert_eq!(plan.state(), AncillaryState::NeedsUpdate { count: 1 });
         assert_eq!(plan.to_update.len(), 1);
         let delta = &plan.to_update[0];
-        assert_eq!(delta.item_link_id, "safety_box");
+        assert_eq!(delta.item_id, "safety_box");
         assert_eq!(delta.existing_line_id.as_deref(), Some("l2"));
         assert!(f64_approx_eq(delta.required_quantity, 1.0));
     }
@@ -323,12 +323,12 @@ mod tests {
         let syringe = plan
             .to_add
             .iter()
-            .find(|d| d.item_link_id == "syringe")
+            .find(|d| d.item_id == "syringe")
             .unwrap();
         let safety_box = plan
             .to_add
             .iter()
-            .find(|d| d.item_link_id == "safety_box")
+            .find(|d| d.item_id == "safety_box")
             .unwrap();
         assert!(f64_approx_eq(syringe.required_quantity, 110.0));
         assert!(f64_approx_eq(safety_box.required_quantity, 2.0));
@@ -427,12 +427,12 @@ mod tests {
         let syringe = plan
             .to_update
             .iter()
-            .find(|d| d.item_link_id == "syringe")
+            .find(|d| d.item_id == "syringe")
             .unwrap();
         let safety_box = plan
             .to_update
             .iter()
-            .find(|d| d.item_link_id == "safety_box")
+            .find(|d| d.item_id == "safety_box")
             .unwrap();
         assert!(f64_approx_eq(syringe.required_quantity, 200.0));
         assert!(f64_approx_eq(safety_box.required_quantity, 2.0));
@@ -483,7 +483,7 @@ mod tests {
                 link("f", "g", 1.0, 1.0), // would be depth 6 — skipped
             ],
         );
-        let item_ids: Vec<&str> = plan.to_add.iter().map(|d| d.item_link_id.as_str()).collect();
+        let item_ids: Vec<&str> = plan.to_add.iter().map(|d| d.item_id.as_str()).collect();
         assert!(item_ids.contains(&"e"));
         assert!(!item_ids.contains(&"g"));
     }
