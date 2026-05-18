@@ -1,8 +1,8 @@
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, GenderType, NameRow, NameRowDelete, NameRowRepository,
-    NameRowType, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, CurrencyRowRepository, GenderType, NameRow, NameRowDelete,
+    NameRowRepository, NameRowType, StorageConnection, SyncBufferRow,
 };
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
@@ -13,7 +13,8 @@ use serde::{Deserialize, Serialize};
 use crate::sync::{translations::currency::CurrencyTranslation, CentralServerConfig};
 
 use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    ToSyncRecordTranslationType,
 };
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -232,7 +233,7 @@ impl SyncTranslation for NameTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyNameRow {
@@ -282,6 +283,19 @@ impl SyncTranslation for NameTranslation {
             .flatten()
             .transpose()
             .context("Error serialising custom data to string")?;
+
+        // No DB-level FK constraint on supplying_store_id, because the store records also rely on name.
+        // We don't want to blank out supplying_store_id if the store record just hasn't been synced yet
+        
+        let currency_id = clear_invalid_fk(
+            connection,
+            "name",
+            &id,
+            "currency_id",
+            currency_id,
+            |c, id| CurrencyRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let result = NameRow {
             id,
@@ -468,28 +482,48 @@ impl SyncTranslation for NameTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{MockData, MockDataInserts},
+        system_log_row::{SystemLogRowRepository, SystemLogType},
+        test_db::{setup_all, setup_all_with_data},
+        CurrencyRow, SyncAction,
+    };
 
     #[actix_rt::test]
     async fn test_name_translation() {
         use crate::sync::test::test_data::name as test_data;
         let translator = NameTranslation {};
 
-        let (_, connection, _, _) =
-            setup_all("test_name_translation", MockDataInserts::none()).await;
+        // FK validation: NEW_ZEALAND_DOLLARS currency and store_a need to exist.
+        // mock_currencies() doesn't include NEW_ZEALAND_DOLLARS so we add it explicitly.
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_name_translation",
+            MockDataInserts::none().names().stores(),
+            MockData {
+                currencies: vec![CurrencyRow {
+                    id: "NEW_ZEALAND_DOLLARS".to_string(),
+                    code: "NZD".to_string(),
+                    rate: 1.6,
+                    is_home_currency: false,
+                    date_updated: None,
+                    is_active: true,
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             // TODO add match record here
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
-                .expect(
-                    format!(
+                .unwrap_or_else(|_| {
+                    panic!(
                         "Error translating from upsert sync record {:?}",
                         record.sync_buffer_row.record_id
                     )
-                    .as_str(),
-                );
+                });
 
             assert_eq!(translation_result, record.translated_record);
         }
@@ -498,15 +532,91 @@ mod tests {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
-                .expect(
-                    format!(
+                .unwrap_or_else(|_| {
+                    panic!(
                         "Error translating from delete sync record {:?}",
                         record.sync_buffer_row.record_id
                     )
-                    .as_str(),
-                );
+                });
 
             assert_eq!(translation_result, record.translated_record);
         }
+    }
+
+    #[actix_rt::test]
+    async fn test_name_clears_invalid_optional_fks_and_writes_system_log() {
+        let translator = NameTranslation {};
+        let (_, connection, _, _) = setup_all(
+            "test_name_clears_invalid_optional_fks_and_writes_system_log",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let sync_record = SyncBufferRow {
+            table_name: "name".to_string(),
+            record_id: "NAME_FK_INVALID".to_string(),
+            data: r#"{
+                "ID": "NAME_FK_INVALID",
+                "name": "Bad FK Name",
+                "code": "code",
+                "type": "facility",
+                "customer": false,
+                "supplier": false,
+                "supplying_store_id": "does_not_exist_store",
+                "first": "",
+                "last": "",
+                "female": false,
+                "date_of_birth": "0000-00-00",
+                "phone": "",
+                "charge code": "",
+                "comment": "",
+                "country": "",
+                "bill_address1": "",
+                "bill_address2": "",
+                "email": "",
+                "url": "",
+                "manufacturer": false,
+                "donor": false,
+                "hold": false,
+                "NEXT_OF_KIN_ID": "",
+                "next_of_kin_relative": "",
+                "created_date": "0000-00-00",
+                "national_health_number": "",
+                "isDeceased": false,
+                "om_created_datetime": "",
+                "om_gender": "",
+                "currency_ID": "does_not_exist_currency"
+            }"#
+            .to_string(),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        let result = translator
+            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .unwrap();
+        let debug = format!("{result:?}");
+        // supplying_store_id has no DB-level FK constraint (store depends on name so we can't
+        // validate ordering), so it is passed through as-is.
+        assert!(
+            debug.contains("supplying_store_id: Some(\"does_not_exist_store\")"),
+            "{}",
+            format!("expected supplying_store_id to pass through unchanged; got:\n{debug}")
+        );
+        assert!(
+            debug.contains("currency_id: None"),
+            "{}",
+            format!("expected currency_id None; got:\n{debug}")
+        );
+
+        let logs = SystemLogRowRepository::new(&connection)
+            .find_all()
+            .unwrap();
+        let fk_errors: Vec<_> = logs
+            .iter()
+            .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
+            .collect();
+        // Only currency_id is validated (supplying_store_id skipped — no DB FK)
+        assert_eq!(fk_errors.len(), 1, "got {fk_errors:?}");
     }
 }

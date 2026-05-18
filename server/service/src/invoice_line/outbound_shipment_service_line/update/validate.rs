@@ -2,9 +2,7 @@ use repository::{InvoiceLine, InvoiceRow, InvoiceType, ItemRow, ItemType, Storag
 
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
-    invoice_line::validate::{
-        check_item_exists, check_line_belongs_to_invoice, check_line_exists,
-    },
+    invoice_line::validate::{check_item_exists, check_line_belongs_to_invoice, check_line_exists},
 };
 
 use super::{UpdateOutboundShipmentServiceLine, UpdateOutboundShipmentServiceLineError};

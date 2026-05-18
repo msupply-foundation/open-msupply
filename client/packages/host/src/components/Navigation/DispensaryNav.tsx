@@ -29,17 +29,15 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
     <AppNavSection isActive={isActive} to={AppRoute.Dispensary}>
       <AppNavLink
         visible={visible}
-        end={false}
+        isParent
         to={AppRoute.Dispensary}
         icon={<CustomersIcon color="primary" fontSize="small" />}
         text={t('dispensary')}
-        inactive
       />
       <Collapse in={isActive}>
         <List>
           <AppNavLink
             visible={visible}
-            end
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Patients)
               .addQuery({ sort: 'createdDatetime', dir: 'desc' })
@@ -48,7 +46,6 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
           />
           <AppNavLink
             visible={visible}
-            end
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Prescription)
               .build()}
@@ -56,7 +53,6 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
           />
           <AppNavLink
             visible={isProgramModule}
-            end
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Encounter)
               .build()}
@@ -64,7 +60,6 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
           />
           <AppNavLink
             visible={visible}
-            end
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Clinicians)
               .build()}

@@ -3,9 +3,9 @@ use repository::{
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
 
+use crate::sync::translations::asset_catalogue_type::AssetCatalogueTypeTranslation;
 use crate::sync::translations::asset_category::AssetCategoryTranslation;
 use crate::sync::translations::asset_class::AssetClassTranslation;
-use crate::sync::translations::asset_type::AssetTypeTranslation;
 
 use super::{
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
@@ -28,7 +28,7 @@ impl SyncTranslation for AssetPropertyTranslation {
         vec![
             AssetClassTranslation.table_name(),
             AssetCategoryTranslation.table_name(),
-            AssetTypeTranslation.table_name(),
+            AssetCatalogueTypeTranslation.table_name(),
         ]
     }
 

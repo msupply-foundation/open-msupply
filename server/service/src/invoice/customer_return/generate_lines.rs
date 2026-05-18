@@ -69,9 +69,9 @@ fn get_existing_return_lines(
     let invoice_line_repo = InvoiceLineRepository::new(&ctx.connection);
     let existing_invoice_lines = invoice_line_repo.query_by_filter(
         InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(return_id))
+            .invoice_id(EqualFilter::equal_to(return_id.to_string()))
             .invoice_type(InvoiceType::CustomerReturn.equal_to())
-            .item_id(EqualFilter::equal_to(item_id)),
+            .item_id(EqualFilter::equal_to(item_id.to_string())),
     )?;
 
     let existing_return_lines = existing_invoice_lines

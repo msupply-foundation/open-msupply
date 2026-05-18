@@ -195,6 +195,7 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
   uischema,
   visible,
   cells,
+  config: _,
 }) => {
   const [activeCategory, setActiveCategory] = useState<number | undefined>();
   const categorization = uischema as Categorization;

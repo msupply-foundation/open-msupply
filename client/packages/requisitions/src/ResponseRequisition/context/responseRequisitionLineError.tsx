@@ -39,13 +39,18 @@ export type UseResponseRequisitionLineErrors = ReturnType<
   typeof useResponseRequisitionLineErrors
 >;
 
-const ResponseRequisitionLineErrorContext =
-  createContext<UseResponseRequisitionLineErrors>({} as any);
+const ResponseRequisitionLineErrorContext = createContext<
+  UseResponseRequisitionLineErrors | undefined
+>(undefined);
 
 export const useResponseRequisitionLineErrorContext = () => {
   const context = useContext(ResponseRequisitionLineErrorContext);
 
-  if (!context) throw new Error('Context does not exist');
+  if (!context) {
+    throw new Error(
+      'useResponseRequisitionLineErrorContext must be used within a ResponseRequisitionLineErrorProvider'
+    );
+  }
 
   return context;
 };

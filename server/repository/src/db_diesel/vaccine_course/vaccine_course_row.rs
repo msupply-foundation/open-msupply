@@ -20,6 +20,7 @@ table! {
         use_in_gaps_calculations -> Bool,
         wastage_rate -> Double,
         deleted_datetime -> Nullable<Timestamp>,
+        can_skip_dose -> Bool
     }
 }
 
@@ -38,6 +39,7 @@ pub struct VaccineCourseRow {
     pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
+    pub can_skip_dose: bool,
 }
 
 pub struct VaccineCourseRowRepository<'a> {
@@ -60,7 +62,7 @@ impl<'a> VaccineCourseRowRepository<'a> {
             .set(vaccine_course_row)
             .execute(self.connection.lock().connection())?;
 
-        self.insert_changelog(vaccine_course_row.id.to_owned(), RowActionType::Upsert)
+        self.insert_changelog(vaccine_course_row.id.to_string(), RowActionType::Upsert)
     }
 
     fn insert_changelog(

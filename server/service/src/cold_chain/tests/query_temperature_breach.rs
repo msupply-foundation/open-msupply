@@ -45,12 +45,12 @@ mod query {
         let service = service_provider.cold_chain_service;
 
         assert_eq!(
-            service.get_temperature_breach(&context, "invalid_id".to_owned()),
-            Err(SingleRecordError::NotFound("invalid_id".to_owned()))
+            service.get_temperature_breach(&context, "invalid_id".to_string()),
+            Err(SingleRecordError::NotFound("invalid_id".to_string()))
         );
 
         let result = service
-            .get_temperature_breach(&context, "temperature_breach_acknowledged".to_owned())
+            .get_temperature_breach(&context, "temperature_breach_acknowledged".to_string())
             .unwrap();
 
         assert_eq!(
@@ -92,8 +92,8 @@ mod query {
                 None,
                 Some(
                     TemperatureBreachFilter::new().id(EqualFilter::equal_any(vec![
-                        "temperature_breach_1".to_owned(),
-                        "temperature_breach_acknowledged".to_owned(),
+                        "temperature_breach_1".to_string(),
+                        "temperature_breach_acknowledged".to_string(),
                     ])),
                 ),
                 None,

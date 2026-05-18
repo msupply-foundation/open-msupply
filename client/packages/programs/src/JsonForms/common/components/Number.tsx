@@ -10,6 +10,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
+import { formatErrors } from '../formatErrors';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 
@@ -37,7 +38,7 @@ const UIComponent = (props: ControlProps) => {
     Options,
     uischema.options
   );
-  const error = !!errors || !!zErrors;
+  const error = !!zErrors || !!errors;
 
   if (!props.visible) {
     return null;
@@ -56,7 +57,7 @@ const UIComponent = (props: ControlProps) => {
     },
     disabled: !props.enabled,
     error: error,
-    helperText: errors || zErrors,
+    helperText: formatErrors(errors || zErrors),
     value: localData,
   };
 

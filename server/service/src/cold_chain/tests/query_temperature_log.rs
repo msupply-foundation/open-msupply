@@ -42,12 +42,12 @@ mod query {
         let service = service_provider.cold_chain_service;
 
         assert_eq!(
-            service.get_temperature_log(&context, "invalid_id".to_owned()),
-            Err(SingleRecordError::NotFound("invalid_id".to_owned()))
+            service.get_temperature_log(&context, "invalid_id".to_string()),
+            Err(SingleRecordError::NotFound("invalid_id".to_string()))
         );
 
         let result = service
-            .get_temperature_log(&context, "temperature_log_1a".to_owned())
+            .get_temperature_log(&context, "temperature_log_1a".to_string())
             .unwrap();
 
         assert_eq!(result.temperature_log_row.id, "temperature_log_1a");
@@ -79,8 +79,8 @@ mod query {
                 &connection,
                 None,
                 Some(TemperatureLogFilter::new().id(EqualFilter::equal_any(vec![
-                    "temperature_log_1a".to_owned(),
-                    "temperature_log_1b".to_owned(),
+                    "temperature_log_1a".to_string(),
+                    "temperature_log_1b".to_string(),
                 ]))),
                 None,
             )

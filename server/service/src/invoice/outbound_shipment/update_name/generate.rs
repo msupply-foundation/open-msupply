@@ -27,12 +27,12 @@ pub fn generate(
 ) -> Result<GenerateResult, UpdateOutboundShipmentNameError> {
     let old_invoice = existing_invoice.clone();
     let old_invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
-        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&existing_invoice.id)),
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(existing_invoice.id.to_string())),
     )?;
 
     let mut new_invoice = InvoiceRow {
         id: uuid(),
-        name_link_id: input_other_party_id.unwrap_or(existing_invoice.name_link_id.clone()),
+        name_id: input_other_party_id.unwrap_or(existing_invoice.name_id.clone()),
         linked_invoice_id: None,
         ..old_invoice.clone()
     };
@@ -47,6 +47,7 @@ pub fn generate(
             },
             invoice_row: new_invoice.clone(),
             item_row: line.item_row.clone(),
+            invoice_line_stats_row: line.invoice_line_stats_row.clone(),
             location_row_option: line.location_row_option.clone(),
             stock_line_option: line.stock_line_option.clone(),
         })
@@ -54,12 +55,12 @@ pub fn generate(
 
     if let Some(other_party) = other_party_option {
         new_invoice.name_store_id = other_party.store_id().map(|id| id.to_string());
-        new_invoice.name_link_id = other_party.name_row.id;
+        new_invoice.name_id = other_party.name_row.id;
     }
 
     let new_activity_log = ActivityLogRepository::new(connection)
         .query_by_filter(
-            ActivityLogFilter::new().record_id(EqualFilter::equal_to(&old_invoice.id)),
+            ActivityLogFilter::new().record_id(EqualFilter::equal_to(old_invoice.id.to_string())),
         )?
         .iter()
         .map(|log| ActivityLogRow {

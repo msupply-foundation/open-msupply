@@ -42,7 +42,7 @@ impl RequisitionCountServiceTrait for RequisitionCountService {
         let repo = RequisitionRepository::new(&ctx.connection);
         repo.count(Some(
             RequisitionFilter::new()
-                .store_id(EqualFilter::equal_to(store_id))
+                .store_id(EqualFilter::equal_to(store_id.to_string()))
                 .r#type(RequisitionType::Response.equal_to())
                 .status(RequisitionStatus::New.equal_to()),
         ))
@@ -56,7 +56,7 @@ impl RequisitionCountServiceTrait for RequisitionCountService {
         let repo = RequisitionRepository::new(&ctx.connection);
         repo.count(Some(
             RequisitionFilter::new()
-                .store_id(EqualFilter::equal_to(store_id))
+                .store_id(EqualFilter::equal_to(store_id.to_string()))
                 .r#type(RequisitionType::Request.equal_to())
                 .status(RequisitionStatus::Draft.equal_to()),
         ))
@@ -70,7 +70,7 @@ impl RequisitionCountServiceTrait for RequisitionCountService {
         let repo = RequisitionRepository::new(&ctx.connection);
         repo.count(Some(
             RequisitionFilter::new()
-                .store_id(EqualFilter::equal_to(store_id))
+                .store_id(EqualFilter::equal_to(store_id.to_string()))
                 .r#type(RequisitionType::Response.equal_to())
                 .status(RequisitionStatus::New.equal_to())
                 .is_emergency(true),

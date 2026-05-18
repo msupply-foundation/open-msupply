@@ -2,6 +2,7 @@ import {
   useParams,
   UseQueryResult,
   useQuery,
+  useQueryClient,
 } from '@openmsupply-client/common';
 import { ResponseFragment } from '../../operations.generated';
 import { useResponseApi } from '../utils/useResponseApi';
@@ -11,17 +12,23 @@ export const useResponseId = () => {
   return id;
 };
 
-export const useResponse = (): UseQueryResult<ResponseFragment> => {
+export const useResponse = (): UseQueryResult<ResponseFragment> & {
+  invalidateQueries: () => Promise<void>;
+} => {
   const responseId = useResponseId();
   const api = useResponseApi();
-  return useQuery(
-    api.keys.detail(responseId),
-    () => api.get.byId(responseId),
-    // Don't refetch when the edit modal opens, for example. But, don't cache data when this query
-    // is inactive. For example, when navigating away from the page and back again, refetch.
-    {
-      refetchOnMount: false,
-      cacheTime: 0,
-    }
-  );
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: api.keys.detail(responseId),
+    queryFn: () => api.get.byId(responseId),
+    refetchOnMount: false,
+    gcTime: 0
+  });
+
+  return {
+    ...query,
+    invalidateQueries: () => queryClient.invalidateQueries({
+      queryKey: api.keys.base()
+    }),
+  };
 };

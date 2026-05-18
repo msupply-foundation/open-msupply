@@ -70,7 +70,7 @@ pub fn add_from_master_list(
 
             match PurchaseOrderLineRepository::new(connection).query_by_filter(
                 PurchaseOrderLineFilter::new()
-                    .purchase_order_id(EqualFilter::equal_to(&input.purchase_order_id))
+                    .purchase_order_id(EqualFilter::equal_to(input.purchase_order_id.to_string()))
                     .id(EqualFilter::equal_any(new_line_ids)),
             ) {
                 Ok(lines) => Ok(lines),
@@ -123,7 +123,7 @@ fn generate(
     let master_list_lines_not_in_invoice = MasterListLineRepository::new(&ctx.connection)
         .query_by_filter(
             MasterListLineFilter::new()
-                .master_list_id(EqualFilter::equal_to(&input.master_list_id))
+                .master_list_id(EqualFilter::equal_to(input.master_list_id.to_string()))
                 .item_id(EqualFilter::not_equal_all(item_ids_in_purchase_order))
                 .item_type(ItemType::Stock.equal_to())
                 .ignore_for_orders(false),
@@ -174,8 +174,8 @@ mod test {
             service.add_to_purchase_order_from_master_list(
                 &context,
                 ServiceInput {
-                    purchase_order_id: "invalid".to_owned(),
-                    master_list_id: "n/a".to_owned()
+                    purchase_order_id: "invalid".to_string(),
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::PurchaseOrderDoesNotExist)
@@ -187,7 +187,7 @@ mod test {
                 &context,
                 ServiceInput {
                     purchase_order_id: mock_purchase_order_c().id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::CannotEditPurchaseOrder)
@@ -212,7 +212,7 @@ mod test {
                 &context,
                 ServiceInput {
                     purchase_order_id: mock_purchase_order_a().id,
-                    master_list_id: "n/a".to_owned()
+                    master_list_id: "n/a".to_string()
                 },
             ),
             Err(ServiceError::NotThisStorePurchaseOrder)

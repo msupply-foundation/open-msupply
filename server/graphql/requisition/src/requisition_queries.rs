@@ -88,6 +88,7 @@ pub struct RequisitionFilterInput {
     pub is_emergency: Option<bool>,
     pub automatically_created: Option<bool>,
     pub is_program_requisition: Option<bool>,
+    pub has_outstanding_lines: Option<bool>,
 }
 
 #[derive(Union)]
@@ -216,12 +217,8 @@ impl RequisitionFilterInput {
             id: self.id.map(EqualFilter::from),
             user_id: self.user_id.map(EqualFilter::from),
             requisition_number: self.requisition_number.map(EqualFilter::from),
-            r#type: self
-                .r#type
-                .map(|t| map_filter!(t, |r| RequisitionType::from(r))),
-            status: self
-                .status
-                .map(|t| map_filter!(t, |s| RequisitionStatus::from(s))),
+            r#type: self.r#type.map(|t| map_filter!(t, RequisitionType::from)),
+            status: self.status.map(|t| map_filter!(t, RequisitionStatus::from)),
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
             sent_datetime: self.sent_datetime.map(DatetimeFilter::from),
             finalised_datetime: self.finalised_datetime.map(DatetimeFilter::from),
@@ -236,11 +233,12 @@ impl RequisitionFilterInput {
             period_id: self.period_id.map(EqualFilter::from),
             program_id: self.program_id.map(EqualFilter::from),
             elmis_code: self.elmis_code.map(EqualFilter::from),
-            linked_requisition_id: None,
-            store_id: None,
             is_emergency: self.is_emergency,
             automatically_created: self.automatically_created,
             is_program_requisition: self.is_program_requisition,
+            has_outstanding_lines: self.has_outstanding_lines,
+            linked_requisition_id: None,
+            store_id: None,
         }
     }
 }

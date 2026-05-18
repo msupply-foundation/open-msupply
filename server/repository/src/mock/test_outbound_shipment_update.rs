@@ -43,12 +43,12 @@ fn mock_item_with_no_stock_line() -> ItemRow {
 fn mock_outbound_shipment_invalid_stock_line() -> InvoiceRow {
     InvoiceRow {
         id: String::from("outbound_shipment_invalid_stock_line"),
-        name_link_id: String::from("name_store_a"),
+        name_id: String::from("name_store_a"),
         store_id: String::from("store_c"),
         invoice_number: 3,
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::New,
-        comment: Some("Sort comment test cA".to_owned()),
+        comment: Some("Sort comment test cA".to_string()),
         their_reference: Some(String::from("")),
         created_datetime: NaiveDate::from_ymd_opt(1970, 1, 6)
             .unwrap()

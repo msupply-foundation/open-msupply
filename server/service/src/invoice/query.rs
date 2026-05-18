@@ -1,11 +1,9 @@
 use crate::{
     get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
-use repository::{EqualFilter, PaginationOption};
-use repository::{
-    Invoice, InvoiceFilter, InvoiceRepository, InvoiceSort, InvoiceType, RepositoryError,
-};
- 
+use repository::EqualFilter;
+use repository::PaginationOption;
+use repository::{Invoice, InvoiceFilter, InvoiceRepository, InvoiceSort, RepositoryError};
 
 pub fn get_invoices(
     ctx: &ServiceContext,
@@ -18,7 +16,7 @@ pub fn get_invoices(
     let repository = InvoiceRepository::new(&ctx.connection);
 
     let mut filter = filter.unwrap_or_default();
-    filter.store_id = store_id_option.map(EqualFilter::equal_to);
+    filter.store_id = store_id_option.map(|id| EqualFilter::equal_to(id.to_string()));
     // For invoice list we don't want to show any that are cancellation
     // reversals
     filter.is_cancellation = Some(false);
@@ -33,11 +31,13 @@ pub fn get_invoice(
     ctx: &ServiceContext,
     store_id_option: Option<&str>,
     id: &str,
+    filter: Option<InvoiceFilter>,
 ) -> Result<Option<Invoice>, RepositoryError> {
-    let mut filter = InvoiceFilter::new().id(EqualFilter::equal_to(id));
-    filter.store_id = store_id_option.map(EqualFilter::equal_to);
+    let mut f = filter.unwrap_or_default();
+    f.id = Some(EqualFilter::equal_to(id.to_string()));
+    f.store_id = store_id_option.map(|id| EqualFilter::equal_to(id.to_string()));
 
-    let mut result = InvoiceRepository::new(&ctx.connection).query_by_filter(filter)?;
+    let mut result = InvoiceRepository::new(&ctx.connection).query_by_filter(f)?;
 
     Ok(result.pop())
 }
@@ -46,18 +46,17 @@ pub fn get_invoice_by_number(
     ctx: &ServiceContext,
     store_id: &str,
     invoice_number: u32,
-    r#type: InvoiceType,
+    filter: InvoiceFilter,
 ) -> Result<Option<Invoice>, RepositoryError> {
-    let mut result = InvoiceRepository::new(&ctx.connection).query_by_filter(
-        InvoiceFilter::new()
-            .invoice_number(EqualFilter::equal_to_i64(invoice_number as i64))
-            // Reverse "cancellation" prescription will have the same Invoice
-            // Number as their linked prescription, so we don't want to return
-            // them
-            .is_cancellation(false)
-            .store_id(EqualFilter::equal_to(store_id))
-            .r#type(r#type.equal_to()),
-    )?;
+    let mut f = filter;
+    f.invoice_number = Some(EqualFilter::equal_to(invoice_number as i64));
+    // Reverse "cancellation" prescription will have the same Invoice
+    // Number as their linked prescription, so we don't want to return
+    // them
+    f.is_cancellation = Some(false);
+    f.store_id = Some(EqualFilter::equal_to(store_id.to_string()));
+
+    let mut result = InvoiceRepository::new(&ctx.connection).query_by_filter(f)?;
 
     Ok(result.pop())
 }
@@ -68,6 +67,7 @@ mod test_query {
         db_diesel::InvoiceType,
         mock::{mock_unique_number_inbound_shipment, MockDataInserts},
         test_db::setup_all,
+        InvoiceFilter,
     };
 
     use crate::service_provider::ServiceProvider;
@@ -83,7 +83,12 @@ mod test_query {
 
         // Not found
         assert_eq!(
-            service.get_invoice_by_number(&context, "store_a", 200, InvoiceType::OutboundShipment),
+            service.get_invoice_by_number(
+                &context,
+                "store_a",
+                200,
+                InvoiceFilter::new().r#type(InvoiceType::OutboundShipment.equal_to()),
+            ),
             Ok(None)
         );
 
@@ -95,7 +100,7 @@ mod test_query {
                 &context,
                 "store_a",
                 invoice_to_find.invoice_number as u32,
-                InvoiceType::OutboundShipment,
+                InvoiceFilter::new().r#type(InvoiceType::OutboundShipment.equal_to()),
             ),
             Ok(None)
         );
@@ -106,7 +111,7 @@ mod test_query {
                 &context,
                 "store_a",
                 invoice_to_find.invoice_number as u32,
-                InvoiceType::InboundShipment,
+                InvoiceFilter::new().r#type(InvoiceType::InboundShipment.equal_to()),
             )
             .unwrap()
             .unwrap();

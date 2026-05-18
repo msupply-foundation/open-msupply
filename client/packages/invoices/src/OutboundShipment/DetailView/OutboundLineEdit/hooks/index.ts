@@ -1,1 +1,1 @@
-export * from './useNextItem';
+export * from './useOpenedWithBarcode';

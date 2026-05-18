@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use repository::ContextType;
 use serde::{Deserialize, Serialize};
@@ -100,12 +100,14 @@ pub struct ReportDefinitionIndex {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ReportDefinition {
     pub index: ReportDefinitionIndex,
-    pub entries: HashMap<String, ReportDefinitionEntry>,
+    /// BTreeMap (rather than HashMap) so iteration/serialization order is deterministic — this
+    /// keeps generated reports JSON stable across builds.
+    pub entries: BTreeMap<String, ReportDefinitionEntry>,
 }
 
 #[cfg(test)]
 mod report_dsl_test {
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
 
     use serde_json::json;
 
@@ -168,7 +170,7 @@ mod report_dsl_test {
                     query: vec!["query".to_string()],
                     ..Default::default()
                 },
-                entries: HashMap::from([
+                entries: BTreeMap::from([
                     (
                         "local_footer.html".to_string(),
                         ReportDefinitionEntry::Ref(ReportRef {

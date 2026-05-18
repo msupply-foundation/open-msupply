@@ -8,19 +8,34 @@ import {
   PanelRow,
   useFormatDateTime,
 } from '@openmsupply-client/common';
-import { useInbound } from '../../api';
+import { useInboundShipment } from '../../api';
+import { ShippingMethodSearchInput } from '@openmsupply-client/system';
 
 export const TransportSectionComponent: FC = () => {
   const t = useTranslation();
-  const { transportReference, expectedDeliveryDate } =
-    useInbound.document.fields(['transportReference', 'expectedDeliveryDate']);
+  const {
+    query: { data, loading },
+  } = useInboundShipment();
   const { localisedDate } = useFormatDateTime();
+
+  if (loading || !data) return null;
+
+  const { transportReference, expectedDeliveryDate, shippingMethod } = data;
 
   // Both transportReference and expectedDeliveryDatetime are read-only and are
   // created during the Inbound Shipment transfer process.
   return (
     <DetailPanelSection title={t('heading.transport-details')}>
       <Grid container gap={0.5} key="transport-details">
+        <PanelRow>
+          <PanelLabel>{t('label.shipping-method')}</PanelLabel>
+          <ShippingMethodSearchInput
+            value={shippingMethod}
+            onChange={() => {}}
+            width={250}
+            disabled={true}
+          />
+        </PanelRow>
         <PanelRow>
           <PanelLabel display="flex" alignItems="center">
             {t('label.expected-delivery-date')}

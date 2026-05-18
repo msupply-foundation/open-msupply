@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React from 'react';
 import {
   useTranslation,
   AppBarContentPortal,
@@ -7,7 +7,7 @@ import {
   PurchaseOrderNodeStatus,
 } from '@openmsupply-client/common';
 
-export const Toolbar = (): ReactElement => {
+export const Toolbar = () => {
   const t = useTranslation();
 
   return (

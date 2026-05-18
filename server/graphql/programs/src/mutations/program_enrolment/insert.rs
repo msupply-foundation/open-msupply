@@ -60,7 +60,7 @@ pub fn insert_program_enrolment(
         ) {
         Ok(document) => document,
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             let std_err = match error {
                 UpsertProgramEnrolmentError::NotAllowedToMutateDocument => {
                     StandardGraphqlError::Forbidden(formatted_error)
@@ -102,8 +102,8 @@ pub fn insert_program_enrolment(
         .program_enrolment(
             &service_context,
             ProgramEnrolmentFilter::new()
-                .patient_id(EqualFilter::equal_to(&input.patient_id))
-                .context_id(EqualFilter::equal_to(&document.context_id)),
+                .patient_id(EqualFilter::equal_to(input.patient_id.to_string()))
+                .context_id(EqualFilter::equal_to(document.context_id.to_string())),
             allowed_ctx.clone(),
         )?
         .ok_or(

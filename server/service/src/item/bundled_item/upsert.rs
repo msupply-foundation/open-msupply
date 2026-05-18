@@ -99,9 +99,13 @@ fn validate(
     // Check for existing bundled item pair that matches this one
     let count = BundledItemRepository::new(connection).count(Some(
         BundledItemFilter::new()
-            .principal_item_variant_id(EqualFilter::equal_to(&input.principal_item_variant_id))
-            .bundled_item_variant_id(EqualFilter::equal_to(&input.bundled_item_variant_id))
-            .id(EqualFilter::not_equal_to(&input.id)),
+            .principal_item_variant_id(EqualFilter::equal_to(
+                input.principal_item_variant_id.to_string(),
+            ))
+            .bundled_item_variant_id(EqualFilter::equal_to(
+                input.bundled_item_variant_id.to_string(),
+            ))
+            .id(EqualFilter::not_equal_to(input.id.to_string())),
     ))?;
 
     if count > 0 {
@@ -109,19 +113,21 @@ fn validate(
     }
 
     // Check for nested bundled items
-    let count = BundledItemRepository::new(connection)
-        .count(Some(BundledItemFilter::new().principal_item_variant_id(
-            EqualFilter::equal_to(&input.bundled_item_variant_id),
-        )))?;
+    let count = BundledItemRepository::new(connection).count(Some(
+        BundledItemFilter::new().principal_item_variant_id(EqualFilter::equal_to(
+            input.bundled_item_variant_id.to_string(),
+        )),
+    ))?;
 
     if count > 0 {
         return Err(UpsertBundledItemError::CanNotNestBundledItems);
     }
 
-    let count = BundledItemRepository::new(connection)
-        .count(Some(BundledItemFilter::new().bundled_item_variant_id(
-            EqualFilter::equal_to(&input.principal_item_variant_id),
-        )))?;
+    let count = BundledItemRepository::new(connection).count(Some(
+        BundledItemFilter::new().bundled_item_variant_id(EqualFilter::equal_to(
+            input.principal_item_variant_id.to_string(),
+        )),
+    ))?;
 
     if count > 0 {
         return Err(UpsertBundledItemError::CanNotNestBundledItems);

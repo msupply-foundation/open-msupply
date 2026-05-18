@@ -1,29 +1,29 @@
 import React, { useCallback, useEffect } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   DetailViewSkeleton,
   AlertModal,
   useNavigate,
   RouteBuilder,
   useTranslation,
-  createQueryParamsStore,
   DetailTabs,
   ModalMode,
   useEditModal,
   useBreadcrumbs,
+  useNonPaginatedMaterialTable,
+  NothingHere,
+  MaterialTable,
 } from '@openmsupply-client/common';
-import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
+import { ActivityLogList } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
-import { usePrescription } from '../api';
-import { ContentArea } from './ContentArea';
+import { PrescriptionLineFragment, usePrescription } from '../api';
 import { AppBarButtons } from './AppBarButton';
 import { Toolbar } from './Toolbar';
 import { SidePanel } from './SidePanel';
 import { Footer } from './Footer';
 import { StockOutLineFragment, Draft } from '../../StockOut';
-import { StockOutItem } from '../../types';
 import { HistoryModal } from './History/HistoryModal';
+import { isPrescriptionPlaceholderRow } from '../../utils';
+import { usePrescriptionColumn } from './columns';
 
 export const PrescriptionDetailView = () => {
   const t = useTranslation();
@@ -31,7 +31,10 @@ export const PrescriptionDetailView = () => {
   const navigate = useNavigate();
   const {
     query: { data, loading },
+    rows,
+    isDisabled,
   } = usePrescription();
+  const columns = usePrescriptionColumn();
 
   const {
     entity: historyEntity,
@@ -52,7 +55,7 @@ export const PrescriptionDetailView = () => {
           .build()
       );
     },
-    [toItemRow, data]
+    [data]
   );
   const onAddItem = () => {
     navigate(
@@ -68,6 +71,25 @@ export const PrescriptionDetailView = () => {
     setHistoryMode(ModalMode.Create);
   };
 
+  const { table, selectedRows } =
+    useNonPaginatedMaterialTable<PrescriptionLineFragment>({
+      tableId: 'prescription-detail',
+      columns,
+      data: rows,
+      grouping: { field: 'item.code' },
+      isLoading: false,
+      isError: false,
+      onRowClick: onRowClick ? row => onRowClick(row) : undefined,
+      getIsPlaceholderRow: row => isPrescriptionPlaceholderRow(row.original),
+      noDataElement: (
+        <NothingHere
+          body={t('error.no-items')}
+          onCreate={isDisabled ? undefined : () => onAddItem()}
+          buttonText={t('button.add-item')}
+        />
+      ),
+    });
+
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.invoiceNumber]);
@@ -76,7 +98,7 @@ export const PrescriptionDetailView = () => {
 
   const tabs = [
     {
-      Component: <ContentArea onRowClick={onRowClick} onAddItem={onAddItem} />,
+      Component: <MaterialTable table={table} />,
       value: 'Details',
     },
     {
@@ -90,16 +112,7 @@ export const PrescriptionDetailView = () => {
       fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
     >
       {data ? (
-        <TableProvider
-          createStore={createTableStore}
-          queryParamsStore={createQueryParamsStore<
-            StockOutLineFragment | StockOutItem
-          >({
-            initialSortBy: {
-              key: 'itemName',
-            },
-          })}
-        >
+        <>
           <AppBarButtons onAddItem={onAddItem} onViewHistory={onViewHistory} />
           <HistoryModal
             draft={historyEntity}
@@ -111,9 +124,12 @@ export const PrescriptionDetailView = () => {
           />
           <Toolbar />
           <DetailTabs tabs={tabs} />
-          <Footer />
+          <Footer
+            selectedRows={selectedRows}
+            resetRowSelection={table.resetRowSelection}
+          />
           <SidePanel />
-        </TableProvider>
+        </>
       ) : (
         <AlertModal
           open={true}

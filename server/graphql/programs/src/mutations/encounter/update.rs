@@ -58,7 +58,7 @@ pub fn update_encounter(
     ) {
         Ok(document) => document,
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             let std_err = match error {
                 UpdateEncounterError::NotAllowedToMutateDocument => {
                     StandardGraphqlError::Forbidden(formatted_error)
@@ -93,7 +93,7 @@ pub fn update_encounter(
         .encounter_service
         .encounter(
             &service_context,
-            EncounterFilter::new().document_name(EqualFilter::equal_to(&document.name)),
+            EncounterFilter::new().document_name(EqualFilter::equal_to(document.name.to_owned())),
             allowed_ctx.clone(),
         )?
         .ok_or(

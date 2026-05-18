@@ -5,16 +5,27 @@ import {
   useHostContext,
   SaveIcon,
   BoxedErrorWithDetails,
+  useNativeClient,
+  useExportLog,
+  useNotification,
+  EnvUtils,
+  Platform,
+  MuiLink,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { InitialiseLayout } from './InitialiseLayout';
 import { useInitialiseForm } from './hooks';
 import { SyncProgress } from '../SyncProgress';
 import { SiteInfo } from '../SiteInfo';
+import { mapSyncError } from 'packages/system/src';
 
 export const Initialise = () => {
   const t = useTranslation();
   const { setPageTitle } = useHostContext();
+  const nativeClient = useNativeClient();
+  const exportLog = useExportLog();
+  const { warning } = useNotification();
+  const isAndroid = EnvUtils.platform === Platform.Android;
 
   const {
     isValid,
@@ -32,6 +43,20 @@ export const Initialise = () => {
     syncStatus,
     siteName,
   } = useInitialiseForm();
+
+  const onSaveLog = async () => {
+    if (!isAndroid) return;
+    const log = await nativeClient.readLog();
+    if (!log?.trim()) {
+      warning(t('error.unable-to-load-server-log'))();
+      return;
+    }
+    await exportLog(log, 'remote_server');
+  };
+
+  const syncError =
+    syncStatus?.error &&
+    mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
 
   useEffect(() => {
     setPageTitle(`${t('messages.not-initialised')} | ${t('app')} `);
@@ -105,11 +130,27 @@ export const Initialise = () => {
         />
       }
       ErrorMessage={error && <BoxedErrorWithDetails {...error} />}
+      SyncErrorMessage={
+        syncError && <BoxedErrorWithDetails {...syncError} width="100%" />
+      }
       onInitialise={async () => {
         /* onInitialise from layout only happens on form key event, form is disabled when isInitialising */
         if (isValid) await onInitialise();
       }}
       SiteInfo={<SiteInfo siteName={siteName} />}
+      SaveLogLink={
+        isAndroid ? (
+          <MuiLink
+            component="button"
+            type="button"
+            onClick={onSaveLog}
+            underline="hover"
+            sx={{ fontSize: '0.8rem', color: 'gray.main' }}
+          >
+            {t('button.save-log')}
+          </MuiLink>
+        ) : undefined
+      }
     />
   );
 };

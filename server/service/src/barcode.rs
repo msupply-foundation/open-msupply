@@ -43,7 +43,7 @@ pub trait BarcodeServiceTrait: Sync + Send {
         let repository = BarcodeRepository::new(&ctx.connection);
 
         Ok(repository
-            .query_by_filter(BarcodeFilter::new().id(EqualFilter::equal_to(&id)))?
+            .query_by_filter(BarcodeFilter::new().id(EqualFilter::equal_to(id.to_string())))?
             .pop())
     }
 
@@ -72,7 +72,7 @@ pub trait BarcodeServiceTrait: Sync + Send {
         let repository = BarcodeRepository::new(&ctx.connection);
 
         Ok(repository
-            .query_by_filter(BarcodeFilter::new().gtin(EqualFilter::equal_to(gtin)))?
+            .query_by_filter(BarcodeFilter::new().gtin(EqualFilter::equal_to(gtin.to_owned())))?
             .pop())
     }
 
@@ -105,7 +105,7 @@ pub(crate) fn generate(
     input: BarcodeInput,
 ) -> Result<BarcodeRow, RepositoryError> {
     let existing_barcode = BarcodeRepository::new(connection)
-        .query_by_filter(BarcodeFilter::new().gtin(EqualFilter::equal_to(&input.gtin)))?
+        .query_by_filter(BarcodeFilter::new().gtin(EqualFilter::equal_to(input.gtin.to_owned())))?
         .pop()
         .map(|r| r.barcode_row);
 

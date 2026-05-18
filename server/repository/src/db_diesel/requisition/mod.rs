@@ -32,6 +32,7 @@ pub struct RequisitionFilter {
     pub is_emergency: Option<bool>,
     pub automatically_created: Option<bool>,
     pub is_program_requisition: Option<bool>,
+    pub has_outstanding_lines: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -139,11 +140,11 @@ impl RequisitionFilter {
     }
 
     pub fn by_id(id: &str) -> RequisitionFilter {
-        RequisitionFilter::new().id(EqualFilter::equal_to(id))
+        RequisitionFilter::new().id(EqualFilter::equal_to(id.to_string()))
     }
 
     pub fn by_linked_requisition_id(id: &str) -> RequisitionFilter {
-        RequisitionFilter::new().linked_requisition_id(EqualFilter::equal_to(id))
+        RequisitionFilter::new().linked_requisition_id(EqualFilter::equal_to(id.to_string()))
     }
 
     pub fn order_type(mut self, filter: EqualFilter<String>) -> Self {
@@ -183,6 +184,11 @@ impl RequisitionFilter {
 
     pub fn is_program_requisition(mut self, filter: bool) -> Self {
         self.is_program_requisition = Some(filter);
+        self
+    }
+
+    pub fn has_outstanding_lines(mut self, filter: bool) -> Self {
+        self.has_outstanding_lines = Some(filter);
         self
     }
 }

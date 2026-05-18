@@ -18,7 +18,7 @@ type ServiceError = RequisitionLineChartError;
 #[derive(InputObject)]
 pub struct ConsumptionOptionsInput {
     /// Defaults to store preference amc_lookback_months
-    amc_lookback_months: Option<u32>,
+    amc_lookback_months: Option<f64>,
     /// Defaults to 12
     number_of_data_points: Option<u32>,
 }
@@ -94,7 +94,7 @@ pub fn chart(
 
 fn map_error(error: ServiceError) -> Result<ChartErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -115,7 +115,6 @@ impl ConsumptionOptionsInput {
         default_amc_lookback_months: f64,
         from: Option<Self>,
     ) -> ConsumptionHistoryOptions {
-        let default_amc_lookback_months = default_amc_lookback_months as u32;
         let default_number_of_datapoints = 3;
 
         from.map(
@@ -316,7 +315,7 @@ mod graphql {
             assert_eq!(
                 consumption_history,
                 ConsumptionHistoryOptions {
-                    amc_lookback_months: 20,
+                    amc_lookback_months: 20.0,
                     number_of_data_points: 3,
                 }
             );
@@ -359,7 +358,7 @@ mod graphql {
                 assert_eq!(
                     consumption_history,
                     ConsumptionHistoryOptions {
-                        amc_lookback_months: 11,
+                        amc_lookback_months: 11.0,
                         number_of_data_points: 12
                     }
                 );

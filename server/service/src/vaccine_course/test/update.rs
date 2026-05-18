@@ -30,8 +30,8 @@ mod query {
 
         // Create a vaccine course
         let vaccine_course_insert_a = InsertVaccineCourse {
-            id: "vaccine_course_id".to_owned(),
-            name: "vaccine_course_name".to_owned(),
+            id: "vaccine_course_id".to_string(),
+            name: "vaccine_course_name".to_string(),
             program_id: mock_immunisation_program_a().id.clone(),
             vaccine_items: vec![],
             doses: vec![],
@@ -39,6 +39,8 @@ mod query {
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: false,
+            store_configs: vec![],
         };
 
         let _result = service
@@ -48,25 +50,25 @@ mod query {
         // Setup some items and doses to add to the vaccine course
 
         let item1 = VaccineCourseItemInput {
-            id: "item_id".to_owned(),
+            id: "item_id".to_string(),
             item_id: mock_item_a().id,
         };
 
         let item2 = VaccineCourseItemInput {
-            id: "item_id2".to_owned(),
+            id: "item_id2".to_string(),
             item_id: mock_item_b().id,
         };
 
         let dose1 = VaccineCourseDoseInput {
-            id: "dose_id1".to_owned(),
-            label: "Dose 1".to_owned(),
+            id: "dose_id1".to_string(),
+            label: "Dose 1".to_string(),
             min_age: 12.0,
             ..Default::default()
         };
 
         let dose2 = VaccineCourseDoseInput {
-            id: "dose_id2".to_owned(),
-            label: "Dose 2".to_owned(),
+            id: "dose_id2".to_string(),
+            label: "Dose 2".to_string(),
             min_age: 18.0,
             ..Default::default()
         };
@@ -78,7 +80,7 @@ mod query {
             doses: vec![
                 dose1.clone(),
                 VaccineCourseDoseInput {
-                    id: "dose_with_lower_min_age".to_owned(),
+                    id: "dose_with_lower_min_age".to_string(),
                     min_age: 10.0,
                     ..Default::default()
                 },
@@ -94,23 +96,27 @@ mod query {
 
         let update = UpdateVaccineCourse {
             id: vaccine_course_insert_a.id.clone(),
-            name: Some("new_name".to_owned()),
+            name: Some("new_name".to_string()),
             vaccine_items: vec![item1.clone(), item2.clone()],
             doses: vec![dose1.clone(), dose2.clone()],
             demographic_id: Some(mock_demographic_a().id),
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: Some(true),
+            store_configs: vec![],
         };
 
         let result = service.update_vaccine_course(&context, update).unwrap();
         assert_eq!(result.name, "new_name");
         assert_eq!(result.demographic_id, Some(mock_demographic_a().id));
+        assert!(result.can_skip_dose);
 
         // Check there are two items for the vaccine_course
         let item_repo = VaccineCourseItemRepository::new(&context.connection);
-        let item_filter = VaccineCourseItemFilter::new()
-            .vaccine_course_id(EqualFilter::equal_to(&vaccine_course_insert_a.id));
+        let item_filter = VaccineCourseItemFilter::new().vaccine_course_id(EqualFilter::equal_to(
+            vaccine_course_insert_a.id.to_string(),
+        ));
 
         let count = item_repo.count(Some(item_filter.clone())).unwrap();
         assert_eq!(count, 2);
@@ -118,8 +124,9 @@ mod query {
         // Check there are two doses for the vaccine_course
 
         let dose_repo = VaccineCourseDoseRepository::new(&context.connection);
-        let dose_filter = VaccineCourseDoseFilter::new()
-            .vaccine_course_id(EqualFilter::equal_to(&vaccine_course_insert_a.id));
+        let dose_filter = VaccineCourseDoseFilter::new().vaccine_course_id(EqualFilter::equal_to(
+            vaccine_course_insert_a.id.to_string(),
+        ));
         let count = dose_repo.count(Some(dose_filter.clone())).unwrap();
         assert_eq!(count, 2);
 
@@ -127,13 +134,15 @@ mod query {
 
         let update = UpdateVaccineCourse {
             id: vaccine_course_insert_a.id.clone(),
-            name: Some("new_name".to_owned()),
+            name: Some("new_name".to_string()),
             vaccine_items: vec![item2],
             doses: vec![dose2],
             demographic_id: Some(mock_demographic_a().id),
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: None,
+            store_configs: vec![],
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
 
@@ -148,13 +157,15 @@ mod query {
         // 2 - Remove item_2 and dose_2 and add item_1 and dose_1
         let update = UpdateVaccineCourse {
             id: vaccine_course_insert_a.id.clone(),
-            name: Some("new_name".to_owned()),
+            name: Some("new_name".to_string()),
             vaccine_items: vec![item1.clone()],
             doses: vec![dose1.clone()],
             demographic_id: Some(mock_demographic_a().id),
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: None,
+            store_configs: vec![],
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
 
@@ -171,19 +182,21 @@ mod query {
         // 3 - Update the label for a vaccine course
 
         let dose1 = VaccineCourseDoseInput {
-            label: "Dose 1 Updated".to_owned(),
+            label: "Dose 1 Updated".to_string(),
             ..dose1
         };
 
         let update = UpdateVaccineCourse {
             id: vaccine_course_insert_a.id.clone(),
-            name: Some("new_name".to_owned()),
+            name: Some("new_name".to_string()),
             vaccine_items: vec![item1.clone()],
             doses: vec![dose1.clone()],
             demographic_id: Some(mock_demographic_a().id),
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: None,
+            store_configs: vec![],
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
 
@@ -195,13 +208,15 @@ mod query {
         // 4 - Remove all items and doses
         let update = UpdateVaccineCourse {
             id: vaccine_course_insert_a.id.clone(),
-            name: Some("new_name".to_owned()),
+            name: Some("new_name".to_string()),
             vaccine_items: vec![],
             doses: vec![],
             demographic_id: Some(mock_demographic_a().id),
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: None,
+            store_configs: vec![],
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
 
@@ -218,8 +233,8 @@ mod query {
         // insert new vaccine course
 
         let vaccine_course_insert_b = InsertVaccineCourse {
-            id: "vaccine_course_id_b".to_owned(),
-            name: "vaccine_course_name".to_owned(),
+            id: "vaccine_course_id_b".to_string(),
+            name: "vaccine_course_name".to_string(),
             program_id: mock_immunisation_program_a().id.clone(),
             vaccine_items: vec![],
             doses: vec![],
@@ -227,6 +242,8 @@ mod query {
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: false,
+            store_configs: vec![],
         };
 
         let result = service
@@ -239,13 +256,15 @@ mod query {
 
         let update = UpdateVaccineCourse {
             id: vaccine_course_insert_b.id.clone(),
-            name: Some("new_name".to_owned()),
+            name: Some("new_name".to_string()),
             vaccine_items: vec![],
             doses: vec![],
             demographic_id: Some(mock_demographic_a().id),
             coverage_rate: 100.0,
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
+            can_skip_dose: None,
+            store_configs: vec![],
         };
 
         assert_eq!(

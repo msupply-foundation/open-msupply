@@ -7,7 +7,7 @@ use crate::{
     stocktake_line::validate::{
         check_active_adjustment_reasons, check_reason_is_valid, check_stock_line_reduced_below_zero,
     },
-    validate::check_store_id_matches,
+    validate::{check_other_party, check_store_id_matches, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate,
 };
 use repository::{
@@ -149,6 +149,31 @@ pub fn validate(
         }
     }
 
+    if let Some(manufacturer_id) = &input.manufacturer_id {
+        match check_other_party(
+            connection,
+            store_id,
+            manufacturer_id,
+            CheckOtherPartyType::Manufacturer,
+        ) {
+            Ok(_) => {}
+            Err(e) => match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => {
+                    return Err(InsertStocktakeLineError::ManufacturerDoesNotExist)
+                }
+                OtherPartyErrors::OtherPartyNotVisible => {
+                    return Err(InsertStocktakeLineError::ManufacturerNotVisible)
+                }
+                OtherPartyErrors::TypeMismatched => {
+                    return Err(InsertStocktakeLineError::ManufacturerIsNotAManufacturer)
+                }
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    return Err(InsertStocktakeLineError::DatabaseError(repository_error))
+                }
+            },
+        };
+    };
+
     if let Some(campaign_id) = &input.campaign_id {
         if !check_campaign_exists(connection, campaign_id)? {
             return Err(InsertStocktakeLineError::CampaignDoesNotExist);
@@ -173,7 +198,7 @@ fn check_stocktake_line_does_not_exist(
     id: &str,
 ) -> Result<bool, RepositoryError> {
     let count = StocktakeLineRepository::new(connection).count(
-        Some(StocktakeLineFilter::new().id(EqualFilter::equal_to(id))),
+        Some(StocktakeLineFilter::new().id(EqualFilter::equal_to(id.to_string()))),
         None,
     )?;
     Ok(count == 0)
@@ -185,7 +210,7 @@ fn check_stock_line_is_unique(
     stock_line_id: &str,
 ) -> Result<bool, RepositoryError> {
     let stocktake_lines = StocktakeLineRepository::new(connection).query_by_filter(
-        StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(id)),
+        StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(id.to_string())),
         None,
     )?;
     let already_has_stock_line = stocktake_lines.iter().find(|line| {
@@ -239,7 +264,7 @@ pub fn check_item_exists_and_get_item_details(
 ) -> Result<(String, Option<String>), InsertStocktakeLineError> {
     let item = ItemRepository::new(connection)
         .query_by_filter(
-            ItemFilter::new().id(EqualFilter::equal_to(item_id)),
+            ItemFilter::new().id(EqualFilter::equal_to(item_id.to_string())),
             Some(store_id.to_string()),
         )?
         .pop()

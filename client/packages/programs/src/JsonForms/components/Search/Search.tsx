@@ -85,7 +85,7 @@ const UIComponent = (props: ControlProps) => {
 
   if (zErrors) return <Typography color="error">{zErrors}</Typography>;
 
-  const childProps = { ...props, errors: props.errors ?? zErrors };
+  const childProps = { ...props, errors: zErrors || props.errors };
 
   switch (options?.source) {
     case 'user':

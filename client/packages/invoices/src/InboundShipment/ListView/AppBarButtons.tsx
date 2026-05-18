@@ -2,93 +2,114 @@ import React, { useState } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   FnUtils,
-  DownloadIcon,
   PlusCircleIcon,
-  useNotification,
   AppBarButtonsPortal,
   ButtonWithIcon,
   Grid,
   useTranslation,
-  LoadingButton,
   ToggleState,
   useNavigate,
   RouteBuilder,
   useAuthContext,
-  useExportCSV,
+  useCallbackWithPermission,
+  useNotification,
+  usePreferences,
+  UserPermission,
+  SplitButtonOption,
+  SplitButton,
 } from '@openmsupply-client/common';
+
 import {
+  ExportSelector,
   NameRowFragment,
   SupplierSearchModal,
 } from '@openmsupply-client/system';
-import { useInbound } from '../api';
+import {
+  InboundShipmentPurchaseOrderLineFragment,
+  useInboundList,
+  useInboundShipment,
+} from '../api';
+import { useListInternalOrders } from '../api/hooks/utils';
 import { inboundsToCsv } from '../../utils';
+import { LinkPurchaseOrderModal } from './LinkPurchaseOrderModal';
 import { LinkInternalOrderModal } from './LinkInternalOrderModal';
 
 export const AppBarButtons = ({
-  invoiceModalController,
+  internalModalController,
+  externalModalController,
   linkRequestModalController,
   simplifiedTabletView,
 }: {
-  invoiceModalController: ToggleState;
+  internalModalController: ToggleState;
+  externalModalController: ToggleState;
   linkRequestModalController: ToggleState;
   simplifiedTabletView?: boolean;
 }) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { error } = useNotification();
   const { store } = useAuthContext();
+  const { error: errorNotification } = useNotification();
   const [name, setName] = useState<NameRowFragment | null>(null);
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(
+    null
+  );
 
-  const exportCsv = useExportCSV();
-  const { mutateAsync: onCreate } = useInbound.document.insert();
-  const { isLoading, fetchAsync } = useInbound.document.listAll({
-    key: 'createdDateTime',
-    direction: 'desc',
-    isDesc: true,
-  });
-  const { mutateAsync: fetchInternalOrders } =
-    useInbound.document.listInternalOrdersPromise();
+  const {
+    create: { create: onCreate },
+  } = useInboundShipment();
+  const {
+    query: { isFetching, refetch },
+  } = useInboundList();
   const manuallyLinkInternalOrder =
     store?.preferences.manuallyLinkInternalOrderToInboundShipment;
 
-  const csvExport = async () => {
-    const data = await fetchAsync();
-    if (!data || !data?.nodes.length) {
-      error(t('error.no-data'))();
-      return;
+  const { refetch: refetchInternalOrders } = useListInternalOrders(
+    selectedSupplierId || ''
+  );
+
+  const createInvoice = async (
+    nameId: string,
+    requisitionId?: string,
+    purchaseOrderId?: string,
+    insertLinesFromPurchaseOrder?: boolean
+  ) => {
+    const isExternal = !!purchaseOrderId;
+    try {
+      const invoiceId = await onCreate({
+        id: FnUtils.generateUUID(),
+        otherPartyId: nameId,
+        requisitionId,
+        purchaseOrderId,
+        insertLinesFromPurchaseOrder,
+      });
+
+      const route = isExternal
+        ? AppRoute.InboundShipmentExternal
+        : AppRoute.InboundShipment;
+      navigate(
+        RouteBuilder.create(AppRoute.Replenishment)
+          .addPart(route)
+          .addPart(invoiceId)
+          .build()
+      );
+    } catch (e) {
+      errorNotification(t('error.failed-to-create-inbound-shipment', { message: (e as Error).message }))();
     }
-
-    const csv = inboundsToCsv(data.nodes, t);
-    await exportCsv(csv, t('filename.inbounds'));
-  };
-
-  const createInvoice = async (nameId: string, requisitionId?: string) => {
-    const invoiceId = await onCreate({
-      id: FnUtils.generateUUID(),
-      otherPartyId: nameId,
-      requisitionId,
-    });
-
-    navigate(
-      RouteBuilder.create(AppRoute.Replenishment)
-        .addPart(AppRoute.InboundShipment)
-        .addPart(invoiceId)
-        .build()
-    );
   };
 
   const handleSupplierSelected = async (
     row: NameRowFragment
   ): Promise<void> => {
-    invoiceModalController.toggleOff();
+    internalModalController.toggleOff();
     if (!manuallyLinkInternalOrder) {
       createInvoice(row.id);
       return;
     }
 
-    const data = await fetchInternalOrders(row.id);
+    setSelectedSupplierId(row.id);
+    const { data } = await refetchInternalOrders();
 
-    if (data?.internalOrders.totalCount === 0) {
+    if (data?.totalCount === 0) {
       createInvoice(row.id);
     } else {
       setName(row);
@@ -96,21 +117,37 @@ export const AppBarButtons = ({
     }
   };
 
+  const handlePurchaseOrderSelected = async (
+    purchaseOrder: InboundShipmentPurchaseOrderLineFragment,
+    addLinesFromPurchaseOrder: boolean
+  ) => {
+    externalModalController.toggleOff();
+
+    createInvoice(
+      purchaseOrder.supplier?.id as string,
+      undefined,
+      purchaseOrder.id,
+      addLinesFromPurchaseOrder
+    );
+  };
+
+  const getCsvData = async () => {
+    const { data } = await refetch();
+    return data?.nodes?.length ? inboundsToCsv(data.nodes, t) : null;
+  };
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <ButtonWithIcon
-          Icon={<PlusCircleIcon />}
-          label={t('button.new-shipment')}
-          onClick={invoiceModalController.toggleOn}
+        <AddButton
+          onNewShipment={internalModalController.toggleOn}
+          onNewShipmentExternal={externalModalController.toggleOn}
         />
         {!simplifiedTabletView && (
-          <LoadingButton
-            startIcon={<DownloadIcon />}
-            variant="outlined"
-            onClick={csvExport}
-            isLoading={isLoading}
-            label={t('button.export')}
+          <ExportSelector
+            getCsvData={getCsvData}
+            filename={t('filename.inbounds')}
+            isLoading={isFetching}
           />
         )}
       </Grid>
@@ -129,10 +166,93 @@ export const AppBarButtons = ({
         name={name}
       />
       <SupplierSearchModal
-        open={invoiceModalController.isOn}
-        onClose={invoiceModalController.toggleOff}
+        open={internalModalController.isOn}
+        onClose={internalModalController.toggleOff}
         onChange={handleSupplierSelected}
       />
+      <LinkPurchaseOrderModal
+        isOpen={externalModalController.isOn}
+        onClose={externalModalController.toggleOff}
+        handlePurchaseOrderSelected={handlePurchaseOrderSelected}
+      />
     </AppBarButtonsPortal>
+  );
+};
+
+export const AddButton = ({
+  onNewShipment,
+  onNewShipmentExternal,
+}: {
+  onNewShipment: () => void;
+  onNewShipmentExternal: () => void;
+}) => {
+  const t = useTranslation();
+  const { useProcurementFunctionality } = usePreferences();
+
+  const handleNewShipment = useCallbackWithPermission(
+    UserPermission.InboundShipmentMutate,
+    onNewShipment
+  );
+
+  const handleNewShipmentExternal = useCallbackWithPermission(
+    UserPermission.InboundShipmentExternalMutate,
+    onNewShipmentExternal
+  );
+
+  const allOptions: SplitButtonOption<string>[] = [
+    {
+      value: 'new-shipment',
+      label: t('button.new-shipment'),
+    },
+    ...(useProcurementFunctionality
+      ? [
+          {
+            value: 'new-external-shipment',
+            label: t('button.new-external-shipment'),
+          },
+        ]
+      : []),
+  ];
+
+  const [selectedOption, setSelectedOption] = useState<
+    SplitButtonOption<string>
+  >(allOptions[0] ?? { value: '', label: '' });
+
+  const handleOptionSelection = (option: SplitButtonOption<string>) => {
+    switch (option.value) {
+      case 'new-shipment':
+        handleNewShipment();
+        break;
+      case 'new-external-shipment':
+        handleNewShipmentExternal();
+        break;
+    }
+  };
+
+  const onSelectOption = (option: SplitButtonOption<string>) => {
+    setSelectedOption(option);
+    handleOptionSelection(option);
+  };
+
+  if (allOptions.length === 1) {
+    return (
+      <ButtonWithIcon
+        Icon={<PlusCircleIcon />}
+        label={t('button.new-shipment')}
+        onClick={handleNewShipment}
+      />
+    );
+  }
+
+  return (
+    <SplitButton
+      color="primary"
+      options={allOptions}
+      selectedOption={selectedOption}
+      onSelectOption={onSelectOption}
+      onClick={handleOptionSelection}
+      openFrom="bottom"
+      Icon={<PlusCircleIcon />}
+    />
   );
 };

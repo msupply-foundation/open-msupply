@@ -1,31 +1,34 @@
 use std::any::Any;
 
 use crate::db_diesel::{
-    item_link_row::item_link, name_link_row::name_link, period::period_row::period,
+    item_link_row::item_link, name_row::name, period::period_row::period,
     program_requisition::program_row::program, store_row::store, user_row::user_account,
+    StorageConnection,
 };
+use crate::diesel_macros::define_linked_tables;
 use crate::repository_error::RepositoryError;
-use crate::StorageConnection;
 
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{Delete, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
-use diesel::dsl::max;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-
-table! {
-    requisition (id) {
-        id -> Text,
+define_linked_tables! {
+    view: requisition = "requisition_view",
+    core: requisition_with_links = "requisition",
+    struct: RequisitionRow,
+    repo: RequisitionRowRepository,
+    shared: {
         requisition_number -> Bigint,
-        name_link_id -> Text,
         store_id -> Text,
         user_id -> Nullable<Text>,
-        #[sql_name = "type"] type_ -> crate::db_diesel::requisition::requisition_row::RequisitionTypeMapping,
-        #[sql_name = "status"] status -> crate::db_diesel::requisition::requisition_row::RequisitionStatusMapping,
+        #[sql_name = "type"]
+        type_ -> crate::db_diesel::requisition::requisition_row::RequisitionTypeMapping,
+        #[sql_name = "status"]
+        status -> crate::db_diesel::requisition::requisition_row::RequisitionStatusMapping,
         created_datetime -> Timestamp,
         sent_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
@@ -41,27 +44,38 @@ table! {
         period_id -> Nullable<Text>,
         order_type -> Nullable<Text>,
         is_emergency -> Bool,
+        created_from_requisition_id -> Nullable<Text>,
+    },
+    links: {
+        name_link_id -> name_id,
+    },
+    optional_links: {
+        destination_customer_link_id -> destination_customer_id,
     }
+
 }
 
-joinable!(requisition -> name_link (name_link_id));
+joinable!(requisition -> name (name_id));
 joinable!(requisition -> store (store_id));
 joinable!(requisition -> user_account (user_id));
 joinable!(requisition -> period (period_id));
 joinable!(requisition -> program (program_id));
-allow_tables_to_appear_in_same_query!(requisition, name_link);
 allow_tables_to_appear_in_same_query!(requisition, item_link);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum RequisitionType {
+    #[default]
     Request,
     Response,
+    Imprest,
+    StockHistory,
 }
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum RequisitionStatus {
+    #[default]
     Draft,
     New,
     Sent,
@@ -81,14 +95,13 @@ pub enum ApprovalStatusType {
 }
 
 #[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, TS, Serialize, Deserialize,
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, TS, Serialize, Deserialize, Default,
 )]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = requisition)]
 pub struct RequisitionRow {
     pub id: String,
     pub requisition_number: i64,
-    pub name_link_id: String,
     pub store_id: String,
     pub user_id: Option<String>,
     #[diesel(column_name = type_)]
@@ -109,36 +122,10 @@ pub struct RequisitionRow {
     pub period_id: Option<String>,
     pub order_type: Option<String>,
     pub is_emergency: bool,
-}
-
-impl Default for RequisitionRow {
-    fn default() -> Self {
-        Self {
-            r#type: RequisitionType::Request,
-            status: RequisitionStatus::Draft,
-            created_datetime: Default::default(),
-            // Defaults
-            id: Default::default(),
-            user_id: Default::default(),
-            requisition_number: Default::default(),
-            name_link_id: Default::default(),
-            store_id: Default::default(),
-            sent_datetime: Default::default(),
-            finalised_datetime: Default::default(),
-            expected_delivery_date: Default::default(),
-            colour: Default::default(),
-            comment: Default::default(),
-            their_reference: Default::default(),
-            max_months_of_stock: Default::default(),
-            min_months_of_stock: Default::default(),
-            approval_status: Default::default(),
-            linked_requisition_id: Default::default(),
-            program_id: None,
-            period_id: None,
-            order_type: None,
-            is_emergency: false,
-        }
-    }
+    pub created_from_requisition_id: Option<String>, // for Internal Orders created from a Requisition
+    // Resolved from name_link - must be last to match view column order
+    pub name_id: String,
+    pub destination_customer_id: Option<String>,
 }
 
 pub struct RequisitionRowRepository<'a> {
@@ -151,12 +138,7 @@ impl<'a> RequisitionRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &RequisitionRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(requisition::table)
-            .values(row)
-            .on_conflict(requisition::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         self.insert_changelog(row, RowActionType::Upsert)
     }
 
@@ -170,7 +152,7 @@ impl<'a> RequisitionRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
-            name_link_id: Some(row.name_link_id.clone()),
+            name_id: Some(row.name_id.clone()),
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
@@ -185,8 +167,10 @@ impl<'a> RequisitionRowRepository<'a> {
 
         let change_log_id = self.insert_changelog(&requisition, RowActionType::Delete)?;
 
-        diesel::delete(requisition::table.filter(requisition::id.eq(requisition_id)))
-            .execute(self.connection.lock().connection())?;
+        diesel::delete(
+            requisition_with_links::table.filter(requisition_with_links::id.eq(requisition_id)),
+        )
+        .execute(self.connection.lock().connection())?;
 
         Ok(Some(change_log_id))
     }
@@ -210,7 +194,7 @@ impl<'a> RequisitionRowRepository<'a> {
                     .eq(r#type)
                     .and(requisition::store_id.eq(store_id)),
             )
-            .select(max(requisition::requisition_number))
+            .select(diesel::dsl::max(requisition::requisition_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
     }
@@ -295,12 +279,12 @@ mod test {
             assert_eq!(result.approval_status, row.approval_status);
         }
 
-        assert_eq!(ApprovalStatusType::Approved.is_approved(), true);
-        assert_eq!(ApprovalStatusType::ApprovedByAnother.is_approved(), true);
-        assert_eq!(ApprovalStatusType::AutoApproved.is_approved(), true);
-        assert_eq!(ApprovalStatusType::Denied.is_approved(), false);
-        assert_eq!(ApprovalStatusType::DeniedByAnother.is_approved(), false);
-        assert_eq!(ApprovalStatusType::Pending.is_approved(), false);
-        assert_eq!(ApprovalStatusType::None.is_approved(), false);
+        assert!(ApprovalStatusType::Approved.is_approved());
+        assert!(ApprovalStatusType::ApprovedByAnother.is_approved());
+        assert!(ApprovalStatusType::AutoApproved.is_approved());
+        assert!(!ApprovalStatusType::Denied.is_approved());
+        assert!(!ApprovalStatusType::DeniedByAnother.is_approved());
+        assert!(!ApprovalStatusType::Pending.is_approved());
+        assert!(!ApprovalStatusType::None.is_approved());
     }
 }

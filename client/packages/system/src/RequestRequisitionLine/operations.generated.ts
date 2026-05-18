@@ -3,7 +3,20 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 import { ReasonOptionRowFragmentDoc } from '../ReasonOption/api/operations.generated';
+import { SyncFileReferenceFragmentDoc } from '../Documents/types.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
+export type ItemWithAvailableStockFragment = {
+  __typename: 'ItemNode';
+  id: string;
+  name: string;
+  code: string;
+  unitName?: string | null;
+  defaultPackSize: number;
+  isVaccine: boolean;
+  doses: number;
+  availableStockOnHand: number;
+};
+
 export type ItemWithStatsFragment = {
   __typename: 'ItemNode';
   id: string;
@@ -41,6 +54,10 @@ export type RequestLineFragment = {
   additionInUnits: number;
   expiringUnits: number;
   daysOutOfStock: number;
+  pricePerUnit?: number | null;
+  forecastTotalUnits?: number | null;
+  forecastTotalDoses?: number | null;
+  vaccineCourses?: string | null;
   itemStats: {
     __typename: 'ItemStatsNode';
     availableStockOnHand: number;
@@ -62,16 +79,13 @@ export type RequestLineFragment = {
     isVaccine: boolean;
     doses: number;
     availableStockOnHand: number;
-    stats: {
-      __typename: 'ItemStatsNode';
-      averageMonthlyConsumption: number;
-      availableStockOnHand: number;
-      availableMonthsOfStockOnHand?: number | null;
-      totalConsumption: number;
-      stockOnHand: number;
-      monthsOfStockOnHand?: number | null;
-    };
   };
+  ancillaryParents: Array<{
+    __typename: 'ItemNode';
+    id: string;
+    name: string;
+    code: string;
+  }>;
   reason?: {
     __typename: 'ReasonOptionNode';
     id: string;
@@ -101,6 +115,47 @@ export type RequestFragment = {
   programName?: string | null;
   orderType?: string | null;
   isEmergency: boolean;
+  ancillaryState: {
+    __typename: 'AncillaryStateResponse';
+    state: Types.AncillaryStateNode;
+    count: number;
+    toAdd: Array<{
+      __typename: 'AncillaryDeltaNode';
+      itemId: string;
+      requiredQuantity: number;
+      currentQuantity?: number | null;
+      item: {
+        __typename: 'ItemNode';
+        id: string;
+        name: string;
+        code: string;
+        unitName?: string | null;
+      };
+    }>;
+    toUpdate: Array<{
+      __typename: 'AncillaryDeltaNode';
+      itemId: string;
+      requiredQuantity: number;
+      currentQuantity?: number | null;
+      item: {
+        __typename: 'ItemNode';
+        id: string;
+        name: string;
+        code: string;
+        unitName?: string | null;
+      };
+    }>;
+  };
+  documents: {
+    __typename: 'SyncFileReferenceConnector';
+    nodes: Array<{
+      __typename: 'SyncFileReferenceNode';
+      id: string;
+      fileName: string;
+      recordId: string;
+      createdDatetime: string;
+    }>;
+  };
   user?: {
     __typename: 'UserNode';
     username: string;
@@ -125,6 +180,10 @@ export type RequestFragment = {
       additionInUnits: number;
       expiringUnits: number;
       daysOutOfStock: number;
+      pricePerUnit?: number | null;
+      forecastTotalUnits?: number | null;
+      forecastTotalDoses?: number | null;
+      vaccineCourses?: string | null;
       itemStats: {
         __typename: 'ItemStatsNode';
         availableStockOnHand: number;
@@ -146,16 +205,13 @@ export type RequestFragment = {
         isVaccine: boolean;
         doses: number;
         availableStockOnHand: number;
-        stats: {
-          __typename: 'ItemStatsNode';
-          averageMonthlyConsumption: number;
-          availableStockOnHand: number;
-          availableMonthsOfStockOnHand?: number | null;
-          totalConsumption: number;
-          stockOnHand: number;
-          monthsOfStockOnHand?: number | null;
-        };
       };
+      ancillaryParents: Array<{
+        __typename: 'ItemNode';
+        id: string;
+        name: string;
+        code: string;
+      }>;
       reason?: {
         __typename: 'ReasonOptionNode';
         id: string;
@@ -185,8 +241,19 @@ export type RequestFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
+    margin?: number | null;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   };
+  destinationCustomer?: {
+    __typename: 'NameNode';
+    id: string;
+    code: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  } | null;
   linkedRequisition?: {
     __typename: 'RequisitionNode';
     approvalStatus: Types.RequisitionNodeApprovalStatus;
@@ -197,6 +264,13 @@ export type RequestFragment = {
     name: string;
     startDate: string;
     endDate: string;
+  } | null;
+  createdFromRequisition?: {
+    __typename: 'RequisitionNode';
+    id: string;
+    requisitionNumber: number;
+    createdDatetime: string;
+    user?: { __typename: 'UserNode'; username: string } | null;
   } | null;
 };
 
@@ -209,8 +283,8 @@ export type OnlyHereToAvoidUnusedWarningsQuery = {
   me: { __typename: 'UserNode' };
 };
 
-export const ItemWithStatsFragmentDoc = gql`
-  fragment ItemWithStats on ItemNode {
+export const ItemWithAvailableStockFragmentDoc = gql`
+  fragment ItemWithAvailableStock on ItemNode {
     id
     name
     code
@@ -219,6 +293,11 @@ export const ItemWithStatsFragmentDoc = gql`
     isVaccine
     doses
     availableStockOnHand(storeId: $storeId)
+  }
+`;
+export const ItemWithStatsFragmentDoc = gql`
+  fragment ItemWithStats on ItemNode {
+    ...ItemWithAvailableStock
     stats(storeId: $storeId) {
       averageMonthlyConsumption
       availableStockOnHand
@@ -227,8 +306,8 @@ export const ItemWithStatsFragmentDoc = gql`
       stockOnHand
       monthsOfStockOnHand
     }
-    isVaccine
   }
+  ${ItemWithAvailableStockFragmentDoc}
 `;
 export const RequestLineFragmentDoc = gql`
   fragment RequestLine on RequisitionLineNode {
@@ -246,6 +325,7 @@ export const RequestLineFragmentDoc = gql`
     additionInUnits
     expiringUnits
     daysOutOfStock
+    pricePerUnit
     itemStats {
       __typename
       availableStockOnHand
@@ -257,13 +337,21 @@ export const RequestLineFragmentDoc = gql`
       approvalComment
     }
     item {
-      ...ItemWithStats
+      ...ItemWithAvailableStock
+    }
+    ancillaryParents {
+      id
+      name
+      code
     }
     reason {
       ...ReasonOptionRow
     }
+    forecastTotalUnits
+    forecastTotalDoses
+    vaccineCourses
   }
-  ${ItemWithStatsFragmentDoc}
+  ${ItemWithAvailableStockFragmentDoc}
   ${ReasonOptionRowFragmentDoc}
 `;
 export const RequestFragmentDoc = gql`
@@ -275,6 +363,32 @@ export const RequestFragmentDoc = gql`
     createdDatetime
     sentDatetime
     finalisedDatetime
+    ancillaryState {
+      state
+      count
+      toAdd {
+        itemId
+        requiredQuantity
+        currentQuantity
+        item {
+          id
+          name
+          code
+          unitName
+        }
+      }
+      toUpdate {
+        itemId
+        requiredQuantity
+        currentQuantity
+        item {
+          id
+          name
+          code
+          unitName
+        }
+      }
+    }
     requisitionNumber
     colour
     theirReference
@@ -284,6 +398,12 @@ export const RequestFragmentDoc = gql`
     maxMonthsOfStock
     minMonthsOfStock
     approvalStatus
+    documents {
+      __typename
+      nodes {
+        ...SyncFileReference
+      }
+    }
     user {
       __typename
       username
@@ -320,6 +440,19 @@ export const RequestFragmentDoc = gql`
       isSupplier
       isOnHold
       name
+      margin
+      store {
+        id
+        code
+      }
+    }
+    destinationCustomer(storeId: $storeId) {
+      id
+      code
+      isCustomer
+      isSupplier
+      isOnHold
+      name
       store {
         id
         code
@@ -337,7 +470,17 @@ export const RequestFragmentDoc = gql`
     }
     orderType
     isEmergency
+    createdFromRequisition {
+      id
+      requisitionNumber
+      createdDatetime
+      user {
+        __typename
+        username
+      }
+    }
   }
+  ${SyncFileReferenceFragmentDoc}
   ${RequestLineFragmentDoc}
 `;
 export const OnlyHereToAvoidUnusedWarningsDocument = gql`
@@ -369,15 +512,17 @@ export function getSdk(
   return {
     OnlyHereToAvoidUnusedWarnings(
       variables?: OnlyHereToAvoidUnusedWarningsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<OnlyHereToAvoidUnusedWarningsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<OnlyHereToAvoidUnusedWarningsQuery>(
-            OnlyHereToAvoidUnusedWarningsDocument,
+          client.request<OnlyHereToAvoidUnusedWarningsQuery>({
+            document: OnlyHereToAvoidUnusedWarningsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'OnlyHereToAvoidUnusedWarnings',
         'query',
         variables

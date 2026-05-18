@@ -19,5 +19,5 @@ pub fn run_command_with_error(command: &mut Command) -> Result<(), CommandError>
     if status.success() {
         return Ok(());
     }
-    return Err(CommandError::StatusNotOk(status));
+    Err(CommandError::StatusNotOk(status))
 }

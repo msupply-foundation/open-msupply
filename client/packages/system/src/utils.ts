@@ -1,4 +1,4 @@
-import { LocaleKey, TypedTFunction } from '@common/intl';
+import { DateUtils, LocaleKey, TypedTFunction } from '@common/intl';
 import { Formatter } from '@common/utils';
 import { AssetPropertyFragment, MasterListRowFragment } from '.';
 import { LocationRowFragment } from './Location/api';
@@ -10,16 +10,20 @@ export const locationsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.code'),
     t('label.name'),
+    t('label.location-type'),
+    t('label.volume'),
+    t('label.volume-used'),
     t('label.on-hold'),
   ];
 
   const data = invoices.map(node => [
-    node.id,
     node.code,
     node.name,
+    node.locationType?.name,
+    node.volume,
+    node.volumeUsed,
     node.onHold,
   ]);
   return Formatter.csv({ fields, data });
@@ -51,7 +55,6 @@ export const stockLinesToCsv = (
   manageVvmStatusForStock: boolean
 ) => {
   const fields: string[] = [
-    'id',
     t('label.code'),
     t('label.name'),
     t('label.batch'),
@@ -62,11 +65,11 @@ export const stockLinesToCsv = (
     t('label.pack-size'),
     t('label.num-packs'),
     t('label.available-in-packs'),
+    t('label.pack-cost-price'),
     t('label.supplier'),
   ];
 
   const data = stockLines.map(node => [
-    node.id,
     node.item.code,
     node.item.name,
     node.batch,
@@ -77,6 +80,7 @@ export const stockLinesToCsv = (
     node.packSize,
     node.totalNumberOfPacks,
     node.availableNumberOfPacks,
+    node.costPricePerPack,
     node.supplierName,
   ]);
   return Formatter.csv({ fields, data });
@@ -88,7 +92,7 @@ interface ParsedRow {
 }
 
 export const processProperties = <
-  T extends { properties: Record<string, string> },
+  T extends { properties: Record<string, string | number> },
 >(
   properties: AssetPropertyFragment[] | PropertyNode[],
   row: ParsedRow,
@@ -121,13 +125,34 @@ export const processProperties = <
               })
             );
           }
-          importRow.properties[property.key] = value;
+          importRow.properties[property.key] = Number(value);
           break;
         case 'BOOLEAN':
           const isTrue =
             value.toLowerCase() === 'true' || value.toLowerCase() === 'yes';
           importRow.properties[property.key] = isTrue ? 'true' : 'false';
           break;
+        case 'DATE': {
+          // CSV template documents date columns as DD/MM/YYYY; reject anything
+          // else so we don't silently push unparseable strings into properties
+          // (the server stores YYYY-MM-DD and would lose the value otherwise).
+          const hasFourDigitYear = value.split('/')[2]?.length === 4;
+          const parsed = hasFourDigitYear
+            ? DateUtils.getDateOrNull(value, 'dd/MM/yyyy')
+            : null;
+          const normalised = parsed ? Formatter.naiveDate(parsed) : null;
+          if (!normalised) {
+            rowErrors.push(
+              t('error.invalid-field-value', {
+                field: property.name,
+                value: value,
+              })
+            );
+            break;
+          }
+          importRow.properties[property.key] = normalised;
+          break;
+        }
         default:
           importRow.properties[property.key] = value;
       }
@@ -135,24 +160,27 @@ export const processProperties = <
   });
 };
 
-export const getInvoiceLocalisationKey = (type: InvoiceNodeType): LocaleKey => {
+export const getInvoiceLocalisationKey = (
+  type: InvoiceNodeType,
+  isFilter = false
+): LocaleKey => {
   switch (type) {
     case InvoiceNodeType.InboundShipment:
-      return 'inbound-shipment';
+      return isFilter ? 'inbound-shipment' : 'label.inbound-shipment';
     case InvoiceNodeType.OutboundShipment:
-      return 'outbound-shipment';
+      return isFilter ? 'outbound-shipment' : 'label.outbound-shipment';
     case InvoiceNodeType.CustomerReturn:
-      return 'customer-return';
+      return isFilter ? 'customer-returns' : 'label.customer-return';
     case InvoiceNodeType.SupplierReturn:
-      return 'supplier-return';
+      return isFilter ? 'supplier-returns' : 'label.supplier-return';
     case InvoiceNodeType.Prescription:
-      return 'prescription';
+      return isFilter ? 'prescriptions' : 'label.prescription';
     case InvoiceNodeType.InventoryAddition:
-      return 'inventory-addition';
+      return isFilter ? 'inventory-additions' : 'label.inventory-addition';
     case InvoiceNodeType.InventoryReduction:
-      return 'inventory-reduction';
+      return isFilter ? 'inventory-reductions' : 'label.inventory-reduction';
     case InvoiceNodeType.Repack:
-      return 'label.repack';
+      return isFilter ? 'label.repacks' : 'label.repack';
   }
 };
 

@@ -19,7 +19,7 @@ export const useUpdateUserInfo = (
   const t = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const { data: lastSuccessfulSync } = useLastSuccessfulUserSync();
-  const { mutateAsync: updateUser, isLoading } = useUpdateUser();
+  const { mutateAsync: updateUser, isPending: isLoading } = useUpdateUser();
   const getUserPermissions = useGetUserPermissions();
   const { mutateAsync: getUserDetails } = useGetUserDetails();
 
@@ -45,9 +45,11 @@ export const useUpdateUserInfo = (
             store,
             token: cookie?.token ?? '',
             user: {
-              id: cookie?.user?.id ?? '',
+              id: userDetails?.userId ?? '',
               name: cookie?.user?.name ?? '',
               permissions,
+              email: userDetails?.email,
+              jobTitle: userDetails?.jobTitle,
             },
           };
           setCookie(authCookie);

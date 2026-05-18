@@ -2,12 +2,14 @@ use crate::{Delete, Upsert};
 
 use super::{
     clinician_link_row::clinician_link, item_link_row::item_link, item_row::item::dsl::*,
-    location_type_row::location_type, name_link_row::name_link, unit_row::unit, ItemLinkRow,
+    location_type_row::location_type, unit_row::unit, ItemLinkRow,
     ItemLinkRowRepository, RepositoryError, StorageConnection,
 };
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 table! {
     item (id) {
@@ -25,6 +27,8 @@ table! {
         is_vaccine -> Bool,
         vaccine_doses -> Integer,
         restricted_location_type_id ->  Nullable<Text>,
+        volume_per_pack -> Double,
+        universal_code -> Nullable<Text>,
     }
 }
 
@@ -38,11 +42,10 @@ table! {
 joinable!(item -> unit (unit_id));
 joinable!(item_is_visible -> item (id));
 allow_tables_to_appear_in_same_query!(item, item_link);
-allow_tables_to_appear_in_same_query!(item, name_link);
 allow_tables_to_appear_in_same_query!(item, clinician_link);
 allow_tables_to_appear_in_same_query!(item, location_type);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Deserialize, Serialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ItemType {
     Stock,
@@ -79,6 +82,8 @@ pub struct ItemRow {
     pub is_vaccine: bool,
     pub vaccine_doses: i32,
     pub restricted_location_type_id: Option<String>,
+    pub volume_per_pack: f64,
+    pub universal_code: Option<String>,
 }
 
 impl Default for ItemRow {
@@ -97,6 +102,8 @@ impl Default for ItemRow {
             ven_category: VENCategory::NotAssigned,
             vaccine_doses: 0,
             restricted_location_type_id: None,
+            volume_per_pack: 0.0,
+            universal_code: None,
         }
     }
 }

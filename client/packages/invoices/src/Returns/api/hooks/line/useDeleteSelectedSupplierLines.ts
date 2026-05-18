@@ -1,10 +1,8 @@
 import {
-  useTableStore,
   useTranslation,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { useReturns } from '../..';
-import { useSupplierReturnRows } from './useSupplierReturnRows';
+import { SupplierReturnLineFragment, useReturns } from '../..';
 import { useSupplierReturnIsDisabled } from '../utils/useSupplierReturnIsDisabled';
 
 interface DeleteSelectedSupplierLinesOutput {
@@ -12,42 +10,32 @@ interface DeleteSelectedSupplierLinesOutput {
   selectedIds: string[];
 }
 
-interface DeleteSelectedSupplierLines {
-  returnId: string;
-}
-
 export const useDeleteSelectedSupplierReturnLines = ({
   returnId,
-}: DeleteSelectedSupplierLines): DeleteSelectedSupplierLinesOutput => {
-  const { items, lines } = useSupplierReturnRows();
+  selectedRows,
+  resetRowSelection,
+}: {
+  returnId: string;
+  selectedRows: SupplierReturnLineFragment[];
+  resetRowSelection: () => void;
+}): DeleteSelectedSupplierLinesOutput => {
   const isDisabled = useSupplierReturnIsDisabled();
   const t = useTranslation();
 
   const { mutateAsync: updateLines } = useReturns.lines.updateSupplierLines();
 
-  const selectedRows =
-    useTableStore(state => {
-      const { isGrouped } = state;
-
-      return isGrouped
-        ? items
-            ?.filter(({ id }) => state.rowState[id]?.isSelected)
-            .map(({ lines }) => lines.flat())
-            .flat()
-        : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
-    })?.map(({ id }) => ({
-      id,
-      stockLineId: '',
-      numberOfPacksToReturn: 0,
-    })) || [];
-
   const onDelete = async () => {
     await updateLines({
       supplierReturnId: returnId,
-      supplierReturnLines: selectedRows,
+      supplierReturnLines: selectedRows.map(({ id }) => ({
+        id,
+        stockLineId: '',
+        numberOfPacksToReturn: 0,
+      })),
     }).catch(err => {
       throw err;
     });
+    resetRowSelection();
   };
 
   const confirmAndDelete = useDeleteConfirmation({

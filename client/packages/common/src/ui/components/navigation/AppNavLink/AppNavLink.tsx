@@ -11,19 +11,19 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useMatch, Link } from 'react-router-dom';
-import { useDrawer, useIsGapsStoreOnly } from '@common/hooks';
+import { useDrawer, useIsExtraSmallScreen } from '@common/hooks';
 import { ChevronDownIcon } from '@common/icons';
 
 const useSelectedNavMenuItem = (
   to: string,
-  end: boolean,
+  isParent: boolean,
   isOpen: boolean
 ): boolean => {
   // This nav menu item should be selected when lower level elements
   // are selected. For example, the route /outbound-shipment/{id} should
   // highlight the nav menu item for outbound-shipments.
   // If the drawer is closed, highlight the higher level elements.
-  const highlightLowerLevels = isOpen ? !end || to.endsWith('*') : false;
+  const highlightLowerLevels = isOpen ? isParent || to.endsWith('*') : false;
   // If we need to highlight the higher levels append a wildcard to the match path.
   // Note: remove the search query to enable a match
   const path = highlightLowerLevels ? to : `${to.split('?')[0]}/*`;
@@ -66,9 +66,8 @@ const StyledListItem = styled<
 
 export interface AppNavLinkProps {
   badgeProps?: BadgeProps;
-  end?: boolean; // denotes lowest level menu item, using terminology from useMatch
+  isParent?: boolean; // indicates that this is a parent nav item, which should be highlighted when any of its children are active
   icon?: JSX.Element;
-  inactive?: boolean;
   text?: string;
   to: string;
   visible?: boolean;
@@ -78,8 +77,7 @@ export interface AppNavLinkProps {
 export const AppNavLink: FC<AppNavLinkProps> = props => {
   const {
     badgeProps,
-    end,
-    inactive,
+    isParent = false,
     icon = <span style={{ width: 2 }} />,
     text,
     to,
@@ -88,16 +86,16 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   } = props;
   const drawer = useDrawer();
 
-  const selected = useSelectedNavMenuItem(to, !!end, drawer.isOpen);
+  const selected = useSelectedNavMenuItem(to, isParent, drawer.isOpen);
   const match = useMatch({ path: `${to}/*` });
-  const isGapsStore = useIsGapsStoreOnly();
-  const isSelectedParentItem = inactive && !!match;
-  const showMenuSectionIcon = inactive && drawer.isOpen;
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+  const isSelectedParentItem = isParent && !!match;
+  const showMenuSectionIcon = isParent && drawer.isOpen;
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     // reset the clicked nav path when navigating
     // otherwise the child menu remains open
     drawer.setClickedNavPath(undefined);
-    if (isGapsStore) drawer.close();
+    if (isExtraSmallScreen) drawer.close();
     if (onClick) onClick(e);
     drawer.onClick();
   };
@@ -105,7 +103,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   const CustomLink = React.useMemo(
     () =>
       React.forwardRef<HTMLAnchorElement>((linkProps, ref) =>
-        !end && !!inactive ? (
+        isParent ? (
           <span
             {...linkProps}
             onClick={() => drawer.onExpand(to)}
@@ -159,7 +157,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
           />
         )}
         <Box className="navLinkText">
-          {!end && <Box width={4} />}
+          {isParent && <Box width={4} />}
           {!showMenuSectionIcon && <Box width={4} />}
           <Badge
             {...badgeProps}

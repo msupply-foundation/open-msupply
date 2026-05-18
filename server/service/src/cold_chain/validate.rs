@@ -9,7 +9,7 @@ pub fn check_temperature_log_does_not_exist(
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
     let temperature_logs = TemperatureLogRepository::new(connection)
-        .query_by_filter(TemperatureLogFilter::new().id(EqualFilter::equal_to(id)))?;
+        .query_by_filter(TemperatureLogFilter::new().id(EqualFilter::equal_to(id.to_string())))?;
 
     Ok(temperature_logs.is_empty())
 }
@@ -25,8 +25,9 @@ pub fn check_temperature_breach_does_not_exist(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
-    let temperature_breaches = TemperatureBreachRepository::new(connection)
-        .query_by_filter(TemperatureBreachFilter::new().id(EqualFilter::equal_to(id)))?;
+    let temperature_breaches = TemperatureBreachRepository::new(connection).query_by_filter(
+        TemperatureBreachFilter::new().id(EqualFilter::equal_to(id.to_string())),
+    )?;
 
     Ok(temperature_breaches.is_empty())
 }

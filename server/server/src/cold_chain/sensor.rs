@@ -38,7 +38,7 @@ pub async fn put_sensors(
     let store_id = match validate_request(request, &service_provider, &auth_data) {
         Ok((_user, store_id)) => store_id,
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             return HttpResponse::Unauthorized().body(formatted_error);
         }
     };
@@ -47,21 +47,20 @@ pub async fn put_sensors(
         Ok(_) => {}
         Err(error) => {
             return HttpResponse::BadRequest().body(format!(
-                "The following sensors failed validation: \n{}",
-                error
+                "The following sensors failed validation: \n{error}"
             ))
         }
     };
 
     let results = match upsert_sensors(service_provider, store_id, sensors).await {
         Ok(response) => response,
-        Err(error) => return HttpResponse::InternalServerError().body(format!("{:#?}", error)),
+        Err(error) => return HttpResponse::InternalServerError().body(format!("{error:#?}")),
     };
 
     for result in &results {
         if let Err(e) = result {
-            error!("Error upserting sensors {:#?}", e);
-            return HttpResponse::InternalServerError().body(format!("{:#?}", e));
+            error!("Error upserting sensors {e:#?}");
+            return HttpResponse::InternalServerError().body(format!("{e:#?}"));
         }
     }
 
@@ -131,7 +130,7 @@ async fn upsert_sensors(
         .iter()
         .map(|sensor| {
             upsert_sensor(&service_provider, &ctx, sensor.clone()).map_err(|e| {
-                error!("{:#?} {:?}", e, sensor);
+                error!("{e:#?} {sensor:?}");
                 e.to_string()
             })
         })

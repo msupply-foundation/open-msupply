@@ -10,6 +10,8 @@ import {
   usePreferences,
   MaterialTable,
   useSimpleMaterialTable,
+  DateUtils,
+  useShallow,
 } from '@openmsupply-client/common';
 import { useOutboundLineEditColumns } from './columns';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
@@ -43,32 +45,54 @@ export const OutboundLineEditTable = ({
     item,
     manualAllocate,
     setVvmStatus,
-  } = useAllocationContext(state => {
-    const { placeholderUnits, item, allocateIn } = state;
+  } = useAllocationContext(
+    useShallow(state => {
+      const { placeholderUnits, item, allocateIn } = state;
 
-    const inDoses = allocateIn.type === AllocateInType.Doses;
-    return {
-      ...state,
-      // In packs & units: we show totals in units
-      // In doses: we show totals in doses
-      allocatedQuantity: getAllocatedQuantity({
+      const inDoses = allocateIn.type === AllocateInType.Doses;
+      return {
         draftLines: state.draftLines,
-        allocateIn: inDoses ? allocateIn : { type: AllocateInType.Units },
-      }),
-      placeholderQuantity:
-        placeholderUnits !== null && inDoses
-          ? (placeholderUnits ?? 0) * (item?.doses || 1)
-          : placeholderUnits,
-    };
-  });
+        nonAllocatableLines: state.nonAllocatableLines,
+        allocateIn,
+        item,
+        manualAllocate: state.manualAllocate,
+        setVvmStatus: state.setVvmStatus,
+        // In packs & units: we show totals in units
+        // In doses: we show totals in doses
+        allocatedQuantity: getAllocatedQuantity({
+          draftLines: state.draftLines,
+          allocateIn: inDoses ? allocateIn : { type: AllocateInType.Units },
+        }),
+        placeholderQuantity:
+          placeholderUnits !== null && inDoses
+            ? (placeholderUnits ?? 0) * (item?.doses || 1)
+            : placeholderUnits,
+      };
+    })
+  );
 
   const getIsDisabled = useCallback(
     (row: DraftStockOutLineFragment) => {
       if (nonAllocatableLines.some(line => line.id === row.id)) return true;
 
-      // For Outbound Shipments, we also don't allow allocating bad VVM status stock
-      if (prefs.manageVvmStatusForStock && item?.isVaccine)
-        return !!row.vvmStatus?.unusable;
+      // For Outbound Shipments, we also don't allow allocating bad VVM status
+      // stock
+      if (
+        prefs.manageVvmStatusForStock &&
+        item?.isVaccine &&
+        !!row.vvmStatus?.unusable
+      )
+        return true;
+
+      // Prevent issuing expired stock if preference is set, up to threshold
+      if (prefs.expiredStockPreventIssue && !!row.expiryDate) {
+        const threshold = prefs.expiredStockIssueThreshold ?? 0;
+        const daysBeforeExpiry = DateUtils.differenceInDays(
+          row.expiryDate,
+          Date.now()
+        );
+        if (daysBeforeExpiry <= threshold) return true;
+      }
 
       return false;
     },
@@ -107,26 +131,21 @@ export const OutboundLineEditTable = ({
     tableId: 'outbound-line-edit',
     columns,
     data: lines,
-    getIsRestrictedRow: row => getIsDisabled(row),
+    // Modal table state should not be synced to URL (would otherwise clobber
+    // the parent detail view's sort/filter URL params on open/close).
+    localStateOnly: true,
+    getIsRestrictedRow: row => getIsDisabled(row.original),
     bottomToolbarContent: (
-      <Box
-        sx={{
-          display: 'flex',
-          width: '100%',
-          justifyContent: 'flex-end',
-        }}
-      >
-        <PlaceholderAndTotal
-          allocatedQuantity={allocatedQuantity + (placeholderQuantity ?? 0)}
-          inDoses={allocateIn.type === AllocateInType.Doses}
-          placeholderQuantity={
-            // If no stock lines, show placeholder: 0. Otherwise don't show placeholder unless >0
-            placeholderQuantity === 0 && lines.length
-              ? null
-              : placeholderQuantity
-          }
-        />
-      </Box>
+      <PlaceholderAndTotal
+        allocatedQuantity={allocatedQuantity + (placeholderQuantity ?? 0)}
+        inDoses={allocateIn.type === AllocateInType.Doses}
+        placeholderQuantity={
+          // If no stock lines, show placeholder: 0. Otherwise don't show placeholder unless >0
+          placeholderQuantity === 0 && lines.length
+            ? null
+            : placeholderQuantity
+        }
+      />
     ),
     renderEmptyRowsFallback: () => (
       <Box sx={{ margin: 'auto' }}>

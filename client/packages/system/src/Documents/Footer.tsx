@@ -1,4 +1,4 @@
-import React, { memo, ReactElement } from 'react';
+import React, { memo, ReactElement, useMemo } from 'react';
 import {
   Action,
   ActionsFooter,
@@ -8,7 +8,6 @@ import {
   useDeleteConfirmation,
   useDownloadFile,
   useNotification,
-  useTableStore,
   useTranslation,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
@@ -16,24 +15,31 @@ import { SyncFileReferenceFragment } from '@openmsupply-client/system';
 
 interface FooterProps {
   recordId: string;
-  documents: SyncFileReferenceFragment[];
   tableName: string;
   invalidateQueries?: () => void;
+  selectedRows?: SyncFileReferenceFragment[];
+  resetRowSelection?: () => void;
+  deletableDocumentIds?: Set<string>;
 }
 
 const FooterComponent = ({
   recordId,
-  documents,
   tableName,
   invalidateQueries = () => {},
+  selectedRows = [],
+  resetRowSelection = () => {},
+  deletableDocumentIds,
 }: FooterProps): ReactElement => {
   const t = useTranslation();
   const downloadFile = useDownloadFile();
   const { error } = useNotification();
 
-  const selectedRows = useTableStore(state =>
-    documents.filter(({ id }) => state.rowState[id]?.isSelected)
-  );
+  // Filter selected rows to only deletable ones
+  const deletableRows = useMemo(() => {
+    if (!deletableDocumentIds) return selectedRows;
+
+    return selectedRows.filter(row => deletableDocumentIds.has(row.id));
+  }, [selectedRows, deletableDocumentIds]);
 
   const handleFileDelete = async (id: string) => {
     const url = `${Environment.SYNC_FILES_URL}/${tableName}/${recordId}/${id}`;
@@ -47,11 +53,16 @@ const FooterComponent = ({
   };
 
   const handleDelete = async () => {
-    const ids = selectedRows.map(row => row.id);
+    // Only delete the deletable ones
+    if (deletableRows.length === 0) {
+      return;
+    }
+
     try {
-      const deleteRequests = ids.map(handleFileDelete);
+      const deleteRequests = deletableRows.map(row => handleFileDelete(row.id));
       await Promise.all(deleteRequests);
       invalidateQueries();
+      resetRowSelection();
     } catch (e) {
       console.error(e);
       error(t('error.an-error-occurred', { message: (e as Error).message }))();
@@ -61,6 +72,7 @@ const FooterComponent = ({
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
     deleteAction: handleDelete,
+    canDelete: deletableRows.length > 0,
     messages: {
       confirmMessage: t('messages.confirm-delete-documents', {
         count: selectedRows.length,
@@ -75,7 +87,7 @@ const FooterComponent = ({
     // Sequential downloads are better than Promise.all() to avoid browser limits
     for (const file of selectedRows) {
       try {
-        const url = `${Environment.SYNC_FILES_URL}/${tableName}/${recordId}/${file.id}`;
+        const url = `${Environment.SYNC_FILES_URL}/${tableName}/${file.recordId}/${file.id}`;
         await downloadFile(url, { credentials: 'include' });
       } catch (e) {
         console.error(e);
@@ -87,11 +99,15 @@ const FooterComponent = ({
   };
 
   const actions: Action[] = [
-    {
-      label: t('button.delete-document'),
-      icon: <DeleteIcon />,
-      onClick: confirmAndDelete,
-    },
+    ...(deletableRows.length > 0
+      ? [
+          {
+            label: t('button.delete-document'),
+            icon: <DeleteIcon />,
+            onClick: confirmAndDelete,
+          },
+        ]
+      : []),
     {
       label: t('button.download'),
       icon: <DownloadIcon />,
@@ -107,6 +123,7 @@ const FooterComponent = ({
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
         </>

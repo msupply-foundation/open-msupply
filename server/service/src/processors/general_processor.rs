@@ -22,6 +22,7 @@ use super::{
     add_central_patient_visibility::AddPatientVisibilityForCentral,
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
     load_plugin::LoadPlugin, plugin_processor::PluginProcessor,
+    requisition_auto_finalise::RequisitionAutoFinaliseProcessor,
 };
 
 #[derive(Error, Debug)]
@@ -51,6 +52,7 @@ pub enum ProcessorType {
     AssignRequisitionNumber,
     AddPatientVisibilityForCentral,
     Plugins,
+    RequisitionAutoFinalise,
 }
 
 impl ProcessorType {
@@ -64,6 +66,9 @@ impl ProcessorType {
                 vec![Box::new(AddPatientVisibilityForCentral)]
             }
             ProcessorType::Plugins => get_plugin_processors(),
+            ProcessorType::RequisitionAutoFinalise => {
+                vec![Box::new(RequisitionAutoFinaliseProcessor)]
+            }
         }
     }
 
@@ -158,7 +163,7 @@ pub(super) trait Processor: Sync + Send {
         }))
     }
 
-    /// Default to empty array in case chanelogs_filter is manually implemented
+    /// Default to empty array in case changelogs_filter is manually implemented
     fn change_log_table_names(&self) -> Vec<ChangelogTableName> {
         Vec::new()
     }

@@ -94,6 +94,14 @@ pub async fn setup_test(
         extra_mock_data,
     }: SetupOption<'_>,
 ) -> SetupResult {
+    // Validate db_name
+    if db_name.contains(' ') {
+        panic!(
+            "Database name '{}' contains spaces. Test database names must not contain spaces as they can cause issues with some setups.",
+            db_name
+        );
+    }
+
     let db_settings = get_test_db_settings(db_name);
     let (connection_manager, core_data) =
         setup_with_version(&db_settings, version.clone(), inserts).await;
@@ -105,5 +113,32 @@ pub async fn setup_test(
         connection,
         connection_manager,
         db_settings,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    #[should_panic(expected = "contains spaces")]
+    async fn test_db_name_validation_panics_with_spaces() {
+        setup_test(SetupOption {
+            db_name: "test db with spaces",
+            ..Default::default()
+        })
+        .await;
+    }
+
+    #[tokio::test]
+    async fn test_db_name_validation_succeeds_when_valid() {
+        let db_name = "test_db_without_spaces";
+        let result = setup_test(SetupOption {
+            db_name,
+            ..Default::default()
+        })
+        .await;
+
+        assert!(result.db_settings.database_name.contains(db_name));
     }
 }

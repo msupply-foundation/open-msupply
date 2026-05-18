@@ -16,7 +16,8 @@ const FRONTEND_PLUGIN: (&str, &str) = (
         "files": [ {
             "file_name": "first_one.js",
             "file_content_base64": "base64stuffhere"
-        }]
+        }],
+        "version": "1.0.0"
     }"#,
 );
 
@@ -30,6 +31,7 @@ fn frontend_plugin() -> FrontendPluginRow {
             file_name: "first_one.js".to_string(),
             file_content_base64: "base64stuffhere".to_string(),
         }]),
+        version: "1.0.0".to_string(),
     }
 }
 

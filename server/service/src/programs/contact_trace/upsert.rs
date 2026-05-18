@@ -150,7 +150,7 @@ fn validate_patient_exists(
 ) -> Result<bool, RepositoryError> {
     let patient = PatientRepository::new(&ctx.connection)
         .query_by_filter(
-            PatientFilter::new().id(EqualFilter::equal_to(patient_id)),
+            PatientFilter::new().id(EqualFilter::equal_to(patient_id.to_string())),
             None,
         )?
         .pop();
@@ -164,7 +164,7 @@ fn validate_document_type(
     let mut entry = DocumentRegistryRepository::new(&ctx.connection).query_by_filter(
         DocumentRegistryFilter::new()
             .r#type(DocumentRegistryCategory::ContactTrace.equal_to())
-            .document_type(EqualFilter::equal_to(document_type)),
+            .document_type(EqualFilter::equal_to(document_type.to_owned())),
     )?;
     Ok(entry.pop())
 }
@@ -174,7 +174,7 @@ fn validate_program(
     context_id: &str,
 ) -> Result<Option<ProgramRow>, RepositoryError> {
     ProgramRepository::new(&ctx.connection)
-        .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(context_id)))
+        .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(context_id.to_string())))
 }
 
 fn validate_parent_doc_exists(
@@ -223,7 +223,7 @@ fn validate(
     };
 
     let contact_trace_data = validate_contact_trace_schema(input).map_err(|err| {
-        UpsertContactTraceError::InvalidDataSchema(format!("Invalid contact trace data: {}", err))
+        UpsertContactTraceError::InvalidDataSchema(format!("Invalid contact trace data: {err}"))
     })?;
     if let Some(patient_id) = contact_trace_data
         .contact
@@ -279,7 +279,7 @@ mod test {
                 .names()
                 .stores()
                 .name_store_joins()
-                .full_master_list()
+                .full_master_lists()
                 .contexts()
                 .programs(),
         )

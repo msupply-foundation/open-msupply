@@ -1,5 +1,4 @@
 use repository::{
-    goods_received_row::GoodsReceivedRowRepository, GoodsReceivedLineRowRepository,
     InvoiceRowRepository, InvoiceType, NumberRowRepository, NumberRowType,
     PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, RepositoryError,
     RequisitionRowRepository, RequisitionType, StocktakeRowRepository, StorageConnection,
@@ -49,15 +48,9 @@ pub fn next_number(
                 .find_max_invoice_number(InvoiceType::SupplierReturn, store_id)?,
             NumberRowType::PurchaseOrder => PurchaseOrderRowRepository::new(connection_tx)
                 .find_max_purchase_order_number(store_id)?,
-            NumberRowType::GoodsReceived => GoodsReceivedRowRepository::new(connection_tx)
-                .find_max_goods_received_number(store_id)?,
             NumberRowType::PurchaseOrderLine(purchase_order_id) => {
                 PurchaseOrderLineRowRepository::new(connection_tx)
                     .find_max_purchase_order_line_number(purchase_order_id)?
-            }
-            NumberRowType::GoodsReceivedLine(goods_received_id) => {
-                GoodsReceivedLineRowRepository::new(connection_tx)
-                    .find_max_goods_received_line_number(goods_received_id)?
             }
             NumberRowType::Program(_) => {
                 let next_number =
@@ -92,7 +85,6 @@ mod test {
         TransactionError,
     };
 
-    #[cfg(not(feature = "memory"))]
     const TEST_SLEEP_TIME: u64 = 100;
     const MAX_CONCURRENCY: u64 = 10;
 
@@ -103,7 +95,7 @@ mod test {
         fn invoice1() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice1".to_string(),
-                name_link_id: mock_name_c().id,
+                name_id: mock_name_c().id,
                 store_id: mock_store_c().id,
                 r#type: InvoiceType::OutboundShipment,
                 invoice_number: 100,
@@ -113,7 +105,7 @@ mod test {
         fn unassigned_requisition() -> RequisitionRow {
             RequisitionRow {
                 id: "unassigned_requisition".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_c().id,
                 r#type: RequisitionType::Response,
                 requisition_number: -1,
@@ -207,16 +199,16 @@ mod test {
         assert_eq!(result, 1);
     }
 
-    /// Note: this test is disabled when running tests using in 'memory' sqlite.
-    /// When running in memory sqlite uses a shared cache and returns an SQLITE_LOCKED response
+    /// When running in memory mode sqlite uses a shared cache and returns an SQLITE_LOCKED response
     /// when two threads try to write using the shared cache concurrently
     /// https://sqlite.org/rescode.html#locked
     /// We are relying on busy_timeout handler to manage the SQLITE_BUSY response code in this
     /// test and there's no equivalent available for shared cache connections (SQLITE_LOCKED).
     /// If we were to use shared cache in production, we'd probably need to use a mutex (or
     /// similar) to protect the database connection.
+    ///
+    /// Note: memory mode is not currently supported for sqlite
     #[actix_rt::test]
-    #[cfg(not(feature = "memory"))]
     async fn test_concurrent_next_number() {
         let (_, _, connection_manager, _) = test_db::setup_all(
             "test_concurrent_numbers",
@@ -253,7 +245,7 @@ mod test {
 
         let a = process_a.join().unwrap();
         let b = process_b.join().unwrap();
-        println!("next_number (INSERT) results : a={} b={}", a, b);
+        println!("next_number (INSERT) results : a={a} b={b}");
         assert!(a != b);
 
         let manager_a = connection_manager.clone();
@@ -279,7 +271,7 @@ mod test {
         let a = process_a.join().unwrap();
         let b = process_b.join().unwrap();
 
-        println!("next_number (UPDATE) results : a={} b={}", a, b);
+        println!("next_number (UPDATE) results : a={a} b={b}");
         assert!(a != b);
     }
 
@@ -297,7 +289,6 @@ mod test {
             // To run this test use something like `RUN_CONCURRENT_TESTS=true cargo test --package service --lib -- number::test::test_highly_concurrent_next_number --exact --nocapture`
 
             // Performance M1 Macbook Pro (postgres in docker)
-            // --features=memory 0.13s
             // --features=postgres 0.62s
             // --features=sqlite 0.14s
 
@@ -332,7 +323,7 @@ mod test {
         let mut unique_numbers = HashSet::new();
         for handle in handles {
             let num = handle.join().unwrap();
-            println!("num: {}", num);
+            println!("num: {num}");
             let new_value = unique_numbers.insert(num);
             assert!(new_value);
         }

@@ -19,8 +19,9 @@ import {
   NewProgramRequisition,
   ProgramRequisitionOptions,
 } from './ProgramRequisitionOptions';
+import { useResponse } from '../api';
 
-interface NewGeneralRequisition {
+export interface NewGeneralRequisition {
   type: NewRequisitionType.General;
   name: NameRowFragment;
 }
@@ -36,51 +37,63 @@ export const CreateRequisitionModalComponent: FC<
   CreateRequisitionModalProps
 > = ({ isOpen, onClose, onCreate }) => {
   const t = useTranslation();
-
+  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: false });
   const { data, isLoading } = useName.document.customers();
-
+  const customerIds = data?.nodes?.map(c => c.id) || [];
+  const { data: hasCustomerPrograms } =
+    useResponse.utils.hasCustomerProgramRequisitionSettings(
+      customerIds,
+      !isLoading
+    );
   const [customer, setCustomer] = React.useState<NameRowFragment | null>(null);
 
-  const handleCustomerChange = (customer: NameRowFragment | null) => {
-    setCustomer(customer);
-  };
-
-  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: false });
-
-  const InnerComponent = () => {
-    if (isLoading) return <BasicSpinner />;
-    if (data && data.totalCount > 0)
-      return (
-        <ModalTabs
-          tabs={[
-            {
-              Component: (
-                <ProgramRequisitionOptions
-                  customerOptions={data.nodes ?? []}
-                  onCreate={onCreate}
-                  onChangeCustomer={handleCustomerChange}
-                  customer={customer}
-                />
-              ),
-              value: t('label.requisition-program'),
-            },
-            {
-              Component: (
-                <GeneralRequisition
-                  onCreate={onCreate}
-                  open={isOpen}
-                  onClose={onClose}
-                />
-              ),
-              value: t('label.requisition-general'),
-            },
-          ]}
+  const programTab = React.useMemo(
+    () => ({
+      Component: (
+        <ProgramRequisitionOptions
+          customerOptions={data?.nodes ?? []}
+          onCreate={onCreate}
+          onChangeCustomer={setCustomer}
+          customer={customer}
         />
-      );
+      ),
+      value: t('label.requisition-program'),
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data?.nodes, onCreate, customer]
+  );
+
+  const generalTab = React.useMemo(
+    () => ({
+      Component: (
+        <GeneralRequisition
+          onCreate={onCreate}
+          open={isOpen}
+          onClose={onClose}
+        />
+      ),
+      value: t('label.requisition-general'),
+    }),
+    [onCreate, isOpen, onClose, t]
+  );
+
+  const InnerComponent = React.useMemo(() => {
+    if (isLoading) return <BasicSpinner />;
+    if (hasCustomerPrograms) {
+      return <ModalTabs tabs={[programTab, generalTab]} />;
+    }
     return (
       <GeneralRequisition onCreate={onCreate} open={isOpen} onClose={onClose} />
     );
-  };
+  }, [
+    isLoading,
+    onCreate,
+    isOpen,
+    onClose,
+    programTab,
+    generalTab,
+    hasCustomerPrograms,
+  ]);
 
   return (
     <Modal
@@ -89,7 +102,7 @@ export const CreateRequisitionModalComponent: FC<
       slideAnimation={false}
       title={t('label.new-requisition')}
     >
-      <InnerComponent />
+      {InnerComponent}
     </Modal>
   );
 };

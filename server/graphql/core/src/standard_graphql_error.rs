@@ -27,7 +27,7 @@ pub enum StandardGraphqlError {
 impl ErrorExtensions for StandardGraphqlError {
     // lets define our base extensions
     fn extend(&self) -> async_graphql::Error {
-        async_graphql::Error::new(format!("{}", self)).extend_with(|_, e| match self {
+        async_graphql::Error::new(format!("{self}")).extend_with(|_, e| match self {
             StandardGraphqlError::InternalError(details) => e.set("details", details.clone()),
             StandardGraphqlError::BadUserInput(details) => e.set("details", details.clone()),
             StandardGraphqlError::Unauthenticated(details) => e.set("details", details.clone()),
@@ -38,13 +38,13 @@ impl ErrorExtensions for StandardGraphqlError {
 
 impl From<RepositoryError> for StandardGraphqlError {
     fn from(err: RepositoryError) -> Self {
-        StandardGraphqlError::InternalError(format!("{:?}", err))
+        StandardGraphqlError::InternalError(format!("{err:?}"))
     }
 }
 
 impl StandardGraphqlError {
     pub fn from_list_error(error: ListError) -> async_graphql::Error {
-        let formatted_error = format!("{:#?}", error);
+        let formatted_error = format!("{error:#?}");
         let graphql_error = match error {
             ListError::DatabaseError(error) => error.into(),
             ListError::LimitBelowMin(_) => StandardGraphqlError::BadUserInput(formatted_error),
@@ -67,7 +67,7 @@ impl StandardGraphqlError {
     }
 
     pub fn from_debug<E: std::fmt::Debug>(error: E) -> async_graphql::Error {
-        StandardGraphqlError::InternalError(format!("{:#?}", error)).extend()
+        StandardGraphqlError::InternalError(format!("{error:#?}")).extend()
     }
 }
 
@@ -90,7 +90,7 @@ pub fn validate_auth(
         let graphql_error = match err {
             AuthError::Denied(kind) => match kind {
                 AuthDeniedKind::NotAuthenticated(_) => {
-                    StandardGraphqlError::Unauthenticated(format!("{:?}", kind))
+                    StandardGraphqlError::Unauthenticated(format!("{kind:?}"))
                 }
                 AuthDeniedKind::InsufficientPermission {
                     msg,
@@ -109,9 +109,9 @@ pub fn validate_auth(
 pub fn list_error_to_gql_err(err: ListError) -> async_graphql::Error {
     let gql_err = match err {
         ListError::DatabaseError(err) => err.into(),
-        ListError::LimitBelowMin(_) => StandardGraphqlError::BadUserInput(format!("{:?}", err)),
-        ListError::LimitAboveMax(_) => StandardGraphqlError::BadUserInput(format!("{:?}", err)),
-        _ => StandardGraphqlError::InternalError(format!("{:?}", err)),
+        ListError::LimitBelowMin(_) => StandardGraphqlError::BadUserInput(format!("{err:?}")),
+        ListError::LimitAboveMax(_) => StandardGraphqlError::BadUserInput(format!("{err:?}")),
+        _ => StandardGraphqlError::InternalError(format!("{err:?}")),
     };
     gql_err.extend()
 }

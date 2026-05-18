@@ -4,7 +4,6 @@ use repository::{
     SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
 };
 
-
 use crate::{
     cursor_controller::CursorController,
     i32_to_u32,
@@ -15,7 +14,7 @@ use crate::{
 
 use super::SyncLogError;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 
 pub struct SyncStatus {
     pub started: NaiveDateTime,
@@ -46,7 +45,7 @@ pub struct FullSyncStatus {
 }
 
 impl FullSyncStatus {
-    fn from_sync_log_row(sync_log_row: SyncLogRow) -> FullSyncStatus {
+    pub fn from_sync_log_row(sync_log_row: SyncLogRow) -> FullSyncStatus {
         let SyncLogRow {
             started_datetime,
             finished_datetime,
@@ -150,7 +149,7 @@ pub enum SyncStatusType {
     Integration,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum InitialisationStatus {
     /// Fully initialised (name)
     Initialised(String),
@@ -290,9 +289,9 @@ fn get_latest_successful_sync_status(
         None => return Ok(None),
     };
 
-    let result = Some(FullSyncStatus::from_sync_log_row(sync_log.sync_log_row));
+    let result = FullSyncStatus::from_sync_log_row(sync_log.sync_log_row);
 
-    Ok(result)
+    Ok(Some(result))
 }
 
 #[derive(Debug)]
@@ -321,18 +320,8 @@ fn number_of_records_in_push_queue(
     Ok(change_logs_total)
 }
 
-impl Default for SyncStatus {
-    fn default() -> Self {
-        Self {
-            started: Default::default(),
-            duration_in_seconds: Default::default(),
-            finished: Default::default(),
-        }
-    }
-}
-
 impl SyncLogError {
-    fn from_sync_log_row(
+    pub fn from_sync_log_row(
         SyncLogRow {
             error_code,
             error_message,

@@ -118,6 +118,8 @@ fn generate(
         location_id: None,
         batch: None,
         expiry_date: None,
+        manufacture_date: None,
+        purchase_order_line_id: None,
         sell_price_per_pack: 0.0,
         cost_price_per_pack: 0.0,
         stock_line_id: None,
@@ -125,7 +127,8 @@ fn generate(
         item_variant_id: None,
         prescribed_quantity: None,
         linked_invoice_id: None,
-        donor_link_id: None,
+        donor_id: None,
+        manufacturer_id: None,
         vvm_status_id: None,
         reason_option_id: None,
         campaign_id: None,
@@ -133,6 +136,7 @@ fn generate(
         shipped_number_of_packs: None,
         volume_per_pack: 0.0,
         shipped_pack_size: None,
+        status: None,
     };
 
     Ok(new_line)
@@ -145,8 +149,8 @@ pub fn check_unallocated_line_does_not_exist(
 ) -> Result<bool, RepositoryError> {
     let count = InvoiceLineRepository::new(connection).count(Some(
         InvoiceLineFilter::new()
-            .item_id(EqualFilter::equal_to(item_id))
-            .invoice_id(EqualFilter::equal_to(invoice_id))
+            .item_id(EqualFilter::equal_to(item_id.to_string()))
+            .invoice_id(EqualFilter::equal_to(invoice_id.to_string()))
             .r#type(InvoiceLineType::UnallocatedStock.equal_to()),
     ))?;
 
@@ -193,7 +197,7 @@ mod test_insert {
         let new_outbound_shipment = mock_new_invoice_with_unallocated_line();
         let existing_invoice_line = mock_unallocated_line();
 
-        let new_line_id = "new_line".to_owned();
+        let new_line_id = "new_line".to_string();
 
         // Line Already Exists
         assert_eq!(
@@ -201,8 +205,8 @@ mod test_insert {
                 &context,
                 InsertOutboundShipmentUnallocatedLine {
                     id: existing_invoice_line.id.clone(),
-                    invoice_id: "".to_owned(),
-                    item_id: "".to_owned(),
+                    invoice_id: "".to_string(),
+                    item_id: "".to_string(),
                     quantity: 0
                 },
             ),
@@ -215,8 +219,8 @@ mod test_insert {
                 &context,
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
-                    invoice_id: "invalid".to_owned(),
-                    item_id: "item_a".to_owned(),
+                    invoice_id: "invalid".to_string(),
+                    item_id: "item_a".to_string(),
                     quantity: 0
                 },
             ),
@@ -230,7 +234,7 @@ mod test_insert {
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: mock_inbound_shipment_a().id.clone(),
-                    item_id: "item_a".to_owned(),
+                    item_id: "item_a".to_string(),
                     quantity: 0
                 },
             ),
@@ -244,7 +248,7 @@ mod test_insert {
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: mock_allocated_invoice().id.clone(),
-                    item_id: "item_a".to_owned(),
+                    item_id: "item_a".to_string(),
                     quantity: 0
                 },
             ),
@@ -258,7 +262,7 @@ mod test_insert {
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: new_outbound_shipment.id.clone(),
-                    item_id: "invalid".to_owned(),
+                    item_id: "invalid".to_string(),
                     quantity: 0
                 },
             ),
@@ -282,7 +286,7 @@ mod test_insert {
             service.insert_outbound_shipment_unallocated_line(
                 &context,
                 InsertOutboundShipmentUnallocatedLine {
-                    id: "new unallocated line id".to_owned(),
+                    id: "new unallocated line id".to_string(),
                     invoice_id: mock_new_invoice_with_unallocated_line().id.clone(),
                     item_id: existing_invoice_line.item_link_id.clone(),
                     quantity: 0
@@ -329,7 +333,7 @@ mod test_insert {
             .insert_outbound_shipment_unallocated_line(
                 &context,
                 InsertOutboundShipmentUnallocatedLine {
-                    id: "new_line".to_owned(),
+                    id: "new_line".to_string(),
                     invoice_id: invoice_id.clone(),
                     item_id: item.id.clone(),
                     quantity: 4,
@@ -344,7 +348,7 @@ mod test_insert {
                 .unwrap()
                 .unwrap(),
             InvoiceLineRow {
-                id: "new_line".to_owned(),
+                id: "new_line".to_string(),
                 invoice_id: invoice_id.clone(),
                 pack_size: 1.0,
                 r#type: InvoiceLineType::UnallocatedStock,

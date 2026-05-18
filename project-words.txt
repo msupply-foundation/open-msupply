@@ -9,6 +9,7 @@ conforma
 datasource
 datetime
 Groupable
+gtin
 Gynaecological
 Haemotology
 Insertable

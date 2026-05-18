@@ -36,7 +36,7 @@ pub fn delete_purchase_order(
                 activity_log_entry(
                     ctx,
                     ActivityLogType::PurchaseOrderDeleted,
-                    Some(id.to_owned()),
+                    Some(id.to_string()),
                     None,
                     None,
                 )?;
@@ -145,7 +145,7 @@ mod test {
             id: "test_purchase_order_confirmed".to_string(),
             store_id: mock_store_a().id,
             status: PurchaseOrderStatus::Confirmed,
-            supplier_name_link_id: "name_a".to_string(),
+            supplier_name_id: "name_a".to_string(),
             purchase_order_number: 1111111111,
             ..Default::default()
         };

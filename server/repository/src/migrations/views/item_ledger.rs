@@ -37,7 +37,8 @@ impl ViewMigrationFragment for ViewMigration {
         ) THEN verified_datetime
         ELSE NULL
         END AS datetime,
-        name,
+        name.name AS name,
+        name.id AS name_id,
         invoice.type AS invoice_type,
         invoice.invoice_number AS invoice_number,
         invoice.id AS invoice_id,
@@ -51,6 +52,7 @@ impl ViewMigrationFragment for ViewMigration {
         invoice_line_stock_movement.total_before_tax AS total_before_tax,
         invoice_line_stock_movement.pack_size as pack_size,
         invoice_line_stock_movement.number_of_packs as number_of_packs,
+        invoice.user_id as user_id,
         CASE
           WHEN invoice.type IN ('INBOUND_SHIPMENT', 'CUSTOMER_RETURN', 'INVENTORY_ADDITION') THEN 1
           WHEN invoice.type IN ('OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN', 'PRESCRIPTION', 'INVENTORY_REDUCTION') THEN 2

@@ -1,41 +1,63 @@
 import {
-  useTableStore,
   useDeleteConfirmation,
   useTranslation,
   useMutation,
+  noOtherVariants,
 } from '@openmsupply-client/common';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { VACCINE, LIST } from './keys';
+import { VaccineCourseRowFragment } from '../operations.generated';
 
-export const useDeleteSelectedVaccineCourses = () => {
+export const useDeleteSelectedVaccineCourses = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: VaccineCourseRowFragment[];
+  resetRowSelection: () => void;
+}) => {
+  const t = useTranslation();
   const { api, queryClient } = useProgramsGraphQL();
   const { mutateAsync } = useMutation(
-    async ({ vaccineCourseId }: { vaccineCourseId: string }) => {
-      const apiResult = await api.deleteVaccineCourse({ vaccineCourseId });
+    {
+      mutationFn: async ({ vaccineCourseId }: { vaccineCourseId: string }) => {
+        const apiResult = await api.deleteVaccineCourse({ vaccineCourseId });
 
-      // The `?` after `centralServer` handles empty `apiResult` (see issue: https://github.com/msupply-foundation/open-msupply/issues/4191)
-      const result = apiResult.centralServer?.vaccineCourse.deleteVaccineCourse;
-
-      if (result?.__typename === 'DeleteResponse') {
-        return result.id;
+        // The `?` after `centralServer` handles empty `apiResult` (see issue: https://github.com/msupply-foundation/open-msupply/issues/4191)
+        return apiResult.centralServer?.vaccineCourse.deleteVaccineCourse;
       }
-
-      throw new Error(t('error.could-not-delete-vaccine-course'));
     }
   );
-  const t = useTranslation();
 
-  const selectedRows =
-    useTableStore(state => {
-      return Object.keys(state.rowState).filter(
-        id => state.rowState[id]?.isSelected
-      );
-    }) || [];
+  const mapStructuredErrors = (
+    result: Awaited<ReturnType<typeof mutateAsync>>
+  ) => {
+    if (result?.__typename === 'DeleteResponse') return;
+    if (!result) return;
+
+    const { error } = result;
+
+    switch (error?.__typename) {
+      case 'VaccineCourseInUse': {
+        return t('error.vaccine-course-in-use');
+      }
+      default:
+        return noOtherVariants(error.__typename);
+    }
+  };
 
   const onDelete = async () => {
-    await Promise.all(
-      selectedRows.map(id => mutateAsync({ vaccineCourseId: id }))
-    ).then(() => queryClient.invalidateQueries([VACCINE, LIST]));
+    for (const row of selectedRows) {
+      const result = await mutateAsync({ vaccineCourseId: row.id });
+      const errorMessage = mapStructuredErrors(result);
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
+
+      await queryClient.invalidateQueries({
+        queryKey: [VACCINE, LIST]
+      });
+      resetRowSelection();
+    }
   };
 
   const confirmAndDelete = useDeleteConfirmation({
@@ -48,8 +70,9 @@ export const useDeleteSelectedVaccineCourses = () => {
       deleteSuccess: t('messages.deleted-vaccine-courses', {
         count: selectedRows.length,
       }),
+      cantDelete: (err: Error) => err.message,
     },
   });
 
-  return { confirmAndDelete, selectedRows };
+  return { confirmAndDelete };
 };

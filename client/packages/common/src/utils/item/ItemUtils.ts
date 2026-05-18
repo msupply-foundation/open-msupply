@@ -12,7 +12,10 @@ export const useItemUtils = () => {
   const setItemFilter = (itemFilter: string) =>
     updateQuery({ codeOrName: itemFilter });
 
-  const matchItem = (itemFilter: string, { name, code }: Partial<ItemNode>) => {
+  const matchItem = (
+    itemFilter: string,
+    { name, code }: Pick<ItemNode, 'name' | 'code'>
+  ) => {
     const filter = RegexUtils.escapeChars(itemFilter);
     return (
       RegexUtils.includes(filter, name ?? '') ||

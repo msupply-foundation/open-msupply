@@ -23,7 +23,7 @@ pub fn check_batch_exists(
 ) -> Result<Option<StockLine>, RepositoryError> {
     Ok(StockLineRepository::new(connection)
         .query_by_filter(
-            StockLineFilter::new().id(EqualFilter::equal_to(batch_id)),
+            StockLineFilter::new().id(EqualFilter::equal_to(batch_id.to_string())),
             Some(store_id.to_string()),
         )?
         .pop())

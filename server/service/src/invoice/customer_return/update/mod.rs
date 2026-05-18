@@ -69,13 +69,13 @@ pub fn update_customer_return(
                 activity_log_entry(
                     ctx,
                     log_type_from_invoice_status(&updated_return.status, false),
-                    Some(updated_return.id.to_owned()),
+                    Some(updated_return.id.to_string()),
                     None,
                     None,
                 )?;
             }
 
-            get_invoice(ctx, None, &updated_return.id)
+            get_invoice(ctx, None, &updated_return.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
@@ -180,7 +180,7 @@ mod test {
         fn not_a_supplier_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "not_a_supplier_join".to_string(),
-                name_link_id: not_a_supplier().id,
+                name_id: not_a_supplier().id,
                 store_id: mock_store_a().id,
                 name_is_supplier: false,
                 ..Default::default()
@@ -191,7 +191,7 @@ mod test {
             InvoiceRow {
                 id: "verified_return".to_string(),
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_store_a().id,
+                name_id: mock_name_store_a().id,
                 currency_id: Some(currency_a().id),
                 r#type: InvoiceType::CustomerReturn,
                 status: InvoiceStatus::Verified,
@@ -202,7 +202,7 @@ mod test {
             InvoiceRow {
                 id: "on_hold_return".to_string(),
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_store_a().id,
+                name_id: mock_name_store_a().id,
                 currency_id: Some(currency_a().id),
                 r#type: InvoiceType::CustomerReturn,
                 status: InvoiceStatus::New,
@@ -307,8 +307,8 @@ mod test {
         /* -------
          * Setting NEW customer return to RECEIVED
          */
-        let return_line_filter = InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(&mock_customer_return_b().id));
+        let return_line_filter =
+            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(mock_customer_return_b().id));
 
         let invoice_line_repo = InvoiceLineRepository::new(&connection);
 
@@ -431,8 +431,8 @@ mod test {
         /* -------
          * Setting NEW customer return to VERIFIED
          */
-        let return_line_filter = InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(&mock_customer_return_b().id));
+        let return_line_filter =
+            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(mock_customer_return_b().id));
 
         let invoice_line_repo = InvoiceLineRepository::new(&connection);
 

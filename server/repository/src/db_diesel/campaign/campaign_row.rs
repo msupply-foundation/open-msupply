@@ -46,7 +46,7 @@ impl<'a> CampaignRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
 
-        self.insert_changelog(row.id.to_owned(), RowActionType::Upsert)
+        self.insert_changelog(row.id.to_string(), RowActionType::Upsert)
     }
 
     fn insert_changelog(
@@ -75,6 +75,15 @@ impl<'a> CampaignRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, campaign_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = campaign::table
+            .filter(campaign::id.eq(campaign_id))
+            .select(campaign::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<CampaignRow>, RepositoryError> {
         let result = campaign::table
             .filter(campaign::id.eq_any(ids))
@@ -88,7 +97,7 @@ impl<'a> CampaignRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
-        self.insert_changelog(campaign_id.to_owned(), RowActionType::Upsert)
+        self.insert_changelog(campaign_id.to_string(), RowActionType::Upsert)
     }
 }
 

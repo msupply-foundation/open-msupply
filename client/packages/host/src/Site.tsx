@@ -18,13 +18,17 @@ import {
   SnackbarProvider,
   BarcodeScannerProvider,
   DetailLoadingSkeleton,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
   useBlockNavigation,
+  useTheme,
+  usePreferences,
+  useIsCentralServerApi,
+  useRootNavigationPath,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
 import { AppRoute } from '@openmsupply-client/config';
-import { Settings } from './Admin/Settings';
 import {
   DashboardRouter,
   CatalogueRouter,
@@ -36,6 +40,7 @@ import {
   ManageRouter,
   ProgramsRouter,
   ReportsRouter,
+  SettingsRouter,
 } from './routers';
 import { RequireAuthentication } from './components/Navigation/RequireAuthentication';
 import { QueryErrorHandler } from './QueryErrorHandler';
@@ -73,11 +78,39 @@ export const Site: FC = () => {
   const getPageTitle = useGetPageTitle();
   const { setPageTitle } = useHostContext();
   const pageTitle = getPageTitle(location.pathname);
-  const isGapsStore = useIsGapsStoreOnly();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+  const rootNavigationPath = useRootNavigationPath();
+  const isCentralServer = useIsCentralServerApi();
+  const { isRtl } = useIntlUtils();
+  const { storeCustomColour } = usePreferences();
+  const theme = useTheme();
 
   useEffect(() => {
     setPageTitle(pageTitle);
   }, [location, pageTitle, setPageTitle]);
+
+  // Colours for the Footer bar, if specified in Store prefs
+  let customColour: string | undefined;
+  let textColour: string | undefined;
+  if (storeCustomColour) {
+    // Try/catch allows us to validate the colour string, while also getting the
+    // complementary textColour using the `getContrastText` function. We need
+    // BOTH the CSS.supports() check and try/catch because:
+    // 1. `getContrastText` function will throw on most invalid inputs, but it
+    //    does let incomplete HEX values through (e.g. #257A2), which results in
+    //    invalid CSS and a non-contrasting text color
+    // 2. The CSS.supports() function rejects the above incomplete HEX values,
+    //    but it accepts CSS colour literals like "red", which the
+    //    `getContrastText` function does not
+    try {
+      if (!CSS.supports('color', storeCustomColour))
+        throw new Error('Invalid colour');
+      textColour = theme.palette.getContrastText(storeCustomColour);
+      customColour = storeCustomColour;
+    } catch (e) {
+      console.error('Error parsing footer colours from Store properties', e);
+    }
+  }
 
   return (
     <RequireAuthentication>
@@ -85,17 +118,22 @@ export const Site: FC = () => {
       <EasterEggModalProvider>
         <SyncModalProvider>
           <CommandK>
-            <SnackbarProvider maxSnack={3}>
+            <SnackbarProvider
+              maxSnack={3}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: isRtl ? 'right' : 'left',
+              }}
+            >
               <BarcodeScannerProvider>
-                {!isGapsStore && <AppDrawer />}
+                {!isExtraSmallScreen && <AppDrawer />}
                 <Box
                   flex={1}
                   display="flex"
                   flexDirection="column"
                   overflow="hidden"
                 >
-                  {isGapsStore && <MobileNavBar />}
-                  {!isGapsStore && <AppBar />}
+                  {isExtraSmallScreen ? <MobileNavBar /> : <AppBar />}
                   <NotifyOnLogin />
                   <Box display="flex" flex={1} overflow="auto">
                     <Routes>
@@ -173,7 +211,7 @@ export const Site: FC = () => {
                         path={RouteBuilder.create(AppRoute.Settings)
                           .addWildCard()
                           .build()}
-                        element={<Settings />}
+                        element={<SettingsRouter />}
                       />
                       <Route
                         path={RouteBuilder.create(AppRoute.Help)
@@ -214,17 +252,20 @@ export const Site: FC = () => {
                       <Route
                         path="/"
                         element={
-                          <Navigate
-                            replace
-                            to={RouteBuilder.create(AppRoute.Dashboard).build()}
-                          />
+                          <Navigate replace to={rootNavigationPath} />
                         }
                       />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Box>
-                  <AppFooter />
-                  <AppFooterPortal SessionDetails={<Footer />} />
+                  <AppFooter
+                    isCentralServer={isCentralServer}
+                    backgroundColor={customColour}
+                    textColor={textColour}
+                  />
+                  <AppFooterPortal
+                    SessionDetails={<Footer backgroundColor={textColour} />}
+                  />
                 </Box>
                 <DetailPanel />
                 <QueryErrorHandler />

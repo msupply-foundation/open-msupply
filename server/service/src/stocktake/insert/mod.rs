@@ -59,7 +59,7 @@ pub fn insert_stocktake(
             activity_log_entry(
                 ctx,
                 ActivityLogType::StocktakeCreated,
-                Some(new_stocktake.id.to_owned()),
+                Some(new_stocktake.id.to_string()),
                 None,
                 None,
             )?;
@@ -247,7 +247,8 @@ mod test {
         // check that rows were created for the stocktake
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1")),
+                StocktakeLineFilter::new()
+                    .stocktake_id(EqualFilter::equal_to("stocktake_1".to_string())),
                 None,
             )
             .unwrap();
@@ -293,7 +294,8 @@ mod test {
 
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2")),
+                StocktakeLineFilter::new()
+                    .stocktake_id(EqualFilter::equal_to("stocktake_2".to_string())),
                 None,
             )
             .unwrap();
@@ -329,7 +331,8 @@ mod test {
         // check that no rows were created for the stocktake
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1")),
+                StocktakeLineFilter::new()
+                    .stocktake_id(EqualFilter::equal_to("stocktake_1".to_string())),
                 None,
             )
             .unwrap();
@@ -364,7 +367,8 @@ mod test {
 
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2")),
+                StocktakeLineFilter::new()
+                    .stocktake_id(EqualFilter::equal_to("stocktake_2".to_string())),
                 None,
             )
             .unwrap();
@@ -409,8 +413,9 @@ mod test {
         // check that no rows were created for the stocktake
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new()
-                    .stocktake_id(EqualFilter::equal_to("stocktake_with_vvm_filter")),
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(
+                    "stocktake_with_vvm_filter".to_string(),
+                )),
                 None,
             )
             .unwrap();
@@ -443,8 +448,9 @@ mod test {
 
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new()
-                    .stocktake_id(EqualFilter::equal_to("stocktake_with_vvm_filter_2")),
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(
+                    "stocktake_with_vvm_filter_2".to_string(),
+                )),
                 None,
             )
             .unwrap();
@@ -528,7 +534,8 @@ mod test {
 
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1")),
+                StocktakeLineFilter::new()
+                    .stocktake_id(EqualFilter::equal_to("stocktake_1".to_string())),
                 None,
             )
             .unwrap();
@@ -555,7 +562,8 @@ mod test {
 
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("blank_stocktake")),
+                StocktakeLineFilter::new()
+                    .stocktake_id(EqualFilter::equal_to("blank_stocktake".to_string())),
                 None,
             )
             .unwrap();
@@ -590,7 +598,8 @@ mod test {
         // check that no rows were created for the stocktake
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1")),
+                StocktakeLineFilter::new()
+                    .stocktake_id(EqualFilter::equal_to("stocktake_1".to_string())),
                 None,
             )
             .unwrap();
@@ -614,7 +623,8 @@ mod test {
 
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
-                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2")),
+                StocktakeLineFilter::new()
+                    .stocktake_id(EqualFilter::equal_to("stocktake_2".to_string())),
                 None,
             )
             .unwrap();
@@ -640,13 +650,13 @@ mod test {
         // Join same item as first masterlist -> check that one item will not be added to the stocktake twice
         let master_list_name_join = MasterListNameJoinRow {
             id: "A_program_b_Join".to_string(),
-            name_link_id: mock_program_master_list_test().id.clone(),
+            name_id: mock_program_master_list_test().id.clone(),
             master_list_id: mock_master_list_program_b().master_list.id.clone(),
         };
         // Join master list with two new items -> check the stocktake contains items from multiple master lists
         let filter_master_list_name_join = MasterListNameJoinRow {
             id: "Filter_program_b_Join".to_string(),
-            name_link_id: mock_program_master_list_test().id.clone(),
+            name_id: mock_program_master_list_test().id.clone(),
             master_list_id: mock_master_list_master_list_line_filter_test()
                 .master_list
                 .id
@@ -688,7 +698,7 @@ mod test {
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
                 StocktakeLineFilter::new()
-                    .stocktake_id(EqualFilter::equal_to(&initial_stocktake.id)),
+                    .stocktake_id(EqualFilter::equal_to(initial_stocktake.id.to_string())),
                 None,
             )
             .unwrap();
@@ -735,7 +745,7 @@ mod test {
             .count(
                 Some(
                     StockLineFilter::new()
-                        .store_id(EqualFilter::equal_to(&store.id))
+                        .store_id(EqualFilter::equal_to(store.id.to_string()))
                         .has_packs_in_store(true),
                 ),
                 None,
@@ -746,7 +756,7 @@ mod test {
             .count(
                 Some(
                     StocktakeLineFilter::new()
-                        .stocktake_id(EqualFilter::equal_to(&in_stock_stocktake.id)),
+                        .stocktake_id(EqualFilter::equal_to(in_stock_stocktake.id.to_string())),
                 ),
                 None,
             )
@@ -778,7 +788,7 @@ mod test {
             .count(
                 Some(
                     StocktakeLineFilter::new()
-                        .stocktake_id(EqualFilter::equal_to(&all_items_stocktake.id)),
+                        .stocktake_id(EqualFilter::equal_to(all_items_stocktake.id.to_string())),
                 ),
                 None,
             )

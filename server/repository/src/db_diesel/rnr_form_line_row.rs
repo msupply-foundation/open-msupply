@@ -116,8 +116,8 @@ impl<'a> RnRFormLineRowRepository<'a> {
     pub fn upsert_one(&self, row: &RnRFormLineRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
         self.insert_changelog(
-            row.id.to_owned(),
-            Some(row.rnr_form_id.to_owned()),
+            row.id.to_string(),
+            Some(row.rnr_form_id.to_string()),
             RowActionType::Upsert,
         )
     }
@@ -136,7 +136,7 @@ impl<'a> RnRFormLineRowRepository<'a> {
             .find_one_by_id(rnr_form_line_id)?
             .map(|r| r.rnr_form_id);
 
-        self.insert_changelog(rnr_form_line_id.to_owned(), form_id, RowActionType::Upsert)?;
+        self.insert_changelog(rnr_form_line_id.to_string(), form_id, RowActionType::Upsert)?;
         Ok(())
     }
 
@@ -159,7 +159,7 @@ impl<'a> RnRFormLineRowRepository<'a> {
             record_id,
             row_action: action,
             store_id,
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
@@ -207,7 +207,7 @@ impl<'a> RnRFormLineRowRepository<'a> {
             .map(|r| r.rnr_form_id);
 
         let change_log_id =
-            self.insert_changelog(rnr_form_line_id.to_owned(), form_id, RowActionType::Delete)?;
+            self.insert_changelog(rnr_form_line_id.to_string(), form_id, RowActionType::Delete)?;
 
         diesel::delete(rnr_form_line.filter(id.eq(rnr_form_line_id)))
             .execute(self.connection.lock().connection())?;

@@ -4,3 +4,4 @@ export * from './IconButton';
 export * from './ToggleButton';
 export * from './ColorSelectButton';
 export * from './standard';
+export * from './AddFromScannerButton';

@@ -33,7 +33,7 @@ pub fn check_line_exists(
     id: &str,
 ) -> Result<Option<InvoiceLine>, RepositoryError> {
     Ok(InvoiceLineRepository::new(connection)
-        .query_by_filter(InvoiceLineFilter::new().id(EqualFilter::equal_to(id)))?
+        .query_by_filter(InvoiceLineFilter::new().id(EqualFilter::equal_to(id.to_string())))?
         .pop())
 }
 
@@ -50,7 +50,7 @@ pub fn check_line_not_associated_with_stocktake(
     store_id: String,
 ) -> bool {
     let result = StockLineRepository::new(connection).query_by_filter(
-        StockLineFilter::new().item_id(EqualFilter::equal_to(id)),
+        StockLineFilter::new().item_id(EqualFilter::equal_to(id.to_string())),
         Some(store_id),
     );
     match result {

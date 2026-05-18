@@ -5,7 +5,12 @@ import {
   MenuItem,
   Option,
 } from '@openmsupply-client/common';
-import { useIntlUtils, SupportedLocales, useUserName } from '@common/intl';
+import {
+  useIntlUtils,
+  SupportedLocales,
+  useUserName,
+  isRtlLocale,
+} from '@common/intl';
 
 export const LanguageMenu: React.FC = () => {
   const navigate = useNavigate();
@@ -23,7 +28,7 @@ export const LanguageMenu: React.FC = () => {
     <MenuItem
       key={option.value}
       value={option.value}
-      sx={option.value === 'ar' ? { justifyContent: 'flex-end' } : {}}
+      sx={isRtlLocale(`${option.value}`) ? { justifyContent: 'flex-end' } : {}}
     >
       {option.label}
     </MenuItem>

@@ -60,11 +60,11 @@ impl From<SyncApiError> for SyncParsedErrorV6 {
         use SyncApiErrorVariantV5 as FromError;
         use SyncParsedErrorV6 as ToError;
 
-        let formated_error = format_error(&from);
+        let formatted_error = format_error(&from);
         match from.source {
             FromError::ParsedError { source, .. } => ToError::LegacyServerError(source),
-            FromError::ConnectionError(_) => ToError::CannotConnectToLegacyServer(formated_error),
-            _ => ToError::OtherLegacyServerError(formated_error),
+            FromError::ConnectionError(_) => ToError::CannotConnectToLegacyServer(formatted_error),
+            _ => ToError::OtherLegacyServerError(formatted_error),
         }
     }
 }
@@ -239,11 +239,23 @@ async fn response_or_err<T: DeserializeOwned>(
         }
     };
 
+    let url = util::redact_url_for_log(response.url());
+    let started = std::time::Instant::now();
     // Not checking for status, expecting 200 only, even if there is error
     let response_text = response
         .text()
         .await
         .map_err(ParsingResponseError::CannotGetTextResponse)?;
+    let elapsed = started.elapsed();
+    let bytes = response_text.len();
+    let kb_per_sec = (bytes as f64 / 1024.0) / elapsed.as_secs_f64().max(0.001);
+    log::info!(
+        "API body read: url '{}', {} bytes in {:.1}s ({:.1} KB/s)",
+        url,
+        bytes,
+        elapsed.as_secs_f64(),
+        kb_per_sec,
+    );
 
     let result = serde_json::from_str(&response_text).map_err(|source| {
         ParsingResponseError::ParseError {

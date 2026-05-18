@@ -117,8 +117,6 @@ const mapRoute = (route: string): RouteMapping => {
         title: 'purchase-order',
         docs: '/replenishment/purchase_orders',
       };
-    case inRoute(AppRoute.GoodsReceived):
-      return { title: 'goods-received', docs: '/replenishment/goods_received' };
     default:
       return { title: undefined, docs: '/introduction/introduction' };
   }

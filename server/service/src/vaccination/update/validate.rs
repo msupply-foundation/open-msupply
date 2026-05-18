@@ -8,6 +8,7 @@ use crate::{
     },
 };
 use repository::{
+    vaccine_course::vaccine_course_dose::{VaccineCourseDoseFilter, VaccineCourseDoseRepository},
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, ItemRow, RepositoryError,
     StockLine, StorageConnection, Vaccination, VaccinationRow,
 };
@@ -25,6 +26,7 @@ pub struct ChangeToGiven {
     pub existing_vaccination: VaccinationRow,
     pub patient_id: String,
     pub new_stock_line: Option<StockLine>,
+    pub program_id: String,
 }
 
 pub struct ChangeToNotGiven {
@@ -41,6 +43,7 @@ pub struct ChangeStockLine {
     pub patient_id: String,
     pub existing_prescription: Option<VaccinationPrescription>,
     pub new_stock_line: Option<StockLine>,
+    pub program_id: String,
 }
 
 pub fn validate(
@@ -109,13 +112,14 @@ pub fn validate(
 
             ValidateResult::ChangeToGiven(ChangeToGiven {
                 existing_vaccination: vaccination_row,
-                patient_id: encounter.patient_link_id,
+                patient_id: encounter.patient_id,
                 new_stock_line: validate_new_stock_line(
                     connection,
                     store_id,
                     stock_line_id,
                     item_id,
                 )?,
+                program_id: encounter.program_id,
             })
         }
         // Changing given -> not given
@@ -138,7 +142,7 @@ pub fn validate(
 
                 ValidateResult::ChangeStockLine(ChangeStockLine {
                     existing_vaccination: vaccination_row.clone(),
-                    patient_id: encounter.patient_link_id,
+                    patient_id: encounter.patient_id,
                     existing_prescription: validate_existing_prescription(
                         connection,
                         &vaccination_row.invoice_id,
@@ -149,6 +153,7 @@ pub fn validate(
                         stock_line_id,
                         item_id,
                     )?,
+                    program_id: encounter.program_id,
                 })
             } else {
                 ValidateResult::NoStatusChangeEdit(vaccination_row)
@@ -169,7 +174,10 @@ fn validate_existing_prescription(
         Some(invoice_id) => {
             InvoiceLineRepository::new(connection)
                 // Vaccination prescription should only ever have 1 line
-                .query_one(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)))?
+                .query_one(
+                    InvoiceLineFilter::new()
+                        .invoice_id(EqualFilter::equal_to(invoice_id.to_string())),
+                )?
                 .ok_or(RepositoryError::NotFound)?
         }
         None => return Ok(None),
@@ -219,15 +227,33 @@ pub fn validate_can_change_given_status(
     })?;
 
     match new_given_status {
-        true => validate_change_to_given(previous_vaccination),
+        true => validate_change_to_given(connection, existing, previous_vaccination),
         false => validate_change_to_not_given(next_vaccination),
     }
 }
 
 fn validate_change_to_given(
+    connection: &StorageConnection,
+    existing: &Vaccination,
     previous_vaccination: Option<Vaccination>,
 ) -> Result<(), UpdateVaccinationError> {
-    // Should only be able to change to given if all previous doses in the course are given
+    // Get the vaccine course to check if doses can be skipped
+    let vaccine_course_dose = VaccineCourseDoseRepository::new(connection)
+        .query_one(VaccineCourseDoseFilter::new().id(EqualFilter::equal_to(
+            existing.vaccine_course_dose_row.id.clone(),
+        )))?
+        .ok_or(UpdateVaccinationError::InternalError(
+            "Vaccine course dose not found".to_string(),
+        ))?;
+
+    // If doses can be skipped, allow changing to given regardless of previous
+    // doses
+    if vaccine_course_dose.vaccine_course_row.can_skip_dose {
+        return Ok(());
+    }
+
+    // If doses CAN'T be skipped, should only be able to change to given if all
+    // previous doses in the course are given
     if let Some(previous_vaccination) = previous_vaccination {
         if !previous_vaccination.vaccination_row.given {
             return Err(UpdateVaccinationError::NotNextDose);

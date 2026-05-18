@@ -40,7 +40,7 @@ date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% endif %} {% endmacro i
         <td></td>
         {% endif %}
         <td>{{self::formatDate(datetime=encounter.startDatetime)}}</td>
-        <td>{{encounter.daysLate}}</td>
+        <td style="text-align: right">{{encounter.daysLate}}</td>
 
         {% if encounter.status == "LTFU" %}
         <td>{{t(k="report.lost-to-follow-up", f="Lost to follow-up")}}</td>

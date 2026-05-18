@@ -68,10 +68,12 @@ impl SyncTranslation for NameMergeTranslation {
 
         let name_store_join_repo = NameStoreJoinRepository::new(connection);
         let name_store_joins_for_delete = name_store_join_repo.query_by_filter(
-            NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(&data.merge_id_to_delete)),
+            NameStoreJoinFilter::new()
+                .name_id(EqualFilter::equal_to(data.merge_id_to_delete.to_owned())),
         )?;
         let name_store_joins_for_keep = name_store_join_repo.query_by_filter(
-            NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(&data.merge_id_to_keep)),
+            NameStoreJoinFilter::new()
+                .name_id(EqualFilter::equal_to(data.merge_id_to_keep.to_owned())),
         )?;
 
         // We need to delete the name_store_joins that are no longer needed after the merge
@@ -88,8 +90,9 @@ impl SyncTranslation for NameMergeTranslation {
         // The remaining NSJ that we keep must logically OR each of these fields with the corresponding field in the deleted NSJs.
         // We prefer making the name visible to stores rather than losing visibility as it allows users to still make invoices and orders
         let store_repo = StoreRepository::new(connection);
-        let store = store_repo
-            .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&data.merge_id_to_keep)))?;
+        let store = store_repo.query_one(
+            StoreFilter::new().name_id(EqualFilter::equal_to(data.merge_id_to_keep.to_owned())),
+        )?;
         let mut deletes = name_store_joins_for_delete
             .iter()
             .filter_map(|nsj_delete| {
@@ -127,13 +130,11 @@ impl SyncTranslation for NameMergeTranslation {
                             && nsj_delete.name_store_join.name_is_supplier)
                     {
                         operations.push(IntegrationOperation::upsert(NameStoreJoinRow {
-                            id: nsj_keep.name_store_join.id.clone(),
-                            name_link_id: nsj_keep.name_store_join.name_link_id.clone(),
-                            store_id: nsj_keep.name_store_join.store_id.clone(),
                             name_is_customer: nsj_keep.name_store_join.name_is_customer
                                 || nsj_delete.name_store_join.name_is_customer,
                             name_is_supplier: nsj_keep.name_store_join.name_is_supplier
                                 || nsj_delete.name_store_join.name_is_supplier,
+                            ..nsj_keep.name_store_join.clone()
                         }));
                     }
 
@@ -213,13 +214,13 @@ mod tests {
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0), true)
             .unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
         let mut name_links = name_link_repo.find_many_by_name_id("name_c").unwrap();
 
-        name_links.sort_by_key(|i| i.id.to_owned());
+        name_links.sort_by_key(|i| i.id.to_string());
         assert_eq!(name_links, expected_name_links);
         let (_, connection, _, _) = setup_all(
             "test_name_merge_message_translation_in_reverse_order",
@@ -231,13 +232,13 @@ mod tests {
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0), true)
             .unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
         let mut name_links = name_link_repo.find_many_by_name_id("name_c").unwrap();
 
-        name_links.sort_by_key(|i| i.id.to_owned());
+        name_links.sort_by_key(|i| i.id.to_string());
         assert_eq!(name_links, expected_name_links);
 
         // When 2 names are merged, we clean up name_store_joins to ensure there only remains 1 NSJ for each store that
@@ -261,7 +262,7 @@ mod tests {
         let count_name_store_join = |id: &str| -> usize {
             name_store_join_repo
                 .query(Some(
-                    NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(id)),
+                    NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(id.to_string())),
                 ))
                 .unwrap()
                 .len()
@@ -313,7 +314,7 @@ mod tests {
             .upsert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0), true)
             .unwrap();
 
         assert_eq!(count_name_store_join("name_a"), 0);

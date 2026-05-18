@@ -1,4 +1,4 @@
-import { FilterBy, useQuery } from '@openmsupply-client/common';
+import { FilterBy, useQuery, keepPreviousData } from '@openmsupply-client/common';
 import { useItemGraphQL } from '../useItemApi';
 import { ITEM_LEDGER } from '../../keys';
 import { ItemLedgerFragment } from '../../operations.generated';
@@ -39,5 +39,6 @@ export const useItemLedger = (
   return useQuery({
     queryKey: [ITEM_LEDGER, itemId, queryParams],
     queryFn,
+    placeholderData: keepPreviousData,
   });
 };

@@ -1,18 +1,19 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{DatabaseError, RecordProgramCombinationAlreadyExists},
+    generic_inputs::NullableUpdateInput,
+    simple_generic_errors::RecordProgramCombinationAlreadyExists,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::vaccine_course::VaccineCourseNode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     vaccine_course::update::{
         UpdateVaccineCourse, UpdateVaccineCourseError as ServiceError, VaccineCourseDoseInput,
-        VaccineCourseItemInput,
+        VaccineCourseItemInput, VaccineCourseStoreConfigInput,
     },
+    NullableUpdate,
 };
-
-use graphql_types::types::vaccine_course::VaccineCourseNode;
 
 pub fn update_vaccine_course(
     ctx: &Context<'_>,
@@ -62,15 +63,25 @@ pub struct UpsertVaccineCourseItemInput {
 }
 
 #[derive(InputObject, Clone)]
+pub struct UpsertVaccineCourseStoreConfigInput {
+    pub id: String,
+    pub store_id: String,
+    pub wastage_rate: Option<NullableUpdateInput<f64>>,
+    pub coverage_rate: Option<NullableUpdateInput<f64>>,
+}
+
+#[derive(InputObject, Clone)]
 pub struct UpdateVaccineCourseInput {
     pub id: String,
     pub name: Option<String>,
     pub vaccine_items: Vec<UpsertVaccineCourseItemInput>,
     pub doses: Vec<UpsertVaccineCourseDoseInput>,
+    pub store_configs: Option<Vec<UpsertVaccineCourseStoreConfigInput>>,
     pub demographic_id: Option<String>,
     pub coverage_rate: f64,
     pub use_in_gaps_calculations: bool,
     pub wastage_rate: f64,
+    pub can_skip_dose: Option<bool>,
 }
 
 impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
@@ -80,10 +91,12 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
             name,
             vaccine_items,
             doses,
+            store_configs,
             demographic_id,
             coverage_rate,
             use_in_gaps_calculations,
             wastage_rate,
+            can_skip_dose,
         }: UpdateVaccineCourseInput,
     ) -> Self {
         UpdateVaccineCourse {
@@ -107,10 +120,25 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
                     min_interval_days: d.min_interval_days,
                 })
                 .collect(),
+            store_configs: store_configs
+                .unwrap_or_default()
+                .into_iter()
+                .map(|config| VaccineCourseStoreConfigInput {
+                    id: config.id,
+                    store_id: config.store_id,
+                    wastage_rate: config
+                        .wastage_rate
+                        .map(|r| NullableUpdate { value: r.value }),
+                    coverage_rate: config
+                        .coverage_rate
+                        .map(|r| NullableUpdate { value: r.value }),
+                })
+                .collect(),
             demographic_id,
             coverage_rate,
             use_in_gaps_calculations,
             wastage_rate,
+            can_skip_dose,
         }
     }
 }
@@ -129,13 +157,13 @@ pub enum UpdateVaccineCourseResponse {
 #[derive(Interface)]
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateVaccineCourseErrorInterface {
-    DatabaseError(DatabaseError),
     VaccineCourseNameExistsForThisProgram(RecordProgramCombinationAlreadyExists),
+    VaccineDosesInUse(VaccineDosesInUse),
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateVaccineCourseErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -145,6 +173,11 @@ fn map_error(error: ServiceError) -> Result<UpdateVaccineCourseErrorInterface> {
                     RecordProgramCombinationAlreadyExists {},
                 ),
             )
+        }
+        ServiceError::VaccineDosesInUse => {
+            return Ok(UpdateVaccineCourseErrorInterface::VaccineDosesInUse(
+                VaccineDosesInUse,
+            ))
         }
         // Standard Graphql Errors
         ServiceError::VaccineCourseDoesNotExist
@@ -156,4 +189,12 @@ fn map_error(error: ServiceError) -> Result<UpdateVaccineCourseErrorInterface> {
     };
 
     Err(graphql_error.extend())
+}
+
+pub struct VaccineDosesInUse;
+#[Object]
+impl VaccineDosesInUse {
+    pub async fn description(&self) -> &str {
+        "One or more vaccine doses are in use and cannot be modified or deleted."
+    }
 }

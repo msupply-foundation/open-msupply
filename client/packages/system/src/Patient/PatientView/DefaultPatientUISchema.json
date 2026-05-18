@@ -99,7 +99,7 @@
         },
         {
           "type": "Group",
-          "label": "Death",
+          "label": "label.death",
           "elements": [
             {
               "type": "Control",

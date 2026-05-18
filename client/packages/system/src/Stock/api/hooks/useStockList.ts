@@ -3,6 +3,7 @@ import {
   StockLineFilterInput,
   StockLineSortFieldInput,
   useQuery,
+  keepPreviousData,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../operations.generated';
 import { useStockGraphQL } from '../useStockGraphQL';
@@ -15,13 +16,17 @@ export type StockListParams = {
   filterBy?: StockLineFilterInput;
 };
 
-export const useStockList = (queryParams: StockListParams) => {
+export const useStockList = (
+  queryParams: StockListParams,
+  options?: { enabled?: boolean }
+) => {
   const { stockApi, storeId } = useStockGraphQL();
 
   const {
     sortBy = {
-      key: 'itemName',
+      key: 'name',
       direction: 'asc',
+      isDesc: false,
     },
     first,
     offset,
@@ -49,33 +54,31 @@ export const useStockList = (queryParams: StockListParams) => {
     return { nodes, totalCount };
   };
 
-  const query = useQuery({ queryKey, queryFn });
+  const query = useQuery({
+    queryKey,
+    queryFn,
+
+    placeholderData: keepPreviousData,
+    enabled: options?.enabled,
+  });
   return query;
 };
 
 const toSortField = (
   sortBy: SortBy<StockLineRowFragment>
 ): StockLineSortFieldInput => {
-  switch (sortBy.key) {
-    case 'batch':
-      return StockLineSortFieldInput.Batch;
-    case 'itemCode':
-      return StockLineSortFieldInput.ItemCode;
-    case 'itemName':
-      return StockLineSortFieldInput.ItemName;
-    case 'packSize':
-      return StockLineSortFieldInput.PackSize;
-    case 'supplierName':
-      return StockLineSortFieldInput.SupplierName;
-    case 'numberOfPacks':
-      return StockLineSortFieldInput.NumberOfPacks;
-    case 'location':
-      return StockLineSortFieldInput.LocationCode;
-    case 'costPricePerPack':
-      return StockLineSortFieldInput.CostPricePerPack;
-    case 'expiryDate':
-    default: {
-      return StockLineSortFieldInput.ItemName;
-    }
-  }
+  const sortFieldMap: Record<string, StockLineSortFieldInput> = {
+    batch: StockLineSortFieldInput.Batch,
+    code: StockLineSortFieldInput.ItemCode,
+    name: StockLineSortFieldInput.ItemName,
+    packSize: StockLineSortFieldInput.PackSize,
+    supplierName: StockLineSortFieldInput.SupplierName,
+    totalNumberOfPacks: StockLineSortFieldInput.NumberOfPacks,
+    'location.code': StockLineSortFieldInput.LocationCode,
+    costPricePerPack: StockLineSortFieldInput.CostPricePerPack,
+    expiryDate: StockLineSortFieldInput.ExpiryDate,
+    manufactureDate: StockLineSortFieldInput.ManufactureDate,
+  };
+
+  return sortFieldMap[sortBy.key] ?? StockLineSortFieldInput.ItemName;
 };

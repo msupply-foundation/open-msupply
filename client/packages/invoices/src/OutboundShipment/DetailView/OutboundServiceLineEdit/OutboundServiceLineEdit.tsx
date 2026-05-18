@@ -5,19 +5,19 @@ import {
   ButtonWithIcon,
   Box,
   PlusCircleIcon,
-  DataTable,
   useDialog,
   useTranslation,
   DialogButton,
-  TableProvider,
-  createTableStore,
   QueryParamsProvider,
   createQueryParamsStore,
+  MaterialTable,
+  useSimpleMaterialTable,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../../api';
 import { useDraftServiceLines } from './useDraftServiceLines';
 import { useServiceLineColumns } from './useServiceLineColumns';
 import { ItemRowFragment, useItem } from '@openmsupply-client/system';
+
 interface OutboundServiceLineEditProps {
   isOpen: boolean;
   onClose: () => void;
@@ -36,6 +36,17 @@ const OutboundServiceLineEditComponent = ({
   const {
     serviceItem: { data: defaultServiceItem },
   } = useItem();
+
+  const linesFiltered = lines.filter(({ isDeleted }) => !isDeleted);
+
+  const table = useSimpleMaterialTable({
+    tableId: 'outbound-detail-service-line',
+    columns,
+    data: linesFiltered,
+    // Modal table state should not be synced to URL (would otherwise clobber
+    // the parent detail view's sort/filter URL params on open/close).
+    localStateOnly: true,
+  });
 
   return (
     <Modal
@@ -76,19 +87,9 @@ const OutboundServiceLineEditComponent = ({
               Icon={<PlusCircleIcon />}
             />
           </Box>
-          <TableProvider createStore={createTableStore}>
-            <DataTable
-              id="outbound-service-line"
-              columns={columns}
-              data={lines.filter(({ isDeleted }) => !isDeleted)}
-              dense
-              noDataMessage={
-                !defaultServiceItem
-                  ? t('error.no-service-charges')
-                  : t('error.no-results')
-              }
-            />
-          </TableProvider>
+          {linesFiltered.length > 0
+            ? <MaterialTable table={table} />
+            : (!defaultServiceItem ? t('error.no-service-charges') : t('error.no-results'))}
         </Box>
       )}
     </Modal>

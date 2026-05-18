@@ -1,16 +1,17 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
-  Autocomplete,
-  useBufferState,
+  InfiniteSearchPicker,
+  NameFilterInput,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useName } from '../../api';
-import {
-  NameSearchInputProps,
-  basicFilterOptions,
-  filterByNameAndCode,
-} from '../../utils';
+import { useName, NameRowFragment } from '../../api';
+import { NameSearchInputProps } from '../../utils';
 import { getNameOptionRenderer } from '../NameOptionRenderer';
+
+interface CustomerSearchInputExtraProps {
+  autoFocus?: boolean;
+  openOnFocus?: boolean;
+}
 
 export const CustomerSearchInput = ({
   onChange,
@@ -18,43 +19,34 @@ export const CustomerSearchInput = ({
   value,
   disabled = false,
   clearable = false,
-  currentId = undefined,
-}: NameSearchInputProps) => {
+  currentId,
+  extraFilter,
+  filterBy,
+  autoFocus = false,
+  openOnFocus = false,
+}: NameSearchInputProps & CustomerSearchInputExtraProps) => {
   const t = useTranslation();
-  const { data, isLoading } = useName.document.customers();
-  const [buffer, setBuffer] = useBufferState(value);
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
-  // For use in JSON forms
-  useEffect(() => {
-    if (currentId && !buffer) {
-      const current = data?.nodes.find(name => name.id === currentId);
-      if (current) {
-        setBuffer(current);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentId, data]);
-
   return (
-    <Autocomplete
+    <InfiniteSearchPicker<NameRowFragment, NameFilterInput>
+      value={value}
+      onChange={onChange}
+      currentId={currentId}
+      useInfiniteData={useName.document.customersInfinite}
+      useGetById={useName.document.get}
+      apiFilter={filterBy as NameFilterInput | undefined}
+      getOptionLabel={option => option.name}
+      getOptionCode={option => option.code}
+      renderOption={NameOptionRenderer}
+      getOptionDisabled={option => option.isOnHold}
+      extraFilter={extraFilter}
       disabled={disabled}
       clearable={clearable}
-      value={buffer && { ...buffer, label: buffer.name }}
-      filterOptionConfig={basicFilterOptions}
-      filterOptions={filterByNameAndCode}
-      loading={isLoading}
-      onChange={(_, name) => {
-        setBuffer(name);
-        onChange(name);
-      }}
-      options={data?.nodes ?? []}
-      renderOption={NameOptionRenderer}
-      width={`${width}px`}
-      popperMinWidth={width}
-      isOptionEqualToValue={(option, value) => option?.id === value?.id}
-      getOptionDisabled={option => option.isOnHold}
-      sx={{ minWidth: width }}
+      autoFocus={autoFocus}
+      openOnFocus={openOnFocus}
+      width={width}
+      noOptionsText={t('label.no-options')}
     />
   );
 };

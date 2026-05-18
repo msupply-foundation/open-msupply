@@ -30,7 +30,7 @@ mod generate_rnr_form_lines {
                 .name_store_joins()
                 .items()
                 .rnr_forms()
-                .full_master_list(),
+                .full_master_lists(),
             MockData {
                 // During the R&R period (jan 2024)
                 invoices: vec![
@@ -175,7 +175,7 @@ mod generate_rnr_form_lines {
         let result = get_usage_map(
             &connection,
             &mock_store_a().id,
-            Some(EqualFilter::equal_to(&item_query_test1().id)),
+            Some(EqualFilter::equal_to(item_query_test1().id)),
             31,
             &NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
         )
@@ -385,7 +385,7 @@ mod generate_rnr_form_lines {
                 rnr_forms: vec![
                     RnRFormRow {
                         id: "rnr_form_1".to_string(),
-                        name_link_id: "name_store_b".to_string(),
+                        name_id: "name_store_b".to_string(),
                         store_id: mock_store_a().id,
                         program_id: mock_program_b().id,
                         period_id: mock_period_2_a().id,
@@ -397,7 +397,7 @@ mod generate_rnr_form_lines {
                     },
                     RnRFormRow {
                         id: "rnr_form_2".to_string(),
-                        name_link_id: "name_store_b".to_string(),
+                        name_id: "name_store_b".to_string(),
                         store_id: mock_store_a().id,
                         program_id: mock_program_b().id,
                         period_id: mock_period_2_b().id,
@@ -409,7 +409,7 @@ mod generate_rnr_form_lines {
                     },
                     RnRFormRow {
                         id: "rnr_form_3".to_string(),
-                        name_link_id: "name_store_b".to_string(),
+                        name_id: "name_store_b".to_string(),
                         store_id: mock_store_a().id,
                         program_id: mock_program_b().id,
                         period_id: mock_period_2_c().id,
@@ -452,7 +452,7 @@ mod generate_rnr_form_lines {
         let result = get_previous_monthly_consumption(
             &connection,
             // Filter so that no rnr_forms are returned
-            RnRFormFilter::new().id(EqualFilter::equal_to("not-exists")),
+            RnRFormFilter::new().id(EqualFilter::equal_to("not-exists".to_string())),
         )
         .unwrap();
         assert_eq!(result.get(&item_query_test1().id), None);
@@ -461,7 +461,7 @@ mod generate_rnr_form_lines {
         let result = get_previous_monthly_consumption(
             &connection,
             // Filter so that no rnr_forms are returned
-            RnRFormFilter::new().id(EqualFilter::equal_to("rnr_form_1")),
+            RnRFormFilter::new().id(EqualFilter::equal_to("rnr_form_1".to_string())),
         )
         .unwrap();
         assert_eq!(
@@ -515,7 +515,7 @@ mod generate_rnr_form_lines {
     fn invoice_adjust_up() -> InvoiceRow {
         InvoiceRow {
             id: "adjust_up".to_string(),
-            name_link_id: mock_name_invad().id,
+            name_id: mock_name_invad().id,
             store_id: mock_store_a().id,
             r#type: InvoiceType::InventoryAddition,
             status: InvoiceStatus::Verified,
@@ -539,7 +539,7 @@ mod generate_rnr_form_lines {
     fn invoice_outbound() -> InvoiceRow {
         InvoiceRow {
             id: "outbound".to_string(),
-            name_link_id: "name_store_b".to_string(),
+            name_id: "name_store_b".to_string(),
             store_id: mock_store_a().id,
             r#type: InvoiceType::OutboundShipment,
             status: InvoiceStatus::Shipped,
@@ -565,7 +565,7 @@ mod generate_rnr_form_lines {
     fn invoice_inbound() -> InvoiceRow {
         InvoiceRow {
             id: "inbound".to_string(),
-            name_link_id: "name_store_b".to_string(),
+            name_id: "name_store_b".to_string(),
             store_id: mock_store_a().id,
             r#type: InvoiceType::InboundShipment,
             status: InvoiceStatus::Received,
@@ -590,7 +590,7 @@ mod generate_rnr_form_lines {
     fn invoice_adjust_down() -> InvoiceRow {
         InvoiceRow {
             id: "adjust_down".to_string(),
-            name_link_id: mock_name_invad().id,
+            name_id: mock_name_invad().id,
             store_id: mock_store_a().id,
             r#type: InvoiceType::InventoryReduction,
             status: InvoiceStatus::Verified,

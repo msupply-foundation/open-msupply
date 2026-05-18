@@ -123,7 +123,7 @@ def upsert_vaccine_packaging_variant_stmt(packaging_variant_id, item_variant_id,
     if volume_per_unit == "":
         volume_per_unit = 0
 
-    insert_statement = f"INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('{packaging_variant_id}', '{item_variant_id}', '{packaging_name}', {packaging_level}, {volume_per_unit}) ON CONFLICT DO NOTHING;\n"
+    insert_statement = f"INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('{packaging_variant_id}', '{item_variant_id}', '{packaging_name}', {packaging_level}, {volume_per_unit}) ON CONFLICT (id) DO UPDATE SET volume_per_unit = EXCLUDED.volume_per_unit;\n"
 
     return insert_statement + changelog_stmt(packaging_variant_id, 'packaging_variant')
 
@@ -145,7 +145,7 @@ def upsert_diluent_packaging_variant_stmt(packaging_variant_id, item_variant_id,
     if volume_per_unit == "":
         volume_per_unit = 0
 
-    insert_statement = f"INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('{packaging_variant_id}', '{item_variant_id}', '{packaging_name}', {packaging_level}, {volume_per_unit}) ON CONFLICT DO NOTHING;\n"
+    insert_statement = f"INSERT INTO packaging_variant (id, item_variant_id, name, packaging_level, volume_per_unit) VALUES ('{packaging_variant_id}', '{item_variant_id}', '{packaging_name}', {packaging_level}, {volume_per_unit}) ON CONFLICT (id) DO UPDATE SET volume_per_unit = EXCLUDED.volume_per_unit;\n"
 
     return insert_statement + changelog_stmt(packaging_variant_id, 'packaging_variant')
 

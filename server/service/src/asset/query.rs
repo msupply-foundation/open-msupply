@@ -25,7 +25,7 @@ pub fn get_asset(ctx: &ServiceContext, id: String) -> Result<Asset, SingleRecord
     let repository = AssetRepository::new(&ctx.connection);
 
     let mut result =
-        repository.query_by_filter(AssetFilter::new().id(EqualFilter::equal_to(&id)))?;
+        repository.query_by_filter(AssetFilter::new().id(EqualFilter::equal_to(id.to_string())))?;
 
     if let Some(record) = result.pop() {
         Ok(record)

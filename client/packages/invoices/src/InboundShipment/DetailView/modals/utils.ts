@@ -1,11 +1,12 @@
 import { InvoiceLineNodeType, FnUtils } from '@openmsupply-client/common';
+import { ItemFragment } from '@openmsupply-client/system';
 import { DraftInboundLine } from './../../../types';
 import { InboundLineFragment } from './../../api/operations.generated';
 
 type InboundLineItem = InboundLineFragment['item'];
 
 export interface CreateDraftInboundLineParams {
-  item: InboundLineItem;
+  item: ItemFragment | InboundLineItem;
   invoiceId: string;
   seed?: InboundLineFragment;
   type?: InvoiceLineNodeType;

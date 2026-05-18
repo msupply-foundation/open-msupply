@@ -20,8 +20,6 @@ pub fn crawl_and_translate(
                     },
                     user_language,
                 )?
-            } else {
-                ()
             };
             Ok(())
         }
@@ -65,12 +63,12 @@ mod json_translate_test {
         });
 
         let expected = serde_json::json!({
-            "key": "Authentication Error",
+            "key": "Authentication error",
             "nested": {
                 "key": "Pending",
                 "untranslated_key": "untranslated_value"
             },
-            "list": ["Add Form", "no-translation"]
+            "list": ["Add form", "no-translation"]
         });
 
         let localisations = service_provider

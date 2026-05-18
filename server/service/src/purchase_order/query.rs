@@ -20,7 +20,7 @@ pub fn get_purchase_orders(
     let repository = PurchaseOrderRepository::new(&ctx.connection);
 
     let mut filter: PurchaseOrderFilter = filter.unwrap_or_default();
-    filter.store_id = store_id.map(EqualFilter::equal_to);
+    filter.store_id = store_id.map(|id| EqualFilter::equal_to(id.to_string()));
 
     Ok(ListResult {
         rows: repository.query(pagination, Some(filter.clone()), sort)?,
@@ -34,8 +34,8 @@ pub fn get_purchase_order(
     id: &str,
 ) -> Result<Option<PurchaseOrder>, RepositoryError> {
     let repository = PurchaseOrderRepository::new(&ctx.connection);
-    let mut filter = PurchaseOrderFilter::new().id(EqualFilter::equal_to(id));
-    filter.store_id = store_id.map(EqualFilter::equal_to);
+    let mut filter = PurchaseOrderFilter::new().id(EqualFilter::equal_to(id.to_string()));
+    filter.store_id = store_id.map(|id| EqualFilter::equal_to(id.to_string()));
 
     Ok(repository.query_by_filter(filter)?.pop())
 }
@@ -52,7 +52,7 @@ mod test {
     #[actix_rt::test]
     async fn purchase_order_service_queries() {
         let (_, connection, connection_manager, _) = setup_all(
-            "purchase order service queries",
+            "purchase_order_service_queries",
             MockDataInserts::none().stores(),
         )
         .await;
@@ -68,7 +68,7 @@ mod test {
         let po = PurchaseOrderRow {
             id: "test_po_1".to_string(),
             store_id: mock_store_a().id,
-            supplier_name_link_id: mock_name_c().id,
+            supplier_name_id: mock_name_c().id,
             created_datetime: chrono::Utc::now().naive_utc(),
             status: repository::PurchaseOrderStatus::New,
             purchase_order_number: 1,
@@ -82,7 +82,7 @@ mod test {
             .unwrap();
         assert!(result.is_none());
 
-        let ref result = service
+        let result = &service
             .get_purchase_order(&context, Some(&po.store_id), &po.id)
             .unwrap();
         assert!(result.is_some());

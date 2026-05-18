@@ -578,7 +578,7 @@ async fn run_server_and_sync(
     omsupply_central_port: u16,
 ) -> Result<(), SyncError> {
     let sync_settings = SyncSettings {
-        url: format!("http://127.0.0.1:{}", msupply_central_port),
+        url: format!("http://127.0.0.1:{msupply_central_port}"),
         username: "".to_string(),
         password_sha256: "".to_string(),
         interval_seconds: 100000,
@@ -587,6 +587,7 @@ async fn run_server_and_sync(
             remote_push: 1,
             central_pull: 1,
         },
+        disable_integration_transaction: false,
     };
 
     let synchroniser = Synchroniser::new(sync_settings.clone(), service_provider.clone()).unwrap();

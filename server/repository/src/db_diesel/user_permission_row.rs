@@ -71,10 +71,12 @@ pub enum PermissionType {
     PurchaseOrderQuery,
     PurchaseOrderMutate,
     PurchaseOrderAuthorise,
-    // goods received
-    GoodsReceivedQuery,
-    GoodsReceivedMutate,
-    GoodsReceivedAuthorise,
+    PurchaseOrderFinalise,
+    // inbound shipment external
+    InboundShipmentExternalQuery,
+    InboundShipmentExternalMutate,
+    InboundShipmentExternalVerify,
+    InboundShipmentExternalAuthorise,
     // reporting
     Report,
     // log
@@ -93,6 +95,7 @@ pub enum PermissionType {
     AssetMutate,
     AssetMutateViaDataMatrix,
     AssetCatalogueItemMutate,
+    AssetStatusMutate,
     // Names
     NamePropertiesMutate,
     // Central Server
@@ -205,7 +208,7 @@ mod test {
         let repo = UserPermissionRowRepository::new(&connection);
         // Try upsert all variants of PermissionType, confirm that diesel enums match postgres
         for permission in PermissionType::iter() {
-            let row_id = format!("{:?}", permission);
+            let row_id = format!("{permission:?}");
 
             let result = repo.upsert_one(&UserPermissionRow {
                 id: row_id.clone(),
@@ -213,7 +216,7 @@ mod test {
                 store_id: Some("store_a".to_string()),
                 ..Default::default()
             });
-            assert_eq!(result, Ok(()), "\n \n HINT: Failed to insert permission for type {:?}. Have you created a migration to add this type to the postgres database enum? \n", row_id);
+            assert_eq!(result, Ok(()), "\n \n HINT: Failed to insert permission for type {row_id:?}. Have you created a migration to add this type to the postgres database enum? \n");
 
             let found = repo.find_one_by_id(&row_id).unwrap().unwrap();
             assert_eq!(found.permission, permission);

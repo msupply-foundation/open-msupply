@@ -4,7 +4,7 @@ import React, { ChangeEvent, useState } from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import { Box, Paper, styled, TextField, Typography } from '@mui/material';
 import { Grid } from '@openmsupply-client/common';
-import { EmergencyIcon, SvgIconProps } from '.';
+import { SvgIconProps } from '.';
 
 import { AlertIcon } from './Alert';
 import { ArrowLeftIcon } from './ArrowLeft';
@@ -12,8 +12,9 @@ import { ArrowRightIcon } from './ArrowRight';
 import { BarChartIcon } from './BarChart';
 import { BarIcon } from './Bar';
 import { BookIcon } from './Book';
-import { CartIcon } from './Cart';
+import { CameraIcon } from './Camera';
 import { CentralIcon } from './Central';
+import { CheckCircleIcon } from './CheckCircle';
 import { CheckIcon } from './Check';
 import { CheckboxCheckedIcon } from './CheckboxChecked';
 import { CheckboxEmptyIcon } from './CheckboxEmpty';
@@ -31,6 +32,7 @@ import { DashboardIcon } from './Dashboard';
 import { DeleteIcon } from './Delete';
 import { DownloadIcon } from './Download';
 import { EditIcon } from './Edit';
+import { EmergencyIcon } from './Emergency';
 import { ExternalLinkIcon } from './ExternalLink';
 import { EyeIcon } from './Eye';
 import { EyeOffIcon } from './EyeOff';
@@ -46,10 +48,11 @@ import { LinkIcon } from './Link';
 import { ListIcon } from './List';
 import { LocationIcon } from './Location';
 import { MSupplyGuy, AnimatedMSupplyGuy } from './MSupplyGuy';
-import { MedicineIcon } from './MedicineIcon';
+import { MailIcon } from './Mail';
+import { MaximiseIcon } from './Maximise';
 import { MenuDotsIcon } from './MenuDots';
 import { MessageSquareIcon } from './MessageSquare';
-import { MessagesIcon } from './Messages';
+import { MinimiseIcon } from './Minimise';
 import { MinusCircleIcon } from './MinusCircle';
 import { PlusCircleIcon } from './PlusCircle';
 import { PowerIcon } from './Power';
@@ -73,10 +76,7 @@ import { SunIcon } from './Sun';
 import { SuppliersIcon } from './Suppliers';
 import { SwipeIcon } from './Swipe';
 import { ThermometerIcon } from './Thermometer';
-import { ToolsIcon } from './Tools';
 import { TranslateIcon } from './Translate';
-import { TrendingDownIcon } from './TrendingDown';
-import { BarChart2Icon } from './BarChart2';
 import { TruckIcon } from './Truck';
 import { UploadIcon } from './Upload';
 import { UserCircleIcon } from './UserCircle';
@@ -105,16 +105,20 @@ type Icon = {
 
 const Template: StoryFn<React.FC<SvgIconProps>> = args => {
   const icons: Icon[] = [
-    { icon: <AlertIcon {...args} />, name: 'Alert' },
     { icon: <AlertIcon double {...args} />, name: 'Alert (double)' },
+    { icon: <AlertIcon {...args} />, name: 'Alert' },
+    {
+      icon: <AnimatedMSupplyGuy {...args} size="medium" />,
+      name: 'AnimatedMSupplyGuy',
+    },
     { icon: <ArrowLeftIcon {...args} />, name: 'ArrowLeft' },
     { icon: <ArrowRightIcon {...args} />, name: 'ArrowRight' },
-    { icon: <BarIcon {...args} />, name: 'Bar' },
     { icon: <BarChartIcon {...args} />, name: 'BarChart' },
-    { icon: <BarChart2Icon {...args} />, name: 'BarChart2Icon' },
+    { icon: <BarIcon {...args} />, name: 'Bar' },
     { icon: <BookIcon {...args} />, name: 'Book' },
-    { icon: <CartIcon {...args} />, name: 'Cart' },
+    { icon: <CameraIcon {...args} />, name: 'Camera' },
     { icon: <CentralIcon {...args} />, name: 'Central' },
+    { icon: <CheckCircleIcon {...args} />, name: 'CheckCircle' },
     { icon: <CheckIcon {...args} />, name: 'Check' },
     { icon: <CheckboxCheckedIcon {...args} />, name: 'CheckboxChecked' },
     { icon: <CheckboxEmptyIcon {...args} />, name: 'CheckboxEmpty' },
@@ -139,8 +143,8 @@ const Template: StoryFn<React.FC<SvgIconProps>> = args => {
     { icon: <ExternalLinkIcon {...args} />, name: 'External Link' },
     { icon: <EyeIcon {...args} />, name: 'Eye' },
     { icon: <EyeOffIcon {...args} />, name: 'EyeOff' },
-    { icon: <FileUploadIcon {...args} />, name: 'File Upload' },
     { icon: <FileIcon {...args} />, name: 'File' },
+    { icon: <FileUploadIcon {...args} />, name: 'File Upload' },
     { icon: <FilterIcon {...args} />, name: 'Filter' },
     { icon: <HelpIcon {...args} />, name: 'Help' },
     { icon: <HomeIcon {...args} />, name: 'Home' },
@@ -151,27 +155,24 @@ const Template: StoryFn<React.FC<SvgIconProps>> = args => {
     { icon: <ListIcon {...args} />, name: 'List' },
     { icon: <LocationIcon {...args} />, name: 'Location' },
     { icon: <MSupplyGuy {...args} size="medium" />, name: 'MSupplyGuy' },
-    {
-      icon: <AnimatedMSupplyGuy {...args} size="medium" />,
-      name: 'AnimatedMSupplyGuy',
-    },
-    { icon: <MedicineIcon {...args} />, name: 'Medicine' },
+    { icon: <MailIcon {...args} />, name: 'Mail' },
+    { icon: <MaximiseIcon {...args} />, name: 'Maximise' },
     { icon: <MenuDotsIcon {...args} />, name: 'MenuDots' },
-    { icon: <MessagesIcon {...args} />, name: 'Messages' },
     { icon: <MessageSquareIcon {...args} />, name: 'MessageSquare' },
-    { icon: <PlusCircleIcon {...args} />, name: 'PlusCircle' },
+    { icon: <MinimiseIcon {...args} />, name: 'Minimise' },
     { icon: <MinusCircleIcon {...args} />, name: 'MinusCircle' },
+    { icon: <PlusCircleIcon {...args} />, name: 'PlusCircle' },
     { icon: <PowerIcon {...args} />, name: 'Power' },
     { icon: <PrinterIcon {...args} />, name: 'Printer' },
     { icon: <RadioIcon {...args} />, name: 'Radio' },
-    { icon: <ReportsIcon {...args} />, name: 'Reports' },
     { icon: <RefreshIcon {...args} />, name: 'Refresh' },
+    { icon: <ReportsIcon {...args} />, name: 'Reports' },
     { icon: <RewindIcon {...args} />, name: 'Rewind' },
     { icon: <SaveIcon {...args} />, name: 'Save' },
     { icon: <ScanIcon {...args} />, name: 'Scan' },
     { icon: <SearchIcon {...args} />, name: 'Search' },
-    { icon: <SettingsIcon {...args} />, name: 'Settings' },
     { icon: <SettingsCircleIcon {...args} />, name: 'SettingsCircle' },
+    { icon: <SettingsIcon {...args} />, name: 'Settings' },
     { icon: <SidebarIcon {...args} />, name: 'Sidebar' },
     { icon: <SlidersIcon {...args} />, name: 'Sliders' },
     { icon: <SnowflakeIcon {...args} />, name: 'Snowflake' },
@@ -182,9 +183,7 @@ const Template: StoryFn<React.FC<SvgIconProps>> = args => {
     { icon: <SuppliersIcon {...args} />, name: 'Suppliers' },
     { icon: <SwipeIcon {...args} />, name: 'Swipe' },
     { icon: <ThermometerIcon {...args} />, name: 'Thermometer' },
-    { icon: <ToolsIcon {...args} />, name: 'Tools' },
     { icon: <TranslateIcon {...args} />, name: 'Translate' },
-    { icon: <TrendingDownIcon {...args} />, name: 'TrendingDown' },
     { icon: <TruckIcon {...args} />, name: 'Truck' },
     { icon: <UploadIcon {...args} />, name: 'Upload' },
     { icon: <UserCircleIcon {...args} />, name: 'UserCircle' },

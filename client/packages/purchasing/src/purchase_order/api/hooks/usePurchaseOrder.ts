@@ -1,23 +1,21 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   FnUtils,
   InsertPurchaseOrderInput,
   PurchaseOrderLineNode,
-  SortUtils,
   useConfirmationModal,
   useMutation,
   useNotification,
   useParams,
   useQuery,
   useTranslation,
-  useUrlQuery,
   RecordPatch,
   useDebounceCallback,
   LIST_KEY,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 
 import { isPurchaseOrderDisabled } from '../../../utils';
-import { usePurchaseOrderColumns } from '../../DetailView/columns';
 import { usePurchaseOrderGraphQL } from '../usePurchaseOrderGraphQL';
 import { PurchaseOrderFragment } from '../operations.generated';
 import { parseUpdateInput } from './utils';
@@ -34,12 +32,11 @@ export const usePurchaseOrder = (id?: string) => {
   const { queryClient } = usePurchaseOrderGraphQL();
 
   // QUERY
-  const { data, isLoading, isError } = useGetById(purchaseOrderId);
+  const { data, isFetching, isError, isLoading } = useGetById(purchaseOrderId);
 
   const isDisabled = data ? isPurchaseOrderDisabled(data) : false;
 
-  const { sortedAndFilteredLines, itemFilter, setItemFilter } =
-    useFilteredAndSortedLines(data);
+  const { filteredLines, itemFilter, setItemFilter } = useFilteredLines(data);
 
   // DRAFT STATE
   const [draft, setDraft] = useState<PurchaseOrderFragment | undefined>();
@@ -48,15 +45,21 @@ export const usePurchaseOrder = (id?: string) => {
     if (data) setDraft(data);
   }, [data]);
 
-  const handleDraftChange = (input: Partial<PurchaseOrderFragment>) => {
-    if (!draft) return;
-    setDraft({ ...draft, ...input });
-  };
+  // Ref avoids draft in useCallback deps (unstable reference on every state change)
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+
+  const handleDraftChange = useCallback(
+    (input: Partial<PurchaseOrderFragment>) => {
+      setDraft(prev => (prev ? { ...prev, ...input } : prev));
+    },
+    []
+  );
 
   // UPDATE
   const {
     mutateAsync: updateMutation,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     error: updateError,
   } = useUpdate();
 
@@ -68,18 +71,32 @@ export const usePurchaseOrder = (id?: string) => {
     return updatePurchaseOrder;
   };
 
-  const handleDebounceUpdate = useDebounceCallback(update, [], DEBOUNCED_TIME);
+  const pendingChanges = useRef<Partial<PurchaseOrderFragment>>({});
 
-  const handleChange = (input: Partial<PurchaseOrderFragment>) => {
-    if (!draft) return;
-    handleDraftChange(input);
-    handleDebounceUpdate(input);
-  };
+  const debouncedFlush = useDebounceCallback(
+    () => {
+      const changes = pendingChanges.current;
+      pendingChanges.current = {};
+      return update(changes);
+    },
+    [],
+    DEBOUNCED_TIME
+  );
+
+  const handleChange = useCallback(
+    (input: Partial<PurchaseOrderFragment>) => {
+      if (!draftRef.current) return;
+      handleDraftChange(input);
+      pendingChanges.current = { ...pendingChanges.current, ...input };
+      debouncedFlush();
+    },
+    [handleDraftChange, debouncedFlush]
+  );
 
   // CREATE
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreate();
 
@@ -89,18 +106,20 @@ export const usePurchaseOrder = (id?: string) => {
     return result;
   };
 
-  const { addFromMasterList, isLoading: isAdding } = useAddFromMasterList();
+  const { addFromMasterList, isPending: isAdding } = useAddFromMasterList();
 
   return {
-    query: { data, isLoading, isError },
-    lines: { sortedAndFilteredLines, itemFilter, setItemFilter },
+    query: { data, isFetching, isError, isLoading },
+    lines: { filteredLines, itemFilter, setItemFilter },
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
     masterList: { addFromMasterList, isAdding },
     isDisabled,
     draft,
     handleChange,
-    invalidateQueries: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
+    invalidateQueries: () => queryClient.invalidateQueries({
+      queryKey: [PURCHASE_ORDER]
+    }),
   };
 };
 
@@ -139,7 +158,9 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [PURCHASE_ORDER]
+    }),
   });
 };
 
@@ -155,54 +176,10 @@ const useUpdate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [PURCHASE_ORDER]
+    }),
   });
-};
-
-// Filters by item code or name, and sorts by the selected column
-const useFilteredAndSortedLines = (
-  data: PurchaseOrderFragment | undefined | void
-) => {
-  const { columns, sortBy } = usePurchaseOrderColumns();
-
-  const { urlQuery, updateQuery } = useUrlQuery({
-    skipParse: ['codeOrName'],
-  });
-
-  const itemFilter = urlQuery?.['codeOrName'] as string;
-
-  const setItemFilter = (filterValue: string) => {
-    updateQuery({
-      codeOrName: filterValue,
-    });
-  };
-
-  const sortedAndFilteredLines = useMemo(() => {
-    if (!data) return [];
-
-    const lines = data.lines.nodes || [];
-    const currentSortColumn = columns.find(({ key }) => key === sortBy.key);
-
-    if (!currentSortColumn?.getSortValue) return lines;
-
-    const sorter = SortUtils.getColumnSorter(
-      currentSortColumn?.getSortValue,
-      !!sortBy.isDesc
-    );
-
-    return [...lines].sort(sorter).filter(line => {
-      if (!itemFilter) return true;
-      const {
-        item: { code, name },
-      } = line;
-      return (
-        code?.toLowerCase().includes(itemFilter.toLowerCase()) ||
-        name?.toLowerCase().includes(itemFilter.toLowerCase())
-      );
-    });
-  }, [data, columns, sortBy, itemFilter]);
-
-  return { sortedAndFilteredLines, itemFilter, setItemFilter };
 };
 
 const useAddFromMasterList = () => {
@@ -215,12 +192,13 @@ const useAddFromMasterList = () => {
     message: t('messages.confirm-add-from-master-list'),
   });
 
-  const mutationState = useMutation(
-    purchaseOrderApi.addToPurchaseOrderFromMasterList,
-    {
-      onSuccess: () => queryClient.invalidateQueries([PURCHASE_ORDER]),
-    }
-  );
+  const mutationState = useMutation({
+    mutationFn: (vars: Parameters<typeof purchaseOrderApi.addToPurchaseOrderFromMasterList>[0]) => purchaseOrderApi.addToPurchaseOrderFromMasterList(vars),
+
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [PURCHASE_ORDER]
+    })
+  });
 
   const addFromMasterList = async (
     masterListId: string,
@@ -267,4 +245,38 @@ const useAddFromMasterList = () => {
   };
 
   return { ...mutationState, addFromMasterList };
+};
+
+// Filters by item code or name
+const useFilteredLines = (data: PurchaseOrderFragment | undefined) => {
+  const { urlQuery, updateQuery } = useUrlQuery({
+    skipParse: ['codeOrName'],
+  });
+
+  const itemFilter = urlQuery?.['codeOrName'] as string;
+
+  const setItemFilter = (filterValue: string) => {
+    updateQuery({
+      codeOrName: filterValue,
+    });
+  };
+
+  const filteredLines = useMemo(() => {
+    if (!data) return [];
+
+    const lines = data.lines.nodes || [];
+
+    return lines.filter(line => {
+      if (!itemFilter) return true;
+      const {
+        item: { code, name },
+      } = line;
+      return (
+        code?.toLowerCase().includes(itemFilter.toLowerCase()) ||
+        name?.toLowerCase().includes(itemFilter.toLowerCase())
+      );
+    });
+  }, [data, itemFilter]);
+
+  return { filteredLines, itemFilter, setItemFilter };
 };

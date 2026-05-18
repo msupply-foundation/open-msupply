@@ -123,13 +123,13 @@ mod tests {
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0), true)
             .unwrap();
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);
         let mut item_links = item_link_repo.find_many_by_item_id("item_c").unwrap();
 
-        item_links.sort_by_key(|i| i.id.to_owned());
+        item_links.sort_by_key(|i| i.id.to_string());
         assert_eq!(item_links, expected_item_links);
 
         let (_, connection, _, _) = setup_all(
@@ -143,13 +143,13 @@ mod tests {
             .upsert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0))
+        integrate_and_translate_sync_buffer(&connection, None, SyncBufferSource::Central(0), true)
             .unwrap();
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);
         let mut item_links = item_link_repo.find_many_by_item_id("item_c").unwrap();
 
-        item_links.sort_by_key(|i| i.id.to_owned());
+        item_links.sort_by_key(|i| i.id.to_string());
         assert_eq!(item_links, expected_item_links);
     }
 }

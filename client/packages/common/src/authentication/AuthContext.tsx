@@ -5,18 +5,16 @@ import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
 import { addMinutes } from 'date-fns/addMinutes';
 import { useLogin, useGetUserPermissions, useRefreshToken } from './api/hooks';
-
 import { AuthenticationResponse } from './api';
 import { UserStoreNodeFragment } from './api/operations.generated';
 import { PropsWithChildrenOnly, UserPermission } from '@common/types';
 import { RouteBuilder } from '../utils/navigation';
 import { matchPath } from 'react-router-dom';
-import { useGql } from '../api';
 import { createRegisteredContext } from 'react-singleton-context';
 import { useUpdateUserInfo } from './hooks/useUpdateUserInfo';
+import { useUserActivity } from './hooks/useUserActivity';
 
-// Also determines auth cookie lifetime
-export const INACTIVITY_TIMEOUT_MINUTES = 60;
+const AUTH_TOKEN_LIFETIME_MINUTES = 60;
 const TOKEN_CHECK_INTERVAL = 60 * 1000;
 
 export enum AuthError {
@@ -82,7 +80,7 @@ export const getAuthCookie = (): AuthCookie => {
 };
 
 export const setAuthCookie = (cookie: AuthCookie) => {
-  const expires = addMinutes(new Date(), INACTIVITY_TIMEOUT_MINUTES);
+  const expires = addMinutes(new Date(), AUTH_TOKEN_LIFETIME_MINUTES); // Decide when to refresh
   const authCookie = { ...cookie, expires };
 
   Cookies.set('auth', JSON.stringify(authCookie), { expires });
@@ -92,13 +90,13 @@ const authControl = {
   isLoggingIn: false,
   login: (_username: string, _password: string) =>
     new Promise<AuthenticationResponse>(() => ({ token: 'token' })),
-  logout: () => {},
+  logout: () => { },
   setStore: (_store: UserStoreNodeFragment) => new Promise<void>(() => ({})),
   storeId: 'store-id',
   token: '',
   userHasPermission: (_permission: UserPermission) => false,
   updateUserIsLoading: false,
-  updateUser: () => new Promise<void>(() => {}),
+  updateUser: () => new Promise<void>(() => { }),
 };
 
 const AuthContext = createRegisteredContext<AuthControl>(
@@ -119,15 +117,17 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     mostRecentCredentials,
   } = useLogin(setCookie);
   const getUserPermissions = useGetUserPermissions();
-  const { refreshToken } = useRefreshToken(() => {
-    Cookies.remove('auth');
-    setCookie(undefined);
-    setError(AuthError.Timeout);
-  });
-  const { setHeader } = useGql();
+  const { isActive } = useUserActivity();
+  const { refreshToken } = useRefreshToken(
+    () => {
+      Cookies.remove('auth');
+      setCookie(undefined);
+      setError(AuthError.Timeout);
+    },
+  );
+
   const mostRecentUsername = mostRecentCredentials[0]?.username ?? undefined;
-  // initialise the auth header with the cookie value i.e. on page refresh
-  setHeader('Authorization', `Bearer ${authCookie?.token}`);
+
   const setStore = async (store: UserStoreNodeFragment) => {
     if (!cookie?.token) return;
 
@@ -138,6 +138,8 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       id: cookie.user?.id ?? '',
       name: cookie.user?.name ?? '',
       permissions,
+      email: cookie.user?.email,
+      jobTitle: cookie.user?.jobTitle,
     };
     const newCookie = { ...cookie, store, user };
     setAuthCookie(newCookie);
@@ -216,10 +218,12 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
         return;
       }
 
-      refreshToken();
+      if (isActive()) {
+        refreshToken();
+      }
     }, TOKEN_CHECK_INTERVAL);
     return () => window.clearInterval(timer);
-  }, [cookie?.token]);
+  }, [cookie?.token, isActive, refreshToken, setError]);
 
   return <Provider value={val}>{children}</Provider>;
 };

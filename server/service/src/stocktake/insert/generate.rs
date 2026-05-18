@@ -99,21 +99,23 @@ fn generate_stocktake_lines(
     }
 
     let mut stock_line_filter: StockLineFilter = StockLineFilter::new()
-        .store_id(EqualFilter::equal_to(store_id))
+        .store_id(EqualFilter::equal_to(store_id.to_string()))
         .has_packs_in_store(true);
 
     if let Some(master_list_id) = master_list_id {
-        stock_line_filter = stock_line_filter
-            .master_list(MasterListFilter::new().id(EqualFilter::equal_to(&master_list_id)))
+        stock_line_filter = stock_line_filter.master_list(
+            MasterListFilter::new().id(EqualFilter::equal_to(master_list_id.to_string())),
+        )
     }
 
     if let Some(location_id) = location_id {
         stock_line_filter = stock_line_filter
-            .location(LocationFilter::new().id(EqualFilter::equal_to(&location_id)))
+            .location(LocationFilter::new().id(EqualFilter::equal_to(location_id.to_string())))
     }
 
     if let Some(vvm_status_id) = vvm_status_id {
-        stock_line_filter = stock_line_filter.vvm_status_id(EqualFilter::equal_to(&vvm_status_id));
+        stock_line_filter =
+            stock_line_filter.vvm_status_id(EqualFilter::equal_to(vvm_status_id.to_string()));
     }
 
     if let Some(expires_before_date) = expires_before {
@@ -141,16 +143,18 @@ fn generate_stocktake_lines(
                          note,
                          item_variant_id,
                          volume_per_pack,
-                         donor_link_id,
+                         donor_id: donor_link_id,
+                         manufacturer_id,
                          campaign_id,
                          program_id,
                          vvm_status_id,
                          item_link_id: _,
-                         supplier_link_id: _,
+                         supplier_id: _,
                          store_id: _,
                          on_hold: _,
                          available_number_of_packs: _,
                          barcode_id: _,
+                         manufacture_date,
                          total_volume: _,
                      },
                  item_row,
@@ -169,13 +173,15 @@ fn generate_stocktake_lines(
                     location_id,
                     batch,
                     expiry_date,
+                    manufacture_date,
                     note,
                     stock_line_id: Some(stock_line_id),
                     pack_size: Some(pack_size),
                     cost_price_per_pack: Some(cost_price_per_pack),
                     sell_price_per_pack: Some(sell_price_per_pack),
                     item_variant_id,
-                    donor_link_id,
+                    donor_id: donor_link_id,
+                    manufacturer_id,
                     vvm_status_id,
                     volume_per_pack,
                     campaign_id,
@@ -219,6 +225,7 @@ fn generate_lines_initial_stocktake(
             location_id: None,
             batch: None,
             expiry_date: None,
+            manufacture_date: None,
             note: None,
             stock_line_id: None,
             pack_size: None,
@@ -227,7 +234,8 @@ fn generate_lines_initial_stocktake(
             comment: None,
             counted_number_of_packs: None,
             item_variant_id: None,
-            donor_link_id: None,
+            donor_id: None,
+            manufacturer_id: None,
             reason_option_id: None,
             vvm_status_id: None,
             volume_per_pack: 0.0,
@@ -267,7 +275,7 @@ pub fn generate_lines_from_master_list(
     let item_ids: Vec<String> = MasterListLineRepository::new(connection)
         .query_by_filter(
             MasterListLineFilter::new()
-                .master_list_id(EqualFilter::equal_to(master_list_id))
+                .master_list_id(EqualFilter::equal_to(master_list_id.to_string()))
                 .item_type(ItemType::Stock.equal_to()),
             None,
         )?
@@ -290,8 +298,8 @@ fn generate_lines_from_item_ids(
         let stock_lines = StockLineRepository::new(connection)
             .query_by_filter(
                 StockLineFilter::new()
-                    .item_id(EqualFilter::equal_to(item_id))
-                    .store_id(EqualFilter::equal_to(store_id))
+                    .item_id(EqualFilter::equal_to(item_id.to_string()))
+                    .store_id(EqualFilter::equal_to(store_id.to_string()))
                     .has_packs_in_store(true),
                 Some(store_id.to_string()),
             )
@@ -312,6 +320,7 @@ fn generate_lines_from_item_ids(
                 location_id: None,
                 batch: None,
                 expiry_date: None,
+                manufacture_date: None,
                 note: None,
                 stock_line_id: None,
                 pack_size: None,
@@ -321,7 +330,8 @@ fn generate_lines_from_item_ids(
                 counted_number_of_packs: None,
                 reason_option_id: None,
                 item_variant_id: None,
-                donor_link_id: None,
+                donor_id: None,
+                manufacturer_id: None,
                 vvm_status_id: None,
                 volume_per_pack: 0.0,
                 campaign_id: None,
@@ -344,13 +354,15 @@ fn generate_lines_from_item_ids(
                     campaign_id,
                     program_id,
                     item_variant_id,
-                    donor_link_id,
+                    donor_id: donor_link_id,
+                    manufacturer_id,
                     vvm_status_id,
-                    supplier_link_id: _,
+                    supplier_id: _,
                     store_id: _,
                     on_hold: _,
                     available_number_of_packs: _,
                     barcode_id: _,
+                    manufacture_date,
                     total_volume: _,
                 } = line.stock_line_row;
 
@@ -363,13 +375,15 @@ fn generate_lines_from_item_ids(
                     location_id,
                     batch,
                     expiry_date,
+                    manufacture_date,
                     note,
                     stock_line_id: Some(stock_line_id),
                     pack_size: Some(pack_size),
                     cost_price_per_pack: Some(cost_price_per_pack),
                     sell_price_per_pack: Some(sell_price_per_pack),
                     item_variant_id,
-                    donor_link_id,
+                    donor_id: donor_link_id,
+                    manufacturer_id,
                     vvm_status_id,
                     volume_per_pack,
                     campaign_id,

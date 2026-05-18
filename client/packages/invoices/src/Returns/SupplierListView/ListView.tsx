@@ -21,6 +21,7 @@ import {
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { AppBarButtons } from './AppBarButtons';
 import { SupplierReturnRowFragment, useReturns } from '../api';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const SupplierReturnListView = () => {
@@ -33,10 +34,11 @@ export const SupplierReturnListView = () => {
     filters: [
       { key: 'otherPartyName' },
       { key: 'status', condition: 'equalTo' },
+      { key: 'createdDatetime', condition: 'between' },
     ],
   });
   const navigate = useNavigate();
-  const modalController = useToggle();
+  const { toggleOff, isOn, toggleOn } = useToggle();
   const { info } = useNotification();
   const { disableManualReturns } = usePreferences();
 
@@ -56,7 +58,7 @@ export const SupplierReturnListView = () => {
 
   const openModal = useCallbackWithPermission(
     UserPermission.SupplierReturnMutate,
-    modalController.toggleOn
+    toggleOn
   );
 
   const handleClick = (): void => {
@@ -106,7 +108,7 @@ export const SupplierReturnListView = () => {
       },
       {
         accessorKey: 'invoiceNumber',
-        header: t('label.invoice-number'),
+        header: t('label.number'),
         description: t('description.invoice-number'),
         enableSorting: true,
         columnType: ColumnType.Number,
@@ -114,18 +116,19 @@ export const SupplierReturnListView = () => {
       {
         accessorKey: 'createdDatetime',
         header: t('label.created-datetime'),
+        enableColumnFilter: true,
         enableSorting: true,
         columnType: ColumnType.Date,
-      },
-      {
-        accessorKey: 'theirReference',
-        header: t('label.reference'),
-        Cell: TextWithTooltipCell,
       },
       {
         accessorKey: 'comment',
         header: t('label.comment'),
         columnType: ColumnType.Comment,
+      },
+      {
+        accessorKey: 'theirReference',
+        header: t('label.reference'),
+        Cell: TextWithTooltipCell,
       },
     ],
     []
@@ -138,7 +141,7 @@ export const SupplierReturnListView = () => {
     totalCount: data?.totalCount ?? 0,
     isLoading: isFetching,
     isError,
-    getIsRestrictedRow: isOutboundDisabled,
+    getIsRestrictedRow: row => isOutboundDisabled(row.original),
     onRowClick: r => navigate(r.id),
     noDataElement: (
       <NothingHere
@@ -150,7 +153,12 @@ export const SupplierReturnListView = () => {
 
   return (
     <>
-      <AppBarButtons modalController={modalController} onNew={handleClick} />
+      <Toolbar />
+      <AppBarButtons
+        onNew={handleClick}
+        isOpen={isOn}
+        onCloseModal={toggleOff}
+      />
       <MaterialTable table={table} />
       <Footer
         selectedRows={selectedRows}

@@ -5,16 +5,20 @@ import { useRequestFields } from '../document/useRequestFields';
 
 export const useRequestLines = (draftItemId?: string) => {
   const { on } = useHideOverStocked();
-  const { itemFilter, setItemFilter } = useItemUtils();
+  const { itemFilter, setItemFilter, matchItem } = useItemUtils();
   const { lines, minMonthsOfStock, maxMonthsOfStock, isFetching, isError } =
     useRequestFields(['lines', 'minMonthsOfStock', 'maxMonthsOfStock']);
 
   const threshold = minMonthsOfStock ?? maxMonthsOfStock;
 
-  const filterOverstocked = useMemo(() => {
-    if (!on) return lines?.nodes;
+  const filteredLines = useMemo(() => {
+    const matchingLines = lines?.nodes?.filter(item =>
+      matchItem(itemFilter, item.item)
+    );
 
-    return lines?.nodes.filter(({ item, itemStats }) => {
+    if (!on) return matchingLines;
+
+    return matchingLines.filter(({ item, itemStats }) => {
       const passesFilter =
         (itemStats.availableStockOnHand === 0 &&
           itemStats.averageMonthlyConsumption === 0) ||
@@ -25,10 +29,12 @@ export const useRequestLines = (draftItemId?: string) => {
       const isDraftItem = draftItemId && item.id === draftItemId;
       return passesFilter || isDraftItem;
     });
-  }, [lines, on, threshold, draftItemId]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lines, on, threshold, itemFilter, draftItemId]);
 
   return {
-    lines: filterOverstocked,
+    lines: filteredLines,
     itemFilter,
     setItemFilter,
     isFetching,

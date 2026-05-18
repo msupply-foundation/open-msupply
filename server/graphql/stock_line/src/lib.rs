@@ -7,10 +7,11 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_general::{ItemSortInput, ItemsResponse};
 use graphql_types::types::*;
 use repository::{
     location::LocationFilter, DateFilter, EqualFilter, PaginationOption, StockLineFilter,
-    StockLineSort, StockLineSortField,
+    StockLineSort, StockLineSortField, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -22,6 +23,7 @@ pub struct StockLineQueries;
 #[graphql(remote = "repository::db_diesel::stock_line::StockLineSortField")]
 pub enum StockLineSortFieldInput {
     ExpiryDate,
+    ManufactureDate,
     NumberOfPacks,
     ItemCode,
     ItemName,
@@ -45,6 +47,8 @@ pub struct StockLineSortInput {
 pub struct StockLineFilterInput {
     pub expiry_date: Option<DateFilterInput>,
     pub id: Option<EqualFilterStringInput>,
+    pub code: Option<StringFilterInput>,
+    pub name: Option<StringFilterInput>,
     pub is_available: Option<bool>,
     pub item_code_or_name: Option<StringFilterInput>,
     pub search: Option<StringFilterInput>,
@@ -64,6 +68,8 @@ impl From<StockLineFilterInput> for StockLineFilter {
         StockLineFilter {
             expiry_date: f.expiry_date.map(DateFilter::from),
             id: f.id.map(EqualFilter::from),
+            code: f.code.map(StringFilter::from),
+            name: f.name.map(StringFilter::from),
             is_available: f.is_available,
             item_code_or_name: f.item_code_or_name.map(StringFilterInput::into),
             search: f.search.map(StringFilterInput::into),
@@ -116,7 +122,7 @@ impl StockLineQueries {
         let filter = filter
             .map(StockLineFilter::from)
             .unwrap_or_default()
-            .store_id(EqualFilter::equal_to(&store_id));
+            .store_id(EqualFilter::equal_to(store_id.to_string()));
 
         let stock_lines = service_provider
             .stock_line_service
@@ -134,6 +140,53 @@ impl StockLineQueries {
         Ok(StockLinesResponse::Response(
             StockLineConnector::from_domain(stock_lines),
         ))
+    }
+
+    /// Query for items that have at least one stock_line matching `filter`
+    /// in `store_id`, sorted/paginated by item attributes. Companion to
+    /// `stockLines`: same filter shape, but the result is one row per item
+    /// (suitable for an aggregated/grouped stock view). Because the predicate
+    /// is identical to what `stockLines` uses, an item appears here iff at
+    /// least one of its stock lines would appear in `stockLines`.
+    pub async fn items_by_stock_line_filter(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Stock-line filter (same shape as the `stockLines` query)")]
+        filter: Option<StockLineFilterInput>,
+        #[graphql(desc = "Item-level sort (only first sort input is evaluated)")] sort: Option<
+            Vec<ItemSortInput>,
+        >,
+    ) -> Result<ItemsResponse> {
+        let user = validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::QueryStockLine,
+                store_id: Some(store_id.clone()),
+            },
+        )?;
+
+        let service_provider = ctx.service_provider();
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+
+        // always filter by store_id (mirrors the `stock_lines` query)
+        let filter = filter
+            .map(StockLineFilter::from)
+            .unwrap_or_default()
+            .store_id(EqualFilter::equal_to(store_id.to_string()));
+
+        let items = service_provider.stock_line_service.get_items_by_stock_line_filter(
+            &service_context,
+            page.map(PaginationOption::from),
+            Some(filter),
+            sort.and_then(|mut sort_list| sort_list.pop())
+                .map(|sort| sort.to_domain()),
+            Some(store_id),
+        )
+        .map_err(StandardGraphqlError::from_list_error)?;
+
+        Ok(ItemsResponse::Response(ItemConnector::from_domain(items)))
     }
 
     /// Query for "historical_stock_line" entries
@@ -162,8 +215,8 @@ impl StockLineQueries {
                     &service_context,
                     None,
                     Some(StockLineFilter {
-                        item_id: Some(EqualFilter::equal_to(&item_id)),
-                        store_id: Some(EqualFilter::equal_to(&store_id)),
+                        item_id: Some(EqualFilter::equal_to(item_id.to_string())),
+                        store_id: Some(EqualFilter::equal_to(store_id.to_string())),
                         is_available: Some(true),
                         ..Default::default()
                     }),
@@ -178,6 +231,11 @@ impl StockLineQueries {
                     store_id,
                     item_id,
                     datetime.naive_utc(),
+                    // Include lines that are empty *now* but had stock at the
+                    // historical datetime — callers like the backdated
+                    // inventory adjustment modal need to display historical
+                    // availability for a specific line.
+                    true,
                 )
                 .map_err(StandardGraphqlError::from_list_error)?,
         };

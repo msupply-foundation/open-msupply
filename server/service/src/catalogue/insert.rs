@@ -66,7 +66,7 @@ pub fn validate(
 
     // Check the item does not already exist
     if repo.count(Some(
-        AssetCatalogueItemFilter::new().id(EqualFilter::equal_to(&input.id)),
+        AssetCatalogueItemFilter::new().id(EqualFilter::equal_to(input.id.to_string())),
     ))? > 0
     {
         return Err(InsertAssetCatalogueItemError::ItemAlreadyExists);
@@ -80,12 +80,13 @@ pub fn validate(
         return Err(InsertAssetCatalogueItemError::CodeAlreadyExists);
     }
 
-    // Check the manufacturer and model are unique
+    // Check the manufacturer, model, and type combination is unique
     if let Some(manufacturer) = &input.manufacturer {
         if repo.count(Some(
             AssetCatalogueItemFilter::new()
                 .manufacturer(StringFilter::equal_to(manufacturer))
-                .model(StringFilter::equal_to(&input.model)),
+                .model(StringFilter::equal_to(&input.model))
+                .type_id(EqualFilter::equal_to(input.type_id.clone())),
         ))? > 0
         {
             return Err(InsertAssetCatalogueItemError::ManufacturerAndModelAlreadyExist);

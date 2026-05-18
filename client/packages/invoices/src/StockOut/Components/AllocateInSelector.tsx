@@ -6,6 +6,7 @@ import {
   useIntlUtils,
   useFormatNumber,
   Typography,
+  useShallow,
 } from '@openmsupply-client/common';
 import { AllocateInType, useAllocationContext } from '../useAllocationContext';
 import { canAutoAllocate } from '../utils';
@@ -19,21 +20,26 @@ export const AllocateInSelector = ({
   const { format } = useFormatNumber();
   const { getPlural } = useIntlUtils();
 
-  const { manageVaccinesInDoses } = usePreferences();
+  const { manageVaccinesInDoses, expiredStockIssueThreshold } =
+    usePreferences();
 
   const { allocateIn, availablePackSizes, setAllocateIn, item } =
-    useAllocationContext(({ allocateIn, draftLines, item, setAllocateIn }) => ({
-      item,
-      allocateIn,
-      setAllocateIn,
-      availablePackSizes: [
-        ...new Set(
-          draftLines
-            .filter(line => canAutoAllocate(line))
-            .map(line => line.packSize)
-        ),
-      ].sort((a, b) => a - b),
-    }));
+    useAllocationContext(
+      useShallow(({ allocateIn, draftLines, item, setAllocateIn }) => ({
+        item,
+        allocateIn,
+        setAllocateIn,
+        availablePackSizes: [
+          ...new Set(
+            draftLines
+              .filter(line =>
+                canAutoAllocate(line, expiredStockIssueThreshold ?? 0)
+              )
+              .map(line => line.packSize)
+          ),
+        ].sort((a, b) => a - b),
+      }))
+    );
 
   const unitName = item?.unitName ?? t('label.unit');
   const pluralisedUnitName = getPlural(unitName, 2);

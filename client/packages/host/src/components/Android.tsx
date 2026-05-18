@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-
 import { AppRoute } from '@openmsupply-client/config';
 import {
   BasicSpinner,
@@ -21,6 +20,7 @@ import {
 import { useTranslation } from '@common/intl';
 import Viewport from './Viewport';
 import { LoginIcon } from './Login/LoginIcon';
+import { LanguageButton } from './LanguageButton';
 
 const Heading = ({ text }: { text: string }) => (
   <Typography
@@ -206,6 +206,7 @@ export const Android = () => {
             />
           </Stack>
         </Stack>
+        <LanguageButton />
       </Viewport>
     );
 

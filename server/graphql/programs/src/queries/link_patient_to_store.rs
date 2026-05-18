@@ -74,8 +74,8 @@ fn map_result(
             name_store_join,
         })),
         Err(err) => {
-            let formatted_error = format!("{:#?}", err);
-            println!("Error while linking patient: {}", formatted_error);
+            let formatted_error = format!("{err:#?}");
+            println!("Error while linking patient: {formatted_error}");
 
             let graphql_error = match err {
                 CentralPatientRequestError::DatabaseError(_) => {

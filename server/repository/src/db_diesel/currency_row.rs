@@ -59,7 +59,7 @@ impl<'a> CurrencyRowRepository<'a> {
             record_id: record_id.clone(),
             row_action: action,
             store_id: None,
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
@@ -74,6 +74,15 @@ impl<'a> CurrencyRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    pub fn check_exists_by_id(&self, currency_id: &str) -> Result<bool, RepositoryError> {
+        let id: Option<String> = currency::table
+            .filter(currency::id.eq(currency_id))
+            .select(currency::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(id.is_some())
     }
 
     pub fn delete(&self, currency_id: &str) -> Result<i64, RepositoryError> {

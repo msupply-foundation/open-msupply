@@ -18,6 +18,7 @@ import {
   useDebounceCallback,
   AssetLogStatusNodeType,
   usePathnameIncludes,
+  CLEAR,
 } from '@openmsupply-client/common';
 import {
   AssetCatalogueItemFragment,
@@ -155,7 +156,7 @@ export const CreateAssetModal = ({
     _value: string,
     reason: string
   ) => {
-    if (reason === 'clear') updateDraft({ store: null });
+    if (reason === CLEAR) updateDraft({ store: null });
   };
 
   const isDisabled =
@@ -203,7 +204,10 @@ export const CreateAssetModal = ({
         <Box>
           <Box display="flex" justifyContent="flex-end">
             <Switch
-              onChange={() => setIsCatalogueAsset(!isCatalogueAsset)}
+              onChange={() => {
+                setIsCatalogueAsset(!isCatalogueAsset);
+                updateDraft({ catalogueItemId: undefined, typeId: undefined });
+              }}
               checked={isCatalogueAsset}
               label={t('label.use-catalogue')}
             />
@@ -230,12 +234,11 @@ export const CreateAssetModal = ({
                 fullWidth
                 onChange={e => {
                   updateDraft({
-                    catalogueItemId: undefined,
                     categoryId: e.target.value,
-                    typeId: '',
                   });
                 }}
                 value={draft.categoryId ?? ''}
+                clearable
               />
             }
           />
@@ -264,9 +267,7 @@ export const CreateAssetModal = ({
                     updateDraft({ catalogueItemId: selected?.id ?? '' })
                   }
                   paginationDebounce={DEBOUNCE_TIMEOUT}
-                  onPageChange={pageNumber =>
-                    fetchNextPage({ pageParam: pageNumber })
-                  }
+                  onPageChange={() => fetchNextPage()}
                   loading={isFetching}
                   onInputChange={(reason, value) => {
                     if (reason?.type === 'change') debounceOnFilter(value);

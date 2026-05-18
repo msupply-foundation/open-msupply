@@ -6,7 +6,7 @@ use repository::RequisitionLine;
 use service::requisition::requisition_supply_status::RequisitionLineSupplyStatus;
 use service::service_provider::ServiceProvider;
 
-use super::{IdPair, RequisitionAndItemId};
+use super::RequisitionAndItemId;
 
 pub struct RequisitionLineSupplyStatusLoader {
     pub service_provider: Data<ServiceProvider>,
@@ -22,7 +22,11 @@ impl Loader<RequisitionAndItemId> for RequisitionLineSupplyStatusLoader {
     ) -> Result<HashMap<RequisitionAndItemId, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
 
-        let (requisition_ids, _) = IdPair::extract_unique_ids(requisition_and_item_id);
+        let requisition_ids = util::dedup_iter(
+            requisition_and_item_id
+                .iter()
+                .map(|input| input.requisition_id.clone()),
+        );
 
         let requisition_supply_statuses = self
             .service_provider

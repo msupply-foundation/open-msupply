@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { RequestLineFragment } from '../api';
 import {
   useAuthContext,
@@ -9,6 +9,11 @@ import {
   useTranslation,
   ColumnType,
   UnitsAndDosesCell,
+  NumericTextDisplay,
+  Box,
+  LinkIcon,
+  PaperPopover,
+  Typography,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { useRequestRequisitionLineErrorContext } from '../context';
@@ -23,7 +28,11 @@ export const useRequestColumns = () => {
   const { store } = useAuthContext();
   const { errors } = useRequestRequisitionLineErrorContext();
   const { plugins } = usePluginProvider();
-  const { manageVaccinesInDoses } = usePreferences();
+  const {
+    manageVaccinesInDoses,
+    warningForExcessRequest,
+    showIndicativePriceInRequisitions,
+  } = usePreferences();
 
   const showExtraColumns =
     !!programName &&
@@ -34,8 +43,8 @@ export const useRequestColumns = () => {
       {
         accessorKey: 'comment',
         header: t('label.comment'),
-        columnType: ColumnType.Comment,
         pin: 'left',
+        columnType: ColumnType.Comment,
       },
       {
         accessorKey: 'item.code',
@@ -48,9 +57,15 @@ export const useRequestColumns = () => {
       {
         accessorKey: 'itemName',
         header: t('label.name'),
-        size: 250,
+        size: 300,
         enableSorting: true,
         enableColumnFilter: true,
+        Cell: ({ row, cell }) => (
+          <ItemNameCell
+            name={cell.getValue<string>() ?? ''}
+            parents={row.original.ancillaryParents ?? []}
+          />
+        ),
       },
       {
         id: 'packUnit',
@@ -84,10 +99,10 @@ export const useRequestColumns = () => {
       },
       {
         accessorKey: 'itemStats.averageMonthlyConsumption',
-        header: t('label.amc'),
+        header: t(showExtraColumns ? 'label.area-amc' : 'label.amc'),
         description: t('description.average-monthly-consumption'),
         columnType: ColumnType.Number,
-        Cell: UnitsAndDosesCell,
+        Cell: props => <UnitsAndDosesCell {...props} roundUp />,
         enableSorting: true,
       },
       {
@@ -95,6 +110,16 @@ export const useRequestColumns = () => {
         header: t('label.months-of-stock'),
         description: t('description.available-months-of-stock'),
         columnType: ColumnType.Number,
+        Cell: ({ cell }) => {
+          const value = cell.getValue<number | undefined>();
+          return (
+            <NumericTextDisplay
+              value={typeof value === 'number' ? value : undefined}
+              defaultValue={UNDEFINED_STRING_VALUE}
+              decimalLimit={1}
+            />
+          );
+        },
         enableSorting: true,
       },
       {
@@ -106,6 +131,16 @@ export const useRequestColumns = () => {
         accessorFn: row =>
           row.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
         enableSorting: true,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'forecastQuantity',
+        header: t('label.target-stock-population'),
+        description: t('description.target-stock-population'),
+        Cell: UnitsAndDosesCell,
+        columnType: ColumnType.Number,
+        accessorFn: row =>
+          row.forecastTotalUnits ? Math.ceil(row.forecastTotalUnits) : 0,
         defaultHideOnMobile: true,
       },
       {
@@ -121,8 +156,30 @@ export const useRequestColumns = () => {
         header: t('label.requested'),
         description: t('description.doses-quantity'),
         columnType: ColumnType.Number,
-        Cell: UnitsAndDosesCell,
+        Cell: ({ row, ...props }) => {
+          const showAlert =
+            warningForExcessRequest &&
+            row.original.requestedQuantity - row.original.suggestedQuantity >=
+            1;
+          return (
+            <UnitsAndDosesCell row={row} {...props} showAlert={showAlert} />
+          );
+        },
         enableSorting: true,
+      },
+      {
+        header: t('label.indicative-price-per-unit'),
+        description: t('description.indicative-price-per-unit'),
+        accessorKey: 'pricePerUnit',
+        columnType: ColumnType.Currency,
+        includeColumn: showIndicativePriceInRequisitions,
+      },
+      {
+        header: t('label.indicative-price'),
+        description: t('description.indicative-price'),
+        accessorFn: row => row.requestedQuantity * (row?.pricePerUnit || 0),
+        columnType: ColumnType.Currency,
+        includeColumn: showIndicativePriceInRequisitions,
       },
 
       // --- Extra consumption columns on program orders
@@ -181,7 +238,7 @@ export const useRequestColumns = () => {
         includeColumn: showExtraColumns,
         accessorFn: row => row.reason?.reason,
         getIsError: row =>
-          errors[row.id]?.__typename === 'RequisitionReasonNotProvided',
+          errors?.[row.id]?.__typename === 'RequisitionReasonNotProvided',
       },
 
       // --- Remote authorisation columns
@@ -204,9 +261,12 @@ export const useRequestColumns = () => {
       ...(plugins.requestRequisitionLine?.tableColumn || []),
     ],
     [
+      t,
       manageVaccinesInDoses,
+      warningForExcessRequest,
       showExtraColumns,
       usesRemoteAuthorisation,
+      showIndicativePriceInRequisitions,
       maxMonthsOfStock,
       plugins.requestRequisitionLine?.tableColumn,
       errors,
@@ -214,4 +274,82 @@ export const useRequestColumns = () => {
   );
 
   return columns;
+};
+
+type AncillaryParent = NonNullable<
+  RequestLineFragment['ancillaryParents']
+>[number];
+
+const ItemNameCell = ({
+  name,
+  parents,
+}: {
+  name: string;
+  parents: AncillaryParent[];
+}) => {
+  const t = useTranslation();
+  if (parents.length === 0) return <>{name}</>;
+  return (
+    <Box
+      display="grid"
+      gridTemplateColumns="1fr auto"
+      alignItems="center"
+      gap={0.5}
+      width="100%"
+    >
+      <Box sx={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
+        {name}
+      </Box>
+      <Box onClick={e => e.stopPropagation()} display="inline-flex">
+        <PaperPopover
+          mode="hover"
+          width={280}
+          placement={{ vertical: 'bottom', horizontal: 'center' }}
+          Content={
+            <Box display="flex" flexDirection="column" gap={1} p={3}>
+              <Typography fontWeight={700}>
+                {t('label.ancillary-of')}
+              </Typography>
+              {parents.length > 1 ? (
+                <Box
+                  component="ul"
+                  sx={{ m: 0, pl: 2.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}
+                >
+                  {parents.map(p => (
+                    <Typography component="li" key={p.id} variant="body2">
+                      <Box
+                        component="span"
+                        sx={{ color: 'text.secondary', mr: 0.5 }}
+                      >
+                        {p.code}
+                      </Box>
+                      {p.name}
+                    </Typography>
+                  ))}
+                </Box>
+              ) : (
+                <Typography variant="body2">
+                  <Box
+                    component="span"
+                    sx={{ color: 'text.secondary', mr: 0.5 }}
+                  >
+                    {parents[0]?.code}
+                  </Box>
+                  {parents[0]?.name}
+                </Typography>
+              )}
+            </Box>
+          }
+        >
+          <LinkIcon
+            sx={{
+              fontSize: 14,
+              color: 'text.secondary',
+              verticalAlign: 'middle',
+            }}
+          />
+        </PaperPopover>
+      </Box>
+    </Box>
+  );
 };

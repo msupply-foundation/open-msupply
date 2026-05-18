@@ -29,7 +29,7 @@ mod test {
     #[actix_rt::test]
     async fn shipping_method_service_queries() {
         let (_, _, connection_manager, _) =
-            setup_all("shipping method service queries", MockDataInserts::none()).await;
+            setup_all("shipping_method_service_queries", MockDataInserts::none()).await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
@@ -66,7 +66,7 @@ mod test {
 
         // Querying with ID filter
         let filter = ShippingMethodFilter {
-            id: Some(EqualFilter::equal_to("test_shipping_method_1")),
+            id: Some(EqualFilter::equal_to("test_shipping_method_1".to_string())),
             ..Default::default()
         };
         let result = service
@@ -89,7 +89,7 @@ mod test {
 
         // Querying with non-existing ID filter
         let filter = ShippingMethodFilter {
-            id: Some(EqualFilter::equal_to("non_existing_id")),
+            id: Some(EqualFilter::equal_to("non_existing_id".to_string())),
             ..Default::default()
         };
         let result = service

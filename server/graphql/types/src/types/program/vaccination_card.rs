@@ -78,6 +78,9 @@ impl VaccinationCardItemNode {
     pub async fn vaccine_course_dose_id(&self) -> &str {
         &self.item.row.vaccine_course_dose_id
     }
+    pub async fn can_skip_dose(&self) -> &bool {
+        &self.item.row.can_skip_dose
+    }
     pub async fn vaccination_id(&self) -> &Option<String> {
         &self.item.row.vaccination_id
     }
@@ -109,7 +112,7 @@ impl VaccinationCardItemNode {
         self.item
             .status
             .clone()
-            .map(|status| VaccinationCardItemNodeStatus::from(status))
+            .map(VaccinationCardItemNodeStatus::from)
     }
 
     pub async fn stock_line(&self, ctx: &Context<'_>) -> Result<Option<StockLineNode>> {

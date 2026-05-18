@@ -50,7 +50,7 @@ mod query {
         pack_size: f64,
         number_of_packs: f64,
         batch: String,
-    ) -> () {
+    ) {
         let invoice_type = if number_of_packs > 0.0 {
             InvoiceType::InboundShipment
         } else {
@@ -75,15 +75,15 @@ mod query {
 
         let invoice_number = next_invoice_number();
         let invoice = InvoiceRow {
-            id: format!("invoice_{}", invoice_number),
+            id: format!("invoice_{invoice_number}"),
             invoice_number,
-            name_link_id: name.to_string(),
+            name_id: name.to_string(),
             r#type: invoice_type,
             store_id: STORE_ID.to_string(),
-            created_datetime: datetime.clone(),
-            picked_datetime: Some(datetime.clone()),
-            received_datetime: Some(datetime.clone()),
-            verified_datetime: Some(datetime.clone()),
+            created_datetime: datetime,
+            picked_datetime: Some(datetime),
+            received_datetime: Some(datetime),
+            verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()
         };
@@ -104,7 +104,7 @@ mod query {
         stock_line.upsert(&ctx.connection).unwrap();
 
         let invoice_line = InvoiceLineRow {
-            id: format!("invoice_line_{}", invoice_number),
+            id: format!("invoice_line_{invoice_number}"),
             invoice_id: invoice.id.clone(),
             item_link_id: ITEM_ID.to_string(),
             stock_line_id: Some(stock_line_id),
@@ -188,7 +188,13 @@ mod query {
         // Check there's no stock to start with, if there is some mocks might have slipped through?
         let result = service_provider
             .stock_line_service
-            .get_historical_stock_lines(&ctx, store_id.clone(), item_id.clone(), date_now().into())
+            .get_historical_stock_lines(
+                &ctx,
+                store_id.clone(),
+                item_id.clone(),
+                date_now().into(),
+                false,
+            )
             .unwrap();
 
         assert!(result.rows.is_empty());
@@ -279,7 +285,13 @@ mod query {
         // // Check we can see 2 stock lines now (stock line A is fully consumed)
         let result = service_provider
             .stock_line_service
-            .get_historical_stock_lines(&ctx, store_id.clone(), item_id.clone(), date_now().into())
+            .get_historical_stock_lines(
+                &ctx,
+                store_id.clone(),
+                item_id.clone(),
+                date_now().into(),
+                false,
+            )
             .unwrap();
 
         assert_eq!(result.rows.len(), 2);
@@ -292,14 +304,18 @@ mod query {
                 store_id.clone(),
                 item_id.clone(),
                 get_midday(2020, 1, 1), // midday to check after the time the stock was introduced
+                false,
             )
             .unwrap();
+        // StockLine A is already excluded by `is_available(true)` in the base query
+        // (fully consumed at current date). StockLine C has 0 available on this date
+        // but is kept in the result so callers can show historical availability.
         assert_eq!(result.rows.len(), 2);
         // Expected available stock for 2020-01-01
-        // | 2020-01-01 | 0           | 500         | 0           |
-        // # StockLine A has been all consumed the future,
+        // | 2020-01-01 | (excluded)  | 500         | 0           |
+        // # StockLine A has been all consumed — not in base query (is_available = false)
         // # StockLine B had 1000 available stock at that date, but the lowest stock level we saw was 500
-        // # StockLine |C doesn't exist yet (should show as 0)
+        // # StockLine C doesn't exist yet — 0 available
         let stock_line_b = result
             .rows
             .iter()
@@ -312,6 +328,22 @@ mod query {
                 .available_number_of_packs,
             500.0
         );
+        // Total at 2020-01-01 was 1000 (differs from min available of 500)
+        assert_eq!(
+            stock_line_b.unwrap().stock_line_row.total_number_of_packs,
+            1000.0
+        );
+        let stock_line_c = result
+            .rows
+            .iter()
+            .find(|r| r.stock_line_row.id == STOCK_LINE_C);
+        assert_eq!(
+            stock_line_c
+                .unwrap()
+                .stock_line_row
+                .available_number_of_packs,
+            0.0
+        );
 
         // +++ 2020-01-02
         let result = service_provider
@@ -321,14 +353,15 @@ mod query {
                 store_id.clone(),
                 item_id.clone(),
                 get_midday(2020, 1, 2), // midday to check after the time the stock was introduced
+                false,
             )
             .unwrap();
         assert_eq!(result.rows.len(), 2);
         // Expected available stock for 2020-01-02
-        // | 2020-01-02 | 0           | 500         | 0           |
-        // # StockLine A has been all consumed the future,
+        // | 2020-01-02 | (excluded)  | 500         | 0           |
+        // # StockLine A excluded from base query (is_available = false)
         // # StockLine B had 500 available stock at that date
-        // # StockLine |C doesn't exist yet
+        // # StockLine C 0 available — doesn't exist yet
         let stock_line_b = result
             .rows
             .iter()
@@ -350,14 +383,15 @@ mod query {
                 store_id.clone(),
                 item_id.clone(),
                 get_midday(2020, 1, 3), // midday to check after the time the stock was introduced
+                false,
             )
             .unwrap();
         assert_eq!(result.rows.len(), 2);
         // Expected available stock for 2020-01-03
-        // | 2020-01-03 | 0           | 500         | 0           |
-        // # StockLine A has been all consumed the future,
+        // | 2020-01-03 | (excluded)  | 500         | 0           |
+        // # StockLine A excluded from base query (is_available = false)
         // # StockLine B had 500 available stock at that date
-        // # StockLine |C doesn't exist yet
+        // # StockLine C 0 available — doesn't exist yet
         let stock_line_b = result
             .rows
             .iter()
@@ -379,14 +413,15 @@ mod query {
                 store_id.clone(),
                 item_id.clone(),
                 get_midday(2020, 1, 4), // midday to check after the time the stock was introduced
+                false,
             )
             .unwrap();
         assert_eq!(result.rows.len(), 2);
         // Expected available stock for 2020-01-04
-        // | 2020-01-04 | 0           | 600         | 0           |
-        // # StockLine A has been all consumed the future,
+        // | 2020-01-04 | (excluded)  | 600         | 0           |
+        // # StockLine A excluded from base query (is_available = false)
         // # StockLine B had 600 available stock at that date (100 added at midnight)
-        // # StockLine |C doesn't exist yet
+        // # StockLine C 0 available — doesn't exist yet
 
         let stock_line_b = result
             .rows
@@ -409,15 +444,16 @@ mod query {
                 store_id.clone(),
                 item_id.clone(),
                 get_midday(2020, 1, 5), // midday to check after the time the stock was introduced
+                false,
             )
             .unwrap();
 
         assert_eq!(result.rows.len(), 2);
         // Expected available stock for 2020-01-05
-        // | 2020-01-05 | 0           | 600         | 0           |
-        // # StockLine A has been all consumed the future,
+        // | 2020-01-05 | (excluded)  | 600         | 0           |
+        // # StockLine A excluded from base query (is_available = false)
         // # StockLine B had 600 available stock at that date
-        // # StockLine |C doesn't exist yet
+        // # StockLine C 0 available — doesn't exist yet
 
         let stock_line_b = result
             .rows
@@ -440,6 +476,7 @@ mod query {
                 store_id.clone(),
                 item_id.clone(),
                 get_midday(2021, 1, 6), // midday to check after the time the stock was introduced
+                false,
             )
             .unwrap();
 
@@ -475,5 +512,103 @@ mod query {
                 .available_number_of_packs,
             1000.0
         );
+        assert_eq!(
+            stock_line_c.unwrap().stock_line_row.total_number_of_packs,
+            1000.0
+        );
+    }
+
+    /// Regression test: a stock line that's currently empty but had stock at
+    /// the historical datetime must be returned when
+    /// `include_currently_unavailable` is true.
+    ///
+    /// Bug: the backdated inventory adjustment modal queries by item, then
+    /// matches the response by stock-line id. If the resolver filtered out
+    /// currently-empty lines, the modal silently fell back to displaying
+    /// *current* values labelled "Current" — even though the user had picked a
+    /// historical date.
+    #[actix_rt::test]
+    async fn historical_stock_lines_include_currently_unavailable() {
+        let ServiceTestContext {
+            service_provider, ..
+        } = setup_all_and_service_provider(
+            "historical_stock_lines_include_currently_unavailable",
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .items()
+                .locations()
+                .numbers(),
+        )
+        .await;
+
+        let store_id = mock_store_a().id;
+        let item_id = mock_item_a().id;
+
+        let ctx = service_provider
+            .context(store_id.clone(), mock_user_account_a().id)
+            .unwrap();
+
+        // Line A: +100 on 2020-01-01, fully consumed by 2020-01-03.
+        // Line B: +500 on 2020-01-01, still has stock now.
+        adjust_test_stock(
+            &ctx,
+            vec![
+                TestStockAdjustment {
+                    datetime: get_midnight(2020, 1, 1),
+                    stock_line_a: Some(100.0),
+                    stock_line_b: Some(500.0),
+                    stock_line_c: None,
+                },
+                TestStockAdjustment {
+                    datetime: get_midnight(2020, 1, 3),
+                    stock_line_a: Some(-100.0),
+                    stock_line_b: None,
+                    stock_line_c: None,
+                },
+            ],
+        );
+
+        // With include_currently_unavailable = false (e.g. outbound allocation),
+        // line A is excluded because it's empty now.
+        let excluding = service_provider
+            .stock_line_service
+            .get_historical_stock_lines(
+                &ctx,
+                store_id.clone(),
+                item_id.clone(),
+                get_midday(2020, 1, 2),
+                false,
+            )
+            .unwrap();
+        assert!(excluding
+            .rows
+            .iter()
+            .all(|r| r.stock_line_row.id != STOCK_LINE_A));
+
+        // With include_currently_unavailable = true (e.g. backdated inventory
+        // adjustment display), line A is now returned. The crucial
+        // regression-guard is presence: without this, the modal silently fell
+        // back to current values labelled "Current". The historical *total* at
+        // 2020-01-02 is 100; available is reported as the min over the window
+        // from datetime to now (0 here, since the -100 consumption later
+        // brings the running balance down to 0).
+        let including = service_provider
+            .stock_line_service
+            .get_historical_stock_lines(
+                &ctx,
+                store_id.clone(),
+                item_id.clone(),
+                get_midday(2020, 1, 2),
+                true,
+            )
+            .unwrap();
+        let line_a = including
+            .rows
+            .iter()
+            .find(|r| r.stock_line_row.id == STOCK_LINE_A)
+            .expect("line A should be present when include_currently_unavailable is true");
+        assert_eq!(line_a.stock_line_row.total_number_of_packs, 100.0);
+        assert_eq!(line_a.stock_line_row.available_number_of_packs, 0.0);
     }
 }

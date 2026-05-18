@@ -14,11 +14,13 @@ import { AddButton } from './AddButton';
 interface AppBarButtonProps {
   isDisabled: boolean;
   onAddItem: () => void;
+  openUploadModal: () => void;
   showIndicators?: boolean;
 }
 
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
+  openUploadModal,
   isDisabled,
   showIndicators = false,
 }) => {
@@ -27,13 +29,18 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const { OpenButton } = useDetailPanel();
   const { data } = useRequest.document.get();
 
+  const disableAddItem = isDisabled || isProgram;
+  const disableUploadDocument = isDisabled; // Allow documents uploading only if not disabled (skip programs restriction)
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <AddButton
           onAddItem={onAddItem}
+          openUploadModal={openUploadModal}
           status={data?.status}
-          disable={isDisabled || isProgram}
+          disableAddItem={disableAddItem}
+          disableUploadDocument={disableUploadDocument}
         />
 
         <UseSuggestedQuantityButton />

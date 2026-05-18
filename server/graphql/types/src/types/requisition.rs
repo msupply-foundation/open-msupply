@@ -1,30 +1,39 @@
 use self::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
+use graphql_core::loader::ItemLoader;
 use graphql_core::{
     loader::{
         InvoiceByRequisitionIdLoader, NameByIdLoader, NameByIdLoaderInput,
         RequisitionLinesByRequisitionIdLoader, RequisitionLinesRemainingToSupplyLoader,
-        RequisitionsByIdLoader, UserLoader,
+        RequisitionsByIdLoader, SyncFileReferenceLoader, UserLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 use repository::{requisition_row::RequisitionRow, ApprovalStatusType, NameRow, Requisition};
-use service::ListResult;
+use service::{
+    requisition_line::ancillary_items::{AncillaryDelta, AncillaryState},
+    ListResult,
+};
 
 use super::{
-    program_node::ProgramNode, InvoiceConnector, NameNode, PeriodNode, RequisitionLineConnector,
-    UserNode,
+    program_node::ProgramNode, InvoiceConnector, ItemNode, NameNode, PeriodNode,
+    RequisitionLineConnector, UserNode,
 };
+use crate::types::SyncFileReferenceConnector;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "repository::db_diesel::requisition::requisition_row::RequisitionType")]
 pub enum RequisitionNodeType {
     /// Requisition created by store that is ordering stock
     Request,
-    /// Supplying store requisition in response to request requisition
+    /// Supplying store requisition in response to request requisition, or manual requisition for a customer
     Response,
+    /// Imprest requisition where each item has a pre-determined max/target quantity
+    Imprest,
+    /// Stock history requisition where facility submits stock on hand
+    StockHistory,
 }
 
 /// Approval status is applicable to response requisition only
@@ -42,6 +51,77 @@ pub enum RequisitionNodeApprovalStatus {
     AutoApproved,
     ApprovedByAnother,
     DeniedByAnother,
+}
+
+/// Whether a request requisition has outstanding ancillary-item work to do.
+/// `NeedsAdd` takes priority over `NeedsUpdate`: once the user has added the
+/// missing lines, any remaining stale quantities surface as `NeedsUpdate`.
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+pub enum AncillaryStateNode {
+    None,
+    NeedsAdd,
+    NeedsUpdate,
+}
+
+#[derive(SimpleObject)]
+pub struct AncillaryStateResponse {
+    pub state: AncillaryStateNode,
+    /// Number of ancillary items in the banner-worthy state. Zero when state is `None`.
+    pub count: u32,
+    /// Items missing from the requisition that need to be added. Always populated
+    /// from the underlying plan, regardless of `state` — the client can show the
+    /// full breakdown even when the banner-relevant state is `NeedsUpdate`.
+    pub to_add: Vec<AncillaryDeltaNode>,
+    /// Items present on the requisition with stale quantities.
+    pub to_update: Vec<AncillaryDeltaNode>,
+}
+
+/// A single ancillary item that the plan wants to add or update on the
+/// requisition, exposed so the client can render the execution plan in the
+/// banner popover.
+pub struct AncillaryDeltaNode {
+    item_id: String,
+    required_quantity: f64,
+    current_quantity: Option<f64>,
+}
+
+#[Object]
+impl AncillaryDeltaNode {
+    pub async fn item_id(&self) -> &str {
+        &self.item_id
+    }
+
+    pub async fn required_quantity(&self) -> f64 {
+        self.required_quantity
+    }
+
+    /// Current quantity on the existing requisition line. `None` for items that
+    /// don't yet have a line (i.e. entries in `toAdd`).
+    pub async fn current_quantity(&self) -> Option<f64> {
+        self.current_quantity
+    }
+
+    pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
+        let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
+        let item_option = loader.load_one(self.item_id.clone()).await?;
+        item_option.map(ItemNode::from_domain).ok_or(
+            StandardGraphqlError::InternalError(format!(
+                "Cannot find item_id {} for ancillary delta",
+                self.item_id
+            ))
+            .extend(),
+        )
+    }
+}
+
+impl AncillaryDeltaNode {
+    fn from_domain(delta: AncillaryDelta) -> Self {
+        Self {
+            item_id: delta.item_link_id,
+            required_quantity: delta.required_quantity,
+            current_quantity: delta.current_quantity,
+        }
+    }
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -81,6 +161,48 @@ impl RequisitionNode {
 
     pub async fn status(&self) -> RequisitionNodeStatus {
         RequisitionNodeStatus::from(self.row().status.clone())
+    }
+
+    /// Whether this request requisition has ancillary items that need adding
+    /// or updating, so the client can render the "add"/"update" banner.
+    /// Always returns `None` for non-request requisitions.
+    pub async fn ancillary_state(&self, ctx: &Context<'_>) -> Result<AncillaryStateResponse> {
+        use repository::RequisitionType;
+        if self.row().r#type != RequisitionType::Request {
+            return Ok(AncillaryStateResponse {
+                state: AncillaryStateNode::None,
+                count: 0,
+                to_add: vec![],
+                to_update: vec![],
+            });
+        }
+        let service_provider = ctx.service_provider();
+        let service_ctx = service_provider.basic_context()?;
+        let plan = service_provider
+            .requisition_line_service
+            .get_ancillary_plan(&service_ctx, &self.row().id)
+            .map_err(|e| StandardGraphqlError::from_debug(&e))?;
+        let (state, count) = match plan.state() {
+            AncillaryState::None => (AncillaryStateNode::None, 0),
+            AncillaryState::NeedsAdd { count } => (AncillaryStateNode::NeedsAdd, count),
+            AncillaryState::NeedsUpdate { count } => (AncillaryStateNode::NeedsUpdate, count),
+        };
+        let to_add = plan
+            .to_add
+            .into_iter()
+            .map(AncillaryDeltaNode::from_domain)
+            .collect();
+        let to_update = plan
+            .to_update
+            .into_iter()
+            .map(AncillaryDeltaNode::from_domain)
+            .collect();
+        Ok(AncillaryStateResponse {
+            state,
+            count,
+            to_add,
+            to_update,
+        })
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
@@ -174,6 +296,29 @@ impl RequisitionNode {
         &self.name_row().id
     }
 
+    pub async fn destination_customer(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<NameNode>> {
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+
+        let destination_customer_id =
+            match &self.requisition.requisition_row.destination_customer_id {
+                Some(customer) => customer,
+                None => return Ok(None),
+            };
+
+        let response_option = loader
+            .load_one(NameByIdLoaderInput::new(&store_id, destination_customer_id))
+            .await?;
+
+        match response_option {
+            Some(name) => Ok(Some(NameNode::from_domain(name))),
+            None => Ok(None),
+        }
+    }
+
     /// Maximum calculated quantity, used to deduce calculated quantity for each line, see calculated in requisition line
     pub async fn max_months_of_stock(&self) -> &f64 {
         &self.row().max_months_of_stock
@@ -182,6 +327,23 @@ impl RequisitionNode {
     /// Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line
     pub async fn min_months_of_stock(&self) -> &f64 {
         &self.row().min_months_of_stock
+    }
+
+    pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
+        let requisition_id = &self.row().id;
+        let linked_requisition_id = &self.row().linked_requisition_id;
+
+        // Load documents for both requisition and linked requisition
+        let mut record_ids = vec![requisition_id.to_string()];
+        if let Some(linked_id) = linked_requisition_id {
+            record_ids.push(linked_id.to_string());
+        }
+
+        let loader = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
+        let results = loader.load_many(record_ids).await?;
+        let all_documents = results.into_values().flatten().collect();
+
+        Ok(SyncFileReferenceConnector::from_vec(all_documents))
     }
 
     pub async fn lines(&self, ctx: &Context<'_>) -> Result<RequisitionLineConnector> {
@@ -262,6 +424,27 @@ impl RequisitionNode {
 
     pub async fn is_emergency(&self) -> bool {
         self.row().is_emergency
+    }
+
+    pub async fn created_from_requisition(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<RequisitionNode>> {
+        let created_from_requisition_id = match &self.row().created_from_requisition_id {
+            Some(id) => id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<RequisitionsByIdLoader>>();
+
+        Ok(loader
+            .load_one(created_from_requisition_id.clone())
+            .await?
+            .map(RequisitionNode::from_domain))
+    }
+
+    pub async fn created_from_requisition_id(&self) -> &Option<String> {
+        &self.row().created_from_requisition_id
     }
 
     // % allocated ?

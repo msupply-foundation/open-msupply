@@ -10,7 +10,7 @@ import {
   ActionsFooter,
 } from '@openmsupply-client/common';
 import { responseStatuses, getRequisitionTranslator } from '../../../utils';
-import { ResponseFragment, useResponse } from '../../api';
+import { ResponseFragment, ResponseLineFragment, useResponse } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 
 export const createStatusLog = (requisition: ResponseFragment) => {
@@ -25,10 +25,19 @@ export const createStatusLog = (requisition: ResponseFragment) => {
   return statusLog;
 };
 
-export const Footer = () => {
+export const Footer = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: ResponseLineFragment[];
+  resetRowSelection: () => void;
+}) => {
   const { data } = useResponse.document.get();
   const t = useTranslation();
-  const { selectedRows, confirmAndDelete } = useResponse.line.delete();
+  const { confirmAndDelete } = useResponse.line.delete(
+    selectedRows,
+    resetRowSelection
+  );
 
   const actions: Action[] = [
     {
@@ -46,6 +55,7 @@ export const Footer = () => {
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
           {data && selectedRows.length === 0 && (

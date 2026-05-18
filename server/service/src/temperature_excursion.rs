@@ -14,7 +14,7 @@ pub trait TemperatureExcursionServiceTrait: Sync + Send {
         store_id: &str,
     ) -> Result<Vec<TemperatureExcursion>, RepositoryError> {
         let filter = TemperatureLogFilter::new()
-            .store_id(EqualFilter::equal_to(store_id))
+            .store_id(EqualFilter::equal_to(store_id.to_string()))
             .datetime(DatetimeFilter::after_or_equal_to(
                 Utc::now()
                     .naive_utc()
@@ -90,7 +90,7 @@ mod test {
     };
 
     use chrono::{Days, NaiveTime, Utc};
-    use rand::{seq::SliceRandom, thread_rng};
+    use rand::seq::SliceRandom;
 
     use crate::temperature_excursion::temperature_excursions;
 
@@ -103,7 +103,7 @@ mod test {
 
         let store = StoreRow {
             id: "store".to_string(),
-            name_link_id: name.id.clone(),
+            name_id: name.id.clone(),
             ..Default::default()
         };
 
@@ -178,7 +178,7 @@ mod test {
 
         // This repository should return results ordered by datetime descending
         // shuffling in order to test this
-        temperature_logs.shuffle(&mut thread_rng());
+        temperature_logs.shuffle(&mut rand::rng());
 
         let (_, connection, _, _) = setup_all_with_data(
             "temperature_excursions",

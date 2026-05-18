@@ -69,12 +69,62 @@ For example, querying an entity in the service layer must be done by `name_id` r
 Internally, the repository looks up all `name_links` which match the `name_id` and then uses these `name_links` to do the query.
 Note, if a merge happened while the service layer still uses the id of the soft deleted entity, a query using this id will return nothing because there will be no links pointing to this old id.
 
-<!-- However, updating a name_id is done using the row.name_link_id -->
+<!-- Link abstraction using define_linked_tables! macro -->
 
-When updating an entity of a data row the link fields of the repository objects are used, e.g. `row.name_link_id = "New name id"`.
-This works because current entity has a matching link entry with the same id, e.g `name_link.id = name_id`.
-For example, when creating an outbound shipment you should use `invoice.name_link_id = customer_name.id` because `customer_name.id` is guaranteed to have a corresponding `name_link_id` row.
-For existing shipments you should **not** update `invoice.name_link_id`, ever because it'd break transfer logic. If you observe that the `invoice.name_link_id != name.id` this is because the original name has been merged into the name that has been returned.
+## Entity Link Abstraction Pattern
 
-Note, editing the `name_link_id` using the `name_id` could be fully hidden in the repository layer by providing a specialized `upsert` data structure which only contains the `name_id` instead of the `name_link_id`.
-However, at this stage this is not done to minimize changes and to keep the number of struct reasonable small.
+To hide the internal `name_link_id` implementation detail from the rest of the codebase, we use the `define_linked_tables!` macro pattern. This pattern:
+
+1. **Generates two table definitions:**
+   - A **view table** (e.g., `invoice_view`, `requisition_view`) that exposes resolved `name_id` fields
+   - A **core table with links** (e.g., `invoice_with_links`, `requisition_with_links`) that contains the actual `name_link_id` fields
+
+2. **Struct uses resolved IDs:**
+   The public struct (e.g., `InvoiceRow`, `RequisitionRow`) uses `name_id` instead of `name_link_id`:
+   ```rust
+   pub struct InvoiceRow {
+       pub id: String,
+       pub name_id: String,  // Resolved from name_link, not name_link_id
+       // ... other fields
+   }
+   ```
+
+3. **Automatic translation on upsert:**
+   The macro generates an `_upsert()` method that automatically translates `name_id` to `name_link_id` when writing to the database:
+   ```rust
+   impl InvoiceRowRepository {
+       pub fn upsert_one(&self, row: &InvoiceRow) -> Result<i64, RepositoryError> {
+           self._upsert(row)?;  // Handles name_id -> name_link_id translation
+           self.insert_changelog(row, RowActionType::Upsert)
+       }
+   }
+   ```
+
+4. **Query pattern with auto_type:**
+   Queries use the `#[diesel::dsl::auto_type]` pattern for cleaner type inference:
+   ```rust
+   #[diesel::dsl::auto_type]
+   fn query() -> _ {
+       invoice::table
+           .inner_join(
+               name_link::table
+                   .on(invoice_with_links::name_link_id.eq(name_link::id))
+                   .inner_join(name::table.on(name_link::name_id.eq(name::id))),
+           )
+           .inner_join(store::table)
+   }
+
+   type BoxedQuery = IntoBoxed<'static, query, DBType>;
+   ```
+
+### Benefits
+
+- **Cleaner API**: Service layer only sees `name_id`, never `name_link_id`
+- **Type safety**: The macro ensures correct translation between view and core tables
+- **Maintainability**: Join patterns are defined once and reused
+- **Consistency**: All tables follow the same pattern (invoice, requisition, etc.)
+
+### Migration considerations
+
+When updating an entity, you should use `row.name_id = customer_name.id` because `customer_name.id` is guaranteed to have a corresponding `name_link` row.
+For existing records you should **not** update `name_id` if it would break transfer logic. If you observe that the resolved `name_id` differs from the original, this is because the original name has been merged into the current name.

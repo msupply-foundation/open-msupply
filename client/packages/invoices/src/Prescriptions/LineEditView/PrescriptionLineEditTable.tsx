@@ -1,44 +1,86 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   Divider,
   Box,
-  DataTable,
+  MaterialTable,
   useTranslation,
   useFormatNumber,
+  useSimpleMaterialTable,
+  usePreferences,
+  DateUtils,
+  useShallow,
 } from '@openmsupply-client/common';
 
 import { usePrescriptionLineEditColumns } from './columns';
-import { getAllocatedQuantity, useAllocationContext } from '../../StockOut';
-import { useDisableVvmRows } from '../../useDisableVvmRows';
+import {
+  DraftStockOutLineFragment,
+  useAllocationContext,
+} from '../../StockOut';
 
 export interface PrescriptionLineEditTableProps {
   disabled?: boolean;
 }
 
 export const PrescriptionLineEditTable = ({
-  disabled,
+  disabled = false,
 }: PrescriptionLineEditTableProps) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
+  const prefs = usePreferences();
+  // Select only the fields actually used. Spreading the whole state into the
+  // selector returns a fresh object every call, which under React 19's stricter
+  // useSyncExternalStore snapshot caching causes an infinite re-render loop.
   const { draftLines, allocateIn, item, manualAllocate } = useAllocationContext(
-    state => ({
-      ...state,
-      allocatedQuantity: getAllocatedQuantity(state),
-    })
+    useShallow(state => ({
+      draftLines: state.draftLines,
+      allocateIn: state.allocateIn,
+      item: state.item,
+      manualAllocate: state.manualAllocate,
+    }))
   );
-
-  useDisableVvmRows({ rows: draftLines, isVaccine: item?.isVaccine });
 
   const allocate = (key: string, value: number) => {
     const num = Number.isNaN(value) ? 0 : value;
     return manualAllocate(key, num, format, t);
   };
 
+  const { expiredStockPreventIssue = false, expiredStockIssueThreshold = 0 } =
+    prefs;
+
+  const getIsDisabled = useCallback(
+    (row: DraftStockOutLineFragment) => {
+      if (disabled) return true;
+      if (!!row.vvmStatus?.unusable) return true;
+      if (row.stockLineOnHold || row.location?.onHold) return true;
+
+      // Prevent issuing expired stock if preference is set, up to threshold
+      if (expiredStockPreventIssue && !!row.expiryDate) {
+        const threshold = expiredStockIssueThreshold ?? 0;
+        const daysBeforeExpiry = DateUtils.differenceInDays(
+          row.expiryDate,
+          Date.now()
+        );
+        if (daysBeforeExpiry <= threshold) return true;
+      }
+
+      return false;
+    },
+    [disabled, expiredStockPreventIssue, expiredStockIssueThreshold]
+  );
+
   const columns = usePrescriptionLineEditColumns({
     allocate,
     item,
     allocateIn: allocateIn.type,
-    disabled,
+    getIsDisabled,
+  });
+
+  const table = useSimpleMaterialTable({
+    tableId: 'prescription-line-edit',
+    columns,
+    data: draftLines,
+    getIsRestrictedRow: row => getIsDisabled(row.original),
+    enableRowSelection: false,
   });
 
   return (
@@ -51,20 +93,9 @@ export const PrescriptionLineEditTable = ({
           flexDirection: 'column',
           overflowX: 'hidden',
           overflowY: 'auto',
-          '& .MuiTableRow-root:nth-of-type(even)': {
-            backgroundColor: 'background.row',
-          },
         }}
       >
-        {!!draftLines.length && (
-          <DataTable
-            id="prescription-line-edit"
-            columns={columns}
-            data={draftLines}
-            isDisabled={disabled}
-            dense
-          />
-        )}
+        {!!draftLines.length && <MaterialTable table={table} />}
       </Box>
     </Box>
   );

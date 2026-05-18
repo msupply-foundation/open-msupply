@@ -1,6 +1,6 @@
 use super::{location_type_row::location_type, DBType, LocationTypeRow, StorageConnection};
 
-use diesel::{dsl::not, prelude::*};
+use diesel::prelude::*;
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
@@ -91,11 +91,6 @@ impl<'a> LocationTypeRepository<'a> {
 
     pub fn create_filtered_query(filter: Option<LocationTypeFilter>) -> BoxedLocationTypeQuery {
         let mut query = location_type::table.into_boxed();
-        // Any cold storage types that don't have temperature set (OdegC to 0degC default value) are invalid => filter out
-
-        query = query.filter(not(location_type::min_temperature
-            .eq(0.0)
-            .and(location_type::max_temperature.eq(0.0))));
 
         if let Some(f) = filter {
             let LocationTypeFilter { id, name } = f;

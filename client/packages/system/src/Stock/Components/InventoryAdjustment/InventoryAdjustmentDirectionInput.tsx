@@ -1,9 +1,7 @@
 import React from 'react';
 import {
   AdjustmentTypeInput,
-  MinusIcon,
-  PlusIcon,
-  ToggleButtonGroup,
+  Select,
   useTranslation,
 } from '@openmsupply-client/common';
 
@@ -20,24 +18,21 @@ export const InventoryAdjustmentDirectionInput = ({
 
   const options = [
     {
-      id: 'decrease',
-      label: t('label.decrease-qty'),
-      value: AdjustmentTypeInput.Reduction,
-      icon: <MinusIcon />,
+      label: t('label.increase'),
+      value: AdjustmentTypeInput.Addition,
     },
     {
-      id: 'increase',
-      label: t('label.increase-qty'),
-      value: AdjustmentTypeInput.Addition,
-      icon: <PlusIcon />,
+      label: t('label.decrease'),
+      value: AdjustmentTypeInput.Reduction,
     },
   ];
 
   return (
-    <ToggleButtonGroup
+    <Select
       value={value}
-      onChange={direction => onChange(direction)}
+      onChange={e => onChange(e.target.value as AdjustmentTypeInput)}
       options={options}
+      sx={{ width: '100%' }}
     />
   );
 };

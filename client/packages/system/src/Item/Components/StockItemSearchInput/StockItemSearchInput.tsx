@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   useToggle,
   useFormatNumber,
@@ -19,7 +19,8 @@ import {
 import { getOptionLabel, StockItemSearchInputProps } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
 
-const DEBOUNCE_TIMEOUT = 300;
+const SEARCH_DEBOUNCE_TIMEOUT = 500;
+const PAGINATION_DEBOUNCE_TIMEOUT = 100;
 const ROWS_PER_PAGE = 100;
 
 export const StockItemSearchInput = ({
@@ -46,15 +47,18 @@ export const StockItemSearchInput = ({
   const debounceOnFilter = useDebouncedValueCallback(
     (searchText: string) => onFilter(searchText),
     [onFilter],
-    DEBOUNCE_TIMEOUT
+    SEARCH_DEBOUNCE_TIMEOUT
   );
 
-  const fullFilter: ItemFilterInput = { ...filter, ...apiFilter };
-  if (itemCategoryName) fullFilter['categoryName'] = itemCategoryName;
-  // For now, we are filtering items by "master_list", as they have the same ID
-  // as their equivalent program. In the future, this may change, so we can add
-  // another filter specifically for programs if required.
-  if (programId) fullFilter['masterListId'] = { equalTo: programId };
+  const fullFilter: ItemFilterInput = useMemo(() => {
+    const result: ItemFilterInput = { ...filter, ...apiFilter };
+    if (itemCategoryName) result['categoryName'] = itemCategoryName;
+    // For now, we are filtering items by "master_list", as they have the same
+    // ID as their equivalent program. In the future, this may change, so we can
+    // add another filter specifically for programs if required.
+    if (programId) result['masterListId'] = { equalTo: programId };
+    return result;
+  }, [filter, apiFilter, itemCategoryName, programId]);
 
   const { data, isLoading, fetchNextPage, isFetchingNextPage } =
     useItemStockOnHandInfinite({
@@ -62,9 +66,22 @@ export const StockItemSearchInput = ({
       filter: disabled ? undefined : fullFilter,
     });
 
-  // Note - important that we do a separate query for current item
-  // The infinite query above may not yet include the currently selected item in its results!
-  const { data: currentItem } = useGetById(currentItemId ?? '');
+  // Try to find current item in the infinite query cache first (optimization)
+  const currentItemFromCache = useMemo(() => {
+    if (!currentItemId) return null;
+    const allItems = data?.pages.flatMap(page => page.data.nodes) ?? [];
+    return allItems.find(item => item.id === currentItemId) ?? null;
+  }, [currentItemId, data?.pages]);
+
+  // Fallback: fetch current item separately if not in cache
+  // This is important because the infinite query may have filters that exclude the current item
+  // (e.g., when editing a stocktake line, the item is excluded from the search results)
+  const { data: currentItemFromAPI } = useGetById(
+    currentItemId && !currentItemFromCache ? currentItemId : ''
+  );
+
+  // Use cached item if available, otherwise use API result
+  const currentItem = currentItemFromCache ?? currentItemFromAPI ?? null;
 
   const pageNumber = data?.pages[data?.pages.length - 1]?.pageNumber ?? 0;
 
@@ -84,14 +101,15 @@ export const StockItemSearchInput = ({
       onChange(currentItem);
     }
     if (currentItem && search === '') setSearch(getOptionLabel(currentItem));
-  }, [currentItem]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentItem, search]);
 
   useEffect(() => {
     // Using the Autocomplete openOnFocus prop, the popper is incorrectly
     // positioned when used within a Dialog. This is a workaround to fix the
     // popper position.
     if (openOnFocus) {
-      setTimeout(() => selectControl.toggleOn(), DEBOUNCE_TIMEOUT);
+      setTimeout(() => selectControl.toggleOn(), SEARCH_DEBOUNCE_TIMEOUT);
     }
 
     // Force focus after component mounts (this can conflict with openOnFocus)
@@ -103,6 +121,7 @@ export const StockItemSearchInput = ({
         input?.focus();
       }, 50);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -137,21 +156,28 @@ export const StockItemSearchInput = ({
       popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       open={selectControl.isOn}
-      paginationDebounce={DEBOUNCE_TIMEOUT}
-      onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
+      paginationDebounce={PAGINATION_DEBOUNCE_TIMEOUT}
+      onPageChange={() => fetchNextPage()}
       mapOptions={items =>
         defaultOptionMapper(items, 'name').sort((a, b) =>
           a.label.localeCompare(b.label)
         )
       }
       inputValue={search}
+      // Default MUI behaviour clears typed text on blur; keep it so an
+      // accidental click-out doesn't lose the user's in-progress search.
+      clearOnBlur={false}
+      onClear={() => {
+        setSearch('');
+        setSelectedCode('');
+        onFilter('');
+      }}
       inputProps={{
         onChange: e => {
           const { value } = e.target;
           setSearch(value);
           debounceOnFilter(getItemNameFilterValue(value, selectedCode));
         },
-        onBlur: () => setSearch(currentItem ? getOptionLabel(currentItem) : ''),
       }}
     />
   );

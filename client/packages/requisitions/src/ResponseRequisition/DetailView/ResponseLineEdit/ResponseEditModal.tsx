@@ -10,6 +10,7 @@ import {
   UserStoreNodeFragment,
   Representation,
   RepresentationValue,
+  RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
 import { ResponseFragment, useResponse } from '../../api';
@@ -17,7 +18,7 @@ import { ResponseLineEdit } from './ResponseLineEdit';
 import { useDraftRequisitionLine, useNextResponseLine } from './hooks';
 import { ResponseStoreStats } from '../ResponseStats/ResponseStoreStats';
 import { RequestStoreStats } from '../ResponseStats/RequestStoreStats';
-import { shouldDeleteLine } from 'packages/requisitions/src/utils';
+import { shouldDeleteLine } from '../../../utils';
 
 interface ResponseLineEditModalProps {
   requisition: ResponseFragment;
@@ -39,7 +40,7 @@ export const ResponseLineEditModal = ({
   const { error } = useNotification();
   const deleteLine = useResponse.line.deleteLine();
   const isDisabled = useResponse.utils.isDisabled();
-  const { orderInPacks } = usePreferences();
+  const { orderInPacks, displayPopulationBasedForecasting } = usePreferences();
 
   const lines = useMemo(
     () =>
@@ -103,8 +104,10 @@ export const ResponseLineEditModal = ({
   };
 
   const onSave = async () => {
-    const success = await handleSave();
-    if (!success) return false;
+    if (requisition.status !== RequisitionNodeStatus.Finalised) {
+      const success = await handleSave();
+      if (!success) return false;
+    }
     if (mode === ModalMode.Update && next) setCurrentItem(next);
     else if (mode === ModalMode.Create) setCurrentItem(undefined);
     else onClose();
@@ -122,6 +125,11 @@ export const ResponseLineEditModal = ({
   }, [draft?.isCreated]);
 
   const { data } = useResponse.line.stats(!draft?.isCreated, draft?.id);
+  const itemVolume =
+    (draft?.availableVolumeAtLocationType?.itemVolumePerUnit ?? 0) *
+    (draft?.supplyQuantity ?? 0);
+  const displayForecasting =
+    (displayPopulationBasedForecasting && !!draft?.forecastTotalUnits) || false;
 
   const tabs = [
     {
@@ -154,6 +162,10 @@ export const ResponseLineEditModal = ({
           averageMonthlyConsumption={
             data?.requestStoreStats.averageMonthlyConsumption ?? 0
           }
+          availableVolumeAtLocationType={draft?.availableVolumeAtLocationType}
+          itemVolume={itemVolume}
+          displayForecasting={displayForecasting}
+          vaccineCourses={draft?.vaccineCourses}
         />
       ),
       value: 'label.customer',
@@ -181,8 +193,12 @@ export const ResponseLineEditModal = ({
           variant="ok"
           disabled={!currentItem || isEditingSupply}
           onClick={async () => {
-            const success = await handleSave();
-            if (success) onClose();
+            if (requisition.status === RequisitionNodeStatus.Finalised) {
+              onClose();
+            } else {
+              const success = await handleSave();
+              if (success) onClose();
+            }
           }}
         />
       }
@@ -207,6 +223,7 @@ export const ResponseLineEditModal = ({
             isUpdateMode={mode === ModalMode.Update}
             isReasonsError={isReasonsError}
             setIsEditingSupply={setIsEditingSupply}
+            displayForecasting={displayForecasting}
           />
           {!!draft && (
             <ModalTabs

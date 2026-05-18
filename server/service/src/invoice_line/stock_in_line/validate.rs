@@ -1,7 +1,7 @@
 use repository::{
     vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
-    EqualFilter, InvoiceLineRow, ProgramFilter, ProgramRepository, RepositoryError, StockLineRow,
-    StockLineRowRepository, StorageConnection,
+    EqualFilter, InvoiceLineRow, RepositoryError, StockLineRow, StockLineRowRepository,
+    StorageConnection,
 };
 
 pub fn check_pack_size(pack_size_option: Option<f64>) -> bool {
@@ -47,25 +47,6 @@ pub fn check_batch_stock_reserved(
     Ok(true)
 }
 
-pub fn check_program_visible_to_store(
-    connection: &StorageConnection,
-    store_id: &str,
-    program_id: &Option<String>,
-) -> Result<bool, RepositoryError> {
-    if let Some(program_id) = program_id {
-        let repo = ProgramRepository::new(connection);
-        let matching_programs = repo.query_by_filter(
-            ProgramFilter::new()
-                .id(EqualFilter::equal_to(program_id))
-                .exists_for_store_id(EqualFilter::equal_to(store_id)),
-        )?;
-
-        // If no programs, then program is not visible to the store
-        return Ok(!matching_programs.is_empty());
-    }
-    Ok(true)
-}
-
 pub fn get_existing_vvm_status_log_id(
     connection: &StorageConnection,
     stock_line_id: &str,
@@ -74,8 +55,8 @@ pub fn get_existing_vvm_status_log_id(
     Ok(VVMStatusLogRepository::new(connection)
         .query_by_filter(
             VVMStatusLogFilter::new()
-                .stock_line_id(EqualFilter::equal_to(stock_line_id))
-                .invoice_line_id(EqualFilter::equal_to(invoice_line_id)),
+                .stock_line_id(EqualFilter::equal_to(stock_line_id.to_string()))
+                .invoice_line_id(EqualFilter::equal_to(invoice_line_id.to_string())),
         )?
         .first()
         .map(|log| log.id.clone()))

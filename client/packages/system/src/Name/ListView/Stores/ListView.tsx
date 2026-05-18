@@ -14,6 +14,7 @@ import { StoreEditModal } from './StoreEditModal';
 import { AppBarButtons } from './AppBarButtons';
 import { PropertiesImportModal } from '../ImportProperties/PropertiesImportModal';
 import { FacilityNameRowFragment } from '../../api/operations.generated';
+import { Toolbar } from './Toolbar';
 
 export const StoresListView = () => {
   const t = useTranslation();
@@ -78,6 +79,7 @@ export const StoresListView = () => {
 
   return (
     <>
+      <Toolbar />
       <PropertiesImportModal
         isOpen={importPropertiesModalController.isOn}
         onClose={importPropertiesModalController.toggleOff}

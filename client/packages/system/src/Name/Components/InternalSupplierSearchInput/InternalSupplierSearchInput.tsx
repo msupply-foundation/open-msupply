@@ -18,9 +18,9 @@ export const InternalSupplierSearchInput: FC<NameSearchInputProps> = ({
   value,
   disabled = false,
 }) => {
+  const t = useTranslation();
   const { data, isLoading } = useName.document.internalSuppliers();
   const [buffer, setBuffer] = useBufferState(value);
-  const t = useTranslation();
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
   return (

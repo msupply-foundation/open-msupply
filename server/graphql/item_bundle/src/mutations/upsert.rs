@@ -90,7 +90,7 @@ fn map_response(from: Result<BundledItemRow, ServiceError>) -> Result<UpsertBund
 
 fn map_error(error: ServiceError) -> Result<UpsertBundledItemErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),

@@ -9,7 +9,7 @@ pub fn query_global(
 ) -> Result<Option<PreferenceRow>, RepositoryError> {
     PreferenceRepository::new(connection).query_one(
         PreferenceFilter::new()
-            .key(EqualFilter::equal_to(key))
+            .key(EqualFilter::equal_to(key.to_owned()))
             .store_id(EqualFilter::is_null(true)),
     )
 }
@@ -21,8 +21,8 @@ pub fn query_store(
 ) -> Result<Option<PreferenceRow>, RepositoryError> {
     PreferenceRepository::new(connection).query_one(
         PreferenceFilter::new()
-            .key(EqualFilter::equal_to(key))
-            .store_id(EqualFilter::equal_to(store_id)),
+            .key(EqualFilter::equal_to(key.to_owned()))
+            .store_id(EqualFilter::equal_to(store_id.to_string())),
     )
 }
 

@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   DetailViewSkeleton,
   AlertModal,
+  RequisitionNodeStatus,
   RouteBuilder,
   useNavigate,
   useTranslation,
@@ -9,12 +10,18 @@ import {
   useAuthContext,
   useBreadcrumbs,
   useEditModal,
+  useToggle,
   useNonPaginatedMaterialTable,
   usePluginProvider,
   NothingHere,
   MaterialTable,
+  useUrlQuery,
 } from '@openmsupply-client/common';
-import { ActivityLogList } from '@openmsupply-client/system';
+import {
+  ActivityLogList,
+  DocumentsTable,
+  UploadDocumentModal,
+} from '@openmsupply-client/system';
 import { RequestLineFragment, useHideOverStocked, useRequest } from '../api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -23,10 +30,10 @@ import { SidePanel } from './SidePanel';
 import { AppRoute } from '@openmsupply-client/config';
 import { RequestRequisitionLineErrorProvider } from '../context';
 import { IndicatorsTab } from './IndicatorsTab';
-import { buildIndicatorEditRoute } from './utils';
 import { RequestLineEditModal } from './RequestLineEdit';
 import { useRequestColumns } from './columns';
 import { isRequestLinePlaceholderRow } from '../../utils';
+import { InternalOrderDetailTabs } from './types';
 
 export const DetailView = () => {
   const t = useTranslation();
@@ -41,8 +48,13 @@ export const DetailView = () => {
     isOpen,
   } = useEditModal<string | null>();
 
-  const { data, isLoading } = useRequest.document.get();
+  const { data, isLoading, invalidateQueries } = useRequest.document.get();
   const isDisabled = useRequest.utils.isDisabled();
+  const {
+    toggleOn: toggleUploadModal,
+    isOn: isUploadModalOpen,
+    toggleOff: toggleCloseUploadModal,
+  } = useToggle();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useRequest.document.indicators(
       store?.nameId ?? '',
@@ -50,29 +62,20 @@ export const DetailView = () => {
       data?.program?.id ?? '',
       !!data
     );
+  const { urlQuery, updateQuery } = useUrlQuery();
+
+  const deletableDocumentIds = useMemo(() => {
+    if (data?.status === RequisitionNodeStatus.Finalised) {
+      return new Set<string>();
+    }
+    // Request requisition can't have documents linked to response requisition.
+    // So all documents linked to request requisition are deletable.
+    return undefined;
+  }, [data?.status]);
 
   const onRowClick = useCallback(
     (line: RequestLineFragment) => onOpen(line.item.id),
     [onOpen]
-  );
-
-  const onProgramIndicatorClick = useCallback(
-    (
-      requisitionId?: string,
-      programIndicatorCode?: string,
-      indicatorId?: string
-    ) => {
-      if (!requisitionId || !programIndicatorCode || !indicatorId) return;
-
-      navigate(
-        buildIndicatorEditRoute(
-          requisitionId,
-          programIndicatorCode,
-          indicatorId
-        )
-      );
-    },
-    []
   );
 
   useEffect(() => {
@@ -80,6 +83,13 @@ export const DetailView = () => {
   }, [setCustomBreadcrumbs, data?.requisitionNumber]);
 
   const onAddItem = () => onOpen();
+  const onOpenUploadModal = useCallback(() => {
+    toggleUploadModal();
+    const currentTab = urlQuery['tab'] ?? InternalOrderDetailTabs.Details;
+    if (currentTab !== InternalOrderDetailTabs.Documents) {
+      updateQuery({ tab: InternalOrderDetailTabs.Documents });
+    }
+  }, [toggleUploadModal, urlQuery, updateQuery]);
 
   const { lines, itemFilter, isError, isFetching } = useRequest.line.list();
   const { on } = useHideOverStocked();
@@ -94,9 +104,10 @@ export const DetailView = () => {
     data: lines,
     isLoading: isFetching,
     isError,
-    getIsPlaceholderRow: isRequestLinePlaceholderRow,
+    getIsPlaceholderRow: row => isRequestLinePlaceholderRow(row.original),
     onRowClick,
     initialSort: { key: 'itemName', dir: 'asc' },
+    manualFiltering: true,
     noDataElement: (
       <NothingHere
         body={
@@ -110,13 +121,34 @@ export const DetailView = () => {
     ),
   });
 
+  if (isLoading) return <DetailViewSkeleton />;
+  if (!data)
+    return (
+      <AlertModal
+        open={true}
+        onOk={() =>
+          navigate(
+            RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.InternalOrder)
+              .build()
+          )
+        }
+        title={t('error.order-not-found')}
+        message={t('messages.click-to-return-to-requisitions')}
+      />
+    );
+
   const tabs = [
     {
       Component: (
         <>
           {plugins.requestRequisitionLine?.tableStateLoader?.map(
             (StateLoader, index) => (
-              <StateLoader key={index} requestLines={lines} />
+              <StateLoader
+                key={index}
+                requestLines={lines}
+                requisition={data}
+              />
             )
           )}
           <MaterialTable table={table} />
@@ -125,37 +157,48 @@ export const DetailView = () => {
       value: 'Details',
     },
     {
+      Component: (
+        <DocumentsTable
+          recordId={data?.id ?? ''}
+          documents={data?.documents?.nodes ?? []}
+          tableName="requisition"
+          invalidateQueries={invalidateQueries}
+          deletableDocumentIds={deletableDocumentIds}
+        />
+      ),
+      value: t('label.documents'),
+    },
+    {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: 'Log',
     },
   ];
 
   const showIndicatorTab =
-    !!data?.programName &&
-    !!data?.otherParty.store &&
+    !!data.programName &&
+    !!data.otherParty.store &&
     programIndicators?.totalCount !== 0 &&
-    !data?.isEmergency;
+    !data.isEmergency;
 
   if (showIndicatorTab) {
     tabs.push({
       Component: (
         <IndicatorsTab
-          onClick={onProgramIndicatorClick}
           isLoading={isLoading || isProgramIndicatorsLoading}
-          request={data}
           indicators={programIndicators?.nodes}
+          disabled={isDisabled}
         />
       ),
       value: t('label.indicators'),
     });
   }
 
-  if (isLoading) return <DetailViewSkeleton />;
-  return !!data ? (
+  return (
     <RequestRequisitionLineErrorProvider>
       <AppBarButtons
         isDisabled={!data || isDisabled}
         onAddItem={onAddItem}
+        openUploadModal={onOpenUploadModal}
         showIndicators={showIndicatorTab}
       />
       <Toolbar />
@@ -177,19 +220,16 @@ export const DetailView = () => {
           store={store}
         />
       )}
+
+      {isUploadModalOpen && (
+        <UploadDocumentModal
+          isOn={isUploadModalOpen}
+          toggleOff={toggleCloseUploadModal}
+          recordId={data?.id ?? ''}
+          tableName="requisition"
+          invalidateQueries={invalidateQueries}
+        />
+      )}
     </RequestRequisitionLineErrorProvider>
-  ) : (
-    <AlertModal
-      open={true}
-      onOk={() =>
-        navigate(
-          RouteBuilder.create(AppRoute.Replenishment)
-            .addPart(AppRoute.InternalOrder)
-            .build()
-        )
-      }
-      title={t('error.order-not-found')}
-      message={t('messages.click-to-return-to-requisitions')}
-    />
   );
 };

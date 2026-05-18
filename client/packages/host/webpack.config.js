@@ -47,7 +47,6 @@ module.exports = env => {
         'Access-Control-Allow-Headers':
           'X-Requested-With, content-type, Authorization',
       },
-      open: true,
     },
     resolve: {
       extensions: ['.js', '.css', '.ts', '.tsx'],
@@ -124,6 +123,10 @@ module.exports = env => {
       new CopyPlugin({
         patterns: [
           { from: './public/game', to: 'game' },
+          {
+            from: './public/BrowserPrint-3.1.250.min.js',
+            to: 'BrowserPrint-3.1.250.min.js',
+          },
           {
             context: path.resolve(
               __dirname,

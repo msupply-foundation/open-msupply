@@ -11,6 +11,7 @@ use repository::{
     requisition_row::{RequisitionStatus, RequisitionType},
     ActivityLogType, EqualFilter, RepositoryError, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
+    SyncFileReferenceFilter, SyncFileReferenceRepository, SyncFileReferenceRowRepository,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -41,13 +42,14 @@ pub fn delete_request_requisition(
 ) -> Result<String, OutError> {
     let requisition_id = ctx
         .connection
-        .transaction_sync(|connection| {
+        .transaction_sync(|connection| -> Result<String, OutError> {
             validate(connection, &ctx.store_id, &input)?;
 
             // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
             // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
             let lines = RequisitionLineRepository::new(connection).query_by_filter(
-                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&input.id)),
+                RequisitionLineFilter::new()
+                    .requisition_id(EqualFilter::equal_to(input.id.to_string())),
             )?;
             for line in lines {
                 delete_request_requisition_line(
@@ -64,18 +66,19 @@ pub fn delete_request_requisition(
                 })?;
             }
             // End TODO
+
+            delete_associated_documents(connection, &input.id)?;
+            RequisitionRowRepository::new(connection).delete(&input.id)?;
+
             activity_log_entry(
                 ctx,
                 ActivityLogType::RequisitionDeleted,
-                Some(input.id.to_owned()),
+                Some(input.id.to_string()),
                 None,
                 None,
             )?;
 
-            match RequisitionRowRepository::new(connection).delete(&input.id) {
-                Ok(_) => Ok(input.id.clone()),
-                Err(error) => Err(OutError::DatabaseError(error)),
-            }
+            Ok(input.id.clone())
         })
         .map_err(|error| error.to_inner_error())?;
 
@@ -106,6 +109,24 @@ fn validate(
     // if !get_lines_for_requisition(connection, &input.id)?.is_empty() {
     //     return Err(OutError::CannotDeleteRequisitionWithLines);
     // }
+
+    Ok(())
+}
+
+fn delete_associated_documents(
+    connection: &StorageConnection,
+    requisition_id: &str,
+) -> Result<(), RepositoryError> {
+    let documents = SyncFileReferenceRepository::new(connection).query_by_filter(
+        SyncFileReferenceFilter::new()
+            .table_name(EqualFilter::equal_to("requisition".to_string()))
+            .record_id(EqualFilter::equal_to(requisition_id.to_string())),
+    )?;
+    let sync_file_ref_row_repo = SyncFileReferenceRowRepository::new(connection);
+
+    for doc in documents {
+        sync_file_ref_row_repo.delete(&doc.sync_file_reference_row.id)?;
+    }
 
     Ok(())
 }
@@ -152,7 +173,7 @@ mod test_delete {
             service.delete_request_requisition(
                 &context,
                 DeleteRequestRequisition {
-                    id: "invalid".to_owned(),
+                    id: "invalid".to_string(),
                 },
             ),
             Err(ServiceError::RequisitionDoesNotExist)

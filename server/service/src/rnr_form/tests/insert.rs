@@ -31,7 +31,7 @@ mod insert {
                 .items()
                 .periods()
                 .program_requisition_settings()
-                .full_master_list(),
+                .full_master_lists(),
             MockData {
                 periods: vec![PeriodRow {
                     id: "future_period".to_string(),
@@ -247,7 +247,7 @@ mod insert {
                 // make supplier store C visible in store B
                 name_store_joins: vec![NameStoreJoinRow {
                     id: String::from("name_store_b_join_c"),
-                    name_link_id: String::from("name_store_c"),
+                    name_id: String::from("name_store_c"),
                     store_id: String::from("store_b"),
                     name_is_customer: false,
                     name_is_supplier: true,
@@ -339,12 +339,12 @@ mod insert {
                 .items()
                 .periods()
                 .program_requisition_settings()
-                .full_master_list(),
+                .full_master_lists(),
             MockData {
-                // make supplier store B visible in store A
+                // make supplier store C visible in store A
                 name_store_joins: vec![NameStoreJoinRow {
-                    id: String::from("name_store_a_join_b"),
-                    name_link_id: String::from("name_store_b"),
+                    id: String::from("name_store_a_join_c"),
+                    name_id: String::from("name_store_c"),
                     store_id: String::from("store_a"),
                     name_is_customer: false,
                     name_is_supplier: true,
@@ -372,7 +372,7 @@ mod insert {
                 &mock_store_a().id,
                 InsertRnRForm {
                     id: "new_rnr_id".to_string(),
-                    supplier_id: mock_name_store_b().id,
+                    supplier_id: mock_name_store_c().id,
                     program_id: mock_program_b().id,
                     period_id: mock_period_2_d().id,
                 },
@@ -386,9 +386,9 @@ mod insert {
 
         let created_line = form_lines.pop().unwrap();
         let blank_line = RnRFormLineRow {
-            id: created_line.id.to_owned(),
-            rnr_form_id: created_line.rnr_form_id.to_owned(),
-            item_link_id: created_line.item_link_id.to_owned(),
+            id: created_line.id.to_string(),
+            rnr_form_id: created_line.rnr_form_id.to_string(),
+            item_link_id: created_line.item_link_id.to_string(),
             ..Default::default()
         };
 
@@ -466,7 +466,7 @@ mod insert {
             let rnr_form = RnRFormRow {
                 id: form_id.clone(),
                 store_id: mock_store_a().id.clone(),
-                name_link_id: "name_store_c".to_string(),
+                name_id: "name_store_c".to_string(),
                 period_id: period_id.clone(),
                 program_id: mock_program_b().id.clone(),
                 status: RnRFormStatus::Finalised,
@@ -479,7 +479,7 @@ mod insert {
             let invoice_id = format!("{period_idx}");
             let invoice = InvoiceRow {
                 id: invoice_id.clone(),
-                name_link_id: "name_store_c".to_string(),
+                name_id: "name_store_c".to_string(),
                 store_id: mock_store_a().id.clone(),
                 r#type: InvoiceType::OutboundShipment,
                 status: InvoiceStatus::Verified,
@@ -552,7 +552,7 @@ mod insert {
         let test_invoice_id = "consumption_invoice".to_string();
         let test_invoice = InvoiceRow {
             id: test_invoice_id.clone(),
-            name_link_id: "name_store_c".to_string(),
+            name_id: "name_store_c".to_string(),
             store_id: mock_store_a().id.clone(),
             r#type: InvoiceType::OutboundShipment,
             status: InvoiceStatus::Picked,
@@ -588,12 +588,12 @@ mod insert {
                 MasterListNameJoinRow {
                     id: "perf_master_list_join_store_a".to_string(),
                     master_list_id: "perf_master_list".to_string(),
-                    name_link_id: "name_store_a".to_string(),
+                    name_id: "name_store_a".to_string(),
                 },
                 MasterListNameJoinRow {
                     id: "perf_master_list_join_store_c".to_string(),
                     master_list_id: "perf_master_list".to_string(),
-                    name_link_id: "name_store_c".to_string(),
+                    name_id: "name_store_c".to_string(),
                 },
             ],
             lines: master_list_lines.clone(),
@@ -621,7 +621,7 @@ mod insert {
                 .name_store_joins()
                 .periods()
                 .items()
-                .full_master_list()
+                .full_master_lists()
                 .program_requisition_settings(),
             MockData {
                 items: perf_test_items,

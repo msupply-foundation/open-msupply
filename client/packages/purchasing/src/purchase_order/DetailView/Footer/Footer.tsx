@@ -8,7 +8,6 @@ import {
   ActionsFooter,
   PurchaseOrderNodeStatus,
   StatusCrumbs,
-  useTableStore,
   usePreferences,
   useDeleteConfirmation,
   CloseIcon,
@@ -22,10 +21,11 @@ import {
   usePurchaseOrder,
   PurchaseOrderFragment,
   usePurchaseOrderLine,
+  PurchaseOrderLineFragment,
 } from '../../api';
 import { getStatusTranslator, purchaseOrderStatuses } from './utils';
 import { StatusChangeButton } from './StatusChangeButton';
-import { ExpectedDeliveryDateModal } from './ExpectedDeliveryDateModal';
+import { UpdateDeliveryDateModal } from './UpdateDeliveryDateModal';
 
 const createStatusLog = (
   purchaseOrder: PurchaseOrderFragment,
@@ -55,16 +55,28 @@ const createStatusLog = (
 interface FooterProps {
   showStatusBar: boolean;
   status: PurchaseOrderNodeStatus;
+  selectedRows: PurchaseOrderLineFragment[];
+  resetRowSelection: () => void;
 }
 
 export const Footer = ({
   showStatusBar,
   status,
+  selectedRows,
+  resetRowSelection,
 }: FooterProps): ReactElement => {
   const t = useTranslation();
   const { success } = useNotification();
-  const { clearSelected } = useTableStore();
-  const { isOn, toggleOn, toggleOff } = useToggle();
+  const {
+    isOn: isExpectedDateOn,
+    toggleOn: toggleExpectedDateOn,
+    toggleOff: toggleExpectedDateOff,
+  } = useToggle();
+  const {
+    isOn: isRequestedDateOn,
+    toggleOn: toggleRequestedDateOn,
+    toggleOff: toggleRequestedDateOff,
+  } = useToggle();
   const { authorisePurchaseOrder = false } = usePreferences();
 
   const {
@@ -76,17 +88,11 @@ export const Footer = ({
     delete: { deleteLines },
   } = usePurchaseOrderLine();
 
-  const selectedRows = useTableStore(state => {
-    const selectedLines =
-      data?.lines.nodes.filter(line => state.rowState[line.id]?.isSelected) ||
-      [];
-    return selectedLines;
-  });
-
   const deleteAction = async () => {
     const ids = selectedRows.map(row => row.id);
     if (ids.length === 0) return;
-    return await deleteLines(ids);
+    await deleteLines(ids);
+    resetRowSelection();
   };
 
   const confirmAndDelete = useDeleteConfirmation({
@@ -109,12 +115,31 @@ export const Footer = ({
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
     },
-    {
+  ];
+
+  if (
+    status !== PurchaseOrderNodeStatus.Confirmed &&
+    status !== PurchaseOrderNodeStatus.Sent &&
+    status !== PurchaseOrderNodeStatus.Finalised
+  ) {
+    actions.push({
       label: t('label.update-expected-delivery-date'),
       icon: <EditIcon />,
-      onClick: toggleOn,
-    },
-  ];
+      onClick: toggleExpectedDateOn,
+    });
+  }
+
+  if (
+    status !== PurchaseOrderNodeStatus.Confirmed &&
+    status !== PurchaseOrderNodeStatus.Sent &&
+    status !== PurchaseOrderNodeStatus.Finalised
+  ) {
+    actions.push({
+      label: t('label.update-requested-delivery-date'),
+      icon: <EditIcon />,
+      onClick: toggleRequestedDateOn,
+    });
+  }
 
   const confirmAndClose = async () => {
     try {
@@ -126,7 +151,7 @@ export const Footer = ({
           count: selectedRows.length,
         })
       )();
-      clearSelected();
+      resetRowSelection();
     } catch (e) {
       console.error('Error closing purchase order lines:', e);
     }
@@ -162,6 +187,7 @@ export const Footer = ({
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
             />
           )}
           {data && selectedRows.length === 0 && showStatusBar ? (
@@ -183,11 +209,22 @@ export const Footer = ({
               </Box>
             </Box>
           ) : null}
-          {isOn && (
-            <ExpectedDeliveryDateModal
+          {isExpectedDateOn && (
+            <UpdateDeliveryDateModal
+              dateType="expected"
               selectedRows={selectedRows}
-              isOpen={isOn}
-              onClose={toggleOff}
+              isOpen={isExpectedDateOn}
+              onClose={toggleExpectedDateOff}
+              resetRowSelection={resetRowSelection}
+            />
+          )}
+          {isRequestedDateOn && (
+            <UpdateDeliveryDateModal
+              dateType="requested"
+              selectedRows={selectedRows}
+              isOpen={isRequestedDateOn}
+              onClose={toggleRequestedDateOff}
+              resetRowSelection={resetRowSelection}
             />
           )}
         </>

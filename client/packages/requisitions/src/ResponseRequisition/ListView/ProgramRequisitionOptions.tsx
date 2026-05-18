@@ -25,7 +25,7 @@ import {
 import { useResponse } from '../api';
 import { NewRequisitionType } from '../../types';
 import { getOrderTypeRenderer } from '../../RequestRequisition/ListView/ProgramRequisitionOptions';
-import { NameRowFragment } from 'packages/system/src/Name/api/operations.generated';
+import { NameRowFragment } from '@openmsupply-client/system';
 
 export interface NewProgramRequisition {
   type: NewRequisitionType.Program;

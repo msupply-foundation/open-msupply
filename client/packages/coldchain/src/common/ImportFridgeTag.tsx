@@ -6,11 +6,9 @@ import { AppRoute, Environment } from '@openmsupply-client/config';
 import { useConfirmOnLeaving, useNotification } from '@common/hooks';
 
 import {
-  Breakpoints,
   RouteBuilder,
-  useAppTheme,
   useAuthContext,
-  useMediaQuery,
+  useIsExtraSmallScreen,
   useNavigate,
   useQueryClient,
 } from '@openmsupply-client/common';
@@ -37,10 +35,7 @@ export const ImportFridgeTag = ({
   const t = useTranslation();
   const navigate = useNavigate();
   const { success, error } = useNotification();
-  const theme = useAppTheme();
-  const isExtraSmallScreen = useMediaQuery(
-    theme.breakpoints.down(Breakpoints.sm)
-  );
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const hiddenFileInput = useRef<HTMLInputElement>(null);
   const { storeId } = useAuthContext();
@@ -86,9 +81,15 @@ export const ImportFridgeTag = ({
       success(t('messages.fridge-tag-import-successful', resultJson))();
 
       // forces a refetch of logs, breach, chart data and sensors
-      queryClient.invalidateQueries(breachApi.keys.base());
-      queryClient.invalidateQueries(logApi.keys.base());
-      queryClient.invalidateQueries([SENSOR]);
+      queryClient.invalidateQueries({
+        queryKey: breachApi.keys.base()
+      });
+      queryClient.invalidateQueries({
+        queryKey: logApi.keys.base()
+      });
+      queryClient.invalidateQueries({
+        queryKey: [SENSOR]
+      });
 
       // if the user is on mobile - redirect to monitoring page
       if (isExtraSmallScreen) {
@@ -137,7 +138,7 @@ export const ImportFridgeTag = ({
         onChange={onUpload}
         ref={hiddenFileInput}
         style={{ display: 'none' }} // Make the file input element invisible
-        accept=".txt"
+        accept=".txt,.csv"
       />
       <LoadingButton
         variant="outlined"

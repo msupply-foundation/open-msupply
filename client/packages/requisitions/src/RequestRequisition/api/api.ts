@@ -10,6 +10,8 @@ import {
   InsertProgramRequestRequisitionInput,
   RequisitionFilterInput,
   UpdateIndicatorValueInput,
+  RefreshAncillaryItemsInput,
+  setNullableInput,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './../DetailView/RequestLineEdit/hooks';
 import { RequestRowFragment, Sdk } from './operations.generated';
@@ -82,6 +84,10 @@ const requestParser = {
       status: requestParser.toStatus(requisition),
       minMonthsOfStock: requisition.minMonthsOfStock,
       maxMonthsOfStock: requisition.maxMonthsOfStock,
+      destinationCustomerId: setNullableInput(
+        'id',
+        requisition.destinationCustomer
+      ),
     };
   },
   toDeleteLine: (line: RequestLineFragment) => ({ id: line.id }),
@@ -184,6 +190,18 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Unable to insert requisition line');
+  },
+  refreshAncillaryItems: async (input: RefreshAncillaryItemsInput) => {
+    const result = await sdk.refreshAncillaryItems({ storeId, input });
+    const response = result?.refreshAncillaryItems;
+    if (response?.__typename === 'RefreshAncillaryItemsSuccess') {
+      return response;
+    }
+    throw new Error(
+      response?.__typename === 'RefreshAncillaryItemsError'
+        ? response.error.description
+        : 'Unable to refresh ancillary items'
+    );
   },
   deleteLine: async (requestLineId: string) => {
     const ids = [{ id: requestLineId }];

@@ -110,7 +110,9 @@ impl SyncTranslation for NameStoreJoinTranslation {
         };
 
         if let Some(store) = StoreRepository::new(connection)
-            .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(&data.store_id)))?
+            .query_by_filter(
+                StoreFilter::new().id(EqualFilter::equal_to(data.store_id.to_string())),
+            )?
             .pop()
         {
             // if the name_store_join is referencing itself, then exclude it
@@ -124,7 +126,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
 
         let result = NameStoreJoinRow {
             id: data.id,
-            name_link_id: data.name_id,
+            name_id: data.name_id,
             store_id: data.store_id,
             // name_is_customer: data.name_is_customer.unwrap_or(name.is_customer),
             // name_is_supplier: data.name_is_supplier.unwrap_or(name.is_supplier),
@@ -147,7 +149,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
             name_store_join:
                 NameStoreJoinRow {
                     id,
-                    name_link_id: _,
+                    name_id: _,
                     store_id,
                     name_is_customer,
                     name_is_supplier,
@@ -155,7 +157,8 @@ impl SyncTranslation for NameStoreJoinTranslation {
             name,
         } = NameStoreJoinRepository::new(connection)
             .query_by_filter(
-                NameStoreJoinFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+                NameStoreJoinFilter::new()
+                    .id(EqualFilter::equal_to(changelog.record_id.to_string())),
             )?
             .pop()
             .ok_or(anyhow::anyhow!("Name store join not found"))?;

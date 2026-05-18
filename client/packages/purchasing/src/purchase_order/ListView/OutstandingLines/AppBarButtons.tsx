@@ -3,11 +3,8 @@ import {
   AppBarButtonsPortal,
   Grid,
   useTranslation,
-  useNotification,
-  LoadingButton,
-  DownloadIcon,
-  useExportCSV,
 } from '@openmsupply-client/common';
+import { ExportSelector } from '@openmsupply-client/system';
 import { PurchaseOrderLineFragment } from '../../api';
 import { outstandingLinesToCsv } from '../../../utils';
 
@@ -21,24 +18,17 @@ export const AppBarButtonsComponent = ({
   isLoading,
 }: AppBarButtonProps) => {
   const t = useTranslation();
-  const exportCsv = useExportCSV();
-  const { error } = useNotification();
 
-  const handleCsvExportClick = async () => {
-    if (!data || !data.length) return error(t('error.no-data'))();
-    const csv = outstandingLinesToCsv(t, data);
-    await exportCsv(csv, t('filename.outstanding-purchase-order-lines'));
-  };
+  const getCsvData = () =>
+    data?.length ? outstandingLinesToCsv(t, data) : null;
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <LoadingButton
-          startIcon={<DownloadIcon />}
-          variant="outlined"
+        <ExportSelector
+          getCsvData={getCsvData}
+          filename={t('filename.outstanding-purchase-order-lines')}
           isLoading={isLoading}
-          label={t('button.export')}
-          onClick={handleCsvExportClick}
         />
       </Grid>
     </AppBarButtonsPortal>

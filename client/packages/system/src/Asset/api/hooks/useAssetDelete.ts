@@ -1,22 +1,10 @@
 import { useMutation } from '@openmsupply-client/common';
 import { useAssetGraphQL } from '../useAssetGraphQL';
 import { ASSET } from './keys';
-import { useAssetList } from './useAssetList';
-import { useTableStore } from '@openmsupply-client/common';
 import { AssetCatalogueItemFragment } from '../operations.generated';
 
 export const useAssetDelete = () => {
   const { assetApi, queryClient } = useAssetGraphQL();
-  const {
-    query: { data },
-  } = useAssetList();
-
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => data?.nodes?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as AssetCatalogueItemFragment[],
-  }));
 
   const mutationFn = async (id: string) => {
     const result = await assetApi.deleteAssetCatalogueItem({
@@ -28,16 +16,18 @@ export const useAssetDelete = () => {
 
   const {
     mutateAsync: deleteMutation,
-    isLoading,
+    isPending: isLoading,
     error,
   } = useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([ASSET]);
+      queryClient.invalidateQueries({
+        queryKey: [ASSET]
+      });
     },
   });
 
-  const deleteAssets = async () => {
+  const deleteAssets = async (selectedRows: AssetCatalogueItemFragment[]) => {
     await Promise.all(selectedRows.map(row => deleteMutation(row.id))).catch(
       err => {
         console.error(err);
@@ -50,6 +40,5 @@ export const useAssetDelete = () => {
     deleteAssets,
     isLoading,
     error,
-    selectedRows,
   };
 };

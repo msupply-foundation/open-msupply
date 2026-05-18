@@ -12,7 +12,11 @@ import {
   noOtherVariants,
   PlusCircleIcon,
 } from '@openmsupply-client/common';
-import { getNextResponseStatus, getStatusTranslation } from '../../../utils';
+import {
+  getNextRequisitionStatus,
+  getStatusTranslation,
+  responseStatuses,
+} from '../../../utils';
 import { ResponseFragment, useResponse } from '../../api';
 import { useResponseRequisitionLineErrorContext } from '../../context';
 import { useCreateShipment } from './useCreateShipment';
@@ -61,7 +65,7 @@ const getNextStatusOption = (
 ): SplitButtonOption<RequisitionNodeStatus | 'create-shipment'> | null => {
   if (!status) return options[0] ?? null;
 
-  const nextStatus = getNextResponseStatus(status);
+  const nextStatus = getNextRequisitionStatus(status, responseStatuses);
 
   if (status === RequisitionNodeStatus.New) {
     if (placeholderOrEmpty || !linesFullySupplied) {
