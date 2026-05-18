@@ -107,19 +107,30 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.names;
     },
-    customers: async ({ sortBy, filterBy }: ListParams) => {
+    customers: async ({
+      first,
+      offset,
+      sortBy,
+      filter,
+    }: {
+      first?: number;
+      offset?: number;
+      sortBy?: SortBy<NameRowFragment>;
+      filter?: NameFilterInput | null;
+    } = {}) => {
       const key = nameParsers.toSort(sortBy?.key ?? '');
 
       const result = await sdk.names({
+        first,
+        offset,
         key,
         desc: !!sortBy?.isDesc,
         storeId,
         filter: {
           isCustomer: true,
           type: { equalAny: [NameNodeType.Facility, NameNodeType.Store] },
-          ...filterBy,
+          ...filter,
         },
-        first: 1000,
       });
 
       return result?.names;
