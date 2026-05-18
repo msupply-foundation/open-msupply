@@ -144,7 +144,7 @@ const UIComponent = (props: ControlProps) => {
             onError={validationError =>
               customErrors.add(path, validationError || 'Invalid date')
             }
-            error={errors}
+            errorText={errors}
             actions={actions}
           />
 
