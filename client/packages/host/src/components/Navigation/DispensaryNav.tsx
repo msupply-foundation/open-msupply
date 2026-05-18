@@ -12,6 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
+import { usePluginNavLinksForCategory } from './usePluginNavLinks';
 
 export interface DispensaryNavProps {
   store?: UserStoreNodeFragment;
@@ -24,6 +25,7 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
   const t = useTranslation();
   const visible = store?.storeMode === StoreModeNodeType.Dispensary;
   const isProgramModule = store?.preferences.omProgramModule;
+  const pluginLinks = usePluginNavLinksForCategory(AppRoute.Dispensary);
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Dispensary}>
@@ -65,6 +67,7 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
               .build()}
             text={t('clinicians')}
           />
+          {pluginLinks}
         </List>
       </Collapse>
     </AppNavSection>

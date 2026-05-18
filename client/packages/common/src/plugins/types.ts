@@ -1,3 +1,4 @@
+import { AppRoute } from '@openmsupply-client/config';
 import { ColumnDef, UsePluginEvents } from '@openmsupply-client/common';
 import {
   ItemFragment,
@@ -9,6 +10,38 @@ import {
 import { InboundFragment } from '@openmsupply-client/invoices';
 import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
 import { DraftRequestLine } from 'packages/requisitions/src/RequestRequisition/DetailView/RequestLineEdit';
+import { UserPermission } from '../types/schema';
+
+// Plugins import any icon they want from `@openmsupply-client/common` (e.g.
+// `StockIcon`) and pass it directly. The host renders it themed to match the
+// built-in navigation; if omitted, a default plugin icon is used.
+export type PluginIcon = React.ComponentType<{
+  color?: 'primary' | 'inherit';
+  fontSize?: 'small' | 'medium' | 'large' | 'inherit';
+}>;
+
+export type PluginPageMenu = {
+  label: string;
+  permissions?: UserPermission[];
+  category:
+    | { type: 'existing'; appRoute: AppRoute }
+    | {
+        type: 'new';
+        key: string;
+        label: string;
+        icon?: PluginIcon;
+        order?: number;
+      };
+};
+
+export type PluginPage = {
+  route: string;
+  Component: React.ComponentType;
+  menu: PluginPageMenu;
+  // Stamped by the host in pluginProvider.ts#addPluginBundle. Plugins should
+  // not set this; it is optional on the type only so plugin bundles compile.
+  pluginCode?: string;
+};
 
 export type Plugins = {
   prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];
@@ -67,6 +100,7 @@ export type Plugins = {
     }>[];
     tableColumn: ColumnDef<MasterListRowFragment>[];
   };
+  pages?: PluginPage[];
 };
 
 type PluginData<D> = { relatedRecordId?: string | null; data: D };
