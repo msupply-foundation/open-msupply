@@ -19,7 +19,7 @@ impl FormSchemaQueries {
         filter: Option<FormSchemaFilterInput>,
         sort: Option<Vec<FormSchemaSortInput>>,
     ) -> Result<FormSchemaResponse> {
-        form_schemas(ctx, page, filter, sort)
+        form_schemas(ctx, page, filter, sort).await
     }
 }
 
@@ -33,6 +33,6 @@ impl FormSchemaMutations {
         ctx: &Context<'_>,
         input: InsertFormSchemaInput,
     ) -> Result<InsertFormSchemaResponse> {
-        insert_form_schema(ctx, input)
+        insert_form_schema(ctx, input).await
     }
 }

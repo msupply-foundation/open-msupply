@@ -16,7 +16,7 @@ use service::{
 
 use crate::types::DemographicProjectionNode;
 
-pub fn update_demographic_projection(
+pub async fn update_demographic_projection(
     ctx: &Context<'_>,
     input: UpdateDemographicProjectionInput,
 ) -> Result<UpdateDemographicProjectionResponse> {
@@ -27,13 +27,19 @@ pub fn update_demographic_projection(
             store_id: None,
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context("".to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let domain_input = input.into();
 
-    match service_provider
-        .demographic_service
-        .update_demographic_projection(&service_context, input.into())
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, ProjectionServiceError> {
+        let service_context = service_provider.context("".to_string(), user.user_id)?;
+        service_provider
+            .demographic_service
+            .update_demographic_projection(&service_context, domain_input)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    match result {
         Ok(demographic_projection) => Ok(UpdateDemographicProjectionResponse::Response(
             DemographicProjectionNode::from_domain(demographic_projection),
         )),

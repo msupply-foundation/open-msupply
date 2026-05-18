@@ -19,7 +19,7 @@ pub enum DeleteAncillaryItemResponse {
     Response(DeleteResponse),
 }
 
-pub fn delete_ancillary_item(
+pub async fn delete_ancillary_item(
     ctx: &Context<'_>,
     store_id: String,
     input: DeleteAncillaryItemInput,
@@ -32,12 +32,17 @@ pub fn delete_ancillary_item(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
+    let domain_input = input.to_domain();
 
-    let result = service_provider
-        .item_service
-        .delete_ancillary_item(&service_context, input.to_domain());
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.basic_context()?;
+        Ok(service_provider
+            .item_service
+            .delete_ancillary_item(&service_context, domain_input))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     map_response(result)
 }

@@ -4,7 +4,10 @@ use graphql_core::{
     ContextExt,
 };
 use repository::PaginationOption;
-use service::auth::{Resource, ResourceAccessRequest};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    ListError,
+};
 
 mod mutations;
 use self::mutations::*;
@@ -27,12 +30,11 @@ impl ItemVariantQueries {
             },
         )?;
 
-        let service_provider = ctx.service_provider();
-        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        let service_provider = ctx.service_provider_data();
 
-        let item_variants = service_provider
-            .item_service
-            .get_item_variants(
+        let item_variants = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+            let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+            service_provider.item_service.get_item_variants(
                 &service_context,
                 Some(PaginationOption {
                     limit: Some(1),
@@ -41,7 +43,10 @@ impl ItemVariantQueries {
                 None,
                 None,
             )
-            .map_err(StandardGraphqlError::from_list_error)?;
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)?
+        .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(item_variants.count > 0)
     }
@@ -58,7 +63,7 @@ impl ItemVariantMutations {
         store_id: String,
         input: UpsertItemVariantInput,
     ) -> Result<UpsertItemVariantResponse> {
-        upsert_item_variant(ctx, store_id, input)
+        upsert_item_variant(ctx, store_id, input).await
     }
 
     async fn delete_item_variant(
@@ -67,6 +72,6 @@ impl ItemVariantMutations {
         store_id: String,
         input: DeleteItemVariantInput,
     ) -> Result<DeleteItemVariantResponse> {
-        delete_item_variant(ctx, store_id, input)
+        delete_item_variant(ctx, store_id, input).await
     }
 }

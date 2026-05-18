@@ -9,10 +9,11 @@ use graphql_types::types::{VaccineCourseDoseNode, VaccineCourseDoseResponse, Vac
 use repository::vaccine_course::vaccine_course::{
     VaccineCourseFilter, VaccineCourseSort, VaccineCourseSortField,
 };
-use repository::{EqualFilter, PaginationOption, StringFilter};
+use repository::{EqualFilter, PaginationOption, RepositoryError, StringFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     vaccine_course::query::{get_vaccine_course, get_vaccine_course_dose, get_vaccine_courses},
+    ListError,
 };
 
 use crate::types::vaccine_course::{
@@ -41,7 +42,7 @@ pub struct VaccineCourseFilterInput {
     pub program_id: Option<EqualFilterStringInput>,
 }
 
-pub fn vaccine_courses(
+pub async fn vaccine_courses(
     ctx: &Context<'_>,
     page: Option<PaginationInput>,
     filter: Option<VaccineCourseFilterInput>,
@@ -54,14 +55,19 @@ pub fn vaccine_courses(
             store_id: None,
         },
     )?;
-    let connection = ctx.get_connection_manager().connection()?;
-    let items = get_vaccine_courses(
-        &connection,
-        page.map(PaginationOption::from),
-        filter.map(|filter| filter.to_domain()),
-        sort.and_then(|mut sort_list| sort_list.pop())
-            .map(|sort| sort.to_domain()),
-    )
+    let service_provider = ctx.service_provider_data();
+    let pagination = page.map(PaginationOption::from);
+    let domain_filter = filter.map(|filter| filter.to_domain());
+    let domain_sort = sort
+        .and_then(|mut sort_list| sort_list.pop())
+        .map(|sort| sort.to_domain());
+
+    let items = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+        let connection = service_provider.connection()?;
+        get_vaccine_courses(&connection, pagination, domain_filter, domain_sort)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
     .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(VaccineCoursesResponse::Response(
@@ -69,10 +75,17 @@ pub fn vaccine_courses(
     ))
 }
 
-pub fn vaccine_course(ctx: &Context<'_>, id: String) -> Result<VaccineCourseResponse> {
-    let connection = ctx.get_connection_manager().connection()?;
+pub async fn vaccine_course(ctx: &Context<'_>, id: String) -> Result<VaccineCourseResponse> {
+    let service_provider = ctx.service_provider_data();
 
-    match get_vaccine_course(&connection, id) {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let connection = service_provider.connection()?;
+        Ok(get_vaccine_course(&connection, id))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    match result {
         Ok(row) => Ok(VaccineCourseResponse::Response(
             VaccineCourseNode::from_domain(row),
         )),
@@ -80,10 +93,20 @@ pub fn vaccine_course(ctx: &Context<'_>, id: String) -> Result<VaccineCourseResp
     }
 }
 
-pub fn vaccine_course_dose(ctx: &Context<'_>, id: String) -> Result<VaccineCourseDoseResponse> {
-    let connection = ctx.get_connection_manager().connection()?;
+pub async fn vaccine_course_dose(
+    ctx: &Context<'_>,
+    id: String,
+) -> Result<VaccineCourseDoseResponse> {
+    let service_provider = ctx.service_provider_data();
 
-    match get_vaccine_course_dose(&connection, id) {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let connection = service_provider.connection()?;
+        Ok(get_vaccine_course_dose(&connection, id))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    match result {
         Ok(row) => Ok(VaccineCourseDoseResponse::Response(
             VaccineCourseDoseNode::from_domain(row),
         )),

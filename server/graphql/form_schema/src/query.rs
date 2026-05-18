@@ -5,7 +5,9 @@ use repository::{FormSchemaSort, FormSchemaSortField, PaginationOption};
 use service::auth::{Resource, ResourceAccessRequest};
 
 use graphql_core::{
-    pagination::PaginationInput, standard_graphql_error::validate_auth, ContextExt,
+    pagination::PaginationInput,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -44,7 +46,7 @@ pub enum FormSchemaResponse {
     Response(FormSchemaConnector),
 }
 
-pub fn form_schemas(
+pub async fn form_schemas(
     ctx: &Context<'_>,
     page: Option<PaginationInput>,
     filter: Option<FormSchemaFilterInput>,
@@ -58,16 +60,21 @@ pub fn form_schemas(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
+    let pagination = page.map(PaginationOption::from);
+    let filter = filter.map(|filter| filter.to_domain());
+    let sort = sort
+        .and_then(|mut sort_list| sort_list.pop())
+        .map(|sort| sort.to_domain());
 
-    let schemas = service_provider.form_schema_service.form_schemas(
-        &context,
-        page.map(PaginationOption::from),
-        filter.map(|filter| filter.to_domain()),
-        sort.and_then(|mut sort_list| sort_list.pop())
-            .map(|sort| sort.to_domain()),
-    )?;
+    let schemas = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let context = service_provider.basic_context()?;
+        service_provider
+            .form_schema_service
+            .form_schemas(&context, pagination, filter, sort)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     let nodes: Vec<FormSchemaNode> = schemas
         .rows

@@ -17,7 +17,7 @@ use service::{
     NullableUpdate,
 };
 
-pub fn insert_vaccine_course(
+pub async fn insert_vaccine_course(
     ctx: &Context<'_>,
     store_id: &str,
     input: InsertVaccineCourseInput,
@@ -30,13 +30,19 @@ pub fn insert_vaccine_course(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
 
-    match service_provider
-        .vaccine_course_service
-        .insert_vaccine_course(&service_context, input.into())
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        Ok(service_provider
+            .vaccine_course_service
+            .insert_vaccine_course(&service_context, input.into()))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    match result {
         Ok(vaccine_course) => Ok(InsertVaccineCourseResponse::Response(
             VaccineCourseNode::from_domain(vaccine_course),
         )),

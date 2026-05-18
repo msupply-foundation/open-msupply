@@ -12,9 +12,12 @@ pub use mutations::*;
 pub mod types;
 use repository::{
     demographic::DemographicFilter, demographic_projection::DemographicProjectionFilter,
-    DemographicIndicatorFilter, PaginationOption,
+    DemographicIndicatorFilter, PaginationOption, RepositoryError,
 };
-use service::auth::{Resource, ResourceAccessRequest};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    ListError,
+};
 use types::{
     DemographicConnector, DemographicFilterInput, DemographicIndicatorConnector,
     DemographicIndicatorSortInput, DemographicProjectionConnector,
@@ -49,20 +52,26 @@ impl DemographicIndicatorQueries {
                 store_id: Some(store_id.clone()),
             },
         )?;
-        let service_provider = ctx.service_provider();
-        let service_context = service_provider.context(store_id, user.user_id)?;
+        let service_provider = ctx.service_provider_data();
+        let pagination = page.map(PaginationOption::from);
+        let domain_filter = filter.map(DemographicFilter::from);
+        // Currently only one sort option is supported, use the first from the list.
+        let domain_sort = sort
+            .and_then(|mut sort_list| sort_list.pop())
+            .map(|sort| sort.to_domain());
 
-        let demographics = service_provider
-            .demographic_service
-            .get_demographics(
+        let demographics = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+            let service_context = service_provider.context(store_id, user.user_id)?;
+            service_provider.demographic_service.get_demographics(
                 &service_context.connection,
-                page.map(PaginationOption::from),
-                filter.map(DemographicFilter::from),
-                // Currently only one sort option is supported, use the first from the list.
-                sort.and_then(|mut sort_list| sort_list.pop())
-                    .map(|sort| sort.to_domain()),
+                pagination,
+                domain_filter,
+                domain_sort,
             )
-            .map_err(StandardGraphqlError::from_list_error)?;
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)?
+        .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(DemographicsResponse::Response(
             DemographicConnector::from_domain(demographics),
@@ -84,20 +93,28 @@ impl DemographicIndicatorQueries {
                 store_id: Some(store_id.clone()),
             },
         )?;
-        let service_provider = ctx.service_provider();
-        let service_context = service_provider.context(store_id, user.user_id)?;
+        let service_provider = ctx.service_provider_data();
+        let pagination = page.map(PaginationOption::from);
+        let domain_filter = filter.map(DemographicIndicatorFilter::from);
+        // Currently only one sort option is supported, use the first from the list.
+        let domain_sort = sort
+            .and_then(|mut sort_list| sort_list.pop())
+            .map(|sort| sort.to_domain());
 
-        let demographic_indicators = service_provider
-            .demographic_service
-            .get_demographic_indicators(
-                &service_context.connection,
-                page.map(PaginationOption::from),
-                filter.map(DemographicIndicatorFilter::from),
-                // Currently only one sort option is supported, use the first from the list.
-                sort.and_then(|mut sort_list| sort_list.pop())
-                    .map(|sort| sort.to_domain()),
-            )
-            .map_err(StandardGraphqlError::from_list_error)?;
+        let demographic_indicators = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+            let service_context = service_provider.context(store_id, user.user_id)?;
+            service_provider
+                .demographic_service
+                .get_demographic_indicators(
+                    &service_context.connection,
+                    pagination,
+                    domain_filter,
+                    domain_sort,
+                )
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)?
+        .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(DemographicIndicatorsResponse::Response(
             DemographicIndicatorConnector::from_domain(demographic_indicators),
@@ -118,20 +135,28 @@ impl DemographicIndicatorQueries {
                 store_id: None,
             },
         )?;
-        let service_provider = ctx.service_provider();
-        let service_context = service_provider.context("".to_string(), user.user_id)?;
+        let service_provider = ctx.service_provider_data();
+        let pagination = page.map(PaginationOption::from);
+        let domain_filter = filter.map(DemographicProjectionFilter::from);
+        // Currently only one sort option is supported, use the first from the list.
+        let domain_sort = sort
+            .and_then(|mut sort_list| sort_list.pop())
+            .map(|sort| sort.to_domain());
 
-        let assets = service_provider
-            .demographic_service
-            .get_demographic_projections(
-                &service_context.connection,
-                page.map(PaginationOption::from),
-                filter.map(DemographicProjectionFilter::from),
-                // Currently only one sort option is supported, use the first from the list.
-                sort.and_then(|mut sort_list| sort_list.pop())
-                    .map(|sort| sort.to_domain()),
-            )
-            .map_err(StandardGraphqlError::from_list_error)?;
+        let assets = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+            let service_context = service_provider.context("".to_string(), user.user_id)?;
+            service_provider
+                .demographic_service
+                .get_demographic_projections(
+                    &service_context.connection,
+                    pagination,
+                    domain_filter,
+                    domain_sort,
+                )
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)?
+        .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(DemographicProjectionsResponse::Response(
             DemographicProjectionConnector::from_domain(assets),
@@ -150,13 +175,17 @@ impl DemographicIndicatorQueries {
                 store_id: None,
             },
         )?;
-        let service_provider = ctx.service_provider();
-        let service_context = service_provider.context("".to_string(), user.user_id)?;
+        let service_provider = ctx.service_provider_data();
 
-        let projection_option = service_provider
-            .demographic_service
-            .get_projection_by_base_year(&service_context, base_year)
-            .map_err(StandardGraphqlError::from_repository_error)?;
+        let projection_option =
+            tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+                let service_context = service_provider.context("".to_string(), user.user_id)?;
+                service_provider
+                    .demographic_service
+                    .get_projection_by_base_year(&service_context, base_year)
+            })
+            .await
+            .map_err(StandardGraphqlError::from_join_error)??;
 
         let response = match projection_option {
             Some(projection) => DemographicProjectionResponse::Response(
@@ -181,7 +210,7 @@ impl DemographicMutations {
         ctx: &Context<'_>,
         input: InsertDemographicIndicatorInput,
     ) -> Result<InsertDemographicIndicatorResponse> {
-        insert_demographic_indicator(ctx, input)
+        insert_demographic_indicator(ctx, input).await
     }
 
     async fn insert_demographic_projection(
@@ -189,7 +218,7 @@ impl DemographicMutations {
         ctx: &Context<'_>,
         input: InsertDemographicProjectionInput,
     ) -> Result<InsertDemographicProjectionResponse> {
-        insert_demographic_projection(ctx, input)
+        insert_demographic_projection(ctx, input).await
     }
 
     async fn update_demographic_indicator(
@@ -197,7 +226,7 @@ impl DemographicMutations {
         ctx: &Context<'_>,
         input: UpdateDemographicIndicatorInput,
     ) -> Result<UpdateDemographicIndicatorResponse> {
-        update_demographic_indicator(ctx, input)
+        update_demographic_indicator(ctx, input).await
     }
 
     async fn update_demographic_projection(
@@ -205,6 +234,6 @@ impl DemographicMutations {
         ctx: &Context<'_>,
         input: UpdateDemographicProjectionInput,
     ) -> Result<UpdateDemographicProjectionResponse> {
-        update_demographic_projection(ctx, input)
+        update_demographic_projection(ctx, input).await
     }
 }

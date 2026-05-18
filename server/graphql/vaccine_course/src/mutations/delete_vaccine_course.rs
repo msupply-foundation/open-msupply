@@ -9,7 +9,7 @@ use service::{
     vaccine_course::delete::DeleteVaccineCourseError as ServiceError,
 };
 
-pub fn delete_vaccine_course(
+pub async fn delete_vaccine_course(
     ctx: &Context<'_>,
     vaccine_course_id: &str,
 ) -> Result<DeleteVaccineCourseResponse> {
@@ -21,13 +21,19 @@ pub fn delete_vaccine_course(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context("".to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let vaccine_course_id = vaccine_course_id.to_string();
 
-    match service_provider
-        .vaccine_course_service
-        .delete_vaccine_course(&service_context, vaccine_course_id.to_string())
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context("".to_string(), user.user_id)?;
+        Ok(service_provider
+            .vaccine_course_service
+            .delete_vaccine_course(&service_context, vaccine_course_id))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    match result {
         Ok(vaccine_course_id) => Ok(DeleteVaccineCourseResponse::Response(DeleteResponse(
             vaccine_course_id,
         ))),

@@ -24,7 +24,7 @@ pub enum InsertFormSchemaResponse {
     Response(FormSchemaNode),
 }
 
-pub fn insert_form_schema(
+pub async fn insert_form_schema(
     ctx: &Context<'_>,
     input: InsertFormSchemaInput,
 ) -> Result<InsertFormSchemaResponse> {
@@ -36,18 +36,22 @@ pub fn insert_form_schema(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
+    let schema = FormSchema {
+        id: input.id,
+        r#type: input.r#type,
+        json_schema: input.json_schema,
+        ui_schema: input.ui_schema,
+    };
 
-    match service_provider.form_schema_service.insert(
-        &context,
-        FormSchema {
-            id: input.id,
-            r#type: input.r#type,
-            json_schema: input.json_schema,
-            ui_schema: input.ui_schema,
-        },
-    ) {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let context = service_provider.basic_context()?;
+        Ok(service_provider.form_schema_service.insert(&context, schema))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    match result {
         Ok(schema) => Ok(InsertFormSchemaResponse::Response(FormSchemaNode {
             schema,
         })),

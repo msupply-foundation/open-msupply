@@ -55,7 +55,7 @@ pub enum UpsertItemVariantErrorInterface {
     DatabaseError(DatabaseError),
 }
 
-pub fn upsert_item_variant(
+pub async fn upsert_item_variant(
     ctx: &Context<'_>,
     store_id: String,
     input: UpsertItemVariantInput,
@@ -67,12 +67,17 @@ pub fn upsert_item_variant(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id, user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let domain_input = input.to_domain();
 
-    let result = service_provider
-        .item_service
-        .upsert_item_variant(&service_context, input.to_domain());
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        Ok(service_provider
+            .item_service
+            .upsert_item_variant(&service_context, domain_input))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     map_response(result)
 }

@@ -15,7 +15,7 @@ use service::{
     },
 };
 
-pub fn insert_demographic_indicator(
+pub async fn insert_demographic_indicator(
     ctx: &Context<'_>,
     input: InsertDemographicIndicatorInput,
 ) -> Result<InsertDemographicIndicatorResponse> {
@@ -26,13 +26,19 @@ pub fn insert_demographic_indicator(
             store_id: None,
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context("".to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let domain_input = input.into();
 
-    match service_provider
-        .demographic_service
-        .insert_demographic_indicator(&service_context, input.into())
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, IndicatorServiceError> {
+        let service_context = service_provider.context("".to_string(), user.user_id)?;
+        service_provider
+            .demographic_service
+            .insert_demographic_indicator(&service_context, domain_input)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    match result {
         Ok(demographic_indicator) => Ok(InsertDemographicIndicatorResponse::Response(
             DemographicIndicatorNode::from_domain(demographic_indicator),
         )),

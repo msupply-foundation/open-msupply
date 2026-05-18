@@ -14,7 +14,7 @@ impl BundledItemMutations {
         store_id: String,
         input: UpsertBundledItemInput,
     ) -> Result<UpsertBundledItemResponse> {
-        upsert_bundled_item(ctx, store_id, input)
+        upsert_bundled_item(ctx, store_id, input).await
     }
 
     async fn delete_bundled_item(
@@ -23,6 +23,6 @@ impl BundledItemMutations {
         store_id: String,
         input: DeleteBundledItemInput,
     ) -> Result<DeleteBundledItemResponse> {
-        delete_bundled_item(ctx, store_id, input)
+        delete_bundled_item(ctx, store_id, input).await
     }
 }

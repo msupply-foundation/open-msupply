@@ -14,7 +14,7 @@ impl AncillaryItemMutations {
         store_id: String,
         input: UpsertAncillaryItemInput,
     ) -> Result<UpsertAncillaryItemResponse> {
-        upsert_ancillary_item(ctx, store_id, input)
+        upsert_ancillary_item(ctx, store_id, input).await
     }
 
     async fn delete_ancillary_item(
@@ -23,6 +23,6 @@ impl AncillaryItemMutations {
         store_id: String,
         input: DeleteAncillaryItemInput,
     ) -> Result<DeleteAncillaryItemResponse> {
-        delete_ancillary_item(ctx, store_id, input)
+        delete_ancillary_item(ctx, store_id, input).await
     }
 }

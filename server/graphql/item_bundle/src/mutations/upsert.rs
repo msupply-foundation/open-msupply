@@ -37,7 +37,7 @@ pub enum UpsertBundledItemErrorInterface {
     DatabaseError(DatabaseError),
 }
 
-pub fn upsert_bundled_item(
+pub async fn upsert_bundled_item(
     ctx: &Context<'_>,
     store_id: String,
     input: UpsertBundledItemInput,
@@ -49,12 +49,18 @@ pub fn upsert_bundled_item(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
 
-    let result = service_provider
-        .item_service
-        .upsert_bundled_item(&service_context, input.to_domain());
+    let service_provider = ctx.service_provider_data();
+    let domain_input = input.to_domain();
+
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.basic_context()?;
+        Ok(service_provider
+            .item_service
+            .upsert_bundled_item(&service_context, domain_input))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     map_response(result)
 }

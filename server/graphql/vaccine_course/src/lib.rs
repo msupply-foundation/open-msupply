@@ -25,7 +25,7 @@ impl VaccineCourseQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<VaccineCourseSortInput>>,
     ) -> Result<VaccineCoursesResponse> {
-        vaccine_courses(ctx, page, filter, sort)
+        vaccine_courses(ctx, page, filter, sort).await
     }
 
     pub async fn vaccine_course(
@@ -33,7 +33,7 @@ impl VaccineCourseQueries {
         ctx: &Context<'_>,
         id: String,
     ) -> Result<VaccineCourseResponse> {
-        vaccine_course(ctx, id)
+        vaccine_course(ctx, id).await
     }
 
     pub async fn vaccine_course_dose(
@@ -41,7 +41,7 @@ impl VaccineCourseQueries {
         ctx: &Context<'_>,
         id: String,
     ) -> Result<VaccineCourseDoseResponse> {
-        vaccine_course_dose(ctx, id)
+        vaccine_course_dose(ctx, id).await
     }
 }
 
@@ -56,7 +56,7 @@ impl VaccineCourseMutations {
         store_id: String,
         input: InsertVaccineCourseInput,
     ) -> Result<InsertVaccineCourseResponse> {
-        insert_vaccine_course(ctx, &store_id, input)
+        insert_vaccine_course(ctx, &store_id, input).await
     }
 
     async fn update_vaccine_course(
@@ -65,7 +65,7 @@ impl VaccineCourseMutations {
         store_id: String,
         input: UpdateVaccineCourseInput,
     ) -> Result<UpdateVaccineCourseResponse> {
-        update_vaccine_course(ctx, &store_id, input)
+        update_vaccine_course(ctx, &store_id, input).await
     }
 
     async fn delete_vaccine_course(
@@ -73,6 +73,6 @@ impl VaccineCourseMutations {
         ctx: &Context<'_>,
         vaccine_course_id: String,
     ) -> Result<DeleteVaccineCourseResponse> {
-        delete_vaccine_course(ctx, &vaccine_course_id)
+        delete_vaccine_course(ctx, &vaccine_course_id).await
     }
 }
