@@ -110,7 +110,7 @@ mod test {
         RequisitionRow {
             id: "requisition_test".to_string(),
             requisition_number: 5,
-            name_link_id: mock_name_store_b().id,
+            name_id: mock_name_store_b().id,
             store_id: mock_store_a().id,
             ..Default::default()
         }
@@ -131,7 +131,7 @@ mod test {
             id: "invoice_linked_to_requisition".to_string(),
             requisition_id: Some(requisition_test().id),
             store_id: mock_store_a().id,
-            name_link_id: mock_name_store_b().id,
+            name_id: mock_name_store_b().id,
             status: InvoiceStatus::New,
             r#type: InvoiceType::InboundShipment,
             ..Default::default()
@@ -153,7 +153,7 @@ mod test {
                 id: "finalised_invoice_linked_to_requisition".to_string(),
                 requisition_id: Some(requisition_test().id),
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_store_b().id,
+                name_id: mock_name_store_b().id,
                 status: InvoiceStatus::Verified,
                 r#type: InvoiceType::InboundShipment,
                 ..Default::default()
@@ -164,7 +164,7 @@ mod test {
             RequisitionRow {
                 id: "requisition_not_linked_to_invoice".to_string(),
                 requisition_number: 5,
-                name_link_id: mock_name_store_b().id,
+                name_id: mock_name_store_b().id,
                 store_id: mock_store_a().id,
                 ..Default::default()
             }

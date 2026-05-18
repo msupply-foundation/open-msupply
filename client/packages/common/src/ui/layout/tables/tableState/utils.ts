@@ -8,16 +8,21 @@ import {
   MRT_VisibilityState,
 } from 'material-react-table';
 
+export type ViewMode = 'table' | 'card';
+
 export interface ManagedTableState {
   density?: MRT_DensityState;
   columnVisibility?: MRT_VisibilityState;
   columnPinning?: MRT_ColumnPinningState;
   columnOrder?: MRT_ColumnOrderState;
   columnSizing?: MRT_ColumnSizingState;
-  isGrouped?: boolean;
+  grouping?: string[];
+  viewMode?: ViewMode;
 }
 
-export const getSavedState = (tableId: string): ManagedTableState => {
+export const getSavedState = (
+  tableId: string
+): ManagedTableState | undefined => {
   const savedString = localStorage.getItem(
     `@openmsupply-client/tables/${tableId}`
   );
@@ -27,8 +32,6 @@ export const getSavedState = (tableId: string): ManagedTableState => {
       return JSON.parse(savedString);
     } catch {}
   }
-
-  return {};
 };
 
 export const updateSavedState = (

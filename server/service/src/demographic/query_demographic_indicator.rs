@@ -11,7 +11,6 @@ use crate::{
     get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
     SingleRecordError,
 };
- 
 
 pub fn get_demographics(
     connection: &StorageConnection,
@@ -49,8 +48,9 @@ pub fn get_demographic_indicator(
 ) -> Result<DemographicIndicator, SingleRecordError> {
     let repository = DemographicIndicatorRepository::new(&ctx.connection);
 
-    let mut result = repository
-        .query_by_filter(DemographicIndicatorFilter::new().id(EqualFilter::equal_to(id.to_string())))?;
+    let mut result = repository.query_by_filter(
+        DemographicIndicatorFilter::new().id(EqualFilter::equal_to(id.to_string())),
+    )?;
 
     if let Some(record) = result.pop() {
         Ok(record)

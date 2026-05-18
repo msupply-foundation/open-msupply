@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - 'client/**'
+  merge_group:
+    branches:
+      - develop
   workflow_dispatch:
 
 concurrency:

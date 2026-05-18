@@ -66,7 +66,7 @@ td {
 
 .col-expiry-date {
     width: 15%;
-	text-align: right;
+	text-align: end;
 }
 
 .col-packsize {

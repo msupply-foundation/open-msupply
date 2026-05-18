@@ -30,18 +30,18 @@ pub fn validate_encounter_schema(
     // If the encounter data uses a derived encounter schema, the derived schema is validated in the
     // document service.
     let encounter: SchemaEncounter = serde_json::from_value(encounter_data.clone())
-        .map_err(|err| format!("Invalid program data: {}", err))?;
+        .map_err(|err| format!("Invalid program data: {err}"))?;
 
     let created_datetime = DateTime::parse_from_rfc3339(&encounter.created_datetime)
-        .map_err(|err| format!("Invalid encounter datetime format: {}", err))?
+        .map_err(|err| format!("Invalid encounter datetime format: {err}"))?
         .naive_utc();
     let start_datetime = DateTime::parse_from_rfc3339(&encounter.start_datetime)
-        .map_err(|err| format!("Invalid encounter datetime format: {}", err))?
+        .map_err(|err| format!("Invalid encounter datetime format: {err}"))?
         .naive_utc();
     let end_datetime = if let Some(end_datetime) = encounter.end_datetime.clone() {
         Some(
             DateTime::parse_from_rfc3339(&end_datetime)
-                .map_err(|err| format!("Invalid encounter datetime format: {}", err))?
+                .map_err(|err| format!("Invalid encounter datetime format: {err}"))?
                 .naive_utc(),
         )
     } else {

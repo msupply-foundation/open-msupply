@@ -1,5 +1,6 @@
 pub(crate) mod abbreviation;
 pub(crate) mod activity_log;
+pub(crate) mod ancillary_item;
 pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
 pub(crate) mod asset_catalogue_type;
@@ -92,6 +93,7 @@ pub(crate) mod vaccine_course_dose_legacy;
 pub(crate) mod vaccine_course_item;
 pub(crate) mod vaccine_course_item_legacy;
 pub(crate) mod vaccine_course_legacy;
+pub(crate) mod vaccine_course_store_config;
 pub(crate) mod vvm_status;
 pub(crate) mod vvm_status_log;
 pub(crate) mod warning;
@@ -191,6 +193,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         vaccine_course_legacy::boxed(),
         vaccine_course_dose::boxed(),
         vaccine_course_dose_legacy::boxed(),
+        vaccine_course_store_config::boxed(),
         vaccine_course_item::boxed(),
         vaccine_course_item_legacy::boxed(),
         encounter_legacy::boxed(),
@@ -203,6 +206,8 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Item Variant
         item_variant::boxed(),
         packaging_variant::boxed(),
+        // Ancillary Item
+        ancillary_item::boxed(),
         // System log
         system_log::boxed(),
         // Plugins
@@ -218,12 +223,11 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Purchase Order
         purchase_order::boxed(),
         purchase_order_line::boxed(),
-        // Goods Receiving
-        goods_received::boxed(),
-        // Goods Received
-        goods_received_line::boxed(),
         // Shipping Method
         shipping_method::boxed(),
+        // Goods Received (legacy OG → InboundShipment)
+        goods_received::boxed(),
+        goods_received_line::boxed(),
     ]
 }
 
@@ -529,7 +533,7 @@ fn translate_changelog(
     for translator in translators.iter() {
         if !r#type
             .iter()
-            .any(|r| translator.should_translate_to_sync_record(changelog, &r))
+            .any(|r| translator.should_translate_to_sync_record(changelog, r))
         {
             continue;
         }
@@ -546,7 +550,7 @@ fn translate_changelog(
         match translation_result {
             PushTranslateResult::PushRecord(records) => translation_results.push(records),
             PushTranslateResult::Ignored(ignore_message) => {
-                log::debug!("Ignored record in push translation: {}", ignore_message)
+                log::debug!("Ignored record in push translation: {ignore_message}")
             }
             PushTranslateResult::NotMatched => {}
         }

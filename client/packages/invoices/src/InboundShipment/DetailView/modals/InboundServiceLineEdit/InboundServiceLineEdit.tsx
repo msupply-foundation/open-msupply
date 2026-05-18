@@ -11,7 +11,7 @@ import {
   MaterialTable,
   useSimpleMaterialTable,
 } from '@openmsupply-client/common';
-import { useInbound } from '../../../api';
+import { useInboundShipment } from '../../../api';
 import { useDraftServiceLines } from './useDraftServiceLines';
 import { useItem } from '@openmsupply-client/system';
 import { useServiceLineColumns } from '@openmsupply-client/invoices/src/OutboundShipment/DetailView/OutboundServiceLineEdit/useServiceLineColumns';
@@ -28,7 +28,7 @@ export const InboundServiceLineEdit = ({
   const t = useTranslation();
   const { error } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });
-  const isDisabled = useInbound.utils.isDisabled();
+  const { isDisabled } = useInboundShipment();
   const { lines, update, add, save, isLoading } = useDraftServiceLines();
   const columns = useServiceLineColumns(update);
   const {
@@ -41,6 +41,9 @@ export const InboundServiceLineEdit = ({
     tableId: 'inbound-detail-service-line',
     columns,
     data: linesFiltered,
+    // Modal table state should not be synced to URL (would otherwise clobber
+    // the parent detail view's sort/filter URL params on open/close).
+    localStateOnly: true,
   });
 
   return (

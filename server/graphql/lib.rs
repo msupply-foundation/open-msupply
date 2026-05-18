@@ -7,6 +7,8 @@ use logger::{GraphQLRequestLogger, QueryLogInfo};
 use std::sync::Mutex;
 use tokio::sync::RwLock;
 
+pub use graphql_core::OperationalStatus;
+
 use actix_web::web::{self, Data};
 use actix_web::HttpResponse;
 use actix_web::{guard, HttpRequest};
@@ -35,14 +37,13 @@ use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::campaign::{CampaignMutations, CampaignQueries};
 use graphql_general::{
     CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
-    InitialisationMutations, InitialisationQueries, InitialisationSubscriptions,
+    InitialisationMutations, InitialisationQueries, InitialisationSubscriptions, MigrationQueries,
     SyncStatusSubscriptions,
 };
-use graphql_goods_received::{GoodsReceivedMutations, GoodsReceivedQueries};
-use graphql_goods_received_line::{GoodsReceivedLineMutations, GoodsReceivedLineQueries};
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
+use graphql_ancillary_item::AncillaryItemMutations;
 use graphql_item_bundle::BundledItemMutations;
 use graphql_item_variant::{ItemVariantMutations, ItemVariantQueries};
 use graphql_location::{LocationMutations, LocationQueries};
@@ -83,6 +84,9 @@ pub type InitialisationSchema = async_graphql::Schema<
     InitialisationMutations,
     InitialisationSubscriptions,
 >;
+pub type MigrationSchema =
+    async_graphql::Schema<MigrationQueries, EmptyMutation, async_graphql::EmptySubscription>;
+
 #[derive(Default, Clone)]
 pub struct CentralServerMutationNode;
 #[Object]
@@ -92,6 +96,9 @@ impl CentralServerMutationNode {
     }
     async fn bundled_item(&self) -> BundledItemMutations {
         BundledItemMutations
+    }
+    async fn ancillary_item(&self) -> AncillaryItemMutations {
+        AncillaryItemMutations
     }
     async fn asset_catalogue(&self) -> AssetCatalogueMutations {
         AssetCatalogueMutations
@@ -194,8 +201,6 @@ pub struct Queries(
     pub CampaignQueries,
     pub PurchaseOrderQueries,
     pub PurchaseOrderLineQueries,
-    pub GoodsReceivedQueries,
-    pub GoodsReceivedLineQueries,
 );
 
 impl Queries {
@@ -232,8 +237,6 @@ impl Queries {
             CampaignQueries,
             PurchaseOrderQueries,
             PurchaseOrderLineQueries,
-            GoodsReceivedQueries,
-            GoodsReceivedLineQueries,
         )
     }
 }
@@ -265,8 +268,6 @@ pub struct Mutations(
     pub ClinicianMutations,
     pub PurchaseOrderMutations,
     pub PurchaseOrderLineMutations,
-    pub GoodsReceivedMutations,
-    pub GoodsReceivedLineMutations,
 );
 
 impl Mutations {
@@ -297,8 +298,6 @@ impl Mutations {
             ClinicianMutations,
             PurchaseOrderMutations,
             PurchaseOrderLineMutations,
-            GoodsReceivedMutations,
-            GoodsReceivedLineMutations,
         )
     }
 }
@@ -317,20 +316,15 @@ impl BaseSubscriptions {
 #[derive(MergedSubscription, Default, Clone)]
 pub struct Subscriptions(pub BaseSubscriptions, pub SyncStatusSubscriptions);
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum OperationalStatus {
-    Operational,
-    Initialising,
-}
-
 /// We need to swap schema between initialisation and operational modes
 /// this is done to avoid validations check in operational mode where
 /// data for validation is not available, this struct helps achieve this
 pub struct GraphqlSchema {
     pub(crate) operational: OperationalSchema,
     initialisation: InitialisationSchema,
+    migration: MigrationSchema,
     /// Set on startup based on InitialisationStatus and then updated via SiteIsInitialisedCallback after initialisation
-    pub operational_status: RwLock<OperationalStatus>,
+    operational_status: Data<RwLock<OperationalStatus>>,
 }
 
 pub struct GraphSchemaData {
@@ -344,7 +338,7 @@ pub struct GraphSchemaData {
 }
 
 impl GraphqlSchema {
-    pub fn new(data: GraphSchemaData, initial_status: OperationalStatus) -> GraphqlSchema {
+    pub fn new(data: GraphSchemaData, operational_status: OperationalStatus) -> GraphqlSchema {
         let GraphSchemaData {
             connection_manager,
             loader_registry,
@@ -370,6 +364,9 @@ impl GraphqlSchema {
                 .finish();
         // Self requester does not need loggers
 
+        // Shared operational status across all schemas
+        let operational_status_ref = Data::new(RwLock::new(operational_status.clone()));
+
         // Operational schema
         let operational_builder =
             OperationalSchema::build(Queries::new(), Mutations::new(), Subscriptions::default())
@@ -382,6 +379,7 @@ impl GraphqlSchema {
                 .data(subscription_broadcast.clone())
                 // Add self requester to operational
                 .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)))
+                .data(operational_status_ref.clone())
                 .extension(GraphQLRequestLogger);
 
         // Initialisation schema should ony need service_provider
@@ -392,17 +390,30 @@ impl GraphqlSchema {
         )
         .data(service_provider.clone())
         .data(subscription_broadcast.clone())
+        .data(operational_status_ref.clone())
+        .data(subscription_broadcast.clone())
         .extension(GraphQLRequestLogger);
+
+        let migration_builder =
+            MigrationSchema::build(MigrationQueries, EmptyMutation, EmptySubscription)
+                .data(service_provider.clone())
+                .data(operational_status_ref.clone())
+                .extension(GraphQLRequestLogger);
 
         GraphqlSchema {
             operational: operational_builder.finish(),
             initialisation: initialisation_builder.finish(),
-            operational_status: RwLock::new(initial_status),
+            migration: migration_builder.finish(),
+            operational_status: operational_status_ref.clone(),
         }
     }
 
-    pub async fn set_operational_status(&self, status: OperationalStatus) {
-        (*self.operational_status.write().await) = status;
+    pub async fn set_operational_status(&self, operational_status: OperationalStatus) {
+        (*self.operational_status.write().await) = operational_status;
+    }
+
+    pub async fn get_operational_status(&self) -> OperationalStatus {
+        self.operational_status.read().await.clone()
     }
 
     async fn execute(&self, http_req: HttpRequest, req: GraphQLRequest) -> Response {
@@ -415,7 +426,8 @@ impl GraphqlSchema {
                 let user_data = auth_data_from_request(&http_req);
                 self.operational.execute(req.data(user_data)).await
             }
-            _ => self.initialisation.execute(req).await,
+            OperationalStatus::MigratingDatabase => self.migration.execute(req).await,
+            OperationalStatus::Initialising => self.initialisation.execute(req).await,
         }
     }
 }
@@ -475,6 +487,12 @@ async fn graphql_ws(
             GraphQLSubscription::new(schema.initialisation.clone())
                 .on_connection_init(on_connection_init)
                 .start(&req, payload)
+        }
+        OperationalStatus::MigratingDatabase => {
+            //TODO: add migration status subscription and route to that instead of returning an error here
+            Err(actix_web::error::ErrorServiceUnavailable(
+                "Subscriptions unavailable during database migration",
+            ))
         }
     }
 }

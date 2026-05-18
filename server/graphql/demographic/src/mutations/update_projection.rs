@@ -103,7 +103,7 @@ pub enum UpdateDemographicProjectionErrorInterface {
 
 fn map_error(error: ProjectionServiceError) -> Result<UpdateDemographicProjectionErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Standard Graphql Errors

@@ -10,10 +10,14 @@ const DEBOUNCE_TIME = 500;
 export const useUpdateSupplierReturn = () => {
   const queryClient = useQueryClient();
   const api = useReturnsApi();
-  const mutation = useMutation(api.updateSupplierReturn, {
+  const mutation = useMutation({
+    mutationFn: api.updateSupplierReturn,
+
     onSuccess: () => {
-      return queryClient.invalidateQueries(api.keys.base());
-    },
+      return queryClient.invalidateQueries({
+        queryKey: api.keys.base()
+      });
+    }
   });
 
   const debouncedMutateAsync = useDebounceCallback(

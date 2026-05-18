@@ -619,7 +619,7 @@ mod test {
         let earlier_stock_in_invoice = InvoiceRow {
             id: earlier_invoice_id.clone(),
             invoice_number: -7,
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             r#type: InvoiceType::InboundShipment,
             store_id: context.store_id.clone(),
             created_datetime: datetime,
@@ -637,7 +637,7 @@ mod test {
         let current_invoice = InvoiceRow {
             id: "stock_in_invoice_id-0".to_string(),
             invoice_number: 0,
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             r#type: InvoiceType::InboundShipment,
             store_id: context.store_id.clone(),
             created_datetime: datetime,
@@ -703,7 +703,7 @@ mod test {
         let prescription_invoice = InvoiceRow {
             id: prescription_id.clone(),
             invoice_number: 999,
-            name_link_id: mock_patient().id,
+            name_id: mock_patient().id,
             r#type: InvoiceType::Prescription,
             store_id: context.store_id.clone(),
             created_datetime: chrono::Utc::now().naive_utc(), // Created now
@@ -816,7 +816,7 @@ mod test {
         let prescription = InvoiceRow {
             id: "prescription_invoice-0".to_string(),
             invoice_number: 0,
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             r#type: InvoiceType::Prescription,
             store_id: context.store_id.clone(),
             created_datetime: datetime,
@@ -874,7 +874,7 @@ mod test {
         let outbound1 = InvoiceRow {
             id: "outbound_invoice-1".to_string(),
             invoice_number: 1,
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             r#type: InvoiceType::OutboundShipment,
             store_id: context.store_id.clone(),
             created_datetime: datetime,
@@ -908,7 +908,7 @@ mod test {
         let prescription1 = InvoiceRow {
             id: "prescription_invoice-1".to_string(),
             invoice_number: 1,
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             r#type: InvoiceType::Prescription,
             store_id: context.store_id.clone(),
             created_datetime: datetime,
@@ -959,7 +959,7 @@ mod test {
         let prescription = InvoiceRow {
             id: "prescription_invoice-0".to_string(),
             invoice_number: 0,
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             r#type: InvoiceType::Prescription,
             store_id: context.store_id.clone(),
             verified_datetime: None,

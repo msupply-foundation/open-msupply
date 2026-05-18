@@ -13,8 +13,7 @@ export const usePrintLabels = () => {
   const {
     isPrinting: isPrintingLabels,
     print,
-    show,
-    DisabledNotification,
+    showDisabledNotification,
     isUsbPrinting,
   } = usePrinter(settings);
 
@@ -24,7 +23,7 @@ export const usePrintLabels = () => {
     e?: React.MouseEvent<HTMLButtonElement>
   ) => {
     if (settings === null && !isUsbPrinting) {
-      e ? show(e) : setPrinterExists(true);
+      e ? showDisabledNotification() : setPrinterExists(true);
       return;
     }
 
@@ -32,19 +31,15 @@ export const usePrintLabels = () => {
     const items = groupItems(lines);
     const labels = generateLabel(items, prescription, storeName);
 
-    print(
-      {
-        endpoint: Environment.PRINT_LABEL_PRESCRIPTION,
-        payload: labels,
-      },
-      e
-    );
+    print({
+      endpoint: Environment.PRINT_LABEL_PRESCRIPTION,
+      payload: labels,
+    });
   };
 
   return {
     isPrintingLabels,
     printLabels,
-    DisabledNotification,
     printerExists,
     setPrinterExists,
   };

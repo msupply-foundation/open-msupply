@@ -107,7 +107,7 @@ fn replace_system_name_ids(
         if mut_invoice.r#type == InvoiceType::InventoryAddition
             || mut_invoice.r#type == InvoiceType::InventoryReduction
         {
-            mut_invoice.name_link_id = inventory_adjustment_name.id.clone();
+            mut_invoice.name_id = inventory_adjustment_name.id.clone();
             mut_invoice.name_store_id = None;
         }
     }

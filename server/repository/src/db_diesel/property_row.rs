@@ -70,7 +70,7 @@ impl<'a> PropertyRowRepository<'a> {
             record_id: property_row,
             row_action: action,
             store_id: None,
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

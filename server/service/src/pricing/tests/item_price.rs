@@ -27,7 +27,7 @@ mod query {
         let discount_list = MasterListRow {
             id: "discount_list".to_string(),
             name: "discount_list".to_string(),
-            discount_percentage: Some(discount.clone()),
+            discount_percentage: Some(discount),
             is_active: true,
             ..Default::default()
         };
@@ -115,7 +115,7 @@ mod query {
             id: "default_price_list_item_1".to_string(),
             master_list_id: "default_price_list".to_string(),
             item_link_id: mock_item_a().id.clone(),
-            price_per_unit: Some(default_price_per_unit.clone()),
+            price_per_unit: Some(default_price_per_unit),
             ..Default::default()
         };
 
@@ -193,7 +193,7 @@ mod query {
             id: "default_price_list_item_1".to_string(),
             master_list_id: "default_price_list".to_string(),
             item_link_id: mock_item_a().id.clone(),
-            price_per_unit: Some(default_price_per_unit.clone()),
+            price_per_unit: Some(default_price_per_unit),
             ..Default::default()
         };
 
@@ -207,7 +207,7 @@ mod query {
         let discount_list = MasterListRow {
             id: "discount_list".to_string(),
             name: "discount_list".to_string(),
-            discount_percentage: Some(discount.clone()),
+            discount_percentage: Some(discount),
             is_active: true,
             ..Default::default()
         };

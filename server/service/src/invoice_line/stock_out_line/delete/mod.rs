@@ -95,7 +95,6 @@ mod test {
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
         StockLineRowRepository,
     };
-   
 
     use crate::{
         invoice_line::stock_out_line::{

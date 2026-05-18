@@ -6,12 +6,13 @@ mod update {
             MockDataInserts,
         },
         test_db::setup_all,
-        ActivityLogRowRepository, ActivityLogType, PurchaseOrderLineRow,
+        ActivityLogRowRepository, ActivityLogType, InvoiceLineRow, InvoiceLineRowRepository,
+        InvoiceRow, InvoiceRowRepository, InvoiceStatus, PurchaseOrderLineRow,
         PurchaseOrderLineRowRepository, PurchaseOrderLineStatus,
     };
 
     use crate::{
-        purchase_order::update::UpdatePurchaseOrderInput,
+        purchase_order::update::{UpdatePurchaseOrderError, UpdatePurchaseOrderInput},
         purchase_order_line::{
             insert::{InsertPurchaseOrderLineInput, PackSizeCodeCombination},
             update::{UpdatePurchaseOrderLineInput, UpdatePurchaseOrderLineInputError},
@@ -30,7 +31,7 @@ mod update {
             .unwrap();
         let service = service_provider.purchase_order_line_service;
         let purchase_order_service = service_provider.purchase_order_service;
-        let mut user_permission = true;
+        let mut user_permission;
 
         // Create a purchase order line
         service
@@ -128,7 +129,6 @@ mod update {
                     status: Some(repository::PurchaseOrderStatus::Sent),
                     ..Default::default()
                 },
-                Some(user_permission),
             )
             .unwrap();
 
@@ -193,12 +193,38 @@ mod update {
             requested_pack_size: 2.0,
             requested_number_of_units: 10.0,
             adjusted_number_of_units: Some(20.0),
-            received_number_of_units: 15.0,
             ..Default::default()
         };
 
         PurchaseOrderLineRowRepository::new(&context.connection)
             .upsert_one(&line)
+            .unwrap();
+
+        let invoice = InvoiceRow {
+            id: "invoice_for_received".to_string(),
+            store_id: mock_store_a().id.clone(),
+            name_id: mock_store_a().name_id.clone(),
+            purchase_order_id: Some(mock_purchase_order_a().id.clone()),
+            status: InvoiceStatus::Shipped,
+            ..Default::default()
+        };
+
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&invoice)
+            .unwrap();
+
+        let invoice_line = InvoiceLineRow {
+            id: "invoice_line_for_received".to_string(),
+            invoice_id: invoice.id.clone(),
+            item_link_id: mock_item_b().id,
+            number_of_packs: 8.0,
+            pack_size: 2.0,
+            purchase_order_line_id: Some("purchase_order_line_received".to_string()),
+            ..Default::default()
+        };
+
+        InvoiceLineRowRepository::new(&context.connection)
+            .upsert_one(&invoice_line)
             .unwrap();
 
         assert_eq!(
@@ -207,7 +233,7 @@ mod update {
                 &mock_store_a().id.clone(),
                 UpdatePurchaseOrderLineInput {
                     id: "purchase_order_line_received".to_string(),
-                    item_id: Some(mock_item_b().id.to_string()),
+                    item_id: Some(mock_item_b().id),
                     adjusted_number_of_units: Some(14.0),
                     ..Default::default()
                 },
@@ -215,6 +241,28 @@ mod update {
             ),
             Err(UpdatePurchaseOrderLineInputError::CannotEditQuantityBelowReceived)
         );
+
+        // Cannot finalise PO when inbound shipments are not verified
+        assert_eq!(
+            purchase_order_service.update_purchase_order(
+                &context,
+                &mock_store_a().id.clone(),
+                UpdatePurchaseOrderInput {
+                    id: "test_purchase_order_a".to_string(),
+                    status: Some(repository::PurchaseOrderStatus::Finalised),
+                    ..Default::default()
+                },
+            ),
+            Err(UpdatePurchaseOrderError::InboundShipmentsNotVerified)
+        );
+
+        // Verify the inbound shipment so the PO can be finalised
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&InvoiceRow {
+                status: InvoiceStatus::Verified,
+                ..invoice.clone()
+            })
+            .unwrap();
 
         // Cannot change adjusted quantity on a finalised purchase order, even if the user has permission
         purchase_order_service
@@ -226,7 +274,6 @@ mod update {
                     status: Some(repository::PurchaseOrderStatus::Finalised),
                     ..Default::default()
                 },
-                None,
             )
             .unwrap();
 

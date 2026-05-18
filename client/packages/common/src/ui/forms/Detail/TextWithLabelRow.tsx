@@ -31,7 +31,7 @@ export const TextWithLabelRow: FC<TextWithLabelRowProps> = ({
   const { sx: labelSx, ...labelPropsRest } = labelProps || {};
 
   return (
-    <Box display="flex" sx={sx}>
+    <Box display="flex" gap={1} sx={sx}>
       <Box style={{ textAlign: 'end', whiteSpace: 'nowrap' }}>
         <FormLabel
           sx={{
@@ -47,7 +47,7 @@ export const TextWithLabelRow: FC<TextWithLabelRowProps> = ({
       </Box>
       <Box flex={1} sx={sx}>
         <Tooltip title={showToolTip ? text : ''} placement="right">
-          <Typography paddingRight={1.5} {...textProps}>
+          <Typography pr={1.5} {...textProps}>
             {text}
           </Typography>
         </Tooltip>

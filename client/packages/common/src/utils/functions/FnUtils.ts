@@ -7,10 +7,12 @@ export const FnUtils = {
   debounce: <T extends (...args: any[]) => any>(
     callback: T,
     wait = 500
-  ): ((...args: Parameters<T>) => Promise<ReturnType<T>>) => {
+  ): ((...args: Parameters<T>) => Promise<ReturnType<T>>) & {
+    cancel: () => void;
+  } => {
     let timer: NodeJS.Timeout | undefined;
 
-    return (...args: Parameters<T>) => {
+    const debounced = (...args: Parameters<T>) => {
       if (timer) {
         clearTimeout(timer);
       }
@@ -21,5 +23,14 @@ export const FnUtils = {
         }, wait);
       });
     };
+
+    debounced.cancel = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = undefined;
+      }
+    };
+
+    return debounced;
   },
 };

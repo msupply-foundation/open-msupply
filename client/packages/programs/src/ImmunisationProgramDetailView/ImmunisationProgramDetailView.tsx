@@ -20,7 +20,7 @@ import {
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import {
-  VaccineCourseFragment,
+  VaccineCourseRowFragment,
   useVaccineCourseList,
   useImmunisationProgram,
 } from '../api';
@@ -61,10 +61,10 @@ export const ImmunisationProgramDetailView: FC = () => {
     onOpen,
     entity: vaccineCourse,
     mode,
-  } = useEditModal<VaccineCourseFragment>();
+  } = useEditModal<VaccineCourseRowFragment>();
 
   const columns = useMemo(
-    (): ColumnDef<VaccineCourseFragment>[] => [
+    (): ColumnDef<VaccineCourseRowFragment>[] => [
       {
         accessorKey: 'name',
         header: t('label.name'),
@@ -83,7 +83,7 @@ export const ImmunisationProgramDetailView: FC = () => {
     []
   );
 
-  const { table, selectedRows } = usePaginatedMaterialTable<VaccineCourseFragment>({
+  const { table, selectedRows } = usePaginatedMaterialTable<VaccineCourseRowFragment>({
     tableId: 'vaccine-course-list',
     isLoading: vaccineCoursesLoading,
     isError: vaccineCoursesError,
@@ -119,7 +119,7 @@ export const ImmunisationProgramDetailView: FC = () => {
           isOpen={isOpen}
           onClose={onClose}
           programId={id}
-          vaccineCourse={vaccineCourse}
+          vaccineCourseId={vaccineCourse?.id ?? null}
           mode={mode}
         />
       )}

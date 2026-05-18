@@ -9,7 +9,8 @@ use repository::{
     campaign_row::CampaignRowRepository, item_variant::item_variant_row::ItemVariantRowRepository,
     vvm_status::vvm_status_row::VVMStatusRowRepository, ChangelogRow, ChangelogTableName,
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-    InvoiceLineRowDelete, InvoiceLineType, InvoiceRowRepository, InvoiceType, ItemRowRepository,
+    InvoiceLineRowDelete, InvoiceLineStatus, InvoiceLineType, InvoiceRowRepository, InvoiceType,
+    ItemRowRepository,
     LocationRowRepository, ProgramRowRepository, ReasonOptionRowRepository, StockLineRowRepository,
     StorageConnection, SyncBufferRow,
 };
@@ -49,6 +50,12 @@ pub struct TransLineRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub program_id: Option<String>,
+    #[serde(default)]
+    pub status: Option<String>,
+    #[serde(default)]
+    pub manufacture_date: Option<NaiveDate>,
+    #[serde(default)]
+    pub purchase_order_line_id: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -121,6 +128,10 @@ pub struct LegacyTransLineRow {
     pub volume_per_pack: f64,
     #[serde(rename = "sent_pack_size")]
     pub shipped_pack_size: Option<f64>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "manufacturer_ID")]
+    #[serde(default)]
+    pub manufacturer_id: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -186,6 +197,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            manufacturer_id,
         } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
 
         let line_type = match to_invoice_line_type(&r#type) {
@@ -328,6 +340,9 @@ impl SyncTranslation for InvoiceLineTranslation {
         let TransLineRowOmsFields {
             campaign_id,
             program_id,
+            status,
+            manufacture_date,
+            purchase_order_line_id,
         } = oms_fields.unwrap_or_default();
 
         let campaign_id = clear_invalid_fk(
@@ -372,7 +387,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
-            donor_link_id: donor_id,
+            donor_id,
             reason_option_id,
             vvm_status_id,
             campaign_id,
@@ -380,6 +395,15 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            status: match status.as_deref() {
+                Some("PENDING") => Some(InvoiceLineStatus::Pending),
+                Some("PASSED") => Some(InvoiceLineStatus::Passed),
+                Some("REJECTED") => Some(InvoiceLineStatus::Rejected),
+                _ => None,
+            },
+            manufacture_date,
+            purchase_order_line_id,
+            manufacturer_id,
         };
 
         let result = adjust_negative_values(result);
@@ -435,7 +459,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     foreign_currency_price_before_tax,
                     item_variant_id,
                     linked_invoice_id,
-                    donor_link_id,
+                    donor_id,
                     vvm_status_id,
                     reason_option_id,
                     campaign_id,
@@ -443,6 +467,10 @@ impl SyncTranslation for InvoiceLineTranslation {
                     shipped_number_of_packs,
                     volume_per_pack,
                     shipped_pack_size,
+                    status,
+                    manufacture_date,
+                    purchase_order_line_id,
+                    manufacturer_id,
                 },
             item_row,
             ..
@@ -451,6 +479,14 @@ impl SyncTranslation for InvoiceLineTranslation {
         let oms_fields = Some(TransLineRowOmsFields {
             campaign_id,
             program_id,
+            status: match status {
+                Some(InvoiceLineStatus::Pending) => Some("PENDING".to_string()),
+                Some(InvoiceLineStatus::Passed) => Some("PASSED".to_string()),
+                Some(InvoiceLineStatus::Rejected) => Some("REJECTED".to_string()),
+                None => None,
+            },
+            manufacture_date,
+            purchase_order_line_id,
         });
 
         let legacy_row = LegacyTransLineRow {
@@ -477,12 +513,13 @@ impl SyncTranslation for InvoiceLineTranslation {
             item_variant_id,
             reason_option_id,
             linked_invoice_id,
-            donor_id: donor_link_id,
+            donor_id,
             vvm_status_id,
             oms_fields,
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            manufacturer_id,
         };
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -598,7 +635,7 @@ mod tests {
                     name: "test variant".to_string(),
                     item_link_id: mock_item_a().id,
                     location_type_id: None,
-                    manufacturer_link_id: None,
+                    manufacturer_id: None,
                     deleted_datetime: None,
                     vvm_type: None,
                     created_datetime: NaiveDateTime::default(),

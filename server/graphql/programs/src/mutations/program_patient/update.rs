@@ -58,7 +58,7 @@ pub fn update_program_patient(
             allowed_ctx: allowed_ctx.clone(),
         })),
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             let std_err = match error {
                 UpdateProgramPatientError::InvalidDataSchema(_) => {
                     StandardGraphqlError::BadUserInput(formatted_error)

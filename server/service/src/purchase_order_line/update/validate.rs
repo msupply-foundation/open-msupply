@@ -28,6 +28,13 @@ pub fn validate(
         .find_one_by_id(&line.purchase_order_id)?
         .ok_or(UpdatePurchaseOrderLineInputError::PurchaseOrderDoesNotExist)?;
 
+    // Check if the user is trying to update the expected delivery date on a finalised PO
+    if input.expected_delivery_date.is_some()
+        && purchase_order.status == PurchaseOrderStatus::Finalised
+    {
+        return Err(UpdatePurchaseOrderLineInputError::CannotEditExpectedDeliveryDate);
+    }
+
     // Allow editing of the requested quantity
     // Check if the user is allowed to update the requested_number_of_units
     if let Some(requested_units) = input.requested_number_of_units {
@@ -50,7 +57,10 @@ pub fn validate(
     // Adjusted units cannot be reduced below received units
     if let Some(adjusted_units) = input.adjusted_number_of_units {
         if Some(adjusted_units) != line.adjusted_number_of_units
-            && adjusted_units < line.received_number_of_units
+            && adjusted_units
+                < purchase_order_line
+                    .purchase_order_line_stats_row
+                    .shipped_number_of_units
         {
             return Err(UpdatePurchaseOrderLineInputError::CannotEditQuantityBelowReceived);
         }

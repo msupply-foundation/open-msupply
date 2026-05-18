@@ -273,7 +273,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
     {
       label: t('label.review'),
       description: '',
-      clickable: true,
+      clickable: bufferedAssetItem.length > 0,
       tab: Tabs.Review,
     },
     {

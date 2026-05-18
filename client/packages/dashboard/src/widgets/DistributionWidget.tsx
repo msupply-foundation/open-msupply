@@ -44,7 +44,7 @@ export const DistributionWidget = ({
   const onError = (e: unknown) => {
     const message = (e as Error).message ?? '';
     const errorSnack = errorNotification(
-      `Failed to create invoice! ${message}`
+      t('error.failed-to-create-outbound-shipment', { message })
     );
     errorSnack();
   };
@@ -60,7 +60,7 @@ export const DistributionWidget = ({
   const corePanels = [
     <StatsPanel
       key={outboundShipmentsPanelContext}
-      error={outbound.error as ApiException}
+      error={outbound.error as unknown as ApiException}
       isError={outbound.isError}
       isLoading={outbound.isLoading}
       title={t('heading.shipments')}
@@ -88,7 +88,7 @@ export const DistributionWidget = ({
     />,
     <StatsPanel
       key={customerRequisitionsPanelContext}
-      error={requisition.error as ApiException}
+      error={requisition.error as unknown as ApiException}
       isError={requisition.isError}
       isLoading={requisition.isLoading}
       title={t('customer-requisition')}

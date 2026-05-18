@@ -1,5 +1,4 @@
 use async_graphql::*;
-
 use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -61,7 +60,7 @@ pub fn map_response(from: Result<Barcode, ServiceError>) -> Result<InsertRespons
         Ok(result) => Ok(InsertResponse::Response(BarcodeNode::from_domain(result))),
         Err(error) => {
             use StandardGraphqlError::*;
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
 
             let graphql_error = match error {
                 ServiceError::InternalError(err) => InternalError(err),

@@ -30,7 +30,6 @@ import { SidePanel } from './SidePanel';
 import { AppRoute } from '@openmsupply-client/config';
 import { RequestRequisitionLineErrorProvider } from '../context';
 import { IndicatorsTab } from './IndicatorsTab';
-import { buildIndicatorEditRoute } from './utils';
 import { RequestLineEditModal } from './RequestLineEdit';
 import { useRequestColumns } from './columns';
 import { isRequestLinePlaceholderRow } from '../../utils';
@@ -51,7 +50,11 @@ export const DetailView = () => {
 
   const { data, isLoading, invalidateQueries } = useRequest.document.get();
   const isDisabled = useRequest.utils.isDisabled();
-  const uploadDocumentController = useToggle();
+  const {
+    toggleOn: toggleUploadModal,
+    isOn: isUploadModalOpen,
+    toggleOff: toggleCloseUploadModal,
+  } = useToggle();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useRequest.document.indicators(
       store?.nameId ?? '',
@@ -60,7 +63,6 @@ export const DetailView = () => {
       !!data
     );
   const { urlQuery, updateQuery } = useUrlQuery();
-  const tab = urlQuery['tab'] ?? InternalOrderDetailTabs.Details;
 
   const deletableDocumentIds = useMemo(() => {
     if (data?.status === RequisitionNodeStatus.Finalised) {
@@ -76,36 +78,18 @@ export const DetailView = () => {
     [onOpen]
   );
 
-  const onProgramIndicatorClick = useCallback(
-    (
-      requisitionId?: string,
-      programIndicatorCode?: string,
-      indicatorId?: string
-    ) => {
-      if (!requisitionId || !programIndicatorCode || !indicatorId) return;
-
-      navigate(
-        buildIndicatorEditRoute(
-          requisitionId,
-          programIndicatorCode,
-          indicatorId
-        )
-      );
-    },
-    [navigate]
-  );
-
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.requisitionNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.requisitionNumber]);
 
   const onAddItem = () => onOpen();
-  const onOpenUploadModal = () => {
-    uploadDocumentController.toggleOn();
-    if (tab !== InternalOrderDetailTabs.Documents) {
+  const onOpenUploadModal = useCallback(() => {
+    toggleUploadModal();
+    const currentTab = urlQuery['tab'] ?? InternalOrderDetailTabs.Details;
+    if (currentTab !== InternalOrderDetailTabs.Documents) {
       updateQuery({ tab: InternalOrderDetailTabs.Documents });
     }
-  };
+  }, [toggleUploadModal, urlQuery, updateQuery]);
 
   const { lines, itemFilter, isError, isFetching } = useRequest.line.list();
   const { on } = useHideOverStocked();
@@ -120,7 +104,7 @@ export const DetailView = () => {
     data: lines,
     isLoading: isFetching,
     isError,
-    getIsPlaceholderRow: isRequestLinePlaceholderRow,
+    getIsPlaceholderRow: row => isRequestLinePlaceholderRow(row.original),
     onRowClick,
     initialSort: { key: 'itemName', dir: 'asc' },
     manualFiltering: true,
@@ -200,10 +184,9 @@ export const DetailView = () => {
     tabs.push({
       Component: (
         <IndicatorsTab
-          onClick={onProgramIndicatorClick}
           isLoading={isLoading || isProgramIndicatorsLoading}
-          request={data}
           indicators={programIndicators?.nodes}
+          disabled={isDisabled}
         />
       ),
       value: t('label.indicators'),
@@ -238,10 +221,10 @@ export const DetailView = () => {
         />
       )}
 
-      {uploadDocumentController.isOn && (
+      {isUploadModalOpen && (
         <UploadDocumentModal
-          isOn={uploadDocumentController.isOn}
-          toggleOff={uploadDocumentController.toggleOff}
+          isOn={isUploadModalOpen}
+          toggleOff={toggleCloseUploadModal}
           recordId={data?.id ?? ''}
           tableName="requisition"
           invalidateQueries={invalidateQueries}

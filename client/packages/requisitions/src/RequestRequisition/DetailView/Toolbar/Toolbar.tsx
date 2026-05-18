@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   AppBarContentPortal,
+  Box,
   InputWithLabelRow,
   BufferedTextInput,
   Grid,
@@ -20,6 +21,7 @@ import {
 } from '@openmsupply-client/system';
 import { useHideOverStocked, useRequest } from '../../api';
 import { useRequestLines } from '../../api/hooks/line/useRequestLines';
+import { AncillaryItemsBanner } from './AncillaryItemsBanner';
 
 const MONTHS = [1, 2, 3, 4, 5, 6];
 
@@ -89,13 +91,15 @@ export const Toolbar = () => {
             label={t('label.supplier-ref')}
             Input={
               <Tooltip title={theirReference} placement="bottom-start">
-                <BufferedTextInput
-                  disabled={isDisabled}
-                  size="small"
-                  sx={{ width: 250 }}
-                  value={theirReference ?? ''}
-                  onChange={e => update({ theirReference: e.target.value })}
-                />
+                <Box>
+                  <BufferedTextInput
+                    disabled={isDisabled}
+                    size="small"
+                    sx={{ width: 250 }}
+                    value={theirReference ?? ''}
+                    onChange={e => update({ theirReference: e.target.value })}
+                  />
+                </Box>
               </Tooltip>
             }
           />
@@ -125,6 +129,7 @@ export const Toolbar = () => {
               {t('info.cannot-edit-program-requisition')}
             </Alert>
           )}
+          <AncillaryItemsBanner />
         </Grid>
         <Grid
           display="flex"

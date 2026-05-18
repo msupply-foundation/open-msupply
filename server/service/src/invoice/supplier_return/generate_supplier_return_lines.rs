@@ -13,6 +13,7 @@ pub struct SupplierReturnLine {
     pub number_of_packs: f64,
     pub available_number_of_packs: f64,
     pub stock_line: StockLine,
+    pub on_hold: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -160,6 +161,12 @@ fn get_existing_return_lines(
 fn outbound_line_from_stock_line_and_invoice_line(
     (invoice_line, stock_line): (Option<InvoiceLine>, StockLine),
 ) -> SupplierReturnLine {
+    let on_hold = stock_line.stock_line_row.on_hold
+        || stock_line
+            .location_row
+            .as_ref()
+            .map_or(false, |l| l.on_hold);
+
     let Some(invoice_line) = invoice_line else {
         return SupplierReturnLine {
             id: uuid(),
@@ -167,6 +174,7 @@ fn outbound_line_from_stock_line_and_invoice_line(
             note: None,
             number_of_packs: 0.0,
             available_number_of_packs: stock_line.stock_line_row.available_number_of_packs,
+            on_hold,
             stock_line,
         };
     };
@@ -190,6 +198,7 @@ fn outbound_line_from_stock_line_and_invoice_line(
         number_of_packs,
         reason_id: reason_option_id,
         available_number_of_packs: number_of_packs_available_to_return,
+        on_hold,
         stock_line,
     }
 }

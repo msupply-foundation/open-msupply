@@ -76,13 +76,13 @@ fn validate_request(
         auth_data.auth_token_secret.as_bytes(),
         !is_develop(),
     );
-    let max_age_token = chrono::Duration::minutes(60).num_seconds() as usize;
-    let max_age_refresh = chrono::Duration::hours(6).num_seconds() as usize;
+    let max_age_token = service::auth_data::TOKEN_LIFETIME_SEC;
+    let max_age_refresh = service::auth_data::REFRESH_TOKEN_LIFETIME_SEC;
     let pair = match service.refresh_token(&refresh_token, max_age_token, max_age_refresh, None) {
         Ok(pair) => pair,
         Err(err) => {
             return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
-                format!("Error refreshing token: {:?}", err),
+                format!("Error refreshing token: {err:?}"),
             )));
         }
     };

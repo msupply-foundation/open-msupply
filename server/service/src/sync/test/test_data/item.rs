@@ -306,7 +306,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                         "{}-{}",
                         ITEM_3_VACCINE.0, "FA6FC67251CC4560AC7FED0C0B23E5A0"
                     ),
-                    item_id: ITEM_3_VACCINE.0.to_owned(),
+                    item_link_id: ITEM_3_VACCINE.0.to_owned(),
                     category_id: "FA6FC67251CC4560AC7FED0C0B23E5A0".to_string(),
                     deleted_datetime: None,
                 }),

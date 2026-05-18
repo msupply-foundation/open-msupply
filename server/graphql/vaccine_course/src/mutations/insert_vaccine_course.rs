@@ -1,3 +1,6 @@
+use super::{
+    UpsertVaccineCourseDoseInput, UpsertVaccineCourseItemInput, UpsertVaccineCourseStoreConfigInput,
+};
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{RecordAlreadyExist, RecordProgramCombinationAlreadyExists},
@@ -9,11 +12,10 @@ use service::{
     auth::{Resource, ResourceAccessRequest},
     vaccine_course::{
         insert::{InsertVaccineCourse, InsertVaccineCourseError as ServiceError},
-        update::{VaccineCourseDoseInput, VaccineCourseItemInput},
+        update::{VaccineCourseDoseInput, VaccineCourseItemInput, VaccineCourseStoreConfigInput},
     },
+    NullableUpdate,
 };
-
-use super::{UpsertVaccineCourseDoseInput, UpsertVaccineCourseItemInput};
 
 pub fn insert_vaccine_course(
     ctx: &Context<'_>,
@@ -53,6 +55,7 @@ pub struct InsertVaccineCourseInput {
     pub program_id: String,
     pub vaccine_items: Vec<UpsertVaccineCourseItemInput>,
     pub doses: Vec<UpsertVaccineCourseDoseInput>,
+    pub store_configs: Option<Vec<UpsertVaccineCourseStoreConfigInput>>,
     pub demographic_id: Option<String>,
     pub coverage_rate: f64,
     pub use_in_gaps_calculations: bool,
@@ -68,6 +71,7 @@ impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
             program_id,
             vaccine_items,
             doses,
+            store_configs,
             demographic_id,
             coverage_rate,
             use_in_gaps_calculations,
@@ -95,6 +99,20 @@ impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
                     max_age: d.max_age,
                     custom_age_label: d.custom_age_label,
                     min_interval_days: d.min_interval_days,
+                })
+                .collect(),
+            store_configs: store_configs
+                .unwrap_or_default()
+                .into_iter()
+                .map(|config| VaccineCourseStoreConfigInput {
+                    id: config.id,
+                    store_id: config.store_id,
+                    wastage_rate: config
+                        .wastage_rate
+                        .map(|r| NullableUpdate { value: r.value }),
+                    coverage_rate: config
+                        .coverage_rate
+                        .map(|r| NullableUpdate { value: r.value }),
                 })
                 .collect(),
             demographic_id,
@@ -125,7 +143,7 @@ pub enum InsertVaccineCourseErrorInterface {
 
 fn map_error(error: ServiceError) -> Result<InsertVaccineCourseErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors

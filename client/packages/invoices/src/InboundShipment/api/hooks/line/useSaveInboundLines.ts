@@ -3,20 +3,21 @@ import {
   useMutation,
   useTranslation,
   noOtherVariants,
+  useParams,
 } from '@openmsupply-client/common';
-import { useInboundId } from '../document/useInbound';
 import { useInboundApi } from '../utils/useInboundApi';
 import { DraftInboundLine } from '../../../../types';
+import { INBOUND, INBOUND_LINE } from '../document/keys';
 
-export const useSaveInboundLines = () => {
+export const useSaveInboundLines = (isExternal: boolean) => {
   const t = useTranslation();
   const queryClient = useQueryClient();
-  const invoiceId = useInboundId();
+  const { invoiceId = '' } = useParams();
   const api = useInboundApi();
 
-  return useMutation(
-    async (lines: DraftInboundLine[]): Promise<{ errorMessage?: string }> => {
-      const result = await api.updateLines(lines);
+  return useMutation({
+    mutationFn: async (lines: DraftInboundLine[]): Promise<{ errorMessage?: string }> => {
+      const result = await api.updateLines(lines, isExternal);
 
       const allResults = [
         ...(result.batchInboundShipment.insertInboundShipmentLines || []),
@@ -53,9 +54,9 @@ export const useSaveInboundLines = () => {
       return { errorMessage: undefined };
     },
 
-    {
-      onSettled: () =>
-        queryClient.invalidateQueries(api.keys.detail(invoiceId)),
-    }
-  );
+    onSettled: () =>
+      queryClient.invalidateQueries({
+        queryKey: [INBOUND, INBOUND_LINE, invoiceId]
+      })
+  });
 };

@@ -34,6 +34,7 @@ import Button from '@mui/material/Button';
 import Hidden from '@mui/material/Hidden';
 import Autocomplete from '@mui/material/Autocomplete';
 import Chip from '@mui/material/Chip';
+import { Popover as MuiPopover } from '@mui/material';
 
 export * from './portals';
 export * from './inputs';
@@ -86,4 +87,5 @@ export {
   DateTimePickerProps,
   FormLabel,
   Card,
+  MuiPopover,
 };

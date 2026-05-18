@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "2.16.1",
+  "version": "2.16.2",
   "code": "item-usage",
   "context": "REPORT",
   "sub_context": "StockAndItems",

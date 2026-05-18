@@ -4,9 +4,9 @@ use super::{
     item_row::item,
     item_variant::item_variant_row::{item_variant, ItemVariantRow},
     location_row::location,
-    name_link_row::name_link,
     name_row::name,
     stock_line_row::stock_line,
+    unit_row::{unit, UnitRow},
     vvm_status::vvm_status_row::{vvm_status, VVMStatusRow},
     DBType, LocationRow, MasterListFilter, MasterListLineFilter, StockLineRow, StorageConnection,
 };
@@ -19,14 +19,11 @@ use crate::{
     },
     location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
-    BarcodeRow, DateFilter, EqualFilter, ItemFilter, ItemLinkRow, ItemRepository, ItemRow,
-    MasterListLineRepository, NameLinkRow, NameRow, Pagination, Sort, StringFilter,
+    BarcodeRow, DateFilter, EqualFilter, Item, ItemFilter, ItemLinkRow, ItemRepository, ItemRow,
+    ItemSort, ItemSortField, MasterListLineRepository, NameRow, Pagination, Sort, StringFilter,
 };
 
-use diesel::{
-    dsl::{Eq, InnerJoin, IntoBoxed, LeftJoin, LeftJoinOn, Nullable},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct StockLine {
@@ -41,6 +38,7 @@ pub struct StockLine {
 
 pub enum StockLineSortField {
     ExpiryDate,
+    ManufactureDate,
     NumberOfPacks,
     ItemCode,
     ItemName,
@@ -79,7 +77,7 @@ type StockLineJoin = (
     (ItemLinkRow, ItemRow),
     Option<ItemVariantRow>,
     Option<LocationRow>,
-    Option<(NameLinkRow, NameRow)>,
+    Option<NameRow>,
     Option<BarcodeRow>,
     Option<VVMStatusRow>,
 );
@@ -129,6 +127,9 @@ impl<'a> StockLineRepository<'a> {
                 StockLineSortField::ExpiryDate => {
                     // TODO: would prefer to have extra parameter on Sort.nulls_last
                     apply_sort_asc_nulls_last!(query, sort, stock_line::expiry_date);
+                }
+                StockLineSortField::ManufactureDate => {
+                    apply_sort_asc_nulls_last!(query, sort, stock_line::manufacture_date);
                 }
                 StockLineSortField::ItemCode => {
                     apply_sort_no_case!(query, sort, item::code);
@@ -183,22 +184,86 @@ impl<'a> StockLineRepository<'a> {
         Ok(result.into_iter().map(to_domain).collect())
     }
 
+    /// Returns one row per item that has at least one stock_line matching the
+    /// supplied filter (within `store_id`). The predicate is identical to what
+    /// `query()` would return, so an item appears here iff at least one of its
+    /// stock lines would appear in `query()` — parity between grouped and
+    /// non-grouped views by construction.
+    pub fn query_items_by_filter(
+        &self,
+        pagination: Pagination,
+        filter: Option<StockLineFilter>,
+        sort: Option<ItemSort>,
+        store_id: Option<String>,
+    ) -> Result<Vec<Item>, RepositoryError> {
+        // The filtered stock_line query, projected down to `item.id`. Used as
+        // a subquery against `item.id` in the outer items query — because
+        // `WHERE item.id IN (...)` ignores duplicate values in the subquery
+        // and the outer items table has each id exactly once, this implicitly
+        // groups by item without needing a `GROUP BY` (which Diesel can't
+        // type-check on top of the deeply-boxed wide join here).
+        let item_id_subquery = Self::create_filtered_query(filter, store_id)
+            .select(item::id)
+            .distinct();
+
+        let mut items_query = item::table
+            .left_join(unit::table)
+            .filter(item::id.eq_any(item_id_subquery))
+            .into_boxed();
+
+        if let Some(sort) = sort {
+            match sort.key {
+                ItemSortField::Name => {
+                    apply_sort_no_case!(items_query, sort, item::name);
+                }
+                ItemSortField::Code => {
+                    apply_sort_no_case!(items_query, sort, item::code);
+                }
+                ItemSortField::Type => {
+                    apply_sort!(items_query, sort, item::type_);
+                }
+            }
+        } else {
+            items_query = items_query.order(item::name.asc());
+        }
+
+        let final_query = items_query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64);
+
+        let result =
+            final_query.load::<(ItemRow, Option<UnitRow>)>(self.connection.lock().connection())?;
+
+        Ok(result
+            .into_iter()
+            .map(|(item_row, unit_row)| Item { item_row, unit_row })
+            .collect())
+    }
+
+    /// Count of distinct items that have at least one stock_line matching the
+    /// supplied filter. Companion to `query_items_by_filter`.
+    pub fn count_items_by_filter(
+        &self,
+        filter: Option<StockLineFilter>,
+        store_id: Option<String>,
+    ) -> Result<i64, RepositoryError> {
+        // Same trick as `query_items_by_filter`: count `item` rows whose `id`
+        // is in the filtered stock_line subquery. The items table has each id
+        // exactly once, so `COUNT(*)` of the outer query is the count of
+        // distinct items with matching stock without needing `GROUP BY`.
+        let item_id_subquery = Self::create_filtered_query(filter, store_id).select(item::id);
+
+        Ok(item::table
+            .filter(item::id.eq_any(item_id_subquery))
+            .count()
+            .get_result(self.connection.lock().connection())?)
+    }
+
     pub fn create_filtered_query(
         filter: Option<StockLineFilter>,
         query_store_id: Option<String>,
     ) -> BoxedStockLineQuery {
-        let mut query = stock_line::table
-            .inner_join(item_link::table.inner_join(item::table))
-            .left_join(item_variant::table)
-            .left_join(location::table)
-            .left_join(
-                name_link::table
-                    .on(stock_line::supplier_link_id.eq(name_link::id.nullable()))
-                    .inner_join(name::table),
-            )
-            .left_join(barcode::table)
-            .left_join(vvm_status::table)
-            .into_boxed();
+        let mut query = query().into_boxed();
 
         if let Some(f) = filter {
             let StockLineFilter {
@@ -293,27 +358,18 @@ impl<'a> StockLineRepository<'a> {
     }
 }
 
-type BoxedStockLineQuery = IntoBoxed<
-    'static,
-    LeftJoin<
-        LeftJoin<
-            LeftJoinOn<
-                LeftJoin<
-                    LeftJoin<
-                        InnerJoin<stock_line::table, InnerJoin<item_link::table, item::table>>,
-                        item_variant::table,
-                    >,
-                    location::table,
-                >,
-                InnerJoin<name_link::table, name::table>,
-                Eq<stock_line::supplier_link_id, Nullable<name_link::id>>,
-            >,
-            barcode::table,
-        >,
-        vvm_status::table,
-    >,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    stock_line::table
+        .inner_join(item_link::table.inner_join(item::table))
+        .left_join(item_variant::table)
+        .left_join(location::table)
+        .left_join(name::table)
+        .left_join(barcode::table)
+        .left_join(vvm_status::table)
+}
+
+type BoxedStockLineQuery = IntoBoxed<'static, query, DBType>;
 
 fn to_domain(
     (
@@ -321,7 +377,7 @@ fn to_domain(
         (_, item_row),
         item_variant_row,
         location_row,
-        name_link_join,
+        supplier_name_row,
         barcode_row,
         vvm_status_row,
     ): StockLineJoin,
@@ -330,7 +386,7 @@ fn to_domain(
         stock_line_row,
         item_row,
         location_row,
-        supplier_name_row: name_link_join.map(|(_, name_row)| name_row),
+        supplier_name_row,
         barcode_row,
         item_variant_row,
         vvm_status_row,
@@ -428,7 +484,7 @@ mod test {
 
     use crate::{
         mock::MockDataInserts,
-        mock::{mock_item_a, mock_store_a, MockData},
+        mock::{mock_item_a, mock_item_b, mock_store_a, MockData},
         test_db, ItemRow, Pagination, StockLine, StockLineFilter, StockLineRepository,
         StockLineRow, StockLineSort, StockLineSortField,
     };
@@ -579,5 +635,100 @@ mod test {
             )
             .unwrap()
         );
+    }
+
+    /// Regression test for issue #11429: items with `total > 0, available = 0`
+    /// (fully reserved by an unfinalised outbound) must still appear in the
+    /// grouped stock view. Verifies that `query_items_by_filter` uses the same
+    /// predicate as the non-grouped `query` (parity by construction).
+    #[actix_rt::test]
+    async fn test_stock_line_query_items_by_filter() {
+        // item_a: two stock lines — one with total=1/available=0 (reserved),
+        //         one with total=2/available=2 (free). Should appear once.
+        fn line_a_reserved() -> StockLineRow {
+            StockLineRow {
+                id: "line_a_reserved".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                pack_size: 1.0,
+                total_number_of_packs: 1.0,
+                available_number_of_packs: 0.0,
+                ..Default::default()
+            }
+        }
+        fn line_a_free() -> StockLineRow {
+            StockLineRow {
+                id: "line_a_free".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_a().id,
+                pack_size: 1.0,
+                total_number_of_packs: 2.0,
+                available_number_of_packs: 2.0,
+                ..Default::default()
+            }
+        }
+        // item_b: a single stock line that is fully reserved. The original
+        // bug: this item would not show up in the grouped view because the
+        // legacy filter checked available_stock_on_hand > 0.
+        fn line_b_reserved() -> StockLineRow {
+            StockLineRow {
+                id: "line_b_reserved".to_string(),
+                store_id: mock_store_a().id,
+                item_link_id: mock_item_b().id,
+                pack_size: 1.0,
+                total_number_of_packs: 1.0,
+                available_number_of_packs: 0.0,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_stock_line_query_items_by_filter",
+            MockDataInserts::none().stores().items().names().units(),
+            MockData {
+                stock_lines: vec![line_a_reserved(), line_a_free(), line_b_reserved()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let repo = StockLineRepository::new(&connection);
+
+        // has_packs_in_store(true) → both items appear (both have stock lines
+        // with total_number_of_packs > 0). One row per item.
+        let result = repo
+            .query_items_by_filter(
+                Pagination::new(),
+                Some(StockLineFilter::new().has_packs_in_store(true)),
+                None,
+                Some(mock_store_a().id),
+            )
+            .unwrap();
+        let item_ids: Vec<String> = result.iter().map(|i| i.item_row.id.clone()).collect();
+        assert_eq!(item_ids.len(), 2);
+        assert!(item_ids.contains(&mock_item_a().id));
+        assert!(item_ids.contains(&mock_item_b().id));
+
+        // Count matches.
+        let count = repo
+            .count_items_by_filter(
+                Some(StockLineFilter::new().has_packs_in_store(true)),
+                Some(mock_store_a().id),
+            )
+            .unwrap();
+        assert_eq!(count, 2);
+
+        // is_available(true) → only item_a (it has a free stock line).
+        // item_b has only the reserved line, so it must be excluded.
+        let result = repo
+            .query_items_by_filter(
+                Pagination::new(),
+                Some(StockLineFilter::new().is_available(true)),
+                None,
+                Some(mock_store_a().id),
+            )
+            .unwrap();
+        let item_ids: Vec<String> = result.iter().map(|i| i.item_row.id.clone()).collect();
+        assert_eq!(item_ids, vec![mock_item_a().id]);
     }
 }
