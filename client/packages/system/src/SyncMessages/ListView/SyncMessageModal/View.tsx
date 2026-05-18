@@ -1,15 +1,14 @@
-import React, { ReactElement } from 'react';
+import React from 'react';
 import {
   Box,
   InputWithLabelRow,
-  LocaleKey,
   ReadOnlyInput,
   Stack,
   SyncMessageNodeStatus,
   SyncMessageNodeType,
   TextArea,
-  TypedTFunction,
   Typography,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { SyncMessageRowFragment } from '../../api';
 import { statusMapping, typeMapping } from '../utils';
@@ -17,20 +16,13 @@ import { FileList } from './FileList';
 
 interface ViewProps {
   data?: SyncMessageRowFragment;
-  t: TypedTFunction<LocaleKey>;
 }
 
-export const View = ({ data, t }: ViewProps): ReactElement => {
-  const status = statusMapping(data?.status);
-  const type = typeMapping(data?.type);
+export const View = ({ data }: ViewProps) => {
+  const t = useTranslation();
 
   return (
-    <Stack
-      sx={{
-        padding: 2,
-        gap: 2,
-      }}
-    >
+    <Stack sx={{ padding: 2, gap: 2 }}>
       <Stack flexDirection="row">
         <Stack gap={2}>
           <InputWithLabelRow
@@ -45,11 +37,11 @@ export const View = ({ data, t }: ViewProps): ReactElement => {
         <Stack gap={2}>
           <InputWithLabelRow
             label={t('label.status')}
-            Input={<ReadOnlyInput value={t(status)} />}
+            Input={<ReadOnlyInput value={t(statusMapping(data?.status))} />}
           />
           <InputWithLabelRow
             label={t('label.type')}
-            Input={<ReadOnlyInput value={t(type)} />}
+            Input={<ReadOnlyInput value={t(typeMapping(data?.type))} />}
           />
         </Stack>
       </Stack>
@@ -69,8 +61,8 @@ export const View = ({ data, t }: ViewProps): ReactElement => {
       {data?.type === SyncMessageNodeType.SupportUpload &&
         data?.status === SyncMessageNodeStatus.Processed && (
           <FileList
-            files={data?.files?.nodes ?? []}
-            syncMessageId={data?.id ?? ''}
+            files={data.files?.nodes ?? []}
+            syncMessageId={data.id}
           />
         )}
     </Stack>

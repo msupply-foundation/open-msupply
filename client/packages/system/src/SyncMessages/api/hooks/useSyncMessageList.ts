@@ -3,6 +3,7 @@ import {
   LIST_KEY,
   SyncMessageSortFieldInput,
   SortBy,
+  keepPreviousData,
   useQuery,
 } from '@openmsupply-client/common';
 import { useSyncMessageGraphQL } from '../useSyncMessageGraphQL';
@@ -16,14 +17,16 @@ export type ListParams = {
   filterBy: FilterBy | null;
 };
 
+const sortFieldMap: Record<string, SyncMessageSortFieldInput> = {
+  createdDatetime: SyncMessageSortFieldInput.CreatedDatetime,
+  status: SyncMessageSortFieldInput.Status,
+};
+
 export const useSyncMessageList = (queryParams: ListParams) => {
   const { syncMessageApi, storeId } = useSyncMessageGraphQL();
 
   const {
-    sortBy = {
-      key: 'number',
-      direction: 'desc',
-    },
+    sortBy = { key: 'createdDatetime', direction: 'desc' },
     first,
     offset,
     filterBy,
@@ -39,30 +42,27 @@ export const useSyncMessageList = (queryParams: ListParams) => {
     filterBy,
   ];
 
-  const sortFieldMap: Record<string, SyncMessageSortFieldInput> = {
-    createdDatetime: SyncMessageSortFieldInput.CreatedDatetime,
-    status: SyncMessageSortFieldInput.Status,
-  };
-
   const queryFn = async (): Promise<{
     nodes: SyncMessageRowFragment[];
     totalCount: number;
   }> => {
-    const filter = {
-      ...filterBy,
-    };
-
-    const query = await syncMessageApi.syncMessages({
+    const result = await syncMessageApi.syncMessages({
       storeId,
-      first: first,
-      offset: offset,
-      key: sortFieldMap[sortBy.key] ?? SyncMessageSortFieldInput.Status,
+      first,
+      offset,
+      key: sortFieldMap[sortBy.key] ?? SyncMessageSortFieldInput.CreatedDatetime,
       desc: sortBy.direction === 'desc',
-      filter,
+      filter: { ...filterBy },
     });
-    const { nodes, totalCount } = query?.centralServer.syncMessage.syncMessages;
+    const { nodes, totalCount } = result.centralServer.syncMessage.syncMessages;
     return { nodes, totalCount };
   };
 
-  return useQuery({ queryKey, queryFn });
+  const { data, isFetching, isError } = useQuery({
+    queryKey,
+    queryFn,
+    placeholderData: keepPreviousData,
+  });
+
+  return { query: { data, isFetching, isError } };
 };

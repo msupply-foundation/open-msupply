@@ -1,15 +1,17 @@
+import React from 'react';
 import {
+  AppBarContentPortal,
+  Box,
+  FilterMenu,
   SyncMessageNodeStatus,
   SyncMessageNodeType,
   useTranslation,
-  AppBarContentPortal,
-  FilterMenu,
-  Box,
 } from '@openmsupply-client/common';
-import React from 'react';
+import { statusMapping, typeMapping } from './utils';
 
 export const Toolbar = () => {
   const t = useTranslation();
+
   return (
     <AppBarContentPortal
       sx={{
@@ -26,13 +28,10 @@ export const Toolbar = () => {
             {
               type: 'enum',
               name: t('label.type'),
-              options: [
-                { label: t('label.other'), value: SyncMessageNodeType.Other },
-                {
-                  label: t('label.request-field-change'),
-                  value: SyncMessageNodeType.RequestFieldChange,
-                },
-              ],
+              options: Object.values(SyncMessageNodeType).map(type => ({
+                value: type,
+                label: t(typeMapping(type)),
+              })),
               urlParameter: 'type',
               isDefault: true,
             },
@@ -45,27 +44,22 @@ export const Toolbar = () => {
                   name: t('label.from-date'),
                   urlParameter: 'createdDatetime',
                   range: 'from',
-                  isDefault: false,
                 },
                 {
                   type: 'date',
                   name: t('label.to-date'),
                   urlParameter: 'createdDatetime',
                   range: 'to',
-                  isDefault: false,
                 },
               ],
             },
             {
               type: 'enum',
               name: t('label.status'),
-              options: [
-                { label: t('label.new'), value: SyncMessageNodeStatus.New },
-                {
-                  label: t('label.processed'),
-                  value: SyncMessageNodeStatus.Processed,
-                },
-              ],
+              options: Object.values(SyncMessageNodeStatus).map(status => ({
+                value: status,
+                label: t(statusMapping(status)),
+              })),
               urlParameter: 'status',
               isDefault: true,
             },

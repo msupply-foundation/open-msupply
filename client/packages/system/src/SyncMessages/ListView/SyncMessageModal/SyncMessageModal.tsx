@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React from 'react';
 import {
   DialogButton,
   ModalMode,
@@ -21,19 +21,18 @@ export const SyncMessageModal = ({
   onClose,
   isOpen,
   mode,
-}: SyncMessageModalProps): ReactElement => {
+}: SyncMessageModalProps) => {
   const t = useTranslation();
-  const { Modal } = useDialog({
-    onClose,
-    isOpen,
-  });
+  const { Modal } = useDialog({ onClose, isOpen });
 
   const {
     query: { data },
-    create: { create },
+    create: { create, isCreating },
     draft,
     setDraft,
   } = useSyncMessage(lineId);
+
+  const isCreate = mode === ModalMode.Create;
 
   const handleSaveClick = async () => {
     await create();
@@ -43,24 +42,22 @@ export const SyncMessageModal = ({
   return (
     <Modal
       width={600}
-      title={
-        mode === ModalMode.Create
-          ? t('title.create-message')
-          : t('title.message')
-      }
+      title={isCreate ? t('title.create-message') : t('title.message')}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
-        <DialogButton
-          variant="save"
-          onClick={handleSaveClick}
-          disabled={mode === ModalMode.Update}
-        />
+        isCreate ? (
+          <DialogButton
+            variant="save"
+            onClick={handleSaveClick}
+            disabled={isCreating}
+          />
+        ) : undefined
       }
     >
-      {mode === ModalMode.Create ? (
-        <Create t={t} draft={draft} setDraft={setDraft} />
+      {isCreate ? (
+        <Create draft={draft} setDraft={setDraft} />
       ) : (
-        <View t={t} data={data} />
+        <View data={data} />
       )}
     </Modal>
   );

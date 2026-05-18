@@ -1,70 +1,108 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
-  createTableStore,
-  DataTable,
+  ColumnDef,
+  ColumnType,
+  MaterialTable,
   NothingHere,
-  TableProvider,
+  SyncMessageNodeStatus,
+  SyncMessageNodeType,
   useEditModal,
+  usePaginatedMaterialTable,
   useTranslation,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { SyncMessageRowFragment, useSyncMessageList } from '../api';
-import { useSyncMessageColumns } from './columns';
+import { statusMapping, typeMapping } from './utils';
 import { SyncMessageModal } from './SyncMessageModal';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 
 export const SyncMessageListView = () => {
   const t = useTranslation();
-  const columns = useSyncMessageColumns();
 
   const { isOpen, entity, onClose, onOpen, mode } =
     useEditModal<SyncMessageRowFragment>();
 
   const {
-    updatePaginationQuery,
-    queryParams: { page, first, offset, sortBy, filterBy },
+    queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
-      { key: 'createdDatetime' },
-      {
-        key: 'status',
-        condition: 'equalTo',
-      },
-      {
-        key: 'type',
-        condition: 'equalTo',
-      },
+      { key: 'createdDatetime', condition: 'between' },
+      { key: 'status', condition: 'equalTo' },
+      { key: 'type', condition: 'equalTo' },
     ],
   });
 
-  const pagination = { page, first, offset };
-  const listParams = {
-    sortBy,
-    first,
-    offset,
-    filterBy,
-  };
+  const {
+    query: { data, isFetching, isError },
+  } = useSyncMessageList({ sortBy, first, offset, filterBy });
 
-  const { data, isError, isLoading } = useSyncMessageList(listParams);
+  const columns = useMemo(
+    (): ColumnDef<SyncMessageRowFragment>[] => [
+      {
+        id: 'fromStore',
+        header: t('label.from-store'),
+        accessorFn: row => row.fromStore?.storeName,
+      },
+      {
+        id: 'toStore',
+        header: t('label.to-store'),
+        accessorFn: row => row.toStore?.storeName,
+      },
+      {
+        accessorKey: 'createdDatetime',
+        header: t('label.created-datetime'),
+        columnType: ColumnType.Date,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'status',
+        header: t('label.status'),
+        accessorFn: row => t(statusMapping(row.status)),
+        enableSorting: true,
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        filterSelectOptions: Object.values(SyncMessageNodeStatus).map(
+          status => ({ value: status, label: t(statusMapping(status)) })
+        ),
+      },
+      {
+        accessorKey: 'type',
+        header: t('label.type'),
+        accessorFn: row => t(typeMapping(row.type)),
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        filterSelectOptions: Object.values(SyncMessageNodeType).map(type => ({
+          value: type,
+          label: t(typeMapping(type)),
+        })),
+      },
+      {
+        accessorKey: 'errorMessage',
+        header: t('label.error-message'),
+      },
+    ],
+    [t]
+  );
+
+  const { table } = usePaginatedMaterialTable({
+    tableId: 'sync-message-list',
+    isLoading: isFetching,
+    isError,
+    columns,
+    data: data?.nodes ?? [],
+    totalCount: data?.totalCount ?? 0,
+    onRowClick: onOpen,
+    noDataElement: <NothingHere body={t('error.no-sync-messages')} />,
+  });
 
   return (
-    <TableProvider createStore={createTableStore}>
+    <>
       <Toolbar />
       <AppBarButtons onOpen={onOpen} />
-      <DataTable
-        id="sync-message-list"
-        enableColumnSelection
-        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-        onChangePage={updatePaginationQuery}
-        columns={columns}
-        data={data?.nodes ?? []}
-        isError={isError}
-        isLoading={isLoading}
-        noDataElement={<NothingHere body={t('error.no-purchase-orders')} />}
-        onRowClick={onOpen}
-      />
+      <MaterialTable table={table} />
       {isOpen && (
         <SyncMessageModal
           lineId={entity?.id}
@@ -73,6 +111,6 @@ export const SyncMessageListView = () => {
           mode={mode}
         />
       )}
-    </TableProvider>
+    </>
   );
 };
