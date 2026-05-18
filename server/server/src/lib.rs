@@ -412,6 +412,10 @@ pub async fn start_server(
     })
     .disable_signals();
 
+    if let Some(workers) = settings.server.workers {
+        http_server = http_server.workers(workers);
+    }
+
     http_server = match certificates.config() {
         Some(config) => http_server
             .bind_rustls_0_23(settings.server.address(), config)
