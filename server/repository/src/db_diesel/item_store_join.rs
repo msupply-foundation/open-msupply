@@ -71,8 +71,7 @@ impl<'a> ItemStoreJoinRowRepositoryTrait<'a> for ItemStoreJoinRowRepository<'a> 
 
     fn upsert_one(&self, row: &ItemStoreJoinRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = ItemStoreJoinRow::generate_changelog(
-            row.id.clone(),
+        let changelog = row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -115,8 +114,7 @@ impl Upsert for ItemStoreJoinRow {
         ItemStoreJoinRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),
