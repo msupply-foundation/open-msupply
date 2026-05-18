@@ -8,6 +8,7 @@ server/report_builder/config.yaml
 server/data
 .gitmodules
 scripts/plugin-management/pluginRepoMap.json
+scripts/plugin-management/.pluginAuth
 node_modules/
 
 standard_reports/test-config.json
