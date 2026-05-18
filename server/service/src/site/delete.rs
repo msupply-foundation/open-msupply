@@ -1,10 +1,10 @@
 use crate::service_provider::ServiceContext;
-use repository::{RepositoryError, SiteRowRepository};
+use repository::{EqualFilter, RepositoryError, SiteRowRepository, StoreFilter, StoreRepository};
 
 #[derive(PartialEq, Debug)]
 pub enum DeleteSiteError {
     SiteDoesNotExist,
-    // TODO: Add check to prevent deletion of sites that have stores associated with them
+    SiteHasStores,
     DatabaseError(RepositoryError),
 }
 
@@ -15,6 +15,13 @@ pub fn delete_site(ctx: &ServiceContext, site_id: i32) -> Result<i32, DeleteSite
 
             repo.find_one_by_id(site_id)?
                 .ok_or(DeleteSiteError::SiteDoesNotExist)?;
+
+            let store_count = StoreRepository::new(connection).count(Some(
+                StoreFilter::new().site_id(EqualFilter::equal_to(site_id)),
+            ))?;
+            if store_count > 0 {
+                return Err(DeleteSiteError::SiteHasStores);
+            }
 
             repo.delete(site_id)?;
             Ok(site_id)
