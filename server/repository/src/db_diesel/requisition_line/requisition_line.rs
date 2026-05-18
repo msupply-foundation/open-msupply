@@ -4,10 +4,7 @@ use crate::{
     RequisitionRow, StorageConnection,
 };
 
-use diesel::{
-    dsl::{InnerJoin, IntoBoxed},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 use super::{requisition_line_row::requisition_line, RequisitionLineFilter, RequisitionLineRow};
 
@@ -73,19 +70,19 @@ impl<'a> RequisitionLineRepository<'a> {
     }
 }
 
-type BoxedRequisitionLineQuery = IntoBoxed<
-    'static,
-    InnerJoin<InnerJoin<requisition_line::table, item::table>, requisition::table>,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    requisition_line::table
+        .inner_join(item::table)
+        .inner_join(requisition::table)
+}
+
+type BoxedRequisitionLineQuery = IntoBoxed<'static, query, DBType>;
 
 fn create_filtered_query(
     filter: Option<RequisitionLineFilter>,
 ) -> Result<BoxedRequisitionLineQuery, RepositoryError> {
-    let mut query = requisition_line::table
-        .inner_join(item::table)
-        .inner_join(requisition::table)
-        .into_boxed();
+    let mut query = query().into_boxed();
 
     if let Some(f) = filter {
         apply_equal_filter!(query, f.id, requisition_line::id);

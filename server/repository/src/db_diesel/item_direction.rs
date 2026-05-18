@@ -5,7 +5,6 @@ use super::ItemRow;
 use crate::diesel_macros::apply_equal_filter;
 
 use crate::{repository_error::RepositoryError, DBType, EqualFilter};
-use diesel::dsl::InnerJoin;
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Clone, Default, PartialEq, Debug)]
@@ -66,16 +65,15 @@ fn to_domain((item_direction_row, item_row): ItemDirectionJoin) -> ItemDirection
     }
 }
 
-type BoxedItemDirectionQuery = IntoBoxed<
-    'static,
-    InnerJoin<item_direction::table, item::table>,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    item_direction::table.inner_join(item::table)
+}
+
+type BoxedItemDirectionQuery = IntoBoxed<'static, query, DBType>;
 
 fn create_filtered_query(filter: Option<ItemDirectionFilter>) -> BoxedItemDirectionQuery {
-    let mut query = item_direction::table
-        .inner_join(item::table)
-        .into_boxed();
+    let mut query = query().into_boxed();
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, item_direction::id);

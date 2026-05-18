@@ -7,7 +7,6 @@ use crate::{
     db_diesel::item_row::item, diesel_macros::apply_equal_filter,
     repository_error::RepositoryError, DBType, EqualFilter,
 };
-use diesel::dsl::InnerJoin;
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Clone, Default, PartialEq, Debug)]
@@ -93,20 +92,17 @@ fn to_domain(
     }
 }
 
-type BoxedItemWarningJoinQuery = IntoBoxed<
-    'static,
-    InnerJoin<
-        InnerJoin<item_warning_join::table, item::table>,
-        warning::table,
-    >,
-    DBType,
->;
-
-fn create_filtered_query(filter: Option<ItemWarningJoinFilter>) -> BoxedItemWarningJoinQuery {
-    let mut query = item_warning_join::table
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    item_warning_join::table
         .inner_join(item::table)
         .inner_join(warning::table)
-        .into_boxed();
+}
+
+type BoxedItemWarningJoinQuery = IntoBoxed<'static, query, DBType>;
+
+fn create_filtered_query(filter: Option<ItemWarningJoinFilter>) -> BoxedItemWarningJoinQuery {
+    let mut query = query().into_boxed();
 
     if let Some(f) = filter {
         let ItemWarningJoinFilter {

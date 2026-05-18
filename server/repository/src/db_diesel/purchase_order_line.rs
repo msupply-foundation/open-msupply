@@ -17,7 +17,7 @@ use crate::{
 };
 
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed},
+    dsl::IntoBoxed,
     prelude::*,
 };
 
@@ -140,24 +140,18 @@ impl<'a> PurchaseOrderLineRepository<'a> {
     }
 }
 
-type BoxedPurchaseOrderLineQuery = IntoBoxed<
-    'static,
-    InnerJoin<
-        InnerJoin<
-            InnerJoin<purchase_order_line::table, item::table>,
-            purchase_order::table,
-        >,
-        purchase_order_line_stats::table,
-    >,
-    DBType,
->;
-
-fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurchaseOrderLineQuery {
-    let mut query = purchase_order_line::table
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    purchase_order_line::table
         .inner_join(item::table)
         .inner_join(purchase_order::table)
         .inner_join(purchase_order_line_stats::table)
-        .into_boxed();
+}
+
+type BoxedPurchaseOrderLineQuery = IntoBoxed<'static, query, DBType>;
+
+fn create_filtered_query(filter: Option<PurchaseOrderLineFilter>) -> BoxedPurchaseOrderLineQuery {
+    let mut query = query().into_boxed();
 
     if let Some(f) = filter {
         let PurchaseOrderLineFilter {

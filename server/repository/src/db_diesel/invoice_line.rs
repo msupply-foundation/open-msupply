@@ -15,7 +15,7 @@ use crate::{
 };
 
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed, LeftJoin},
+    dsl::IntoBoxed,
     prelude::*,
 };
 
@@ -288,36 +288,21 @@ impl<'a> InvoiceLineRepository<'a> {
     }
 }
 
-type BoxedInvoiceLineQuery = IntoBoxed<
-    'static,
-    LeftJoin<
-        LeftJoin<
-            LeftJoin<
-                InnerJoin<
-                    InnerJoin<
-                        InnerJoin<invoice_line::table, item::table>,
-                        invoice::table,
-                    >,
-                    invoice_line_stats::table,
-                >,
-                location::table,
-            >,
-            stock_line::table,
-        >,
-        reason_option::table,
-    >,
-    DBType,
->;
-
-fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQuery {
-    let mut query = invoice_line::table
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    invoice_line::table
         .inner_join(item::table)
         .inner_join(invoice::table)
         .inner_join(invoice_line_stats::table)
         .left_join(location::table)
         .left_join(stock_line::table)
         .left_join(reason_option::table)
-        .into_boxed();
+}
+
+type BoxedInvoiceLineQuery = IntoBoxed<'static, query, DBType>;
+
+fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQuery {
+    let mut query = query().into_boxed();
 
     if let Some(f) = filter {
         let InvoiceLineFilter {
