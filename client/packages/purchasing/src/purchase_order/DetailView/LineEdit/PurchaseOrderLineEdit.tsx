@@ -138,11 +138,7 @@ export const PurchaseOrderLineEdit = ({
               <TextInput
                 label={t('label.unit')}
                 value={draft?.unit || ''}
-                onChange={(value?: string) => update({ unit: value })}
-                disabled={
-                  disabled ||
-                  isFieldDisabled(status, StatusGroup.AfterConfirmed)
-                }
+                disabled
               />
               <TextInput
                 label={t('label.supplier-item-code')}

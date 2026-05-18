@@ -1,4 +1,9 @@
-import { useGql, useAuthContext, useQuery } from '@openmsupply-client/common';
+import {
+  useGql,
+  useAuthContext,
+  useQuery,
+  keepPreviousData,
+} from '@openmsupply-client/common';
 import { getSdk } from '../../operations.generated';
 import { HISTORICAL_STOCK_LINES } from '../../keys';
 
@@ -22,11 +27,12 @@ export const useHistoricalStockLines = ({
     datetime ?? 'NO_DATETIME',
   ];
 
-  const result = useQuery(
-    key,
-    () => sdk.getHistoricalStockLines({ storeId, itemId, datetime }),
-    { enabled, keepPreviousData: true }
-  );
+  const result = useQuery({
+    queryKey: key,
+    queryFn: () => sdk.getHistoricalStockLines({ storeId, itemId, datetime }),
+    enabled,
+    placeholderData: keepPreviousData,
+  });
 
   return {
     ...result,

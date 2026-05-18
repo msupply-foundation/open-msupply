@@ -12,6 +12,7 @@ import {
   Typography,
   DateTimePickerInput,
   DateUtils,
+  Formatter,
   usePreferences,
 } from '@openmsupply-client/common';
 import { DraftInventoryAdjustment } from '../../api';
@@ -103,7 +104,13 @@ export const AdjustmentForm = ({
                 setDraft(state => ({
                   ...state,
                   backdatedDatetime:
-                    date && !DateUtils.isToday(date) ? date.toISOString() : null,
+                    date && !DateUtils.isToday(date)
+                      ? Formatter.toIsoString(
+                          isInventoryReduction
+                            ? DateUtils.endOfDayOrNull(date)
+                            : DateUtils.startOfDay(date)
+                        )
+                      : null,
                 }))
               }
               maxDate={new Date()}
