@@ -35,7 +35,7 @@
     <td class="table_number">{{line.costPricePerPack | default(value=0)}}</td>
     <td class="table_number">{{line.snapshotNumberOfPacks | round( precision=2)}}</td>
 
-    {% if line.countedNumberOfPacks %}
+    {% if line.countedNumberOfPacks is number %}
     {% set_global Vnumofpackscounted=line.countedNumberOfPacks %}
     {% else %}
     {% set_global Vnumofpackscounted=0 %}

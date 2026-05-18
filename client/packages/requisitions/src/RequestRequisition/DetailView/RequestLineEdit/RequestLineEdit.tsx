@@ -276,6 +276,7 @@ export const RequestLineEdit = ({
                 label={t('label.months-of-stock')}
                 value={draft?.itemStats?.availableMonthsOfStockOnHand}
                 packagingDisplay={t('label.months')}
+                decimalLimit={1}
               />
               {displayForecasting &&
                 renderValueInfoRows([

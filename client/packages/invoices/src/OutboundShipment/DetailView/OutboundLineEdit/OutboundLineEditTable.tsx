@@ -125,24 +125,16 @@ export const OutboundLineEditTable = ({
     data: lines,
     getIsRestrictedRow: row => getIsDisabled(row.original),
     bottomToolbarContent: (
-      <Box
-        sx={{
-          display: 'flex',
-          width: '100%',
-          justifyContent: 'flex-end',
-        }}
-      >
-        <PlaceholderAndTotal
-          allocatedQuantity={allocatedQuantity + (placeholderQuantity ?? 0)}
-          inDoses={allocateIn.type === AllocateInType.Doses}
-          placeholderQuantity={
-            // If no stock lines, show placeholder: 0. Otherwise don't show placeholder unless >0
-            placeholderQuantity === 0 && lines.length
-              ? null
-              : placeholderQuantity
-          }
-        />
-      </Box>
+      <PlaceholderAndTotal
+        allocatedQuantity={allocatedQuantity + (placeholderQuantity ?? 0)}
+        inDoses={allocateIn.type === AllocateInType.Doses}
+        placeholderQuantity={
+          // If no stock lines, show placeholder: 0. Otherwise don't show placeholder unless >0
+          placeholderQuantity === 0 && lines.length
+            ? null
+            : placeholderQuantity
+        }
+      />
     ),
     renderEmptyRowsFallback: () => (
       <Box sx={{ margin: 'auto' }}>

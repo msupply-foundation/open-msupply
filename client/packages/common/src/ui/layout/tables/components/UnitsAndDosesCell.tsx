@@ -19,10 +19,14 @@ export const UnitsAndDosesCell = <T extends MRT_RowData>({
   cell,
   row,
   showAlert,
+  roundUp,
+  decimalLimit,
 }: {
   cell: MRT_Cell<T>;
   row: MRT_Row<T & { item?: ItemData }>;
   showAlert?: boolean;
+  roundUp?: boolean;
+  decimalLimit?: number;
 }) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
@@ -42,6 +46,8 @@ export const UnitsAndDosesCell = <T extends MRT_RowData>({
       <NumericTextDisplay
         value={typeof value === 'number' ? value : undefined}
         defaultValue={UNDEFINED_STRING_VALUE}
+        roundUp={roundUp}
+        decimalLimit={decimalLimit}
       />
       {manageVaccinesInDoses && item?.isVaccine && (
         <Typography

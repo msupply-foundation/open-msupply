@@ -21,6 +21,7 @@ import {
 } from '@openmsupply-client/system';
 import { useHideOverStocked, useRequest } from '../../api';
 import { useRequestLines } from '../../api/hooks/line/useRequestLines';
+import { AncillaryItemsBanner } from './AncillaryItemsBanner';
 
 const MONTHS = [1, 2, 3, 4, 5, 6];
 
@@ -78,6 +79,7 @@ export const Toolbar = () => {
               Input={
                 <InternalSupplierSearchInput
                   disabled={isDisabled || isProgram}
+                  width={250}
                   value={otherParty ?? null}
                   onChange={otherParty =>
                     update({ otherParty: otherParty ?? undefined })
@@ -128,6 +130,7 @@ export const Toolbar = () => {
               {t('info.cannot-edit-program-requisition')}
             </Alert>
           )}
+          <AncillaryItemsBanner />
         </Grid>
         <Grid
           display="flex"

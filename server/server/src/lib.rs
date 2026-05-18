@@ -134,13 +134,13 @@ pub async fn start_server(
     // Wire transaction notifications to the subscription worker.
     // Fired after outermost transaction commits.
     let commit_trigger = subscription_trigger.clone();
-    connection_manager.set_on_commit(std::sync::Arc::new(move |notification| {
-        match notification {
+    connection_manager.set_on_commit(std::sync::Arc::new(
+        move |notification| match notification {
             repository::TransactionNotification::ChangelogInsert => {
                 commit_trigger.send(SubscriptionTrigger::PushQueueChanged);
             }
-        }
-    }));
+        },
+    ));
     let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
     let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init(file_sync_trigger.clone()); // Cloning as we want to expose this for stop messages
     let (ledger_fix_trigger, ledger_fix_driver) = LedgerFixDriver::init();
@@ -314,6 +314,10 @@ pub async fn start_server(
             .configure(config_serve_frontend)
     })
     .disable_signals();
+
+    if let Some(workers) = settings.server.workers {
+        http_server = http_server.workers(workers);
+    }
 
     http_server = match certificates.config() {
         Some(config) => http_server
