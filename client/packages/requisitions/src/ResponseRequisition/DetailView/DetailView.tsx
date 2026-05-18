@@ -6,7 +6,6 @@ import {
   AlertModal,
   RouteBuilder,
   DetailTabs,
-  IndicatorLineRowNode,
   useBreadcrumbs,
   useEditModal,
   useAuthContext,
@@ -20,11 +19,9 @@ import { Toolbar } from './Toolbar/Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { useResponse, ResponseLineFragment, ResponseFragment } from '../api';
+import { useResponse, ResponseLineFragment } from '../api';
 import { IndicatorsTab, Documents } from './Tabs';
 import { ResponseRequisitionLineErrorProvider } from '../context';
-import { ProgramIndicatorFragment } from '../../RequestRequisition/api';
-import { buildIndicatorEditRoute } from './utils';
 import { ResponseLineEditModal } from './ResponseLineEdit';
 import { useResponseColumns } from './columns';
 import { isResponseLinePlaceholderRow } from '../../utils';
@@ -64,24 +61,6 @@ const DetailViewInner = () => {
     [onOpen]
   );
 
-  const onProgramIndicatorClick = useCallback(
-    (
-      programIndicator?: ProgramIndicatorFragment,
-      indicatorLine?: IndicatorLineRowNode,
-      response?: ResponseFragment
-    ) => {
-      if (!response || !indicatorLine) return;
-      navigate(
-        buildIndicatorEditRoute(
-          response.id,
-          String(programIndicator?.code),
-          indicatorLine.id
-        )
-      );
-    },
-    [navigate]
-  );
-
   const onAddItem = () => {
     onOpen();
   };
@@ -96,7 +75,7 @@ const DetailViewInner = () => {
     data: lines,
     isLoading: isFetching,
     isError,
-    getIsPlaceholderRow: isResponseLinePlaceholderRow,
+    getIsPlaceholderRow: row => isResponseLinePlaceholderRow(row.original),
     onRowClick,
     initialSort: { key: 'itemName', dir: 'asc' },
     noDataElement: (
@@ -137,10 +116,9 @@ const DetailViewInner = () => {
     tabs.push({
       Component: (
         <IndicatorsTab
-          onClick={onProgramIndicatorClick}
           isLoading={isLoading || isProgramIndicatorsLoading}
-          response={data}
           indicators={programIndicators?.nodes}
+          disabled={isDisabled}
         />
       ),
       value: t('label.indicators'),

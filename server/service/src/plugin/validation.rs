@@ -41,15 +41,9 @@ pub struct ValidatedPluginBucket {
 }
 
 impl ValidatedPluginBucket {
-    pub fn new(base_dir: &Option<String>) -> anyhow::Result<Self> {
-        let plugin_dir = match base_dir {
-            Some(base_dir) => PathBuf::from_str(base_dir)?.join(PLUGIN_FILE_DIR),
-            None => PathBuf::from_str(PLUGIN_FILE_DIR)?,
-        };
-        let trusted_cert_path = match base_dir {
-            Some(base_dir) => PathBuf::from_str(base_dir)?.join(PLUGIN_CERT_DIR),
-            None => PathBuf::from_str(PLUGIN_CERT_DIR)?,
-        };
+    pub fn new(base_dir: &str) -> anyhow::Result<Self> {
+        let plugin_dir = PathBuf::from_str(base_dir)?.join(PLUGIN_FILE_DIR);
+        let trusted_cert_path = PathBuf::from_str(base_dir)?.join(PLUGIN_CERT_DIR);
 
         Ok(ValidatedPluginBucket {
             plugin_dir,
@@ -72,8 +66,7 @@ impl ValidatedPluginBucket {
             return Ok(plugin.clone());
         }
         Err(anyhow::Error::msg(format!(
-            "Failed to validate plugin: {:?}",
-            path
+            "Failed to validate plugin: {path:?}"
         )))
     }
 
@@ -156,10 +149,9 @@ pub fn sign_plugin(
     out_file.write_all(manifest.as_bytes())?;
 
     // Sign
-    let mut rng = rand::thread_rng();
     let signing_key = SigningKey::<Sha256>::new(private_key);
 
-    let signature = signing_key.sign_with_rng(&mut rng, manifest.as_bytes());
+    let signature = signing_key.sign_with_rng(&mut rsa::rand_core::OsRng, manifest.as_bytes());
     // Write signature
     let signature_pem = pem::encode(&Pem::new(SIGNATURE_TAG, signature.to_bytes()));
     let out_path = PathBuf::from(plugin_path).join(MANIFEST_SIGNATURE_FILE);
@@ -284,7 +276,7 @@ fn verify_rsa_signature(
         match VerifyingKey::<Sha256>::new(public_key).verify(manifest, &signature) {
             Ok(_) => true,
             Err(err) => {
-                log::warn!("Failed to validate plugin: {}", err);
+                log::warn!("Failed to validate plugin: {err}");
                 false
             }
         },

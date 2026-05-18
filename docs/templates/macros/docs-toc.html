@@ -1,0 +1,99 @@
+{% macro docs_toc(page, edit_path="") %}
+  {% if page.toc %}
+  {% set first_entry = page.toc | first %}
+  {# If TOC has a single h1 entry with children, use those children as top-level #}
+  {% if page.toc | length == 1 and first_entry.children %}
+    {% set toc_entries = first_entry.children %}
+  {% else %}
+    {% set toc_entries = page.toc %}
+  {% endif %}
+  <nav class="docs-toc d-none d-xl-block" aria-label="Table of contents">
+    <div class="page-links">
+      <h3>On this page</h3>
+      <ul id="toc-list">
+        {% for h2 in toc_entries %}
+          <li>
+            <a href="{{ h2.permalink | safe }}" class="toc-link">{{ h2.title }}</a>
+            {% if h2.children %}
+              <ul>
+                {% for h3 in h2.children %}
+                  <li>
+                    <a href="{{ h3.permalink | safe }}" class="toc-link">{{ h3.title }}</a>
+                    {% if h3.children %}
+                      <ul>
+                        {% for h4 in h3.children %}
+                          <li><a href="{{ h4.permalink | safe }}" class="toc-link">{{ h4.title }}</a></li>
+                        {% endfor %}
+                      </ul>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+      {% if edit_path and config.extra.edit_page %}
+      <div class="docs-edit-page">
+        <a href="{{ config.extra.docs_repo }}/edit/{{ config.extra.repo_branch }}/docs/content/{{ edit_path }}" target="_blank" rel="noopener">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit this page
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </nav>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var tocLinks = document.querySelectorAll('#toc-list .toc-link');
+    if (!tocLinks.length) return;
+
+    var headings = [];
+    tocLinks.forEach(function(link) {
+      var id = link.getAttribute('href').split('#').pop();
+      var el = document.getElementById(id);
+      if (el) headings.push({ el: el, link: link });
+    });
+
+    function updateActive() {
+      var scrollY = window.scrollY + 80; // offset for sticky header
+      var active = headings[0];
+
+      for (var i = 0; i < headings.length; i++) {
+        if (headings[i].el.offsetTop <= scrollY) {
+          active = headings[i];
+        }
+      }
+
+      tocLinks.forEach(function(l) { l.classList.remove('active'); });
+      if (active) active.link.classList.add('active');
+    }
+
+    var ticking = false;
+    window.addEventListener('scroll', function() {
+      if (!ticking) {
+        requestAnimationFrame(function() {
+          updateActive();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+
+    updateActive();
+  });
+  </script>
+  {% elif edit_path and config.extra.edit_page %}
+  <nav class="docs-toc d-none d-xl-block" aria-label="Page actions">
+    <div class="page-links">
+      <div class="docs-edit-page" style="border: none; margin: 0; padding: 0;">
+        <a href="{{ config.extra.docs_repo }}/edit/{{ config.extra.repo_branch }}/docs/content/{{ edit_path }}" target="_blank" rel="noopener">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit this page
+        </a>
+      </div>
+    </div>
+  </nav>
+  {% endif %}
+{% endmacro %}

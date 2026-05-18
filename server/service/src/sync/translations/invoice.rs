@@ -1,25 +1,25 @@
 use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
-use crate::sync::translations::shipping_method::ShippingMethodTranslation;
 use crate::sync::translations::{
     clinician::ClinicianTranslation, currency::CurrencyTranslation,
     diagnosis::DiagnosisTranslation, name::NameTranslation,
-    name_insurance_join::NameInsuranceJoinTranslation, store::StoreTranslation, to_legacy_time,
+    name_insurance_join::NameInsuranceJoinTranslation, purchase_order::PurchaseOrderTranslation,
+    shipping_method::ShippingMethodTranslation, store::StoreTranslation, to_legacy_time,
 };
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    name_insurance_join_row::NameInsuranceJoinRowRepository, ChangelogRow, ChangelogTableName,
-    CurrencyFilter, CurrencyRepository, CurrencyRowRepository, DiagnosisRowRepository, EqualFilter,
-    Invoice, InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceRowRepository,
-    InvoiceStatus, InvoiceType, KeyValueStoreRepository, NameRow, NameRowRepository,
-    StorageConnection, StoreFilter, StoreRepository,
-    StoreRowRepository, SyncBufferRow, UserAccountRow, UserAccountRowRepository,
+    ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, CurrencyRowRepository,
+    DiagnosisRowRepository, EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, InvoiceRow,
+    InvoiceRowDelete, InvoiceRowRepository, InvoiceStatus, InvoiceType, KeyValueStoreRepository,
+    NameRow, NameRowRepository, StorageConnection, StoreFilter, StoreRepository, StoreRowRepository,
+    SyncBufferRow, UserAccountRow, UserAccountRowRepository,
 };
+use repository::name_insurance_join_row::NameInsuranceJoinRowRepository;
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 use util::sync_serde::{
     date_option_to_isostring, date_to_isostring, empty_str_as_option, empty_str_as_option_string,
-    naive_time, zero_date_as_option, zero_f64_as_none,
+    naive_time, object_fields_as_option, zero_date_as_option, zero_f64_as_none,
 };
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -120,6 +120,14 @@ pub enum TransactMode {
     #[serde(other)]
     Others,
 }
+#[derive(Deserialize, Serialize, Default)]
+pub struct TransactRowOmsFields {
+    #[serde(default)]
+    pub charges_local_currency: f64,
+    #[serde(default)]
+    pub charges_foreign_currency: f64,
+}
+
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacyTransactRow {
@@ -152,6 +160,9 @@ pub struct LegacyTransactRow {
     pub transport_reference: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub goods_received_ID: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "original_PO_ID")]
+    pub purchase_order_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub requisition_ID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -278,6 +289,10 @@ pub struct LegacyTransactRow {
     #[serde(rename = "ship_method_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub shipping_method_id: Option<String>,
+
+    #[serde(default)]
+    #[serde(deserialize_with = "object_fields_as_option")]
+    pub oms_fields: Option<TransactRowOmsFields>,
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
@@ -336,6 +351,7 @@ impl SyncTranslation for InvoiceTranslation {
             DiagnosisTranslation.table_name(),
             NameInsuranceJoinTranslation.table_name(),
             ShippingMethodTranslation.table_name(),
+            PurchaseOrderTranslation.table_name(),
         ]
     }
 
@@ -393,9 +409,7 @@ impl SyncTranslation for InvoiceTranslation {
         let mapping = map_legacy(&invoice_type, &data, is_transfer);
 
         let currency_id = match data.currency_id {
-            Some(currency_id) => {
-                Some(currency_id)
-            }
+            Some(currency_id) => Some(currency_id),
             None => {
                 let currency_id = CurrencyRepository::new(connection)
                     .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
@@ -406,6 +420,7 @@ impl SyncTranslation for InvoiceTranslation {
                 Some(currency_id)
             }
         };
+
         // Validate AFTER home-currency fallback; the fallback resolves to a real id.
         let currency_id = clear_invalid_fk(
             connection,
@@ -434,7 +449,6 @@ impl SyncTranslation for InvoiceTranslation {
             |c, id| NameInsuranceJoinRowRepository::new(c).check_exists_by_id(id),
             true,
         )?;
-        
         let shipping_method_id = clear_invalid_fk(
             connection,
             "invoice",
@@ -443,7 +457,18 @@ impl SyncTranslation for InvoiceTranslation {
             data.shipping_method_id,
             |c, id| repository::ShippingMethodRowRepository::new(c).check_exists_by_id(id),
             true,
-         )?;
+        )?;
+        let purchase_order_id = clear_invalid_fk(
+            connection,
+            "invoice",
+            &data.ID,
+            "purchase_order_id",
+            data.purchase_order_id,
+            |c, id| repository::PurchaseOrderRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+
+        let oms_fields = data.oms_fields.unwrap_or_default();
 
         let status = match data.om_status {
             Some(legacy_om_status) => legacy_om_status.to_invoice_status(),
@@ -454,7 +479,7 @@ impl SyncTranslation for InvoiceTranslation {
             id: data.ID,
             user_id: data.user_id,
             store_id: data.store_ID,
-            name_link_id: data.name_ID,
+            name_id: data.name_ID,
             name_store_id,
             invoice_number: data.invoice_num,
             r#type: data.om_type.unwrap_or(invoice_type),
@@ -482,7 +507,7 @@ impl SyncTranslation for InvoiceTranslation {
 
             requisition_id: data.requisition_ID,
             linked_invoice_id: data.linked_transaction_id,
-            default_donor_link_id: data.default_donor_id,
+            default_donor_id: data.default_donor_id,
             transport_reference: data.transport_reference,
             original_shipment_id: data.original_shipment_id,
             backdated_datetime: mapping.backdated_datetime,
@@ -492,8 +517,10 @@ impl SyncTranslation for InvoiceTranslation {
             insurance_discount_amount: data.insurance_discount_amount,
             insurance_discount_percentage: data.insurance_discount_percentage,
             expected_delivery_date: data.expected_delivery_date,
-            goods_received_id: data.goods_received_ID,
+            purchase_order_id,
             shipping_method_id,
+            charges_local_currency: oms_fields.charges_local_currency,
+            charges_foreign_currency: oms_fields.charges_foreign_currency,
         };
 
         // HACK...
@@ -547,7 +574,7 @@ impl SyncTranslation for InvoiceTranslation {
                 InvoiceRow {
                     id,
                     user_id,
-                    name_link_id: _,
+                    name_id: _,
                     name_store_id: _,
                     store_id,
                     invoice_number,
@@ -581,9 +608,11 @@ impl SyncTranslation for InvoiceTranslation {
                     insurance_discount_percentage,
                     is_cancellation,
                     expected_delivery_date,
-                    default_donor_link_id: default_donor_id,
-                    goods_received_id,
+                    default_donor_id,
+                    purchase_order_id,
                     shipping_method_id,
+                    charges_local_currency,
+                    charges_foreign_currency,
                 },
             name_row,
             clinician_row,
@@ -656,9 +685,14 @@ impl SyncTranslation for InvoiceTranslation {
             insurance_discount_percentage,
             is_cancellation,
             expected_delivery_date,
-            default_donor_id,
-            goods_received_ID: goods_received_id,
+            default_donor_id: default_donor_id,
+            goods_received_ID: None,
+            purchase_order_id,
             shipping_method_id,
+            oms_fields: Some(TransactRowOmsFields {
+                charges_local_currency,
+                charges_foreign_currency,
+            }),
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
@@ -1077,9 +1111,6 @@ mod tests {
         .await;
 
         // FK validation requires the records referenced by test data to exist.
-        // The test data uses currency ids "NEW_ZEALAND_DOLLARS" and "AUSTRALIAN_DOLLARS"
-        // (note plural — different from the AUSTRALIAN_DOLLAR mock) plus a name_insurance_join
-        // and shipping_method id. Insert them directly since MockData doesn't carry these fields.
         for currency in [
             CurrencyRow {
                 id: "NEW_ZEALAND_DOLLARS".to_string(),
@@ -1113,7 +1144,7 @@ mod tests {
             .unwrap();
         NameInsuranceJoinRow {
             id: "NAME_INSURANCE_JOIN_1_ID".to_string(),
-            name_link_id: "name_a".to_string(),
+            name_id: "name_a".to_string(),
             insurance_provider_id: "INSURANCE_PROVIDER_1".to_string(),
             policy_number_person: None,
             policy_number_family: None,
@@ -1143,6 +1174,9 @@ mod tests {
         }
         .upsert(&connection)
         .unwrap();
+        repository::PurchaseOrderRowRepository::new(&connection)
+            .upsert_one(&repository::mock::mock_purchase_order_a())
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
@@ -1207,11 +1241,10 @@ mod tests {
         }
     }
 
-    /// FK validation: when currency_id, diagnosis_id, name_insurance_join_id and
-    /// shipping_method_id all reference records that don't exist, the translator should null
-    /// each one on the translated row and write a SyncTranslationFkError for each.
-    /// Other optional FKs on InvoiceRow (user_id, requisition_id, etc.) aren't validated yet
-    /// because their target tables aren't in pull_dependencies().
+    /// FK validation: when currency_id, diagnosis_id, name_insurance_join_id,
+    /// shipping_method_id and purchase_order_id all reference records that don't exist, the
+    /// translator should null each one on the translated row and write a SyncTranslationFkError
+    /// for each.
     #[actix_rt::test]
     async fn test_invoice_clears_invalid_optional_fks_and_writes_system_log() {
         let translator = InvoiceTranslation {};
@@ -1271,7 +1304,8 @@ mod tests {
               "is_cancellation": false,
               "insuranceDiscountAmount": 0,
               "insuranceDiscountRate": 0,
-              "goods_received_ID": ""
+              "goods_received_ID": "",
+              "original_PO_ID": "does_not_exist_purchase_order"
             }"#
             .to_string(),
             action: SyncAction::Upsert,
@@ -1282,9 +1316,6 @@ mod tests {
             .try_translate_from_upsert_sync_record(&connection, &sync_record)
             .unwrap();
         let debug = format!("{result:?}");
-        // currency_id falls back to the home currency when the supplied one is invalid +
-        // missing — but our supplied id is invalid (Some), so the helper clears it. There's
-        // no further fallback.
         assert!(
             debug.contains("currency_id: None"),
             "{}",
@@ -1305,6 +1336,11 @@ mod tests {
             "{}",
             format!("expected shipping_method_id None; got:\n{debug}")
         );
+        assert!(
+            debug.contains("purchase_order_id: None"),
+            "{}",
+            format!("expected purchase_order_id None; got:\n{debug}")
+        );
 
         let logs = SystemLogRowRepository::new(&connection)
             .find_all()
@@ -1313,6 +1349,6 @@ mod tests {
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
             .collect();
-        assert_eq!(fk_errors.len(), 4, "got {fk_errors:?}");
+        assert_eq!(fk_errors.len(), 5, "got {fk_errors:?}");
     }
 }

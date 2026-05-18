@@ -195,7 +195,7 @@ pub fn get_products_at_risk_item_ids(
                 return None;
             }
             let months_of_stock = stats.total_stock_on_hand / stats.average_monthly_consumption;
-            let is_at_risk = months_of_stock < show_low_stock_alerts as f64;
+            let is_at_risk = months_of_stock < show_low_stock_alerts;
 
             (is_at_risk == product_at_risk).then_some(id)
         })

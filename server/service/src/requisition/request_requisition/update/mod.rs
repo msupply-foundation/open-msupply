@@ -39,7 +39,7 @@ pub struct UpdateRequestRequisition {
     pub min_months_of_stock: Option<f64>,
     pub status: Option<UpdateRequestRequisitionStatus>,
     pub expected_delivery_date: Option<NaiveDate>,
-    pub original_customer_id: Option<NullableUpdate<String>>,
+    pub destination_customer_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -58,11 +58,11 @@ pub enum UpdateRequestRequisitionError {
     OrderTypeNotFound,
     OrderingTooManyItems(i32), // emergency order
     ReasonsNotProvided(Vec<RequisitionLine>),
-    // Original customer validation
-    OriginalCustomerNotACustomer,
-    OriginalCustomerNotVisible,
-    OriginalCustomerDoesNotExist,
-    OriginalCustomerIsNotAStore,
+    // Destination customer validation
+    DestinationCustomerNotACustomer,
+    DestinationCustomerNotVisible,
+    DestinationCustomerDoesNotExist,
+    DestinationCustomerIsNotAStore,
     // Internal
     UpdatedRequisitionDoesNotExist,
     PluginError(PluginError),

@@ -157,20 +157,27 @@ export const StockItemSearchInput = ({
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       open={selectControl.isOn}
       paginationDebounce={PAGINATION_DEBOUNCE_TIMEOUT}
-      onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
+      onPageChange={() => fetchNextPage()}
       mapOptions={items =>
         defaultOptionMapper(items, 'name').sort((a, b) =>
           a.label.localeCompare(b.label)
         )
       }
       inputValue={search}
+      // Default MUI behaviour clears typed text on blur; keep it so an
+      // accidental click-out doesn't lose the user's in-progress search.
+      clearOnBlur={false}
+      onClear={() => {
+        setSearch('');
+        setSelectedCode('');
+        onFilter('');
+      }}
       inputProps={{
         onChange: e => {
           const { value } = e.target;
           setSearch(value);
           debounceOnFilter(getItemNameFilterValue(value, selectedCode));
         },
-        onBlur: () => setSearch(currentItem ? getOptionLabel(currentItem) : ''),
       }}
     />
   );

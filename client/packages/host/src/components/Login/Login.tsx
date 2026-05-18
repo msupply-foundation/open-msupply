@@ -5,6 +5,7 @@ import {
   useInterval,
   LoadingButton,
   useHostContext,
+  useAuthContext,
   LocalStorage,
   useFormatDateTime,
   BoxedErrorWithDetails,
@@ -15,15 +16,16 @@ import { LoginLayout } from './LoginLayout';
 import { SiteInfo } from '../SiteInfo';
 import { useHost } from '../../api';
 
-export const Login = () => {
+export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
   const t = useTranslation();
   const { setPageTitle } = useHostContext();
+  const { logout } = useAuthContext();
   const hashInput = {
     logo: LocalStorage.getItem('/theme/logohash') ?? '',
     theme: LocalStorage.getItem('/theme/customhash') ?? '',
   };
   const { data: displaySettings } = useHost.settings.displaySettings(hashInput);
-  const passwordRef = React.useRef(null);
+  const passwordRef = React.useRef<HTMLInputElement>(null);
   const {
     isValid,
     password,
@@ -34,7 +36,7 @@ export const Login = () => {
     onLogin,
     error,
     siteName,
-  } = useLoginForm(passwordRef);
+  } = useLoginForm(passwordRef, fullSize);
   const [timeoutRemaining, setTimeoutRemaining] = useState(
     error?.timeoutRemaining ?? 0
   );
@@ -130,10 +132,23 @@ export const Login = () => {
     }
   }, [displaySettings]);
 
+  // logout must only run once on mount — if it shares deps with the page
+  // title effect (which re-runs when `t` changes), an i18n language change
+  // during a startTransition navigation will re-trigger logout and wipe the
+  // auth cookie mid-login.
   useEffect(() => {
-    setPageTitle(`${t('app.login')} | ${t('app')} `);
-    LocalStorage.removeItem('/error/auth');
-  }, [setPageTitle, t]);
+    if (fullSize) {
+      logout();
+      LocalStorage.removeItem('/error/auth');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (fullSize) {
+      setPageTitle(`${t('app.login')} | ${t('app')} `);
+    }
+  }, [setPageTitle, t, fullSize]);
 
   return (
     <LoginLayout
@@ -188,6 +203,7 @@ export const Login = () => {
             details={error.detail || ''}
             error={loginError.error}
             hint={loginError.hint}
+            width="100%"
           />
         )
       }
@@ -195,6 +211,7 @@ export const Login = () => {
         if (isValid) await onLogin();
       }}
       SiteInfo={<SiteInfo siteName={siteName} />}
+      fullSize={fullSize}
     />
   );
 };

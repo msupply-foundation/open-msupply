@@ -9,6 +9,8 @@ import {
   UNDEFINED_STRING_VALUE,
   Grid,
   useTheme,
+  DateUtils,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../../api';
 import { useDiagnosisOptions } from '../../api/hooks/useDiagnosisOptions';
@@ -22,7 +24,13 @@ type Option = { id: string; value: string; label: string };
 export const PatientDetailsComponent = () => {
   const theme = useTheme();
   const t = useTranslation();
+  const { localisedDate } = useFormatDateTime();
   const [selected, setSelected] = useState<Option | null>();
+
+  const formatNaiveDate = (date?: string | null) => {
+    const naive = DateUtils.getNaiveDate(date);
+    return naive ? localisedDate(naive) : UNDEFINED_STRING_VALUE;
+  };
 
   const {
     query: { data },
@@ -46,10 +54,10 @@ export const PatientDetailsComponent = () => {
   const displayValue =
     selected === undefined
       ? {
-          label: diagnosis?.description ?? '',
-          value: diagnosis?.id ?? '',
-          id: diagnosis?.id ?? '',
-        }
+        label: diagnosis?.description ?? '',
+        value: diagnosis?.id ?? '',
+        id: diagnosis?.id ?? '',
+      }
       : selected;
 
   return (
@@ -67,9 +75,7 @@ export const PatientDetailsComponent = () => {
 
         <PanelRow>
           <PanelLabel fontWeight="bold">{t('label.date-of-birth')}</PanelLabel>
-          <PanelField>
-            {patient?.dateOfBirth ?? UNDEFINED_STRING_VALUE}
-          </PanelField>
+          <PanelField>{formatNaiveDate(patient?.dateOfBirth)}</PanelField>
         </PanelRow>
 
         <PanelRow>

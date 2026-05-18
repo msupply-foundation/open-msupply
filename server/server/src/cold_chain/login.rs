@@ -31,7 +31,7 @@ pub async fn post_login(
 ) -> HttpResponse {
     let cookie = match do_login(user_info, service_provider, auth_data).await {
         Ok(cookie) => cookie,
-        Err(error) => return HttpResponse::InternalServerError().body(format!("{:#?}", error)),
+        Err(error) => return HttpResponse::InternalServerError().body(format!("{error:#?}")),
     };
     match cookie {
         Some(cookie) => HttpResponse::Ok()
@@ -78,13 +78,13 @@ async fn do_login(
                         .finish(),
                 ),
                 Err(error) => {
-                    error!("{:#?}", error);
+                    error!("{error:#?}");
                     None
                 }
             }
         }
         Err(error) => {
-            error!("{:#?}", error);
+            error!("{error:#?}");
             None
         }
     };

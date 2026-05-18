@@ -6,7 +6,7 @@ import {
   RequisitionReasonsNotProvidedErrorFragmentDoc,
   ProgramIndicatorFragmentDoc,
 } from '../../RequestRequisition/api/operations.generated';
-import { ItemWithStatsFragmentDoc } from '../../../../system/src/RequestRequisitionLine/operations.generated';
+import { ItemWithAvailableStockFragmentDoc } from '../../../../system/src/RequestRequisitionLine/operations.generated';
 import { ReasonOptionRowFragmentDoc } from '../../../../system/src/ReasonOption/api/operations.generated';
 import { SyncFileReferenceFragmentDoc } from '../../../../system/src/Documents/types.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
@@ -97,6 +97,9 @@ export type ResponseLineFragment = {
   requisitionId: string;
   approvedQuantity: number;
   approvalComment?: string | null;
+  forecastTotalUnits?: number | null;
+  forecastTotalDoses?: number | null;
+  vaccineCourses?: string | null;
   itemStats: {
     __typename: 'ItemStatsNode';
     stockOnHand: number;
@@ -113,15 +116,6 @@ export type ResponseLineFragment = {
     isVaccine: boolean;
     doses: number;
     availableStockOnHand: number;
-    stats: {
-      __typename: 'ItemStatsNode';
-      averageMonthlyConsumption: number;
-      availableStockOnHand: number;
-      availableMonthsOfStockOnHand?: number | null;
-      totalConsumption: number;
-      stockOnHand: number;
-      monthsOfStockOnHand?: number | null;
-    };
   };
   linkedRequisitionLine?: {
     __typename: 'RequisitionLineNode';
@@ -233,6 +227,9 @@ export type ResponseFragment = {
       requisitionId: string;
       approvedQuantity: number;
       approvalComment?: string | null;
+      forecastTotalUnits?: number | null;
+      forecastTotalDoses?: number | null;
+      vaccineCourses?: string | null;
       itemStats: {
         __typename: 'ItemStatsNode';
         stockOnHand: number;
@@ -249,15 +246,6 @@ export type ResponseFragment = {
         isVaccine: boolean;
         doses: number;
         availableStockOnHand: number;
-        stats: {
-          __typename: 'ItemStatsNode';
-          averageMonthlyConsumption: number;
-          availableStockOnHand: number;
-          availableMonthsOfStockOnHand?: number | null;
-          totalConsumption: number;
-          stockOnHand: number;
-          monthsOfStockOnHand?: number | null;
-        };
       };
       linkedRequisitionLine?: {
         __typename: 'RequisitionLineNode';
@@ -402,6 +390,9 @@ export type ResponseByNumberQuery = {
             requisitionId: string;
             approvedQuantity: number;
             approvalComment?: string | null;
+            forecastTotalUnits?: number | null;
+            forecastTotalDoses?: number | null;
+            vaccineCourses?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               stockOnHand: number;
@@ -418,15 +409,6 @@ export type ResponseByNumberQuery = {
               isVaccine: boolean;
               doses: number;
               availableStockOnHand: number;
-              stats: {
-                __typename: 'ItemStatsNode';
-                averageMonthlyConsumption: number;
-                availableStockOnHand: number;
-                availableMonthsOfStockOnHand?: number | null;
-                totalConsumption: number;
-                stockOnHand: number;
-                monthsOfStockOnHand?: number | null;
-              };
             };
             linkedRequisitionLine?: {
               __typename: 'RequisitionLineNode';
@@ -579,6 +561,9 @@ export type ResponseByIdQuery = {
             requisitionId: string;
             approvedQuantity: number;
             approvalComment?: string | null;
+            forecastTotalUnits?: number | null;
+            forecastTotalDoses?: number | null;
+            vaccineCourses?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               stockOnHand: number;
@@ -595,15 +580,6 @@ export type ResponseByIdQuery = {
               isVaccine: boolean;
               doses: number;
               availableStockOnHand: number;
-              stats: {
-                __typename: 'ItemStatsNode';
-                averageMonthlyConsumption: number;
-                availableStockOnHand: number;
-                availableMonthsOfStockOnHand?: number | null;
-                totalConsumption: number;
-                stockOnHand: number;
-                monthsOfStockOnHand?: number | null;
-              };
             };
             linkedRequisitionLine?: {
               __typename: 'RequisitionLineNode';
@@ -1093,6 +1069,7 @@ export type ProgramIndicatorsQuery = {
           columnNumber: number;
           name: string;
           valueType?: Types.IndicatorValueTypeNode | null;
+          isActive: boolean;
           value?: {
             __typename: 'IndicatorValueNode';
             id: string;
@@ -1106,6 +1083,7 @@ export type ProgramIndicatorsQuery = {
           lineNumber: number;
           name: string;
           valueType?: Types.IndicatorValueTypeNode | null;
+          isActive: boolean;
         };
         customerIndicatorInfo: Array<{
           __typename: 'CustomerIndicatorInformationNode';
@@ -1148,7 +1126,7 @@ export type InsertRequestFromResponseRequisitionMutationVariables =
 
 export type InsertRequestFromResponseRequisitionMutation = {
   __typename: 'Mutations';
-  insertFromResponseRequisition:
+  insertRequestFromResponseRequisition:
     | {
         __typename: 'InsertFromResponseRequisitionError';
         error:
@@ -1211,7 +1189,7 @@ export const ResponseLineFragmentDoc = gql`
       averageMonthlyConsumption
     }
     item {
-      ...ItemWithStats
+      ...ItemWithAvailableStock
     }
     approvedQuantity
     approvalComment
@@ -1228,8 +1206,11 @@ export const ResponseLineFragmentDoc = gql`
     availableVolumeAtLocationType {
       ...AvailableVolumeAtLocationType
     }
+    forecastTotalUnits
+    forecastTotalDoses
+    vaccineCourses
   }
-  ${ItemWithStatsFragmentDoc}
+  ${ItemWithAvailableStockFragmentDoc}
   ${ReasonOptionRowFragmentDoc}
   ${AvailableVolumeAtLocationTypeFragmentDoc}
 `;
@@ -1884,7 +1865,7 @@ export const InsertRequestFromResponseRequisitionDocument = gql`
     $storeId: String!
     $input: InsertFromResponseRequisitionInput!
   ) {
-    insertFromResponseRequisition(input: $input, storeId: $storeId) {
+    insertRequestFromResponseRequisition(input: $input, storeId: $storeId) {
       ... on RequisitionNode {
         __typename
         id

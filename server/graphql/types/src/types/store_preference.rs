@@ -68,6 +68,12 @@ impl StorePreferenceNode {
         &self.store_preference.extra_fields_in_requisition
     }
 
+    pub async fn keep_requisition_lines_with_zero_requested_quantity_on_finalised(&self) -> &bool {
+        &self
+            .store_preference
+            .keep_requisition_lines_with_zero_requested_quantity_on_finalised
+    }
+
     pub async fn manually_link_internal_order_to_inbound_shipment(&self) -> &bool {
         &self
             .store_preference
@@ -95,7 +101,7 @@ impl StorePreferenceNode {
                     .monthly_consumption_look_back_period
                     == 0.0
                 {
-                    DEFAULT_AMC_LOOKBACK_MONTHS.into()
+                    DEFAULT_AMC_LOOKBACK_MONTHS
                 } else {
                     store_preference.monthly_consumption_look_back_period
                 },

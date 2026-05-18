@@ -50,7 +50,7 @@ export const useTemperatureNotificationList = (queryParams?: ListParams) => {
   const query = useQuery({
     queryKey,
     queryFn,
-    cacheTime: POLLING_INTERVAL_MS,
+    gcTime: POLLING_INTERVAL_MS,
     refetchInterval: POLLING_INTERVAL_MS,
     staleTime: STALE_TIME_MS,
     enabled: !!storeId && canViewSensorDetails,

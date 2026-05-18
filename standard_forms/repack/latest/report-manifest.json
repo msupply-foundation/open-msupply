@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "2.6.2",
+  "version": "2.6.3",
   "code": "repack",
   "context": "REPACK",
   "name": "Repack",
@@ -8,6 +8,5 @@
     "gql": "repack.graphql"
   },
   "arguments": {},
-  "header": "header.html",
-  "footer": "footer.html"
+  "header": "header.html"
 }

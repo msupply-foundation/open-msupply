@@ -55,7 +55,10 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
             .set(vaccine_course_item_row)
             .execute(self.connection.lock().connection())?;
 
-        self.insert_changelog(vaccine_course_item_row.id.to_string(), RowActionType::Upsert)
+        self.insert_changelog(
+            vaccine_course_item_row.id.to_string(),
+            RowActionType::Upsert,
+        )
     }
 
     fn insert_changelog(

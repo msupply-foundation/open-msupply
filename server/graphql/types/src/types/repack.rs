@@ -97,8 +97,7 @@ impl RepackStockLineNode {
             let loader = ctx.get_loader::<DataLoader<StockLineByIdLoader>>();
             let stock_line = loader.load_one(stock_line_id.clone()).await?.ok_or(
                 StandardGraphqlError::InternalError(format!(
-                    "Cannot find stock line {}",
-                    stock_line_id
+                    "Cannot find stock line {stock_line_id}"
                 ))
                 .extend(),
             )?;

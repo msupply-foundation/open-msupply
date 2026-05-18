@@ -63,7 +63,7 @@ impl MigrationFragment for Migrate {
                         .filter(sync_buffer::record_id.eq(&id))
                         .set(sync_buffer::integration_error.eq(e.to_string()))
                         .execute(connection.lock().connection())?;
-                    println!("Error parsing legacy row for ID {}: {}", id, e);
+                    println!("Error parsing legacy row for ID {id}: {e}");
                     continue;
                 }
             };

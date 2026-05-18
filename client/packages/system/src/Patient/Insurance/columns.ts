@@ -1,6 +1,7 @@
 import {
   ColumnDef,
   ColumnType,
+  ExpiryDateCell,
   useTranslation,
 } from '@openmsupply-client/common';
 import { InsuranceFragment } from '../apiModern/operations.generated';
@@ -33,6 +34,7 @@ export const useInsuranceColumns = () => {
         accessorKey: 'expiryDate',
         header: t('label.expiry-date'),
         columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
       },
       {
         id: 'isActive',

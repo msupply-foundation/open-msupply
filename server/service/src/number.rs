@@ -1,5 +1,4 @@
 use repository::{
-    goods_received_row::GoodsReceivedRowRepository, GoodsReceivedLineRowRepository,
     InvoiceRowRepository, InvoiceType, NumberRowRepository, NumberRowType,
     PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, RepositoryError,
     RequisitionRowRepository, RequisitionType, StocktakeRowRepository, StorageConnection,
@@ -49,15 +48,9 @@ pub fn next_number(
                 .find_max_invoice_number(InvoiceType::SupplierReturn, store_id)?,
             NumberRowType::PurchaseOrder => PurchaseOrderRowRepository::new(connection_tx)
                 .find_max_purchase_order_number(store_id)?,
-            NumberRowType::GoodsReceived => GoodsReceivedRowRepository::new(connection_tx)
-                .find_max_goods_received_number(store_id)?,
             NumberRowType::PurchaseOrderLine(purchase_order_id) => {
                 PurchaseOrderLineRowRepository::new(connection_tx)
                     .find_max_purchase_order_line_number(purchase_order_id)?
-            }
-            NumberRowType::GoodsReceivedLine(goods_received_id) => {
-                GoodsReceivedLineRowRepository::new(connection_tx)
-                    .find_max_goods_received_line_number(goods_received_id)?
             }
             NumberRowType::Program(_) => {
                 let next_number =
@@ -102,7 +95,7 @@ mod test {
         fn invoice1() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice1".to_string(),
-                name_link_id: mock_name_c().id,
+                name_id: mock_name_c().id,
                 store_id: mock_store_c().id,
                 r#type: InvoiceType::OutboundShipment,
                 invoice_number: 100,
@@ -112,7 +105,7 @@ mod test {
         fn unassigned_requisition() -> RequisitionRow {
             RequisitionRow {
                 id: "unassigned_requisition".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_c().id,
                 r#type: RequisitionType::Response,
                 requisition_number: -1,
@@ -252,7 +245,7 @@ mod test {
 
         let a = process_a.join().unwrap();
         let b = process_b.join().unwrap();
-        println!("next_number (INSERT) results : a={} b={}", a, b);
+        println!("next_number (INSERT) results : a={a} b={b}");
         assert!(a != b);
 
         let manager_a = connection_manager.clone();
@@ -278,7 +271,7 @@ mod test {
         let a = process_a.join().unwrap();
         let b = process_b.join().unwrap();
 
-        println!("next_number (UPDATE) results : a={} b={}", a, b);
+        println!("next_number (UPDATE) results : a={a} b={b}");
         assert!(a != b);
     }
 
@@ -330,7 +323,7 @@ mod test {
         let mut unique_numbers = HashSet::new();
         for handle in handles {
             let num = handle.join().unwrap();
-            println!("num: {}", num);
+            println!("num: {num}");
             let new_value = unique_numbers.insert(num);
             assert!(new_value);
         }

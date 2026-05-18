@@ -7,7 +7,6 @@ import {
   Theme,
 } from '@mui/material';
 import { Property } from 'csstype';
-import { useIntlUtils } from '@common/intl';
 import { useAppTheme, useMediaQuery } from '@common/styles';
 interface ButtonProps {
   color?: 'inherit' | 'primary' | 'secondary';
@@ -24,8 +23,8 @@ interface ButtonProps {
 }
 
 const StyledButton = styled(MuiButton, {
-  shouldForwardProp: prop => prop !== 'shrink' && prop !== 'isRtl',
-})<{ isRtl: boolean; shrink: boolean }>(({ isRtl, color, theme, disabled }) => {
+  shouldForwardProp: prop => prop !== 'shrink',
+})<{ shrink: boolean }>(({ color, theme, disabled }) => {
   const iconColor = theme.palette.primary.main;
 
   return {
@@ -34,14 +33,8 @@ const StyledButton = styled(MuiButton, {
     marginRight: 5,
     textTransform: 'none' as Property.TextTransform,
     color: color === 'primary' ? theme.mixins.button.textColor : undefined,
-    isRtl,
-
     '& .MuiButton-startIcon, .MuiSvgIcon-root': {
       color: color === 'primary' && !disabled ? iconColor : color,
-      isRtl: {
-        marginRight: -4,
-        marginLeft: 8,
-      },
     },
   };
 });
@@ -59,7 +52,6 @@ export const FlatButton: React.FC<ButtonProps> = ({
   shrinkThreshold = 'md',
   loading = false,
 }) => {
-  const { isRtl } = useIntlUtils();
   const theme = useAppTheme();
   const isShrinkThreshold = useMediaQuery(
     theme.breakpoints.down(shrinkThreshold)
@@ -79,7 +71,6 @@ export const FlatButton: React.FC<ButtonProps> = ({
       endIcon={endIcon}
       variant="text"
       color={color}
-      isRtl={isRtl}
       sx={sx}
       name={name}
       disabled={loading || disabled}
