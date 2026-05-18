@@ -34,7 +34,7 @@ impl ReportQueries {
         user_language: String,
         id: String,
     ) -> Result<ReportResponse> {
-        report(ctx, store_id, user_language, id)
+        report(ctx, store_id, user_language, id).await
     }
 
     /// Queries a list of available reports
@@ -46,7 +46,7 @@ impl ReportQueries {
         filter: Option<ReportFilterInput>,
         sort: Option<Vec<ReportSortInput>>,
     ) -> Result<ReportsResponse> {
-        reports(ctx, store_id, user_language, filter, sort)
+        reports(ctx, store_id, user_language, filter, sort).await
     }
 
     /// Queries all reports and their respective versions
@@ -67,6 +67,7 @@ impl ReportQueries {
             sort,
             page.map(PaginationOption::from),
         )
+        .await
     }
 
     /// Creates a generated report.
@@ -161,7 +162,7 @@ impl CentralReportMutations {
         ctx: &Context<'_>,
         file_id: String,
     ) -> Result<Vec<String>> {
-        let ids = install_uploaded_reports(ctx, file_id)?;
+        let ids = install_uploaded_reports(ctx, file_id).await?;
         Ok(ids)
     }
 }

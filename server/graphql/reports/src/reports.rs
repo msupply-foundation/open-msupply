@@ -187,7 +187,7 @@ impl ReportConnector {
     }
 }
 
-pub fn report(
+pub async fn report(
     ctx: &Context<'_>,
     store_id: String,
     user_language: String,
@@ -201,24 +201,32 @@ pub fn report(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id, user.user_id)?;
-    let localisations = service_provider
-        .localisations_service
-        .get_localisations(&service_context.connection)?;
+    let service_provider = ctx.service_provider_data();
 
-    match service_provider.report_service.get_report(
-        &service_context,
-        &localisations,
-        user_language,
-        &id,
-    ) {
+    let result = tokio::task::spawn_blocking(
+        move || -> async_graphql::Result<Result<Report, GetReportError>> {
+            let service_context = service_provider.context(store_id, user.user_id)?;
+            let localisations = service_provider
+                .localisations_service
+                .get_localisations(&service_context.connection)?;
+            Ok(service_provider.report_service.get_report(
+                &service_context,
+                &localisations,
+                user_language,
+                &id,
+            ))
+        },
+    )
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    match result {
         Ok(report) => Ok(ReportResponse::Report(ReportNode { row: report })),
         Err(err) => map_report_error(err),
     }
 }
 
-pub fn reports(
+pub async fn reports(
     ctx: &Context<'_>,
     store_id: String,
     user_language: String,
@@ -233,21 +241,31 @@ pub fn reports(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id, user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let domain_filter = filter.map(|f| f.to_domain());
+    let domain_sort = sort
+        .and_then(|mut sort_list| sort_list.pop())
+        .map(|sort| sort.to_domain());
 
-    let localisations = service_provider
-        .localisations_service
-        .get_localisations(&service_context.connection)?;
+    let result = tokio::task::spawn_blocking(
+        move || -> async_graphql::Result<Result<Vec<Report>, GetReportsError>> {
+            let service_context = service_provider.context(store_id, user.user_id)?;
+            let localisations = service_provider
+                .localisations_service
+                .get_localisations(&service_context.connection)?;
+            Ok(service_provider.report_service.query_reports(
+                &service_context,
+                &localisations,
+                user_language,
+                domain_filter,
+                domain_sort,
+            ))
+        },
+    )
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
-    match service_provider.report_service.query_reports(
-        &service_context,
-        &localisations,
-        user_language,
-        filter.map(|f| f.to_domain()),
-        sort.and_then(|mut sort_list| sort_list.pop())
-            .map(|sort| sort.to_domain()),
-    ) {
+    match result {
         Ok(reports) => Ok(ReportsResponse::Response(ReportConnector {
             total_count: reports.len() as u32,
             nodes: reports.into_iter().map(|row| ReportNode { row }).collect(),
@@ -256,7 +274,7 @@ pub fn reports(
     }
 }
 
-pub fn all_report_versions(
+pub async fn all_report_versions(
     ctx: &Context<'_>,
     store_id: String,
     user_language: String,
@@ -272,21 +290,32 @@ pub fn all_report_versions(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id, user.user_id)?;
-    let localisations = &service_provider
-        .localisations_service
-        .get_localisations(&service_context.connection)?;
+    let service_provider = ctx.service_provider_data();
+    let domain_filter = filter.map(|f| f.to_domain());
+    let domain_sort = sort
+        .and_then(|mut sort_list| sort_list.pop())
+        .map(|sort| sort.to_domain());
 
-    let reports = match service_provider.report_service.query_all_report_versions(
-        &service_context,
-        localisations,
-        user_language,
-        filter.map(|f| f.to_domain()),
-        sort.and_then(|mut sort_list| sort_list.pop())
-            .map(|sort| sort.to_domain()),
-        pagination,
-    ) {
+    let result = tokio::task::spawn_blocking(
+        move || -> async_graphql::Result<Result<ListResult<Report>, GetReportsError>> {
+            let service_context = service_provider.context(store_id, user.user_id)?;
+            let localisations = service_provider
+                .localisations_service
+                .get_localisations(&service_context.connection)?;
+            Ok(service_provider.report_service.query_all_report_versions(
+                &service_context,
+                &localisations,
+                user_language,
+                domain_filter,
+                domain_sort,
+                pagination,
+            ))
+        },
+    )
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    let reports = match result {
         Ok(reports) => reports,
         Err(err) => return map_reports_error(err),
     };

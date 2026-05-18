@@ -11,7 +11,10 @@ use service::{
 };
 use util::format_error;
 
-pub fn install_uploaded_reports(ctx: &Context<'_>, file_id: String) -> Result<Vec<String>> {
+pub async fn install_uploaded_reports(
+    ctx: &Context<'_>,
+    file_id: String,
+) -> Result<Vec<String>> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -20,14 +23,19 @@ pub fn install_uploaded_reports(ctx: &Context<'_>, file_id: String) -> Result<Ve
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let settings = ctx.get_settings();
-    let service_ctx = service_provider
-        .basic_context()
-        .map_err(|e| StandardGraphqlError::InternalError(format_error(&e)).extend())?;
+    let service_provider = ctx.service_provider_data();
+    let settings = ctx.get_settings().clone();
 
-    service_provider
-        .report_service
-        .install_uploaded_reports(&service_ctx, settings, UploadedFile { file_id })
-        .map_err(|e| StandardGraphqlError::InternalError(format_error(&e)).extend())
+    tokio::task::spawn_blocking(move || -> Result<Vec<String>> {
+        let service_ctx = service_provider
+            .basic_context()
+            .map_err(|e| StandardGraphqlError::InternalError(format_error(&e)).extend())?;
+
+        service_provider
+            .report_service
+            .install_uploaded_reports(&service_ctx, &settings, UploadedFile { file_id })
+            .map_err(|e| StandardGraphqlError::InternalError(format_error(&e)).extend())
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
 }

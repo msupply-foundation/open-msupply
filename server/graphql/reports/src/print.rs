@@ -5,8 +5,11 @@ use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{ContextExt, RequestUserData};
 use repository::query_json;
 use service::auth::{Resource, ResourceAccessRequest};
+use service::localisations::Localisations;
 use service::report::definition::{GraphQlQuery, PrintReportSort, ReportDefinition, SQLQuery};
-use service::report::report_service::{ReportError, ResolvedReportQuery};
+use service::report::report_service::{
+    ReportError, ResolvedReportDefinition, ResolvedReportQuery,
+};
 
 use crate::PrintFormat;
 
@@ -74,15 +77,34 @@ pub async fn generate_report(
     )?;
 
     let sort = sort.map(|s| s.to_domain());
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
-    let service = &service_provider.report_service;
-    let localisations = &service_provider
-        .localisations_service
-        .get_localisations(&service_context.connection)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id_for_blocking = store_id.clone();
+    let report_id_for_blocking = report_id.clone();
+    let user_id = user.user_id.clone();
 
-    // get the required report
-    let resolved_report = match service.resolve_report(&service_context, &report_id) {
+    // Resolve report and load localisations off the async runtime.
+    let resolved = tokio::task::spawn_blocking({
+        let service_provider = service_provider.clone();
+        move || -> async_graphql::Result<(
+            Localisations,
+            Result<ResolvedReportDefinition, ReportError>,
+        )> {
+            let service_context =
+                service_provider.context(store_id_for_blocking, user_id)?;
+            let localisations = service_provider
+                .localisations_service
+                .get_localisations(&service_context.connection)?;
+            let resolved_report = service_provider
+                .report_service
+                .resolve_report(&service_context, &report_id_for_blocking);
+            Ok((localisations, resolved_report))
+        }
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    let (localisations, resolved_report) = resolved;
+    let resolved_report = match resolved_report {
         Ok(resolved_report) => resolved_report,
         Err(err) => {
             return Ok(PrintReportResponse::Error(PrintReportError {
@@ -91,7 +113,7 @@ pub async fn generate_report(
         }
     };
 
-    // fetch data required for the report
+    // fetch data required for the report (mixes async self_request with sync SQL queries)
     let result = fetch_data(
         ctx,
         &resolved_report.queries,
@@ -113,13 +135,13 @@ pub async fn generate_report(
         }
     };
     // generate the report with the fetched data
-    let file_id = match service.generate_html_report(
+    let file_id = match service_provider.report_service.generate_html_report(
         &ctx.get_settings().server.base_dir,
         &resolved_report,
         report_data,
         arguments,
         format.map(PrintFormat::to_domain),
-        localisations,
+        &localisations,
         current_language,
     ) {
         Ok(file_id) => file_id,
@@ -152,22 +174,42 @@ pub async fn generate_report_definition(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
-    let service = &service_provider.report_service;
-    let localisations = &service_provider
-        .localisations_service
-        .get_localisations(&service_context.connection)?;
+    let service_provider = ctx.service_provider_data();
 
-    // get the required report
+    // get the required report definition
     let report_definition: ReportDefinition = serde_json::from_value(report)
         .map_err(|err| StandardGraphqlError::BadUserInput(format!("{err}")).extend())?;
-    let resolved_report = match service.resolve_report_definition(
-        &service_context,
-        name.unwrap_or("report".to_string()),
-        report_definition,
-        excel_template_buffer,
-    ) {
+
+    let store_id_for_blocking = store_id.clone();
+    let user_id = user.user_id.clone();
+    let name_owned = name.unwrap_or("report".to_string());
+
+    // Resolve report definition and load localisations off the async runtime.
+    let resolved = tokio::task::spawn_blocking({
+        let service_provider = service_provider.clone();
+        move || -> async_graphql::Result<(
+            Localisations,
+            Result<ResolvedReportDefinition, ReportError>,
+        )> {
+            let service_context =
+                service_provider.context(store_id_for_blocking, user_id)?;
+            let localisations = service_provider
+                .localisations_service
+                .get_localisations(&service_context.connection)?;
+            let resolved_report = service_provider.report_service.resolve_report_definition(
+                &service_context,
+                name_owned,
+                report_definition,
+                excel_template_buffer,
+            );
+            Ok((localisations, resolved_report))
+        }
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    let (localisations, resolved_report) = resolved;
+    let resolved_report = match resolved_report {
         Ok(resolved_report) => resolved_report,
         Err(err) => {
             return Ok(PrintReportResponse::Error(PrintReportError {
@@ -176,7 +218,7 @@ pub async fn generate_report_definition(
         }
     };
 
-    // fetch data required for the report
+    // fetch data required for the report (mixes async self_request with sync SQL queries)
     let result = fetch_data(
         ctx,
         &resolved_report.queries,
@@ -199,13 +241,13 @@ pub async fn generate_report_definition(
     };
 
     // generate the report with the fetched data
-    let file_id = match service.generate_html_report(
+    let file_id = match service_provider.report_service.generate_html_report(
         &ctx.get_settings().server.base_dir,
         &resolved_report,
         report_data,
         arguments,
         format.map(PrintFormat::to_domain),
-        localisations,
+        &localisations,
         current_language,
     ) {
         Ok(file_id) => file_id,
