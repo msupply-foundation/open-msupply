@@ -11,7 +11,7 @@ use service::{
     name::update::{UpdateNameProperties, UpdateNamePropertiesError as ServiceError},
 };
 
-pub fn update_name_properties(
+pub async fn update_name_properties(
     ctx: &Context<'_>,
     store_id: &str,
     input: UpdateNamePropertiesInput,
@@ -24,23 +24,30 @@ pub fn update_name_properties(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input: UpdateNameProperties = input.into();
 
-    match service_provider.name_service.update_name_properties(
-        &service_context,
-        store_id,
-        input.into(),
-    ) {
-        Ok(name) => Ok(UpdateNamePropertiesResponse::Response(
-            NameNode::from_domain(name),
-        )),
-        Err(error) => Ok(UpdateNamePropertiesResponse::Error(
-            UpdateNamePropertiesError {
+    let result = tokio::task::spawn_blocking(move || -> Result<UpdateNamePropertiesResponse> {
+        let service_context = service_provider
+            .context(store_id.clone(), user.user_id)
+            .map_err(StandardGraphqlError::from_repository_error)?;
+
+        Ok(match service_provider.name_service.update_name_properties(
+            &service_context,
+            &store_id,
+            domain_input,
+        ) {
+            Ok(name) => UpdateNamePropertiesResponse::Response(NameNode::from_domain(name)),
+            Err(error) => UpdateNamePropertiesResponse::Error(UpdateNamePropertiesError {
                 error: map_error(error)?,
-            },
-        )),
-    }
+            }),
+        })
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    Ok(result)
 }
 
 #[derive(InputObject)]

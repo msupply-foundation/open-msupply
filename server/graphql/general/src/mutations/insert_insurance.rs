@@ -58,7 +58,7 @@ pub enum InsertInsuranceResponse {
     Response(IdResponse),
 }
 
-pub fn insert_insurance(
+pub async fn insert_insurance(
     ctx: &Context<'_>,
     store_id: &str,
     input: InsertInsuranceInput,
@@ -71,14 +71,20 @@ pub fn insert_insurance(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input = input.to_domain();
 
-    map_response(
-        service_provider
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        Ok(service_provider
             .insurance_service
-            .insert_insurance(&service_context, input.to_domain()),
-    )
+            .insert_insurance(&service_context, domain_input))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    map_response(result)
 }
 
 pub fn map_response(

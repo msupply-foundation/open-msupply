@@ -586,7 +586,7 @@ impl GeneralMutations {
         store_id: String,
         input: LogLevelInput,
     ) -> Result<UpsertLogLevelResponse> {
-        update_log_level(ctx, store_id, input)
+        update_log_level(ctx, store_id, input).await
     }
 
     pub async fn update_user(&self, ctx: &Context<'_>) -> Result<update_user::UpdateResponse> {
@@ -598,7 +598,7 @@ impl GeneralMutations {
         ctx: &Context<'_>,
         input: LabelPrinterSettingsInput,
     ) -> Result<UpdateLabelPrinterSettingsResponse> {
-        update_label_printer_settings(ctx, input)
+        update_label_printer_settings(ctx, input).await
     }
 
     pub async fn update_name_properties(
@@ -607,7 +607,7 @@ impl GeneralMutations {
         store_id: String,
         input: UpdateNamePropertiesInput,
     ) -> Result<UpdateNamePropertiesResponse> {
-        update_name_properties(ctx, &store_id, input)
+        update_name_properties(ctx, &store_id, input).await
     }
 
     async fn insert_insurance(
@@ -616,7 +616,7 @@ impl GeneralMutations {
         store_id: String,
         input: InsertInsuranceInput,
     ) -> Result<InsertInsuranceResponse> {
-        insert_insurance(ctx, &store_id, input)
+        insert_insurance(ctx, &store_id, input).await
     }
 
     async fn update_insurance(
@@ -625,7 +625,7 @@ impl GeneralMutations {
         store_id: String,
         input: UpdateInsuranceInput,
     ) -> Result<UpdateInsuranceResponse> {
-        update_insurance(ctx, &store_id, input)
+        update_insurance(ctx, &store_id, input).await
     }
 }
 

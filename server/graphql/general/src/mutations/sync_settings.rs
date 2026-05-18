@@ -28,21 +28,31 @@ pub async fn update_sync_settings(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
-    let database_sync_settings = service_provider
-        .settings
-        .sync_settings(&service_context)?
-        .ok_or(StandardGraphqlError::from_str_slice(
-            "Sync settings are missing after initialisation",
-        ))?;
+    let service_provider = ctx.service_provider_data();
+
+    // Sync prelude (DB-touching) wrapped in spawn_blocking
+    let service_provider_clone = service_provider.clone();
+    let database_sync_settings = tokio::task::spawn_blocking(move || -> Result<_> {
+        let service_context = service_provider_clone
+            .basic_context()
+            .map_err(StandardGraphqlError::from_repository_error)?;
+        service_provider_clone
+            .settings
+            .sync_settings(&service_context)
+            .map_err(StandardGraphqlError::from_repository_error)?
+            .ok_or(StandardGraphqlError::from_str_slice(
+                "Sync settings are missing after initialisation",
+            ))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     let sync_settings = input.to_domain();
 
     if sync_settings.core_site_details_changed(&database_sync_settings) {
         if let Err(error) = service_provider
             .site_info_service
-            .request_and_set_site_info(service_provider, &sync_settings)
+            .request_and_set_site_info(&service_provider, &sync_settings)
             .await
         {
             return Ok(UpdateSyncSettingsResponse::Error(SyncErrorNode::map_error(
@@ -52,10 +62,19 @@ pub async fn update_sync_settings(
     }
 
     // request and set site info above should validate settings, can consider all errors in update_sync_settings as internal errors
-    service_provider
-        .settings
-        .update_sync_settings(&service_context, &sync_settings)
-        .map_err(StandardGraphqlError::from_debug)?;
+    let service_provider_clone = service_provider.clone();
+    let sync_settings_clone = sync_settings.clone();
+    tokio::task::spawn_blocking(move || -> Result<_> {
+        let service_context = service_provider_clone
+            .basic_context()
+            .map_err(StandardGraphqlError::from_repository_error)?;
+        service_provider_clone
+            .settings
+            .update_sync_settings(&service_context, &sync_settings_clone)
+            .map_err(StandardGraphqlError::from_debug)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     Ok(UpdateSyncSettingsResponse::Response(SyncSettingsNode {
         settings: sync_settings,
