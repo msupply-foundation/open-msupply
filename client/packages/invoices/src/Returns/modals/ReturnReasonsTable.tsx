@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import {
   ColumnDef,
+  ColumnType,
+  ExpiryDateCell,
   MaterialTable,
   ReasonOptionNodeType,
   useSimpleMaterialTable,
@@ -55,6 +57,8 @@ export const ReturnReasonsComponent = ({
       {
         accessorKey: 'expiryDate',
         header: t('label.expiry'),
+        columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
         size: 100,
       },
       // 'itemUnit', // not implemented for now

@@ -1,7 +1,7 @@
 import { usePatient } from '@openmsupply-client/system';
 
 export const usePatientSearchQuery = () => {
-  const { data, error, isLoading, mutateAsync } = usePatient.utils.search();
+  const { data, error, isPending: isLoading, mutateAsync } = usePatient.utils.search();
 
   // Leaving as any[] as documentDraft could be any type
   const results =

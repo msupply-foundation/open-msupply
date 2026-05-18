@@ -56,28 +56,30 @@ export const useConfigureNameProperties = () => {
     return primaryProperties;
   };
 
-  return useMutation(
-    (propertyType: PropertyType) => {
+  return useMutation({
+    mutationFn: (propertyType: PropertyType) => {
       const properties = getProperties(propertyType);
       return api.configureNameProperties(properties);
     },
-    {
-      onSuccess: () => queryClient.invalidateQueries(NAME_PROPERTIES_KEY),
-    }
-  );
+
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [NAME_PROPERTIES_KEY]
+    })
+  });
 };
 
 export const useConfigureCustomProperties = () => {
   const api = useHostApi();
   const queryClient = useQueryClient();
 
-  return useMutation(
-    (customProperties: ConfigureNamePropertyInput[]) =>
+  return useMutation({
+    mutationFn: (customProperties: ConfigureNamePropertyInput[]) =>
       api.configureNameProperties(customProperties),
-    {
-      onSuccess: () => queryClient.invalidateQueries(NAME_PROPERTIES_KEY),
-    }
-  );
+
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [NAME_PROPERTIES_KEY]
+    })
+  });
 };
 
 interface NamePropertyStatus {

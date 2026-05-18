@@ -5,8 +5,12 @@ export const useManualSync = () => {
   const api = useSyncApi();
   const queryClient = useQueryClient();
 
-  const mutation = useMutation(api.manualSync, {
-    onSettled: () => queryClient.invalidateQueries(api.keys.syncInfo()),
+  const mutation = useMutation({
+    mutationFn: api.manualSync,
+
+    onSettled: () => queryClient.invalidateQueries({
+      queryKey: api.keys.syncInfo()
+    })
   });
 
   return {

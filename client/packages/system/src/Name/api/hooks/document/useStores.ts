@@ -1,4 +1,4 @@
-import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
+import { useQuery, keepPreviousData, useUrlQueryParams } from '@openmsupply-client/common';
 import { useNameApi } from '../utils/useNameApi';
 
 export const useStores = () => {
@@ -8,11 +8,9 @@ export const useStores = () => {
     filters: [{ key: 'codeOrName' }],
   });
 
-  return useQuery(
-    api.keys.storesList(queryParams),
-    () => api.get.stores(queryParams),
-    {
-      keepPreviousData: true,
-    }
-  );
+  return useQuery({
+    queryKey: api.keys.storesList(queryParams),
+    queryFn: () => api.get.stores(queryParams),
+    placeholderData: keepPreviousData
+  });
 };

@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, ClinicianRow, GenderType, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, ClinicianRow, GenderType, StorageConnection, StoreRowRepository, SyncBufferRow,
     Row,
 
 };
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
 use crate::sync::translations::store::StoreTranslation;
 use util::sync_serde::{empty_str_as_option_string, object_fields_as_option, ok_or_none};
 
@@ -78,7 +78,7 @@ impl SyncTranslation for ClinicianTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _connection: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyClinicianRow {
@@ -97,6 +97,16 @@ impl SyncTranslation for ClinicianTranslation {
             store_id,
             oms_fields,
         } = sync_record.deserialize()?;
+
+        let store_id = clear_invalid_fk(
+            connection,
+            "clinician",
+            &id,
+            "store_id",
+            store_id,
+            |c, id| StoreRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let gender = if let Some(fields) = oms_fields {
             fields.gender
@@ -187,8 +197,9 @@ mod tests {
         use crate::sync::test::test_data::clinician as test_data;
         let translator = ClinicianTranslation {};
 
+        // FK validation requires store_a to exist (test data references it)
         let (_, connection, _, _) =
-            setup_all("test_clinician_translation", MockDataInserts::none()).await;
+            setup_all("test_clinician_translation", MockDataInserts::none().stores()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
