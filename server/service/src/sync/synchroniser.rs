@@ -397,7 +397,7 @@ pub(crate) fn run_post_sync_triggers(
 async fn integrate_and_translate_sync_outer(
     service_provider: &ServiceProvider,
     logger: &mut SyncLogger<'_>,
-    record_type: SyncBufferSource,
+    source_site_id: i32,
     use_transaction: bool,
 ) -> Result<
     (
@@ -419,57 +419,7 @@ async fn integrate_and_translate_sync_outer(
             let result = integrate_and_translate_sync_buffer(
                 &ctx.connection,
                 Some(&mut logger),
-                record_type,
-                use_transaction,
-            )
-            .map_err(SyncError::IntegrationError)?;
-
-            Ok((logger.into_handle(), result))
-        })
-        .await
-        .map_err(|e| SyncError::Other(format!("integrate join error: {e:?}")))??;
-
-    logger.restore(returned_logger_handle);
-
-    Ok(result)
-}
-
-/// Async wrapper around the synchronous `integrate_and_translate_sync_buffer`.
-///
-/// Integration does substantial blocking DB work. Running it directly on a tokio worker
-/// thread starves other tasks scheduled on the same thread — notably the GraphQL
-/// subscription tasks (`sync_info`, `initialisation_status`) that need to fire updates
-/// to clients while a sync is in progress. We hand the work to `spawn_blocking` so the
-/// runtime can keep driving those tasks on its worker threads.
-///
-/// The logger is passed across the blocking boundary via `SyncLoggerHandle` because it
-/// borrows the `StorageConnection`, which only exists inside the blocking closure.
-async fn integrate_and_translate_sync_outer(
-    service_provider: &ServiceProvider,
-    logger: &mut SyncLogger<'_>,
-    record_type: SyncBufferSource,
-    use_transaction: bool,
-) -> Result<
-    (
-        TranslationAndIntegrationResults,
-        TranslationAndIntegrationResults,
-        TranslationAndIntegrationResults,
-    ),
-    SyncError,
-> {
-    let ctx = service_provider.basic_context()?;
-
-    let logger_handle = logger.into_handle();
-
-    let (returned_logger_handle, result) =
-        // Spawn the blocking task on a separate thread to avoid starving the async runtime and blocking other tasks while integrating
-        tokio::task::spawn_blocking(move || -> Result<_, SyncError> {
-            let mut logger = logger_handle.with_connection(&ctx.connection);
-
-            let result = integrate_and_translate_sync_buffer(
-                &ctx.connection,
-                Some(&mut logger),
-                record_type,
+                source_site_id,
                 use_transaction,
             )
             .map_err(SyncError::IntegrationError)?;
