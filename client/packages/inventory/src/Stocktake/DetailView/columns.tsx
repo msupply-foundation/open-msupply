@@ -26,6 +26,11 @@ export const useStocktakeColumns = () => {
     [errors]
   );
 
+  const getRowHasError = useCallback(
+    (row: StocktakeLineFragment) => !!errors?.[row.id],
+    [errors]
+  );
+
   const columns = useMemo(() => {
     const cols: ColumnDef<StocktakeLineFragment>[] = [
       {
@@ -35,6 +40,7 @@ export const useStocktakeColumns = () => {
         size: 120,
         enableColumnFilter: true,
         enableSorting: true,
+        getIsError: getRowHasError,
       },
       {
         accessorKey: 'itemName',
@@ -172,7 +178,13 @@ export const useStocktakeColumns = () => {
       },
     ];
     return cols;
-  }, [t, manageVaccinesInDoses, allowTrackingOfStockByDonor, getIsError]);
+  }, [
+    t,
+    manageVaccinesInDoses,
+    allowTrackingOfStockByDonor,
+    getIsError,
+    getRowHasError,
+  ]);
 
   return columns;
 };
