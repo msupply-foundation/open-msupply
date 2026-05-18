@@ -14,16 +14,25 @@ impl Loader<String> for UserLoader {
     type Error = async_graphql::Error;
 
     async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = UserRepository::new(&connection);
-        Ok(repo
-            .query(
-                Pagination::all(),
-                Some(UserFilter::new().id(EqualFilter::equal_any(keys.to_vec()))),
-                None,
-            )?
-            .into_iter()
-            .map(|user| (user.user_row.id.clone(), user))
-            .collect())
+        let connection_manager = self.connection_manager.clone();
+        let keys = keys.to_vec();
+
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, User>, async_graphql::Error> {
+                let connection = connection_manager.connection()?;
+                let repo = UserRepository::new(&connection);
+                Ok(repo
+                    .query(
+                        Pagination::all(),
+                        Some(UserFilter::new().id(EqualFilter::equal_any(keys))),
+                        None,
+                    )?
+                    .into_iter()
+                    .map(|user| (user.user_row.id.clone(), user))
+                    .collect())
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }

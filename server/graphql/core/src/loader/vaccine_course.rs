@@ -20,22 +20,31 @@ impl Loader<String> for VaccineCourseLoader {
     type Error = RepositoryError;
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = VaccineCourseRepository::new(&connection);
+        let connection_manager = self.connection_manager.clone();
+        let ids = ids.to_vec();
 
-        let result = repo
-            .query_by_filter(
-                VaccineCourseFilter::new()
-                    .id(EqualFilter::equal_any(ids.to_owned()))
-                    .include_deleted(true),
-            )?
-            .into_iter()
-            .map(|course| {
-                let id = course.id.clone();
-                (id, course)
-            })
-            .collect();
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, VaccineCourseRow>, RepositoryError> {
+                let connection = connection_manager.connection()?;
+                let repo = VaccineCourseRepository::new(&connection);
 
-        Ok(result)
+                let result = repo
+                    .query_by_filter(
+                        VaccineCourseFilter::new()
+                            .id(EqualFilter::equal_any(ids))
+                            .include_deleted(true),
+                    )?
+                    .into_iter()
+                    .map(|course| {
+                        let id = course.id.clone();
+                        (id, course)
+                    })
+                    .collect();
+
+                Ok(result)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

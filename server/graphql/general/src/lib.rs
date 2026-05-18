@@ -370,7 +370,7 @@ impl GeneralQueries {
     }
 
     pub async fn log_file_names(&self, ctx: &Context<'_>) -> Result<LogNode> {
-        log_file_names(ctx)
+        log_file_names(ctx).await
     }
 
     pub async fn log_contents(
@@ -378,11 +378,11 @@ impl GeneralQueries {
         ctx: &Context<'_>,
         file_name: Option<String>,
     ) -> Result<LogNode> {
-        log_content(ctx, file_name)
+        log_content(ctx, file_name).await
     }
 
     pub async fn log_level(&self, ctx: &Context<'_>) -> Result<LogLevelNode> {
-        log_level(ctx)
+        log_level(ctx).await
     }
 
     pub async fn last_successful_user_sync(

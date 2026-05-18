@@ -18,22 +18,31 @@ impl Loader<String> for VaccineCourseStoreConfigByVaccineCourseIdLoader {
     type Error = RepositoryError;
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = VaccineCourseStoreConfigRepository::new(&connection);
+        let connection_manager = self.connection_manager.clone();
+        let ids = ids.to_vec();
 
-        let rows = repo.query_by_filter(
-            VaccineCourseStoreConfigFilter::new()
-                .vaccine_course_id(EqualFilter::equal_any(ids.to_owned())),
-        )?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Vec<VaccineCourseStoreConfigRow>>, RepositoryError> {
+                let connection = connection_manager.connection()?;
+                let repo = VaccineCourseStoreConfigRepository::new(&connection);
 
-        let mut map: HashMap<String, Vec<VaccineCourseStoreConfigRow>> = HashMap::new();
+                let rows = repo.query_by_filter(
+                    VaccineCourseStoreConfigFilter::new()
+                        .vaccine_course_id(EqualFilter::equal_any(ids)),
+                )?;
 
-        for row in rows {
-            let id = row.vaccine_course_id.clone();
-            let list = map.entry(id).or_default();
-            list.push(row);
-        }
+                let mut map: HashMap<String, Vec<VaccineCourseStoreConfigRow>> = HashMap::new();
 
-        Ok(map)
+                for row in rows {
+                    let id = row.vaccine_course_id.clone();
+                    let list = map.entry(id).or_default();
+                    list.push(row);
+                }
+
+                Ok(map)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

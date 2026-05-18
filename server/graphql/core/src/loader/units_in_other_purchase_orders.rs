@@ -16,29 +16,38 @@ impl Loader<String> for UnitsInOtherPurchaseOrdersLoader {
     type Error = RepositoryError;
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = PurchaseOrderLineRepository::new(&connection);
+        let connection_manager = self.connection_manager.clone();
+        let ids = ids.to_vec();
 
-        let lines = repo.query_by_filter(
-            PurchaseOrderLineFilter::new().id(EqualFilter::equal_any(ids.to_vec())),
-        )?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, f64>, RepositoryError> {
+                let connection = connection_manager.connection()?;
+                let repo = PurchaseOrderLineRepository::new(&connection);
 
-        let mut result = HashMap::new();
+                let lines = repo.query_by_filter(
+                    PurchaseOrderLineFilter::new().id(EqualFilter::equal_any(ids)),
+                )?;
 
-        for line in lines {
-            let line_row = &line.purchase_order_line_row;
-            let item_row = &line.item_row;
+                let mut result = HashMap::new();
 
-            let units = calculate_units_in_other_purchase_orders(
-                &connection,
-                &item_row.id,
-                &line_row.purchase_order_id,
-                None,
-            )?;
+                for line in lines {
+                    let line_row = &line.purchase_order_line_row;
+                    let item_row = &line.item_row;
 
-            result.insert(line_row.id.clone(), units);
-        }
+                    let units = calculate_units_in_other_purchase_orders(
+                        &connection,
+                        &item_row.id,
+                        &line_row.purchase_order_id,
+                        None,
+                    )?;
 
-        Ok(result)
+                    result.insert(line_row.id.clone(), units);
+                }
+
+                Ok(result)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }
