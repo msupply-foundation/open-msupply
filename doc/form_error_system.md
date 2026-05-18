@@ -3,7 +3,9 @@
 A reusable system for tracking, displaying, and validating form input errors on the open-mSupply client. Designed around the use case of "show all errors as a summary below the form, allow illegal input to be typed but flag it, and don't show 'required' errors until the user tries to submit."
 
 Source: [client/packages/common/src/hooks/useFormErrors/](../client/packages/common/src/hooks/useFormErrors/).
-Reference implementation: [client/packages/system/src/Patient/Insurance/InsuranceModal.tsx](../client/packages/system/src/Patient/Insurance/InsuranceModal.tsx).
+Reference implementations:
+- [InsuranceModal.tsx](../client/packages/system/src/Patient/Insurance/InsuranceModal.tsx) — vertical form
+- [VaccineCourseEditModal.tsx](../client/packages/programs/src/VaccineCourseEditModal/VaccineCourseEditModal.tsx) — form **plus** an editable table with cross-row constraints and a per-row consolidated summary
 
 ---
 
@@ -97,9 +99,20 @@ Render-prop wrapper for inputs that haven't (or shouldn't) be modified to call `
 
 The render-prop also receives `setCustomError(msg | null)` and `setValidationError(msg | null)` if the inner component needs imperative control.
 
-### `<ErrorDisplay formId={...} />` &nbsp;— consumer-side
+### `<ErrorDisplay />` &nbsp;— consumer-side
 
-Renders the red `<Alert>` summary listing the form's visible errors, or nothing if there are none. Drop it once per form, typically below the form body.
+Renders the red `<Alert>` summary listing the form's visible errors, or nothing if there are none. Drop it once per form, typically below the form body. Two modes:
+
+```tsx
+<ErrorDisplay formId="my-form" />          // default — read from store
+<ErrorDisplay items={[...]} />              // override — render the supplied items
+```
+
+The override mode pairs with [`useFormErrorList`](#useformerrorlist) when you want a custom summary layout (grouping, filtering, re-ordering) without losing the Alert chrome and styling.
+
+### `useFormErrorList(formId)` &nbsp;— consumer-side
+
+Returns the same flat `[{ fieldId, label, message }, ...]` array `<ErrorDisplay>` would render in default mode. Useful for building a custom summary (e.g. grouping table cells per row), then handing the result back to `<ErrorDisplay items={...}>`. See [Tables](#tables) below.
 
 ### `formError` prop &nbsp;— input-side
 
@@ -312,9 +325,110 @@ return <DialogButton variant="save" disabled={hasErrors} onClick={handleSave} />
 
 ---
 
+<a id="tables"></a>
+## Tables
+
+Editable tables work the same way as forms — just per cell rather than per top-level field. Two conventions worth knowing:
+
+### `fieldId` convention: `${rowId}.${columnKey}`
+
+Use the row's stable id (typically a UUID) plus a column identifier, joined with a `.`. Example: `"abc-123.minAgeMonths"`. The `.` is what makes the row grouping in the summary trivial — see below.
+
+The row's stable id matters: if you use the row's *index*, fieldIds shift when rows are reordered or deleted, and the store's per-field state breaks. UUIDs (or any stable per-row key) are required.
+
+### Cross-row validation via `customError`
+
+The `validate` callback only sees one cell's value. For rules that compare across rows ("row N's start must be after row N-1's end"), compute the violations once at the table parent and pass each cell its specific message via `customError`:
+
+```tsx
+const rowErrors = useMemo(() => {
+  const errs: Record<string, { min?: string; max?: string }> = {};
+  rows.forEach((row, idx) => {
+    const prev = rows[idx - 1];
+    if (prev && row.start <= prev.start) {
+      errs[row.id] = { ...errs[row.id], min: t('error.out-of-order') };
+    }
+    if (row.end < row.start) {
+      errs[row.id] = { ...errs[row.id], max: t('error.end-before-start') };
+    }
+  });
+  return errs;
+}, [rows, t]);
+
+// in each Cell:
+<AgeInputCell
+  cell={cell}
+  formError={{ formId: FORM_ID, fieldId: `${row.id}.start`, label: t('label.start') }}
+  customError={rowErrors[row.id]?.min ?? null}
+  ...
+/>
+```
+
+### Custom summary: one entry per row
+
+A flat list of cell errors gets noisy fast — six rows × two errors each is twelve bullet points. Use `useFormErrorList` + `<ErrorDisplay items={...}>` to consolidate per row:
+
+```tsx
+const flat = useFormErrorList(FORM_ID);
+
+const items = useMemo<ErrorDisplayItem[]>(() => {
+  const topForm: ErrorDisplayItem[] = [];
+  const groups = new Map<string, string[]>();
+
+  for (const err of flat) {
+    if (!err.fieldId.includes('.')) {
+      // Top-form field — pass through 1:1.
+      topForm.push({ key: err.fieldId, label: err.label, message: err.message });
+    } else {
+      // Table cell — group by row id.
+      const [rowId] = err.fieldId.split('.');
+      const list = groups.get(rowId) ?? [];
+      list.push(err.message);
+      groups.set(rowId, list);
+    }
+  }
+
+  const groupedItems = [...groups].map(([rowId, messages]) => ({
+    key: rowId,
+    label: `Row ${indexOfRowById(rows, rowId)}`,
+    message: messages.join(', '),
+  }));
+
+  return [...topForm, ...groupedItems];
+}, [flat, rows]);
+
+return <ErrorDisplay items={items} />;
+```
+
+Output:
+
+```
+- Name: Required
+- Coverage rate: Value is too large
+- Dose 2: Out of order, To age must be ≥ From age
+- Dose 3: Label required
+```
+
+The convention "no `.` in fieldId means top-form, dot-separated means table cell" is what lets one form mix both kinds of error in a single summary without special-casing.
+
+### Cell components that already accept `formError`
+
+| Cell | Notes |
+|------|-------|
+| `BasicTextInput` (when used as a cell) | Native support |
+| `NumericTextInput` (or `NumberInputCell`) | Native support; built-in min/max surfaces as a validation error when `formError` is set |
+| `TextInputCell` | Native support |
+| `AgeInputCell` | Native support; registers the *combined months* value as one field, so the year and month boxes share an error border |
+
+### Cleanup is automatic
+
+When a row is deleted, its cells unmount → `useFormField`'s cleanup runs → the field is removed from the store. The summary updates immediately. Adding a row is just a remount with new cells.
+
+---
+
 ## Reference implementation
 
-[InsuranceModal.tsx](../client/packages/system/src/Patient/Insurance/InsuranceModal.tsx) exercises every feature:
+[InsuranceModal.tsx](../client/packages/system/src/Patient/Insurance/InsuranceModal.tsx) exercises the form features:
 
 | Field | Demonstrates |
 |-------|--------------|
@@ -325,4 +439,14 @@ return <DialogButton variant="save" disabled={hasErrors} onClick={handleSave} />
 | `discountPercentage` | built-in `min`/`max` validation **plus** a cross-field `customError` with `showOnSubmit: true` (`isActive && rate === 0` blocks save, but the message is deferred until the user attempts Save so it doesn't show on a freshly opened form) |
 | `isActive` | a Switch — kept out of the system entirely (booleans don't need validation) |
 
-Walking through the modal in the browser and comparing it with the test plan in [PR #8494](https://github.com/msupply-foundation/open-msupply/pull/8494) is the fastest way to internalise the behaviour.
+[VaccineCourseEditModal.tsx](../client/packages/programs/src/VaccineCourseEditModal/VaccineCourseEditModal.tsx) exercises the **table** features on top of the same form pattern:
+
+| Field / column | Demonstrates |
+|----------------|--------------|
+| `name`, `coverageRate`, `wastageRate` (top form) | regular `formError` + `required`, identical to InsuranceModal |
+| Dose `label` cell | per-row `required` via `TextInputCell.formError` |
+| Dose `minAgeMonths` cell | cross-row `customError` (must be > previous row's `minAgeMonths`) |
+| Dose `maxAgeMonths` cell | per-row `customError` (must be ≥ this row's `minAgeMonths`) |
+| `<ErrorDisplay items={...} />` | custom summary that mixes flat top-form bullets with per-row consolidated dose lines |
+
+Walking through one of these modals in the browser is the fastest way to internalise the behaviour.
