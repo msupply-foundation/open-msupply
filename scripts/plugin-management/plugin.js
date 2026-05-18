@@ -337,12 +337,26 @@ function cmdInstall(args) {
   info('\ndone.');
 }
 
+function cmdOpen() {
+  const pluginPath = findCurrentPlugin();
+  const full = path.join(REPO_ROOT, pluginPath);
+  info(`opening ${pluginPath} in GitHub Desktop`);
+  if (process.platform === 'darwin') {
+    run('open', ['-a', 'GitHub Desktop', full]);
+  } else if (process.platform === 'win32') {
+    run('cmd', ['/c', 'start', '', 'github://openLocalRepo/' + encodeURI(full)]);
+  } else {
+    run('github', [full]);
+  }
+}
+
 function usage() {
   console.log(`usage:
   yarn plugin get <name> [-b <branch>]   add a plugin submodule (resets any existing first)
   yarn plugin install [frontend|backend] [--url U] [--username U] [--password P]
                                           build and install the current plugin into the local server
                                           (omit target to install both frontend and backend)
+  yarn plugin open                        open the current plugin submodule in GitHub Desktop
   yarn plugin reset                       remove all plugin submodules under ${PLUGINS_DIR}/`);
 }
 
@@ -353,6 +367,8 @@ function main() {
       return cmdGet(rest);
     case 'install':
       return cmdInstall(rest);
+    case 'open':
+      return cmdOpen();
     case 'reset':
       return cmdReset();
     case undefined:
