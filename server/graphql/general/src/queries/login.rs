@@ -4,12 +4,9 @@ use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 
 use http2::header::SET_COOKIE;
 use service::{
-    login::{LoginError, LoginFailure, LoginInput, LoginService},
+    login::{LoginError, LoginFailure, LoginInput, LoginService, MIN_ERR_RESPONSE_TIME_SEC},
     token::TokenPair,
 };
-
-// Fixed login response time in case of an error (see service)
-const MIN_ERR_RESPONSE_TIME_SEC: u64 = 6;
 
 pub struct AuthToken {
     pub pair: TokenPair,
