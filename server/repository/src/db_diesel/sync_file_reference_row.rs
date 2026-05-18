@@ -49,6 +49,20 @@ table! {
     }
 }
 
+// Sync split — which fields cross the wire?
+//
+// Synced (no `skip_serializing`): id, table_name, record_id, file_name, mime_type,
+//   total_bytes, status, error, created_datetime, deleted_datetime.
+//   These describe the file's terminal/observable state — what users (and the
+//   sync_message UI) need to see consistently across sites.
+//
+// Local-only (`skip_serializing`): uploaded_bytes, downloaded_bytes, retries,
+//   retry_at, direction. These are each site's own retry/progress bookkeeping.
+//   Every site computes them independently — central learns "the file arrived"
+//   by setting uploaded_bytes itself when it handles the PUT, not by sync.
+//
+// Deserialization always accepts every field via `#[serde(default)]` so older
+// payloads (missing the now-synced fields) still parse cleanly.
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
 )]
@@ -76,10 +90,8 @@ pub struct SyncFileReferenceRow {
     #[serde(skip_serializing)]
     #[serde(default)]
     pub direction: SyncFileDirection,
-    #[serde(skip_serializing)]
     #[serde(default)]
     pub status: SyncFileStatus,
-    #[serde(skip_serializing)]
     #[serde(default)]
     pub error: Option<String>,
     pub created_datetime: NaiveDateTime,
@@ -171,7 +183,16 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         Ok(result)
     }
 
-    // Note this deliberately doesn't create change log records to avoid triggering sync updates to central server for local only information
+    /// Persists the row WITHOUT producing a changelog entry, so the change is not synced to
+    /// other sites. Use only for transitions that are meaningful only locally:
+    ///
+    /// - `status = InProgress` (an in-flight flicker that's about to settle to `Done`/`Error`)
+    /// - Bumping `retries` / `retry_at` between failed attempts
+    /// - Updating `uploaded_bytes` / `downloaded_bytes` mid-transfer
+    ///
+    /// For terminal transitions (`Done`, `Error`, `PermanentFailure`) or any change to `error`,
+    /// call `upsert_one` instead so the outcome propagates to central / other sites — see the
+    /// "Sync split" comment on `SyncFileReferenceRow` above for which fields cross the wire.
     pub fn update_status(
         &self,
         sync_file_reference_row: &SyncFileReferenceRow,

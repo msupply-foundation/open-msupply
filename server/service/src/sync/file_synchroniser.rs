@@ -164,7 +164,9 @@ impl FileSynchroniser {
         let Err(error) = upload_result
         // On Success
         else {
-            sync_file_repo.update_status(&SyncFileReferenceRow {
+            // Terminal transition — use upsert_one so the Done status syncs to central.
+            // uploaded_bytes is local-only (skip_serializing) so it stays put for our own bookkeeping.
+            sync_file_repo.upsert_one(&SyncFileReferenceRow {
                 uploaded_bytes: sync_file_reference.total_bytes, // We always upload the whole file in one go
                 status: SyncFileStatus::Done,
                 error: None,
@@ -211,7 +213,10 @@ impl FileSynchroniser {
             }
         };
 
-        sync_file_repo.update_status(&SyncFileReferenceRow {
+        // Terminal failure transition — use upsert_one so the Error / PermanentFailure status and
+        // error message sync to central. retries / retry_at are local-only (skip_serializing) so
+        // each site keeps its own retry schedule.
+        sync_file_repo.upsert_one(&SyncFileReferenceRow {
             error: Some(format_error(&error)),
             ..sync_file_ref_update
         })?;
