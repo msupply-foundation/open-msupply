@@ -396,7 +396,7 @@ fn set_database_version(
 }
 
 #[derive(Error, Debug)]
-#[error("Sql error {0}")]
+#[error("Sql error: {1}\n{0}")]
 pub(crate) struct SqlError(String, #[source] RepositoryError);
 
 /// Will try and execute diesel query return SQL error which contains debug version of SQL statements
