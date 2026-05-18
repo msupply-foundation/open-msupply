@@ -11,7 +11,7 @@ use repository::{
     ChangelogRow, ChangelogTableName,
     EqualFilter, LocationRowRepository, ProgramRowRepository, ReasonOptionRowRepository,
     Row, StockLineRowRepository, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
-    StocktakeLineRow, StorageConnection, SyncBufferRow,
+    StocktakeLineRow, StorageConnection, SyncBufferRow, SyncRecordData,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -453,7 +453,7 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "Stock_take_lines".to_string(),
             record_id: "STOCKTAKE_LINE_FK_INVALID".to_string(),
-            data: r#"{
+            data: SyncRecordData(serde_json::from_str(r#"{
                 "ID": "STOCKTAKE_LINE_FK_INVALID",
                 "stock_take_ID": "stocktake_a",
                 "Batch": "",
@@ -478,8 +478,7 @@ mod tests {
                     "campaign_id": "does_not_exist_campaign",
                     "program_id": "does_not_exist_program"
                 }
-            }"#
-            .to_string(),
+            }"#).unwrap()),
             action: SyncAction::Upsert,
             ..Default::default()
         };

@@ -9,7 +9,7 @@ use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository,
     ReasonOptionRowRepository, RequisitionFilter, RequisitionLineRow, RequisitionLineRowDelete,
     RequisitionLineRowRepository, RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository, Row,
-    StorageConnection, SyncBufferRow,
+    StorageConnection, SyncBufferRow, SyncRecordData,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
@@ -434,7 +434,7 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "requisition_line".to_string(),
             record_id: "REQ_LINE_FK_INVALID".to_string(),
-            data: r#"{
+            data: SyncRecordData(serde_json::from_str(r#"{
                 "ID": "REQ_LINE_FK_INVALID",
                 "requisition_ID": "req_a",
                 "item_ID": "item_a",
@@ -464,8 +464,7 @@ mod tests {
                     "available_volume": null,
                     "location_type_id": "does_not_exist_location_type"
                 }
-            }"#
-            .to_string(),
+            }"#).unwrap()),
             action: SyncAction::Upsert,
             ..Default::default()
         };

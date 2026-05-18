@@ -12,7 +12,7 @@ use repository::{
     DiagnosisRowRepository, EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, InvoiceRow,
     InvoiceRowDelete, InvoiceRowRepository, InvoiceStatus, InvoiceType, KeyValueStoreRepository,
     NameRow, NameRowRepository, Row, StorageConnection, StoreFilter, StoreRepository, StoreRowRepository,
-    SyncBufferRow, UserAccountRow, UserAccountRowRepository,
+    SyncBufferRow, SyncRecordData, UserAccountRow, UserAccountRowRepository,
 };
 use repository::name_insurance_join_row::NameInsuranceJoinRowRepository;
 use serde::{Deserialize, Serialize};
@@ -1147,22 +1147,22 @@ mod tests {
                 comment: None,
             })
             .unwrap();
-        NameInsuranceJoinRow {
-            id: "NAME_INSURANCE_JOIN_1_ID".to_string(),
-            name_id: "name_a".to_string(),
-            insurance_provider_id: "INSURANCE_PROVIDER_1".to_string(),
-            policy_number_person: None,
-            policy_number_family: None,
-            policy_number: "PN1".to_string(),
-            policy_type: InsurancePolicyType::Personal,
-            discount_percentage: 0.0,
-            expiry_date: NaiveDate::from_ymd_opt(2030, 1, 1).unwrap(),
-            is_active: true,
-            entered_by_id: None,
-            name_of_insured: None,
-        }
-        .upsert(&connection)
-        .unwrap();
+        NameInsuranceJoinRowRepository::new(&connection)
+            .upsert_one(&NameInsuranceJoinRow {
+                id: "NAME_INSURANCE_JOIN_1_ID".to_string(),
+                name_id: "name_a".to_string(),
+                insurance_provider_id: "INSURANCE_PROVIDER_1".to_string(),
+                policy_number_person: None,
+                policy_number_family: None,
+                policy_number: "PN1".to_string(),
+                policy_type: InsurancePolicyType::Personal,
+                discount_percentage: 0.0,
+                expiry_date: NaiveDate::from_ymd_opt(2030, 1, 1).unwrap(),
+                is_active: true,
+                entered_by_id: None,
+                name_of_insured: None,
+            })
+            .unwrap();
         ShippingMethodRowRepository::new(&connection)
             .upsert_one(&ShippingMethodRow {
                 id: "SHIPPING_METHOD_1_ID".to_string(),
@@ -1170,15 +1170,15 @@ mod tests {
                 deleted_datetime: None,
             })
             .unwrap();
-        DiagnosisRow {
-            id: "503E901E00534F1797DF4F29E12F907D".to_string(),
-            code: "DX1".to_string(),
-            description: "Test diagnosis".to_string(),
-            notes: None,
-            valid_till: None,
-        }
-        .upsert(&connection)
-        .unwrap();
+        DiagnosisRowRepository::new(&connection)
+            .upsert_one(&DiagnosisRow {
+                id: "503E901E00534F1797DF4F29E12F907D".to_string(),
+                code: "DX1".to_string(),
+                description: "Test diagnosis".to_string(),
+                notes: None,
+                valid_till: None,
+            })
+            .unwrap();
         repository::PurchaseOrderRowRepository::new(&connection)
             .upsert_one(&repository::mock::mock_purchase_order_a())
             .unwrap();
@@ -1274,7 +1274,7 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "transact".to_string(),
             record_id: "INVOICE_FK_INVALID".to_string(),
-            data: r#"{
+            data: SyncRecordData(serde_json::from_str(r#"{
               "ID": "INVOICE_FK_INVALID",
               "name_ID": "name_store_a",
               "store_ID": "store_b",
@@ -1315,8 +1315,7 @@ mod tests {
               "insuranceDiscountRate": 0,
               "goods_received_ID": "",
               "original_PO_ID": "does_not_exist_purchase_order"
-            }"#
-            .to_string(),
+            }"#).unwrap()),
             action: SyncAction::Upsert,
             ..Default::default()
         };

@@ -9,7 +9,7 @@ use repository::{
     campaign_row::CampaignRowRepository, item_variant::item_variant_row::ItemVariantRowRepository,
     vvm_status::vvm_status_row::VVMStatusRowRepository, BarcodeRowRepository, ChangelogRow, Row,
     ChangelogTableName, EqualFilter, LocationRowRepository, ProgramRowRepository, StockLine,
-    StockLineFilter, StockLineRepository, StockLineRow, StorageConnection, SyncBufferRow,
+    StockLineFilter, StockLineRepository, StockLineRow, StorageConnection, SyncBufferRow, SyncRecordData,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -408,7 +408,7 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "item_line".to_string(),
             record_id: "ITEM_LINE_FK_INVALID".to_string(),
-            data: r#"{
+            data: SyncRecordData(serde_json::from_str(r#"{
                 "ID": "ITEM_LINE_FK_INVALID",
                 "store_ID": "store_a",
                 "item_ID": "item_a",
@@ -432,8 +432,7 @@ mod tests {
                     "campaign_id": "missing_campaign",
                     "program_id": "does_not_exist_program"
                 }
-            }"#
-            .to_string(),
+            }"#).unwrap()),
             action: SyncAction::Upsert,
             ..Default::default()
         };

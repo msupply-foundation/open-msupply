@@ -109,11 +109,11 @@ async fn test_sync_pull_and_push() {
     let changelogs = rows
         .into_iter()
         .filter(|changelog| {
-            if changelog.table_name != ChangelogTableName::SystemLog {
+            if changelog.changelog().table_name != ChangelogTableName::SystemLog {
                 return true;
             }
             let row = system_log_repo
-                .find_one_by_id(&changelog.record_id)
+                .find_one_by_id(&changelog.changelog().record_id)
                 .unwrap();
             !matches!(
                 row.map(|r| r.r#type),
@@ -124,7 +124,7 @@ async fn test_sync_pull_and_push() {
     // Translate
     let mut translated = vec![translate_rows_to_sync_records(
         &connection,
-        rows,
+        changelogs,
         vec![
             ToSyncRecordTranslationType::PushToLegacyCentral,
             ToSyncRecordTranslationType::PullFromOmSupplyCentral,
