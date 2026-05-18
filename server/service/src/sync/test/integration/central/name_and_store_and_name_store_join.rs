@@ -54,6 +54,9 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             deleted_datetime: None,
             next_of_kin_id: None,
             next_of_kin_name: None,
+            // 4D defaults these float columns to 0 when the upsert omits them.
+            margin: Some(0.0),
+            freight_factor: Some(0.0),
             ..Default::default()
         };
         let name_json1 = json!({
@@ -89,6 +92,8 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             r#type: NameRowType::Facility,
             is_customer: true,
             is_supplier: false,
+            margin: Some(0.0),
+            freight_factor: Some(0.0),
             ..Default::default()
         };
         let mut name_json2 = json!({

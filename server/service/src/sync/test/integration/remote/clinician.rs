@@ -46,6 +46,7 @@ impl SyncRecordTester for ClinicianRecordTester {
             email: None,
             gender: Some(GenderType::Male),
             is_active: true,
+            store_id: Some(store_row.id.clone()),
             ..Default::default()
         };
 
