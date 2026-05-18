@@ -10,6 +10,7 @@ use crate::{
     auth_data::AuthData,
     service_provider::ServiceProvider,
     settings::is_develop,
+    sync::CentralServerConfig,
     token::{JWTIssuingError, TokenPair, TokenService},
     user_account::{UserAccountService, VerifyPasswordError},
 };
@@ -135,16 +136,27 @@ impl LoginService {
         // endpoint, etc.), fall back to local hash verification — the user's
         // `password_hash` flows in via the user sync translation, so the local
         // hash is current.
+        //
+        // On the central server itself we *are* the source of truth, so skip
+        // the round-trip (we'd just be hitting our upstream legacy mSupply,
+        // which 404s, or worse, looping through our own endpoint).
         let mut connection_failure = false;
-        match central_user_login(&input.central_server_url, &input.username, &input.password).await
-        {
-            Ok(()) => {}
-            Err(CentralUserLoginError::InvalidCredentials) => {
-                return Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials));
-            }
-            Err(CentralUserLoginError::Unreachable(reason)) => {
-                info!("central user login unreachable, falling back to local: {reason}");
-                connection_failure = true;
+        if !CentralServerConfig::is_central_server() {
+            match central_user_login(
+                &input.central_server_url,
+                &input.username,
+                &input.password,
+            )
+            .await
+            {
+                Ok(()) => {}
+                Err(CentralUserLoginError::InvalidCredentials) => {
+                    return Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials));
+                }
+                Err(CentralUserLoginError::Unreachable(reason)) => {
+                    info!("central user login unreachable, falling back to local: {reason}");
+                    connection_failure = true;
+                }
             }
         }
 
@@ -463,6 +475,66 @@ mod test {
                 Err(LoginError::LoginFailure(LoginFailure::NoSiteAccess))
             );
         }
+    }
+
+    /// On the central server we are the source of truth, so `do_login` should
+    /// skip the round-trip to `central_user_login` entirely and verify against
+    /// the local hash directly.
+    #[actix_rt::test]
+    async fn central_server_short_circuits_central_user_login() {
+        use crate::sync::test_util_set_is_central_server;
+
+        let (_, _, connection_manager, _) = setup_all(
+            "central_server_short_circuits_central_user_login",
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .user_accounts()
+                .user_store_joins(),
+        )
+        .await;
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+
+        let auth_data = AuthData {
+            auth_token_secret: "secret".to_string(),
+            token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
+            no_ssl: true,
+            debug_no_access_control: false,
+        };
+
+        seed_user_with_real_hash(&service_provider);
+        KeyValueStoreRepository::new(&context.connection)
+            .set_i32(
+                KeyType::SettingsSyncSiteId,
+                Some(repository::mock::mock_store_a().site_id),
+            )
+            .unwrap();
+
+        test_util_set_is_central_server(true);
+
+        // Deliberately unreachable URL: if the short-circuit didn't fire,
+        // `central_user_login` would attempt to connect and we'd see latency
+        // up to the 10s connect timeout. Since we're on central, this URL
+        // must never be touched.
+        let result = LoginService::login(
+            &service_provider,
+            &auth_data,
+            LoginInput {
+                username: mock_user_account_a().username,
+                password: "password".to_string(),
+                central_server_url: "http://this-host-should-never-be-contacted.invalid"
+                    .to_string(),
+            },
+            0,
+        )
+        .await;
+
+        assert!(
+            result.is_ok(),
+            "expected local-only verify on central, got {:?}",
+            result
+        );
     }
 
     #[actix_rt::test]
