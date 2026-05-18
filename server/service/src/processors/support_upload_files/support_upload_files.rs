@@ -232,62 +232,85 @@ fn process_log_files(
     Ok(())
 }
 
+// Database extracts only work on sqlite deployments — postgres has no single-file representation
+// of the DB and `VACUUM INTO 'path'` is a sqlite-specific statement. Postgres deployments
+// can still receive a logs-only support upload; the database checkbox returns a clear error here.
+#[cfg(feature = "postgres")]
+fn process_database_files(
+    _ctx: &ServiceContext,
+    _service_provider: &ServiceProvider,
+    _sync_message: &SyncMessageRow,
+) -> Result<(), ProcessorError> {
+    Err(ProcessorError::OtherError(
+        "database upload is only supported on sqlite sites".to_string(),
+    ))
+}
+
+#[cfg(not(feature = "postgres"))]
 fn process_database_files(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
     sync_message: &SyncMessageRow,
 ) -> Result<(), ProcessorError> {
-    let database_settings = service_provider.settings.get_database_info().map_err(|e| {
-        ProcessorError::OtherError(format!(
-            "(process_database_files) Failed to get database settings: {}",
-            e.to_string()
-        ))
-    })?;
-
     let server_settings = service_provider
         .settings
         .get_server_settings_info()
         .map_err(|e| {
             ProcessorError::OtherError(format!(
                 "(process_database_files) Failed to get server settings: {}",
-                e.to_string()
+                e
             ))
         })?;
-
-    let database_path = database_settings.database_path();
-    let database_bytes = std::fs::read(database_path).map_err(|e| {
-        ProcessorError::OtherError(format!(
-            "(process_database_files) Failed to read database file at: {}",
-            e.to_string()
-        ))
-    })?;
 
     let static_file_service = StaticFileService::new(&server_settings.base_dir).map_err(|e| {
         ProcessorError::OtherError(format!(
             "(process_database_files) Failed to create StaticFileService at: {}",
-            e.to_string()
+            e
         ))
     })?;
 
+    // Reserve the destination directly inside the sync_files dir — the file synchroniser will
+    // upload from this exact path later, so no intermediate copy is needed.
     let file = static_file_service
-        .store_file(
+        .reserve_file(
             "uploaded-database.sqlite",
-            StaticFileCategory::SyncFile("sync_message".to_string(), sync_message.id.clone()),
-            &database_bytes,
+            &StaticFileCategory::SyncFile("sync_message".to_string(), sync_message.id.clone()),
+            None,
         )
         .map_err(|e| {
             ProcessorError::OtherError(format!(
-                "(process_database_files) Failed to store database file: {}",
-                e.to_string()
+                "(process_database_files) Failed to reserve snapshot path: {}",
+                e
             ))
         })?;
+
+    // Snapshot the live DB via sqlite's VACUUM INTO. This gives a consistent point-in-time copy
+    // (no WAL/torn-read risk) and typically halves the file size. Escape any single quotes in the
+    // path defensively — base_dir is server-configured but still untrusted-ish.
+    let escaped_path = file.path.replace('\'', "''");
+    let sql = format!("VACUUM INTO '{}'", escaped_path);
+    ctx.connection.batch_execute(&sql).map_err(|e| {
+        ProcessorError::OtherError(format!(
+            "(process_database_files) VACUUM INTO failed: {}",
+            e
+        ))
+    })?;
+
+    let total_bytes = std::fs::metadata(&file.path)
+        .map_err(|e| {
+            ProcessorError::OtherError(format!(
+                "(process_database_files) Failed to stat snapshot file: {}",
+                e
+            ))
+        })?
+        .len() as i32;
 
     SyncFileReferenceRowRepository::new(&ctx.connection).upsert_one(&SyncFileReferenceRow {
         id: file.id.clone(),
         file_name: file.name.clone(),
         table_name: "sync_message".to_string(),
         record_id: sync_message.id.clone(),
-        total_bytes: database_bytes.len() as i32,
+        total_bytes,
         mime_type: Some("application/x-sqlite3".to_string()),
         uploaded_bytes: 0,
         created_datetime: chrono::Utc::now().naive_utc(),

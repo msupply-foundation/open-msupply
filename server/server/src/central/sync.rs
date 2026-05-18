@@ -1,10 +1,9 @@
 use std::fmt::Display;
 
-use actix_multipart::form::{tempfile::TempFile, MultipartForm};
 use actix_web::{
     dev::HttpServiceFactory,
     http::header::{ContentDisposition, DispositionParam, DispositionType},
-    post, put,
+    post,
     web::{self, Data, Json},
     HttpRequest, Responder, ResponseError,
 };
@@ -16,8 +15,7 @@ use service::{
         api_v6::{
             SiteStatusRequestV6, SiteStatusResponseV6, SyncDownloadFileRequestV6,
             SyncParsedErrorV6, SyncPatientPullRequestV6, SyncPullRequestV6, SyncPullResponseV6,
-            SyncPushRequestV6, SyncPushResponseV6, SyncUploadFileRequestV6,
-            SyncUploadFileResponseV6,
+            SyncPushRequestV6, SyncPushResponseV6,
         },
         sync_on_central,
     },
@@ -30,7 +28,7 @@ pub fn sync_on_central() -> impl HttpServiceFactory {
         .service(push)
         .service(site_status)
         .service(download_file)
-        .service(upload_file)
+        .service(super::tus::tus_on_central())
 }
 
 #[post("/pull")]
@@ -127,35 +125,3 @@ async fn download_file(
     Ok(response)
 }
 
-// Request one part 'json_part' one part 'file_part'
-// can't directly align multipart between actix_web and reqwest
-// need to be vigilant when changing parts and update equivalent upload_part in sync api_v6 client request
-#[derive(MultipartForm)]
-pub struct SyncUploadFileMultipartRequestV6 {
-    pub file_part: TempFile,
-    pub json_part: actix_multipart::form::json::Json<SyncUploadFileRequestV6>,
-}
-
-#[put("/upload_file")]
-async fn upload_file(
-    MultipartForm(SyncUploadFileMultipartRequestV6 {
-        file_part,
-        json_part,
-    }): MultipartForm<SyncUploadFileMultipartRequestV6>,
-    settings: Data<Settings>,
-    service_provider: Data<ServiceProvider>,
-) -> actix_web::Result<impl Responder> {
-    let response = match sync_on_central::upload_file(
-        &settings,
-        &service_provider,
-        json_part.into_inner(),
-        file_part,
-    )
-    .await
-    {
-        Ok(batch) => SyncUploadFileResponseV6::Data(batch),
-        Err(error) => SyncUploadFileResponseV6::Error(error),
-    };
-
-    Ok(web::Json(response))
-}
