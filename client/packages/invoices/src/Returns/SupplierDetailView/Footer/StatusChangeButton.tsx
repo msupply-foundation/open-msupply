@@ -27,12 +27,7 @@ const useStatusChangeButton = () => {
   const { mutateAsync } = useReturns.document.updateSupplierReturn();
 
   const status = data?.status ?? InvoiceNodeStatus.New;
-
-  // TODO: lines
-  const lines: { totalCount: number; nodes: unknown[] } = {
-    totalCount: 1,
-    nodes: [],
-  };
+  const lineCount = data?.lines?.totalCount ?? 0;
 
   const options = useMemo(() => {
     let statusOptions = getStatusOptions(
@@ -97,7 +92,7 @@ const useStatusChangeButton = () => {
     setSelectedOption,
     getConfirmation,
     onHold: data?.onHold ?? false,
-    lines,
+    lineCount,
   };
 };
 
@@ -108,11 +103,11 @@ export const StatusChangeButton = () => {
     setSelectedOption,
     getConfirmation,
     onHold,
-    lines,
+    lineCount,
   } = useStatusChangeButton();
   const isDisabled = useReturns.utils.supplierIsDisabled();
   const t = useTranslation();
-  const noLines = lines?.totalCount === 0;
+  const noLines = lineCount === 0;
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
