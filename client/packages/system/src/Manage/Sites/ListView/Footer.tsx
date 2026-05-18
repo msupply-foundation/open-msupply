@@ -12,6 +12,7 @@ import {
 import { SiteRowFragment } from '../api';
 
 type DeleteError = {
+  siteId: number;
   siteName: string;
   message: string;
 };
@@ -20,10 +21,12 @@ export const FooterComponent = ({
   selectedRows,
   resetRowSelection,
   deleteSite,
+  setFailedDeleteIds,
 }: {
   selectedRows: SiteRowFragment[];
   resetRowSelection: () => void;
   deleteSite: (siteId: number) => Promise<unknown>;
+  setFailedDeleteIds: (ids: number[]) => void;
 }) => {
   const t = useTranslation();
   const { success } = useNotification();
@@ -31,6 +34,7 @@ export const FooterComponent = ({
 
   const deleteAction = async () => {
     if (selectedRows) {
+      setFailedDeleteIds([]);
       const errors: DeleteError[] = [];
       await Promise.all(
         selectedRows.map(async row => {
@@ -38,6 +42,7 @@ export const FooterComponent = ({
             await deleteSite(row.id);
           } catch (e) {
             errors.push({
+              siteId: row.id,
               siteName: row.name,
               message: String(e),
             });
@@ -45,6 +50,7 @@ export const FooterComponent = ({
         })
       );
       setDeleteErrors(errors);
+      setFailedDeleteIds(errors.map(e => e.siteId));
       if (errors.length === 0) {
         success(
           t('messages.deleted-sites', {

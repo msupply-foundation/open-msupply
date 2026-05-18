@@ -104,8 +104,10 @@ const useGetList = (queryParams?: ListParams) => {
       sort: toSortInput(sortBy),
       filter: filterBy,
     });
-    const { nodes, totalCount } =
-      query?.centralServer?.site?.sites ?? { nodes: [], totalCount: 0 };
+    const { nodes, totalCount } = query?.centralServer?.site?.sites ?? {
+      nodes: [],
+      totalCount: 0,
+    };
     return { nodes, totalCount };
   };
 
@@ -182,12 +184,35 @@ const useUpsertSite = () => {
   });
 };
 
+enum DeleteSiteError {
+  SiteHasStores = 'SiteHasStores',
+  CannotDeleteCentralSite = 'CannotDeleteCentralSite',
+}
+
 const useDeleteSite = () => {
   const { siteApi, queryClient } = useSiteGraphQL();
+  const t = useTranslation();
 
   const mutationFn = async (siteId: number) => {
     const result = await siteApi.deleteSite({ siteId });
-    return result?.centralServer?.site?.deleteSite;
+    const deleteResult = result?.centralServer?.site?.deleteSite;
+
+    if (deleteResult?.__typename === 'DeleteSiteNode') {
+      return deleteResult;
+    }
+
+    if (deleteResult?.__typename === 'DeleteSiteError') {
+      switch (deleteResult.error.__typename) {
+        case DeleteSiteError.SiteHasStores:
+          throw new Error(t('error.site-has-stores'));
+        case DeleteSiteError.CannotDeleteCentralSite:
+          throw new Error(t('error.cannot-delete-central-site'));
+        default:
+          throw new Error(t('error.unable-to-delete-site'));
+      }
+    }
+
+    throw new Error(t('error.unable-to-delete-site'));
   };
 
   return useMutation({

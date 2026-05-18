@@ -1,5 +1,8 @@
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 use repository::{KeyType, KeyValueStoreRepository};
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -28,13 +31,17 @@ impl SyncSettingsNode {
         self.settings.interval_seconds
     }
 
-    /// Currently OG Central Server ID
-    pub async fn central_server_site_id(&self, ctx: &Context<'_>) -> Result<Option<i32>> {
+    pub async fn central_server_site_id(&self, ctx: &Context<'_>) -> Result<i32> {
         let service_provider = ctx.service_provider();
         let service_context = service_provider.basic_context()?;
-        let value = KeyValueStoreRepository::new(&service_context.connection)
-            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?;
-        Ok(value)
+        KeyValueStoreRepository::new(&service_context.connection)
+            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
+            .ok_or_else(|| {
+                StandardGraphqlError::InternalError(
+                    "SettingsSyncCentralServerSiteId is not set".to_string(),
+                )
+                .extend()
+            })
     }
 
     pub async fn sync_site_id(&self, ctx: &Context<'_>) -> Result<Option<i32>> {

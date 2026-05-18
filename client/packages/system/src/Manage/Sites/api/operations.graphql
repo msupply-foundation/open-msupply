@@ -75,7 +75,24 @@ mutation deleteSite($siteId: Int!) {
   centralServer {
     site {
       deleteSite(siteId: $siteId) {
-        id
+        __typename
+        ... on DeleteSiteNode {
+          id
+        }
+        ... on DeleteSiteError {
+          __typename
+          error {
+            ... on SiteHasStores {
+              __typename
+              description
+            }
+            ... on CannotDeleteCentralSite {
+              __typename
+              description
+            }
+            description
+          }
+        }
       }
     }
   }

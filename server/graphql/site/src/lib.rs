@@ -5,7 +5,7 @@ use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
 use mutations::{
     assign_stores_to_site, clear_site_token, delete_site, upsert_site, AssignStoresToSiteInput,
-    AssignStoresToSiteNode, ClearSiteTokenNode, DeleteSiteNode, UpsertSiteInput,
+    AssignStoresToSiteNode, ClearSiteTokenNode, DeleteSiteResponse, UpsertSiteInput,
     UpsertSiteResponse,
 };
 use queries::{SiteFilterInput, SiteSortInput, SitesResponse};
@@ -23,7 +23,11 @@ impl CentralSiteMutations {
         upsert_site(ctx, input)
     }
 
-    pub async fn delete_site(&self, ctx: &Context<'_>, site_id: i32) -> Result<DeleteSiteNode> {
+    pub async fn delete_site(
+        &self,
+        ctx: &Context<'_>,
+        site_id: i32,
+    ) -> Result<DeleteSiteResponse> {
         delete_site(ctx, site_id)
     }
 

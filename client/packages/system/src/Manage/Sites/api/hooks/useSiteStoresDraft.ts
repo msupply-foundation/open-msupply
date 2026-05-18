@@ -13,8 +13,7 @@ export const useSiteStoresDraft = (siteId: number, isNew = false) => {
   const { mutateAsync: assign, isLoading: isAssigning } =
     useAssignStoresToSite();
   const { data: syncSettings } = useSyncSettings();
-  const unassignedSiteId =
-    syncSettings?.syncSiteId ?? syncSettings?.centralServerSiteId ?? 0;
+  const unassignedSiteId = syncSettings?.centralServerSiteId ?? 1; // Should never be null, but we currently know standalone is 1.
 
   const originalStores: SiteStoreDraftRow[] = useMemo(
     () => (isNew ? [] : (data?.nodes ?? [])),
