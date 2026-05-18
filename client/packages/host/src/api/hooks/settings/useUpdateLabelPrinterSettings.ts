@@ -3,5 +3,7 @@ import { useHostApi } from '../utils/useHostApi';
 
 export const useUpdateLabelPrinterSettings = () => {
   const api = useHostApi();
-  return useMutation(api.updateLabelPrinterSettings);
+  return useMutation({
+    mutationFn: api.updateLabelPrinterSettings
+  });
 };

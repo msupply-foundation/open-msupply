@@ -9,6 +9,9 @@ export const useStocktakes = () => {
   const api = useStocktakeApi();
 
   return {
-    ...useQuery(api.keys.paramList(queryParams), api.get.list(queryParams)),
+    ...useQuery({
+      queryKey: api.keys.paramList(queryParams),
+      queryFn: api.get.list(queryParams)
+    }),
   };
 };

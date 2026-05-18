@@ -10,10 +10,10 @@ export const useCentralPatientSearch = (
 ) => {
   const api = usePatientApi();
   return {
-    ...useQuery(
-      api.keys.centralSearch(params),
-      () => api.get.centralSearch(params),
-      { enabled: enabled && JSON.stringify(params) !== '{}' }
-    ),
+    ...useQuery({
+      queryKey: api.keys.centralSearch(params),
+      queryFn: () => api.get.centralSearch(params),
+      enabled: enabled && JSON.stringify(params) !== '{}'
+    }),
   };
 };
