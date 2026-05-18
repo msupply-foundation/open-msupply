@@ -91,6 +91,7 @@ fn map_error(error: ServiceError) -> Result<DeleteSiteErrorInterface> {
             ))
         }
         ServiceError::SiteDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::NotStandaloneCentral => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

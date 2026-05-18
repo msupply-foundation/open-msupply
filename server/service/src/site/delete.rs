@@ -9,19 +9,25 @@ pub enum DeleteSiteError {
     SiteDoesNotExist,
     SiteHasStores,
     CannotDeleteCentralSite,
+    NotStandaloneCentral,
     DatabaseError(RepositoryError),
 }
 
 pub fn delete_site(ctx: &ServiceContext, site_id: i32) -> Result<i32, DeleteSiteError> {
     ctx.connection
         .transaction_sync(|connection| {
+            let kv = KeyValueStoreRepository::new(connection);
+
+            if kv.get_bool(KeyType::IsStandaloneCentral)? != Some(true) {
+                return Err(DeleteSiteError::NotStandaloneCentral);
+            }
+
             let repo = SiteRowRepository::new(connection);
 
             repo.find_one_by_id(site_id)?
                 .ok_or(DeleteSiteError::SiteDoesNotExist)?;
 
-            let central_site_id = KeyValueStoreRepository::new(connection)
-                .get_i32(KeyType::SettingsSyncCentralServerSiteId)?;
+            let central_site_id = kv.get_i32(KeyType::SettingsSyncCentralServerSiteId)?;
             if central_site_id == Some(site_id) {
                 return Err(DeleteSiteError::CannotDeleteCentralSite);
             }
@@ -71,6 +77,15 @@ mod tests {
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
+
+        assert_eq!(
+            delete_site(&context, 1),
+            Err(DeleteSiteError::NotStandaloneCentral)
+        );
+
+        KeyValueStoreRepository::new(&context.connection)
+            .set_bool(KeyType::IsStandaloneCentral, Some(true))
+            .unwrap();
 
         assert_eq!(
             delete_site(&context, 999),
@@ -129,6 +144,10 @@ mod tests {
 
         let service_provider = ServiceProvider::new(connection_manager.clone());
         let context = service_provider.basic_context().unwrap();
+
+        KeyValueStoreRepository::new(&context.connection)
+            .set_bool(KeyType::IsStandaloneCentral, Some(true))
+            .unwrap();
 
         upsert_site(
             &context,
