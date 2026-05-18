@@ -53,10 +53,10 @@ pub async fn update_user(ctx: &Context<'_>) -> Result<UpdateResponse> {
             store_id: None,
         },
     )?;
-    let service_provider = ctx.service_provider();
+    let service_provider = ctx.service_provider_data();
     let auth_data = ctx.get_auth_data();
 
-    let user = match SyncUser::update_user(service_provider, auth_data, &user.user_id).await {
+    let user = match SyncUser::update_user(&service_provider, auth_data, &user.user_id).await {
         Ok(user) => user,
         Err(error) => {
             let formatted_error = format!("{error:#?}");

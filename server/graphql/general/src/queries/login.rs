@@ -91,18 +91,29 @@ pub enum AuthTokenResponse {
 }
 
 pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<AuthTokenResponse> {
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
     let auth_data = ctx.get_auth_data();
-    let sync_settings = service_provider
-        .settings
-        .sync_settings(&service_context)?
-        .ok_or(StandardGraphqlError::InternalError(
-            "Sync settings not available".to_string(),
-        ))?;
+
+    // DB-touching sync settings lookup wrapped
+    let service_provider_for_sync = service_provider.clone();
+    let sync_settings = tokio::task::spawn_blocking(move || -> Result<_> {
+        let service_context = service_provider_for_sync
+            .basic_context()
+            .map_err(StandardGraphqlError::from_repository_error)?;
+        service_provider_for_sync
+            .settings
+            .sync_settings(&service_context)
+            .map_err(StandardGraphqlError::from_repository_error)?
+            .ok_or_else(|| {
+                StandardGraphqlError::InternalError("Sync settings not available".to_string())
+                    .extend()
+            })
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     let pair = match LoginService::login(
-        service_provider,
+        &service_provider,
         auth_data,
         LoginInput {
             username: username.to_string(),

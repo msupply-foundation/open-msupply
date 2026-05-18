@@ -9,7 +9,7 @@ use service::{
     sync::sync_status::status::InitialisationStatus,
 };
 
-pub fn manual_sync(
+pub async fn manual_sync(
     ctx: &Context<'_>,
     with_auth: bool,
     fetch_patient_id: Option<String>,
@@ -24,12 +24,21 @@ pub fn manual_sync(
         )?;
     }
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
-    let initialisation_status = service_provider
-        .sync_status_service
-        .get_initialisation_status(&service_context)?;
+    // Only the DB-touching status check is wrapped; the actual sync trigger is
+    // a non-DB signal call.
+    let service_provider_for_status = service_provider.clone();
+    let initialisation_status =
+        tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+            let service_context = service_provider_for_status.basic_context()?;
+            service_provider_for_status
+                .sync_status_service
+                .get_initialisation_status(&service_context)
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)?
+        .map_err(StandardGraphqlError::from_repository_error)?;
 
     if initialisation_status == InitialisationStatus::PreInitialisation {
         return Err(StandardGraphqlError::BadUserInput(

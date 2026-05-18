@@ -560,7 +560,7 @@ impl GeneralMutations {
         ctx: &Context<'_>,
         fetch_patient_id: Option<String>,
     ) -> Result<String> {
-        manual_sync(ctx, true, fetch_patient_id)
+        manual_sync(ctx, true, fetch_patient_id).await
     }
 
     pub async fn update_display_settings(
@@ -677,7 +677,7 @@ impl InitialisationMutations {
         ctx: &Context<'_>,
         _fetch_patient_id: Option<String>,
     ) -> Result<String> {
-        manual_sync(ctx, false, None)
+        manual_sync(ctx, false, None).await
     }
 }
 
