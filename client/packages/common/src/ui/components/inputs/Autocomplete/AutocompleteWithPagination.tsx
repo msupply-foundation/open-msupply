@@ -211,8 +211,13 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       };
 
   useEffect(() => {
-    setTimeout(() => setIsLoading(false), LOADER_HIDE_TIMEOUT);
-  }, [options]);
+    if (loading) {
+      setIsLoading(true);
+      return;
+    }
+    const timer = setTimeout(() => setIsLoading(false), LOADER_HIDE_TIMEOUT);
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   return (
     <MuiAutocomplete
