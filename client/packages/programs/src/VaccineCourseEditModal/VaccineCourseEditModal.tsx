@@ -21,6 +21,7 @@ import {
   InputWithLabelRow,
   MaterialTable,
   ModalMode,
+  NothingHere,
   NumericTextInput,
   PlusCircleIcon,
   useDialog,
@@ -95,10 +96,6 @@ function doseIndex(
   return doses.indexOf(dose) + 1;
 }
 
-function doseIndexById(doses: VaccineCourseDoseFragment[], doseId: string) {
-  return doses.findIndex(d => d.id === doseId) + 1;
-}
-
 export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   vaccineCourseId,
   isOpen,
@@ -114,10 +111,14 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     create: { create },
     updatePatch,
     query: { isLoading },
+    isDirty,
     resetDraft,
   } = useVaccineCourse(vaccineCourseId ?? undefined);
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const doses = draft.vaccineCourseDoses ?? [];
+  const doses = useMemo(
+    () => draft.vaccineCourseDoses ?? [],
+    [draft.vaccineCourseDoses]
+  );
 
   const form = useForm(FORM_ID);
   const flatErrors = useFormErrorList(FORM_ID);
@@ -128,6 +129,10 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   const summaryItems = useMemo<ErrorDisplayItem[]>(() => {
     const topForm: ErrorDisplayItem[] = [];
     const doseGroups = new Map<string, string[]>();
+    // O(1) lookup of a dose's 1-based index by id. Doubles as a "does this
+    // doseId still exist?" check — stale fieldIds whose row has just been
+    // deleted (cleanup hasn't run yet) get filtered out below.
+    const doseIndexMap = new Map(doses.map((d, i) => [d.id, i + 1]));
 
     for (const err of flatErrors) {
       if (!err.fieldId.includes('.')) {
@@ -138,7 +143,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         });
       } else {
         const [doseId] = err.fieldId.split('.');
-        if (!doseId) continue;
+        if (!doseId || !doseIndexMap.has(doseId)) continue;
         const list = doseGroups.get(doseId) ?? [];
         list.push(err.message);
         doseGroups.set(doseId, list);
@@ -148,7 +153,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     const doseItems: ErrorDisplayItem[] = [...doseGroups].map(
       ([doseId, messages]) => ({
         key: doseId,
-        label: `${t('label.dose')} ${doseIndexById(doses, doseId)}`,
+        label: `${t('label.dose')} ${doseIndexMap.get(doseId)}`,
         message: messages.join(', '),
       })
     );
@@ -215,14 +220,12 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     }
   };
 
-  // Save is enabled by default — validation is now surfaced through
-  // `<ErrorDisplay>` and gated by `form.hasErrors()` in the save handler. The
-  // only reason to keep Save disabled outside of validation is when there's
-  // no program context to save against (programmer error, shouldn't happen in
-  // practice). `isDirty` no longer gates the button: in Create mode, the user
-  // needs to be able to click Save on a fresh form to see the required-field
-  // errors; in Edit mode, re-saving an unchanged record is harmless.
-  const disable = !programId;
+  // Validation is surfaced through `<ErrorDisplay>` and gated by
+  // `form.hasErrors()` in the save handler, so Save stays enabled in Create
+  // mode (the user needs to click it to reveal required-field errors on a
+  // fresh form). In Edit mode, gate on `isDirty` so re-saving an unchanged
+  // record doesn't hit the network unnecessarily.
+  const disable = !programId || (mode === ModalMode.Update && !isDirty);
 
   const modalContent = isLoading ? (
     <BasicSpinner />
@@ -555,10 +558,7 @@ const VaccineCourseDoseTable = ({
     columns,
     data: doses,
     enableRowSelection: false,
-    // When there are no doses we don't render the "Nothing here" placeholder —
-    // it pushes the form's <ErrorDisplay> too far down on a fresh form. The
-    // empty header row is enough of a hint that the table exists.
-    noDataElement: <></>,
+    noDataElement: <NothingHere body={t('message.add-a-dose')} />,
   });
 
   return <MaterialTable table={table} />;

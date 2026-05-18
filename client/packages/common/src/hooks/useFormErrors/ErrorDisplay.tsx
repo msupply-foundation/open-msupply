@@ -59,7 +59,7 @@ type ErrorDisplayProps =
   | {
       // Override mode — render the supplied items verbatim. Use this with
       // `useFormErrorList` to build custom summaries (e.g. grouping by row).
-      formId?: string;
+      formId?: undefined;
       items: ErrorDisplayItem[];
       sx?: SxProps;
     };
