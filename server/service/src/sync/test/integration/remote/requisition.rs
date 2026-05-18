@@ -63,7 +63,8 @@ impl SyncRecordTester for RequisitionRecordTester {
             snapshot_datetime: None,
             approved_quantity: 0.0,
             approval_comment: None,
-            initial_stock_on_hand_units: 5.0,
+            // 4D recalculates this to match available_stock_on_hand for Draft requisitions.
+            initial_stock_on_hand_units: 10.0,
             incoming_units: 5.0,
             outgoing_units: 5.0,
             loss_in_units: 5.0,
@@ -145,7 +146,8 @@ impl SyncRecordTester for RequisitionRecordTester {
         requisition_line_row_1.snapshot_datetime = NaiveDate::from_ymd_opt(2022, 03, 20)
             .unwrap()
             .and_hms_opt(12, 13, 14);
-        requisition_line_row_1.initial_stock_on_hand_units = 5.0;
+        // 4D recalculates this to match available_stock_on_hand.
+        requisition_line_row_1.initial_stock_on_hand_units = 15.0;
         requisition_line_row_1.incoming_units = 5.0;
         requisition_line_row_1.outgoing_units = 5.0;
         requisition_line_row_1.loss_in_units = 5.0;
