@@ -116,7 +116,7 @@ A plugin page contributes one entry to the `pages?: PluginPage[]` slot. The shap
 
 ```typescript
 import { AppRoute } from '@openmsupply-client/config';
-import { Plugins, ReportsIcon } from '@openmsupply-client/common';
+import { Plugins, ReportsIcon, UserPermission } from '@openmsupply-client/common';
 
 const myPlugin: Plugins = {
   pages: [
@@ -126,7 +126,7 @@ const myPlugin: Plugins = {
       menu: {
         label: 'Stock aging',
         // (optional) gate behind permission(s); ALL must be held to see the page
-        permissions: [UserPermission.StockMutate],
+        permissions: [UserPermission.StockLineQuery],
         category: {
           type: 'existing',                            // attach under built-in Inventory
           appRoute: AppRoute.Inventory,
