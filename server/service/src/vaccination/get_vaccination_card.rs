@@ -36,7 +36,8 @@ pub fn get_vaccination_card(
 ) -> Result<VaccinationCard, RepositoryError> {
     let enrolment = ProgramEnrolmentRepository::new(&ctx.connection)
         .query_by_filter(
-            ProgramEnrolmentFilter::new().id(EqualFilter::equal_to(program_enrolment_id.to_string())),
+            ProgramEnrolmentFilter::new()
+                .id(EqualFilter::equal_to(program_enrolment_id.to_string())),
         )?
         .pop()
         .ok_or(RepositoryError::NotFound)?;

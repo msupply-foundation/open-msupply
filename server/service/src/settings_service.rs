@@ -21,8 +21,7 @@ pub enum UpdateSettingsError {
 fn validate(settings: &SyncSettings) -> Result<(), UpdateSettingsError> {
     if let Err(err) = Url::parse(&settings.url) {
         return Err(UpdateSettingsError::InvalidSettings(format!(
-            "Invalid url: {:?}",
-            err
+            "Invalid url: {err:?}"
         )));
     }
 
@@ -53,6 +52,7 @@ pub trait SettingsServiceTrait: Sync + Send {
                 password_sha256: password_sha256?,
                 interval_seconds: interval_seconds? as u64,
                 batch_size: Default::default(),
+                disable_integration_transaction: false,
             })
         };
 

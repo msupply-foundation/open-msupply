@@ -5,15 +5,18 @@ use repository::{EqualFilter, Pagination, ProgramEnrolment, ProgramEnrolmentFilt
 use service::service_provider::ServiceProvider;
 use std::collections::HashMap;
 
-use super::IdPair;
-
-pub type ProgramEnrolmentLoaderInput = IdPair<Vec<String>>;
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub struct ProgramEnrolmentLoaderInput {
+    pub patient_id: String,
+    pub program: String,
+    pub allowed_ctx: Vec<String>,
+}
 impl ProgramEnrolmentLoaderInput {
     pub fn new(patient_id: &str, program: &str, allowed_ctx: Vec<String>) -> Self {
         ProgramEnrolmentLoaderInput {
-            primary_id: patient_id.to_string(),
-            secondary_id: program.to_string(),
-            payload: allowed_ctx,
+            patient_id: patient_id.to_string(),
+            program: program.to_string(),
+            allowed_ctx,
         }
     }
 }
@@ -40,8 +43,8 @@ impl Loader<ProgramEnrolmentLoaderInput> for ProgramEnrolmentLoader {
         // allowed_ctx -> Vec<(patient_id, program)>
         let mut map = HashMap::<Vec<String>, Vec<(String, String)>>::new();
         for item in inputs {
-            let entry = map.entry(item.payload.clone()).or_default();
-            entry.push((item.primary_id.clone(), item.secondary_id.clone()))
+            let entry = map.entry(item.allowed_ctx.clone()).or_default();
+            entry.push((item.patient_id.clone(), item.program.clone()))
         }
         let mut out = HashMap::<ProgramEnrolmentLoaderInput, Self::Value>::new();
 

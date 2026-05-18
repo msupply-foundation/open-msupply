@@ -19,46 +19,6 @@ impl Logout {
     }
 }
 
-pub struct MissingAuthToken;
-#[Object]
-impl MissingAuthToken {
-    pub async fn description(&self) -> &str {
-        "Auth token was not provided"
-    }
-}
-
-pub struct ExpiredSignature;
-#[Object]
-impl ExpiredSignature {
-    pub async fn description(&self) -> &str {
-        "Provided token is expired"
-    }
-}
-
-pub struct InvalidToken;
-#[Object]
-impl InvalidToken {
-    pub async fn description(&self) -> &str {
-        "Provided token is invalid"
-    }
-}
-
-pub struct TokenInvalided;
-#[Object]
-impl TokenInvalided {
-    pub async fn description(&self) -> &str {
-        "Token has been invalidated by the server"
-    }
-}
-
-pub struct NotAnApiToken;
-#[Object]
-impl NotAnApiToken {
-    pub async fn description(&self) -> &str {
-        "Not an api token"
-    }
-}
-
 #[derive(Union)]
 pub enum LogoutResponse {
     Response(Logout),
@@ -72,7 +32,7 @@ pub fn logout(ctx: &Context<'_>) -> Result<LogoutResponse> {
     let user_auth = match validate_auth(auth_data, &ctx.get_auth_token()) {
         Ok(value) => value,
         Err(err) => {
-            let formatted_error = format!("{:#?}", err);
+            let formatted_error = format!("{err:#?}");
             let graphql_error = match err {
                 AuthError::Denied(_) => StandardGraphqlError::Forbidden(formatted_error),
                 AuthError::InternalError(_) => StandardGraphqlError::InternalError(formatted_error),
@@ -91,7 +51,7 @@ pub fn logout(ctx: &Context<'_>) -> Result<LogoutResponse> {
     match service.logout(&user_id) {
         Ok(_) => {}
         Err(e) => {
-            let formatted_error = format!("{:#?}", e);
+            let formatted_error = format!("{e:#?}");
             let graphql_error = match e {
                 service::token::JWTLogoutError::ConcurrencyLockError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)

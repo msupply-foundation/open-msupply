@@ -2,9 +2,17 @@ import React from 'react';
 import { BasicTextInput } from '@common/components';
 import {
   Box,
-  ColumnDefinition,
   RecordWithId,
 } from '@openmsupply-client/common';
+
+type ColumnDefinition<T> = {
+  label: string;
+  setter: (patch: T) => void;
+  accessor: (args: { rowData: T }) => unknown;
+  key: string;
+  Cell: (args: { rowData: T; column: ColumnDefinition<T>; isDisabled?: boolean }) => React.ReactNode;
+  minWidth?: number;
+};
 
 interface RecordWithIdWithRequiredFields extends RecordWithId {
   label?: string;

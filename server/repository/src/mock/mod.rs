@@ -17,8 +17,6 @@ mod encounter;
 mod form_schema;
 mod full_invoice;
 mod full_master_list;
-mod goods_received;
-mod goods_received_line;
 mod indicator_column;
 mod indicator_line;
 mod indicator_value;
@@ -94,8 +92,6 @@ pub use encounter::*;
 pub use form_schema::*;
 pub use full_invoice::*;
 pub use full_master_list::*;
-pub use goods_received::*;
-pub use goods_received_line::*;
 pub use indicator_column::*;
 pub use indicator_line::*;
 pub use indicator_value::*;
@@ -159,11 +155,13 @@ use crate::{
     campaign_row::{CampaignRow, CampaignRowRepository},
     category_row::{CategoryRow, CategoryRowRepository},
     contact_form_row::{ContactFormRow, ContactFormRowRepository},
-    goods_received_row::{GoodsReceivedRow, GoodsReceivedRowRepository},
     item_variant::item_variant_row::{ItemVariantRow, ItemVariantRowRepository},
     reason_option_row::{ReasonOptionRow, ReasonOptionRowRepository},
     vaccine_course::{
         vaccine_course_dose_row::{VaccineCourseDoseRow, VaccineCourseDoseRowRepository},
+        vaccine_course_store_config_row::{
+            VaccineCourseStoreConfigRow, VaccineCourseStoreConfigRowRepository,
+        },
         vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
         vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
     },
@@ -241,6 +239,7 @@ pub struct MockData {
     pub vaccine_courses: Vec<VaccineCourseRow>,
     pub vaccine_course_doses: Vec<VaccineCourseDoseRow>,
     pub vaccine_course_items: Vec<VaccineCourseItemRow>,
+    pub vaccine_course_store_configs: Vec<VaccineCourseStoreConfigRow>,
     pub encounters: Vec<EncounterRow>,
     pub program_enrolments: Vec<ProgramEnrolmentRow>,
     pub program_indicators: Vec<ProgramIndicatorRow>,
@@ -261,8 +260,6 @@ pub struct MockData {
     pub purchase_order_line: Vec<PurchaseOrderLineRow>,
     pub location_types: Vec<LocationTypeRow>,
     pub preferences: Vec<PreferenceRow>,
-    pub goods_received: Vec<GoodsReceivedRow>,
-    pub goods_received_line: Vec<GoodsReceivedLineRow>,
 }
 
 impl MockData {
@@ -335,6 +332,7 @@ pub struct MockDataInserts {
     pub vaccine_courses: bool,
     pub vaccine_course_doses: bool,
     pub vaccine_course_items: bool,
+    pub vaccine_course_store_configs: bool,
     pub encounters: bool,
     pub program_enrolments: bool,
     pub program_indicators: bool,
@@ -356,8 +354,6 @@ pub struct MockDataInserts {
     pub purchase_order_line: bool,
     pub location_types: bool,
     pub preferences: bool,
-    pub goods_received: bool,
-    pub goods_received_line: bool,
 }
 
 impl MockDataInserts {
@@ -420,6 +416,7 @@ impl MockDataInserts {
             vaccine_courses: true,
             vaccine_course_doses: true,
             vaccine_course_items: true,
+            vaccine_course_store_configs: true,
             encounters: true,
             program_enrolments: true,
             program_indicators: true,
@@ -440,8 +437,6 @@ impl MockDataInserts {
             purchase_order_line: true,
             location_types: true,
             preferences: true,
-            goods_received: true,
-            goods_received_line: true,
         }
     }
 
@@ -746,6 +741,11 @@ impl MockDataInserts {
         self.vaccine_course_items = true;
         self
     }
+    pub fn vaccine_course_store_configs(mut self) -> Self {
+        self.vaccine_courses = true;
+        self.vaccine_course_store_configs = true;
+        self
+    }
 
     pub fn encounters(mut self) -> Self {
         self.encounters = true;
@@ -821,34 +821,6 @@ impl MockDataInserts {
         self.currencies = true;
         self.purchase_order = true;
         self.purchase_order_line = true;
-        self
-    }
-
-    pub fn goods_received(mut self) -> Self {
-        self.location_types = true;
-        self.names = true;
-        self.units = true;
-        self.items = true;
-        self.stores = true;
-        self.currencies = true;
-        self.purchase_order = true;
-        self.purchase_order_line = true;
-        self.goods_received = true;
-        self
-    }
-
-    pub fn goods_received_line(mut self) -> Self {
-        self.location_types = true;
-        self.names = true;
-        self.units = true;
-        self.items = true;
-        self.stores = true;
-        self.currencies = true;
-        self.purchase_order = true;
-        self.purchase_order_line = true;
-        self.goods_received = true;
-        self.goods_received_line = true;
-
         self
     }
 
@@ -945,6 +917,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             vaccine_courses: mock_vaccine_courses(),
             vaccine_course_doses: mock_vaccine_course_doses(),
             vaccine_course_items: mock_vaccine_course_items(),
+            vaccine_course_store_configs: mock_vaccine_course_store_configs(),
             encounters: mock_encounters(),
             program_enrolments: mock_program_enrolments(),
             program_indicators: mock_program_indicators(),
@@ -961,8 +934,6 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             purchase_order: mock_purchase_orders(),
             purchase_order_line: mock_purchase_order_lines(),
             location_types: mock_location_types(),
-            goods_received: mock_goods_received(),
-            goods_received_line: mock_goods_received_lines(),
             ..Default::default()
         },
     );
@@ -1424,6 +1395,12 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+        if inserts.vaccine_course_store_configs {
+            let repo = VaccineCourseStoreConfigRowRepository::new(connection);
+            for row in &mock_data.vaccine_course_store_configs {
+                repo.upsert_one(row).unwrap();
+            }
+        }
         if inserts.encounters {
             let repo = EncounterRowRepository::new(connection);
             for row in &mock_data.encounters {
@@ -1552,20 +1529,6 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
-
-        if inserts.goods_received {
-            let repo = GoodsReceivedRowRepository::new(connection);
-            for row in &mock_data.goods_received {
-                repo.upsert_one(row).unwrap();
-            }
-        }
-
-        if inserts.goods_received_line {
-            let repo = GoodsReceivedLineRowRepository::new(connection);
-            for row in &mock_data.goods_received_line {
-                repo.upsert_one(row).unwrap();
-            }
-        }
     }
     mock_data
 }
@@ -1631,6 +1594,7 @@ impl MockData {
             mut vaccine_courses,
             mut vaccine_course_doses,
             mut vaccine_course_items,
+            mut vaccine_course_store_configs,
             mut encounters,
             mut program_enrolments,
             mut program_indicators,
@@ -1651,8 +1615,6 @@ impl MockData {
             mut purchase_order_line,
             mut location_types,
             mut preferences,
-            mut goods_received,
-            mut goods_received_line,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1713,6 +1675,8 @@ impl MockData {
         self.vaccine_courses.append(&mut vaccine_courses);
         self.vaccine_course_doses.append(&mut vaccine_course_doses);
         self.vaccine_course_items.append(&mut vaccine_course_items);
+        self.vaccine_course_store_configs
+            .append(&mut vaccine_course_store_configs);
         self.encounters.append(&mut encounters);
         self.program_enrolments.append(&mut program_enrolments);
         self.program_indicators.append(&mut program_indicators);
@@ -1732,8 +1696,6 @@ impl MockData {
         self.purchase_order_line.append(&mut purchase_order_line);
         self.location_types.append(&mut location_types);
         self.preferences.append(&mut preferences);
-        self.goods_received.append(&mut goods_received);
-        self.goods_received_line.append(&mut goods_received_line);
         self
     }
 }

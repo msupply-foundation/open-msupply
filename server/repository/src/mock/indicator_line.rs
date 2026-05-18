@@ -44,10 +44,25 @@ pub fn mock_indicator_line_c() -> IndicatorLineRow {
     }
 }
 
+pub fn mock_indicator_line_d_inactive() -> IndicatorLineRow {
+    IndicatorLineRow {
+        id: "indicator_line_row_d_inactive".to_string(),
+        code: "ird_inactive".to_string(),
+        program_indicator_id: mock_program_indicator_a().id,
+        line_number: 3,
+        description: "Inactive line D".to_string(),
+        value_type: None,
+        default_value: "".to_string(),
+        is_required: false,
+        is_active: false,
+    }
+}
+
 pub fn mock_indicator_lines() -> Vec<IndicatorLineRow> {
     vec![
         mock_indicator_line_a(),
         mock_indicator_line_b(),
         mock_indicator_line_c(),
+        mock_indicator_line_d_inactive(),
     ]
 }

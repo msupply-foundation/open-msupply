@@ -24,8 +24,6 @@ use crate::{
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
     },
     email::{EmailService, EmailServiceTrait},
-    goods_received::{GoodsReceivedService, GoodsReceivedServiceTrait},
-    goods_received_line::{GoodsReceivedLineService, GoodsReceivedLineServiceTrait},
     insurance::{InsuranceService, InsuranceServiceTrait},
     insurance_provider::{InsuranceProviderService, InsuranceProviderServiceTrait},
     invoice::{InvoiceService, InvoiceServiceTrait},
@@ -89,6 +87,8 @@ use repository::{
     PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager, Store,
     StoreFilter, StoreSort,
 };
+
+use crate::subscription::SubscriptionTriggerHandle;
 use util::constants::SYSTEM_USER_ID;
 
 pub struct ServiceProvider {
@@ -199,14 +199,15 @@ pub struct ServiceProvider {
     // Purchase Orders
     pub purchase_order_service: Box<dyn PurchaseOrderServiceTrait>,
     pub purchase_order_line_service: Box<dyn PurchaseOrderLineServiceTrait>,
-    pub goods_received_service: Box<dyn GoodsReceivedServiceTrait>,
-    pub goods_received_line_service: Box<dyn GoodsReceivedLineServiceTrait>,
     // Contacts
     pub contact_service: Box<dyn ContactServiceTrait>,
     // Shipping Method
     pub shipping_method_service: Box<dyn ShippingMethodServiceTrait>,
     // Sync Message
     pub sync_message_service: Box<dyn SyncMessageTrait>,
+    // Subscription trigger handle — used by SyncLogger and changelog callbacks
+    // to send events to the shared subscription worker.
+    pub subscription_trigger: SubscriptionTriggerHandle,
 }
 
 pub struct ServiceContext {
@@ -232,6 +233,7 @@ impl ServiceProvider {
             SiteIsInitialisedTrigger::new_void(),
             None, // Mail not required for test/CLI setups
             None,
+            SubscriptionTriggerHandle::new_void(),
         )
     }
 
@@ -243,6 +245,7 @@ impl ServiceProvider {
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
         mail_settings: Option<MailSettings>,
         settings: Option<Settings>,
+        subscription_trigger: SubscriptionTriggerHandle,
     ) -> Self {
         ServiceProvider {
             connection_manager: connection_manager.clone(),
@@ -317,12 +320,11 @@ impl ServiceProvider {
             campaign_service: Box::new(CampaignService),
             purchase_order_service: Box::new(PurchaseOrderService),
             purchase_order_line_service: Box::new(PurchaseOrderLineService),
-            goods_received_service: Box::new(GoodsReceivedService),
-            goods_received_line_service: Box::new(GoodsReceivedLineService),
             contact_service: Box::new(ContactService {}),
             sync_message_service: Box::new(SyncMessageService),
             ledger_fix_trigger,
             shipping_method_service: Box::new(ShippingMethodService {}),
+            subscription_trigger,
         }
     }
 

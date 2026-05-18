@@ -7,9 +7,11 @@ use crate::sync::translations::{
 
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, StockLineRowRepository, StocktakeLine,
-    StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow, StorageConnection,
-    SyncBufferRow,
+    campaign_row::CampaignRowRepository, item_variant::item_variant_row::ItemVariantRowRepository,
+    ChangelogRow, ChangelogTableName,
+    EqualFilter, LocationRowRepository, ProgramRowRepository, ReasonOptionRowRepository,
+    StockLineRowRepository, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
+    StocktakeLineRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -17,9 +19,9 @@ use util::sync_serde::{
     zero_date_as_option,
 };
 
-use super::{
-    utils::clear_invalid_location_id, PullTranslateResult, PushTranslateResult, SyncTranslation,
-};
+use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
+
+const RECORD_TABLE: &str = "stocktake_line";
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -30,6 +32,8 @@ pub struct LegacyStocktakeLineRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub program_id: Option<String>,
+    #[serde(default)]
+    pub manufacture_date: Option<NaiveDate>,
 }
 
 #[allow(non_snake_case)]
@@ -78,6 +82,10 @@ pub struct LegacyStocktakeLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub vvm_status_id: Option<String>,
     pub volume_per_pack: f64,
+    #[serde(rename = "manufacturer_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(default)]
+    pub manufacturer_id: Option<String>,
     #[serde(default)]
     #[serde(deserialize_with = "object_fields_as_option")]
     pub oms_fields: Option<LegacyStocktakeLineRowOmsFields>,
@@ -138,6 +146,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             donor_id,
             vvm_status_id,
             volume_per_pack,
+            manufacturer_id,
             oms_fields,
         } = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
 
@@ -149,32 +158,74 @@ impl SyncTranslation for StocktakeLineTranslation {
         };
 
         // omSupply should be generating the stocktake line with valid stock lines.
-        // Currently a uuid is assigned by central for the stock_line id which causes a foreign key constraint violation
-        let is_stock_line_valid = match item_line_ID {
-            Some(ref stock_line_id) => StockLineRowRepository::new(connection)
-                .find_one_by_id(stock_line_id)?
-                .is_some(),
-            None => true,
-        };
+        // Currently a uuid is assigned by central for the stock_line id which causes a foreign
+        // key constraint violation; clear_invalid_fk handles the validation + null + system_log.
+        let stock_line_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "stock_line_id",
+            item_line_ID,
+            |c, id| StockLineRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
-        if !is_stock_line_valid {
-            log::warn!(
-                "Stock line is not valid, stocktake_line_id: {ID}, stock_line_id: {item_line_ID:?}"
-            );
-        }
+        let (campaign_id, program_id, manufacture_date) = oms_fields
+            .map(|fields| (fields.campaign_id, fields.program_id, fields.manufacture_date))
+            .unwrap_or((None, None, None));
 
-        let (campaign_id, program_id) = oms_fields
-            .map(|fields| (fields.campaign_id, fields.program_id))
-            .unwrap_or((None, None));
+        let location_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "location_id",
+            location_id,
+            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let item_variant_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "item_variant_id",
+            item_variant_id,
+            |c, id| ItemVariantRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        // No DB-level FK constraint on stocktake_line.vvm_status_id (unlike stock_line/invoice_line), skip validation
+        // Note: the DB constraint may be missing from the migration and should be added separately
+        let reason_option_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "reason_option_id",
+            reason_option_id,
+            |c, id| ReasonOptionRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let campaign_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "campaign_id",
+            campaign_id,
+            |c, id| CampaignRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let program_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "program_id",
+            program_id,
+            |c, id| ProgramRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
-        let location_id = clear_invalid_location_id(connection, location_id)?;
         let result = StocktakeLineRow {
             id: ID,
             stocktake_id: stock_take_ID,
-            stock_line_id: match is_stock_line_valid {
-                true => item_line_ID,
-                false => None,
-            },
+            stock_line_id,
             location_id,
             comment,
             snapshot_number_of_packs: snapshot_qty,
@@ -183,12 +234,14 @@ impl SyncTranslation for StocktakeLineTranslation {
             item_name,
             batch: Batch,
             expiry_date: expiry,
+            manufacture_date,
             pack_size: Some(snapshot_packsize),
             cost_price_per_pack: Some(cost_price),
             sell_price_per_pack: Some(sell_price),
             note,
             item_variant_id,
-            donor_link_id: donor_id,
+            donor_id,
+            manufacturer_id,
             reason_option_id,
             vvm_status_id,
             volume_per_pack,
@@ -229,12 +282,14 @@ impl SyncTranslation for StocktakeLineTranslation {
                     item_name,
                     batch,
                     expiry_date,
+                    manufacture_date,
                     pack_size,
                     cost_price_per_pack,
                     sell_price_per_pack,
                     note,
                     item_variant_id,
-                    donor_link_id: donor_id,
+                    donor_id,
+                    manufacturer_id,
                     reason_option_id,
                     vvm_status_id,
                     volume_per_pack,
@@ -246,11 +301,12 @@ impl SyncTranslation for StocktakeLineTranslation {
             ..
         } = stocktake_line;
 
-        let oms_fields = match (&campaign_id, &program_id) {
-            (None, None) => None,
+        let oms_fields = match (&campaign_id, &program_id, &manufacture_date) {
+            (None, None, None) => None,
             _ => Some(LegacyStocktakeLineRowOmsFields {
                 campaign_id,
                 program_id,
+                manufacture_date,
             }),
         };
 
@@ -277,6 +333,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             donor_id,
             vvm_status_id,
             volume_per_pack,
+            manufacturer_id,
             oms_fields,
         };
 
@@ -304,7 +361,12 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+        campaign_row::CampaignRow,
+        mock::{MockData, MockDataInserts},
+        system_log_row::{SystemLogRowRepository, SystemLogType},
+        test_db::{setup_all, setup_all_with_data},
+        vvm_status::vvm_status_row::VVMStatusRow,
+        ChangelogFilter, ChangelogRepository, ContextRow, ProgramRow, SyncAction,
     };
     use serde_json::json;
 
@@ -313,7 +375,9 @@ mod tests {
         use crate::sync::test::test_data::stocktake_line as test_data;
         let translator = StocktakeLineTranslation {};
 
-        let (_, connection, _, _) = setup_all(
+        // Pre-populate FK records that the test data references; without these the FK
+        // validation in the translator would null them out.
+        let (_, connection, _, _) = setup_all_with_data(
             "test_stock_take_line_translation",
             MockDataInserts::none()
                 .stock_lines()
@@ -322,6 +386,33 @@ mod tests {
                 .names()
                 .locations()
                 .stores(),
+            MockData {
+                contexts: vec![ContextRow {
+                    id: "test_ctx".to_string(),
+                    name: "test ctx".to_string(),
+                }],
+                programs: vec![ProgramRow {
+                    id: "program_test".to_string(),
+                    master_list_id: None,
+                    name: "program_test".to_string(),
+                    context_id: "test_ctx".to_string(),
+                    is_immunisation: false,
+                    elmis_code: None,
+                    deleted_datetime: None,
+                }],
+                campaigns: vec![CampaignRow {
+                    id: "campaign_a".to_string(),
+                    name: "Campaign A".to_string(),
+                    ..Default::default()
+                }],
+                vvm_statuses: vec![VVMStatusRow {
+                    id: "VVM_STATUS_1".to_string(),
+                    code: "1".to_string(),
+                    description: "VVM 1".to_string(),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -332,6 +423,119 @@ mod tests {
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    /// When optional FKs reference records that don't exist, the translator should:
+    ///  - null out each invalid FK on the translated row
+    ///  - write a `system_log` row of type `SyncTranslationFkError` for each invalid FK
+    /// so the integration upstream of this translator doesn't fail on FK constraint violations.
+    #[actix_rt::test]
+    async fn test_stocktake_line_clears_invalid_optional_fks_and_writes_system_log() {
+        let translator = StocktakeLineTranslation {};
+        let (_, connection, _, _) = setup_all(
+            "test_stocktake_line_clears_invalid_optional_fks_and_writes_system_log",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let sync_record = SyncBufferRow {
+            table_name: "Stock_take_lines".to_string(),
+            record_id: "STOCKTAKE_LINE_FK_INVALID".to_string(),
+            data: r#"{
+                "ID": "STOCKTAKE_LINE_FK_INVALID",
+                "stock_take_ID": "stocktake_a",
+                "Batch": "",
+                "comment": "",
+                "cost_price": 0,
+                "donor_ID": "",
+                "expiry": "0000-00-00",
+                "is_edited": false,
+                "item_ID": "item_a",
+                "item_name": "Item A",
+                "item_line_ID": "",
+                "location_id": "does_not_exist_location",
+                "optionID": "does_not_exist_reason_option",
+                "sell_price": 0,
+                "snapshot_packsize": 1,
+                "snapshot_qty": 1,
+                "stock_take_qty": 0,
+                "vaccine_vial_monitor_status_ID": "does_not_exist_vvm",
+                "om_item_variant_id": "does_not_exist_item_variant",
+                "volume_per_pack": 0,
+                "oms_fields": {
+                    "campaign_id": "does_not_exist_campaign",
+                    "program_id": "does_not_exist_program"
+                }
+            }"#
+            .to_string(),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        let result = translator
+            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .unwrap();
+
+        let expected = PullTranslateResult::upsert(StocktakeLineRow {
+            id: "STOCKTAKE_LINE_FK_INVALID".to_string(),
+            stocktake_id: "stocktake_a".to_string(),
+            stock_line_id: None,
+            location_id: None,
+            comment: None,
+            snapshot_number_of_packs: 1.0,
+            counted_number_of_packs: None,
+            item_link_id: "item_a".to_string(),
+            item_name: "Item A".to_string(),
+            batch: None,
+            expiry_date: None,
+            pack_size: Some(1.0),
+            cost_price_per_pack: Some(0.0),
+            sell_price_per_pack: Some(0.0),
+            note: None,
+            item_variant_id: None,
+            donor_id: None,
+            manufacturer_id: None,
+            manufacture_date: None,
+            reason_option_id: None,
+            vvm_status_id: Some("does_not_exist_vvm".to_string()),
+            volume_per_pack: 0.0,
+            campaign_id: None,
+            program_id: None,
+        });
+        assert_eq!(result, expected);
+
+        let logs = SystemLogRowRepository::new(&connection)
+            .find_all()
+            .unwrap();
+        let fk_errors: Vec<_> = logs
+            .iter()
+            .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
+            .collect();
+        // location_id, item_variant_id, reason_option_id, campaign_id, program_id
+        // (vvm_status_id skipped — no DB-level FK constraint)
+        assert_eq!(fk_errors.len(), 5, "got {fk_errors:?}");
+        let messages: String = fk_errors
+            .iter()
+            .filter_map(|l| l.message.as_deref())
+            .collect::<Vec<_>>()
+            .join("\n");
+        for fk_field in [
+            "location_id",
+            "item_variant_id",
+            "reason_option_id",
+            "campaign_id",
+            "program_id",
+        ] {
+            assert!(
+                messages.contains(fk_field),
+                "{}",
+                format!("expected message to mention {fk_field}; got:\n{messages}")
+            );
+            assert!(
+                messages.contains("STOCKTAKE_LINE_FK_INVALID"),
+                "expected message to include the record id"
+            );
         }
     }
 

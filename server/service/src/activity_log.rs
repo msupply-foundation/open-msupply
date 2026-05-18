@@ -102,7 +102,7 @@ pub fn activity_log_entry_with_diff(
     let (changed_from, changed_to) = match old_value {
         Some(old) => {
             match json_diff(&old, &new_value).map_err(|e| RepositoryError::DBError {
-                msg: format!("{:?}", e),
+                msg: format!("{e:?}"),
                 extra: "JSON diff error".to_string(),
             })? {
                 Some((from, to)) => (
@@ -157,14 +157,9 @@ pub fn system_log_entry(
     let sync_site_id =
         KeyValueStoreRepository::new(connection).get_i32(KeyType::SettingsSyncSiteId)?;
 
-    let message = match { message } {
+    let message = match message {
         SystemLogMessage::Error(error, context) => {
-            format!(
-                "{} - {} - {}",
-                context,
-                log_type.to_string(),
-                format_error(&error)
-            )
+            format!("{} - {} - {}", context, log_type, format_error(&error))
         }
         SystemLogMessage::Message(msg) => msg.to_string(),
     };
@@ -299,7 +294,7 @@ mod test {
             MockData {
                 invoices: vec![InvoiceRow {
                     id: "test".to_string(),
-                    name_link_id: mock_name_a().id,
+                    name_id: mock_name_a().id,
                     store_id: mock_store_a().id,
                     r#type: InvoiceType::OutboundShipment,
                     status: InvoiceStatus::Allocated,

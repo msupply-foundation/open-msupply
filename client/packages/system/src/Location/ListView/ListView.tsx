@@ -15,6 +15,7 @@ import {
 import { LocationRowFragment, useLocationList } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { LocationEditModal } from './LocationEditModal';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const LocationListView = () => {
@@ -27,6 +28,9 @@ export const LocationListView = () => {
         key: 'name',
       },
       {
+        key: 'code',
+      },
+      {
         key: 'onHold',
         condition: '=',
       },
@@ -34,7 +38,7 @@ export const LocationListView = () => {
   });
   const queryParams = { sortBy, first, offset, filterBy };
   const {
-    query: { data, isError, isLoading, isFetching },
+    query: { data, isError, isFetching },
   } = useLocationList(queryParams);
   const t = useTranslation();
 
@@ -48,6 +52,7 @@ export const LocationListView = () => {
         accessorKey: 'code',
         header: t('label.code'),
         enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'name',
@@ -129,6 +134,7 @@ export const LocationListView = () => {
 
   return (
     <>
+      <Toolbar />
       {isOpen && (
         <LocationEditModal
           mode={mode}
@@ -137,11 +143,7 @@ export const LocationListView = () => {
           location={entity}
         />
       )}
-      <AppBarButtons
-        onCreate={() => onOpen()}
-        locations={data?.nodes}
-        reportIsLoading={isLoading}
-      />
+      <AppBarButtons onCreate={() => onOpen()} sortBy={sortBy} />
       <MaterialTable table={table} />
       <Footer
         selectedRows={selectedRows}

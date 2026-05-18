@@ -9,3 +9,14 @@ body {
   margin: 10px 5% 10px 5%;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
+
+@media print {
+  @page {
+    size: portrait;
+    @bottom-center {
+      font-family: Tahoma;
+      font-size: 8pt;
+      content: counter(page);
+    }
+  }
+}

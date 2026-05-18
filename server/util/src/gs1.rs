@@ -18,6 +18,12 @@ pub struct GS1 {
     gs1: HashMap<String, String>,
 }
 
+impl Default for GS1 {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GS1 {
     pub fn new() -> Self {
         Self {
@@ -112,7 +118,7 @@ fn parse_gs1_string(gs1_input: String) -> Result<HashMap<String, String>, GS1Par
     for c in gs1_input.chars() {
         if c == '(' {
             // Found the start of a new AI, if we have a leftover AI and data pair, let's add it to the map
-            if ai.len() > 0 {
+            if !ai.is_empty() {
                 gs1.insert(ai.clone(), data.clone());
                 // Clear the data string, so we can start recording the new data string
                 data.clear();
@@ -128,7 +134,7 @@ fn parse_gs1_string(gs1_input: String) -> Result<HashMap<String, String>, GS1Par
             data.push(c);
         }
     }
-    if ai.len() > 0 {
+    if !ai.is_empty() {
         // If we have a leftover AI and data pair, let's add it to the map!
         gs1.insert(ai.clone(), data.clone());
     }

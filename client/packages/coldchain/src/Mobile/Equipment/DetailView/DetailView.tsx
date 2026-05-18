@@ -1,8 +1,11 @@
 import React, { FC } from 'react';
-import { Box, DetailFormSkeleton } from '@openmsupply-client/common';
+import {
+  Box,
+  DetailFormSkeleton,
+  LocaleKey,
+  StatusChip,
+} from '@openmsupply-client/common';
 import { SimpleLabelDisplay } from '../../Components/SimpleLabelDisplay';
-import { Status } from 'packages/coldchain/src/Equipment/Components';
-
 import { AccordionPanelSection } from 'packages/invoices/src/Prescriptions/LineEditView/PanelSection';
 import { useEquipmentDetailView } from 'packages/coldchain/src/Equipment/DetailView';
 import {
@@ -12,8 +15,13 @@ import {
 import { Footer } from './Footer';
 import { StatusLogs } from 'packages/coldchain/src/Equipment/DetailView/Tabs/StatusLogs';
 import { UpdateStatusButton } from 'packages/coldchain/src/Equipment/DetailView/UpdateStatusButton';
+import { ColdRoomActionButton } from 'packages/coldchain/src/Equipment/DetailView/AppBarButtons';
 import { Documents } from 'packages/coldchain/src/Equipment/DetailView/Tabs/Documents';
 import { LogCardListView } from './LogCardListView';
+import {
+  statusColourMap,
+  useIsColdRoom,
+} from 'packages/coldchain/src/Equipment/utils';
 
 export const EquipmentDetailView: FC = () => {
   const {
@@ -29,10 +37,14 @@ export const EquipmentDetailView: FC = () => {
     // navigate,
     t,
   } = useEquipmentDetailView();
+  const isColdRoom = useIsColdRoom();
 
   if (isLoading && isLoadingLocations) return <DetailFormSkeleton />;
-
   if (!data) return <h1>{t('error.asset-not-found')}</h1>;
+
+  const status = data.statusLog?.status
+    ? statusColourMap(data.statusLog?.status)
+    : undefined;
 
   return (
     <Box
@@ -51,7 +63,11 @@ export const EquipmentDetailView: FC = () => {
           gap: '.5em',
         }}
       >
-        <UpdateStatusButton assetId={data?.id} />
+        {isColdRoom && data?.id ? (
+          <ColdRoomActionButton assetId={data.id} />
+        ) : (
+          <UpdateStatusButton assetId={data?.id} />
+        )}
       </Box>
       <Box
         sx={{
@@ -69,7 +85,10 @@ export const EquipmentDetailView: FC = () => {
       </Box>
 
       <Box sx={{ padding: '.2rem', marginBottom: '.5em' }}>
-        <Status status={data.statusLog?.status} />
+        <StatusChip
+          label={t(status?.label as LocaleKey)}
+          colour={status?.colour}
+        />
       </Box>
 
       <Box

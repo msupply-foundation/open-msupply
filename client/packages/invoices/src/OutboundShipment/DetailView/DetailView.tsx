@@ -14,7 +14,6 @@ import {
   InvoiceLineNodeType,
   MaterialTable,
   NothingHere,
-  Groupable,
 } from '@openmsupply-client/common';
 import {
   toItemRow,
@@ -92,31 +91,28 @@ export const DetailView = () => {
     row.type === InvoiceLineNodeType.UnallocatedStock ||
     row.numberOfPacks === 0;
 
-  const { table, selectedRows } = useNonPaginatedMaterialTable<
-    Groupable<StockOutLineFragment>
-  >({
-    tableId: 'outbound-shipment-detail-view',
-    columns,
-    data: rows,
-    isError,
-    grouping: { enabled: true },
-    isLoading: false,
-    initialSort: { key: 'itemName', dir: 'asc' },
-    onRowClick: !isDisabled ? onRowClick : undefined,
-    getIsPlaceholderRow: row =>
-      !!(
-        isPlaceholderRow(row) ||
-        // Also mark parent rows as placeholder if any subRows are placeholders
-        row.subRows?.some(isPlaceholderRow)
+  const { table, selectedRows } =
+    useNonPaginatedMaterialTable<StockOutLineFragment>({
+      tableId: 'outbound-shipment-detail-view',
+      columns,
+      data: rows,
+      isError,
+      grouping: { field: 'item.code' },
+      isLoading: false,
+      initialSort: { key: 'itemName', dir: 'asc' },
+      onRowClick: !isDisabled ? onRowClick : undefined,
+      getIsPlaceholderRow: row =>
+        isPlaceholderRow(row.original) ||
+        // Also mark parent rows as placeholder if any of its children are placeholders
+        row.getLeafRows().some(leaf => isPlaceholderRow(leaf.original)),
+      noDataElement: (
+        <NothingHere
+          body={t('error.no-outbound-items')}
+          onCreate={isDisabled ? undefined : () => onAddItem()}
+          buttonText={t('button.add-item')}
+        />
       ),
-    noDataElement: (
-      <NothingHere
-        body={t('error.no-outbound-items')}
-        onCreate={isDisabled ? undefined : () => onAddItem()}
-        buttonText={t('button.add-item')}
-      />
-    ),
-  });
+    });
 
   // Table manages the sorting state
   // This needs to be passed to the edit modal, so based on latest sort order
@@ -166,7 +162,7 @@ export const DetailView = () => {
           outboundShipmentLineIds={outboundShipmentLineIds || []}
           customerId={data.otherPartyId}
           modalMode={returnModalMode}
-          outboundShipmentId={data.id}
+          outboundShipment={data}
           onCreate={table.resetRowSelection}
           isNewReturn
         />

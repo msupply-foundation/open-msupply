@@ -26,13 +26,13 @@ pub fn main_patient_doc_name(patient_id: &str) -> String {
 }
 
 pub fn patient_doc_name(patient_id: &str, doc_type: &str) -> String {
-    format!("p/{}/{}", patient_id, doc_type)
+    format!("p/{patient_id}/{doc_type}")
 }
 
 /// Note: the "p" prefix simply indicates that the used naming schema, i.e. how the name is
 /// constructed
 pub fn patient_doc_name_with_id(patient_id: &str, doc_type: &str, id: &str) -> String {
-    format!("p/{}/{}/{}", patient_id, doc_type, id)
+    format!("p/{patient_id}/{doc_type}/{id}")
 }
 
 pub trait PatientServiceTrait: Sync + Send {

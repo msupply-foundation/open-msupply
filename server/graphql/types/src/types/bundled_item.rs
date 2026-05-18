@@ -30,7 +30,7 @@ impl BundledItemNode {
         let principal_item_variant_id = &self.bundled_item.principal_item_variant_id;
         let loader = ctx.get_loader::<DataLoader<ItemVariantByItemVariantIdLoader>>();
         let result = loader.load_one(principal_item_variant_id.clone()).await?;
-        Ok(result.map(|item_variant| ItemVariantNode::from_domain(item_variant)))
+        Ok(result.map(ItemVariantNode::from_domain))
     }
 
     pub async fn bundled_item_variant_id(&self) -> &String {
@@ -41,7 +41,7 @@ impl BundledItemNode {
         let bundled_item_variant_id = &self.bundled_item.bundled_item_variant_id;
         let loader = ctx.get_loader::<DataLoader<ItemVariantByItemVariantIdLoader>>();
         let result = loader.load_one(bundled_item_variant_id.clone()).await?;
-        Ok(result.map(|item_variant| ItemVariantNode::from_domain(item_variant)))
+        Ok(result.map(ItemVariantNode::from_domain))
     }
 }
 

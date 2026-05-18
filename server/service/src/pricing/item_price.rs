@@ -93,7 +93,7 @@ pub fn get_pricing_for_items(
 
         // 4. Return the pricing data
         item_prices.push(ItemPrice {
-            item_id: item_id,
+            item_id,
             default_price_per_unit,
             discount_percentage,
             calculated_price_per_unit: calculated_price,

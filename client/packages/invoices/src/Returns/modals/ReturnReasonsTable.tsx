@@ -1,16 +1,18 @@
 import React, { useMemo } from 'react';
 import {
   ColumnDef,
+  ColumnType,
+  ExpiryDateCell,
   MaterialTable,
   ReasonOptionNodeType,
   useSimpleMaterialTable,
   useTranslation,
+  TextInputCell,
 } from '@openmsupply-client/common';
 import {
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
 } from '@openmsupply-client/system';
-import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
 
 interface ReturnWithReason {
   id: string;
@@ -26,10 +28,12 @@ export const ReturnReasonsComponent = ({
   lines,
   updateLine,
   isDisabled,
+  disabledLinked,
 }: {
   lines: ReturnWithReason[];
   updateLine: (line: Partial<ReturnWithReason> & { id: string }) => void;
   isDisabled: boolean;
+  disabledLinked: boolean;
 }) => {
   const t = useTranslation();
 
@@ -53,6 +57,8 @@ export const ReturnReasonsComponent = ({
       {
         accessorKey: 'expiryDate',
         header: t('label.expiry'),
+        columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
         size: 100,
       },
       // 'itemUnit', // not implemented for now
@@ -63,7 +69,7 @@ export const ReturnReasonsComponent = ({
           <ReasonOptionsSearchInput
             type={ReasonOptionNodeType.ReturnReason}
             onChange={reason => updateLine({ ...row, reasonOption: reason })}
-            disabled={isDisabled}
+            disabled={disabledLinked}
             value={row.reasonOption}
           />
         ),
@@ -82,7 +88,7 @@ export const ReturnReasonsComponent = ({
         ),
         size: 200,
         pin: 'right',
-      }
+      },
     ],
     []
   );

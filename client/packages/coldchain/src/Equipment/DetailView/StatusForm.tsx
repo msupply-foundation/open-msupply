@@ -11,11 +11,11 @@ import {
   BasicTextInput,
   InputWithLabelRow,
   Typography,
-  useIsGapsStoreOnly,
+  useIsExtraSmallScreen,
   UploadFile,
 } from '@openmsupply-client/common';
 import { FileList } from '../Components';
-import { parseLogStatus } from '../utils';
+import { statusColourMap } from '../utils';
 import { useAssetLogReasonList } from '@openmsupply-client/system';
 import { TakePhotoButton } from './TakePhotoButton';
 
@@ -29,13 +29,13 @@ export type Draft = InsertAssetLogInput & { files?: File[] };
 const Row = ({
   children,
   label,
-  isGaps,
+  isExtraSmallScreen,
 }: {
   children: ReactNode;
   label: string;
-  isGaps: boolean;
+  isExtraSmallScreen: boolean;
 }) => {
-  if (!isGaps)
+  if (!isExtraSmallScreen)
     return (
       <Box paddingTop={1.5}>
         <InputWithLabelRow
@@ -58,7 +58,7 @@ const Row = ({
     );
 
   return (
-    <Box paddingTop={1.5}>
+    <Box paddingTop={1.5} paddingX={2}>
       <Typography
         sx={{
           fontSize: '1em',
@@ -74,7 +74,7 @@ const Row = ({
 
 export const StatusForm = ({ draft, onChange }: StatusForm) => {
   const t = useTranslation();
-  const isGaps = useIsGapsStoreOnly();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
   const isNative = Capacitor.isNativePlatform();
   const debouncedOnChange = useDebounceCallback(
     (patch: Partial<InsertAssetLogInput>) => onChange(patch),
@@ -88,15 +88,17 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
 
   const getOptionsFromEnum = (
     enumObject: Record<string, string>,
-    parser: (value: never) => { key: LocaleKey } | undefined
+    parser: (value: never) => { label: LocaleKey } | undefined
   ) =>
     Object.values(enumObject).map(value => {
       if (value === undefined) return undefined;
       const parsed = parser(value as never);
-      return parsed == undefined ? undefined : getOption(t(parsed.key), value);
+      return parsed == undefined
+        ? undefined
+        : getOption(t(parsed.label), value);
     });
 
-  const statuses = getOptionsFromEnum(AssetLogStatusNodeType, parseLogStatus);
+  const statuses = getOptionsFromEnum(AssetLogStatusNodeType, statusColourMap);
   const { data } = useAssetLogReasonList(
     draft.status
       ? {
@@ -112,6 +114,10 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
         value: value.id,
       };
     }) ?? [];
+
+  const selectedReason = data?.nodes?.find(
+    reason => reason.id === draft.reasonId
+  );
 
   const removeFile = (name: string) => {
     onChange({ files: draft.files?.filter(file => file.name !== name) });
@@ -133,8 +139,12 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
       }}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-        <Row label={t('label.new-functional-status')} isGaps={isGaps}>
+        <Row
+          label={t('label.new-functional-status')}
+          isExtraSmallScreen={isExtraSmallScreen}
+        >
           <Autocomplete
+            required
             isOptionEqualToValue={option => option?.value === draft.status}
             onChange={(_e, selected) =>
               onChange({
@@ -146,8 +156,9 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
             width="100%"
           />
         </Row>
-        <Row label={t('label.reason')} isGaps={isGaps}>
+        <Row label={t('label.reason')} isExtraSmallScreen={isExtraSmallScreen}>
           <Autocomplete
+            required={draft.status === AssetLogStatusNodeType.NotFunctioning}
             disabled={reasons.length === 0}
             options={reasons}
             width="100%"
@@ -158,8 +169,12 @@ export const StatusForm = ({ draft, onChange }: StatusForm) => {
             value={reasons.find(r => r?.value === draft.reasonId) ?? null}
           />
         </Row>
-        <Row label={t('label.observations')} isGaps={isGaps}>
+        <Row
+          label={t('label.observations')}
+          isExtraSmallScreen={isExtraSmallScreen}
+        >
           <BasicTextInput
+            required={!!selectedReason?.commentsRequired}
             multiline
             rows={4}
             fullWidth

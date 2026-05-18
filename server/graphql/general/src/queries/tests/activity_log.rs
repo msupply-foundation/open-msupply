@@ -16,8 +16,8 @@ mod graphql {
         )
         .await;
 
-        let query = r#"query activityLogs {
-            activityLogs {
+        let query = r#"query activityLogs($storeId: String!) {
+            activityLogs(storeId: $storeId) {
                 ... on ActivityLogConnector {
                     nodes {
                         datetime
@@ -29,6 +29,10 @@ mod graphql {
                 }
             }
         }"#;
+
+        let variables = json!({
+            "storeId": "store_a"
+        });
 
         let expected = json!({
             "activityLogs": {
@@ -58,7 +62,7 @@ mod graphql {
             }
         });
 
-        assert_graphql_query!(&settings, query, &None, Some(&expected), None);
+        assert_graphql_query!(&settings, query, &Some(variables), Some(&expected), None);
     }
 
     #[actix_rt::test]
@@ -71,8 +75,8 @@ mod graphql {
         )
         .await;
 
-        let query = r#"query activityLogs($activityLogFilter: ActivityLogFilterInput!) {
-            activityLogs(filter: $activityLogFilter) {
+        let query = r#"query activityLogs($storeId: String!, $activityLogFilter: ActivityLogFilterInput!) {
+            activityLogs(storeId: $storeId, filter: $activityLogFilter) {
                 ... on ActivityLogConnector {
                     nodes {
                         datetime
@@ -92,6 +96,7 @@ mod graphql {
         }"#;
 
         let variables = json!({
+            "storeId": "store_a",
             "activityLogFilter": {
                 "type": {
                     "equalTo": "INVOICE_CREATED"

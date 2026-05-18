@@ -10,4 +10,5 @@ pub enum PropertyValueType {
     Boolean,
     Integer,
     Float,
+    Date,
 }

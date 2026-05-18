@@ -52,7 +52,7 @@ pub async fn put_breaches(
     let store_id = match validate_request(request, &service_provider, &auth_data) {
         Ok((_user, store_id)) => store_id,
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             return HttpResponse::Unauthorized().body(formatted_error);
         }
     };
@@ -64,13 +64,13 @@ pub async fn put_breaches(
 
     let results = match upsert_temperature_breaches(service_provider, store_id, breaches).await {
         Ok(response) => response,
-        Err(error) => return HttpResponse::InternalServerError().body(format!("{:#?}", error)),
+        Err(error) => return HttpResponse::InternalServerError().body(format!("{error:#?}")),
     };
 
     for result in &results {
         if let Err(e) = result {
-            error!("Error inserting temperature breaches {:#?}", e);
-            return HttpResponse::InternalServerError().body(format!("{:#?}", e));
+            error!("Error inserting temperature breaches {e:#?}");
+            return HttpResponse::InternalServerError().body(format!("{e:#?}"));
         }
     }
 
@@ -109,7 +109,7 @@ async fn upsert_temperature_breaches(
         .into_iter()
         .map(|breach| {
             upsert_temperature_breach(&service_provider, &ctx, breach.clone()).map_err(|e| {
-                error!("{:#?} {:?}", e, breach);
+                error!("{e:#?} {breach:?}");
                 e.to_string()
             })
         })
@@ -129,7 +129,7 @@ fn upsert_temperature_breach(
 
     let sensor = sensor_service
         .get_sensor(ctx, breach.sensor_id.clone())
-        .map_err(|e| anyhow::anyhow!("Unable to get sensor {:?}", e))?;
+        .map_err(|e| anyhow::anyhow!("Unable to get sensor {e:?}"))?;
     let start_datetime = DateTime::from_timestamp(breach.start_unix_timestamp, 0)
         .context(format!(
             "Unable to parse timestamp {}",
@@ -173,7 +173,7 @@ fn upsert_temperature_breach(
             };
             service
                 .update_temperature_breach(ctx, breach)
-                .map_err(|e| anyhow::anyhow!("Unable to update temperature breach {:?}", e))?
+                .map_err(|e| anyhow::anyhow!("Unable to update temperature breach {e:?}"))?
         }
         Err(SingleRecordError::NotFound(_)) => {
             let breach = InsertTemperatureBreach {
@@ -192,7 +192,7 @@ fn upsert_temperature_breach(
             };
             service
                 .insert_temperature_breach(ctx, breach)
-                .map_err(|e| anyhow::anyhow!("Unable to insert temperature breach {:?}", e))?
+                .map_err(|e| anyhow::anyhow!("Unable to insert temperature breach {e:?}"))?
         }
         Err(e) => {
             return Err(anyhow::anyhow!(

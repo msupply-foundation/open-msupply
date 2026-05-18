@@ -9,9 +9,7 @@ import {
   StepDefinition,
   StepperColour,
   useIsCentralServerApi,
-  useMediaQuery,
-  Breakpoints,
-  useAppTheme,
+  useIsExtraSmallScreen,
   ChevronsDownIcon,
   DownloadIcon,
 } from '@openmsupply-client/common';
@@ -50,10 +48,7 @@ export const SyncProgress: FC<SyncProgressProps> = ({
     !!error,
     isOperational
   );
-  const theme = useAppTheme();
-  const isExtraSmallScreen = useMediaQuery(
-    theme.breakpoints.down(Breakpoints.sm)
-  );
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   return (
     <Box display="flex" flexDirection={'column'}>

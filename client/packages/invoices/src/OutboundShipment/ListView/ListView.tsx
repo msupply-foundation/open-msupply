@@ -13,15 +13,14 @@ import {
   NameAndColorSetterCell,
   NothingHere,
   usePreferences,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
-import {
-  getStatusTranslator,
-  isOutboundDisabled,
-  outboundStatuses,
-} from '../../utils';
+import { getStatusTranslator, isOutboundDisabled } from '../../utils';
+import { getStatusSequence } from '../../statuses';
 import { AppBarButtons } from './AppBarButtons';
 import { useOutbound } from '../api';
 import { OutboundRowFragment } from '../api/operations.generated';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const OutboundShipmentListView = () => {
@@ -38,7 +37,7 @@ export const OutboundShipmentListView = () => {
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
     filters: [
       { key: 'otherPartyName' },
-      { key: 'status', condition: 'equalTo' },
+      { key: 'status', condition: 'equalAny' },
       { key: 'theirReference' },
       { key: 'createdDatetime', condition: 'between' },
       { key: 'shippedDatetime', condition: 'between' },
@@ -49,8 +48,8 @@ export const OutboundShipmentListView = () => {
 
   const { data, isFetching, isError } = useOutbound.document.list(queryParams);
   const { mutate: onUpdate } = useOutbound.document.update();
-  const statuses = outboundStatuses.filter(status =>
-    invoiceStatusOptions?.includes(status)
+  const statuses = getStatusSequence(InvoiceNodeType.OutboundShipment).filter(
+    status => invoiceStatusOptions?.includes(status)
   );
 
   const mrtColumns = useMemo(
@@ -85,7 +84,7 @@ export const OutboundShipmentListView = () => {
       },
       {
         accessorKey: 'invoiceNumber',
-        header: t('label.invoice-number'),
+        header: t('label.number'),
         columnType: ColumnType.Number,
         description: t('description.invoice-number'),
         enableSorting: true,
@@ -105,17 +104,16 @@ export const OutboundShipmentListView = () => {
         defaultHideOnMobile: true,
         Cell: TextWithTooltipCell,
       },
-
+      {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
+      },
       {
         accessorKey: 'pricing.totalAfterTax',
         header: t('label.total'),
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
-      },
-      {
-        accessorKey: 'comment',
-        header: t('label.comment'),
-        columnType: ColumnType.Comment,
       },
     ],
     []
@@ -131,7 +129,7 @@ export const OutboundShipmentListView = () => {
       data: data?.nodes,
       totalCount: data?.totalCount ?? 0,
       initialSort: { key: 'invoiceNumber', dir: 'desc' },
-      getIsRestrictedRow: isOutboundDisabled,
+      getIsRestrictedRow: row => isOutboundDisabled(row.original),
       noDataElement: (
         <NothingHere
           body={t('error.no-outbound-shipments')}
@@ -142,6 +140,7 @@ export const OutboundShipmentListView = () => {
 
   return (
     <>
+      <Toolbar filter={filter} />
       <AppBarButtons
         modalController={modalController}
         simplifiedTabletView={simplifiedTabletView}

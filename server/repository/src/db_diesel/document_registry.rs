@@ -175,17 +175,17 @@ fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, Repos
     let json_schema =
         serde_json::from_str(&form_schema.json_schema).map_err(|err| RepositoryError::DBError {
             msg: "Invalid json schema".to_string(),
-            extra: format!("{}", err),
+            extra: format!("{err}"),
         })?;
     let ui_schema =
         serde_json::from_str(&form_schema.ui_schema).map_err(|err| RepositoryError::DBError {
             msg: "Invalid ui schema".to_string(),
-            extra: format!("{}", err),
+            extra: format!("{err}"),
         })?;
     let config = if let Some(config) = config {
         let config = serde_json::from_str(&config).map_err(|err| RepositoryError::DBError {
             msg: "Invalid document config".to_string(),
-            extra: format!("{}", err),
+            extra: format!("{err}"),
         })?;
         Some(config)
     } else {

@@ -6,6 +6,7 @@ import {
   TemperatureBreachFilterInput,
   TemperatureBreachSortFieldInput,
 } from '@common/types';
+import { isEnumValue } from '@common/utils';
 
 export type ListParams = {
   first: number;
@@ -21,20 +22,14 @@ export const getTemperatureBreachQueries = (sdk: Sdk, storeId: string) => ({
     list:
       ({ first, offset, sortBy, filterBy }: ListParams) =>
       async () => {
-        const key =
-          sortBy.key === 'datetime' || sortBy.key === 'temperature'
-            ? TemperatureBreachSortFieldInput.StartDatetime
-            : (sortBy.key as TemperatureBreachSortFieldInput);
+        const key = isEnumValue(TemperatureBreachSortFieldInput, sortBy.key)
+          ? sortBy.key
+          : TemperatureBreachSortFieldInput.StartDatetime;
 
         let filter = undefined;
         if (filterBy !== null) {
           const { datetime, ...rest } = filterBy;
-          if (!!datetime) {
-            filter = {
-              ...rest,
-              startDatetime: datetime,
-            };
-          }
+          filter = { ...rest, startDatetime: datetime };
         }
 
         const result = await sdk.temperatureBreaches({

@@ -5,7 +5,7 @@ import Box from '@mui/material/Box';
 import { ChevronDownIcon } from '@common/icons';
 import { useTranslation, useFormatDateTime } from '@common/intl';
 import { VerticalStepper } from '../../steppers/VerticalStepper';
-import { PaperHoverPopover, PaperPopoverSection } from '../../popover';
+import { PaperPopover, PaperPopoverSection } from '../../popover';
 import { styled } from '@mui/material/styles';
 import { useMediaQuery } from '@mui/material';
 import { Breakpoints, useAppTheme } from '@common/styles';
@@ -74,8 +74,12 @@ export const StatusCrumbs = <StatusType extends string>(
   }
 
   return (
-    <PaperHoverPopover
-      placement="top"
+    <PaperPopover
+      mode="hover"
+      placement={{
+        vertical: 'top',
+        horizontal: 'center',
+      }}
       width={width}
       Content={
         <PaperPopoverSection label={t('label.order-history')}>
@@ -107,6 +111,6 @@ export const StatusCrumbs = <StatusType extends string>(
           {Crumbs}
         </Breadcrumbs>
       </Box>
-    </PaperHoverPopover>
+    </PaperPopover>
   );
 };

@@ -48,13 +48,10 @@ impl Loader<PreviousEncounterLoaderInput> for PreviousEncounterLoader {
                     }),
                 )?
                 .first()
-                .map(|encounter| encounter.clone());
+                .cloned();
 
-            match encounter {
-                Some(encounter) => {
-                    out.insert(input.clone(), encounter);
-                }
-                None => {}
+            if let Some(encounter) = encounter {
+                out.insert(input.clone(), encounter);
             }
         }
 

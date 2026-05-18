@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use crate::activity_log::system_log;
 use crate::ledger_fix::find_ledger_discrepancies::find_stock_line_ledger_discrepancies;
-use crate::ledger_fix::stock_line_ledger_fix::stock_line_ledger_fix;
 use crate::{activity_log::system_error_log, service_provider::ServiceProvider};
 
 use chrono::{NaiveDateTime, TimeDelta, Utc};
@@ -22,10 +21,10 @@ pub struct LedgerFixTrigger {
     sender: Sender<Option<String>>,
 }
 
-const FIRST_RUN_DELAY: Duration = Duration::from_secs(5);
+const FIRST_RUN_DELAY: Duration = Duration::from_secs(60 * 15);
 // This trigger is not to re-run ledger fix but to check if ledger fix is needed again
 // Will check against key values store LAST_LEDGER_FIX_RUN and LEDGER_FIX_INTERVAL
-const RE_TRIGGER_DELAY: Duration = Duration::from_secs(60 * 60); // 1 hour
+const RE_TRIGGER_DELAY: Duration = Duration::from_secs(60 * 60 * 24);
 const LEDGER_FIX_INTERVAL: TimeDelta = TimeDelta::days(1);
 
 impl LedgerFixDriver {
@@ -78,42 +77,13 @@ async fn ledger_fix(service_provider: Arc<ServiceProvider>) {
         }
     };
 
-    log::info!("Performing ledger fix on {} lines...", stock_line_ids.len());
+    let error_msg = format!(
+        "Stock lines with ledger discrepancies {}: {:?}",
+        stock_line_ids.len(),
+        stock_line_ids
+    );
 
-    for (index, stock_line_id) in stock_line_ids.iter().enumerate() {
-        let mut operation_log = format!(
-            "{index}/{} Fixing stock line {stock_line_id} {}\n",
-            stock_line_ids.len(),
-            Utc::now().naive_utc()
-        );
-
-        let result = stock_line_ledger_fix(&ctx.connection, &mut operation_log, &stock_line_id);
-
-        match result {
-            Ok(is_fixed) => {
-                operation_log.push_str(&format!(
-                    "Finished stock line fix operation {}\n",
-                    Utc::now().naive_utc()
-                ));
-                let status = if is_fixed { "Fully" } else { "Partially" };
-                system_log(&ctx.connection, SystemLogType::LedgerFix,
-                        &format!("{status} fixed ledger discrepancy for stock_line {stock_line_id} - Details: {operation_log}\n"
-                    )).unwrap();
-            }
-            Err(e) => {
-                system_error_log(
-                    &ctx.connection,
-                    SystemLogType::LedgerFixError,
-                    &e,
-                    &format!(
-                        "Error fixing stock line {}, {}",
-                        stock_line_id, operation_log
-                    ),
-                )
-                .unwrap();
-            }
-        }
-    }
+    system_log(&ctx.connection, SystemLogType::LedgerFixError, &error_msg).unwrap()
 }
 
 impl LedgerFixTrigger {
@@ -185,74 +155,4 @@ fn set_last_ledger_fix_run(service_provider: &ServiceProvider) {
     key_value_store
         .set_string(KeyType::LastLedgerFixRun, Some(now_string))
         .expect("Database error while setting last ledger fix run");
-}
-
-#[cfg(test)]
-mod test {
-    use repository::mock::{mock_store_a, MockDataInserts};
-
-    use super::*;
-    use crate::{
-        ledger_fix::{
-            fixes::{
-                adjust_all_to_match_available, adjust_historic_incoming_invoices,
-                adjust_total_to_match_ledger, fix_cancellations, inventory_adjustment_to_balance,
-            },
-            is_ledger_fixed,
-        },
-        test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
-    };
-
-    #[actix_rt::test]
-    async fn test_all_ledger_fixes() {
-        let mock_data = adjust_all_to_match_available::test::mock_data()
-            .join(adjust_historic_incoming_invoices::test::mock_data())
-            .join(inventory_adjustment_to_balance::test::mock_data())
-            .join(adjust_total_to_match_ledger::test::mock_data())
-            .join(fix_cancellations::test::mock_data());
-
-        let all_stock_lines: Vec<String> =
-            mock_data.stock_lines.iter().map(|s| s.id.clone()).collect();
-
-        let ServiceTestContext {
-            connection,
-            service_provider,
-            ..
-        } = setup_all_with_data_and_service_provider(
-            "test_all_ledger_fixes",
-            MockDataInserts::none()
-                .names()
-                .stores()
-                .units()
-                .items()
-                .currencies(),
-            mock_data,
-        )
-        .await;
-
-        KeyValueStoreRepository::new(&connection)
-            .set_i32(
-                repository::KeyType::SettingsSyncSiteId,
-                Some(mock_store_a().site_id),
-            )
-            .unwrap();
-
-        for stock_line_id in all_stock_lines.iter() {
-            assert_eq!(
-                is_ledger_fixed(&connection, stock_line_id),
-                Ok(false),
-                "Stock line ledger should be broken for {stock_line_id}"
-            );
-        }
-
-        ledger_fix(service_provider.clone()).await;
-
-        for stock_line_id in all_stock_lines {
-            assert_eq!(
-                is_ledger_fixed(&connection, &stock_line_id),
-                Ok(true),
-                "Stock line ledger should now be fixed for {stock_line_id}"
-            );
-        }
-    }
 }

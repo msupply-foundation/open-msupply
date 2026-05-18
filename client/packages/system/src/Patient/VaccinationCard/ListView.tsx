@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   MaterialTable,
   NothingHere,
@@ -34,36 +34,39 @@ const VaccinationCardListComponent = () => {
   const navigate = useNavigate();
   const { setModal: selectModal } = usePatientModalStore();
 
-  const columns: ColumnDef<ProgramEnrolmentRowFragment>[] = [
-    {
-      id: 'type',
-      header: t('label.enrolment-program'),
-      accessorFn: row => row?.document?.documentRegistry?.name,
-      enableSorting: true,
-      enableColumnFilter: true,
-    },
-    {
-      accessorKey: 'programEnrolmentId',
-      header: t('label.enrolment-patient-id'),
-      enableSorting: true,
-    },
-    // TODO - add column for next appointment
-    {
-      accessorKey: 'status',
-      header: t('label.program-status'),
-      enableSorting: true,
-      enableColumnFilter: true,
-      filterVariant: 'select',
-    },
-    {
-      accessorKey: 'enrolmentDatetime',
-      header: t('label.enrolment-datetime'),
-      columnType: ColumnType.Date,
-      size: 175,
-      enableSorting: true,
-      enableColumnFilter: true,
-    },
-  ];
+  const columns = useMemo<ColumnDef<ProgramEnrolmentRowFragment>[]>(
+    () => [
+      {
+        id: 'type',
+        header: t('label.enrolment-program'),
+        accessorFn: row => row?.document?.documentRegistry?.name,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'programEnrolmentId',
+        header: t('label.enrolment-patient-id'),
+        enableSorting: true,
+      },
+      // TODO - add column for next appointment
+      {
+        accessorKey: 'status',
+        header: t('label.program-status'),
+        enableSorting: true,
+        enableColumnFilter: true,
+        filterVariant: 'select',
+      },
+      {
+        accessorKey: 'enrolmentDatetime',
+        header: t('label.enrolment-datetime'),
+        columnType: ColumnType.Date,
+        size: 175,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+    ],
+    [t]
+  );
 
   const { table } = useNonPaginatedMaterialTable({
     tableId: 'vaccination-card-list',

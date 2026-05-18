@@ -33,7 +33,6 @@ pub enum ContextType {
     Prescription,
     InternalOrder,
     PurchaseOrder,
-    GoodsReceived,
     SupplierReturn,
     CustomerReturn,
 }
@@ -79,7 +78,7 @@ pub struct ReportRow {
     pub excel_template_buffer: Option<Vec<u8>>,
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Selectable)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Selectable, Default)]
 #[diesel(table_name = report)]
 pub struct ReportMetaDataRow {
     pub id: String,
@@ -87,18 +86,6 @@ pub struct ReportMetaDataRow {
     pub version: String,
     pub code: String,
     pub is_active: bool,
-}
-
-impl Default for ReportMetaDataRow {
-    fn default() -> Self {
-        Self {
-            id: Default::default(),
-            is_custom: true,
-            version: Default::default(),
-            code: Default::default(),
-            is_active: true,
-        }
-    }
 }
 
 pub struct ReportRowRepository<'a> {
@@ -134,7 +121,7 @@ impl<'a> ReportRowRepository<'a> {
             record_id: uid.to_string(),
             row_action: action,
             store_id: None,
-            name_link_id: None,
+            name_id: None,
         };
         ChangelogRepository::new(self.connection).insert(&row)
     }

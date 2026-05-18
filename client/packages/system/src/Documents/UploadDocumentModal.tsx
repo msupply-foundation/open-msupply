@@ -94,7 +94,7 @@ export const UploadDocumentModal = ({
           <CircularProgress />
         </Box>
       ) : (
-        <UploadFile onUpload={handleUpload} />
+        <UploadFile onUpload={handleUpload} multiple />
       )}
     </Modal>
   );

@@ -50,7 +50,6 @@ export const PatientView = () => {
   const [isDirtyPatient, setIsDirtyPatient] = useState(false);
   const { store, storeId } = useAuthContext();
   const { showContactTracing } = usePreferences();
-
   const {
     query: { data: insuranceProvidersData },
   } = useInsuranceProviders();

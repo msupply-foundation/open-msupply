@@ -23,7 +23,8 @@ pub fn validate(
     let requisition_row = check_requisition_row_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
     let requisition_lines = RequisitionLineRepository::new(connection).query_by_filter(
-        RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(requisition_row.id.to_string())),
+        RequisitionLineFilter::new()
+            .requisition_id(EqualFilter::equal_to(requisition_row.id.to_string())),
     )?;
     let status_changed = input.status.is_some();
 
@@ -101,11 +102,11 @@ pub fn validate(
     };
     validate_supplier(connection, store_id, supplier_id)?;
 
-    let original_customer_id = match &input.original_customer_id {
+    let destination_customer_id = match &input.destination_customer_id {
         Some(NullableUpdate { value: Some(id) }) => id,
         _ => return Ok((requisition_row, status_changed)),
     };
-    validate_original_customer(connection, store_id, original_customer_id)?;
+    validate_destination_customer(connection, store_id, destination_customer_id)?;
 
     Ok((requisition_row, status_changed))
 }
@@ -135,29 +136,29 @@ fn validate_supplier(
     Ok(())
 }
 
-fn validate_original_customer(
+fn validate_destination_customer(
     connection: &StorageConnection,
     store_id: &str,
-    original_customer_id: &str,
+    destination_customer_id: &str,
 ) -> Result<(), OutError> {
-    let original_customer = check_other_party(
+    let destination_customer = check_other_party(
         connection,
         store_id,
-        original_customer_id,
+        destination_customer_id,
         CheckOtherPartyType::Customer,
     )
     .map_err(|e| match e {
-        OtherPartyErrors::OtherPartyDoesNotExist => OutError::OriginalCustomerDoesNotExist,
-        OtherPartyErrors::OtherPartyNotVisible => OutError::OriginalCustomerNotVisible,
-        OtherPartyErrors::TypeMismatched => OutError::OriginalCustomerNotACustomer,
+        OtherPartyErrors::OtherPartyDoesNotExist => OutError::DestinationCustomerDoesNotExist,
+        OtherPartyErrors::OtherPartyNotVisible => OutError::DestinationCustomerNotVisible,
+        OtherPartyErrors::TypeMismatched => OutError::DestinationCustomerNotACustomer,
         OtherPartyErrors::DatabaseError(repository_error) => {
             OutError::DatabaseError(repository_error)
         }
     })?;
 
-    original_customer
+    destination_customer
         .store_id()
-        .ok_or(OutError::OriginalCustomerIsNotAStore)?;
+        .ok_or(OutError::DestinationCustomerIsNotAStore)?;
 
     Ok(())
 }

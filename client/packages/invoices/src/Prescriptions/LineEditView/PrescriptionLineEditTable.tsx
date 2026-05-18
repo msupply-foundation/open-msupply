@@ -8,12 +8,12 @@ import {
   useSimpleMaterialTable,
   usePreferences,
   DateUtils,
+  useShallow,
 } from '@openmsupply-client/common';
 
 import { usePrescriptionLineEditColumns } from './columns';
 import {
   DraftStockOutLineFragment,
-  getAllocatedQuantity,
   useAllocationContext,
 } from '../../StockOut';
 
@@ -27,11 +27,16 @@ export const PrescriptionLineEditTable = ({
   const t = useTranslation();
   const { format } = useFormatNumber();
   const prefs = usePreferences();
+  // Select only the fields actually used. Spreading the whole state into the
+  // selector returns a fresh object every call, which under React 19's stricter
+  // useSyncExternalStore snapshot caching causes an infinite re-render loop.
   const { draftLines, allocateIn, item, manualAllocate } = useAllocationContext(
-    state => ({
-      ...state,
-      allocatedQuantity: getAllocatedQuantity(state),
-    })
+    useShallow(state => ({
+      draftLines: state.draftLines,
+      allocateIn: state.allocateIn,
+      item: state.item,
+      manualAllocate: state.manualAllocate,
+    }))
   );
 
   const allocate = (key: string, value: number) => {
@@ -46,6 +51,7 @@ export const PrescriptionLineEditTable = ({
     (row: DraftStockOutLineFragment) => {
       if (disabled) return true;
       if (!!row.vvmStatus?.unusable) return true;
+      if (row.stockLineOnHold || row.location?.onHold) return true;
 
       // Prevent issuing expired stock if preference is set, up to threshold
       if (expiredStockPreventIssue && !!row.expiryDate) {
@@ -59,7 +65,7 @@ export const PrescriptionLineEditTable = ({
 
       return false;
     },
-    [expiredStockPreventIssue, expiredStockIssueThreshold, item]
+    [disabled, expiredStockPreventIssue, expiredStockIssueThreshold]
   );
 
   const columns = usePrescriptionLineEditColumns({
@@ -73,7 +79,7 @@ export const PrescriptionLineEditTable = ({
     tableId: 'prescription-line-edit',
     columns,
     data: draftLines,
-    getIsRestrictedRow: getIsDisabled,
+    getIsRestrictedRow: row => getIsDisabled(row.original),
     enableRowSelection: false,
   });
 

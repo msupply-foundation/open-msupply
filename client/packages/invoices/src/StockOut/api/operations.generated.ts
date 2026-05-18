@@ -56,6 +56,7 @@ export type StockOutLineFragment = {
     costPricePerPack: number;
     packSize: number;
     expiryDate?: string | null;
+    volumePerPack: number;
     item: {
       __typename: 'ItemNode';
       name: string;
@@ -81,6 +82,7 @@ export type DraftStockOutLineFragment = {
   dosesPerUnit: number;
   itemVariantId?: string | null;
   vvmStatusId?: string | null;
+  volumePerPack?: number | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -146,6 +148,7 @@ export type GetOutboundEditLinesQuery = {
       dosesPerUnit: number;
       itemVariantId?: string | null;
       vvmStatusId?: string | null;
+      volumePerPack?: number | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -230,6 +233,7 @@ export const StockOutLineFragmentDoc = gql`
         isVaccine
         doses
       }
+      volumePerPack
     }
   }
 `;
@@ -275,6 +279,7 @@ export const DraftStockOutLineFragmentDoc = gql`
       name
       id
     }
+    volumePerPack
   }
 `;
 export const GetOutboundEditLinesDocument = gql`
@@ -342,15 +347,17 @@ export function getSdk(
   return {
     getOutboundEditLines(
       variables: GetOutboundEditLinesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<GetOutboundEditLinesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<GetOutboundEditLinesQuery>(
-            GetOutboundEditLinesDocument,
+          client.request<GetOutboundEditLinesQuery>({
+            document: GetOutboundEditLinesDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'getOutboundEditLines',
         'query',
         variables

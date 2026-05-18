@@ -25,14 +25,18 @@ query requisitionQuery($storeId: String!, $dataId: String!) {
           remainingQuantityToSupply
           alreadyIssued
           comment
+          averageMonthlyConsumption
           item {
             code
             name
           }
           itemStats {
             stockOnHand
-            averageMonthlyConsumption
-            monthsOfStockOnHand
+          }
+          linkedRequisitionLine {
+            itemStats {
+              availableMonthsOfStockOnHand
+            }
           }
         }
       }

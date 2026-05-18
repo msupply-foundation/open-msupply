@@ -8,6 +8,7 @@ import {
   useTranslation,
   ColumnType,
   UnitsAndDosesCell,
+  NumericTextDisplay,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment, useResponse } from '../api';
 import { useResponseRequisitionLineErrorContext } from '../context';
@@ -58,7 +59,7 @@ export const useResponseColumns = () => {
         accessorKey: 'item.unitName',
         header: t('label.unit'),
         enableColumnFilter: true,
-        size: 130,
+        size: 100,
       },
       {
         id: 'dosesPerUnit',
@@ -73,7 +74,7 @@ export const useResponseColumns = () => {
         accessorKey: 'itemStats.stockOnHand',
         header: t('label.our-soh'),
         description: t('description.our-soh'),
-        size: 150,
+        size: 135,
         columnType: ColumnType.Number,
         Cell: UnitsAndDosesCell,
         enableSorting: true,
@@ -82,7 +83,7 @@ export const useResponseColumns = () => {
         accessorKey: 'availableStockOnHand',
         header: t('label.customer-soh'),
         description: t('description.customer-soh'),
-        size: 150,
+        size: 135,
         columnType: ColumnType.Number,
         Cell: UnitsAndDosesCell,
         enableSorting: true,
@@ -168,7 +169,7 @@ export const useResponseColumns = () => {
         header: t('label.amc'),
         size: 100,
         columnType: ColumnType.Number,
-        Cell: UnitsAndDosesCell,
+        Cell: props => <UnitsAndDosesCell {...props} roundUp />,
         includeColumn: showExtraProgramColumns,
       },
       {
@@ -189,7 +190,16 @@ export const useResponseColumns = () => {
         header: t('label.months-of-stock'),
         size: 100,
         columnType: ColumnType.Number,
-        Cell: UnitsAndDosesCell,
+        Cell: ({ cell }) => {
+          const value = cell.getValue<number | undefined>();
+          return (
+            <NumericTextDisplay
+              value={typeof value === 'number' ? value : undefined}
+              defaultValue={UNDEFINED_STRING_VALUE}
+              decimalLimit={1}
+            />
+          );
+        },
         includeColumn: showExtraProgramColumns,
       },
       {
@@ -214,20 +224,6 @@ export const useResponseColumns = () => {
           );
         },
         enableSorting: true,
-      },
-      {
-        header: t('label.indicative-price-per-unit'),
-        description: t('description.indicative-price-per-unit'),
-        accessorKey: 'pricePerUnit',
-        columnType: ColumnType.Currency,
-        includeColumn: showIndicativePriceInRequisitions,
-      },
-      {
-        header: t('label.indicative-price'),
-        description: t('description.indicative-price'),
-        accessorFn: row => row.requestedQuantity * (row?.pricePerUnit || 0),
-        columnType: ColumnType.Currency,
-        includeColumn: showIndicativePriceInRequisitions,
       },
       {
         accessorKey: 'approvedQuantity',
@@ -277,6 +273,20 @@ export const useResponseColumns = () => {
         columnType: ColumnType.Number,
         Cell: UnitsAndDosesCell,
         enableSorting: true,
+      },
+      {
+        header: t('label.indicative-price-per-unit'),
+        description: t('description.indicative-price-per-unit'),
+        accessorKey: 'pricePerUnit',
+        columnType: ColumnType.Currency,
+        includeColumn: showIndicativePriceInRequisitions,
+      },
+      {
+        header: t('label.indicative-price'),
+        description: t('description.indicative-price'),
+        accessorFn: row => row.supplyQuantity * (row?.pricePerUnit ?? 0),
+        columnType: ColumnType.Currency,
+        includeColumn: showIndicativePriceInRequisitions,
       },
     ],
     [

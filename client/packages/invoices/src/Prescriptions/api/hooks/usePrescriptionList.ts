@@ -4,12 +4,12 @@ import {
   InvoiceSortFieldInput,
   SortBy,
   useQuery,
+  keepPreviousData,
 } from '@openmsupply-client/common';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { LIST, PRESCRIPTION } from './keys';
 import { PrescriptionRowFragment } from '../operations.generated';
 import { sortFieldMap } from './utils';
-import { useDelete } from './usePrescriptionDelete';
 
 export type ListParams = {
   first?: number;
@@ -68,23 +68,10 @@ export const usePrescriptionList = (queryParams?: ListParams) => {
   const { data, isLoading, isError, isFetching } = useQuery({
     queryKey,
     queryFn,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
-
-  const {
-    mutateAsync: deleteMutation,
-    isLoading: isDeleting,
-    error: deleteError,
-  } = useDelete();
-
-  const deletePrescriptions = async (
-    selectedRows: PrescriptionRowFragment[]
-  ) => {
-    await deleteMutation(selectedRows);
-  };
 
   return {
     query: { data, isLoading, isFetching, isError },
-    delete: { deletePrescriptions, isDeleting, deleteError },
   };
 };

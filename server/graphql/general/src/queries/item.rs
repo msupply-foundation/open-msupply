@@ -64,6 +64,7 @@ pub struct ItemFilterInput {
     pub max_months_of_stock: Option<f64>,
     pub with_recent_consumption: Option<bool>,
     pub products_at_risk_of_being_out_of_stock: Option<bool>,
+    pub universal_code: Option<StringFilterInput>,
 }
 
 #[derive(Union)]
@@ -123,13 +124,14 @@ impl ItemFilterInput {
             max_months_of_stock,
             with_recent_consumption,
             products_at_risk_of_being_out_of_stock,
+            universal_code,
         } = self;
 
         ItemFilter {
             id: id.map(EqualFilter::from),
             name: name.map(StringFilter::from),
             code: code.map(StringFilter::from),
-            r#type: r#type.map(|t| map_filter!(t, |r| ItemType::from(r))),
+            r#type: r#type.map(|t| map_filter!(t, ItemType::from)),
             category_id,
             category_name,
             is_visible,
@@ -145,6 +147,7 @@ impl ItemFilterInput {
             max_months_of_stock,
             with_recent_consumption,
             products_at_risk_of_being_out_of_stock,
+            universal_code: universal_code.map(StringFilter::from),
         }
     }
 }

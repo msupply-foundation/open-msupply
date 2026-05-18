@@ -71,6 +71,8 @@ pub(crate) enum SyncError {
     RemotePullError(#[from] RemotePullError),
     #[error("Error while integrating records")]
     IntegrationError(RepositoryError),
+    #[error("Other error: {0}")]
+    Other(String),
 }
 
 // For unwrap and expect debug implementation is used
@@ -136,7 +138,8 @@ impl Synchroniser {
 
     pub(crate) async fn sync(&self, fetch_patient_id: Option<String>) -> Result<(), SyncError> {
         let ctx = self.service_provider.basic_context()?;
-        let mut logger = SyncLogger::start(&ctx.connection)?;
+        let mut logger = SyncLogger::start(&ctx.connection)?
+            .with_subscription_trigger(self.service_provider.subscription_trigger.clone());
 
         let sync_result = self.sync_inner(&mut logger, &ctx, fetch_patient_id).await;
 
@@ -281,20 +284,17 @@ impl Synchroniser {
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
-        let (upserts, deletes, merges) = integrate_and_translate_sync_buffer(
-            &ctx.connection,
-            // Only pass in logger during initialisation
-            match is_initialised {
-                false => Some(logger),
-                true => None,
-            },
+        let (upserts, deletes, merges) = integrate_and_translate_sync_outer(
+            &self.service_provider,
+            logger,
             SyncBufferSource::Central(central_sync_server_id),
+            !self.settings.disable_integration_transaction,
         )
-        .map_err(SyncError::IntegrationError)?;
+        .await?;
 
-        warn!("Upsert Integration result: {:?}", upserts);
-        warn!("Delete Integration result: {:?}", deletes);
-        warn!("Merge Integration result: {:?}", merges);
+        upserts.log("Upsert");
+        deletes.log("Delete");
+        merges.log("Merge");
 
         logger.done_step(SyncStep::Integrate)?;
 
@@ -336,11 +336,62 @@ impl Synchroniser {
     }
 }
 
+/// Async wrapper around the synchronous `integrate_and_translate_sync_buffer`.
+///
+/// Integration does substantial blocking DB work. Running it directly on a tokio worker
+/// thread starves other tasks scheduled on the same thread — notably the GraphQL
+/// subscription tasks (`sync_info`, `initialisation_status`) that need to fire updates
+/// to clients while a sync is in progress. We hand the work to `spawn_blocking` so the
+/// runtime can keep driving those tasks on its worker threads.
+///
+/// The logger is passed across the blocking boundary via `SyncLoggerHandle` because it
+/// borrows the `StorageConnection`, which only exists inside the blocking closure.
+async fn integrate_and_translate_sync_outer(
+    service_provider: &ServiceProvider,
+    logger: &mut SyncLogger<'_>,
+    record_type: SyncBufferSource,
+    use_transaction: bool,
+) -> Result<
+    (
+        TranslationAndIntegrationResults,
+        TranslationAndIntegrationResults,
+        TranslationAndIntegrationResults,
+    ),
+    SyncError,
+> {
+    let ctx = service_provider.basic_context()?;
+
+    let logger_handle = logger.into_handle();
+
+    let (returned_logger_handle, result) =
+        // Spawn the blocking task on a separate thread to avoid starving the async runtime and blocking other tasks while integrating
+        tokio::task::spawn_blocking(move || -> Result<_, SyncError> {
+            let mut logger = logger_handle.with_connection(&ctx.connection);
+
+            let result = integrate_and_translate_sync_buffer(
+                &ctx.connection,
+                Some(&mut logger),
+                record_type,
+                use_transaction,
+            )
+            .map_err(SyncError::IntegrationError)?;
+
+            Ok((logger.into_handle(), result))
+        })
+        .await
+        .map_err(|e| SyncError::Other(format!("integrate join error: {e:?}")))??;
+
+    logger.restore(returned_logger_handle);
+
+    Ok(result)
+}
+
 /// Translation And Integration of sync buffer, pub since used in CLI
 pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
     logger: Option<&mut SyncLogger<'_>>,
     record_type: SyncBufferSource,
+    use_transaction: bool,
 ) -> Result<
     (
         TranslationAndIntegrationResults,
@@ -376,14 +427,14 @@ pub fn integrate_and_translate_sync_buffer(
         let upsert_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Upsert,
             &table_order,
-            record_type.clone(),
+            record_type,
         )?;
 
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
         let delete_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Delete,
             &table_order,
-            record_type.clone(),
+            record_type,
         )?;
 
         let upsert_integration_result = translation_and_integration
@@ -404,7 +455,7 @@ pub fn integrate_and_translate_sync_buffer(
         let merge_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncAction::Merge,
             &table_order,
-            record_type.clone(),
+            record_type,
         )?;
 
         let merge_integration_result: TranslationAndIntegrationResults =
@@ -421,9 +472,13 @@ pub fn integrate_and_translate_sync_buffer(
         ))
     };
 
-    let result = connection
-        .transaction_sync(integrate_and_translate)
-        .map_err::<RepositoryError, _>(|e| e.to_inner_error())?;
+    let result = if use_transaction {
+        connection
+            .transaction_sync(integrate_and_translate)
+            .map_err::<RepositoryError, _>(|e| e.to_inner_error())?
+    } else {
+        integrate_and_translate(connection)?
+    };
 
     Ok(result)
 }

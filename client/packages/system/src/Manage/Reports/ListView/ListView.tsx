@@ -18,7 +18,13 @@ export const ReportsList = () => {
   const t = useTranslation();
   const {
     queryParams: { sortBy, first, offset, filterBy },
-  } = useUrlQueryParams({ initialSort: { key: 'code', dir: 'asc' } });
+  } = useUrlQueryParams({
+    initialSort: { key: 'code', dir: 'asc' },
+    filters: [
+      { key: 'name' },
+      { key: 'isActive', condition: '=' },
+    ],
+  });
 
   const queryParams = {
     sortBy: sortBy.key ? sortBy : undefined,
@@ -41,6 +47,7 @@ export const ReportsList = () => {
         accessorKey: 'name',
         header: t('label.name'),
         enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'code',
@@ -57,6 +64,18 @@ export const ReportsList = () => {
         header: t('label.status'),
         accessorFn: row =>
           row.isActive ? t('label.active') : t('label.inactive'),
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        filterSelectOptions: [
+          {
+            label: t('label.inactive'),
+            value: 'false',
+          },
+          {
+            label: t('label.active'),
+            value: 'true',
+          },
+        ],
       },
       {
         accessorKey: 'isCustom',

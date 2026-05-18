@@ -17,6 +17,7 @@ interface EditModalState<T> {
 
 export const useEditModal = <T>(): EditModalState<T> => {
   const modalControl = useToggle(false);
+  const { toggleOn, toggleOff } = modalControl;
   const [entity, setEntity] = useState<T | null>(null);
   const [mode, setMode] = useState<ModalMode | null>(null);
 
@@ -24,16 +25,16 @@ export const useEditModal = <T>(): EditModalState<T> => {
     (entity: T | null = null) => {
       setEntity(entity);
       setMode(entity ? ModalMode.Update : ModalMode.Create);
-      modalControl.toggleOn();
+      toggleOn();
     },
-    [modalControl]
+    [toggleOn, setEntity, setMode]
   );
 
   const onClose = useCallback(() => {
     setMode(null);
     setEntity(null);
-    modalControl.toggleOff();
-  }, [modalControl]);
+    toggleOff();
+  }, [toggleOff, setMode, setEntity]);
 
   return {
     onOpen,

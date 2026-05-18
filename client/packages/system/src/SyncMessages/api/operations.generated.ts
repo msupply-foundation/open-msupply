@@ -260,13 +260,16 @@ export function getSdk(
   return {
     syncMessages(
       variables: SyncMessagesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<SyncMessagesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<SyncMessagesQuery>(SyncMessagesDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<SyncMessagesQuery>({
+            document: SyncMessagesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'syncMessages',
         'query',
@@ -275,15 +278,17 @@ export function getSdk(
     },
     syncMessageById(
       variables: SyncMessageByIdQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<SyncMessageByIdQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<SyncMessageByIdQuery>(
-            SyncMessageByIdDocument,
+          client.request<SyncMessageByIdQuery>({
+            document: SyncMessageByIdDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'syncMessageById',
         'query',
         variables
@@ -291,15 +296,17 @@ export function getSdk(
     },
     insertSyncMessage(
       variables: InsertSyncMessageMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsertSyncMessageMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertSyncMessageMutation>(
-            InsertSyncMessageDocument,
+          client.request<InsertSyncMessageMutation>({
+            document: InsertSyncMessageDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insertSyncMessage',
         'mutation',
         variables

@@ -14,7 +14,7 @@ pub fn mock_stock_line_a() -> StockLineRow {
         available_number_of_packs: 30.0,
         pack_size: 1.0,
         total_number_of_packs: 40.0,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     }
 }
@@ -28,7 +28,7 @@ pub fn mock_stock_line_b() -> StockLineRow {
         available_number_of_packs: 20.0,
         pack_size: 1.0,
         total_number_of_packs: 30.0,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     }
 }
@@ -50,7 +50,7 @@ pub fn mock_item_b_stock_line_a() -> StockLineRow {
         available_number_of_packs: 3.0,
         pack_size: 1.0,
         total_number_of_packs: 30.0,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     }
 }
@@ -66,7 +66,7 @@ pub fn mock_item_b_lines() -> Vec<StockLineRow> {
         available_number_of_packs: 4.0,
         pack_size: 1.0,
         total_number_of_packs: 25.0,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     };
 
@@ -85,7 +85,7 @@ pub fn mock_item_c_lines() -> Vec<StockLineRow> {
         sell_price_per_pack: 15.0,
         total_number_of_packs: 1.0,
         note: Some("stock line note".to_string()),
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     };
 
@@ -97,7 +97,7 @@ pub fn mock_item_c_lines() -> Vec<StockLineRow> {
         available_number_of_packs: 6.0,
         pack_size: 1.0,
         total_number_of_packs: 1.0,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     };
 
@@ -115,7 +115,7 @@ pub fn mock_stock_line_si_d() -> Vec<StockLineRow> {
         cost_price_per_pack: 2.0,
         sell_price_per_pack: 18.0,
         total_number_of_packs: 7.0,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     };
 
@@ -130,7 +130,7 @@ pub fn mock_stock_line_si_d() -> Vec<StockLineRow> {
         sell_price_per_pack: 34.0,
         total_number_of_packs: 2.0,
         expiry_date: Some(NaiveDate::from_ymd_opt(2020, 8, 11).unwrap()),
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     };
 
@@ -149,7 +149,7 @@ pub fn mock_stock_line_ci_c() -> Vec<StockLineRow> {
         sell_price_per_pack: 9.0,
         total_number_of_packs: 8.0,
         expiry_date: Some(NaiveDate::from_ymd_opt(2020, 1, 4).unwrap()),
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     };
 
@@ -163,7 +163,7 @@ pub fn mock_stock_line_ci_c() -> Vec<StockLineRow> {
         sell_price_per_pack: 34.0,
         total_number_of_packs: 21.0,
         expiry_date: Some(NaiveDate::from_ymd_opt(2020, 3, 23).unwrap()),
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     };
 
@@ -182,7 +182,7 @@ pub fn mock_stock_line_ci_d() -> Vec<StockLineRow> {
         sell_price_per_pack: 11.0,
         total_number_of_packs: 10.0,
         expiry_date: Some(NaiveDate::from_ymd_opt(2020, 1, 4).unwrap()),
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     };
 
@@ -199,7 +199,7 @@ pub fn mock_item_query_test1() -> Vec<StockLineRow> {
         cost_price_per_pack: 2.0,
         sell_price_per_pack: 11.0,
         total_number_of_packs: 3.0,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     };
 
@@ -215,7 +215,7 @@ pub fn mock_stock_line_on_hold() -> Vec<StockLineRow> {
         pack_size: 1.0,
         total_number_of_packs: 100.0,
         on_hold: true,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     };
 
@@ -231,7 +231,7 @@ pub fn mock_stock_line_location_is_on_hold() -> Vec<StockLineRow> {
         available_number_of_packs: 100.0,
         pack_size: 1.0,
         total_number_of_packs: 100.0,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     };
 

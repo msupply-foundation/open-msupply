@@ -14,6 +14,7 @@ import {
   esES,
   ruRU,
   enUS as muiEnUS,
+  faIR,
 } from '@mui/x-date-pickers/locales';
 
 // Material React Table translations
@@ -22,6 +23,8 @@ import { MRT_Localization_ES } from 'material-react-table/locales/es';
 import { MRT_Localization_FR } from 'material-react-table/locales/fr';
 import { MRT_Localization_PT } from 'material-react-table/locales/pt';
 import { MRT_Localization_RU } from 'material-react-table/locales/ru';
+// Persian/Farsi locale, used as an approximation for the unsupported Dari and Pashto
+import { MRT_Localization_FA } from 'material-react-table/locales/fa';
 
 // importing individually to reduce bundle size
 // the date-fns methods are tree shaking correctly
@@ -33,8 +36,10 @@ import { ar } from 'date-fns/locale/ar';
 import { es } from 'date-fns/locale/es';
 import { ru } from 'date-fns/locale/ru';
 import { pt } from 'date-fns/locale/pt';
+// Persian/Farsi locale, used as an approximation for the unsupported Dari and Pashto
+import { faIR as fa } from 'date-fns/locale/fa-IR';
+
 import pluralize from 'pluralize';
-import { localeKeySet } from '../locales';
 export { splitTranslatedLines } from './ReactUtils';
 
 // Map locale string (from i18n) to locale object (from date-fns)
@@ -50,6 +55,9 @@ export const getLocale = (language: SupportedLocales) => {
       return fr;
     case 'pt':
       return pt;
+    case 'ps':
+    case 'prs':
+      return fa;
     default:
       return getLocaleObj[language];
   }
@@ -80,6 +88,9 @@ const getDateLocalisations = (language: SupportedLocales) => {
     case 'ar':
     case 'tet':
       return getLocalisations(muiEnUS);
+    case 'prs':
+    case 'ps':
+      return getLocalisations(faIR);
     default:
       noOtherVariants(language);
   }
@@ -101,6 +112,9 @@ const getTableLocalisations = (language: SupportedLocales) => {
       return MRT_Localization_PT;
     case 'ar':
       return MRT_Localization_AR;
+    case 'prs':
+    case 'ps':
+      return MRT_Localization_FA;
 
     // Default is English
     // Not every language is supported, and some dialects may want
@@ -119,13 +133,15 @@ export const useIntl = () => useContext(IntlContext);
 
 const languageOptions = [
   { label: 'عربي', value: 'ar' },
-  { label: 'Français', value: 'fr' },
-  { label: 'Français (Djibouti)', value: 'fr-DJ' },
+  { label: 'دری', value: 'prs' },
   { label: 'English', value: 'en' },
   { label: 'Español', value: 'es' },
+  { label: 'Français', value: 'fr' },
+  { label: 'Français (Djibouti)', value: 'fr-DJ' },
+  { label: 'پښتو', value: 'ps' },
+  { label: 'Português', value: 'pt' },
   { label: 'Русский', value: 'ru' },
   { label: 'Tetum', value: 'tet' },
-  { label: 'Português', value: 'pt' },
 ];
 
 const locales = [
@@ -136,12 +152,17 @@ const locales = [
   'fr-DJ' as const,
   'ru' as const,
   'tet' as const,
+  'ps' as const,
+  'prs' as const,
   'pt' as const,
 ] as const;
 
-const rtlLocales = ['ar'];
+const rtlLocales = ['ar', 'prs', 'ps'];
+
+const pluralExceptions = ['each'];
 
 export type SupportedLocales = (typeof locales)[number];
+export const isRtlLocale = (locale: string) => rtlLocales.includes(locale);
 
 type StringOrEmpty = string | null | undefined;
 
@@ -193,9 +214,13 @@ export const useIntlUtils = () => {
     [language]
   );
 
-  // pluralize only works for English words. Any other language strings are returned unchanged
   const getPlural = (word: string, count: number) => {
+    // pluralize only works for English words. Any other language strings are returned unchanged
     if (language !== 'en') return word;
+
+    // pick up any known failures in the pluralization library and return the original word in that case
+    if (pluralExceptions.includes(word.toLowerCase())) return word;
+
     return pluralize(word, count);
   };
 
@@ -207,13 +232,7 @@ export const useIntlUtils = () => {
     return t(localeKey, Formatter.fromCamelCase(serverKey));
   };
 
-  const translateDynamicKey = (key: string, fallback: string) => {
-    return isLocaleKey(key) ? t(key) : fallback;
-  };
 
-  const isLocaleKey = (key: string): key is LocaleKey => {
-    return localeKeySet.has(key);
-  };
 
   const invalidateCustomTranslations = () => {
     // Clear from local storage cache
@@ -251,8 +270,6 @@ export const useIntlUtils = () => {
     getLocalisedFullName,
     getPlural,
     translateServerError,
-    isLocaleKey,
-    translateDynamicKey,
     invalidateCustomTranslations,
   };
 };

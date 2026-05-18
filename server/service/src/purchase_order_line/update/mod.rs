@@ -33,6 +33,7 @@ pub enum UpdatePurchaseOrderLineInputError {
     DatabaseError(RepositoryError),
     ItemDoesNotExist,
     CannotChangeStatus,
+    CannotEditExpectedDeliveryDate,
     ItemCannotBeOrdered(PurchaseOrderLine),
 }
 
@@ -43,8 +44,8 @@ pub struct UpdatePurchaseOrderLineInput {
     pub requested_pack_size: Option<f64>,
     pub requested_number_of_units: Option<f64>,
     pub adjusted_number_of_units: Option<f64>,
-    pub requested_delivery_date: Option<NaiveDate>,
-    pub expected_delivery_date: Option<NaiveDate>,
+    pub requested_delivery_date: Option<NullableUpdate<NaiveDate>>,
+    pub expected_delivery_date: Option<NullableUpdate<NaiveDate>>,
     pub price_per_pack_before_discount: Option<f64>,
     pub price_per_pack_after_discount: Option<f64>,
     pub manufacturer_id: Option<NullableUpdate<String>>,
@@ -72,21 +73,24 @@ pub fn update_purchase_order_line(
             let mut updated_input = input.clone();
             let mut line_status_changed_to_new = false;
 
-            if input.adjusted_number_of_units
-                != current_purchase_order_line.adjusted_number_of_units
-            {
+            let adjusted_units_changed = match input.adjusted_number_of_units {
+                // Only consider it changed if explicitly provided and different
+                Some(_) => {
+                    input.adjusted_number_of_units
+                        != current_purchase_order_line.adjusted_number_of_units
+                }
+                // Not provided in input, no change
+                None => false,
+            };
+
+            if adjusted_units_changed {
                 let purchase_order = PurchaseOrderRowRepository::new(connection)
                     .find_one_by_id(&purchase_order_id)?
                     .ok_or(UpdatePurchaseOrderLineInputError::PurchaseOrderDoesNotExist)?;
 
                 // Update purchase order status
                 if purchase_order.status == PurchaseOrderStatus::Sent {
-                    update_order_status_on_adjusted_quantity_change(
-                        ctx,
-                        store_id,
-                        purchase_order,
-                        user_has_auth_permission,
-                    )?;
+                    update_order_status_on_adjusted_quantity_change(ctx, store_id, purchase_order)?;
                 }
 
                 // Handle line status change to New separately. The Purchase Order status may have already been changed by another line
@@ -133,17 +137,11 @@ fn update_order_status_on_adjusted_quantity_change(
     ctx: &ServiceContext,
     store_id: &str,
     purchase_order: PurchaseOrderRow,
-    user_has_auth_permission: Option<bool>,
 ) -> Result<(), UpdatePurchaseOrderLineInputError> {
     let purchase_order_input = create_purchase_order_input(&purchase_order.id);
 
-    update_purchase_order(
-        ctx,
-        store_id,
-        purchase_order_input,
-        user_has_auth_permission,
-    )
-    .map_err(|_| UpdatePurchaseOrderLineInputError::DatabaseError(RepositoryError::NotFound))?;
+    update_purchase_order(ctx, store_id, purchase_order_input)
+        .map_err(|_| UpdatePurchaseOrderLineInputError::DatabaseError(RepositoryError::NotFound))?;
 
     Ok(())
 }
@@ -152,7 +150,7 @@ fn create_purchase_order_input(purchase_order_id: &str) -> UpdatePurchaseOrderIn
     UpdatePurchaseOrderInput {
         id: purchase_order_id.to_string(),
         status: Some(PurchaseOrderStatus::Confirmed),
-        sent_datetime: Some(NullableUpdate { value: None }),
+        sent_datetime: None,
         supplier_id: None,
         confirmed_datetime: None,
         comment: None,

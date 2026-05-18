@@ -1,13 +1,4 @@
-## common/ui/components/portals
+# common/ui/components/portals
 
-### Overview
-
-Portal components.
-
-### Intentions
-
-Grouping of portal related components.
-
-### Tips & Things to keep in mind
-
-### Future considerations
+- **Docs site**: https://dev-docs.msupply.foundation/client/packages/common/ui/components/portals/
+- **Source**: [docs/content/client/packages/common/ui/components/portals/_index.md](../../../../../../../docs/content/client/packages/common/ui/components/portals/_index.md)

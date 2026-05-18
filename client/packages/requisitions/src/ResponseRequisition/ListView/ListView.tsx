@@ -37,6 +37,11 @@ export const ListView = () => {
       dir: 'desc',
     },
     filters: [
+      {
+        key: 'requisitionNumber',
+        condition: 'equalTo',
+        isNumber: true,
+      },
       { key: 'comment' },
       { key: 'otherPartyName' },
       {
@@ -78,20 +83,9 @@ export const ListView = () => {
         ),
       },
       {
-        accessorKey: 'requisitionNumber',
-        header: t('label.number'),
-        enableSorting: true,
-        columnType: ColumnType.Number,
-      },
-      {
-        accessorKey: 'createdDatetime',
-        header: t('label.created'),
-        enableSorting: true,
-        columnType: ColumnType.Date,
-      },
-      {
         id: 'status',
         header: t('label.status'),
+        size: 115,
         enableSorting: true,
         enableColumnFilter: true,
         accessorFn: row => getRequisitionTranslator(t)(row.status),
@@ -106,8 +100,24 @@ export const ListView = () => {
         ],
       },
       {
+        accessorKey: 'requisitionNumber',
+        header: t('label.number'),
+        size: 100,
+        enableSorting: true,
+        columnType: ColumnType.Number,
+      },
+      {
+        accessorKey: 'createdDatetime',
+        header: t('label.created'),
+        size: 115,
+        enableSorting: true,
+        columnType: ColumnType.Date,
+      },
+
+      {
         id: 'numberOfShipments',
         header: t('label.shipments'),
+        size: 115,
         description: t('description.number-of-shipments'),
         accessorFn: rowData => rowData?.shipments?.totalCount ?? 0,
         columnType: ColumnType.Number,
@@ -156,7 +166,7 @@ export const ListView = () => {
     isError,
     isLoading: isFetching,
     onRowClick: row => navigate(String(row.id)),
-    getIsRestrictedRow: isResponseDisabled,
+    getIsRestrictedRow: row => isResponseDisabled(row.original),
     noDataElement: (
       <NothingHere
         body={t('error.no-requisitions')}
@@ -167,7 +177,7 @@ export const ListView = () => {
 
   return (
     <>
-      <Toolbar filter={filter} />
+      <Toolbar />
       <AppBarButtons
         requisitionModalController={requisitionModalController}
         createOrderModalController={createOrderModalController}

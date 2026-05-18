@@ -99,6 +99,37 @@ export type RequestByNumberQuery = {
           margin?: number | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         };
+        ancillaryState: {
+          __typename: 'AncillaryStateResponse';
+          state: Types.AncillaryStateNode;
+          count: number;
+          toAdd: Array<{
+            __typename: 'AncillaryDeltaNode';
+            itemId: string;
+            requiredQuantity: number;
+            currentQuantity?: number | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            };
+          }>;
+          toUpdate: Array<{
+            __typename: 'AncillaryDeltaNode';
+            itemId: string;
+            requiredQuantity: number;
+            currentQuantity?: number | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            };
+          }>;
+        };
         documents: {
           __typename: 'SyncFileReferenceConnector';
           nodes: Array<{
@@ -136,6 +167,9 @@ export type RequestByNumberQuery = {
             expiringUnits: number;
             daysOutOfStock: number;
             pricePerUnit?: number | null;
+            forecastTotalUnits?: number | null;
+            forecastTotalDoses?: number | null;
+            vaccineCourses?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               availableStockOnHand: number;
@@ -157,16 +191,13 @@ export type RequestByNumberQuery = {
               isVaccine: boolean;
               doses: number;
               availableStockOnHand: number;
-              stats: {
-                __typename: 'ItemStatsNode';
-                averageMonthlyConsumption: number;
-                availableStockOnHand: number;
-                availableMonthsOfStockOnHand?: number | null;
-                totalConsumption: number;
-                stockOnHand: number;
-                monthsOfStockOnHand?: number | null;
-              };
             };
+            ancillaryParents: Array<{
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+            }>;
             reason?: {
               __typename: 'ReasonOptionNode';
               id: string;
@@ -259,6 +290,37 @@ export type RequestByIdQuery = {
           margin?: number | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         };
+        ancillaryState: {
+          __typename: 'AncillaryStateResponse';
+          state: Types.AncillaryStateNode;
+          count: number;
+          toAdd: Array<{
+            __typename: 'AncillaryDeltaNode';
+            itemId: string;
+            requiredQuantity: number;
+            currentQuantity?: number | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            };
+          }>;
+          toUpdate: Array<{
+            __typename: 'AncillaryDeltaNode';
+            itemId: string;
+            requiredQuantity: number;
+            currentQuantity?: number | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            };
+          }>;
+        };
         documents: {
           __typename: 'SyncFileReferenceConnector';
           nodes: Array<{
@@ -296,6 +358,9 @@ export type RequestByIdQuery = {
             expiringUnits: number;
             daysOutOfStock: number;
             pricePerUnit?: number | null;
+            forecastTotalUnits?: number | null;
+            forecastTotalDoses?: number | null;
+            vaccineCourses?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               availableStockOnHand: number;
@@ -317,16 +382,13 @@ export type RequestByIdQuery = {
               isVaccine: boolean;
               doses: number;
               availableStockOnHand: number;
-              stats: {
-                __typename: 'ItemStatsNode';
-                averageMonthlyConsumption: number;
-                availableStockOnHand: number;
-                availableMonthsOfStockOnHand?: number | null;
-                totalConsumption: number;
-                stockOnHand: number;
-                monthsOfStockOnHand?: number | null;
-              };
             };
+            ancillaryParents: Array<{
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+            }>;
             reason?: {
               __typename: 'ReasonOptionNode';
               id: string;
@@ -490,6 +552,30 @@ export type RequestsQuery = {
   };
 };
 
+export type RefreshAncillaryItemsMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.RefreshAncillaryItemsInput;
+}>;
+
+export type RefreshAncillaryItemsMutation = {
+  __typename: 'Mutations';
+  refreshAncillaryItems:
+    | {
+        __typename: 'RefreshAncillaryItemsError';
+        error:
+          | { __typename: 'CannotEditRequisition'; description: string }
+          | {
+              __typename: 'ForeignKeyError';
+              description: string;
+              key: Types.ForeignKey;
+            };
+      }
+    | {
+        __typename: 'RefreshAncillaryItemsSuccess';
+        lines: Array<{ __typename: 'RequisitionLineNode'; id: string }>;
+      };
+};
+
 export type InsertRequestLineMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.InsertRequestRequisitionLineInput;
@@ -635,7 +721,9 @@ export type InsertProgramRequestMutation = {
   insertProgramRequestRequisition:
     | {
         __typename: 'InsertProgramRequestRequisitionError';
-        error: { __typename: 'MaxOrdersReachedForPeriod'; description: string };
+        error:
+          | { __typename: 'MaxOrdersReachedForPeriod'; description: string }
+          | { __typename: 'SupplierNotValid'; description: string };
       }
     | { __typename: 'RequisitionNode'; id: string };
 };
@@ -808,6 +896,7 @@ export type ProgramIndicatorFragment = {
       columnNumber: number;
       name: string;
       valueType?: Types.IndicatorValueTypeNode | null;
+      isActive: boolean;
       value?: {
         __typename: 'IndicatorValueNode';
         id: string;
@@ -821,6 +910,7 @@ export type ProgramIndicatorFragment = {
       lineNumber: number;
       name: string;
       valueType?: Types.IndicatorValueTypeNode | null;
+      isActive: boolean;
     };
     customerIndicatorInfo: Array<{
       __typename: 'CustomerIndicatorInformationNode';
@@ -843,6 +933,7 @@ export type IndicatorLineRowFragment = {
   lineNumber: number;
   name: string;
   valueType?: Types.IndicatorValueTypeNode | null;
+  isActive: boolean;
 };
 
 export type IndicatorColumnFragment = {
@@ -851,6 +942,7 @@ export type IndicatorColumnFragment = {
   columnNumber: number;
   name: string;
   valueType?: Types.IndicatorValueTypeNode | null;
+  isActive: boolean;
   value?: {
     __typename: 'IndicatorValueNode';
     id: string;
@@ -890,6 +982,7 @@ export type IndicatorLineWithColumnsFragment = {
     columnNumber: number;
     name: string;
     valueType?: Types.IndicatorValueTypeNode | null;
+    isActive: boolean;
     value?: {
       __typename: 'IndicatorValueNode';
       id: string;
@@ -903,6 +996,7 @@ export type IndicatorLineWithColumnsFragment = {
     lineNumber: number;
     name: string;
     valueType?: Types.IndicatorValueTypeNode | null;
+    isActive: boolean;
   };
   customerIndicatorInfo: Array<{
     __typename: 'CustomerIndicatorInformationNode';
@@ -941,6 +1035,7 @@ export type ProgramIndicatorsQuery = {
           columnNumber: number;
           name: string;
           valueType?: Types.IndicatorValueTypeNode | null;
+          isActive: boolean;
           value?: {
             __typename: 'IndicatorValueNode';
             id: string;
@@ -954,6 +1049,7 @@ export type ProgramIndicatorsQuery = {
           lineNumber: number;
           name: string;
           valueType?: Types.IndicatorValueTypeNode | null;
+          isActive: boolean;
         };
         customerIndicatorInfo: Array<{
           __typename: 'CustomerIndicatorInformationNode';
@@ -1114,6 +1210,7 @@ export const IndicatorColumnFragmentDoc = gql`
     columnNumber
     name
     valueType
+    isActive
     value(
       periodId: $periodId
       customerNameId: $customerNameId
@@ -1131,6 +1228,7 @@ export const IndicatorLineRowFragmentDoc = gql`
     lineNumber
     name
     valueType
+    isActive
   }
 `;
 export const CustomerIndicatorInfoFragmentDoc = gql`
@@ -1302,6 +1400,37 @@ export const RequestsDocument = gql`
     }
   }
   ${RequestRowFragmentDoc}
+`;
+export const RefreshAncillaryItemsDocument = gql`
+  mutation refreshAncillaryItems(
+    $storeId: String!
+    $input: RefreshAncillaryItemsInput!
+  ) {
+    refreshAncillaryItems(storeId: $storeId, input: $input) {
+      __typename
+      ... on RefreshAncillaryItemsSuccess {
+        __typename
+        lines {
+          id
+        }
+      }
+      ... on RefreshAncillaryItemsError {
+        __typename
+        error {
+          description
+          ... on CannotEditRequisition {
+            __typename
+            description
+          }
+          ... on ForeignKeyError {
+            __typename
+            description
+            key
+          }
+        }
+      }
+    }
+  }
 `;
 export const InsertRequestLineDocument = gql`
   mutation insertRequestLine(
@@ -1510,6 +1639,10 @@ export const InsertProgramRequestDocument = gql`
             __typename
             description
           }
+          ... on SupplierNotValid {
+            __typename
+            description
+          }
         }
       }
     }
@@ -1692,15 +1825,17 @@ export function getSdk(
   return {
     requestByNumber(
       variables: RequestByNumberQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<RequestByNumberQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<RequestByNumberQuery>(
-            RequestByNumberDocument,
+          client.request<RequestByNumberQuery>({
+            document: RequestByNumberDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'requestByNumber',
         'query',
         variables
@@ -1708,13 +1843,16 @@ export function getSdk(
     },
     requestById(
       variables: RequestByIdQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<RequestByIdQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<RequestByIdQuery>(RequestByIdDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<RequestByIdQuery>({
+            document: RequestByIdDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'requestById',
         'query',
@@ -1723,15 +1861,17 @@ export function getSdk(
     },
     requisitionLineChart(
       variables: RequisitionLineChartQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<RequisitionLineChartQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<RequisitionLineChartQuery>(
-            RequisitionLineChartDocument,
+          client.request<RequisitionLineChartQuery>({
+            document: RequisitionLineChartDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'requisitionLineChart',
         'query',
         variables
@@ -1739,30 +1879,53 @@ export function getSdk(
     },
     requests(
       variables: RequestsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<RequestsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<RequestsQuery>(RequestsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<RequestsQuery>({
+            document: RequestsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'requests',
         'query',
         variables
       );
     },
+    refreshAncillaryItems(
+      variables: RefreshAncillaryItemsMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<RefreshAncillaryItemsMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<RefreshAncillaryItemsMutation>({
+            document: RefreshAncillaryItemsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'refreshAncillaryItems',
+        'mutation',
+        variables
+      );
+    },
     insertRequestLine(
       variables: InsertRequestLineMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsertRequestLineMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertRequestLineMutation>(
-            InsertRequestLineDocument,
+          client.request<InsertRequestLineMutation>({
+            document: InsertRequestLineDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insertRequestLine',
         'mutation',
         variables
@@ -1770,15 +1933,17 @@ export function getSdk(
     },
     updateRequestLine(
       variables: UpdateRequestLineMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpdateRequestLineMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateRequestLineMutation>(
-            UpdateRequestLineDocument,
+          client.request<UpdateRequestLineMutation>({
+            document: UpdateRequestLineDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'updateRequestLine',
         'mutation',
         variables
@@ -1786,15 +1951,17 @@ export function getSdk(
     },
     addFromMasterList(
       variables: AddFromMasterListMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<AddFromMasterListMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AddFromMasterListMutation>(
-            AddFromMasterListDocument,
+          client.request<AddFromMasterListMutation>({
+            document: AddFromMasterListDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'addFromMasterList',
         'mutation',
         variables
@@ -1802,15 +1969,17 @@ export function getSdk(
     },
     deleteRequestLines(
       variables: DeleteRequestLinesMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<DeleteRequestLinesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteRequestLinesMutation>(
-            DeleteRequestLinesDocument,
+          client.request<DeleteRequestLinesMutation>({
+            document: DeleteRequestLinesDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'deleteRequestLines',
         'mutation',
         variables
@@ -1818,15 +1987,17 @@ export function getSdk(
     },
     useSuggestedQuantity(
       variables: UseSuggestedQuantityMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UseSuggestedQuantityMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UseSuggestedQuantityMutation>(
-            UseSuggestedQuantityDocument,
+          client.request<UseSuggestedQuantityMutation>({
+            document: UseSuggestedQuantityDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'useSuggestedQuantity',
         'mutation',
         variables
@@ -1834,15 +2005,17 @@ export function getSdk(
     },
     insertRequest(
       variables: InsertRequestMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsertRequestMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertRequestMutation>(
-            InsertRequestDocument,
+          client.request<InsertRequestMutation>({
+            document: InsertRequestDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insertRequest',
         'mutation',
         variables
@@ -1850,15 +2023,17 @@ export function getSdk(
     },
     insertProgramRequest(
       variables: InsertProgramRequestMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<InsertProgramRequestMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InsertProgramRequestMutation>(
-            InsertProgramRequestDocument,
+          client.request<InsertProgramRequestMutation>({
+            document: InsertProgramRequestDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'insertProgramRequest',
         'mutation',
         variables
@@ -1866,15 +2041,17 @@ export function getSdk(
     },
     updateRequest(
       variables: UpdateRequestMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpdateRequestMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateRequestMutation>(
-            UpdateRequestDocument,
+          client.request<UpdateRequestMutation>({
+            document: UpdateRequestDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'updateRequest',
         'mutation',
         variables
@@ -1882,15 +2059,17 @@ export function getSdk(
     },
     deleteRequest(
       variables: DeleteRequestMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<DeleteRequestMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteRequestMutation>(
-            DeleteRequestDocument,
+          client.request<DeleteRequestMutation>({
+            document: DeleteRequestDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'deleteRequest',
         'mutation',
         variables
@@ -1898,15 +2077,17 @@ export function getSdk(
     },
     supplierProgramSettings(
       variables: SupplierProgramSettingsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<SupplierProgramSettingsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<SupplierProgramSettingsQuery>(
-            SupplierProgramSettingsDocument,
+          client.request<SupplierProgramSettingsQuery>({
+            document: SupplierProgramSettingsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'supplierProgramSettings',
         'query',
         variables
@@ -1914,15 +2095,17 @@ export function getSdk(
     },
     programIndicators(
       variables: ProgramIndicatorsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ProgramIndicatorsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ProgramIndicatorsQuery>(
-            ProgramIndicatorsDocument,
+          client.request<ProgramIndicatorsQuery>({
+            document: ProgramIndicatorsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'programIndicators',
         'query',
         variables
@@ -1930,15 +2113,17 @@ export function getSdk(
     },
     updateIndicatorValue(
       variables: UpdateIndicatorValueMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpdateIndicatorValueMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateIndicatorValueMutation>(
-            UpdateIndicatorValueDocument,
+          client.request<UpdateIndicatorValueMutation>({
+            document: UpdateIndicatorValueDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'updateIndicatorValue',
         'mutation',
         variables
@@ -1946,15 +2131,17 @@ export function getSdk(
     },
     recentStocktakeItems(
       variables: RecentStocktakeItemsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<RecentStocktakeItemsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<RecentStocktakeItemsQuery>(
-            RecentStocktakeItemsDocument,
+          client.request<RecentStocktakeItemsQuery>({
+            document: RecentStocktakeItemsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'recentStocktakeItems',
         'query',
         variables

@@ -59,7 +59,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             CONTACT_1,
             ContactRow {
                 id: "CONTACT_1".to_string(),
-                name_link_id: "name_store_a".to_string(),
+                name_id: "name_store_a".to_string(),
                 first_name: "test first".to_string(),
                 position: Some("test position".to_string()),
                 comment: Some("test comment".to_string()),
@@ -79,7 +79,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             CONTACT_2,
             ContactRow {
                 id: "CONTACT_2".to_string(),
-                name_link_id: "name_store_a".to_string(),
+                name_id: "name_store_a".to_string(),
                 first_name: "second test first".to_string(),
                 position: Some("second test position".to_string()),
                 comment: Some("second test comment".to_string()),

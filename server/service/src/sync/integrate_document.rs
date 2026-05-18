@@ -82,7 +82,7 @@ fn update_program_enrolment(
     };
     let program_enrolment: SchemaProgramEnrolment = serde_json::from_value(document.data.clone())
         .map_err(|err| {
-        RepositoryError::as_db_error(&format!("Invalid program enrolment data: {}", err), "")
+        RepositoryError::as_db_error(&format!("Invalid program enrolment data: {err}"), "")
     })?;
     let program_row = ProgramRepository::new(con)
         .query_one(
@@ -90,7 +90,7 @@ fn update_program_enrolment(
         )?
         .ok_or(RepositoryError::as_db_error("Program row not found", ""))?;
     update_program_enrolment_row(con, patient_id, document, program_enrolment, program_row)
-        .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
+        .map_err(|err| RepositoryError::as_db_error(&format!("{err:?}"), ""))?;
     Ok(())
 }
 
@@ -104,7 +104,7 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
 
     let encounter: crate::programs::encounter::validate_misc::ValidatedSchemaEncounter =
         validate_encounter_schema(&document.data).map_err(|err| {
-            RepositoryError::as_db_error(&format!("Invalid encounter data: {}", err), "")
+            RepositoryError::as_db_error(&format!("Invalid encounter data: {err}"), "")
         })?;
     let encounter_start_time = encounter.start_datetime;
     let existing_encounter = EncounterRepository::new(con)
@@ -134,7 +134,7 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
         existing_encounter.map(|encounter| encounter.row.start_datetime),
         None,
     )
-    .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
+    .map_err(|err| RepositoryError::as_db_error(&format!("{err:?}"), ""))?;
     Ok(())
 }
 
@@ -150,7 +150,7 @@ fn update_contact_trace(
     };
     let contact_trace: SchemaContactTrace =
         serde_json::from_value(document.data.clone()).map_err(|err| {
-            RepositoryError::as_db_error(&format!("Invalid contact trace data: {}", err), "")
+            RepositoryError::as_db_error(&format!("Invalid contact trace data: {err}"), "")
         })?;
     let program_row = ProgramRepository::new(con)
         .query_one(
@@ -158,7 +158,7 @@ fn update_contact_trace(
         )?
         .ok_or(RepositoryError::as_db_error("Program row not found", ""))?;
     update_contact_trace_row(con, patient_id, document, contact_trace, program_row)
-        .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
+        .map_err(|err| RepositoryError::as_db_error(&format!("{err:?}"), ""))?;
     Ok(())
 }
 

@@ -33,7 +33,12 @@ export const PrescriptionLineEdit = ({
 
   const t = useTranslation();
   const { format } = useFormatNumber();
-  const { manageVaccinesInDoses, sortByVvmStatusThenExpiry } = usePreferences();
+  const {
+    manageVaccinesInDoses,
+    sortByVvmStatusThenExpiry,
+    expiredStockPreventIssue,
+    expiredStockIssueThreshold,
+  } = usePreferences();
 
   // Needs to update when user clicks on different item in the list, or when
   // changing item with the selector
@@ -80,6 +85,9 @@ export const PrescriptionLineEdit = ({
             manageVaccinesInDoses && data.item.isVaccine
               ? { type: AllocateInType.Doses }
               : undefined,
+          expiryThresholdDays: expiredStockPreventIssue
+            ? (expiredStockIssueThreshold ?? 0)
+            : 0,
         },
         format,
         t

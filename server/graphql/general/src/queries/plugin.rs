@@ -6,6 +6,10 @@ use service::plugin::FrontendPluginMetadata;
 pub struct FrontendPluginMetadataNode {
     pub code: String,
     pub path: String,
+    /// Hash of the plugin's bundled file contents — clients append this as a
+    /// cache-busting URL token (?v=...) so the browser only refetches when the
+    /// bundle's bytes change.
+    pub hash: String,
 }
 
 pub fn frontend_plugin_metadata(
@@ -25,10 +29,18 @@ pub fn frontend_plugin_metadata(
 }
 
 impl FrontendPluginMetadataNode {
-    fn from_domain(FrontendPluginMetadata { code, entry_point }: FrontendPluginMetadata) -> Self {
+    fn from_domain(
+        FrontendPluginMetadata {
+            code,
+            entry_point,
+            hash,
+            ..
+        }: FrontendPluginMetadata,
+    ) -> Self {
         Self {
             path: format!("{code}/{entry_point}"),
             code,
+            hash,
         }
     }
 }

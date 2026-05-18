@@ -11,7 +11,7 @@ use service::{
     sync::sync_user::SyncUser,
 };
 
-use crate::{ InvalidCredentials, MissingCredentials};
+use crate::{InvalidCredentials, MissingCredentials};
 
 pub struct UpdateUserNode {
     pub last_successful_sync: Option<NaiveDateTime>,
@@ -59,7 +59,7 @@ pub async fn update_user(ctx: &Context<'_>) -> Result<UpdateResponse> {
     let user = match SyncUser::update_user(service_provider, auth_data, &user.user_id).await {
         Ok(user) => user,
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             let graphql_error = match error {
                 LoginError::FetchUserError(FetchUserError::ConnectionError(_)) => {
                     return Ok(UpdateResponse::Error(UpdateUserError {
@@ -82,9 +82,8 @@ pub async fn update_user(ctx: &Context<'_>) -> Result<UpdateResponse> {
                 | LoginError::LoginFailure(LoginFailure::NoSiteAccess)
                 | LoginError::InternalError(_)
                 | LoginError::DatabaseError(_)
-                | LoginError::FailedToGenerateToken(_) 
-                | LoginError::MSupplyCentralNotReached
-                => {
+                | LoginError::FailedToGenerateToken(_)
+                | LoginError::MSupplyCentralNotReached => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
             };

@@ -1,14 +1,18 @@
 {
   "name": "open-msupply",
   "//": "Main version for the app, should be in semantic version format (any release candidate or test build should be separated by '-' i.e. 1.1.1-rc1 or 1.1.1-test",
-  "version": "2.16.00-develop",
+  "version": "2.20.00",
   "private": true,
   "scripts": {
     "start": "cd ./server && cargo run & cd ./client && yarn start-local",
     "build": "cd ./client && yarn build && cd ../server && cargo build --release",
-    "test": "cd ./server && ulimit -n 1000 && cargo test && cd ../client && yarn test"
+    "test": "cd ./server && ulimit -n 1000 && cargo test && cd ../client && yarn test",
+    "dockerise": "bash docker/dockerise.sh"
   },
   "dependencies": {
     "typescript": "^5.9.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
   }
 }

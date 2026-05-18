@@ -465,7 +465,7 @@ impl LoadTest {
                     "https://demo-open.msupply.org".to_string(),
                     "http://localhost:8000".to_string(),
                 ],
-                base_dir: Some("app_data".to_string()),
+                base_dir: "app_data".to_string(),
                 machine_uid: None,
                 override_is_central_server: false,
             },
@@ -476,12 +476,16 @@ impl LoadTest {
                 host: "localhost".to_string(),
                 database_name: "omsupply-database".to_string(),
                 database_path: None,
+                connection_pool_max_connections: None,
+                connection_pool_min_idle: None,
+                connection_pool_timeout_seconds: None,
                 init_sql: None,
             },
             logging: None,
             backup: None,
             mail: None,
             sync: None,
+            features: None,
         };
         let base_config_path = self.output_dir.join("base.yaml");
         std::fs::write(base_config_path, serde_yml::to_string(&base_config)?)?;
@@ -550,7 +554,7 @@ impl LoadTest {
                     debug_no_access_control: true, // Allow us to use GQL on the remote sites without auth
                     discovery: DiscoveryMode::Disabled,
                     cors_origins: vec![],
-                    base_dir: Some(database_path.to_string()),
+                    base_dir: database_path.to_string(),
                     machine_uid: Some("1337_test".to_string()),
                     override_is_central_server: false,
                 },
@@ -561,6 +565,9 @@ impl LoadTest {
                     host: "localhost".to_string(),
                     database_name: format!("site_{}", site_n_store.site.site_id),
                     database_path: Some(database_path.to_string()),
+                    connection_pool_max_connections: None,
+                    connection_pool_min_idle: None,
+                    connection_pool_timeout_seconds: None,
                     init_sql: None,
                 },
                 sync: Some(SyncSettings {
@@ -573,10 +580,12 @@ impl LoadTest {
                         remote_push: 512,
                         central_pull: 512,
                     },
+                    disable_integration_transaction: false,
                 }),
                 logging: None,
                 backup: None,
                 mail: None,
+                features: None,
             };
 
             let full_site = TestSite {

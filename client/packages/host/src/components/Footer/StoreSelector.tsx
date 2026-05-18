@@ -9,14 +9,9 @@ import {
   useNavigate,
   useUserDetails,
   BasicTextInput,
-  PersistentPaperPopover,
-  usePopover,
-  useIsGapsStoreOnly,
-  EnvUtils,
-  Platform,
-  RouteBuilder,
+  useRootNavigationPath,
+  PaperPopover,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
 import { PropsWithChildrenOnly, UserStoreNodeFragment } from '@common/types';
 
 export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
@@ -24,9 +19,9 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const navigate = useNavigate();
   const { store, setStore, token } = useAuthContext();
   const { data, isLoading } = useUserDetails(token);
-  const popoverControls = usePopover();
-  const isGaps = useIsGapsStoreOnly();
-  const isAndroid = EnvUtils.platform === Platform.Android;
+  const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
+
+  const rootNavigationPath = useRootNavigationPath();
 
   const storeSorter = (a: UserStoreNodeFragment, b: UserStoreNodeFragment) => {
     if (a.name < b.name) return -1;
@@ -64,14 +59,8 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
       disabled={s.id === store.id || !!s.isDisabled}
       onClick={async () => {
         await setStore(s);
-        popoverControls.hide();
-        const route =
-          isGaps && isAndroid
-            ? RouteBuilder.create(AppRoute.Coldchain)
-                .addPart(AppRoute.Equipment)
-                .build()
-            : AppRoute.Dashboard;
-        navigate(route);
+        setPopoverAnchor(null);
+        navigate(rootNavigationPath);
       }}
       key={s.id}
       sx={buttonStyle}
@@ -79,9 +68,14 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   ));
 
   return (
-    <PersistentPaperPopover
-      popoverControls={popoverControls}
-      placement="top"
+    <PaperPopover
+      mode="click"
+      placement={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
+      anchorEl={popoverAnchor}
+      onAnchorElChange={setPopoverAnchor}
       width={400}
       Content={
         <PaperPopoverSection label={t('select-store')}>
@@ -121,6 +115,6 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
       }
     >
       {children}
-    </PersistentPaperPopover>
+    </PaperPopover>
   );
 };

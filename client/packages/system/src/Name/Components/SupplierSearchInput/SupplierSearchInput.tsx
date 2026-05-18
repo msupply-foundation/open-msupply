@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import {
   Autocomplete,
+  CLEAR,
   useBufferState,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -52,6 +53,15 @@ export const SupplierSearchInput = ({
       onChange={(_, name) => {
         setBuffer(name);
         name && onChange(name);
+      }}
+      onInputChange={(
+        _event: React.SyntheticEvent<Element, Event>,
+        _value: string,
+        reason: string
+      ) => {
+        if (reason === CLEAR) {
+          onChange(null);
+        }
       }}
       options={data?.nodes ?? []}
       renderOption={NameOptionRenderer}

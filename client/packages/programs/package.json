@@ -9,16 +9,16 @@
     "eslint": "eslint ./src"
   },
   "dependencies": {
-    "@jsonforms/core": "^3.5.1",
-    "@jsonforms/material-renderers": "^3.5.1",
-    "@jsonforms/react": "^3.5.1",
+    "@jsonforms/core": "3.5.1",
+    "@jsonforms/material-renderers": "3.5.1",
+    "@jsonforms/react": "3.5.1",
     "@mui/icons-material": "^5.14.1",
     "@openmsupply-client/common": "^0.0.1",
     "@openmsupply-client/config": "^0.0.0",
     "@openmsupply-client/requisitions": "^0.0.0",
-    "react": "^18.0.0",
+    "react": "^19.2.4",
     "react-diff-viewer": "3.1.1",
-    "react-dom": "^18.0.0",
+    "react-dom": "^19.2.4",
     "zod": "3.23.8"
   },
   "devDependencies": {}

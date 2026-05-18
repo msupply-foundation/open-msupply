@@ -10,6 +10,9 @@ pub use self::item_variant::*;
 pub mod bundled_item;
 pub use self::bundled_item::*;
 
+pub mod ancillary_item;
+pub use self::ancillary_item::*;
+
 pub mod item_stats;
 pub use self::item_stats::*;
 
@@ -112,6 +115,8 @@ pub mod vaccine_course_item;
 pub use self::vaccine_course_item::*;
 pub mod vaccine_course_dose;
 pub use self::vaccine_course_dose::*;
+pub mod vaccine_course_store_config;
+pub use self::vaccine_course_store_config::*;
 
 pub mod demographic_indicator;
 pub use self::demographic_indicator::*;

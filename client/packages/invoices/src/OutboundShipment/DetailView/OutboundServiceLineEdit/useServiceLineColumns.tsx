@@ -4,16 +4,14 @@ import {
   RecordPatch,
   IconButton,
   XCircleIcon,
-  ColumnAlign,
   ColumnDef,
   ColumnType,
+  TextInputCell,
+  NumberInputCell,
+  CurrencyInputCell,
 } from '@openmsupply-client/common';
 import { ServiceItemSearchInput, toItemWithPackSize } from '@openmsupply-client/system';
 import { DraftInboundLine, DraftStockOutLine } from './../../../types';
-// Need to be re-exported when Legacy cells are removed
-import { TextInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/TextInputCell';
-import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
-import { CurrencyInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/CurrencyInputCell';
 
 export const useServiceLineColumns = <T extends DraftInboundLine | DraftStockOutLine>(
   setter: (patch: RecordPatch<T>) => void
@@ -94,7 +92,6 @@ export const useServiceLineColumns = <T extends DraftInboundLine | DraftStockOut
         id: 'delete',
         header: t('label.delete'),
         size: 50,
-        align: ColumnAlign.Center,
         Cell: ({ row }) => (
           <IconButton
             icon={<XCircleIcon />}

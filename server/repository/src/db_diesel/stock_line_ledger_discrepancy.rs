@@ -40,7 +40,7 @@ impl<'a> StockLineLedgerDiscrepancyRepository<'a> {
         &self,
         filter: Option<StockLineLedgerDiscrepancyFilter>,
     ) -> Result<Vec<StockLineLedgerDiscrepancy>, RepositoryError> {
-        let query = create_filtered_query(self.connection, filter);
+        let query = create_filtered_query(filter);
 
         // Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
@@ -53,7 +53,6 @@ impl<'a> StockLineLedgerDiscrepancyRepository<'a> {
 }
 
 fn create_filtered_query(
-    connection: &StorageConnection,
     filter: Option<StockLineLedgerDiscrepancyFilter>,
 ) -> IntoBoxed<'static, stock_line_ledger_discrepancy::table, DBType> {
     let mut query = stock_line_ledger_discrepancy::table.into_boxed();
@@ -74,7 +73,7 @@ fn create_filtered_query(
 
     if let Some(stock_line_filter) = stock_line {
         let stock_line_ids =
-            StockLineRepository::create_filtered_query(connection, Some(stock_line_filter), None)
+            StockLineRepository::create_filtered_query(Some(stock_line_filter), None)
                 .select(stock_line::id);
 
         query = query.filter(stock_line_ledger_discrepancy::stock_line_id.eq_any(stock_line_ids));

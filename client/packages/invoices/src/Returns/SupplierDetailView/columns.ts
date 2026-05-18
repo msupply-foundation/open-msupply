@@ -1,4 +1,10 @@
-import { ColumnDef, useTranslation, ColumnType, Groupable, ArrayUtils } from '@openmsupply-client/common';
+import {
+  ColumnDef,
+  useTranslation,
+  ColumnType,
+  ExpiryDateCell,
+  weightedAverageByPacks,
+} from '@openmsupply-client/common';
 import { SupplierReturnLineFragment } from '../api';
 import { useMemo } from 'react';
 
@@ -6,7 +12,7 @@ export const useSupplierReturnColumns = () => {
   const t = useTranslation();
 
   const columns = useMemo(
-    (): ColumnDef<Groupable<SupplierReturnLineFragment>>[] => [
+    (): ColumnDef<SupplierReturnLineFragment>[] => [
       {
         accessorKey: 'itemCode',
         header: t('label.code'),
@@ -30,6 +36,7 @@ export const useSupplierReturnColumns = () => {
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         header: t('label.expiry'),
         columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
         enableSorting: true,
         enableColumnFilter: true,
       },
@@ -46,55 +53,37 @@ export const useSupplierReturnColumns = () => {
         enableSorting: true,
       },
       {
-        id: 'numberOfPacks',
-        accessorFn: row => {
-          if (row.subRows)
-            return row.subRows.reduce((total, line) => total + line.numberOfPacks, 0);
-          return row.numberOfPacks;
-        },
+        accessorKey: 'numberOfPacks',
         header: t('label.num-packs'),
         columnType: ColumnType.Number,
+        aggregationFn: 'sum',
         enableSorting: true,
       },
       {
         id: 'totalQuantity',
-        accessorFn: row => {
-          if (row.subRows)
-            return row.subRows.reduce((total, line) => total + line.packSize * line.numberOfPacks, 0);
-          return row.packSize * row.numberOfPacks;
-        },
+        accessorFn: row => row.packSize * row.numberOfPacks,
         header: t('label.total-quantity'),
         columnType: ColumnType.Number,
+        aggregationFn: 'sum',
         enableSorting: true,
       },
       {
-        id: 'costPricePerPack',
-        accessorFn: row => {
-          if (row.subRows)
-            return ArrayUtils.getAveragePrice(row.subRows, 'costPricePerPack');
-          return row.costPricePerPack;
-        },
-        header: t('label.unit-price'),
+        accessorKey: 'costPricePerPack',
+        header: t('label.pack-cost-price'),
         columnType: ColumnType.Currency,
+        aggregationFn: weightedAverageByPacks(),
         enableSorting: true,
       },
       {
         id: 'lineTotal',
-        accessorFn: row => {
-          if (row.subRows) {
-            return Object.values(row.subRows).reduce(
-              (sum, batch) => sum + batch.costPricePerPack * batch.numberOfPacks,
-              0
-            );
-          }
-          return row.costPricePerPack * row.numberOfPacks;
-        },
+        accessorFn: row => row.costPricePerPack * row.numberOfPacks,
         header: t('label.line-total'),
         columnType: ColumnType.Currency,
+        aggregationFn: 'sum',
         enableSorting: true,
       },
     ],
-    [],
+    []
   );
 
   return columns;

@@ -41,8 +41,12 @@ impl<'a> IndicatorColumnRepository<'a> {
 
     pub fn create_filtered_query(filter: Option<IndicatorColumnFilter>) -> BoxedIndicatorQuery {
         let mut query = indicator_column::table.into_boxed();
+
+        // NOTE: Older versions of OG did not set is_active on column rows meaning they defaulted to false.
+        // Until mSupply has UI to fix this, we need to include all columns regardless of the is_active status. Once the column rows are updated to have correct is_active values, we can uncomment the following code to filter out inactive columns as well.
+
         // Filter out inactive by default
-        query = query.filter(indicator_column::is_active.eq(true));
+        // query = query.filter(indicator_column::is_active.eq(true));
 
         if let Some(f) = filter {
             apply_equal_filter!(query, f.id, indicator_column::id);

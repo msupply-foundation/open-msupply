@@ -3,10 +3,106 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
+export type ItemCountsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  lowStockThreshold: Types.Scalars['Float']['input'];
+  highStockThreshold: Types.Scalars['Float']['input'];
+}>;
+
+export type ItemCountsQuery = {
+  __typename: 'Queries';
+  itemCounts: {
+    __typename: 'ItemCounts';
+    itemCounts: {
+      __typename: 'ItemCountsResponse';
+      lowStock: number;
+      noStock: number;
+      highStock: number;
+      total: number;
+      outOfStockProducts: number;
+      productsAtRiskOfBeingOutOfStock: number;
+      productsOverstocked: number;
+    };
+  };
+};
+
+export type InboundInternalCountsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type InboundInternalCountsQuery = {
+  __typename: 'Queries';
+  inboundShipmentCounts: {
+    __typename: 'InboundInvoiceCounts';
+    notDelivered: number;
+    created: {
+      __typename: 'InvoiceCountsSummary';
+      today: number;
+      thisWeek: number;
+    };
+  };
+};
+
+export type InboundExternalCountsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type InboundExternalCountsQuery = {
+  __typename: 'Queries';
+  inboundShipmentExternalCounts: {
+    __typename: 'InboundInvoiceCounts';
+    notDelivered: number;
+    created: {
+      __typename: 'InvoiceCountsSummary';
+      today: number;
+      thisWeek: number;
+    };
+  };
+};
+
+export type OutboundCountsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type OutboundCountsQuery = {
+  __typename: 'Queries';
+  outboundShipmentCounts: {
+    __typename: 'OutboundInvoiceCounts';
+    notShipped: number;
+  };
+};
+
+export type InternalOrderCountsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type InternalOrderCountsQuery = {
+  __typename: 'Queries';
+  requisitionCounts: {
+    __typename: 'RequisitionCounts';
+    request: { __typename: 'RequestRequisitionCounts'; draft: number };
+  };
+};
+
+export type RequisitionCountsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type RequisitionCountsQuery = {
+  __typename: 'Queries';
+  requisitionCounts: {
+    __typename: 'RequisitionCounts';
+    response: { __typename: 'ResponseRequisitionCounts'; new: number };
+    emergency: {
+      __typename: 'EmergencyResponseRequisitionCounts';
+      new: number;
+    };
+  };
+};
+
 export type StockCountsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   daysTillExpired?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
 }>;
 
 export type StockCountsQuery = {
@@ -20,112 +116,21 @@ export type StockCountsQuery = {
   };
 };
 
-export type ItemCountsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  lowStockThreshold: Types.Scalars['Int']['input'];
-}>;
-
-export type ItemCountsQuery = {
-  __typename: 'Queries';
-  itemCounts: {
-    __typename: 'ItemCounts';
-    itemCounts: {
-      __typename: 'ItemCountsResponse';
-      lowStock: number;
-      noStock: number;
-      moreThanSixMonthsStock: number;
-      total: number;
-      outOfStockProducts: number;
-      productsAtRiskOfBeingOutOfStock: number;
-      productsOverstocked: number;
-    };
-  };
-};
-
-export type RequisitionCountsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-}>;
-
-export type RequisitionCountsQuery = {
-  __typename: 'Queries';
-  requisitionCounts: {
-    __typename: 'RequisitionCounts';
-    request: { __typename: 'RequestRequisitionCounts'; draft: number };
-    response: { __typename: 'ResponseRequisitionCounts'; new: number };
-    emergency: {
-      __typename: 'EmergencyResponseRequisitionCounts';
-      new: number;
-    };
-  };
-};
-
-export type OutboundShipmentCountsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-}>;
-
-export type OutboundShipmentCountsQuery = {
-  __typename: 'Queries';
-  invoiceCounts: {
-    __typename: 'InvoiceCounts';
-    outbound: {
-      __typename: 'OutboundInvoiceCounts';
-      notShipped: number;
-      created: {
-        __typename: 'InvoiceCountsSummary';
-        today: number;
-        thisWeek: number;
-      };
-    };
-  };
-};
-
-export type InboundShipmentCountsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-}>;
-
-export type InboundShipmentCountsQuery = {
-  __typename: 'Queries';
-  invoiceCounts: {
-    __typename: 'InvoiceCounts';
-    inbound: {
-      __typename: 'InboundInvoiceCounts';
-      notDelivered: number;
-      created: {
-        __typename: 'InvoiceCountsSummary';
-        today: number;
-        thisWeek: number;
-      };
-    };
-  };
-};
-
-export const StockCountsDocument = gql`
-  query stockCounts(
-    $storeId: String!
-    $daysTillExpired: Int
-    $timezoneOffset: Int
-  ) {
-    stockCounts(
-      storeId: $storeId
-      daysTillExpired: $daysTillExpired
-      timezoneOffset: $timezoneOffset
-    ) {
-      expired
-      expiringSoon
-      expiringBetweenThresholds
-      expiringInNextThreeMonths
-    }
-  }
-`;
 export const ItemCountsDocument = gql`
-  query itemCounts($storeId: String!, $lowStockThreshold: Int!) {
-    itemCounts(lowStockThreshold: $lowStockThreshold, storeId: $storeId) {
+  query itemCounts(
+    $storeId: String!
+    $lowStockThreshold: Float!
+    $highStockThreshold: Float!
+  ) {
+    itemCounts(
+      lowStockThreshold: $lowStockThreshold
+      highStockThreshold: $highStockThreshold
+      storeId: $storeId
+    ) {
       itemCounts {
         lowStock
         noStock
-        moreThanSixMonthsStock
+        highStock
         total
         outOfStockProducts
         productsAtRiskOfBeingOutOfStock
@@ -134,12 +139,47 @@ export const ItemCountsDocument = gql`
     }
   }
 `;
-export const RequisitionCountsDocument = gql`
-  query requisitionCounts($storeId: String!) {
+export const InboundInternalCountsDocument = gql`
+  query inboundInternalCounts($storeId: String!) {
+    inboundShipmentCounts(storeId: $storeId) {
+      created {
+        today
+        thisWeek
+      }
+      notDelivered
+    }
+  }
+`;
+export const InboundExternalCountsDocument = gql`
+  query inboundExternalCounts($storeId: String!) {
+    inboundShipmentExternalCounts(storeId: $storeId) {
+      created {
+        today
+        thisWeek
+      }
+      notDelivered
+    }
+  }
+`;
+export const OutboundCountsDocument = gql`
+  query outboundCounts($storeId: String!) {
+    outboundShipmentCounts(storeId: $storeId) {
+      notShipped
+    }
+  }
+`;
+export const InternalOrderCountsDocument = gql`
+  query internalOrderCounts($storeId: String!) {
     requisitionCounts(storeId: $storeId) {
       request {
         draft
       }
+    }
+  }
+`;
+export const RequisitionCountsDocument = gql`
+  query requisitionCounts($storeId: String!) {
+    requisitionCounts(storeId: $storeId) {
       response {
         new
       }
@@ -149,29 +189,13 @@ export const RequisitionCountsDocument = gql`
     }
   }
 `;
-export const OutboundShipmentCountsDocument = gql`
-  query outboundShipmentCounts($storeId: String!, $timezoneOffset: Int) {
-    invoiceCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
-      outbound {
-        created {
-          today
-          thisWeek
-        }
-        notShipped
-      }
-    }
-  }
-`;
-export const InboundShipmentCountsDocument = gql`
-  query inboundShipmentCounts($storeId: String!, $timezoneOffset: Int) {
-    invoiceCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
-      inbound {
-        created {
-          today
-          thisWeek
-        }
-        notDelivered
-      }
+export const StockCountsDocument = gql`
+  query stockCounts($storeId: String!, $daysTillExpired: Int) {
+    stockCounts(storeId: $storeId, daysTillExpired: $daysTillExpired) {
+      expired
+      expiringSoon
+      expiringBetweenThresholds
+      expiringInNextThreeMonths
     }
   }
 `;
@@ -195,80 +219,128 @@ export function getSdk(
   withWrapper: SdkFunctionWrapper = defaultWrapper
 ) {
   return {
-    stockCounts(
-      variables: StockCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<StockCountsQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<StockCountsQuery>(StockCountsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
-          }),
-        'stockCounts',
-        'query',
-        variables
-      );
-    },
     itemCounts(
       variables: ItemCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ItemCountsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemCountsQuery>(ItemCountsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<ItemCountsQuery>({
+            document: ItemCountsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'itemCounts',
         'query',
         variables
       );
     },
+    inboundInternalCounts(
+      variables: InboundInternalCountsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InboundInternalCountsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InboundInternalCountsQuery>({
+            document: InboundInternalCountsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'inboundInternalCounts',
+        'query',
+        variables
+      );
+    },
+    inboundExternalCounts(
+      variables: InboundExternalCountsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InboundExternalCountsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InboundExternalCountsQuery>({
+            document: InboundExternalCountsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'inboundExternalCounts',
+        'query',
+        variables
+      );
+    },
+    outboundCounts(
+      variables: OutboundCountsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<OutboundCountsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<OutboundCountsQuery>({
+            document: OutboundCountsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'outboundCounts',
+        'query',
+        variables
+      );
+    },
+    internalOrderCounts(
+      variables: InternalOrderCountsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InternalOrderCountsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InternalOrderCountsQuery>({
+            document: InternalOrderCountsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'internalOrderCounts',
+        'query',
+        variables
+      );
+    },
     requisitionCounts(
       variables: RequisitionCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<RequisitionCountsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<RequisitionCountsQuery>(
-            RequisitionCountsDocument,
+          client.request<RequisitionCountsQuery>({
+            document: RequisitionCountsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'requisitionCounts',
         'query',
         variables
       );
     },
-    outboundShipmentCounts(
-      variables: OutboundShipmentCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<OutboundShipmentCountsQuery> {
+    stockCounts(
+      variables: StockCountsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<StockCountsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<OutboundShipmentCountsQuery>(
-            OutboundShipmentCountsDocument,
+          client.request<StockCountsQuery>({
+            document: StockCountsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
-        'outboundShipmentCounts',
-        'query',
-        variables
-      );
-    },
-    inboundShipmentCounts(
-      variables: InboundShipmentCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
-    ): Promise<InboundShipmentCountsQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<InboundShipmentCountsQuery>(
-            InboundShipmentCountsDocument,
-            variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
-        'inboundShipmentCounts',
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'stockCounts',
         'query',
         variables
       );

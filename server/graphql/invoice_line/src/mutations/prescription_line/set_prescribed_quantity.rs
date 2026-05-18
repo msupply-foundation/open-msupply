@@ -97,7 +97,7 @@ pub fn map_response(
 
 fn map_error(error: ServiceError) -> Result<SetPrescribedQuantityErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors

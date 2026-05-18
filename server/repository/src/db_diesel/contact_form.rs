@@ -7,10 +7,9 @@ use crate::{diesel_macros::apply_equal_filter, RepositoryError};
 
 use super::{
     contact_form_row::{contact_form, ContactFormRow},
-    name_link_row::name_link,
     name_row::name,
     store_row::store,
-    DBType, EqualFilter, NameLinkRow, NameRow, Pagination, StorageConnection, StoreRow,
+    DBType, EqualFilter, NameRow, Pagination, StorageConnection, StoreRow,
 };
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -36,7 +35,7 @@ impl ContactFormFilter {
     }
 }
 
-pub type ContactFormJoin = (ContactFormRow, (StoreRow, (NameLinkRow, NameRow)));
+pub type ContactFormJoin = (ContactFormRow, (StoreRow, NameRow));
 
 pub struct ContactFormRepository<'a> {
     connection: &'a StorageConnection,
@@ -81,7 +80,7 @@ impl<'a> ContactFormRepository<'a> {
             .load::<ContactFormJoin>(self.connection.lock().connection())?
             .into_iter()
             .map(
-                |(contact_form_row, (store_row, (_, name_row)))| ContactForm {
+                |(contact_form_row, (store_row, name_row))| ContactForm {
                     contact_form_row,
                     store_row,
                     name_row,
@@ -97,14 +96,14 @@ type BoxedContactFormQuery = IntoBoxed<
     'static,
     InnerJoin<
         contact_form::table,
-        InnerJoin<store::table, InnerJoin<name_link::table, name::table>>,
+        InnerJoin<store::table, name::table>,
     >,
     DBType,
 >;
 
 fn create_filtered_query(filter: Option<ContactFormFilter>) -> BoxedContactFormQuery {
     let mut query = contact_form::table
-        .inner_join(store::table.inner_join(name_link::table.inner_join(name::table)))
+        .inner_join(store::table.inner_join(name::table))
         // removed for now while user_accounts not available on central
         // .inner_join(user_account::table)
         .into_boxed();

@@ -92,9 +92,7 @@ pub enum ActivityLogNodeType {
     ItemVariantUpdateVVMType,
     VVMStatusLogUpdated,
     VolumePerPackChanged,
-    GoodsReceivedCreated,
-    GoodsReceivedDeleted,
-    GoodsReceivedStatusFinalised,
+    StockLineEdit,
     // Purchase Orders
     PurchaseOrderCreated,
     PurchaseOrderRequestApproval,
@@ -113,6 +111,7 @@ pub enum ActivityLogNodeType {
     // Patients
     PatientCreated,
     PatientUpdated,
+    InvoiceDateBackdated,
 }
 
 #[Object]

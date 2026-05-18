@@ -9,7 +9,8 @@ use crate::{
 
 use repository::{
     ActivityLogType, EqualFilter, RepositoryError, Sensor, SensorRow, SensorRowRepository,
-    StorageConnection, TemperatureBreachRow, TemperatureLogRepository, TemperatureLogRowRepository,
+    StorageConnection, TemperatureBreachRow, TemperatureBreachRowRepository,
+    TemperatureLogRepository, TemperatureLogRowRepository,
 };
 
 #[derive(PartialEq, Debug)]
@@ -43,7 +44,14 @@ pub fn update_sensor(
             SensorRowRepository::new(connection).upsert_one(&updated_sensor_row)?;
 
             if let Some(location_update) = input.location_id {
-                if sensor_row.location_id == location_update.value {
+                if sensor_row.location_id != location_update.value {
+                    if let Some(new_location_id) = &location_update.value {
+                        TemperatureLogRowRepository::new(connection)
+                            .update_location_id_by_sensor_id(&sensor_row.id, new_location_id)?;
+                        TemperatureBreachRowRepository::new(connection)
+                            .update_location_id_by_sensor_id(&sensor_row.id, new_location_id)?;
+                    }
+
                     activity_log_entry(
                         ctx,
                         ActivityLogType::SensorLocationChanged,

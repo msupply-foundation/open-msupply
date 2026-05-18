@@ -4,14 +4,21 @@ use chrono::{NaiveDate, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-#[derive(Clone, PartialEq, Debug, Default)]
+#[derive(Clone, PartialEq, Debug, Default, TS, Serialize, Deserialize)]
 pub struct StringFilter {
+    #[ts(optional)]
     pub equal_to: Option<String>,
+    #[ts(optional)]
     pub not_equal_to: Option<String>,
+    #[ts(optional)]
     pub equal_any: Option<Vec<String>>,
+    #[ts(optional)]
     pub not_equal_all: Option<Vec<String>>,
+    #[ts(optional)]
     pub like: Option<String>,
+    #[ts(optional)]
     pub starts_with: Option<String>,
+    #[ts(optional)]
     pub ends_with: Option<String>,
 }
 

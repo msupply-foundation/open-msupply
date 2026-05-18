@@ -309,7 +309,9 @@ const UIComponent = (props: ControlProps) => {
   const { customErrors } = config;
 
   const { mutateAsync: mutateGenerateId } = useMutation(
-    async (input: GenerateIdInput): Promise<string> => generateId(input)
+    {
+      mutationFn: async (input: GenerateIdInput): Promise<string> => generateId(input)
+    }
   );
   const { mutateAsync: allocateNumber } = useDocument.utils.allocateNumber();
 
@@ -419,7 +421,7 @@ const UIComponent = (props: ControlProps) => {
             value={text}
             style={{ flex: 1 }}
             helperText={zErrors ?? errors}
-            onChange={e => onChange(e.target.value)}
+            onChange={e => onChange(e.target.value || undefined)}
             error={!!zErrors || !!errors}
             FormHelperTextProps={
               errors ? { sx: { color: 'error.main' } } : undefined

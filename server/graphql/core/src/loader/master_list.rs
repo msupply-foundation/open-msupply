@@ -5,17 +5,16 @@ use async_graphql::dataloader::Loader;
 use repository::{EqualFilter, MasterList, MasterListFilter, MasterListRepository};
 use service::service_provider::ServiceProvider;
 
-use super::IdPair;
-
-#[derive(Clone, Debug)]
-pub struct EmptyPayload;
-pub type MasterListByItemIdLoaderInput = IdPair<EmptyPayload>;
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub struct MasterListByItemIdLoaderInput {
+    pub store_id: String,
+    pub item_id: String,
+}
 impl MasterListByItemIdLoaderInput {
     pub fn new(store_id: &str, item_id: &str) -> Self {
         MasterListByItemIdLoaderInput {
-            primary_id: store_id.to_string(),
-            secondary_id: item_id.to_string(),
-            payload: EmptyPayload {},
+            store_id: store_id.to_string(),
+            item_id: item_id.to_string(),
         }
     }
 }
@@ -35,9 +34,9 @@ impl Loader<MasterListByItemIdLoaderInput> for MasterListByItemIdLoader {
         let connection = service_context.connection;
 
         let mut store_item_map = HashMap::<String, Vec<String>>::new();
-        for item in ids_with_store_id {
-            let entry = store_item_map.entry(item.primary_id.clone()).or_default();
-            entry.push(item.secondary_id.clone())
+        for input in ids_with_store_id {
+            let entry = store_item_map.entry(input.store_id.clone()).or_default();
+            entry.push(input.item_id.clone())
         }
         let mut output = HashMap::<MasterListByItemIdLoaderInput, Self::Value>::new();
 
@@ -50,9 +49,8 @@ impl Loader<MasterListByItemIdLoaderInput> for MasterListByItemIdLoader {
                 )?;
 
                 let entry = output.entry(MasterListByItemIdLoaderInput {
-                    primary_id: store_id.clone(),
-                    secondary_id: item_id,
-                    payload: EmptyPayload {},
+                    store_id: store_id.clone(),
+                    item_id,
                 });
 
                 entry.or_default().extend(master_list);

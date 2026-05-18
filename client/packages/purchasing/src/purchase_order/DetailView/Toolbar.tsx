@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   AppBarContentPortal,
+  Box,
   InputWithLabelRow,
   BufferedTextInput,
   Grid,
@@ -11,6 +12,7 @@ import {
   useNotification,
   NumericTextInput,
   useConfirmationModal,
+  SearchBar,
 } from '@openmsupply-client/common';
 import {
   CurrencyAutocomplete,
@@ -32,14 +34,16 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   const {
     draft,
     query: { data, isFetching },
+    lines: { itemFilter, setItemFilter },
     update: { update },
     handleChange,
   } = usePurchaseOrder();
   const { updateLines } = usePurchaseOrderLine();
 
-  const [requestedDeliveryDate, setRequestedDeliveryDate] = useState(
-    new Date(data?.requestedDeliveryDate ?? '')
-  );
+  const [requestedDeliveryDate, setRequestedDeliveryDate] =
+    useState<Date | null>(
+      data?.requestedDeliveryDate ? new Date(data.requestedDeliveryDate) : null
+    );
 
   const getMostRecentExpectedDate = () => {
     const dates = data?.lines?.nodes
@@ -48,12 +52,13 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     return dates?.[0] ? dates[0] : null;
   };
 
-  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState(
-    new Date(getMostRecentExpectedDate() ?? '')
+  const mostRecentExpectedDate = getMostRecentExpectedDate();
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<Date | null>(
+    mostRecentExpectedDate ? new Date(mostRecentExpectedDate) : null
   );
 
   const disabledRequestedDeliveryDate = data?.status
-    ? isFieldDisabled(data.status, StatusGroup.AfterConfirmed)
+    ? isFieldDisabled(data.status, StatusGroup.AfterSent)
     : false;
   const disabledExpectedDeliveryDate = data?.status
     ? isFieldDisabled(data.status, StatusGroup.AfterSent)
@@ -80,11 +85,11 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
     if (!data) return;
     const formattedDate = Formatter.naiveDate(date);
     await updateLines(data?.lines?.nodes, {
-      expectedDeliveryDate: formattedDate,
+      expectedDeliveryDate: { value: formattedDate },
     });
   };
 
-  const confirmModal = useConfirmationModal({
+  const confirmExpectedModal = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t(
       'label.update-purchase-order-expected-delivery-date-for-all-lines'
@@ -93,13 +98,54 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
   });
 
   const handleExpectedDeliveryDateChange = (newDate: Date | null) => {
-    if (!newDate) return;
     const previousDate = expectedDeliveryDate;
 
     setExpectedDeliveryDate(newDate);
-    confirmModal({
+    confirmExpectedModal({
       onConfirm: () => updateExpectedDeliveryChange(newDate),
       onCancel: () => setExpectedDeliveryDate(previousDate),
+    });
+  };
+
+  const updateRequestedDeliveryChange = async (date: Date | null) => {
+    if (!data) return;
+    const formattedDate = Formatter.naiveDate(date);
+    handleUpdate({ requestedDeliveryDate: formattedDate });
+    await updateLines(data?.lines?.nodes, {
+      requestedDeliveryDate: { value: formattedDate },
+    });
+    // Auto-fill expected delivery date for lines that have none
+    const linesWithoutExpected =
+      data?.lines?.nodes?.filter(line => !line.expectedDeliveryDate) ?? [];
+    if (linesWithoutExpected.length > 0) {
+      try {
+        await updateLines(linesWithoutExpected, {
+          expectedDeliveryDate: { value: formattedDate },
+        });
+        if (!getMostRecentExpectedDate()) {
+          setExpectedDeliveryDate(date);
+        }
+      } catch (e) {
+        error(t('messages.error-saving-purchase-order'))();
+      }
+    }
+  };
+
+  const confirmRequestedModal = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t(
+      'label.update-purchase-order-requested-delivery-date-for-all-lines'
+    ),
+    onConfirm: () => {},
+  });
+
+  const handleRequestedDeliveryDateChange = (newDate: Date | null) => {
+    const previousDate = requestedDeliveryDate;
+
+    setRequestedDeliveryDate(newDate);
+    confirmRequestedModal({
+      onConfirm: () => updateRequestedDeliveryChange(newDate),
+      onCancel: () => setRequestedDeliveryDate(previousDate),
     });
   };
 
@@ -134,15 +180,17 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
             label={t('label.supplier-ref')}
             Input={
               <Tooltip title={data?.reference} placement="bottom-start">
-                <BufferedTextInput
-                  disabled={isDisabled}
-                  size="small"
-                  sx={{ width: 250 }}
-                  value={data?.reference ?? null}
-                  onChange={e => {
-                    handleChange({ reference: e.target.value });
-                  }}
-                />
+                <Box>
+                  <BufferedTextInput
+                    disabled={isDisabled}
+                    size="small"
+                    sx={{ width: 250 }}
+                    value={data?.reference ?? ''}
+                    onChange={e => {
+                      handleChange({ reference: e.target.value });
+                    }}
+                  />
+                </Box>
               </Tooltip>
             }
           />
@@ -178,14 +226,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
               Input={
                 <DateTimePickerInput
                   value={requestedDeliveryDate}
-                  onChange={date => {
-                    if (!date) return;
-                    setRequestedDeliveryDate(date);
-                    const formattedDate = Formatter.naiveDate(date);
-                    handleUpdate({
-                      requestedDeliveryDate: formattedDate,
-                    });
-                  }}
+                  onChange={handleRequestedDeliveryDateChange}
                   width={250}
                   disabled={disabledRequestedDeliveryDate}
                 />
@@ -201,6 +242,14 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
                   disabled={disabledExpectedDeliveryDate}
                 />
               }
+            />
+          </Grid>
+          <Grid display="flex" flexGrow={1} justifyContent="flex-end">
+            <SearchBar
+              placeholder={t('placeholder.filter-items')}
+              value={itemFilter ?? ''}
+              onChange={newValue => setItemFilter(newValue)}
+              debounceTime={0}
             />
           </Grid>
         </Grid>

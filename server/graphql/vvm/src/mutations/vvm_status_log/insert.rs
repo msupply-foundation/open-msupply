@@ -48,7 +48,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryAndMutateVvmStatus,
+            resource: Resource::MutateVvmStatus,
             store_id: Some(store_id.to_string()),
         },
     );
@@ -73,7 +73,7 @@ fn map_response(from: Result<VVMStatusLogRow, ServiceError>) -> Result<InsertRes
 }
 
 fn map_error(error: ServiceError) -> Result<InsertResponse> {
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::VVMStatusLogAlreadyExists

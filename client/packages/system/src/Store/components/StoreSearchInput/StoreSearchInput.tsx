@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StoreRowFragment, usePaginatedStores } from '../../api';
 import {
   AutocompleteWithPagination,
+  CLEAR,
   useDebouncedValue,
 } from '@openmsupply-client/common';
 import { StoreOptionRender } from './StoreOptionRenderer';
@@ -67,7 +68,7 @@ export const StoreSearchInput = ({
       value={value ? { label: value.storeName, ...value } : null}
       isOptionEqualToValue={(option, value) => option.id === value.id}
       paginationDebounce={DEBOUNCE_TIMEOUT}
-      onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
+      onPageChange={() => fetchNextPage()}
       inputValue={input}
       inputProps={{
         onChange: e => {
@@ -81,7 +82,7 @@ export const StoreSearchInput = ({
         },
       }}
       onInputChange={(event, value, reason) => {
-        if (reason === 'clear') {
+        if (reason === CLEAR) {
           setInput('');
         }
         onInputChange(event, value, reason);

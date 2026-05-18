@@ -1,20 +1,16 @@
 import React, { useEffect } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   DetailViewSkeleton,
   AlertModal,
   useNavigate,
   RouteBuilder,
   useTranslation,
-  createQueryParamsStore,
   useEditModal,
   DetailTabs,
   useBreadcrumbs,
   NothingHere,
   useNonPaginatedMaterialTable,
   MaterialTable,
-  Groupable,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -27,7 +23,7 @@ import { SupplierReturnEditModal } from '../modals';
 import { getNextItemId } from '../../utils';
 import { useSupplierReturnColumns } from './columns';
 
-export const SupplierReturnsDetailViewComponent = () => {
+export const SupplierReturnsDetailView = () => {
   const {
     onOpen,
     onClose,
@@ -51,13 +47,13 @@ export const SupplierReturnsDetailViewComponent = () => {
   const columns = useSupplierReturnColumns();
 
   const { table, selectedRows } =
-    useNonPaginatedMaterialTable<Groupable<SupplierReturnLineFragment>>({
+    useNonPaginatedMaterialTable<SupplierReturnLineFragment>({
       tableId: 'supplier-return-detail',
       onRowClick: row => onOpen(row.itemId),
       columns,
       isLoading,
       data: lines,
-      grouping: { enabled: true },
+      grouping: { field: 'itemCode' },
       enableRowSelection: !isDisabled,
       noDataElement: (
         <NothingHere
@@ -137,16 +133,3 @@ export const SupplierReturnsDetailViewComponent = () => {
     </React.Suspense>
   );
 };
-
-export const SupplierReturnsDetailView = () => (
-  <TableProvider
-    createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<SupplierReturnLineFragment>({
-      initialSortBy: {
-        key: 'itemName',
-      },
-    })}
-  >
-    <SupplierReturnsDetailViewComponent />
-  </TableProvider>
-);
