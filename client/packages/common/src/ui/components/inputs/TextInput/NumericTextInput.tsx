@@ -100,17 +100,17 @@
  * Numeric), so please check these all behave as expected as well.
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { BasicTextInput, BasicTextInputProps } from './BasicTextInput';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { BasicTextInput, BasicTextInputProps, FormErrorBinding } from './BasicTextInput';
 import {
   merge,
   NumUtils,
   RegexUtils,
   UNDEFINED_STRING_VALUE,
 } from '@common/utils';
-import { useFormatNumber, useCurrency } from '@common/intl';
+import { useFormatNumber, useCurrency, useTranslation } from '@common/intl';
 import { InputAdornment, Tooltip } from '@common/components';
-import { useBufferState } from '@common/hooks';
+import { CustomErrorValue, useBufferState, useFormField } from '@common/hooks';
 
 export interface NumericInputProps {
   /**
@@ -172,9 +172,11 @@ export interface NumericInputProps {
 }
 
 export type NumericTextInputProps = NumericInputProps &
-  Omit<BasicTextInputProps, 'onChange'> & {
+  Omit<BasicTextInputProps, 'onChange' | 'formError' | 'customError'> & {
     onChange?: (value: number | undefined) => void;
     endAdornment?: string;
+    formError?: FormErrorBinding;
+    customError?: CustomErrorValue;
   };
 
 export const DEFAULT_NUMERIC_TEXT_INPUT_WIDTH = 75;
@@ -202,10 +204,15 @@ export const NumericTextInput = React.forwardRef<
       fullWidth,
       endAdornment,
       inputMode,
+      formError,
+      customError,
+      required,
+      error: errorProp,
       ...props
     },
     ref
   ) => {
+    const t = useTranslation();
     const { format, parse, round } = useFormatNumber();
     const {
       options: { separator, decimal },
@@ -272,6 +279,33 @@ export const NumericTextInput = React.forwardRef<
     const inputRegex = new RegExp(
       `^-?\\d*${RegexUtils.escapeChars(decimal)}?\\d*$`
     );
+
+    // When `formError` is provided, skip the clamp-on-input behaviour and
+    // surface min/max violations through the form-error system instead. This
+    // matches the "allow illegal input but flag it" goal of issue #5990.
+    const isFormErrorActive = !!formError;
+    const validate = useMemo(
+      () =>
+        isFormErrorActive
+          ? (val: number | undefined) => {
+              if (val === undefined) return null;
+              if (val > max) return t('error.numeric-input-error-too-big');
+              if (val < min) return t('error.numeric-input-error-too-small');
+              return null;
+            }
+          : undefined,
+      [isFormErrorActive, min, max, t]
+    );
+    const { error: storeError } = useFormField({
+      formId: formError?.formId ?? '',
+      fieldId: formError?.fieldId ?? '',
+      label: formError?.label ?? '',
+      value,
+      required,
+      customError,
+      validate,
+    });
+    const error = isFormErrorActive ? errorProp || storeError : errorProp;
 
     // Display values when the input is disabled
     // uses the input decimalLimit or defaults to 2dp
@@ -348,11 +382,15 @@ export const NumericTextInput = React.forwardRef<
 
             if (Number.isNaN(parsed)) return;
 
-            const constrained = constrain(parsed, decimalLimit, min, max);
+            // When formError is active, allow out-of-range values through and
+            // let the validation surface as an error. Otherwise clamp.
+            const finalValue = isFormErrorActive
+              ? NumUtils.round(parsed, decimalLimit)
+              : constrain(parsed, decimalLimit, min, max);
             setTextValue(
-              noFormatting ? String(constrained) : format(constrained)
+              noFormatting ? String(finalValue) : format(finalValue)
             );
-            onChange(constrained);
+            onChange(finalValue);
           }}
           onKeyDown={e => {
             if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
@@ -362,12 +400,10 @@ export const NumericTextInput = React.forwardRef<
               (e.key === 'ArrowUp' ? step : -step) *
               (e.shiftKey ? multiplier : 1);
 
-            const newNum = constrain(
-              (value ?? Math.max(min, 0)) + change,
-              decimalLimit,
-              min,
-              max
-            );
+            const incremented = (value ?? Math.max(min, 0)) + change;
+            const newNum = isFormErrorActive
+              ? NumUtils.round(incremented, decimalLimit)
+              : constrain(incremented, decimalLimit, min, max);
             setTextValue(formatValue(newNum));
             onChange(newNum);
           }}
@@ -384,6 +420,8 @@ export const NumericTextInput = React.forwardRef<
           }}
           onFocus={e => e.target.select()}
           fullWidth={fullWidth}
+          required={required}
+          error={error}
           {...props}
           value={props.disabled ? disabledValue : textValue}
         />

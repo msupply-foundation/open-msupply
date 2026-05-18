@@ -4,5 +4,8 @@ import { useNameApi } from '../utils/useNameApi';
 export const useDonors = () => {
   const api = useNameApi();
 
-  return useQuery(api.keys.donors(), () => api.get.donors());
+  return useQuery({
+    queryKey: api.keys.donors(),
+    queryFn: () => api.get.donors()
+  });
 };

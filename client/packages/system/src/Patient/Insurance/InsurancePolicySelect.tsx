@@ -6,11 +6,15 @@ import { Autocomplete, InputWithLabelRow } from '@common/components';
 interface InsurancePolicySelectProps {
   policyType: string;
   onChange: (value: string) => void;
+  error?: boolean;
+  required?: boolean;
 }
 
 export const InsurancePolicySelect: FC<InsurancePolicySelectProps> = ({
   policyType,
   onChange,
+  error,
+  required,
 }): ReactElement => {
   const t = useTranslation();
 
@@ -33,7 +37,8 @@ export const InsurancePolicySelect: FC<InsurancePolicySelectProps> = ({
       Input={
         <Autocomplete
           clearable={false}
-          required
+          required={required ?? true}
+          error={error}
           options={options}
           value={defaultValue}
           onChange={(_, option) => {

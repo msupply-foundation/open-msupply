@@ -135,6 +135,7 @@ echo ""
 # Iterate through all tags with pagination
 # ---------------------------------------------------------------------------
 DELETED_COUNT=0
+FAILED_COUNT=0
 KEPT_COUNT=0
 PAGE_URL="https://hub.docker.com/v2/repositories/${REPO}/tags/?page_size=100"
 
@@ -191,8 +192,12 @@ while [[ "$PAGE_URL" != "null" && -n "$PAGE_URL" ]]; do
             if [[ "$HTTP_CODE" == "204" ]]; then
                 echo "  -> Deleted successfully"
                 DELETED_COUNT=$((DELETED_COUNT + 1))
+            elif [[ "$HTTP_CODE" == "403" ]]; then
+                echo "  -> ERROR: Delete returned HTTP 403 (Forbidden). Check that the Docker Hub token has 'Read, Write & Delete' permissions."
+                FAILED_COUNT=$((FAILED_COUNT + 1))
             else
-                echo "  -> WARNING: Delete returned HTTP $HTTP_CODE"
+                echo "  -> ERROR: Delete returned HTTP $HTTP_CODE"
+                FAILED_COUNT=$((FAILED_COUNT + 1))
             fi
         fi
 
@@ -205,5 +210,12 @@ if [[ "$DRY_RUN" == "true" ]]; then
     echo "Tags that would be deleted: $DELETED_COUNT"
 else
     echo "Tags deleted: $DELETED_COUNT"
+    echo "Tags failed: $FAILED_COUNT"
 fi
 echo "Tags kept: $KEPT_COUNT"
+
+if [[ "$FAILED_COUNT" -gt 0 ]]; then
+    echo ""
+    echo "ERROR: $FAILED_COUNT tag(s) failed to delete."
+    exit 1
+fi

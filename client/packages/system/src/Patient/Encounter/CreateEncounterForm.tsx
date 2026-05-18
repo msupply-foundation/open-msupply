@@ -117,7 +117,8 @@ export const CreateEncounterForm = ({
               setStartDateTimeError(validationError as string);
               setHasFormError(true);
             }}
-            error={startDateTimeError}
+            error={!!startDateTimeError}
+            errorText={startDateTimeError}
             slots={{
               day: BadgePickersDay,
             }}

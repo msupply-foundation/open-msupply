@@ -168,6 +168,7 @@ pub enum Resource {
     QueryPurchaseOrder,
     MutatePurchaseOrder,
     AuthorisePurchaseOrder,
+    FinalisePurchaseOrder,
     // Inbound Shipment External
     MutateInboundShipmentExternal,
     QueryInboundShipmentExternal,
@@ -842,6 +843,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::PurchaseOrderAuthorise),
+        ]),
+    );
+    map.insert(
+        Resource::FinalisePurchaseOrder,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PurchaseOrderFinalise),
         ]),
     );
 

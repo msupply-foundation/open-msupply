@@ -25,7 +25,7 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
     theme: LocalStorage.getItem('/theme/customhash') ?? '',
   };
   const { data: displaySettings } = useHost.settings.displaySettings(hashInput);
-  const passwordRef = React.useRef(null);
+  const passwordRef = React.useRef<HTMLInputElement>(null);
   const {
     isValid,
     password,
@@ -203,6 +203,7 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
             details={error.detail || ''}
             error={loginError.error}
             hint={loginError.hint}
+            width="100%"
           />
         )
       }
