@@ -25,7 +25,7 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
     theme: LocalStorage.getItem('/theme/customhash') ?? '',
   };
   const { data: displaySettings } = useHost.settings.displaySettings(hashInput);
-  const passwordRef = React.useRef(null);
+  const passwordRef = React.useRef<HTMLInputElement>(null);
   const {
     isValid,
     password,
