@@ -1,11 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { Chip, FormControlLabel } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { Trans } from 'react-i18next';
@@ -38,7 +31,6 @@ const StoreRow = React.memo(function StoreRow({
   isDefault,
   isLastUsed,
   onSelect,
-  rowRef,
 }: {
   id: string;
   store: UserStoreNodeFragment;
@@ -46,13 +38,11 @@ const StoreRow = React.memo(function StoreRow({
   isDefault: boolean;
   isLastUsed: boolean;
   onSelect: (id: string) => void;
-  rowRef?: React.Ref<HTMLDivElement>;
 }) {
   const t = useTranslation();
   return (
     <Box
       id={id}
-      ref={rowRef}
       onClick={() => onSelect(store.id)}
       role="option"
       aria-selected={isActive}
@@ -125,13 +115,17 @@ export const LoginStoreSelectorPanel = ({
   );
 
   const defaultStoreId = data?.defaultStore?.id;
-  const lastUsedStoreId = useMemo(() => {
-    if (!username) return undefined;
+  const [lastUsedStoreId, setLastUsedStoreId] = useState<string | undefined>(
+    undefined
+  );
+  const [lastUsedCaptured, setLastUsedCaptured] = useState(false);
+  if (!lastUsedCaptured && open && username) {
     const mru = getMostRecentCredentials(mruCreds ?? null).find(
       item => item.username.toLowerCase() === username.toLowerCase()
     );
-    return mru?.store?.id;
-  }, [username, mruCreds]);
+    setLastUsedStoreId(mru?.store?.id);
+    setLastUsedCaptured(true);
+  }
 
   const orderedStores = useMemo(() => {
     const pinnedIds = [defaultStoreId, lastUsedStoreId].filter(
@@ -162,17 +156,10 @@ export const LoginStoreSelectorPanel = ({
     if (allStores.length <= 1) onSelected();
   }, [open, isLoading, allStores.length, username, onSelected, skipPrefs]);
 
-  const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
+  const [selected, setSelected] = useState<string | undefined>();
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [query, setQuery] = useState('');
-  const activeRowRef = useRef<HTMLDivElement | null>(null);
-  const hasScrolledOnceRef = useRef(false);
-  const hasInitializedRef = useRef(false);
-  const handleStoreSelect = useCallback(
-    (id: string) => setSelectedId(id),
-    []
-  );
 
   const visibleStores = useMemo(() => {
     if (!query) return orderedStores;
@@ -180,30 +167,13 @@ export const LoginStoreSelectorPanel = ({
     return orderedStores.filter(s => s.name.toLowerCase().includes(q));
   }, [orderedStores, query]);
 
-  useEffect(() => {
-    if (isLoading || hasInitializedRef.current || allStores.length === 0)
-      return;
-    hasInitializedRef.current = true;
-    if (defaultStoreId && allStores.some(s => s.id === defaultStoreId)) {
-      setSelectedId(defaultStoreId);
-    } else if (
-      lastUsedStoreId &&
-      allStores.some(s => s.id === lastUsedStoreId)
-    ) {
-      setSelectedId(lastUsedStoreId);
-    } else {
-      setSelectedId(allStores[0]?.id);
+  const selectedId = useMemo(() => {
+    const stores = [selected, defaultStoreId, lastUsedStoreId];
+    for (const id of stores) {
+      if (id && visibleStores.some(s => s.id === id)) return id;
     }
-  }, [isLoading, allStores, defaultStoreId, lastUsedStoreId]);
-
-  // Re-anchor selection to the first visible row whenever the filter hides
-  // the previously-selected one.
-  useEffect(() => {
-    if (!selectedId) return;
-    if (!visibleStores.some(s => s.id === selectedId)) {
-      setSelectedId(visibleStores[0]?.id);
-    }
-  }, [visibleStores, selectedId]);
+    return visibleStores[0]?.id;
+  }, [selected, defaultStoreId, lastUsedStoreId, visibleStores]);
 
   const confirm = useCallback(
     async (id: string | undefined) => {
@@ -236,50 +206,36 @@ export const LoginStoreSelectorPanel = ({
     ]
   );
 
-  const selectedIdRef = useRef(selectedId);
-  const visibleStoresRef = useRef(visibleStores);
-  const confirmRef = useRef(confirm);
-  useEffect(() => {
-    selectedIdRef.current = selectedId;
-    visibleStoresRef.current = visibleStores;
-    confirmRef.current = confirm;
-  });
-
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (isLoggingIn) return;
-      const stores = visibleStoresRef.current;
-      const current = selectedIdRef.current;
       if (e.key === 'Enter') {
         e.preventDefault();
-        void confirmRef.current(current);
+        void confirm(selectedId);
         return;
       }
-      const key =
-        e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0;
-      if (!key || stores.length === 0) return;
+      const key = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0;
+      if (!key || visibleStores.length === 0) return;
       e.preventDefault();
-      const len = stores.length;
-      const idx = current
-        ? stores.findIndex(s => s.id === current)
+      const len = visibleStores.length;
+      const idx = selectedId
+        ? visibleStores.findIndex(s => s.id === selectedId)
         : key === 1
           ? -1
           : 0;
-      setSelectedId(stores[(idx + key + len) % len]?.id);
+      const nextId = visibleStores[(idx + key + len) % len]?.id;
+      if (!nextId) return;
+      setSelected(nextId);
+      requestAnimationFrame(() => {
+        document
+          .getElementById(optionId(nextId))
+          ?.scrollIntoView({ block: 'nearest' });
+      });
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [open, isLoggingIn]);
-
-  useEffect(() => {
-    if (!selectedId) return;
-    if (!hasScrolledOnceRef.current) {
-      hasScrolledOnceRef.current = true;
-      return;
-    }
-    activeRowRef.current?.scrollIntoView({ block: 'nearest' });
-  }, [selectedId]);
+  }, [open, isLoggingIn, visibleStores, selectedId, confirm, optionId]);
 
   if (!open) return null;
 
@@ -366,21 +322,17 @@ export const LoginStoreSelectorPanel = ({
             }
             sx={{ overflowY: 'auto', flex: 1 }}
           >
-            {visibleStores.map(s => {
-              const isActive = s.id === selectedId;
-              return (
-                <StoreRow
-                  key={s.id}
-                  id={optionId(s.id)}
-                  store={s}
-                  isActive={isActive}
-                  isDefault={s.id === defaultStoreId}
-                  isLastUsed={s.id === lastUsedStoreId}
-                  onSelect={handleStoreSelect}
-                  rowRef={isActive ? activeRowRef : undefined}
-                />
-              );
-            })}
+            {visibleStores.map(s => (
+              <StoreRow
+                key={s.id}
+                id={optionId(s.id)}
+                store={s}
+                isActive={s.id === selectedId}
+                isDefault={s.id === defaultStoreId}
+                isLastUsed={s.id === lastUsedStoreId}
+                onSelect={setSelected}
+              />
+            ))}
           </Box>
         )}
       </Box>
@@ -402,7 +354,7 @@ export const LoginStoreSelectorPanel = ({
           }
           label={
             <Typography sx={{ fontSize: '14px', color: 'text.secondary' }}>
-              {t('message.dont-show-store-selection')}
+              {t('message.remember-store-choice')}
             </Typography>
           }
         />
