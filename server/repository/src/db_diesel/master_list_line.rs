@@ -10,10 +10,7 @@ use super::{
     MasterListFilter, MasterListLineRow, StorageConnection,
 };
 
-use diesel::{
-    helper_types::{InnerJoin, IntoBoxed},
-    prelude::*,
-};
+use diesel::{helper_types::IntoBoxed, prelude::*};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct MasterListLine {
@@ -110,9 +107,7 @@ impl<'a> MasterListLineRepository<'a> {
         filter: Option<MasterListLineFilter>,
         store_id: Option<String>,
     ) -> Result<BoxedMasterListLineQuery, RepositoryError> {
-        let mut query = master_list_line::table
-            .inner_join(item::table)
-            .into_boxed();
+        let mut query = query().into_boxed();
 
         if let Some(f) = filter {
             apply_equal_filter!(query, f.id, master_list_line::id);
@@ -147,11 +142,12 @@ impl<'a> MasterListLineRepository<'a> {
     }
 }
 
-type BoxedMasterListLineQuery = IntoBoxed<
-    'static,
-    InnerJoin<master_list_line::table, item::table>,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    master_list_line::table.inner_join(item::table)
+}
+
+type BoxedMasterListLineQuery = IntoBoxed<'static, query, DBType>;
 
 fn to_domain((master_list_line_row, item_row): MasterListLineJoin) -> MasterListLine {
     MasterListLine {

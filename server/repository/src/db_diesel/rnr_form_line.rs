@@ -8,10 +8,7 @@ use crate::{
     EqualFilter, ItemRow, Pagination, RequisitionLineRow, RnRFormLineRow, Sort,
 };
 
-use diesel::{
-    dsl::{InnerJoin, IntoBoxed, LeftJoin},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct RnRFormLine {
@@ -100,17 +97,17 @@ fn to_domain(
         item_row,
     }
 }
-type BoxedRnRFormLineQuery = IntoBoxed<
-    'static,
-    LeftJoin<InnerJoin<rnr_form_line::table, item::table>, requisition_line::table>,
-    DBType,
->;
-
-fn create_filtered_query(filter: Option<RnRFormLineFilter>) -> BoxedRnRFormLineQuery {
-    let mut query = rnr_form_line::table
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    rnr_form_line::table
         .inner_join(item::table)
         .left_join(requisition_line::table)
-        .into_boxed();
+}
+
+type BoxedRnRFormLineQuery = IntoBoxed<'static, query, DBType>;
+
+fn create_filtered_query(filter: Option<RnRFormLineFilter>) -> BoxedRnRFormLineQuery {
+    let mut query = query().into_boxed();
 
     if let Some(f) = filter {
         let RnRFormLineFilter {
