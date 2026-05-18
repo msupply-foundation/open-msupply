@@ -7,13 +7,16 @@ use graphql_core::pagination::PaginationInput;
 use graphql_core::simple_generic_errors::{
     ErrorWrapper, NodeError, NodeErrorInterface, RecordNotFound,
 };
-use graphql_core::standard_graphql_error::{list_error_to_gql_err, validate_auth};
+use graphql_core::standard_graphql_error::{
+    list_error_to_gql_err, validate_auth, StandardGraphqlError,
+};
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{StocktakeNode, StocktakeNodeStatus};
 use repository::StocktakeSortField;
 use repository::*;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
+use service::ListError;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -72,7 +75,7 @@ pub enum StocktakesResponse {
     Response(StocktakeConnector),
 }
 
-pub fn stocktakes(
+pub async fn stocktakes(
     ctx: &Context<'_>,
     store_id: &str,
     page: Option<PaginationInput>,
@@ -87,29 +90,37 @@ pub fn stocktakes(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
-    let service = &service_provider.stocktake_service;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let pagination = page.map(PaginationOption::from);
+    let domain_filter = filter.map(StocktakeFilter::from);
+    // Currently only one sort option is supported, use the first from the list.
+    let domain_sort = sort
+        .and_then(|mut sort_list| sort_list.pop())
+        .map(|sort| sort.to_domain());
 
-    match service.get_stocktakes(
-        &service_ctx,
-        store_id,
-        page.map(PaginationOption::from),
-        filter.map(StocktakeFilter::from),
-        // Currently only one sort option is supported, use the first from the list.
-        sort.and_then(|mut sort_list| sort_list.pop())
-            .map(|sort| sort.to_domain()),
-    ) {
-        Ok(stocktakes) => Ok(StocktakesResponse::Response(StocktakeConnector {
-            total_count: stocktakes.count,
-            nodes: stocktakes
-                .rows
-                .into_iter()
-                .map(|stocktake| StocktakeNode { stocktake })
-                .collect(),
-        })),
-        Err(err) => Err(list_error_to_gql_err(err)),
-    }
+    let stocktakes = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+        let service_ctx = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider.stocktake_service.get_stocktakes(
+            &service_ctx,
+            &store_id,
+            pagination,
+            domain_filter,
+            domain_sort,
+        )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_list_error)?;
+
+    Ok(StocktakesResponse::Response(StocktakeConnector {
+        total_count: stocktakes.count,
+        nodes: stocktakes
+            .rows
+            .into_iter()
+            .map(|stocktake| StocktakeNode { stocktake })
+            .collect(),
+    }))
 }
 
 #[derive(Union)]
@@ -118,7 +129,11 @@ pub enum StocktakeResponse {
     Error(NodeError),
 }
 
-pub fn stocktake(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<StocktakeResponse> {
+pub async fn stocktake(
+    ctx: &Context<'_>,
+    store_id: &str,
+    id: &str,
+) -> Result<StocktakeResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -127,17 +142,24 @@ pub fn stocktake(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<Stocktak
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
-    let service = &service_provider.stocktake_service;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let id = id.to_string();
 
-    match service.get_stocktakes(
-        &service_ctx,
-        store_id,
-        None,
-        Some(StocktakeFilter::new().id(EqualFilter::equal_to(id.to_string()))),
-        None,
-    ) {
+    let stocktakes = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+        let service_ctx = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider.stocktake_service.get_stocktakes(
+            &service_ctx,
+            &store_id,
+            None,
+            Some(StocktakeFilter::new().id(EqualFilter::equal_to(id))),
+            None,
+        )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    match stocktakes {
         Ok(mut stocktakes) => {
             let result = match stocktakes.rows.pop() {
                 Some(stocktake) => StocktakeResponse::Response(StocktakeNode { stocktake }),
@@ -152,7 +174,7 @@ pub fn stocktake(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<Stocktak
     }
 }
 
-pub fn stocktake_by_number(
+pub async fn stocktake_by_number(
     ctx: &Context<'_>,
     store_id: &str,
     stocktake_number: i64,
@@ -165,17 +187,23 @@ pub fn stocktake_by_number(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
-    let service = &service_provider.stocktake_service;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
 
-    match service.get_stocktakes(
-        &service_ctx,
-        store_id,
-        None,
-        Some(StocktakeFilter::new().stocktake_number(EqualFilter::equal_to(stocktake_number))),
-        None,
-    ) {
+    let stocktakes = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+        let service_ctx = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider.stocktake_service.get_stocktakes(
+            &service_ctx,
+            &store_id,
+            None,
+            Some(StocktakeFilter::new().stocktake_number(EqualFilter::equal_to(stocktake_number))),
+            None,
+        )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    match stocktakes {
         Ok(mut stocktakes) => {
             let result = match stocktakes.rows.pop() {
                 Some(stocktake) => StocktakeResponse::Response(StocktakeNode { stocktake }),

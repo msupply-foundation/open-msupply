@@ -4,9 +4,13 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::vvm_status::{VVMStatusConnector, VVMStatusesResponse};
+use repository::RepositoryError;
 use service::auth::{Resource, ResourceAccessRequest};
 
-pub fn active_vvm_statuses(ctx: &Context<'_>, store_id: String) -> Result<VVMStatusesResponse> {
+pub async fn active_vvm_statuses(
+    ctx: &Context<'_>,
+    store_id: String,
+) -> Result<VVMStatusesResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -15,13 +19,16 @@ pub fn active_vvm_statuses(ctx: &Context<'_>, store_id: String) -> Result<VVMSta
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
 
-    let result = service_provider
-        .vvm_service
-        .active_vvm_statuses(&service_context.connection)
-        .map_err(StandardGraphqlError::from_repository_error)?;
+    let result = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider
+            .vvm_service
+            .active_vvm_statuses(&service_context.connection)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     Ok(VVMStatusesResponse::Response(
         VVMStatusConnector::from_domain(result),

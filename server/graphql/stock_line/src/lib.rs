@@ -115,27 +115,33 @@ impl StockLineQueries {
             },
         )?;
 
-        let service_provider = ctx.service_provider();
-        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        let service_provider = ctx.service_provider_data();
 
         // always filter by store_id
         let filter = filter
             .map(StockLineFilter::from)
             .unwrap_or_default()
-            .store_id(EqualFilter::equal_to(store_id.to_string()));
+            .store_id(EqualFilter::equal_to(store_id.clone()));
+        let sort = sort
+            .and_then(|mut sort_list| sort_list.pop())
+            .map(|sort| sort.to_domain());
+        let pagination = page.map(PaginationOption::from);
 
-        let stock_lines = service_provider
-            .stock_line_service
-            .get_stock_lines(
+        let stock_lines = tokio::task::spawn_blocking(move || {
+            let service_context = service_provider
+                .context(store_id.clone(), user.user_id)
+                .map_err(service::ListError::DatabaseError)?;
+            service_provider.stock_line_service.get_stock_lines(
                 &service_context,
-                page.map(PaginationOption::from),
+                pagination,
                 Some(filter),
-                // Currently only one sort option is supported, use the first from the list.
-                sort.and_then(|mut sort_list| sort_list.pop())
-                    .map(|sort| sort.to_domain()),
+                sort,
                 Some(store_id),
             )
-            .map_err(StandardGraphqlError::from_list_error)?;
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)?
+        .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(StockLinesResponse::Response(
             StockLineConnector::from_domain(stock_lines),
@@ -167,23 +173,34 @@ impl StockLineQueries {
             },
         )?;
 
-        let service_provider = ctx.service_provider();
-        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        let service_provider = ctx.service_provider_data();
 
         // always filter by store_id (mirrors the `stock_lines` query)
         let filter = filter
             .map(StockLineFilter::from)
             .unwrap_or_default()
-            .store_id(EqualFilter::equal_to(store_id.to_string()));
+            .store_id(EqualFilter::equal_to(store_id.clone()));
+        let sort = sort
+            .and_then(|mut sort_list| sort_list.pop())
+            .map(|sort| sort.to_domain());
+        let pagination = page.map(PaginationOption::from);
 
-        let items = service_provider.stock_line_service.get_items_by_stock_line_filter(
-            &service_context,
-            page.map(PaginationOption::from),
-            Some(filter),
-            sort.and_then(|mut sort_list| sort_list.pop())
-                .map(|sort| sort.to_domain()),
-            Some(store_id),
-        )
+        let items = tokio::task::spawn_blocking(move || {
+            let service_context = service_provider
+                .context(store_id.clone(), user.user_id)
+                .map_err(service::ListError::DatabaseError)?;
+            service_provider
+                .stock_line_service
+                .get_items_by_stock_line_filter(
+                    &service_context,
+                    pagination,
+                    Some(filter),
+                    sort,
+                    Some(store_id),
+                )
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)?
         .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(ItemsResponse::Response(ItemConnector::from_domain(items)))
@@ -205,40 +222,43 @@ impl StockLineQueries {
             },
         )?;
 
-        let service_provider = ctx.service_provider();
-        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        let service_provider = ctx.service_provider_data();
 
-        let stock_lines = match datetime {
-            None => service_provider
-                .stock_line_service
-                .get_stock_lines(
+        let stock_lines = tokio::task::spawn_blocking(move || {
+            let service_context = service_provider
+                .context(store_id.clone(), user.user_id)
+                .map_err(service::ListError::DatabaseError)?;
+            match datetime {
+                None => service_provider.stock_line_service.get_stock_lines(
                     &service_context,
                     None,
                     Some(StockLineFilter {
-                        item_id: Some(EqualFilter::equal_to(item_id.to_string())),
-                        store_id: Some(EqualFilter::equal_to(store_id.to_string())),
+                        item_id: Some(EqualFilter::equal_to(item_id.clone())),
+                        store_id: Some(EqualFilter::equal_to(store_id.clone())),
                         is_available: Some(true),
                         ..Default::default()
                     }),
                     None,
                     Some(store_id),
-                )
-                .map_err(StandardGraphqlError::from_list_error)?,
-            Some(datetime) => service_provider
-                .stock_line_service
-                .get_historical_stock_lines(
-                    &service_context,
-                    store_id,
-                    item_id,
-                    datetime.naive_utc(),
-                    // Include lines that are empty *now* but had stock at the
-                    // historical datetime — callers like the backdated
-                    // inventory adjustment modal need to display historical
-                    // availability for a specific line.
-                    true,
-                )
-                .map_err(StandardGraphqlError::from_list_error)?,
-        };
+                ),
+                Some(datetime) => service_provider
+                    .stock_line_service
+                    .get_historical_stock_lines(
+                        &service_context,
+                        store_id,
+                        item_id,
+                        datetime.naive_utc(),
+                        // Include lines that are empty *now* but had stock at the
+                        // historical datetime — callers like the backdated
+                        // inventory adjustment modal need to display historical
+                        // availability for a specific line.
+                        true,
+                    ),
+            }
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)?
+        .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(StockLinesResponse::Response(
             StockLineConnector::from_domain(stock_lines),
@@ -257,7 +277,7 @@ impl StockLineMutations {
         store_id: String,
         input: mutations::InsertInput,
     ) -> Result<mutations::InsertResponse> {
-        mutations::insert(ctx, &store_id, input)
+        mutations::insert(ctx, &store_id, input).await
     }
 
     async fn update_stock_line(
@@ -266,6 +286,6 @@ impl StockLineMutations {
         store_id: String,
         input: mutations::UpdateInput,
     ) -> Result<mutations::UpdateResponse> {
-        mutations::update(ctx, &store_id, input)
+        mutations::update(ctx, &store_id, input).await
     }
 }

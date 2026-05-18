@@ -11,7 +11,7 @@ use service::{
     location::delete::{DeleteLocation, DeleteLocationError as ServiceError},
 };
 
-pub fn delete_location(
+pub async fn delete_location(
     ctx: &Context<'_>,
     store_id: &str,
     input: DeleteLocationInput,
@@ -24,13 +24,20 @@ pub fn delete_location(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input: DeleteLocation = input.into();
 
-    match service_provider
-        .location_service
-        .delete_location(&service_context, input.into())
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, ServiceError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        service_provider
+            .location_service
+            .delete_location(&service_context, domain_input)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    match result {
         Ok(location_id) => Ok(DeleteLocationResponse::Response(DeleteResponse(
             location_id,
         ))),

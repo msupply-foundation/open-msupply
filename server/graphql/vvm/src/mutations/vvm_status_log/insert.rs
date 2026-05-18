@@ -1,6 +1,9 @@
 use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 use graphql_types::types::VVMStatusLogNode;
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
 
@@ -44,23 +47,35 @@ pub enum InsertResponse {
     Response(VVMStatusLogNode),
 }
 
-pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
+pub async fn insert(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: InsertInput,
+) -> Result<InsertResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateVvmStatus,
             store_id: Some(store_id.to_string()),
         },
-    );
+    )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user?.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input = input.to_domain();
 
-    map_response(service_provider.vvm_service.insert_vvm_status_log(
-        &service_context,
-        store_id,
-        input.to_domain(),
-    ))
+    let result = tokio::task::spawn_blocking(move || -> Result<_, ServiceError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider.vvm_service.insert_vvm_status_log(
+            &service_context,
+            &store_id,
+            domain_input,
+        )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    map_response(result)
 }
 
 fn map_response(from: Result<VVMStatusLogRow, ServiceError>) -> Result<InsertResponse> {

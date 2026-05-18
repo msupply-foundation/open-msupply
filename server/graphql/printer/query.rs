@@ -2,12 +2,12 @@ use async_graphql::*;
 use graphql_core::{
     generic_filters::{EqualFilterStringInput, StringFilterInput},
     simple_generic_errors::NodeError,
-    standard_graphql_error::validate_auth,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::{PrinterConnector, PrinterNode};
 
-use repository::{printer::PrinterFilter, EqualFilter, StringFilter};
+use repository::{printer::PrinterFilter, EqualFilter, RepositoryError, StringFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Union)]
@@ -23,7 +23,10 @@ pub struct PrinterFilterInput {
     pub address: Option<EqualFilterStringInput>,
 }
 
-pub fn printers(ctx: &Context<'_>, filter: Option<PrinterFilterInput>) -> Result<PrinterConnector> {
+pub async fn printers(
+    ctx: &Context<'_>,
+    filter: Option<PrinterFilterInput>,
+) -> Result<PrinterConnector> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -32,16 +35,19 @@ pub fn printers(ctx: &Context<'_>, filter: Option<PrinterFilterInput>) -> Result
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
+    let domain_filter = filter.map(|f| f.to_domain());
 
-    let printer_service = &service_provider.printer_service;
-    let printers =
-        printer_service.get_printers(&context.connection, filter.map(|f| f.to_domain()))?;
+    let printers = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let context = service_provider.basic_context()?;
+        service_provider
+            .printer_service
+            .get_printers(&context.connection, domain_filter)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
-    let response = PrinterConnector::from_vec(printers);
-
-    Ok(response)
+    Ok(PrinterConnector::from_vec(printers))
 }
 
 impl PrinterFilterInput {

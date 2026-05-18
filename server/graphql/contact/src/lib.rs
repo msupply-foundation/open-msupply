@@ -16,6 +16,6 @@ impl ContactQueries {
         store_id: String,
         name_id: String,
     ) -> Result<ContactsResponse> {
-        contacts(ctx, store_id, &name_id)
+        contacts(ctx, store_id, &name_id).await
     }
 }

@@ -4,9 +4,10 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{VVMStatusLogConnector, VVMStatusLogResponse};
+use repository::RepositoryError;
 use service::auth::{Resource, ResourceAccessRequest};
 
-pub fn get_vvm_status_log_by_stock_line(
+pub async fn get_vvm_status_log_by_stock_line(
     ctx: &Context<'_>,
     store_id: String,
     stock_line_id: &str,
@@ -19,13 +20,17 @@ pub fn get_vvm_status_log_by_stock_line(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let stock_line_id = stock_line_id.to_string();
 
-    let result = service_provider
-        .vvm_service
-        .get_vvm_status_logs_by_stock_line(&service_context.connection, stock_line_id)
-        .map_err(StandardGraphqlError::from_repository_error)?;
+    let result = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider
+            .vvm_service
+            .get_vvm_status_logs_by_stock_line(&service_context.connection, &stock_line_id)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     Ok(VVMStatusLogResponse::Response(
         VVMStatusLogConnector::from_domain(result),

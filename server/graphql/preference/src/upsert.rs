@@ -1,13 +1,16 @@
 use std::collections::BTreeMap;
 
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 use graphql_types::types::{patient::GenderTypeNode, InvoiceNodeStatus};
 use repository::{GenderType, InvoiceStatus};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     preference::{
-        BackdatingData, StorePrefUpdate, UpsertPreferences,
+        BackdatingData, StorePrefUpdate, UpsertPreferenceError, UpsertPreferences,
         WarnWhenMissingRecentStocktakeData,
     },
 };
@@ -110,7 +113,7 @@ pub struct UpsertPreferencesInput {
     pub show_indicative_price_in_requisitions: Option<Vec<BoolStorePrefInput>>,
 }
 
-pub fn upsert_preferences(
+pub async fn upsert_preferences(
     ctx: &Context<'_>,
     store_id: String,
     input: UpsertPreferencesInput,
@@ -122,14 +125,19 @@ pub fn upsert_preferences(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
+    let domain_input = input.to_domain();
 
-    service_provider
-        .preference_service
-        .upsert(&service_context, input.to_domain())?;
+    tokio::task::spawn_blocking(move || -> Result<(), UpsertPreferenceError> {
+        let service_context = service_provider.basic_context()?;
 
-    Ok(())
+        service_provider
+            .preference_service
+            .upsert(&service_context, domain_input)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(Into::into)
 }
 
 impl UpsertPreferencesInput {

@@ -20,7 +20,7 @@ impl PrinterQueries {
         ctx: &Context<'_>,
         filter: Option<PrinterFilterInput>,
     ) -> Result<PrinterConnector> {
-        printers(ctx, filter)
+        printers(ctx, filter).await
     }
 }
 
@@ -34,7 +34,7 @@ impl PrinterMutations {
         ctx: &Context<'_>,
         input: InsertPrinterInput,
     ) -> Result<InsertPrinterResponse> {
-        insert_printer(ctx, input)
+        insert_printer(ctx, input).await
     }
 
     async fn update_printer(
@@ -42,6 +42,6 @@ impl PrinterMutations {
         ctx: &Context<'_>,
         input: UpdatePrinterInput,
     ) -> Result<UpdatePrinterResponse> {
-        update_printer(ctx, input)
+        update_printer(ctx, input).await
     }
 }

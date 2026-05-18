@@ -75,7 +75,7 @@ pub enum StocktakesLinesResponse {
     Response(StocktakeLineConnector),
 }
 
-pub fn stocktake_lines(
+pub async fn stocktake_lines(
     ctx: &Context<'_>,
     store_id: &str,
     stocktake_id: &str,
@@ -92,22 +92,33 @@ pub fn stocktake_lines(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
-    let service = &service_provider.stocktake_line_service;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let stocktake_id = stocktake_id.to_string();
 
     let sort = report_sort_to_typed_sort(report_sort)
         .map(|(key, desc)| StocktakeLineSortInput { key, desc })
         .or_else(|| sort.and_then(|mut sort_list| sort_list.pop()));
 
-    let stocktake_lines = service.get_stocktake_lines(
-        &service_ctx,
-        store_id,
-        stocktake_id,
-        page.map(PaginationOption::from),
-        filter.map(StocktakeLineFilter::from),
-        sort.map(|s| s.to_domain()),
-    );
+    let pagination = page.map(PaginationOption::from);
+    let domain_filter = filter.map(StocktakeLineFilter::from);
+    let domain_sort = sort.map(|s| s.to_domain());
+
+    let stocktake_lines = tokio::task::spawn_blocking(
+        move || -> Result<_, GetStocktakeLinesError> {
+            let service_ctx = service_provider.context(store_id.clone(), user.user_id)?;
+            service_provider.stocktake_line_service.get_stocktake_lines(
+                &service_ctx,
+                &store_id,
+                &stocktake_id,
+                pagination,
+                domain_filter,
+                domain_sort,
+            )
+        },
+    )
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
 
     if let Ok(stocktake_lines) = stocktake_lines {
         Ok(StocktakesLinesResponse::Response(StocktakeLineConnector {

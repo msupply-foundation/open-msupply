@@ -16,7 +16,7 @@ impl StocktakeQueries {
         store_id: String,
         id: String,
     ) -> Result<StocktakeResponse> {
-        stocktake(ctx, &store_id, &id)
+        stocktake(ctx, &store_id, &id).await
     }
 
     pub async fn stocktake_by_number(
@@ -25,7 +25,7 @@ impl StocktakeQueries {
         store_id: String,
         stocktake_number: i64,
     ) -> Result<StocktakeResponse> {
-        stocktake_by_number(ctx, &store_id, stocktake_number)
+        stocktake_by_number(ctx, &store_id, stocktake_number).await
     }
 
     pub async fn stocktakes(
@@ -36,7 +36,7 @@ impl StocktakeQueries {
         filter: Option<StocktakeFilterInput>,
         sort: Option<Vec<StocktakeSortInput>>,
     ) -> Result<StocktakesResponse> {
-        stocktakes(ctx, &store_id, page, filter, sort)
+        stocktakes(ctx, &store_id, page, filter, sort).await
     }
 }
 
@@ -51,7 +51,7 @@ impl StocktakeMutations {
         store_id: String,
         input: InsertInput,
     ) -> Result<InsertResponse> {
-        insert(ctx, &store_id, input)
+        insert(ctx, &store_id, input).await
     }
 
     async fn update_stocktake(
@@ -60,7 +60,7 @@ impl StocktakeMutations {
         store_id: String,
         input: UpdateInput,
     ) -> Result<UpdateResponse> {
-        update(ctx, &store_id, input)
+        update(ctx, &store_id, input).await
     }
 
     async fn delete_stocktake(
@@ -69,6 +69,6 @@ impl StocktakeMutations {
         store_id: String,
         input: DeleteInput,
     ) -> Result<DeleteResponse> {
-        delete(ctx, &store_id, input)
+        delete(ctx, &store_id, input).await
     }
 }

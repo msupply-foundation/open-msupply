@@ -23,6 +23,7 @@ async-trait = { workspace = true }
 chrono = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+tokio = { workspace = true }
 
 [dev-dependencies]
 actix-rt = { workspace = true }

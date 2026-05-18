@@ -24,7 +24,7 @@ pub enum UpdatePrinterResponse {
     Response(PrinterNode),
 }
 
-pub fn update_printer(
+pub async fn update_printer(
     ctx: &Context<'_>,
     input: UpdatePrinterInput,
 ) -> Result<UpdatePrinterResponse> {
@@ -36,8 +36,7 @@ pub fn update_printer(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
     let UpdatePrinterInput {
         id,
@@ -48,17 +47,22 @@ pub fn update_printer(
         label_height,
     } = input;
 
-    let result = service_provider.printer_service.update_printer(
-        &service_context,
-        UpdatePrinter {
-            id,
-            description,
-            address,
-            port,
-            label_width,
-            label_height,
-        },
-    );
+    let result = tokio::task::spawn_blocking(move || -> Result<_, UpdatePrinterError> {
+        let service_context = service_provider.basic_context()?;
+        service_provider.printer_service.update_printer(
+            &service_context,
+            UpdatePrinter {
+                id,
+                description,
+                address,
+                port,
+                label_width,
+                label_height,
+            },
+        )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
 
     let response = match result {
         Ok(printer) => UpdatePrinterResponse::Response(PrinterNode::from_domain(printer)),

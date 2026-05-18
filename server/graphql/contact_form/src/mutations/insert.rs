@@ -42,7 +42,7 @@ pub enum InsertContactFormResponse {
     Response(InsertResponse),
 }
 
-pub fn insert_contact_form(
+pub async fn insert_contact_form(
     ctx: &Context<'_>,
     store_id: &str,
     input: InsertContactFormInput,
@@ -55,14 +55,23 @@ pub fn insert_contact_form(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id_for_ctx = store_id.to_string();
+    let store_id_for_svc = store_id.to_string();
+    let domain_input = input.to_domain();
 
-    map_response(service_provider.contact_form_service.insert_contact_form(
-        &service_context,
-        store_id,
-        input.to_domain(),
-    ))
+    let result = tokio::task::spawn_blocking(move || -> Result<_, ServiceError> {
+        let service_context = service_provider.context(store_id_for_ctx, user.user_id)?;
+        service_provider.contact_form_service.insert_contact_form(
+            &service_context,
+            &store_id_for_svc,
+            domain_input,
+        )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    map_response(result)
 }
 
 pub fn map_response(

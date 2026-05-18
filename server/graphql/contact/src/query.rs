@@ -7,7 +7,11 @@ use service::auth::{Resource, ResourceAccessRequest};
 
 use crate::types::contact::{ContactConnector, ContactsResponse};
 
-pub fn contacts(ctx: &Context<'_>, store_id: String, name_id: &str) -> Result<ContactsResponse> {
+pub async fn contacts(
+    ctx: &Context<'_>,
+    store_id: String,
+    name_id: &str,
+) -> Result<ContactsResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -16,13 +20,18 @@ pub fn contacts(ctx: &Context<'_>, store_id: String, name_id: &str) -> Result<Co
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let name_id = name_id.to_string();
 
-    let result = service_provider
-        .contact_service
-        .contacts(&service_context.connection, name_id)
-        .map_err(StandardGraphqlError::from_repository_error)?;
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        service_provider
+            .contact_service
+            .contacts(&service_context.connection, &name_id)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_repository_error)?;
 
     Ok(ContactsResponse::Response(ContactConnector::from_domain(
         result,

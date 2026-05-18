@@ -9,7 +9,10 @@ use graphql_core::{
 };
 use graphql_types::types::*;
 use repository::{location::LocationFilter, EqualFilter, PaginationOption};
-use service::auth::{Resource, ResourceAccessRequest};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    ListError,
+};
 
 #[derive(Default, Clone)]
 pub struct LocationQueries;
@@ -34,8 +37,7 @@ impl LocationQueries {
             },
         )?;
 
-        let service_provider = ctx.service_provider();
-        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        let service_provider = ctx.service_provider_data();
 
         // always filter by store_id if a store_id filter isn't provided
         let mut filter = filter.map(LocationFilter::from).unwrap_or_default();
@@ -44,17 +46,24 @@ impl LocationQueries {
             filter = filter.store_id(EqualFilter::equal_to(store_id.to_string()));
         }
 
-        let locations = service_provider
-            .location_service
-            .get_locations(
+        let pagination = page.map(PaginationOption::from);
+        // Currently only one sort option is supported, use the first from the list.
+        let sort = sort
+            .and_then(|mut sort_list| sort_list.pop())
+            .map(|sort| sort.to_domain());
+
+        let locations = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+            let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+            service_provider.location_service.get_locations(
                 &service_context,
-                page.map(PaginationOption::from),
+                pagination,
                 Some(filter),
-                // Currently only one sort option is supported, use the first from the list.
-                sort.and_then(|mut sort_list| sort_list.pop())
-                    .map(|sort| sort.to_domain()),
+                sort,
             )
-            .map_err(StandardGraphqlError::from_list_error)?;
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)?
+        .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(LocationsResponse::Response(LocationConnector::from_domain(
             locations,
@@ -73,7 +82,7 @@ impl LocationMutations {
         store_id: String,
         input: InsertLocationInput,
     ) -> Result<InsertLocationResponse> {
-        insert_location(ctx, &store_id, input)
+        insert_location(ctx, &store_id, input).await
     }
 
     async fn update_location(
@@ -82,7 +91,7 @@ impl LocationMutations {
         store_id: String,
         input: UpdateLocationInput,
     ) -> Result<UpdateLocationResponse> {
-        update_location(ctx, &store_id, input)
+        update_location(ctx, &store_id, input).await
     }
 
     async fn delete_location(
@@ -91,7 +100,7 @@ impl LocationMutations {
         store_id: String,
         input: DeleteLocationInput,
     ) -> Result<DeleteLocationResponse> {
-        delete_location(ctx, &store_id, input)
+        delete_location(ctx, &store_id, input).await
     }
 }
 

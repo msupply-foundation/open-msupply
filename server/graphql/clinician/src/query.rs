@@ -12,7 +12,7 @@ use repository::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    ListResult,
+    ListError, ListResult,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -65,7 +65,7 @@ pub enum CliniciansResponse {
     Response(ClinicianConnector),
 }
 
-pub fn clinicians(
+pub async fn clinicians(
     ctx: &Context<'_>,
     store_id: String,
     page: Option<PaginationInput>,
@@ -80,21 +80,27 @@ pub fn clinicians(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let pagination = page.map(PaginationOption::from);
+    let domain_filter = filter.map(|filter| filter.to_domain());
+    // Currently only one sort option is supported, use the first from the list.
+    let domain_sort = sort
+        .and_then(|mut sort_list| sort_list.pop())
+        .map(|sort| sort.to_domain());
 
-    let clinician = service_provider
-        .clinician_service
-        .get_clinicians(
+    let clinician = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider.clinician_service.get_clinicians(
             &service_context,
             &store_id,
-            page.map(PaginationOption::from),
-            filter.map(|filter| filter.to_domain()),
-            // Currently only one sort option is supported, use the first from the list.
-            sort.and_then(|mut sort_list| sort_list.pop())
-                .map(|sort| sort.to_domain()),
+            pagination,
+            domain_filter,
+            domain_sort,
         )
-        .map_err(StandardGraphqlError::from_list_error)?;
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(CliniciansResponse::Response(
         ClinicianConnector::from_domain(clinician),

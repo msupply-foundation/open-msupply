@@ -42,7 +42,7 @@ pub enum AdjustmentTypeInput {
     Reduction,
 }
 
-pub fn create_inventory_adjustment(
+pub async fn create_inventory_adjustment(
     ctx: &Context<'_>,
     store_id: &str,
     input: CreateInventoryAdjustmentInput,
@@ -55,12 +55,18 @@ pub fn create_inventory_adjustment(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input = input.to_domain();
 
-    let result = service_provider
-        .invoice_service
-        .insert_inventory_adjustment(&service_context, input.to_domain());
+    let result = tokio::task::spawn_blocking(move || -> Result<_, ServiceError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        service_provider
+            .invoice_service
+            .insert_inventory_adjustment(&service_context, domain_input)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
 
     let result = match result {
         Ok(invoice) => InsertResponse::Response(InvoiceNode::from_domain(invoice)),

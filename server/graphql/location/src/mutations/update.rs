@@ -14,7 +14,7 @@ use service::{
     location::update::{UpdateLocation, UpdateLocationError as ServiceError},
 };
 
-pub fn update_location(
+pub async fn update_location(
     ctx: &Context<'_>,
     store_id: &str,
     input: UpdateLocationInput,
@@ -27,13 +27,20 @@ pub fn update_location(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input: UpdateLocation = input.into();
 
-    match service_provider
-        .location_service
-        .update_location(&service_context, input.into())
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, ServiceError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        service_provider
+            .location_service
+            .update_location(&service_context, domain_input)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    match result {
         Ok(location) => Ok(UpdateLocationResponse::Response(LocationNode::from_domain(
             location,
         ))),

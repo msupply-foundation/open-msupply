@@ -13,6 +13,6 @@ impl ContactFormMutations {
         store_id: String,
         input: InsertContactFormInput,
     ) -> Result<InsertContactFormResponse> {
-        insert_contact_form(ctx, &store_id, input)
+        insert_contact_form(ctx, &store_id, input).await
     }
 }

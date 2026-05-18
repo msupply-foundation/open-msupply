@@ -20,7 +20,7 @@ impl ClinicianQueries {
         filter: Option<ClinicianFilterInput>,
         sort: Option<Vec<ClinicianSortInput>>,
     ) -> Result<CliniciansResponse> {
-        clinicians(ctx, store_id, page, filter, sort)
+        clinicians(ctx, store_id, page, filter, sort).await
     }
 }
 
@@ -35,6 +35,6 @@ impl ClinicianMutations {
         store_id: String,
         input: InsertClinicianInput,
     ) -> Result<IdResponse> {
-        insert_clinician(ctx, &store_id, input)
+        insert_clinician(ctx, &store_id, input).await
     }
 }

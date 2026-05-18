@@ -23,7 +23,7 @@ pub enum InsertPrinterResponse {
     Response(PrinterNode),
 }
 
-pub fn insert_printer(
+pub async fn insert_printer(
     ctx: &Context<'_>,
     input: InsertPrinterInput,
 ) -> Result<InsertPrinterResponse> {
@@ -35,8 +35,7 @@ pub fn insert_printer(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
     let InsertPrinterInput {
         id,
@@ -47,17 +46,22 @@ pub fn insert_printer(
         label_height,
     } = input;
 
-    let result = service_provider.printer_service.insert_printer(
-        &service_context,
-        InsertPrinter {
-            id,
-            description,
-            address,
-            port,
-            label_width,
-            label_height,
-        },
-    );
+    let result = tokio::task::spawn_blocking(move || -> Result<_, InsertPrinterError> {
+        let service_context = service_provider.basic_context()?;
+        service_provider.printer_service.insert_printer(
+            &service_context,
+            InsertPrinter {
+                id,
+                description,
+                address,
+                port,
+                label_width,
+                label_height,
+            },
+        )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
 
     let response = match result {
         Ok(printer) => InsertPrinterResponse::Response(PrinterNode::from_domain(printer)),

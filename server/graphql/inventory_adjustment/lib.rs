@@ -13,6 +13,6 @@ impl InventoryAdjustmentMutations {
         store_id: String,
         input: CreateInventoryAdjustmentInput,
     ) -> Result<InsertResponse> {
-        create_inventory_adjustment(ctx, &store_id, input)
+        create_inventory_adjustment(ctx, &store_id, input).await
     }
 }
