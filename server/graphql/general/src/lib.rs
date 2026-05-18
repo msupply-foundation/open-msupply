@@ -568,7 +568,7 @@ impl GeneralMutations {
         ctx: &Context<'_>,
         input: DisplaySettingsInput,
     ) -> Result<UpdateDisplaySettingsResponse> {
-        update_display_settings(ctx, input)
+        update_display_settings(ctx, input).await
     }
 
     pub async fn insert_barcode(
