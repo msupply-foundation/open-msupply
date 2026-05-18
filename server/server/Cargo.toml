@@ -61,6 +61,15 @@ winres = "0.1.12"
 [target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
 astro-dnssd = { version = "0.3.6" }
 
+# Dev-server proxy (only used in macOS/Linux debug builds)
+[target.'cfg(any(target_os = "macos", target_os = "linux"))'.dependencies]
+open = "5"
+libc = "0.2"
+awc = "3"
+actix-ws = "0.3"
+actix-codec = "0.5"
+futures-util = { workspace = true }
+
 [features]
 default = ["sqlite", "dep:machine-uid"]
 sqlite = ["repository/sqlite"]

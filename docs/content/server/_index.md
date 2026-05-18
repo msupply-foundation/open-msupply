@@ -115,6 +115,8 @@ cargo run
 
 Explore API available on `http://localhost:8000/graphql` with build in playground or try [online graphiql explorer](https://graphiql-online.com/)
 
+> **Frontend in dev (macOS/Linux only)**: in debug builds the server auto-spawns `webpack-dev-server` as a child process and proxies unmatched routes (including the HMR WebSocket) to it, then opens a browser to `http://localhost:8000`. You don't need to run `yarn start` separately — doing so would start a second webpack instance. Windows debug builds and all release builds continue to use the embedded frontend bundle (run `yarn build` in `client/` first). To disable auto-spawn, set `frontend_dev_server: false` under `server:` in `configuration/local.yaml`; the embedded bundle will be served instead.
+
 ## Open mSupply Central and Remote
 
 Open mSupply server can be launched in both modes, this is controlled via `Site is open mSupply central server` configuration in legacy mSupply site settings, more info in [Sync Docs](https://github.com/msupply-foundation/open-msupply/blob/develop/server/service/src/sync/README.md#open-msupply-central-server) and [Integration Test Docs](https://github.com/msupply-foundation/open-msupply/blob/develop/server/service/src/sync/test/integration/README.md#4-open-msupply-central-server).

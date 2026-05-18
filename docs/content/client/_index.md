@@ -37,6 +37,8 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 
 `yarn start API_HOST='http://localhost:8001'` (using custom API url, see [config.ts for more info](./packages/config/src/config.ts))
 
+> On **macOS/Linux** dev builds, `cd server && cargo run` alone now spawns `webpack-dev-server` and proxies HMR through `localhost:8000` — you don't need `yarn start` in that case. Use `yarn start` if you're on Windows, want a custom `API_HOST`, or want to point at the demo server.
+
 - Bundle for production:
 
 `yarn build`

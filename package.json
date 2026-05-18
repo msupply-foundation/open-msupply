@@ -4,7 +4,7 @@
   "version": "2.20.00",
   "private": true,
   "scripts": {
-    "start": "cd ./server && cargo run & cd ./client && yarn start-local",
+    "start": "cd ./server && cargo run",
     "build": "cd ./client && yarn build && cd ../server && cargo build --release",
     "test": "cd ./server && ulimit -n 1000 && cargo test && cd ../client && yarn test",
     "dockerise": "bash docker/dockerise.sh"
