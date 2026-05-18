@@ -56,7 +56,7 @@ export const usePluginRoutes = (): React.ReactNode => {
   return (plugins.pages ?? [])
     .filter(page => !!page.pluginCode)
     .map(page => {
-      const path = `${categoryKeyFor(page)}/${page.route}`;
+      const path = `/${categoryKeyFor(page)}/${page.route}`;
       const Component = page.Component;
       return (
         <Route
