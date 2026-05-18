@@ -531,6 +531,7 @@
   "error.shipment-not-found": "Shipment not found",
   "error.site-auth-timeout": "Site authentication timed out, please try again later",
   "error.site-has-no-store": "Site has no store",
+  "error.site-has-stores": "Cannot delete a site that has stores assigned to it. Remove the stores from the stie first.",
   "error.site-incorrect-hardware-id": "Incorrect hardware ID",
   "error.site-incorrect-password": "Incorrect password",
   "error.site-is-not-v7": "This site has not been upgraded to V7 sync yet. Run a sync to complete the upgrade.",
