@@ -90,7 +90,12 @@ export type DeleteSiteMutation = {
         | { __typename: 'DeleteSiteNode'; id: number }
         | {
             __typename: 'DeleteSiteError';
-            error: { __typename: 'SiteHasStores'; description: string };
+            error:
+              | { __typename: 'SiteHasStores'; description: string }
+              | {
+                  __typename: 'CannotDeleteCentralSite';
+                  description: string;
+                };
           };
     };
   };
@@ -241,6 +246,10 @@ export const DeleteSiteDocument = gql`
             __typename
             error {
               ... on SiteHasStores {
+                __typename
+                description
+              }
+              ... on CannotDeleteCentralSite {
                 __typename
                 description
               }

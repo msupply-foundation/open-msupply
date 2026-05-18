@@ -27,10 +27,19 @@ impl SiteHasStores {
     }
 }
 
+pub struct CannotDeleteCentralSite;
+#[Object]
+impl CannotDeleteCentralSite {
+    pub async fn description(&self) -> &str {
+        "Cannot delete the central server site"
+    }
+}
+
 #[derive(Interface)]
 #[graphql(field(name = "description", ty = "String"))]
 pub enum DeleteSiteErrorInterface {
     SiteHasStores(SiteHasStores),
+    CannotDeleteCentralSite(CannotDeleteCentralSite),
 }
 
 #[derive(SimpleObject)]
@@ -75,6 +84,11 @@ fn map_error(error: ServiceError) -> Result<DeleteSiteErrorInterface> {
     let graphql_error = match error {
         ServiceError::SiteHasStores => {
             return Ok(DeleteSiteErrorInterface::SiteHasStores(SiteHasStores))
+        }
+        ServiceError::CannotDeleteCentralSite => {
+            return Ok(DeleteSiteErrorInterface::CannotDeleteCentralSite(
+                CannotDeleteCentralSite,
+            ))
         }
         ServiceError::SiteDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
