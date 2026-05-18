@@ -33,49 +33,67 @@ impl Loader<AvailableVolumeOnRequisitionLoaderInput> for AvailableVolumeOnRequis
         &self,
         requisition_and_item_ids: &[AvailableVolumeOnRequisitionLoaderInput],
     ) -> Result<HashMap<AvailableVolumeOnRequisitionLoaderInput, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
-        let connection = &service_context.connection;
+        let service_provider = self.service_provider.clone();
+        let requisition_and_item_ids = requisition_and_item_ids.to_vec();
 
-        let requisition_id =
-            if let Some(requisition_and_item_ids) = requisition_and_item_ids.first() {
-                &requisition_and_item_ids.requisition_id
-            } else {
-                return Ok(HashMap::new());
-            };
+        tokio::task::spawn_blocking(
+            move || -> Result<
+                HashMap<
+                    AvailableVolumeOnRequisitionLoaderInput,
+                    (Option<LocationTypeRow>, f64, f64),
+                >,
+                async_graphql::Error,
+            > {
+                let service_context = service_provider.basic_context()?;
+                let connection = &service_context.connection;
 
-        let item_ids: Vec<String> = requisition_and_item_ids
-            .iter()
-            .map(|input| input.item_id.clone())
-            .collect();
+                let requisition_id =
+                    if let Some(requisition_and_item_ids) = requisition_and_item_ids.first() {
+                        requisition_and_item_ids.requisition_id.clone()
+                    } else {
+                        return Ok(HashMap::new());
+                    };
 
-        let available_volumes =
-            get_requisition_available_volume_for_items(connection, requisition_id, &item_ids)?;
+                let item_ids: Vec<String> = requisition_and_item_ids
+                    .iter()
+                    .map(|input| input.item_id.clone())
+                    .collect();
 
-        let mut output = HashMap::<
-            AvailableVolumeOnRequisitionLoaderInput,
-            (Option<LocationTypeRow>, f64, f64),
-        >::new();
+                let available_volumes = get_requisition_available_volume_for_items(
+                    connection,
+                    &requisition_id,
+                    &item_ids,
+                )?;
 
-        for input in requisition_and_item_ids.iter() {
-            let item_id = &input.item_id;
+                let mut output = HashMap::<
+                    AvailableVolumeOnRequisitionLoaderInput,
+                    (Option<LocationTypeRow>, f64, f64),
+                >::new();
 
-            if let Some(volume_info) = available_volumes.get(item_id) {
-                output.insert(
-                    AvailableVolumeOnRequisitionLoaderInput::new(requisition_id, item_id),
-                    (
-                        volume_info.location_type.clone(),
-                        volume_info.available_volume,
-                        volume_info.volume_per_unit,
-                    ),
-                );
-            } else {
-                output.insert(
-                    AvailableVolumeOnRequisitionLoaderInput::new(requisition_id, item_id),
-                    (None, 0.0, 0.0),
-                );
-            }
-        }
+                for input in requisition_and_item_ids.iter() {
+                    let item_id = &input.item_id;
 
-        Ok(output)
+                    if let Some(volume_info) = available_volumes.get(item_id) {
+                        output.insert(
+                            AvailableVolumeOnRequisitionLoaderInput::new(&requisition_id, item_id),
+                            (
+                                volume_info.location_type.clone(),
+                                volume_info.available_volume,
+                                volume_info.volume_per_unit,
+                            ),
+                        );
+                    } else {
+                        output.insert(
+                            AvailableVolumeOnRequisitionLoaderInput::new(&requisition_id, item_id),
+                            (None, 0.0, 0.0),
+                        );
+                    }
+                }
+
+                Ok(output)
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }

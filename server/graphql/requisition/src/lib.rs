@@ -33,7 +33,7 @@ impl RequisitionQueries {
         store_id: String,
         id: String,
     ) -> Result<RequisitionResponse> {
-        get_requisition(ctx, &store_id, &id)
+        get_requisition(ctx, &store_id, &id).await
     }
 
     pub async fn requisitions(
@@ -44,7 +44,7 @@ impl RequisitionQueries {
         filter: Option<RequisitionFilterInput>,
         sort: Option<Vec<RequisitionSortInput>>,
     ) -> Result<RequisitionsResponse> {
-        get_requisitions(ctx, &store_id, page, filter, sort)
+        get_requisitions(ctx, &store_id, page, filter, sort).await
     }
 
     pub async fn requisition_by_number(
@@ -54,7 +54,7 @@ impl RequisitionQueries {
         requisition_number: u32,
         r#type: RequisitionNodeType,
     ) -> Result<RequisitionResponse> {
-        get_requisition_by_number(ctx, &store_id, requisition_number, r#type)
+        get_requisition_by_number(ctx, &store_id, requisition_number, r#type).await
     }
 
     pub async fn supplier_program_requisition_settings(
@@ -62,7 +62,7 @@ impl RequisitionQueries {
         ctx: &Context<'_>,
         store_id: String,
     ) -> Result<Vec<SupplierProgramRequisitionSettingNode>> {
-        get_supplier_program_requisition_settings(ctx, &store_id)
+        get_supplier_program_requisition_settings(ctx, &store_id).await
     }
 
     pub async fn program_requisition_settings_by_customer(
@@ -71,7 +71,7 @@ impl RequisitionQueries {
         store_id: String,
         customer_name_id: String,
     ) -> Result<CustomerProgramRequisitionSettingNode> {
-        get_program_requisition_settings_by_customer(ctx, &store_id, &customer_name_id)
+        get_program_requisition_settings_by_customer(ctx, &store_id, &customer_name_id).await
     }
 
     pub async fn has_customer_program_requisition_settings(
@@ -80,7 +80,7 @@ impl RequisitionQueries {
         store_id: String,
         customer_name_ids: Vec<String>,
     ) -> Result<bool> {
-        has_customer_program_requisition_settings(ctx, &store_id, &customer_name_ids)
+        has_customer_program_requisition_settings(ctx, &store_id, &customer_name_ids).await
     }
 
     pub async fn program_indicators(
@@ -90,7 +90,7 @@ impl RequisitionQueries {
         sort: Option<ProgramIndicatorSortInput>,
         filter: Option<ProgramIndicatorFilterInput>,
     ) -> Result<ProgramIndicatorResponse> {
-        program_indicators(ctx, store_id, sort, filter)
+        program_indicators(ctx, store_id, sort, filter).await
     }
 }
 
@@ -105,7 +105,7 @@ impl RequisitionMutations {
         store_id: String,
         input: request_requisition::insert::InsertInput,
     ) -> Result<request_requisition::insert::InsertResponse> {
-        request_requisition::insert::insert(ctx, &store_id, input)
+        request_requisition::insert::insert(ctx, &store_id, input).await
     }
 
     async fn insert_program_request_requisition(
@@ -114,7 +114,7 @@ impl RequisitionMutations {
         store_id: String,
         input: request_requisition::insert_program::InsertProgramRequestRequisitionInput,
     ) -> Result<request_requisition::insert_program::InsertResponse> {
-        request_requisition::insert_program::insert_program(ctx, &store_id, input)
+        request_requisition::insert_program::insert_program(ctx, &store_id, input).await
     }
 
     async fn update_request_requisition(
@@ -123,7 +123,7 @@ impl RequisitionMutations {
         store_id: String,
         input: request_requisition::update::UpdateInput,
     ) -> Result<request_requisition::update::UpdateResponse> {
-        request_requisition::update::update(ctx, &store_id, input)
+        request_requisition::update::update(ctx, &store_id, input).await
     }
 
     async fn delete_request_requisition(
@@ -132,7 +132,7 @@ impl RequisitionMutations {
         store_id: String,
         input: request_requisition::delete::DeleteInput,
     ) -> Result<request_requisition::delete::DeleteResponse> {
-        request_requisition::delete::delete(ctx, &store_id, input)
+        request_requisition::delete::delete(ctx, &store_id, input).await
     }
 
     async fn insert_request_from_response_requisition(
@@ -143,7 +143,7 @@ impl RequisitionMutations {
     ) -> Result<request_requisition::insert_request_from_response_requisition::InsertFromResponse> {
         request_requisition::insert_request_from_response_requisition::insert_request_from_response_requisition(
             ctx, &store_id, input,
-        )
+        ).await
     }
 
     /// Set requested for each line in request requisition to calculated
@@ -153,7 +153,7 @@ impl RequisitionMutations {
         store_id: String,
         input: request_requisition::use_suggested_quantity::UseSuggestedQuantityInput,
     ) -> Result<request_requisition::use_suggested_quantity::UseSuggestedQuantityResponse> {
-        request_requisition::use_suggested_quantity::use_suggested_quantity(ctx, &store_id, input)
+        request_requisition::use_suggested_quantity::use_suggested_quantity(ctx, &store_id, input).await
     }
 
     /// Add requisition lines from master item master list
@@ -163,7 +163,7 @@ impl RequisitionMutations {
         store_id: String,
         input: request_requisition::add_from_master_list::AddFromMasterListInput,
     ) -> Result<request_requisition::add_from_master_list::AddFromMasterListResponse> {
-        request_requisition::add_from_master_list::add_from_master_list(ctx, &store_id, input)
+        request_requisition::add_from_master_list::add_from_master_list(ctx, &store_id, input).await
     }
 
     async fn response_add_from_master_list(
@@ -175,6 +175,7 @@ impl RequisitionMutations {
         response_requisition::add_from_master_list::response_add_from_master_list(
             ctx, &store_id, input,
         )
+        .await
     }
 
     async fn insert_response_requisition(
@@ -183,7 +184,7 @@ impl RequisitionMutations {
         store_id: String,
         input: response_requisition::insert::InsertInput,
     ) -> Result<response_requisition::insert::InsertResponse> {
-        response_requisition::insert::insert(ctx, &store_id, input)
+        response_requisition::insert::insert(ctx, &store_id, input).await
     }
 
     async fn insert_program_response_requisition(
@@ -192,7 +193,7 @@ impl RequisitionMutations {
         store_id: String,
         input: response_requisition::insert_program::InsertProgramResponseRequisitionInput,
     ) -> Result<response_requisition::insert_program::InsertResponse> {
-        response_requisition::insert_program::insert_program(ctx, &store_id, input)
+        response_requisition::insert_program::insert_program(ctx, &store_id, input).await
     }
 
     async fn update_response_requisition(
@@ -201,7 +202,7 @@ impl RequisitionMutations {
         store_id: String,
         input: response_requisition::update::UpdateInput,
     ) -> Result<response_requisition::update::UpdateResponse> {
-        response_requisition::update::update(ctx, &store_id, input)
+        response_requisition::update::update(ctx, &store_id, input).await
     }
 
     async fn delete_response_requisition(
@@ -210,7 +211,7 @@ impl RequisitionMutations {
         store_id: String,
         input: response_requisition::delete::DeleteInput,
     ) -> Result<response_requisition::delete::DeleteResponse> {
-        response_requisition::delete::delete(ctx, &store_id, input)
+        response_requisition::delete::delete(ctx, &store_id, input).await
     }
 
     /// Set supply quantity to requested quantity
@@ -224,6 +225,7 @@ impl RequisitionMutations {
         response_requisition::supply_requested_quantity::supply_requested_quantity(
             ctx, &store_id, input,
         )
+        .await
     }
 
     /// Create shipment for response requisition
@@ -240,6 +242,7 @@ impl RequisitionMutations {
         response_requisition::create_requisition_shipment::create_requisition_shipment(
             ctx, &store_id, input,
         )
+        .await
     }
 
     pub async fn update_indicator_value(
@@ -248,7 +251,7 @@ impl RequisitionMutations {
         store_id: String,
         input: UpdateIndicatorValueInput,
     ) -> Result<UpdateIndicatorValueResponse> {
-        update_indicator_value::update(ctx, store_id, input)
+        update_indicator_value::update(ctx, store_id, input).await
     }
 }
 

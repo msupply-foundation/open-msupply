@@ -63,7 +63,7 @@ pub enum InsuranceProvidersResponse {
     Response(InsuranceProvidersConnector),
 }
 
-pub fn insurance_providers(
+pub async fn insurance_providers(
     ctx: &Context<'_>,
     store_id: String,
 ) -> Result<InsuranceProvidersResponse> {
@@ -75,13 +75,17 @@ pub fn insurance_providers(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
 
-    let result = service_provider
-        .insurance_provider_service
-        .insurance_providers(&service_context.connection)
-        .map_err(StandardGraphqlError::from_repository_error)?;
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider
+            .insurance_provider_service
+            .insurance_providers(&service_context.connection)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_repository_error)?;
 
     Ok(InsuranceProvidersResponse::Response(
         InsuranceProvidersConnector::from_domain(result),

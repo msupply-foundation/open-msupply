@@ -7,8 +7,9 @@ use graphql_core::{
 };
 
 use graphql_types::types::rnr_form::RnRFormNode;
-use repository::{PaginationOption, RnRFormFilter};
+use repository::{PaginationOption, RepositoryError, RnRFormFilter};
 use service::auth::{Resource, ResourceAccessRequest};
+use service::ListError;
 
 use crate::types::{
     period_schedule::{PeriodSchedulesConnector, PeriodSchedulesResponse},
@@ -17,7 +18,7 @@ use crate::types::{
     },
 };
 
-pub fn r_and_r_forms(
+pub async fn r_and_r_forms(
     ctx: &Context<'_>,
     store_id: String,
     page: Option<PaginationInput>,
@@ -31,26 +32,28 @@ pub fn r_and_r_forms(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let context = service_provider.context(store_id.clone(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
 
-    let list_result = service_provider
-        .rnr_form_service
-        .get_rnr_forms(
+    let list_result = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+        let context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider.rnr_form_service.get_rnr_forms(
             &context,
             &store_id,
             page.map(PaginationOption::from),
             filter.map(RnRFormFilter::from),
             sort.map(RnRFormSortInput::to_domain),
         )
-        .map_err(StandardGraphqlError::from_list_error)?;
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(RnRFormsResponse::Response(RnRFormConnector::from_domain(
         list_result,
     )))
 }
 
-pub fn r_and_r_form(
+pub async fn r_and_r_form(
     ctx: &Context<'_>,
     store_id: String,
     rnr_form_id: String,
@@ -62,31 +65,27 @@ pub fn r_and_r_form(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let context = service_provider.context(store_id.clone(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
 
-    match service_provider
-        .rnr_form_service
-        .get_rnr_form(&context, &store_id, rnr_form_id)
-        .map_err(StandardGraphqlError::from_repository_error)
-    {
-        Ok(form) => {
-            let result = match form {
-                Some(r_and_r_form) => {
-                    RnRFormResponse::Response(RnRFormNode::from_domain(r_and_r_form))
-                }
-                None => RnRFormResponse::Error(ErrorWrapper {
-                    error: NodeErrorInterface::RecordNotFound(RecordNotFound {}),
-                }),
-            };
-            Ok(result)
-        }
+    let form = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider
+            .rnr_form_service
+            .get_rnr_form(&context, &store_id, rnr_form_id)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
-        Err(err) => Err(err),
-    }
+    let result = match form {
+        Some(r_and_r_form) => RnRFormResponse::Response(RnRFormNode::from_domain(r_and_r_form)),
+        None => RnRFormResponse::Error(ErrorWrapper {
+            error: NodeErrorInterface::RecordNotFound(RecordNotFound {}),
+        }),
+    };
+    Ok(result)
 }
 
-pub fn get_schedules_with_periods_by_program(
+pub async fn get_schedules_with_periods_by_program(
     ctx: &Context<'_>,
     store_id: String,
     program_id: String,
@@ -98,13 +97,16 @@ pub fn get_schedules_with_periods_by_program(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let context = service_provider.context(store_id.clone(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
 
-    let result = service_provider
-        .rnr_form_service
-        .get_schedules_with_periods_by_program(&context, &store_id, &program_id)
-        .map_err(StandardGraphqlError::from_repository_error)?;
+    let result = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider
+            .rnr_form_service
+            .get_schedules_with_periods_by_program(&context, &store_id, &program_id)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     Ok(PeriodSchedulesResponse::Response(
         PeriodSchedulesConnector::from_domain(result),

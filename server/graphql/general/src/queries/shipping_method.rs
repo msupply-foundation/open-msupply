@@ -19,7 +19,7 @@ pub enum ShippingMethodsResponse {
     Response(ShippingMethodConnector),
 }
 
-pub fn get_shipping_methods(
+pub async fn get_shipping_methods(
     ctx: &Context<'_>,
     store_id: &str,
     filter: Option<ShippingMethodFilterInput>,
@@ -32,13 +32,18 @@ pub fn get_shipping_methods(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
-    let service = &service_provider.shipping_method_service;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_filter = filter.map(|filter| filter.to_domain());
 
-    let shipping_method = service
-        .get_shipping_methods(&service_context, filter.map(|filter| filter.to_domain()))
-        .map_err(StandardGraphqlError::from_list_error)?;
+    let shipping_method = tokio::task::spawn_blocking(move || -> Result<_, service::ListError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        let service = &service_provider.shipping_method_service;
+        service.get_shipping_methods(&service_context, domain_filter)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(ShippingMethodsResponse::Response(
         ShippingMethodConnector::from_domain(shipping_method),

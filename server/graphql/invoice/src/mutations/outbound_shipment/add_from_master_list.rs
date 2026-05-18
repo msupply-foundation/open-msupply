@@ -42,7 +42,7 @@ pub enum AddFromMasterListResponse {
     Response(InvoiceLineConnector),
 }
 
-pub fn add_from_master_list(
+pub async fn add_from_master_list(
     ctx: &Context<'_>,
     store_id: &str,
     input: AddToShipmentFromMasterListInput,
@@ -55,13 +55,20 @@ pub fn add_from_master_list(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input = input.to_domain();
 
-    let response = match service_provider
-        .invoice_service
-        .add_to_outbound_shipment_from_master_list(&service_context, input.to_domain())
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        Ok(service_provider
+            .invoice_service
+            .add_to_outbound_shipment_from_master_list(&service_context, domain_input))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    let response = match result {
         Ok(invoice_lines) => {
             AddFromMasterListResponse::Response(InvoiceLineConnector::from_vec(invoice_lines))
         }

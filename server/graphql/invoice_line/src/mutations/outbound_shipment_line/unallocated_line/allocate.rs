@@ -43,7 +43,11 @@ pub struct ResponseNode {
     issued_expiring_soon_stock_lines: StockLineConnector,
 }
 
-pub fn allocate(ctx: &Context<'_>, store_id: &str, line_id: String) -> Result<AllocateResponse> {
+pub async fn allocate(
+    ctx: &Context<'_>,
+    store_id: &str,
+    line_id: String,
+) -> Result<AllocateResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -52,14 +56,19 @@ pub fn allocate(ctx: &Context<'_>, store_id: &str, line_id: String) -> Result<Al
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
 
-    map_response(
-        service_provider
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        Ok(service_provider
             .invoice_line_service
-            .allocate_outbound_shipment_unallocated_line(&service_context, line_id),
-    )
+            .allocate_outbound_shipment_unallocated_line(&service_context, line_id))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    map_response(result)
 }
 
 pub fn map_response(from: Result<ServiceResult, ServiceError>) -> Result<AllocateResponse> {

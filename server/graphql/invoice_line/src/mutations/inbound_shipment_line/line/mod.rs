@@ -19,8 +19,30 @@ pub fn validate_line_edit_authorisation(
     connection: &StorageConnection,
     line_updates: &[(String, Option<Option<InvoiceLineStatusType>>)],
 ) -> Result<()> {
-    if *r#type != InboundShipmentType::InboundShipmentExternal {
+    if !compute_needs_authorise(r#type, connection, line_updates) {
         return Ok(());
+    }
+
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::AuthoriseInboundShipmentExternal,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    Ok(())
+}
+
+/// Same DB logic as `validate_line_edit_authorisation` but without the auth check,
+/// suitable for running inside `tokio::task::spawn_blocking`.
+pub fn compute_needs_authorise(
+    r#type: &InboundShipmentType,
+    connection: &StorageConnection,
+    line_updates: &[(String, Option<Option<InvoiceLineStatusType>>)],
+) -> bool {
+    if *r#type != InboundShipmentType::InboundShipmentExternal {
+        return false;
     }
 
     let any_status_approve_or_reject = line_updates.iter().any(|(_, status)| {
@@ -33,7 +55,7 @@ pub fn validate_line_edit_authorisation(
     });
 
     // TODO: come up with a better way to handle data based permissions. the graphql/service layer split makes it difficult to set permissions based on data
-    let needs_authorise = any_status_approve_or_reject || {
+    any_status_approve_or_reject || {
         let repo = InvoiceLineRowRepository::new(connection);
         line_updates.iter().any(|(id, status)| {
             let is_changing_to_pending = status
@@ -47,19 +69,7 @@ pub fn validate_line_edit_authorisation(
                 .flatten()
                 .map_or(false, |l| l.status == Some(InvoiceLineStatus::Passed))
         })
-    };
-
-    if needs_authorise {
-        validate_auth(
-            ctx,
-            &ResourceAccessRequest {
-                resource: Resource::AuthoriseInboundShipmentExternal,
-                store_id: Some(store_id.to_string()),
-            },
-        )?;
     }
-
-    Ok(())
 }
 
 pub struct BatchIsReserved;

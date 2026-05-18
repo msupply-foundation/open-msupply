@@ -47,44 +47,56 @@ impl Loader<IndicatorValueLoaderInput> for IndicatorValueLoader {
         &self,
         loader_inputs: &[IndicatorValueLoaderInput],
     ) -> Result<HashMap<IndicatorValueLoaderInput, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
-        let repo = IndicatorValueRepository::new(&service_context.connection);
+        let service_provider = self.service_provider.clone();
+        let loader_inputs = loader_inputs.to_vec();
 
-        // Group inputs by (period_id, store_id, customer_name_id) to handle
-        // batched requests with different filter combinations
-        let mut groups: HashSet<(String, String, String)> = HashSet::new();
-        for input in loader_inputs {
-            groups.insert((
-                input.period_id.clone(),
-                input.store_id.clone(),
-                input.customer_name_id.clone(),
-            ));
-        }
+        tokio::task::spawn_blocking(
+            move || -> Result<
+                HashMap<IndicatorValueLoaderInput, IndicatorValueRow>,
+                async_graphql::Error,
+            > {
+                let service_context = service_provider.basic_context()?;
+                let repo = IndicatorValueRepository::new(&service_context.connection);
 
-        let mut result = HashMap::new();
+                // Group inputs by (period_id, store_id, customer_name_id) to handle
+                // batched requests with different filter combinations
+                let mut groups: HashSet<(String, String, String)> = HashSet::new();
+                for input in &loader_inputs {
+                    groups.insert((
+                        input.period_id.clone(),
+                        input.store_id.clone(),
+                        input.customer_name_id.clone(),
+                    ));
+                }
 
-        for (period_id, store_id, customer_name_id) in &groups {
-            let filter = IndicatorValueFilter::new()
-                .store_id(EqualFilter::equal_to(store_id.clone()))
-                .customer_name_id(EqualFilter::equal_to(customer_name_id.clone()))
-                .period_id(EqualFilter::equal_to(period_id.clone()));
+                let mut result = HashMap::new();
 
-            let values = repo.query_by_filter(filter)?;
+                for (period_id, store_id, customer_name_id) in &groups {
+                    let filter = IndicatorValueFilter::new()
+                        .store_id(EqualFilter::equal_to(store_id.clone()))
+                        .customer_name_id(EqualFilter::equal_to(customer_name_id.clone()))
+                        .period_id(EqualFilter::equal_to(period_id.clone()));
 
-            for value in values {
-                result.insert(
-                    IndicatorValueLoaderInput::new(
-                        &value.indicator_value_row.indicator_line_id,
-                        &value.indicator_value_row.indicator_column_id,
-                        period_id,
-                        store_id,
-                        customer_name_id,
-                    ),
-                    value.indicator_value_row,
-                );
-            }
-        }
+                    let values = repo.query_by_filter(filter)?;
 
-        Ok(result)
+                    for value in values {
+                        result.insert(
+                            IndicatorValueLoaderInput::new(
+                                &value.indicator_value_row.indicator_line_id,
+                                &value.indicator_value_row.indicator_column_id,
+                                period_id,
+                                store_id,
+                                customer_name_id,
+                            ),
+                            value.indicator_value_row,
+                        );
+                    }
+                }
+
+                Ok(result)
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }

@@ -1,5 +1,8 @@
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     sync::settings::SyncSettings,
@@ -28,7 +31,7 @@ impl SyncSettingsNode {
     }
 }
 
-pub(crate) fn sync_settings(
+pub(crate) async fn sync_settings(
     ctx: &Context<'_>,
     with_auth: bool,
 ) -> Result<Option<SyncSettingsNode>> {
@@ -42,9 +45,15 @@ pub(crate) fn sync_settings(
         )?;
     }
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
-    let settings = service_provider.settings.sync_settings(&service_context)?;
+    let settings = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.basic_context()?;
+        service_provider.settings.sync_settings(&service_context)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_repository_error)?;
+
     Ok(settings.map(|settings| SyncSettingsNode { settings }))
 }

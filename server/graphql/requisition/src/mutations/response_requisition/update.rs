@@ -70,7 +70,11 @@ pub enum UpdateResponse {
     Response(RequisitionNode),
 }
 
-pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+pub async fn update(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: UpdateInput,
+) -> Result<UpdateResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -79,13 +83,20 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input = input.to_domain();
 
-    let response = match service_provider
-        .requisition_service
-        .update_response_requisition(&service_context, input.to_domain())
-    {
+    let requisition = tokio::task::spawn_blocking(move || -> Result<_, ServiceError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        service_provider
+            .requisition_service
+            .update_response_requisition(&service_context, domain_input)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    let response = match requisition {
         Ok(requisition) => UpdateResponse::Response(RequisitionNode::from_domain(requisition)),
         Err(error) => UpdateResponse::Error(UpdateError {
             error: map_error(error)?,

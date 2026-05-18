@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_core::ContextExt;
+use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 use service::plugin::FrontendPluginMetadata;
 
 #[derive(PartialEq, Debug, SimpleObject)]
@@ -12,18 +12,23 @@ pub struct FrontendPluginMetadataNode {
     pub hash: String,
 }
 
-pub fn frontend_plugin_metadata(
+pub async fn frontend_plugin_metadata(
     ctx: &Context<'_>,
 ) -> Result<Vec<FrontendPluginMetadataNode>, Error> {
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
-    let plugins = service_provider
-        .plugin_service
-        .get_frontend_plugins_metadata(&context)
-        .into_iter()
-        .map(FrontendPluginMetadataNode::from_domain)
-        .collect();
+    let plugins = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let context = service_provider.basic_context()?;
+        Ok(service_provider
+            .plugin_service
+            .get_frontend_plugins_metadata(&context))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_repository_error)?
+    .into_iter()
+    .map(FrontendPluginMetadataNode::from_domain)
+    .collect();
 
     Ok(plugins)
 }

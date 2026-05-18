@@ -19,20 +19,29 @@ impl Loader<String> for StocktakeLineByStocktakeIdLoader {
         &self,
         stocktake_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = StocktakeLineRepository::new(&connection);
+        let connection_manager = self.connection_manager.clone();
+        let stocktake_ids = stocktake_ids.to_vec();
 
-        let all_lines = repo.query_by_filter(
-            StocktakeLineFilter::new()
-                .stocktake_id(EqualFilter::equal_any(stocktake_ids.to_owned())),
-            None,
-        )?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Vec<StocktakeLine>>, RepositoryError> {
+                let connection = connection_manager.connection()?;
+                let repo = StocktakeLineRepository::new(&connection);
 
-        let mut map: HashMap<String, Vec<StocktakeLine>> = HashMap::new();
-        for line in all_lines {
-            let list = map.entry(line.line.stocktake_id.clone()).or_default();
-            list.push(line);
-        }
-        Ok(map)
+                let all_lines = repo.query_by_filter(
+                    StocktakeLineFilter::new()
+                        .stocktake_id(EqualFilter::equal_any(stocktake_ids)),
+                    None,
+                )?;
+
+                let mut map: HashMap<String, Vec<StocktakeLine>> = HashMap::new();
+                for line in all_lines {
+                    let list = map.entry(line.line.stocktake_id.clone()).or_default();
+                    list.push(line);
+                }
+                Ok(map)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

@@ -17,7 +17,7 @@ use service::invoice_line::stock_in_line::{
 use service::invoice_line::ShipmentTaxUpdate;
 use service::NullableUpdate;
 
-use super::{validate_line_edit_authorisation, BatchIsReserved};
+use super::BatchIsReserved;
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateInboundShipmentLineInput")]
@@ -60,7 +60,7 @@ pub enum UpdateResponse {
     Response(InvoiceLineNode),
 }
 
-pub fn update(
+pub async fn update(
     ctx: &Context<'_>,
     store_id: &str,
     input: UpdateInput,
@@ -74,22 +74,55 @@ pub fn update(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id_owned = store_id.to_string();
+    let line_id = input.id.clone();
+    let line_status = input.status.clone();
+    let r#type_for_check = r#type.clone();
 
-    validate_line_edit_authorisation(
-        ctx,
-        store_id,
-        &r#type,
-        &service_context.connection,
-        &[(input.id.clone(), input.status.clone())],
-    )?;
+    let needs_authorise = {
+        let service_provider = service_provider.clone();
+        let store_id = store_id_owned.clone();
+        let user_id = user.user_id.clone();
+        tokio::task::spawn_blocking(move || -> Result<bool, repository::RepositoryError> {
+            let service_context = service_provider.context(store_id, user_id)?;
+            Ok(super::compute_needs_authorise(
+                &r#type_for_check,
+                &service_context.connection,
+                &[(line_id, line_status)],
+            ))
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)??
+    };
 
-    let response = match service_provider.invoice_line_service.update_stock_in_line(
-        &service_context,
-        input.to_domain(),
-        Some(r#type.to_domain()),
-    ) {
+    if needs_authorise {
+        validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: service::auth::Resource::AuthoriseInboundShipmentExternal,
+                store_id: Some(store_id.to_string()),
+            },
+        )?;
+    }
+
+    let domain_input = input.to_domain();
+    let domain_type = r#type.to_domain();
+    let user_id = user.user_id.clone();
+    let store_id_for_call = store_id_owned.clone();
+
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id_for_call, user_id)?;
+        Ok(service_provider.invoice_line_service.update_stock_in_line(
+            &service_context,
+            domain_input,
+            Some(domain_type),
+        ))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    let response = match result {
         Ok(invoice_line) => UpdateResponse::Response(InvoiceLineNode::from_domain(invoice_line)),
         Err(error) => UpdateResponse::Error(UpdateError {
             error: map_error(error)?,

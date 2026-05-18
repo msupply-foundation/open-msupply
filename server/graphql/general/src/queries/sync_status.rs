@@ -112,7 +112,7 @@ impl FullSyncStatusNode {
     }
 }
 
-pub fn latest_sync_status(
+pub async fn latest_sync_status(
     ctx: &Context<'_>,
     with_auth: bool,
 ) -> Result<Option<FullSyncStatusNode>> {
@@ -120,38 +120,52 @@ pub fn latest_sync_status(
         validate_sync_info_auth(ctx)?
     };
 
-    let service_provider = ctx.service_provider();
-    let ctx = service_provider.basic_context()?;
-    let sync_status = match service_provider
-        .sync_status_service
-        .get_latest_sync_status(&ctx)?
-    {
-        Some(sync_status) => sync_status,
-        None => return Ok(None),
-    };
-    let last_successful_sync_status = service_provider
-        .sync_status_service
-        .get_latest_successful_sync_status(&ctx)
-        .unwrap_or(None);
+    let service_provider = ctx.service_provider_data();
 
-    Ok(Some(FullSyncStatusNode::from_sync_status(
-        sync_status,
-        last_successful_sync_status,
-    )))
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let ctx = service_provider.basic_context()?;
+        let sync_status = match service_provider
+            .sync_status_service
+            .get_latest_sync_status(&ctx)?
+        {
+            Some(sync_status) => sync_status,
+            None => return Ok(None),
+        };
+        let last_successful_sync_status = service_provider
+            .sync_status_service
+            .get_latest_successful_sync_status(&ctx)
+            .unwrap_or(None);
+
+        Ok(Some((sync_status, last_successful_sync_status)))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_repository_error)?;
+
+    Ok(result.map(|(sync_status, last_successful_sync_status)| {
+        FullSyncStatusNode::from_sync_status(sync_status, last_successful_sync_status)
+    }))
 }
 
-pub fn number_of_records_in_push_queue(ctx: &Context<'_>) -> Result<u64> {
+pub async fn number_of_records_in_push_queue(ctx: &Context<'_>) -> Result<u64> {
     validate_sync_info_auth(ctx)?;
 
-    let service_provider = ctx.service_provider();
-    let ctx = service_provider.basic_context()?;
-    let push_queue_count = service_provider
-        .sync_status_service
-        .number_of_records_in_push_queue(&ctx)
-        .map_err(|error| {
-            let formatted_error = format!("{error:#?}");
-            StandardGraphqlError::InternalError(formatted_error).extend()
-        })?;
+    let service_provider = ctx.service_provider_data();
+
+    let push_queue_count = tokio::task::spawn_blocking(move || -> Result<u64> {
+        let ctx = service_provider
+            .basic_context()
+            .map_err(StandardGraphqlError::from_repository_error)?;
+        service_provider
+            .sync_status_service
+            .number_of_records_in_push_queue(&ctx)
+            .map_err(|error| {
+                let formatted_error = format!("{error:#?}");
+                StandardGraphqlError::InternalError(formatted_error).extend()
+            })
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     Ok(push_queue_count)
 }

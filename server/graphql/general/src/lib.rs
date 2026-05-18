@@ -100,7 +100,7 @@ impl GeneralQueries {
     }
 
     pub async fn me(&self, ctx: &Context<'_>) -> Result<UserResponse> {
-        me(ctx)
+        me(ctx).await
     }
 
     pub async fn is_central_server(&self) -> bool {
@@ -121,11 +121,11 @@ impl GeneralQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<NameSortInput>>,
     ) -> Result<NamesResponse> {
-        get_names(ctx, store_id, page, filter, sort)
+        get_names(ctx, store_id, page, filter, sort).await
     }
 
     pub async fn store(&self, ctx: &Context<'_>, id: String) -> Result<StoreResponse> {
-        get_store(ctx, &id)
+        get_store(ctx, &id).await
     }
 
     pub async fn stores(
@@ -136,7 +136,7 @@ impl GeneralQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<StoreSortInput>>,
     ) -> Result<StoresResponse> {
-        stores(ctx, page, filter, sort)
+        stores(ctx, page, filter, sort).await
     }
 
     /// Query omSupply "master_lists" entries
@@ -149,7 +149,7 @@ impl GeneralQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<MasterListSortInput>>,
     ) -> Result<MasterListsResponse> {
-        master_lists(ctx, store_id, page, filter, sort)
+        master_lists(ctx, store_id, page, filter, sort).await
     }
 
     pub async fn master_list_lines(
@@ -162,7 +162,7 @@ impl GeneralQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<MasterListLineSortInput>>,
     ) -> Result<MasterListLinesResponse> {
-        master_list_lines(ctx, store_id, master_list_id, page, filter, sort)
+        master_list_lines(ctx, store_id, master_list_id, page, filter, sort).await
     }
 
     /// Query omSupply "item" entries
@@ -262,6 +262,7 @@ impl GeneralQueries {
             consumption_options_input,
             stock_evolution_options_input,
         )
+        .await
     }
 
     pub async fn activity_logs(
@@ -281,7 +282,7 @@ impl GeneralQueries {
         &self,
         ctx: &Context<'_>,
     ) -> Result<InitialisationStatusNode> {
-        initialisation_status(ctx)
+        initialisation_status(ctx).await
     }
 
     /// Available without authorisation in all states (Operational, Initialisation and MigratingDatabase)
@@ -293,15 +294,15 @@ impl GeneralQueries {
         &self,
         ctx: &Context<'_>,
     ) -> Result<Option<FullSyncStatusNode>> {
-        latest_sync_status(ctx, true)
+        latest_sync_status(ctx, true).await
     }
 
     pub async fn number_of_records_in_push_queue(&self, ctx: &Context<'_>) -> Result<u64> {
-        number_of_records_in_push_queue(ctx)
+        number_of_records_in_push_queue(ctx).await
     }
 
     pub async fn sync_settings(&self, ctx: &Context<'_>) -> Result<Option<SyncSettingsNode>> {
-        sync_settings(ctx, true)
+        sync_settings(ctx, true).await
     }
 
     pub async fn display_settings(
@@ -309,7 +310,7 @@ impl GeneralQueries {
         ctx: &Context<'_>,
         input: DisplaySettingsHash,
     ) -> Result<DisplaySettingsNode> {
-        display_settings(ctx, input)
+        display_settings(ctx, input).await
     }
 
     pub async fn response_requisition_stats(
@@ -357,7 +358,7 @@ impl GeneralQueries {
         store_id: String,
         gtin: String,
     ) -> Result<BarcodeResponse> {
-        barcode_by_gtin(ctx, store_id, gtin)
+        barcode_by_gtin(ctx, store_id, gtin).await
     }
 
     pub async fn requisition_counts(
@@ -395,7 +396,7 @@ impl GeneralQueries {
         &self,
         ctx: &Context<'_>,
     ) -> Result<Vec<FrontendPluginMetadataNode>> {
-        frontend_plugin_metadata(ctx)
+        frontend_plugin_metadata(ctx).await
     }
 
     pub async fn currencies(
@@ -405,7 +406,7 @@ impl GeneralQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<CurrencySortInput>>,
     ) -> Result<CurrenciesResponse> {
-        currencies(ctx, filter, sort)
+        currencies(ctx, filter, sort).await
     }
 
     pub async fn database_settings(&self, ctx: &Context<'_>) -> Result<DatabaseSettingsNode> {
@@ -421,7 +422,7 @@ impl GeneralQueries {
         store_id: String,
         input: GenerateSupplierReturnLinesInput,
     ) -> Result<GenerateSupplierReturnLinesResponse> {
-        generate_supplier_return_lines(ctx, store_id, input)
+        generate_supplier_return_lines(ctx, store_id, input).await
     }
 
     #[graphql(deprecation = "Since 2.8.0. Use reason_options instead")]
@@ -445,14 +446,14 @@ impl GeneralQueries {
         store_id: String,
         input: GenerateCustomerReturnLinesInput,
     ) -> Result<GenerateCustomerReturnLinesResponse> {
-        generate_customer_return_lines(ctx, store_id, input)
+        generate_customer_return_lines(ctx, store_id, input).await
     }
 
     pub async fn label_printer_settings(
         &self,
         ctx: &Context<'_>,
     ) -> Result<Option<LabelPrinterSettingNode>> {
-        label_printer_settings(ctx)
+        label_printer_settings(ctx).await
     }
 
     pub async fn name_properties(&self, ctx: &Context<'_>) -> Result<NamePropertyResponse> {
@@ -502,7 +503,7 @@ impl GeneralQueries {
         name_id: String,
         sort: Option<Vec<InsuranceSortInput>>,
     ) -> Result<InsurancesResponse> {
-        insurance_policies(ctx, store_id, name_id, sort)
+        insurance_policies(ctx, store_id, name_id, sort).await
     }
 
     pub async fn insurance_policy(
@@ -511,7 +512,7 @@ impl GeneralQueries {
         store_id: String,
         id: String,
     ) -> Result<InsuranceResponse> {
-        insurance_policy(ctx, store_id, id)
+        insurance_policy(ctx, store_id, id).await
     }
 
     pub async fn insurance_providers(
@@ -519,7 +520,7 @@ impl GeneralQueries {
         ctx: &Context<'_>,
         store_id: String,
     ) -> Result<InsuranceProvidersResponse> {
-        insurance_providers(ctx, store_id)
+        insurance_providers(ctx, store_id).await
     }
 
     pub async fn shipping_methods(
@@ -528,7 +529,7 @@ impl GeneralQueries {
         store_id: String,
         filter: Option<ShippingMethodFilterInput>,
     ) -> Result<ShippingMethodsResponse> {
-        get_shipping_methods(ctx, &store_id, filter)
+        get_shipping_methods(ctx, &store_id, filter).await
     }
 }
 
@@ -635,21 +636,21 @@ pub struct InitialisationQueries;
 #[Object]
 impl InitialisationQueries {
     pub async fn sync_settings(&self, ctx: &Context<'_>) -> Result<Option<SyncSettingsNode>> {
-        sync_settings(ctx, false)
+        sync_settings(ctx, false).await
     }
     /// Available without authorisation in operational and initialisation states
     pub async fn initialisation_status(
         &self,
         ctx: &Context<'_>,
     ) -> Result<InitialisationStatusNode> {
-        initialisation_status(ctx)
+        initialisation_status(ctx).await
     }
 
     pub async fn latest_sync_status(
         &self,
         ctx: &Context<'_>,
     ) -> Result<Option<FullSyncStatusNode>> {
-        latest_sync_status(ctx, false)
+        latest_sync_status(ctx, false).await
     }
 
     /// Available without authorisation in all states
@@ -701,7 +702,7 @@ impl DiscoveryQueries {
         &self,
         ctx: &Context<'_>,
     ) -> Result<InitialisationStatusNode> {
-        initialisation_status(ctx)
+        initialisation_status(ctx).await
     }
 }
 

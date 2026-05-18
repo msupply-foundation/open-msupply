@@ -20,35 +20,44 @@ impl Loader<String> for AssetByLocationLoader {
     type Error = RepositoryError;
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let asset_location_repo = AssetInternalLocationRepository::new(&connection);
-        let asset_repo = AssetRepository::new(&connection);
+        let connection_manager = self.connection_manager.clone();
+        let ids = ids.to_vec();
 
-        let locations =
-            asset_location_repo.query_by_filter(AssetInternalLocationFilter::new().location_id(
-                EqualFilter::equal_any(ids.iter().map(String::clone).collect()),
-            ))?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Vec<Asset>>, RepositoryError> {
+                let connection = connection_manager.connection()?;
+                let asset_location_repo = AssetInternalLocationRepository::new(&connection);
+                let asset_repo = AssetRepository::new(&connection);
 
-        let mut location_ids_by_asset: HashMap<String, String> = HashMap::new();
-        for location in locations {
-            location_ids_by_asset.insert(location.asset_id, location.location_id);
-        }
+                let locations = asset_location_repo.query_by_filter(
+                    AssetInternalLocationFilter::new()
+                        .location_id(EqualFilter::equal_any(ids)),
+                )?;
 
-        let assets = asset_repo.query_by_filter(AssetFilter::new().id(EqualFilter::equal_any(
-            location_ids_by_asset.clone().into_keys().collect(),
-        )))?;
+                let mut location_ids_by_asset: HashMap<String, String> = HashMap::new();
+                for location in locations {
+                    location_ids_by_asset.insert(location.asset_id, location.location_id);
+                }
 
-        let mut map: HashMap<String, Vec<Asset>> = HashMap::new();
-        for asset in assets {
-            let location_id = location_ids_by_asset
-                .get(&asset.id)
-                .unwrap_or(&"".to_string())
-                .to_owned();
+                let assets = asset_repo.query_by_filter(AssetFilter::new().id(
+                    EqualFilter::equal_any(location_ids_by_asset.clone().into_keys().collect()),
+                ))?;
 
-            let list = map.entry(location_id).or_default();
-            list.push(asset);
-        }
+                let mut map: HashMap<String, Vec<Asset>> = HashMap::new();
+                for asset in assets {
+                    let location_id = location_ids_by_asset
+                        .get(&asset.id)
+                        .unwrap_or(&"".to_string())
+                        .to_owned();
 
-        Ok(map)
+                    let list = map.entry(location_id).or_default();
+                    list.push(asset);
+                }
+
+                Ok(map)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

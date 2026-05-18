@@ -101,7 +101,7 @@ impl ProgramsQueries {
         #[graphql(desc = "The document filter")] filter: Option<DocumentFilterInput>,
         sort: Option<DocumentSortInput>,
     ) -> Result<DocumentResponse> {
-        documents(ctx, store_id, page, filter, sort)
+        documents(ctx, store_id, page, filter, sort).await
     }
 
     pub async fn document(
@@ -110,7 +110,7 @@ impl ProgramsQueries {
         #[graphql(desc = "Store id")] store_id: String,
         #[graphql(desc = "The document name")] name: String,
     ) -> Result<Option<DocumentNode>> {
-        document(ctx, store_id, name)
+        document(ctx, store_id, name).await
     }
 
     pub async fn document_history(
@@ -119,7 +119,7 @@ impl ProgramsQueries {
         #[graphql(desc = "Store id")] store_id: String,
         #[graphql(desc = "The document name")] name: String,
     ) -> Result<DocumentHistoryResponse> {
-        document_history(ctx, store_id, name)
+        document_history(ctx, store_id, name).await
     }
 
     pub async fn document_registries(
@@ -129,7 +129,7 @@ impl ProgramsQueries {
         sort: Option<Vec<DocumentRegistrySortInput>>,
         store_id: String,
     ) -> Result<DocumentRegistryResponse> {
-        document_registries(ctx, filter, sort, store_id)
+        document_registries(ctx, filter, sort, store_id).await
     }
 
     pub async fn patients(
@@ -140,7 +140,7 @@ impl ProgramsQueries {
         filter: Option<PatientFilterInput>,
         sort: Option<Vec<PatientSortInput>>,
     ) -> Result<PatientResponse> {
-        patients(ctx, store_id, page, filter, sort)
+        patients(ctx, store_id, page, filter, sort).await
     }
     pub async fn patient(
         &self,
@@ -148,7 +148,7 @@ impl ProgramsQueries {
         store_id: String,
         patient_id: String,
     ) -> Result<Option<PatientNode>> {
-        patient(ctx, store_id, patient_id)
+        patient(ctx, store_id, patient_id).await
     }
     pub async fn patient_search(
         &self,
@@ -156,7 +156,7 @@ impl ProgramsQueries {
         store_id: String,
         input: PatientSearchInput,
     ) -> Result<PatientSearchResponse> {
-        patient_search(ctx, store_id, input)
+        patient_search(ctx, store_id, input).await
     }
 
     pub async fn central_patient_search(
@@ -175,12 +175,26 @@ impl ProgramsQueries {
             },
         )?;
 
-        let service_provider = ctx.service_provider();
-        let context = service_provider.basic_context()?;
+        let service_provider = ctx.service_provider_data();
 
-        let sync_settings = service_provider.settings.sync_settings(&context)?.ok_or(
-            StandardGraphqlError::InternalError("Missing sync settings".to_string()).extend(),
-        )?;
+        let sync_settings = {
+            let service_provider = service_provider.clone();
+            tokio::task::spawn_blocking(move || -> async_graphql::Result<_> {
+                let context = service_provider
+                    .basic_context()
+                    .map_err(StandardGraphqlError::from_repository_error)?;
+                service_provider
+                    .settings
+                    .sync_settings(&context)
+                    .map_err(StandardGraphqlError::from_repository_error)?
+                    .ok_or_else(|| {
+                        StandardGraphqlError::InternalError("Missing sync settings".to_string())
+                            .extend()
+                    })
+            })
+            .await
+            .map_err(StandardGraphqlError::from_join_error)??
+        };
 
         let result = patient_search_central(&sync_settings, input.to_domain()).await;
         map_central_patient_search_result(result)
@@ -193,7 +207,7 @@ impl ProgramsQueries {
         sort: Option<ProgramEnrolmentSortInput>,
         filter: Option<ProgramEnrolmentFilterInput>,
     ) -> Result<ProgramEnrolmentResponse> {
-        program_enrolments(ctx, store_id, sort, filter)
+        program_enrolments(ctx, store_id, sort, filter).await
     }
 
     /// Returns active program events at a given date time.
@@ -208,7 +222,7 @@ impl ProgramsQueries {
         sort: Option<ProgramEventSortInput>,
         filter: Option<ProgramEventFilterInput>,
     ) -> Result<ProgramEventResponse> {
-        active_program_events(ctx, store_id, at, page, sort, filter)
+        active_program_events(ctx, store_id, at, page, sort, filter).await
     }
 
     pub async fn program_events(
@@ -219,7 +233,7 @@ impl ProgramsQueries {
         sort: Option<ProgramEventSortInput>,
         filter: Option<ProgramEventFilterInput>,
     ) -> Result<ProgramEventResponse> {
-        program_events(ctx, store_id, page, sort, filter)
+        program_events(ctx, store_id, page, sort, filter).await
     }
 
     pub async fn encounters(
@@ -230,7 +244,7 @@ impl ProgramsQueries {
         filter: Option<EncounterFilterInput>,
         sort: Option<EncounterSortInput>,
     ) -> Result<EncounterResponse> {
-        encounters(ctx, store_id, page, filter, sort)
+        encounters(ctx, store_id, page, filter, sort).await
     }
 
     pub async fn encounter_fields(
@@ -242,7 +256,7 @@ impl ProgramsQueries {
         filter: Option<EncounterFilterInput>,
         sort: Option<EncounterSortInput>,
     ) -> Result<EncounterFieldsResponse> {
-        encounter_fields(ctx, store_id, input, page, filter, sort)
+        encounter_fields(ctx, store_id, input, page, filter, sort).await
     }
 
     pub async fn contact_traces(
@@ -253,7 +267,7 @@ impl ProgramsQueries {
         filter: Option<ContactTraceFilterInput>,
         sort: Option<ContactTraceSortInput>,
     ) -> Result<ContactTraceResponse> {
-        contact_traces(ctx, store_id, page, filter, sort)
+        contact_traces(ctx, store_id, page, filter, sort).await
     }
 
     pub async fn programs(
@@ -264,7 +278,7 @@ impl ProgramsQueries {
         filter: Option<ProgramFilterInput>,
         sort: Option<ProgramSortInput>,
     ) -> Result<ProgramsResponse> {
-        programs(ctx, store_id, page, filter, sort)
+        programs(ctx, store_id, page, filter, sort).await
     }
 
     pub async fn periods(
@@ -275,7 +289,7 @@ impl ProgramsQueries {
         page: Option<PaginationInput>,
         filter: Option<PeriodFilterInput>,
     ) -> Result<PeriodsResponse> {
-        periods(ctx, store_id, program_id, page, filter)
+        periods(ctx, store_id, program_id, page, filter).await
     }
 
     pub async fn r_and_r_forms(
@@ -286,7 +300,7 @@ impl ProgramsQueries {
         filter: Option<RnRFormFilterInput>,
         sort: Option<RnRFormSortInput>,
     ) -> Result<RnRFormsResponse> {
-        r_and_r_forms(ctx, store_id, page, filter, sort)
+        r_and_r_forms(ctx, store_id, page, filter, sort).await
     }
 
     pub async fn r_and_r_form(
@@ -295,7 +309,7 @@ impl ProgramsQueries {
         store_id: String,
         rnr_form_id: String,
     ) -> Result<RnRFormResponse> {
-        r_and_r_form(ctx, store_id, rnr_form_id)
+        r_and_r_form(ctx, store_id, rnr_form_id).await
     }
 
     pub async fn schedules_with_periods_by_program(
@@ -304,7 +318,7 @@ impl ProgramsQueries {
         store_id: String,
         program_id: String,
     ) -> Result<PeriodSchedulesResponse> {
-        get_schedules_with_periods_by_program(ctx, store_id, program_id)
+        get_schedules_with_periods_by_program(ctx, store_id, program_id).await
     }
 
     pub async fn vaccination(
@@ -313,7 +327,7 @@ impl ProgramsQueries {
         store_id: String,
         id: String,
     ) -> Result<Option<VaccinationNode>> {
-        vaccination(ctx, store_id, id)
+        vaccination(ctx, store_id, id).await
     }
 
     pub async fn vaccination_card(
@@ -322,7 +336,7 @@ impl ProgramsQueries {
         store_id: String,
         program_enrolment_id: String,
     ) -> Result<VaccinationCardResponse> {
-        vaccination_card(ctx, store_id, program_enrolment_id)
+        vaccination_card(ctx, store_id, program_enrolment_id).await
     }
 }
 
@@ -336,7 +350,7 @@ impl ProgramsMutations {
         ctx: &Context<'_>,
         input: InsertDocumentRegistryInput,
     ) -> Result<InsertDocumentResponse> {
-        insert_document_registry(ctx, input)
+        insert_document_registry(ctx, input).await
     }
 
     /// Inserts a new patient (without document data)
@@ -346,7 +360,7 @@ impl ProgramsMutations {
         store_id: String,
         input: InsertPatientInput,
     ) -> Result<InsertPatientResponse> {
-        insert_patient(ctx, store_id, input)
+        insert_patient(ctx, store_id, input).await
     }
 
     /// Updates a new patient (without document data)
@@ -356,7 +370,7 @@ impl ProgramsMutations {
         store_id: String,
         input: UpdatePatientInput,
     ) -> Result<UpdatePatientResponse> {
-        update_patient(ctx, store_id, input)
+        update_patient(ctx, store_id, input).await
     }
 
     /// Inserts a new program patient, i.e. a patient that can contain additional information stored
@@ -367,7 +381,7 @@ impl ProgramsMutations {
         store_id: String,
         input: InsertProgramPatientInput,
     ) -> Result<InsertProgramPatientResponse> {
-        insert_program_patient(ctx, store_id, input)
+        insert_program_patient(ctx, store_id, input).await
     }
 
     /// Updates a new program patient, i.e. a patient the can contain additional information stored
@@ -378,7 +392,7 @@ impl ProgramsMutations {
         store_id: String,
         input: UpdateProgramPatientInput,
     ) -> Result<UpdateProgramPatientResponse> {
-        update_program_patient(ctx, store_id, input)
+        update_program_patient(ctx, store_id, input).await
     }
 
     /// Links a patient to a store and thus effectively to a site
@@ -399,7 +413,7 @@ impl ProgramsMutations {
         store_id: String,
         input: InsertProgramEnrolmentInput,
     ) -> Result<InsertProgramEnrolmentResponse> {
-        insert_program_enrolment(ctx, store_id, input)
+        insert_program_enrolment(ctx, store_id, input).await
     }
 
     /// Updates an existing program document belonging to a patient.
@@ -409,7 +423,7 @@ impl ProgramsMutations {
         store_id: String,
         input: UpdateProgramEnrolmentInput,
     ) -> Result<UpdateProgramEnrolmentResponse> {
-        update_program_enrolment(ctx, store_id, input)
+        update_program_enrolment(ctx, store_id, input).await
     }
 
     pub async fn insert_encounter(
@@ -418,7 +432,7 @@ impl ProgramsMutations {
         store_id: String,
         input: InsertEncounterInput,
     ) -> Result<InsertEncounterResponse> {
-        insert_encounter(ctx, store_id, input)
+        insert_encounter(ctx, store_id, input).await
     }
 
     pub async fn update_encounter(
@@ -427,7 +441,7 @@ impl ProgramsMutations {
         store_id: String,
         input: UpdateEncounterInput,
     ) -> Result<UpdateEncounterResponse> {
-        update_encounter(ctx, store_id, input)
+        update_encounter(ctx, store_id, input).await
     }
 
     pub async fn allocate_program_number(
@@ -436,7 +450,7 @@ impl ProgramsMutations {
         store_id: String,
         input: AllocateProgramNumberInput,
     ) -> Result<AllocateProgramNumberResponse> {
-        allocate_program_number(ctx, store_id, input)
+        allocate_program_number(ctx, store_id, input).await
     }
 
     pub async fn insert_contact_trace(
@@ -445,7 +459,7 @@ impl ProgramsMutations {
         store_id: String,
         input: InsertContactTraceInput,
     ) -> Result<InsertContactTraceResponse> {
-        insert_contact_trace(ctx, store_id, input)
+        insert_contact_trace(ctx, store_id, input).await
     }
 
     pub async fn update_contact_trace(
@@ -454,7 +468,7 @@ impl ProgramsMutations {
         store_id: String,
         input: UpdateContactTraceInput,
     ) -> Result<UpdateContactTraceResponse> {
-        update_contact_trace(ctx, store_id, input)
+        update_contact_trace(ctx, store_id, input).await
     }
 
     pub async fn insert_rnr_form(
@@ -463,7 +477,7 @@ impl ProgramsMutations {
         store_id: String,
         input: InsertRnRFormInput,
     ) -> Result<InsertRnRFormResponse> {
-        insert_rnr_form(ctx, store_id, input)
+        insert_rnr_form(ctx, store_id, input).await
     }
 
     pub async fn update_rnr_form(
@@ -472,7 +486,7 @@ impl ProgramsMutations {
         store_id: String,
         input: UpdateRnRFormInput,
     ) -> Result<UpdateRnRFormResponse> {
-        update_rnr_form(ctx, store_id, input)
+        update_rnr_form(ctx, store_id, input).await
     }
 
     pub async fn finalise_rnr_form(
@@ -481,7 +495,7 @@ impl ProgramsMutations {
         store_id: String,
         input: FinaliseRnRFormInput,
     ) -> Result<FinaliseRnRFormResponse> {
-        finalise_rnr_form(ctx, store_id, input)
+        finalise_rnr_form(ctx, store_id, input).await
     }
 
     pub async fn delete_rnr_form(
@@ -490,7 +504,7 @@ impl ProgramsMutations {
         store_id: String,
         input: DeleteRnRFormInput,
     ) -> Result<DeleteRnRFormResponse> {
-        delete_rnr_form(ctx, store_id, input)
+        delete_rnr_form(ctx, store_id, input).await
     }
 
     pub async fn insert_vaccination(
@@ -499,7 +513,7 @@ impl ProgramsMutations {
         store_id: String,
         input: InsertVaccinationInput,
     ) -> Result<InsertVaccinationResponse> {
-        insert_vaccination(ctx, store_id, input)
+        insert_vaccination(ctx, store_id, input).await
     }
 
     pub async fn update_vaccination(
@@ -508,6 +522,6 @@ impl ProgramsMutations {
         store_id: String,
         input: UpdateVaccinationInput,
     ) -> Result<UpdateVaccinationResponse> {
-        update_vaccination(ctx, store_id, input)
+        update_vaccination(ctx, store_id, input).await
     }
 }

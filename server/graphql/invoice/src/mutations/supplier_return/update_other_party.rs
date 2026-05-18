@@ -35,7 +35,7 @@ pub enum UpdateOtherPartyResponse {
     Response(InvoiceNode),
 }
 
-pub fn update_other_party(
+pub async fn update_other_party(
     ctx: &Context<'_>,
     store_id: &str,
     input: UpdateOtherPartyInput,
@@ -48,14 +48,20 @@ pub fn update_other_party(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input = input.to_domain();
 
-    map_response(
-        service_provider
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        Ok(service_provider
             .invoice_service
-            .update_supplier_return_other_party(&service_context, input.to_domain()),
-    )
+            .update_supplier_return_other_party(&service_context, domain_input))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    map_response(result)
 }
 
 #[derive(Interface)]

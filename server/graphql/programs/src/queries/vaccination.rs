@@ -14,7 +14,7 @@ pub enum VaccinationCardResponse {
     Error(NodeError),
 }
 
-pub fn vaccination_card(
+pub async fn vaccination_card(
     ctx: &Context<'_>,
     store_id: String,
     program_enrolment_id: String,
@@ -26,13 +26,18 @@ pub fn vaccination_card(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
-    match service_provider
-        .vaccination_service
-        .get_vaccination_card(&context, program_enrolment_id)
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let context = service_provider.basic_context()?;
+        service_provider
+            .vaccination_service
+            .get_vaccination_card(&context, program_enrolment_id)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    match result {
         Ok(vaccination_card) => Ok(VaccinationCardResponse::Response(
             VaccinationCardNode::from_domain(vaccination_card),
         )),
@@ -45,7 +50,7 @@ pub fn vaccination_card(
     }
 }
 
-pub fn vaccination(
+pub async fn vaccination(
     ctx: &Context<'_>,
     store_id: String,
     id: String,
@@ -57,13 +62,16 @@ pub fn vaccination(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
-    match service_provider
-        .vaccination_service
-        .get_vaccination(&context, id)
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let context = service_provider.basic_context()?;
+        service_provider.vaccination_service.get_vaccination(&context, id)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    match result {
         Ok(vaccination) => {
             let result = VaccinationNode::from_domain(vaccination);
             Ok(Some(result))

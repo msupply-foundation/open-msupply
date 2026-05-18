@@ -4,7 +4,10 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::contact_trace::ContactTraceNode;
-use repository::{contact_trace::ContactTraceFilter, StringFilter};
+use repository::{
+    contact_trace::{ContactTrace, ContactTraceFilter},
+    StringFilter,
+};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     programs::contact_trace::upsert::{UpsertContactTrace, UpsertContactTraceError},
@@ -29,7 +32,7 @@ pub enum UpdateContactTraceResponse {
     Response(ContactTraceNode),
 }
 
-pub fn update_contact_trace(
+pub async fn update_contact_trace(
     ctx: &Context<'_>,
     store_id: String,
     input: UpdateContactTraceInput,
@@ -41,84 +44,96 @@ pub fn update_contact_trace(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities();
+    let allowed_ctx = user.capabilities().clone();
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
+    let store_id_for_response = store_id.clone();
+    let allowed_ctx_for_response = allowed_ctx.clone();
+    let user_id = user.user_id.clone();
 
-    let UpdateContactTraceInput {
-        r#type,
-        patient_id,
-        data,
-        schema_id,
-        parent,
-    } = input;
-    let document = match service_provider.contact_trace_service.upsert_contact_trace(
-        &service_context,
-        service_provider,
-        &user.user_id,
-        UpsertContactTrace {
+    let row = tokio::task::spawn_blocking(move || -> async_graphql::Result<ContactTrace> {
+        let service_context = service_provider
+            .basic_context()
+            .map_err(StandardGraphqlError::from_repository_error)?;
+
+        let UpdateContactTraceInput {
             r#type,
+            patient_id,
             data,
             schema_id,
-            patient_id,
-            parent: Some(parent),
-        },
-        allowed_ctx.clone(),
-    ) {
-        Ok(document) => document,
-        Err(error) => {
-            let formatted_error = format!("{error:#?}");
-            let std_err = match error {
-                UpsertContactTraceError::NotAllowedToMutateDocument => {
-                    StandardGraphqlError::Forbidden(formatted_error)
-                }
-                UpsertContactTraceError::InvalidParentId => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                UpsertContactTraceError::InvalidDataSchema(_) => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                UpsertContactTraceError::DataSchemaDoesNotExist => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                UpsertContactTraceError::InternalError(_) => {
-                    StandardGraphqlError::InternalError(formatted_error)
-                }
-                UpsertContactTraceError::DatabaseError(_) => {
-                    StandardGraphqlError::InternalError(formatted_error)
-                }
-                UpsertContactTraceError::InvalidPatientId => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                UpsertContactTraceError::InvalidContactPatientId => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                UpsertContactTraceError::DocumentTypeDoesNotExist => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-            };
-            return Err(std_err.extend());
-        }
-    };
-
-    let row = service_provider
-        .contact_trace_service
-        .contact_trace(
+            parent,
+        } = input;
+        let document = match service_provider.contact_trace_service.upsert_contact_trace(
             &service_context,
-            ContactTraceFilter {
-                document_name: Some(StringFilter::equal_to(&document.name)),
-                ..Default::default()
+            &service_provider,
+            &user_id,
+            UpsertContactTrace {
+                r#type,
+                data,
+                schema_id,
+                patient_id,
+                parent: Some(parent),
             },
             allowed_ctx.clone(),
-        )?
-        .ok_or(
-            StandardGraphqlError::InternalError("Encounter went missing".to_string()).extend(),
-        )?;
+        ) {
+            Ok(document) => document,
+            Err(error) => {
+                let formatted_error = format!("{error:#?}");
+                let std_err = match error {
+                    UpsertContactTraceError::NotAllowedToMutateDocument => {
+                        StandardGraphqlError::Forbidden(formatted_error)
+                    }
+                    UpsertContactTraceError::InvalidParentId => {
+                        StandardGraphqlError::BadUserInput(formatted_error)
+                    }
+                    UpsertContactTraceError::InvalidDataSchema(_) => {
+                        StandardGraphqlError::BadUserInput(formatted_error)
+                    }
+                    UpsertContactTraceError::DataSchemaDoesNotExist => {
+                        StandardGraphqlError::BadUserInput(formatted_error)
+                    }
+                    UpsertContactTraceError::InternalError(_) => {
+                        StandardGraphqlError::InternalError(formatted_error)
+                    }
+                    UpsertContactTraceError::DatabaseError(_) => {
+                        StandardGraphqlError::InternalError(formatted_error)
+                    }
+                    UpsertContactTraceError::InvalidPatientId => {
+                        StandardGraphqlError::BadUserInput(formatted_error)
+                    }
+                    UpsertContactTraceError::InvalidContactPatientId => {
+                        StandardGraphqlError::BadUserInput(formatted_error)
+                    }
+                    UpsertContactTraceError::DocumentTypeDoesNotExist => {
+                        StandardGraphqlError::BadUserInput(formatted_error)
+                    }
+                };
+                return Err(std_err.extend());
+            }
+        };
+
+        let row = service_provider
+            .contact_trace_service
+            .contact_trace(
+                &service_context,
+                ContactTraceFilter {
+                    document_name: Some(StringFilter::equal_to(&document.name)),
+                    ..Default::default()
+                },
+                allowed_ctx.clone(),
+            )
+            .map_err(StandardGraphqlError::from_repository_error)?
+            .ok_or(
+                StandardGraphqlError::InternalError("Encounter went missing".to_string()).extend(),
+            )?;
+        Ok(row)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     Ok(UpdateContactTraceResponse::Response(ContactTraceNode {
-        store_id,
+        store_id: store_id_for_response,
         contact_trace: row,
-        allowed_ctx: allowed_ctx.clone(),
+        allowed_ctx: allowed_ctx_for_response,
     }))
 }

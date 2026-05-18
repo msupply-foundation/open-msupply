@@ -27,7 +27,7 @@ impl InvoiceQueries {
         #[graphql(desc = "Optional type to check type-specific permissions and filter results")]
         r#type: Option<InvoiceTypeInput>,
     ) -> Result<InvoiceResponse> {
-        get_invoice(ctx, Some(store_id), &id, r#type)
+        get_invoice(ctx, Some(store_id), &id, r#type).await
     }
 
     pub async fn invoice_by_number(
@@ -37,7 +37,7 @@ impl InvoiceQueries {
         invoice_number: u32,
         r#type: InvoiceTypeInput,
     ) -> Result<InvoiceResponse> {
-        get_invoice_by_number(ctx, store_id, invoice_number, r#type)
+        get_invoice_by_number(ctx, store_id, invoice_number, r#type).await
     }
 
     pub async fn invoices(
@@ -50,7 +50,7 @@ impl InvoiceQueries {
         sort: Option<Vec<InvoiceSortInput>>,
         r#type: Option<Vec<InvoiceTypeInput>>,
     ) -> Result<InvoicesResponse> {
-        get_invoices(ctx, store_id, page, filter, sort, r#type)
+        get_invoices(ctx, store_id, page, filter, sort, r#type).await
     }
 }
 
@@ -65,7 +65,7 @@ impl InvoiceMutations {
         store_id: String,
         input: outbound_shipment::insert::InsertInput,
     ) -> Result<outbound_shipment::insert::InsertResponse> {
-        outbound_shipment::insert::insert(ctx, &store_id, input)
+        outbound_shipment::insert::insert(ctx, &store_id, input).await
     }
 
     async fn update_outbound_shipment(
@@ -74,7 +74,7 @@ impl InvoiceMutations {
         store_id: String,
         input: outbound_shipment::update::UpdateInput,
     ) -> Result<outbound_shipment::update::UpdateResponse> {
-        outbound_shipment::update::update(ctx, &store_id, input)
+        outbound_shipment::update::update(ctx, &store_id, input).await
     }
 
     async fn update_outbound_shipment_name(
@@ -83,7 +83,7 @@ impl InvoiceMutations {
         store_id: String,
         input: outbound_shipment::update_name::UpdateNameInput,
     ) -> Result<outbound_shipment::update_name::UpdateNameResponse> {
-        outbound_shipment::update_name::update_name(ctx, &store_id, input)
+        outbound_shipment::update_name::update_name(ctx, &store_id, input).await
     }
 
     async fn delete_outbound_shipment(
@@ -92,7 +92,7 @@ impl InvoiceMutations {
         store_id: String,
         id: String,
     ) -> Result<outbound_shipment::delete::DeleteResponse> {
-        outbound_shipment::delete::delete(ctx, &store_id, id)
+        outbound_shipment::delete::delete(ctx, &store_id, id).await
     }
 
     async fn insert_inbound_shipment(
@@ -107,6 +107,7 @@ impl InvoiceMutations {
             input,
             InboundShipmentType::InboundShipment,
         )
+        .await
     }
 
     async fn insert_inbound_shipment_external(
@@ -121,6 +122,7 @@ impl InvoiceMutations {
             input,
             InboundShipmentType::InboundShipmentExternal,
         )
+        .await
     }
 
     async fn update_inbound_shipment(
@@ -135,6 +137,7 @@ impl InvoiceMutations {
             input,
             InboundShipmentType::InboundShipment,
         )
+        .await
     }
 
     async fn update_inbound_shipment_external(
@@ -149,6 +152,7 @@ impl InvoiceMutations {
             input,
             InboundShipmentType::InboundShipmentExternal,
         )
+        .await
     }
 
     async fn delete_inbound_shipment(
@@ -163,6 +167,7 @@ impl InvoiceMutations {
             input,
             InboundShipmentType::InboundShipment,
         )
+        .await
     }
 
     async fn delete_inbound_shipment_external(
@@ -177,6 +182,7 @@ impl InvoiceMutations {
             input,
             InboundShipmentType::InboundShipmentExternal,
         )
+        .await
     }
 
     /// Add invoice lines from master item master list
@@ -186,7 +192,7 @@ impl InvoiceMutations {
         store_id: String,
         input: AddToShipmentFromMasterListInput,
     ) -> Result<outbound_shipment::AddFromMasterListResponse> {
-        outbound_shipment::add_from_master_list(ctx, &store_id, input)
+        outbound_shipment::add_from_master_list(ctx, &store_id, input).await
     }
 
     async fn add_to_inbound_shipment_from_master_list(
@@ -195,7 +201,7 @@ impl InvoiceMutations {
         store_id: String,
         input: AddToShipmentFromMasterListInput,
     ) -> Result<inbound_shipment::AddFromMasterListResponse> {
-        inbound_shipment::add_from_master_list(ctx, &store_id, input)
+        inbound_shipment::add_from_master_list(ctx, &store_id, input).await
     }
 
     async fn insert_prescription(
@@ -204,7 +210,7 @@ impl InvoiceMutations {
         store_id: String,
         input: prescription::insert::InsertInput,
     ) -> Result<prescription::insert::InsertResponse> {
-        prescription::insert::insert(ctx, &store_id, input)
+        prescription::insert::insert(ctx, &store_id, input).await
     }
 
     async fn update_prescription(
@@ -213,7 +219,7 @@ impl InvoiceMutations {
         store_id: String,
         input: prescription::update::UpdateInput,
     ) -> Result<prescription::update::UpdateResponse> {
-        prescription::update::update(ctx, &store_id, input)
+        prescription::update::update(ctx, &store_id, input).await
     }
 
     async fn delete_prescription(
@@ -222,7 +228,7 @@ impl InvoiceMutations {
         store_id: String,
         id: String,
     ) -> Result<prescription::delete::DeleteResponse> {
-        prescription::delete::delete(ctx, &store_id, id)
+        prescription::delete::delete(ctx, &store_id, id).await
     }
 
     async fn insert_supplier_return(
@@ -231,7 +237,7 @@ impl InvoiceMutations {
         store_id: String,
         input: supplier_return::insert::InsertInput,
     ) -> Result<supplier_return::insert::InsertResponse> {
-        supplier_return::insert::insert(ctx, &store_id, input)
+        supplier_return::insert::insert(ctx, &store_id, input).await
     }
 
     async fn update_supplier_return(
@@ -240,7 +246,7 @@ impl InvoiceMutations {
         store_id: String,
         input: supplier_return::update::UpdateInput,
     ) -> Result<supplier_return::update::UpdateResponse> {
-        supplier_return::update::update(ctx, &store_id, input)
+        supplier_return::update::update(ctx, &store_id, input).await
     }
 
     async fn update_supplier_return_other_party(
@@ -249,7 +255,7 @@ impl InvoiceMutations {
         store_id: String,
         input: supplier_return::update_other_party::UpdateOtherPartyInput,
     ) -> Result<supplier_return::update_other_party::UpdateOtherPartyResponse> {
-        supplier_return::update_other_party::update_other_party(ctx, &store_id, input)
+        supplier_return::update_other_party::update_other_party(ctx, &store_id, input).await
     }
 
     async fn update_supplier_return_lines(
@@ -258,7 +264,7 @@ impl InvoiceMutations {
         store_id: String,
         input: supplier_return::update_lines::UpdateInput,
     ) -> Result<supplier_return::update_lines::UpdateResponse> {
-        supplier_return::update_lines::update_lines(ctx, &store_id, input)
+        supplier_return::update_lines::update_lines(ctx, &store_id, input).await
     }
 
     async fn delete_supplier_return(
@@ -267,7 +273,7 @@ impl InvoiceMutations {
         store_id: String,
         id: String,
     ) -> Result<supplier_return::delete::DeleteResponse> {
-        supplier_return::delete::delete(ctx, &store_id, id)
+        supplier_return::delete::delete(ctx, &store_id, id).await
     }
 
     async fn insert_customer_return(
@@ -276,7 +282,7 @@ impl InvoiceMutations {
         store_id: String,
         input: customer_return::insert::InsertInput,
     ) -> Result<customer_return::insert::InsertResponse> {
-        customer_return::insert::insert(ctx, &store_id, input)
+        customer_return::insert::insert(ctx, &store_id, input).await
     }
 
     async fn update_customer_return(
@@ -285,7 +291,7 @@ impl InvoiceMutations {
         store_id: String,
         input: customer_return::update::UpdateInput,
     ) -> Result<customer_return::update::UpdateResponse> {
-        customer_return::update::update(ctx, &store_id, input)
+        customer_return::update::update(ctx, &store_id, input).await
     }
 
     async fn update_customer_return_lines(
@@ -294,7 +300,7 @@ impl InvoiceMutations {
         store_id: String,
         input: customer_return::update_lines::UpdateInput,
     ) -> Result<customer_return::update_lines::UpdateResponse> {
-        customer_return::update_lines::update_lines(ctx, &store_id, input)
+        customer_return::update_lines::update_lines(ctx, &store_id, input).await
     }
 
     async fn delete_customer_return(
@@ -303,6 +309,6 @@ impl InvoiceMutations {
         store_id: String,
         id: String,
     ) -> Result<customer_return::delete::DeleteResponse> {
-        customer_return::delete::delete(ctx, &store_id, id)
+        customer_return::delete::delete(ctx, &store_id, id).await
     }
 }

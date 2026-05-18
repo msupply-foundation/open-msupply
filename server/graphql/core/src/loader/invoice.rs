@@ -23,23 +23,29 @@ impl Loader<String> for InvoiceByIdLoader {
         &self,
         invoice_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
+        let service_provider = self.service_provider.clone();
+        let invoice_ids = invoice_ids.to_vec();
 
-        let filter = InvoiceFilter::new().id(EqualFilter::equal_any(
-            invoice_ids.iter().map(String::clone).collect(),
-        ));
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Invoice>, async_graphql::Error> {
+                let service_context = service_provider.basic_context()?;
 
-        let invoices = self
-            .service_provider
-            .invoice_service
-            .get_invoices(&service_context, None, None, Some(filter), None)
-            .map_err(StandardGraphqlError::from_list_error)?;
+                let filter = InvoiceFilter::new().id(EqualFilter::equal_any(invoice_ids));
 
-        Ok(invoices
-            .rows
-            .into_iter()
-            .map(|invoice| (invoice.invoice_row.id.clone(), invoice))
-            .collect())
+                let invoices = service_provider
+                    .invoice_service
+                    .get_invoices(&service_context, None, None, Some(filter), None)
+                    .map_err(StandardGraphqlError::from_list_error)?;
+
+                Ok(invoices
+                    .rows
+                    .into_iter()
+                    .map(|invoice| (invoice.invoice_row.id.clone(), invoice))
+                    .collect())
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }
 
@@ -55,17 +61,26 @@ impl Loader<String> for InvoiceStatsLoader {
         &self,
         invoice_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = InvoiceLineRepository::new(&connection);
-        let result = repo
-            .stats(invoice_ids)?
-            .into_iter()
-            .map(|row| {
-                let invoice_id = row.invoice_id.clone();
-                (invoice_id, row)
-            })
-            .collect();
-        Ok(result)
+        let connection_manager = self.connection_manager.clone();
+        let invoice_ids = invoice_ids.to_vec();
+
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, PricingRow>, RepositoryError> {
+                let connection = connection_manager.connection()?;
+                let repo = InvoiceLineRepository::new(&connection);
+                let result = repo
+                    .stats(&invoice_ids)?
+                    .into_iter()
+                    .map(|row| {
+                        let invoice_id = row.invoice_id.clone();
+                        (invoice_id, row)
+                    })
+                    .collect();
+                Ok(result)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }
 
@@ -81,25 +96,32 @@ impl Loader<String> for InvoiceByRequisitionIdLoader {
         &self,
         requisition_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
+        let service_provider = self.service_provider.clone();
+        let requisition_ids = requisition_ids.to_vec();
 
-        let filter = InvoiceFilter::new().requisition_id(EqualFilter::equal_any(
-            requisition_ids.iter().map(String::clone).collect(),
-        ));
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Vec<Invoice>>, async_graphql::Error> {
+                let service_context = service_provider.basic_context()?;
 
-        let invoices = self
-            .service_provider
-            .invoice_service
-            .get_invoices(&service_context, None, None, Some(filter), None)
-            .map_err(StandardGraphqlError::from_list_error)?;
+                let filter =
+                    InvoiceFilter::new().requisition_id(EqualFilter::equal_any(requisition_ids));
 
-        let mut result: HashMap<String, Vec<Invoice>> = HashMap::new();
-        for invoice in invoices.rows {
-            if let Some(requisition_id) = &invoice.invoice_row.requisition_id {
-                let list = result.entry(requisition_id.clone()).or_default();
-                list.push(invoice);
-            }
-        }
-        Ok(result)
+                let invoices = service_provider
+                    .invoice_service
+                    .get_invoices(&service_context, None, None, Some(filter), None)
+                    .map_err(StandardGraphqlError::from_list_error)?;
+
+                let mut result: HashMap<String, Vec<Invoice>> = HashMap::new();
+                for invoice in invoices.rows {
+                    if let Some(requisition_id) = &invoice.invoice_row.requisition_id {
+                        let list = result.entry(requisition_id.clone()).or_default();
+                        list.push(invoice);
+                    }
+                }
+                Ok(result)
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }

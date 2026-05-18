@@ -34,37 +34,58 @@ impl Loader<RequisitionIndicatorInfoLoaderInput> for RequisitionIndicatorInfoLoa
         &self,
         loader_inputs: &[RequisitionIndicatorInfoLoaderInput],
     ) -> Result<HashMap<RequisitionIndicatorInfoLoaderInput, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
+        let service_provider = self.service_provider.clone();
+        let loader_inputs = loader_inputs.to_vec();
 
-        let line_ids = util::dedup_iter(loader_inputs.iter().map(|input| input.line_id.clone()));
+        tokio::task::spawn_blocking(
+            move || -> Result<
+                HashMap<RequisitionIndicatorInfoLoaderInput, Vec<CustomerIndicatorInformation>>,
+                async_graphql::Error,
+            > {
+                let service_context = service_provider.basic_context()?;
 
-        let Some(RequisitionIndicatorInfoLoaderInput {
-            store_id,
-            period_id,
-            ..
-        }) = loader_inputs.first()
-        else {
-            return Ok(HashMap::new());
-        };
+                let line_ids = util::dedup_iter(
+                    loader_inputs.iter().map(|input| input.line_id.clone()),
+                );
 
-        let indicator_info_rows = self
-            .service_provider
-            .requisition_service
-            .get_indicator_information(&service_context, line_ids, store_id, period_id)?;
-
-        let mut result: HashMap<_, Self::Value> = HashMap::new();
-
-        for indicator_info in indicator_info_rows {
-            result
-                .entry(RequisitionIndicatorInfoLoaderInput::new(
-                    &indicator_info.indicator_line_id,
+                let Some(RequisitionIndicatorInfoLoaderInput {
                     store_id,
                     period_id,
-                ))
-                .or_default()
-                .push(indicator_info);
-        }
+                    ..
+                }) = loader_inputs.first()
+                else {
+                    return Ok(HashMap::new());
+                };
 
-        Ok(result)
+                let indicator_info_rows = service_provider
+                    .requisition_service
+                    .get_indicator_information(
+                        &service_context,
+                        line_ids,
+                        store_id,
+                        period_id,
+                    )?;
+
+                let mut result: HashMap<
+                    RequisitionIndicatorInfoLoaderInput,
+                    Vec<CustomerIndicatorInformation>,
+                > = HashMap::new();
+
+                for indicator_info in indicator_info_rows {
+                    result
+                        .entry(RequisitionIndicatorInfoLoaderInput::new(
+                            &indicator_info.indicator_line_id,
+                            store_id,
+                            period_id,
+                        ))
+                        .or_default()
+                        .push(indicator_info);
+                }
+
+                Ok(result)
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }

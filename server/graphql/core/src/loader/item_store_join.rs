@@ -32,20 +32,32 @@ impl Loader<ItemStoreJoinLoaderInput> for ItemStoreJoinLoader {
         &self,
         loader_inputs: &[ItemStoreJoinLoaderInput],
     ) -> Result<HashMap<ItemStoreJoinLoaderInput, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
+        let connection_manager = self.connection_manager.clone();
+        let loader_inputs = loader_inputs.to_vec();
 
-        let mut result_map = HashMap::new();
+        tokio::task::spawn_blocking(
+            move || -> Result<
+                HashMap<ItemStoreJoinLoaderInput, Vec<ItemStoreJoinRow>>,
+                RepositoryError,
+            > {
+                let connection = connection_manager.connection()?;
 
-        for loader_input in loader_inputs {
-            let store_id = &loader_input.store_id;
-            let item_id = &loader_input.item_id;
+                let mut result_map = HashMap::new();
 
-            let result = ItemStoreJoinRowRepository::new(&connection)
-                .find_one_by_item_and_store_id(item_id, store_id)?;
+                for loader_input in &loader_inputs {
+                    let store_id = &loader_input.store_id;
+                    let item_id = &loader_input.item_id;
 
-            result_map.insert(loader_input.clone(), result.into_iter().collect());
-        }
+                    let result = ItemStoreJoinRowRepository::new(&connection)
+                        .find_one_by_item_and_store_id(item_id, store_id)?;
 
-        Ok(result_map)
+                    result_map.insert(loader_input.clone(), result.into_iter().collect());
+                }
+
+                Ok(result_map)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

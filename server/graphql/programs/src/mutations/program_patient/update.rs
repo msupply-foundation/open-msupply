@@ -4,6 +4,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::patient::PatientNode;
+use repository::{Patient, RepositoryError};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     programs::patient::{UpdateProgramPatient, UpdateProgramPatientError},
@@ -23,7 +24,7 @@ pub enum UpdateProgramPatientResponse {
     Response(PatientNode),
 }
 
-pub fn update_program_patient(
+pub async fn update_program_patient(
     ctx: &Context<'_>,
     store_id: String,
     input: UpdateProgramPatientInput,
@@ -35,27 +36,37 @@ pub fn update_program_patient(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities();
+    let allowed_ctx = user.capabilities().clone();
+    let user_id = user.user_id.clone();
 
-    let service_provider = ctx.service_provider();
-    let service_context =
-        service_provider.context(store_id.to_string(), user.user_id.to_string())?;
+    let service_provider = ctx.service_provider_data();
+    let store_id_for_response = store_id.clone();
+    let allowed_ctx_for_response = allowed_ctx.clone();
 
-    match service_provider.patient_service.upsert_program_patient(
-        &service_context,
-        service_provider,
-        &store_id,
-        &user.user_id,
-        UpdateProgramPatient {
-            data: input.data,
-            schema_id: input.schema_id,
-            parent: Some(input.parent),
+    let result = tokio::task::spawn_blocking(
+        move || -> Result<Result<Patient, UpdateProgramPatientError>, RepositoryError> {
+            let service_context = service_provider.context(store_id.clone(), user_id.clone())?;
+            Ok(service_provider.patient_service.upsert_program_patient(
+                &service_context,
+                &service_provider,
+                &store_id,
+                &user_id,
+                UpdateProgramPatient {
+                    data: input.data,
+                    schema_id: input.schema_id,
+                    parent: Some(input.parent),
+                },
+            ))
         },
-    ) {
+    )
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    match result {
         Ok(patient) => Ok(UpdateProgramPatientResponse::Response(PatientNode {
-            store_id,
+            store_id: store_id_for_response,
             patient,
-            allowed_ctx: allowed_ctx.clone(),
+            allowed_ctx: allowed_ctx_for_response,
         })),
         Err(error) => {
             let formatted_error = format!("{error:#?}");

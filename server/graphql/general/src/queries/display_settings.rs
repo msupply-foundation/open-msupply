@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_core::ContextExt;
+use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 
 #[derive(SimpleObject)]
 pub struct DisplaySettingNode {
@@ -42,16 +42,21 @@ fn match_node(
     }
 }
 
-pub(crate) fn display_settings(
+pub(crate) async fn display_settings(
     ctx: &Context<'_>,
     input: DisplaySettingsHash,
 ) -> Result<DisplaySettingsNode> {
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
-    let settings = service_provider
-        .display_settings_service
-        .display_settings(&service_context)?;
+    let settings = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.basic_context()?;
+        service_provider
+            .display_settings_service
+            .display_settings(&service_context)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_repository_error)?;
 
     let display_settings = DisplaySettingsNode {
         custom_logo: match_node(settings.custom_logo, input.logo),

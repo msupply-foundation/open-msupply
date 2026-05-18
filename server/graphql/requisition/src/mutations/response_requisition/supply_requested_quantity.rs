@@ -39,7 +39,7 @@ pub enum SupplyRequestedQuantityResponse {
     Response(RequisitionLineConnector),
 }
 
-pub fn supply_requested_quantity(
+pub async fn supply_requested_quantity(
     ctx: &Context<'_>,
     store_id: &str,
     input: SupplyRequestedQuantityInput,
@@ -52,13 +52,20 @@ pub fn supply_requested_quantity(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input = input.to_domain();
 
-    let response = match service_provider
-        .requisition_service
-        .supply_requested_quantity(&service_context, input.to_domain())
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        Ok(service_provider
+            .requisition_service
+            .supply_requested_quantity(&service_context, domain_input))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    let response = match result {
         Ok(requisition_lines) => SupplyRequestedQuantityResponse::Response(
             RequisitionLineConnector::from_vec(requisition_lines),
         ),

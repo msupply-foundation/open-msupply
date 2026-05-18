@@ -35,7 +35,7 @@ pub enum UpdateIndicatorValueResponse {
     Error(UpdateError),
 }
 
-pub fn update(
+pub async fn update(
     ctx: &Context<'_>,
     store_id: String,
     input: UpdateIndicatorValueInput,
@@ -48,13 +48,19 @@ pub fn update(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let domain_input = input.to_domain();
 
-    let response = match service_provider
-        .indicator_value_service
-        .update_indicator_value(&service_context, input.to_domain())
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        Ok(service_provider
+            .indicator_value_service
+            .update_indicator_value(&service_context, domain_input))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    let response = match result {
         Ok(indicator_value) => {
             UpdateIndicatorValueResponse::Response(IndicatorValueNode::from_domain(indicator_value))
         }

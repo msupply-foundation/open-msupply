@@ -18,16 +18,25 @@ impl Loader<String> for LocationByIdLoader {
     type Error = RepositoryError;
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = LocationRepository::new(&connection);
+        let connection_manager = self.connection_manager.clone();
+        let ids = ids.to_vec();
 
-        let result =
-            repo.query_by_filter(LocationFilter::new().id(EqualFilter::equal_any(ids.to_owned())))?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Location>, RepositoryError> {
+                let connection = connection_manager.connection()?;
+                let repo = LocationRepository::new(&connection);
 
-        Ok(result
-            .into_iter()
-            .map(|location| (location.location_row.id.clone(), location))
-            .collect())
+                let result = repo
+                    .query_by_filter(LocationFilter::new().id(EqualFilter::equal_any(ids)))?;
+
+                Ok(result
+                    .into_iter()
+                    .map(|location| (location.location_row.id.clone(), location))
+                    .collect())
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }
 
@@ -40,19 +49,28 @@ impl Loader<String> for VolumeUsedByLocationLoader {
     type Error = RepositoryError;
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = LocationRepository::new(&connection);
+        let connection_manager = self.connection_manager.clone();
+        let ids = ids.to_vec();
 
-        let locations =
-            repo.query_by_filter(LocationFilter::new().id(EqualFilter::equal_any(ids.to_owned())))?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, f64>, RepositoryError> {
+                let connection = connection_manager.connection()?;
+                let repo = LocationRepository::new(&connection);
 
-        let mut result = HashMap::new();
+                let locations = repo
+                    .query_by_filter(LocationFilter::new().id(EqualFilter::equal_any(ids)))?;
 
-        for location in locations {
-            let volume_used = get_volume_used(&connection, &location.location_row)?;
-            result.insert(location.location_row.id.clone(), volume_used);
-        }
+                let mut result = HashMap::new();
 
-        Ok(result)
+                for location in locations {
+                    let volume_used = get_volume_used(&connection, &location.location_row)?;
+                    result.insert(location.location_row.id.clone(), volume_used);
+                }
+
+                Ok(result)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

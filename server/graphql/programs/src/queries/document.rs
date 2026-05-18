@@ -8,9 +8,10 @@ use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_types::types::document::{DocumentConnector, DocumentNode};
 use repository::{
     DatetimeFilter, DocumentFilter, DocumentSort, DocumentSortField, EqualFilter, PaginationOption,
-    StringFilter,
+    RepositoryError, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
+use service::ListError;
 
 #[derive(Union)]
 pub enum DocumentResponse {
@@ -72,7 +73,11 @@ impl DocumentSortInput {
     }
 }
 
-pub fn document(ctx: &Context<'_>, store_id: String, name: String) -> Result<Option<DocumentNode>> {
+pub async fn document(
+    ctx: &Context<'_>,
+    store_id: String,
+    name: String,
+) -> Result<Option<DocumentNode>> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -80,23 +85,27 @@ pub fn document(ctx: &Context<'_>, store_id: String, name: String) -> Result<Opt
             store_id: Some(store_id),
         },
     )?;
-    let allowed_ctx = user.capabilities();
+    let allowed_ctx = user.capabilities().clone();
 
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
-    let node = service_provider
-        .document_service
-        .document(&context, &name, Some(allowed_ctx))?
-        .map(|document| DocumentNode {
-            allowed_ctx: allowed_ctx.clone(),
-            document,
-        });
+    let node = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let context = service_provider.basic_context()?;
+        Ok(service_provider
+            .document_service
+            .document(&context, &name, Some(&allowed_ctx))?
+            .map(|document| DocumentNode {
+                allowed_ctx: allowed_ctx.clone(),
+                document,
+            }))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     Ok(node)
 }
 
-pub fn documents(
+pub async fn documents(
     ctx: &Context<'_>,
     store_id: String,
     page: Option<PaginationInput>,
@@ -110,33 +119,36 @@ pub fn documents(
             store_id: Some(store_id),
         },
     )?;
-    let allowed_ctx = user.capabilities();
+    let allowed_ctx = user.capabilities().clone();
 
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
     let filter = filter.map(|f| f.to_domain_filter());
 
-    let result = service_provider
-        .document_service
-        .documents(
+    let connector = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+        let context = service_provider.basic_context()?;
+        let result = service_provider.document_service.documents(
             &context,
             page.map(PaginationOption::from),
             filter,
             sort.map(DocumentSortInput::to_domain),
-            Some(allowed_ctx),
-        )
-        .map_err(StandardGraphqlError::from_list_error)?;
+            Some(&allowed_ctx),
+        )?;
+        Ok(DocumentConnector {
+            total_count: result.count,
+            nodes: result
+                .rows
+                .into_iter()
+                .map(|document| DocumentNode {
+                    allowed_ctx: allowed_ctx.clone(),
+                    document,
+                })
+                .collect(),
+        })
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_list_error)?;
 
-    Ok(DocumentResponse::Response(DocumentConnector {
-        total_count: result.count,
-        nodes: result
-            .rows
-            .into_iter()
-            .map(|document| DocumentNode {
-                allowed_ctx: allowed_ctx.clone(),
-                document,
-            })
-            .collect(),
-    }))
+    Ok(DocumentResponse::Response(connector))
 }

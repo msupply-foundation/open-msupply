@@ -17,14 +17,23 @@ impl Loader<String> for InsuranceProviderByIdLoader {
     type Error = RepositoryError;
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = InsuranceProviderRowRepository::new(&connection);
+        let connection_manager = self.connection_manager.clone();
+        let ids = ids.to_vec();
 
-        let result = repo.find_many_by_ids(ids)?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, InsuranceProviderRow>, RepositoryError> {
+                let connection = connection_manager.connection()?;
+                let repo = InsuranceProviderRowRepository::new(&connection);
 
-        Ok(result
-            .into_iter()
-            .map(|insurance_provider| (insurance_provider.id.clone(), insurance_provider))
-            .collect())
+                let result = repo.find_many_by_ids(&ids)?;
+
+                Ok(result
+                    .into_iter()
+                    .map(|insurance_provider| (insurance_provider.id.clone(), insurance_provider))
+                    .collect())
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

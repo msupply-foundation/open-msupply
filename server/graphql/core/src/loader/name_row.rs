@@ -15,12 +15,22 @@ impl Loader<String> for NameRowLoader {
     type Error = RepositoryError;
 
     async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
-        let results = NameRowRepository::new(&service_context.connection).find_many_by_id(keys)?;
+        let service_provider = self.service_provider.clone();
+        let keys = keys.to_vec();
 
-        Ok(results
-            .into_iter()
-            .map(|name_row| (name_row.id.clone(), name_row))
-            .collect())
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, NameRow>, RepositoryError> {
+                let service_context = service_provider.basic_context()?;
+                let results = NameRowRepository::new(&service_context.connection)
+                    .find_many_by_id(&keys)?;
+
+                Ok(results
+                    .into_iter()
+                    .map(|name_row| (name_row.id.clone(), name_row))
+                    .collect())
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

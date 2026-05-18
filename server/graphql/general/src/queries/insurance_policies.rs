@@ -32,7 +32,7 @@ pub enum InsuranceResponse {
     Response(InsurancePolicyNode),
 }
 
-pub fn insurance_policy(
+pub async fn insurance_policy(
     ctx: &Context<'_>,
     store_id: String,
     id: String,
@@ -45,13 +45,17 @@ pub fn insurance_policy(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
 
-    let result = service_provider
-        .insurance_service
-        .insurance(&service_context.connection, &id)
-        .map_err(StandardGraphqlError::from_repository_error)?;
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider
+            .insurance_service
+            .insurance(&service_context.connection, &id)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_repository_error)?;
 
     Ok(InsuranceResponse::Response(InsurancePolicyNode {
         insurance: result,
@@ -68,7 +72,7 @@ pub enum InsurancesResponse {
     Response(InsuranceConnector),
 }
 
-pub fn insurance_policies(
+pub async fn insurance_policies(
     ctx: &Context<'_>,
     store_id: String,
     name_id: String,
@@ -82,18 +86,20 @@ pub fn insurance_policies(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let domain_sort = sort
+        .and_then(|mut sort_list| sort_list.pop())
+        .map(|sort| sort.to_domain());
 
-    let result = service_provider
-        .insurance_service
-        .insurances(
-            &service_context.connection,
-            &name_id,
-            sort.and_then(|mut sort_list| sort_list.pop())
-                .map(|sort| sort.to_domain()),
-        )
-        .map_err(StandardGraphqlError::from_repository_error)?;
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider
+            .insurance_service
+            .insurances(&service_context.connection, &name_id, domain_sort)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_repository_error)?;
 
     Ok(InsurancesResponse::Response(
         InsuranceConnector::from_domain(result),

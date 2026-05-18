@@ -32,34 +32,44 @@ impl Loader<ClinicianLoaderInput> for ClinicianLoader {
         &self,
         ids_with_store_id: &[ClinicianLoaderInput],
     ) -> Result<HashMap<ClinicianLoaderInput, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
+        let service_provider = self.service_provider.clone();
+        let ids_with_store_id = ids_with_store_id.to_vec();
 
-        // store_id -> Vec of clinician_id
-        let mut store_map = HashMap::<String, Vec<String>>::new();
-        for item in ids_with_store_id {
-            let entry = store_map.entry(item.store_id.clone()).or_default();
-            entry.push(item.clinician_id.clone())
-        }
-        let mut output = HashMap::<ClinicianLoaderInput, Self::Value>::new();
-        for (store_id, clinician_ids) in store_map {
-            let clinicians = self
-                .service_provider
-                .clinician_service
-                .get_clinicians(
-                    &service_context,
-                    &store_id,
-                    None, // TODO this needs to be ALL without limit
-                    Some(ClinicianFilter::new().id(EqualFilter::equal_any(clinician_ids))),
-                    None,
-                )
-                .map_err(|err| StandardGraphqlError::InternalError(format!("{err:?}")))?;
-            for clinician in clinicians.rows {
-                output.insert(
-                    ClinicianLoaderInput::new(&store_id, &clinician.id),
-                    clinician,
-                );
-            }
-        }
-        Ok(output)
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<ClinicianLoaderInput, Clinician>, async_graphql::Error> {
+                let service_context = service_provider.basic_context()?;
+
+                // store_id -> Vec of clinician_id
+                let mut store_map = HashMap::<String, Vec<String>>::new();
+                for item in &ids_with_store_id {
+                    let entry = store_map.entry(item.store_id.clone()).or_default();
+                    entry.push(item.clinician_id.clone())
+                }
+                let mut output = HashMap::<ClinicianLoaderInput, Clinician>::new();
+                for (store_id, clinician_ids) in store_map {
+                    let clinicians = service_provider
+                        .clinician_service
+                        .get_clinicians(
+                            &service_context,
+                            &store_id,
+                            None, // TODO this needs to be ALL without limit
+                            Some(ClinicianFilter::new().id(EqualFilter::equal_any(clinician_ids))),
+                            None,
+                        )
+                        .map_err(|err| {
+                            StandardGraphqlError::InternalError(format!("{err:?}"))
+                        })?;
+                    for clinician in clinicians.rows {
+                        output.insert(
+                            ClinicianLoaderInput::new(&store_id, &clinician.id),
+                            clinician,
+                        );
+                    }
+                }
+                Ok(output)
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }

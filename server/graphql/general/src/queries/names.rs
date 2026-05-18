@@ -90,7 +90,7 @@ pub struct EqualFilterTypeInput {
     pub not_equal_all: Option<Vec<NameNodeType>>,
 }
 
-pub fn get_names(
+pub async fn get_names(
     ctx: &Context<'_>,
     store_id: String,
     page: Option<PaginationInput>,
@@ -105,21 +105,26 @@ pub fn get_names(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let pagination = page.map(PaginationOption::from);
+    let domain_filter = filter.map(|filter| filter.to_domain());
+    let domain_sort = sort
+        .and_then(|mut sort_list| sort_list.pop())
+        .map(|sort| sort.to_domain());
 
-    let names = service_provider
-        .name_service
-        .get_names(
+    let names = tokio::task::spawn_blocking(move || -> Result<_, service::ListError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider.name_service.get_names(
             &service_context,
             &store_id,
-            page.map(PaginationOption::from),
-            filter.map(|filter| filter.to_domain()),
-            // Currently only one sort option is supported, use the first from the list.
-            sort.and_then(|mut sort_list| sort_list.pop())
-                .map(|sort| sort.to_domain()),
+            pagination,
+            domain_filter,
+            domain_sort,
         )
-        .map_err(StandardGraphqlError::from_list_error)?;
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(NamesResponse::Response(NameConnector::from_domain(names)))
 }

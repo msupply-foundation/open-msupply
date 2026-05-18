@@ -5,7 +5,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::rnr_form::RnRFormNode;
-use repository::RnRForm;
+use repository::{RepositoryError, RnRForm};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     rnr_form::finalise::{FinaliseRnRForm, FinaliseRnRFormError as ServiceError},
@@ -21,7 +21,7 @@ pub enum FinaliseRnRFormResponse {
     Response(RnRFormNode),
 }
 
-pub fn finalise_rnr_form(
+pub async fn finalise_rnr_form(
     ctx: &Context<'_>,
     store_id: String,
     input: FinaliseRnRFormInput,
@@ -33,13 +33,22 @@ pub fn finalise_rnr_form(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
-    match service_provider.rnr_form_service.finalise_rnr_form(
-        &service_context,
-        &store_id,
-        FinaliseRnRFormInput::to_domain(input),
-    ) {
+    let service_provider = ctx.service_provider_data();
+
+    let result = tokio::task::spawn_blocking(
+        move || -> Result<Result<RnRForm, ServiceError>, RepositoryError> {
+            let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+            Ok(service_provider.rnr_form_service.finalise_rnr_form(
+                &service_context,
+                &store_id,
+                FinaliseRnRFormInput::to_domain(input),
+            ))
+        },
+    )
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    match result {
         Ok(RnRForm {
             rnr_form_row,
             name_row,

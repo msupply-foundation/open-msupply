@@ -24,12 +24,17 @@ pub struct EmergencyResponseRequisitionCounts {
 #[Object]
 impl ResponseRequisitionCounts {
     async fn new(&self, ctx: &Context<'_>) -> Result<i64> {
-        let service_provider = ctx.service_provider();
-        let service_ctx = service_provider.context(self.store_id.clone(), "".to_string())?;
-        let service = &service_provider.requisition_count_service;
-        let count = service
-            .new_response_requisition_count(&service_ctx, &self.store_id)
-            .map_err(StandardGraphqlError::from)?;
+        let service_provider = ctx.service_provider_data();
+        let store_id = self.store_id.clone();
+
+        let count = tokio::task::spawn_blocking(move || -> Result<i64, repository::RepositoryError> {
+            let service_ctx = service_provider.context(store_id.clone(), "".to_string())?;
+            let service = &service_provider.requisition_count_service;
+            service.new_response_requisition_count(&service_ctx, &store_id)
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)?
+        .map_err(StandardGraphqlError::from_repository_error)?;
 
         Ok(count)
     }
@@ -38,12 +43,17 @@ impl ResponseRequisitionCounts {
 #[Object]
 impl RequestRequisitionCounts {
     async fn draft(&self, ctx: &Context<'_>) -> Result<i64> {
-        let service_provider = ctx.service_provider();
-        let service_ctx = service_provider.context(self.store_id.clone(), "".to_string())?;
-        let service = &service_provider.requisition_count_service;
-        let count = service
-            .draft_request_requisition_count(&service_ctx, &self.store_id)
-            .map_err(StandardGraphqlError::from)?;
+        let service_provider = ctx.service_provider_data();
+        let store_id = self.store_id.clone();
+
+        let count = tokio::task::spawn_blocking(move || -> Result<i64, repository::RepositoryError> {
+            let service_ctx = service_provider.context(store_id.clone(), "".to_string())?;
+            let service = &service_provider.requisition_count_service;
+            service.draft_request_requisition_count(&service_ctx, &store_id)
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)?
+        .map_err(StandardGraphqlError::from_repository_error)?;
 
         Ok(count)
     }
@@ -52,12 +62,17 @@ impl RequestRequisitionCounts {
 #[Object]
 impl EmergencyResponseRequisitionCounts {
     async fn new(&self, ctx: &Context<'_>) -> Result<i64> {
-        let service_provider = ctx.service_provider();
-        let service_ctx = service_provider.context(self.store_id.clone(), "".to_string())?;
-        let service = &service_provider.requisition_count_service;
-        let count = service
-            .new_emergency_response_requisition_count(&service_ctx, &self.store_id)
-            .map_err(StandardGraphqlError::from)?;
+        let service_provider = ctx.service_provider_data();
+        let store_id = self.store_id.clone();
+
+        let count = tokio::task::spawn_blocking(move || -> Result<i64, repository::RepositoryError> {
+            let service_ctx = service_provider.context(store_id.clone(), "".to_string())?;
+            let service = &service_provider.requisition_count_service;
+            service.new_emergency_response_requisition_count(&service_ctx, &store_id)
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)?
+        .map_err(StandardGraphqlError::from_repository_error)?;
 
         Ok(count)
     }

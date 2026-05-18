@@ -1,7 +1,10 @@
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 use graphql_types::types::{MasterListNode, NameNode, PeriodNode};
-use repository::ProgramSupplier;
+use repository::{ProgramSupplier, RepositoryError};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     requisition::program_settings::supplier_program_settings::{
@@ -47,7 +50,7 @@ pub struct CustomerProgramRequisitionSettingNode {
     pub program_settings: Vec<ProgramSettingNode>,
 }
 
-pub fn get_supplier_program_requisition_settings(
+pub async fn get_supplier_program_requisition_settings(
     ctx: &Context<'_>,
     store_id: &str,
 ) -> Result<Vec<SupplierProgramRequisitionSettingNode>> {
@@ -59,12 +62,17 @@ pub fn get_supplier_program_requisition_settings(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
 
-    let settings = service_provider
-        .requisition_service
-        .get_supplier_program_requisition_settings(&service_context, store_id)?;
+    let settings = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider
+            .requisition_service
+            .get_supplier_program_requisition_settings(&service_context, &store_id)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     let response = settings
         .into_iter()
@@ -108,7 +116,7 @@ pub fn get_supplier_program_requisition_settings(
     Ok(response)
 }
 
-pub fn get_program_requisition_settings_by_customer(
+pub async fn get_program_requisition_settings_by_customer(
     ctx: &Context<'_>,
     store_id: &str,
     customer_name_id: &str,
@@ -121,12 +129,18 @@ pub fn get_program_requisition_settings_by_customer(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let customer_name_id = customer_name_id.to_string();
 
-    let settings = service_provider
-        .requisition_service
-        .get_program_requisition_settings_by_customer(&service_context, customer_name_id)?;
+    let settings = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        service_provider
+            .requisition_service
+            .get_program_requisition_settings_by_customer(&service_context, &customer_name_id)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     let response = CustomerProgramRequisitionSettingNode {
         customer_name_id: settings.customer_name_id,
@@ -167,7 +181,7 @@ pub fn get_program_requisition_settings_by_customer(
     Ok(response)
 }
 
-pub fn has_customer_program_requisition_settings(
+pub async fn has_customer_program_requisition_settings(
     ctx: &Context<'_>,
     store_id: &str,
     customer_name_ids: &[String],
@@ -180,10 +194,18 @@ pub fn has_customer_program_requisition_settings(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let customer_name_ids = customer_name_ids.to_vec();
 
-    Ok(service_provider
-        .requisition_service
-        .has_customer_program_requisition_settings(&service_context, customer_name_ids)?)
+    let has = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        service_provider
+            .requisition_service
+            .has_customer_program_requisition_settings(&service_context, &customer_name_ids)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    Ok(has)
 }

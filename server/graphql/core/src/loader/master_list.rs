@@ -30,33 +30,49 @@ impl Loader<MasterListByItemIdLoaderInput> for MasterListByItemIdLoader {
         &self,
         ids_with_store_id: &[MasterListByItemIdLoaderInput],
     ) -> Result<HashMap<MasterListByItemIdLoaderInput, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
-        let connection = service_context.connection;
+        let service_provider = self.service_provider.clone();
+        let ids_with_store_id = ids_with_store_id.to_vec();
 
-        let mut store_item_map = HashMap::<String, Vec<String>>::new();
-        for input in ids_with_store_id {
-            let entry = store_item_map.entry(input.store_id.clone()).or_default();
-            entry.push(input.item_id.clone())
-        }
-        let mut output = HashMap::<MasterListByItemIdLoaderInput, Self::Value>::new();
+        tokio::task::spawn_blocking(
+            move || -> Result<
+                HashMap<MasterListByItemIdLoaderInput, Vec<MasterList>>,
+                async_graphql::Error,
+            > {
+                let service_context = service_provider.basic_context()?;
+                let connection = service_context.connection;
 
-        for (store_id, item_ids) in store_item_map {
-            for item_id in item_ids {
-                let master_list = MasterListRepository::new(&connection).query_by_filter(
-                    MasterListFilter::new()
-                        .exists_for_store_id(EqualFilter::equal_to(store_id.to_string()))
-                        .item_id(EqualFilter::equal_to(item_id.to_string())),
-                )?;
+                let mut store_item_map = HashMap::<String, Vec<String>>::new();
+                for input in &ids_with_store_id {
+                    let entry = store_item_map.entry(input.store_id.clone()).or_default();
+                    entry.push(input.item_id.clone())
+                }
+                let mut output =
+                    HashMap::<MasterListByItemIdLoaderInput, Vec<MasterList>>::new();
 
-                let entry = output.entry(MasterListByItemIdLoaderInput {
-                    store_id: store_id.clone(),
-                    item_id,
-                });
+                for (store_id, item_ids) in store_item_map {
+                    for item_id in item_ids {
+                        let master_list =
+                            MasterListRepository::new(&connection).query_by_filter(
+                                MasterListFilter::new()
+                                    .exists_for_store_id(EqualFilter::equal_to(
+                                        store_id.to_string(),
+                                    ))
+                                    .item_id(EqualFilter::equal_to(item_id.to_string())),
+                            )?;
 
-                entry.or_default().extend(master_list);
-            }
-        }
+                        let entry = output.entry(MasterListByItemIdLoaderInput {
+                            store_id: store_id.clone(),
+                            item_id,
+                        });
 
-        Ok(output)
+                        entry.or_default().extend(master_list);
+                    }
+                }
+
+                Ok(output)
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }

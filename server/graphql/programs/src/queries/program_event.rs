@@ -13,8 +13,9 @@ use graphql_types::types::{
 };
 use repository::PaginationOption;
 use service::auth::{Resource, ResourceAccessRequest};
+use service::ListError;
 
-pub fn program_events(
+pub async fn program_events(
     ctx: &Context<'_>,
     store_id: String,
     page: Option<PaginationInput>,
@@ -28,38 +29,41 @@ pub fn program_events(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities();
+    let allowed_ctx = user.capabilities().clone();
 
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
-    let list_result = service_provider
-        .program_event_service
-        .events(
+    let connector = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+        let context = service_provider.basic_context()?;
+        let list_result = service_provider.program_event_service.events(
             &context,
             page.map(PaginationOption::from),
             filter.map(ProgramEventFilterInput::to_domain),
             sort.map(ProgramEventSortInput::to_domain),
-            Some(allowed_ctx),
-        )
-        .map_err(StandardGraphqlError::from_list_error)?;
-    let nodes: Vec<ProgramEventNode> = list_result
-        .rows
-        .into_iter()
-        .map(|row| ProgramEventNode {
-            store_id: store_id.clone(),
-            program_event: row,
-            allowed_ctx: allowed_ctx.clone(),
+            Some(&allowed_ctx),
+        )?;
+        let nodes: Vec<ProgramEventNode> = list_result
+            .rows
+            .into_iter()
+            .map(|row| ProgramEventNode {
+                store_id: store_id.clone(),
+                program_event: row,
+                allowed_ctx: allowed_ctx.clone(),
+            })
+            .collect();
+        Ok(ProgramEventConnector {
+            total_count: list_result.count,
+            nodes,
         })
-        .collect();
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_list_error)?;
 
-    Ok(ProgramEventResponse::Response(ProgramEventConnector {
-        total_count: list_result.count,
-        nodes,
-    }))
+    Ok(ProgramEventResponse::Response(connector))
 }
 
-pub fn active_program_events(
+pub async fn active_program_events(
     ctx: &Context<'_>,
     store_id: String,
     at: Option<DateTime<Utc>>,
@@ -74,35 +78,37 @@ pub fn active_program_events(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities();
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let allowed_ctx = user.capabilities().clone();
+    let service_provider = ctx.service_provider_data();
 
-    let list_result = service_provider
-        .program_event_service
-        .active_events(
+    let connector = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+        let context = service_provider.basic_context()?;
+        let list_result = service_provider.program_event_service.active_events(
             &context,
             at.map(|at| at.naive_utc())
                 .unwrap_or(Utc::now().naive_utc()),
             page.map(PaginationOption::from),
             filter.map(ProgramEventFilterInput::to_domain),
             sort.map(ProgramEventSortInput::to_domain),
-            Some(allowed_ctx),
-        )
-        .map_err(StandardGraphqlError::from_list_error)?;
-    let nodes: Vec<ProgramEventNode> = list_result
-        .rows
-        .into_iter()
-        .map(|row| ProgramEventNode {
-            store_id: store_id.clone(),
-            program_event: row,
-            allowed_ctx: allowed_ctx.clone(),
+            Some(&allowed_ctx),
+        )?;
+        let nodes: Vec<ProgramEventNode> = list_result
+            .rows
+            .into_iter()
+            .map(|row| ProgramEventNode {
+                store_id: store_id.clone(),
+                program_event: row,
+                allowed_ctx: allowed_ctx.clone(),
+            })
+            .collect();
+        Ok(ProgramEventConnector {
+            total_count: list_result.count,
+            nodes,
         })
-        .collect();
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_list_error)?;
 
-    Ok(ProgramEventResponse::Response(ProgramEventConnector {
-        total_count: list_result.count,
-
-        nodes,
-    }))
+    Ok(ProgramEventResponse::Response(connector))
 }

@@ -53,7 +53,11 @@ pub enum UpdateResponse {
     Error(UpdateError),
 }
 
-pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+pub async fn update(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: UpdateInput,
+) -> Result<UpdateResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -62,12 +66,18 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input = input.to_domain();
 
-    let result = service_provider
-        .invoice_service
-        .update_customer_return(&service_context, input.to_domain());
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        Ok(service_provider
+            .invoice_service
+            .update_customer_return(&service_context, domain_input))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     let result = match result {
         Ok(customer_return) => UpdateResponse::Response(InvoiceNode::from_domain(customer_return)),

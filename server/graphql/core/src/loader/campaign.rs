@@ -15,14 +15,23 @@ impl Loader<String> for CampaignByIdLoader {
     type Error = RepositoryError;
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = CampaignRowRepository::new(&connection);
+        let connection_manager = self.connection_manager.clone();
+        let ids = ids.to_vec();
 
-        let result = repo.find_many_by_id(ids)?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, CampaignRow>, RepositoryError> {
+                let connection = connection_manager.connection()?;
+                let repo = CampaignRowRepository::new(&connection);
 
-        Ok(result
-            .into_iter()
-            .map(|campaign| (campaign.id.clone(), campaign))
-            .collect())
+                let result = repo.find_many_by_id(&ids)?;
+
+                Ok(result
+                    .into_iter()
+                    .map(|campaign| (campaign.id.clone(), campaign))
+                    .collect())
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

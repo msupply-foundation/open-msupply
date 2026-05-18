@@ -22,21 +22,29 @@ impl Loader<String> for DocumentLoader {
         &self,
         document_names: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let ctx = self.service_provider.basic_context()?;
-        let mut out = HashMap::new();
-        let doc_names = document_names.to_vec();
+        let service_provider = self.service_provider.clone();
+        let document_names = document_names.to_vec();
 
-        let result = DocumentRepository::new(&ctx.connection).query(
-            Pagination::all(),
-            Some(DocumentFilter::new().name(StringFilter::equal_any(doc_names))),
-            None,
-        )?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Document>, RepositoryError> {
+                let ctx = service_provider.basic_context()?;
+                let mut out = HashMap::new();
 
-        for doc in result {
-            out.insert(doc.name.clone(), doc);
-        }
+                let result = DocumentRepository::new(&ctx.connection).query(
+                    Pagination::all(),
+                    Some(DocumentFilter::new().name(StringFilter::equal_any(document_names))),
+                    None,
+                )?;
 
-        Ok(out)
+                for doc in result {
+                    out.insert(doc.name.clone(), doc);
+                }
+
+                Ok(out)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }
 
@@ -53,20 +61,28 @@ impl Loader<String> for DocumentByIdLoader {
         &self,
         document_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let ctx = self.service_provider.basic_context()?;
-        let mut out = HashMap::new();
-        let doc_ids = document_ids.to_vec();
+        let service_provider = self.service_provider.clone();
+        let document_ids = document_ids.to_vec();
 
-        let result = DocumentRepository::new(&ctx.connection).query(
-            Pagination::all(),
-            Some(DocumentFilter::new().id(EqualFilter::equal_any(doc_ids))),
-            None,
-        )?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Document>, RepositoryError> {
+                let ctx = service_provider.basic_context()?;
+                let mut out = HashMap::new();
 
-        for doc in result {
-            out.insert(doc.id.clone(), doc);
-        }
+                let result = DocumentRepository::new(&ctx.connection).query(
+                    Pagination::all(),
+                    Some(DocumentFilter::new().id(EqualFilter::equal_any(document_ids))),
+                    None,
+                )?;
 
-        Ok(out)
+                for doc in result {
+                    out.insert(doc.id.clone(), doc);
+                }
+
+                Ok(out)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

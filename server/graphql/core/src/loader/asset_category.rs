@@ -16,16 +16,25 @@ impl Loader<String> for AssetCategoryLoader {
     type Error = RepositoryError;
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = AssetCategoryRepository::new(&connection);
+        let connection_manager = self.connection_manager.clone();
+        let ids = ids.to_vec();
 
-        let result = repo.query_by_filter(
-            AssetCategoryFilter::new().id(EqualFilter::equal_any(ids.to_owned())),
-        )?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, AssetCategoryRow>, RepositoryError> {
+                let connection = connection_manager.connection()?;
+                let repo = AssetCategoryRepository::new(&connection);
 
-        Ok(result
-            .into_iter()
-            .map(|asset_category| (asset_category.id.clone(), asset_category))
-            .collect())
+                let result = repo.query_by_filter(
+                    AssetCategoryFilter::new().id(EqualFilter::equal_any(ids)),
+                )?;
+
+                Ok(result
+                    .into_iter()
+                    .map(|asset_category| (asset_category.id.clone(), asset_category))
+                    .collect())
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

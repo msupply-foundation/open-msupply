@@ -51,7 +51,7 @@ pub struct ChartError {
     pub error: ChartErrorInterface,
 }
 
-pub fn chart(
+pub async fn chart(
     ctx: &Context<'_>,
     store_id: &str,
     request_requisition_line_id: &str,
@@ -66,28 +66,40 @@ pub fn chart(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
-    let amc_lookback_months = get_store_preferences(&service_context.connection, store_id)?
-        .monthly_consumption_look_back_period;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let request_requisition_line_id = request_requisition_line_id.to_string();
+    let stock_evolution_options = stock_evolution_options_input
+        .map(|i| i.to_domain())
+        .unwrap_or_default();
 
-    let result = match service_provider
-        .requisition_line_service
-        .get_requisition_line_chart(
-            &service_context,
-            request_requisition_line_id,
-            ConsumptionOptionsInput::to_domain(amc_lookback_months, consumption_options_input),
-            stock_evolution_options_input
-                .map(|i| i.to_domain())
-                .unwrap_or_default(),
-        ) {
-        Ok(requisition_line_chart) => {
-            ChartResponse::Response(ItemChartNode::from_domain(requisition_line_chart))
-        }
-        Err(error) => ChartResponse::Error(ChartError {
-            error: map_error(error)?,
-        }),
-    };
+    let result = tokio::task::spawn_blocking(move || -> Result<ChartResponse> {
+        let service_context = service_provider
+            .context(store_id.clone(), user.user_id)
+            .map_err(StandardGraphqlError::from_repository_error)?;
+        let amc_lookback_months = get_store_preferences(&service_context.connection, &store_id)
+            .map_err(StandardGraphqlError::from_repository_error)?
+            .monthly_consumption_look_back_period;
+
+        let response = match service_provider
+            .requisition_line_service
+            .get_requisition_line_chart(
+                &service_context,
+                &request_requisition_line_id,
+                ConsumptionOptionsInput::to_domain(amc_lookback_months, consumption_options_input),
+                stock_evolution_options,
+            ) {
+            Ok(requisition_line_chart) => {
+                ChartResponse::Response(ItemChartNode::from_domain(requisition_line_chart))
+            }
+            Err(error) => ChartResponse::Error(ChartError {
+                error: map_error(error)?,
+            }),
+        };
+        Ok(response)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     Ok(result)
 }

@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_core::ContextExt;
+use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 
 #[derive(InputObject, SimpleObject)]
 pub struct LabelPrinterSettingNode {
@@ -20,13 +20,20 @@ impl LabelPrinterSettingNode {
     }
 }
 
-pub(crate) fn label_printer_settings(ctx: &Context<'_>) -> Result<Option<LabelPrinterSettingNode>> {
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
+pub(crate) async fn label_printer_settings(
+    ctx: &Context<'_>,
+) -> Result<Option<LabelPrinterSettingNode>> {
+    let service_provider = ctx.service_provider_data();
 
-    let settings = service_provider
-        .label_printer_settings_service
-        .label_printer_settings(&service_context)?;
+    let settings = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.basic_context()?;
+        service_provider
+            .label_printer_settings_service
+            .label_printer_settings(&service_context)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_repository_error)?;
 
     let label_printer_settings = settings.map(LabelPrinterSettingNode::from_domain);
 

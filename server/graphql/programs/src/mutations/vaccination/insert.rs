@@ -6,6 +6,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::vaccination::VaccinationNode;
+use repository::{RepositoryError, Vaccination};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     vaccination::insert::{InsertVaccination, InsertVaccinationError as ServiceError},
@@ -67,7 +68,7 @@ pub enum InsertVaccinationResponse {
     Response(VaccinationNode),
 }
 
-pub fn insert_vaccination(
+pub async fn insert_vaccination(
     ctx: &Context<'_>,
     store_id: String,
     input: InsertVaccinationInput,
@@ -79,14 +80,22 @@ pub fn insert_vaccination(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let user_id = user.user_id.clone();
 
-    let result = service_provider.vaccination_service.insert_vaccination(
-        &service_context,
-        &store_id,
-        input.into(),
-    );
+    let result = tokio::task::spawn_blocking(
+        move || -> Result<Result<Vaccination, ServiceError>, RepositoryError> {
+            let service_context = service_provider.context(store_id.clone(), user_id)?;
+            Ok(service_provider.vaccination_service.insert_vaccination(
+                &service_context,
+                &store_id,
+                input.into(),
+            ))
+        },
+    )
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
     let result = match result {
         Ok(vaccination) => {
             InsertVaccinationResponse::Response(VaccinationNode::from_domain(vaccination))

@@ -122,7 +122,7 @@ pub enum InvoiceLinesResponse {
     Response(InvoiceLineConnector),
 }
 
-pub fn invoice_lines(
+pub async fn invoice_lines(
     ctx: &Context<'_>,
     store_id: &str,
     page: Option<PaginationInput>,
@@ -138,21 +138,31 @@ pub fn invoice_lines(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
-    let service = &service_provider.invoice_line_service;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
 
     let sort = report_sort_to_typed_sort(report_sort)
         .map(|(key, desc)| InvoiceLineSortInput { key, desc })
         .or_else(|| sort.and_then(|mut sort_list| sort_list.pop()));
+    let pagination = page.map(PaginationOption::from);
+    let domain_filter = filter.map(InvoiceLineFilter::from);
+    let domain_sort = sort.map(|s| s.to_domain());
 
-    let invoice_lines = service.get_invoice_lines(
-        &service_ctx,
-        store_id,
-        page.map(PaginationOption::from),
-        filter.map(InvoiceLineFilter::from),
-        sort.map(|s| s.to_domain()),
-    );
+    let invoice_lines = tokio::task::spawn_blocking(
+        move || -> Result<_, repository::RepositoryError> {
+            let service_ctx = service_provider.context(store_id.clone(), user.user_id)?;
+            let service = &service_provider.invoice_line_service;
+            Ok(service.get_invoice_lines(
+                &service_ctx,
+                &store_id,
+                pagination,
+                domain_filter,
+                domain_sort,
+            ))
+        },
+    )
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     if let Ok(invoice_lines) = invoice_lines {
         Ok(InvoiceLinesResponse::Response(
@@ -175,7 +185,7 @@ pub fn invoice_lines(
     }
 }
 
-pub fn draft_outbound_lines(
+pub async fn draft_outbound_lines(
     ctx: &Context<'_>,
     store_id: &str,
     item_id: &str,
@@ -189,11 +199,20 @@ pub fn draft_outbound_lines(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
-    let service = &service_provider.invoice_line_service;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let item_id = item_id.to_string();
+    let invoice_id = invoice_id.to_string();
 
-    let result = service.get_draft_stock_out_lines(&service_ctx, store_id, item_id, invoice_id);
+    let result = tokio::task::spawn_blocking(
+        move || -> Result<_, repository::RepositoryError> {
+            let service_ctx = service_provider.context(store_id.clone(), user.user_id)?;
+            let service = &service_provider.invoice_line_service;
+            Ok(service.get_draft_stock_out_lines(&service_ctx, &store_id, &item_id, &invoice_id))
+        },
+    )
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     if let Ok((draft_lines, item_data)) = result {
         Ok(DraftStockOutItemData {

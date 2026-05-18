@@ -47,7 +47,11 @@ impl DeleteInput {
     }
 }
 
-pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<DeleteResponse> {
+pub async fn delete(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: DeleteInput,
+) -> Result<DeleteResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -56,14 +60,20 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input = input.to_domain();
 
-    map_response(
-        service_provider
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        Ok(service_provider
             .invoice_line_service
-            .delete_outbound_shipment_unallocated_line(&service_context, input.to_domain()),
-    )
+            .delete_outbound_shipment_unallocated_line(&service_context, domain_input))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    map_response(result)
 }
 
 pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse> {

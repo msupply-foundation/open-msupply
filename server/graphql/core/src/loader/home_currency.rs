@@ -17,20 +17,28 @@ impl Loader<()> for HomeCurrencyLoader {
     type Error = RepositoryError;
 
     async fn load(&self, _keys: &[()]) -> Result<HashMap<(), Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = CurrencyRepository::new(&connection);
-        let home_currency = repo
-            .query_by_filter(
-                CurrencyFilter::new()
-                    .is_home_currency(true)
-                    .is_active(true),
-            )?
-            .pop();
+        let connection_manager = self.connection_manager.clone();
 
-        let mut result = HashMap::new();
-        if let Some(home_currency) = home_currency {
-            result.insert((), home_currency.currency_row.code);
-        }
-        Ok(result)
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<(), String>, RepositoryError> {
+                let connection = connection_manager.connection()?;
+                let repo = CurrencyRepository::new(&connection);
+                let home_currency = repo
+                    .query_by_filter(
+                        CurrencyFilter::new()
+                            .is_home_currency(true)
+                            .is_active(true),
+                    )?
+                    .pop();
+
+                let mut result = HashMap::new();
+                if let Some(home_currency) = home_currency {
+                    result.insert((), home_currency.currency_row.code);
+                }
+                Ok(result)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

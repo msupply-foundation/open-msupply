@@ -1,6 +1,6 @@
 use async_graphql::Enum;
 pub use async_graphql::*;
-use graphql_core::ContextExt;
+use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 use service::sync::sync_status::status::InitialisationStatus;
 
 #[derive(SimpleObject)]
@@ -19,12 +19,19 @@ pub enum InitialisationStatusType {
     PreInitialisation,
 }
 
-pub(crate) fn initialisation_status(ctx: &Context<'_>) -> Result<InitialisationStatusNode> {
-    let service_provider = ctx.service_provider();
-    let ctx = service_provider.basic_context()?;
-    let initialisation_status = service_provider
-        .sync_status_service
-        .get_initialisation_status(&ctx)?;
+pub(crate) async fn initialisation_status(
+    ctx: &Context<'_>,
+) -> Result<InitialisationStatusNode> {
+    let service_provider = ctx.service_provider_data();
+
+    let initialisation_status = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let ctx = service_provider.basic_context()?;
+        service_provider
+            .sync_status_service
+            .get_initialisation_status(&ctx)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     Ok(InitialisationStatusNode::from_domain(initialisation_status))
 }

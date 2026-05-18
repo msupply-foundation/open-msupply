@@ -19,21 +19,32 @@ impl Loader<String> for BundledItemByPrincipalItemVariantIdLoader {
         &self,
         principal_item_variant_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
-        let repo = BundledItemRepository::new(&service_context.connection);
+        let service_provider = self.service_provider.clone();
+        let principal_item_variant_ids = principal_item_variant_ids.to_vec();
 
-        let bundles = repo.query_by_filter(BundledItemFilter::new().principal_item_variant_id(
-            EqualFilter::equal_any(principal_item_variant_ids.to_vec()),
-        ))?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Vec<BundledItemRow>>, RepositoryError> {
+                let service_context = service_provider.basic_context()?;
+                let repo = BundledItemRepository::new(&service_context.connection);
 
-        let mut map: HashMap<String, Vec<BundledItemRow>> = HashMap::new();
-        for bundle in bundles {
-            let list = map
-                .entry(bundle.principal_item_variant_id.clone())
-                .or_default();
-            list.push(bundle);
-        }
-        Ok(map)
+                let bundles = repo.query_by_filter(
+                    BundledItemFilter::new().principal_item_variant_id(EqualFilter::equal_any(
+                        principal_item_variant_ids,
+                    )),
+                )?;
+
+                let mut map: HashMap<String, Vec<BundledItemRow>> = HashMap::new();
+                for bundle in bundles {
+                    let list = map
+                        .entry(bundle.principal_item_variant_id.clone())
+                        .or_default();
+                    list.push(bundle);
+                }
+                Ok(map)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }
 
@@ -49,21 +60,30 @@ impl Loader<String> for BundledItemByBundledItemVariantIdLoader {
         &self,
         bundled_item_variant_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
-        let repo = BundledItemRepository::new(&service_context.connection);
+        let service_provider = self.service_provider.clone();
+        let bundled_item_variant_ids = bundled_item_variant_ids.to_vec();
 
-        let bundles = repo
-            .query_by_filter(BundledItemFilter::new().bundled_item_variant_id(
-                EqualFilter::equal_any(bundled_item_variant_ids.to_vec()),
-            ))?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Vec<BundledItemRow>>, RepositoryError> {
+                let service_context = service_provider.basic_context()?;
+                let repo = BundledItemRepository::new(&service_context.connection);
 
-        let mut map: HashMap<String, Vec<BundledItemRow>> = HashMap::new();
-        for bundle in bundles {
-            let list = map
-                .entry(bundle.bundled_item_variant_id.clone())
-                .or_default();
-            list.push(bundle);
-        }
-        Ok(map)
+                let bundles = repo.query_by_filter(
+                    BundledItemFilter::new()
+                        .bundled_item_variant_id(EqualFilter::equal_any(bundled_item_variant_ids)),
+                )?;
+
+                let mut map: HashMap<String, Vec<BundledItemRow>> = HashMap::new();
+                for bundle in bundles {
+                    let list = map
+                        .entry(bundle.bundled_item_variant_id.clone())
+                        .or_default();
+                    list.push(bundle);
+                }
+                Ok(map)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

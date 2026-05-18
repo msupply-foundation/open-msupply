@@ -19,36 +19,44 @@ impl Loader<String> for PurchaseOrderLinesByPurchaseOrderIdLoader {
         &self,
         purchase_order_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
+        let service_provider = self.service_provider.clone();
+        let purchase_order_ids = purchase_order_ids.to_vec();
 
-        let purchase_order_lines = self
-            .service_provider
-            .purchase_order_line_service
-            .get_purchase_order_lines(
-                &service_context,
-                None,
-                None,
-                Some(
-                    PurchaseOrderLineFilter::new()
-                        .purchase_order_id(EqualFilter::equal_any(purchase_order_ids.to_owned())),
-                ),
-                None,
-            )
-            .map_err(StandardGraphqlError::from_list_error)?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Vec<PurchaseOrderLine>>, async_graphql::Error> {
+                let service_context = service_provider.basic_context()?;
 
-        let mut result: HashMap<String, Vec<PurchaseOrderLine>> = HashMap::new();
-        for purchase_order_line in purchase_order_lines.rows {
-            let list = result
-                .entry(
-                    purchase_order_line
-                        .purchase_order_line_row
-                        .purchase_order_id
-                        .clone(),
-                )
-                .or_default();
-            list.push(purchase_order_line)
-        }
-        Ok(result)
+                let purchase_order_lines = service_provider
+                    .purchase_order_line_service
+                    .get_purchase_order_lines(
+                        &service_context,
+                        None,
+                        None,
+                        Some(
+                            PurchaseOrderLineFilter::new()
+                                .purchase_order_id(EqualFilter::equal_any(purchase_order_ids)),
+                        ),
+                        None,
+                    )
+                    .map_err(StandardGraphqlError::from_list_error)?;
+
+                let mut result: HashMap<String, Vec<PurchaseOrderLine>> = HashMap::new();
+                for purchase_order_line in purchase_order_lines.rows {
+                    let list = result
+                        .entry(
+                            purchase_order_line
+                                .purchase_order_line_row
+                                .purchase_order_id
+                                .clone(),
+                        )
+                        .or_default();
+                    list.push(purchase_order_line)
+                }
+                Ok(result)
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }
 
@@ -64,27 +72,34 @@ impl Loader<String> for PurchaseOrderLineByIdLoader {
         &self,
         purchase_order_line_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
+        let service_provider = self.service_provider.clone();
+        let purchase_order_line_ids = purchase_order_line_ids.to_vec();
 
-        let filter = PurchaseOrderLineFilter::new().id(EqualFilter::equal_any(
-            purchase_order_line_ids.iter().map(String::clone).collect(),
-        ));
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, PurchaseOrderLine>, async_graphql::Error> {
+                let service_context = service_provider.basic_context()?;
 
-        let purchase_order_lines = self
-            .service_provider
-            .purchase_order_line_service
-            .get_purchase_order_lines(&service_context, None, None, Some(filter), None)
-            .map_err(StandardGraphqlError::from_list_error)?;
+                let filter = PurchaseOrderLineFilter::new()
+                    .id(EqualFilter::equal_any(purchase_order_line_ids));
 
-        Ok(purchase_order_lines
-            .rows
-            .into_iter()
-            .map(|purchase_order_line| {
-                (
-                    purchase_order_line.purchase_order_line_row.id.clone(),
-                    purchase_order_line,
-                )
-            })
-            .collect())
+                let purchase_order_lines = service_provider
+                    .purchase_order_line_service
+                    .get_purchase_order_lines(&service_context, None, None, Some(filter), None)
+                    .map_err(StandardGraphqlError::from_list_error)?;
+
+                Ok(purchase_order_lines
+                    .rows
+                    .into_iter()
+                    .map(|purchase_order_line| {
+                        (
+                            purchase_order_line.purchase_order_line_row.id.clone(),
+                            purchase_order_line,
+                        )
+                    })
+                    .collect())
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }

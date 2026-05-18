@@ -30,7 +30,7 @@ pub enum GenerateCustomerReturnLinesResponse {
     Response(GeneratedCustomerReturnLineConnector),
 }
 
-pub fn generate_customer_return_lines(
+pub async fn generate_customer_return_lines(
     ctx: &Context<'_>,
     store_id: String,
     input: GenerateCustomerReturnLinesInput,
@@ -43,13 +43,20 @@ pub fn generate_customer_return_lines(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let domain_input = input.to_domain();
 
-    let return_lines = service_provider
-        .invoice_service
-        .generate_customer_return_lines(&service_context, &store_id, input.to_domain())
-        .map_err(StandardGraphqlError::from_list_error)?;
+    let return_lines = tokio::task::spawn_blocking(move || -> Result<_, service::ListError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider.invoice_service.generate_customer_return_lines(
+            &service_context,
+            &store_id,
+            domain_input,
+        )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(GenerateCustomerReturnLinesResponse::Response(
         GeneratedCustomerReturnLineConnector::from_domain(return_lines),

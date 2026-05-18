@@ -9,6 +9,7 @@ use repository::{EncounterFilter, PaginationOption};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     programs::encounter::encounter_fields::{EncounterFields, EncounterFieldsResult},
+    ListError,
 };
 
 #[derive(InputObject, Clone)]
@@ -49,7 +50,7 @@ impl EncounterFieldsNode {
     }
 }
 
-pub fn encounter_fields(
+pub async fn encounter_fields(
     ctx: &Context<'_>,
     store_id: String,
     input: EncounterFieldsInput,
@@ -64,14 +65,13 @@ pub fn encounter_fields(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities();
+    let allowed_ctx = user.capabilities().clone();
 
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
-    let result = service_provider
-        .encounter_service
-        .encounters_fields(
+    let connector = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+        let context = service_provider.basic_context()?;
+        let result = service_provider.encounter_service.encounters_fields(
             &context,
             EncounterFields {
                 fields: input.fields,
@@ -80,23 +80,26 @@ pub fn encounter_fields(
             filter.map(EncounterFilter::from),
             sort.map(EncounterSortInput::to_domain),
             allowed_ctx.clone(),
-        )
-        .map_err(StandardGraphqlError::from_list_error)?;
+        )?;
 
-    let nodes = result
-        .rows
-        .into_iter()
-        .map(|encounter_fields| EncounterFieldsNode {
-            store_id: store_id.clone(),
-            encounter_fields_result: encounter_fields,
-            allowed_ctx: allowed_ctx.clone(),
-        })
-        .collect();
+        let nodes = result
+            .rows
+            .into_iter()
+            .map(|encounter_fields| EncounterFieldsNode {
+                store_id: store_id.clone(),
+                encounter_fields_result: encounter_fields,
+                allowed_ctx: allowed_ctx.clone(),
+            })
+            .collect();
 
-    Ok(EncounterFieldsResponse::Response(
-        EncounterFieldsConnector {
+        Ok(EncounterFieldsConnector {
             total_count: result.count,
             nodes,
-        },
-    ))
+        })
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_list_error)?;
+
+    Ok(EncounterFieldsResponse::Response(connector))
 }

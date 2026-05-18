@@ -10,7 +10,7 @@ use graphql_types::types::document_registry::{
 };
 use repository::{
     DocumentRegistryCategory, DocumentRegistryFilter, DocumentRegistrySort,
-    DocumentRegistrySortField, EqualFilter,
+    DocumentRegistrySortField, EqualFilter, RepositoryError,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 use service::usize_to_u32;
@@ -53,7 +53,7 @@ pub struct DocumentRegistrySortInput {
     desc: Option<bool>,
 }
 
-pub fn document_registries(
+pub async fn document_registries(
     ctx: &Context<'_>,
     filter: Option<DocumentRegistryFilterInput>,
     sort: Option<Vec<DocumentRegistrySortInput>>,
@@ -66,28 +66,22 @@ pub fn document_registries(
             store_id: Some(store_id),
         },
     )?;
-    let allowed_ctx = user.capabilities();
+    let allowed_ctx = user.capabilities().clone();
 
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
     let filter = filter.map(|f| f.to_domain()).unwrap_or_default();
 
-    let entries = service_provider
-        .document_registry_service
-        .get_entries(
+    let connector = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let context = service_provider.basic_context()?;
+        let entries = service_provider.document_registry_service.get_entries(
             &context,
             Some(filter),
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
-            allowed_ctx,
-        )
-        .map_err(|err| {
-            let formatted_err = format! {"{err:?}"};
-            StandardGraphqlError::InternalError(formatted_err).extend()
-        })?;
-    Ok(DocumentRegistryResponse::Response(
-        DocumentRegistryConnector {
+            &allowed_ctx,
+        )?;
+        Ok(DocumentRegistryConnector {
             total_count: usize_to_u32(entries.len()),
             nodes: entries
                 .into_iter()
@@ -96,8 +90,16 @@ pub fn document_registries(
                     document_registry,
                 })
                 .collect(),
-        },
-    ))
+        })
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(|err| {
+        let formatted_err = format! {"{err:?}"};
+        StandardGraphqlError::InternalError(formatted_err).extend()
+    })?;
+
+    Ok(DocumentRegistryResponse::Response(connector))
 }
 
 impl DocumentRegistryFilterInput {

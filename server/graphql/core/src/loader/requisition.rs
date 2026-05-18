@@ -20,22 +20,28 @@ impl Loader<String> for RequisitionsByIdLoader {
         &self,
         requisition_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
+        let service_provider = self.service_provider.clone();
+        let requisition_ids = requisition_ids.to_vec();
 
-        let filter = RequisitionFilter::new().id(EqualFilter::equal_any(
-            requisition_ids.iter().map(String::clone).collect(),
-        ));
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Requisition>, async_graphql::Error> {
+                let service_context = service_provider.basic_context()?;
 
-        let requisitions = self
-            .service_provider
-            .requisition_service
-            .get_requisitions(&service_context, None, None, Some(filter), None)
-            .map_err(StandardGraphqlError::from_list_error)?;
+                let filter = RequisitionFilter::new().id(EqualFilter::equal_any(requisition_ids));
 
-        Ok(requisitions
-            .rows
-            .into_iter()
-            .map(|requisition| (requisition.requisition_row.id.clone(), requisition))
-            .collect())
+                let requisitions = service_provider
+                    .requisition_service
+                    .get_requisitions(&service_context, None, None, Some(filter), None)
+                    .map_err(StandardGraphqlError::from_list_error)?;
+
+                Ok(requisitions
+                    .rows
+                    .into_iter()
+                    .map(|requisition| (requisition.requisition_row.id.clone(), requisition))
+                    .collect())
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }

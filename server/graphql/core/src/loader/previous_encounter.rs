@@ -27,34 +27,43 @@ impl Loader<PreviousEncounterLoaderInput> for PreviousEncounterLoader {
         &self,
         inputs: &[PreviousEncounterLoaderInput],
     ) -> Result<HashMap<PreviousEncounterLoaderInput, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
+        let service_provider = self.service_provider.clone();
+        let inputs = inputs.to_vec();
 
-        let mut out = HashMap::<PreviousEncounterLoaderInput, Self::Value>::new();
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<PreviousEncounterLoaderInput, Encounter>, async_graphql::Error> {
+                let service_context = service_provider.basic_context()?;
 
-        for input in inputs {
-            let filter = EncounterFilter::new()
-                .patient_id(EqualFilter::equal_to(input.patient_id.to_string()))
-                .start_datetime(DatetimeFilter::before(
-                    input.current_encounter_start_datetime,
-                ));
+                let mut out = HashMap::<PreviousEncounterLoaderInput, Encounter>::new();
 
-            let encounter = EncounterRepository::new(&service_context.connection)
-                .query(
-                    Pagination::one(),
-                    Some(filter),
-                    Some(EncounterSort {
-                        key: EncounterSortField::StartDatetime,
-                        desc: Some(true),
-                    }),
-                )?
-                .first()
-                .cloned();
+                for input in &inputs {
+                    let filter = EncounterFilter::new()
+                        .patient_id(EqualFilter::equal_to(input.patient_id.to_string()))
+                        .start_datetime(DatetimeFilter::before(
+                            input.current_encounter_start_datetime,
+                        ));
 
-            if let Some(encounter) = encounter {
-                out.insert(input.clone(), encounter);
-            }
-        }
+                    let encounter = EncounterRepository::new(&service_context.connection)
+                        .query(
+                            Pagination::one(),
+                            Some(filter),
+                            Some(EncounterSort {
+                                key: EncounterSortField::StartDatetime,
+                                desc: Some(true),
+                            }),
+                        )?
+                        .first()
+                        .cloned();
 
-        Ok(out)
+                    if let Some(encounter) = encounter {
+                        out.insert(input.clone(), encounter);
+                    }
+                }
+
+                Ok(out)
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }

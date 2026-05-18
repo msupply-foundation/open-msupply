@@ -40,7 +40,7 @@ pub enum CreateRequisitionShipmentResponse {
     Response(InvoiceNode),
 }
 
-pub fn create_requisition_shipment(
+pub async fn create_requisition_shipment(
     ctx: &Context<'_>,
     store_id: &str,
     input: CreateRequisitionShipmentInput,
@@ -53,13 +53,20 @@ pub fn create_requisition_shipment(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input = input.to_domain();
 
-    let response = match service_provider
-        .requisition_service
-        .create_requisition_shipment(&service_context, input.to_domain())
-    {
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        Ok(service_provider
+            .requisition_service
+            .create_requisition_shipment(&service_context, domain_input))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    let response = match result {
         Ok(invoice) => {
             CreateRequisitionShipmentResponse::Response(InvoiceNode::from_domain(invoice))
         }

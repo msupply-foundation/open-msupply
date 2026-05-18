@@ -1,5 +1,8 @@
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(SimpleObject)]
@@ -32,7 +35,7 @@ pub struct LogLevelNode {
     pub level: LogLevelEnum,
 }
 
-pub fn log_file_names(ctx: &Context<'_>) -> Result<LogNode> {
+pub async fn log_file_names(ctx: &Context<'_>) -> Result<LogNode> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -41,15 +44,22 @@ pub fn log_file_names(ctx: &Context<'_>) -> Result<LogNode> {
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
-    let log_service = &service_provider.log_service;
-    let file_names = log_service.get_log_file_names(&service_context)?;
+    let service_provider = ctx.service_provider_data();
+
+    let file_names = tokio::task::spawn_blocking(move || -> Result<_> {
+        let service_context = service_provider
+            .basic_context()
+            .map_err(StandardGraphqlError::from_repository_error)?;
+        let log_service = &service_provider.log_service;
+        Ok(log_service.get_log_file_names(&service_context)?)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     Ok(LogNode::from_domain(Some(file_names), None))
 }
 
-pub fn log_content(ctx: &Context<'_>, file_name: Option<String>) -> Result<LogNode> {
+pub async fn log_content(ctx: &Context<'_>, file_name: Option<String>) -> Result<LogNode> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -58,15 +68,22 @@ pub fn log_content(ctx: &Context<'_>, file_name: Option<String>) -> Result<LogNo
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
-    let log_service = &service_provider.log_service;
-    let content = log_service.get_log_content(&service_context, file_name)?;
+    let service_provider = ctx.service_provider_data();
+
+    let content = tokio::task::spawn_blocking(move || -> Result<_> {
+        let service_context = service_provider
+            .basic_context()
+            .map_err(StandardGraphqlError::from_repository_error)?;
+        let log_service = &service_provider.log_service;
+        Ok(log_service.get_log_content(&service_context, file_name)?)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     Ok(LogNode::from_domain(Some(vec![content.0]), Some(content.1)))
 }
 
-pub fn log_level(ctx: &Context<'_>) -> Result<LogLevelNode> {
+pub async fn log_level(ctx: &Context<'_>) -> Result<LogLevelNode> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -75,10 +92,17 @@ pub fn log_level(ctx: &Context<'_>) -> Result<LogLevelNode> {
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
-    let log_service = &service_provider.log_service;
-    let level = log_service.get_log_level(&service_context)?;
+    let service_provider = ctx.service_provider_data();
+
+    let level = tokio::task::spawn_blocking(move || -> Result<_> {
+        let service_context = service_provider
+            .basic_context()
+            .map_err(StandardGraphqlError::from_repository_error)?;
+        let log_service = &service_provider.log_service;
+        Ok(log_service.get_log_level(&service_context)?)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     Ok(LogLevelNode {
         level: level.map(LogLevelEnum::from).unwrap_or(LogLevelEnum::Info),

@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_types::types::document_registry::{DocumentRegistryCategoryNode, DocumentRegistryNode};
-use repository::DocumentRegistryCategory;
+use repository::{DocumentRegistry, DocumentRegistryCategory, RepositoryError};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     document::document_registry::{InsertDocRegistryError, InsertDocumentRegistry},
@@ -26,7 +26,7 @@ pub enum InsertDocumentResponse {
     Response(DocumentRegistryNode),
 }
 
-pub fn insert_document_registry(
+pub async fn insert_document_registry(
     ctx: &Context<'_>,
     input: InsertDocumentRegistryInput,
 ) -> Result<InsertDocumentResponse> {
@@ -37,18 +37,27 @@ pub fn insert_document_registry(
             store_id: None,
         },
     )?;
-    let allowed_ctx = user.capabilities();
+    let allowed_ctx = user.capabilities().clone();
 
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
-    let response = match service_provider.document_registry_service.insert(
-        &context,
-        to_domain(input),
-        allowed_ctx,
-    ) {
+    let (result, allowed_ctx) = tokio::task::spawn_blocking(
+        move || -> Result<(Result<DocumentRegistry, InsertDocRegistryError>, Vec<String>), RepositoryError> {
+            let context = service_provider.basic_context()?;
+            let result = service_provider.document_registry_service.insert(
+                &context,
+                to_domain(input),
+                &allowed_ctx,
+            );
+            Ok((result, allowed_ctx))
+        },
+    )
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    let response = match result {
         Ok(document_registry) => InsertDocumentResponse::Response(DocumentRegistryNode {
-            allowed_ctx: allowed_ctx.clone(),
+            allowed_ctx,
             document_registry,
         }),
         Err(error) => {

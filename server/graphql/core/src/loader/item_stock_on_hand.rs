@@ -30,32 +30,43 @@ impl Loader<ItemsStockOnHandLoaderInput> for ItemsStockOnHandLoader {
         &self,
         store_and_item_id: &[ItemsStockOnHandLoaderInput],
     ) -> Result<HashMap<ItemsStockOnHandLoaderInput, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
+        let service_provider = self.service_provider.clone();
+        let store_and_item_id = store_and_item_id.to_vec();
 
-        let item_ids =
-            util::dedup_iter(store_and_item_id.iter().map(|input| input.item_id.clone()));
-        let store_ids =
-            util::dedup_iter(store_and_item_id.iter().map(|input| input.store_id.clone()));
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<ItemsStockOnHandLoaderInput, u32>, async_graphql::Error> {
+                let service_context = service_provider.basic_context()?;
 
-        let filter = StockOnHandFilter {
-            item_id: Some(EqualFilter::equal_any(item_ids)),
-            store_id: Some(EqualFilter::equal_any(store_ids)),
-        };
+                let item_ids = util::dedup_iter(
+                    store_and_item_id.iter().map(|input| input.item_id.clone()),
+                );
+                let store_ids = util::dedup_iter(
+                    store_and_item_id.iter().map(|input| input.store_id.clone()),
+                );
 
-        let stock_on_hand_rows =
-            StockOnHandRepository::new(&service_context.connection).query(Some(filter))?;
+                let filter = StockOnHandFilter {
+                    item_id: Some(EqualFilter::equal_any(item_ids)),
+                    store_id: Some(EqualFilter::equal_any(store_ids)),
+                };
 
-        Ok(stock_on_hand_rows
-            .into_iter()
-            .map(|stock_on_hand| {
-                (
-                    ItemsStockOnHandLoaderInput::new(
-                        &stock_on_hand.store_id,
-                        &stock_on_hand.item_id,
-                    ),
-                    stock_on_hand.available_stock_on_hand as u32,
-                )
-            })
-            .collect())
+                let stock_on_hand_rows =
+                    StockOnHandRepository::new(&service_context.connection).query(Some(filter))?;
+
+                Ok(stock_on_hand_rows
+                    .into_iter()
+                    .map(|stock_on_hand| {
+                        (
+                            ItemsStockOnHandLoaderInput::new(
+                                &stock_on_hand.store_id,
+                                &stock_on_hand.item_id,
+                            ),
+                            stock_on_hand.available_stock_on_hand as u32,
+                        )
+                    })
+                    .collect())
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }

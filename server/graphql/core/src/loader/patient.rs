@@ -18,24 +18,32 @@ impl Loader<String> for PatientLoader {
         &self,
         patient_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
+        let service_provider = self.service_provider.clone();
+        let patient_ids = patient_ids.to_vec();
 
-        let result = self
-            .service_provider
-            .patient_service
-            .get_patients(
-                &service_context,
-                None,
-                Some(PatientFilter::new().id(EqualFilter::equal_any(patient_ids.to_owned()))),
-                None,
-                None,
-            )
-            .map_err(StandardGraphqlError::from_repository_error)?
-            .rows
-            .into_iter()
-            .map(|p| (p.id.clone(), p))
-            .collect();
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Patient>, async_graphql::Error> {
+                let service_context = service_provider.basic_context()?;
 
-        Ok(result)
+                let result = service_provider
+                    .patient_service
+                    .get_patients(
+                        &service_context,
+                        None,
+                        Some(PatientFilter::new().id(EqualFilter::equal_any(patient_ids))),
+                        None,
+                        None,
+                    )
+                    .map_err(StandardGraphqlError::from_repository_error)?
+                    .rows
+                    .into_iter()
+                    .map(|p| (p.id.clone(), p))
+                    .collect();
+
+                Ok(result)
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }

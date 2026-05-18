@@ -11,47 +11,55 @@ use service::{
 };
 use util::timezone::offset_to_timezone;
 
-fn do_invoice_count(
+async fn do_invoice_count(
     ctx: &Context<'_>,
-    invoice_type: &InvoiceType,
-    invoice_status: &InvoiceStatus,
-    range: &CountTimeRange,
-    timezone_offset: &FixedOffset,
-    store_id: &str,
+    invoice_type: InvoiceType,
+    invoice_status: InvoiceStatus,
+    range: CountTimeRange,
+    timezone_offset: FixedOffset,
+    store_id: String,
     is_external: Option<bool>,
 ) -> Result<i64> {
-    let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context(store_id.to_string(), "".to_string())?;
-    let service = &service_provider.invoice_count_service;
-    let count = match is_external {
-        None => service
-            .invoices_count(
+    let service_provider = ctx.service_provider_data();
+
+    let count = tokio::task::spawn_blocking(move || -> Result<i64> {
+        let service_ctx = service_provider
+            .context(store_id.to_string(), "".to_string())
+            .map_err(StandardGraphqlError::from_repository_error)?;
+        let service = &service_provider.invoice_count_service;
+        let result = match is_external {
+            None => service.invoices_count(
                 &service_ctx,
-                store_id,
-                invoice_type,
-                invoice_status,
-                range,
+                &store_id,
+                &invoice_type,
+                &invoice_status,
+                &range,
                 &Utc::now(),
-                timezone_offset,
+                &timezone_offset,
             ),
-        Some(is_external) => service
-            .invoices_count_by_external(
+            Some(is_external) => service.invoices_count_by_external(
                 &service_ctx,
-                store_id,
-                invoice_type,
-                invoice_status,
-                range,
+                &store_id,
+                &invoice_type,
+                &invoice_status,
+                &range,
                 &Utc::now(),
-                timezone_offset,
+                &timezone_offset,
                 is_external,
             ),
-    }
-    .map_err(|err| match err {
-        InvoiceCountError::RepositoryError(err) => StandardGraphqlError::from(err),
-        InvoiceCountError::BadTimezoneOffset => {
-            StandardGraphqlError::BadUserInput("Invalid timezone offset".to_string())
-        }
-    })?;
+        };
+        result.map_err(|err| {
+            match err {
+                InvoiceCountError::RepositoryError(err) => StandardGraphqlError::from(err),
+                InvoiceCountError::BadTimezoneOffset => {
+                    StandardGraphqlError::BadUserInput("Invalid timezone offset".to_string())
+                }
+            }
+            .extend()
+        })
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     Ok(count)
 }
@@ -69,25 +77,27 @@ impl InvoiceCountsSummary {
     async fn today(&self, ctx: &Context<'_>) -> Result<i64> {
         do_invoice_count(
             ctx,
-            &self.invoice_type,
-            &self.invoice_status,
-            &CountTimeRange::Today,
-            &self.timezone_offset,
-            &self.store_id,
+            self.invoice_type.clone(),
+            self.invoice_status.clone(),
+            CountTimeRange::Today,
+            self.timezone_offset,
+            self.store_id.clone(),
             self.is_external,
         )
+        .await
     }
 
     async fn this_week(&self, ctx: &Context<'_>) -> Result<i64> {
         do_invoice_count(
             ctx,
-            &self.invoice_type,
-            &self.invoice_status,
-            &CountTimeRange::ThisWeek,
-            &self.timezone_offset,
-            &self.store_id,
+            self.invoice_type.clone(),
+            self.invoice_status.clone(),
+            CountTimeRange::ThisWeek,
+            self.timezone_offset,
+            self.store_id.clone(),
             self.is_external,
         )
+        .await
     }
 }
 
@@ -110,20 +120,26 @@ impl OutboundInvoiceCounts {
 
     /// Number of outbound shipments not shipped yet
     async fn not_shipped(&self, ctx: &Context<'_>) -> Result<i64> {
-        let service_provider = ctx.service_provider();
-        let service_ctx = service_provider.basic_context().map_err(|_| Error {
-            message: "InternalError".to_string(),
-            source: None,
-            extensions: None,
-        })?;
-        let service = &service_provider.invoice_count_service;
-        let not_shipped: i64 = service
-            .outbound_invoices_not_shipped_count(&service_ctx, &self.store_id)
-            .map_err(|_| Error {
+        let service_provider = ctx.service_provider_data();
+        let store_id = self.store_id.clone();
+
+        let not_shipped = tokio::task::spawn_blocking(move || -> Result<i64> {
+            let service_ctx = service_provider.basic_context().map_err(|_| Error {
                 message: "InternalError".to_string(),
                 source: None,
                 extensions: None,
             })?;
+            let service = &service_provider.invoice_count_service;
+            service
+                .outbound_invoices_not_shipped_count(&service_ctx, &store_id)
+                .map_err(|_| Error {
+                    message: "InternalError".to_string(),
+                    source: None,
+                    extensions: None,
+                })
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)??;
         Ok(not_shipped)
     }
 }
@@ -147,25 +163,31 @@ impl InboundInvoiceCounts {
     }
 
     async fn not_delivered(&self, ctx: &Context<'_>) -> Result<i64> {
-        let service_provider = ctx.service_provider();
-        let service_ctx = service_provider.basic_context().map_err(|_| Error {
-            message: "InternalError".to_string(),
-            source: None,
-            extensions: None,
-        })?;
-        let service = &service_provider.invoice_count_service;
+        let service_provider = ctx.service_provider_data();
+        let store_id = self.store_id.clone();
+        let is_external = self.is_external;
 
-        let not_delivered: i64 = service
-            .inbound_invoices_not_delivered_count_by_external(
-                &service_ctx,
-                &self.store_id,
-                self.is_external,
-            )
-            .map_err(|_| Error {
+        let not_delivered = tokio::task::spawn_blocking(move || -> Result<i64> {
+            let service_ctx = service_provider.basic_context().map_err(|_| Error {
                 message: "InternalError".to_string(),
                 source: None,
                 extensions: None,
             })?;
+            let service = &service_provider.invoice_count_service;
+            service
+                .inbound_invoices_not_delivered_count_by_external(
+                    &service_ctx,
+                    &store_id,
+                    is_external,
+                )
+                .map_err(|_| Error {
+                    message: "InternalError".to_string(),
+                    source: None,
+                    extensions: None,
+                })
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)??;
 
         Ok(not_delivered)
     }

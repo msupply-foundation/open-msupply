@@ -17,19 +17,28 @@ impl Loader<String> for ItemVariantsByItemIdLoader {
     type Error = RepositoryError;
 
     async fn load(&self, item_ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
-        let repo = ItemVariantRepository::new(&service_context.connection);
+        let service_provider = self.service_provider.clone();
+        let item_ids = item_ids.to_vec();
 
-        let item_variants = repo.query_by_filter(
-            ItemVariantFilter::new().item_id(EqualFilter::equal_any(item_ids.to_vec())),
-        )?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Vec<ItemVariant>>, RepositoryError> {
+                let service_context = service_provider.basic_context()?;
+                let repo = ItemVariantRepository::new(&service_context.connection);
 
-        let mut map: HashMap<String, Vec<ItemVariant>> = HashMap::new();
-        for variant in item_variants {
-            let list = map.entry(variant.item_row.id.clone()).or_default();
-            list.push(variant);
-        }
-        Ok(map)
+                let item_variants = repo.query_by_filter(
+                    ItemVariantFilter::new().item_id(EqualFilter::equal_any(item_ids)),
+                )?;
+
+                let mut map: HashMap<String, Vec<ItemVariant>> = HashMap::new();
+                for variant in item_variants {
+                    let list = map.entry(variant.item_row.id.clone()).or_default();
+                    list.push(variant);
+                }
+                Ok(map)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }
 
@@ -45,17 +54,26 @@ impl Loader<String> for ItemVariantByItemVariantIdLoader {
         &self,
         item_variant_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
-        let repo = ItemVariantRepository::new(&service_context.connection);
+        let service_provider = self.service_provider.clone();
+        let item_variant_ids = item_variant_ids.to_vec();
 
-        let item_variants = repo.query_by_filter(
-            ItemVariantFilter::new().id(EqualFilter::equal_any(item_variant_ids.to_vec())),
-        )?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, ItemVariant>, RepositoryError> {
+                let service_context = service_provider.basic_context()?;
+                let repo = ItemVariantRepository::new(&service_context.connection);
 
-        let mut map: HashMap<String, ItemVariant> = HashMap::new();
-        for variant in item_variants {
-            map.insert(variant.clone().item_variant_row.id, variant);
-        }
-        Ok(map)
+                let item_variants = repo.query_by_filter(
+                    ItemVariantFilter::new().id(EqualFilter::equal_any(item_variant_ids)),
+                )?;
+
+                let mut map: HashMap<String, ItemVariant> = HashMap::new();
+                for variant in item_variants {
+                    map.insert(variant.clone().item_variant_row.id, variant);
+                }
+                Ok(map)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

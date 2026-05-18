@@ -20,31 +20,43 @@ impl Loader<String> for ItemCategoryLoader {
         &self,
         item_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let category_repo = CategoryRowRepository::new(&connection);
-        let item_category_repo = ItemCategoryRepository::new(&connection);
+        let connection_manager = self.connection_manager.clone();
+        let item_ids = item_ids.to_vec();
 
-        let mut result_map: HashMap<String, Vec<CategoryRow>> = HashMap::new();
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Vec<CategoryRow>>, RepositoryError> {
+                let connection = connection_manager.connection()?;
+                let category_repo = CategoryRowRepository::new(&connection);
+                let item_category_repo = ItemCategoryRepository::new(&connection);
 
-        for item_id in item_ids {
-            let item_categories = item_category_repo.query_by_filter(
-                ItemCategoryFilter::new().item_id(EqualFilter::equal_to(item_id.clone())),
-            )?;
+                let mut result_map: HashMap<String, Vec<CategoryRow>> = HashMap::new();
 
-            let mut categories = Vec::new();
-            for ic in &item_categories {
-                if let Some(row) = category_repo.find_one_by_id(&ic.item_category_join_row.category_id)? {
-                    if row.deleted_datetime.is_none() {
-                        categories.push(row);
+                for item_id in &item_ids {
+                    let item_categories = item_category_repo.query_by_filter(
+                        ItemCategoryFilter::new()
+                            .item_id(EqualFilter::equal_to(item_id.clone())),
+                    )?;
+
+                    let mut categories = Vec::new();
+                    for ic in &item_categories {
+                        if let Some(row) = category_repo
+                            .find_one_by_id(&ic.item_category_join_row.category_id)?
+                        {
+                            if row.deleted_datetime.is_none() {
+                                categories.push(row);
+                            }
+                        }
+                    }
+
+                    if !categories.is_empty() {
+                        result_map.insert(item_id.clone(), categories);
                     }
                 }
-            }
 
-            if !categories.is_empty() {
-                result_map.insert(item_id.clone(), categories);
-            }
-        }
-
-        Ok(result_map)
+                Ok(result_map)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

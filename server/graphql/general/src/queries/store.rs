@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::generic_filters::{EqualFilterInput, EqualFilterStringInput};
 use graphql_core::simple_generic_errors::{NodeError, NodeErrorInterface};
-use graphql_core::standard_graphql_error::validate_auth;
+use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
     generic_filters::StringFilterInput, pagination::PaginationInput,
     standard_graphql_error::list_error_to_gql_err, ContextExt,
@@ -56,7 +56,7 @@ pub enum StoresResponse {
     Response(StoreConnector),
 }
 
-pub fn get_store(ctx: &Context<'_>, id: &str) -> Result<StoreResponse> {
+pub async fn get_store(ctx: &Context<'_>, id: &str) -> Result<StoreResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -65,14 +65,19 @@ pub fn get_store(ctx: &Context<'_>, id: &str) -> Result<StoreResponse> {
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context("".to_string(), user.user_id)?;
-    let service = &service_provider.general_service;
+    let service_provider = ctx.service_provider_data();
+    let id = id.to_string();
 
-    let store_option = service.get_store(
-        &service_context,
-        StoreFilter::new().id(EqualFilter::equal_to(id.to_string())),
-    )?;
+    let store_option = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context("".to_string(), user.user_id)?;
+        let service = &service_provider.general_service;
+        service.get_store(
+            &service_context,
+            StoreFilter::new().id(EqualFilter::equal_to(id)),
+        )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     let response = match store_option {
         Some(store) => StoreResponse::Response(StoreNode::from_domain(store)),
@@ -84,7 +89,7 @@ pub fn get_store(ctx: &Context<'_>, id: &str) -> Result<StoreResponse> {
     Ok(response)
 }
 
-pub fn stores(
+pub async fn stores(
     ctx: &Context<'_>,
     page: Option<PaginationInput>,
     filter: Option<StoreFilterInput>,
@@ -98,22 +103,23 @@ pub fn stores(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context("".to_string(), user.user_id)?;
-    let service = &service_provider.general_service;
+    let service_provider = ctx.service_provider_data();
+    let pagination = page.map(PaginationOption::from);
+    let domain_filter = filter.map(|filter| filter.to_domain());
+    let domain_sort = sort
+        .and_then(|mut sort_list| sort_list.pop())
+        .map(|sort| sort.to_domain());
 
     // TODO add auth validation and restrict returned stores according to the user's permissions
 
-    let result = service
-        .get_stores(
-            &service_context,
-            page.map(PaginationOption::from),
-            filter.map(|filter| filter.to_domain()),
-            // Currently only one sort option is supported, use the first from the list.
-            sort.and_then(|mut sort_list| sort_list.pop())
-                .map(|sort| sort.to_domain()),
-        )
-        .map_err(list_error_to_gql_err)?;
+    let result = tokio::task::spawn_blocking(move || -> Result<_, service::ListError> {
+        let service_context = service_provider.context("".to_string(), user.user_id)?;
+        let service = &service_provider.general_service;
+        service.get_stores(&service_context, pagination, domain_filter, domain_sort)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(list_error_to_gql_err)?;
     Ok(StoresResponse::Response({
         StoreConnector {
             total_count: result.count,

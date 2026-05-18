@@ -38,54 +38,65 @@ impl Loader<ProgramEnrolmentLoaderInput> for ProgramEnrolmentLoader {
         &self,
         inputs: &[ProgramEnrolmentLoaderInput],
     ) -> Result<HashMap<ProgramEnrolmentLoaderInput, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
+        let service_provider = self.service_provider.clone();
+        let inputs = inputs.to_vec();
 
-        // allowed_ctx -> Vec<(patient_id, program)>
-        let mut map = HashMap::<Vec<String>, Vec<(String, String)>>::new();
-        for item in inputs {
-            let entry = map.entry(item.allowed_ctx.clone()).or_default();
-            entry.push((item.patient_id.clone(), item.program.clone()))
-        }
-        let mut out = HashMap::<ProgramEnrolmentLoaderInput, Self::Value>::new();
+        tokio::task::spawn_blocking(
+            move || -> Result<
+                HashMap<ProgramEnrolmentLoaderInput, ProgramEnrolment>,
+                async_graphql::Error,
+            > {
+                let service_context = service_provider.basic_context()?;
 
-        for (allowed_ctx, patient_program_list) in map.into_iter() {
-            let program_to_patients_map = patient_program_list.into_iter().fold(
-                HashMap::<String, Vec<String>>::new(),
-                |mut prev, (patient_id, program)| {
-                    let entry = prev.entry(program).or_default();
-                    entry.push(patient_id);
-                    prev
-                },
-            );
-            for (program, patient_id) in program_to_patients_map {
-                let entries = self
-                    .service_provider
-                    .program_enrolment_service
-                    .program_enrolments(
-                        &service_context,
-                        Pagination::all(),
-                        None,
-                        Some(
-                            ProgramEnrolmentFilter::new()
-                                .context_id(EqualFilter::equal_to(program.to_owned()))
-                                .patient_id(EqualFilter::equal_any(patient_id)),
-                        ),
-                        allowed_ctx.clone(),
-                    )?;
-
-                for program_enrolment in entries.into_iter() {
-                    out.insert(
-                        ProgramEnrolmentLoaderInput::new(
-                            &program_enrolment.patient_row.id,
-                            &program,
-                            allowed_ctx.clone(),
-                        ),
-                        program_enrolment,
-                    );
+                // allowed_ctx -> Vec<(patient_id, program)>
+                let mut map = HashMap::<Vec<String>, Vec<(String, String)>>::new();
+                for item in &inputs {
+                    let entry = map.entry(item.allowed_ctx.clone()).or_default();
+                    entry.push((item.patient_id.clone(), item.program.clone()))
                 }
-            }
-        }
+                let mut out = HashMap::<ProgramEnrolmentLoaderInput, ProgramEnrolment>::new();
 
-        Ok(out)
+                for (allowed_ctx, patient_program_list) in map.into_iter() {
+                    let program_to_patients_map = patient_program_list.into_iter().fold(
+                        HashMap::<String, Vec<String>>::new(),
+                        |mut prev, (patient_id, program)| {
+                            let entry = prev.entry(program).or_default();
+                            entry.push(patient_id);
+                            prev
+                        },
+                    );
+                    for (program, patient_id) in program_to_patients_map {
+                        let entries = service_provider
+                            .program_enrolment_service
+                            .program_enrolments(
+                                &service_context,
+                                Pagination::all(),
+                                None,
+                                Some(
+                                    ProgramEnrolmentFilter::new()
+                                        .context_id(EqualFilter::equal_to(program.to_owned()))
+                                        .patient_id(EqualFilter::equal_any(patient_id)),
+                                ),
+                                allowed_ctx.clone(),
+                            )?;
+
+                        for program_enrolment in entries.into_iter() {
+                            out.insert(
+                                ProgramEnrolmentLoaderInput::new(
+                                    &program_enrolment.patient_row.id,
+                                    &program,
+                                    allowed_ctx.clone(),
+                                ),
+                                program_enrolment,
+                            );
+                        }
+                    }
+                }
+
+                Ok(out)
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }

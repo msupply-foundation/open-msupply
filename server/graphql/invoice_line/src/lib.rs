@@ -24,7 +24,7 @@ impl InvoiceLineQueries {
         sort: Option<Vec<InvoiceLineSortInput>>,
         report_sort: Option<PrintReportSortInput>,
     ) -> Result<InvoiceLinesResponse> {
-        invoice_lines(ctx, &store_id, page, filter, sort, report_sort)
+        invoice_lines(ctx, &store_id, page, filter, sort, report_sort).await
     }
 
     pub async fn draft_stock_out_lines(
@@ -34,7 +34,7 @@ impl InvoiceLineQueries {
         item_id: String,
         invoice_id: String,
     ) -> Result<DraftStockOutItemData> {
-        draft_outbound_lines(ctx, &store_id, &item_id, &invoice_id)
+        draft_outbound_lines(ctx, &store_id, &item_id, &invoice_id).await
     }
 }
 
@@ -50,7 +50,7 @@ impl InvoiceLineMutations {
         store_id: String,
         input: outbound_shipment_line::line::insert::InsertInput,
     ) -> Result<outbound_shipment_line::line::insert::InsertResponse> {
-        outbound_shipment_line::line::insert::insert(ctx, &store_id, input)
+        outbound_shipment_line::line::insert::insert(ctx, &store_id, input).await
     }
 
     async fn update_outbound_shipment_line(
@@ -59,7 +59,7 @@ impl InvoiceLineMutations {
         store_id: String,
         input: outbound_shipment_line::line::update::UpdateInput,
     ) -> Result<outbound_shipment_line::line::update::UpdateResponse> {
-        outbound_shipment_line::line::update::update(ctx, &store_id, input)
+        outbound_shipment_line::line::update::update(ctx, &store_id, input).await
     }
 
     async fn delete_outbound_shipment_line(
@@ -68,7 +68,7 @@ impl InvoiceLineMutations {
         store_id: String,
         input: outbound_shipment_line::line::delete::DeleteInput,
     ) -> Result<outbound_shipment_line::line::delete::DeleteResponse> {
-        outbound_shipment_line::line::delete::delete(ctx, &store_id, input)
+        outbound_shipment_line::line::delete::delete(ctx, &store_id, input).await
     }
 
     async fn insert_outbound_shipment_service_line(
@@ -77,7 +77,7 @@ impl InvoiceLineMutations {
         store_id: String,
         input: outbound_shipment_line::service_line::insert::InsertInput,
     ) -> Result<outbound_shipment_line::service_line::insert::InsertResponse> {
-        outbound_shipment_line::service_line::insert::insert(ctx, &store_id, input)
+        outbound_shipment_line::service_line::insert::insert(ctx, &store_id, input).await
     }
 
     async fn update_outbound_shipment_service_line(
@@ -86,7 +86,7 @@ impl InvoiceLineMutations {
         store_id: String,
         input: outbound_shipment_line::service_line::update::UpdateInput,
     ) -> Result<outbound_shipment_line::service_line::update::UpdateResponse> {
-        outbound_shipment_line::service_line::update::update(ctx, &store_id, input)
+        outbound_shipment_line::service_line::update::update(ctx, &store_id, input).await
     }
 
     async fn delete_outbound_shipment_service_line(
@@ -95,7 +95,7 @@ impl InvoiceLineMutations {
         store_id: String,
         input: outbound_shipment_line::service_line::delete::DeleteInput,
     ) -> Result<outbound_shipment_line::service_line::delete::DeleteResponse> {
-        outbound_shipment_line::service_line::delete::delete(ctx, &store_id, input)
+        outbound_shipment_line::service_line::delete::delete(ctx, &store_id, input).await
     }
 
     async fn insert_outbound_shipment_unallocated_line(
@@ -104,7 +104,7 @@ impl InvoiceLineMutations {
         store_id: String,
         input: outbound_shipment_line::unallocated_line::insert::InsertInput,
     ) -> Result<outbound_shipment_line::unallocated_line::insert::InsertResponse> {
-        outbound_shipment_line::unallocated_line::insert::insert(ctx, &store_id, input)
+        outbound_shipment_line::unallocated_line::insert::insert(ctx, &store_id, input).await
     }
 
     async fn update_outbound_shipment_unallocated_line(
@@ -113,7 +113,7 @@ impl InvoiceLineMutations {
         store_id: String,
         input: outbound_shipment_line::unallocated_line::update::UpdateInput,
     ) -> Result<outbound_shipment_line::unallocated_line::update::UpdateResponse> {
-        outbound_shipment_line::unallocated_line::update::update(ctx, &store_id, input)
+        outbound_shipment_line::unallocated_line::update::update(ctx, &store_id, input).await
     }
 
     async fn delete_outbound_shipment_unallocated_line(
@@ -122,7 +122,7 @@ impl InvoiceLineMutations {
         store_id: String,
         input: outbound_shipment_line::unallocated_line::delete::DeleteInput,
     ) -> Result<outbound_shipment_line::unallocated_line::delete::DeleteResponse> {
-        outbound_shipment_line::unallocated_line::delete::delete(ctx, &store_id, input)
+        outbound_shipment_line::unallocated_line::delete::delete(ctx, &store_id, input).await
     }
 
     async fn allocate_outbound_shipment_unallocated_line(
@@ -131,7 +131,7 @@ impl InvoiceLineMutations {
         store_id: String,
         line_id: String,
     ) -> Result<outbound_shipment_line::unallocated_line::allocate::AllocateResponse> {
-        outbound_shipment_line::unallocated_line::allocate::allocate(ctx, &store_id, line_id)
+        outbound_shipment_line::unallocated_line::allocate::allocate(ctx, &store_id, line_id).await
     }
 
     async fn save_outbound_shipment_item_lines(
@@ -143,6 +143,7 @@ impl InvoiceLineMutations {
         outbound_shipment_line::save_item_lines::save_outbound_shipment_item_lines(
             ctx, &store_id, input,
         )
+        .await
     }
 
     async fn save_prescription_item_lines(
@@ -152,6 +153,7 @@ impl InvoiceLineMutations {
         input: prescription_line::save_item_lines::SavePrescriptionLinesInput,
     ) -> Result<InvoiceNode> {
         prescription_line::save_item_lines::save_prescription_item_lines(ctx, &store_id, input)
+            .await
     }
 
     // Inbound
@@ -167,6 +169,7 @@ impl InvoiceLineMutations {
             input,
             InboundShipmentType::InboundShipment,
         )
+        .await
     }
 
     async fn insert_inbound_shipment_external_line(
@@ -181,6 +184,7 @@ impl InvoiceLineMutations {
             input,
             InboundShipmentType::InboundShipmentExternal,
         )
+        .await
     }
 
     async fn update_inbound_shipment_line(
@@ -195,6 +199,7 @@ impl InvoiceLineMutations {
             input,
             InboundShipmentType::InboundShipment,
         )
+        .await
     }
 
     async fn update_inbound_shipment_external_line(
@@ -209,6 +214,7 @@ impl InvoiceLineMutations {
             input,
             InboundShipmentType::InboundShipmentExternal,
         )
+        .await
     }
 
     async fn delete_inbound_shipment_line(
@@ -223,6 +229,7 @@ impl InvoiceLineMutations {
             input,
             InboundShipmentType::InboundShipment,
         )
+        .await
     }
 
     async fn delete_inbound_shipment_external_line(
@@ -237,6 +244,7 @@ impl InvoiceLineMutations {
             input,
             InboundShipmentType::InboundShipmentExternal,
         )
+        .await
     }
 
     async fn insert_inbound_shipment_service_line(
@@ -251,6 +259,7 @@ impl InvoiceLineMutations {
             input,
             InboundShipmentType::InboundShipment,
         )
+        .await
     }
 
     async fn insert_inbound_shipment_external_service_line(
@@ -265,6 +274,7 @@ impl InvoiceLineMutations {
             input,
             InboundShipmentType::InboundShipmentExternal,
         )
+        .await
     }
 
     async fn update_inbound_shipment_service_line(
@@ -279,6 +289,7 @@ impl InvoiceLineMutations {
             input,
             InboundShipmentType::InboundShipment,
         )
+        .await
     }
 
     async fn update_inbound_shipment_external_service_line(
@@ -293,6 +304,7 @@ impl InvoiceLineMutations {
             input,
             InboundShipmentType::InboundShipmentExternal,
         )
+        .await
     }
 
     async fn delete_inbound_shipment_service_line(
@@ -307,6 +319,7 @@ impl InvoiceLineMutations {
             input,
             InboundShipmentType::InboundShipment,
         )
+        .await
     }
 
     async fn delete_inbound_shipment_external_service_line(
@@ -321,6 +334,7 @@ impl InvoiceLineMutations {
             input,
             InboundShipmentType::InboundShipmentExternal,
         )
+        .await
     }
 
     async fn insert_prescription_line(
@@ -329,7 +343,7 @@ impl InvoiceLineMutations {
         store_id: String,
         input: prescription_line::insert::InsertInput,
     ) -> Result<prescription_line::insert::InsertResponse> {
-        prescription_line::insert::insert(ctx, &store_id, input)
+        prescription_line::insert::insert(ctx, &store_id, input).await
     }
 
     async fn update_prescription_line(
@@ -338,7 +352,7 @@ impl InvoiceLineMutations {
         store_id: String,
         input: prescription_line::update::UpdateInput,
     ) -> Result<prescription_line::update::UpdateResponse> {
-        prescription_line::update::update(ctx, &store_id, input)
+        prescription_line::update::update(ctx, &store_id, input).await
     }
 
     async fn delete_prescription_line(
@@ -347,6 +361,6 @@ impl InvoiceLineMutations {
         store_id: String,
         input: prescription_line::delete::DeleteInput,
     ) -> Result<prescription_line::delete::DeleteResponse> {
-        prescription_line::delete::delete(ctx, &store_id, input)
+        prescription_line::delete::delete(ctx, &store_id, input).await
     }
 }

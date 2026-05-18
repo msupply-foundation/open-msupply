@@ -4,8 +4,9 @@ pub struct AllocateProgramNumberInput {
 }
 
 use async_graphql::*;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use repository::NumberRowType;
+use repository::{NumberRowType, RepositoryError};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     number::next_number,
@@ -27,7 +28,7 @@ pub enum AllocateProgramNumberResponse {
     Response(NumberNode),
 }
 
-pub fn allocate_program_number(
+pub async fn allocate_program_number(
     ctx: &Context<'_>,
     store_id: String,
     input: AllocateProgramNumberInput,
@@ -40,14 +41,19 @@ pub fn allocate_program_number(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
-    let number = next_number(
-        &context.connection,
-        &NumberRowType::Program(input.number_name),
-        &store_id,
-    )?;
+    let number = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let context = service_provider.basic_context()?;
+        next_number(
+            &context.connection,
+            &NumberRowType::Program(input.number_name),
+            &store_id,
+        )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
     Ok(AllocateProgramNumberResponse::Response(NumberNode {
         number,
     }))

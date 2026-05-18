@@ -6,7 +6,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{rnr_form::RnRFormNode, rnr_form_line::LowStockStatus};
-use repository::{RnRForm, RnRFormLowStock};
+use repository::{RepositoryError, RnRForm, RnRFormLowStock};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     rnr_form::update::{UpdateRnRForm, UpdateRnRFormError as ServiceError, UpdateRnRFormLine},
@@ -47,7 +47,7 @@ pub enum UpdateRnRFormResponse {
     Response(RnRFormNode),
 }
 
-pub fn update_rnr_form(
+pub async fn update_rnr_form(
     ctx: &Context<'_>,
     store_id: String,
     input: UpdateRnRFormInput,
@@ -59,13 +59,22 @@ pub fn update_rnr_form(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
-    match service_provider.rnr_form_service.update_rnr_form(
-        &service_context,
-        &store_id,
-        UpdateRnRFormInput::to_domain(input),
-    ) {
+    let service_provider = ctx.service_provider_data();
+
+    let result = tokio::task::spawn_blocking(
+        move || -> Result<Result<RnRForm, ServiceError>, RepositoryError> {
+            let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+            Ok(service_provider.rnr_form_service.update_rnr_form(
+                &service_context,
+                &store_id,
+                UpdateRnRFormInput::to_domain(input),
+            ))
+        },
+    )
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    match result {
         Ok(RnRForm {
             rnr_form_row,
             name_row,

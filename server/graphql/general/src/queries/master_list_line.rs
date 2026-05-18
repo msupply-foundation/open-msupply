@@ -17,7 +17,7 @@ use graphql_core::{
     ContextExt,
 };
 
-pub fn master_list_lines(
+pub async fn master_list_lines(
     ctx: &Context<'_>,
     store_id: String,
     master_list_id: String,
@@ -33,21 +33,26 @@ pub fn master_list_lines(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id, user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let pagination = page.map(PaginationOption::from);
+    let domain_filter = filter.map(MasterListLineFilterInput::to_domain);
+    let domain_sort = sort
+        .and_then(|mut sort_list| sort_list.pop())
+        .map(|sort| sort.to_domain());
 
-    let master_lists = service_provider
-        .master_list_service
-        .get_master_list_lines(
+    let master_lists = tokio::task::spawn_blocking(move || -> Result<_, service::ListError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        service_provider.master_list_service.get_master_list_lines(
             &service_context,
             &master_list_id,
-            page.map(PaginationOption::from),
-            filter.map(MasterListLineFilterInput::to_domain),
-            // Currently only one sort option is supported, use the first from the list.
-            sort.and_then(|mut sort_list| sort_list.pop())
-                .map(|sort| sort.to_domain()),
+            pagination,
+            domain_filter,
+            domain_sort,
         )
-        .map_err(StandardGraphqlError::from_list_error)?;
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(MasterListLinesResponse::Response(
         MasterListLineConnector::from_domain(master_lists),

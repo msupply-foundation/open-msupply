@@ -19,27 +19,38 @@ impl Loader<String> for PurchaseOrderByIdLoader {
         &self,
         purchase_order_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
+        let service_provider = self.service_provider.clone();
+        let purchase_order_ids = purchase_order_ids.to_vec();
 
-        let purchase_orders = self
-            .service_provider
-            .purchase_order_service
-            .get_purchase_orders(
-                &service_context,
-                None,
-                None,
-                Some(
-                    PurchaseOrderFilter::new()
-                        .id(EqualFilter::equal_any(purchase_order_ids.to_owned())),
-                ),
-                None,
-            )
-            .map_err(StandardGraphqlError::from_list_error)?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, PurchaseOrder>, async_graphql::Error> {
+                let service_context = service_provider.basic_context()?;
 
-        let mut result: HashMap<String, PurchaseOrder> = HashMap::new();
-        for purchase_order in purchase_orders.rows {
-            result.insert(purchase_order.purchase_order_row.id.clone(), purchase_order);
-        }
-        Ok(result)
+                let purchase_orders = service_provider
+                    .purchase_order_service
+                    .get_purchase_orders(
+                        &service_context,
+                        None,
+                        None,
+                        Some(
+                            PurchaseOrderFilter::new()
+                                .id(EqualFilter::equal_any(purchase_order_ids)),
+                        ),
+                        None,
+                    )
+                    .map_err(StandardGraphqlError::from_list_error)?;
+
+                let mut result: HashMap<String, PurchaseOrder> = HashMap::new();
+                for purchase_order in purchase_orders.rows {
+                    result.insert(
+                        purchase_order.purchase_order_row.id.clone(),
+                        purchase_order,
+                    );
+                }
+                Ok(result)
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }

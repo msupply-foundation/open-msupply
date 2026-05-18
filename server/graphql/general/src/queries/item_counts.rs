@@ -28,9 +28,8 @@ pub struct ItemCountsResponse {
 #[Object]
 impl ItemCounts {
     async fn item_counts(&self, ctx: &Context<'_>) -> Result<ItemCountsResponse> {
-        let service_provider = ctx.service_provider();
-        let service_ctx = service_provider.basic_context()?;
-        let service = &service_provider.item_count_service;
+        let service_provider = ctx.service_provider_data();
+        let store_id = self.store_id.clone();
         let low_stock_threshold_in_months = self
             .low_stock_threshold
             .unwrap_or(DEFAULT_LOW_STOCK_THRESHOLD);
@@ -38,24 +37,32 @@ impl ItemCounts {
             .high_stock_threshold
             .unwrap_or(DEFAULT_HIGH_STOCK_THRESHOLD);
 
-        match service.get_item_counts(
-            &service_ctx,
-            &self.store_id,
-            low_stock_threshold_in_months,
-            high_stock_threshold_in_months,
-        ) {
-            Ok(item_counts) => Ok(ItemCountsResponse {
-                total: item_counts.total,
-                no_stock: item_counts.no_stock,
-                low_stock: item_counts.low_stock,
-                high_stock: item_counts.high_stock,
-                out_of_stock_products: item_counts.out_of_stock_products,
-                products_at_risk_of_being_out_of_stock: item_counts
-                    .products_at_risk_of_being_out_of_stock,
-                products_overstocked: item_counts.products_overstocked,
-            }),
-            Err(err) => Err(StandardGraphqlError::from_error(&err)),
-        }
+        let result = tokio::task::spawn_blocking(move || {
+            let service_ctx = service_provider
+                .basic_context()
+                .map_err(StandardGraphqlError::from_repository_error)?;
+            let service = &service_provider.item_count_service;
+            service
+                .get_item_counts(
+                    &service_ctx,
+                    &store_id,
+                    low_stock_threshold_in_months,
+                    high_stock_threshold_in_months,
+                )
+                .map_err(|err| StandardGraphqlError::from_error(&err))
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)??;
+
+        Ok(ItemCountsResponse {
+            total: result.total,
+            no_stock: result.no_stock,
+            low_stock: result.low_stock,
+            high_stock: result.high_stock,
+            out_of_stock_products: result.out_of_stock_products,
+            products_at_risk_of_being_out_of_stock: result.products_at_risk_of_being_out_of_stock,
+            products_overstocked: result.products_overstocked,
+        })
     }
 }
 

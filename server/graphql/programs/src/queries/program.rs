@@ -10,13 +10,14 @@ use repository::{PaginationOption, ProgramFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     program::query::get_periods,
+    ListError,
 };
 
 use crate::types::program::{
     ProgramConnector, ProgramFilterInput, ProgramSortInput, ProgramsResponse,
 };
 
-pub fn programs(
+pub async fn programs(
     ctx: &Context<'_>,
     store_id: String,
     page: Option<PaginationInput>,
@@ -30,25 +31,27 @@ pub fn programs(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let context = service_provider.context(store_id, user.user_id)?;
+    let service_provider = ctx.service_provider_data();
 
-    let list_result = service_provider
-        .program_service
-        .get_programs(
+    let list_result = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+        let context = service_provider.context(store_id, user.user_id)?;
+        service_provider.program_service.get_programs(
             &context.connection,
             page.map(PaginationOption::from),
             filter.map(ProgramFilter::from),
             sort.map(ProgramSortInput::to_domain),
         )
-        .map_err(StandardGraphqlError::from_list_error)?;
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(ProgramsResponse::Response(ProgramConnector::from_domain(
         list_result,
     )))
 }
 
-pub fn periods(
+pub async fn periods(
     ctx: &Context<'_>,
     store_id: String,
     program_id: Option<String>,
@@ -62,16 +65,20 @@ pub fn periods(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
-    let result = get_periods(
-        &context.connection,
-        store_id,
-        program_id,
-        page.map(PaginationOption::from),
-        filter.map(|f| f.to_domain()),
-    )
+    let result = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+        let context = service_provider.basic_context()?;
+        get_periods(
+            &context.connection,
+            store_id,
+            program_id,
+            page.map(PaginationOption::from),
+            filter.map(|f| f.to_domain()),
+        )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
     .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(PeriodsResponse::Response(PeriodConnector::from_domain(

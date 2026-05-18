@@ -15,24 +15,33 @@ impl Loader<String> for ProgramByIdLoader {
     type Error = RepositoryError;
 
     async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = ProgramRepository::new(&connection);
-        let result = repo
-            .query(
-                Pagination {
-                    limit: keys.len() as u32,
-                    offset: 0,
-                },
-                Some(ProgramFilter::new().id(EqualFilter::equal_any(keys.to_vec()))),
-                None,
-            )?
-            .into_iter()
-            .map(|program| {
-                let id = program.id.clone();
-                (id, program)
-            })
-            .collect();
-        Ok(result)
+        let connection_manager = self.connection_manager.clone();
+        let keys = keys.to_vec();
+
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Program>, RepositoryError> {
+                let connection = connection_manager.connection()?;
+                let repo = ProgramRepository::new(&connection);
+                let result = repo
+                    .query(
+                        Pagination {
+                            limit: keys.len() as u32,
+                            offset: 0,
+                        },
+                        Some(ProgramFilter::new().id(EqualFilter::equal_any(keys))),
+                        None,
+                    )?
+                    .into_iter()
+                    .map(|program| {
+                        let id = program.id.clone();
+                        (id, program)
+                    })
+                    .collect();
+                Ok(result)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }
 
@@ -61,33 +70,46 @@ impl Loader<ProgramsByItemIdLoaderInput> for ProgramsByItemIdLoader {
         &self,
         ids_with_store_id: &[ProgramsByItemIdLoaderInput],
     ) -> Result<HashMap<ProgramsByItemIdLoaderInput, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
-        let connection = service_context.connection;
+        let service_provider = self.service_provider.clone();
+        let ids_with_store_id = ids_with_store_id.to_vec();
 
-        let mut store_item_map = HashMap::<String, Vec<String>>::new();
-        for item in ids_with_store_id {
-            let entry = store_item_map.entry(item.store_id.clone()).or_default();
-            entry.push(item.item_id.clone())
-        }
-        let mut output = HashMap::<ProgramsByItemIdLoaderInput, Self::Value>::new();
+        tokio::task::spawn_blocking(
+            move || -> Result<
+                HashMap<ProgramsByItemIdLoaderInput, Vec<Program>>,
+                async_graphql::Error,
+            > {
+                let service_context = service_provider.basic_context()?;
+                let connection = service_context.connection;
 
-        for (store_id, item_ids) in store_item_map {
-            for item_id in item_ids {
-                let program = ProgramRepository::new(&connection).query_by_filter(
-                    ProgramFilter::new()
-                        .exists_for_store_id(EqualFilter::equal_to(store_id.to_string()))
-                        .item_id(EqualFilter::equal_to(item_id.to_string())),
-                )?;
+                let mut store_item_map = HashMap::<String, Vec<String>>::new();
+                for item in &ids_with_store_id {
+                    let entry = store_item_map.entry(item.store_id.clone()).or_default();
+                    entry.push(item.item_id.clone())
+                }
+                let mut output =
+                    HashMap::<ProgramsByItemIdLoaderInput, Vec<Program>>::new();
 
-                let entry = output.entry(ProgramsByItemIdLoaderInput {
-                    store_id: store_id.clone(),
-                    item_id,
-                });
+                for (store_id, item_ids) in store_item_map {
+                    for item_id in item_ids {
+                        let program = ProgramRepository::new(&connection).query_by_filter(
+                            ProgramFilter::new()
+                                .exists_for_store_id(EqualFilter::equal_to(store_id.to_string()))
+                                .item_id(EqualFilter::equal_to(item_id.to_string())),
+                        )?;
 
-                entry.or_default().extend(program);
-            }
-        }
+                        let entry = output.entry(ProgramsByItemIdLoaderInput {
+                            store_id: store_id.clone(),
+                            item_id,
+                        });
 
-        Ok(output)
+                        entry.or_default().extend(program);
+                    }
+                }
+
+                Ok(output)
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }

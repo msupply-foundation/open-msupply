@@ -1,8 +1,11 @@
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_types::types::patient::{PatientFilterInput, PatientNode};
-use repository::{EqualFilter, PaginationOption, PatientFilter, PatientSort, PatientSortField};
+use repository::{
+    EqualFilter, PaginationOption, PatientFilter, PatientSort, PatientSortField, RepositoryError,
+};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(SimpleObject)]
@@ -54,7 +57,7 @@ impl PatientSortInput {
     }
 }
 
-pub fn patients(
+pub async fn patients(
     ctx: &Context<'_>,
     store_id: String,
     page: Option<PaginationInput>,
@@ -68,35 +71,41 @@ pub fn patients(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let allowed_ctx = user.capabilities();
+    let allowed_ctx = user.capabilities().clone();
 
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
-    let patients = service_provider.patient_service.get_patients(
-        &context,
-        page.map(PaginationOption::from),
-        filter.map(PatientFilter::from),
-        sort.and_then(|mut sort_list| sort_list.pop())
-            .map(|sort| sort.to_domain()),
-        Some(allowed_ctx),
-    )?;
-    let nodes: Vec<PatientNode> = patients
-        .rows
-        .into_iter()
-        .map(|patient| PatientNode {
-            store_id: store_id.clone(),
-            patient,
-            allowed_ctx: allowed_ctx.clone(),
+    let connector = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let context = service_provider.basic_context()?;
+        let patients = service_provider.patient_service.get_patients(
+            &context,
+            page.map(PaginationOption::from),
+            filter.map(PatientFilter::from),
+            sort.and_then(|mut sort_list| sort_list.pop())
+                .map(|sort| sort.to_domain()),
+            Some(&allowed_ctx),
+        )?;
+        let nodes: Vec<PatientNode> = patients
+            .rows
+            .into_iter()
+            .map(|patient| PatientNode {
+                store_id: store_id.clone(),
+                patient,
+                allowed_ctx: allowed_ctx.clone(),
+            })
+            .collect();
+        Ok(PatientConnector {
+            total_count: patients.count,
+            nodes,
         })
-        .collect();
-    Ok(PatientResponse::Response(PatientConnector {
-        total_count: patients.count,
-        nodes,
-    }))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    Ok(PatientResponse::Response(connector))
 }
 
-pub fn patient(
+pub async fn patient(
     ctx: &Context<'_>,
     store_id: String,
     patient_id: String,
@@ -108,27 +117,31 @@ pub fn patient(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let allowed_ctx = user.capabilities();
+    let allowed_ctx = user.capabilities().clone();
 
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
-    let node = service_provider
-        .patient_service
-        .get_patients(
-            &context,
-            None,
-            Some(PatientFilter::new().id(EqualFilter::equal_to(patient_id.to_string()))),
-            None,
-            Some(allowed_ctx),
-        )?
-        .rows
-        .pop()
-        .map(|patient| PatientNode {
-            store_id: store_id.clone(),
-            patient,
-            allowed_ctx: allowed_ctx.clone(),
-        });
+    let node = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let context = service_provider.basic_context()?;
+        Ok(service_provider
+            .patient_service
+            .get_patients(
+                &context,
+                None,
+                Some(PatientFilter::new().id(EqualFilter::equal_to(patient_id.to_string()))),
+                None,
+                Some(&allowed_ctx),
+            )?
+            .rows
+            .pop()
+            .map(|patient| PatientNode {
+                store_id: store_id.clone(),
+                patient,
+                allowed_ctx: allowed_ctx.clone(),
+            }))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     Ok(node)
 }

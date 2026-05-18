@@ -59,10 +59,20 @@ pub async fn link_patient_to_store(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let name_id = name_id.to_string();
 
-    let result = link_patient_to_store_service(service_provider, &context, store_id, name_id).await;
+    let context = {
+        let service_provider = service_provider.clone();
+        tokio::task::spawn_blocking(move || service_provider.basic_context())
+            .await
+            .map_err(StandardGraphqlError::from_join_error)?
+            .map_err(StandardGraphqlError::from_repository_error)?
+    };
+
+    let result =
+        link_patient_to_store_service(&service_provider, &context, &store_id, &name_id).await;
     map_result(result)
 }
 

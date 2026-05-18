@@ -14,8 +14,8 @@ use graphql_types::types::{
     RequisitionConnector, RequisitionNode, RequisitionNodeStatus, RequisitionNodeType,
 };
 use repository::{
-    DateFilter, DatetimeFilter, EqualFilter, PaginationOption, RequisitionStatus, RequisitionType,
-    StringFilter,
+    DateFilter, DatetimeFilter, EqualFilter, PaginationOption, RepositoryError, RequisitionStatus,
+    RequisitionType, StringFilter,
 };
 use repository::{RequisitionFilter, RequisitionSort, RequisitionSortField};
 use service::auth::{Resource, ResourceAccessRequest};
@@ -102,7 +102,11 @@ pub enum RequisitionResponse {
     Response(RequisitionNode),
 }
 
-pub fn get_requisition(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<RequisitionResponse> {
+pub async fn get_requisition(
+    ctx: &Context<'_>,
+    store_id: &str,
+    id: &str,
+) -> Result<RequisitionResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -111,14 +115,20 @@ pub fn get_requisition(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<Re
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let id = id.to_string();
 
-    let requisition_option = service_provider.requisition_service.get_requisition(
-        &service_context,
-        Some(store_id),
-        id,
-    )?;
+    let requisition_option = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider.requisition_service.get_requisition(
+            &service_context,
+            Some(&store_id),
+            &id,
+        )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     let response = match requisition_option {
         Some(requisition) => {
@@ -130,7 +140,7 @@ pub fn get_requisition(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<Re
     Ok(response)
 }
 
-pub fn get_requisitions(
+pub async fn get_requisitions(
     ctx: &Context<'_>,
     store_id: &str,
     page: Option<PaginationInput>,
@@ -145,28 +155,35 @@ pub fn get_requisitions(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let pagination = page.map(PaginationOption::from);
+    let domain_filter = filter.map(|filter| filter.to_domain());
+    // Currently only one sort option is supported, use the first from the list.
+    let domain_sort = sort
+        .and_then(|mut sort_list| sort_list.pop())
+        .map(|sort| sort.to_domain());
 
-    let requisitions = service_provider
-        .requisition_service
-        .get_requisitions(
+    let requisitions = tokio::task::spawn_blocking(move || {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider.requisition_service.get_requisitions(
             &service_context,
-            Some(store_id),
-            page.map(PaginationOption::from),
-            filter.map(|filter| filter.to_domain()),
-            // Currently only one sort option is supported, use the first from the list.
-            sort.and_then(|mut sort_list| sort_list.pop())
-                .map(|sort| sort.to_domain()),
+            Some(&store_id),
+            pagination,
+            domain_filter,
+            domain_sort,
         )
-        .map_err(StandardGraphqlError::from_list_error)?;
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(RequisitionsResponse::Response(
         RequisitionConnector::from_domain(requisitions),
     ))
 }
 
-pub fn get_requisition_by_number(
+pub async fn get_requisition_by_number(
     ctx: &Context<'_>,
     store_id: &str,
     requisition_number: u32,
@@ -180,17 +197,23 @@ pub fn get_requisition_by_number(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_type = r#type.into();
 
-    let requisition_option = service_provider
-        .requisition_service
-        .get_requisition_by_number(
-            &service_context,
-            store_id,
-            requisition_number,
-            r#type.into(),
-        )?;
+    let requisition_option = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider
+            .requisition_service
+            .get_requisition_by_number(
+                &service_context,
+                &store_id,
+                requisition_number,
+                domain_type,
+            )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     let response = match requisition_option {
         Some(requisition) => {

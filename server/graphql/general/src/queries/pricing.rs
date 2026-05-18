@@ -57,16 +57,21 @@ pub async fn item_price(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id, user.user_id)?;
+    let service_provider = ctx.service_provider_data();
     let item_id = input.item_id.clone();
+    let domain_input = input.to_domain();
 
-    let pricing = service_provider
-        .pricing_service
-        .get_pricing_for_item(&service_context, input.to_domain())
-        .map_err(StandardGraphqlError::from_repository_error)?
-        .remove(&item_id)
-        .unwrap_or_default();
+    let pricing = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        Ok(service_provider
+            .pricing_service
+            .get_pricing_for_item(&service_context, domain_input)?
+            .remove(&item_id)
+            .unwrap_or_default())
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_repository_error)?;
 
     Ok(ItemPriceResponse::Response(ItemPriceNode { pricing }))
 }

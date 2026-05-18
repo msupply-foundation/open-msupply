@@ -40,7 +40,7 @@ pub enum InsertResponse {
     Response(InvoiceLineNode),
 }
 
-pub fn insert(
+pub async fn insert(
     ctx: &Context<'_>,
     store_id: &str,
     input: InsertInput,
@@ -54,14 +54,25 @@ pub fn insert(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input = input.to_domain();
+    let domain_type = r#type.to_domain();
 
-    map_response(
-        service_provider
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        Ok(service_provider
             .invoice_line_service
-            .insert_inbound_shipment_service_line(&service_context, input.to_domain(), Some(r#type.to_domain())),
-    )
+            .insert_inbound_shipment_service_line(
+                &service_context,
+                domain_input,
+                Some(domain_type),
+            ))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    map_response(result)
 }
 
 pub fn map_response(from: Result<InvoiceLine, ServiceError>) -> Result<InsertResponse> {

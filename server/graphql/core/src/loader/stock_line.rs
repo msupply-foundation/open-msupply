@@ -19,26 +19,35 @@ impl Loader<String> for StockLineByLocationIdLoader {
         &self,
         location_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = StockLineRepository::new(&connection);
+        let connection_manager = self.connection_manager.clone();
+        let location_ids = location_ids.to_vec();
 
-        let result = repo.query_by_filter(
-            StockLineFilter::new()
-                .location_id(EqualFilter::equal_any(location_ids.to_owned()))
-                .has_packs_in_store(true),
-            None,
-        )?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Vec<StockLine>>, RepositoryError> {
+                let connection = connection_manager.connection()?;
+                let repo = StockLineRepository::new(&connection);
 
-        let mut result_map = HashMap::new();
-        for stock_line in result {
-            if let Some(location_id) = &stock_line.stock_line_row.location_id {
-                result_map
-                    .entry(location_id.clone())
-                    .or_insert(Vec::new())
-                    .push(stock_line);
-            }
-        }
-        Ok(result_map)
+                let result = repo.query_by_filter(
+                    StockLineFilter::new()
+                        .location_id(EqualFilter::equal_any(location_ids))
+                        .has_packs_in_store(true),
+                    None,
+                )?;
+
+                let mut result_map = HashMap::new();
+                for stock_line in result {
+                    if let Some(location_id) = &stock_line.stock_line_row.location_id {
+                        result_map
+                            .entry(location_id.clone())
+                            .or_insert(Vec::new())
+                            .push(stock_line);
+                    }
+                }
+                Ok(result_map)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }
 
@@ -68,37 +77,50 @@ impl Loader<StockLineByItemAndStoreIdLoaderInput> for StockLineByItemAndStoreIdL
         &self,
         item_and_store_ids: &[StockLineByItemAndStoreIdLoaderInput],
     ) -> Result<HashMap<StockLineByItemAndStoreIdLoaderInput, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = StockLineRepository::new(&connection);
+        let connection_manager = self.connection_manager.clone();
+        let item_and_store_ids = item_and_store_ids.to_vec();
 
-        let store_id = if let Some(item_and_store_ids) = item_and_store_ids.first() {
-            &item_and_store_ids.store_id
-        } else {
-            return Ok(HashMap::new());
-        };
+        tokio::task::spawn_blocking(
+            move || -> Result<
+                HashMap<StockLineByItemAndStoreIdLoaderInput, Vec<StockLine>>,
+                RepositoryError,
+            > {
+                let connection = connection_manager.connection()?;
+                let repo = StockLineRepository::new(&connection);
 
-        let item_ids =
-            util::dedup_iter(item_and_store_ids.iter().map(|input| input.item_id.clone()));
+                let store_id = if let Some(item_and_store_ids) = item_and_store_ids.first() {
+                    item_and_store_ids.store_id.clone()
+                } else {
+                    return Ok(HashMap::new());
+                };
 
-        let result = repo.query_by_filter(
-            StockLineFilter::new()
-                .item_id(EqualFilter::equal_any(item_ids))
-                .store_id(EqualFilter::equal_to(store_id.to_string()))
-                .has_packs_in_store(true),
-            None,
-        )?;
+                let item_ids = util::dedup_iter(
+                    item_and_store_ids.iter().map(|input| input.item_id.clone()),
+                );
 
-        let mut result_map = HashMap::new();
-        for stock_line in result {
-            result_map
-                .entry(StockLineByItemAndStoreIdLoaderInput::new(
-                    store_id,
-                    &stock_line.item_row.id,
-                ))
-                .or_insert(Vec::new())
-                .push(stock_line);
-        }
-        Ok(result_map)
+                let result = repo.query_by_filter(
+                    StockLineFilter::new()
+                        .item_id(EqualFilter::equal_any(item_ids))
+                        .store_id(EqualFilter::equal_to(store_id.to_string()))
+                        .has_packs_in_store(true),
+                    None,
+                )?;
+
+                let mut result_map = HashMap::new();
+                for stock_line in result {
+                    result_map
+                        .entry(StockLineByItemAndStoreIdLoaderInput::new(
+                            &store_id,
+                            &stock_line.item_row.id,
+                        ))
+                        .or_insert(Vec::new())
+                        .push(stock_line);
+                }
+                Ok(result_map)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }
 
@@ -111,17 +133,26 @@ impl Loader<String> for StockLineByIdLoader {
     type Error = RepositoryError;
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = StockLineRepository::new(&connection);
+        let connection_manager = self.connection_manager.clone();
+        let ids = ids.to_vec();
 
-        let result = repo.query_by_filter(
-            StockLineFilter::new().id(EqualFilter::equal_any(ids.to_owned())),
-            None,
-        )?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, StockLine>, RepositoryError> {
+                let connection = connection_manager.connection()?;
+                let repo = StockLineRepository::new(&connection);
 
-        Ok(result
-            .into_iter()
-            .map(|stock_line| (stock_line.stock_line_row.id.clone(), stock_line))
-            .collect())
+                let result = repo.query_by_filter(
+                    StockLineFilter::new().id(EqualFilter::equal_any(ids)),
+                    None,
+                )?;
+
+                Ok(result
+                    .into_iter()
+                    .map(|stock_line| (stock_line.stock_line_row.id.clone(), stock_line))
+                    .collect())
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

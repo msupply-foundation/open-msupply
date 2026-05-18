@@ -51,57 +51,65 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
         &self,
         loader_inputs: &[ItemStatsLoaderInput],
     ) -> Result<HashMap<ItemStatsLoaderInput, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
+        let service_provider = self.service_provider.clone();
+        let loader_inputs = loader_inputs.to_vec();
 
-        // Validate all same store
-        let store_id = match loader_inputs.first() {
-            Some(input) => &input.store_id,
-            None => return Ok(HashMap::new()),
-        };
-        if loader_inputs.iter().any(|i| &i.store_id != store_id) {
-            return Err(StandardGraphqlError::BadUserInput(
-                "Cannot batch item stats across multiple stores".to_string(),
-            )
-            .into());
-        }
-        let store_id = store_id.clone();
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<ItemStatsLoaderInput, ItemStats>, async_graphql::Error> {
+                let service_context = service_provider.basic_context()?;
 
-        let mut map = HashMap::<ItemStatsLoaderInputPayload, Vec<String>>::new();
+                // Validate all same store
+                let store_id = match loader_inputs.first() {
+                    Some(input) => &input.store_id,
+                    None => return Ok(HashMap::new()),
+                };
+                if loader_inputs.iter().any(|i| &i.store_id != store_id) {
+                    return Err(StandardGraphqlError::BadUserInput(
+                        "Cannot batch item stats across multiple stores".to_string(),
+                    )
+                    .into());
+                }
+                let store_id = store_id.clone();
 
-        // Group by payload -> Vec<item_id>
-        for input in loader_inputs {
-            map.entry(input.payload.clone())
-                .or_default()
-                .push(input.item_id.clone());
-        }
+                let mut map = HashMap::<ItemStatsLoaderInputPayload, Vec<String>>::new();
 
-        let mut out = HashMap::<ItemStatsLoaderInput, Self::Value>::new();
+                // Group by payload -> Vec<item_id>
+                for input in &loader_inputs {
+                    map.entry(input.payload.clone())
+                        .or_default()
+                        .push(input.item_id.clone());
+                }
 
-        for (payload, item_ids) in map {
-            let item_stats = self
-                .service_provider
-                .item_stats_service
-                .get_item_stats(
-                    &service_context,
-                    &store_id,
-                    payload.amc_lookback_months.map(|f| f.into_inner()),
-                    item_ids,
-                    payload.period_end,
-                )
-                .map_err(|e| StandardGraphqlError::from_error(&e))?;
+                let mut out = HashMap::<ItemStatsLoaderInput, ItemStats>::new();
 
-            for item_stat in item_stats {
-                out.insert(
-                    ItemStatsLoaderInput::new(
-                        &store_id,
-                        &item_stat.item_id,
-                        payload.amc_lookback_months.map(|f| f.into_inner()),
-                        payload.period_end,
-                    ),
-                    item_stat,
-                );
-            }
-        }
-        Ok(out)
+                for (payload, item_ids) in map {
+                    let item_stats = service_provider
+                        .item_stats_service
+                        .get_item_stats(
+                            &service_context,
+                            &store_id,
+                            payload.amc_lookback_months.map(|f| f.into_inner()),
+                            item_ids,
+                            payload.period_end,
+                        )
+                        .map_err(|e| StandardGraphqlError::from_error(&e))?;
+
+                    for item_stat in item_stats {
+                        out.insert(
+                            ItemStatsLoaderInput::new(
+                                &store_id,
+                                &item_stat.item_id,
+                                payload.amc_lookback_months.map(|f| f.into_inner()),
+                                payload.period_end,
+                            ),
+                            item_stat,
+                        );
+                    }
+                }
+                Ok(out)
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }

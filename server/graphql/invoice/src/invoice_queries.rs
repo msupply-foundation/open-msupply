@@ -161,7 +161,7 @@ pub struct InvoiceFilterInput {
     pub program_id: Option<EqualFilterStringInput>,
 }
 
-pub fn get_invoice(
+pub async fn get_invoice(
     ctx: &Context<'_>,
     store_id: Option<String>,
     id: &str,
@@ -179,18 +179,24 @@ pub fn get_invoice(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context =
-        service_provider.context(store_id.clone().unwrap_or("".to_string()), user.user_id)?;
-    let invoice_service = &service_provider.invoice_service;
+    let service_provider = ctx.service_provider_data();
+    let id = id.to_string();
 
     let type_filter = r#type.map(|s| {
         let mut f = InvoiceFilter::default();
         apply_type_filters(&mut f, &[s]);
         f
     });
-    let invoice_option =
-        invoice_service.get_invoice(&service_context, store_id.as_deref(), id, type_filter)?;
+
+    let invoice_option = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context =
+            service_provider.context(store_id.clone().unwrap_or("".to_string()), user.user_id)?;
+        service_provider
+            .invoice_service
+            .get_invoice(&service_context, store_id.as_deref(), &id, type_filter)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     let response = match invoice_option {
         Some(invoice) => InvoiceResponse::Response(InvoiceNode::from_domain(invoice)),
@@ -202,7 +208,7 @@ pub fn get_invoice(
     Ok(response)
 }
 
-pub fn get_invoices(
+pub async fn get_invoices(
     ctx: &Context<'_>,
     store_id: String,
     page: Option<PaginationInput>,
@@ -229,33 +235,39 @@ pub fn get_invoices(
     }
     let user = user.expect("resources should never be empty");
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+    let service_provider = ctx.service_provider_data();
 
     let mut domain_filter = filter.map(|filter| filter.to_domain()).unwrap_or_default();
     if let Some(types) = &r#type {
         apply_type_filters(&mut domain_filter, types);
     }
 
-    let invoices = service_provider
-        .invoice_service
-        .get_invoices(
+    let pagination = page.map(PaginationOption::from);
+    // Currently only one sort option is supported, use the first from the list.
+    let domain_sort = sort
+        .and_then(|mut sort_list| sort_list.pop())
+        .map(|sort| sort.to_domain());
+
+    let invoices = tokio::task::spawn_blocking(move || -> Result<_, service::ListError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider.invoice_service.get_invoices(
             &service_context,
             Some(&store_id),
-            page.map(PaginationOption::from),
+            pagination,
             Some(domain_filter),
-            // Currently only one sort option is supported, use the first from the list.
-            sort.and_then(|mut sort_list| sort_list.pop())
-                .map(|sort| sort.to_domain()),
+            domain_sort,
         )
-        .map_err(StandardGraphqlError::from_list_error)?;
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(InvoicesResponse::Response(InvoiceConnector::from_domain(
         invoices,
     )))
 }
 
-pub fn get_invoice_by_number(
+pub async fn get_invoice_by_number(
     ctx: &Context<'_>,
     store_id: String,
     invoice_number: u32,
@@ -269,18 +281,22 @@ pub fn get_invoice_by_number(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
-    let invoice_service = &service_provider.invoice_service;
+    let service_provider = ctx.service_provider_data();
 
     let mut type_filter = InvoiceFilter::default();
     apply_type_filters(&mut type_filter, &[r#type]);
-    let invoice_option = invoice_service.get_invoice_by_number(
-        &service_context,
-        &store_id,
-        invoice_number,
-        type_filter,
-    )?;
+
+    let invoice_option = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        service_provider.invoice_service.get_invoice_by_number(
+            &service_context,
+            &store_id,
+            invoice_number,
+            type_filter,
+        )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     let response = match invoice_option {
         Some(invoice) => InvoiceResponse::Response(InvoiceNode::from_domain(invoice)),

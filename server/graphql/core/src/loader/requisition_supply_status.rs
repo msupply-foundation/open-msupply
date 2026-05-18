@@ -20,30 +20,44 @@ impl Loader<RequisitionAndItemId> for RequisitionLineSupplyStatusLoader {
         &self,
         requisition_and_item_id: &[RequisitionAndItemId],
     ) -> Result<HashMap<RequisitionAndItemId, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
+        let service_provider = self.service_provider.clone();
+        let requisition_and_item_id = requisition_and_item_id.to_vec();
 
-        let requisition_ids = util::dedup_iter(
-            requisition_and_item_id
-                .iter()
-                .map(|input| input.requisition_id.clone()),
-        );
+        tokio::task::spawn_blocking(
+            move || -> Result<
+                HashMap<RequisitionAndItemId, RequisitionLineSupplyStatus>,
+                async_graphql::Error,
+            > {
+                let service_context = service_provider.basic_context()?;
 
-        let requisition_supply_statuses = self
-            .service_provider
-            .requisition_service
-            .get_requisitions_supply_status(&service_context, requisition_ids)?;
+                let requisition_ids = util::dedup_iter(
+                    requisition_and_item_id
+                        .iter()
+                        .map(|input| input.requisition_id.clone()),
+                );
 
-        Ok(requisition_supply_statuses
-            .into_iter()
-            .map(|status| {
-                let requisition_line_row = &status.requisition_line.requisition_line_row;
-                let item_row = &status.requisition_line.item_row;
-                (
-                    RequisitionAndItemId::new(&requisition_line_row.requisition_id, &item_row.id),
-                    status,
-                )
-            })
-            .collect())
+                let requisition_supply_statuses = service_provider
+                    .requisition_service
+                    .get_requisitions_supply_status(&service_context, requisition_ids)?;
+
+                Ok(requisition_supply_statuses
+                    .into_iter()
+                    .map(|status| {
+                        let requisition_line_row = &status.requisition_line.requisition_line_row;
+                        let item_row = &status.requisition_line.item_row;
+                        (
+                            RequisitionAndItemId::new(
+                                &requisition_line_row.requisition_id,
+                                &item_row.id,
+                            ),
+                            status,
+                        )
+                    })
+                    .collect())
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }
 
@@ -59,24 +73,33 @@ impl Loader<String> for RequisitionLinesRemainingToSupplyLoader {
         &self,
         requisition_ids: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
+        let service_provider = self.service_provider.clone();
+        let requisition_ids = requisition_ids.to_vec();
 
-        let requisition_supply_statuses = self
-            .service_provider
-            .requisition_service
-            .get_requisitions_supply_status(&service_context, requisition_ids.to_owned())?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Vec<RequisitionLine>>, async_graphql::Error> {
+                let service_context = service_provider.basic_context()?;
 
-        let remaining_to_supply =
-            RequisitionLineSupplyStatus::lines_remaining_to_supply(requisition_supply_statuses);
+                let requisition_supply_statuses = service_provider
+                    .requisition_service
+                    .get_requisitions_supply_status(&service_context, requisition_ids)?;
 
-        let mut result: HashMap<String, Vec<RequisitionLine>> = HashMap::new();
-        for supply_status in remaining_to_supply {
-            let requisition_line = supply_status.requisition_line;
-            let list = result
-                .entry(requisition_line.requisition_line_row.requisition_id.clone())
-                .or_default();
-            list.push(requisition_line);
-        }
-        Ok(result)
+                let remaining_to_supply = RequisitionLineSupplyStatus::lines_remaining_to_supply(
+                    requisition_supply_statuses,
+                );
+
+                let mut result: HashMap<String, Vec<RequisitionLine>> = HashMap::new();
+                for supply_status in remaining_to_supply {
+                    let requisition_line = supply_status.requisition_line;
+                    let list = result
+                        .entry(requisition_line.requisition_line_row.requisition_id.clone())
+                        .or_default();
+                    list.push(requisition_line);
+                }
+                Ok(result)
+            },
+        )
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("Loader blocking task failed: {e}")))?
     }
 }

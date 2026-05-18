@@ -22,7 +22,7 @@ pub enum InsertFromInternalOrderResponse {
     Response(InvoiceLineNode),
 }
 
-pub fn insert_from_internal_order_line(
+pub async fn insert_from_internal_order_line(
     ctx: &Context<'_>,
     store_id: &str,
     input: InsertFromInternalOrderLine,
@@ -35,11 +35,18 @@ pub fn insert_from_internal_order_line(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
-    let result = service_provider
-        .invoice_line_service
-        .insert_from_internal_order_line(&service_context, input.to_domain());
+    let service_provider = ctx.service_provider_data();
+    let store_id = store_id.to_string();
+    let domain_input = input.to_domain();
+
+    let result = tokio::task::spawn_blocking(move || -> Result<_, repository::RepositoryError> {
+        let service_context = service_provider.context(store_id, user.user_id)?;
+        Ok(service_provider
+            .invoice_line_service
+            .insert_from_internal_order_line(&service_context, domain_input))
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     map_response(result)
 }

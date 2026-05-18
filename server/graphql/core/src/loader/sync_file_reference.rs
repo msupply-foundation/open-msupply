@@ -17,33 +17,42 @@ impl Loader<String> for SyncFileReferenceLoader {
     type Error = RepositoryError;
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
-        let connection = self.connection_manager.connection()?;
-        let repo = SyncFileReferenceRepository::new(&connection);
+        let connection_manager = self.connection_manager.clone();
+        let ids = ids.to_vec();
 
-        let sync_file_references = repo.query(
-            Pagination::all(),
-            Some(
-                SyncFileReferenceFilter::new()
-                    .record_id(EqualFilter::equal_any(ids.to_owned()))
-                    .is_deleted(false),
-            ),
-            Some(SyncFileReferenceSort {
-                key: SyncFileReferenceSortField::FileName,
-                desc: Some(false),
-            }),
-        )?;
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<String, Vec<SyncFileReference>>, RepositoryError> {
+                let connection = connection_manager.connection()?;
+                let repo = SyncFileReferenceRepository::new(&connection);
 
-        let mut map: HashMap<String, Vec<SyncFileReference>> = HashMap::new();
+                let sync_file_references = repo.query(
+                    Pagination::all(),
+                    Some(
+                        SyncFileReferenceFilter::new()
+                            .record_id(EqualFilter::equal_any(ids))
+                            .is_deleted(false),
+                    ),
+                    Some(SyncFileReferenceSort {
+                        key: SyncFileReferenceSortField::FileName,
+                        desc: Some(false),
+                    }),
+                )?;
 
-        for sync_file_reference in sync_file_references {
-            let asset_id = sync_file_reference
-                .sync_file_reference_row
-                .record_id
-                .clone();
-            let list = map.entry(asset_id).or_default();
-            list.push(sync_file_reference);
-        }
+                let mut map: HashMap<String, Vec<SyncFileReference>> = HashMap::new();
 
-        Ok(map)
+                for sync_file_reference in sync_file_references {
+                    let asset_id = sync_file_reference
+                        .sync_file_reference_row
+                        .record_id
+                        .clone();
+                    let list = map.entry(asset_id).or_default();
+                    list.push(sync_file_reference);
+                }
+
+                Ok(map)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

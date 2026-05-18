@@ -42,33 +42,41 @@ impl Loader<DocumentRegistryLoaderInput> for DocumentRegistryLoader {
         &self,
         document_types: &[DocumentRegistryLoaderInput],
     ) -> Result<HashMap<DocumentRegistryLoaderInput, Self::Value>, Self::Error> {
-        let ctx = self.service_provider.basic_context()?;
+        let service_provider = self.service_provider.clone();
+        let document_types = document_types.to_vec();
 
-        let mut map = HashMap::<Vec<String>, Vec<String>>::new();
-        for item in document_types {
-            let entry = map.entry(item.allowed_ctx.clone()).or_default();
-            entry.push(item.registry_id.clone())
-        }
-        let mut out = HashMap::<DocumentRegistryLoaderInput, Self::Value>::new();
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<DocumentRegistryLoaderInput, DocumentRegistry>, RepositoryError> {
+                let ctx = service_provider.basic_context()?;
 
-        for (allowed_ctx, document_types) in map.into_iter() {
-            let entries = self
-                .service_provider
-                .document_registry_service
-                .get_entries_by_doc_type(
-                    &ctx.connection,
-                    document_types.to_vec(),
-                    Some(&allowed_ctx),
-                )?;
+                let mut map = HashMap::<Vec<String>, Vec<String>>::new();
+                for item in &document_types {
+                    let entry = map.entry(item.allowed_ctx.clone()).or_default();
+                    entry.push(item.registry_id.clone())
+                }
+                let mut out = HashMap::<DocumentRegistryLoaderInput, DocumentRegistry>::new();
 
-            for entry in entries.into_iter() {
-                out.insert(
-                    DocumentRegistryLoaderInput::new(&allowed_ctx, &entry.document_type),
-                    entry,
-                );
-            }
-        }
+                for (allowed_ctx, document_types) in map.into_iter() {
+                    let entries = service_provider
+                        .document_registry_service
+                        .get_entries_by_doc_type(
+                            &ctx.connection,
+                            document_types.to_vec(),
+                            Some(&allowed_ctx),
+                        )?;
 
-        Ok(out)
+                    for entry in entries.into_iter() {
+                        out.insert(
+                            DocumentRegistryLoaderInput::new(&allowed_ctx, &entry.document_type),
+                            entry,
+                        );
+                    }
+                }
+
+                Ok(out)
+            },
+        )
+        .await
+        .map_err(|e| RepositoryError::as_db_error("Loader blocking task failed", e))?
     }
 }

@@ -9,6 +9,7 @@ use graphql_types::types::encounter::{
 };
 use repository::{EncounterFilter, PaginationOption};
 use service::auth::{Resource, ResourceAccessRequest};
+use service::ListError;
 
 #[derive(Union)]
 pub enum EncounterResponse {
@@ -18,7 +19,7 @@ pub enum EncounterResponse {
 /// Returns a list of encounters.
 ///
 /// Deleted encounters are excluded from the returned list.
-pub fn encounters(
+pub async fn encounters(
     ctx: &Context<'_>,
     store_id: String,
     page: Option<PaginationInput>,
@@ -32,10 +33,9 @@ pub fn encounters(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities();
+    let allowed_ctx = user.capabilities().clone();
 
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
 
     // Filter out deleted encounters
     // Note, in the future we could has an include_deleted filter flag, which skips the following
@@ -54,28 +54,32 @@ pub fn encounters(
         filter.map(EncounterFilter::from)
     };
 
-    let result = service_provider
-        .encounter_service
-        .encounters(
+    let connector = tokio::task::spawn_blocking(move || -> Result<_, ListError> {
+        let context = service_provider.basic_context()?;
+        let result = service_provider.encounter_service.encounters(
             &context,
             page.map(PaginationOption::from),
             filter,
             sort.map(EncounterSortInput::to_domain),
             allowed_ctx.clone(),
-        )
-        .map_err(StandardGraphqlError::from_list_error)?;
-    let nodes = result
-        .rows
-        .into_iter()
-        .map(|encounter| EncounterNode {
-            store_id: store_id.clone(),
-            encounter,
-            allowed_ctx: allowed_ctx.clone(),
+        )?;
+        let nodes = result
+            .rows
+            .into_iter()
+            .map(|encounter| EncounterNode {
+                store_id: store_id.clone(),
+                encounter,
+                allowed_ctx: allowed_ctx.clone(),
+            })
+            .collect();
+        Ok(EncounterConnector {
+            total_count: result.count,
+            nodes,
         })
-        .collect();
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?
+    .map_err(StandardGraphqlError::from_list_error)?;
 
-    Ok(EncounterResponse::Response(EncounterConnector {
-        total_count: result.count,
-        nodes,
-    }))
+    Ok(EncounterResponse::Response(connector))
 }

@@ -1,8 +1,9 @@
 use async_graphql::*;
 use chrono::NaiveDate;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_types::types::patient::{GenderTypeNode, PatientNode};
-use repository::GenderType;
+use repository::{GenderType, RepositoryError};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     programs::patient::PatientSearch,
@@ -50,7 +51,7 @@ impl PatientSearchNode {
     }
 }
 
-pub fn patient_search(
+pub async fn patient_search(
     ctx: &Context<'_>,
     store_id: String,
     input: PatientSearchInput,
@@ -62,34 +63,40 @@ pub fn patient_search(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities();
+    let allowed_ctx = user.capabilities().clone();
 
-    let service_provider = ctx.service_provider();
-    let context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
+    let domain_input = input.to_domain();
 
-    let result = service_provider.patient_service.patient_search(
-        &context,
-        service_provider,
-        input.to_domain(),
-        Some(allowed_ctx),
-    )?;
-    let nodes = result
-        .rows
-        .into_iter()
-        .map(|p| PatientSearchNode {
-            patient: PatientNode {
-                store_id: store_id.clone(),
-                patient: p.patient,
-                allowed_ctx: allowed_ctx.clone(),
-            },
-            score: p.score,
+    let connector = tokio::task::spawn_blocking(move || -> Result<_, RepositoryError> {
+        let context = service_provider.basic_context()?;
+        let result = service_provider.patient_service.patient_search(
+            &context,
+            &service_provider,
+            domain_input,
+            Some(&allowed_ctx),
+        )?;
+        let nodes = result
+            .rows
+            .into_iter()
+            .map(|p| PatientSearchNode {
+                patient: PatientNode {
+                    store_id: store_id.clone(),
+                    patient: p.patient,
+                    allowed_ctx: allowed_ctx.clone(),
+                },
+                score: p.score,
+            })
+            .collect();
+        Ok(PatientSearchConnector {
+            total_count: result.count,
+            nodes,
         })
-        .collect();
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
-    Ok(PatientSearchResponse::Response(PatientSearchConnector {
-        total_count: result.count,
-        nodes,
-    }))
+    Ok(PatientSearchResponse::Response(connector))
 }
 
 impl PatientSearchInput {
