@@ -81,8 +81,10 @@ static KEY_VALUE_STORE_CACHE: RwLock<Option<HashMap<KeyType, KeyValueStoreRow>>>
 
 fn get_cached_row(key: &KeyType) -> Option<KeyValueStoreRow> {
     // Disable cache in tests: each test has its own database but shares this
-    // process-global static, causing cross-test contamination.
-    if cfg!(test) {
+    // process-global static, causing cross-test contamination. `cfg!(test)`
+    // only fires for the crate being compiled as a test, so we also gate on
+    // the integration_test feature for tests in dependent crates.
+    if cfg!(test) || cfg!(feature = "integration_test") {
         return None;
     }
     let cache = KEY_VALUE_STORE_CACHE.read().unwrap();
@@ -90,7 +92,7 @@ fn get_cached_row(key: &KeyType) -> Option<KeyValueStoreRow> {
 }
 
 fn set_cached_row(row: KeyValueStoreRow) {
-    if cfg!(test) {
+    if cfg!(test) || cfg!(feature = "integration_test") {
         return;
     }
     let mut cache = KEY_VALUE_STORE_CACHE.write().unwrap();
