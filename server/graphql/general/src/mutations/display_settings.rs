@@ -1,6 +1,9 @@
 use async_graphql::*;
 
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     display_settings_service,
@@ -46,7 +49,7 @@ impl DisplaySettingsInput {
     }
 }
 
-pub fn update_display_settings(
+pub async fn update_display_settings(
     ctx: &Context<'_>,
     input: DisplaySettingsInput,
 ) -> Result<UpdateDisplaySettingsResponse> {
@@ -58,15 +61,20 @@ pub fn update_display_settings(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
+    let service_provider = ctx.service_provider_data();
     let input = input.to_domain();
-    let result = service_provider
-        .display_settings_service
-        .update_display_settings(&service_context, &input);
 
-    match result {
-        Ok(result) => Ok(UpdateDisplaySettingsResponse::from_domain(result)),
-        Err(error) => Err(async_graphql::Error::from(error)),
-    }
+    let result = tokio::task::spawn_blocking(move || -> Result<_> {
+        let service_context = service_provider
+            .basic_context()
+            .map_err(StandardGraphqlError::from_repository_error)?;
+        service_provider
+            .display_settings_service
+            .update_display_settings(&service_context, &input)
+            .map_err(async_graphql::Error::from)
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    Ok(UpdateDisplaySettingsResponse::from_domain(result))
 }

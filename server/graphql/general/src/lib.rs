@@ -577,7 +577,7 @@ impl GeneralMutations {
         store_id: String,
         input: BarcodeInput,
     ) -> Result<mutations::barcode::InsertResponse> {
-        insert_barcode(ctx, &store_id, input)
+        insert_barcode(ctx, &store_id, input).await
     }
 
     pub async fn update_log_level(
