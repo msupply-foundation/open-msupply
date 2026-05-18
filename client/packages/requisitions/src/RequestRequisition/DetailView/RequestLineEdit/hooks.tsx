@@ -49,6 +49,7 @@ const createDraftFromItem = (
     additionInUnits: 0,
     daysOutOfStock: 0,
     expiringUnits: 0,
+    ancillaryParents: [],
   };
 };
 
@@ -72,7 +73,7 @@ export const useDraftRequisitionLine = (
   const [isReasonsError, setIsReasonsError] = useState(false);
   const { lines } = useRequest.line.list(item?.id);
   const { data } = useRequest.document.get();
-  const { mutateAsync: saveMutation, isLoading } = useRequest.line.save();
+  const { mutateAsync: saveMutation, isPending: isLoading } = useRequest.line.save();
 
   const [draft, setDraft] = useState<DraftRequestLine | null>(null);
   useEffect(() => {
