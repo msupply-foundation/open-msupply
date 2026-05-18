@@ -1,10 +1,14 @@
 use crate::service_provider::ServiceContext;
-use repository::{EqualFilter, RepositoryError, SiteRowRepository, StoreFilter, StoreRepository};
+use repository::{
+    EqualFilter, KeyType, KeyValueStoreRepository, RepositoryError, SiteRowRepository, StoreFilter,
+    StoreRepository,
+};
 
 #[derive(PartialEq, Debug)]
 pub enum DeleteSiteError {
     SiteDoesNotExist,
     SiteHasStores,
+    CannotDeleteCentralSite,
     DatabaseError(RepositoryError),
 }
 
@@ -15,6 +19,12 @@ pub fn delete_site(ctx: &ServiceContext, site_id: i32) -> Result<i32, DeleteSite
 
             repo.find_one_by_id(site_id)?
                 .ok_or(DeleteSiteError::SiteDoesNotExist)?;
+
+            let central_site_id = KeyValueStoreRepository::new(connection)
+                .get_i32(KeyType::SettingsSyncCentralServerSiteId)?;
+            if central_site_id == Some(site_id) {
+                return Err(DeleteSiteError::CannotDeleteCentralSite);
+            }
 
             let store_count = StoreRepository::new(connection).count(Some(
                 StoreFilter::new().site_id(EqualFilter::equal_to(site_id)),
@@ -48,7 +58,7 @@ mod tests {
     use repository::{
         mock::{mock_store_a, MockDataInserts},
         test_db::setup_all,
-        SiteRowRepository,
+        KeyType, KeyValueStoreRepository, SiteRowRepository,
     };
 
     #[actix_rt::test]
@@ -90,6 +100,25 @@ mod tests {
         assert_eq!(
             delete_site(&context, 5),
             Err(DeleteSiteError::SiteHasStores)
+        );
+
+        upsert_site(
+            &context,
+            UpsertSite {
+                id: 7,
+                code: Some("central".to_string()),
+                name: "Central".to_string(),
+                password: Some("password".to_string()),
+                clear_hardware_id: false,
+            },
+        )
+        .unwrap();
+        KeyValueStoreRepository::new(&context.connection)
+            .set_i32(KeyType::SettingsSyncCentralServerSiteId, Some(7))
+            .unwrap();
+        assert_eq!(
+            delete_site(&context, 7),
+            Err(DeleteSiteError::CannotDeleteCentralSite)
         );
     }
 

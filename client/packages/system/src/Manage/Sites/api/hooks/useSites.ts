@@ -186,6 +186,7 @@ const useUpsertSite = () => {
 
 enum DeleteSiteError {
   SiteHasStores = 'SiteHasStores',
+  CannotDeleteCentralSite = 'CannotDeleteCentralSite',
 }
 
 const useDeleteSite = () => {
@@ -204,6 +205,8 @@ const useDeleteSite = () => {
       switch (deleteResult.error.__typename) {
         case DeleteSiteError.SiteHasStores:
           throw new Error(t('error.site-has-stores'));
+        case DeleteSiteError.CannotDeleteCentralSite:
+          throw new Error(t('error.cannot-delete-central-site'));
         default:
           throw new Error(t('error.unable-to-delete-site'));
       }

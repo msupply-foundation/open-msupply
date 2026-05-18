@@ -86,6 +86,10 @@ mutation deleteSite($siteId: Int!) {
               __typename
               description
             }
+            ... on CannotDeleteCentralSite {
+              __typename
+              description
+            }
             description
           }
         }
