@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_ancillary_item_table;
+mod add_property_system_v2;
 mod add_purchase_order_finalise_permission;
 mod add_storage_capacity_5c_to_insulated_containers;
 mod add_user_is_active;
@@ -24,6 +25,7 @@ impl Migration for V2_19_00 {
             Box::new(add_user_is_active::Migrate),
             Box::new(add_storage_capacity_5c_to_insulated_containers::Migrate),
             Box::new(fix_po_linked_inbound_line_prices::Migrate),
+            Box::new(add_property_system_v2::Migrate),
         ]
     }
 }

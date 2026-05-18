@@ -1,4 +1,4 @@
-use repository::{property_row::PropertyRow, types::PropertyValueType};
+use repository::{property_row::PropertyRow, PropertyType};
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -9,20 +9,20 @@ const PROPERTY1: (&str, &str) = (
     "abcbea92-d5bf-4832-863b-c04e093a7760",
     r#"{
         "id": "abcbea92-d5bf-4832-863b-c04e093a7760",
-        "key": "favourite_colour",
+        "type": "text",
         "name": "Your favourite colour",
-        "value_type": "STRING",
-        "allowed_values": "Blue,Yellow"
+        "translation_key": null,
+        "deleted_datetime": null
     }"#,
 );
 
 fn property1() -> PropertyRow {
     PropertyRow {
         id: PROPERTY1.0.to_string(),
-        key: "favourite_colour".to_string(),
+        r#type: PropertyType::Text.as_str().to_string(),
         name: "Your favourite colour".to_string(),
-        value_type: PropertyValueType::String,
-        allowed_values: Some("Blue,Yellow".to_string()),
+        translation_key: None,
+        deleted_datetime: None,
     }
 }
 

@@ -94,7 +94,13 @@ pub enum ChangelogTableName {
     AssetLogReason,
     AssetProperty,
     Property,
+    // NameProperty is no longer emitted (replaced by PropertyTable junction)
+    // but the enum value is preserved so existing changelog/migration data
+    // remains decodable.
     NameProperty,
+    PropertyTable,
+    PropertyOption,
+    PropertyValue,
     NameOmsFields,
     RnrForm,
     RnrFormLine,
@@ -181,6 +187,12 @@ impl ChangelogTableName {
             ChangelogTableName::AssetProperty => ChangeLogSyncStyle::Central,
             ChangelogTableName::Property => ChangeLogSyncStyle::Central,
             ChangelogTableName::NameProperty => ChangeLogSyncStyle::Central,
+            ChangelogTableName::PropertyTable => ChangeLogSyncStyle::Central,
+            ChangelogTableName::PropertyOption => ChangeLogSyncStyle::Central,
+            // TODO: property_value should sync as Remote when table_name is a
+            // store-scoped parent, Central when it points at central data.
+            // For the prototype we treat it uniformly as Central.
+            ChangelogTableName::PropertyValue => ChangeLogSyncStyle::Central,
             ChangelogTableName::NameOmsFields => ChangeLogSyncStyle::Central,
             ChangelogTableName::RnrForm => ChangeLogSyncStyle::Remote,
             ChangelogTableName::RnrFormLine => ChangeLogSyncStyle::Remote,

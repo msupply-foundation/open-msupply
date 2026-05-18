@@ -455,10 +455,6 @@ impl GeneralQueries {
         label_printer_settings(ctx)
     }
 
-    pub async fn name_properties(&self, ctx: &Context<'_>) -> Result<NamePropertyResponse> {
-        name_properties(ctx)
-    }
-
     pub async fn reason_options(
         &self,
         ctx: &Context<'_>,
@@ -711,11 +707,9 @@ pub struct CentralGeneralMutations;
 
 #[Object]
 impl CentralGeneralMutations {
-    pub async fn configure_name_properties(
-        &self,
-        ctx: &Context<'_>,
-        input: Vec<ConfigureNamePropertyInput>,
-    ) -> Result<ConfigureNamePropertiesResponse> {
-        configure_name_properties(ctx, input)
+    // Placeholder so the mutation root remains a non-empty object while the
+    // properties-KDD prototype rebuilds the property mutation surface.
+    pub async fn _placeholder(&self) -> bool {
+        true
     }
 }

@@ -47,7 +47,6 @@ pub(crate) mod master_list_name_join;
 pub(crate) mod name;
 pub(crate) mod name_insurance_join;
 pub(crate) mod name_oms_fields;
-pub(crate) mod name_property;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
@@ -137,7 +136,6 @@ pub(crate) fn all_translators() -> SyncTranslators {
         om_form_schema::boxed(),
         document_registry::boxed(),
         property::boxed(),
-        name_property::boxed(),
         location_type::boxed(),
         campaign::boxed(),
         contact::boxed(),

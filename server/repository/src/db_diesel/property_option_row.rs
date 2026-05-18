@@ -10,53 +10,53 @@ use crate::RowActionType;
 use crate::StorageConnection;
 use crate::Upsert;
 
+use super::property_row::property;
+
 table! {
-    property (id) {
+    property_option (id) {
         id -> Text,
-        #[sql_name = "type"]
-        type_ -> Text,
+        property_id -> Text,
         name -> Text,
         translation_key -> Nullable<Text>,
         deleted_datetime -> Nullable<Timestamp>,
     }
 }
+joinable!(property_option -> property (property_id));
+allow_tables_to_appear_in_same_query!(property_option, property);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
 )]
-#[diesel(table_name = property)]
+#[diesel(table_name = property_option)]
 #[diesel(treat_none_as_null = true)]
-pub struct PropertyRow {
+pub struct PropertyOptionRow {
     pub id: String,
-    // String form of crate::types::PropertyType — kept as String because the
-    // column is TEXT (portable between SQLite and Postgres without an enum).
-    #[diesel(column_name = type_)]
-    pub r#type: String,
+    pub property_id: String,
     pub name: String,
     pub translation_key: Option<String>,
     pub deleted_datetime: Option<NaiveDateTime>,
 }
 
-pub struct PropertyRowRepository<'a> {
+pub struct PropertyOptionRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> PropertyRowRepository<'a> {
+impl<'a> PropertyOptionRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        PropertyRowRepository { connection }
+        PropertyOptionRowRepository { connection }
     }
 
-    pub fn _upsert_one(&self, row: &PropertyRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(property::table)
+    pub fn _upsert_one(&self, row: &PropertyOptionRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(property_option::table)
             .values(row)
-            .on_conflict(property::id)
+            .on_conflict(property_option::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &PropertyRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &PropertyOptionRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
         self.insert_changelog(row.id.to_string(), RowActionType::Upsert)
     }
@@ -67,7 +67,7 @@ impl<'a> PropertyRowRepository<'a> {
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Property,
+            table_name: ChangelogTableName::PropertyOption,
             record_id,
             row_action: action,
             store_id: None,
@@ -76,44 +76,51 @@ impl<'a> PropertyRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&row)
     }
 
-    pub fn find_all(&self) -> Result<Vec<PropertyRow>, RepositoryError> {
-        let result = property::table.load(self.connection.lock().connection())?;
-        Ok(result)
-    }
-
     pub fn find_one_by_id(
         &self,
-        property_id: &str,
-    ) -> Result<Option<PropertyRow>, RepositoryError> {
-        let result = property::table
-            .filter(property::id.eq(property_id))
+        option_id: &str,
+    ) -> Result<Option<PropertyOptionRow>, RepositoryError> {
+        Ok(property_option::table
+            .filter(property_option::id.eq(option_id))
             .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
+            .optional()?)
+    }
+
+    pub fn find_by_property_id(
+        &self,
+        property_id: &str,
+        include_deleted: bool,
+    ) -> Result<Vec<PropertyOptionRow>, RepositoryError> {
+        let mut query = property_option::table
+            .filter(property_option::property_id.eq(property_id))
+            .into_boxed();
+        if !include_deleted {
+            query = query.filter(property_option::deleted_datetime.is_null());
+        }
+        Ok(query.load(self.connection.lock().connection())?)
     }
 
     pub fn mark_deleted(
         &self,
-        property_id: &str,
+        option_id: &str,
         deleted_at: NaiveDateTime,
     ) -> Result<(), RepositoryError> {
-        diesel::update(property::table.filter(property::id.eq(property_id)))
-            .set(property::deleted_datetime.eq(Some(deleted_at)))
+        diesel::update(property_option::table.filter(property_option::id.eq(option_id)))
+            .set(property_option::deleted_datetime.eq(Some(deleted_at)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
 
-impl Upsert for PropertyRow {
+impl Upsert for PropertyOptionRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = PropertyRowRepository::new(con).upsert_one(self)?;
+        let cursor_id = PropertyOptionRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))
     }
 
-    // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            PropertyRowRepository::new(con).find_one_by_id(&self.id),
+            PropertyOptionRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }
