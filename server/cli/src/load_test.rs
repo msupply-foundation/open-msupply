@@ -361,6 +361,7 @@ impl LoadTest {
                 standalone_store_name: None,
                 standalone_admin_username: None,
                 standalone_admin_password: None,
+                workers: None,
             },
             database: DatabaseSettings {
                 username: "postgres".to_string(),
@@ -455,6 +456,7 @@ impl LoadTest {
                     standalone_store_name: None,
                     standalone_admin_username: None,
                     standalone_admin_password: None,
+                    workers: None,
                 },
                 database: DatabaseSettings {
                     username: "postgres".to_string(),
