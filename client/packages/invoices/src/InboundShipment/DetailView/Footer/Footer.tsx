@@ -203,7 +203,7 @@ export const FooterComponent = ({
               </Box>
             </Box>
           ) : null}
-          {
+          {changeCampaignOrProgramModal.isOpen && (
             <ChangeCampaignOrProgramConfirmationModal
               isOpen={changeCampaignOrProgramModal.isOpen}
               onCancel={changeCampaignOrProgramModal.onClose}
@@ -211,7 +211,7 @@ export const FooterComponent = ({
               rows={selectedRows}
               onChange={mutateAsync}
             />
-          }
+          )}
         </>
       }
     />

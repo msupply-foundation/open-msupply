@@ -1,7 +1,10 @@
 import React from 'react';
-import { Autocomplete, useTranslation } from '@openmsupply-client/common';
+import {
+  InfiniteSearchPicker,
+  NameFilterInput,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { NameRowFragment, useName } from '../../api';
-import { basicFilterOptions, filterByNameAndCode } from '../../utils';
 import { getNameOptionRenderer } from '../NameOptionRenderer';
 
 export interface DonorSearchInputProps {
@@ -24,34 +27,21 @@ export const DonorSearchInput = ({
   const t = useTranslation();
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
-  const { data, isLoading } = useName.document.donors();
-  const { data: selectedDonor, isLoading: isLoadingSelected } =
-    useName.document.get(donorId || '');
-
-  const options = data?.nodes ?? [];
-  const selectedOption = options.find(o => o.id === donorId) || selectedDonor;
-
   return (
-    <Autocomplete
+    <InfiniteSearchPicker<NameRowFragment, NameFilterInput>
+      onChange={onChange}
+      currentId={donorId ?? undefined}
+      useInfiniteData={useName.document.donorsInfinite}
+      useGetById={useName.document.get}
+      getOptionLabel={option => option.name}
+      getOptionCode={option => option.code}
+      renderOption={NameOptionRenderer}
+      getOptionDisabled={option => option.isOnHold}
       disabled={disabled}
       clearable={clearable}
-      value={
-        selectedOption
-          ? { ...selectedOption, label: selectedOption.name }
-          : null
-      }
-      filterOptionConfig={basicFilterOptions}
-      loading={isLoading || isLoadingSelected}
-      onChange={(_, name) => onChange(name)}
-      options={options}
-      renderOption={NameOptionRenderer}
-      getOptionLabel={option => option.name}
-      filterOptions={filterByNameAndCode}
+      width={fullWidth ? undefined : width}
       popperMinWidth={width}
-      isOptionEqualToValue={(option, value) => option?.id === value?.id}
-      getOptionDisabled={option => option.isOnHold}
-      width={fullWidth ? undefined : `${width}px`}
-      fullWidth={fullWidth}
+      noOptionsText={t('label.no-options')}
     />
   );
 };
