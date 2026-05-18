@@ -5,6 +5,7 @@ import { IndicatorsDemographics } from '../IndicatorsDemographics/DetailView/Ind
 import { EditGlobalPreferencesPage } from '../Preferences/EditPage';
 import { CampaignsList } from '../Campaigns';
 import { ReportsList } from '../Reports';
+import { SyncMessageListView } from '../../SyncMessages';
 
 export const ManageService: FC = () => {
   const indicatorsDemographicsRoute = RouteBuilder.create(
@@ -17,6 +18,7 @@ export const ManageService: FC = () => {
 
   const campaignsRoute = RouteBuilder.create(AppRoute.Campaigns).build();
   const reportsRoute = RouteBuilder.create(AppRoute.Reports).build();
+  const syncMessageRoute = RouteBuilder.create(AppRoute.SyncMessage).build();
 
   return (
     <Routes>
@@ -27,6 +29,7 @@ export const ManageService: FC = () => {
       <Route path={preferencesRoute} element={<EditGlobalPreferencesPage />} />
       <Route path={campaignsRoute} element={<CampaignsList />} />
       <Route path={reportsRoute} element={<ReportsList />} />
+      <Route path={syncMessageRoute} element={<SyncMessageListView />} />
     </Routes>
   );
 };

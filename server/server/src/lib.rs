@@ -154,6 +154,7 @@ pub async fn start_server(
         ledger_fix_trigger,
         site_is_initialise_trigger,
         settings.mail.clone(),
+        Some(settings.clone()),
         subscription_trigger,
     ));
     let loaders = get_loaders(&connection_manager, service_provider.clone()).await;

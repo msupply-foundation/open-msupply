@@ -28,12 +28,31 @@ impl SyncTranslation for SyncFileReferenceTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_str::<
-            SyncFileReferenceRow,
-        >(&sync_record.data)?))
+        let incoming: SyncFileReferenceRow = serde_json::from_str(&sync_record.data)?;
+
+        // Local-only fields (uploaded_bytes, downloaded_bytes, retries, retry_at, direction) are
+        // `skip_serializing` so they arrive as defaults. If we already have a row for this file,
+        // preserve our own bookkeeping for those fields rather than letting the incoming defaults
+        // clobber it — e.g. central's PUT handler sets uploaded_bytes when the file arrives, and
+        // we don't want a later status sync to reset it to 0.
+        let merged = match SyncFileReferenceRowRepository::new(connection)
+            .find_one_by_id(&incoming.id)?
+        {
+            Some(existing) => SyncFileReferenceRow {
+                uploaded_bytes: existing.uploaded_bytes,
+                downloaded_bytes: existing.downloaded_bytes,
+                retries: existing.retries,
+                retry_at: existing.retry_at,
+                direction: existing.direction,
+                ..incoming
+            },
+            None => incoming,
+        };
+
+        Ok(PullTranslateResult::upsert(merged))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

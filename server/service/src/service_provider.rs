@@ -63,7 +63,7 @@ use crate::{
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
     rnr_form::{RnRFormService, RnRFormServiceTrait},
     sensor::{SensorService, SensorServiceTrait},
-    settings::MailSettings,
+    settings::{MailSettings, Settings},
     settings_service::{SettingsService, SettingsServiceTrait},
     shipping_method::{ShippingMethodService, ShippingMethodServiceTrait},
     standard_reports::StandardReports,
@@ -76,6 +76,7 @@ use crate::{
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
+    sync_message::{SyncMessageService, SyncMessageTrait},
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
     vaccination::{VaccinationService, VaccinationServiceTrait},
     vaccine_course::VaccineCourseServiceTrait,
@@ -202,6 +203,8 @@ pub struct ServiceProvider {
     pub contact_service: Box<dyn ContactServiceTrait>,
     // Shipping Method
     pub shipping_method_service: Box<dyn ShippingMethodServiceTrait>,
+    // Sync Message
+    pub sync_message_service: Box<dyn SyncMessageTrait>,
     // Subscription trigger handle — used by SyncLogger and changelog callbacks
     // to send events to the shared subscription worker.
     pub subscription_trigger: SubscriptionTriggerHandle,
@@ -229,6 +232,7 @@ impl ServiceProvider {
             LedgerFixTrigger::new_void(),
             SiteIsInitialisedTrigger::new_void(),
             None, // Mail not required for test/CLI setups
+            None,
             SubscriptionTriggerHandle::new_void(),
         )
     }
@@ -240,6 +244,7 @@ impl ServiceProvider {
         ledger_fix_trigger: LedgerFixTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
         mail_settings: Option<MailSettings>,
+        settings: Option<Settings>,
         subscription_trigger: SubscriptionTriggerHandle,
     ) -> Self {
         ServiceProvider {
@@ -263,7 +268,7 @@ impl ServiceProvider {
             clinician_service: Box::new(ClinicianService {}),
             general_service: Box::new(GeneralService {}),
             report_service: Box::new(ReportService {}),
-            settings: Box::new(SettingsService),
+            settings: Box::new(SettingsService::new(settings.clone())),
             document_service: Box::new(DocumentService {}),
             document_registry_service: Box::new(DocumentRegistryService {}),
             form_schema_service: Box::new(FormSchemaService {}),
@@ -316,6 +321,7 @@ impl ServiceProvider {
             purchase_order_service: Box::new(PurchaseOrderService),
             purchase_order_line_service: Box::new(PurchaseOrderLineService),
             contact_service: Box::new(ContactService {}),
+            sync_message_service: Box::new(SyncMessageService),
             ledger_fix_trigger,
             shipping_method_service: Box::new(ShippingMethodService {}),
             subscription_trigger,

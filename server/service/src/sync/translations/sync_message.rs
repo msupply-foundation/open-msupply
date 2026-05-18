@@ -39,6 +39,7 @@ pub struct LegacyMessageRow {
 pub enum LegacySyncMessageStatus {
     #[default]
     New,
+    InProgress,
     Processed,
 }
 
@@ -75,6 +76,7 @@ impl SyncTranslation for MessageTranslation {
 
         let status = match status {
             LegacySyncMessageStatus::New => SyncMessageRowStatus::New,
+            LegacySyncMessageStatus::InProgress => SyncMessageRowStatus::InProgress,
             LegacySyncMessageStatus::Processed => SyncMessageRowStatus::Processed,
         };
 
@@ -135,6 +137,7 @@ impl SyncTranslation for MessageTranslation {
             created_time,
             status: match status {
                 SyncMessageRowStatus::New => LegacySyncMessageStatus::New,
+                SyncMessageRowStatus::InProgress => LegacySyncMessageStatus::InProgress,
                 SyncMessageRowStatus::Processed => LegacySyncMessageStatus::Processed,
             },
             r#type,

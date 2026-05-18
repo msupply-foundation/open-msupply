@@ -23,6 +23,7 @@ use super::{
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
     load_plugin::LoadPlugin, plugin_processor::PluginProcessor,
     requisition_auto_finalise::RequisitionAutoFinaliseProcessor,
+    support_upload_files::SupportUploadFilesProcessor,
 };
 
 #[derive(Error, Debug)]
@@ -51,6 +52,7 @@ pub enum ProcessorType {
     LoadPlugin,
     AssignRequisitionNumber,
     AddPatientVisibilityForCentral,
+    SupportUploadFiles,
     Plugins,
     RequisitionAutoFinalise,
 }
@@ -68,6 +70,9 @@ impl ProcessorType {
             ProcessorType::Plugins => get_plugin_processors(),
             ProcessorType::RequisitionAutoFinalise => {
                 vec![Box::new(RequisitionAutoFinaliseProcessor)]
+            }
+            ProcessorType::SupportUploadFiles => {
+                vec![Box::new(SupportUploadFilesProcessor)]
             }
         }
     }
