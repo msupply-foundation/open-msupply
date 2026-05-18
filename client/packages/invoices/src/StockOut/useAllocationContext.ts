@@ -7,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   StockOutAlert,
-  canAllocate,
+  showLines,
   getAllocatedQuantity,
   issue,
   packsToQuantity,
@@ -63,6 +63,7 @@ interface AllocationContext {
   placeholderUnits: number | null;
   prescribedUnits: number | null;
   note: string | null;
+  expiryThresholdDays: number;
 
   initialise: (
     params: {
@@ -73,6 +74,7 @@ interface AllocationContext {
       scannedBatch?: string;
       allocateIn?: AllocateInOption;
       ignoreNonAllocatableLines?: boolean;
+      expiryThresholdDays: number;
     },
     format: (value: number, options?: Intl.NumberFormatOptions) => string,
     t: TypedTFunction<LocaleKey>
@@ -111,7 +113,6 @@ interface AllocationContext {
     quantity: number,
     format: (value: number, options?: Intl.NumberFormatOptions) => string,
     t: TypedTFunction<LocaleKey>,
-    expiryThresholdDays: number,
     allowPartialPacks?: boolean
   ) => number;
 }
@@ -126,6 +127,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
   alerts: [],
   allocateIn: { type: AllocateInType.Units },
   note: null,
+  expiryThresholdDays: 0,
 
   initialise: (
     {
@@ -136,6 +138,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       scannedBatch,
       allocateIn: inputAllocateIn,
       ignoreNonAllocatableLines,
+      expiryThresholdDays,
     },
     format,
     t
@@ -149,7 +152,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       sortedLines,
       line => {
         return (
-          canAllocate(line) &&
+          showLines(line) &&
           (!scannedBatch || scannedBatchFilter(sortedLines, line, scannedBatch))
         );
       }
@@ -161,6 +164,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       item,
       note,
       allocateIn,
+      expiryThresholdDays,
 
       draftLines: allocatableLines,
       // When not ignored, we still want to display non-allocatable lines to the user
@@ -238,7 +242,7 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       item?.doses ?? 0
     );
 
-    autoAllocate(quantityInNewPackSize, format, t, 0);
+    autoAllocate(quantityInNewPackSize, format, t);
   },
 
   setAlerts: alerts =>
@@ -289,19 +293,14 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     }));
   },
 
-  autoAllocate: (
-    quantity,
-    format,
-    t,
-    expiryThresholdDays,
-    allowPartialPacks = false
-  ) => {
+  autoAllocate: (quantity, format, t, allowPartialPacks = false) => {
     const {
       draftLines,
       nonAllocatableLines,
       placeholderUnits,
       allocateIn,
       item,
+      expiryThresholdDays,
     } = get();
 
     const result = allocateQuantities(draftLines, quantity, {
@@ -321,8 +320,8 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
     });
 
     const hasOnHold = nonAllocatableLines.some(
-      ({ availablePacks, stockLineOnHold }) =>
-        availablePacks > 0 && !!stockLineOnHold
+      ({ availablePacks, stockLineOnHold, location }) =>
+        availablePacks > 0 && (!!stockLineOnHold || !!location?.onHold)
     );
 
     // Note that a placeholder is always considered to be pack size 1

@@ -114,6 +114,10 @@ impl SupplierReturnLineNode {
         self.stock_line_row().pack_size
     }
 
+    pub async fn on_hold(&self) -> bool {
+        self.return_line.on_hold
+    }
+
     pub async fn reason_option(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {
         let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
         let reason_option_id = match &self.return_line.reason_id {

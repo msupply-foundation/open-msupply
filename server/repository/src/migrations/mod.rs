@@ -1,17 +1,6 @@
+mod base_migration;
 pub mod constants;
 mod types;
-mod v1_00_04;
-mod v1_01_01;
-mod v1_01_02;
-mod v1_01_03;
-mod v1_01_05;
-mod v1_01_11;
-mod v1_01_12;
-mod v1_01_13;
-mod v1_01_14;
-mod v1_01_15;
-mod v1_02_00;
-mod v1_02_01;
 mod v1_03_00;
 mod v1_04_00;
 mod v1_05_00;
@@ -49,14 +38,17 @@ mod v2_13_01;
 mod v2_14_00;
 mod v2_15_00;
 mod v2_16_00;
+mod v2_16_01;
+mod v2_17_00;
+mod v2_17_03;
+mod v2_17_05;
+mod v2_18_00;
+mod v2_19_00;
+mod v2_20_00;
 mod version;
 mod views;
 
 pub(crate) use self::types::*;
-use self::v1_00_04::V1_00_04;
-use self::v1_01_01::V1_01_01;
-use self::v1_01_02::V1_01_02;
-use self::v1_01_03::V1_01_03;
 
 pub(crate) mod helpers;
 mod templates;
@@ -64,8 +56,9 @@ mod templates;
 pub use self::version::*;
 
 use crate::{
-    run_db_migrations, KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository,
-    RepositoryError, StorageConnection,
+    migrations::base_migration::{initialize_earliest_db, initialize_latest_db, is_empty_db},
+    KeyType, KeyValueStoreRepository, MigrationFragmentLogRepository, RepositoryError,
+    StorageConnection,
 };
 use chrono::{NaiveDateTime, Utc};
 use diesel::connection::SimpleConnection;
@@ -95,8 +88,8 @@ pub(crate) trait MigrationFragment {
 pub enum MigrationError {
     #[error("The database you are connecting to is a later version ({0}) than the server ({1}). It is unsafe to run with this configuration, the server is stopping")]
     DatabaseVersionAboveAppVersion(Version, Version),
-    #[error("Database version is pre release ({0}), it cannot be upgraded")]
-    DatabaseVersionIsPreRelease(Version),
+    #[error("Database version is not supported ({0}), it cannot be upgraded")]
+    DatabaseVersionNotSupported(Version),
     #[error("Migration version ({0}) is higher then app version ({1}), consider increasing app version in root package.json")]
     MigrationAboveAppVersion(Version, Version),
     #[error("Problem dropping or re-creating views {0}")]
@@ -121,18 +114,6 @@ pub fn migrate(
     to_version: Option<Version>,
 ) -> Result<(Version, Vec<(String, NaiveDateTime)>), MigrationError> {
     let migrations: Vec<Box<dyn Migration>> = vec![
-        Box::new(V1_00_04),
-        Box::new(V1_01_01),
-        Box::new(V1_01_02),
-        Box::new(V1_01_03),
-        Box::new(v1_01_05::V1_01_05),
-        Box::new(v1_01_11::V1_01_11),
-        Box::new(v1_01_12::V1_01_12),
-        Box::new(v1_01_13::V1_01_13),
-        Box::new(v1_01_14::V1_01_14),
-        Box::new(v1_01_15::V1_01_15),
-        Box::new(v1_02_00::V1_02_00),
-        Box::new(v1_02_01::V1_02_01),
         Box::new(v1_03_00::V1_03_00),
         Box::new(v1_04_00::V1_04_00),
         Box::new(v1_05_00::V1_05_00),
@@ -170,15 +151,45 @@ pub fn migrate(
         Box::new(v2_14_00::V2_14_00),
         Box::new(v2_15_00::V2_15_00),
         Box::new(v2_16_00::V2_16_00),
+        Box::new(v2_16_01::V2_16_01),
+        Box::new(v2_17_00::V2_17_00),
+        Box::new(v2_17_03::V2_17_03),
+        Box::new(v2_17_05::V2_17_05),
+        Box::new(v2_18_00::V2_18_00),
+        Box::new(v2_19_00::V2_19_00),
+        Box::new(v2_20_00::V2_20_00),
     ];
 
-    // Historic diesel migrations
-    run_db_migrations(connection).unwrap();
+    // Check if the database has been initialised, if not run the base sql to kick start the process
+    if is_empty_db(connection)? {
+        log::info!("Empty database detected, creating base schema...");
 
-    // Rust migrations
+        if to_version.is_some() {
+            log::info!("Target version specified, initializing earliest base schema");
+            // We always use the earliest base schema when migrating to a specific version
+            // This is the easiest way to makes sure migration tests can still run.
+            initialize_earliest_db(connection)?;
+        } else {
+            log::info!("No target version specified, initializing latest base schema");
+            initialize_latest_db(connection)?;
+        }
+        log::info!("Base schema...installed");
+    }
+
     let to_version = to_version.unwrap_or(Version::from_package_json());
 
+    // Rust migrations
     let starting_database_version = get_database_version(connection);
+
+    if starting_database_version < migrations[0].version() {
+        log::error!(
+            "Database version < {v} cannot be upgraded. Please install a version between {v} and 2.15.0 first, or re-initialise to upgrade",
+            v = migrations[0].version()
+        );
+        return Err(MigrationError::DatabaseVersionNotSupported(
+            starting_database_version,
+        ));
+    }
 
     // Get migration fragment log repository and create table if it doesn't exist
     create_migration_fragment_table(connection)?;
@@ -235,10 +246,7 @@ pub fn migrate(
                 })?;
 
             migration_result.push((
-                format!(
-                    "Running one time database migration {}",
-                    migration_version.to_string()
-                ),
+                format!("Running one time database migration {}", migration_version),
                 Utc::now().naive_utc(),
             ));
 
@@ -257,13 +265,13 @@ pub fn migrate(
                     fragment.identifier()
                 );
 
-                fragment.migrate(connection).map_err(|source| {
-                    MigrationError::FragmentMigrationError {
-                        source,
+                connection
+                    .transaction_sync(|connection| fragment.migrate(connection))
+                    .map_err(|source| MigrationError::FragmentMigrationError {
+                        source: source.to_inner_error(),
                         version: migration_version.clone(),
                         identifier: fragment.identifier(),
-                    }
-                })?;
+                    })?;
 
                 migration_fragment_log_repo.insert(migration, &fragment)?;
             }
@@ -271,7 +279,7 @@ pub fn migrate(
     }
 
     migration_result.push((
-        format!("Migrations finished to version {}", to_version.to_string()),
+        format!("Migrations finished to version {}", to_version),
         Utc::now().naive_utc(),
     ));
 
@@ -294,7 +302,7 @@ pub fn migrate(
     set_database_version(connection, &to_version)?;
 
     migration_result.push((
-        format!("Views recreated for {}", to_version.to_string()),
+        format!("Views recreated for {}", to_version),
         Utc::now().naive_utc(),
     ));
 

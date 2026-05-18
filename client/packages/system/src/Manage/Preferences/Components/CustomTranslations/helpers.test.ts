@@ -7,6 +7,7 @@ import {
   extractVariables as extractVariables,
   hasInvalidBrackets,
   checkInvalidVariables as checkInvalidVariables,
+  mergeTranslations,
 } from './helpers';
 
 describe('custom translations helpers', () => {
@@ -262,6 +263,146 @@ describe('custom translations helpers', () => {
             custom: 'Line2 {{b}}\nLine1 {{a}}',
           })
         ).toBe(false);
+      });
+    });
+  });
+
+  describe('mergeTranslations', () => {
+    const tr = (
+      key: string,
+      custom: string,
+      defaultVal = 'Default'
+    ): Translation => ({
+      id: key,
+      key,
+      default: defaultVal,
+      custom,
+    });
+
+    const existing: Translation[] = [
+      tr('button.ok', 'Okay', 'OK'),
+      tr('button.cancel', 'Annuler', 'Cancel'),
+      tr('label.name', 'Nom', 'Name'),
+    ];
+
+    describe('replace mode', () => {
+      it('replaces all existing translations with imported ones', () => {
+        const imported = [tr('button.ok', 'Sure', 'OK'), tr('label.new', 'New!', 'New')];
+        const result = mergeTranslations(existing, imported, 'replace');
+        expect(result).toEqual(imported);
+      });
+
+      it('returns empty array when imported is empty', () => {
+        const result = mergeTranslations(existing, [], 'replace');
+        expect(result).toEqual([]);
+      });
+
+      it('replaces even when existing is empty', () => {
+        const imported = [tr('label.new', 'New!', 'New')];
+        const result = mergeTranslations([], imported, 'replace');
+        expect(result).toEqual(imported);
+      });
+    });
+
+    describe('keep-existing mode', () => {
+      it('adds new keys without modifying existing ones', () => {
+        const imported = [
+          tr('button.ok', 'Sure', 'OK'),     // exists — should be skipped
+          tr('label.new', 'Nouveau', 'New'),  // new — should be added
+        ];
+        const result = mergeTranslations(existing, imported, 'keep-existing');
+        expect(result).toEqual([
+          ...existing,
+          tr('label.new', 'Nouveau', 'New'),
+        ]);
+      });
+
+      it('preserves existing custom values for overlapping keys', () => {
+        const imported = [tr('button.ok', 'Overridden', 'OK')];
+        const result = mergeTranslations(existing, imported, 'keep-existing');
+        // button.ok should keep the original 'Okay' value
+        expect(result.find(t => t.key === 'button.ok')?.custom).toBe('Okay');
+      });
+
+      it('returns existing unchanged when imported is empty', () => {
+        const result = mergeTranslations(existing, [], 'keep-existing');
+        expect(result).toEqual(existing);
+      });
+
+      it('adds all imported when existing is empty', () => {
+        const imported = [tr('label.new', 'New!', 'New')];
+        const result = mergeTranslations([], imported, 'keep-existing');
+        expect(result).toEqual(imported);
+      });
+
+      it('adds nothing when all imported keys already exist', () => {
+        const imported = [
+          tr('button.ok', 'Different', 'OK'),
+          tr('button.cancel', 'Different', 'Cancel'),
+        ];
+        const result = mergeTranslations(existing, imported, 'keep-existing');
+        expect(result).toEqual(existing);
+      });
+    });
+
+    describe('overwrite mode', () => {
+      it('overwrites existing keys and adds new ones', () => {
+        const imported = [
+          tr('button.ok', 'Sure', 'OK'),     // exists — should be overwritten
+          tr('label.new', 'Nouveau', 'New'),  // new — should be added
+        ];
+        const result = mergeTranslations(existing, imported, 'overwrite');
+        expect(result).toEqual([
+          tr('button.ok', 'Sure', 'OK'),       // overwritten
+          tr('button.cancel', 'Annuler', 'Cancel'), // untouched
+          tr('label.name', 'Nom', 'Name'),     // untouched
+          tr('label.new', 'Nouveau', 'New'),   // added
+        ]);
+      });
+
+      it('preserves non-overlapping existing translations', () => {
+        const imported = [tr('button.ok', 'Sure', 'OK')];
+        const result = mergeTranslations(existing, imported, 'overwrite');
+        expect(result.find(t => t.key === 'button.cancel')?.custom).toBe(
+          'Annuler'
+        );
+        expect(result.find(t => t.key === 'label.name')?.custom).toBe('Nom');
+      });
+
+      it('only updates the custom field, preserving other properties', () => {
+        const existingWithMeta: Translation[] = [
+          { id: 'button.ok', key: 'button.ok', default: 'OK', custom: 'Okay', isNew: true },
+        ];
+        const imported = [tr('button.ok', 'Sure', 'OK')];
+        const result = mergeTranslations(existingWithMeta, imported, 'overwrite');
+        expect(result[0]).toEqual({
+          id: 'button.ok',
+          key: 'button.ok',
+          default: 'OK',
+          custom: 'Sure',
+          isNew: true,
+        });
+      });
+
+      it('returns existing unchanged when imported is empty', () => {
+        const result = mergeTranslations(existing, [], 'overwrite');
+        expect(result).toEqual(existing);
+      });
+
+      it('adds all imported when existing is empty', () => {
+        const imported = [tr('label.new', 'New!', 'New')];
+        const result = mergeTranslations([], imported, 'overwrite');
+        expect(result).toEqual(imported);
+      });
+
+      it('overwrites all when every key overlaps', () => {
+        const imported = [
+          tr('button.ok', 'Sure', 'OK'),
+          tr('button.cancel', 'Nope', 'Cancel'),
+          tr('label.name', 'Nombre', 'Name'),
+        ];
+        const result = mergeTranslations(existing, imported, 'overwrite');
+        expect(result.map(t => t.custom)).toEqual(['Sure', 'Nope', 'Nombre']);
       });
     });
   });

@@ -1,14 +1,14 @@
-use repository::location::{Location, LocationFilter, LocationRepository, LocationSort};
-use repository::{
-    EqualFilter, LocationRow, PaginationOption, RepositoryError, StockLineFilter,
-    StockLineRepository, StorageConnection,
-};
+use std::collections::HashMap;
 
 use crate::{
     get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
     SingleRecordError,
 };
- 
+use repository::{
+    location::{Location, LocationFilter, LocationRepository, LocationSort},
+    EqualFilter, ItemFilter, ItemRepository, LocationRow, PaginationOption, RepositoryError,
+    StockLineFilter, StockLineRepository, StorageConnection,
+};
 
 pub fn get_locations(
     ctx: &ServiceContext,
@@ -28,8 +28,8 @@ pub fn get_locations(
 pub fn get_location(ctx: &ServiceContext, id: String) -> Result<Location, SingleRecordError> {
     let repository = LocationRepository::new(&ctx.connection);
 
-    let mut result =
-        repository.query_by_filter(LocationFilter::new().id(EqualFilter::equal_to(id.to_string())))?;
+    let mut result = repository
+        .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to(id.to_string())))?;
 
     if let Some(record) = result.pop() {
         Ok(record)
@@ -60,4 +60,71 @@ pub fn get_volume_used(
         .iter()
         .map(|line| line.stock_line_row.total_volume)
         .sum())
+}
+
+#[derive(Debug, PartialEq, Default, Clone)]
+pub struct AvailableVolumeByType {
+    pub restricted_location_type_id: Option<String>,
+    pub available_volume: Option<f64>,
+}
+
+pub fn get_available_volume_by_location_type(
+    connection: &StorageConnection,
+    store_id: &str,
+    item_ids: &[String],
+) -> Result<HashMap<String, AvailableVolumeByType>, RepositoryError> {
+    let items = ItemRepository::new(connection).query_by_filter(
+        ItemFilter::new().id(EqualFilter::equal_any(item_ids.to_vec())),
+        None,
+    )?;
+
+    let mut result = HashMap::new();
+
+    for item in items {
+        // TODO: Use item_store_join location restrictions if/when they are implemented
+        let restricted_location_type_id = match item.item_row.restricted_location_type_id {
+            Some(ref id) => id.clone(),
+            None => return Ok(HashMap::new()),
+        };
+
+        let stock_line_repo = StockLineRepository::new(connection);
+        let lines = stock_line_repo.query_by_filter(
+            StockLineFilter::new()
+                .location(
+                    LocationFilter::new().location_type_id(EqualFilter::equal_to(
+                        restricted_location_type_id.clone(),
+                    )),
+                )
+                .has_packs_in_store(true),
+            Some(store_id.to_string()),
+        )?;
+
+        let location_repo = LocationRepository::new(connection);
+        let locations = location_repo.query_by_filter(
+            LocationFilter::new()
+                .location_type_id(EqualFilter::equal_to(restricted_location_type_id.clone())),
+        )?;
+
+        if locations.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let used_volume: f64 = lines
+            .iter()
+            .map(|line| line.stock_line_row.total_volume)
+            .sum();
+
+        let total_volume: f64 = locations.iter().map(|loc| loc.location_row.volume).sum();
+
+        result.insert(
+            item.item_row.id.clone(),
+            AvailableVolumeByType {
+                restricted_location_type_id: (!restricted_location_type_id.is_empty())
+                    .then_some(restricted_location_type_id),
+                available_volume: Some(total_volume - used_volume),
+            },
+        );
+    }
+
+    Ok(result)
 }

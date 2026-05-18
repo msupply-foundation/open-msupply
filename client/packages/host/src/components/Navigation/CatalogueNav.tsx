@@ -20,30 +20,26 @@ export const CatalogueNav = () => {
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Catalogue}>
       <AppNavLink
-        end={false}
+        isParent
         to={AppRoute.Catalogue}
         icon={<ListIcon color="primary" style={{ width: 20 }} />}
         text={t('catalogue')}
-        inactive
       />
       <Collapse in={isActive}>
         <List>
           <AppNavLink
-            end
             to={RouteBuilder.create(AppRoute.Catalogue)
               .addPart(AppRoute.Assets)
               .build()}
             text={t('assets')}
           />
           <AppNavLink
-            end
             to={RouteBuilder.create(AppRoute.Catalogue)
               .addPart(AppRoute.Items)
               .build()}
             text={t('items')}
           />
           <AppNavLink
-            end
             to={RouteBuilder.create(AppRoute.Catalogue)
               .addPart(AppRoute.MasterLists)
               .build()}

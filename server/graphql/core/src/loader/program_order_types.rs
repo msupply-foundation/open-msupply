@@ -1,4 +1,4 @@
-use crate::{loader::IdPair, standard_graphql_error::StandardGraphqlError};
+use crate::standard_graphql_error::StandardGraphqlError;
 use actix_web::web::Data;
 use async_graphql::dataloader::Loader;
 use repository::{EqualFilter, MasterListLineFilter, MasterListLineRepository};
@@ -11,15 +11,16 @@ use service::{
 };
 use std::collections::HashMap;
 
-#[derive(Clone, Debug)]
-pub struct EmptyPayload;
-pub type OrderTypesByProgramIdInput = IdPair<EmptyPayload>;
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub struct OrderTypesByProgramIdInput {
+    pub store_id: String,
+    pub item_id: String,
+}
 impl OrderTypesByProgramIdInput {
     pub fn new(store_id: &str, item_id: &str) -> Self {
         OrderTypesByProgramIdInput {
-            primary_id: store_id.to_string(),
-            secondary_id: item_id.to_string(),
-            payload: EmptyPayload {},
+            store_id: store_id.to_string(),
+            item_id: item_id.to_string(),
         }
     }
 }
@@ -41,8 +42,8 @@ impl Loader<OrderTypesByProgramIdInput> for OrderTypesByProgramIdLoader {
 
         let mut store_item_map = HashMap::<String, Vec<String>>::new();
         for item in ids_with_store_id {
-            let entry = store_item_map.entry(item.primary_id.clone()).or_default();
-            entry.push(item.secondary_id.clone())
+            let entry = store_item_map.entry(item.store_id.clone()).or_default();
+            entry.push(item.item_id.clone())
         }
 
         let store_ids = store_item_map.keys().cloned().collect::<Vec<String>>();

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   useTranslation,
   NothingHere,
@@ -12,14 +12,16 @@ import {
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,
-  UnitsAndDosesCell,
   ChipTableCell,
+  ExpiryDateCell,
+  UnitsAndDosesCell,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { useStockList } from '../api/hooks/useStockList';
+import { useGroupedStockList } from '../api/hooks/useGroupedStockList';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
-import { ExpiryDateCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateCell';
+import { Toolbar } from './Toolbar';
 
 export const StockListView = () => {
   const t = useTranslation();
@@ -28,9 +30,13 @@ export const StockListView = () => {
   const { manageVvmStatusForStock } = usePreferences();
   const { isOpen, onClose, onOpen } = useEditModal();
 
+  const [isGrouped, setIsGrouped] = useState<boolean | null>(null);
+
   const {
     queryParams: { sortBy, first, offset, filterBy },
+    updateFilterQuery,
   } = useUrlQueryParams({
+    initialSort: { key: 'name', dir: 'asc' },
     filters: [
       { key: 'vvmStatusId', condition: 'equalTo' },
       { key: 'search' },
@@ -52,6 +58,28 @@ export const StockListView = () => {
       },
     ],
   });
+
+  // Stock-line-specific filters don't apply in grouped mode (and vice versa
+  // there are no grouped-only filters yet). Clear them on toggle so stale URL
+  // params don't silently affect the ungrouped query when the user switches back.
+  const stockLineFilterKeys = [
+    'location.code',
+    'masterList.name',
+    'expiryDate',
+    'vvmStatusId',
+  ];
+  const initialRender = useRef(true);
+  useEffect(() => {
+    if (initialRender.current) {
+      initialRender.current = false;
+      return;
+    }
+    if (isGrouped) {
+      stockLineFilterKeys.forEach(key => updateFilterQuery(key, ''));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isGrouped]);
+
   const queryParams = {
     filterBy: { ...filterBy },
     offset,
@@ -59,7 +87,19 @@ export const StockListView = () => {
     first,
   };
 
-  const { data, isFetching, isError } = useStockList(queryParams);
+  // Both hooks are always called (React rules), but only one is active
+  const ungroupedResult = useStockList(queryParams, {
+    enabled: isGrouped === false,
+  });
+  const groupedResult = useGroupedStockList(queryParams, {
+    enabled: isGrouped === true,
+  });
+
+  const data = isGrouped ? groupedResult.data : ungroupedResult.data;
+  const isFetching = isGrouped
+    ? groupedResult.isFetching
+    : ungroupedResult.isFetching;
+  const isError = isGrouped ? groupedResult.isError : ungroupedResult.isError;
 
   const mrtColumns = useMemo(
     (): ColumnDef<StockLineRowFragment>[] => [
@@ -95,7 +135,7 @@ export const StockListView = () => {
         Cell: TextWithTooltipCell,
         size: 100,
         defaultHideOnMobile: true,
-        enableSorting: true,
+        enableSorting: !isGrouped,
       },
       {
         id: 'expiryDate',
@@ -103,13 +143,23 @@ export const StockListView = () => {
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         columnType: ColumnType.Date,
         Cell: ExpiryDateCell,
-        size: 120,
+        size: 100,
         defaultHideOnMobile: true,
         enableColumnFilter: true,
         dateFilterFormat: 'date',
-        enableSorting: true,
+        enableSorting: !isGrouped,
       },
-
+      {
+        id: 'manufactureDate',
+        header: t('label.manufacture-date'),
+        accessorFn: row =>
+          row.manufactureDate ? new Date(row.manufactureDate) : null,
+        columnType: ColumnType.Date,
+        size: 100,
+        defaultHideOnMobile: true,
+        enableColumnFilter: true,
+        enableSorting: !isGrouped,
+      },
       {
         id: 'vvmStatus',
         header: t('label.vvm-status'),
@@ -118,9 +168,8 @@ export const StockListView = () => {
         size: 150,
         defaultHideOnMobile: true,
         includeColumn: manageVvmStatusForStock,
-        enableSorting: true,
+        enableSorting: !isGrouped,
       },
-
       {
         id: 'location.code',
         accessorFn: row => row.location?.code || '',
@@ -128,7 +177,7 @@ export const StockListView = () => {
         Cell: TextWithTooltipCell,
         size: 100,
         defaultHideOnMobile: true,
-        enableSorting: true,
+        enableSorting: !isGrouped,
         enableColumnFilter: true,
       },
       {
@@ -145,24 +194,26 @@ export const StockListView = () => {
         accessorKey: 'packSize',
         Cell: TextWithTooltipCell,
         align: 'right',
-        size: 125,
+        size: 90,
         defaultHideOnMobile: true,
-        enableSorting: true,
+        enableSorting: !isGrouped,
       },
       {
         header: t('label.pack-quantity'),
         accessorKey: 'totalNumberOfPacks',
         columnType: ColumnType.Number,
         align: 'right',
-        size: 125,
-        enableSorting: true,
+        size: 100,
+        enableSorting: !isGrouped,
       },
       {
         header: t('label.soh'),
         description: t('description.soh'),
         accessorFn: row => row.totalNumberOfPacks * row.packSize,
         Cell: UnitsAndDosesCell,
+        aggregationFn: 'sum',
         align: 'right',
+        size: 100,
         enableSorting: false,
         defaultHideOnMobile: true,
       },
@@ -172,7 +223,9 @@ export const StockListView = () => {
         description: t('description.available-soh'),
         accessorFn: row => row.availableNumberOfPacks * row.packSize,
         Cell: UnitsAndDosesCell,
+        aggregationFn: 'sum',
         align: 'right',
+        size: 125,
         enableSorting: false,
         defaultHideOnMobile: true,
       },
@@ -183,7 +236,7 @@ export const StockListView = () => {
         columnType: ColumnType.Currency,
         size: 125,
         defaultHideOnMobile: true,
-        enableSorting: true,
+        enableSorting: !isGrouped,
       },
       {
         id: 'totalCost',
@@ -191,8 +244,17 @@ export const StockListView = () => {
         description: t('description.total-cost'),
         accessorFn: row => row.totalNumberOfPacks * row.costPricePerPack,
         columnType: ColumnType.Currency,
+        aggregationFn: 'sum',
         enableSorting: false,
-        size: 125,
+        size: 100,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        accessorFn: row => row.manufacturer?.name ?? '',
+        Cell: TextWithTooltipCell,
+        size: 150,
         defaultHideOnMobile: true,
       },
       {
@@ -203,11 +265,11 @@ export const StockListView = () => {
         Cell: TextWithTooltipCell,
         size: 190,
         defaultHideOnMobile: true,
-        enableSorting: true,
+        enableSorting: !isGrouped,
       },
       ...(plugins.stockLine?.tableColumn || []),
     ],
-    [manageVvmStatusForStock, plugins.stockLine?.tableColumn]
+    [isGrouped, manageVvmStatusForStock, plugins.stockLine?.tableColumn, t]
   );
 
   const { table } = usePaginatedMaterialTable<StockLineRowFragment>({
@@ -219,6 +281,10 @@ export const StockListView = () => {
     data: data?.nodes,
     totalCount: data?.totalCount ?? 0,
     enableRowSelection: false,
+    grouping: {
+      field: 'code',
+      onToggle: setIsGrouped,
+    },
     noDataElement: (
       <NothingHere
         body={t('error.no-stock')}
@@ -230,6 +296,7 @@ export const StockListView = () => {
 
   return (
     <>
+      <Toolbar isGrouped={!!isGrouped} />
       <AppBarButtons exportFilter={filterBy} />
       {plugins.stockLine?.tableStateLoader?.map((StateLoader, index) => (
         <StateLoader key={index} stockLines={data?.nodes ?? []} />

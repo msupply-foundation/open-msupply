@@ -4,10 +4,7 @@
     {
       "type": "Control",
       "scope": "#/properties/expiryDate",
-      "label": "T#report.expiry-date",
-      "options": {
-        "dateOnly": true
-      }
+      "label": "T#report.expiry-date"
     },
     {
       "type": "Control",

@@ -20,7 +20,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    PRAGMA foreign_keys = OFF;
+                    -- PRAGMA foreign_keys = OFF; -- No longer effective now that we're using transactions
 
                     -- Create new temp table without foreign key
                     CREATE TABLE IF NOT EXISTS asset_internal_location_new (
@@ -37,7 +37,7 @@ impl MigrationFragment for Migrate {
                     -- Rename new table to old table name
                     ALTER TABLE asset_internal_location_new RENAME TO asset_internal_location;
 
-                    PRAGMA foreign_keys = ON;
+                    -- PRAGMA foreign_keys = ON;
                 "#
             )?;
         }

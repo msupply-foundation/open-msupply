@@ -6,7 +6,6 @@ import {
   AlertModal,
   RouteBuilder,
   DetailTabs,
-  IndicatorLineRowNode,
   useBreadcrumbs,
   useEditModal,
   useAuthContext,
@@ -20,14 +19,13 @@ import { Toolbar } from './Toolbar/Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { useResponse, ResponseLineFragment, ResponseFragment } from '../api';
+import { useResponse, ResponseLineFragment } from '../api';
 import { IndicatorsTab, Documents } from './Tabs';
 import { ResponseRequisitionLineErrorProvider } from '../context';
-import { ProgramIndicatorFragment } from '../../RequestRequisition/api';
-import { buildIndicatorEditRoute } from './utils';
 import { ResponseLineEditModal } from './ResponseLineEdit';
 import { useResponseColumns } from './columns';
 import { isResponseLinePlaceholderRow } from '../../utils';
+import { useResponseLines } from '../api/hooks/line/useResponseLines';
 
 const DetailViewInner = () => {
   const t = useTranslation();
@@ -45,6 +43,7 @@ const DetailViewInner = () => {
 
   const { data, isLoading, isFetching, isError, invalidateQueries } =
     useResponse.document.get();
+  const { lines } = useResponseLines();
   const { columns } = useResponseColumns();
   const isDisabled = useResponse.utils.isDisabled();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
@@ -62,24 +61,6 @@ const DetailViewInner = () => {
     [onOpen]
   );
 
-  const onProgramIndicatorClick = useCallback(
-    (
-      programIndicator?: ProgramIndicatorFragment,
-      indicatorLine?: IndicatorLineRowNode,
-      response?: ResponseFragment
-    ) => {
-      if (!response || !indicatorLine) return;
-      navigate(
-        buildIndicatorEditRoute(
-          response.id,
-          String(programIndicator?.code),
-          indicatorLine.id
-        )
-      );
-    },
-    [navigate]
-  );
-
   const onAddItem = () => {
     onOpen();
   };
@@ -91,10 +72,10 @@ const DetailViewInner = () => {
   const { table, selectedRows } = useNonPaginatedMaterialTable({
     tableId: 'response-requisition-detail',
     columns,
-    data: data?.lines.nodes,
+    data: lines,
     isLoading: isFetching,
     isError,
-    getIsPlaceholderRow: isResponseLinePlaceholderRow,
+    getIsPlaceholderRow: row => isResponseLinePlaceholderRow(row.original),
     onRowClick,
     initialSort: { key: 'itemName', dir: 'asc' },
     noDataElement: (
@@ -135,10 +116,9 @@ const DetailViewInner = () => {
     tabs.push({
       Component: (
         <IndicatorsTab
-          onClick={onProgramIndicatorClick}
           isLoading={isLoading || isProgramIndicatorsLoading}
-          response={data}
           indicators={programIndicators?.nodes}
+          disabled={isDisabled}
         />
       ),
       value: t('label.indicators'),

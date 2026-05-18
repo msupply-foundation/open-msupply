@@ -21,7 +21,7 @@ pub fn mock_test_unallocated_line() -> MockData {
 pub fn mock_new_invoice_with_unallocated_line() -> InvoiceRow {
     InvoiceRow {
         id: "unallocated_line_new_invoice".to_string(),
-        name_link_id: "name_store_a".to_string(),
+        name_id: "name_store_a".to_string(),
         store_id: "store_c".to_string(),
         invoice_number: 1,
         r#type: InvoiceType::OutboundShipment,
@@ -62,7 +62,7 @@ pub fn mock_unallocated_line() -> InvoiceLineRow {
 pub fn mock_new_invoice_with_unallocated_line2() -> InvoiceRow {
     InvoiceRow {
         id: "unallocated_line_new_invoice2".to_string(),
-        name_link_id: "name_store_a".to_string(),
+        name_id: "name_store_a".to_string(),
         store_id: "store_a".to_string(),
         invoice_number: 2,
         r#type: InvoiceType::OutboundShipment,
@@ -101,7 +101,7 @@ pub fn mock_unallocated_line2() -> InvoiceLineRow {
 pub fn mock_allocated_invoice() -> InvoiceRow {
     InvoiceRow {
         id: "unallocated_line_allocated_invoice".to_string(),
-        name_link_id: "name_store_a".to_string(),
+        name_id: "name_store_a".to_string(),
         store_id: "store_a".to_string(),
         invoice_number: 1,
         r#type: InvoiceType::OutboundShipment,

@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { ImportRow } from './EquipmentImportModal';
-import { ImportReviewDataTable } from './ImportReviewDataTable';
+import { ImportReviewTable } from './ImportReviewTable';
 import { ImportPanel } from '@common/components';
 
 interface EquipmentReviewTabProps {
@@ -16,7 +16,7 @@ export const EquipmentReviewTab: FC<ImportPanel & EquipmentReviewTabProps> = ({
   hasError,
 }) => (
   <ImportPanel tab={tab}>
-    <ImportReviewDataTable
+    <ImportReviewTable
       importRows={uploadedRows}
       showWarnings={showWarnings}
       showErrors={hasError}

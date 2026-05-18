@@ -3,7 +3,8 @@ import {
   ColumnDef,
   useTranslation,
   ColumnType,
-  Groupable,
+  ExpiryDateCell,
+  weightedAverageByPacks,
 } from '@openmsupply-client/common';
 import { CustomerReturnLineFragment } from '../api';
 
@@ -11,7 +12,7 @@ export const useCustomerReturnColumns = () => {
   const t = useTranslation();
 
   const columns = useMemo(
-    (): ColumnDef<Groupable<CustomerReturnLineFragment>>[] => [
+    (): ColumnDef<CustomerReturnLineFragment>[] => [
       {
         accessorKey: 'itemCode',
         header: t('label.code'),
@@ -35,6 +36,7 @@ export const useCustomerReturnColumns = () => {
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         header: t('label.expiry'),
         columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
         enableSorting: true,
         enableColumnFilter: true,
       },
@@ -51,29 +53,37 @@ export const useCustomerReturnColumns = () => {
         enableSorting: true,
       },
       {
-        id: 'numberOfPacks',
-        accessorFn: row => {
-          if (row.subRows)
-            return row.subRows.reduce((total, line) => total + line.numberOfPacks, 0);
-          return row.numberOfPacks;
-        },
+        accessorKey: 'numberOfPacks',
         header: t('label.num-packs'),
         columnType: ColumnType.Number,
+        aggregationFn: 'sum',
         enableSorting: true,
       },
       {
         id: 'totalQuantity',
-        accessorFn: row => {
-          if (row.subRows)
-            return row.subRows.reduce((total, line) => total + line.packSize * line.numberOfPacks, 0);
-          return row.packSize * row.numberOfPacks;
-        },
+        accessorFn: row => row.packSize * row.numberOfPacks,
         header: t('label.total-quantity'),
         columnType: ColumnType.Number,
+        aggregationFn: 'sum',
         enableSorting: true,
-      }
+      },
+      {
+        accessorKey: 'sellPricePerPack',
+        header: t('label.pack-sell-price'),
+        columnType: ColumnType.Currency,
+        aggregationFn: weightedAverageByPacks(),
+        enableSorting: true,
+      },
+      {
+        id: 'lineTotal',
+        accessorFn: row => row.sellPricePerPack * row.numberOfPacks,
+        header: t('label.line-total'),
+        columnType: ColumnType.Currency,
+        aggregationFn: 'sum',
+        enableSorting: true,
+      },
     ],
-    [],
+    []
   );
 
   return columns;

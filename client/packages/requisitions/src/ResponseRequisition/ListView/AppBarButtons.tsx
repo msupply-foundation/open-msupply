@@ -25,7 +25,7 @@ import {
 import { CreateOrderModal } from './CreateOrderModal';
 import { NewProgramRequisition } from './ProgramRequisitionOptions';
 
-export const AppBarButtons = ({
+const AppBarButtonsComponent = ({
   requisitionModalController,
   createOrderModalController,
 }: {
@@ -42,7 +42,7 @@ export const AppBarButtons = ({
 
   const { mutateAsync: onCreate } = useResponse.document.insert();
   const { insert: onProgramCreate } = useResponse.document.insertProgram();
-  const { mutateAsync, isLoading } = useResponse.document.listAll({
+  const { mutateAsync, isPending: isLoading } = useResponse.document.listAll({
     key: 'createdDatetime',
     direction: 'desc',
     isDesc: true,
@@ -162,3 +162,5 @@ export const AppBarButtons = ({
     </AppBarButtonsPortal>
   );
 };
+
+export const AppBarButtons = React.memo(AppBarButtonsComponent);

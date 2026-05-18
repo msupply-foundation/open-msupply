@@ -165,13 +165,16 @@ export function getSdk(
   return {
     contacts(
       variables: ContactsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ContactsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ContactsQuery>(ContactsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<ContactsQuery>({
+            document: ContactsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'contacts',
         'query',
@@ -180,15 +183,17 @@ export function getSdk(
     },
     purchaseOrders(
       variables: PurchaseOrdersQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<PurchaseOrdersQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PurchaseOrdersQuery>(
-            PurchaseOrdersDocument,
+          client.request<PurchaseOrdersQuery>({
+            document: PurchaseOrdersDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'purchaseOrders',
         'query',
         variables

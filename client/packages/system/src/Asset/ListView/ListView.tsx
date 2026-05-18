@@ -30,8 +30,12 @@ export const AssetListView: FC = () => {
   const categoryId = urlQuery['categoryId'];
 
   // only show type options in the filter which are relevant for the selected category
-  const filteredTypes = (typeData?.nodes || []).filter(
-    type => !categoryId || type.categoryId === categoryId
+  const filteredTypes = useMemo(
+    () =>
+      (typeData?.nodes || []).filter(
+        type => !categoryId || type.categoryId === categoryId
+      ),
+    [typeData?.nodes, categoryId]
   );
 
   const t = useTranslation();
@@ -135,10 +139,7 @@ export const AssetListView: FC = () => {
         isOpen={importModalController.isOn}
         onClose={importModalController.toggleOff}
       />
-      <AppBarButtons
-        importModalController={importModalController}
-        assets={data?.nodes ?? []}
-      />
+      <AppBarButtons importModalController={importModalController} />
 
       <MaterialTable table={table} />
 

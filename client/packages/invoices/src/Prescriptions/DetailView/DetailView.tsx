@@ -1,23 +1,19 @@
 import React, { useCallback, useEffect } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   DetailViewSkeleton,
   AlertModal,
   useNavigate,
   RouteBuilder,
   useTranslation,
-  createQueryParamsStore,
   DetailTabs,
   ModalMode,
   useEditModal,
   useBreadcrumbs,
   useNonPaginatedMaterialTable,
-  Groupable,
   NothingHere,
   MaterialTable,
 } from '@openmsupply-client/common';
-import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
+import { ActivityLogList } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { PrescriptionLineFragment, usePrescription } from '../api';
 import { AppBarButtons } from './AppBarButton';
@@ -25,7 +21,6 @@ import { Toolbar } from './Toolbar';
 import { SidePanel } from './SidePanel';
 import { Footer } from './Footer';
 import { StockOutLineFragment, Draft } from '../../StockOut';
-import { StockOutItem } from '../../types';
 import { HistoryModal } from './History/HistoryModal';
 import { isPrescriptionPlaceholderRow } from '../../utils';
 import { usePrescriptionColumn } from './columns';
@@ -60,7 +55,7 @@ export const PrescriptionDetailView = () => {
           .build()
       );
     },
-    [toItemRow, data]
+    [data]
   );
   const onAddItem = () => {
     navigate(
@@ -76,26 +71,24 @@ export const PrescriptionDetailView = () => {
     setHistoryMode(ModalMode.Create);
   };
 
-  const { table, selectedRows } = useNonPaginatedMaterialTable<
-    Groupable<PrescriptionLineFragment>
-  >({
-    tableId: 'prescription-detail',
-    columns,
-    data: rows,
-    grouping: { enabled: true },
-    isLoading: false,
-    initialSort: { key: 'itemName', dir: 'asc' },
-    isError: false,
-    onRowClick: onRowClick ? row => onRowClick(row) : undefined,
-    getIsPlaceholderRow: isPrescriptionPlaceholderRow,
-    noDataElement: (
-      <NothingHere
-        body={t('error.no-prescriptions')}
-        onCreate={isDisabled ? undefined : () => onAddItem()}
-        buttonText={t('button.add-item')}
-      />
-    ),
-  });
+  const { table, selectedRows } =
+    useNonPaginatedMaterialTable<PrescriptionLineFragment>({
+      tableId: 'prescription-detail',
+      columns,
+      data: rows,
+      grouping: { field: 'item.code' },
+      isLoading: false,
+      isError: false,
+      onRowClick: onRowClick ? row => onRowClick(row) : undefined,
+      getIsPlaceholderRow: row => isPrescriptionPlaceholderRow(row.original),
+      noDataElement: (
+        <NothingHere
+          body={t('error.no-items')}
+          onCreate={isDisabled ? undefined : () => onAddItem()}
+          buttonText={t('button.add-item')}
+        />
+      ),
+    });
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
@@ -119,16 +112,7 @@ export const PrescriptionDetailView = () => {
       fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
     >
       {data ? (
-        <TableProvider
-          createStore={createTableStore}
-          queryParamsStore={createQueryParamsStore<
-            StockOutLineFragment | StockOutItem
-          >({
-            initialSortBy: {
-              key: 'itemName',
-            },
-          })}
-        >
+        <>
           <AppBarButtons onAddItem={onAddItem} onViewHistory={onViewHistory} />
           <HistoryModal
             draft={historyEntity}
@@ -145,7 +129,7 @@ export const PrescriptionDetailView = () => {
             resetRowSelection={table.resetRowSelection}
           />
           <SidePanel />
-        </TableProvider>
+        </>
       ) : (
         <AlertModal
           open={true}

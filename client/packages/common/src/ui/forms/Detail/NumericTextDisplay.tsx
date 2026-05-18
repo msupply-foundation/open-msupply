@@ -18,6 +18,7 @@ interface NumericTextDisplayProps {
   packagingDisplay?: string;
   decimalLimit?: number;
   sx?: SxProps;
+  roundUp?: boolean;
 }
 
 export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
@@ -27,10 +28,13 @@ export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
   packagingDisplay,
   decimalLimit = 2,
   sx,
+  roundUp = false,
 }) => {
   const format = useFormatNumber();
   const tooltip = value ? format.round(value ?? undefined, 10) : null;
-  const formattedValue = format.round(value ?? 0, decimalLimit);
+  const formattedValue = roundUp
+    ? format.roundUpToWholeNumber(value ?? 0)
+    : format.round(value ?? 0, decimalLimit);
 
   const displayValue =
     value === undefined || value === null ? defaultValue : formattedValue;

@@ -7,8 +7,9 @@ import {
   AppFooterPortal,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { PrescriptionRowFragment, usePrescriptionList } from '../api';
+import { PrescriptionRowFragment } from '../api';
 import { canDeletePrescription } from '../../utils';
+import { usePrescriptionDelete } from '../api/hooks/usePrescriptionDelete';
 
 export const FooterComponent = ({
   selectedRows,
@@ -19,9 +20,7 @@ export const FooterComponent = ({
 }) => {
   const t = useTranslation();
 
-  const {
-    delete: { deletePrescriptions },
-  } = usePrescriptionList();
+  const { deletePrescriptions } = usePrescriptionDelete();
 
   const deleteAction = async () => {
     await deletePrescriptions(selectedRows);

@@ -20,37 +20,32 @@ export const DistributionNav: FC = () => {
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Distribution}>
       <AppNavLink
-        end={false}
+        isParent
         to={AppRoute.Distribution}
         icon={<TruckIcon color="primary" fontSize="small" />}
         text={t('distribution')}
-        inactive
       />
       <Collapse in={isActive}>
         <List>
           <AppNavLink
-            end
             to={RouteBuilder.create(AppRoute.Distribution)
               .addPart(AppRoute.CustomerRequisition)
               .build()}
             text={t('customer-requisition')}
           />
           <AppNavLink
-            end
             to={RouteBuilder.create(AppRoute.Distribution)
               .addPart(AppRoute.OutboundShipment)
               .build()}
             text={t('outbound-shipment')}
           />
           <AppNavLink
-            end
             to={RouteBuilder.create(AppRoute.Distribution)
               .addPart(AppRoute.CustomerReturn)
               .build()}
             text={t('customer-returns')}
           />
           <AppNavLink
-            end
             to={RouteBuilder.create(AppRoute.Distribution)
               .addPart(AppRoute.Customer)
               .build()}

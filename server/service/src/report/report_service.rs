@@ -2,12 +2,14 @@ use base64::prelude::*;
 use chrono::{DateTime, Utc};
 use log::error;
 use repository::{
-    get_storage_connection_manager, migrations::Version, EqualFilter, Pagination, PaginationOption,
-    Report, ReportFilter, ReportMetaData, ReportRepository, ReportRowRepository, ReportSort,
-    RepositoryError,
+    migrations::Version, EqualFilter, Pagination, PaginationOption, Report, ReportFilter,
+    ReportMetaData, ReportRepository, ReportRowRepository, ReportSort, RepositoryError,
 };
 use serde::{Deserialize, Serialize};
-use std::{cmp::Ordering, collections::HashMap, time::SystemTime};
+use std::{
+    collections::{BTreeMap, HashMap},
+    time::SystemTime,
+};
 use thiserror::Error;
 use util::{format_error, uuid::uuid};
 
@@ -163,7 +165,7 @@ pub trait ReportServiceTrait: Sync + Send {
     /// Converts a HTML report to a file for the target PrintFormat and returns file id
     fn generate_html_report(
         &self,
-        base_dir: &Option<String>,
+        base_dir: &str,
         report: &ResolvedReportDefinition,
         report_data: serde_json::Value,
         arguments: Option<serde_json::Value>,
@@ -176,27 +178,34 @@ pub trait ReportServiceTrait: Sync + Send {
             report_data,
             arguments,
             localisations,
-            current_language,
+            current_language.clone(),
         )?;
 
         match format {
-            Some(PrintFormat::Html) => {
-                generate_html_report_to_html(base_dir, document, report.name.clone())
-            }
+            Some(PrintFormat::Html) => generate_html_report_to_html(
+                base_dir,
+                document,
+                report.name.clone(),
+                &current_language,
+            ),
             Some(PrintFormat::Excel) => export_html_report_to_excel(
                 base_dir,
                 document,
                 report.name.clone(),
                 &report.excel_template_buffer,
             ),
-            Some(PrintFormat::Pdf) | None => {
-                generate_html_report_to_pdf(base_dir, document, report.name.clone())
-            }
+            Some(PrintFormat::Pdf) | None => generate_html_report_to_pdf(
+                base_dir,
+                document,
+                report.name.clone(),
+                &current_language,
+            ),
         }
     }
 
     fn install_uploaded_reports(
         &self,
+        ctx: &ServiceContext,
         settings: &Settings,
         uploaded_file: UploadedFile,
     ) -> Result<Vec<String>, InstallReportError> {
@@ -204,15 +213,11 @@ pub trait ReportServiceTrait: Sync + Send {
         let report_json: ReportsData = uploaded_file
             .as_json_file(settings)
             .map_err(|_| InstallReportError::InvalidFile)?;
-        let connection_manager = get_storage_connection_manager(&settings.database);
-        let con = connection_manager
-            .connection()
-            .map_err(InstallReportError::RepositoryError)?;
 
         // default overwrite as true
         // TODO add user input to customise overwrite
         let reports =
-            StandardReports::upsert_reports(report_json, &con, true).map_err(|_error| {
+            StandardReports::upsert_reports(report_json, &ctx.connection, true).map_err(|_error| {
                 InstallReportError::RepositoryError(RepositoryError::DBError {
                     msg: String::from("Failed to upsert report"),
                     extra: String::new(),
@@ -224,7 +229,7 @@ pub trait ReportServiceTrait: Sync + Send {
 
     fn csv_to_excel(
         &self,
-        base_dir: &Option<String>,
+        base_dir: &str,
         csv_data: &str,
         filename: &str,
     ) -> Result<String, ReportError> {
@@ -234,13 +239,14 @@ pub trait ReportServiceTrait: Sync + Send {
 
 /// Converts a HTML report to a pdf file and returns the file id
 fn generate_html_report_to_pdf(
-    base_dir: &Option<String>,
+    base_dir: &str,
     document: GeneratedReport,
     report_name: String,
+    language: &Option<String>,
 ) -> Result<String, ReportError> {
     let id = uuid();
     // TODO use a proper tmp dir here instead of base_dir?
-    let pdf = html_to_pdf(base_dir, &format_html_document(document), &id)
+    let pdf = html_to_pdf(base_dir, &format_html_document(document, language), &id)
         .map_err(|err| ReportError::HTMLToPDFError(format!("{err}")))?;
 
     let file_service = StaticFileService::new(base_dir)
@@ -258,9 +264,10 @@ fn generate_html_report_to_pdf(
 
 /// Converts the report to a HTML file and returns the file id
 fn generate_html_report_to_html(
-    base_dir: &Option<String>,
+    base_dir: &str,
     document: GeneratedReport,
     report_name: String,
+    language: &Option<String>,
 ) -> Result<String, ReportError> {
     let file_service = StaticFileService::new(base_dir)
         .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
@@ -269,20 +276,40 @@ fn generate_html_report_to_html(
         .store_file(
             &format!("{}_{}.html", now.format("%Y%m%d_%H%M%S"), report_name),
             StaticFileCategory::Temporary,
-            format_html_document(document).as_bytes(),
+            format_html_document(document, language).as_bytes(),
         )
         .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
     Ok(file.id)
 }
 
+const RTL_LOCALES: &[&str] = &["ar", "prs", "ps"];
+
+fn is_rtl_locale(language: &Option<String>) -> bool {
+    language
+        .as_ref()
+        .map(|lang| RTL_LOCALES.contains(&lang.as_str()))
+        .unwrap_or(false)
+}
+
 /// Puts the document content, header and footer into a <html> template.
 /// This assumes that the document contains the html body.
-fn format_html_document(document: GeneratedReport) -> String {
+fn format_html_document(document: GeneratedReport, language: &Option<String>) -> String {
+    let dir = if is_rtl_locale(language) {
+        "rtl"
+    } else {
+        "ltr"
+    };
     // ensure that <html> is at the start of the text
     // if not, the cordova printer plugin renders as text not HTML!
     // The table structure is a formatting hack to show the footer on every page
+    let rtl_style = if dir == "rtl" {
+        "<style>body, table, th, td { direction: rtl; }</style>"
+    } else {
+        ""
+    };
     format!(
-        "<html>
+        "<html dir=\"{dir}\">
+    <head>{rtl_style}</head>
     <body>
         <table class=\"paging\">
             <thead>
@@ -410,14 +437,14 @@ fn query_all_report_versions(
 fn report_filter_method(reports: Vec<ReportMetaData>, app_version: Version) -> Vec<String> {
     let reports_with_compatible_versions: Vec<ReportMetaData> = reports
         .into_iter()
-        .filter(|r| compare_major_minor(r.version.clone(), &app_version) != Ordering::Greater)
+        .filter(|r| r.version.is_compatible_by_major_and_minor(&app_version))
         .collect();
 
-    let mut codes: Vec<String> = reports_with_compatible_versions
-        .iter()
-        .map(|r| r.code.clone())
-        .collect();
-    codes.dedup();
+    let codes = util::dedup_iter(
+        reports_with_compatible_versions
+            .iter()
+            .map(|r| r.code.clone()),
+    );
 
     let mut reports_to_show: Vec<String> = vec![];
     for code in codes {
@@ -446,16 +473,6 @@ fn find_latest_report(reports: Vec<ReportMetaData>) -> Option<ReportMetaData> {
     reports
         .into_iter()
         .max_by(|a, b| a.version.partial_cmp(&b.version).unwrap())
-}
-
-fn compare_major_minor(first: Version, second: &Version) -> Ordering {
-    if first.major != second.major {
-        return first.major.cmp(&second.major);
-    }
-    if first.minor != second.minor {
-        return first.minor.cmp(&second.minor);
-    }
-    Ordering::Equal
 }
 
 fn resolve_report(
@@ -599,6 +616,7 @@ fn generate_report(
     })?;
     // TODO: Validate if used and if needed
     context.insert("res", &report.resources);
+    context.insert("isRtl", &is_rtl_locale(&current_language));
 
     let mut tera = tera::Tera::default();
 
@@ -776,7 +794,7 @@ fn load_template_references(
 ) -> Result<ReportDefinition, ReportError> {
     let mut out = ReportDefinition {
         index: report.index.clone(),
-        entries: HashMap::new(),
+        entries: BTreeMap::new(),
     };
     for (name, entry) in report.entries {
         match entry {
@@ -827,7 +845,7 @@ impl From<std::io::Error> for ReportError {
 
 #[cfg(test)]
 mod report_service_test {
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
 
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ContextType, ReportRow, ReportRowRepository,
@@ -853,7 +871,7 @@ mod report_service_test {
                 query: vec!["query".to_string()],
                 ..Default::default()
             },
-            entries: HashMap::from([
+            entries: BTreeMap::from([
                 (
                     "template.html".to_string(),
                     ReportDefinitionEntry::TeraTemplate(TeraTemplate {
@@ -883,7 +901,7 @@ mod report_service_test {
                 query: vec![],
                 ..Default::default()
             },
-            entries: HashMap::from([(
+            entries: BTreeMap::from([(
                 "footer.html".to_string(),
                 ReportDefinitionEntry::TeraTemplate(TeraTemplate {
                     output: ReportOutputType::Html,
@@ -1066,8 +1084,7 @@ mod report_filter_test {
         let mut report = reports
             .clone()
             .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.3.5"));
 
@@ -1077,8 +1094,7 @@ mod report_filter_test {
         report = reports
             .clone()
             .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.3.5"));
 
@@ -1088,8 +1104,7 @@ mod report_filter_test {
         report = reports
             .clone()
             .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.8.3"));
 
@@ -1099,8 +1114,7 @@ mod report_filter_test {
         report = reports
             .clone()
             .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("3.0.1"));
 
@@ -1110,8 +1124,7 @@ mod report_filter_test {
         report = reports
             .clone()
             .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("3.5.1"));
     }
@@ -1141,8 +1154,7 @@ mod report_filter_test {
         let mut report = reports
             .clone()
             .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.3.0"));
 
@@ -1152,8 +1164,7 @@ mod report_filter_test {
         report = reports
             .clone()
             .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.3.0"));
 
@@ -1163,8 +1174,7 @@ mod report_filter_test {
         report = reports
             .clone()
             .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.8.2"));
 
@@ -1174,8 +1184,7 @@ mod report_filter_test {
         report = reports
             .clone()
             .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.8.2"));
 
@@ -1185,8 +1194,7 @@ mod report_filter_test {
         report = reports
             .clone()
             .into_iter()
-            .filter(|r| r.id == result.clone().into_iter().next().unwrap())
-            .next()
+            .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.8.2"));
     }

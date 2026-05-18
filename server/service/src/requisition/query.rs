@@ -33,7 +33,7 @@ pub fn get_requisition(
     id: &str,
 ) -> Result<Option<Requisition>, RepositoryError> {
     let mut filter = RequisitionFilter::new().id(EqualFilter::equal_to(id.to_string()));
-    filter.store_id = store_id_option.map(|id| EqualFilter::equal_to(id.to_string()));
+    filter.store_id = store_id_option.map(|store_id| EqualFilter::equal_to(store_id.to_string()));
 
     let mut result = RequisitionRepository::new(&ctx.connection).query_by_filter(filter)?;
 

@@ -2,17 +2,17 @@
 include ':capacitor-android'
 project(':capacitor-android').projectDir = new File('../../node_modules/@capacitor/android/capacitor')
 
+include ':capacitor-mlkit-barcode-scanning'
+project(':capacitor-mlkit-barcode-scanning').projectDir = new File('../../node_modules/@capacitor-mlkit/barcode-scanning/android')
+
 include ':capacitor-camera'
-project(':capacitor-camera').projectDir = new File('../../node_modules/@capacitor/camera/android')
+project(':capacitor-camera').projectDir = new File('node_modules/@capacitor/camera/android')
 
 include ':capacitor-geolocation'
-project(':capacitor-geolocation').projectDir = new File('../../node_modules/@capacitor/geolocation/android')
+project(':capacitor-geolocation').projectDir = new File('node_modules/@capacitor/geolocation/android')
 
 include ':bcyesil-capacitor-plugin-printer'
 project(':bcyesil-capacitor-plugin-printer').projectDir = new File('../../node_modules/@bcyesil/capacitor-plugin-printer/android')
-
-include ':capacitor-community-barcode-scanner'
-project(':capacitor-community-barcode-scanner').projectDir = new File('../../node_modules/@capacitor-community/barcode-scanner/android')
 
 include ':capacitor-community-file-opener'
 project(':capacitor-community-file-opener').projectDir = new File('../../node_modules/@capacitor-community/file-opener/android')

@@ -56,6 +56,7 @@ table! {
   frontend_plugin (id) {
       id -> Text,
       code -> Text,
+      version -> Text,
       entry_point -> Text,
       types -> Text,
       files -> Text,
@@ -69,6 +70,7 @@ table! {
 pub struct FrontendPluginRow {
     pub id: String,
     pub code: String,
+    pub version: String,
     pub entry_point: String,
     #[diesel(serialize_as = String)]
     #[diesel(deserialize_as = String)]
@@ -120,7 +122,7 @@ impl<'a> FrontendPluginRowRepository<'a> {
             record_id: uid.to_string(),
             row_action: action,
             store_id: None,
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

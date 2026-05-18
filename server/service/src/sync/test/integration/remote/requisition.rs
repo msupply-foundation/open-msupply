@@ -24,7 +24,7 @@ impl SyncRecordTester for RequisitionRecordTester {
             store_id: store_id.to_string(),
             user_id: None,
             requisition_number: 456,
-            name_link_id: uuid(),
+            name_id: uuid(),
             r#type: RequisitionType::Request,
             status: RequisitionStatus::Draft,
             created_datetime: NaiveDate::from_ymd_opt(2022, 03, 23)
@@ -45,6 +45,8 @@ impl SyncRecordTester for RequisitionRecordTester {
             period_id: None,
             order_type: None,
             is_emergency: false,
+            created_from_requisition_id: None,
+            destination_customer_id: None,
         };
         let requisition_row_1 = base_requisition_row.clone();
         let requisition_line_row_1 = RequisitionLineRow {
@@ -69,6 +71,12 @@ impl SyncRecordTester for RequisitionRecordTester {
             expiring_units: 5.0,
             days_out_of_stock: 5.0,
             option_id: None,
+            price_per_unit: None,
+            available_volume: None,
+            location_type_id: None,
+            forecast_total_units: None,
+            forecast_total_doses: None,
+            vaccine_courses: None,
         };
 
         let mut requisition_row_2 = base_requisition_row.clone();
@@ -91,7 +99,7 @@ impl SyncRecordTester for RequisitionRecordTester {
                     "type_of": "general"
                 }],
                 "name": [{
-                    "ID": base_requisition_row.name_link_id,
+                    "ID": base_requisition_row.name_id,
                     "type": "store"
                 }],
             }),

@@ -178,7 +178,10 @@ mod query {
             .get_item_variants(
                 &context,
                 None,
-                Some(ItemVariantFilter::new().id(EqualFilter::equal_to(test_item_a_variant_id.to_string()))),
+                Some(
+                    ItemVariantFilter::new()
+                        .id(EqualFilter::equal_to(test_item_a_variant_id.to_string())),
+                ),
                 None,
             )
             .unwrap();
@@ -204,7 +207,10 @@ mod query {
             .get_item_variants(
                 &context,
                 None,
-                Some(ItemVariantFilter::new().id(EqualFilter::equal_to(test_item_a_variant_id.to_string()))),
+                Some(
+                    ItemVariantFilter::new()
+                        .id(EqualFilter::equal_to(test_item_a_variant_id.to_string())),
+                ),
                 None,
             )
             .unwrap();
@@ -213,16 +219,16 @@ mod query {
 
         // Check that delete also soft deleted the bundled item record
 
-        let bundled_item = service
-            .get_bundled_items(
-                &context,
-                None,
-                Some(
-                    BundledItemFilter::new()
-                        .principal_item_variant_id(EqualFilter::equal_to(test_item_b_variant_id.to_string())),
-                ),
-            )
-            .unwrap();
+        let bundled_item =
+            service
+                .get_bundled_items(
+                    &context,
+                    None,
+                    Some(BundledItemFilter::new().principal_item_variant_id(
+                        EqualFilter::equal_to(test_item_b_variant_id.to_string()),
+                    )),
+                )
+                .unwrap();
         assert_eq!(bundled_item.count, 0);
     }
 

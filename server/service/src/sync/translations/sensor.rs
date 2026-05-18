@@ -142,6 +142,7 @@ impl SyncTranslation for SensorTranslation {
             SensorType::BlueMaestro => "BLUE_MAESTRO",
             SensorType::Laird => "LAIRD",
             SensorType::Berlinger => "BERLINGER",
+            SensorType::LogTag => "LOG_TAG",
         }
         .to_string();
 

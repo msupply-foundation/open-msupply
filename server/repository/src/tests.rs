@@ -17,7 +17,7 @@ mod repository_test {
         pub fn store_1() -> StoreRow {
             StoreRow {
                 id: "store1".to_string(),
-                name_link_id: "name1".to_string(),
+                name_id: "name1".to_string(),
                 code: "code1".to_string(),
                 ..Default::default()
             }
@@ -68,7 +68,7 @@ mod repository_test {
                 on_hold: false,
                 note: None,
                 location_id: None,
-                supplier_link_id: Some(String::from("name1")),
+                supplier_id: Some(String::from("name1")),
                 ..Default::default()
             }
         }
@@ -117,14 +117,14 @@ mod repository_test {
             MasterListNameJoinRow {
                 id: "masterlistnamejoin1".to_string(),
                 master_list_id: master_list_1().id.to_string(),
-                name_link_id: name_1().id.to_string(),
+                name_id: name_1().id.to_string(),
             }
         }
 
         pub fn invoice_1() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice1".to_string(),
-                name_link_id: name_1().id.to_string(),
+                name_id: name_1().id.to_string(),
                 store_id: store_1().id.to_string(),
                 invoice_number: 12,
                 r#type: InvoiceType::InboundShipment,
@@ -140,7 +140,7 @@ mod repository_test {
         pub fn invoice_2() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice2".to_string(),
-                name_link_id: name_1().id.to_string(),
+                name_id: name_1().id.to_string(),
                 store_id: store_1().id.to_string(),
                 invoice_number: 12,
                 r#type: InvoiceType::OutboundShipment,
@@ -639,7 +639,7 @@ mod repository_test {
             .query_by_filter(
                 InvoiceFilter::new()
                     .r#type(InvoiceType::OutboundShipment.equal_to())
-                    .name_id(EqualFilter::equal_to(item1.name_link_id.to_string())),
+                    .name_id(EqualFilter::equal_to(item1.name_id.to_string())),
             )
             .unwrap();
         assert_eq!(1, loaded_item.len());
@@ -1080,7 +1080,6 @@ mod repository_test {
         assert_eq!(result, Some(true));
     }
 
-    #[cfg(not(feature = "memory"))]
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn test_tx_deadlock() {
         use crate::{ItemRow, RepositoryError, TransactionError};
@@ -1088,12 +1087,6 @@ mod repository_test {
 
         let (_, _, connection_manager, _) =
             test_db::setup_all("tx_deadlock", MockDataInserts::none()).await;
-
-        // Note: this test is disabled when running tests using in 'memory' sqlite.
-        // When running in memory sqlite uses a shared cache and returns an SQLITE_LOCKED response when two threads try to write using the shared cache concurrently
-        // https://sqlite.org/rescode.html#locked
-        // We are relying on busy_timeout handler to manage the SQLITE_BUSY response code in this test and there's no equivalent available for shared cache connections (SQLITE_LOCKED).
-        // If we were to use shared cache in production, we'd probably need to use a mutex (or similar) to protect the database connection.
 
         /*
             Issue Description...
@@ -1164,7 +1157,7 @@ mod repository_test {
                     let sleep_duration = SystemTime::now()
                         .duration_since(start_dt)
                         .expect("Time went backwards");
-                    println!("A: Slept for {:?}", sleep_duration);
+                    println!("A: Slept for {sleep_duration:?}");
                     println!("A: writing");
                     repo.upsert_one(&ItemRow {
                         id: "tx_deadlock_id2".to_string(),
@@ -1203,7 +1196,7 @@ mod repository_test {
                     println!("B: write 2");
                     Ok(())
                 });
-            println!("B: Returning {:?}", result);
+            println!("B: Returning {result:?}");
             result
         });
 

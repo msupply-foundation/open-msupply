@@ -22,6 +22,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         registerPlugin(NativeApi.class);
+        registerPlugin(HoneywellScannerPlugin.class);
         super.onCreate(savedInstanceState);
 
         discoveryConstants = new DiscoveryConstants(getContentResolver());

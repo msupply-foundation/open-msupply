@@ -1,6 +1,6 @@
 import { ItemNodeType, useParams, useQuery } from '@openmsupply-client/common';
 import { useItemGraphQL } from '../useItemGraphQL';
-import { ITEM } from '../keys';
+import { useItemApi } from './useItemApi';
 import { useItemsByFilter } from './useItems';
 
 export function useItem(id?: string) {
@@ -37,6 +37,7 @@ export function useItem(id?: string) {
 
 export const useGetById = (itemId: string) => {
   const { api, storeId } = useItemGraphQL();
+  const { keys } = useItemApi();
 
   const queryFn = async () => {
     const result = await api.itemById({
@@ -50,7 +51,7 @@ export const useGetById = (itemId: string) => {
   };
 
   const query = useQuery({
-    queryKey: [ITEM, itemId],
+    queryKey: keys.detail(itemId),
     queryFn,
     enabled: !!itemId,
   });

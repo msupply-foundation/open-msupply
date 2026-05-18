@@ -14,6 +14,7 @@ import {
 import { usePurchaseOrderList } from '../api';
 import { PurchaseOrderRowFragment } from '../api/operations.generated';
 import { AppBarButtons } from './AppBarButtons';
+import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import {
   getPurchaseOrderStatusTranslator,
@@ -122,6 +123,19 @@ export const PurchaseOrderListView = () => {
         size: 90,
       },
       {
+        header: t('label.total-cost'),
+        accessorKey: 'orderTotalAfterDiscount',
+        columnType: ColumnType.Currency,
+        defaultHideOnMobile: true,
+      },
+      {
+        header: t('label.currency'),
+        id: 'currency',
+        accessorFn: row => row.currency?.code ?? '',
+        defaultHideOnMobile: true,
+        size: 80,
+      },
+      {
         header: t('label.lines'),
         accessorFn: row => row.lines?.totalCount ?? 0,
         size: 80,
@@ -147,7 +161,7 @@ export const PurchaseOrderListView = () => {
       data: data?.nodes ?? [],
       totalCount: data?.totalCount ?? 0,
       initialSort: { key: 'number', dir: 'desc' },
-      getIsRestrictedRow: isPurchaseOrderDisabled,
+      getIsRestrictedRow: row => isPurchaseOrderDisabled(row.original),
       noDataElement: (
         <NothingHere
           body={t('error.no-purchase-orders')}
@@ -158,6 +172,7 @@ export const PurchaseOrderListView = () => {
 
   return (
     <>
+      <Toolbar />
       <AppBarButtons
         data={data?.nodes}
         isLoading={isFetching}

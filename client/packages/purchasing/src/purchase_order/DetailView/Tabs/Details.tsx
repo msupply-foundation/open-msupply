@@ -15,9 +15,10 @@ import { PurchaseOrderFragment } from '../../api';
 interface DetailsProps {
   draft?: PurchaseOrderFragment;
   onChange: (input: Partial<PurchaseOrderFragment>) => void;
+  disabled?: boolean;
 }
 
-export const Details = ({ draft, onChange }: DetailsProps): ReactElement => {
+export const Details = ({ draft, onChange, disabled }: DetailsProps): ReactElement => {
   const t = useTranslation();
 
   if (!draft)
@@ -55,6 +56,7 @@ export const Details = ({ draft, onChange }: DetailsProps): ReactElement => {
               labelWidth={'160px'}
               Input={
                 <BasicTextInput
+                  disabled={disabled}
                   value={draft.authorisingOfficer1 ?? ''}
                   onChange={event => {
                     onChange({
@@ -69,6 +71,7 @@ export const Details = ({ draft, onChange }: DetailsProps): ReactElement => {
               labelWidth={'160px'}
               Input={
                 <BasicTextInput
+                  disabled={disabled}
                   value={draft.authorisingOfficer2 ?? ''}
                   onChange={event =>
                     onChange({
@@ -83,6 +86,7 @@ export const Details = ({ draft, onChange }: DetailsProps): ReactElement => {
               labelWidth={'160px'}
               Input={
                 <TextArea
+                  disabled={disabled}
                   value={draft.additionalInstructions ?? ''}
                   onChange={event =>
                     onChange({
@@ -108,6 +112,7 @@ export const Details = ({ draft, onChange }: DetailsProps): ReactElement => {
               labelWidth={'140px'}
               Input={
                 <BasicTextInput
+                  disabled={disabled}
                   value={draft?.supplierAgent ?? ''}
                   onChange={event =>
                     onChange({
@@ -122,6 +127,7 @@ export const Details = ({ draft, onChange }: DetailsProps): ReactElement => {
               labelWidth={'140px'}
               Input={
                 <BasicTextInput
+                  disabled={disabled}
                   value={draft?.headingMessage ?? ''}
                   onChange={event =>
                     onChange({
@@ -136,6 +142,7 @@ export const Details = ({ draft, onChange }: DetailsProps): ReactElement => {
               labelWidth={'140px'}
               Input={
                 <TextArea
+                  disabled={disabled}
                   value={draft.freightConditions ?? ''}
                   onChange={event =>
                     onChange({
@@ -163,6 +170,7 @@ export const Details = ({ draft, onChange }: DetailsProps): ReactElement => {
                 labelWidth={'150px'}
                 Input={
                   <CurrencyInput
+                    disabled={disabled}
                     value={
                       (draft?.[key as keyof PurchaseOrderFragment] as number) ??
                       0

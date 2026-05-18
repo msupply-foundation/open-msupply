@@ -17,12 +17,16 @@ export const useAssetInsert = () => {
     return result.centralServer.assetCatalogue.insertAssetCatalogueItem;
   };
 
-  const invalidateQueries = () => queryClient.invalidateQueries(ASSET);
+  const invalidateQueries = () => queryClient.invalidateQueries({
+    queryKey: [ASSET]
+  });
 
   const mutation = useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([ASSET]);
+      queryClient.invalidateQueries({
+        queryKey: [ASSET]
+      });
     },
     onError: e => {
       console.error(e);

@@ -20,13 +20,11 @@ export const useCustomerReturn = () => {
   const { invoiceId = '' } = useParams();
   const api = useReturnsApi();
 
-  const query = useQuery(
-    api.keys.customerDetail(invoiceId),
-    () => api.get.customerReturnById(invoiceId),
-    {
-      enabled: !!isCustomerReturnPage,
-    }
-  );
+  const query = useQuery({
+    queryKey: api.keys.customerDetail(invoiceId),
+    queryFn: () => api.get.customerReturnById(invoiceId),
+    enabled: !!isCustomerReturnPage
+  });
 
   const [patch, setPatch] = useState<Partial<CustomerReturnFragment>>({});
 

@@ -12,8 +12,8 @@
       "foreignExchangeRate": 1,
       "id": "AA2E9B330AEF425980D711CD0CD7351D",
       "lines": {
-        "nodes": {
-          "0": {
+        "nodes": [
+          {
             "comment": "This is a PO comment.",
             "expectedDeliveryDate": "2026-09-02",
             "item": {
@@ -25,9 +25,11 @@
             "pricePerPackAfterDiscount": 0.95,
             "requestedNumberOfUnits": 10000,
             "requestedPackSize": 1000,
-            "lineCost": "9500.00"
+            "supplierItemCode": null,
+            "lineCost": "9.50",
+            "requestedNumberOfPacks": 10
           },
-          "1": {
+          {
             "comment": "Second PO comment dolutegravir.",
             "expectedDeliveryDate": "2026-09-02",
             "item": {
@@ -39,23 +41,27 @@
             "pricePerPackAfterDiscount": 1.98,
             "requestedNumberOfUnits": 242,
             "requestedPackSize": 11,
-            "lineCost": "479.16"
+            "supplierItemCode": null,
+            "lineCost": "43.56",
+            "requestedNumberOfPacks": 22
           },
-          "2": {
+          {
             "comment": "Third PO comment salbutamol.",
             "expectedDeliveryDate": "2026-09-02",
             "item": {
               "code": "89893",
-              "name": "Salbutamol Inhaler"
+              "name": "Salbutamol Inhaler",
+              "unitName": null
             },
             "lineNumber": 3,
             "pricePerPackAfterDiscount": 4.9,
             "requestedNumberOfUnits": 250,
             "requestedPackSize": 5,
-            "lineCost": "1225.00"
-          },
-          "length": 3
-        }
+            "supplierItemCode": null,
+            "lineCost": "245.00",
+            "requestedNumberOfPacks": 50
+          }
+        ]
       },
       "number": 3,
       "orderTotalAfterDiscount": 298.06,

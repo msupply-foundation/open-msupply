@@ -18,8 +18,7 @@ pub(crate) fn update_program_enrolment_row(
     let enrolment_datetime = DateTime::parse_from_rfc3339(&program.enrolment_datetime)
         .map_err(|err| {
             UpsertProgramEnrolmentError::InternalError(format!(
-                "Invalid enrolment datetime format: {}",
-                err
+                "Invalid enrolment datetime format: {err}"
             ))
         })?
         .naive_utc();
@@ -45,7 +44,7 @@ pub(crate) fn update_program_enrolment_row(
         document_type: document.r#type.clone(),
         program_id: program_row.id,
         document_name: document.name.clone(),
-        patient_link_id: patient_id.to_string(),
+        patient_id: patient_id.to_string(),
         enrolment_datetime,
         program_enrolment_id: program.program_enrolment_id,
         status,

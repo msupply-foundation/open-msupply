@@ -12,6 +12,5 @@ export const useNestedNav = (path: string): NestedNavState => {
 
   const isActive =
     isOpen && (clickedNavPath ? matchPath(path, clickedNavPath) : !!match);
-
   return { isActive };
 };

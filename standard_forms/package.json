@@ -4,7 +4,7 @@
   "sideEffects": false,
   "private": true,
   "scripts": {
-    "test": "jest --config ./jest.config.js --maxWorkers=50% --env=jsdom --testPathIgnorePatterns"
+    "test": "jest --config ./jest.config.js --maxWorkers=50% --env=jsdom"
   },
   "workspaces": {
     "packages": [
@@ -15,10 +15,10 @@
     "@swc/core": "^1.6.7",
     "@swc/jest": "^0.2.15",
     "@testing-library/jest-dom": "^6.4.6",
-    "@types/jest": "^29.5.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.14.9",
-    "jest": "^29.6.2",
-    "jest-environment-jsdom": "^29.6.2",
+    "jest": "^30.0.0",
+    "jest-environment-jsdom": "^30.0.0",
     "typescript": "^5.0.2"
   }
 }

@@ -25,8 +25,9 @@ pub fn get_repack(ctx: &ServiceContext, invoice_id: &str) -> Result<Repack, Repo
         .pop()
         .ok_or(RepositoryError::NotFound)?;
 
-    let invoice_lines = InvoiceLineRepository::new(connection)
-        .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id.to_string())))?;
+    let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id.to_string())),
+    )?;
 
     let invoice_line_from = invoice_lines
         .iter()
@@ -89,6 +90,13 @@ pub fn get_repacks_by_stock_line(
             .ok_or(RepositoryError::NotFound)?
             .clone();
 
+        // Skip invoice if 'repacked to' stock line is same as the queried stock line
+        if let Some(stock_line_id_to) = &invoice_line_to.invoice_line_row.stock_line_id {
+            if stock_line_id_to == stock_line_id {
+                continue;
+            }
+        }
+
         repacks.push(Repack {
             invoice,
             invoice_line_from,
@@ -128,7 +136,7 @@ mod test {
     async fn query_repacks() {
         let invoice = InvoiceRow {
             id: "repack_invoice_a".to_string(),
-            name_link_id: "name_store_a".to_string(),
+            name_id: "name_store_a".to_string(),
             store_id: "store_a".to_string(),
             invoice_number: 10,
             r#type: InvoiceType::Repack,

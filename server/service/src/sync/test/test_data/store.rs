@@ -55,7 +55,7 @@ fn store_1() -> TestSyncIncomingRecord {
         STORE_1,
         StoreRow {
             id: STORE_1.0.to_string(),
-            name_link_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+            name_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
             code: "GEN".to_string(),
             site_id: 1,
             logo: Some("No logo".to_string()),
@@ -113,7 +113,9 @@ const STORE_2: (&str, &str) = (
 
 fn store_2() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord {
-        translated_record: PullTranslateResult::Ignored("System names not implemented".to_string()),
+        translated_record: PullTranslateResult::Ignored(
+            "System names not implemented for store translation".to_string(),
+        ),
         sync_buffer_row: SyncBufferRow {
             table_name: TABLE_NAME.to_string(),
             record_id: STORE_2.0.to_string(),
@@ -172,7 +174,9 @@ const STORE_3: (&str, &str) = (
 
 fn store_3() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord {
-        translated_record: PullTranslateResult::Ignored("System names not implemented".to_string()),
+        translated_record: PullTranslateResult::Ignored(
+            "System names not implemented for store translation".to_string(),
+        ),
         sync_buffer_row: SyncBufferRow {
             table_name: TABLE_NAME.to_string(),
             record_id: STORE_3.0.to_string(),
@@ -231,7 +235,9 @@ const STORE_4: (&str, &str) = (
 
 fn store_4() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord {
-        translated_record: PullTranslateResult::Ignored("System names not implemented".to_string()),
+        translated_record: PullTranslateResult::Ignored(
+            "System names not implemented for store translation".to_string(),
+        ),
         sync_buffer_row: SyncBufferRow {
             table_name: TABLE_NAME.to_string(),
             record_id: STORE_4.0.to_string(),

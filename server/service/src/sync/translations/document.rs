@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use repository::{
     ChangelogRow, ChangelogTableName, Document, DocumentRepository, DocumentRow, DocumentStatus,
-    StorageConnection, SyncBufferRow,
+    FormSchemaRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde_json::Value;
 
@@ -17,7 +17,7 @@ use crate::sync::{
 
 use util::sync_serde::empty_str_as_option_string;
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -76,7 +76,7 @@ impl SyncTranslation for DocumentTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _connection: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyDocumentRow {
@@ -92,6 +92,17 @@ impl SyncTranslation for DocumentTranslation {
             owner_name_id,
             context_id,
         } = serde_json::from_str::<LegacyDocumentRow>(&sync_record.data)?;
+
+        let form_schema_id = clear_invalid_fk(
+            connection,
+            "document",
+            &id,
+            "form_schema_id",
+            form_schema_id,
+            |c, id| FormSchemaRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+
         let result = Document {
             id,
             name,
@@ -132,8 +143,8 @@ impl SyncTranslation for DocumentTranslation {
             data,
             form_schema_id,
             status,
-            owner_name_link_id: _,
             context_id,
+            owner_name_id: _,
         } = document.to_row()?;
 
         let legacy_row = LegacyDocumentRow {

@@ -3,14 +3,15 @@ use repository::{
     item_category::{ItemCategoryFilter, ItemCategoryRepository},
     item_category_row::ItemCategoryJoinRow,
     ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemRowRepository,
-    ItemType, StorageConnection, SyncBufferRow, VENCategory,
+    ItemType, LocationTypeRowRepository, StorageConnection, SyncBufferRow, UnitRowRepository,
+    VENCategory,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::sync::{
     translations::{
         category::CategoryTranslation, location_type::LocationTypeTranslation,
-        unit::UnitTranslation,
+        unit::UnitTranslation, utils::clear_invalid_fk,
     },
     CentralServerConfig,
 };
@@ -46,6 +47,10 @@ pub struct LegacyItemRow {
     category_ID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     restricted_location_type_ID: Option<String>,
+    volume_per_pack: f64,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "universalcodes_code")]
+    universal_code: Option<String>,
 }
 
 fn to_item_type(type_of: LegacyItemType) -> ItemType {
@@ -123,12 +128,31 @@ impl SyncTranslation for ItemTranslation {
         // Translate the item_category join row
         let item_category_upserts = translate_item_category_join(connection, &data)?;
 
+        let unit_id = clear_invalid_fk(
+            connection,
+            "item",
+            &data.ID,
+            "unit_id",
+            data.unit_ID,
+            |c, id| UnitRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let restricted_location_type_id = clear_invalid_fk(
+            connection,
+            "item",
+            &data.ID,
+            "restricted_location_type_id",
+            data.restricted_location_type_ID,
+            |c, id| LocationTypeRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+
         // Translate the item row
         let item_row = ItemRow {
             id: data.ID.clone(),
             name: data.item_name,
             code: data.code,
-            unit_id: data.unit_ID,
+            unit_id,
             r#type: to_item_type(data.type_of),
             legacy_record: ordered_simple_json(&sync_record.data)?,
             default_pack_size: data.default_pack_size,
@@ -137,7 +161,9 @@ impl SyncTranslation for ItemTranslation {
             strength: data.strength,
             ven_category: to_ven_category(data.VEN_category),
             vaccine_doses: data.doses,
-            restricted_location_type_id: data.restricted_location_type_ID,
+            restricted_location_type_id,
+            volume_per_pack: data.volume_per_pack,
+            universal_code: data.universal_code,
         };
 
         integration_operations.push(IntegrationOperation::upsert(item_row));
@@ -195,6 +221,8 @@ impl SyncTranslation for ItemTranslation {
             ven_category,
             vaccine_doses,
             restricted_location_type_id,
+            volume_per_pack,
+            universal_code,
         } = item;
 
         let legacy_row = LegacyItemRow {
@@ -213,6 +241,8 @@ impl SyncTranslation for ItemTranslation {
             // build out the syncing back and forth of categories to OG!
             category_ID: None,
             restricted_location_type_ID: restricted_location_type_id,
+            volume_per_pack,
+            universal_code,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
@@ -254,7 +284,7 @@ fn translate_item_category_join(
     if let Some(category_id) = &data.category_ID {
         let item_category_join_row = ItemCategoryJoinRow {
             id: format!("{}-{}", data.ID.clone(), category_id.clone()),
-            item_id: data.ID.clone(),
+            item_link_id: data.ID.clone(),
             category_id: category_id.clone(),
             deleted_datetime: None,
         };
@@ -267,15 +297,41 @@ fn translate_item_category_join(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{MockData, MockDataInserts},
+        system_log_row::{SystemLogRowRepository, SystemLogType},
+        test_db::{setup_all, setup_all_with_data},
+        LocationTypeRow, SyncAction, UnitRow,
+    };
 
     #[actix_rt::test]
     async fn test_item_translation() {
         use crate::sync::test::test_data::item as test_data;
         let translator = ItemTranslation {};
 
-        let (_, connection, _, _) =
-            setup_all("test_item_translation", MockDataInserts::none()).await;
+        // FK validation requires the units and location types referenced by test data to exist
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_item_translation",
+            MockDataInserts::none(),
+            MockData {
+                units: vec![
+                    UnitRow {
+                        id: "A02C91EB6C77400BA783C4CD7C565F29".to_string(),
+                        ..Default::default()
+                    },
+                    UnitRow {
+                        id: "97674EFD5DFD4D8CABCAF58AAB4ED054".to_string(),
+                        ..Default::default()
+                    },
+                ],
+                location_types: vec![LocationTypeRow {
+                    id: "84AA2B7A18694A2AB1E84DCABAD19617".to_string(),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
@@ -294,5 +350,63 @@ mod tests {
 
             assert_eq!(translation_result, record.translated_record);
         }
+    }
+
+    #[actix_rt::test]
+    async fn test_item_clears_invalid_optional_fks_and_writes_system_log() {
+        let translator = ItemTranslation {};
+        let (_, connection, _, _) = setup_all(
+            "test_item_clears_invalid_optional_fks_and_writes_system_log",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let sync_record = SyncBufferRow {
+            table_name: "item".to_string(),
+            record_id: "ITEM_FK_INVALID".to_string(),
+            data: r#"{
+                "ID": "ITEM_FK_INVALID",
+                "item_name": "Bad FK Item",
+                "code": "code",
+                "unit_ID": "does_not_exist_unit",
+                "type_of": "general",
+                "default_pack_size": 1.0,
+                "is_vaccine": false,
+                "VEN_category": "",
+                "strength": "",
+                "doses": 0,
+                "category_ID": "",
+                "restricted_location_type_ID": "does_not_exist_location_type",
+                "volume_per_pack": 0,
+                "universalcodes_code": ""
+            }"#
+            .to_string(),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        let result = translator
+            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .unwrap();
+        let debug = format!("{result:?}");
+        assert!(
+            debug.contains("unit_id: None"),
+            "{}",
+            format!("expected unit_id None; got:\n{debug}")
+        );
+        assert!(
+            debug.contains("restricted_location_type_id: None"),
+            "{}",
+            format!("expected restricted_location_type_id None; got:\n{debug}")
+        );
+
+        let logs = SystemLogRowRepository::new(&connection)
+            .find_all()
+            .unwrap();
+        let fk_errors: Vec<_> = logs
+            .iter()
+            .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
+            .collect();
+        assert_eq!(fk_errors.len(), 2, "got {fk_errors:?}");
     }
 }

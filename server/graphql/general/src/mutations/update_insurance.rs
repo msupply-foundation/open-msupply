@@ -38,7 +38,7 @@ impl UpdateInsuranceInput {
         ServiceInput {
             id,
             insurance_provider_id,
-            policy_type: policy_type.map(|t| InsurancePolicyType::from(t)),
+            policy_type: policy_type.map(InsurancePolicyType::from),
             discount_percentage,
             expiry_date,
             is_active,
@@ -86,7 +86,7 @@ pub fn map_response(
 
 fn map_error(error: ServiceError) -> Result<UpdateInsuranceResponse> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::InsuranceDoesNotExist | ServiceError::UpdatedRecordNotFound => {

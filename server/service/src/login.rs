@@ -135,10 +135,10 @@ impl LoginService {
                     )))
                 }
                 FetchUserError::ConnectionError(_) => {
-                    info!("{:?}", err);
+                    info!("{err:?}");
                     connection_failure = true;
                 }
-                FetchUserError::InternalError(_) => info!("{:?}", err),
+                FetchUserError::InternalError(_) => info!("{err:?}"),
             },
         };
         let mut service_ctx = service_provider.basic_context()?;
@@ -190,8 +190,8 @@ impl LoginService {
             auth_data.auth_token_secret.as_bytes(),
             !is_develop(),
         );
-        let max_age_token = chrono::Duration::minutes(60).num_seconds() as usize;
-        let max_age_refresh = chrono::Duration::hours(6).num_seconds() as usize;
+        let max_age_token = crate::auth_data::TOKEN_LIFETIME_SEC;
+        let max_age_refresh = crate::auth_data::REFRESH_TOKEN_LIFETIME_SEC;
 
         let pair = match token_service.jwt_token(
             &user_account.id,
@@ -211,24 +211,24 @@ impl LoginService {
     ) -> Result<LoginUserInfoV4, FetchUserError> {
         // Prepare central login query
         let central_server_url = Url::parse(&input.central_server_url).map_err(|err| {
-            FetchUserError::InternalError(format!("Failed to parse central server url: {}", err))
+            FetchUserError::InternalError(format!("Failed to parse central server url: {err}"))
         })?;
         let client = ClientBuilder::new()
             .connect_timeout(Duration::from_secs(CONNECTION_TIMEOUT_SEC))
             .build()
-            .map_err(|err| FetchUserError::ConnectionError(format!("{:?}", err)))?;
+            .map_err(|err| FetchUserError::ConnectionError(format!("{err:?}")))?;
         let login_api = LoginApiV4::new(client, central_server_url.clone());
         let username = &input.username;
         let password = &input.password;
 
         let service_ctx = service_provider.basic_context().map_err(|err| {
-            FetchUserError::InternalError(format!("Failed to get service context: {}", err))
+            FetchUserError::InternalError(format!("Failed to get service context: {err}"))
         })?;
         let settings = service_provider
             .settings
             .sync_settings(&service_ctx)
             .map_err(|err| {
-                FetchUserError::InternalError(format!("Failed to get sync settings: {}", err))
+                FetchUserError::InternalError(format!("Failed to get sync settings: {err}"))
             })?;
 
         // Try login with central
@@ -252,14 +252,12 @@ impl LoginService {
                 }
                 LoginV4Error::ConnectionError(_) => {
                     return Err(FetchUserError::ConnectionError(format!(
-                        "Failed to reach the central server to fetch data for {}: {:?}",
-                        username, err
+                        "Failed to reach the central server to fetch data for {username}: {err:?}"
                     )))
                 }
                 LoginV4Error::ParseError(_) => {
                     return Err(FetchUserError::InternalError(format!(
-                        "Failed to parse central server response for {}: {:?}",
-                        username, err
+                        "Failed to parse central server response for {username}: {err:?}"
                     )))
                 }
             },
@@ -317,6 +315,7 @@ impl LoginService {
             phone_number: user_info.user.phone1,
             job_title: user_info.user.job_title,
             last_successful_sync: Some(Utc::now().naive_utc()),
+            is_active: user_info.user.active,
         };
         let stores_permissions: Vec<StorePermissions> = user_info
             .user_stores
@@ -361,7 +360,7 @@ impl LoginService {
 
 impl From<RepositoryError> for LoginError {
     fn from(err: RepositoryError) -> Self {
-        LoginError::InternalError(format!("{:?}", err))
+        LoginError::InternalError(format!("{err:?}"))
     }
 }
 
@@ -473,15 +472,21 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionTyp
             Permissions::AuthorisePurchaseOrders => {
                 output.insert(PermissionType::PurchaseOrderAuthorise);
             }
+            Permissions::FinalisePurchaseOrders => {
+                output.insert(PermissionType::PurchaseOrderFinalise);
+            }
             // goods received
             Permissions::ViewGoodsReceived => {
-                output.insert(PermissionType::GoodsReceivedQuery);
+                output.insert(PermissionType::InboundShipmentExternalQuery);
             }
             Permissions::AddEditGoodsReceived => {
-                output.insert(PermissionType::GoodsReceivedMutate);
+                output.insert(PermissionType::InboundShipmentExternalMutate);
+            }
+            Permissions::FinaliseGoodsReceived => {
+                output.insert(PermissionType::InboundShipmentExternalVerify);
             }
             Permissions::AuthoriseGoodsReceived => {
-                output.insert(PermissionType::GoodsReceivedAuthorise);
+                output.insert(PermissionType::InboundShipmentExternalAuthorise);
             }
             // reports
             Permissions::ViewReports => {
@@ -563,7 +568,7 @@ mod test {
         EqualFilter, KeyType, KeyValueStoreRepository, UserFilter, UserPermissionFilter,
         UserPermissionRepository, UserRepository,
     };
-    use util::{assert_matches, assert_variant};
+    use util::assert_matches;
 
     use crate::{
         apis::login_v4::LoginResponseV4,
@@ -696,7 +701,7 @@ mod test {
 
             assert!(result.is_ok());
         }
-        // check login error handling when empty password hash and can't connect to mSupply
+
         {
             let mock_server = MockServer::start();
             mock_server.mock(|when, then| {
@@ -718,10 +723,12 @@ mod test {
             )
             .await;
 
-            assert_matches!(result, Err(LoginError::MSupplyCentralNotReached));
+            assert_matches!(
+                result,
+                Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+            );
         }
 
-        // check login error handling when empty password hash and can connect to mSupply
         {
             let mock_server = MockServer::start();
             mock_server.mock(|when, then| {
@@ -746,13 +753,12 @@ mod test {
                 },
                 0,
             )
-            .await
-            .inspect_err(|e| {
-                let err_message = assert_variant!(e, LoginError::InternalError(err) => err);
-                assert_eq!(err_message, "Corrupted credentials")
-            });
+            .await;
 
-            assert!(result.is_err());
+            assert_matches!(
+                result,
+                Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+            );
         }
         // If server password has changed, and trying to login with old password, return LoginError::LoginFailure
         {

@@ -3,6 +3,7 @@ import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import { z } from 'zod';
 import {
   AutocompleteWithPagination,
+  CLEAR,
   DetailInputWithLabelRow,
   extractProperty,
   Formatter,
@@ -111,7 +112,7 @@ const UIComponent = (props: ControlProps) => {
             _value: string,
             reason: string
           ) => {
-            if (reason === 'clear') {
+            if (reason === CLEAR) {
               onChange(null);
             }
           }}
@@ -120,7 +121,7 @@ const UIComponent = (props: ControlProps) => {
           isOptionEqualToValue={(option, value) => option.id === value.id}
           clearable={props.uischema.options?.['clearable'] ?? false}
           disabled={shouldFindByProgram ? !programId : false}
-          onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
+          onPageChange={() => fetchNextPage()}
           paginationDebounce={300}
         />
       }

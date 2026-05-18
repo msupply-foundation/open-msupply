@@ -6,9 +6,12 @@ use crate::sync::translations::{
 
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
-    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineType,
-    InvoiceRowRepository, InvoiceType, ItemRowRepository, StockLineRowRepository,
+    campaign_row::CampaignRowRepository, item_variant::item_variant_row::ItemVariantRowRepository,
+    vvm_status::vvm_status_row::VVMStatusRowRepository, ChangelogRow, ChangelogTableName,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
+    InvoiceLineRowDelete, InvoiceLineStatus, InvoiceLineType, InvoiceRowRepository, InvoiceType,
+    ItemRowRepository,
+    LocationRowRepository, ProgramRowRepository, ReasonOptionRowRepository, StockLineRowRepository,
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
@@ -18,8 +21,8 @@ use util::sync_serde::{
 };
 
 use super::{
-    is_active_record_on_site, utils::clear_invalid_location_id, ActiveRecordCheck,
-    PullTranslateResult, PushTranslateResult, SyncTranslation,
+    is_active_record_on_site, utils::clear_invalid_fk, ActiveRecordCheck, PullTranslateResult,
+    PushTranslateResult, SyncTranslation,
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -47,6 +50,12 @@ pub struct TransLineRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub program_id: Option<String>,
+    #[serde(default)]
+    pub status: Option<String>,
+    #[serde(default)]
+    pub manufacture_date: Option<NaiveDate>,
+    #[serde(default)]
+    pub purchase_order_line_id: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -119,6 +128,10 @@ pub struct LegacyTransLineRow {
     pub volume_per_pack: f64,
     #[serde(rename = "sent_pack_size")]
     pub shipped_pack_size: Option<f64>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "manufacturer_ID")]
+    #[serde(default)]
+    pub manufacturer_id: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -184,6 +197,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            manufacturer_id,
         } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
 
         let line_type = match to_invoice_line_type(&r#type) {
@@ -257,46 +271,98 @@ impl SyncTranslation for InvoiceLineTranslation {
             },
         )?;
 
-        // TODO: remove the stock_line_is_valid check once central server does not generate the inbound shipment
-        // omSupply should be generating the inbound, with valid stock lines.
-        // Currently a uuid is assigned by central for the stock_line id which causes a foreign key constraint violation
-        let is_stock_line_valid = stock_line_id.as_ref().is_some_and(|stock_line_id| {
-            StockLineRowRepository::new(connection)
-                .find_one_by_id(stock_line_id)
-                .is_ok_and(|stock_line| stock_line.is_some())
-        });
+        // On a remote site, foreign-site invoice lines arrive without their stock lines or
+        // locations (those records belong to the other site). On OMS central all site data is
+        // present, so the FK may well exist. In both cases: keep the link if the record exists
+        // locally, null it if it doesn't. Only log an error for records this site owns —
+        // a missing FK on a foreign-site record is expected, not operator-actionable.
+        // TODO: remove the stock_line FK validation once central server does not generate the
+        // inbound shipment — omSupply should be generating the inbound with valid stock lines.
+        // Currently a uuid is assigned by central for the stock_line id which causes a foreign
+        // key constraint violation, so we still need this for active-on-site records.
+        let stock_line_id = clear_invalid_fk(
+            connection,
+            "invoice_line",
+            &id,
+            "stock_line_id",
+            stock_line_id,
+            |c, id| StockLineRowRepository::new(c).check_exists_by_id(id),
+            is_record_active_on_site,
+        )?;
+        let location_id = clear_invalid_fk(
+            connection,
+            "invoice_line",
+            &id,
+            "location_id",
+            location_id,
+            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
+            is_record_active_on_site,
+        )?;
 
-        if !is_stock_line_valid {
-            log::warn!(
-                "Stock line is not valid, invoice_line_id: {}, stock_line_id: {:?}",
-                id,
-                stock_line_id
-            );
-        }
+        let item_variant_id = clear_invalid_fk(
+            connection,
+            "invoice_line",
+            &id,
+            "item_variant_id",
+            item_variant_id,
+            |c, id| ItemVariantRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let vvm_status_id = clear_invalid_fk(
+            connection,
+            "invoice_line",
+            &id,
+            "vvm_status_id",
+            vvm_status_id,
+            |c, id| VVMStatusRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
-        // When invoice lines are coming from another site, we don't get stock line and location
-        // so foreign key constraint is violated, thus we want to set them to None if it's foreign site record.
-        // If the invoice is an auto generated inbound shipment, then the stock_lines are not valid either.
-        let stock_line_id = if is_record_active_on_site && is_stock_line_valid {
-            stock_line_id
-        } else {
-            None
-        };
-        let location_id = clear_invalid_location_id(connection, location_id)?;
-
+        // "0" is a sentinel value used by OG for "no option set" — treat it as None before
+        // the FK validation so we don't write a system_log entry for the sentinel.
         let reason_option_id = reason_option_id.and_then(|reason_option_id| {
             if reason_option_id == "0" {
-                // This is not a valid optionID
                 None
             } else {
                 Some(reason_option_id)
             }
         });
+        let reason_option_id = clear_invalid_fk(
+            connection,
+            "invoice_line",
+            &id,
+            "reason_option_id",
+            reason_option_id,
+            |c, id| ReasonOptionRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let TransLineRowOmsFields {
             campaign_id,
             program_id,
+            status,
+            manufacture_date,
+            purchase_order_line_id,
         } = oms_fields.unwrap_or_default();
+
+        let campaign_id = clear_invalid_fk(
+            connection,
+            "invoice_line",
+            &id,
+            "campaign_id",
+            campaign_id,
+            |c, id| CampaignRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let program_id = clear_invalid_fk(
+            connection,
+            "invoice_line",
+            &id,
+            "program_id",
+            program_id,
+            |c, id| ProgramRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let result = InvoiceLineRow {
             id,
@@ -321,7 +387,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
-            donor_link_id: donor_id,
+            donor_id,
             reason_option_id,
             vvm_status_id,
             campaign_id,
@@ -329,6 +395,15 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            status: match status.as_deref() {
+                Some("PENDING") => Some(InvoiceLineStatus::Pending),
+                Some("PASSED") => Some(InvoiceLineStatus::Passed),
+                Some("REJECTED") => Some(InvoiceLineStatus::Rejected),
+                _ => None,
+            },
+            manufacture_date,
+            purchase_order_line_id,
+            manufacturer_id,
         };
 
         let result = adjust_negative_values(result);
@@ -384,7 +459,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     foreign_currency_price_before_tax,
                     item_variant_id,
                     linked_invoice_id,
-                    donor_link_id,
+                    donor_id,
                     vvm_status_id,
                     reason_option_id,
                     campaign_id,
@@ -392,6 +467,10 @@ impl SyncTranslation for InvoiceLineTranslation {
                     shipped_number_of_packs,
                     volume_per_pack,
                     shipped_pack_size,
+                    status,
+                    manufacture_date,
+                    purchase_order_line_id,
+                    manufacturer_id,
                 },
             item_row,
             ..
@@ -400,6 +479,14 @@ impl SyncTranslation for InvoiceLineTranslation {
         let oms_fields = Some(TransLineRowOmsFields {
             campaign_id,
             program_id,
+            status: match status {
+                Some(InvoiceLineStatus::Pending) => Some("PENDING".to_string()),
+                Some(InvoiceLineStatus::Passed) => Some("PASSED".to_string()),
+                Some(InvoiceLineStatus::Rejected) => Some("REJECTED".to_string()),
+                None => None,
+            },
+            manufacture_date,
+            purchase_order_line_id,
         });
 
         let legacy_row = LegacyTransLineRow {
@@ -426,12 +513,13 @@ impl SyncTranslation for InvoiceLineTranslation {
             item_variant_id,
             reason_option_id,
             linked_invoice_id,
-            donor_id: donor_link_id,
+            donor_id,
             vvm_status_id,
             oms_fields,
             shipped_number_of_packs,
             volume_per_pack,
             shipped_pack_size,
+            manufacturer_id,
         };
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -495,10 +583,15 @@ mod tests {
     };
 
     use super::*;
+    use chrono::NaiveDateTime;
     use repository::{
-        mock::{mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
+        campaign_row::CampaignRow,
+        item_variant::item_variant_row::ItemVariantRow,
+        mock::{mock_item_a, mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
+        system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogFilter, ChangelogRepository, KeyType, KeyValueStoreRow,
+        ChangelogFilter, ChangelogRepository, ContextRow, KeyType, KeyValueStoreRow, ProgramRow,
+        SyncAction,
     };
     use serde_json::json;
 
@@ -519,6 +612,35 @@ mod tests {
                 .currencies(),
             MockData {
                 invoices: vec![mock_outbound_shipment_a()],
+                contexts: vec![ContextRow {
+                    id: "test_ctx".to_string(),
+                    name: "test ctx".to_string(),
+                }],
+                programs: vec![ProgramRow {
+                    id: "program_a".to_string(),
+                    master_list_id: None,
+                    name: "program_a".to_string(),
+                    context_id: "test_ctx".to_string(),
+                    is_immunisation: false,
+                    elmis_code: None,
+                    deleted_datetime: None,
+                }],
+                campaigns: vec![CampaignRow {
+                    id: "campaign_a".to_string(),
+                    name: "Campaign A".to_string(),
+                    ..Default::default()
+                }],
+                item_variants: vec![ItemVariantRow {
+                    id: "5fb99f9c-03f4-47f2-965b-c9ecd083c675".to_string(),
+                    name: "test variant".to_string(),
+                    item_link_id: mock_item_a().id,
+                    location_type_id: None,
+                    manufacturer_id: None,
+                    deleted_datetime: None,
+                    vvm_type: None,
+                    created_datetime: NaiveDateTime::default(),
+                    created_by: None,
+                }],
                 key_value_store_rows: vec![KeyValueStoreRow {
                     id: KeyType::SettingsSyncSiteId,
                     value_int: Some(mock_store_b().site_id),
@@ -585,6 +707,132 @@ mod tests {
             };
 
             assert_eq!(translated[0].record.record_data["item_ID"], json!("item_a"));
+        }
+    }
+
+    /// When optional FKs reference records that don't exist, the translator should
+    /// null each one and write a `system_log` row per missing FK. The active-on-site
+    /// gate (which can also null `stock_line_id`) is exercised by the happy-path test.
+    #[actix_rt::test]
+    async fn test_invoice_line_clears_invalid_optional_fks_and_writes_system_log() {
+        let translator = InvoiceLineTranslation {};
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_invoice_line_clears_invalid_optional_fks_and_writes_system_log",
+            MockDataInserts::none()
+                .units()
+                .items()
+                .names()
+                .stores()
+                .currencies(),
+            // mock_outbound_shipment_a is on store_b, and we tell the test that this site IS
+            // store_b's site, so is_active_record_on_site returns true. That isolates the FK
+            // validation as the only reason these FKs would get cleared.
+            MockData {
+                invoices: vec![mock_outbound_shipment_a()],
+                key_value_store_rows: vec![KeyValueStoreRow {
+                    id: KeyType::SettingsSyncSiteId,
+                    value_int: Some(mock_store_b().site_id),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let sync_record = SyncBufferRow {
+            table_name: "trans_line".to_string(),
+            record_id: "TRANS_LINE_FK_INVALID".to_string(),
+            data: r#"{
+                "ID": "TRANS_LINE_FK_INVALID",
+                "transaction_ID": "outbound_shipment_a",
+                "item_ID": "item_a",
+                "item_name": "Item A",
+                "item_line_ID": "does_not_exist_stock_line",
+                "batch": "",
+                "expiry_date": "0000-00-00",
+                "pack_size": 1,
+                "cost_price": 10,
+                "sell_price": 0,
+                "quantity": 1,
+                "type": "stock_in",
+                "barcodeID": "",
+                "location_ID": "",
+                "note": "",
+                "optionID": "does_not_exist_reason",
+                "vaccine_vial_monitor_status_ID": "does_not_exist_vvm",
+                "om_item_variant_id": "does_not_exist_item_variant",
+                "donor_id": "",
+                "linked_trans_line_ID": "",
+                "linked_transact_id": "",
+                "volume_per_pack": 0,
+                "foreign_currency_price": 0,
+                "is_from_inventory_adjustment": true,
+                "oms_fields": {
+                    "campaign_id": "does_not_exist_campaign",
+                    "program_id": "does_not_exist_program"
+                }
+            }"#
+            .to_string(),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        let result = translator
+            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .unwrap();
+
+        let PullTranslateResult::IntegrationOperations(ops) = result else {
+            panic!("{}", format!("expected IntegrationOperations, got {result:?}"));
+        };
+        let debug = format!("{ops:?}");
+        for (field, _id) in [
+            ("stock_line_id", "does_not_exist_stock_line"),
+            ("item_variant_id", "does_not_exist_item_variant"),
+            ("vvm_status_id", "does_not_exist_vvm"),
+            ("reason_option_id", "does_not_exist_reason"),
+            ("campaign_id", "does_not_exist_campaign"),
+            ("program_id", "does_not_exist_program"),
+        ] {
+            let needle = format!("{field}: None");
+            assert!(
+                debug.contains(&needle),
+                "{}",
+                format!("expected {field} to be cleared; got:\n{debug}")
+            );
+        }
+
+        // One system_log entry per invalid FK
+        let logs = SystemLogRowRepository::new(&connection)
+            .find_all()
+            .unwrap();
+        let fk_errors: Vec<_> = logs
+            .iter()
+            .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
+            .collect();
+        assert_eq!(fk_errors.len(), 6, "got {fk_errors:?}");
+
+        let messages: String = fk_errors
+            .iter()
+            .filter_map(|l| l.message.as_deref())
+            .collect::<Vec<_>>()
+            .join("\n");
+        for fk_field in [
+            "stock_line_id",
+            "item_variant_id",
+            "vvm_status_id",
+            "reason_option_id",
+            "campaign_id",
+            "program_id",
+        ] {
+            assert!(
+                messages.contains(fk_field),
+                "{}",
+                format!("expected message to mention {fk_field}; got:\n{messages}")
+            );
+            assert!(
+                messages.contains("TRANS_LINE_FK_INVALID"),
+                "expected message to mention the record id"
+            );
         }
     }
 }

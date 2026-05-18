@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useResponse, ResponseLineFragment, ResponseFragment } from '../../api';
-import { ItemWithStatsFragment } from '@openmsupply-client/system';
+import { ItemWithAvailableStockFragment } from '@openmsupply-client/system';
 import { FnUtils } from '@common/utils';
 import { useTranslation } from '@common/intl';
 
@@ -13,7 +13,7 @@ export type DraftResponseLine = Omit<
 };
 
 const createDraftFromItem = (
-  item: ItemWithStatsFragment,
+  item: ItemWithAvailableStockFragment,
   requisition: ResponseFragment
 ): DraftResponseLine => {
   return {
@@ -55,12 +55,12 @@ const createDraftFromResponseLine = (
 });
 
 export const useDraftRequisitionLine = (
-  item?: ItemWithStatsFragment | null
+  item?: ItemWithAvailableStockFragment | null
 ) => {
   const t = useTranslation();
-  const lines = useResponse.line.list();
+  const { lines } = useResponse.line.list();
   const { data } = useResponse.document.get();
-  const { mutateAsync: saveMutation, isLoading } = useResponse.line.save();
+  const { mutateAsync: saveMutation, isPending: isLoading } = useResponse.line.save();
   const [isReasonsError, setIsReasonsError] = useState(false);
 
   const [draft, setDraft] = useState<DraftResponseLine | null>(null);
@@ -127,14 +127,14 @@ export const useDraftRequisitionLine = (
 
 export const useNextResponseLine = (
   lines: ResponseLineFragment[],
-  currentItem?: ItemWithStatsFragment | null
+  currentItem?: ItemWithAvailableStockFragment | null
 ) => {
   if (!lines || !currentItem) {
     return { hasNext: false, next: null };
   }
   const nextState: {
     hasNext: boolean;
-    next: ItemWithStatsFragment | null;
+    next: ItemWithAvailableStockFragment | null;
   } = { hasNext: true, next: null };
   const idx = lines.findIndex(l => l.item.id === currentItem?.id);
   const next = lines[idx + 1];

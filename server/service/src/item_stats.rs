@@ -77,6 +77,7 @@ pub fn get_item_stats(
         item_id: Some(EqualFilter::equal_any(item_ids.clone())),
         store_id: Some(EqualFilter::equal_to(store_id.to_string())),
         date: Some(DateFilter::date_range(&start_date, &end_date)),
+        ..Default::default()
     };
 
     let consumption = get_consumption::Input {
@@ -127,10 +128,13 @@ pub fn get_item_stats(
         None => amc::Trait::call(&DefaultAmc, input),
     }?;
 
+    let stock_on_hand_rows = get_stock_on_hand_rows(connection, store_id, Some(item_ids.clone()))?;
+
     Ok(ItemStats::new_vec(
+        &item_ids,
         amc_by_item,
         consumption_map,
-        get_stock_on_hand_rows(connection, store_id, Some(item_ids))?,
+        stock_on_hand_rows,
     ))
 }
 
@@ -241,25 +245,38 @@ pub fn get_stock_on_hand_rows(
 
 impl ItemStats {
     fn new_vec(
+        item_ids: &[String],
         amc_by_item: amc::Output,
         consumption_map: HashMap<String /* item_id */, f64 /* total consumption */>,
         stock_on_hand_rows: Vec<StockOnHandRow>,
     ) -> Vec<Self> {
-        stock_on_hand_rows
-            .into_iter()
-            .map(|stock_on_hand| ItemStats {
-                available_stock_on_hand: stock_on_hand.available_stock_on_hand,
-                item_id: stock_on_hand.item_id.clone(),
-                item_name: stock_on_hand.item_name.clone(),
-                average_monthly_consumption: amc_by_item
-                    .get(&stock_on_hand.item_id)
-                    .and_then(|r| r.average_monthly_consumption)
-                    .unwrap_or_default(),
-                total_consumption: consumption_map
-                    .get(&stock_on_hand.item_id)
-                    .copied()
-                    .unwrap_or_default(),
-                total_stock_on_hand: stock_on_hand.total_stock_on_hand,
+        let soh_map: HashMap<&str, &StockOnHandRow> = stock_on_hand_rows
+            .iter()
+            .map(|row| (row.item_id.as_str(), row))
+            .collect();
+
+        item_ids
+            .iter()
+            .map(|item_id| {
+                let soh = soh_map.get(item_id.as_str());
+                ItemStats {
+                    available_stock_on_hand: soh
+                        .map(|s| s.available_stock_on_hand)
+                        .unwrap_or(0.0),
+                    item_id: item_id.clone(),
+                    item_name: soh.map(|s| s.item_name.clone()).unwrap_or_default(),
+                    average_monthly_consumption: amc_by_item
+                        .get(item_id)
+                        .and_then(|r| r.average_monthly_consumption)
+                        .unwrap_or_default(),
+                    total_consumption: consumption_map
+                        .get(item_id)
+                        .copied()
+                        .unwrap_or_default(),
+                    total_stock_on_hand: soh
+                        .map(|s| s.total_stock_on_hand)
+                        .unwrap_or(0.0),
+                }
             })
             .collect()
     }
@@ -305,7 +322,8 @@ mod test {
         };
 
         // Use make_movements to create days where the item is out of stock
-        let mock_data = MockData {
+
+        MockData {
             stock_lines: vec![test_stock_line.clone()],
             ..Default::default()
         }
@@ -330,9 +348,7 @@ mod test {
                 https://www.tablesgenerator.com/text_tables (file -> paste table data)
                 */
             ],
-        ));
-
-        mock_data
+        ))
     }
 
     #[actix_rt::test]

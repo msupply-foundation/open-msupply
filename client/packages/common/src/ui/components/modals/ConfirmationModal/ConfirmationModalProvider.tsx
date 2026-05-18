@@ -72,10 +72,11 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
         info={info}
         title={title}
         onConfirm={async () => {
-          onConfirm && (await onConfirm(confirmationModalState));
+          // Close the modal before running onConfirm so that another modal can be opened from onConfirm
           cleanupConfirm
             ? cleanupConfirm()
             : setState(state => ({ ...state, open: false }));
+          onConfirm && (await onConfirm(confirmationModalState));
         }}
         onCancel={() => {
           setState(state => ({ ...state, open: false }));

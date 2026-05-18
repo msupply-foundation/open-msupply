@@ -18,6 +18,8 @@ interface ConfirmationModalProps {
   iconType?: 'alert' | 'info' | 'help';
   buttonLabel?: string | undefined;
   cancelButtonLabel?: string | undefined;
+  otherButtons?: Array<React.ReactNode>;
+  placeCancelButtonFirst?: boolean;
 }
 
 const iconLookup = {
@@ -38,10 +40,23 @@ export const ConfirmationModal = ({
   iconType = 'alert',
   buttonLabel,
   cancelButtonLabel,
+  otherButtons,
+  placeCancelButtonFirst = false,
 }: ConfirmationModalProps) => {
   const [loading, setLoading] = useState(false);
   const Icon = iconLookup[iconType];
   const t = useTranslation();
+
+  const cancelButton = (
+    <Grid>
+      <DialogButton
+        variant="cancel"
+        customLabel={cancelButtonLabel}
+        disabled={loading}
+        onClick={onCancel}
+      />
+    </Grid>
+  );
 
   return (
     <BasicModal width={width} height={height} open={open} onClose={onCancel}>
@@ -56,7 +71,10 @@ export const ConfirmationModal = ({
         </Grid>
         {info && (
           <Grid paddingY={1}>
-            <Alert style={{ whiteSpace: 'pre-line' }} severity="info">
+            <Alert
+              style={{ whiteSpace: 'pre-line' }}
+              severity={iconType === 'alert' ? 'warning' : 'info'}
+            >
               {info}
             </Alert>
           </Grid>
@@ -73,14 +91,10 @@ export const ConfirmationModal = ({
           flex={1}
           display="flex"
         >
-          <Grid>
-            <DialogButton
-              variant="cancel"
-              customLabel={cancelButtonLabel}
-              disabled={loading}
-              onClick={onCancel}
-            />
-          </Grid>
+          {placeCancelButtonFirst && cancelButton}
+          {otherButtons &&
+            otherButtons.map((button, idx) => <Grid key={idx}>{button}</Grid>)}
+          {!placeCancelButtonFirst && cancelButton}
           <Grid>
             <LoadingButton
               autoFocus

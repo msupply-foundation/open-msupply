@@ -10,7 +10,7 @@ impl Preference for ShowIndicativePriceInRequisitions {
     }
 
     fn preference_type(&self) -> PreferenceType {
-        PreferenceType::Global
+        PreferenceType::Store
     }
 
     fn value_type(&self) -> PreferenceValueType {

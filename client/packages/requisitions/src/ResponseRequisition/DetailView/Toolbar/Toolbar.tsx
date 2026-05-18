@@ -9,16 +9,17 @@ import {
   BufferedTextInput,
   Tooltip,
   BasicTextInput,
-  usePreferences,
+  SearchBar,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
-
 import { useResponse } from '../../api';
 import { getApprovalStatusKey } from '../../../utils';
+import { useResponseLines } from '../../api/hooks/line/useResponseLines';
 
 export const Toolbar = () => {
   const t = useTranslation();
   const isDisabled = useResponse.utils.isDisabled();
+  const { itemFilter, setItemFilter } = useResponseLines();
 
   const {
     approvalStatus,
@@ -34,7 +35,6 @@ export const Toolbar = () => {
     'programName',
     'destinationCustomer',
   ]);
-  const { selectDestinationStoreForAnInternalOrder } = usePreferences();
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
 
   return (
@@ -68,17 +68,19 @@ export const Toolbar = () => {
                 label={t('label.customer-ref')}
                 Input={
                   <Tooltip title={theirReference} placement="bottom-start">
-                    <BufferedTextInput
-                      disabled={isDisabled}
-                      size="small"
-                      sx={{ width: 250 }}
-                      value={theirReference}
-                      onChange={e => update({ theirReference: e.target.value })}
-                    />
+                    <Box>
+                      <BufferedTextInput
+                        disabled={isDisabled}
+                        size="small"
+                        sx={{ width: 250 }}
+                        value={theirReference}
+                        onChange={e => update({ theirReference: e.target.value })}
+                      />
+                    </Box>
                   </Tooltip>
                 }
               />
-              {selectDestinationStoreForAnInternalOrder && (
+              {!!destinationCustomer && (
                 <InputWithLabelRow
                   label={t('label.destination-customer')}
                   Input={
@@ -110,6 +112,14 @@ export const Toolbar = () => {
             </Box>
           </Box>
         </Grid>
+        <SearchBar
+          placeholder={t('placeholder.filter-items')}
+          value={itemFilter}
+          onChange={newValue => {
+            setItemFilter(newValue);
+          }}
+          debounceTime={0}
+        />
       </Grid>
     </AppBarContentPortal>
   );

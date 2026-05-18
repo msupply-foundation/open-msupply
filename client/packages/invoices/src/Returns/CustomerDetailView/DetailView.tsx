@@ -1,18 +1,14 @@
 import React, { useEffect } from 'react';
 import {
-  TableProvider,
-  createTableStore,
   DetailViewSkeleton,
   AlertModal,
   useNavigate,
   RouteBuilder,
   useTranslation,
-  createQueryParamsStore,
   DetailTabs,
   useEditModal,
   useBreadcrumbs,
   useNonPaginatedMaterialTable,
-  Groupable,
   NothingHere,
   MaterialTable,
 } from '@openmsupply-client/common';
@@ -27,7 +23,7 @@ import { CustomerReturnEditModal } from '../modals';
 import { getNextItemId } from '../../utils';
 import { useCustomerReturnColumns } from './columns';
 
-const CustomerReturnsDetailViewComponent = () => {
+export const CustomerReturnDetailView = () => {
   const { data, isLoading } = useReturns.document.customerReturn();
   const { lines } = useReturns.lines.customerReturnRows();
   const t = useTranslation();
@@ -50,18 +46,18 @@ const CustomerReturnsDetailViewComponent = () => {
   const columns = useCustomerReturnColumns();
 
   const { table, selectedRows } =
-    useNonPaginatedMaterialTable<Groupable<CustomerReturnLineFragment>>({
+    useNonPaginatedMaterialTable<CustomerReturnLineFragment>({
       tableId: 'purchase-order-detail-view',
       onRowClick: row => onOpen(row.itemId),
       columns,
       isLoading,
       data: lines,
-      grouping: { enabled: true },
+      grouping: { field: 'itemCode' },
       enableRowSelection: !isDisabled,
       noDataElement: (
         <NothingHere
           body={t('error.no-customer-return-items')}
-          onCreate={isDisabled ? undefined : () => onOpen}
+          onCreate={isDisabled ? undefined : () => onOpen()}
           buttonText={t('button.add-item')}
         />
       ),
@@ -135,16 +131,3 @@ const CustomerReturnsDetailViewComponent = () => {
     </React.Suspense>
   );
 };
-
-export const CustomerReturnDetailView = () => (
-  <TableProvider
-    createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<CustomerReturnLineFragment>({
-      initialSortBy: {
-        key: 'itemName',
-      },
-    })}
-  >
-    <CustomerReturnsDetailViewComponent />
-  </TableProvider>
-);

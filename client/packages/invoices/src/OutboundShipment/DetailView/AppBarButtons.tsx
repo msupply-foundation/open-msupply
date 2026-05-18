@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   AppBarButtonsPortal,
+  AddFromScannerButton,
   ButtonWithIcon,
   PlusCircleIcon,
   Grid,
@@ -8,11 +9,13 @@ import {
   useTranslation,
   ReportContext,
   useUrlQueryParams,
+  ScanResult,
+  useNotification,
+  useBarcodeScannerContext,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../api';
 import { ReportSelector } from '@openmsupply-client/system';
 import { AddFromMasterListButton } from './AddFromMasterListButton';
-import { AddFromScannerButton } from './AddFromScannerButton';
 import { ScannedBarcode } from '../../types';
 
 interface AppBarButtonProps {
@@ -22,11 +25,40 @@ interface AppBarButtonProps {
 export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
   const isDisabled = useOutbound.utils.isDisabled();
   const { data } = useOutbound.document.get();
+  const { mutateAsync: getBarcode } = useOutbound.utils.barcode();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation();
   const {
     queryParams: { sortBy },
   } = useUrlQueryParams();
+
+  const { warning } = useNotification();
+
+  const handleScanResult = useCallback(
+    async (result: ScanResult) => {
+      if (!!result.content) {
+        const { content, gtin, batch, expiryDate } = result;
+        const value = gtin ?? content;
+        const barcode = await getBarcode(value);
+
+        // Barcode exists
+        if (barcode?.__typename === 'BarcodeNode') {
+          onAddItem({ ...barcode, batch, expiryDate: expiryDate ?? undefined });
+        } else {
+          warning(t('error.no-matching-item'))();
+
+          onAddItem({
+            gtin: value,
+            batch,
+            expiryDate: expiryDate ?? undefined,
+          });
+        }
+      }
+    },
+    [getBarcode, onAddItem, warning, t]
+  );
+
+  useBarcodeScannerContext(handleScanResult);
 
   return (
     <AppBarButtonsPortal>
@@ -38,7 +70,7 @@ export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
           onClick={() => onAddItem()}
         />
         <AddFromMasterListButton />
-        <AddFromScannerButton onAddItem={onAddItem} disabled={isDisabled} />
+        <AddFromScannerButton disabled={isDisabled} />
         <ReportSelector
           context={ReportContext.OutboundShipment}
           dataId={data?.id ?? ''}

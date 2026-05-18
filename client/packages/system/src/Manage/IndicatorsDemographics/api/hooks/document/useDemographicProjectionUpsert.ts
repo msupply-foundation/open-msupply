@@ -12,7 +12,9 @@ export const useDemographicProjectionUpsert = () => {
   const { mutateAsync: update } = useDemographicProjectionUpdate();
 
   const invalidateQueries = (baseYear: number) =>
-    queryClient.invalidateQueries(api.keys.projection(baseYear));
+    queryClient.invalidateQueries({
+      queryKey: api.keys.projection(baseYear)
+    });
 
   const upsertProjection = async (
     projection: Omit<DemographicProjectionFragment, '__typename'>

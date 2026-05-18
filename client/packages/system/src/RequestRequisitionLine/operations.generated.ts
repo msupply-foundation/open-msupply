@@ -5,6 +5,18 @@ import gql from 'graphql-tag';
 import { ReasonOptionRowFragmentDoc } from '../ReasonOption/api/operations.generated';
 import { SyncFileReferenceFragmentDoc } from '../Documents/types.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
+export type ItemWithAvailableStockFragment = {
+  __typename: 'ItemNode';
+  id: string;
+  name: string;
+  code: string;
+  unitName?: string | null;
+  defaultPackSize: number;
+  isVaccine: boolean;
+  doses: number;
+  availableStockOnHand: number;
+};
+
 export type ItemWithStatsFragment = {
   __typename: 'ItemNode';
   id: string;
@@ -43,6 +55,9 @@ export type RequestLineFragment = {
   expiringUnits: number;
   daysOutOfStock: number;
   pricePerUnit?: number | null;
+  forecastTotalUnits?: number | null;
+  forecastTotalDoses?: number | null;
+  vaccineCourses?: string | null;
   itemStats: {
     __typename: 'ItemStatsNode';
     availableStockOnHand: number;
@@ -64,16 +79,13 @@ export type RequestLineFragment = {
     isVaccine: boolean;
     doses: number;
     availableStockOnHand: number;
-    stats: {
-      __typename: 'ItemStatsNode';
-      averageMonthlyConsumption: number;
-      availableStockOnHand: number;
-      availableMonthsOfStockOnHand?: number | null;
-      totalConsumption: number;
-      stockOnHand: number;
-      monthsOfStockOnHand?: number | null;
-    };
   };
+  ancillaryParents: Array<{
+    __typename: 'ItemNode';
+    id: string;
+    name: string;
+    code: string;
+  }>;
   reason?: {
     __typename: 'ReasonOptionNode';
     id: string;
@@ -103,6 +115,37 @@ export type RequestFragment = {
   programName?: string | null;
   orderType?: string | null;
   isEmergency: boolean;
+  ancillaryState: {
+    __typename: 'AncillaryStateResponse';
+    state: Types.AncillaryStateNode;
+    count: number;
+    toAdd: Array<{
+      __typename: 'AncillaryDeltaNode';
+      itemId: string;
+      requiredQuantity: number;
+      currentQuantity?: number | null;
+      item: {
+        __typename: 'ItemNode';
+        id: string;
+        name: string;
+        code: string;
+        unitName?: string | null;
+      };
+    }>;
+    toUpdate: Array<{
+      __typename: 'AncillaryDeltaNode';
+      itemId: string;
+      requiredQuantity: number;
+      currentQuantity?: number | null;
+      item: {
+        __typename: 'ItemNode';
+        id: string;
+        name: string;
+        code: string;
+        unitName?: string | null;
+      };
+    }>;
+  };
   documents: {
     __typename: 'SyncFileReferenceConnector';
     nodes: Array<{
@@ -140,6 +183,9 @@ export type RequestFragment = {
       expiringUnits: number;
       daysOutOfStock: number;
       pricePerUnit?: number | null;
+      forecastTotalUnits?: number | null;
+      forecastTotalDoses?: number | null;
+      vaccineCourses?: string | null;
       itemStats: {
         __typename: 'ItemStatsNode';
         availableStockOnHand: number;
@@ -161,16 +207,13 @@ export type RequestFragment = {
         isVaccine: boolean;
         doses: number;
         availableStockOnHand: number;
-        stats: {
-          __typename: 'ItemStatsNode';
-          averageMonthlyConsumption: number;
-          availableStockOnHand: number;
-          availableMonthsOfStockOnHand?: number | null;
-          totalConsumption: number;
-          stockOnHand: number;
-          monthsOfStockOnHand?: number | null;
-        };
       };
+      ancillaryParents: Array<{
+        __typename: 'ItemNode';
+        id: string;
+        name: string;
+        code: string;
+      }>;
       reason?: {
         __typename: 'ReasonOptionNode';
         id: string;
@@ -242,8 +285,8 @@ export type OnlyHereToAvoidUnusedWarningsQuery = {
   me: { __typename: 'UserNode' };
 };
 
-export const ItemWithStatsFragmentDoc = gql`
-  fragment ItemWithStats on ItemNode {
+export const ItemWithAvailableStockFragmentDoc = gql`
+  fragment ItemWithAvailableStock on ItemNode {
     id
     name
     code
@@ -252,6 +295,11 @@ export const ItemWithStatsFragmentDoc = gql`
     isVaccine
     doses
     availableStockOnHand(storeId: $storeId)
+  }
+`;
+export const ItemWithStatsFragmentDoc = gql`
+  fragment ItemWithStats on ItemNode {
+    ...ItemWithAvailableStock
     stats(storeId: $storeId) {
       averageMonthlyConsumption
       availableStockOnHand
@@ -260,8 +308,8 @@ export const ItemWithStatsFragmentDoc = gql`
       stockOnHand
       monthsOfStockOnHand
     }
-    isVaccine
   }
+  ${ItemWithAvailableStockFragmentDoc}
 `;
 export const RequestLineFragmentDoc = gql`
   fragment RequestLine on RequisitionLineNode {
@@ -291,13 +339,21 @@ export const RequestLineFragmentDoc = gql`
       approvalComment
     }
     item {
-      ...ItemWithStats
+      ...ItemWithAvailableStock
+    }
+    ancillaryParents {
+      id
+      name
+      code
     }
     reason {
       ...ReasonOptionRow
     }
+    forecastTotalUnits
+    forecastTotalDoses
+    vaccineCourses
   }
-  ${ItemWithStatsFragmentDoc}
+  ${ItemWithAvailableStockFragmentDoc}
   ${ReasonOptionRowFragmentDoc}
 `;
 export const RequestFragmentDoc = gql`
@@ -309,6 +365,32 @@ export const RequestFragmentDoc = gql`
     createdDatetime
     sentDatetime
     finalisedDatetime
+    ancillaryState {
+      state
+      count
+      toAdd {
+        itemId
+        requiredQuantity
+        currentQuantity
+        item {
+          id
+          name
+          code
+          unitName
+        }
+      }
+      toUpdate {
+        itemId
+        requiredQuantity
+        currentQuantity
+        item {
+          id
+          name
+          code
+          unitName
+        }
+      }
+    }
     requisitionNumber
     colour
     theirReference
@@ -432,15 +514,17 @@ export function getSdk(
   return {
     OnlyHereToAvoidUnusedWarnings(
       variables?: OnlyHereToAvoidUnusedWarningsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<OnlyHereToAvoidUnusedWarningsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<OnlyHereToAvoidUnusedWarningsQuery>(
-            OnlyHereToAvoidUnusedWarningsDocument,
+          client.request<OnlyHereToAvoidUnusedWarningsQuery>({
+            document: OnlyHereToAvoidUnusedWarningsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'OnlyHereToAvoidUnusedWarnings',
         'query',
         variables

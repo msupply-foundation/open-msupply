@@ -4,6 +4,7 @@ import { NumUtils } from '../numbers';
 export const Representation = {
   PACKS: 'packs',
   UNITS: 'units',
+  DOSES: 'doses',
 } as const;
 
 export type RepresentationValue =
@@ -75,41 +76,23 @@ export const QuantityUtils = {
    * Rounding/formatting to 0 decimal places should be done in the component with useFormatNumber().
    */
   calculateValueInDoses: (
-    representation: RepresentationValue,
-    defaultPackSize: number,
     dosesPerUnit: number,
     value?: number | null
   ): number => {
     if (!value) return 0;
-    if (representation === Representation.PACKS) {
-      return value * defaultPackSize * dosesPerUnit;
-    }
     return value * dosesPerUnit;
   },
 
   useValueInDoses: (
-    displayVaccinesInDoses: boolean,
-    representation: RepresentationValue,
-    defaultPackSize: number,
+    isDosesEnabled: boolean,
     dosesPerUnit: number,
     value?: number | null
   ): number | undefined =>
     useMemo(
       () =>
-        displayVaccinesInDoses
-          ? QuantityUtils.calculateValueInDoses(
-              representation,
-              defaultPackSize || 1,
-              dosesPerUnit,
-              value
-            )
+        isDosesEnabled
+          ? QuantityUtils.calculateValueInDoses(dosesPerUnit, value)
           : undefined,
-      [
-        displayVaccinesInDoses,
-        representation,
-        defaultPackSize,
-        dosesPerUnit,
-        value,
-      ]
+      [isDosesEnabled, dosesPerUnit, value]
     ),
 };

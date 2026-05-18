@@ -11,14 +11,14 @@ import {
   ColumnDef,
   ColumnType,
   CheckCell,
-  Typography,
+  Box,
   Tooltip,
   TextWithTooltipCell,
+  Currencies,
   CurrencyValueCell,
+  ExpiryDateCell,
+  NumberInputCell,
 } from '@openmsupply-client/common';
-// Need to be re-exported when Legacy cells are removed
-import { NumberInputCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/NumberInputCell';
-import { ExpiryDateCell } from '@openmsupply-client/common/src/ui/layout/tables/material-react-table/components/ExpiryDateCell';
 import {
   CurrencyRowFragment,
   ItemVariantInfoIcon,
@@ -175,12 +175,11 @@ export const useOutboundLineEditColumns = ({
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
         Cell: props => (
-          <CurrencyValueCell {...props} currencyCode={currency?.code} />
+          <CurrencyValueCell {...props} currencyCode={currency?.code as Currencies} />
         ),
         accessorFn: rowData =>
           currency ? rowData.sellPricePerPack / currency.rate : undefined,
       },
-
       {
         accessorKey: 'packSize',
         header: t('label.pack-size'),
@@ -188,7 +187,6 @@ export const useOutboundLineEditColumns = ({
         size: 80,
         defaultHideOnMobile: true,
       },
-
       {
         accessorKey: 'dosesPerUnit',
         header: unit
@@ -235,6 +233,7 @@ export const useOutboundLineEditColumns = ({
           <NumberInputCell
             id={getStockOutQuantityCellId(row.original.batch)} // Used by when adding by barcode scanner
             cell={cell}
+            debounceTime={500}
             updateFn={value =>
               allocate(row.original.id, value, {
                 preventPartialPacks: true,
@@ -271,6 +270,13 @@ export const useOutboundLineEditColumns = ({
         defaultHideOnMobile: true,
       },
       {
+        id: 'volume',
+        header: t('label.volume'),
+        size: 100,
+        columnType: ColumnType.Number,
+        accessorFn: row => (row.volumePerPack ?? 0) * row.numberOfPacks,
+      },
+      {
         id: 'onHold',
         header: t('label.on-hold'),
         size: 70,
@@ -288,14 +294,14 @@ export const useOutboundLineEditColumns = ({
 const LocationCell = ({ row }: { row: MRT_Row<DraftStockOutLineFragment> }) => {
   const t = useTranslation();
 
-  const { code = '', onHold = false } = row.original.location || {};
+  const { code = UNDEFINED_STRING_VALUE, onHold = false } =
+    row.original.location || {};
 
   const onHoldText = onHold ? ` (${t('label.on-hold')})` : '';
 
   return (
     <Tooltip title={code} placement="bottom-start">
-      <Typography
-        component="div"
+      <Box
         sx={{
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -303,7 +309,7 @@ const LocationCell = ({ row }: { row: MRT_Row<DraftStockOutLineFragment> }) => {
         }}
       >
         {code + onHoldText}
-      </Typography>
+      </Box>
     </Tooltip>
   );
 };

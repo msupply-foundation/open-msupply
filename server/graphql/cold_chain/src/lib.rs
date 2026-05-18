@@ -478,7 +478,10 @@ mod test_logs {
                 Some(
                     TemperatureLogFilter::new()
                         .store_id(EqualFilter::equal_to("store_a".to_string()))
-                        .sensor(SensorFilter::new().id(EqualFilter::equal_to("match_sensor".to_string())))
+                        .sensor(
+                            SensorFilter::new()
+                                .id(EqualFilter::equal_to("match_sensor".to_string()))
+                        )
                 )
             );
             Ok(ListResult::empty())

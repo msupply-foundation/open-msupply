@@ -92,7 +92,7 @@ td.borderlineTopBottom {
 
 .col-expiry-date {
   width: 7.5%;
-  text-align: right;
+  text-align: end;
 }
 
 .col-packsize {

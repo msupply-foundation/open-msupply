@@ -6,8 +6,6 @@ import {
   BasicTextInput,
   Grid,
   useTranslation,
-  useIsGrouped,
-  Switch,
   useNavigate,
   RouteBuilder,
 } from '@openmsupply-client/common';
@@ -24,7 +22,6 @@ export const Toolbar: FC = () => {
     useReturns.document.supplierReturn();
   const { otherParty, theirReference, id, originalShipment } =
     bufferedState ?? { id: '' };
-  const { isGrouped, toggleIsGrouped } = useIsGrouped('supplierReturn');
   const { mutateAsync: updateOtherParty } =
     useReturns.document.updateOtherParty();
 
@@ -81,28 +78,12 @@ export const Toolbar: FC = () => {
                   disabled={isDisabled}
                   size="small"
                   sx={{ width: 250 }}
-                  value={theirReference}
+                  value={theirReference ?? ''}
                   onChange={event => {
                     update({ theirReference: event.target.value });
                   }}
                 />
               }
-            />
-          </Box>
-        </Grid>
-        <Grid
-          display="flex"
-          gap={1}
-          justifyContent="flex-end"
-          alignItems="center"
-        >
-          <Box sx={{ marginRight: 2 }}>
-            <Switch
-              label={t('label.group-by-item')}
-              onChange={toggleIsGrouped}
-              checked={isGrouped}
-              size="small"
-              color="secondary"
             />
           </Box>
         </Grid>

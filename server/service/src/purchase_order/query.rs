@@ -52,7 +52,7 @@ mod test {
     #[actix_rt::test]
     async fn purchase_order_service_queries() {
         let (_, connection, connection_manager, _) = setup_all(
-            "purchase order service queries",
+            "purchase_order_service_queries",
             MockDataInserts::none().stores(),
         )
         .await;
@@ -68,7 +68,7 @@ mod test {
         let po = PurchaseOrderRow {
             id: "test_po_1".to_string(),
             store_id: mock_store_a().id,
-            supplier_name_link_id: mock_name_c().id,
+            supplier_name_id: mock_name_c().id,
             created_datetime: chrono::Utc::now().naive_utc(),
             status: repository::PurchaseOrderStatus::New,
             purchase_order_number: 1,

@@ -121,17 +121,20 @@ export const ActivityLogList: FC<{ recordId: string }> = ({ recordId }) => {
         accessorKey: 'datetime',
         header: t('label.date'),
         columnType: ColumnType.Date,
+        size: 50,
       },
       {
         id: 'time',
         header: t('label.time'),
         accessorFn: row => localisedTime(row.datetime),
         align: 'right',
+        size: 50,
       },
       {
         id: 'username',
         accessorFn: rowData => rowData?.user?.username ?? '',
         header: t('label.user'),
+        size: 80,
       },
       {
         id: 'type',
@@ -140,6 +143,7 @@ export const ActivityLogList: FC<{ recordId: string }> = ({ recordId }) => {
           t(Formatter.logTypeTranslation(rowData.type), {
             defaultValue: rowData.type,
           }),
+        size: 100,
       },
       {
         id: 'changeDetails',

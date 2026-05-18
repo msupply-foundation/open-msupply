@@ -32,9 +32,6 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
   ) => {
     const t = useTranslation();
 
-    const showClearOption =
-      !!props?.value && !!props?.onChange && clearable && options.length > 1;
-
     return (
       <TextField
         ref={ref}
@@ -67,8 +64,8 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
         {...props}
       >
         {options.map(renderOption || defaultRenderOption)}
-        {showClearOption && <Divider />}
-        {showClearOption && (
+        {clearable && <Divider />}
+        {clearable && (
           <MenuItem
             key={'clear-filters'}
             onClick={() =>

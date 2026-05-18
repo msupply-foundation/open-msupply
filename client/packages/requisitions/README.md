@@ -1,16 +1,4 @@
-## requisitions
+# requisitions
 
-### Overview
-
-Requisitions Domain
-
-### Intentions
-
-The intention is that this package is responsible for requisition domain features:
-
-- Internal orders
-- Customer requisitions
-
-### Tips & Things to keep in mind
-
-### Future considerations
+- **Docs site**: https://dev-docs.msupply.foundation/client/packages/requisitions/
+- **Source**: [docs/content/client/packages/requisitions/_index.md](../../../docs/content/client/packages/requisitions/_index.md)

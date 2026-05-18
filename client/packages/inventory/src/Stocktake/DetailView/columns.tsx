@@ -3,8 +3,8 @@ import {
   useTranslation,
   usePreferences,
   ColumnDef,
-  Groupable,
   ColumnType,
+  ExpiryDateCell,
   UnitsAndDosesCell,
 } from '@openmsupply-client/common';
 import { StocktakeLineFragment } from '../api';
@@ -19,20 +19,15 @@ export const useStocktakeColumns = () => {
   const getIsError = useCallback(
     (
       errorType: StocktakeLineError['__typename'],
-      row: Groupable<StocktakeLineFragment>
+      row: StocktakeLineFragment
     ) => {
-      if (row.subRows) {
-        return row.subRows.some(
-          subRow => errors?.[subRow.id]?.__typename === errorType
-        );
-      }
       return errors?.[row.id]?.__typename === errorType;
     },
     [errors]
   );
 
   const columns = useMemo(() => {
-    const cols: ColumnDef<Groupable<StocktakeLineFragment>>[] = [
+    const cols: ColumnDef<StocktakeLineFragment>[] = [
       {
         accessorKey: 'item.code',
         header: t('label.code'),
@@ -44,13 +39,14 @@ export const useStocktakeColumns = () => {
       {
         accessorKey: 'itemName',
         header: t('label.name'),
-        size: 400,
+        size: 350,
         enableColumnFilter: true,
         enableSorting: true,
       },
       {
         accessorKey: 'batch',
         header: t('label.batch'),
+        size: 110,
         enableSorting: true,
         defaultHideOnMobile: true,
       },
@@ -59,6 +55,19 @@ export const useStocktakeColumns = () => {
         // expiryDate from backend is a string - use accessorFn to convert to Date object for sort and filtering
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         header: t('label.expiry-date'),
+        size: 110,
+        columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
+        defaultHideOnMobile: true,
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        id: 'manufactureDate',
+        accessorFn: row =>
+          row.manufactureDate ? new Date(row.manufactureDate) : null,
+        header: t('label.manufacture-date'),
+        size: 110,
         columnType: ColumnType.Date,
         defaultHideOnMobile: true,
         enableColumnFilter: true,
@@ -75,6 +84,7 @@ export const useStocktakeColumns = () => {
         id: 'itemUnit',
         accessorKey: 'item.unitName',
         header: t('label.unit-name'),
+        size: 100,
         enableSorting: true,
         defaultHideOnMobile: true,
       },
@@ -93,61 +103,47 @@ export const useStocktakeColumns = () => {
         accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
       },
       {
-        id: 'snapshotNumberOfPacks',
+        accessorKey: 'snapshotNumberOfPacks',
         header: t('label.snapshot-num-of-packs'),
         description: t('description.snapshot-num-of-packs'),
         columnType: ColumnType.Number,
         enableSorting: true,
-        accessorFn: row => {
-          if (row.subRows)
-            return row.subRows.reduce(
-              (total, line) => total + line.snapshotNumberOfPacks,
-              0
-            );
-
-          return row.snapshotNumberOfPacks;
-        },
+        aggregationFn: 'sum',
         getIsError: row =>
           getIsError('SnapshotCountCurrentCountMismatchLine', row),
       },
       {
-        id: 'countedNumberOfPacks',
+        accessorKey: 'countedNumberOfPacks',
         header: t('label.counted-num-of-packs'),
         description: t('description.counted-num-of-packs'),
         columnType: ColumnType.Number,
         enableSorting: true,
-        accessorFn: row => {
-          if (row.subRows) {
-            // return null if no subRows have a countedNumberOfPacks, else sum
-            return row.subRows.reduce<number | null>((total, line) => {
-              if (line.countedNumberOfPacks === null) return total;
-              return (total ?? 0) + (line.countedNumberOfPacks ?? 0);
-            }, null);
-          }
-
-          return row.countedNumberOfPacks;
-        },
+        aggregationFn: 'sum',
         getIsError: row => getIsError('StockLineReducedBelowZero', row),
       },
       {
+        id: 'dosesCounted',
+        header: t('label.doses-counted'),
+        columnType: ColumnType.Number,
+        enableSorting: true,
+        aggregationFn: 'sum',
+        includeColumn: manageVaccinesInDoses,
+        accessorFn: row => {
+          if (!row.item.isVaccine) return null;
+          const counted = row.countedNumberOfPacks;
+          if (counted === null || counted === undefined) return null;
+          return counted * (row.packSize ?? 1) * (row.item.doses ?? 1);
+        },
+      },
+      {
         id: 'difference',
+        accessorFn: row =>
+          (row.countedNumberOfPacks ?? row.snapshotNumberOfPacks) -
+          row.snapshotNumberOfPacks,
         header: t('label.difference'),
         columnType: ColumnType.Number,
+        aggregationFn: 'sum',
         Cell: UnitsAndDosesCell,
-        accessorFn: row => {
-          if (row.subRows) {
-            return row.subRows.reduce((total, line) => {
-              const difference =
-                (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks) -
-                line.snapshotNumberOfPacks;
-              return total + difference;
-            }, 0);
-          }
-          return (
-            (row.countedNumberOfPacks ?? row.snapshotNumberOfPacks) -
-            row.snapshotNumberOfPacks
-          );
-        },
       },
       {
         id: 'reason',
@@ -164,13 +160,19 @@ export const useStocktakeColumns = () => {
         defaultHideOnMobile: true,
       },
       {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        accessorFn: row => row.manufacturer?.name ?? '',
+        defaultHideOnMobile: true,
+      },
+      {
         accessorKey: 'comment',
         header: t('label.comment'),
         columnType: ColumnType.Comment,
       },
     ];
     return cols;
-  }, [getIsError, manageVaccinesInDoses, allowTrackingOfStockByDonor]);
+  }, [t, manageVaccinesInDoses, allowTrackingOfStockByDonor, getIsError]);
 
   return columns;
 };
