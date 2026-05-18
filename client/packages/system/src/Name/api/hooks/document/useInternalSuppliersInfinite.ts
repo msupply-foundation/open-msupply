@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   NameFilterInput,
   useInfiniteQuery,
 } from '@openmsupply-client/common';
@@ -20,9 +21,9 @@ export const useInternalSuppliersInfinite = ({
     filter,
   };
 
-  return useInfiniteQuery(
-    [...api.keys.list(), 'internalSuppliers', 'infinite', filter],
-    async ({ pageParam }) => {
+  return useInfiniteQuery({
+    queryKey: [...api.keys.list(), 'internalSuppliers', 'infinite', filter],
+    queryFn: async ({ pageParam }) => {
       const pageNumber = Number(pageParam ?? 0);
 
       const data = await api.get.internalSuppliers({
@@ -36,6 +37,11 @@ export const useInternalSuppliersInfinite = ({
         pageNumber,
       };
     },
-    { keepPreviousData: true }
-  );
+    initialPageParam: 0,
+    getNextPageParam: lastPage =>
+      (lastPage.pageNumber + 1) * rowsPerPage < (lastPage.data?.totalCount ?? 0)
+        ? lastPage.pageNumber + 1
+        : undefined,
+    placeholderData: keepPreviousData,
+  });
 };
