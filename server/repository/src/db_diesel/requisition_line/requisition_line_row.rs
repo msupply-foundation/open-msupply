@@ -113,6 +113,11 @@ impl<'a> RequisitionLineRowRepository<'a> {
         item_id_param: &str,
         approved_quantity: f64,
     ) -> Result<(), RepositoryError> {
+        // Resolve all item_link IDs for this canonical item_id so the update
+        // covers merged items. We use a two-step fetch rather than a Diesel
+        // subquery to avoid adding allow_tables_to_appear_in_same_query! between
+        // the write table (requisition_line_with_links) and item_link, which
+        // would reintroduce the coupling this abstraction is designed to prevent.
         let item_link_ids: Vec<String> = ItemLinkRowRepository::new(self.connection)
             .find_many_by_item_id(item_id_param)?
             .into_iter()

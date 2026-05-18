@@ -64,8 +64,13 @@ pub struct RnRFormRow {
     pub linked_requisition_id: Option<String>,
     pub their_reference: Option<String>,
     pub comment: Option<String>,
-    // Resolved from name_link - must be last to match view column order
-    #[serde(alias = "name_link_id")]
+    // Resolved from name_link - must be last to match view column order.
+    // Central servers always run the latest version, but remote clients may be older:
+    // - `rename` keeps the JSON field name as `name_link_id` so older remote clients
+    //   can still deserialize records they pull from an upgraded central server.
+    // - `alias` lets the central server deserialize JSON pushed by older remote
+    //   clients (which still emit `name_link_id`).
+    #[serde(rename = "name_link_id", alias = "name_id")]
     pub name_id: String,
 }
 
