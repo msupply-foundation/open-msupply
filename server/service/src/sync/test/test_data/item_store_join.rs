@@ -91,7 +91,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 default_sell_price_per_pack: 5.0,
                 ignore_for_orders: true,
                 margin: 0.0,
-                default_location_id: None,
+                default_location_id: None, // Invalid location cleared
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(

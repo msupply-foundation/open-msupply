@@ -154,6 +154,7 @@ impl<'a> RnRFormLineRowRepository<'a> {
         form_id: Option<String>,
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
+        // Get store id via rnr_form
         let store_id = match form_id {
             Some(form_id) => RnRFormRowRepository::new(self.connection)
                 .find_one_by_id(&form_id)?
@@ -227,10 +228,12 @@ impl<'a> RnRFormLineRowRepository<'a> {
 
 #[derive(Debug, Clone)]
 pub struct RnRFormLineDelete(pub String);
+// For tests only
 impl Delete for RnRFormLineDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         RnRFormLineRowRepository::new(con).delete(&self.0)
     }
+    // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
             RnRFormLineRowRepository::new(con).find_one_by_id(&self.0),
@@ -245,6 +248,7 @@ impl Upsert for RnRFormLineRow {
         Ok(Some(cursor_id))
     }
 
+    // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             RnRFormLineRowRepository::new(con).find_one_by_id(&self.id),
