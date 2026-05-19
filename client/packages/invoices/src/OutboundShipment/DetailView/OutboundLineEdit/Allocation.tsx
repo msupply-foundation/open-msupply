@@ -141,7 +141,15 @@ const AllocationInner = () => {
   };
 
   return (
-    <>
+    <Box
+      sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        overflow: 'hidden',
+      }}
+    >
       <ModalRow>
         <ModalLabel label="" />
         <Grid display="flex">
@@ -171,6 +179,6 @@ const AllocationInner = () => {
         currency={currency}
         isExternalSupplier={!otherParty?.store}
       />
-    </>
+    </Box>
   );
 };

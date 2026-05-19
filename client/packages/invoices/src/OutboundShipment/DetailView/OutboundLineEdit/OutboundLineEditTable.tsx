@@ -20,7 +20,6 @@ import {
   getAllocatedQuantity,
   DraftStockOutLineFragment,
 } from '../../../StockOut';
-import { min } from 'lodash';
 
 export interface OutboundLineEditTableProps {
   currency?: CurrencyRowFragment | null;
@@ -152,14 +151,23 @@ export const OutboundLineEditTable = ({
   });
 
   return (
-    <Box style={{ width: '100%' }}>
+    <Box
+      style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        overflow: 'hidden',
+      }}
+    >
       <Divider margin={10} />
       <Box
         style={{
-          maxHeight: min([screen.height - 570, 325]),
+          flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          overflowX: 'hidden',
+          minHeight: 0,
+          overflowX: 'auto',
           overflowY: 'auto',
         }}
       >
