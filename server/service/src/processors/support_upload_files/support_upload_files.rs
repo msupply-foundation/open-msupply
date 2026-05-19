@@ -460,6 +460,7 @@ mod tests {
                 base_dir: base_dir.path().to_string_lossy().to_string(),
                 machine_uid: None,
                 override_is_central_server: false,
+                workers: None,
             },
             database: db_settings,
             sync: None,
