@@ -159,7 +159,6 @@ pub fn save_stock_out_item_lines(
 
             if let Some(note) = input.note {
                 let repo = InvoiceLineRowRepository::new(connection);
-                // Pretty sure that item_id is ok as item_id here, as we're saving a new record?
                 repo.update_note_by_invoice_and_item_id(
                     &input.invoice_id,
                     &input.item_id,

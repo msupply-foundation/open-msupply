@@ -82,9 +82,10 @@ impl<'a> ItemDirectionRowRepository<'a> {
 impl Upsert for ItemDirectionRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         ItemDirectionRowRepository::new(con).upsert_one(self)?;
-        Ok(None)
+        Ok(None) // Table not in Changelog
     }
 
+    // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             ItemDirectionRowRepository::new(con).find_one_by_id(&self.id),
@@ -101,6 +102,7 @@ impl Delete for ItemDirectionRowDelete {
         Ok(None)
     }
 
+    // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
             ItemDirectionRowRepository::new(con).find_one_by_id(&self.0),

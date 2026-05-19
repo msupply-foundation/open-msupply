@@ -93,6 +93,7 @@ impl Upsert for ItemStoreJoinRow {
         Ok(None)
     }
 
+    // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             ItemStoreJoinRowRepository::new(con).find_one_by_id(&self.id),

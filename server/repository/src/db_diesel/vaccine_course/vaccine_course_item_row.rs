@@ -108,6 +108,7 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
         )))
         .execute(self.connection.lock().connection())?;
 
+        // Upsert row action as this is a soft delete, not actual delete
         self.insert_changelog(vaccine_course_item_id.to_string(), RowActionType::Upsert)
     }
 }
@@ -118,6 +119,7 @@ impl Upsert for VaccineCourseItemRow {
         Ok(Some(cursor_id))
     }
 
+    // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             VaccineCourseItemRowRepository::new(con).find_one_by_id(&self.id),

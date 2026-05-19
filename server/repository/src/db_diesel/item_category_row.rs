@@ -77,9 +77,11 @@ impl<'a> ItemCategoryJoinRowRepository<'a> {
 impl Upsert for ItemCategoryJoinRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         ItemCategoryJoinRowRepository::new(con).upsert_one(self)?;
+        // Not in changelog
         Ok(None)
     }
 
+    // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             ItemCategoryJoinRowRepository::new(con).find_one_by_id(&self.id),
