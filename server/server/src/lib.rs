@@ -333,12 +333,6 @@ pub async fn start_server(
     if actual_port != settings.server.port {
         info!("Server bound to OS-assigned port {actual_port}");
     }
-    // Publish the bound port to a file so webpack-dev-server's proxy can find us.
-    // Dev builds only — production has no dev proxy to coordinate with.
-    #[cfg(debug_assertions)]
-    if let Err(e) = std::fs::write(".dev-port", actual_port.to_string()) {
-        log::warn!("Failed to write .dev-port file: {e}");
-    }
     // OSC 2: set the pane/tab title to include the bound URL. Picked up by zellij,
     // VS Code's terminal, iTerm2, etc. — invisible in the output stream.
     // `print!` is line-buffered and won't flush on its own; emit + flush explicitly.

@@ -3,6 +3,7 @@
 server/report_builder/config.yaml
 .vscode/*
 !.vscode/extensions.json
+!.vscode/tasks.json
 
 # Temp export files
 server/data

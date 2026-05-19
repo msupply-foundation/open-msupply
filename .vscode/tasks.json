@@ -1,0 +1,128 @@
+{
+  "version": "2.0.0",
+  "inputs": [
+    {
+      "id": "frontendPort",
+      "type": "command",
+      "command": "shellCommand.execute",
+      "args": {
+        "command": "${workspaceFolder}/scripts/read-frontend-port.sh",
+        "useFirstResult": true
+      }
+    },
+    {
+      "id": "backendPort",
+      "type": "command",
+      "command": "shellCommand.execute",
+      "args": {
+        "command": "node -e \"require('net').createServer().listen(0,function(){console.log(this.address().port);this.close()})\"",
+        "useFirstResult": true
+      }
+    },
+    {
+      "id": "envName",
+      "type": "command",
+      "command": "shellCommand.execute",
+      "args": {
+        "command": "ls ${workspaceFolder}/server/configuration/*.yaml | xargs -n1 basename | sed 's/\\.yaml$//' | grep -vE '^(base|example)$'",
+        "description": "Pick which configuration/<env>.yaml to use",
+        "useSingleResult": true
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "label": "dev: all",
+      "dependsOrder": "parallel",
+      "dependsOn": ["dev: backend", "dev: frontend"],
+      "group": { "kind": "build", "isDefault": true },
+      "runOptions": { "instanceLimit": 10 },
+      "problemMatcher": []
+    },
+    {
+      "label": "dev: backend",
+      "type": "shell",
+      "command": "cargo run",
+      "options": {
+        "cwd": "${workspaceFolder}/server",
+        "env": { "APP__SERVER__PORT": "${input:backendPort}" }
+      },
+      "presentation": {
+        "panel": "new",
+        "group": "dev",
+        "reveal": "always"
+      },
+      "runOptions": { "instanceLimit": 10 },
+      "problemMatcher": []
+    },
+    {
+      "label": "dev: open browser",
+      "type": "shell",
+      "command": "open \"http://localhost:$(${workspaceFolder}/scripts/read-frontend-port.sh ${input:envName})\"",
+      "presentation": {
+        "panel": "shared",
+        "reveal": "silent",
+        "close": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "dev: frontend",
+      "type": "shell",
+      "command": "yarn workspace @openmsupply-client/host webpack-cli serve --port ${input:frontendPort}",
+      "options": {
+        "cwd": "${workspaceFolder}/client",
+        "env": { "OMS_BACKEND_PORT": "${input:backendPort}" }
+      },
+      "presentation": {
+        "panel": "new",
+        "group": "dev",
+        "reveal": "always"
+      },
+      "runOptions": { "instanceLimit": 10 },
+      "problemMatcher": []
+    },
+    {
+      "label": "dev: all (choose env)",
+      "dependsOrder": "parallel",
+      "dependsOn": ["dev: backend (env)", "dev: frontend (env)"],
+      "runOptions": { "instanceLimit": 10 },
+      "problemMatcher": []
+    },
+    {
+      "label": "dev: backend (env)",
+      "type": "shell",
+      "command": "cargo run",
+      "options": {
+        "cwd": "${workspaceFolder}/server",
+        "env": {
+          "APP_ENVIRONMENT": "${input:envName}",
+          "APP__SERVER__PORT": "${input:backendPort}"
+        }
+      },
+      "presentation": {
+        "panel": "new",
+        "group": "dev-env",
+        "reveal": "always"
+      },
+      "runOptions": { "instanceLimit": 10 },
+      "problemMatcher": []
+    },
+    {
+      "label": "dev: frontend (env)",
+      "type": "shell",
+      "command": "yarn workspace @openmsupply-client/host webpack-cli serve --port $(${workspaceFolder}/scripts/read-frontend-port.sh ${input:envName})",
+      "options": {
+        "cwd": "${workspaceFolder}/client",
+        "env": { "OMS_BACKEND_PORT": "${input:backendPort}" }
+      },
+      "presentation": {
+        "panel": "new",
+        "group": "dev-env",
+        "reveal": "always"
+      },
+      "runOptions": { "instanceLimit": 10 },
+      "problemMatcher": []
+    }
+  ]
+}

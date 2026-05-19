@@ -13,16 +13,10 @@ pub struct AppEnvironment;
 
 impl EnvironmentVariable for AppEnvironment {
     fn get() -> String {
-        match env::var(APP_ENVIRONMENT_KEY) {
-            Ok(v) if v.eq_ignore_ascii_case(APP_ENVIRONMENT_PRODUCTION) => v,
-            _ => String::from(APP_ENVIRONMENT_LOCAL),
-        }
+        env::var(APP_ENVIRONMENT_KEY).unwrap_or_else(|_| String::from(APP_ENVIRONMENT_LOCAL))
     }
 
     fn try_get() -> Result<String, VarError> {
-        match env::var(APP_ENVIRONMENT_KEY)? {
-            v if v.eq_ignore_ascii_case(APP_ENVIRONMENT_PRODUCTION) => Ok(v),
-            _ => Ok(String::from(APP_ENVIRONMENT_LOCAL)),
-        }
+        env::var(APP_ENVIRONMENT_KEY)
     }
 }

@@ -16,5 +16,7 @@
     // General
     "streetsidesoftware.code-spell-checker",
     "github.vscode-pull-request-github",
+    // Powers `${input:backendPort}` in tasks.json (shellCommand.execute)
+    "augustocdias.tasks-shell-input",
   ]
 }
