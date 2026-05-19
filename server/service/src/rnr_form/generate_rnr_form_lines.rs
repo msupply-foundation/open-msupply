@@ -136,7 +136,7 @@ pub fn generate_rnr_form_lines(
             Ok(RnRFormLineRow {
                 id: uuid(),
                 rnr_form_id: rnr_form_id.to_string(),
-                item_id: item_id,
+                item_id,
                 requisition_line_id: None,
                 previous_monthly_consumption_values,
                 average_monthly_consumption,

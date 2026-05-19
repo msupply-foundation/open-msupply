@@ -105,7 +105,7 @@ fn generate(
         invoice_id,
         pack_size: 1.0,
         number_of_packs: quantity as f64,
-        item_id: item_id,
+        item_id,
         item_code: item.code,
         item_name: item.name,
         r#type: InvoiceLineType::UnallocatedStock,
