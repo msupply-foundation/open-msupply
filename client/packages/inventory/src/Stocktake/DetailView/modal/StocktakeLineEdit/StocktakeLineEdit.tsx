@@ -32,6 +32,7 @@ import {
   Tabs,
 } from './StocktakeLineEditTabs';
 import { StocktakeLineFragment, useStocktakeOld } from '../../../api';
+import { useStocktakeLineErrorContext } from '../../../context';
 import {
   LocationTable,
   BatchTable,
@@ -76,8 +77,22 @@ export const StocktakeLineEdit = ({
 
   const { isDisabled, items, totalLineCount, lines } =
     useStocktakeOld.line.rows();
-  const { draftLines, update, addLine, isSaving, save, nextItem } =
-    useStocktakeLineEdit(currentItem, items, lines);
+  const {
+    draftLines,
+    update: updateLine,
+    addLine,
+    isSaving,
+    save,
+    nextItem,
+  } = useStocktakeLineEdit(currentItem, items, lines);
+  const { unsetError } = useStocktakeLineErrorContext();
+  const update: typeof updateLine = useCallback(
+    patch => {
+      unsetError(patch.id);
+      updateLine(patch);
+    },
+    [unsetError, updateLine]
+  );
   const t = useTranslation();
   const { error } = useNotification();
   const {
