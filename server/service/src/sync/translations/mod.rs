@@ -85,6 +85,7 @@ pub(crate) mod temperature_log;
 pub(crate) mod unit;
 pub(crate) mod user;
 pub(crate) mod user_permission;
+pub(crate) mod user_store_permissions;
 pub(crate) mod utils;
 pub(crate) mod vaccination;
 pub(crate) mod vaccination_legacy;
@@ -115,6 +116,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         diagnosis::boxed(),
         item_direction::boxed(),
         user::boxed(),
+        user_store_permissions::boxed(),
         name::boxed(),
         name_tag::boxed(),
         name_tag_join::boxed(),
