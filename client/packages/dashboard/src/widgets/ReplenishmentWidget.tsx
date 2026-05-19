@@ -96,8 +96,8 @@ export const ReplenishmentWidget = ({
     modalControl.toggleOn
   );
 
-  const internalTab = t('label.internal');
-  const externalTab = t('label.external');
+  const internalTab = 'internal';
+  const externalTab = 'external';
 
   const corePanels = [
     <StatsPanel
@@ -138,7 +138,7 @@ export const ReplenishmentWidget = ({
           link: RouteBuilder.create(AppRoute.Replenishment)
             .addPart(AppRoute.InboundShipment)
             .addQuery({
-              status: InvoiceNodeStatus.Shipped,
+              status: `${InvoiceNodeStatus.Shipped},${InvoiceNodeStatus.New}`,
               tab: internalTab,
             })
             .build(),
@@ -189,7 +189,7 @@ export const ReplenishmentWidget = ({
                 link: RouteBuilder.create(AppRoute.Replenishment)
                   .addPart(AppRoute.InboundShipment)
                   .addQuery({
-                    status: InvoiceNodeStatus.Shipped,
+                    status: `${InvoiceNodeStatus.Shipped},${InvoiceNodeStatus.New}`,
                     tab: externalTab,
                   })
                   .build(),
