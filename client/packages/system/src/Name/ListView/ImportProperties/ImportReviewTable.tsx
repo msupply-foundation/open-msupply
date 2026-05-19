@@ -85,7 +85,7 @@ export const ImportReviewTable: FC<ImportReviewTableProps> = ({
     data: rowsWithProperties,
     columns,
     enableRowSelection: false,
-    noUrlFiltering: true,
+    localStateOnly: true,
   });
 
   const tableHeight = window.innerHeight - 360;

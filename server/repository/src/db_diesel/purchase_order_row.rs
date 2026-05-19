@@ -5,7 +5,7 @@ use crate::{
     RowActionType, StorageConnection, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
-use diesel::{dsl::max, prelude::*};
+use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
@@ -179,6 +179,15 @@ impl<'a> PurchaseOrderRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, purchase_order_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = purchase_order::table
+            .filter(purchase_order::id.eq(purchase_order_id))
+            .select(purchase_order::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn delete(&self, purchase_order_id: &str) -> Result<Option<i64>, RepositoryError> {
         let old_row = self.find_one_by_id(purchase_order_id)?;
         let change_log_id = match old_row {
@@ -200,7 +209,7 @@ impl<'a> PurchaseOrderRowRepository<'a> {
     ) -> Result<Option<i64>, RepositoryError> {
         let result = purchase_order::table
             .filter(purchase_order::store_id.eq(store_id))
-            .select(max(purchase_order::purchase_order_number))
+            .select(diesel::dsl::max(purchase_order::purchase_order_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
     }

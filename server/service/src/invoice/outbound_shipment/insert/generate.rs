@@ -63,6 +63,8 @@ pub fn generate(
         default_donor_id: None,
         purchase_order_id: None,
         shipping_method_id: None,
+        charges_local_currency: 0.0,
+        charges_foreign_currency: 0.0,
     };
 
     Ok(result)

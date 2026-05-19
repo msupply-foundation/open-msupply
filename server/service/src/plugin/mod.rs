@@ -1,14 +1,17 @@
 use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
+    time::Instant,
 };
 
 use base64::{prelude::BASE64_STANDARD, Engine};
+use log::info;
 use repository::{
     migrations::Version, BackendPluginRowRepository, FrontendPluginFile, FrontendPluginRow,
     FrontendPluginRowRepository, PluginType, RepositoryError,
 };
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 use thiserror::Error;
 
 use crate::{
@@ -59,6 +62,10 @@ pub struct FrontendPluginMetadata {
     pub code: String,
     pub version: Version,
     pub entry_point: String,
+    /// Hex-encoded SHA-256 of the concatenated file contents — used as a
+    /// cache-busting URL token so the browser only refetches when the bundle
+    /// actually changes.
+    pub hash: String,
 }
 
 #[derive(Debug)]
@@ -150,6 +157,10 @@ pub trait PluginServiceTrait: Sync + Send {
             ..
         }: FrontendPluginRow,
     ) {
+        let started = Instant::now();
+        let file_count = files.0.len();
+        let total_bytes: usize = files.0.iter().map(|f| f.file_content_base64.len()).sum();
+
         let version = Version::from_str(&version);
         let app_version = Version::from_package_json();
 
@@ -182,11 +193,23 @@ pub trait PluginServiceTrait: Sync + Send {
             );
         }
 
+        // Hash all files (sorted by name for stability) so the URL token only
+        // changes when the bundle's bytes change.
+        let mut hasher = Sha256::new();
+        let mut file_names: Vec<&String> = files_content.keys().collect();
+        file_names.sort();
+        for name in file_names {
+            hasher.update(name.as_bytes());
+            hasher.update(&files_content[name]);
+        }
+        let hash = hex::encode(hasher.finalize());
+
         let mut plugins = ctx.frontend_plugins_cache.0.write().unwrap();
         // Remove all plugins with this code
         (*plugins).remove(&code);
 
         // Add plugin with this code
+        let code_for_log = code.clone();
         (*plugins).insert(
             code.clone(),
             FrontendPlugin {
@@ -194,9 +217,18 @@ pub trait PluginServiceTrait: Sync + Send {
                     code,
                     version,
                     entry_point,
+                    hash,
                 },
                 files_content,
             },
+        );
+
+        info!(
+            "Loaded frontend plugin '{}' ({} files, {} base64 bytes) in {:?}",
+            code_for_log,
+            file_count,
+            total_bytes,
+            started.elapsed(),
         );
     }
 

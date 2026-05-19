@@ -30,6 +30,7 @@ pub fn delete_customer_return(
                         id: line.invoice_line_row.id.clone(),
                         r#type: StockInType::CustomerReturn,
                     },
+                    None,
                 )
                 .map_err(|error| DeleteCustomerReturnError::LineDeleteError {
                     line_id: line.invoice_line_row.id,

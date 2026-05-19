@@ -29,12 +29,11 @@ import {
   CampaignOrProgramCell,
   DonorSearchInput,
   getVolumePerPackFromVariant,
-  ItemVariantInput,
   LocationRowFragment,
   LocationSearchInput,
+  ManufacturerSearchInput,
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,
-  useIsItemVariantsEnabled,
   VVMStatusSearchInput,
 } from '@openmsupply-client/system';
 import {
@@ -59,12 +58,12 @@ export const BatchTable = ({
   isInitialStocktake: boolean;
 }) => {
   const t = useTranslation();
-  const itemVariantsEnabled = useIsItemVariantsEnabled();
-  const { manageVvmStatusForStock } = usePreferences();
+  const { manageVvmStatusForStock, manageVaccinesInDoses } = usePreferences();
   const { errors } = useStocktakeLineErrorContext();
 
   const showVVMStatusColumn =
     (manageVvmStatusForStock && isVaccineItem) ?? false;
+  const showDosesCountedColumn = !!(manageVaccinesInDoses && isVaccineItem);
 
   const columns = useMemo(
     (): ColumnDef<DraftStocktakeLine>[] => [
@@ -138,36 +137,6 @@ export const BatchTable = ({
         },
       },
       {
-        id: 'itemVariant',
-        header: t('label.item-variant'),
-        accessorFn: row => row.itemVariant?.id || '',
-        size: 150,
-        Cell: ({
-          row: {
-            original: { id, packSize, countThisLine, itemVariant, item },
-          },
-        }) => (
-          <ItemVariantInput
-            disabled={disabled || !countThisLine}
-            selectedId={itemVariant?.id}
-            itemId={item.id}
-            width="100%"
-            onChange={itemVariant =>
-              update({
-                id,
-                itemVariantId: itemVariant?.id || null,
-                itemVariant,
-                volumePerPack: getVolumePerPackFromVariant({
-                  packSize,
-                  itemVariant,
-                }),
-              })
-            }
-          />
-        ),
-        includeColumn: itemVariantsEnabled,
-      },
-      {
         id: 'vvmStatus',
         header: t('label.vvm-status'),
         size: 150,
@@ -225,6 +194,18 @@ export const BatchTable = ({
         ),
       },
       {
+        id: 'dosesCounted',
+        header: t('label.doses-counted'),
+        columnType: ColumnType.Number,
+        size: 100,
+        includeColumn: showDosesCountedColumn,
+        accessorFn: row => {
+          const counted = row.countedNumberOfPacks;
+          if (counted === null || counted === undefined) return null;
+          return counted * (row.packSize ?? 1) * (row.item.doses ?? 1);
+        },
+      },
+      {
         accessorKey: 'volumePerPack',
         header: t('label.volume-per-pack'),
         size: 100,
@@ -256,13 +237,16 @@ export const BatchTable = ({
         ),
       },
     ],
-    [showVVMStatusColumn, itemVariantsEnabled, errors]
+    [showVVMStatusColumn, showDosesCountedColumn, errors]
   );
 
   const table = useSimpleMaterialTable({
     tableId: 'stocktake-batches',
     columns,
     data: batches,
+    // Modal table state should not be synced to URL (would otherwise clobber
+    // the parent detail view's sort/filter URL params on open/close).
+    localStateOnly: true,
     noDataElement: (
       <Typography sx={{ color: 'gray.dark', padding: 2 }}>
         {t('label.add-new-line')}
@@ -341,6 +325,9 @@ export const PricingTable = ({
     tableId: 'stocktake-pricing',
     columns,
     data: batches,
+    // Modal table state should not be synced to URL (would otherwise clobber
+    // the parent detail view's sort/filter URL params on open/close).
+    localStateOnly: true,
     noDataElement: (
       <Typography sx={{ color: 'gray.dark', padding: 2 }}>
         {t('label.add-new-line')}
@@ -439,6 +426,26 @@ export const LocationTable = ({
           />
         ),
       },
+      {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        Cell: ({ row: { original: row } }) => (
+          <ManufacturerSearchInput
+            value={row.manufacturer ?? null}
+            disabled={disabled || !row.countThisLine}
+            onChange={manufacturer => {
+              update({
+                id: row.id,
+                manufacturer: manufacturer ?? undefined,
+                ...(row.itemVariant
+                  ? { itemVariantId: null, itemVariant: null }
+                  : {}),
+              });
+            }}
+            width={200}
+          />
+        ),
+      },
 
       {
         accessorKey: 'comment',
@@ -461,6 +468,9 @@ export const LocationTable = ({
     tableId: 'stocktake-location',
     columns,
     data: batches,
+    // Modal table state should not be synced to URL (would otherwise clobber
+    // the parent detail view's sort/filter URL params on open/close).
+    localStateOnly: true,
     noDataElement: (
       <Typography sx={{ color: 'gray.dark', padding: 2 }}>
         {t('label.add-new-line')}

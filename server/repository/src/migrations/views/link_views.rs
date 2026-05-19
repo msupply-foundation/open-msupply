@@ -32,6 +32,7 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS goods_received_line_view;  -- removed but keep drop for cleanup
                 DROP VIEW IF EXISTS item_variant_view;
                 DROP VIEW IF EXISTS program_event_view;
+                DROP VIEW IF EXISTS ancillary_item_view;
             "#
         )?;
 
@@ -99,11 +100,14 @@ impl ViewMigrationFragment for ViewMigration {
                 CREATE VIEW requisition_view AS
                 SELECT
                     requisition.*,
-                    name_link.name_id as name_id
+                    name_link.name_id as name_id,
+                    destination_customer_link.name_id as destination_customer_id
                 FROM
                     requisition
                 JOIN
-                    name_link ON requisition.name_link_id = name_link.id;
+                    name_link ON requisition.name_link_id = name_link.id
+                LEFT JOIN
+                    name_link AS destination_customer_link ON requisition.destination_customer_link_id = destination_customer_link.id;
 
                 CREATE VIEW rnr_form_view AS
                 SELECT
@@ -145,13 +149,16 @@ impl ViewMigrationFragment for ViewMigration {
                 SELECT
                     stock_line.*,
                     supplier_link.name_id as supplier_id,
-                    donor_link.name_id as donor_id
+                    donor_link.name_id as donor_id,
+                    manufacturer_link.name_id as manufacturer_id
                 FROM
                     stock_line
                 LEFT JOIN
                     name_link AS supplier_link ON stock_line.supplier_link_id = supplier_link.id
                 LEFT JOIN
-                    name_link AS donor_link ON stock_line.donor_link_id = donor_link.id;
+                    name_link AS donor_link ON stock_line.donor_link_id = donor_link.id
+                LEFT JOIN
+                    name_link AS manufacturer_link ON stock_line.manufacturer_link_id = manufacturer_link.id;
 
                 CREATE VIEW purchase_order_view AS
                 SELECT
@@ -168,11 +175,14 @@ impl ViewMigrationFragment for ViewMigration {
                 CREATE VIEW invoice_line_view AS
                 SELECT
                     invoice_line.*,
-                    donor_link.name_id as donor_id
+                    donor_link.name_id as donor_id,
+                    manufacturer_link.name_id as manufacturer_id
                 FROM
                     invoice_line
                 LEFT JOIN
-                    name_link AS donor_link ON invoice_line.donor_link_id = donor_link.id;
+                    name_link AS donor_link ON invoice_line.donor_link_id = donor_link.id
+                LEFT JOIN
+                    name_link AS manufacturer_link ON invoice_line.manufacturer_link_id = manufacturer_link.id;
 
                 CREATE VIEW purchase_order_line_view AS
                 SELECT
@@ -186,11 +196,14 @@ impl ViewMigrationFragment for ViewMigration {
                 CREATE VIEW stocktake_line_view AS
                 SELECT
                     stocktake_line.*,
-                    donor_link.name_id as donor_id
+                    donor_link.name_id as donor_id,
+                    manufacturer_link.name_id as manufacturer_id
                 FROM
                     stocktake_line
                 LEFT JOIN
-                    name_link AS donor_link ON stocktake_line.donor_link_id = donor_link.id;
+                    name_link AS donor_link ON stocktake_line.donor_link_id = donor_link.id
+                LEFT JOIN
+                    name_link AS manufacturer_link ON stocktake_line.manufacturer_link_id = manufacturer_link.id;
 
                 CREATE VIEW encounter_view AS
                 SELECT
@@ -248,6 +261,18 @@ impl ViewMigrationFragment for ViewMigration {
                     program_event
                 LEFT JOIN
                     name_link AS patient_link ON program_event.patient_link_id = patient_link.id;
+
+                CREATE VIEW ancillary_item_view AS
+                SELECT
+                    ancillary_item.*,
+                    principal_link.item_id as item_id,
+                    ancillary_link.item_id as ancillary_item_id
+                FROM
+                    ancillary_item
+                JOIN
+                    item_link AS principal_link ON ancillary_item.item_link_id = principal_link.id
+                JOIN
+                    item_link AS ancillary_link ON ancillary_item.ancillary_item_link_id = ancillary_link.id;
             "#
         )?;
 

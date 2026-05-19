@@ -1,9 +1,10 @@
 use async_graphql::*;
+use graphql_core::generic_inputs::InboundShipmentType;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::ContextExt;
-use graphql_invoice::mutations::inbound_shipment;
+use graphql_invoice::mutations::inbound_shipment::{self, validate_shipment_verify_authorisation};
 use graphql_invoice_line::mutations::inbound_shipment_line;
-use service::auth::Resource;
+use graphql_invoice_line::mutations::inbound_shipment_line::line::validate_line_edit_authorisation;
 use service::auth::ResourceAccessRequest;
 use service::invoice::inbound_shipment::*;
 
@@ -121,11 +122,16 @@ pub struct BatchInput {
     pub continue_on_error: Option<bool>,
 }
 
-pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<BatchResponse> {
+pub fn batch(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: BatchInput,
+    r#type: InboundShipmentType,
+) -> Result<BatchResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateInboundShipment,
+            resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -133,15 +139,37 @@ pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<Bat
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
+    // Finalising a shipment requires verify permission
+    if let Some(update_shipments) = &input.update_inbound_shipments {
+        for shipment in update_shipments {
+            validate_shipment_verify_authorisation(ctx, store_id, &r#type, &shipment.status)?;
+        }
+    }
+
+    // Approving/rejecting lines or editing already-approved lines requires authorise permission
+    if let Some(update_lines) = &input.update_inbound_shipment_lines {
+        let line_updates: Vec<_> = update_lines
+            .iter()
+            .map(|line| (line.id.clone(), line.status.clone()))
+            .collect();
+        validate_line_edit_authorisation(
+            ctx,
+            store_id,
+            &r#type,
+            &service_context.connection,
+            &line_updates,
+        )?;
+    }
+
     let response = service_provider
         .invoice_service
-        .batch_inbound_shipment(&service_context, input.to_domain())?;
+        .batch_inbound_shipment(&service_context, input.to_domain(r#type))?;
 
     BatchResponse::from_domain(response)
 }
 
 impl BatchInput {
-    fn to_domain(self) -> ServiceInput {
+    fn to_domain(self, r#type: InboundShipmentType) -> ServiceInput {
         let BatchInput {
             insert_inbound_shipments,
             insert_inbound_shipment_lines,
@@ -178,6 +206,7 @@ impl BatchInput {
             delete_shipment: delete_inbound_shipments
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
             continue_on_error,
+            r#type: r#type.to_domain(),
         }
     }
 }

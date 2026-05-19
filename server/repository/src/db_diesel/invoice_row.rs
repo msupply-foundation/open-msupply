@@ -1,14 +1,14 @@
 use super::{
     clinician_link_row::clinician_link, currency_row::currency, item_link_row::item_link,
-    name_row::name, shipping_method_row::shipping_method, store_row::store,
-    user_row::user_account, StorageConnection,
+    name_row::name, purchase_order_row::purchase_order, shipping_method_row::shipping_method,
+    store_row::store, user_row::user_account, StorageConnection,
 };
 use crate::{
     diesel_macros::define_linked_tables, repository_error::RepositoryError, ChangeLogInsertRow,
     ChangelogRepository, ChangelogTableName, Delete, RowActionType, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
-use diesel::{dsl::max, prelude::*};
+use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use std::any::Any;
@@ -24,7 +24,7 @@ define_linked_tables! {
         store_id -> Text,
         user_id -> Nullable<Text>,
         invoice_number -> BigInt,
-        #[sql_name = "type"] 
+        #[sql_name = "type"]
         type_ -> crate::db_diesel::invoice_row::InvoiceTypeMapping,
         status -> crate::db_diesel::invoice_row::InvoiceStatusMapping,
         on_hold -> Bool,
@@ -57,6 +57,8 @@ define_linked_tables! {
         expected_delivery_date -> Nullable<Date>,
         purchase_order_id -> Nullable<Text>,
         shipping_method_id -> Nullable<Text>,
+        charges_local_currency -> Double,
+        charges_foreign_currency -> Double,
     },
     links:{
          name_link_id -> name_id,
@@ -73,6 +75,7 @@ joinable!(invoice -> currency (currency_id));
 joinable!(invoice -> clinician_link (clinician_link_id));
 joinable!(invoice -> shipping_method (shipping_method_id));
 allow_tables_to_appear_in_same_query!(invoice, item_link);
+allow_tables_to_appear_in_same_query!(invoice, purchase_order);
 
 #[derive(
     DbEnum, Debug, Display, Clone, PartialEq, Eq, Serialize, Deserialize, Default, PartialOrd, Ord,
@@ -153,6 +156,8 @@ pub struct InvoiceRow {
     pub expected_delivery_date: Option<NaiveDate>,
     pub purchase_order_id: Option<String>,
     pub shipping_method_id: Option<String>,
+    pub charges_local_currency: f64,
+    pub charges_foreign_currency: f64,
     // Resolved from name_link - must be last to match view column order
     pub name_id: String,
     pub default_donor_id: Option<String>,
@@ -171,7 +176,6 @@ impl<'a> InvoiceRowRepository<'a> {
         self._upsert(row)?;
         self.insert_changelog(row, RowActionType::Upsert)
     }
-
 
     fn insert_changelog(
         &self,
@@ -211,6 +215,15 @@ impl<'a> InvoiceRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, invoice_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = invoice::table
+            .filter(invoice::id.eq(invoice_id))
+            .select(invoice::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<InvoiceRow>, RepositoryError> {
         let result = invoice::table
             .filter(invoice::id.eq_any(ids))
@@ -225,7 +238,7 @@ impl<'a> InvoiceRowRepository<'a> {
     ) -> Result<Option<i64>, RepositoryError> {
         let result = invoice::table
             .filter(invoice::type_.eq(r#type).and(invoice::store_id.eq(store)))
-            .select(max(invoice::invoice_number))
+            .select(diesel::dsl::max(invoice::invoice_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
     }

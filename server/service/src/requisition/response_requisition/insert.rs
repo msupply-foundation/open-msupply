@@ -126,7 +126,7 @@ fn generate(
         order_type: None,
         is_emergency: false,
         created_from_requisition_id: None,
-        original_customer_id: None,
+        destination_customer_id: None,
     };
 
     Ok(result)

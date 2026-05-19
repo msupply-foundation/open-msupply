@@ -47,6 +47,7 @@ define_linked_tables! {
     optional_links: {
         supplier_link_id -> supplier_id,
         donor_link_id -> donor_id,
+        manufacturer_link_id -> manufacturer_id,
     }
 }
 
@@ -88,6 +89,7 @@ pub struct StockLineRow {
     // Resolved from name_link - must be last to match view column order
     pub supplier_id: Option<String>,
     pub donor_id: Option<String>,
+    pub manufacturer_id: Option<String>,
 }
 
 pub struct StockLineRowRepository<'a> {
@@ -140,6 +142,15 @@ impl<'a> StockLineRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = stock_line::table
+            .filter(stock_line::id.eq(lookup_id))
+            .select(stock_line::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
     }
 
     pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<StockLineRow>, RepositoryError> {

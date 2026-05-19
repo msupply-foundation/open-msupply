@@ -29,6 +29,7 @@ export type UserStoreNodeFragment = {
     monthsItemsExpire: number;
     stocktakeFrequency: number;
     extraFieldsInRequisition: boolean;
+    keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
     manuallyLinkInternalOrderToInboundShipment: boolean;
     useConsumptionAndStockFromCustomersForInternalOrders: boolean;
     editPrescribedQuantityOnPrescription: boolean;
@@ -98,6 +99,7 @@ export type MeQuery = {
         monthsItemsExpire: number;
         stocktakeFrequency: number;
         extraFieldsInRequisition: boolean;
+        keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
         manuallyLinkInternalOrderToInboundShipment: boolean;
         useConsumptionAndStockFromCustomersForInternalOrders: boolean;
         editPrescribedQuantityOnPrescription: boolean;
@@ -132,6 +134,7 @@ export type MeQuery = {
           monthsItemsExpire: number;
           stocktakeFrequency: number;
           extraFieldsInRequisition: boolean;
+          keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
           manuallyLinkInternalOrderToInboundShipment: boolean;
           useConsumptionAndStockFromCustomersForInternalOrders: boolean;
           editPrescribedQuantityOnPrescription: boolean;
@@ -266,6 +269,7 @@ export type PreferencesQuery = {
     expiredStockIssueThreshold: number;
     displayPopulationBasedForecasting: boolean;
     warningForExcessRequest: boolean;
+    externalInboundShipmentLinesMustBeAuthorised: boolean;
     invoiceStatusOptions: Array<Types.InvoiceNodeStatus>;
     itemMarginOverridesSupplierMargin: boolean;
     showIndicativePriceInRequisitions: boolean;
@@ -276,6 +280,12 @@ export type PreferencesQuery = {
       enabled: boolean;
       maxAge: number;
       minItems: number;
+    };
+    backdating: {
+      __typename: 'BackdatingNode';
+      shipmentsEnabled: boolean;
+      inventoryAdjustmentsEnabled: boolean;
+      maxDays: number;
     };
   };
 };
@@ -318,6 +328,7 @@ export const UserStoreNodeFragmentDoc = gql`
       monthsItemsExpire
       stocktakeFrequency
       extraFieldsInRequisition
+      keepRequisitionLinesWithZeroRequestedQuantityOnFinalised
       manuallyLinkInternalOrderToInboundShipment
       useConsumptionAndStockFromCustomersForInternalOrders
       editPrescribedQuantityOnPrescription
@@ -531,11 +542,17 @@ export const PreferencesDocument = gql`
         minItems
       }
       warningForExcessRequest
+      externalInboundShipmentLinesMustBeAuthorised
       invoiceStatusOptions
       itemMarginOverridesSupplierMargin
       showIndicativePriceInRequisitions
       isGaps
       globalTableConfigs
+      backdating {
+        shipmentsEnabled
+        inventoryAdjustmentsEnabled
+        maxDays
+      }
     }
   }
 `;
@@ -575,13 +592,16 @@ export function getSdk(
   return {
     authToken(
       variables: AuthTokenQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<AuthTokenQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<AuthTokenQuery>(AuthTokenDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<AuthTokenQuery>({
+            document: AuthTokenDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'authToken',
         'query',
@@ -590,13 +610,16 @@ export function getSdk(
     },
     me(
       variables?: MeQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<MeQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<MeQuery>(MeDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<MeQuery>({
+            document: MeDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'me',
         'query',
@@ -605,15 +628,17 @@ export function getSdk(
     },
     isCentralServer(
       variables?: IsCentralServerQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<IsCentralServerQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<IsCentralServerQuery>(
-            IsCentralServerDocument,
+          client.request<IsCentralServerQuery>({
+            document: IsCentralServerDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'isCentralServer',
         'query',
         variables
@@ -621,13 +646,16 @@ export function getSdk(
     },
     refreshToken(
       variables?: RefreshTokenQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<RefreshTokenQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<RefreshTokenQuery>(RefreshTokenDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<RefreshTokenQuery>({
+            document: RefreshTokenDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'refreshToken',
         'query',
@@ -636,13 +664,16 @@ export function getSdk(
     },
     permissions(
       variables: PermissionsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<PermissionsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PermissionsQuery>(PermissionsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<PermissionsQuery>({
+            document: PermissionsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'permissions',
         'query',
@@ -651,13 +682,16 @@ export function getSdk(
     },
     updateUser(
       variables?: UpdateUserMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpdateUserMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdateUserMutation>(UpdateUserDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<UpdateUserMutation>({
+            document: UpdateUserDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'updateUser',
         'mutation',
@@ -666,15 +700,17 @@ export function getSdk(
     },
     lastSuccessfulUserSync(
       variables?: LastSuccessfulUserSyncQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<LastSuccessfulUserSyncQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<LastSuccessfulUserSyncQuery>(
-            LastSuccessfulUserSyncDocument,
+          client.request<LastSuccessfulUserSyncQuery>({
+            document: LastSuccessfulUserSyncDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'lastSuccessfulUserSync',
         'query',
         variables
@@ -682,13 +718,16 @@ export function getSdk(
     },
     preferences(
       variables: PreferencesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<PreferencesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PreferencesQuery>(PreferencesDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<PreferencesQuery>({
+            document: PreferencesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'preferences',
         'query',

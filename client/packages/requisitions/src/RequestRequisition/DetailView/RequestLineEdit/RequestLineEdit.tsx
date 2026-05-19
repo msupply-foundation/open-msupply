@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import {
+  ItemWithAvailableStockFragment,
   ItemWithStatsFragment,
   ReasonOptionsSearchInput,
   RequestFragment,
@@ -44,7 +45,7 @@ import ForecastCalculationDisplay from '../../../common/ForecastCalculationDispl
 interface RequestLineEditProps {
   requisition: RequestFragment;
   lines: RequestLineFragment[];
-  currentItem?: ItemWithStatsFragment;
+  currentItem?: ItemWithAvailableStockFragment;
   onChangeItem: (item: ItemWithStatsFragment) => void;
   draft?: DraftRequestLine | null;
   update: (patch: Partial<DraftRequestLine>) => void;
@@ -92,8 +93,8 @@ export const RequestLineEdit = ({
   const defaultPackSize = currentItem?.defaultPackSize || 1;
 
   const showContent = !!draft && !!currentItem;
-  const displayVaccinesInDoses =
-    manageVaccinesInDoses && currentItem?.isVaccine;
+  const isDosesEnabled =
+    !!manageVaccinesInDoses && !!currentItem?.isVaccine && !!currentItem?.doses;
   const disableItemSelection = disabled || isUpdateMode;
   const disableReasons =
     draft?.requestedQuantity === draft?.suggestedQuantity || disabled;
@@ -118,8 +119,9 @@ export const RequestLineEdit = ({
             value,
             sx,
             endAdornmentOverride,
-            displayVaccinesInDoses: showDoses,
+            isDosesEnabled: dosesEnabled,
             roundUp,
+            isFixedValue,
           }) => (
             <ValueInfoRow
               key={label}
@@ -130,10 +132,11 @@ export const RequestLineEdit = ({
               representation={representation}
               unitName={unitName}
               sx={sx}
-              displayVaccinesInDoses={showDoses ?? displayVaccinesInDoses}
+              isDosesEnabled={dosesEnabled ?? isDosesEnabled}
               dosesPerUnit={currentItem?.doses}
               decimalLimit={0}
               roundUp={roundUp}
+              isFixedValue={isFixedValue ?? false}
             />
           )
         )}
@@ -143,7 +146,7 @@ export const RequestLineEdit = ({
       defaultPackSize,
       representation,
       unitName,
-      displayVaccinesInDoses,
+      isDosesEnabled,
       currentItem?.doses,
     ]
   );
@@ -174,7 +177,7 @@ export const RequestLineEdit = ({
             representation={representation}
             setRepresentation={setRepresentation}
             unitName={unitName}
-            displayVaccinesInDoses={displayVaccinesInDoses}
+            isDosesEnabled={isDosesEnabled}
             dosesPerUnit={currentItem?.doses}
             setIsEditingRequested={setIsEditingRequested}
           />
@@ -262,17 +265,18 @@ export const RequestLineEdit = ({
                   value={currentItem?.defaultPackSize}
                 />
               )}
-              {displayVaccinesInDoses && currentItem?.doses ? (
+              {isDosesEnabled && currentItem?.doses ? (
                 <InfoRow
                   label={t('label.doses-per-unit')}
                   value={currentItem?.doses}
                 />
               ) : null}
-              {renderValueInfoRows(getLeftPanel(t, draft))}
+              {renderValueInfoRows(getLeftPanel(t, draft, showExtraFields))}
               <InfoRow
                 label={t('label.months-of-stock')}
                 value={draft?.itemStats?.availableMonthsOfStockOnHand}
                 packagingDisplay={t('label.months')}
+                decimalLimit={1}
               />
               {displayForecasting &&
                 renderValueInfoRows([
@@ -283,7 +287,6 @@ export const RequestLineEdit = ({
                       : undefined,
                   },
                 ])}
-              ,
               {showExtraFields &&
                 renderValueInfoRows([
                   {

@@ -16,11 +16,16 @@ struct MinAvailableAndPackSize {
     total: f64,
 }
 
+pub struct HistoricalQuantities {
+    pub min_available: f64,
+    pub total: f64,
+}
+
 pub fn get_historical_stock_lines_available_quantity(
     connection: &StorageConnection,
     stock_lines: Vec<(&StockLineRow, Option<f64>)>,
     datetime: &NaiveDateTime,
-) -> Result<HashMap<String /* Stock Line Id */, f64>, RepositoryError> {
+) -> Result<HashMap<String /* Stock Line Id */, HistoricalQuantities>, RepositoryError> {
     let filter = StockMovementFilter::new()
         .stock_line_id(EqualFilter::equal_any(
             stock_lines
@@ -73,8 +78,11 @@ pub fn get_historical_stock_lines_available_quantity(
     Ok(min_available_and_pack_size
         .into_iter()
         .map(
-            |(stock_line_id, MinAvailableAndPackSize { min, pack_size, .. })| {
-                (stock_line_id, min / pack_size)
+            |(stock_line_id, MinAvailableAndPackSize { min, pack_size, total })| {
+                (stock_line_id, HistoricalQuantities {
+                    min_available: min / pack_size,
+                    total: total / pack_size,
+                })
             },
         )
         .collect())
@@ -82,25 +90,27 @@ pub fn get_historical_stock_lines_available_quantity(
 
 /// Get historical stock lines for a given store and item at a given datetime.
 /// NOTE: Stock lines are only adjusted based on stock movements, changes to batch, expiry dates etc are not considered.
+///
+/// When `include_currently_unavailable` is true, lines that are empty *now* but
+/// had stock at the historical datetime are also returned. Callers that need
+/// to allocate against current stock (e.g. backdated outbound shipments)
+/// should pass false; callers that want to display historical availability for
+/// a specific line (e.g. backdated inventory adjustment) should pass true.
 pub fn get_historical_stock_lines(
     ctx: &ServiceContext,
     store_id: &str,
     item_id: &str,
     datetime: &NaiveDateTime,
+    include_currently_unavailable: bool,
 ) -> Result<ListResult<StockLine>, RepositoryError> {
-    // First get the current stock lines
-    let mut stock_lines = get_stock_lines(
-        ctx,
-        None,
-        Some(
-            StockLineFilter::new()
-                .store_id(EqualFilter::equal_to(store_id.to_string()))
-                .item_id(EqualFilter::equal_to(item_id.to_string()))
-                .is_available(true),
-        ),
-        None,
-        Some(store_id.to_string()),
-    )
+    let mut filter = StockLineFilter::new()
+        .store_id(EqualFilter::equal_to(store_id.to_string()))
+        .item_id(EqualFilter::equal_to(item_id.to_string()));
+    if !include_currently_unavailable {
+        filter = filter.is_available(true);
+    }
+
+    let mut stock_lines = get_stock_lines(ctx, None, Some(filter), None, Some(store_id.to_string()))
     .map_err(|e| match e {
         ListError::DatabaseError(e) => e,
         _ => RepositoryError::NotFound, // Shouldn't happen happen as we don't have any pagination in our request
@@ -117,11 +127,9 @@ pub fn get_historical_stock_lines(
     )?;
 
     for stock_line in stock_lines.rows.iter_mut() {
-        if let Some(historic_available_number_of_packs) =
-            historic_quantities.get(&stock_line.stock_line_row.id)
-        {
-            stock_line.stock_line_row.available_number_of_packs =
-                *historic_available_number_of_packs;
+        if let Some(historic) = historic_quantities.get(&stock_line.stock_line_row.id) {
+            stock_line.stock_line_row.available_number_of_packs = historic.min_available;
+            stock_line.stock_line_row.total_number_of_packs = historic.total;
         }
     }
 
@@ -139,5 +147,9 @@ pub fn get_historical_stock_line_available_quantity(
         vec![(stock_line, reserved_available_number_of_packs)],
         datetime,
     )
-    .map(|r| *r.get(&stock_line.id).unwrap_or(&0.0))
+    .map(|r| {
+        r.get(&stock_line.id)
+            .map(|q| q.min_available)
+            .unwrap_or(0.0)
+    })
 }

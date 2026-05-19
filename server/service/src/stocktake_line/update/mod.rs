@@ -26,8 +26,9 @@ pub struct UpdateStocktakeLine {
     pub note: Option<String>,
     pub item_variant_id: Option<NullableUpdate<String>>,
     pub donor_id: Option<NullableUpdate<String>>,
+    pub manufacturer_id: Option<NullableUpdate<String>>,
     pub reason_option_id: Option<String>,
-    pub vvm_status_id: Option<String>,
+    pub vvm_status_id: Option<NullableUpdate<String>>,
     pub volume_per_pack: Option<f64>,
     pub campaign_id: Option<NullableUpdate<String>>,
     pub program_id: Option<NullableUpdate<String>>,
@@ -45,6 +46,9 @@ pub enum UpdateStocktakeLineError {
     StocktakeIsLocked,
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
+    ManufacturerDoesNotExist,
+    ManufacturerNotVisible,
+    ManufacturerIsNotAManufacturer,
     CampaignDoesNotExist,
     ProgramDoesNotExist,
     SnapshotCountCurrentCountMismatchLine(StocktakeLine),
@@ -270,12 +274,30 @@ mod stocktake_line_test {
                 &context,
                 UpdateStocktakeLine {
                     id: stocktake_line_a.id,
-                    vvm_status_id: Some("invalid".to_string()),
+                    vvm_status_id: Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    }),
                     ..Default::default()
                 },
             )
             .unwrap_err();
         assert_eq!(error, UpdateStocktakeLineError::VvmStatusDoesNotExist);
+
+        // error: ManufacturerDoesNotExist
+        let stocktake_line_a = mock_stocktake_line_a();
+        let error = service
+            .update_stocktake_line(
+                &context,
+                UpdateStocktakeLine {
+                    id: stocktake_line_a.id,
+                    manufacturer_id: Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap_err();
+        assert_eq!(error, UpdateStocktakeLineError::ManufacturerDoesNotExist);
 
         // error: IncorrectLocationType
         let stocktake_line = StocktakeLineRow {

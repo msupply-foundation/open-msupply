@@ -15,9 +15,13 @@ import {
 import { Footer } from './Footer';
 import { StatusLogs } from 'packages/coldchain/src/Equipment/DetailView/Tabs/StatusLogs';
 import { UpdateStatusButton } from 'packages/coldchain/src/Equipment/DetailView/UpdateStatusButton';
+import { ColdRoomActionButton } from 'packages/coldchain/src/Equipment/DetailView/AppBarButtons';
 import { Documents } from 'packages/coldchain/src/Equipment/DetailView/Tabs/Documents';
 import { LogCardListView } from './LogCardListView';
-import { statusColourMap } from 'packages/coldchain/src/Equipment/utils';
+import {
+  statusColourMap,
+  useIsColdRoom,
+} from 'packages/coldchain/src/Equipment/utils';
 
 export const EquipmentDetailView: FC = () => {
   const {
@@ -33,6 +37,7 @@ export const EquipmentDetailView: FC = () => {
     // navigate,
     t,
   } = useEquipmentDetailView();
+  const isColdRoom = useIsColdRoom();
 
   if (isLoading && isLoadingLocations) return <DetailFormSkeleton />;
   if (!data) return <h1>{t('error.asset-not-found')}</h1>;
@@ -58,7 +63,11 @@ export const EquipmentDetailView: FC = () => {
           gap: '.5em',
         }}
       >
-        <UpdateStatusButton assetId={data?.id} />
+        {isColdRoom && data?.id ? (
+          <ColdRoomActionButton assetId={data.id} />
+        ) : (
+          <UpdateStatusButton assetId={data?.id} />
+        )}
       </Box>
       <Box
         sx={{

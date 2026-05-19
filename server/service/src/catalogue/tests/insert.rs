@@ -1,7 +1,9 @@
 #[cfg(test)]
 mod query {
     use repository::{
-        migrations::constants::{COLD_CHAIN_EQUIPMENT_UUID, REFRIGERATORS_AND_FREEZERS_UUID},
+        migrations::constants::{
+            COLD_CHAIN_EQUIPMENT_UUID, FREEZER_UUID, REFRIGERATORS_AND_FREEZERS_UUID,
+        },
         mock::{mock_store_a, MockDataInserts},
         test_db::setup_all,
     };
@@ -84,7 +86,7 @@ mod query {
             Err(InsertAssetCatalogueItemError::CodeAlreadyExists)
         );
 
-        // 4. Check we can't create an asset_catalogue_item with the manufacturer and model
+        // 4. Check we can't create an asset_catalogue_item with the same manufacturer, model AND type
         assert_eq!(
             service.insert_asset_catalogue_item(
                 &ctx,
@@ -102,5 +104,23 @@ mod query {
             ),
             Err(InsertAssetCatalogueItemError::ManufacturerAndModelAlreadyExist)
         );
+
+        // 5. Check we CAN create an asset_catalogue_item with the same manufacturer and model when the type differs
+        assert!(service
+            .insert_asset_catalogue_item(
+                &ctx,
+                InsertAssetCatalogueItem {
+                    id: "new_id_2".to_string(),
+                    sub_catalogue: "General".to_string(),
+                    category_id: REFRIGERATORS_AND_FREEZERS_UUID.to_string(),
+                    class_id: COLD_CHAIN_EQUIPMENT_UUID.to_string(),
+                    code: "NewCode2".to_string(),
+                    manufacturer: Some("Fisher & Paykel".to_string()),
+                    model: "Kelvinator".to_string(),
+                    type_id: FREEZER_UUID.to_string(),
+                    properties: None
+                },
+            )
+            .is_ok());
     }
 }

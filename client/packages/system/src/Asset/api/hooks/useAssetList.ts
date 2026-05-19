@@ -5,6 +5,7 @@ import {
   LIST_KEY,
   SortBy,
   useInfiniteQuery,
+  useMutation,
   useQuery,
 } from '@openmsupply-client/common';
 import { useAssetGraphQL } from '../useAssetGraphQL';
@@ -71,7 +72,7 @@ export const useInfiniteAssets = ({
       : { ...queryParams?.filterBy, categoryId: { equalTo: categoryId } };
 
   const params = { ...queryParams, filter };
-  const queryFn = async ({ pageParam = 0 }) => {
+  const queryFn = async ({ pageParam }: { pageParam: number }) => {
     const pageNumber = Number(pageParam);
     const { assetCatalogueItems } = await assetApi.assetCatalogueItems({
       ...params,
@@ -81,7 +82,7 @@ export const useInfiniteAssets = ({
     });
 
     return {
-      data: assetCatalogueItems ?? [],
+      data: assetCatalogueItems ?? { nodes: [], totalCount: 0 },
       pageNumber,
     };
   };
@@ -89,8 +90,32 @@ export const useInfiniteAssets = ({
   const infiniteQuery = useInfiniteQuery({
     queryKey,
     queryFn,
+    initialPageParam: 0,
+    getNextPageParam: lastPage =>
+      (lastPage.pageNumber + 1) * rowsPerPage < lastPage.data.totalCount
+        ? lastPage.pageNumber + 1
+        : undefined,
   });
   return infiniteQuery;
+};
+
+export const useAssetCatalogueListAll = () => {
+  const { assetApi } = useAssetGraphQL();
+
+  const result = useMutation({
+    mutationFn: async () => {
+      const query = await assetApi.assetCatalogueItems({
+        key: AssetCatalogueItemSortFieldInput.Code,
+      });
+      const { nodes, totalCount } = query?.assetCatalogueItems;
+      return { nodes, totalCount };
+    },
+  });
+
+  return {
+    ...result,
+    fetchAsync: result.mutateAsync,
+  };
 };
 
 const toSortField = (sortBy?: SortBy<AssetCatalogueItemFragment>) => {

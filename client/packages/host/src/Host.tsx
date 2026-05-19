@@ -6,7 +6,6 @@ import {
   Box,
   AppThemeProvider,
   QueryClient,
-  // ReactQueryDevtools,
   QueryClientProvider,
   RouteBuilder,
   ErrorBoundary,
@@ -31,8 +30,10 @@ import {
   InitialisationStatusType,
   useAuthContext,
 } from '@openmsupply-client/common';
+// import { ReactQueryDevtools } from 'react-query/devtools';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
+import { MigrationInfoProvider } from './components/Migration';
 import { Site } from './Site';
 import { ErrorAlert } from './components/ErrorAlert';
 import { Discovery } from './components/Discovery';
@@ -46,16 +47,8 @@ const appVersion = require('../../../../package.json').version; // eslint-disabl
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // These are disabled during development because they're
-      // annoying to have constantly refetching.
-      refetchOnWindowFocus: EnvUtils.isProduction(),
-      retry: EnvUtils.isProduction(),
-      // This is the default in v4 which is currently in alpha as it is
-      // what most users think the default is.
-      // This will subscribe components of a query only to the data they
-      // destructure. I.e. if the component does not read the isLoading
-      // field, the component will not re-render when the state changes.
-      notifyOnChangeProps: 'tracked',
+      // Creates unnecessary requests
+      refetchOnWindowFocus: false,
     },
   },
 });
@@ -71,13 +64,15 @@ const skipRequest = () =>
 
 const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { logout } = useAuthContext();
-  const data = useInitialisationStatus(false, true);
+  const data = useInitialisationStatus(false);
 
-  // Technically this should not fire before query is loaded because we are doing suspense
-  if (data?.data?.status == InitialisationStatusType.Initialised)
+  // Query still loading — don't render children yet, but don't logout either
+  if (!data?.data) return null;
+
+  if (data.data.status == InitialisationStatusType.Initialised)
     return children;
 
-  // Clear token
+  // Server is not initialised — clear token
   logout();
 
   return null;
@@ -176,17 +171,19 @@ const Host = () => (
                   url={Environment.GRAPHQL_URL}
                   skipRequest={skipRequest}
                 >
-                  <AuthProvider>
-                    <PreInit>
-                      <Init />
-                    </PreInit>
-                    <ConfirmationModalProvider>
-                      <AlertModalProvider>
-                        <RouterProvider router={router} />
-                      </AlertModalProvider>
-                    </ConfirmationModalProvider>
-                  </AuthProvider>
-                  {/* <ReactQueryDevtools initialIsOpen /> */}
+                  <MigrationInfoProvider>
+                    <AuthProvider>
+                      <PreInit>
+                        <Init />
+                      </PreInit>
+                      <ConfirmationModalProvider>
+                        <AlertModalProvider>
+                          <RouterProvider router={router} />
+                        </AlertModalProvider>
+                      </ConfirmationModalProvider>
+                    </AuthProvider>
+                  </MigrationInfoProvider>
+                  {/* <ReactQueryDevtools initialIsOpen={false} /> */}
                 </GqlProvider>
               </QueryClientProvider>
             </ErrorBoundary>

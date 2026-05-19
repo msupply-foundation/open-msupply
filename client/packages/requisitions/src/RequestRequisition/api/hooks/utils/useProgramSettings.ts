@@ -4,5 +4,8 @@ import { useRequestApi } from './useRequestApi';
 export const useProgramSettings = () => {
   const api = useRequestApi();
 
-  return useQuery(api.keys.programSettings(), () => api.programSettings());
+  return useQuery({
+    queryKey: api.keys.programSettings(),
+    queryFn: () => api.programSettings()
+  });
 };

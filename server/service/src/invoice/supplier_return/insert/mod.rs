@@ -26,6 +26,7 @@ pub struct InsertSupplierReturn {
     pub id: String,
     pub other_party_id: String,
     pub inbound_shipment_id: Option<String>,
+    pub their_reference: Option<String>,
     pub supplier_return_lines: Vec<SupplierReturnLineInput>,
 }
 
@@ -119,7 +120,7 @@ pub fn insert_supplier_return(
                 None,
             )?;
 
-            get_invoice(ctx, None, &supplier_return.id)
+            get_invoice(ctx, None, &supplier_return.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })

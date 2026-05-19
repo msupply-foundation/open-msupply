@@ -46,6 +46,7 @@ export interface ModalProps {
   sx?: SxProps<Theme>;
   title: string;
   deleteButton?: JSX.Element;
+  headerActions?: React.ReactNode;
   disableOkKeyBinding?: boolean;
   enableAutocomplete?: boolean;
   disableEnforceFocus?: boolean;
@@ -162,6 +163,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     enableAutocomplete,
     sx = {},
     deleteButton,
+    headerActions,
     disableEnforceFocus = false,
   }: ModalProps) => {
     const t = useTranslation();
@@ -259,7 +261,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
             label={t('button.close')}
           />
         )}
-        {title ? <ModalTitle title={title} /> : null}
+        {title ? <ModalTitle title={title} headerActions={headerActions} /> : null}
         <form
           style={{
             display: 'flex',

@@ -1,9 +1,8 @@
 use repository::{
-    indicator_column::{IndicatorColumnFilter, IndicatorColumnRepository},
     indicator_line::{IndicatorLineFilter, IndicatorLineRepository},
     indicator_value::{IndicatorValue, IndicatorValueFilter, IndicatorValueRepository},
-    EqualFilter, IndicatorValueRow, IndicatorValueRowRepository, IndicatorValueType,
-    RepositoryError, StorageConnection,
+    EqualFilter, IndicatorColumnRowRepository, IndicatorValueRow, IndicatorValueRowRepository,
+    IndicatorValueType, RepositoryError, StorageConnection,
 };
 
 use crate::{requisition::common::indicator_value_type, service_provider::ServiceContext};
@@ -71,12 +70,12 @@ fn validate(
         .pop()
         .ok_or(OutError::IndicatorLineDoesNotExist)?;
 
-    let indicator_column = IndicatorColumnRepository::new(connection)
-        .query_by_filter(IndicatorColumnFilter::new().id(EqualFilter::equal_to(
-            indicator_value_row.indicator_column_id.to_string(),
-        )))?
-        .pop()
+    let indicator_column = IndicatorColumnRowRepository::new(connection)
+        .find_one_by_id(&indicator_value_row.indicator_column_id)?
         .ok_or(OutError::IndicatorColumnDoesNotExist)?;
+
+    // TODO: Future when mSupply supports enabling and disabling columns (or OMS Central)
+    // Check that the colum is active before allowing update of value.
 
     if let Some(IndicatorValueType::Number) =
         indicator_value_type(&indicator_line, &indicator_column)

@@ -49,7 +49,7 @@ body > table {
 }
 .body_column_label th {
   border-bottom: 0.5px solid black;
-  text-align: left;
+  text-align: start;
 }
 
 .body_column_label th,
@@ -77,8 +77,8 @@ body > table {
   font-size: 8pt;
   text-align: right;
   border-spacing: 20pt 0; /* Adds horizontal space between columns */
-  margin-left: auto;
-  margin-right: 0; /* Aligns table to the right */
+  margin-inline-start: auto;
+  margin-inline-end: 0; /* Aligns table to the right */
   padding: 0;
   padding-top: 20pt;
 }

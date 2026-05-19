@@ -157,7 +157,7 @@ fn generate(
         order_type: None, // Should we capture this in the RnR form?
         is_emergency: false,
         created_from_requisition_id: None,
-        original_customer_id: None,
+        destination_customer_id: None,
     };
 
     let rnr_form_id = rnr_form_row.id.clone();

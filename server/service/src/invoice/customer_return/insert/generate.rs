@@ -80,6 +80,8 @@ pub fn generate(
         default_donor_id: None,
         purchase_order_id: None,
         shipping_method_id: None,
+        charges_local_currency: 0.0,
+        charges_foreign_currency: 0.0,
     };
 
     let lines_with_packs: Vec<CustomerReturnLineInput> = customer_return_lines
@@ -134,11 +136,13 @@ pub fn generate(
                 barcode: None,
                 stock_on_hold: false,
                 donor_id: None,
+                manufacturer_id: None,
                 campaign_id: None,
                 program_id: None,
                 manufacture_date: None,
                 shipped_number_of_packs: None,
                 shipped_pack_size: None,
+                purchase_order_line_id: None,
             },
         )
         .collect();

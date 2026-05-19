@@ -30,9 +30,11 @@ pub fn generate(
         adjusted_number_of_units: adjusted_number_of_units
             .or(purchase_order_line.adjusted_number_of_units),
         requested_delivery_date: requested_delivery_date
-            .or(purchase_order_line.requested_delivery_date),
+            .map(|v| v.value)
+            .unwrap_or(purchase_order_line.requested_delivery_date),
         expected_delivery_date: expected_delivery_date
-            .or(purchase_order_line.expected_delivery_date),
+            .map(|v| v.value)
+            .unwrap_or(purchase_order_line.expected_delivery_date),
         price_per_pack_before_discount: price_per_pack_before_discount
             .unwrap_or(purchase_order_line.price_per_pack_before_discount),
         price_per_pack_after_discount: price_per_pack_after_discount

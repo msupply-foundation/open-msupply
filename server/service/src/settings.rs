@@ -41,6 +41,9 @@ pub struct ServerSettings {
     // Option to set server mode as central server, should only be used in testing, demo and development
     #[serde(default)]
     pub override_is_central_server: bool,
+    /// Number of actix-web worker threads. Defaults to the number of logical CPUs.
+    /// Increase if 408 timeouts are observed under load.
+    pub workers: Option<usize>,
 }
 
 fn default_base_dir() -> String {

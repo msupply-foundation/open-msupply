@@ -17,8 +17,13 @@ export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const t = useTranslation();
   const username = useUserName();
 
-  const { changeLanguage, currentLanguage, languageOptions, setUserLocale } =
-    useIntlUtils();
+  const {
+    changeLanguage,
+    currentLanguage,
+    isRtl,
+    languageOptions,
+    setUserLocale,
+  } = useIntlUtils();
 
   const languageButtons = languageOptions.map(l => (
     <FlatButton
@@ -38,7 +43,7 @@ export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
         overflowY: 'visible',
         textOverflow: 'ellipsis',
         display: 'block',
-        textAlign: 'left',
+        textAlign: isRtl ? 'right' : 'left',
       }}
     />
   ));

@@ -4,6 +4,7 @@ import {
   Checkbox,
   ColumnDef,
   ColumnType,
+  ExpiryDateCell,
   MaterialTable,
   useSimpleMaterialTable,
   useTranslation,
@@ -29,10 +30,21 @@ export const SelectBatch = ({
     stockLinesFromItem: { data, isLoading },
   } = useItem(itemId);
 
-  // Auto-select if there is only one stock line (and not already selected)
+  const availableDoses = (data?.nodes ?? []).filter(
+    n => getRemainingDoses(n) >= 1
+  );
+  const selectedIsAvailable = availableDoses.some(
+    n => n.id === stockLine?.id
+  );
+
+  // Auto-select the only available batch, or clear selection if the previously selected batch is no longer available
   useEffect(() => {
-    if (data?.nodes?.length === 1 && !stockLine && isNewlyGiven) {
-      setStockLine(data.nodes[0]!);
+    if (!selectedIsAvailable) {
+      const autoSelect =
+        availableDoses.length === 1 && isNewlyGiven
+          ? availableDoses[0]!
+          : null;
+      setStockLine(autoSelect);
     }
   }, [data, isNewlyGiven, stockLine]);
 
@@ -58,6 +70,7 @@ export const SelectBatch = ({
         accessorKey: 'expiryDate',
         header: t('label.expiry-date'),
         columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
         size: 100,
       },
       {

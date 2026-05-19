@@ -70,6 +70,15 @@ impl<'a> ProgramRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = program::table
+            .filter(program::id.eq(lookup_id))
+            .select(program::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::update(program::table.filter(program::id.eq(id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))

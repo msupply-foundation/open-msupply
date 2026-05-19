@@ -9,6 +9,7 @@ export type StockLineFragment = {
   availableNumberOfPacks: number;
   batch?: string | null;
   expiryDate?: string | null;
+  manufactureDate?: string | null;
   id: string;
   itemId: string;
   note?: string | null;
@@ -219,6 +220,37 @@ export type BundledItemFragment = {
   } | null;
 };
 
+export type AncillaryItemRowFragment = {
+  __typename: 'ItemNode';
+  id: string;
+  name: string;
+  code: string;
+  unitName?: string | null;
+};
+
+export type AncillaryItemFragment = {
+  __typename: 'AncillaryItemNode';
+  id: string;
+  itemQuantity: number;
+  ancillaryQuantity: number;
+  itemId: string;
+  ancillaryItemId: string;
+  item?: {
+    __typename: 'ItemNode';
+    id: string;
+    name: string;
+    code: string;
+    unitName?: string | null;
+  } | null;
+  ancillaryItem?: {
+    __typename: 'ItemNode';
+    id: string;
+    name: string;
+    code: string;
+    unitName?: string | null;
+  } | null;
+};
+
 export type ItemVariantFragment = {
   __typename: 'ItemVariantNode';
   id: string;
@@ -336,6 +368,7 @@ export type ItemFragment = {
       availableNumberOfPacks: number;
       batch?: string | null;
       expiryDate?: string | null;
+      manufactureDate?: string | null;
       id: string;
       itemId: string;
       note?: string | null;
@@ -488,6 +521,28 @@ export type ItemFragment = {
       } | null;
     }>;
   }>;
+  ancillaryItems: Array<{
+    __typename: 'AncillaryItemNode';
+    id: string;
+    itemQuantity: number;
+    ancillaryQuantity: number;
+    itemId: string;
+    ancillaryItemId: string;
+    item?: {
+      __typename: 'ItemNode';
+      id: string;
+      name: string;
+      code: string;
+      unitName?: string | null;
+    } | null;
+    ancillaryItem?: {
+      __typename: 'ItemNode';
+      id: string;
+      name: string;
+      code: string;
+      unitName?: string | null;
+    } | null;
+  }>;
   itemDirections: Array<{
     __typename: 'ItemDirectionNode';
     directions: string;
@@ -553,6 +608,7 @@ export type ItemsWithStockLinesQuery = {
           availableNumberOfPacks: number;
           batch?: string | null;
           expiryDate?: string | null;
+          manufactureDate?: string | null;
           id: string;
           itemId: string;
           note?: string | null;
@@ -708,6 +764,28 @@ export type ItemsWithStockLinesQuery = {
             itemName: string;
           } | null;
         }>;
+      }>;
+      ancillaryItems: Array<{
+        __typename: 'AncillaryItemNode';
+        id: string;
+        itemQuantity: number;
+        ancillaryQuantity: number;
+        itemId: string;
+        ancillaryItemId: string;
+        item?: {
+          __typename: 'ItemNode';
+          id: string;
+          name: string;
+          code: string;
+          unitName?: string | null;
+        } | null;
+        ancillaryItem?: {
+          __typename: 'ItemNode';
+          id: string;
+          name: string;
+          code: string;
+          unitName?: string | null;
+        } | null;
       }>;
       itemDirections: Array<{
         __typename: 'ItemDirectionNode';
@@ -894,6 +972,7 @@ export type ItemByIdQuery = {
           availableNumberOfPacks: number;
           batch?: string | null;
           expiryDate?: string | null;
+          manufactureDate?: string | null;
           id: string;
           itemId: string;
           note?: string | null;
@@ -1048,6 +1127,28 @@ export type ItemByIdQuery = {
           } | null;
         }>;
       }>;
+      ancillaryItems: Array<{
+        __typename: 'AncillaryItemNode';
+        id: string;
+        itemQuantity: number;
+        ancillaryQuantity: number;
+        itemId: string;
+        ancillaryItemId: string;
+        item?: {
+          __typename: 'ItemNode';
+          id: string;
+          name: string;
+          code: string;
+          unitName?: string | null;
+        } | null;
+        ancillaryItem?: {
+          __typename: 'ItemNode';
+          id: string;
+          name: string;
+          code: string;
+          unitName?: string | null;
+        } | null;
+      }>;
       itemDirections: Array<{
         __typename: 'ItemDirectionNode';
         directions: string;
@@ -1184,6 +1285,7 @@ export type GetHistoricalStockLinesQuery = {
       availableNumberOfPacks: number;
       batch?: string | null;
       expiryDate?: string | null;
+      manufactureDate?: string | null;
       id: string;
       itemId: string;
       note?: string | null;
@@ -1446,6 +1548,74 @@ export type DeleteBundledItemMutation = {
   };
 };
 
+export type UpsertAncillaryItemMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpsertAncillaryItemInput;
+}>;
+
+export type UpsertAncillaryItemMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    ancillaryItem: {
+      __typename: 'AncillaryItemMutations';
+      upsertAncillaryItem:
+        | {
+            __typename: 'AncillaryItemNode';
+            id: string;
+            itemQuantity: number;
+            ancillaryQuantity: number;
+            itemId: string;
+            ancillaryItemId: string;
+            item?: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            } | null;
+            ancillaryItem?: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            } | null;
+          }
+        | {
+            __typename: 'UpsertAncillaryItemError';
+            error:
+              | { __typename: 'AncillaryCycleDetected'; description: string }
+              | {
+                  __typename: 'AncillaryMaxDepthExceeded';
+                  max: number;
+                  actual: number;
+                  description: string;
+                }
+              | { __typename: 'DatabaseError'; description: string }
+              | { __typename: 'DuplicateAncillaryItem'; description: string }
+              | { __typename: 'InternalError'; description: string };
+          };
+    };
+  };
+};
+
+export type DeleteAncillaryItemMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.DeleteAncillaryItemInput;
+}>;
+
+export type DeleteAncillaryItemMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    ancillaryItem: {
+      __typename: 'AncillaryItemMutations';
+      deleteAncillaryItem: { __typename: 'DeleteResponse'; id: string };
+    };
+  };
+};
+
 export type ItemLedgerFragment = {
   __typename: 'ItemLedgerNode';
   id: string;
@@ -1458,6 +1628,7 @@ export type ItemLedgerFragment = {
   invoiceId: string;
   invoiceStatus: Types.InvoiceNodeStatus;
   invoiceType: Types.InvoiceNodeType;
+  isExternal: boolean;
   name: string;
   packSize: number;
   movementInUnits: number;
@@ -1465,6 +1636,7 @@ export type ItemLedgerFragment = {
   sellPricePerPack: number;
   totalBeforeTax?: number | null;
   numberOfPacks: number;
+  user?: { __typename: 'UserNode'; username: string } | null;
 };
 
 export type ItemLedgerQueryVariables = Types.Exact<{
@@ -1491,6 +1663,7 @@ export type ItemLedgerQuery = {
       invoiceId: string;
       invoiceStatus: Types.InvoiceNodeStatus;
       invoiceType: Types.InvoiceNodeType;
+      isExternal: boolean;
       name: string;
       packSize: number;
       movementInUnits: number;
@@ -1498,6 +1671,7 @@ export type ItemLedgerQuery = {
       sellPricePerPack: number;
       totalBeforeTax?: number | null;
       numberOfPacks: number;
+      user?: { __typename: 'UserNode'; username: string } | null;
     }>;
   };
 };
@@ -1593,6 +1767,7 @@ export const StockLineFragmentDoc = gql`
     availableNumberOfPacks
     batch
     expiryDate
+    manufactureDate
     id
     itemId
     location {
@@ -1719,6 +1894,32 @@ export const ItemVariantFragmentDoc = gql`
   ${PackagingVariantFragmentDoc}
   ${BundledItemFragmentDoc}
 `;
+export const AncillaryItemRowFragmentDoc = gql`
+  fragment AncillaryItemRow on ItemNode {
+    __typename
+    id
+    name
+    code
+    unitName
+  }
+`;
+export const AncillaryItemFragmentDoc = gql`
+  fragment AncillaryItem on AncillaryItemNode {
+    __typename
+    id
+    itemQuantity
+    ancillaryQuantity
+    itemId
+    ancillaryItemId
+    item {
+      ...AncillaryItemRow
+    }
+    ancillaryItem {
+      ...AncillaryItemRow
+    }
+  }
+  ${AncillaryItemRowFragmentDoc}
+`;
 export const ItemFragmentDoc = gql`
   fragment Item on ItemNode {
     __typename
@@ -1765,6 +1966,9 @@ export const ItemFragmentDoc = gql`
     variants {
       ...ItemVariant
     }
+    ancillaryItems {
+      ...AncillaryItem
+    }
     itemDirections {
       ...ItemDirection
     }
@@ -1776,6 +1980,7 @@ export const ItemFragmentDoc = gql`
   ${LocationTypeFragmentDoc}
   ${StockLineFragmentDoc}
   ${ItemVariantFragmentDoc}
+  ${AncillaryItemFragmentDoc}
   ${ItemDirectionFragmentDoc}
 `;
 export const ItemsWithStatsFragmentDoc = gql`
@@ -1812,6 +2017,7 @@ export const ItemLedgerFragmentDoc = gql`
     invoiceId
     invoiceStatus
     invoiceType
+    isExternal
     name
     packSize
     movementInUnits
@@ -1819,6 +2025,9 @@ export const ItemLedgerFragmentDoc = gql`
     sellPricePerPack
     totalBeforeTax
     numberOfPacks
+    user {
+      username
+    }
   }
 `;
 export const ItemsWithStockLinesDocument = gql`
@@ -2100,6 +2309,52 @@ export const DeleteBundledItemDocument = gql`
     }
   }
 `;
+export const UpsertAncillaryItemDocument = gql`
+  mutation upsertAncillaryItem(
+    $storeId: String!
+    $input: UpsertAncillaryItemInput!
+  ) {
+    centralServer {
+      ancillaryItem {
+        upsertAncillaryItem(storeId: $storeId, input: $input) {
+          __typename
+          ... on AncillaryItemNode {
+            ...AncillaryItem
+          }
+          ... on UpsertAncillaryItemError {
+            error {
+              __typename
+              description
+              ... on AncillaryMaxDepthExceeded {
+                max
+                actual
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  ${AncillaryItemFragmentDoc}
+`;
+export const DeleteAncillaryItemDocument = gql`
+  mutation deleteAncillaryItem(
+    $storeId: String!
+    $input: DeleteAncillaryItemInput!
+  ) {
+    centralServer {
+      ancillaryItem {
+        deleteAncillaryItem(storeId: $storeId, input: $input) {
+          __typename
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
+      }
+    }
+  }
+`;
 export const ItemLedgerDocument = gql`
   query itemLedger(
     $first: Int
@@ -2146,15 +2401,17 @@ export function getSdk(
   return {
     itemsWithStockLines(
       variables: ItemsWithStockLinesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ItemsWithStockLinesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemsWithStockLinesQuery>(
-            ItemsWithStockLinesDocument,
+          client.request<ItemsWithStockLinesQuery>({
+            document: ItemsWithStockLinesDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'itemsWithStockLines',
         'query',
         variables
@@ -2162,13 +2419,16 @@ export function getSdk(
     },
     items(
       variables: ItemsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ItemsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemsQuery>(ItemsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<ItemsQuery>({
+            document: ItemsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'items',
         'query',
@@ -2177,15 +2437,17 @@ export function getSdk(
     },
     itemStockOnHand(
       variables: ItemStockOnHandQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ItemStockOnHandQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemStockOnHandQuery>(
-            ItemStockOnHandDocument,
+          client.request<ItemStockOnHandQuery>({
+            document: ItemStockOnHandDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'itemStockOnHand',
         'query',
         variables
@@ -2193,15 +2455,17 @@ export function getSdk(
     },
     itemsWithStats(
       variables: ItemsWithStatsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ItemsWithStatsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemsWithStatsQuery>(
-            ItemsWithStatsDocument,
+          client.request<ItemsWithStatsQuery>({
+            document: ItemsWithStatsDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'itemsWithStats',
         'query',
         variables
@@ -2209,13 +2473,16 @@ export function getSdk(
     },
     itemById(
       variables: ItemByIdQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ItemByIdQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemByIdQuery>(ItemByIdDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<ItemByIdQuery>({
+            document: ItemByIdDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'itemById',
         'query',
@@ -2224,15 +2491,17 @@ export function getSdk(
     },
     itemVariantsConfigured(
       variables: ItemVariantsConfiguredQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ItemVariantsConfiguredQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemVariantsConfiguredQuery>(
-            ItemVariantsConfiguredDocument,
+          client.request<ItemVariantsConfiguredQuery>({
+            document: ItemVariantsConfiguredDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'itemVariantsConfigured',
         'query',
         variables
@@ -2240,13 +2509,16 @@ export function getSdk(
     },
     itemVariants(
       variables: ItemVariantsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ItemVariantsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemVariantsQuery>(ItemVariantsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<ItemVariantsQuery>({
+            document: ItemVariantsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'itemVariants',
         'query',
@@ -2255,15 +2527,17 @@ export function getSdk(
     },
     getHistoricalStockLines(
       variables: GetHistoricalStockLinesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<GetHistoricalStockLinesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<GetHistoricalStockLinesQuery>(
-            GetHistoricalStockLinesDocument,
+          client.request<GetHistoricalStockLinesQuery>({
+            document: GetHistoricalStockLinesDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'getHistoricalStockLines',
         'query',
         variables
@@ -2271,15 +2545,17 @@ export function getSdk(
     },
     upsertItemVariant(
       variables: UpsertItemVariantMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpsertItemVariantMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpsertItemVariantMutation>(
-            UpsertItemVariantDocument,
+          client.request<UpsertItemVariantMutation>({
+            document: UpsertItemVariantDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'upsertItemVariant',
         'mutation',
         variables
@@ -2287,15 +2563,17 @@ export function getSdk(
     },
     deleteItemVariant(
       variables: DeleteItemVariantMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<DeleteItemVariantMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteItemVariantMutation>(
-            DeleteItemVariantDocument,
+          client.request<DeleteItemVariantMutation>({
+            document: DeleteItemVariantDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'deleteItemVariant',
         'mutation',
         variables
@@ -2303,13 +2581,16 @@ export function getSdk(
     },
     locationTypes(
       variables: LocationTypesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<LocationTypesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<LocationTypesQuery>(LocationTypesDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<LocationTypesQuery>({
+            document: LocationTypesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'locationTypes',
         'query',
@@ -2318,15 +2599,17 @@ export function getSdk(
     },
     upsertBundledItem(
       variables: UpsertBundledItemMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<UpsertBundledItemMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpsertBundledItemMutation>(
-            UpsertBundledItemDocument,
+          client.request<UpsertBundledItemMutation>({
+            document: UpsertBundledItemDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'upsertBundledItem',
         'mutation',
         variables
@@ -2334,29 +2617,70 @@ export function getSdk(
     },
     deleteBundledItem(
       variables: DeleteBundledItemMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<DeleteBundledItemMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeleteBundledItemMutation>(
-            DeleteBundledItemDocument,
+          client.request<DeleteBundledItemMutation>({
+            document: DeleteBundledItemDocument,
             variables,
-            { ...requestHeaders, ...wrappedRequestHeaders }
-          ),
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
         'deleteBundledItem',
+        'mutation',
+        variables
+      );
+    },
+    upsertAncillaryItem(
+      variables: UpsertAncillaryItemMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UpsertAncillaryItemMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpsertAncillaryItemMutation>({
+            document: UpsertAncillaryItemDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'upsertAncillaryItem',
+        'mutation',
+        variables
+      );
+    },
+    deleteAncillaryItem(
+      variables: DeleteAncillaryItemMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<DeleteAncillaryItemMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteAncillaryItemMutation>({
+            document: DeleteAncillaryItemDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'deleteAncillaryItem',
         'mutation',
         variables
       );
     },
     itemLedger(
       variables: ItemLedgerQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<ItemLedgerQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemLedgerQuery>(ItemLedgerDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<ItemLedgerQuery>({
+            document: ItemLedgerDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'itemLedger',
         'query',

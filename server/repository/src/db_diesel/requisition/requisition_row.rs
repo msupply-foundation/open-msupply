@@ -11,7 +11,6 @@ use crate::repository_error::RepositoryError;
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{Delete, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
-use diesel::dsl::max;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -46,12 +45,12 @@ define_linked_tables! {
         order_type -> Nullable<Text>,
         is_emergency -> Bool,
         created_from_requisition_id -> Nullable<Text>,
-        original_customer_id -> Nullable<Text>,
     },
     links: {
         name_link_id -> name_id,
     },
     optional_links: {
+        destination_customer_link_id -> destination_customer_id,
     }
 
 }
@@ -69,6 +68,8 @@ pub enum RequisitionType {
     #[default]
     Request,
     Response,
+    Imprest,
+    StockHistory,
 }
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -122,9 +123,9 @@ pub struct RequisitionRow {
     pub order_type: Option<String>,
     pub is_emergency: bool,
     pub created_from_requisition_id: Option<String>, // for Internal Orders created from a Requisition
-    pub original_customer_id: Option<String>,
     // Resolved from name_link - must be last to match view column order
     pub name_id: String,
+    pub destination_customer_id: Option<String>,
 }
 
 pub struct RequisitionRowRepository<'a> {
@@ -166,8 +167,10 @@ impl<'a> RequisitionRowRepository<'a> {
 
         let change_log_id = self.insert_changelog(&requisition, RowActionType::Delete)?;
 
-        diesel::delete(requisition_with_links::table.filter(requisition_with_links::id.eq(requisition_id)))
-            .execute(self.connection.lock().connection())?;
+        diesel::delete(
+            requisition_with_links::table.filter(requisition_with_links::id.eq(requisition_id)),
+        )
+        .execute(self.connection.lock().connection())?;
 
         Ok(Some(change_log_id))
     }
@@ -191,7 +194,7 @@ impl<'a> RequisitionRowRepository<'a> {
                     .eq(r#type)
                     .and(requisition::store_id.eq(store_id)),
             )
-            .select(max(requisition::requisition_number))
+            .select(diesel::dsl::max(requisition::requisition_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
     }

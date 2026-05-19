@@ -4,6 +4,7 @@ import {
   useTranslation,
   useNotification,
   InvoiceNodeStatus,
+  InvoiceNodeType,
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
@@ -14,37 +15,9 @@ import {
   getNextStatusOption,
   getPreviousStatus,
   getStatusTranslator,
-  supplierReturnStatuses,
 } from '../../../utils';
 import { useReturns } from '../../api';
-
-const getStatusOptions = (
-  currentStatus: InvoiceNodeStatus,
-  getButtonLabel: (status: InvoiceNodeStatus) => string
-): SplitButtonOption<InvoiceNodeStatus>[] => {
-  const options: SplitButtonOption<InvoiceNodeStatus>[] = [
-    InvoiceNodeStatus.New,
-    InvoiceNodeStatus.Picked,
-    InvoiceNodeStatus.Shipped,
-    InvoiceNodeStatus.Delivered,
-    InvoiceNodeStatus.Verified,
-  ].map(status => ({
-    value: status,
-    label: getButtonLabel(status),
-    isDisabled: true,
-  }));
-
-  if (currentStatus === InvoiceNodeStatus.New) {
-    if (options[1]) options[1].isDisabled = false;
-    if (options[2]) options[2].isDisabled = false;
-  }
-
-  if (currentStatus === InvoiceNodeStatus.Picked) {
-    if (options[2]) options[2].isDisabled = false;
-  }
-
-  return options;
-};
+import { getStatusOptions, getStatusSequence } from '../../../statuses';
 
 const useStatusChangeButton = () => {
   const t = useTranslation();
@@ -62,7 +35,11 @@ const useStatusChangeButton = () => {
   };
 
   const options = useMemo(() => {
-    let statusOptions = getStatusOptions(status, getButtonLabel(t));
+    let statusOptions = getStatusOptions(
+      InvoiceNodeType.SupplierReturn,
+      status,
+      getButtonLabel(t)
+    );
     if (invoiceStatusOptions) {
       statusOptions = statusOptions.filter(
         option => !!option.value && invoiceStatusOptions.includes(option.value)
@@ -71,13 +48,14 @@ const useStatusChangeButton = () => {
     return statusOptions;
   }, [status, invoiceStatusOptions]);
 
-  const currentStatus = invoiceStatusOptions?.includes(status)
-    ? status
-    : getPreviousStatus(
-        status,
-        invoiceStatusOptions ?? [],
-        supplierReturnStatuses
-      );
+  const currentStatus =
+    !invoiceStatusOptions || invoiceStatusOptions.includes(status)
+      ? status
+      : getPreviousStatus(
+          status,
+          invoiceStatusOptions,
+          getStatusSequence(InvoiceNodeType.SupplierReturn)
+        );
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>

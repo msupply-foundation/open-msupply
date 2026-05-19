@@ -35,6 +35,7 @@ pub fn generate(
         adjustment,
         adjustment_type,
         reason_option_id,
+        backdated_datetime: _, // Handled in insert.rs after generate
     }: InsertInventoryAdjustment,
     stock_line: StockLine,
 ) -> Result<GenerateResult, RepositoryError> {
@@ -97,6 +98,8 @@ pub fn generate(
         default_donor_id: None,
         purchase_order_id: None,
         shipping_method_id: None,
+        charges_local_currency: 0.0,
+        charges_foreign_currency: 0.0,
     };
 
     let StockLineRow {
@@ -140,6 +143,7 @@ pub fn generate(
             note,
             item_variant_id,
             donor_id: donor_link_id,
+            manufacturer_id: None,
             vvm_status_id,
             campaign_id,
             program_id,
@@ -151,6 +155,7 @@ pub fn generate(
             tax_percentage: None,
             shipped_number_of_packs: None,
             shipped_pack_size: None,
+            purchase_order_line_id: None,
         }),
         AdjustmentType::Reduction => InsertStockInOrOutLine::StockOut(InsertStockOutLine {
             r#type: StockOutType::InventoryReduction,
@@ -175,6 +180,7 @@ pub fn generate(
             sell_price_per_pack: None,
             item_variant_id: None,
             donor_id: None,
+            manufacturer_id: None,
         }),
     };
 

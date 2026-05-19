@@ -195,7 +195,7 @@ mod test_update {
                     min_months_of_stock: None,
                     other_party_id: Some(mock_name_store_c().id),
                     expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap()),
-                    original_customer_id: None,
+                    destination_customer_id: None,
                 },
             )
             .unwrap();

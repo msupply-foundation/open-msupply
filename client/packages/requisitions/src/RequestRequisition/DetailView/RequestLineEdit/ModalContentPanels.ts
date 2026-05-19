@@ -7,7 +7,8 @@ import { DraftRequestLine } from '.';
 
 export const getLeftPanel = (
   t: TypedTFunction<LocaleKey>,
-  draft?: DraftRequestLine | null
+  draft?: DraftRequestLine | null,
+  showAsAreaAmc?: boolean
 ): ValueInfo[] => {
   const base: ValueInfo[] = [
     {
@@ -15,8 +16,9 @@ export const getLeftPanel = (
       value: draft?.itemStats.availableStockOnHand,
     },
     {
-      label: t('label.amc/amd'),
+      label: t(showAsAreaAmc ? 'label.area-amc' : 'label.amc/amd'),
       value: draft?.itemStats.averageMonthlyConsumption,
+      roundUp: true,
     },
   ];
 
@@ -58,7 +60,7 @@ export const getExtraMiddlePanels = (
       label: t('label.days-out-of-stock'),
       value: draft?.daysOutOfStock,
       endAdornmentOverride: t('label.days'),
-      displayVaccinesInDoses: false,
+      isFixedValue: true,
     },
   ];
 };

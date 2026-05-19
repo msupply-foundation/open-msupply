@@ -78,7 +78,7 @@ pub fn update_supplier_return(
                 )?;
             }
 
-            get_invoice(ctx, None, &input.supplier_return_id)
+            get_invoice(ctx, None, &input.supplier_return_id, None)
                 .map_err(UpdateSupplierReturnError::DatabaseError)?
                 .ok_or(UpdateSupplierReturnError::UpdatedReturnDoesNotExist)
         })

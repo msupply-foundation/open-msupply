@@ -1,7 +1,7 @@
 use crate::{
     db_diesel::store_row::store, diesel_macros::apply_equal_filter,
     name_store_join::name_store_join, vaccination_row::vaccination, DBType, EqualFilter,
-    LockedConnection, RepositoryError, StorageConnection,
+    LockedConnection, RepositoryError, StorageConnection, TransactionNotification,
 };
 use diesel::{helper_types::IntoBoxed, prelude::*};
 use serde::{Deserialize, Serialize};
@@ -102,12 +102,14 @@ pub enum ChangelogTableName {
     VaccineCourse,
     VaccineCourseItem,
     VaccineCourseDose,
+    VaccineCourseStoreConfig,
     Vaccination,
     Encounter,
     ItemVariant,
     PackagingVariant,
     IndicatorValue,
     BundledItem,
+    AncillaryItem,
     Item,
     ContactForm,
     SystemLog,
@@ -186,12 +188,14 @@ impl ChangelogTableName {
             ChangelogTableName::VaccineCourse => ChangeLogSyncStyle::Central,
             ChangelogTableName::VaccineCourseItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::VaccineCourseDose => ChangeLogSyncStyle::Central,
+            ChangelogTableName::VaccineCourseStoreConfig => ChangeLogSyncStyle::Central,
             ChangelogTableName::Vaccination => ChangeLogSyncStyle::Remote,
             ChangelogTableName::Encounter => ChangeLogSyncStyle::Remote,
             ChangelogTableName::ItemVariant => ChangeLogSyncStyle::Central,
             ChangelogTableName::PackagingVariant => ChangeLogSyncStyle::Central,
             ChangelogTableName::IndicatorValue => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::BundledItem => ChangeLogSyncStyle::Central,
+            ChangelogTableName::AncillaryItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::ContactForm => ChangeLogSyncStyle::RemoteToCentral,
             ChangelogTableName::SystemLog => ChangeLogSyncStyle::RemoteToCentral,
             ChangelogTableName::InsuranceProvider => ChangeLogSyncStyle::Legacy,
@@ -439,6 +443,7 @@ impl<'a> ChangelogRepository<'a> {
             .pop()
             .unwrap_or_default(); // This shouldn't happen, maybe should unwrap or panic?
 
+        self.connection.notify(TransactionNotification::ChangelogInsert);
         Ok(cursor_id)
     }
 
@@ -451,6 +456,7 @@ impl<'a> ChangelogRepository<'a> {
             .execute(self.connection.lock().connection())?;
         let cursor_id = diesel::select(last_insert_rowid())
             .get_result::<i64>(self.connection.lock().connection())?;
+        self.connection.notify(TransactionNotification::ChangelogInsert);
         Ok(cursor_id)
     }
 }

@@ -54,7 +54,7 @@ pub fn get_draft_stock_out_lines(
     item_id: &str,
     invoice_id: &str,
 ) -> Result<(Vec<DraftStockOutLine>, DraftStockOutItemData), ListError> {
-    let invoice = get_invoice(ctx, Some(store_id), invoice_id)?.ok_or(ListError::DatabaseError(
+    let invoice = get_invoice(ctx, Some(store_id), invoice_id, None)?.ok_or(ListError::DatabaseError(
         RepositoryError::DBError {
             msg: "Invoice not found".to_string(),
             extra: invoice_id.to_string(),
@@ -134,7 +134,7 @@ fn get_historical_available_stock_lines(
     datetime: Option<NaiveDateTime>,
 ) -> Result<Vec<StockLine>, ListError> {
     let historical_stock_lines = match datetime {
-        Some(datetime) => get_historical_stock_lines(ctx, store_id, item_id, &datetime)?,
+        Some(datetime) => get_historical_stock_lines(ctx, store_id, item_id, &datetime, false)?,
         None => get_stock_lines(
             ctx,
             None,
@@ -149,7 +149,19 @@ fn get_historical_available_stock_lines(
         )?,
     };
 
-    Ok(historical_stock_lines.rows)
+    // For backdated outbounds, drop stock lines that had no availability at the historical date —
+    // they can't be picked.
+    let rows = if datetime.is_some() {
+        historical_stock_lines
+            .rows
+            .into_iter()
+            .filter(|line| line.stock_line_row.available_number_of_packs > 0.0)
+            .collect()
+    } else {
+        historical_stock_lines.rows
+    };
+
+    Ok(rows)
 }
 
 fn get_outgoing_invoice_lines(
@@ -186,7 +198,7 @@ fn get_outgoing_invoice_lines(
 
         for stock_line in invoice_stock_lines.iter_mut() {
             if let Some(historic_quantity) = historic_quantities.get(&stock_line.id) {
-                stock_line.available_number_of_packs = *historic_quantity;
+                stock_line.available_number_of_packs = historic_quantity.min_available;
             }
         }
     }
