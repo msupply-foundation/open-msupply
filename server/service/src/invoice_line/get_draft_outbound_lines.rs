@@ -134,7 +134,7 @@ fn get_historical_available_stock_lines(
     datetime: Option<NaiveDateTime>,
 ) -> Result<Vec<StockLine>, ListError> {
     let historical_stock_lines = match datetime {
-        Some(datetime) => get_historical_stock_lines(ctx, store_id, item_id, &datetime)?,
+        Some(datetime) => get_historical_stock_lines(ctx, store_id, item_id, &datetime, false)?,
         None => get_stock_lines(
             ctx,
             None,
