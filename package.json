@@ -4,7 +4,8 @@
   "version": "2.19.00",
   "private": true,
   "scripts": {
-    "start": "cd ./server && cargo run",
+    "server": "cd server && APP__SERVER__PORT=0 cargo run",
+    "client": "cd client && yarn start-local",
     "build": "cd ./client && yarn build && cd ../server && cargo build --release",
     "test": "cd ./server && ulimit -n 1000 && cargo test && cd ../client && yarn test",
     "dockerise": "bash docker/dockerise.sh"

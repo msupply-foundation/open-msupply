@@ -69,10 +69,6 @@ pub mod middleware;
 mod schedule_plugin;
 mod scheduled_tasks;
 mod serve_frontend;
-#[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
-mod dev_server;
-#[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
-mod serve_frontend_dev;
 pub mod static_files;
 pub mod support;
 mod upload_fridge_tag;
@@ -137,13 +133,13 @@ pub async fn start_server(
     // Wire transaction notifications to the subscription worker.
     // Fired after outermost transaction commits.
     let commit_trigger = subscription_trigger.clone();
-    connection_manager.set_on_commit(std::sync::Arc::new(move |notification| {
-        match notification {
+    connection_manager.set_on_commit(std::sync::Arc::new(
+        move |notification| match notification {
             repository::TransactionNotification::ChangelogInsert => {
                 commit_trigger.send(SubscriptionTrigger::PushQueueChanged);
             }
-        }
-    }));
+        },
+    ));
     let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
     let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init(file_sync_trigger.clone()); // Cloning as we want to expose this for stop messages
     let (ledger_fix_trigger, ledger_fix_driver) = LedgerFixDriver::init();
@@ -264,42 +260,33 @@ pub async fn start_server(
         }
     }
 
-    info!("Starting discovery graphql server",);
-    let closure_service_provider = service_provider.clone();
-    // See attach_discovery_graphql_schema for more details
-    tokio::spawn(
-        HttpServer::new(move || {
-            App::new()
-                .wrap(Cors::permissive())
-                .configure(attach_discovery_graphql_schema(
-                    closure_service_provider.clone(),
-                ))
-        })
-        .bind(settings.server.discovery_address())?
-        .run(),
-    );
+    // Discovery server uses port + 1, which only makes sense when the main port is
+    // a known/advertised value. Skip when port is 0 (random — e.g. `yarn server`
+    // sets APP__SERVER__PORT=0 so the OS picks a free port, multi-worktree friendly).
+    if settings.server.port != 0 {
+        info!("Starting discovery graphql server",);
+        let closure_service_provider = service_provider.clone();
+        // See attach_discovery_graphql_schema for more details
+        tokio::spawn(
+            HttpServer::new(move || {
+                App::new()
+                    .wrap(Cors::permissive())
+                    .configure(attach_discovery_graphql_schema(
+                        closure_service_provider.clone(),
+                    ))
+            })
+            .bind(settings.server.discovery_address())?
+            .run(),
+        );
+    } else {
+        info!("Skipping discovery graphql server (no fixed port to advertise)");
+    }
 
     // START SERVER
     info!("Initialising http server..",);
     let processors_task = processors.spawn(service_provider.clone().into_inner());
     let ledger_fix_task = ledger_fix_driver.run(service_provider.clone().into_inner());
     let file_sync_task = file_sync_driver.run(service_provider.clone().into_inner());
-
-    // In dev mode, spawn webpack-dev-server for frontend hot reloading
-    #[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
-    let (dev_server, dev_server_process) = {
-        if settings.server.frontend_dev_server {
-            match dev_server::spawn(settings.server.port).await {
-                Ok((ds, proc)) => (Some(Data::new(ds)), Some(proc)),
-                Err(e) => {
-                    log::warn!("Failed to start webpack dev server: {e}. Falling back to embedded frontend.");
-                    (None, None)
-                }
-            }
-        } else {
-            (None, None)
-        }
-    };
 
     let closure_settings = settings.clone();
     let closure_service_provider = service_provider.clone();
@@ -328,25 +315,7 @@ pub async fn start_server(
             .configure(config_support)
             .configure(config_print)
             .configure(config_custom_translations)
-            .configure(config_upload);
-
-        // In dev mode proxy to webpack-dev-server; otherwise serve the embedded frontend bundle.
-        // The awc Client is !Send (internal Rc), so it can't go through Data<T> — register
-        // it per worker via app_data and pull it out with req.app_data::<awc::Client>() in
-        // the handler. One Client per worker means the connection pool is reused.
-        #[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
-        let app = {
-            if let Some(ref ds) = dev_server {
-                app.app_data(ds.clone())
-                    .app_data(awc::Client::new())
-                    .configure(serve_frontend_dev::config_serve_frontend)
-            } else {
-                // frontend_dev_server: false or spawn failed — fall back to embedded bundle
-                app.configure(serve_frontend::config_serve_frontend)
-            }
-        };
-        #[cfg(not(all(debug_assertions, any(target_os = "macos", target_os = "linux"))))]
-        let app = app
+            .configure(config_upload)
             // Needs to be last to capture all unmatched routes
             .configure(serve_frontend::config_serve_frontend);
 
@@ -354,11 +323,35 @@ pub async fn start_server(
     })
     .disable_signals();
 
+    // Bind via std TcpListener so we can discover the OS-assigned port when
+    // settings.server.port is 0 (set in yaml, or overridden via APP__SERVER__PORT=0
+    // for the `yarn server` flow where webpack owns the front-facing port).
+    let bind_address = settings.server.address();
+    let listener = std::net::TcpListener::bind(&bind_address)
+        .unwrap_or_else(|e| panic!("{}", format!("Failed to bind {bind_address}: {e}")));
+    let actual_port = listener.local_addr().unwrap().port();
+    if actual_port != settings.server.port {
+        info!("Server bound to OS-assigned port {actual_port}");
+    }
+    // Publish the bound port to a file so webpack-dev-server's proxy can find us.
+    // Dev builds only — production has no dev proxy to coordinate with.
+    #[cfg(debug_assertions)]
+    if let Err(e) = std::fs::write(".dev-port", actual_port.to_string()) {
+        log::warn!("Failed to write .dev-port file: {e}");
+    }
+    // OSC 2: set the pane/tab title to include the bound URL. Picked up by zellij,
+    // VS Code's terminal, iTerm2, etc. — invisible in the output stream.
+    // `print!` is line-buffered and won't flush on its own; emit + flush explicitly.
+    {
+        use std::io::Write;
+        let mut stdout = std::io::stdout();
+        let _ = write!(stdout, "\x1b]2;server http://localhost:{actual_port}\x07");
+        let _ = stdout.flush();
+    }
+
     http_server = match certificates.config() {
-        Some(config) => http_server
-            .bind_rustls_0_23(settings.server.address(), config)
-            .unwrap(),
-        None => http_server.bind(settings.server.address()).unwrap(),
+        Some(config) => http_server.listen_rustls_0_23(listener, config).unwrap(),
+        None => http_server.listen(listener).unwrap(),
     };
     info!("Initialising http server..done",);
 
@@ -378,10 +371,6 @@ pub async fn start_server(
         Ok(result) => result,
         Err(e) => {
             log::error!("Failed to run DB migrations: {}", format_error(&e));
-            // std::process::exit bypasses Drop — explicitly drop so the dev-server
-            // process group gets SIGTERM before we vanish
-            #[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
-            drop(dev_server_process);
             std::process::exit(1);
         }
     };
@@ -506,11 +495,6 @@ pub async fn start_server(
         Some(_) = off_switch.recv() => {
             status_log.log("Server received request to stop with off switch");
         },
-        // SIGHUP from terminal close / IDE restart — without this the dev-server child gets orphaned.
-        // Pends forever on platforms where the dev server isn't spawned.
-        _ = wait_for_sighup() => {
-            status_log.log("Server received SIGHUP, stopping server");
-        },
         _ = synchroniser_task => unreachable!("Synchroniser unexpectedly stopped"),
         _ = file_sync_task => unreachable!("File sync unexpectedly stopped"),
           _ = ledger_fix_task => unreachable!("Ledger fix unexpectedly stopped"),
@@ -520,29 +504,11 @@ pub async fn start_server(
         subscription_error = subscription_task_handle => unreachable!("Subscription task stopped unexpectedly: {:?}", subscription_error),
     };
 
-    // Kill dev server first so it doesn't hold connections open
-    #[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
-    drop(dev_server_process);
-
     server_handle.stop(true).await;
 
     status_log.log("Server stopped successfully");
 
     Ok(())
-}
-
-/// Resolves on SIGHUP under macOS/Linux debug builds (where we have a dev-server child to clean up).
-/// On every other target it pends forever, so the surrounding `select!` arm is a no-op.
-async fn wait_for_sighup() {
-    #[cfg(all(debug_assertions, any(target_os = "macos", target_os = "linux")))]
-    {
-        let mut sig =
-            tokio::signal::unix::signal(tokio::signal::unix::SignalKind::hangup())
-                .expect("Failed to install SIGHUP handler");
-        sig.recv().await;
-    }
-    #[cfg(not(all(debug_assertions, any(target_os = "macos", target_os = "linux"))))]
-    std::future::pending::<()>().await
 }
 
 struct StatusLog<'a>(&'a StorageConnection);

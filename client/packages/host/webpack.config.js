@@ -1,5 +1,7 @@
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
+const fs = require('fs');
+const yaml = require('js-yaml');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ModuleFederationPlugin = webpack.container.ModuleFederationPlugin;
@@ -8,6 +10,37 @@ const dependencies = require('./package.json').dependencies;
 const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+
+// Server writes its bound port here on startup so we can proxy to it even when
+// it's an OS-assigned random port (multi-worktree support). Resolved per-request
+// via the `router` option below, so it survives webpack starting before the server.
+const DEV_PORT_FILE = path.resolve(__dirname, '../../../server/.dev-port');
+const backendTarget = () => {
+  try {
+    const port = parseInt(fs.readFileSync(DEV_PORT_FILE, 'utf8').trim(), 10);
+    if (port > 0) return `http://localhost:${port}`;
+  } catch {}
+  return 'http://localhost:8000';
+};
+
+// The front-facing port (what the browser hits) is shared with the Rust server's
+// config: read it from local.yaml (or base.yaml) so a worktree can pin its own
+// port by editing one file.
+const CONFIG_DIR = path.resolve(__dirname, '../../../server/configuration');
+const readServerPortFromYaml = () => {
+  for (const file of ['local.yaml', 'base.yaml']) {
+    try {
+      const doc = yaml.load(fs.readFileSync(path.join(CONFIG_DIR, file), 'utf8'));
+      const port = doc && doc.server && doc.server.port;
+      if (typeof port === 'number' && port > 0) return port;
+    } catch {}
+  }
+  return 3003;
+};
+const FRONT_FACING_PORT = parseInt(
+  process.env.APP__SERVER__PORT || readServerPortFromYaml(),
+  10
+);
 class DummyWebpackPlugin {
   apply(compiler) {
     compiler.hooks.run.tap('DummyWebpackPlugin', () => {});
@@ -38,7 +71,16 @@ module.exports = env => {
         ? path.join(__dirname, 'dist')
         : path.join(__dirname, 'public'),
 
-      port: 3003,
+      port: FRONT_FACING_PORT,
+      // OSC 2: set the pane/tab title to include the bound URL. Picked up by zellij,
+      // VS Code's terminal, iTerm2, etc. — invisible in the output stream.
+      // BEL (\x07) terminator is the original xterm convention and the one zellij
+      // parses most reliably; ST (\x1b\\) sometimes loses the trailing backslash
+      // through layered shells.
+      onListening: devServer => {
+        const port = devServer.server.address().port;
+        process.stdout.write(`\x1b]2;client http://localhost:${port}\x07`);
+      },
       historyApiFallback: true,
       headers: {
         'Access-Control-Allow-Origin': '*',
@@ -47,7 +89,35 @@ module.exports = env => {
         'Access-Control-Allow-Headers':
           'X-Requested-With, content-type, Authorization',
       },
-      open: true,
+      open: false,
+      // Proxy every backend route through to the Rust server so dev runs
+      // single-origin. `ws: true` carries /graphql/ws (subscriptions); webpack's
+      // own HMR WS uses a separate /ws path, untouched by this.
+      proxy: [
+        {
+          context: [
+            '/graphql',
+            '/files',
+            '/sync_files',
+            '/upload',
+            '/fridge-tag',
+            '/frontend_plugins',
+            '/plugins',
+            '/central',
+            '/support',
+            '/print',
+            '/coldchain',
+            '/custom-translations',
+          ],
+          // `target` is the initial value; `router` resolves it per-request so the
+          // proxy picks up the server's port from .dev-port whenever it's written
+          // (handles webpack starting before the server has compiled).
+          target: env.API_HOST || backendTarget(),
+          router: env.API_HOST ? undefined : () => backendTarget(),
+          ws: true,
+          changeOrigin: true,
+        },
+      ],
     },
     resolve: {
       extensions: ['.js', '.css', '.ts', '.tsx'],
