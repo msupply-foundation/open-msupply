@@ -49,23 +49,10 @@ table! {
     }
 }
 
-// Sync split — which fields cross the wire?
-//
-// Synced (no `skip_serializing`): id, table_name, record_id, file_name, mime_type,
-//   total_bytes, status, error, created_datetime, deleted_datetime.
-//   These describe the file's terminal/observable state — what users (and the
-//   sync_message UI) need to see consistently across sites.
-//
-// Local-only (`skip_serializing`): uploaded_bytes, downloaded_bytes, retries,
-//   retry_at, direction. These are each site's own retry/progress bookkeeping.
-//   Every site computes them independently — central learns "the file arrived"
-//   by setting uploaded_bytes itself when it handles the PUT, not by sync.
-//
-// Deserialization always accepts every field via `#[serde(default)]` so older
-// payloads (missing the now-synced fields) still parse cleanly.
-#[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
-)]
+// Local/synced split lives in `SyncFileReferenceWire` (below). Anything absent
+// from the wire DTO is local-only by construction; the pull translator merges
+// the wire payload over an existing row to preserve those local fields.
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
 #[diesel(table_name = sync_file_reference)]
 pub struct SyncFileReferenceRow {
     pub id: String,
@@ -73,29 +60,78 @@ pub struct SyncFileReferenceRow {
     pub record_id: String,
     pub file_name: String,
     pub mime_type: Option<String>,
-    #[serde(skip_serializing)]
-    #[serde(default)]
     pub uploaded_bytes: i32,
-    #[serde(skip_serializing)]
-    #[serde(default)]
     pub downloaded_bytes: i32,
+    pub total_bytes: i32,
+    pub retries: i32,
+    pub retry_at: Option<NaiveDateTime>,
+    pub direction: SyncFileDirection,
+    pub status: SyncFileStatus,
+    pub error: Option<String>,
+    pub created_datetime: NaiveDateTime,
+    pub deleted_datetime: Option<NaiveDateTime>,
+}
+
+/// Subset of `SyncFileReferenceRow` that crosses sync. Anything not listed here
+/// is local-only per-site state (retry counters, transfer progress, direction).
+/// On pull, [`Self::into_row`] merges the wire payload over the existing local row
+/// so a status sync from central never clobbers our own bookkeeping.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SyncFileReferenceWire {
+    pub id: String,
+    pub table_name: String,
+    pub record_id: String,
+    pub file_name: String,
+    #[serde(default)]
+    pub mime_type: Option<String>,
     #[serde(default)]
     pub total_bytes: i32,
-    #[serde(skip_serializing)]
-    #[serde(default)]
-    pub retries: i32,
-    #[serde(skip_serializing)]
-    #[serde(default)]
-    pub retry_at: Option<NaiveDateTime>,
-    #[serde(skip_serializing)]
-    #[serde(default)]
-    pub direction: SyncFileDirection,
     #[serde(default)]
     pub status: SyncFileStatus,
     #[serde(default)]
     pub error: Option<String>,
     pub created_datetime: NaiveDateTime,
+    #[serde(default)]
     pub deleted_datetime: Option<NaiveDateTime>,
+}
+
+impl SyncFileReferenceWire {
+    pub fn from_row(row: &SyncFileReferenceRow) -> Self {
+        SyncFileReferenceWire {
+            id: row.id.clone(),
+            table_name: row.table_name.clone(),
+            record_id: row.record_id.clone(),
+            file_name: row.file_name.clone(),
+            mime_type: row.mime_type.clone(),
+            total_bytes: row.total_bytes,
+            status: row.status.clone(),
+            error: row.error.clone(),
+            created_datetime: row.created_datetime,
+            deleted_datetime: row.deleted_datetime,
+        }
+    }
+
+    pub fn into_row(self, existing: Option<SyncFileReferenceRow>) -> SyncFileReferenceRow {
+        let local = existing.unwrap_or_default();
+        SyncFileReferenceRow {
+            id: self.id,
+            table_name: self.table_name,
+            record_id: self.record_id,
+            file_name: self.file_name,
+            mime_type: self.mime_type,
+            total_bytes: self.total_bytes,
+            status: self.status,
+            error: self.error,
+            created_datetime: self.created_datetime,
+            deleted_datetime: self.deleted_datetime,
+            // Local-only fields preserved from the existing row.
+            uploaded_bytes: local.uploaded_bytes,
+            downloaded_bytes: local.downloaded_bytes,
+            retries: local.retries,
+            retry_at: local.retry_at,
+            direction: local.direction,
+        }
+    }
 }
 
 pub struct SyncFileReferenceRowRepository<'a> {
@@ -191,9 +227,9 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
     /// - Updating `uploaded_bytes` / `downloaded_bytes` mid-transfer
     ///
     /// For terminal transitions (`Done`, `Error`, `PermanentFailure`) or any change to `error`,
-    /// call `upsert_one` instead so the outcome propagates to central / other sites — see the
-    /// "Sync split" comment on `SyncFileReferenceRow` above for which fields cross the wire.
-    pub fn update_status(
+    /// call `upsert_one` instead so the outcome propagates to central / other sites — see
+    /// `SyncFileReferenceWire` for which fields cross the wire.
+    pub fn upsert_without_changelog(
         &self,
         sync_file_reference_row: &SyncFileReferenceRow,
     ) -> Result<(), RepositoryError> {

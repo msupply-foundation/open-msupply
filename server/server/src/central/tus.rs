@@ -255,7 +255,7 @@ async fn patch_chunk(
     // without producing a changelog. The remote's terminal status (Done) is the source of truth
     // and reaches central via the regular sync push.
     if new_offset == row.total_bytes as u64 {
-        repo.update_status(&SyncFileReferenceRow {
+        repo.upsert_without_changelog(&SyncFileReferenceRow {
             uploaded_bytes: row.total_bytes,
             ..row
         })
@@ -370,7 +370,7 @@ fn decode_sync_v5_settings(
 
 /// When the file_reference row hasn't yet synced from the remote we still want the upload to
 /// proceed — record-id, table-name, file-name come from Upload-Metadata. The row is written via
-/// `update_status` (no changelog) so it stays local; the proper row arrives via sync later and is
+/// `upsert_without_changelog` so it stays local; the proper row arrives via sync later and is
 /// merged (preserving our local-only fields).
 fn create_stopgap_row(
     ctx: &ServiceContext,
@@ -400,7 +400,7 @@ fn create_stopgap_row(
         deleted_datetime: None,
     };
     SyncFileReferenceRowRepository::new(&ctx.connection)
-        .update_status(&row)
+        .upsert_without_changelog(&row)
         .map_err(internal)?;
     Ok(row)
 }

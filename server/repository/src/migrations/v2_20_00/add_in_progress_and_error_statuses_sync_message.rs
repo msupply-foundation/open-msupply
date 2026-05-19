@@ -4,7 +4,7 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "add_in_progress_status_sync_message"
+        "add_in_progress_and_error_statuses_sync_message"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
@@ -13,6 +13,7 @@ impl MigrationFragment for Migrate {
                 connection,
                 r#"
                     ALTER TYPE sync_message_status ADD VALUE IF NOT EXISTS 'IN_PROGRESS';
+                    ALTER TYPE sync_message_status ADD VALUE IF NOT EXISTS 'ERROR';
                 "#
             )?;
         }

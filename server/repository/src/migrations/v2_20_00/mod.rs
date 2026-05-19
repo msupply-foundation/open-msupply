@@ -1,7 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
-mod add_in_progress_status_sync_message;
+mod add_in_progress_and_error_statuses_sync_message;
 mod add_support_upload_files_processor_cursor_key_value_store;
 
 pub(crate) struct V2_20_00;
@@ -17,7 +17,7 @@ impl Migration for V2_20_00 {
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
             Box::new(add_support_upload_files_processor_cursor_key_value_store::Migrate),
-            Box::new(add_in_progress_status_sync_message::Migrate),
+            Box::new(add_in_progress_and_error_statuses_sync_message::Migrate),
         ]
     }
 }

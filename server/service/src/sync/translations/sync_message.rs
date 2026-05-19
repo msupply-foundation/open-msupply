@@ -41,6 +41,7 @@ pub enum LegacySyncMessageStatus {
     New,
     InProgress,
     Processed,
+    Error,
 }
 
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
@@ -78,6 +79,7 @@ impl SyncTranslation for MessageTranslation {
             LegacySyncMessageStatus::New => SyncMessageRowStatus::New,
             LegacySyncMessageStatus::InProgress => SyncMessageRowStatus::InProgress,
             LegacySyncMessageStatus::Processed => SyncMessageRowStatus::Processed,
+            LegacySyncMessageStatus::Error => SyncMessageRowStatus::Error,
         };
 
         let body = serde_json::to_string(&body).context("Failed to serialize message body")?;
@@ -139,6 +141,7 @@ impl SyncTranslation for MessageTranslation {
                 SyncMessageRowStatus::New => LegacySyncMessageStatus::New,
                 SyncMessageRowStatus::InProgress => LegacySyncMessageStatus::InProgress,
                 SyncMessageRowStatus::Processed => LegacySyncMessageStatus::Processed,
+                SyncMessageRowStatus::Error => LegacySyncMessageStatus::Error,
             },
             r#type,
             error_message,
