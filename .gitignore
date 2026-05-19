@@ -27,3 +27,6 @@ server/configuration/*.yaml
 !configuration/base.yaml
 !configuration/example.yaml
 server/target-postgres/
+
+# Playwright MCP scratch logs / page dumps
+.playwright-mcp/
