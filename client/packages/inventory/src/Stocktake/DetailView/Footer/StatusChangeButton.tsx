@@ -18,9 +18,9 @@ import { useStocktakeLineErrorContext } from '../../context';
 const getStatusOptions = (
   getButtonLabel: (status: StocktakeNodeStatus) => string
 ): [
-    SplitButtonOption<StocktakeNodeStatus>,
-    SplitButtonOption<StocktakeNodeStatus>,
-  ] => {
+  SplitButtonOption<StocktakeNodeStatus>,
+  SplitButtonOption<StocktakeNodeStatus>,
+] => {
   return [
     {
       value: StocktakeNodeStatus.New,
@@ -48,11 +48,11 @@ const getNextStatusOption = (
 
 const getButtonLabel =
   (t: ReturnType<typeof useTranslation>) =>
-    (invoiceStatus: StocktakeNodeStatus): string => {
-      return t('button.save-and-confirm-status', {
-        status: t(getStatusTranslation(invoiceStatus)),
-      });
-    };
+  (invoiceStatus: StocktakeNodeStatus): string => {
+    return t('button.save-and-confirm-status', {
+      status: t(getStatusTranslation(invoiceStatus)),
+    });
+  };
 
 const useStatusChangeButton = () => {
   const { id, lines, status } = useStocktakeOld.document.fields([
@@ -112,7 +112,7 @@ const useStatusChangeButton = () => {
             Object.fromEntries(
               structured.errors.map(e => [
                 stocktakeLineIdByStockLineId.get(e.stockLine.id) ??
-                e.stockLine.id,
+                  e.stockLine.id,
                 e,
               ])
             )
