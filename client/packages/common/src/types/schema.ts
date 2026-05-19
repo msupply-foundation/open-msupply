@@ -3192,7 +3192,10 @@ export enum InitialisationStatusType {
   PreInitialisation = 'PRE_INITIALISATION',
 }
 
-export type InitialiseSiteResponse = SyncErrorNode | SyncSettingsNode;
+export type InitialiseSiteResponse =
+  | SyncErrorNode
+  | SyncErrorV7Node
+  | SyncSettingsNode;
 
 export type InsertAssetCatalogueItemError = {
   __typename: 'InsertAssetCatalogueItemError';
@@ -11203,7 +11206,10 @@ export enum UpdateSupplierReturnStatusInput {
   Shipped = 'SHIPPED',
 }
 
-export type UpdateSyncSettingsResponse = SyncErrorNode | SyncSettingsNode;
+export type UpdateSyncSettingsResponse =
+  | SyncErrorNode
+  | SyncErrorV7Node
+  | SyncSettingsNode;
 
 export type UpdateTemperatureBreachInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
