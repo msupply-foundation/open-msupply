@@ -75,7 +75,7 @@ pub fn update_customer_return(
                 )?;
             }
 
-            get_invoice(ctx, None, &updated_return.id)
+            get_invoice(ctx, None, &updated_return.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })

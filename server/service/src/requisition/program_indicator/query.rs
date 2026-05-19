@@ -21,6 +21,7 @@ pub fn program_indicators(
     pagination: Pagination,
     sort: Option<ProgramIndicatorSort>,
     filter: Option<ProgramIndicatorFilter>,
+    include_inactive: bool,
 ) -> Result<Vec<ProgramIndicator>, RepositoryError> {
     let indicators = ProgramIndicatorRepository::new(connection).query(pagination, filter, sort)?;
 
@@ -31,8 +32,23 @@ pub fn program_indicators(
 
     let mut indicator_line_rows =
         IndicatorLineRowRepository::new(connection).find_many_by_indicator_ids(&indicator_ids)?;
+
     let mut indicator_column_rows =
         IndicatorColumnRowRepository::new(connection).find_many_by_indicator_ids(&indicator_ids)?;
+
+    if !include_inactive {
+        indicator_line_rows = indicator_line_rows
+            .into_iter()
+            .filter(|line| line.is_active)
+            .collect();
+
+        // In previous versions of OG, all column rows were marked with is_active = false (default value)
+        // Until mSupply has UI to fix this, we need to include all columns regardless of the is_active status. Once the column rows are updated to have correct is_active values, we can uncomment the following code to filter out inactive columns as well.
+        // indicator_column_rows = indicator_column_rows
+        //     .into_iter()
+        //     .filter(|column| column.is_active)
+        //     .collect();
+    }
 
     let mut result_indicators = Vec::new();
 
@@ -86,6 +102,7 @@ mod query {
                 },
                 None,
                 None,
+                true,
             )
             .unwrap();
         assert_eq!(result.len(), 2);
@@ -104,7 +121,8 @@ mod query {
             })
             .collect();
 
-        assert_eq!(lines_a.len(), 2);
+        // 3 lines: line_a, line_b, and line_d_inactive
+        assert_eq!(lines_a.len(), 3);
 
         let lines_b: Vec<IndicatorLine> = result
             .into_iter()
@@ -121,7 +139,61 @@ mod query {
         assert_eq!(lines_b.len(), 1);
 
         // Check columns are mapped to each line in program_indicator_a
+        // 3 lines x 3 columns (column_a, column_b, column_c_inactive)
         let columns_a_count = lines_a.iter().flat_map(|line| line.columns.iter()).count();
-        assert_eq!(columns_a_count, 4);
+        assert_eq!(columns_a_count, 9);
+    }
+
+    #[actix_rt::test]
+    async fn program_indicator_query_exclude_inactive() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "test_program_indicator_query_exclude_inactive",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let service = service_provider.program_indicator_service;
+
+        let result = service
+            .program_indicators(
+                &connection,
+                Pagination {
+                    limit: 500,
+                    offset: 0,
+                },
+                None,
+                None,
+                false, // exclude inactive
+            )
+            .unwrap();
+        assert_eq!(result.len(), 2);
+
+        let lines_a: Vec<IndicatorLine> = result
+            .clone()
+            .into_iter()
+            .flat_map(|program_indicator| {
+                program_indicator.lines.into_iter().filter_map(|line| {
+                    if line.line.program_indicator_id == *"program_indicator_a" {
+                        Some(line)
+                    } else {
+                        None
+                    }
+                })
+            })
+            .collect();
+
+        // Only active lines: line_a, line_b (not line_d_inactive)
+        assert_eq!(lines_a.len(), 2);
+
+        // Columns are NOT filtered by is_active (all columns are always included).
+        // This is intentional: mSupply historically defaults column is_active to false,
+        // so filtering would break existing data. Only lines are filtered when include_inactive = false.
+        // 2 active lines x 3 columns (column_a, column_b, column_c_inactive) = 6
+        let columns_a_count = lines_a.iter().flat_map(|line| line.columns.iter()).count();
+        assert_eq!(columns_a_count, 6);
+
+        // Verify no inactive lines are present
+        assert!(lines_a.iter().all(|line| line.line.is_active));
     }
 }

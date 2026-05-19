@@ -50,6 +50,7 @@ export const getImportHelpers = (
     warningMessage: '',
     discountPercentage: 0,
     unitsOrderedInOthers: 0,
+    receivedNumberOfUnits: 0,
     numberOfPacks: 0,
   };
   const rowErrors: string[] = [];

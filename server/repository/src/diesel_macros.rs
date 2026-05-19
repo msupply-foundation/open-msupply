@@ -385,6 +385,17 @@ macro_rules! apply_sort_asc_nulls_first {
 /// 2. **View table** definition (with resolved `id` columns for queries)
 /// 3. **Repository `_upsert` method** that translates between resolved IDs and link IDs
 ///
+/// # `treat_none_as_null` Semantics
+///
+/// The generated `_upsert` method always explicitly sets every field value, including `None`
+/// values for `Option<T>` fields. This is equivalent to Diesel's `#[diesel(treat_none_as_null = true)]`
+/// behavior — `None` is written as SQL `NULL`, never skipped.
+///
+/// **Important:** If a database column has a `NOT NULL DEFAULT` constraint, the corresponding
+/// Rust field must NOT be `Option<T>` / `Nullable<...>`. Use the non-optional type instead
+/// (e.g., `f64` / `Double`) and set a matching default in the Rust `Default` impl. Otherwise,
+/// inserting a default-constructed row will attempt to write `NULL` and violate the constraint.
+///
 /// # Entity Linking Pattern
 ///
 /// The pattern hides internal `*_link_id` columns from the public API, exposing only resolved IDs.

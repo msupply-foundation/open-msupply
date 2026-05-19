@@ -78,6 +78,15 @@ impl<'a> ReasonOptionRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = reason_option::table
+            .filter(reason_option::id.eq(lookup_id))
+            .select(reason_option::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn soft_delete(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
         diesel::update(reason_option::table)
             .filter(reason_option::id.eq(reason_option_id))

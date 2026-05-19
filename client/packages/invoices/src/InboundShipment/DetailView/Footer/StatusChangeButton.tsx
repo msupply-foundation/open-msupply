@@ -4,105 +4,49 @@ import {
   useTranslation,
   useNotification,
   InvoiceNodeStatus,
+  InvoiceNodeType,
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
   useDisabledNotificationToast,
-  UserPermission,
-  useAuthContext,
   usePreferences,
 } from '@openmsupply-client/common';
 import {
   isInboundPlaceholderRow,
   getButtonLabel,
   getNextStatusOption,
-  inboundStatuses,
   getPreviousStatus,
   getStatusTranslator,
+  getInboundShipmentType,
 } from '../../../utils';
 import { InboundLineFragment, useInboundShipment } from '../../api';
-
-const getStatusOptions = (
-  currentStatus: InvoiceNodeStatus,
-  getButtonLabel: (status: InvoiceNodeStatus) => string,
-  isManuallyCreated: boolean
-): SplitButtonOption<InvoiceNodeStatus>[] => {
-  // Manual workflows skip Picked and Shipped statuses
-  const statuses = isManuallyCreated
-    ? [
-        InvoiceNodeStatus.New,
-        InvoiceNodeStatus.Delivered,
-        InvoiceNodeStatus.Received,
-        InvoiceNodeStatus.Verified,
-      ]
-    : [
-        InvoiceNodeStatus.New,
-        InvoiceNodeStatus.Picked,
-        InvoiceNodeStatus.Shipped,
-        InvoiceNodeStatus.Delivered,
-        InvoiceNodeStatus.Received,
-        InvoiceNodeStatus.Verified,
-      ];
-
-  const options = statuses.map(status => ({
-    value: status,
-    label: getButtonLabel(status),
-    isDisabled: true,
-  }));
-
-  if (isManuallyCreated) {
-    if (currentStatus === InvoiceNodeStatus.New) {
-      if (options[1]) options[1].isDisabled = false;
-      if (options[2]) options[2].isDisabled = false;
-      if (options[3]) options[3].isDisabled = false;
-    }
-    if (currentStatus === InvoiceNodeStatus.Delivered) {
-      if (options[2]) options[2].isDisabled = false;
-      if (options[3]) options[3].isDisabled = false;
-    }
-    if (currentStatus === InvoiceNodeStatus.Received) {
-      if (options[3]) options[3].isDisabled = false;
-    }
-  } else {
-    if (currentStatus === InvoiceNodeStatus.Shipped) {
-      if (options[3]) options[3].isDisabled = false;
-      if (options[4]) options[4].isDisabled = false;
-      if (options[5]) options[5].isDisabled = false;
-    }
-    if (currentStatus === InvoiceNodeStatus.Delivered) {
-      if (options[4]) options[4].isDisabled = false;
-      if (options[5]) options[5].isDisabled = false;
-    }
-    if (currentStatus === InvoiceNodeStatus.Received) {
-      if (options[5]) options[5].isDisabled = false;
-    }
-  }
-
-  return options;
-};
+import { getStatusOptions, getStatusSequence } from '../../../statuses';
 
 const StatusChangeButtonContent = ({
   data,
   update,
+  hasMutatePermission,
   isStatusChangeDisabled,
+  hasVerifyPermission,
 }: {
   data: NonNullable<ReturnType<typeof useInboundShipment>['query']['data']>;
   update: ReturnType<typeof useInboundShipment>['update']['update'];
+  hasMutatePermission: boolean;
   isStatusChangeDisabled: boolean;
+  hasVerifyPermission: boolean;
 }) => {
   const t = useTranslation();
   const { invoiceStatusOptions } = usePreferences();
   const { success, error } = useNotification();
-  const { userHasPermission } = useAuthContext();
-
-  const { status, onHold, linkedShipment, lines } = data;
-  const isManuallyCreated = !linkedShipment?.id;
+  const { status, onHold, lines } = data;
+  const shipmentType = getInboundShipmentType(data);
 
   const options = useMemo(() => {
     let statusOptions = getStatusOptions(
+      InvoiceNodeType.InboundShipment,
       status,
       getButtonLabel(t),
-      isManuallyCreated
+      { inboundShipmentType: shipmentType }
     );
     if (invoiceStatusOptions) {
       statusOptions = statusOptions.filter(
@@ -110,11 +54,18 @@ const StatusChangeButtonContent = ({
       );
     }
     return statusOptions;
-  }, [status, isManuallyCreated, invoiceStatusOptions, t]);
+  }, [status, shipmentType, invoiceStatusOptions, t]);
 
-  const currentStatus = invoiceStatusOptions?.includes(status)
-    ? status
-    : getPreviousStatus(status, invoiceStatusOptions ?? [], inboundStatuses);
+  const currentStatus =
+    !invoiceStatusOptions || invoiceStatusOptions.includes(status)
+      ? status
+      : getPreviousStatus(
+          status,
+          invoiceStatusOptions,
+          getStatusSequence(InvoiceNodeType.InboundShipment, {
+            inboundShipmentType: shipmentType,
+          })
+        );
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
@@ -157,26 +108,27 @@ const StatusChangeButtonContent = ({
     t('messages.on-hold-inbound')
   );
 
-  const permissionDeniedNotification = useDisabledNotificationToast(
-    t('auth.permission-denied')
-  );
-
   const pendingLinesNotification = useDisabledNotificationToast(
     t('messages.pending-lines')
   );
 
+  const permissionDeniedNotification = useDisabledNotificationToast(
+    t('auth.permission-denied')
+  );
+
   const onVerify = () => {
-    if (userHasPermission(UserPermission.InboundShipmentVerify)) {
-      getConfirmation();
-    } else {
+    if (!hasVerifyPermission) {
       permissionDeniedNotification();
+      return;
     }
+    getConfirmation();
   };
 
   if (!selectedOption) return null;
   if (isStatusChangeDisabled) return null;
 
   const onStatusClick = () => {
+    if (!hasMutatePermission) return permissionDeniedNotification();
     if (!validateEmptyInvoice(lines)) return noLinesNotification();
     if (onHold) return onHoldNotification();
     if (
@@ -230,7 +182,9 @@ export const StatusChangeButton = () => {
   const {
     query: { data, loading },
     update: { update },
+    hasMutatePermission,
     isStatusChangeDisabled,
+    hasVerifyPermission,
   } = useInboundShipment();
 
   if (loading || !data) return null;
@@ -239,7 +193,9 @@ export const StatusChangeButton = () => {
     <StatusChangeButtonContent
       data={data}
       update={update}
+      hasMutatePermission={hasMutatePermission}
       isStatusChangeDisabled={isStatusChangeDisabled}
+      hasVerifyPermission={hasVerifyPermission}
     />
   );
 };

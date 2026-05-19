@@ -2,6 +2,7 @@ pub mod invoice_line_queries;
 pub mod mutations;
 use self::mutations::{inbound_shipment_line, outbound_shipment_line, prescription_line};
 use async_graphql::*;
+use graphql_core::generic_inputs::InboundShipmentType;
 use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
 use graphql_types::types::{DraftStockOutItemData, InvoiceNode};
 use invoice_line_queries::{
@@ -160,7 +161,26 @@ impl InvoiceLineMutations {
         store_id: String,
         input: inbound_shipment_line::line::insert::InsertInput,
     ) -> Result<inbound_shipment_line::line::insert::InsertResponse> {
-        inbound_shipment_line::line::insert::insert(ctx, &store_id, input)
+        inbound_shipment_line::line::insert::insert(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipment,
+        )
+    }
+
+    async fn insert_inbound_shipment_external_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_shipment_line::line::insert::InsertInput,
+    ) -> Result<inbound_shipment_line::line::insert::InsertResponse> {
+        inbound_shipment_line::line::insert::insert(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipmentExternal,
+        )
     }
 
     async fn update_inbound_shipment_line(
@@ -169,7 +189,26 @@ impl InvoiceLineMutations {
         store_id: String,
         input: inbound_shipment_line::line::update::UpdateInput,
     ) -> Result<inbound_shipment_line::line::update::UpdateResponse> {
-        inbound_shipment_line::line::update::update(ctx, &store_id, input)
+        inbound_shipment_line::line::update::update(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipment,
+        )
+    }
+
+    async fn update_inbound_shipment_external_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_shipment_line::line::update::UpdateInput,
+    ) -> Result<inbound_shipment_line::line::update::UpdateResponse> {
+        inbound_shipment_line::line::update::update(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipmentExternal,
+        )
     }
 
     async fn delete_inbound_shipment_line(
@@ -178,7 +217,26 @@ impl InvoiceLineMutations {
         store_id: String,
         input: inbound_shipment_line::line::delete::DeleteInput,
     ) -> Result<inbound_shipment_line::line::delete::DeleteResponse> {
-        inbound_shipment_line::line::delete::delete(ctx, &store_id, input)
+        inbound_shipment_line::line::delete::delete(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipment,
+        )
+    }
+
+    async fn delete_inbound_shipment_external_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_shipment_line::line::delete::DeleteInput,
+    ) -> Result<inbound_shipment_line::line::delete::DeleteResponse> {
+        inbound_shipment_line::line::delete::delete(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipmentExternal,
+        )
     }
 
     async fn insert_inbound_shipment_service_line(
@@ -187,7 +245,26 @@ impl InvoiceLineMutations {
         store_id: String,
         input: inbound_shipment_line::service_line::insert::InsertInput,
     ) -> Result<inbound_shipment_line::service_line::insert::InsertResponse> {
-        inbound_shipment_line::service_line::insert::insert(ctx, &store_id, input)
+        inbound_shipment_line::service_line::insert::insert(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipment,
+        )
+    }
+
+    async fn insert_inbound_shipment_external_service_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_shipment_line::service_line::insert::InsertInput,
+    ) -> Result<inbound_shipment_line::service_line::insert::InsertResponse> {
+        inbound_shipment_line::service_line::insert::insert(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipmentExternal,
+        )
     }
 
     async fn update_inbound_shipment_service_line(
@@ -196,7 +273,26 @@ impl InvoiceLineMutations {
         store_id: String,
         input: inbound_shipment_line::service_line::update::UpdateInput,
     ) -> Result<inbound_shipment_line::service_line::update::UpdateResponse> {
-        inbound_shipment_line::service_line::update::update(ctx, &store_id, input)
+        inbound_shipment_line::service_line::update::update(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipment,
+        )
+    }
+
+    async fn update_inbound_shipment_external_service_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_shipment_line::service_line::update::UpdateInput,
+    ) -> Result<inbound_shipment_line::service_line::update::UpdateResponse> {
+        inbound_shipment_line::service_line::update::update(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipmentExternal,
+        )
     }
 
     async fn delete_inbound_shipment_service_line(
@@ -205,7 +301,26 @@ impl InvoiceLineMutations {
         store_id: String,
         input: inbound_shipment_line::service_line::delete::DeleteInput,
     ) -> Result<inbound_shipment_line::service_line::delete::DeleteResponse> {
-        inbound_shipment_line::service_line::delete::delete(ctx, &store_id, input)
+        inbound_shipment_line::service_line::delete::delete(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipment,
+        )
+    }
+
+    async fn delete_inbound_shipment_external_service_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_shipment_line::service_line::delete::DeleteInput,
+    ) -> Result<inbound_shipment_line::service_line::delete::DeleteResponse> {
+        inbound_shipment_line::service_line::delete::delete(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipmentExternal,
+        )
     }
 
     async fn insert_prescription_line(

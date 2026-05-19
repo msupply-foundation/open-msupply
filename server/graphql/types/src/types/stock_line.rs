@@ -167,6 +167,23 @@ impl StockLineNode {
         Ok(result.map(NameNode::from_domain))
     }
 
+    pub async fn manufacturer(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<NameNode>> {
+        let manufacturer_id = match &self.row().manufacturer_id {
+            None => return Ok(None),
+            Some(manufacturer_id) => manufacturer_id,
+        };
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+        let result = loader
+            .load_one(NameByIdLoaderInput::new(&store_id, manufacturer_id))
+            .await?;
+
+        Ok(result.map(NameNode::from_domain))
+    }
+
     pub async fn campaign(&self, ctx: &Context<'_>) -> Result<Option<CampaignNode>> {
         let loader = ctx.get_loader::<DataLoader<CampaignByIdLoader>>();
 

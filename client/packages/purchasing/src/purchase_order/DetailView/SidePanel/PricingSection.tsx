@@ -39,7 +39,7 @@ export const PricingSection = ({
   disabled,
 }: PricingSectionProps) => {
   const t = useTranslation();
-  const { c } = useCurrency(draft?.currency?.code as Currencies);
+  const { c, options } = useCurrency(draft?.currency?.code as Currencies);
 
   if (!draft) return null;
 
@@ -100,6 +100,8 @@ export const PricingSection = ({
             slotProps={slotProps}
             onChange={handleSupplierDiscountAmountChange}
             disabled={disabled}
+            decimalLimit={options.precision}
+            endAdornment={options.symbol}
           />
         </PanelRow>
         <PanelRow>

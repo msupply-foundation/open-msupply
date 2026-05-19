@@ -14,7 +14,9 @@ use util::uuid::uuid;
 use crate::{
     invoice::{
         customer_return::{UpdateCustomerReturn, UpdateCustomerReturnStatus},
-        inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus},
+        inbound_shipment::{
+            InboundShipmentType, UpdateInboundShipment, UpdateInboundShipmentStatus,
+        },
         outbound_shipment::update::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
         supplier_return::update::{UpdateSupplierReturn, UpdateSupplierReturnStatus},
     },
@@ -92,6 +94,7 @@ async fn invoice_transfers() {
         default_sell_price_per_pack: 20.0,
         ignore_for_orders: false,
         margin: 10.0,
+        default_location_id: None,
     };
 
     // No default price - will use cost price + margin for pricing
@@ -102,6 +105,7 @@ async fn invoice_transfers() {
         default_sell_price_per_pack: 0.0,
         ignore_for_orders: false,
         margin: 10.0,
+        default_location_id: None,
     };
 
     let ServiceTestContext {
@@ -373,6 +377,7 @@ async fn invoice_transfers_with_merged_name() {
         default_sell_price_per_pack: 20.0,
         ignore_for_orders: false,
         margin: 0.0,
+        default_location_id: None,
     };
 
     let item3_store_properties = ItemStoreJoinRow {
@@ -382,6 +387,7 @@ async fn invoice_transfers_with_merged_name() {
         default_sell_price_per_pack: 15.0,
         ignore_for_orders: false,
         margin: 10.0,
+        default_location_id: None,
     };
 
     let ServiceTestContext {
@@ -1170,6 +1176,7 @@ impl InvoiceTransferTester {
                     status: Some(UpdateInboundShipmentStatus::Received),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -1193,6 +1200,7 @@ impl InvoiceTransferTester {
                     status: Some(UpdateInboundShipmentStatus::Verified),
                     ..Default::default()
                 },
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 

@@ -58,9 +58,8 @@ pub trait PurchaseOrderServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         store_id: &str,
         input: UpdatePurchaseOrderInput,
-        user_has_permission: Option<bool>,
     ) -> Result<PurchaseOrderRow, UpdatePurchaseOrderError> {
-        update_purchase_order(ctx, store_id, input, user_has_permission)
+        update_purchase_order(ctx, store_id, input)
     }
 
     fn delete_purchase_order(

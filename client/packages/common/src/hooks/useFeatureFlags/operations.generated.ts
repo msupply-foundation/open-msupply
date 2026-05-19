@@ -34,13 +34,16 @@ export function getSdk(
   return {
     featureFlags(
       variables?: FeatureFlagsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
     ): Promise<FeatureFlagsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<FeatureFlagsQuery>(FeatureFlagsDocument, variables, {
-            ...requestHeaders,
-            ...wrappedRequestHeaders,
+          client.request<FeatureFlagsQuery>({
+            document: FeatureFlagsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
           }),
         'featureFlags',
         'query',

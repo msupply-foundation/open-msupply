@@ -2,12 +2,12 @@ use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
-    loader::StockLineByIdLoader,
+    loader::{StockLineByIdLoader, UserLoader},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 
-use graphql_types::types::{InvoiceNodeType, StockLineNode};
+use graphql_types::types::{InvoiceNodeType, StockLineNode, UserNode};
 use repository::{
     stock_line_ledger::{
         StockLineLedgerFilter, StockLineLedgerRow, StockLineLedgerSort, StockLineLedgerSortField,
@@ -89,6 +89,21 @@ impl LedgerNode {
     }
     pub async fn running_balance(&self) -> &f64 {
         &self.ledger.running_balance
+    }
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
+        let loader = ctx.get_loader::<DataLoader<UserLoader>>();
+
+        let user_id = match &self.ledger.user_id {
+            Some(user_id) => user_id,
+            None => return Ok(None),
+        };
+
+        let result = loader
+            .load_one(user_id.clone())
+            .await?
+            .map(UserNode::from_domain);
+
+        Ok(result)
     }
 
     pub async fn stock_line(&self, ctx: &Context<'_>) -> Result<Option<StockLineNode>> {

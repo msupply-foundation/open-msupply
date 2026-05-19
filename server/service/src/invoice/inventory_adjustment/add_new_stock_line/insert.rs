@@ -34,6 +34,7 @@ pub struct AddNewStockLine {
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
     pub volume_per_pack: Option<f64>,
+    pub manufacturer_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -69,7 +70,7 @@ pub fn add_new_stock_line(
             invoice_row_repo.upsert_one(&invoice)?;
 
             // Add invoice line (and introduce stock line)
-            insert_stock_in_line(ctx, stock_in_line)
+            insert_stock_in_line(ctx, stock_in_line, None)
                 .map_err(AddNewStockLineError::LineInsertError)?;
 
             // Add inventory adjustment reason to the invoice line
@@ -94,6 +95,15 @@ pub fn add_new_stock_line(
                 ctx,
                 ActivityLogType::InventoryAdjustment,
                 Some(verified_invoice.id.to_string()),
+                None,
+                None,
+            )?;
+
+            // Also log against the stock line so it appears in the stock line's Log tab
+            activity_log_entry(
+                ctx,
+                ActivityLogType::InventoryAdjustment,
+                Some(stock_line_id.clone()),
                 None,
                 None,
             )?;

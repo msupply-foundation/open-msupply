@@ -47,6 +47,7 @@ pub fn generate(
             },
             invoice_row: new_invoice.clone(),
             item_row: line.item_row.clone(),
+            invoice_line_stats_row: line.invoice_line_stats_row.clone(),
             location_row_option: line.location_row_option.clone(),
             stock_line_option: line.stock_line_option.clone(),
         })

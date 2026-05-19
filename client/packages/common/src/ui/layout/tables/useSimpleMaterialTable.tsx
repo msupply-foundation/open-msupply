@@ -40,7 +40,9 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
         }}
       >
         <MRT_ShowHideColumnsButton table={table} />
-        {bottomToolbarContent}
+        {bottomToolbarContent && (
+          <Box sx={{ marginLeft: 'auto' }}>{bottomToolbarContent}</Box>
+        )}
       </Box>
     ),
 
@@ -53,6 +55,7 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
       sx: {
         fontSize: '0.85em',
         fontWeight: 400,
+        alignItems: 'flex-end',
         color: getIsPlaceholderRow(row)
           ? 'secondary.light'
           : getIsRestrictedRow(row)

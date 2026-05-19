@@ -14,7 +14,7 @@ use service::{
 };
 use util::{constants::expected_delivery_date_offset, date_now_with_offset};
 
-use crate::mutations::errors::MaxOrdersReachedForPeriod;
+use crate::mutations::errors::{MaxOrdersReachedForPeriod, SupplierNotValid};
 
 #[derive(InputObject)]
 #[graphql(name = "InsertProgramRequestRequisitionInput")]
@@ -35,6 +35,7 @@ pub struct InsertProgramRequestRequisitionInput {
 #[graphql(field(name = "description", ty = "String"))]
 pub enum InsertErrorInterface {
     MaxOrdersReachedForPeriod(MaxOrdersReachedForPeriod),
+    SupplierNotValid(SupplierNotValid),
 }
 
 #[derive(SimpleObject)]
@@ -95,9 +96,11 @@ pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                 MaxOrdersReachedForPeriod,
             ))
         }
+        ServiceError::SupplierNotValid => {
+            return Ok(InsertErrorInterface::SupplierNotValid(SupplierNotValid))
+        }
         // Standard Graphql Errors
         ServiceError::RequisitionAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::SupplierNotValid => BadUserInput(formatted_error),
         ServiceError::ProgramOrderTypeDoesNotExist => BadUserInput(formatted_error),
 
         ServiceError::NewlyCreatedRequisitionDoesNotExist => InternalError(formatted_error),
@@ -212,6 +215,34 @@ mod test {
             "insertProgramRequestRequisition": {
               "error": {
                 "__typename": "MaxOrdersReachedForPeriod"
+              }
+            }
+          }
+        );
+
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(json!({
+              "input": {
+                "id": "id input",
+                "otherPartyId": "other party input",
+                "programOrderTypeId": "program_order_type_id",
+                "periodId": "period_id",
+              },
+              "storeId": "store_a"
+            })),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // SupplierNotValid
+        let test_service = TestService(Box::new(|_| Err(ServiceError::SupplierNotValid)));
+
+        let expected = json!({
+            "insertProgramRequestRequisition": {
+              "error": {
+                "__typename": "SupplierNotValid"
               }
             }
           }

@@ -210,7 +210,7 @@ fn generate(
         finalised_datetime: None,
         linked_requisition_id: None,
         created_from_requisition_id: None,
-        original_customer_id: None,
+        destination_customer_id: None,
     };
 
     let master_list_id = program.master_list_id.clone().unwrap_or_default();
@@ -236,6 +236,7 @@ fn generate(
                 ProgramIndicatorFilter::new()
                     .program_id(EqualFilter::equal_to(program.id.to_string())),
             ),
+            false,
         )?
     } else {
         vec![]
