@@ -12,6 +12,7 @@ use crate::{
     custom_translations::config_custom_translations,
     middleware::central_server_only,
     print::config_print,
+    serve_frontend::config_serve_frontend,
     static_files::config_static_files,
     support::config_support,
     upload_fridge_tag::config_upload_fridge_tag,
@@ -260,27 +261,20 @@ pub async fn start_server(
         }
     }
 
-    // Discovery server uses port + 1, which only makes sense when the main port is
-    // a known/advertised value. Skip when port is 0 (random — e.g. `yarn server`
-    // sets APP__SERVER__PORT=0 so the OS picks a free port, multi-worktree friendly).
-    if settings.server.port != 0 {
-        info!("Starting discovery graphql server",);
-        let closure_service_provider = service_provider.clone();
-        // See attach_discovery_graphql_schema for more details
-        tokio::spawn(
-            HttpServer::new(move || {
-                App::new()
-                    .wrap(Cors::permissive())
-                    .configure(attach_discovery_graphql_schema(
-                        closure_service_provider.clone(),
-                    ))
-            })
-            .bind(settings.server.discovery_address())?
-            .run(),
-        );
-    } else {
-        info!("Skipping discovery graphql server (no fixed port to advertise)");
-    }
+    info!("Starting discovery graphql server",);
+    let closure_service_provider = service_provider.clone();
+    // See attach_discovery_graphql_schema for more details
+    tokio::spawn(
+        HttpServer::new(move || {
+            App::new()
+                .wrap(Cors::permissive())
+                .configure(attach_discovery_graphql_schema(
+                    closure_service_provider.clone(),
+                ))
+        })
+        .bind(settings.server.discovery_address())?
+        .run(),
+    );
 
     // START SERVER
     info!("Initialising http server..",);
@@ -292,7 +286,7 @@ pub async fn start_server(
     let closure_service_provider = service_provider.clone();
     let closure_schema = graphql_schema.clone();
     let mut http_server = HttpServer::new(move || {
-        let app = App::new()
+        App::new()
             .app_data(Data::new(closure_settings.clone()))
             .wrap(logger_middleware())
             .wrap(cors_policy(&closure_settings))
@@ -316,36 +310,16 @@ pub async fn start_server(
             .configure(config_print)
             .configure(config_custom_translations)
             .configure(config_upload)
-            // Needs to be last to capture all unmatched routes
-            .configure(serve_frontend::config_serve_frontend);
-
-        app
+            // Needs to be last to capture all unmatches routes
+            .configure(config_serve_frontend)
     })
     .disable_signals();
 
-    // Bind via std TcpListener so we can discover the OS-assigned port when
-    // settings.server.port is 0 (set in yaml, or overridden via APP__SERVER__PORT=0
-    // for the `yarn server` flow where webpack owns the front-facing port).
-    let bind_address = settings.server.address();
-    let listener = std::net::TcpListener::bind(&bind_address)
-        .unwrap_or_else(|e| panic!("{}", format!("Failed to bind {bind_address}: {e}")));
-    let actual_port = listener.local_addr().unwrap().port();
-    if actual_port != settings.server.port {
-        info!("Server bound to OS-assigned port {actual_port}");
-    }
-    // OSC 2: set the pane/tab title to include the bound URL. Picked up by zellij,
-    // VS Code's terminal, iTerm2, etc. — invisible in the output stream.
-    // `print!` is line-buffered and won't flush on its own; emit + flush explicitly.
-    {
-        use std::io::Write;
-        let mut stdout = std::io::stdout();
-        let _ = write!(stdout, "\x1b]2;server http://localhost:{actual_port}\x07");
-        let _ = stdout.flush();
-    }
-
     http_server = match certificates.config() {
-        Some(config) => http_server.listen_rustls_0_23(listener, config).unwrap(),
-        None => http_server.listen(listener).unwrap(),
+        Some(config) => http_server
+            .bind_rustls_0_23(settings.server.address(), config)
+            .unwrap(),
+        None => http_server.bind(settings.server.address()).unwrap(),
     };
     info!("Initialising http server..done",);
 

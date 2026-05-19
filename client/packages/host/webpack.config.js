@@ -9,12 +9,12 @@ const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
-// Backend address for the proxy. The VSCode `dev: all` task picks a free port
-// and exports OMS_BACKEND_PORT to both the cargo and webpack processes so they
-// agree without any side-channel file. Fallback covers running webpack alone
-// against a server already bound to the conventional 8000.
-const backendTarget = () =>
-  `http://localhost:${process.env.OMS_BACKEND_PORT || 8000}`;
+// Where the dev-server proxies backend routes. The VSCode `dev: all` task picks
+// a free port for cargo and exports OMS_BACKEND_URL pointed at it; the fallback
+// covers running webpack alone against a server on the conventional 8000.
+// Point at a remote backend (e.g. demo) by setting the same env var:
+//   OMS_BACKEND_URL=https://demo-open.msupply.org yarn start
+const backendTarget = process.env.OMS_BACKEND_URL || 'http://localhost:8000';
 
 class DummyWebpackPlugin {
   apply(compiler) {
@@ -85,9 +85,12 @@ module.exports = env => {
             '/coldchain',
             '/custom-translations',
           ],
-          target: env.API_HOST || backendTarget(),
+          target: backendTarget,
           ws: true,
           changeOrigin: true,
+          // Lets auth cookies issued by a remote backend (e.g. demo) attach to
+          // localhost when proxying. No-op for the local-cargo case.
+          cookieDomainRewrite: 'localhost',
         },
       ],
     },
@@ -154,7 +157,6 @@ module.exports = env => {
     plugins: [
       new ReactRefreshWebpackPlugin(),
       new webpack.DefinePlugin({
-        API_HOST: JSON.stringify(env.API_HOST),
         LOCAL_PLUGINS: JSON.stringify(require('./getLocalPlugins.js')),
         LANG_VERSION: Date.now(),
       }),

@@ -6,7 +6,7 @@
       "type": "command",
       "command": "shellCommand.execute",
       "args": {
-        "command": "${workspaceFolder}/scripts/read-frontend-port.sh",
+        "command": "${workspaceFolder}/.vscode/read-frontend-port.sh",
         "useFirstResult": true
       }
     },
@@ -58,7 +58,7 @@
     {
       "label": "dev: open browser",
       "type": "shell",
-      "command": "open \"http://localhost:$(${workspaceFolder}/scripts/read-frontend-port.sh ${input:envName})\"",
+      "command": "open \"http://localhost:$(${workspaceFolder}/.vscode/read-frontend-port.sh ${input:envName})\"",
       "presentation": {
         "panel": "shared",
         "reveal": "silent",
@@ -72,7 +72,7 @@
       "command": "yarn workspace @openmsupply-client/host webpack-cli serve --port ${input:frontendPort}",
       "options": {
         "cwd": "${workspaceFolder}/client",
-        "env": { "OMS_BACKEND_PORT": "${input:backendPort}" }
+        "env": { "OMS_BACKEND_URL": "http://localhost:${input:backendPort}" }
       },
       "presentation": {
         "panel": "new",
@@ -111,10 +111,10 @@
     {
       "label": "dev: frontend (env)",
       "type": "shell",
-      "command": "yarn workspace @openmsupply-client/host webpack-cli serve --port $(${workspaceFolder}/scripts/read-frontend-port.sh ${input:envName})",
+      "command": "yarn workspace @openmsupply-client/host webpack-cli serve --port $(${workspaceFolder}/.vscode/read-frontend-port.sh ${input:envName})",
       "options": {
         "cwd": "${workspaceFolder}/client",
-        "env": { "OMS_BACKEND_PORT": "${input:backendPort}" }
+        "env": { "OMS_BACKEND_URL": "http://localhost:${input:backendPort}" }
       },
       "presentation": {
         "panel": "new",

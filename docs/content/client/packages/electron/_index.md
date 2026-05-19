@@ -56,7 +56,7 @@ Since front end for client is server through remote server, it needs to be rebui
 
 ### Debugging
 
-Similar to [android](../android/README.MD#debugging), to speed up development we can serve both discovery and main web app through webpack server. Running `yarn start-local` and `yarn electron:start-local` from client would allow for hot reload and debugging typescript (can open developer tools with the same shortcut as chrome).
+Similar to [android](../android/README.MD#debugging), to speed up development we can serve both discovery and main web app through webpack server. Running `yarn start` and `yarn electron:start-local` from client would allow for hot reload and debugging typescript (can open developer tools with the same shortcut as chrome).
 
 Please note that when debugging with live reload, connections to a discovered server will always go through to the webpack server (regardless of which server is being selected).
 Also the discovery may not show any servers when hot reloaded and may require stopping and starting electron
@@ -65,7 +65,7 @@ Also the discovery may not show any servers when hot reloaded and may require st
 
 To avoid error being thrown by electron when certificate is self signed, we override certificate error listener and allow connection when:
 
-- In debug mode (`yarn start-local`)
+- In debug mode (`yarn start`)
 - For all connections to selected server where stored SSL fingerprint matches server fingerprint
 
 For above to work we store SSL fingerprint when we first connect to the server and then check that fingerprint on consecutive connections.

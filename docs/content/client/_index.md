@@ -31,11 +31,11 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 
 - Run on development mode:
 
-`yarn start` (using localhost:8000 as API - ensure you have already gone through the `server` setup instructions)
+`yarn start` (proxies API calls to `http://localhost:8000` — ensure you have already gone through the `server` setup instructions)
 
-`yarn start-remote` (using demo server API)
+`OMS_BACKEND_URL=https://demo-open.msupply.org yarn start` (using demo server API)
 
-`yarn start API_HOST='http://localhost:8001'` (using custom API url, see [config.ts for more info](./packages/config/src/config.ts))
+`OMS_BACKEND_URL=http://localhost:8001 yarn start` (using custom backend URL, see [config.ts](./packages/config/src/config.ts) and [webpack.config.js](./packages/host/webpack.config.js))
 
 - Bundle for production:
 
