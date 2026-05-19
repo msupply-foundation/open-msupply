@@ -15,7 +15,8 @@ export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
   const { manageVvmStatusForStock } = usePreferences();
   const { data: vmmStatuses } = useVvmStatusesEnabled();
 
-  const searchFilter = [
+  // Item-level filters apply in both grouped and ungrouped modes.
+  const itemFilters = [
     {
       type: 'text',
       name: t('messages.search'),
@@ -23,10 +24,6 @@ export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
       placeholder: t('messages.search'),
       isDefault: true,
     },
-  ] satisfies FilterDefinition[];
-
-  // Master list filters at the item level, so it applies in both modes.
-  const itemFilters = [
     {
       type: 'text',
       name: t('label.master-list'),
@@ -62,16 +59,16 @@ export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
     },
     ...(manageVvmStatusForStock
       ? [
-          {
-            type: 'enum',
-            name: t('label.vvm-status'),
-            urlParameter: 'vvmStatusId',
-            options: vmmStatuses?.map(status => ({
-              label: status.description ?? '',
-              value: status.id,
-            })),
-          } as FilterDefinition,
-        ]
+        {
+          type: 'enum',
+          name: t('label.vvm-status'),
+          urlParameter: 'vvmStatusId',
+          options: vmmStatuses?.map(status => ({
+            label: status.description ?? '',
+            value: status.id,
+          })),
+        } as FilterDefinition,
+      ]
       : []),
   ] satisfies (FilterDefinition | GroupFilterDefinition)[];
 
@@ -87,9 +84,7 @@ export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
       <Box display="flex" gap={1}>
         <FilterMenu
           filters={
-            isGrouped
-              ? [...searchFilter, ...itemFilters]
-              : [...searchFilter, ...itemFilters, ...stockLineFilters]
+            isGrouped ? itemFilters : [...itemFilters, ...stockLineFilters]
           }
         />
       </Box>
