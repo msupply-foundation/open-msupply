@@ -608,6 +608,12 @@ pub fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permissio
             Permissions::FinaliseSupplierInvoices => {
                 output.insert(PermissionType::InboundShipmentVerify);
             }
+            // Remaining `Permissions` variants are legacy mSupply permissions
+            // with no equivalent in open mSupply's `PermissionType` — e.g. they
+            // gate features that don't exist here (builds, tenders, drug
+            // interaction groups, currencies, etc.), are UI-only toggles, or
+            // are marked deprecated. Anything unmapped is intentionally
+            // ignored rather than granted.
             _ => continue,
         }
     }
