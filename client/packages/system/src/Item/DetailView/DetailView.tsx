@@ -10,6 +10,7 @@ import {
   DetailTabs,
   useIsCentralServerApi,
   InvoiceNodeType,
+  PropertyParentTableEnum,
 } from '@openmsupply-client/common';
 import { ItemLedgerFragment, useItem } from '../api';
 import { Toolbar } from './Toolbar';
@@ -20,6 +21,7 @@ import { ItemVariantsTab } from './Tabs/ItemVariants';
 import { ItemLedgerTab } from './Tabs/ItemLedger';
 import { StoreTab } from './Tabs/Store';
 import { AncillarySupplies } from './Tabs/AncillarySupplies';
+import { PropertySection } from '../../Property';
 
 export const ItemDetailView = () => {
   const t = useTranslation();
@@ -109,6 +111,18 @@ export const ItemDetailView = () => {
     {
       Component: <AncillarySupplies item={data} />,
       value: t('title.ancillary-supplies'),
+    },
+    {
+      Component: (
+        <Box p={2}>
+          <PropertySection
+            table={PropertyParentTableEnum.Item}
+            recordId={data.id}
+            values={data.propertyValues}
+          />
+        </Box>
+      ),
+      value: t('heading.properties'),
     },
   ];
 

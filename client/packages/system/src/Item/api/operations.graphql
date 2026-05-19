@@ -268,6 +268,11 @@ fragment Item on ItemNode {
     defaultSellPricePerPack
     ignoreForOrders
   }
+  # Values from the new property system (KDD option 1). Resolved via
+  # PropertyValuesByItemRecordLoader so list rows are batched.
+  propertyValues {
+    ...PropertyValue
+  }
 }
 
 query itemsWithStockLines(

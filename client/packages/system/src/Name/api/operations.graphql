@@ -58,6 +58,11 @@ fragment Name on NameNode {
     id
     code
   }
+  # Values from the new property system (KDD option 1). Resolved via the
+  # PropertyValuesByNameRecordLoader so list rows are batched.
+  propertyValues {
+    ...PropertyValue
+  }
 }
 
 fragment Property on PropertyNode {

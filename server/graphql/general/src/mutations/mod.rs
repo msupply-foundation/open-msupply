@@ -1,5 +1,8 @@
 pub mod barcode;
 pub mod common;
+pub mod configure_property;
+pub mod delete_property_value;
+pub mod property_errors;
 pub mod display_settings;
 pub mod initialise_site;
 pub mod insert_insurance;
@@ -10,3 +13,4 @@ pub mod sync_settings;
 pub mod update_insurance;
 pub mod update_name_properties;
 pub mod update_user;
+pub mod upsert_property_value;

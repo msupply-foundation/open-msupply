@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { PropertyValueFragmentDoc } from '../../Property/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type NameRowFragment = {
   __typename: 'NameNode';
@@ -54,6 +55,45 @@ export type NameFragment = {
   freightFactor?: number | null;
   store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   currency?: { __typename: 'CurrencyNode'; id: string; code: string } | null;
+  propertyValues: Array<{
+    __typename: 'PropertyValueNode';
+    id: string;
+    recordId: string;
+    parentTable: Types.PropertyParentTableEnum;
+    valueText?: string | null;
+    valueNumber?: number | null;
+    valueReal?: number | null;
+    valueDate?: string | null;
+    property: {
+      __typename: 'PropertyNode';
+      id: string;
+      name: string;
+      type: Types.PropertyTypeEnum;
+      translationKey?: string | null;
+      options: Array<{
+        __typename: 'PropertyOptionNode';
+        id: string;
+        propertyId: string;
+        name: string;
+        translationKey?: string | null;
+        isDeleted: boolean;
+      }>;
+      attachedTo: Array<{
+        __typename: 'PropertyTableNode';
+        id: string;
+        propertyId: string;
+        table: Types.PropertyParentTableEnum;
+      }>;
+    };
+    option?: {
+      __typename: 'PropertyOptionNode';
+      id: string;
+      propertyId: string;
+      name: string;
+      translationKey?: string | null;
+      isDeleted: boolean;
+    } | null;
+  }>;
 };
 
 export type PropertyFragment = {
@@ -162,6 +202,45 @@ export type NameByIdQuery = {
         id: string;
         code: string;
       } | null;
+      propertyValues: Array<{
+        __typename: 'PropertyValueNode';
+        id: string;
+        recordId: string;
+        parentTable: Types.PropertyParentTableEnum;
+        valueText?: string | null;
+        valueNumber?: number | null;
+        valueReal?: number | null;
+        valueDate?: string | null;
+        property: {
+          __typename: 'PropertyNode';
+          id: string;
+          name: string;
+          type: Types.PropertyTypeEnum;
+          translationKey?: string | null;
+          options: Array<{
+            __typename: 'PropertyOptionNode';
+            id: string;
+            propertyId: string;
+            name: string;
+            translationKey?: string | null;
+            isDeleted: boolean;
+          }>;
+          attachedTo: Array<{
+            __typename: 'PropertyTableNode';
+            id: string;
+            propertyId: string;
+            table: Types.PropertyParentTableEnum;
+          }>;
+        };
+        option?: {
+          __typename: 'PropertyOptionNode';
+          id: string;
+          propertyId: string;
+          name: string;
+          translationKey?: string | null;
+          isDeleted: boolean;
+        } | null;
+      }>;
     }>;
   };
 };
@@ -178,14 +257,14 @@ export type NamePropertiesQuery = {
       __typename: 'NamePropertyNode';
       id: string;
       remoteEditable: boolean;
-      property: {
+      property?: {
         __typename: 'PropertyNode';
         id: string;
         key: string;
         name: string;
         allowedValues?: string | null;
         valueType: Types.PropertyNodeValueType;
-      };
+      } | null;
     }>;
   };
 };
@@ -229,6 +308,45 @@ export type UpdateNamePropertiesMutation = {
           id: string;
           code: string;
         } | null;
+        propertyValues: Array<{
+          __typename: 'PropertyValueNode';
+          id: string;
+          recordId: string;
+          parentTable: Types.PropertyParentTableEnum;
+          valueText?: string | null;
+          valueNumber?: number | null;
+          valueReal?: number | null;
+          valueDate?: string | null;
+          property: {
+            __typename: 'PropertyNode';
+            id: string;
+            name: string;
+            type: Types.PropertyTypeEnum;
+            translationKey?: string | null;
+            options: Array<{
+              __typename: 'PropertyOptionNode';
+              id: string;
+              propertyId: string;
+              name: string;
+              translationKey?: string | null;
+              isDeleted: boolean;
+            }>;
+            attachedTo: Array<{
+              __typename: 'PropertyTableNode';
+              id: string;
+              propertyId: string;
+              table: Types.PropertyParentTableEnum;
+            }>;
+          };
+          option?: {
+            __typename: 'PropertyOptionNode';
+            id: string;
+            propertyId: string;
+            name: string;
+            translationKey?: string | null;
+            isDeleted: boolean;
+          } | null;
+        }>;
       }
     | {
         __typename: 'UpdateNamePropertiesError';
@@ -299,7 +417,11 @@ export const NameFragmentDoc = gql`
       id
       code
     }
+    propertyValues {
+      ...PropertyValue
+    }
   }
+  ${PropertyValueFragmentDoc}
 `;
 export const PropertyFragmentDoc = gql`
   fragment Property on PropertyNode {

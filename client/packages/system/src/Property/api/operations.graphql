@@ -1,0 +1,103 @@
+fragment PropertyOption on PropertyOptionNode {
+  __typename
+  id
+  propertyId
+  name
+  translationKey
+  isDeleted
+}
+
+fragment PropertyAttachment on PropertyTableNode {
+  __typename
+  id
+  propertyId
+  table
+}
+
+fragment PropertyDetail on PropertyNode {
+  __typename
+  id
+  name
+  type
+  translationKey
+  options {
+    ...PropertyOption
+  }
+  attachedTo {
+    ...PropertyAttachment
+  }
+}
+
+fragment PropertyValue on PropertyValueNode {
+  __typename
+  id
+  recordId
+  parentTable
+  property {
+    ...PropertyDetail
+  }
+  option {
+    ...PropertyOption
+  }
+  valueText
+  valueNumber
+  valueReal
+  valueDate
+}
+
+# All properties — used by the admin list view.
+query properties {
+  properties {
+    ...PropertyDetail
+  }
+}
+
+# Single property by id — used by the admin detail view.
+query propertyById($id: String!) {
+  propertyById(id: $id) {
+    ...PropertyDetail
+  }
+}
+
+# Fetches every property attached to a given parent table. Used by
+# record-detail views to know which rows to render.
+query propertiesForTable($table: PropertyParentTableEnum!) {
+  propertiesForTable(table: $table) {
+    ...PropertyDetail
+  }
+}
+
+# Values written against a single record. Used by PropertySection on
+# record-detail pages when standalone (not via the parent node resolver).
+query propertyValuesForRecord(
+  $table: PropertyParentTableEnum!
+  $recordId: String!
+) {
+  propertyValues(table: $table, recordId: $recordId) {
+    ...PropertyValue
+  }
+}
+
+mutation configureProperty($input: ConfigurePropertyGqlInput!) {
+  configureProperty(input: $input) {
+    ...PropertyDetail
+  }
+}
+
+mutation upsertPropertyValue($input: UpsertPropertyValueGqlInput!) {
+  upsertPropertyValue(input: $input) {
+    ...PropertyValue
+  }
+}
+
+mutation deletePropertyValue(
+  $table: PropertyParentTableEnum!
+  $recordId: String!
+  $propertyId: String!
+) {
+  deletePropertyValue(
+    table: $table
+    recordId: $recordId
+    propertyId: $propertyId
+  )
+}

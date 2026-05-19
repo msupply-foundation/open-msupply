@@ -1,0 +1,1 @@
+export { PropertyDetailView } from './DetailView';

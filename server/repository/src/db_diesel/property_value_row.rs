@@ -126,6 +126,35 @@ impl<'a> PropertyValueRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
+    // Batch lookup used by graphql DataLoaders.
+    pub fn find_by_records(
+        &self,
+        table_name: &str,
+        record_ids: &[String],
+    ) -> Result<Vec<PropertyValueRow>, RepositoryError> {
+        if record_ids.is_empty() {
+            return Ok(vec![]);
+        }
+        Ok(property_value::table
+            .filter(property_value::table_name.eq(table_name))
+            .filter(property_value::record_id.eq_any(record_ids))
+            .load(self.connection.lock().connection())?)
+    }
+
+    pub fn find_by_record_and_property(
+        &self,
+        table_name: &str,
+        record_id: &str,
+        property_id: &str,
+    ) -> Result<Option<PropertyValueRow>, RepositoryError> {
+        Ok(property_value::table
+            .filter(property_value::table_name.eq(table_name))
+            .filter(property_value::record_id.eq(record_id))
+            .filter(property_value::property_id.eq(property_id))
+            .first(self.connection.lock().connection())
+            .optional()?)
+    }
+
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(property_value::table.filter(property_value::id.eq(id)))
             .execute(self.connection.lock().connection())?;

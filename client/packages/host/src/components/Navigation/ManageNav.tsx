@@ -77,6 +77,13 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
               .build()}
             text={t('reports')}
           />
+          <AppNavLink
+            visible={isCentralServer && isServerAdmin}
+            to={RouteBuilder.create(AppRoute.Manage)
+              .addPart(AppRoute.Properties)
+              .build()}
+            text={t('properties')}
+          />
         </List>
       </Collapse>
     </AppNavSection>

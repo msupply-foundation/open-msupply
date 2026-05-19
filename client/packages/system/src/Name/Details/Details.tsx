@@ -12,8 +12,10 @@ import {
   MuiLink,
   BasicTextInput,
   ObjUtils,
+  PropertyParentTableEnum,
 } from '@openmsupply-client/common';
 import { SUPPLY_LEVEL_KEY } from '@openmsupply-client/host/src/api/hooks/settings/namePropertyKeys';
+import { PropertySection } from '../../Property';
 import { useName } from '../api';
 import { NameRenderer } from '../Components';
 
@@ -31,7 +33,7 @@ export const Details = ({ nameId, type = 'customer' }: DetailsProps) => {
   const { data: properties } = useName.document.properties();
 
   const supplyLevelProperty = properties?.find(
-    p => p.property.key === SUPPLY_LEVEL_KEY
+    p => p.property?.key === SUPPLY_LEVEL_KEY
   )?.property;
 
   if (isLoading) return <BasicSpinner />;
@@ -209,6 +211,17 @@ export const Details = ({ nameId, type = 'customer' }: DetailsProps) => {
               }}
             />
           )}
+        </Box>
+        <Box width="100%" mt={2}>
+          {/* Property values are independently editable even though the rest
+              of this view is read-only — they are user-configurable data.
+              Values come from the Name fragment (resolved via DataLoader) so
+              no extra per-record query is needed. */}
+          <PropertySection
+            table={PropertyParentTableEnum.Name}
+            recordId={nameId}
+            values={data?.propertyValues}
+          />
         </Box>
       </Box>
     </DetailContainer>

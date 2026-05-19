@@ -162,6 +162,22 @@ pub fn get_properties_for_table(
     Ok(PropertyRepository::new(&connection).query_by_filter(filter)?)
 }
 
+// All configured (non-deleted) properties — used by the admin list view.
+pub fn get_all_properties(
+    connection_manager: &StorageConnectionManager,
+) -> Result<Vec<Property>, PropertyServiceError> {
+    let connection = connection_manager.connection()?;
+    Ok(PropertyRepository::new(&connection).query_by_filter(PropertyFilter::new())?)
+}
+
+pub fn get_property(
+    connection_manager: &StorageConnectionManager,
+    id: &str,
+) -> Result<Option<Property>, PropertyServiceError> {
+    let connection = connection_manager.connection()?;
+    Ok(PropertyRowRepository::new(&connection).find_one_by_id(id)?)
+}
+
 pub fn get_property_values(
     connection_manager: &StorageConnectionManager,
     table: PropertyParentTable,
@@ -170,8 +186,38 @@ pub fn get_property_values(
     let connection = connection_manager.connection()?;
     let values =
         PropertyValueRowRepository::new(&connection).find_by_record(table.as_str(), record_id)?;
-    let prop_repo = PropertyRowRepository::new(&connection);
-    let option_repo = PropertyOptionRowRepository::new(&connection);
+    join_values_with_property(&connection, values)
+}
+
+// Batch fetch values for many records of the same parent table. Returned map is
+// keyed by record_id; records with no values are absent from the map.
+pub fn get_property_values_for_records(
+    connection_manager: &StorageConnectionManager,
+    table: PropertyParentTable,
+    record_ids: &[String],
+) -> Result<
+    std::collections::HashMap<String, Vec<PropertyValueWithProperty>>,
+    PropertyServiceError,
+> {
+    let connection = connection_manager.connection()?;
+    let values = PropertyValueRowRepository::new(&connection)
+        .find_by_records(table.as_str(), record_ids)?;
+    let joined = join_values_with_property(&connection, values)?;
+
+    let mut map: std::collections::HashMap<String, Vec<PropertyValueWithProperty>> =
+        std::collections::HashMap::new();
+    for v in joined {
+        map.entry(v.value.record_id.clone()).or_default().push(v);
+    }
+    Ok(map)
+}
+
+fn join_values_with_property(
+    connection: &StorageConnection,
+    values: Vec<PropertyValueRow>,
+) -> Result<Vec<PropertyValueWithProperty>, PropertyServiceError> {
+    let prop_repo = PropertyRowRepository::new(connection);
+    let option_repo = PropertyOptionRowRepository::new(connection);
 
     let mut result = Vec::with_capacity(values.len());
     for value in values {
@@ -189,6 +235,25 @@ pub fn get_property_values(
         });
     }
     Ok(result)
+}
+
+// True deletion (removes the row entirely). Returns whether a row existed.
+pub fn delete_property_value(
+    connection_manager: &StorageConnectionManager,
+    table: PropertyParentTable,
+    record_id: &str,
+    property_id: &str,
+) -> Result<bool, PropertyServiceError> {
+    let connection = connection_manager.connection()?;
+    let existing = PropertyValueRowRepository::new(&connection)
+        .find_by_record_and_property(table.as_str(), record_id, property_id)?;
+    match existing {
+        Some(row) => {
+            PropertyValueRowRepository::new(&connection).delete(&row.id)?;
+            Ok(true)
+        }
+        None => Ok(false),
+    }
 }
 
 pub fn upsert_property_value(

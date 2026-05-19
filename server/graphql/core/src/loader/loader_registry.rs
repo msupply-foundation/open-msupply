@@ -604,5 +604,18 @@ pub async fn get_loaders(
         tokio::spawn,
     ));
 
+    loaders.insert(DataLoader::new(
+        PropertyValuesByNameRecordLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        PropertyValuesByItemRecordLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    ));
+
     loaders
 }

@@ -1506,6 +1506,21 @@ export type ConfigureNamePropertyInput = {
   valueType: PropertyNodeValueType;
 };
 
+export type ConfigurePropertyGqlInput = {
+  attachedTo: Array<PropertyAttachmentGqlInput>;
+  id: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  options: Array<ConfigurePropertyOptionGqlInput>;
+  translationKey?: InputMaybe<Scalars['String']['input']>;
+  type: PropertyTypeEnum;
+};
+
+export type ConfigurePropertyOptionGqlInput = {
+  id: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  translationKey?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type ConnectionError = CentralPatientSearchErrorInterface &
   LinkPatientPatientToStoreErrorInterface &
   UpdateUserErrorInterface & {
@@ -4410,6 +4425,7 @@ export type InvoiceFilterInput = {
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
   isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
   linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
+  linkedOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
   nameId?: InputMaybe<EqualFilterStringInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
@@ -4901,6 +4917,7 @@ export type ItemNode = {
   name: Scalars['String']['output'];
   outerPackSize: Scalars['Int']['output'];
   programs?: Maybe<Array<ProgramNode>>;
+  propertyValues: Array<PropertyValueNode>;
   restrictedLocationType?: Maybe<LocationTypeNode>;
   restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   stats: ItemStatsNode;
@@ -5445,6 +5462,8 @@ export type Mutations = {
   batchResponseRequisition: BatchResponseRequisitionResponse;
   batchStocktake: BatchStocktakeResponse;
   centralServer: CentralServerMutationNode;
+  /** Create or update a property (KDD option 1) — central admin only. */
+  configureProperty: PropertyNode;
   createInventoryAdjustment: CreateInventoryAdjustmentResponse;
   /**
    * Create shipment for response requisition
@@ -5468,6 +5487,8 @@ export type Mutations = {
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
+  /** Clear a property's value on one record. Returns whether a row existed. */
+  deletePropertyValue: Scalars['Boolean']['output'];
   deletePurchaseOrder: DeletePurchaseOrderResponse;
   deletePurchaseOrderLines: Array<DeletePurchaseOrderLineResponseWithId>;
   deleteRequestRequisition: DeleteRequestRequisitionResponse;
@@ -5599,6 +5620,8 @@ export type Mutations = {
   updateUser: UpdateUserResponse;
   updateVaccination: UpdateVaccinationResponse;
   updateVvmStatusLog: UpdateVvmStatusResponse;
+  /** Write a typed value against one property on one record. */
+  upsertPropertyValue: PropertyValueNode;
   /** Set requested for each line in request requisition to calculated */
   useSuggestedQuantity: UseSuggestedQuantityResponse;
 };
@@ -5666,6 +5689,10 @@ export type MutationsBatchResponseRequisitionArgs = {
 export type MutationsBatchStocktakeArgs = {
   input: BatchStocktakeInput;
   storeId: Scalars['String']['input'];
+};
+
+export type MutationsConfigurePropertyArgs = {
+  input: ConfigurePropertyGqlInput;
 };
 
 export type MutationsCreateInventoryAdjustmentArgs = {
@@ -5751,6 +5778,12 @@ export type MutationsDeletePrescriptionArgs = {
 export type MutationsDeletePrescriptionLineArgs = {
   input: DeletePrescriptionLineInput;
   storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeletePropertyValueArgs = {
+  propertyId: Scalars['String']['input'];
+  recordId: Scalars['String']['input'];
+  table: PropertyParentTableEnum;
 };
 
 export type MutationsDeletePurchaseOrderArgs = {
@@ -6309,6 +6342,10 @@ export type MutationsUpdateVvmStatusLogArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsUpsertPropertyValueArgs = {
+  input: UpsertPropertyValueGqlInput;
+};
+
 export type MutationsUseSuggestedQuantityArgs = {
   input: UseSuggestedQuantityInput;
   storeId: Scalars['String']['input'];
@@ -6390,6 +6427,7 @@ export type NameNode = {
   phone?: Maybe<Scalars['String']['output']>;
   /** Returns a JSON string of the name properties e.g {"property_key": "value"} */
   properties: Scalars['String']['output'];
+  propertyValues: Array<PropertyValueNode>;
   store?: Maybe<StoreNode>;
   type: NameNodeType;
   website?: Maybe<Scalars['String']['output']>;
@@ -6411,7 +6449,7 @@ export type NamePropertyConnector = {
 export type NamePropertyNode = {
   __typename: 'NamePropertyNode';
   id: Scalars['String']['output'];
-  property: PropertyNode;
+  property?: Maybe<PropertyNode>;
   remoteEditable: Scalars['Boolean']['output'];
 };
 
@@ -7330,18 +7368,21 @@ export type ProgramSortInput = {
 
 export type ProgramsResponse = ProgramConnector;
 
+export type PropertyAttachmentGqlInput = {
+  id: Scalars['String']['input'];
+  table: PropertyParentTableEnum;
+};
+
 export type PropertyNode = {
   __typename: 'PropertyNode';
-  /**
-   * If `valueType` is `String`, this field can contain a comma-separated
-   * list of allowed values, essentially defining an enum.
-   * If `valueType` is Integer or Float, this field will include the
-   * word `negative` if negative values are allowed.
-   */
   allowedValues?: Maybe<Scalars['String']['output']>;
+  attachedTo: Array<PropertyTableNode>;
   id: Scalars['String']['output'];
   key: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  options: Array<PropertyOptionNode>;
+  translationKey?: Maybe<Scalars['String']['output']>;
+  type: PropertyTypeEnum;
   valueType: PropertyNodeValueType;
 };
 
@@ -7352,6 +7393,86 @@ export enum PropertyNodeValueType {
   Integer = 'INTEGER',
   String = 'STRING',
 }
+
+export type PropertyOptionNode = {
+  __typename: 'PropertyOptionNode';
+  id: Scalars['String']['output'];
+  isDeleted: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  propertyId: Scalars['String']['output'];
+  translationKey?: Maybe<Scalars['String']['output']>;
+};
+
+export enum PropertyParentTableEnum {
+  InvoiceLine = 'INVOICE_LINE',
+  Item = 'ITEM',
+  Name = 'NAME',
+}
+
+export type PropertyTableNode = {
+  __typename: 'PropertyTableNode';
+  id: Scalars['String']['output'];
+  propertyId: Scalars['String']['output'];
+  table: PropertyParentTableEnum;
+};
+
+export enum PropertyTypeEnum {
+  Date = 'DATE',
+  Number = 'NUMBER',
+  Option = 'OPTION',
+  Real = 'REAL',
+  Text = 'TEXT',
+}
+
+export type PropertyValueGqlInput =
+  | {
+      date: Scalars['NaiveDate']['input'];
+      number?: never;
+      optionId?: never;
+      real?: never;
+      text?: never;
+    }
+  | {
+      date?: never;
+      number: Scalars['Int']['input'];
+      optionId?: never;
+      real?: never;
+      text?: never;
+    }
+  | {
+      date?: never;
+      number?: never;
+      optionId: Scalars['String']['input'];
+      real?: never;
+      text?: never;
+    }
+  | {
+      date?: never;
+      number?: never;
+      optionId?: never;
+      real: Scalars['Float']['input'];
+      text?: never;
+    }
+  | {
+      date?: never;
+      number?: never;
+      optionId?: never;
+      real?: never;
+      text: Scalars['String']['input'];
+    };
+
+export type PropertyValueNode = {
+  __typename: 'PropertyValueNode';
+  id: Scalars['String']['output'];
+  option?: Maybe<PropertyOptionNode>;
+  parentTable: PropertyParentTableEnum;
+  property: PropertyNode;
+  recordId: Scalars['String']['output'];
+  valueDate?: Maybe<Scalars['NaiveDate']['output']>;
+  valueNumber?: Maybe<Scalars['Int']['output']>;
+  valueReal?: Maybe<Scalars['Float']['output']>;
+  valueText?: Maybe<Scalars['String']['output']>;
+};
 
 export type PurchaseOrderConnector = {
   __typename: 'PurchaseOrderConnector';
@@ -7668,6 +7789,11 @@ export type Queries = {
   me: UserResponse;
   /** Available without authorisation in all states (Operational, Initialisation and MigratingDatabase) */
   migrationStatus: MigrationStatusNode;
+  /**
+   * Legacy name-property query — kept as a no-op stub returning an empty
+   * connector so the host UI keeps compiling until it migrates to the new
+   * property system. Do not use for new work.
+   */
   nameProperties: NamePropertyResponse;
   /** Query omSupply "name" entries */
   names: NamesResponse;
@@ -7689,6 +7815,14 @@ export type Queries = {
   programIndicators: ProgramIndicatorResponse;
   programRequisitionSettingsByCustomer: CustomerProgramRequisitionSettingNode;
   programs: ProgramsResponse;
+  /** All properties (KDD option 1). Used by the central-admin list view. */
+  properties: Array<PropertyNode>;
+  /** Properties (KDD option 1) attached to a given parent table. */
+  propertiesForTable: Array<PropertyNode>;
+  /** One property by id (admin detail view). */
+  propertyById?: Maybe<PropertyNode>;
+  /** All property values written for one record of a given parent table. */
+  propertyValues: Array<PropertyValueNode>;
   purchaseOrder: PurchaseOrderResponse;
   purchaseOrderLine: PurchaseOrderLineResponse;
   purchaseOrderLines: PurchaseOrderLinesResponse;
@@ -8252,6 +8386,19 @@ export type QueriesProgramsArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<ProgramSortInput>;
   storeId: Scalars['String']['input'];
+};
+
+export type QueriesPropertiesForTableArgs = {
+  table: PropertyParentTableEnum;
+};
+
+export type QueriesPropertyByIdArgs = {
+  id: Scalars['String']['input'];
+};
+
+export type QueriesPropertyValuesArgs = {
+  recordId: Scalars['String']['input'];
+  table: PropertyParentTableEnum;
 };
 
 export type QueriesPurchaseOrderArgs = {
@@ -11462,6 +11609,14 @@ export type UpsertPreferencesInput = {
     Array<WarnWhenMissingRecentStocktakeInput>
   >;
   warningForExcessRequest?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type UpsertPropertyValueGqlInput = {
+  id: Scalars['String']['input'];
+  propertyId: Scalars['String']['input'];
+  recordId: Scalars['String']['input'];
+  table: PropertyParentTableEnum;
+  value: PropertyValueGqlInput;
 };
 
 export type UpsertVaccineCourseDoseInput = {

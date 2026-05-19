@@ -1,10 +1,12 @@
 use super::{patient::GenderTypeNode, StoreNode};
-use crate::types::CurrencyNode;
+use crate::types::{CurrencyNode, PropertyValueNode};
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::{
-    loader::CurrencyByIdLoader, simple_generic_errors::NodeError,
-    standard_graphql_error::StandardGraphqlError, ContextExt,
+    loader::{CurrencyByIdLoader, PropertyValuesByNameRecordLoader},
+    simple_generic_errors::NodeError,
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
 };
 use repository::{Name, NameRow, NameRowType, NameType, Store, StoreRow};
 use serde::Serialize;
@@ -174,6 +176,14 @@ impl NameNode {
             .map(CurrencyNode::from_domain);
 
         Ok(result)
+    }
+
+    // Values from the new four-table property system (KDD option 1). Distinct
+    // from `properties`, which is a JSON string from the legacy column.
+    pub async fn property_values(&self, ctx: &Context<'_>) -> Result<Vec<PropertyValueNode>> {
+        let loader = ctx.get_loader::<DataLoader<PropertyValuesByNameRecordLoader>>();
+        let values = loader.load_one(self.row().id.clone()).await?.unwrap_or_default();
+        Ok(PropertyValueNode::from_vec(values))
     }
 }
 
