@@ -8,9 +8,10 @@ use crate::{
         apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
     },
     name_oms_fields_alias,
+    property_value_row::property_value,
     repository_error::RepositoryError,
-    EqualFilter, NameOmsFieldsRow, NameRowType, Pagination, Sort, StoreFilter, StoreRepository,
-    StringFilter,
+    EqualFilter, NameOmsFieldsRow, NameRowType, Pagination, PropertyValueFilter,
+    PropertyValueRepository, Sort, StoreFilter, StoreRepository, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -56,6 +57,11 @@ pub struct NameFilter {
 
     pub code_or_name: Option<StringFilter>,
     pub store: Option<StoreFilter>,
+
+    /// Filter by relational property values. Each entry becomes its own
+    /// `record_id IN (SELECT record_id FROM property_value WHERE …)`
+    /// sub-query, so multiple entries AND together.
+    pub property: Option<Vec<PropertyValueFilter>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -193,6 +199,7 @@ impl<'a> NameRepository<'a> {
                 code_or_name,
                 supplying_store_id,
                 store,
+                property,
             } = f;
 
             // or filter need to be applied before and filters
@@ -253,6 +260,19 @@ impl<'a> NameRepository<'a> {
             if store.is_some() {
                 let store_ids = StoreRepository::create_filtered_query(store).select(store::id);
                 query = query.filter(store::id.eq_any(store_ids));
+            }
+
+            // Each property filter becomes its own EXISTS-style sub-query keyed on
+            // `table_name = "name"`. Multiple entries AND together so a name must
+            // have a matching `property_value` row for *every* condition.
+            if let Some(property_filters) = property {
+                for cond in property_filters {
+                    let sub = PropertyValueRepository::create_filtered_query(Some(
+                        cond.table_name(EqualFilter::equal_to("name".to_string())),
+                    ))
+                    .select(property_value::record_id);
+                    query = query.filter(name::id.eq_any(sub));
+                }
             }
         };
 
@@ -364,6 +384,11 @@ impl NameFilter {
 
     pub fn store(mut self, filter: StoreFilter) -> Self {
         self.store = Some(filter);
+        self
+    }
+
+    pub fn property(mut self, filters: Vec<PropertyValueFilter>) -> Self {
+        self.property = Some(filters);
         self
     }
 }
@@ -757,5 +782,147 @@ mod tests {
             )
             .unwrap();
         assert_eq!(result.first().unwrap().name_row.code, "code3");
+    }
+
+    #[actix_rt::test]
+    async fn test_name_query_filter_by_property() {
+        use crate::{
+            mock::{
+                mock_name_a, mock_name_b, mock_name_c, mock_property_date, mock_property_number,
+                mock_property_option, mock_property_option_a, mock_property_option_b,
+                mock_property_real, mock_property_text,
+            },
+            DateFilter, EqualFilter, PropertyValueFilter, PropertyValueRow,
+            PropertyValueRowRepository, StringFilter,
+        };
+        use chrono::NaiveDate;
+
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_name_query_filter_by_property",
+            MockDataInserts::none().names().properties(),
+        )
+        .await;
+        let repo = NameRepository::new(&connection);
+        let store_id = "any_store";
+
+        // value_text: like — only name_a's "abc" matches.
+        let result = repo
+            .query_by_filter(
+                store_id,
+                NameFilter::new().property(vec![PropertyValueFilter::new()
+                    .property_id(EqualFilter::equal_to(mock_property_text().id))
+                    .value_text(StringFilter::like("ab"))]),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].name_row.id, mock_name_a().id);
+
+        // value_option_id: equal_to — only name_b is attached to option_a.
+        let result = repo
+            .query_by_filter(
+                store_id,
+                NameFilter::new().property(vec![PropertyValueFilter::new()
+                    .property_id(EqualFilter::equal_to(mock_property_option().id))
+                    .value_option_id(EqualFilter::equal_to(mock_property_option_a().id))]),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].name_row.id, mock_name_b().id);
+
+        // value_option_id: equal_any across both options — both name_b and name_c match.
+        let result = repo
+            .query_by_filter(
+                store_id,
+                NameFilter::new().property(vec![PropertyValueFilter::new()
+                    .property_id(EqualFilter::equal_to(mock_property_option().id))
+                    .value_option_id(EqualFilter::equal_any(vec![
+                        mock_property_option_a().id,
+                        mock_property_option_b().id,
+                    ]))]),
+            )
+            .unwrap();
+        let ids: Vec<_> = result.into_iter().map(|n| n.name_row.id).collect();
+        assert!(ids.contains(&mock_name_b().id));
+        assert!(ids.contains(&mock_name_c().id));
+        assert_eq!(ids.len(), 2);
+
+        // value_number / value_real / value_date — each pinpoints name_a.
+        for filter in [
+            PropertyValueFilter::new()
+                .property_id(EqualFilter::equal_to(mock_property_number().id))
+                .value_number(EqualFilter::equal_to(42)),
+            PropertyValueFilter::new()
+                .property_id(EqualFilter::equal_to(mock_property_real().id))
+                .value_real(EqualFilter::equal_to(1.5)),
+            PropertyValueFilter::new()
+                .property_id(EqualFilter::equal_to(mock_property_date().id))
+                .value_date(DateFilter::equal_to(
+                    NaiveDate::from_ymd_opt(2024, 1, 15).unwrap(),
+                )),
+        ] {
+            let result = repo
+                .query_by_filter(store_id, NameFilter::new().property(vec![filter]))
+                .unwrap();
+            assert_eq!(result.len(), 1);
+            assert_eq!(result[0].name_row.id, mock_name_a().id);
+        }
+
+        // AND across multiple property conditions — only name_b has BOTH
+        // text="xyz" and option=option_a.
+        let result = repo
+            .query_by_filter(
+                store_id,
+                NameFilter::new().property(vec![
+                    PropertyValueFilter::new()
+                        .property_id(EqualFilter::equal_to(mock_property_text().id))
+                        .value_text(StringFilter::equal_to("xyz")),
+                    PropertyValueFilter::new()
+                        .property_id(EqualFilter::equal_to(mock_property_option().id))
+                        .value_option_id(EqualFilter::equal_to(mock_property_option_a().id)),
+                ]),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].name_row.id, mock_name_b().id);
+
+        // No row matches both text="abc" AND option=option_a — name_a has the
+        // text but no option, name_b has the option but a different text.
+        let result = repo
+            .query_by_filter(
+                store_id,
+                NameFilter::new().property(vec![
+                    PropertyValueFilter::new()
+                        .property_id(EqualFilter::equal_to(mock_property_text().id))
+                        .value_text(StringFilter::equal_to("abc")),
+                    PropertyValueFilter::new()
+                        .property_id(EqualFilter::equal_to(mock_property_option().id))
+                        .value_option_id(EqualFilter::equal_to(mock_property_option_a().id)),
+                ]),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 0);
+
+        // table_name guard: an `item` row with the same value_text must NOT
+        // surface in name results (proves the sub-query pins table_name="name").
+        PropertyValueRowRepository::new(&connection)
+            .upsert_one(&PropertyValueRow {
+                id: "item_property_value_decoy".to_string(),
+                table_name: "item".to_string(),
+                record_id: "item_a".to_string(),
+                property_id: mock_property_text().id,
+                value_text: Some("abc".to_string()),
+                ..Default::default()
+            })
+            .unwrap();
+        let result = repo
+            .query_by_filter(
+                store_id,
+                NameFilter::new().property(vec![PropertyValueFilter::new()
+                    .property_id(EqualFilter::equal_to(mock_property_text().id))
+                    .value_text(StringFilter::equal_to("abc"))]),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].name_row.id, mock_name_a().id);
     }
 }

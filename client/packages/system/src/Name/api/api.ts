@@ -10,6 +10,7 @@ import {
   Sdk,
   NameRowFragment,
   FacilityNameRowFragment,
+  NamePropertyFragment,
   UpdateNamePropertiesMutation,
 } from './operations.generated';
 
@@ -173,7 +174,10 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
       first,
       offset,
       sortBy,
-    }: ListParams): Promise<{
+      filter,
+    }: ListParams & {
+      filter?: Pick<NameFilterInput, 'property'> | null;
+    }): Promise<{
       nodes: NameRowFragment[];
       totalCount: number;
     }> => {
@@ -191,6 +195,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         filter: {
           [type === 'customer' ? 'isCustomer' : 'isSupplier']: true,
           type: { equalAny: [NameNodeType.Facility, NameNodeType.Store] },
+          ...filter,
         },
       });
 
@@ -203,6 +208,12 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         return result?.nameProperties?.nodes;
       }
       throw new Error('Unable to fetch properties');
+    },
+    // KDD option 1: definitions (id, type, options) for properties attached to
+    // the `name` table. Powers the property filter dropdowns on the list view.
+    propertyDefinitions: async (): Promise<NamePropertyFragment[]> => {
+      const result = await sdk.namePropertyDefinitions();
+      return result?.propertiesForTable ?? [];
     },
   },
   updateNameProperties: async (

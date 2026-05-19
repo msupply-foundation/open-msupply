@@ -189,6 +189,7 @@ mod graphql {
                 code_or_name: _,
                 supplying_store_id: _,
                 store: _,
+                property: _,
             } = filter.unwrap();
 
             assert_eq!(

@@ -46,6 +46,25 @@ export type StocktakeLineFragment = {
     isOnHold: boolean;
     name: string;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    propertyValues: Array<{
+      __typename: 'PropertyValueNode';
+      id: string;
+      valueText?: string | null;
+      valueNumber?: number | null;
+      valueReal?: number | null;
+      valueDate?: string | null;
+      property: {
+        __typename: 'PropertyNode';
+        id: string;
+        name: string;
+        type: Types.PropertyTypeEnum;
+      };
+      option?: {
+        __typename: 'PropertyOptionNode';
+        id: string;
+        name: string;
+      } | null;
+    }>;
   } | null;
   location?: {
     __typename: 'LocationNode';
@@ -153,6 +172,25 @@ export type StocktakeFragment = {
         isOnHold: boolean;
         name: string;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        propertyValues: Array<{
+          __typename: 'PropertyValueNode';
+          id: string;
+          valueText?: string | null;
+          valueNumber?: number | null;
+          valueReal?: number | null;
+          valueDate?: string | null;
+          property: {
+            __typename: 'PropertyNode';
+            id: string;
+            name: string;
+            type: Types.PropertyTypeEnum;
+          };
+          option?: {
+            __typename: 'PropertyOptionNode';
+            id: string;
+            name: string;
+          } | null;
+        }>;
       } | null;
       location?: {
         __typename: 'LocationNode';
@@ -308,6 +346,25 @@ export type StocktakeQuery = {
                 id: string;
                 code: string;
               } | null;
+              propertyValues: Array<{
+                __typename: 'PropertyValueNode';
+                id: string;
+                valueText?: string | null;
+                valueNumber?: number | null;
+                valueReal?: number | null;
+                valueDate?: string | null;
+                property: {
+                  __typename: 'PropertyNode';
+                  id: string;
+                  name: string;
+                  type: Types.PropertyTypeEnum;
+                };
+                option?: {
+                  __typename: 'PropertyOptionNode';
+                  id: string;
+                  name: string;
+                } | null;
+              }>;
             } | null;
             location?: {
               __typename: 'LocationNode';
@@ -439,6 +496,25 @@ export type StocktakeByNumberQuery = {
                 id: string;
                 code: string;
               } | null;
+              propertyValues: Array<{
+                __typename: 'PropertyValueNode';
+                id: string;
+                valueText?: string | null;
+                valueNumber?: number | null;
+                valueReal?: number | null;
+                valueDate?: string | null;
+                property: {
+                  __typename: 'PropertyNode';
+                  id: string;
+                  name: string;
+                  type: Types.PropertyTypeEnum;
+                };
+                option?: {
+                  __typename: 'PropertyOptionNode';
+                  id: string;
+                  name: string;
+                } | null;
+              }>;
             } | null;
             location?: {
               __typename: 'LocationNode';
@@ -551,6 +627,25 @@ export type StocktakeLinesQuery = {
         isOnHold: boolean;
         name: string;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        propertyValues: Array<{
+          __typename: 'PropertyValueNode';
+          id: string;
+          valueText?: string | null;
+          valueNumber?: number | null;
+          valueReal?: number | null;
+          valueDate?: string | null;
+          property: {
+            __typename: 'PropertyNode';
+            id: string;
+            name: string;
+            type: Types.PropertyTypeEnum;
+          };
+          option?: {
+            __typename: 'PropertyOptionNode';
+            id: string;
+            name: string;
+          } | null;
+        }>;
       } | null;
       location?: {
         __typename: 'LocationNode';

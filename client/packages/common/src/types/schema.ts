@@ -6388,6 +6388,11 @@ export type NameFilterInput = {
   /** Filter by name */
   name?: InputMaybe<StringFilterInput>;
   phone?: InputMaybe<StringFilterInput>;
+  /**
+   * Filter by relational property values. Multiple entries AND together —
+   * a name must satisfy every condition to be returned.
+   */
+  property?: InputMaybe<Array<PropertyValueFilterInput>>;
   /** Code of the store if store is linked to name */
   storeCode?: InputMaybe<StringFilterInput>;
   supplyingStoreId?: InputMaybe<EqualFilterStringInput>;
@@ -7423,6 +7428,19 @@ export enum PropertyTypeEnum {
   Real = 'REAL',
   Text = 'TEXT',
 }
+
+export type PropertyValueFilterInput = {
+  /**
+   * Anchors the condition to a single property definition. Required —
+   * without it the condition would match across unrelated properties.
+   */
+  propertyId: EqualFilterStringInput;
+  valueDate?: InputMaybe<DateFilterInput>;
+  valueNumber?: InputMaybe<EqualFilterNumberInput>;
+  valueOptionId?: InputMaybe<EqualFilterStringInput>;
+  valueReal?: InputMaybe<EqualFilterBigFloatingNumberInput>;
+  valueText?: InputMaybe<StringFilterInput>;
+};
 
 export type PropertyValueGqlInput =
   | {

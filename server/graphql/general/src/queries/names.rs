@@ -1,14 +1,17 @@
 use async_graphql::{Context, Enum, InputObject, Result, SimpleObject, Union};
 use graphql_core::{
-    generic_filters::{EqualFilterStringInput, StringFilterInput},
+    generic_filters::{
+        DateFilterInput, EqualFilterBigFloatingNumberInput, EqualFilterNumberInput,
+        EqualFilterStringInput, StringFilterInput,
+    },
     map_filter,
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::{NameNode, NameNodeType};
-use repository::{EqualFilter, NameType, PaginationOption, StringFilter};
-use repository::{Name, NameFilter, NameSort, NameSortField};
+use repository::{DateFilter, EqualFilter, NameType, PaginationOption, StringFilter};
+use repository::{Name, NameFilter, NameSort, NameSortField, PropertyValueFilter};
 
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -69,6 +72,46 @@ pub struct NameFilterInput {
     pub code_or_name: Option<StringFilterInput>,
 
     pub supplying_store_id: Option<EqualFilterStringInput>,
+
+    /// Filter by relational property values. Multiple entries AND together —
+    /// a name must satisfy every condition to be returned.
+    pub property: Option<Vec<PropertyValueFilterInput>>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct PropertyValueFilterInput {
+    /// Anchors the condition to a single property definition. Required —
+    /// without it the condition would match across unrelated properties.
+    pub property_id: EqualFilterStringInput,
+    pub value_text: Option<StringFilterInput>,
+    pub value_option_id: Option<EqualFilterStringInput>,
+    pub value_number: Option<EqualFilterNumberInput>,
+    pub value_real: Option<EqualFilterBigFloatingNumberInput>,
+    pub value_date: Option<DateFilterInput>,
+}
+
+impl From<PropertyValueFilterInput> for PropertyValueFilter {
+    fn from(f: PropertyValueFilterInput) -> Self {
+        let PropertyValueFilterInput {
+            property_id,
+            value_text,
+            value_option_id,
+            value_number,
+            value_real,
+            value_date,
+        } = f;
+        PropertyValueFilter {
+            id: None,
+            table_name: None,
+            record_id: None,
+            property_id: Some(EqualFilter::from(property_id)),
+            value_text: value_text.map(StringFilter::from),
+            value_option_id: value_option_id.map(EqualFilter::from),
+            value_number: value_number.map(EqualFilter::from),
+            value_real: value_real.map(EqualFilter::from),
+            value_date: value_date.map(DateFilter::from),
+        }
+    }
 }
 
 #[derive(SimpleObject)]
@@ -146,6 +189,7 @@ impl NameFilterInput {
             email,
             code_or_name,
             supplying_store_id,
+            property,
         } = self;
 
         NameFilter {
@@ -169,6 +213,8 @@ impl NameFilterInput {
             email: email.map(StringFilter::from),
             supplying_store_id: supplying_store_id.map(EqualFilter::from),
             store: None,
+            property: property
+                .map(|filters| filters.into_iter().map(PropertyValueFilter::from).collect()),
         }
     }
 }

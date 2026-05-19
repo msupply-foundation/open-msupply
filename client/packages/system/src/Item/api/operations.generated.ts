@@ -276,6 +276,25 @@ export type ItemVariantFragment = {
     isOnHold: boolean;
     name: string;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    propertyValues: Array<{
+      __typename: 'PropertyValueNode';
+      id: string;
+      valueText?: string | null;
+      valueNumber?: number | null;
+      valueReal?: number | null;
+      valueDate?: string | null;
+      property: {
+        __typename: 'PropertyNode';
+        id: string;
+        name: string;
+        type: Types.PropertyTypeEnum;
+      };
+      option?: {
+        __typename: 'PropertyOptionNode';
+        id: string;
+        name: string;
+      } | null;
+    }>;
   } | null;
   locationType?: {
     __typename: 'LocationTypeNode';
@@ -467,6 +486,25 @@ export type ItemFragment = {
       isOnHold: boolean;
       name: string;
       store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      propertyValues: Array<{
+        __typename: 'PropertyValueNode';
+        id: string;
+        valueText?: string | null;
+        valueNumber?: number | null;
+        valueReal?: number | null;
+        valueDate?: string | null;
+        property: {
+          __typename: 'PropertyNode';
+          id: string;
+          name: string;
+          type: Types.PropertyTypeEnum;
+        };
+        option?: {
+          __typename: 'PropertyOptionNode';
+          id: string;
+          name: string;
+        } | null;
+      }>;
     } | null;
     locationType?: {
       __typename: 'LocationTypeNode';
@@ -750,6 +788,25 @@ export type ItemsWithStockLinesQuery = {
           isOnHold: boolean;
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          propertyValues: Array<{
+            __typename: 'PropertyValueNode';
+            id: string;
+            valueText?: string | null;
+            valueNumber?: number | null;
+            valueReal?: number | null;
+            valueDate?: string | null;
+            property: {
+              __typename: 'PropertyNode';
+              id: string;
+              name: string;
+              type: Types.PropertyTypeEnum;
+            };
+            option?: {
+              __typename: 'PropertyOptionNode';
+              id: string;
+              name: string;
+            } | null;
+          }>;
         } | null;
         locationType?: {
           __typename: 'LocationTypeNode';
@@ -1151,6 +1208,25 @@ export type ItemByIdQuery = {
           isOnHold: boolean;
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          propertyValues: Array<{
+            __typename: 'PropertyValueNode';
+            id: string;
+            valueText?: string | null;
+            valueNumber?: number | null;
+            valueReal?: number | null;
+            valueDate?: string | null;
+            property: {
+              __typename: 'PropertyNode';
+              id: string;
+              name: string;
+              type: Types.PropertyTypeEnum;
+            };
+            option?: {
+              __typename: 'PropertyOptionNode';
+              id: string;
+              name: string;
+            } | null;
+          }>;
         } | null;
         locationType?: {
           __typename: 'LocationTypeNode';
@@ -1329,6 +1405,25 @@ export type ItemVariantsQuery = {
           isOnHold: boolean;
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          propertyValues: Array<{
+            __typename: 'PropertyValueNode';
+            id: string;
+            valueText?: string | null;
+            valueNumber?: number | null;
+            valueReal?: number | null;
+            valueDate?: string | null;
+            property: {
+              __typename: 'PropertyNode';
+              id: string;
+              name: string;
+              type: Types.PropertyTypeEnum;
+            };
+            option?: {
+              __typename: 'PropertyOptionNode';
+              id: string;
+              name: string;
+            } | null;
+          }>;
         } | null;
         locationType?: {
           __typename: 'LocationTypeNode';
@@ -1510,6 +1605,25 @@ export type UpsertItemVariantMutation = {
                 id: string;
                 code: string;
               } | null;
+              propertyValues: Array<{
+                __typename: 'PropertyValueNode';
+                id: string;
+                valueText?: string | null;
+                valueNumber?: number | null;
+                valueReal?: number | null;
+                valueDate?: string | null;
+                property: {
+                  __typename: 'PropertyNode';
+                  id: string;
+                  name: string;
+                  type: Types.PropertyTypeEnum;
+                };
+                option?: {
+                  __typename: 'PropertyOptionNode';
+                  id: string;
+                  name: string;
+                } | null;
+              }>;
             } | null;
             locationType?: {
               __typename: 'LocationTypeNode';

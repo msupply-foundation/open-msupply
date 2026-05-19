@@ -9,6 +9,24 @@ fragment NameRow on NameNode {
     id
     code
   }
+  # KDD option 1: relational property values, resolved via
+  # PropertyValuesByNameRecordLoader so list rows are batched.
+  propertyValues {
+    id
+    property {
+      id
+      name
+      type
+    }
+    option {
+      id
+      name
+    }
+    valueText
+    valueNumber
+    valueReal
+    valueDate
+  }
 }
 
 fragment FacilityNameRow on NameNode {
@@ -71,6 +89,26 @@ fragment Property on PropertyNode {
   name
   allowedValues
   valueType
+}
+
+# Definition shape used by the property filter on the names list (KDD option 1).
+# Includes the `option` rows so the UI can render a dropdown for option-typed
+# properties without a second query per property.
+fragment NameProperty on PropertyNode {
+  id
+  name
+  type
+  options {
+    id
+    name
+    isDeleted
+  }
+}
+
+query namePropertyDefinitions {
+  propertiesForTable(table: NAME) {
+    ...NameProperty
+  }
 }
 
 query names(

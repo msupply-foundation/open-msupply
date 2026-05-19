@@ -97,6 +97,25 @@ export type StockLineRowFragment = {
     isOnHold: boolean;
     name: string;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    propertyValues: Array<{
+      __typename: 'PropertyValueNode';
+      id: string;
+      valueText?: string | null;
+      valueNumber?: number | null;
+      valueReal?: number | null;
+      valueDate?: string | null;
+      property: {
+        __typename: 'PropertyNode';
+        id: string;
+        name: string;
+        type: Types.PropertyTypeEnum;
+      };
+      option?: {
+        __typename: 'PropertyOptionNode';
+        id: string;
+        name: string;
+      } | null;
+    }>;
   } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
@@ -347,6 +366,25 @@ export type StockLinesQuery = {
         isOnHold: boolean;
         name: string;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        propertyValues: Array<{
+          __typename: 'PropertyValueNode';
+          id: string;
+          valueText?: string | null;
+          valueNumber?: number | null;
+          valueReal?: number | null;
+          valueDate?: string | null;
+          property: {
+            __typename: 'PropertyNode';
+            id: string;
+            name: string;
+            type: Types.PropertyTypeEnum;
+          };
+          option?: {
+            __typename: 'PropertyOptionNode';
+            id: string;
+            name: string;
+          } | null;
+        }>;
       } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
@@ -473,6 +511,25 @@ export type StockLineQuery = {
         isOnHold: boolean;
         name: string;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        propertyValues: Array<{
+          __typename: 'PropertyValueNode';
+          id: string;
+          valueText?: string | null;
+          valueNumber?: number | null;
+          valueReal?: number | null;
+          valueDate?: string | null;
+          property: {
+            __typename: 'PropertyNode';
+            id: string;
+            name: string;
+            type: Types.PropertyTypeEnum;
+          };
+          option?: {
+            __typename: 'PropertyOptionNode';
+            id: string;
+            name: string;
+          } | null;
+        }>;
       } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
@@ -637,6 +694,25 @@ export type UpdateStockLineMutation = {
           isOnHold: boolean;
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          propertyValues: Array<{
+            __typename: 'PropertyValueNode';
+            id: string;
+            valueText?: string | null;
+            valueNumber?: number | null;
+            valueReal?: number | null;
+            valueDate?: string | null;
+            property: {
+              __typename: 'PropertyNode';
+              id: string;
+              name: string;
+              type: Types.PropertyTypeEnum;
+            };
+            option?: {
+              __typename: 'PropertyOptionNode';
+              id: string;
+              name: string;
+            } | null;
+          }>;
         } | null;
         program?: {
           __typename: 'ProgramNode';
@@ -975,6 +1051,25 @@ export type InsertStockLineMutation = {
           isOnHold: boolean;
           name: string;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          propertyValues: Array<{
+            __typename: 'PropertyValueNode';
+            id: string;
+            valueText?: string | null;
+            valueNumber?: number | null;
+            valueReal?: number | null;
+            valueDate?: string | null;
+            property: {
+              __typename: 'PropertyNode';
+              id: string;
+              name: string;
+              type: Types.PropertyTypeEnum;
+            };
+            option?: {
+              __typename: 'PropertyOptionNode';
+              id: string;
+              name: string;
+            } | null;
+          }>;
         } | null;
         program?: {
           __typename: 'ProgramNode';
@@ -1172,6 +1267,25 @@ export type ItemsByStockLineFilterQuery = {
               id: string;
               code: string;
             } | null;
+            propertyValues: Array<{
+              __typename: 'PropertyValueNode';
+              id: string;
+              valueText?: string | null;
+              valueNumber?: number | null;
+              valueReal?: number | null;
+              valueDate?: string | null;
+              property: {
+                __typename: 'PropertyNode';
+                id: string;
+                name: string;
+                type: Types.PropertyTypeEnum;
+              };
+              option?: {
+                __typename: 'PropertyOptionNode';
+                id: string;
+                name: string;
+              } | null;
+            }>;
           } | null;
           program?: {
             __typename: 'ProgramNode';

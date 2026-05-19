@@ -39,6 +39,25 @@ export type InboundLineFragment = {
     isOnHold: boolean;
     name: string;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    propertyValues: Array<{
+      __typename: 'PropertyValueNode';
+      id: string;
+      valueText?: string | null;
+      valueNumber?: number | null;
+      valueReal?: number | null;
+      valueDate?: string | null;
+      property: {
+        __typename: 'PropertyNode';
+        id: string;
+        name: string;
+        type: Types.PropertyTypeEnum;
+      };
+      option?: {
+        __typename: 'PropertyOptionNode';
+        id: string;
+        name: string;
+      } | null;
+    }>;
   } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
@@ -197,6 +216,25 @@ export type InboundFragment = {
         isOnHold: boolean;
         name: string;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        propertyValues: Array<{
+          __typename: 'PropertyValueNode';
+          id: string;
+          valueText?: string | null;
+          valueNumber?: number | null;
+          valueReal?: number | null;
+          valueDate?: string | null;
+          property: {
+            __typename: 'PropertyNode';
+            id: string;
+            name: string;
+            type: Types.PropertyTypeEnum;
+          };
+          option?: {
+            __typename: 'PropertyOptionNode';
+            id: string;
+            name: string;
+          } | null;
+        }>;
       } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
@@ -546,6 +584,25 @@ export type InvoiceQuery = {
                 id: string;
                 code: string;
               } | null;
+              propertyValues: Array<{
+                __typename: 'PropertyValueNode';
+                id: string;
+                valueText?: string | null;
+                valueNumber?: number | null;
+                valueReal?: number | null;
+                valueDate?: string | null;
+                property: {
+                  __typename: 'PropertyNode';
+                  id: string;
+                  name: string;
+                  type: Types.PropertyTypeEnum;
+                };
+                option?: {
+                  __typename: 'PropertyOptionNode';
+                  id: string;
+                  name: string;
+                } | null;
+              }>;
             } | null;
             program?: {
               __typename: 'ProgramNode';
@@ -806,6 +863,25 @@ export type InboundByNumberQuery = {
                 id: string;
                 code: string;
               } | null;
+              propertyValues: Array<{
+                __typename: 'PropertyValueNode';
+                id: string;
+                valueText?: string | null;
+                valueNumber?: number | null;
+                valueReal?: number | null;
+                valueDate?: string | null;
+                property: {
+                  __typename: 'PropertyNode';
+                  id: string;
+                  name: string;
+                  type: Types.PropertyTypeEnum;
+                };
+                option?: {
+                  __typename: 'PropertyOptionNode';
+                  id: string;
+                  name: string;
+                } | null;
+              }>;
             } | null;
             program?: {
               __typename: 'ProgramNode';

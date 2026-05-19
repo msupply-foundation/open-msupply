@@ -13,6 +13,25 @@ export type NameRowFragment = {
   isOnHold: boolean;
   name: string;
   store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  propertyValues: Array<{
+    __typename: 'PropertyValueNode';
+    id: string;
+    valueText?: string | null;
+    valueNumber?: number | null;
+    valueReal?: number | null;
+    valueDate?: string | null;
+    property: {
+      __typename: 'PropertyNode';
+      id: string;
+      name: string;
+      type: Types.PropertyTypeEnum;
+    };
+    option?: {
+      __typename: 'PropertyOptionNode';
+      id: string;
+      name: string;
+    } | null;
+  }>;
 };
 
 export type FacilityNameRowFragment = {
@@ -105,6 +124,39 @@ export type PropertyFragment = {
   valueType: Types.PropertyNodeValueType;
 };
 
+export type NamePropertyFragment = {
+  __typename: 'PropertyNode';
+  id: string;
+  name: string;
+  type: Types.PropertyTypeEnum;
+  options: Array<{
+    __typename: 'PropertyOptionNode';
+    id: string;
+    name: string;
+    isDeleted: boolean;
+  }>;
+};
+
+export type NamePropertyDefinitionsQueryVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type NamePropertyDefinitionsQuery = {
+  __typename: 'Queries';
+  propertiesForTable: Array<{
+    __typename: 'PropertyNode';
+    id: string;
+    name: string;
+    type: Types.PropertyTypeEnum;
+    options: Array<{
+      __typename: 'PropertyOptionNode';
+      id: string;
+      name: string;
+      isDeleted: boolean;
+    }>;
+  }>;
+};
+
 export type NamesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   key: Types.NameSortFieldInput;
@@ -128,6 +180,25 @@ export type NamesQuery = {
       isOnHold: boolean;
       name: string;
       store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      propertyValues: Array<{
+        __typename: 'PropertyValueNode';
+        id: string;
+        valueText?: string | null;
+        valueNumber?: number | null;
+        valueReal?: number | null;
+        valueDate?: string | null;
+        property: {
+          __typename: 'PropertyNode';
+          id: string;
+          name: string;
+          type: Types.PropertyTypeEnum;
+        };
+        option?: {
+          __typename: 'PropertyOptionNode';
+          id: string;
+          name: string;
+        } | null;
+      }>;
     }>;
   };
 };
@@ -366,6 +437,22 @@ export const NameRowFragmentDoc = gql`
       id
       code
     }
+    propertyValues {
+      id
+      property {
+        id
+        name
+        type
+      }
+      option {
+        id
+        name
+      }
+      valueText
+      valueNumber
+      valueReal
+      valueDate
+    }
   }
 `;
 export const FacilityNameRowFragmentDoc = gql`
@@ -431,6 +518,26 @@ export const PropertyFragmentDoc = gql`
     allowedValues
     valueType
   }
+`;
+export const NamePropertyFragmentDoc = gql`
+  fragment NameProperty on PropertyNode {
+    id
+    name
+    type
+    options {
+      id
+      name
+      isDeleted
+    }
+  }
+`;
+export const NamePropertyDefinitionsDocument = gql`
+  query namePropertyDefinitions {
+    propertiesForTable(table: NAME) {
+      ...NameProperty
+    }
+  }
+  ${NamePropertyFragmentDoc}
 `;
 export const NamesDocument = gql`
   query names(
@@ -556,6 +663,24 @@ export function getSdk(
   withWrapper: SdkFunctionWrapper = defaultWrapper
 ) {
   return {
+    namePropertyDefinitions(
+      variables?: NamePropertyDefinitionsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<NamePropertyDefinitionsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<NamePropertyDefinitionsQuery>({
+            document: NamePropertyDefinitionsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'namePropertyDefinitions',
+        'query',
+        variables
+      );
+    },
     names(
       variables: NamesQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
