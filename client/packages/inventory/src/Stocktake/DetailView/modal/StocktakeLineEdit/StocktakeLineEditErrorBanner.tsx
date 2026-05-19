@@ -1,23 +1,10 @@
 import React from 'react';
 import { Alert, Box, useTranslation } from '@openmsupply-client/common';
 import {
-  StocktakeLineError,
+  stocktakeLineErrorMessageKey,
   useStocktakeLineErrorContext,
 } from '../../../context';
 import { DraftStocktakeLine } from './utils';
-
-const translationKey = (typename: StocktakeLineError['__typename']) => {
-  switch (typename) {
-    case 'StockLineReducedBelowZero':
-      return 'error.reduced-below-zero';
-    case 'SnapshotCountCurrentCountMismatchLine':
-      return 'error.snapshot-total-mismatch';
-    case 'AdjustmentReasonNotProvided':
-      return 'error.provide-reason';
-    case 'AdjustmentReasonNotValid':
-      return 'error.provide-valid-reason';
-  }
-};
 
 interface StocktakeLineErrorBannerProps {
   draftLines: DraftStocktakeLine[];
@@ -44,7 +31,7 @@ export const StocktakeLineEditErrorBanner: React.FC<StocktakeLineErrorBannerProp
       {visibleErrors.map(({ line, error }) => (
         <Alert key={line.id} severity="error">
           {line.batch ? `${line.batch}: ` : ''}
-          {t(translationKey(error.__typename))}
+          {t(stocktakeLineErrorMessageKey(error.__typename))}
         </Alert>
       ))}
     </Box>

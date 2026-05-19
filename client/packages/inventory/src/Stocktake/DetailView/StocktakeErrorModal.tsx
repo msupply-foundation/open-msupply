@@ -9,20 +9,11 @@ import {
   AlertIcon,
   useTranslation,
 } from '@openmsupply-client/common';
-import { StocktakeLineError, useStocktakeLineErrorContext } from '../context';
-
-const translationKey = (typename: StocktakeLineError['__typename']) => {
-  switch (typename) {
-    case 'StockLineReducedBelowZero':
-      return 'error.reduced-below-zero';
-    case 'SnapshotCountCurrentCountMismatchLine':
-      return 'error.snapshot-total-mismatch';
-    case 'AdjustmentReasonNotProvided':
-      return 'error.provide-reason';
-    case 'AdjustmentReasonNotValid':
-      return 'error.provide-valid-reason';
-  }
-};
+import {
+  StocktakeLineError,
+  stocktakeLineErrorMessageKey,
+  useStocktakeLineErrorContext,
+} from '../context';
 
 const label = (error: StocktakeLineError): string | undefined => {
   if (error.__typename === 'StockLineReducedBelowZero') {
@@ -88,7 +79,7 @@ export const StocktakeErrorModal = () => {
                   <Typography fontWeight="bold">{label(error)}</Typography>
                 )}
                 <Typography variant="body2">
-                  {t(translationKey(error.__typename))}
+                  {t(stocktakeLineErrorMessageKey(error.__typename))}
                 </Typography>
               </Box>
             );
