@@ -95,6 +95,7 @@ export const SyncMessageListView = () => {
     data: data?.nodes ?? [],
     totalCount: data?.totalCount ?? 0,
     onRowClick: onOpen,
+    enableRowSelection: false,
     noDataElement: <NothingHere body={t('error.no-sync-messages')} />,
   });
 
