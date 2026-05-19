@@ -8,8 +8,12 @@ export const statusMapping = (status?: SyncMessageNodeStatus): LocaleKey => {
   switch (status) {
     case SyncMessageNodeStatus.New:
       return 'label.new';
+    case SyncMessageNodeStatus.InProgress:
+      return 'status.in-progress';
     case SyncMessageNodeStatus.Processed:
       return 'label.processed';
+    case SyncMessageNodeStatus.Error:
+      return 'status.error';
     default:
       return 'messages.not-applicable';
   }

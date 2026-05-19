@@ -25,6 +25,7 @@ pub enum SyncMessageNodeStatus {
     New,
     InProgress,
     Processed,
+    Error,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -128,8 +129,9 @@ impl SyncMessageNodeStatus {
     pub fn from_domain(status: &SyncMessageRowStatus) -> SyncMessageNodeStatus {
         match status {
             SyncMessageRowStatus::New => SyncMessageNodeStatus::New,
-            SyncMessageRowStatus::InProgress => SyncMessageNodeStatus::New,
+            SyncMessageRowStatus::InProgress => SyncMessageNodeStatus::InProgress,
             SyncMessageRowStatus::Processed => SyncMessageNodeStatus::Processed,
+            SyncMessageRowStatus::Error => SyncMessageNodeStatus::Error,
         }
     }
 
@@ -138,6 +140,7 @@ impl SyncMessageNodeStatus {
             SyncMessageNodeStatus::New => SyncMessageRowStatus::New,
             SyncMessageNodeStatus::InProgress => SyncMessageRowStatus::InProgress,
             SyncMessageNodeStatus::Processed => SyncMessageRowStatus::Processed,
+            SyncMessageNodeStatus::Error => SyncMessageRowStatus::Error,
         }
     }
 }

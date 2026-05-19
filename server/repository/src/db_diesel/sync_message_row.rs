@@ -18,6 +18,7 @@ pub enum SyncMessageRowStatus {
     New,
     InProgress,
     Processed,
+    Error,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, TS)]

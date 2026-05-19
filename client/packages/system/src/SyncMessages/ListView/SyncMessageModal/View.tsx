@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Alert,
   Box,
   InputWithLabelRow,
   ReadOnlyInput,
@@ -58,11 +59,14 @@ export const View = ({ data }: ViewProps) => {
           disabled
         />
       </Box>
+      {data?.status === SyncMessageNodeStatus.Error && data?.errorMessage && (
+        <Alert severity="error">{data.errorMessage}</Alert>
+      )}
       {data?.type === SyncMessageNodeType.SupportUpload &&
-        data?.status === SyncMessageNodeStatus.Processed && (
+        (data?.files?.nodes?.length ?? 0) > 0 && (
           <FileList
-            files={data.files?.nodes ?? []}
-            syncMessageId={data.id}
+            files={data?.files?.nodes ?? []}
+            syncMessageId={data?.id ?? ''}
           />
         )}
     </Stack>

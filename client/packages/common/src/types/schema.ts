@@ -10037,6 +10037,7 @@ export type SyncMessageNode = {
 };
 
 export enum SyncMessageNodeStatus {
+  Error = 'error',
   InProgress = 'inProgress',
   New = 'new',
   Processed = 'processed',

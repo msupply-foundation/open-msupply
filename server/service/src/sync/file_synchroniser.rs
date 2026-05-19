@@ -115,7 +115,7 @@ impl FileSynchroniser {
             },
         };
 
-        sync_file_repo.update_status(&file_row_update)?;
+        sync_file_repo.upsert_without_changelog(&file_row_update)?;
 
         Ok(download_result?)
     }
@@ -139,7 +139,7 @@ impl FileSynchroniser {
         };
 
         // update the database to say we're uploading the file
-        sync_file_repo.update_status(&SyncFileReferenceRow {
+        sync_file_repo.upsert_without_changelog(&SyncFileReferenceRow {
             status: SyncFileStatus::InProgress,
             ..sync_file_reference.clone()
         })?;
@@ -165,7 +165,8 @@ impl FileSynchroniser {
         // On Success
         else {
             // Terminal transition — use upsert_one so the Done status syncs to central.
-            // uploaded_bytes is local-only (skip_serializing) so it stays put for our own bookkeeping.
+            // uploaded_bytes is local-only (absent from SyncFileReferenceWire) so it stays put
+            // for our own bookkeeping.
             sync_file_repo.upsert_one(&SyncFileReferenceRow {
                 uploaded_bytes: sync_file_reference.total_bytes, // We always upload the whole file in one go
                 status: SyncFileStatus::Done,
@@ -214,8 +215,8 @@ impl FileSynchroniser {
         };
 
         // Terminal failure transition — use upsert_one so the Error / PermanentFailure status and
-        // error message sync to central. retries / retry_at are local-only (skip_serializing) so
-        // each site keeps its own retry schedule.
+        // error message sync to central. retries / retry_at are local-only (absent from
+        // SyncFileReferenceWire) so each site keeps its own retry schedule.
         sync_file_repo.upsert_one(&SyncFileReferenceRow {
             error: Some(format_error(&error)),
             ..sync_file_ref_update
