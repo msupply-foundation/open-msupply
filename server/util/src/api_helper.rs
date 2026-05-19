@@ -123,7 +123,6 @@ where
             } else {
                 "not retrying".to_string()
             };
-
             log::warn!(
                 "API request failed: url '{}', {}, attempt {}/{} after {:.1}s (request body: {}); {}",
                 url_display,

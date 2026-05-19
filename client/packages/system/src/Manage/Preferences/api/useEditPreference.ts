@@ -43,8 +43,8 @@ export const useEditPreferences = (
 const useUpsertPref = () => {
   const { api, storeId: requestStoreId, queryClient } = usePreferencesGraphQL();
 
-  return useMutation(
-    async (input: Partial<UpsertPreferencesInput>) => {
+  return useMutation({
+    mutationFn: async (input: Partial<UpsertPreferencesInput>) => {
       const result = await api.upsertPreferences({
         input,
         storeId: requestStoreId,
@@ -54,17 +54,22 @@ const useUpsertPref = () => {
       }
       throw new Error('Could not update preferences');
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(PREFERENCES_QUERY_KEY);
-        queryClient.invalidateQueries(PREFERENCE_DESCRIPTION_QUERY_KEY);
-        queryClient.invalidateQueries([
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [PREFERENCES_QUERY_KEY],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [PREFERENCE_DESCRIPTION_QUERY_KEY],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [
           'dashboard',
           'count',
           requestStoreId,
           'stock',
-        ]);
-      },
+        ]
+      });
     }
-  );
+  });
 };
