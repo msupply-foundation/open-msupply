@@ -1,52 +1,45 @@
 import React, { FC } from 'react';
 import {
-  AutocompleteList,
-  AutocompleteListProps,
-  createQueryParamsStore,
-  ListSearch,
-  QueryParamsProvider,
+  BasicModal,
+  Box,
+  ModalTitle,
   useTranslation,
+  useWindowDimensions,
 } from '@openmsupply-client/common';
-import { useName, NameRowFragment } from '../../api';
-import { filterByNameAndCode, NameSearchProps } from '../../utils';
-import { getNameOptionRenderer } from '../NameOptionRenderer';
+import { NameSearchProps } from '../../utils';
+import { InternalSupplierSearchInput } from '../InternalSupplierSearchInput';
 
-const InternalSupplierSearchComponent: FC<NameSearchProps> = props => {
+export const InternalSupplierSearchModal: FC<NameSearchProps> = props => {
   const t = useTranslation();
-  const { data, isLoading } = useName.document.internalSuppliers();
-  const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
+  const { height } = useWindowDimensions();
+  const modalHeight = height * 0.8;
+  const isList = 'isList' in props;
 
-  const listProps: AutocompleteListProps<NameRowFragment> = {
-    loading: isLoading,
-    filterOptions: filterByNameAndCode,
-    getOptionLabel: option => option.name,
-    renderOption: NameOptionRenderer,
-    onChange: (_, name) => {
-      if (name && !(name instanceof Array)) props.onChange(name);
-    },
-    options: data?.nodes ?? [],
-    getOptionDisabled: option => option.isOnHold,
-  };
-
-  if ('isList' in props) return <AutocompleteList {...listProps} />;
-
-  const { open, onClose } = props;
-  return (
-    <ListSearch
-      open={open}
-      onClose={onClose}
-      title={t('suppliers')}
-      {...listProps}
+  // isList renders inline inside its parent → fill the container.
+  // Popup renders centred in a BasicModal → fixed width.
+  const input = (
+    <InternalSupplierSearchInput
+      value={null}
+      onChange={name => {
+        if (name) props.onChange(name);
+      }}
+      width={isList ? undefined : 500}
+      clearable={false}
+      autoFocus
+      openOnFocus
     />
   );
-};
 
-export const InternalSupplierSearchModal: FC<NameSearchProps> = props => (
-  <QueryParamsProvider
-    createStore={createQueryParamsStore<NameRowFragment>({
-      initialSortBy: { key: 'name' },
-    })}
-  >
-    <InternalSupplierSearchComponent {...props} />
-  </QueryParamsProvider>
-);
+  if (isList) {
+    return <Box padding={2}>{input}</Box>;
+  }
+
+  const { open, onClose } = props;
+
+  return (
+    <BasicModal open={open} onClose={onClose} height={modalHeight}>
+      <ModalTitle title={t('suppliers')} />
+      <Box padding={2}>{input}</Box>
+    </BasicModal>
+  );
+};
