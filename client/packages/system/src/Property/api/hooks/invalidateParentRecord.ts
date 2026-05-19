@@ -1,4 +1,4 @@
-import { PropertyParentTableEnum, QueryClient } from '@openmsupply-client/common';
+import { PropertyV2ParentTableEnum, QueryClient } from '@openmsupply-client/common';
 
 // After a property value mutation, the value lives on the parent record's
 // GraphQL fragment (e.g. NameNode.propertyValues / ItemNode.propertyValues),
@@ -9,15 +9,15 @@ import { PropertyParentTableEnum, QueryClient } from '@openmsupply-client/common
 // specific cache key — react-query's predicate match handles the rest.
 export const invalidateParentRecord = (
   queryClient: QueryClient,
-  table: PropertyParentTableEnum,
+  table: PropertyV2ParentTableEnum,
   _recordId: string | undefined
 ) => {
   switch (table) {
-    case PropertyParentTableEnum.Name:
+    case PropertyV2ParentTableEnum.Name:
       return queryClient.invalidateQueries({ queryKey: ['name'] });
-    case PropertyParentTableEnum.Item:
+    case PropertyV2ParentTableEnum.Item:
       return queryClient.invalidateQueries({ queryKey: ['item'] });
-    case PropertyParentTableEnum.InvoiceLine:
+    case PropertyV2ParentTableEnum.InvoiceLine:
       return queryClient.invalidateQueries({ queryKey: ['invoice'] });
     default:
       return Promise.resolve();

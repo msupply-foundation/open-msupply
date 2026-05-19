@@ -4,7 +4,7 @@ import {
   DetailContainer,
   Grid,
   Navigate,
-  PropertyTypeEnum,
+  PropertyV2TypeEnum,
   RouteBuilder,
   useAuthContext,
   useBreadcrumbs,
@@ -58,7 +58,7 @@ export const PropertyDetailView = () => {
   const onSave = async () => {
     try {
       const sendOptions =
-        draft.type === PropertyTypeEnum.Option
+        draft.type === PropertyV2TypeEnum.Option
           ? optionsDraft.rows
               .filter(o => !o.isDeleted)
               .map(o => ({
@@ -104,7 +104,7 @@ export const PropertyDetailView = () => {
             update={update}
             toggleAttachedTable={toggleAttachedTable}
           />
-          {draft.type === PropertyTypeEnum.Option && (
+          {draft.type === PropertyV2TypeEnum.Option && (
             <OptionsEditor {...optionsDraft} />
           )}
         </Grid>

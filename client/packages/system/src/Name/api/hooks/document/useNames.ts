@@ -3,12 +3,12 @@ import {
   keepPreviousData,
   useUrlQuery,
   useUrlQueryParams,
-  PropertyValueFilterInput,
+  PropertyV2ValueFilterInput,
 } from '@openmsupply-client/common';
 import { useNameApi } from '../utils/useNameApi';
 
 // URL params like `property.<propertyId>=<optionId|text>` are turned into
-// PropertyValueFilterInput entries on the names query. The value column we
+// PropertyV2ValueFilterInput entries on the names query. The value column we
 // target depends on the property's `type` — option-typed properties use
 // `valueOptionId`, everything else falls back to `valueText` (the only branch
 // the toolbar currently emits, but the parsing is generic so adding numeric/
@@ -18,8 +18,8 @@ const PROPERTY_PREFIX = 'property.';
 const buildPropertyFilters = (
   urlQuery: Record<string, unknown>,
   optionPropertyIds: Set<string>
-): PropertyValueFilterInput[] => {
-  const filters: PropertyValueFilterInput[] = [];
+): PropertyV2ValueFilterInput[] => {
+  const filters: PropertyV2ValueFilterInput[] = [];
   for (const [key, value] of Object.entries(urlQuery)) {
     if (!key.startsWith(PROPERTY_PREFIX)) continue;
     if (value === undefined || value === null || value === '') continue;

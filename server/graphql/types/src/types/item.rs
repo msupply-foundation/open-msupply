@@ -3,7 +3,7 @@ use super::{
     StockLineConnector, WarningNode,
 };
 use crate::types::{
-    program_node::ProgramNode, ItemStorePropertiesNode, LocationTypeNode, PropertyValueNode,
+    program_node::ProgramNode, ItemStorePropertiesNode, LocationTypeNode, PropertyV2ValueNode,
 };
 
 use async_graphql::dataloader::DataLoader;
@@ -16,7 +16,7 @@ use graphql_core::{
         ItemStoreJoinLoader, ItemStoreJoinLoaderInput, ItemVariantsByItemIdLoader,
         ItemsStatsForItemLoader, ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput,
         LocationTypeLoader, MasterListByItemIdLoader, MasterListByItemIdLoaderInput,
-        ProgramsByItemIdLoader, ProgramsByItemIdLoaderInput, PropertyValuesByItemRecordLoader,
+        ProgramsByItemIdLoader, ProgramsByItemIdLoaderInput, PropertyV2ValuesByItemRecordLoader,
         StockLineByItemAndStoreIdLoader, StockLineByItemAndStoreIdLoaderInput, WarningLoader,
     },
     simple_generic_errors::InternalError,
@@ -329,10 +329,10 @@ impl ItemNode {
     }
 
     // Values from the new four-table property system (KDD option 1).
-    pub async fn property_values(&self, ctx: &Context<'_>) -> Result<Vec<PropertyValueNode>> {
-        let loader = ctx.get_loader::<DataLoader<PropertyValuesByItemRecordLoader>>();
+    pub async fn property_v2_values(&self, ctx: &Context<'_>) -> Result<Vec<PropertyV2ValueNode>> {
+        let loader = ctx.get_loader::<DataLoader<PropertyV2ValuesByItemRecordLoader>>();
         let values = loader.load_one(self.row().id.clone()).await?.unwrap_or_default();
-        Ok(PropertyValueNode::from_vec(values))
+        Ok(PropertyV2ValueNode::from_vec(values))
     }
 }
 

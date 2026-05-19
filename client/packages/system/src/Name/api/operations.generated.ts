@@ -2,7 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { PropertyValueFragmentDoc } from '../../Property/api/operations.generated';
+import { PropertyV2ValueFragmentDoc } from '../../Property/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type NameRowFragment = {
   __typename: 'NameNode';
@@ -13,25 +13,36 @@ export type NameRowFragment = {
   isOnHold: boolean;
   name: string;
   store?: { __typename: 'StoreNode'; id: string; code: string } | null;
-  propertyValues: Array<{
-    __typename: 'PropertyValueNode';
+};
+
+export type NameRowWithPropertyV2ValuesFragment = {
+  __typename: 'NameNode';
+  code: string;
+  id: string;
+  isCustomer: boolean;
+  isSupplier: boolean;
+  isOnHold: boolean;
+  name: string;
+  propertyV2Values: Array<{
+    __typename: 'PropertyV2ValueNode';
     id: string;
     valueText?: string | null;
     valueNumber?: number | null;
     valueReal?: number | null;
     valueDate?: string | null;
     property: {
-      __typename: 'PropertyNode';
+      __typename: 'PropertyV2Node';
       id: string;
       name: string;
-      type: Types.PropertyTypeEnum;
+      type: Types.PropertyV2TypeEnum;
     };
     option?: {
-      __typename: 'PropertyOptionNode';
+      __typename: 'PropertyV2OptionNode';
       id: string;
       name: string;
     } | null;
   }>;
+  store?: { __typename: 'StoreNode'; id: string; code: string } | null;
 };
 
 export type FacilityNameRowFragment = {
@@ -74,23 +85,23 @@ export type NameFragment = {
   freightFactor?: number | null;
   store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   currency?: { __typename: 'CurrencyNode'; id: string; code: string } | null;
-  propertyValues: Array<{
-    __typename: 'PropertyValueNode';
+  propertyV2Values: Array<{
+    __typename: 'PropertyV2ValueNode';
     id: string;
     recordId: string;
-    parentTable: Types.PropertyParentTableEnum;
+    parentTable: Types.PropertyV2ParentTableEnum;
     valueText?: string | null;
     valueNumber?: number | null;
     valueReal?: number | null;
     valueDate?: string | null;
     property: {
-      __typename: 'PropertyNode';
+      __typename: 'PropertyV2Node';
       id: string;
       name: string;
-      type: Types.PropertyTypeEnum;
+      type: Types.PropertyV2TypeEnum;
       translationKey?: string | null;
       options: Array<{
-        __typename: 'PropertyOptionNode';
+        __typename: 'PropertyV2OptionNode';
         id: string;
         propertyId: string;
         name: string;
@@ -98,14 +109,14 @@ export type NameFragment = {
         isDeleted: boolean;
       }>;
       attachedTo: Array<{
-        __typename: 'PropertyTableNode';
+        __typename: 'PropertyV2TableNode';
         id: string;
         propertyId: string;
-        table: Types.PropertyParentTableEnum;
+        table: Types.PropertyV2ParentTableEnum;
       }>;
     };
     option?: {
-      __typename: 'PropertyOptionNode';
+      __typename: 'PropertyV2OptionNode';
       id: string;
       propertyId: string;
       name: string;
@@ -124,32 +135,32 @@ export type PropertyFragment = {
   valueType: Types.PropertyNodeValueType;
 };
 
-export type NamePropertyFragment = {
-  __typename: 'PropertyNode';
+export type NamePropertyV2Fragment = {
+  __typename: 'PropertyV2Node';
   id: string;
   name: string;
-  type: Types.PropertyTypeEnum;
+  type: Types.PropertyV2TypeEnum;
   options: Array<{
-    __typename: 'PropertyOptionNode';
+    __typename: 'PropertyV2OptionNode';
     id: string;
     name: string;
     isDeleted: boolean;
   }>;
 };
 
-export type NamePropertyDefinitionsQueryVariables = Types.Exact<{
+export type NamePropertyV2DefinitionsQueryVariables = Types.Exact<{
   [key: string]: never;
 }>;
 
-export type NamePropertyDefinitionsQuery = {
+export type NamePropertyV2DefinitionsQuery = {
   __typename: 'Queries';
-  propertiesForTable: Array<{
-    __typename: 'PropertyNode';
+  propertiesV2ForTable: Array<{
+    __typename: 'PropertyV2Node';
     id: string;
     name: string;
-    type: Types.PropertyTypeEnum;
+    type: Types.PropertyV2TypeEnum;
     options: Array<{
-      __typename: 'PropertyOptionNode';
+      __typename: 'PropertyV2OptionNode';
       id: string;
       name: string;
       isDeleted: boolean;
@@ -179,26 +190,26 @@ export type NamesQuery = {
       isSupplier: boolean;
       isOnHold: boolean;
       name: string;
-      store?: { __typename: 'StoreNode'; id: string; code: string } | null;
-      propertyValues: Array<{
-        __typename: 'PropertyValueNode';
+      propertyV2Values: Array<{
+        __typename: 'PropertyV2ValueNode';
         id: string;
         valueText?: string | null;
         valueNumber?: number | null;
         valueReal?: number | null;
         valueDate?: string | null;
         property: {
-          __typename: 'PropertyNode';
+          __typename: 'PropertyV2Node';
           id: string;
           name: string;
-          type: Types.PropertyTypeEnum;
+          type: Types.PropertyV2TypeEnum;
         };
         option?: {
-          __typename: 'PropertyOptionNode';
+          __typename: 'PropertyV2OptionNode';
           id: string;
           name: string;
         } | null;
       }>;
+      store?: { __typename: 'StoreNode'; id: string; code: string } | null;
     }>;
   };
 };
@@ -273,23 +284,23 @@ export type NameByIdQuery = {
         id: string;
         code: string;
       } | null;
-      propertyValues: Array<{
-        __typename: 'PropertyValueNode';
+      propertyV2Values: Array<{
+        __typename: 'PropertyV2ValueNode';
         id: string;
         recordId: string;
-        parentTable: Types.PropertyParentTableEnum;
+        parentTable: Types.PropertyV2ParentTableEnum;
         valueText?: string | null;
         valueNumber?: number | null;
         valueReal?: number | null;
         valueDate?: string | null;
         property: {
-          __typename: 'PropertyNode';
+          __typename: 'PropertyV2Node';
           id: string;
           name: string;
-          type: Types.PropertyTypeEnum;
+          type: Types.PropertyV2TypeEnum;
           translationKey?: string | null;
           options: Array<{
-            __typename: 'PropertyOptionNode';
+            __typename: 'PropertyV2OptionNode';
             id: string;
             propertyId: string;
             name: string;
@@ -297,14 +308,14 @@ export type NameByIdQuery = {
             isDeleted: boolean;
           }>;
           attachedTo: Array<{
-            __typename: 'PropertyTableNode';
+            __typename: 'PropertyV2TableNode';
             id: string;
             propertyId: string;
-            table: Types.PropertyParentTableEnum;
+            table: Types.PropertyV2ParentTableEnum;
           }>;
         };
         option?: {
-          __typename: 'PropertyOptionNode';
+          __typename: 'PropertyV2OptionNode';
           id: string;
           propertyId: string;
           name: string;
@@ -328,14 +339,14 @@ export type NamePropertiesQuery = {
       __typename: 'NamePropertyNode';
       id: string;
       remoteEditable: boolean;
-      property?: {
+      property: {
         __typename: 'PropertyNode';
         id: string;
         key: string;
         name: string;
         allowedValues?: string | null;
         valueType: Types.PropertyNodeValueType;
-      } | null;
+      };
     }>;
   };
 };
@@ -379,23 +390,23 @@ export type UpdateNamePropertiesMutation = {
           id: string;
           code: string;
         } | null;
-        propertyValues: Array<{
-          __typename: 'PropertyValueNode';
+        propertyV2Values: Array<{
+          __typename: 'PropertyV2ValueNode';
           id: string;
           recordId: string;
-          parentTable: Types.PropertyParentTableEnum;
+          parentTable: Types.PropertyV2ParentTableEnum;
           valueText?: string | null;
           valueNumber?: number | null;
           valueReal?: number | null;
           valueDate?: string | null;
           property: {
-            __typename: 'PropertyNode';
+            __typename: 'PropertyV2Node';
             id: string;
             name: string;
-            type: Types.PropertyTypeEnum;
+            type: Types.PropertyV2TypeEnum;
             translationKey?: string | null;
             options: Array<{
-              __typename: 'PropertyOptionNode';
+              __typename: 'PropertyV2OptionNode';
               id: string;
               propertyId: string;
               name: string;
@@ -403,14 +414,14 @@ export type UpdateNamePropertiesMutation = {
               isDeleted: boolean;
             }>;
             attachedTo: Array<{
-              __typename: 'PropertyTableNode';
+              __typename: 'PropertyV2TableNode';
               id: string;
               propertyId: string;
-              table: Types.PropertyParentTableEnum;
+              table: Types.PropertyV2ParentTableEnum;
             }>;
           };
           option?: {
-            __typename: 'PropertyOptionNode';
+            __typename: 'PropertyV2OptionNode';
             id: string;
             propertyId: string;
             name: string;
@@ -437,7 +448,12 @@ export const NameRowFragmentDoc = gql`
       id
       code
     }
-    propertyValues {
+  }
+`;
+export const NameRowWithPropertyV2ValuesFragmentDoc = gql`
+  fragment NameRowWithPropertyV2Values on NameNode {
+    ...NameRow
+    propertyV2Values {
       id
       property {
         id
@@ -454,6 +470,7 @@ export const NameRowFragmentDoc = gql`
       valueDate
     }
   }
+  ${NameRowFragmentDoc}
 `;
 export const FacilityNameRowFragmentDoc = gql`
   fragment FacilityNameRow on NameNode {
@@ -504,11 +521,11 @@ export const NameFragmentDoc = gql`
       id
       code
     }
-    propertyValues {
-      ...PropertyValue
+    propertyV2Values {
+      ...PropertyV2Value
     }
   }
-  ${PropertyValueFragmentDoc}
+  ${PropertyV2ValueFragmentDoc}
 `;
 export const PropertyFragmentDoc = gql`
   fragment Property on PropertyNode {
@@ -519,8 +536,8 @@ export const PropertyFragmentDoc = gql`
     valueType
   }
 `;
-export const NamePropertyFragmentDoc = gql`
-  fragment NameProperty on PropertyNode {
+export const NamePropertyV2FragmentDoc = gql`
+  fragment NamePropertyV2 on PropertyV2Node {
     id
     name
     type
@@ -531,13 +548,13 @@ export const NamePropertyFragmentDoc = gql`
     }
   }
 `;
-export const NamePropertyDefinitionsDocument = gql`
-  query namePropertyDefinitions {
-    propertiesForTable(table: NAME) {
-      ...NameProperty
+export const NamePropertyV2DefinitionsDocument = gql`
+  query namePropertyV2Definitions {
+    propertiesV2ForTable(table: NAME) {
+      ...NamePropertyV2
     }
   }
-  ${NamePropertyFragmentDoc}
+  ${NamePropertyV2FragmentDoc}
 `;
 export const NamesDocument = gql`
   query names(
@@ -557,13 +574,13 @@ export const NamesDocument = gql`
       ... on NameConnector {
         __typename
         nodes {
-          ...NameRow
+          ...NameRowWithPropertyV2Values
         }
         totalCount
       }
     }
   }
-  ${NameRowFragmentDoc}
+  ${NameRowWithPropertyV2ValuesFragmentDoc}
 `;
 export const FacilitiesDocument = gql`
   query facilities(
@@ -663,20 +680,20 @@ export function getSdk(
   withWrapper: SdkFunctionWrapper = defaultWrapper
 ) {
   return {
-    namePropertyDefinitions(
-      variables?: NamePropertyDefinitionsQueryVariables,
+    namePropertyV2Definitions(
+      variables?: NamePropertyV2DefinitionsQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<NamePropertyDefinitionsQuery> {
+    ): Promise<NamePropertyV2DefinitionsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<NamePropertyDefinitionsQuery>({
-            document: NamePropertyDefinitionsDocument,
+          client.request<NamePropertyV2DefinitionsQuery>({
+            document: NamePropertyV2DefinitionsDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'namePropertyDefinitions',
+        'namePropertyV2Definitions',
         'query',
         variables
       );

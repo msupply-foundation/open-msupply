@@ -1506,16 +1506,16 @@ export type ConfigureNamePropertyInput = {
   valueType: PropertyNodeValueType;
 };
 
-export type ConfigurePropertyGqlInput = {
-  attachedTo: Array<PropertyAttachmentGqlInput>;
+export type ConfigurePropertyV2GqlInput = {
+  attachedTo: Array<PropertyV2AttachmentGqlInput>;
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
-  options: Array<ConfigurePropertyOptionGqlInput>;
+  options: Array<ConfigurePropertyV2OptionGqlInput>;
   translationKey?: InputMaybe<Scalars['String']['input']>;
-  type: PropertyTypeEnum;
+  type: PropertyV2TypeEnum;
 };
 
-export type ConfigurePropertyOptionGqlInput = {
+export type ConfigurePropertyV2OptionGqlInput = {
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
   translationKey?: InputMaybe<Scalars['String']['input']>;
@@ -4917,7 +4917,7 @@ export type ItemNode = {
   name: Scalars['String']['output'];
   outerPackSize: Scalars['Int']['output'];
   programs?: Maybe<Array<ProgramNode>>;
-  propertyValues: Array<PropertyValueNode>;
+  propertyV2Values: Array<PropertyV2ValueNode>;
   restrictedLocationType?: Maybe<LocationTypeNode>;
   restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   stats: ItemStatsNode;
@@ -5462,8 +5462,8 @@ export type Mutations = {
   batchResponseRequisition: BatchResponseRequisitionResponse;
   batchStocktake: BatchStocktakeResponse;
   centralServer: CentralServerMutationNode;
-  /** Create or update a property (KDD option 1) — central admin only. */
-  configureProperty: PropertyNode;
+  /** Create or update a V2 property (KDD option 1) — central admin only. */
+  configurePropertyV2: PropertyV2Node;
   createInventoryAdjustment: CreateInventoryAdjustmentResponse;
   /**
    * Create shipment for response requisition
@@ -5487,8 +5487,8 @@ export type Mutations = {
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
-  /** Clear a property's value on one record. Returns whether a row existed. */
-  deletePropertyValue: Scalars['Boolean']['output'];
+  /** Clear a V2 property's value on one record. Returns whether a row existed. */
+  deletePropertyV2Value: Scalars['Boolean']['output'];
   deletePurchaseOrder: DeletePurchaseOrderResponse;
   deletePurchaseOrderLines: Array<DeletePurchaseOrderLineResponseWithId>;
   deleteRequestRequisition: DeleteRequestRequisitionResponse;
@@ -5620,8 +5620,8 @@ export type Mutations = {
   updateUser: UpdateUserResponse;
   updateVaccination: UpdateVaccinationResponse;
   updateVvmStatusLog: UpdateVvmStatusResponse;
-  /** Write a typed value against one property on one record. */
-  upsertPropertyValue: PropertyValueNode;
+  /** Write a typed V2 value against one property on one record. */
+  upsertPropertyV2Value: PropertyV2ValueNode;
   /** Set requested for each line in request requisition to calculated */
   useSuggestedQuantity: UseSuggestedQuantityResponse;
 };
@@ -5691,8 +5691,8 @@ export type MutationsBatchStocktakeArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type MutationsConfigurePropertyArgs = {
-  input: ConfigurePropertyGqlInput;
+export type MutationsConfigurePropertyV2Args = {
+  input: ConfigurePropertyV2GqlInput;
 };
 
 export type MutationsCreateInventoryAdjustmentArgs = {
@@ -5780,10 +5780,10 @@ export type MutationsDeletePrescriptionLineArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type MutationsDeletePropertyValueArgs = {
+export type MutationsDeletePropertyV2ValueArgs = {
   propertyId: Scalars['String']['input'];
   recordId: Scalars['String']['input'];
-  table: PropertyParentTableEnum;
+  table: PropertyV2ParentTableEnum;
 };
 
 export type MutationsDeletePurchaseOrderArgs = {
@@ -6342,8 +6342,8 @@ export type MutationsUpdateVvmStatusLogArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type MutationsUpsertPropertyValueArgs = {
-  input: UpsertPropertyValueGqlInput;
+export type MutationsUpsertPropertyV2ValueArgs = {
+  input: UpsertPropertyV2ValueGqlInput;
 };
 
 export type MutationsUseSuggestedQuantityArgs = {
@@ -6392,7 +6392,7 @@ export type NameFilterInput = {
    * Filter by relational property values. Multiple entries AND together —
    * a name must satisfy every condition to be returned.
    */
-  property?: InputMaybe<Array<PropertyValueFilterInput>>;
+  property?: InputMaybe<Array<PropertyV2ValueFilterInput>>;
   /** Code of the store if store is linked to name */
   storeCode?: InputMaybe<StringFilterInput>;
   supplyingStoreId?: InputMaybe<EqualFilterStringInput>;
@@ -6432,7 +6432,7 @@ export type NameNode = {
   phone?: Maybe<Scalars['String']['output']>;
   /** Returns a JSON string of the name properties e.g {"property_key": "value"} */
   properties: Scalars['String']['output'];
-  propertyValues: Array<PropertyValueNode>;
+  propertyV2Values: Array<PropertyV2ValueNode>;
   store?: Maybe<StoreNode>;
   type: NameNodeType;
   website?: Maybe<Scalars['String']['output']>;
@@ -6454,7 +6454,7 @@ export type NamePropertyConnector = {
 export type NamePropertyNode = {
   __typename: 'NamePropertyNode';
   id: Scalars['String']['output'];
-  property?: Maybe<PropertyNode>;
+  property: PropertyNode;
   remoteEditable: Scalars['Boolean']['output'];
 };
 
@@ -7373,21 +7373,18 @@ export type ProgramSortInput = {
 
 export type ProgramsResponse = ProgramConnector;
 
-export type PropertyAttachmentGqlInput = {
-  id: Scalars['String']['input'];
-  table: PropertyParentTableEnum;
-};
-
 export type PropertyNode = {
   __typename: 'PropertyNode';
+  /**
+   * If `valueType` is `String`, this field can contain a comma-separated
+   * list of allowed values, essentially defining an enum.
+   * If `valueType` is Integer or Float, this field will include the
+   * word `negative` if negative values are allowed.
+   */
   allowedValues?: Maybe<Scalars['String']['output']>;
-  attachedTo: Array<PropertyTableNode>;
   id: Scalars['String']['output'];
   key: Scalars['String']['output'];
   name: Scalars['String']['output'];
-  options: Array<PropertyOptionNode>;
-  translationKey?: Maybe<Scalars['String']['output']>;
-  type: PropertyTypeEnum;
   valueType: PropertyNodeValueType;
 };
 
@@ -7399,8 +7396,23 @@ export enum PropertyNodeValueType {
   String = 'STRING',
 }
 
-export type PropertyOptionNode = {
-  __typename: 'PropertyOptionNode';
+export type PropertyV2AttachmentGqlInput = {
+  id: Scalars['String']['input'];
+  table: PropertyV2ParentTableEnum;
+};
+
+export type PropertyV2Node = {
+  __typename: 'PropertyV2Node';
+  attachedTo: Array<PropertyV2TableNode>;
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  options: Array<PropertyV2OptionNode>;
+  translationKey?: Maybe<Scalars['String']['output']>;
+  type: PropertyV2TypeEnum;
+};
+
+export type PropertyV2OptionNode = {
+  __typename: 'PropertyV2OptionNode';
   id: Scalars['String']['output'];
   isDeleted: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
@@ -7408,20 +7420,20 @@ export type PropertyOptionNode = {
   translationKey?: Maybe<Scalars['String']['output']>;
 };
 
-export enum PropertyParentTableEnum {
+export enum PropertyV2ParentTableEnum {
   InvoiceLine = 'INVOICE_LINE',
   Item = 'ITEM',
   Name = 'NAME',
 }
 
-export type PropertyTableNode = {
-  __typename: 'PropertyTableNode';
+export type PropertyV2TableNode = {
+  __typename: 'PropertyV2TableNode';
   id: Scalars['String']['output'];
   propertyId: Scalars['String']['output'];
-  table: PropertyParentTableEnum;
+  table: PropertyV2ParentTableEnum;
 };
 
-export enum PropertyTypeEnum {
+export enum PropertyV2TypeEnum {
   Date = 'DATE',
   Number = 'NUMBER',
   Option = 'OPTION',
@@ -7429,7 +7441,7 @@ export enum PropertyTypeEnum {
   Text = 'TEXT',
 }
 
-export type PropertyValueFilterInput = {
+export type PropertyV2ValueFilterInput = {
   /**
    * Anchors the condition to a single property definition. Required —
    * without it the condition would match across unrelated properties.
@@ -7442,7 +7454,7 @@ export type PropertyValueFilterInput = {
   valueText?: InputMaybe<StringFilterInput>;
 };
 
-export type PropertyValueGqlInput =
+export type PropertyV2ValueGqlInput =
   | {
       date: Scalars['NaiveDate']['input'];
       number?: never;
@@ -7479,12 +7491,12 @@ export type PropertyValueGqlInput =
       text: Scalars['String']['input'];
     };
 
-export type PropertyValueNode = {
-  __typename: 'PropertyValueNode';
+export type PropertyV2ValueNode = {
+  __typename: 'PropertyV2ValueNode';
   id: Scalars['String']['output'];
-  option?: Maybe<PropertyOptionNode>;
-  parentTable: PropertyParentTableEnum;
-  property: PropertyNode;
+  option?: Maybe<PropertyV2OptionNode>;
+  parentTable: PropertyV2ParentTableEnum;
+  property: PropertyV2Node;
   recordId: Scalars['String']['output'];
   valueDate?: Maybe<Scalars['NaiveDate']['output']>;
   valueNumber?: Maybe<Scalars['Int']['output']>;
@@ -7807,11 +7819,6 @@ export type Queries = {
   me: UserResponse;
   /** Available without authorisation in all states (Operational, Initialisation and MigratingDatabase) */
   migrationStatus: MigrationStatusNode;
-  /**
-   * Legacy name-property query — kept as a no-op stub returning an empty
-   * connector so the host UI keeps compiling until it migrates to the new
-   * property system. Do not use for new work.
-   */
   nameProperties: NamePropertyResponse;
   /** Query omSupply "name" entries */
   names: NamesResponse;
@@ -7833,14 +7840,14 @@ export type Queries = {
   programIndicators: ProgramIndicatorResponse;
   programRequisitionSettingsByCustomer: CustomerProgramRequisitionSettingNode;
   programs: ProgramsResponse;
-  /** All properties (KDD option 1). Used by the central-admin list view. */
-  properties: Array<PropertyNode>;
-  /** Properties (KDD option 1) attached to a given parent table. */
-  propertiesForTable: Array<PropertyNode>;
-  /** One property by id (admin detail view). */
-  propertyById?: Maybe<PropertyNode>;
-  /** All property values written for one record of a given parent table. */
-  propertyValues: Array<PropertyValueNode>;
+  /** All V2 properties (KDD option 1). Used by the central-admin list view. */
+  propertiesV2: Array<PropertyV2Node>;
+  /** V2 properties (KDD option 1) attached to a given parent table. */
+  propertiesV2ForTable: Array<PropertyV2Node>;
+  /** One V2 property by id (admin detail view). */
+  propertyV2ById?: Maybe<PropertyV2Node>;
+  /** All V2 property values written for one record of a given parent table. */
+  propertyV2Values: Array<PropertyV2ValueNode>;
   purchaseOrder: PurchaseOrderResponse;
   purchaseOrderLine: PurchaseOrderLineResponse;
   purchaseOrderLines: PurchaseOrderLinesResponse;
@@ -8406,17 +8413,17 @@ export type QueriesProgramsArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type QueriesPropertiesForTableArgs = {
-  table: PropertyParentTableEnum;
+export type QueriesPropertiesV2ForTableArgs = {
+  table: PropertyV2ParentTableEnum;
 };
 
-export type QueriesPropertyByIdArgs = {
+export type QueriesPropertyV2ByIdArgs = {
   id: Scalars['String']['input'];
 };
 
-export type QueriesPropertyValuesArgs = {
+export type QueriesPropertyV2ValuesArgs = {
   recordId: Scalars['String']['input'];
-  table: PropertyParentTableEnum;
+  table: PropertyV2ParentTableEnum;
 };
 
 export type QueriesPurchaseOrderArgs = {
@@ -11629,12 +11636,12 @@ export type UpsertPreferencesInput = {
   warningForExcessRequest?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
-export type UpsertPropertyValueGqlInput = {
+export type UpsertPropertyV2ValueGqlInput = {
   id: Scalars['String']['input'];
   propertyId: Scalars['String']['input'];
   recordId: Scalars['String']['input'];
-  table: PropertyParentTableEnum;
-  value: PropertyValueGqlInput;
+  table: PropertyV2ParentTableEnum;
+  value: PropertyV2ValueGqlInput;
 };
 
 export type UpsertVaccineCourseDoseInput = {

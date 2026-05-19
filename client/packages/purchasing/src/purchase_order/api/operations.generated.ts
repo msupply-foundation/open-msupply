@@ -103,25 +103,6 @@ export type PurchaseOrderFragment = {
         isOnHold: boolean;
         name: string;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
-        propertyValues: Array<{
-          __typename: 'PropertyValueNode';
-          id: string;
-          valueText?: string | null;
-          valueNumber?: number | null;
-          valueReal?: number | null;
-          valueDate?: string | null;
-          property: {
-            __typename: 'PropertyNode';
-            id: string;
-            name: string;
-            type: Types.PropertyTypeEnum;
-          };
-          option?: {
-            __typename: 'PropertyOptionNode';
-            id: string;
-            name: string;
-          } | null;
-        }>;
       } | null;
       purchaseOrder?: {
         __typename: 'PurchaseOrderNode';
@@ -208,25 +189,6 @@ export type PurchaseOrderLineFragment = {
     isOnHold: boolean;
     name: string;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
-    propertyValues: Array<{
-      __typename: 'PropertyValueNode';
-      id: string;
-      valueText?: string | null;
-      valueNumber?: number | null;
-      valueReal?: number | null;
-      valueDate?: string | null;
-      property: {
-        __typename: 'PropertyNode';
-        id: string;
-        name: string;
-        type: Types.PropertyTypeEnum;
-      };
-      option?: {
-        __typename: 'PropertyOptionNode';
-        id: string;
-        name: string;
-      } | null;
-    }>;
   } | null;
   purchaseOrder?: {
     __typename: 'PurchaseOrderNode';
@@ -374,25 +336,6 @@ export type PurchaseOrderByIdQuery = {
                 id: string;
                 code: string;
               } | null;
-              propertyValues: Array<{
-                __typename: 'PropertyValueNode';
-                id: string;
-                valueText?: string | null;
-                valueNumber?: number | null;
-                valueReal?: number | null;
-                valueDate?: string | null;
-                property: {
-                  __typename: 'PropertyNode';
-                  id: string;
-                  name: string;
-                  type: Types.PropertyTypeEnum;
-                };
-                option?: {
-                  __typename: 'PropertyOptionNode';
-                  id: string;
-                  name: string;
-                } | null;
-              }>;
             } | null;
             purchaseOrder?: {
               __typename: 'PurchaseOrderNode';
@@ -563,25 +506,6 @@ export type PurchaseOrderLinesQuery = {
         isOnHold: boolean;
         name: string;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
-        propertyValues: Array<{
-          __typename: 'PropertyValueNode';
-          id: string;
-          valueText?: string | null;
-          valueNumber?: number | null;
-          valueReal?: number | null;
-          valueDate?: string | null;
-          property: {
-            __typename: 'PropertyNode';
-            id: string;
-            name: string;
-            type: Types.PropertyTypeEnum;
-          };
-          option?: {
-            __typename: 'PropertyOptionNode';
-            id: string;
-            name: string;
-          } | null;
-        }>;
       } | null;
       purchaseOrder?: {
         __typename: 'PurchaseOrderNode';
@@ -660,25 +584,6 @@ export type PurchaseOrderLineQuery = {
         isOnHold: boolean;
         name: string;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
-        propertyValues: Array<{
-          __typename: 'PropertyValueNode';
-          id: string;
-          valueText?: string | null;
-          valueNumber?: number | null;
-          valueReal?: number | null;
-          valueDate?: string | null;
-          property: {
-            __typename: 'PropertyNode';
-            id: string;
-            name: string;
-            type: Types.PropertyTypeEnum;
-          };
-          option?: {
-            __typename: 'PropertyOptionNode';
-            id: string;
-            name: string;
-          } | null;
-        }>;
       } | null;
       purchaseOrder?: {
         __typename: 'PurchaseOrderNode';

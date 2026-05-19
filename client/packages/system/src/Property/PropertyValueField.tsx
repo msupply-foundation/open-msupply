@@ -5,17 +5,17 @@ import {
   DateUtils,
   Formatter,
   NumericTextInput,
-  PropertyTypeEnum,
-  PropertyValueGqlInput,
+  PropertyV2TypeEnum,
+  PropertyV2ValueGqlInput,
   Select,
   useTranslation,
 } from '@openmsupply-client/common';
-import { PropertyDetailFragment, PropertyValueFragment } from './api';
+import { PropertyV2DetailFragment, PropertyV2ValueFragment } from './api';
 
 interface PropertyValueFieldProps {
-  property: PropertyDetailFragment;
-  value: PropertyValueFragment | undefined;
-  onChange: (value: PropertyValueGqlInput) => void;
+  property: PropertyV2DetailFragment;
+  value: PropertyV2ValueFragment | undefined;
+  onChange: (value: PropertyV2ValueGqlInput) => void;
   onClear: () => void;
   disabled?: boolean;
 }
@@ -32,7 +32,7 @@ export const PropertyValueField = ({
   const t = useTranslation();
 
   switch (property.type) {
-    case PropertyTypeEnum.Text: {
+    case PropertyV2TypeEnum.Text: {
       return (
         <BasicTextInput
           value={value?.valueText ?? ''}
@@ -46,7 +46,7 @@ export const PropertyValueField = ({
         />
       );
     }
-    case PropertyTypeEnum.Number: {
+    case PropertyV2TypeEnum.Number: {
       return (
         <NumericTextInput
           value={value?.valueNumber ?? undefined}
@@ -58,7 +58,7 @@ export const PropertyValueField = ({
         />
       );
     }
-    case PropertyTypeEnum.Real: {
+    case PropertyV2TypeEnum.Real: {
       return (
         <NumericTextInput
           value={value?.valueReal ?? undefined}
@@ -71,7 +71,7 @@ export const PropertyValueField = ({
         />
       );
     }
-    case PropertyTypeEnum.Date: {
+    case PropertyV2TypeEnum.Date: {
       return (
         <DateTimePickerInput
           value={DateUtils.getDateOrNull(value?.valueDate ?? null)}
@@ -86,7 +86,7 @@ export const PropertyValueField = ({
         />
       );
     }
-    case PropertyTypeEnum.Option: {
+    case PropertyV2TypeEnum.Option: {
       // Hide soft-deleted options unless the current value points to one — in
       // that case keep it selectable (tagged "removed") so the field renders
       // the historical selection without surprising the user.

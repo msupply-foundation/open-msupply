@@ -9,8 +9,9 @@ import {
 import {
   Sdk,
   NameRowFragment,
+  NameRowWithPropertyV2ValuesFragment,
   FacilityNameRowFragment,
-  NamePropertyFragment,
+  NamePropertyV2Fragment,
   UpdateNamePropertiesMutation,
 } from './operations.generated';
 
@@ -178,7 +179,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
     }: ListParams & {
       filter?: Pick<NameFilterInput, 'property'> | null;
     }): Promise<{
-      nodes: NameRowFragment[];
+      nodes: NameRowWithPropertyV2ValuesFragment[];
       totalCount: number;
     }> => {
       const key =
@@ -211,9 +212,9 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
     },
     // KDD option 1: definitions (id, type, options) for properties attached to
     // the `name` table. Powers the property filter dropdowns on the list view.
-    propertyDefinitions: async (): Promise<NamePropertyFragment[]> => {
-      const result = await sdk.namePropertyDefinitions();
-      return result?.propertiesForTable ?? [];
+    propertyDefinitions: async (): Promise<NamePropertyV2Fragment[]> => {
+      const result = await sdk.namePropertyV2Definitions();
+      return result?.propertiesV2ForTable ?? [];
     },
   },
   updateNameProperties: async (

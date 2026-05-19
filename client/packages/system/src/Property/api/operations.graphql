@@ -1,4 +1,4 @@
-fragment PropertyOption on PropertyOptionNode {
+fragment PropertyV2Option on PropertyV2OptionNode {
   __typename
   id
   propertyId
@@ -7,37 +7,37 @@ fragment PropertyOption on PropertyOptionNode {
   isDeleted
 }
 
-fragment PropertyAttachment on PropertyTableNode {
+fragment PropertyV2Attachment on PropertyV2TableNode {
   __typename
   id
   propertyId
   table
 }
 
-fragment PropertyDetail on PropertyNode {
+fragment PropertyV2Detail on PropertyV2Node {
   __typename
   id
   name
   type
   translationKey
   options {
-    ...PropertyOption
+    ...PropertyV2Option
   }
   attachedTo {
-    ...PropertyAttachment
+    ...PropertyV2Attachment
   }
 }
 
-fragment PropertyValue on PropertyValueNode {
+fragment PropertyV2Value on PropertyV2ValueNode {
   __typename
   id
   recordId
   parentTable
   property {
-    ...PropertyDetail
+    ...PropertyV2Detail
   }
   option {
-    ...PropertyOption
+    ...PropertyV2Option
   }
   valueText
   valueNumber
@@ -45,57 +45,57 @@ fragment PropertyValue on PropertyValueNode {
   valueDate
 }
 
-# All properties — used by the admin list view.
-query properties {
-  properties {
-    ...PropertyDetail
+# All V2 properties — used by the admin list view.
+query propertiesV2 {
+  propertiesV2 {
+    ...PropertyV2Detail
   }
 }
 
-# Single property by id — used by the admin detail view.
-query propertyById($id: String!) {
-  propertyById(id: $id) {
-    ...PropertyDetail
+# Single V2 property by id — used by the admin detail view.
+query propertyV2ById($id: String!) {
+  propertyV2ById(id: $id) {
+    ...PropertyV2Detail
   }
 }
 
-# Fetches every property attached to a given parent table. Used by
+# Fetches every V2 property attached to a given parent table. Used by
 # record-detail views to know which rows to render.
-query propertiesForTable($table: PropertyParentTableEnum!) {
-  propertiesForTable(table: $table) {
-    ...PropertyDetail
+query propertiesV2ForTable($table: PropertyV2ParentTableEnum!) {
+  propertiesV2ForTable(table: $table) {
+    ...PropertyV2Detail
   }
 }
 
 # Values written against a single record. Used by PropertySection on
 # record-detail pages when standalone (not via the parent node resolver).
-query propertyValuesForRecord(
-  $table: PropertyParentTableEnum!
+query propertyV2ValuesForRecord(
+  $table: PropertyV2ParentTableEnum!
   $recordId: String!
 ) {
-  propertyValues(table: $table, recordId: $recordId) {
-    ...PropertyValue
+  propertyV2Values(table: $table, recordId: $recordId) {
+    ...PropertyV2Value
   }
 }
 
-mutation configureProperty($input: ConfigurePropertyGqlInput!) {
-  configureProperty(input: $input) {
-    ...PropertyDetail
+mutation configurePropertyV2($input: ConfigurePropertyV2GqlInput!) {
+  configurePropertyV2(input: $input) {
+    ...PropertyV2Detail
   }
 }
 
-mutation upsertPropertyValue($input: UpsertPropertyValueGqlInput!) {
-  upsertPropertyValue(input: $input) {
-    ...PropertyValue
+mutation upsertPropertyV2Value($input: UpsertPropertyV2ValueGqlInput!) {
+  upsertPropertyV2Value(input: $input) {
+    ...PropertyV2Value
   }
 }
 
-mutation deletePropertyValue(
-  $table: PropertyParentTableEnum!
+mutation deletePropertyV2Value(
+  $table: PropertyV2ParentTableEnum!
   $recordId: String!
   $propertyId: String!
 ) {
-  deletePropertyValue(
+  deletePropertyV2Value(
     table: $table
     recordId: $recordId
     propertyId: $propertyId

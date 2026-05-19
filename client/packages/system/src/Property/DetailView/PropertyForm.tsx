@@ -4,8 +4,8 @@ import {
   Box,
   Checkbox,
   Grid,
-  PropertyParentTableEnum,
-  PropertyTypeEnum,
+  PropertyV2ParentTableEnum,
+  PropertyV2TypeEnum,
   Select,
   Typography,
   useTranslation,
@@ -16,21 +16,21 @@ import { PropertyInputRow, PROPERTY_INPUT_WIDTH } from './StyledInputRow';
 interface PropertyFormProps {
   draft: DraftProperty;
   update: (patch: Partial<DraftProperty>) => void;
-  toggleAttachedTable: (table: PropertyParentTableEnum) => void;
+  toggleAttachedTable: (table: PropertyV2ParentTableEnum) => void;
 }
 
-const TABLE_OPTIONS: PropertyParentTableEnum[] = [
-  PropertyParentTableEnum.Name,
-  PropertyParentTableEnum.Item,
-  PropertyParentTableEnum.InvoiceLine,
+const TABLE_OPTIONS: PropertyV2ParentTableEnum[] = [
+  PropertyV2ParentTableEnum.Name,
+  PropertyV2ParentTableEnum.Item,
+  PropertyV2ParentTableEnum.InvoiceLine,
 ];
 
-const TYPE_OPTIONS: PropertyTypeEnum[] = [
-  PropertyTypeEnum.Text,
-  PropertyTypeEnum.Number,
-  PropertyTypeEnum.Real,
-  PropertyTypeEnum.Date,
-  PropertyTypeEnum.Option,
+const TYPE_OPTIONS: PropertyV2TypeEnum[] = [
+  PropertyV2TypeEnum.Text,
+  PropertyV2TypeEnum.Number,
+  PropertyV2TypeEnum.Real,
+  PropertyV2TypeEnum.Date,
+  PropertyV2TypeEnum.Option,
 ];
 
 export const PropertyForm = ({
@@ -59,7 +59,7 @@ export const PropertyForm = ({
           <Select
             value={draft.type}
             onChange={e =>
-              update({ type: e.target.value as PropertyTypeEnum })
+              update({ type: e.target.value as PropertyV2TypeEnum })
             }
             options={TYPE_OPTIONS.map(t => ({ label: t, value: t }))}
             sx={{ width: PROPERTY_INPUT_WIDTH }}

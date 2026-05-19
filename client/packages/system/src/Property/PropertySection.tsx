@@ -6,16 +6,16 @@ import {
   DetailSection,
   FnUtils,
   LocaleKey,
-  PropertyParentTableEnum,
-  PropertyValueGqlInput,
+  PropertyV2ParentTableEnum,
+  PropertyV2ValueGqlInput,
   Typography,
   TypedTFunction,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
 import {
-  PropertyDetailFragment,
-  PropertyValueFragment,
+  PropertyV2DetailFragment,
+  PropertyV2ValueFragment,
   useDeletePropertyValue,
   usePropertiesForTable,
   useUpsertPropertyValue,
@@ -23,17 +23,17 @@ import {
 import { PropertyValueField } from './PropertyValueField';
 
 interface PropertySectionProps {
-  table: PropertyParentTableEnum;
+  table: PropertyV2ParentTableEnum;
   recordId: string | undefined;
   // Property values for the record. Caller fetches via the parent node's
   // `propertyValues` resolver (which uses a DataLoader) and passes them in,
   // so we don't fire a duplicate per-record value query.
-  values: PropertyValueFragment[] | undefined;
+  values: PropertyV2ValueFragment[] | undefined;
   disabled?: boolean;
 }
 
 const labelFor = (
-  property: PropertyDetailFragment,
+  property: PropertyV2DetailFragment,
   t: TypedTFunction<LocaleKey>
 ) => {
   if (property.translationKey) {
@@ -59,13 +59,13 @@ export const PropertySection = ({
   if (isLoading) return <BasicSpinner />;
   if (!properties || properties.length === 0) return null;
 
-  const valuesByProperty = new Map<string, PropertyValueFragment>(
-    (values ?? []).map((v: PropertyValueFragment) => [v.property.id, v])
+  const valuesByProperty = new Map<string, PropertyV2ValueFragment>(
+    (values ?? []).map((v: PropertyV2ValueFragment) => [v.property.id, v])
   );
 
   const onChange = async (
-    property: PropertyDetailFragment,
-    input: PropertyValueGqlInput
+    property: PropertyV2DetailFragment,
+    input: PropertyV2ValueGqlInput
   ) => {
     if (!recordId) return;
     try {
@@ -82,7 +82,7 @@ export const PropertySection = ({
     }
   };
 
-  const onClear = async (property: PropertyDetailFragment) => {
+  const onClear = async (property: PropertyV2DetailFragment) => {
     if (!recordId) return;
     try {
       await deleteValue({ table, recordId, propertyId: property.id });
@@ -94,7 +94,7 @@ export const PropertySection = ({
   return (
     <DetailSection title={t('heading.properties')}>
       <Box display="flex" flexDirection="column" gap={1.5} width="100%">
-        {properties.map((property: PropertyDetailFragment) => (
+        {properties.map((property: PropertyV2DetailFragment) => (
           <DetailInputWithLabelRow
             key={property.id}
             label={labelFor(property, t)}

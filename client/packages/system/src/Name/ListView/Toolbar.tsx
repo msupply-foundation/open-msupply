@@ -4,9 +4,9 @@ import {
   Box,
   FilterDefinition,
   FilterMenu,
-  PropertyTypeEnum,
+  PropertyV2TypeEnum,
 } from '@openmsupply-client/common';
-import { useName, NamePropertyFragment } from '../api';
+import { useName, NamePropertyV2Fragment } from '../api';
 
 // Translates a property definition (KDD option 1) into the FilterMenu's
 // FilterDefinition shape. Option-typed properties become a Select (enum filter)
@@ -14,10 +14,10 @@ import { useName, NamePropertyFragment } from '../api';
 // text filter — the URL value is interpreted as a `like` match on
 // `value_text` by the names hook.
 const toFilterDefinition = (
-  prop: NamePropertyFragment
+  prop: NamePropertyV2Fragment
 ): FilterDefinition | null => {
   const urlParameter = `property.${prop.id}`;
-  if (prop.type === PropertyTypeEnum.Option) {
+  if (prop.type === PropertyV2TypeEnum.Option) {
     const options = prop.options
       .filter(o => !o.isDeleted)
       .map(o => ({ label: o.name, value: o.id }));

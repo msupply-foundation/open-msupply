@@ -9,8 +9,8 @@ export const useProperty = (id: string | undefined) => {
     queryKey: [PROPERTIES, id],
     queryFn: async () => {
       if (!id || id === 'new') return null;
-      const result = await propertyApi.propertyById({ id });
-      return result.propertyById ?? null;
+      const result = await propertyApi.propertyV2ById({ id });
+      return result.propertyV2ById ?? null;
     },
     enabled: id !== undefined,
   });

@@ -1,7 +1,8 @@
-use chrono::NaiveDateTime;
-use diesel::prelude::*;
+use super::property_row::property::dsl::*;
+
 use serde::{Deserialize, Serialize};
 
+use crate::types::PropertyValueType;
 use crate::ChangeLogInsertRow;
 use crate::ChangelogRepository;
 use crate::ChangelogTableName;
@@ -10,31 +11,29 @@ use crate::RowActionType;
 use crate::StorageConnection;
 use crate::Upsert;
 
+use diesel::prelude::*;
+
 table! {
     property (id) {
         id -> Text,
-        #[sql_name = "type"]
-        type_ -> Text,
+        key -> Text,
         name -> Text,
-        translation_key -> Nullable<Text>,
-        deleted_datetime -> Nullable<Timestamp>,
+        value_type -> crate::db_diesel::assets::types::PropertyValueTypeMapping,
+        allowed_values -> Nullable<Text>,
     }
 }
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
 )]
 #[diesel(table_name = property)]
 #[diesel(treat_none_as_null = true)]
 pub struct PropertyRow {
     pub id: String,
-    // String form of crate::types::PropertyType — kept as String because the
-    // column is TEXT (portable between SQLite and Postgres without an enum).
-    #[diesel(column_name = type_)]
-    pub r#type: String,
+    pub key: String,
     pub name: String,
-    pub translation_key: Option<String>,
-    pub deleted_datetime: Option<NaiveDateTime>,
+    pub value_type: PropertyValueType,
+    pub allowed_values: Option<String>,
 }
 
 pub struct PropertyRowRepository<'a> {
@@ -46,38 +45,39 @@ impl<'a> PropertyRowRepository<'a> {
         PropertyRowRepository { connection }
     }
 
-    pub fn _upsert_one(&self, row: &PropertyRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(property::table)
-            .values(row)
-            .on_conflict(property::id)
+    pub fn _upsert_one(&self, property_row: &PropertyRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(property)
+            .values(property_row)
+            .on_conflict(id)
             .do_update()
-            .set(row)
+            .set(property_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &PropertyRow) -> Result<i64, RepositoryError> {
-        self._upsert_one(row)?;
-        self.insert_changelog(row.id.to_string(), RowActionType::Upsert)
+    pub fn upsert_one(&self, property_row: &PropertyRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(property_row)?;
+        self.insert_changelog(property_row.id.to_string(), RowActionType::Upsert)
     }
 
     fn insert_changelog(
         &self,
-        record_id: String,
+        property_row: String,
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::Property,
-            record_id,
+            record_id: property_row,
             row_action: action,
             store_id: None,
             name_id: None,
         };
+
         ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_all(&self) -> Result<Vec<PropertyRow>, RepositoryError> {
-        let result = property::table.load(self.connection.lock().connection())?;
+        let result = property.load(self.connection.lock().connection())?;
         Ok(result)
     }
 
@@ -85,20 +85,16 @@ impl<'a> PropertyRowRepository<'a> {
         &self,
         property_id: &str,
     ) -> Result<Option<PropertyRow>, RepositoryError> {
-        let result = property::table
-            .filter(property::id.eq(property_id))
+        let result = property
+            .filter(id.eq(property_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn mark_deleted(
-        &self,
-        property_id: &str,
-        deleted_at: NaiveDateTime,
-    ) -> Result<(), RepositoryError> {
-        diesel::update(property::table.filter(property::id.eq(property_id)))
-            .set(property::deleted_datetime.eq(Some(deleted_at)))
+    pub fn delete(&self, property_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(property)
+            .filter(id.eq(property_id))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

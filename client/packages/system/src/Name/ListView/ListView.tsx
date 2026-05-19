@@ -8,11 +8,11 @@ import {
   usePaginatedMaterialTable,
   MaterialTable,
   ColumnDef,
-  PropertyTypeEnum,
+  PropertyV2TypeEnum,
 } from '@openmsupply-client/common';
 import { TransitionProps } from '@mui/material/transitions';
 import { Details } from '../Details';
-import { useName, NameRowFragment } from '../api';
+import { useName, NameRowWithPropertyV2ValuesFragment } from '../api';
 import { NameRenderer } from '../Components';
 import { Toolbar } from './Toolbar';
 
@@ -34,7 +34,7 @@ export const NameListView = ({ type }: NameListProps): ReactElement => {
     () =>
       new Set(
         (propertyDefinitions ?? [])
-          .filter(p => p.type === PropertyTypeEnum.Option)
+          .filter(p => p.type === PropertyV2TypeEnum.Option)
           .map(p => p.id)
       ),
     [propertyDefinitions]
@@ -51,20 +51,20 @@ export const NameListView = ({ type }: NameListProps): ReactElement => {
   // render the option's `name`; everything else falls back to the populated
   // typed column (text/number/real/date).
   const propertyColumns = useMemo(
-    (): ColumnDef<NameRowFragment>[] =>
+    (): ColumnDef<NameRowWithPropertyV2ValuesFragment>[] =>
       (propertyDefinitions ?? []).map(prop => ({
         id: `property.${prop.id}`,
         header: prop.name,
         enableSorting: false,
         accessorFn: row => {
-          const pv = row.propertyValues?.find(v => v.property.id === prop.id);
+          const pv = row.propertyV2Values?.find(v => v.property.id === prop.id);
           if (!pv) return '';
-          if (prop.type === PropertyTypeEnum.Option) return pv.option?.name ?? '';
-          if (prop.type === PropertyTypeEnum.Text) return pv.valueText ?? '';
-          if (prop.type === PropertyTypeEnum.Number)
+          if (prop.type === PropertyV2TypeEnum.Option) return pv.option?.name ?? '';
+          if (prop.type === PropertyV2TypeEnum.Text) return pv.valueText ?? '';
+          if (prop.type === PropertyV2TypeEnum.Number)
             return pv.valueNumber ?? '';
-          if (prop.type === PropertyTypeEnum.Real) return pv.valueReal ?? '';
-          if (prop.type === PropertyTypeEnum.Date) return pv.valueDate ?? '';
+          if (prop.type === PropertyV2TypeEnum.Real) return pv.valueReal ?? '';
+          if (prop.type === PropertyV2TypeEnum.Date) return pv.valueDate ?? '';
           return '';
         },
       })),
@@ -72,7 +72,7 @@ export const NameListView = ({ type }: NameListProps): ReactElement => {
   );
 
   const columns = useMemo(
-    (): ColumnDef<NameRowFragment>[] => [
+    (): ColumnDef<NameRowWithPropertyV2ValuesFragment>[] => [
       {
         accessorKey: 'code',
         header: t('label.code'),
@@ -103,7 +103,7 @@ export const NameListView = ({ type }: NameListProps): ReactElement => {
     ) => <Fade ref={ref} {...props} timeout={800}></Fade>
   );
 
-  const handleRowClick = (row: NameRowFragment): void => {
+  const handleRowClick = (row: NameRowWithPropertyV2ValuesFragment): void => {
     if (type === 'supplier') return navigate(row.id);
     setSelectedId(row.id);
     showDialog();

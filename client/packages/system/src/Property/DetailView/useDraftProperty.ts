@@ -1,32 +1,32 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   FnUtils,
-  PropertyParentTableEnum,
-  PropertyTypeEnum,
+  PropertyV2ParentTableEnum,
+  PropertyV2TypeEnum,
 } from '@openmsupply-client/common';
-import { PropertyDetailFragment } from '../api';
+import { PropertyV2DetailFragment } from '../api';
 
 export interface DraftProperty {
   id: string;
   name: string;
-  type: PropertyTypeEnum;
+  type: PropertyV2TypeEnum;
   translationKey: string | null;
-  attachedTables: PropertyParentTableEnum[];
+  attachedTables: PropertyV2ParentTableEnum[];
   // Stable per-attachment row id, keyed by parent table — needed because the
   // server-side property_table row has its own id distinct from the property id.
-  attachmentIds: Partial<Record<PropertyParentTableEnum, string>>;
+  attachmentIds: Partial<Record<PropertyV2ParentTableEnum, string>>;
 }
 
 const emptyDraft = (): DraftProperty => ({
   id: FnUtils.generateUUID(),
   name: '',
-  type: PropertyTypeEnum.Text,
+  type: PropertyV2TypeEnum.Text,
   translationKey: null,
   attachedTables: [],
   attachmentIds: {},
 });
 
-const seedDraft = (property: PropertyDetailFragment): DraftProperty => ({
+const seedDraft = (property: PropertyV2DetailFragment): DraftProperty => ({
   id: property.id,
   name: property.name,
   type: property.type,
@@ -38,7 +38,7 @@ const seedDraft = (property: PropertyDetailFragment): DraftProperty => ({
 });
 
 export const useDraftProperty = (
-  seed: PropertyDetailFragment | null | undefined
+  seed: PropertyV2DetailFragment | null | undefined
 ) => {
   const baseline = useMemo(
     () => (seed ? seedDraft(seed) : emptyDraft()),
@@ -55,7 +55,7 @@ export const useDraftProperty = (
   const update = (patch: Partial<DraftProperty>) =>
     setDraft(prev => ({ ...prev, ...patch }));
 
-  const toggleAttachedTable = (table: PropertyParentTableEnum) =>
+  const toggleAttachedTable = (table: PropertyV2ParentTableEnum) =>
     setDraft(prev => {
       const has = prev.attachedTables.includes(table);
       return {

@@ -9,9 +9,15 @@ fragment NameRow on NameNode {
     id
     code
   }
-  # KDD option 1: relational property values, resolved via
-  # PropertyValuesByNameRecordLoader so list rows are batched.
-  propertyValues {
+}
+
+# Wider variant used by the customers/suppliers list views, which need the
+# V2 property values to render the per-property columns added by the KDD
+# prototype. Kept separate from `NameRow` so other consumers (e.g. invoice
+# toolbars) don't have to fan their otherParty selections out.
+fragment NameRowWithPropertyV2Values on NameNode {
+  ...NameRow
+  propertyV2Values {
     id
     property {
       id
@@ -77,9 +83,9 @@ fragment Name on NameNode {
     code
   }
   # Values from the new property system (KDD option 1). Resolved via the
-  # PropertyValuesByNameRecordLoader so list rows are batched.
-  propertyValues {
-    ...PropertyValue
+  # PropertyV2ValuesByNameRecordLoader so list rows are batched.
+  propertyV2Values {
+    ...PropertyV2Value
   }
 }
 
@@ -94,7 +100,7 @@ fragment Property on PropertyNode {
 # Definition shape used by the property filter on the names list (KDD option 1).
 # Includes the `option` rows so the UI can render a dropdown for option-typed
 # properties without a second query per property.
-fragment NameProperty on PropertyNode {
+fragment NamePropertyV2 on PropertyV2Node {
   id
   name
   type
@@ -105,9 +111,9 @@ fragment NameProperty on PropertyNode {
   }
 }
 
-query namePropertyDefinitions {
-  propertiesForTable(table: NAME) {
-    ...NameProperty
+query namePropertyV2Definitions {
+  propertiesV2ForTable(table: NAME) {
+    ...NamePropertyV2
   }
 }
 
@@ -128,7 +134,7 @@ query names(
     ... on NameConnector {
       __typename
       nodes {
-        ...NameRow
+        ...NameRowWithPropertyV2Values
       }
       totalCount
     }

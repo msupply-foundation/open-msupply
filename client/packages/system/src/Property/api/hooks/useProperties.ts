@@ -8,8 +8,8 @@ export const useProperties = (enabled = true) => {
   return useQuery({
     queryKey: [PROPERTIES],
     queryFn: async () => {
-      const result = await propertyApi.properties();
-      return result.properties;
+      const result = await propertyApi.propertiesV2();
+      return result.propertiesV2;
     },
     enabled,
   });

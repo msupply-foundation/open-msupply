@@ -1,7 +1,7 @@
 export * from './hooks';
 export type {
-  PropertyDetailFragment,
-  PropertyOptionFragment,
-  PropertyAttachmentFragment,
-  PropertyValueFragment,
+  PropertyV2DetailFragment,
+  PropertyV2OptionFragment,
+  PropertyV2AttachmentFragment,
+  PropertyV2ValueFragment,
 } from './operations.generated';

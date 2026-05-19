@@ -269,9 +269,9 @@ fragment Item on ItemNode {
     ignoreForOrders
   }
   # Values from the new property system (KDD option 1). Resolved via
-  # PropertyValuesByItemRecordLoader so list rows are batched.
-  propertyValues {
-    ...PropertyValue
+  # PropertyV2ValuesByItemRecordLoader so list rows are batched.
+  propertyV2Values {
+    ...PropertyV2Value
   }
 }
 

@@ -1,23 +1,23 @@
-import { PropertyParentTableEnum, useMutation } from '@openmsupply-client/common';
+import { PropertyV2ParentTableEnum, useMutation } from '@openmsupply-client/common';
 import { usePropertyGraphQL } from '../usePropertyGraphQL';
 import { invalidateParentRecord } from './invalidateParentRecord';
 
 interface DeletePropertyValueInput {
-  table: PropertyParentTableEnum;
+  table: PropertyV2ParentTableEnum;
   recordId: string;
   propertyId: string;
 }
 
 export const useDeletePropertyValue = (
-  table: PropertyParentTableEnum,
+  table: PropertyV2ParentTableEnum,
   recordId: string | undefined
 ) => {
   const { propertyApi, queryClient } = usePropertyGraphQL();
 
   return useMutation({
     mutationFn: async (input: DeletePropertyValueInput) => {
-      const result = await propertyApi.deletePropertyValue(input);
-      return result.deletePropertyValue;
+      const result = await propertyApi.deletePropertyV2Value(input);
+      return result.deletePropertyV2Value;
     },
     onSuccess: () => invalidateParentRecord(queryClient, table, recordId),
   });

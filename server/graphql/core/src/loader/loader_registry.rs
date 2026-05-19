@@ -605,13 +605,13 @@ pub async fn get_loaders(
     ));
 
     loaders.insert(DataLoader::new(
-        PropertyValuesByNameRecordLoader {
+        PropertyV2ValuesByNameRecordLoader {
             connection_manager: connection_manager.clone(),
         },
         tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
-        PropertyValuesByItemRecordLoader {
+        PropertyV2ValuesByItemRecordLoader {
             connection_manager: connection_manager.clone(),
         },
         tokio::spawn,

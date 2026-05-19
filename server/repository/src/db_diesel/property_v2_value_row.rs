@@ -10,11 +10,11 @@ use crate::RowActionType;
 use crate::StorageConnection;
 use crate::Upsert;
 
-use super::property_option_row::property_option;
-use super::property_row::property;
+use super::property_v2_option_row::property_v2_option;
+use super::property_v2_row::property_v2;
 
 table! {
-    property_value (id) {
+    property_v2_value (id) {
         id -> Text,
         table_name -> Text,
         record_id -> Text,
@@ -26,17 +26,17 @@ table! {
         value_option_id -> Nullable<Text>,
     }
 }
-joinable!(property_value -> property (property_id));
-joinable!(property_value -> property_option (value_option_id));
-allow_tables_to_appear_in_same_query!(property_value, property);
-allow_tables_to_appear_in_same_query!(property_value, property_option);
+joinable!(property_v2_value -> property_v2 (property_id));
+joinable!(property_v2_value -> property_v2_option (value_option_id));
+allow_tables_to_appear_in_same_query!(property_v2_value, property_v2);
+allow_tables_to_appear_in_same_query!(property_v2_value, property_v2_option);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Serialize, Deserialize, Default,
 )]
-#[diesel(table_name = property_value)]
+#[diesel(table_name = property_v2_value)]
 #[diesel(treat_none_as_null = true)]
-pub struct PropertyValueRow {
+pub struct PropertyV2ValueRow {
     pub id: String,
     pub table_name: String,
     pub record_id: String,
@@ -48,26 +48,26 @@ pub struct PropertyValueRow {
     pub value_option_id: Option<String>,
 }
 
-pub struct PropertyValueRowRepository<'a> {
+pub struct PropertyV2ValueRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> PropertyValueRowRepository<'a> {
+impl<'a> PropertyV2ValueRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        PropertyValueRowRepository { connection }
+        PropertyV2ValueRowRepository { connection }
     }
 
-    pub fn _upsert_one(&self, row: &PropertyValueRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(property_value::table)
+    pub fn _upsert_one(&self, row: &PropertyV2ValueRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(property_v2_value::table)
             .values(row)
-            .on_conflict(property_value::id)
+            .on_conflict(property_v2_value::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &PropertyValueRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &PropertyV2ValueRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
         self.insert_changelog(row.id.to_string(), RowActionType::Upsert)
     }
@@ -78,7 +78,7 @@ impl<'a> PropertyValueRowRepository<'a> {
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::PropertyValue,
+            table_name: ChangelogTableName::PropertyV2Value,
             record_id,
             row_action: action,
             store_id: None,
@@ -89,17 +89,17 @@ impl<'a> PropertyValueRowRepository<'a> {
 
     // Upsert keyed by the (table_name, record_id, property_id) triple — the
     // logical unique identity of a property value. Re-setting overwrites in place.
-    pub fn upsert_by_record(&self, row: &PropertyValueRow) -> Result<i64, RepositoryError> {
-        let existing = property_value::table
-            .filter(property_value::table_name.eq(&row.table_name))
-            .filter(property_value::record_id.eq(&row.record_id))
-            .filter(property_value::property_id.eq(&row.property_id))
-            .select(property_value::id)
+    pub fn upsert_by_record(&self, row: &PropertyV2ValueRow) -> Result<i64, RepositoryError> {
+        let existing = property_v2_value::table
+            .filter(property_v2_value::table_name.eq(&row.table_name))
+            .filter(property_v2_value::record_id.eq(&row.record_id))
+            .filter(property_v2_value::property_id.eq(&row.property_id))
+            .select(property_v2_value::id)
             .first::<String>(self.connection.lock().connection())
             .optional()?;
 
         let to_insert = match existing {
-            Some(existing_id) => PropertyValueRow {
+            Some(existing_id) => PropertyV2ValueRow {
                 id: existing_id,
                 ..row.clone()
             },
@@ -108,9 +108,9 @@ impl<'a> PropertyValueRowRepository<'a> {
         self.upsert_one(&to_insert)
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<PropertyValueRow>, RepositoryError> {
-        Ok(property_value::table
-            .filter(property_value::id.eq(id))
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<PropertyV2ValueRow>, RepositoryError> {
+        Ok(property_v2_value::table
+            .filter(property_v2_value::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?)
     }
@@ -119,10 +119,10 @@ impl<'a> PropertyValueRowRepository<'a> {
         &self,
         table_name: &str,
         record_id: &str,
-    ) -> Result<Vec<PropertyValueRow>, RepositoryError> {
-        Ok(property_value::table
-            .filter(property_value::table_name.eq(table_name))
-            .filter(property_value::record_id.eq(record_id))
+    ) -> Result<Vec<PropertyV2ValueRow>, RepositoryError> {
+        Ok(property_v2_value::table
+            .filter(property_v2_value::table_name.eq(table_name))
+            .filter(property_v2_value::record_id.eq(record_id))
             .load(self.connection.lock().connection())?)
     }
 
@@ -131,13 +131,13 @@ impl<'a> PropertyValueRowRepository<'a> {
         &self,
         table_name: &str,
         record_ids: &[String],
-    ) -> Result<Vec<PropertyValueRow>, RepositoryError> {
+    ) -> Result<Vec<PropertyV2ValueRow>, RepositoryError> {
         if record_ids.is_empty() {
             return Ok(vec![]);
         }
-        Ok(property_value::table
-            .filter(property_value::table_name.eq(table_name))
-            .filter(property_value::record_id.eq_any(record_ids))
+        Ok(property_v2_value::table
+            .filter(property_v2_value::table_name.eq(table_name))
+            .filter(property_v2_value::record_id.eq_any(record_ids))
             .load(self.connection.lock().connection())?)
     }
 
@@ -146,31 +146,31 @@ impl<'a> PropertyValueRowRepository<'a> {
         table_name: &str,
         record_id: &str,
         property_id: &str,
-    ) -> Result<Option<PropertyValueRow>, RepositoryError> {
-        Ok(property_value::table
-            .filter(property_value::table_name.eq(table_name))
-            .filter(property_value::record_id.eq(record_id))
-            .filter(property_value::property_id.eq(property_id))
+    ) -> Result<Option<PropertyV2ValueRow>, RepositoryError> {
+        Ok(property_v2_value::table
+            .filter(property_v2_value::table_name.eq(table_name))
+            .filter(property_v2_value::record_id.eq(record_id))
+            .filter(property_v2_value::property_id.eq(property_id))
             .first(self.connection.lock().connection())
             .optional()?)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(property_value::table.filter(property_value::id.eq(id)))
+        diesel::delete(property_v2_value::table.filter(property_v2_value::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
 
-impl Upsert for PropertyValueRow {
+impl Upsert for PropertyV2ValueRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = PropertyValueRowRepository::new(con).upsert_one(self)?;
+        let cursor_id = PropertyV2ValueRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))
     }
 
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            PropertyValueRowRepository::new(con).find_one_by_id(&self.id),
+            PropertyV2ValueRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

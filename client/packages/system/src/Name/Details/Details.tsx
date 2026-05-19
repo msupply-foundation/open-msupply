@@ -12,7 +12,7 @@ import {
   MuiLink,
   BasicTextInput,
   ObjUtils,
-  PropertyParentTableEnum,
+  PropertyV2ParentTableEnum,
 } from '@openmsupply-client/common';
 import { SUPPLY_LEVEL_KEY } from '@openmsupply-client/host/src/api/hooks/settings/namePropertyKeys';
 import { PropertySection } from '../../Property';
@@ -218,9 +218,9 @@ export const Details = ({ nameId, type = 'customer' }: DetailsProps) => {
               Values come from the Name fragment (resolved via DataLoader) so
               no extra per-record query is needed. */}
           <PropertySection
-            table={PropertyParentTableEnum.Name}
+            table={PropertyV2ParentTableEnum.Name}
             recordId={nameId}
-            values={data?.propertyValues}
+            values={data?.propertyV2Values}
           />
         </Box>
       </Box>

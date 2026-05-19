@@ -14,7 +14,7 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { AppBarButtons } from './AppBarButtons';
-import { PropertyDetailFragment, useProperties } from '../api';
+import { PropertyV2DetailFragment, useProperties } from '../api';
 
 export const PropertyListView = () => {
   const t = useTranslation();
@@ -40,7 +40,7 @@ export const PropertyListView = () => {
   }
 
   const columns = useMemo(
-    (): ColumnDef<PropertyDetailFragment>[] => [
+    (): ColumnDef<PropertyV2DetailFragment>[] => [
       {
         header: t('label.name'),
         accessorKey: 'name',
@@ -69,7 +69,7 @@ export const PropertyListView = () => {
 
   const rows = data ?? [];
 
-  const { table } = usePaginatedMaterialTable<PropertyDetailFragment>({
+  const { table } = usePaginatedMaterialTable<PropertyV2DetailFragment>({
     tableId: 'property-list-view',
     isLoading,
     isError,

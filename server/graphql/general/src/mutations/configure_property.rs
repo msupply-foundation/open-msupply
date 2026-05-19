@@ -1,44 +1,44 @@
 use async_graphql::*;
 
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::{PropertyNode, PropertyParentTableEnum, PropertyTypeEnum};
-use repository::{PropertyRowRepository, RepositoryError};
+use graphql_types::types::{PropertyV2Node, PropertyV2ParentTableEnum, PropertyV2TypeEnum};
+use repository::{PropertyV2RowRepository, RepositoryError};
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    property::{
-        configure_property, ConfigurePropertyInput as ServiceInput, ConfigurePropertyOptionInput,
-        PropertyAttachmentInput, PropertyServiceError,
+    property_v2::{
+        configure_property_v2, ConfigurePropertyV2Input as ServiceInput,
+        ConfigurePropertyV2OptionInput, PropertyV2AttachmentInput, PropertyV2ServiceError,
     },
 };
 
 use crate::mutations::property_errors::property_service_error_to_graphql;
 
 #[derive(InputObject)]
-pub struct PropertyAttachmentGqlInput {
+pub struct PropertyV2AttachmentGqlInput {
     pub id: String,
-    pub table: PropertyParentTableEnum,
+    pub table: PropertyV2ParentTableEnum,
 }
 
 #[derive(InputObject)]
-pub struct ConfigurePropertyOptionGqlInput {
+pub struct ConfigurePropertyV2OptionGqlInput {
     pub id: String,
     pub name: String,
     pub translation_key: Option<String>,
 }
 
 #[derive(InputObject)]
-pub struct ConfigurePropertyGqlInput {
+pub struct ConfigurePropertyV2GqlInput {
     pub id: String,
-    pub r#type: PropertyTypeEnum,
+    pub r#type: PropertyV2TypeEnum,
     pub name: String,
     pub translation_key: Option<String>,
-    pub attached_to: Vec<PropertyAttachmentGqlInput>,
+    pub attached_to: Vec<PropertyV2AttachmentGqlInput>,
     // Required for OPTION-type properties, empty otherwise.
-    pub options: Vec<ConfigurePropertyOptionGqlInput>,
+    pub options: Vec<ConfigurePropertyV2OptionGqlInput>,
 }
 
-impl From<ConfigurePropertyGqlInput> for ServiceInput {
-    fn from(input: ConfigurePropertyGqlInput) -> Self {
+impl From<ConfigurePropertyV2GqlInput> for ServiceInput {
+    fn from(input: ConfigurePropertyV2GqlInput) -> Self {
         ServiceInput {
             id: input.id,
             r#type: input.r#type.into(),
@@ -47,7 +47,7 @@ impl From<ConfigurePropertyGqlInput> for ServiceInput {
             attached_to: input
                 .attached_to
                 .into_iter()
-                .map(|a| PropertyAttachmentInput {
+                .map(|a| PropertyV2AttachmentInput {
                     id: a.id,
                     table: a.table.into(),
                 })
@@ -55,7 +55,7 @@ impl From<ConfigurePropertyGqlInput> for ServiceInput {
             options: input
                 .options
                 .into_iter()
-                .map(|o| ConfigurePropertyOptionInput {
+                .map(|o| ConfigurePropertyV2OptionInput {
                     id: o.id,
                     name: o.name,
                     translation_key: o.translation_key,
@@ -65,10 +65,10 @@ impl From<ConfigurePropertyGqlInput> for ServiceInput {
     }
 }
 
-pub fn configure_property_mutation(
+pub fn configure_property_v2_mutation(
     ctx: &Context<'_>,
-    input: ConfigurePropertyGqlInput,
-) -> Result<PropertyNode> {
+    input: ConfigurePropertyV2GqlInput,
+) -> Result<PropertyV2Node> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -81,22 +81,22 @@ pub fn configure_property_mutation(
     let service_input: ServiceInput = input.into();
     let property_id = service_input.id.clone();
 
-    configure_property(connection_manager, service_input)
+    configure_property_v2(connection_manager, service_input)
         .map_err(property_service_error_to_graphql)?;
 
     let connection = connection_manager
         .connection()
-        .map_err(PropertyServiceError::DatabaseError)
+        .map_err(PropertyV2ServiceError::DatabaseError)
         .map_err(property_service_error_to_graphql)?;
-    let row = PropertyRowRepository::new(&connection)
+    let row = PropertyV2RowRepository::new(&connection)
         .find_one_by_id(&property_id)
-        .map_err(PropertyServiceError::DatabaseError)
+        .map_err(PropertyV2ServiceError::DatabaseError)
         .map_err(property_service_error_to_graphql)?
         .ok_or_else(|| {
-            property_service_error_to_graphql(PropertyServiceError::DatabaseError(
+            property_service_error_to_graphql(PropertyV2ServiceError::DatabaseError(
                 RepositoryError::NotFound,
             ))
         })?;
 
-    Ok(PropertyNode::from_domain(row))
+    Ok(PropertyV2Node::from_domain(row))
 }

@@ -1,5 +1,5 @@
 import {
-  ConfigurePropertyGqlInput,
+  ConfigurePropertyV2GqlInput,
   useMutation,
 } from '@openmsupply-client/common';
 import { usePropertyGraphQL } from '../usePropertyGraphQL';
@@ -9,9 +9,9 @@ export const useConfigureProperty = () => {
   const { propertyApi, queryClient } = usePropertyGraphQL();
 
   return useMutation({
-    mutationFn: async (input: ConfigurePropertyGqlInput) => {
-      const result = await propertyApi.configureProperty({ input });
-      return result.configureProperty;
+    mutationFn: async (input: ConfigurePropertyV2GqlInput) => {
+      const result = await propertyApi.configurePropertyV2({ input });
+      return result.configurePropertyV2;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [PROPERTIES] }),
   });

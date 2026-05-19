@@ -10,7 +10,7 @@ import {
   DetailTabs,
   useIsCentralServerApi,
   InvoiceNodeType,
-  PropertyParentTableEnum,
+  PropertyV2ParentTableEnum,
 } from '@openmsupply-client/common';
 import { ItemLedgerFragment, useItem } from '../api';
 import { Toolbar } from './Toolbar';
@@ -116,9 +116,9 @@ export const ItemDetailView = () => {
       Component: (
         <Box p={2}>
           <PropertySection
-            table={PropertyParentTableEnum.Item}
+            table={PropertyV2ParentTableEnum.Item}
             recordId={data.id}
-            values={data.propertyValues}
+            values={data.propertyV2Values}
           />
         </Box>
       ),

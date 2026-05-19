@@ -3,8 +3,8 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type PropertyOptionFragment = {
-  __typename: 'PropertyOptionNode';
+export type PropertyV2OptionFragment = {
+  __typename: 'PropertyV2OptionNode';
   id: string;
   propertyId: string;
   name: string;
@@ -12,21 +12,21 @@ export type PropertyOptionFragment = {
   isDeleted: boolean;
 };
 
-export type PropertyAttachmentFragment = {
-  __typename: 'PropertyTableNode';
+export type PropertyV2AttachmentFragment = {
+  __typename: 'PropertyV2TableNode';
   id: string;
   propertyId: string;
-  table: Types.PropertyParentTableEnum;
+  table: Types.PropertyV2ParentTableEnum;
 };
 
-export type PropertyDetailFragment = {
-  __typename: 'PropertyNode';
+export type PropertyV2DetailFragment = {
+  __typename: 'PropertyV2Node';
   id: string;
   name: string;
-  type: Types.PropertyTypeEnum;
+  type: Types.PropertyV2TypeEnum;
   translationKey?: string | null;
   options: Array<{
-    __typename: 'PropertyOptionNode';
+    __typename: 'PropertyV2OptionNode';
     id: string;
     propertyId: string;
     name: string;
@@ -34,30 +34,30 @@ export type PropertyDetailFragment = {
     isDeleted: boolean;
   }>;
   attachedTo: Array<{
-    __typename: 'PropertyTableNode';
+    __typename: 'PropertyV2TableNode';
     id: string;
     propertyId: string;
-    table: Types.PropertyParentTableEnum;
+    table: Types.PropertyV2ParentTableEnum;
   }>;
 };
 
-export type PropertyValueFragment = {
-  __typename: 'PropertyValueNode';
+export type PropertyV2ValueFragment = {
+  __typename: 'PropertyV2ValueNode';
   id: string;
   recordId: string;
-  parentTable: Types.PropertyParentTableEnum;
+  parentTable: Types.PropertyV2ParentTableEnum;
   valueText?: string | null;
   valueNumber?: number | null;
   valueReal?: number | null;
   valueDate?: string | null;
   property: {
-    __typename: 'PropertyNode';
+    __typename: 'PropertyV2Node';
     id: string;
     name: string;
-    type: Types.PropertyTypeEnum;
+    type: Types.PropertyV2TypeEnum;
     translationKey?: string | null;
     options: Array<{
-      __typename: 'PropertyOptionNode';
+      __typename: 'PropertyV2OptionNode';
       id: string;
       propertyId: string;
       name: string;
@@ -65,14 +65,14 @@ export type PropertyValueFragment = {
       isDeleted: boolean;
     }>;
     attachedTo: Array<{
-      __typename: 'PropertyTableNode';
+      __typename: 'PropertyV2TableNode';
       id: string;
       propertyId: string;
-      table: Types.PropertyParentTableEnum;
+      table: Types.PropertyV2ParentTableEnum;
     }>;
   };
   option?: {
-    __typename: 'PropertyOptionNode';
+    __typename: 'PropertyV2OptionNode';
     id: string;
     propertyId: string;
     name: string;
@@ -81,18 +81,18 @@ export type PropertyValueFragment = {
   } | null;
 };
 
-export type PropertiesQueryVariables = Types.Exact<{ [key: string]: never }>;
+export type PropertiesV2QueryVariables = Types.Exact<{ [key: string]: never }>;
 
-export type PropertiesQuery = {
+export type PropertiesV2Query = {
   __typename: 'Queries';
-  properties: Array<{
-    __typename: 'PropertyNode';
+  propertiesV2: Array<{
+    __typename: 'PropertyV2Node';
     id: string;
     name: string;
-    type: Types.PropertyTypeEnum;
+    type: Types.PropertyV2TypeEnum;
     translationKey?: string | null;
     options: Array<{
-      __typename: 'PropertyOptionNode';
+      __typename: 'PropertyV2OptionNode';
       id: string;
       propertyId: string;
       name: string;
@@ -100,28 +100,28 @@ export type PropertiesQuery = {
       isDeleted: boolean;
     }>;
     attachedTo: Array<{
-      __typename: 'PropertyTableNode';
+      __typename: 'PropertyV2TableNode';
       id: string;
       propertyId: string;
-      table: Types.PropertyParentTableEnum;
+      table: Types.PropertyV2ParentTableEnum;
     }>;
   }>;
 };
 
-export type PropertyByIdQueryVariables = Types.Exact<{
+export type PropertyV2ByIdQueryVariables = Types.Exact<{
   id: Types.Scalars['String']['input'];
 }>;
 
-export type PropertyByIdQuery = {
+export type PropertyV2ByIdQuery = {
   __typename: 'Queries';
-  propertyById?: {
-    __typename: 'PropertyNode';
+  propertyV2ById?: {
+    __typename: 'PropertyV2Node';
     id: string;
     name: string;
-    type: Types.PropertyTypeEnum;
+    type: Types.PropertyV2TypeEnum;
     translationKey?: string | null;
     options: Array<{
-      __typename: 'PropertyOptionNode';
+      __typename: 'PropertyV2OptionNode';
       id: string;
       propertyId: string;
       name: string;
@@ -129,28 +129,28 @@ export type PropertyByIdQuery = {
       isDeleted: boolean;
     }>;
     attachedTo: Array<{
-      __typename: 'PropertyTableNode';
+      __typename: 'PropertyV2TableNode';
       id: string;
       propertyId: string;
-      table: Types.PropertyParentTableEnum;
+      table: Types.PropertyV2ParentTableEnum;
     }>;
   } | null;
 };
 
-export type PropertiesForTableQueryVariables = Types.Exact<{
-  table: Types.PropertyParentTableEnum;
+export type PropertiesV2ForTableQueryVariables = Types.Exact<{
+  table: Types.PropertyV2ParentTableEnum;
 }>;
 
-export type PropertiesForTableQuery = {
+export type PropertiesV2ForTableQuery = {
   __typename: 'Queries';
-  propertiesForTable: Array<{
-    __typename: 'PropertyNode';
+  propertiesV2ForTable: Array<{
+    __typename: 'PropertyV2Node';
     id: string;
     name: string;
-    type: Types.PropertyTypeEnum;
+    type: Types.PropertyV2TypeEnum;
     translationKey?: string | null;
     options: Array<{
-      __typename: 'PropertyOptionNode';
+      __typename: 'PropertyV2OptionNode';
       id: string;
       propertyId: string;
       name: string;
@@ -158,38 +158,38 @@ export type PropertiesForTableQuery = {
       isDeleted: boolean;
     }>;
     attachedTo: Array<{
-      __typename: 'PropertyTableNode';
+      __typename: 'PropertyV2TableNode';
       id: string;
       propertyId: string;
-      table: Types.PropertyParentTableEnum;
+      table: Types.PropertyV2ParentTableEnum;
     }>;
   }>;
 };
 
-export type PropertyValuesForRecordQueryVariables = Types.Exact<{
-  table: Types.PropertyParentTableEnum;
+export type PropertyV2ValuesForRecordQueryVariables = Types.Exact<{
+  table: Types.PropertyV2ParentTableEnum;
   recordId: Types.Scalars['String']['input'];
 }>;
 
-export type PropertyValuesForRecordQuery = {
+export type PropertyV2ValuesForRecordQuery = {
   __typename: 'Queries';
-  propertyValues: Array<{
-    __typename: 'PropertyValueNode';
+  propertyV2Values: Array<{
+    __typename: 'PropertyV2ValueNode';
     id: string;
     recordId: string;
-    parentTable: Types.PropertyParentTableEnum;
+    parentTable: Types.PropertyV2ParentTableEnum;
     valueText?: string | null;
     valueNumber?: number | null;
     valueReal?: number | null;
     valueDate?: string | null;
     property: {
-      __typename: 'PropertyNode';
+      __typename: 'PropertyV2Node';
       id: string;
       name: string;
-      type: Types.PropertyTypeEnum;
+      type: Types.PropertyV2TypeEnum;
       translationKey?: string | null;
       options: Array<{
-        __typename: 'PropertyOptionNode';
+        __typename: 'PropertyV2OptionNode';
         id: string;
         propertyId: string;
         name: string;
@@ -197,14 +197,14 @@ export type PropertyValuesForRecordQuery = {
         isDeleted: boolean;
       }>;
       attachedTo: Array<{
-        __typename: 'PropertyTableNode';
+        __typename: 'PropertyV2TableNode';
         id: string;
         propertyId: string;
-        table: Types.PropertyParentTableEnum;
+        table: Types.PropertyV2ParentTableEnum;
       }>;
     };
     option?: {
-      __typename: 'PropertyOptionNode';
+      __typename: 'PropertyV2OptionNode';
       id: string;
       propertyId: string;
       name: string;
@@ -214,20 +214,20 @@ export type PropertyValuesForRecordQuery = {
   }>;
 };
 
-export type ConfigurePropertyMutationVariables = Types.Exact<{
-  input: Types.ConfigurePropertyGqlInput;
+export type ConfigurePropertyV2MutationVariables = Types.Exact<{
+  input: Types.ConfigurePropertyV2GqlInput;
 }>;
 
-export type ConfigurePropertyMutation = {
+export type ConfigurePropertyV2Mutation = {
   __typename: 'Mutations';
-  configureProperty: {
-    __typename: 'PropertyNode';
+  configurePropertyV2: {
+    __typename: 'PropertyV2Node';
     id: string;
     name: string;
-    type: Types.PropertyTypeEnum;
+    type: Types.PropertyV2TypeEnum;
     translationKey?: string | null;
     options: Array<{
-      __typename: 'PropertyOptionNode';
+      __typename: 'PropertyV2OptionNode';
       id: string;
       propertyId: string;
       name: string;
@@ -235,37 +235,37 @@ export type ConfigurePropertyMutation = {
       isDeleted: boolean;
     }>;
     attachedTo: Array<{
-      __typename: 'PropertyTableNode';
+      __typename: 'PropertyV2TableNode';
       id: string;
       propertyId: string;
-      table: Types.PropertyParentTableEnum;
+      table: Types.PropertyV2ParentTableEnum;
     }>;
   };
 };
 
-export type UpsertPropertyValueMutationVariables = Types.Exact<{
-  input: Types.UpsertPropertyValueGqlInput;
+export type UpsertPropertyV2ValueMutationVariables = Types.Exact<{
+  input: Types.UpsertPropertyV2ValueGqlInput;
 }>;
 
-export type UpsertPropertyValueMutation = {
+export type UpsertPropertyV2ValueMutation = {
   __typename: 'Mutations';
-  upsertPropertyValue: {
-    __typename: 'PropertyValueNode';
+  upsertPropertyV2Value: {
+    __typename: 'PropertyV2ValueNode';
     id: string;
     recordId: string;
-    parentTable: Types.PropertyParentTableEnum;
+    parentTable: Types.PropertyV2ParentTableEnum;
     valueText?: string | null;
     valueNumber?: number | null;
     valueReal?: number | null;
     valueDate?: string | null;
     property: {
-      __typename: 'PropertyNode';
+      __typename: 'PropertyV2Node';
       id: string;
       name: string;
-      type: Types.PropertyTypeEnum;
+      type: Types.PropertyV2TypeEnum;
       translationKey?: string | null;
       options: Array<{
-        __typename: 'PropertyOptionNode';
+        __typename: 'PropertyV2OptionNode';
         id: string;
         propertyId: string;
         name: string;
@@ -273,14 +273,14 @@ export type UpsertPropertyValueMutation = {
         isDeleted: boolean;
       }>;
       attachedTo: Array<{
-        __typename: 'PropertyTableNode';
+        __typename: 'PropertyV2TableNode';
         id: string;
         propertyId: string;
-        table: Types.PropertyParentTableEnum;
+        table: Types.PropertyV2ParentTableEnum;
       }>;
     };
     option?: {
-      __typename: 'PropertyOptionNode';
+      __typename: 'PropertyV2OptionNode';
       id: string;
       propertyId: string;
       name: string;
@@ -290,19 +290,19 @@ export type UpsertPropertyValueMutation = {
   };
 };
 
-export type DeletePropertyValueMutationVariables = Types.Exact<{
-  table: Types.PropertyParentTableEnum;
+export type DeletePropertyV2ValueMutationVariables = Types.Exact<{
+  table: Types.PropertyV2ParentTableEnum;
   recordId: Types.Scalars['String']['input'];
   propertyId: Types.Scalars['String']['input'];
 }>;
 
-export type DeletePropertyValueMutation = {
+export type DeletePropertyV2ValueMutation = {
   __typename: 'Mutations';
-  deletePropertyValue: boolean;
+  deletePropertyV2Value: boolean;
 };
 
-export const PropertyOptionFragmentDoc = gql`
-  fragment PropertyOption on PropertyOptionNode {
+export const PropertyV2OptionFragmentDoc = gql`
+  fragment PropertyV2Option on PropertyV2OptionNode {
     __typename
     id
     propertyId
@@ -311,109 +311,109 @@ export const PropertyOptionFragmentDoc = gql`
     isDeleted
   }
 `;
-export const PropertyAttachmentFragmentDoc = gql`
-  fragment PropertyAttachment on PropertyTableNode {
+export const PropertyV2AttachmentFragmentDoc = gql`
+  fragment PropertyV2Attachment on PropertyV2TableNode {
     __typename
     id
     propertyId
     table
   }
 `;
-export const PropertyDetailFragmentDoc = gql`
-  fragment PropertyDetail on PropertyNode {
+export const PropertyV2DetailFragmentDoc = gql`
+  fragment PropertyV2Detail on PropertyV2Node {
     __typename
     id
     name
     type
     translationKey
     options {
-      ...PropertyOption
+      ...PropertyV2Option
     }
     attachedTo {
-      ...PropertyAttachment
+      ...PropertyV2Attachment
     }
   }
-  ${PropertyOptionFragmentDoc}
-  ${PropertyAttachmentFragmentDoc}
+  ${PropertyV2OptionFragmentDoc}
+  ${PropertyV2AttachmentFragmentDoc}
 `;
-export const PropertyValueFragmentDoc = gql`
-  fragment PropertyValue on PropertyValueNode {
+export const PropertyV2ValueFragmentDoc = gql`
+  fragment PropertyV2Value on PropertyV2ValueNode {
     __typename
     id
     recordId
     parentTable
     property {
-      ...PropertyDetail
+      ...PropertyV2Detail
     }
     option {
-      ...PropertyOption
+      ...PropertyV2Option
     }
     valueText
     valueNumber
     valueReal
     valueDate
   }
-  ${PropertyDetailFragmentDoc}
-  ${PropertyOptionFragmentDoc}
+  ${PropertyV2DetailFragmentDoc}
+  ${PropertyV2OptionFragmentDoc}
 `;
-export const PropertiesDocument = gql`
-  query properties {
-    properties {
-      ...PropertyDetail
+export const PropertiesV2Document = gql`
+  query propertiesV2 {
+    propertiesV2 {
+      ...PropertyV2Detail
     }
   }
-  ${PropertyDetailFragmentDoc}
+  ${PropertyV2DetailFragmentDoc}
 `;
-export const PropertyByIdDocument = gql`
-  query propertyById($id: String!) {
-    propertyById(id: $id) {
-      ...PropertyDetail
+export const PropertyV2ByIdDocument = gql`
+  query propertyV2ById($id: String!) {
+    propertyV2ById(id: $id) {
+      ...PropertyV2Detail
     }
   }
-  ${PropertyDetailFragmentDoc}
+  ${PropertyV2DetailFragmentDoc}
 `;
-export const PropertiesForTableDocument = gql`
-  query propertiesForTable($table: PropertyParentTableEnum!) {
-    propertiesForTable(table: $table) {
-      ...PropertyDetail
+export const PropertiesV2ForTableDocument = gql`
+  query propertiesV2ForTable($table: PropertyV2ParentTableEnum!) {
+    propertiesV2ForTable(table: $table) {
+      ...PropertyV2Detail
     }
   }
-  ${PropertyDetailFragmentDoc}
+  ${PropertyV2DetailFragmentDoc}
 `;
-export const PropertyValuesForRecordDocument = gql`
-  query propertyValuesForRecord(
-    $table: PropertyParentTableEnum!
+export const PropertyV2ValuesForRecordDocument = gql`
+  query propertyV2ValuesForRecord(
+    $table: PropertyV2ParentTableEnum!
     $recordId: String!
   ) {
-    propertyValues(table: $table, recordId: $recordId) {
-      ...PropertyValue
+    propertyV2Values(table: $table, recordId: $recordId) {
+      ...PropertyV2Value
     }
   }
-  ${PropertyValueFragmentDoc}
+  ${PropertyV2ValueFragmentDoc}
 `;
-export const ConfigurePropertyDocument = gql`
-  mutation configureProperty($input: ConfigurePropertyGqlInput!) {
-    configureProperty(input: $input) {
-      ...PropertyDetail
+export const ConfigurePropertyV2Document = gql`
+  mutation configurePropertyV2($input: ConfigurePropertyV2GqlInput!) {
+    configurePropertyV2(input: $input) {
+      ...PropertyV2Detail
     }
   }
-  ${PropertyDetailFragmentDoc}
+  ${PropertyV2DetailFragmentDoc}
 `;
-export const UpsertPropertyValueDocument = gql`
-  mutation upsertPropertyValue($input: UpsertPropertyValueGqlInput!) {
-    upsertPropertyValue(input: $input) {
-      ...PropertyValue
+export const UpsertPropertyV2ValueDocument = gql`
+  mutation upsertPropertyV2Value($input: UpsertPropertyV2ValueGqlInput!) {
+    upsertPropertyV2Value(input: $input) {
+      ...PropertyV2Value
     }
   }
-  ${PropertyValueFragmentDoc}
+  ${PropertyV2ValueFragmentDoc}
 `;
-export const DeletePropertyValueDocument = gql`
-  mutation deletePropertyValue(
-    $table: PropertyParentTableEnum!
+export const DeletePropertyV2ValueDocument = gql`
+  mutation deletePropertyV2Value(
+    $table: PropertyV2ParentTableEnum!
     $recordId: String!
     $propertyId: String!
   ) {
-    deletePropertyValue(
+    deletePropertyV2Value(
       table: $table
       recordId: $recordId
       propertyId: $propertyId
@@ -440,128 +440,128 @@ export function getSdk(
   withWrapper: SdkFunctionWrapper = defaultWrapper
 ) {
   return {
-    properties(
-      variables?: PropertiesQueryVariables,
+    propertiesV2(
+      variables?: PropertiesV2QueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<PropertiesQuery> {
+    ): Promise<PropertiesV2Query> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PropertiesQuery>({
-            document: PropertiesDocument,
+          client.request<PropertiesV2Query>({
+            document: PropertiesV2Document,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'properties',
+        'propertiesV2',
         'query',
         variables
       );
     },
-    propertyById(
-      variables: PropertyByIdQueryVariables,
+    propertyV2ById(
+      variables: PropertyV2ByIdQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<PropertyByIdQuery> {
+    ): Promise<PropertyV2ByIdQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PropertyByIdQuery>({
-            document: PropertyByIdDocument,
+          client.request<PropertyV2ByIdQuery>({
+            document: PropertyV2ByIdDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'propertyById',
+        'propertyV2ById',
         'query',
         variables
       );
     },
-    propertiesForTable(
-      variables: PropertiesForTableQueryVariables,
+    propertiesV2ForTable(
+      variables: PropertiesV2ForTableQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<PropertiesForTableQuery> {
+    ): Promise<PropertiesV2ForTableQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PropertiesForTableQuery>({
-            document: PropertiesForTableDocument,
+          client.request<PropertiesV2ForTableQuery>({
+            document: PropertiesV2ForTableDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'propertiesForTable',
+        'propertiesV2ForTable',
         'query',
         variables
       );
     },
-    propertyValuesForRecord(
-      variables: PropertyValuesForRecordQueryVariables,
+    propertyV2ValuesForRecord(
+      variables: PropertyV2ValuesForRecordQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<PropertyValuesForRecordQuery> {
+    ): Promise<PropertyV2ValuesForRecordQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PropertyValuesForRecordQuery>({
-            document: PropertyValuesForRecordDocument,
+          client.request<PropertyV2ValuesForRecordQuery>({
+            document: PropertyV2ValuesForRecordDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'propertyValuesForRecord',
+        'propertyV2ValuesForRecord',
         'query',
         variables
       );
     },
-    configureProperty(
-      variables: ConfigurePropertyMutationVariables,
+    configurePropertyV2(
+      variables: ConfigurePropertyV2MutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<ConfigurePropertyMutation> {
+    ): Promise<ConfigurePropertyV2Mutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ConfigurePropertyMutation>({
-            document: ConfigurePropertyDocument,
+          client.request<ConfigurePropertyV2Mutation>({
+            document: ConfigurePropertyV2Document,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'configureProperty',
+        'configurePropertyV2',
         'mutation',
         variables
       );
     },
-    upsertPropertyValue(
-      variables: UpsertPropertyValueMutationVariables,
+    upsertPropertyV2Value(
+      variables: UpsertPropertyV2ValueMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<UpsertPropertyValueMutation> {
+    ): Promise<UpsertPropertyV2ValueMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpsertPropertyValueMutation>({
-            document: UpsertPropertyValueDocument,
+          client.request<UpsertPropertyV2ValueMutation>({
+            document: UpsertPropertyV2ValueDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'upsertPropertyValue',
+        'upsertPropertyV2Value',
         'mutation',
         variables
       );
     },
-    deletePropertyValue(
-      variables: DeletePropertyValueMutationVariables,
+    deletePropertyV2Value(
+      variables: DeletePropertyV2ValueMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<DeletePropertyValueMutation> {
+    ): Promise<DeletePropertyV2ValueMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<DeletePropertyValueMutation>({
-            document: DeletePropertyValueDocument,
+          client.request<DeletePropertyV2ValueMutation>({
+            document: DeletePropertyV2ValueDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'deletePropertyValue',
+        'deletePropertyV2Value',
         'mutation',
         variables
       );

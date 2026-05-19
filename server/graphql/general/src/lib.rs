@@ -20,18 +20,21 @@ use service::sync::CentralServerConfig;
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
     AbbreviationNode, CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, DiagnosisNode,
-    MasterListFilterInput, PropertyNode, PropertyParentTableEnum, PropertyValueNode,
+    MasterListFilterInput, PropertyV2Node, PropertyV2ParentTableEnum, PropertyV2ValueNode,
     StorePreferenceNode,
 };
-use queries::name_property::{name_properties, NamePropertyResponse};
+use queries::name_property::{
+    configure_name_properties, name_properties, ConfigureNamePropertiesResponse,
+    ConfigureNamePropertyInput, NamePropertyResponse,
+};
 use queries::property::{
     properties, properties_for_table, property_by_id, property_values,
 };
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
     common::SyncSettingsInput,
-    configure_property::{configure_property_mutation, ConfigurePropertyGqlInput},
-    delete_property_value::delete_property_value_mutation,
+    configure_property::{configure_property_v2_mutation, ConfigurePropertyV2GqlInput},
+    delete_property_value::delete_property_v2_value_mutation,
     display_settings::{
         update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsResponse,
     },
@@ -49,7 +52,7 @@ use mutations::{
         update_name_properties, UpdateNamePropertiesInput, UpdateNamePropertiesResponse,
     },
     update_user,
-    upsert_property_value::{upsert_property_value_mutation, UpsertPropertyValueGqlInput},
+    upsert_property_value::{upsert_property_v2_value_mutation, UpsertPropertyV2ValueGqlInput},
 };
 use queries::{
     abbreviation::AbbreviationFilterInput,
@@ -284,44 +287,41 @@ impl GeneralQueries {
         activity_logs(ctx, store_id, page, filter, sort)
     }
 
-    /// All properties (KDD option 1). Used by the central-admin list view.
-    pub async fn properties(&self, ctx: &Context<'_>) -> Result<Vec<PropertyNode>> {
+    /// All V2 properties (KDD option 1). Used by the central-admin list view.
+    pub async fn properties_v2(&self, ctx: &Context<'_>) -> Result<Vec<PropertyV2Node>> {
         properties(ctx)
     }
 
-    /// Properties (KDD option 1) attached to a given parent table.
-    pub async fn properties_for_table(
+    /// V2 properties (KDD option 1) attached to a given parent table.
+    pub async fn properties_v2_for_table(
         &self,
         ctx: &Context<'_>,
-        table: PropertyParentTableEnum,
-    ) -> Result<Vec<PropertyNode>> {
+        table: PropertyV2ParentTableEnum,
+    ) -> Result<Vec<PropertyV2Node>> {
         properties_for_table(ctx, table)
     }
 
-    /// One property by id (admin detail view).
-    pub async fn property_by_id(
+    /// One V2 property by id (admin detail view).
+    pub async fn property_v2_by_id(
         &self,
         ctx: &Context<'_>,
         id: String,
-    ) -> Result<Option<PropertyNode>> {
+    ) -> Result<Option<PropertyV2Node>> {
         property_by_id(ctx, id)
     }
 
-    /// All property values written for one record of a given parent table.
-    pub async fn property_values(
+    /// All V2 property values written for one record of a given parent table.
+    pub async fn property_v2_values(
         &self,
         ctx: &Context<'_>,
-        table: PropertyParentTableEnum,
+        table: PropertyV2ParentTableEnum,
         record_id: String,
-    ) -> Result<Vec<PropertyValueNode>> {
+    ) -> Result<Vec<PropertyV2ValueNode>> {
         property_values(ctx, table, record_id)
     }
 
-    /// Legacy name-property query — kept as a no-op stub returning an empty
-    /// connector so the host UI keeps compiling until it migrates to the new
-    /// property system. Do not use for new work.
-    pub async fn name_properties(&self) -> NamePropertyResponse {
-        name_properties()
+    pub async fn name_properties(&self, ctx: &Context<'_>) -> Result<NamePropertyResponse> {
+        name_properties(ctx)
     }
 
     /// Available without authorisation in operational and initialisation states
@@ -671,33 +671,33 @@ impl GeneralMutations {
         update_insurance(ctx, &store_id, input)
     }
 
-    /// Create or update a property (KDD option 1) — central admin only.
-    pub async fn configure_property(
+    /// Create or update a V2 property (KDD option 1) — central admin only.
+    pub async fn configure_property_v2(
         &self,
         ctx: &Context<'_>,
-        input: ConfigurePropertyGqlInput,
-    ) -> Result<PropertyNode> {
-        configure_property_mutation(ctx, input)
+        input: ConfigurePropertyV2GqlInput,
+    ) -> Result<PropertyV2Node> {
+        configure_property_v2_mutation(ctx, input)
     }
 
-    /// Write a typed value against one property on one record.
-    pub async fn upsert_property_value(
+    /// Write a typed V2 value against one property on one record.
+    pub async fn upsert_property_v2_value(
         &self,
         ctx: &Context<'_>,
-        input: UpsertPropertyValueGqlInput,
-    ) -> Result<PropertyValueNode> {
-        upsert_property_value_mutation(ctx, input)
+        input: UpsertPropertyV2ValueGqlInput,
+    ) -> Result<PropertyV2ValueNode> {
+        upsert_property_v2_value_mutation(ctx, input)
     }
 
-    /// Clear a property's value on one record. Returns whether a row existed.
-    pub async fn delete_property_value(
+    /// Clear a V2 property's value on one record. Returns whether a row existed.
+    pub async fn delete_property_v2_value(
         &self,
         ctx: &Context<'_>,
-        table: PropertyParentTableEnum,
+        table: PropertyV2ParentTableEnum,
         record_id: String,
         property_id: String,
     ) -> Result<bool> {
-        delete_property_value_mutation(ctx, table, record_id, property_id)
+        delete_property_v2_value_mutation(ctx, table, record_id, property_id)
     }
 }
 
@@ -782,39 +782,13 @@ impl DiscoveryQueries {
 #[derive(Default, Clone)]
 pub struct CentralGeneralMutations;
 
-#[derive(InputObject, Clone)]
-pub struct ConfigureNamePropertyInput {
-    pub id: String,
-    pub key: String,
-    pub property_id: String,
-    pub name: String,
-    pub value_type: graphql_types::types::PropertyNodeValueType,
-    pub allowed_values: Option<String>,
-    pub remote_editable: bool,
-}
-
-#[derive(Union)]
-pub enum ConfigureNamePropertiesResponse {
-    Response(Success),
-}
-
-pub struct Success;
-
-#[Object]
-impl Success {
-    pub async fn success(&self) -> bool {
-        true
-    }
-}
-
 #[Object]
 impl CentralGeneralMutations {
-    // Legacy stub — accepts the old ConfigureNamePropertyInput list and silently
-    // succeeds. Kept until the host UI migrates to the new property system.
     pub async fn configure_name_properties(
         &self,
-        _input: Vec<ConfigureNamePropertyInput>,
-    ) -> ConfigureNamePropertiesResponse {
-        ConfigureNamePropertiesResponse::Response(Success)
+        ctx: &Context<'_>,
+        input: Vec<ConfigureNamePropertyInput>,
+    ) -> Result<ConfigureNamePropertiesResponse> {
+        configure_name_properties(ctx, input)
     }
 }

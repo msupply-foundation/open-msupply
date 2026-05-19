@@ -1,10 +1,10 @@
 use async_graphql::{ErrorExtensions, FieldError};
-use service::property::PropertyServiceError;
+use service::property_v2::PropertyV2ServiceError;
 
 // Maps the service error enum to a top-level graphql error with a stable
 // `code` extension. Front-ends switch on the code rather than the message.
-pub fn property_service_error_to_graphql(error: PropertyServiceError) -> FieldError {
-    use PropertyServiceError::*;
+pub fn property_service_error_to_graphql(error: PropertyV2ServiceError) -> FieldError {
+    use PropertyV2ServiceError::*;
     let (code, message) = match &error {
         PropertyNotFound(id) => ("PROPERTY_NOT_FOUND", format!("Property '{id}' not found")),
         OptionNotFoundForProperty {

@@ -11,7 +11,7 @@ use graphql_core::{
 };
 use graphql_types::types::{NameNode, NameNodeType};
 use repository::{DateFilter, EqualFilter, NameType, PaginationOption, StringFilter};
-use repository::{Name, NameFilter, NameSort, NameSortField, PropertyValueFilter};
+use repository::{Name, NameFilter, NameSort, NameSortField, PropertyV2ValueFilter};
 
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -75,11 +75,11 @@ pub struct NameFilterInput {
 
     /// Filter by relational property values. Multiple entries AND together —
     /// a name must satisfy every condition to be returned.
-    pub property: Option<Vec<PropertyValueFilterInput>>,
+    pub property: Option<Vec<PropertyV2ValueFilterInput>>,
 }
 
 #[derive(InputObject, Clone)]
-pub struct PropertyValueFilterInput {
+pub struct PropertyV2ValueFilterInput {
     /// Anchors the condition to a single property definition. Required —
     /// without it the condition would match across unrelated properties.
     pub property_id: EqualFilterStringInput,
@@ -90,9 +90,9 @@ pub struct PropertyValueFilterInput {
     pub value_date: Option<DateFilterInput>,
 }
 
-impl From<PropertyValueFilterInput> for PropertyValueFilter {
-    fn from(f: PropertyValueFilterInput) -> Self {
-        let PropertyValueFilterInput {
+impl From<PropertyV2ValueFilterInput> for PropertyV2ValueFilter {
+    fn from(f: PropertyV2ValueFilterInput) -> Self {
+        let PropertyV2ValueFilterInput {
             property_id,
             value_text,
             value_option_id,
@@ -100,7 +100,7 @@ impl From<PropertyValueFilterInput> for PropertyValueFilter {
             value_real,
             value_date,
         } = f;
-        PropertyValueFilter {
+        PropertyV2ValueFilter {
             id: None,
             table_name: None,
             record_id: None,
@@ -214,7 +214,7 @@ impl NameFilterInput {
             supplying_store_id: supplying_store_id.map(EqualFilter::from),
             store: None,
             property: property
-                .map(|filters| filters.into_iter().map(PropertyValueFilter::from).collect()),
+                .map(|filters| filters.into_iter().map(PropertyV2ValueFilter::from).collect()),
         }
     }
 }

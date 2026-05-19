@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FnUtils } from '@openmsupply-client/common';
-import { PropertyOptionFragment } from '../api';
+import { PropertyV2OptionFragment } from '../api';
 
 export interface DraftOption {
   id: string;
@@ -13,7 +13,7 @@ export interface DraftOption {
   isNew: boolean;
 }
 
-const seed = (options: PropertyOptionFragment[]): DraftOption[] =>
+const seed = (options: PropertyV2OptionFragment[]): DraftOption[] =>
   options.map(o => ({
     id: o.id,
     name: o.name,
@@ -23,7 +23,7 @@ const seed = (options: PropertyOptionFragment[]): DraftOption[] =>
   }));
 
 export const useDraftPropertyOptions = (
-  initial: PropertyOptionFragment[] | undefined
+  initial: PropertyV2OptionFragment[] | undefined
 ) => {
   const [rows, setRows] = useState<DraftOption[]>(() => seed(initial ?? []));
 
