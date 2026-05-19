@@ -93,6 +93,10 @@ const ModeOption = ({
         label={label}
         shouldShrink={false}
         color={color}
+        sx={{
+          color: 'gray.dark',
+          '& .MuiButton-startIcon': { color: `${color}.main` },
+        }}
       />
     </Box>
 
@@ -199,20 +203,20 @@ export const Android = () => {
           </Box>
           <Stack spacing={3} maxWidth={400}>
             <ModeOption
-              icon={<ExternalLinkIcon fontSize="small" />}
-              label={t('label.connect')}
-              mode={NativeMode.Client}
-              message={t('messages.native-mode-client')}
-              setMode={handleSetMode}
-              color="secondary"
-            />
-            <ModeOption
               icon={<MonitorIcon fontSize="small" />}
               label={t('label.local')}
               mode={NativeMode.Server}
               message={t('messages.native-mode-server')}
               setMode={handleSetMode}
               color="primary"
+            />
+            <ModeOption
+              icon={<ExternalLinkIcon fontSize="small" />}
+              label={t('label.connect')}
+              mode={NativeMode.Client}
+              message={t('messages.native-mode-client')}
+              setMode={handleSetMode}
+              color="secondary"
             />
           </Stack>
         </Stack>
