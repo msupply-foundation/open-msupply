@@ -1,9 +1,10 @@
 use std::time::Duration;
 
 use reqwest::{ClientBuilder, StatusCode, Url};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 const CONNECTION_TIMEOUT_SEC: u64 = 10;
+const REQUEST_TIMEOUT_SEC: u64 = 30;
 
 #[derive(Debug)]
 pub enum CentralUserLoginError {
@@ -14,11 +15,14 @@ pub enum CentralUserLoginError {
     Unreachable(String),
 }
 
-#[derive(Serialize)]
+/// Request body for `POST /central/user/login`. Shared between the reqwest
+/// client below and the actix handler on the central server side so the wire
+/// shape only has to be defined once.
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct CentralUserLoginInput<'a> {
-    username: &'a str,
-    password: &'a str,
+pub struct UserLoginInput {
+    pub username: String,
+    pub password: String,
 }
 
 /// POSTs to `{central_server_url}/central/user/login`.
@@ -37,12 +41,16 @@ pub async fn central_user_login(
 
     let client = ClientBuilder::new()
         .connect_timeout(Duration::from_secs(CONNECTION_TIMEOUT_SEC))
+        .timeout(Duration::from_secs(REQUEST_TIMEOUT_SEC))
         .build()
         .map_err(|e| CentralUserLoginError::Unreachable(format!("client build failed: {e:?}")))?;
 
     let response = client
         .post(url)
-        .json(&CentralUserLoginInput { username, password })
+        .json(&UserLoginInput {
+            username: username.to_string(),
+            password: password.to_string(),
+        })
         .send()
         .await
         .map_err(|e| CentralUserLoginError::Unreachable(format!("send failed: {e}")))?;
