@@ -25,18 +25,22 @@ export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
     },
   ] satisfies FilterDefinition[];
 
+  // Master list filters at the item level, so it applies in both modes.
+  const itemFilters = [
+    {
+      type: 'text',
+      name: t('label.master-list'),
+      urlParameter: 'masterList.name',
+      placeholder: t('placeholder.search-by-master-list-name'),
+    },
+  ] satisfies FilterDefinition[];
+
   const stockLineFilters = [
     {
       type: 'text',
       name: t('label.location'),
       urlParameter: 'location.code',
       placeholder: t('placeholder.search-by-location-code'),
-    },
-    {
-      type: 'text',
-      name: t('label.master-list'),
-      urlParameter: 'masterList.name',
-      placeholder: t('placeholder.search-by-master-list-name'),
     },
     {
       type: 'group',
@@ -83,7 +87,9 @@ export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
       <Box display="flex" gap={1}>
         <FilterMenu
           filters={
-            isGrouped ? searchFilter : [...searchFilter, ...stockLineFilters]
+            isGrouped
+              ? [...searchFilter, ...itemFilters]
+              : [...searchFilter, ...itemFilters, ...stockLineFilters]
           }
         />
       </Box>
