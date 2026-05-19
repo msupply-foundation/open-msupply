@@ -61,14 +61,14 @@ export const Toolbar: FC = () => {
               name: t('label.min-mos'),
               urlParameter: 'minMonthsOfStock',
               minValue: 0,
-              decimalLimit: 0,
+              decimalLimit: 2,
             },
             {
               type: 'number',
               name: t('label.max-mos'),
               urlParameter: 'maxMonthsOfStock',
               minValue: 0,
-              decimalLimit: 0,
+              decimalLimit: 2,
             },
             ...(numMonthsConsumption
               ? [
