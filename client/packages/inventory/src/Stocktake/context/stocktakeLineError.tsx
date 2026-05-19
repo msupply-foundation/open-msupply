@@ -13,6 +13,21 @@ export type StocktakeLineError =
   | AdjustmentReasonNotValidErrorFragment
   | SnapshotCountCurrentCountMismatchLineErrorFragment;
 
+export const stocktakeLineErrorMessageKey = (
+  typename: StocktakeLineError['__typename']
+) => {
+  switch (typename) {
+    case 'StockLineReducedBelowZero':
+      return 'error.reduced-below-zero';
+    case 'SnapshotCountCurrentCountMismatchLine':
+      return 'error.snapshot-total-mismatch';
+    case 'AdjustmentReasonNotProvided':
+      return 'error.provide-reason';
+    case 'AdjustmentReasonNotValid':
+      return 'error.provide-valid-reason';
+  }
+};
+
 const useStocktakeLineErrors = () => {
   const [errors, setErrors] = useState<{
     [stocktakeLineId: string]: StocktakeLineError | undefined;
