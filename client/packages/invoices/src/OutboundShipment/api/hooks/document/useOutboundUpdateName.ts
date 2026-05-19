@@ -5,9 +5,13 @@ export const useOutboundUpdateName = () => {
   const queryClient = useQueryClient();
   const api = useOutboundApi();
 
-  return useMutation(api.updateName, {
+  return useMutation({
+    mutationFn: api.updateName,
+
     onSuccess: () => {
-      queryClient.invalidateQueries(api.keys.base());
-    },
+      queryClient.invalidateQueries({
+        queryKey: api.keys.base()
+      });
+    }
   });
 };

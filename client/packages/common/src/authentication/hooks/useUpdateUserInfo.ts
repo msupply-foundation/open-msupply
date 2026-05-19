@@ -19,7 +19,7 @@ export const useUpdateUserInfo = (
   const t = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const { data: lastSuccessfulSync } = useLastSuccessfulUserSync();
-  const { mutateAsync: updateUser, isLoading } = useUpdateUser();
+  const { mutateAsync: updateUser, isPending: isLoading } = useUpdateUser();
   const getUserPermissions = useGetUserPermissions();
   const { mutateAsync: getUserDetails } = useGetUserDetails();
 

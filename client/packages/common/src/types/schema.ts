@@ -4410,6 +4410,7 @@ export type InvoiceFilterInput = {
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
   isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
   linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
+  linkedOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
   nameId?: InputMaybe<EqualFilterStringInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;

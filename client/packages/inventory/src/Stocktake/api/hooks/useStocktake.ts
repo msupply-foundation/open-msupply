@@ -12,7 +12,7 @@ export function useStocktake() {
   // TODO: Move get/delete/update methods here
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreate();
 
@@ -63,6 +63,8 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([STOCKTAKE]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [STOCKTAKE]
+    }),
   });
 };

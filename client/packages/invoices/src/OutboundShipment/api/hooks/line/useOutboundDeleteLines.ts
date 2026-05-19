@@ -16,9 +16,13 @@ export const useOutboundDeleteLines = () => {
   const api = useOutboundApi();
   const queryKey = api.keys.detail(outboundId);
 
-  return useMutation(api.deleteLines, {
+  return useMutation({
+    mutationFn: api.deleteLines,
+
     onMutate: async lines => {
-      await queryClient.cancelQueries(queryKey);
+      await queryClient.cancelQueries({
+        queryKey: queryKey
+      });
       const previous = queryClient.getQueryData<OutboundFragment>(queryKey);
       if (previous) {
         const nodes = previous.lines.nodes.filter(
@@ -35,6 +39,7 @@ export const useOutboundDeleteLines = () => {
       }
       return { previous, lines };
     },
+
     onError: (_error, _vars, ctx) => {
       // Having issues typing this correctly. If typing ctx in the args list,
       // then TS infers the wrong type for the useMutation call and all
@@ -45,7 +50,10 @@ export const useOutboundDeleteLines = () => {
       };
       queryClient.setQueryData(queryKey, context?.previous);
     },
-    onSettled: () => queryClient.invalidateQueries(queryKey),
+
+    onSettled: () => queryClient.invalidateQueries({
+      queryKey: queryKey
+    })
   });
 };
 

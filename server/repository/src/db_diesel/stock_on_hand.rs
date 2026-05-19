@@ -3,9 +3,12 @@ use super::StorageConnection;
 use crate::{diesel_macros::apply_equal_filter, item_link, EqualFilter, RepositoryError};
 use diesel::prelude::*;
 
-// This is actually a view in our database, not a table, but diesel treats them both the same.
+// Points to the store_stock_on_hand view (no cross join, only items with stock).
+// The legacy stock_on_hand view (with item x store cross join) is kept for external consumers.
+// NOTE: This view only returns rows for items that have stock (available or total > 0).
+// Items with no stock lines will NOT appear. Callers must default to 0 for missing items.
 table! {
-    stock_on_hand (id) {
+    store_stock_on_hand (id) {
         id -> Text,
         item_id -> Text,
         item_name -> Text,
@@ -31,8 +34,8 @@ pub struct StockOnHandFilter {
     pub store_id: Option<EqualFilter<String>>,
 }
 
-joinable!(stock_on_hand -> item_link (item_id));
-allow_tables_to_appear_in_same_query!(item_link, stock_on_hand);
+joinable!(store_stock_on_hand -> item_link (item_id));
+allow_tables_to_appear_in_same_query!(item_link, store_stock_on_hand);
 
 pub struct StockOnHandRepository<'a> {
     connection: &'a StorageConnection,
@@ -55,13 +58,13 @@ impl<'a> StockOnHandRepository<'a> {
         filter: Option<StockOnHandFilter>,
     ) -> Result<Vec<StockOnHandRow>, RepositoryError> {
         // Query StockOnHand
-        let mut query = stock_on_hand::table.into_boxed();
+        let mut query = store_stock_on_hand::table.into_boxed();
 
         if let Some(f) = filter {
             let StockOnHandFilter { item_id, store_id } = f;
 
-            apply_equal_filter!(query, item_id, stock_on_hand::item_id);
-            apply_equal_filter!(query, store_id, stock_on_hand::store_id);
+            apply_equal_filter!(query, item_id, store_stock_on_hand::item_id);
+            apply_equal_filter!(query, store_id, store_stock_on_hand::store_id);
         }
 
         // Debug diesel query

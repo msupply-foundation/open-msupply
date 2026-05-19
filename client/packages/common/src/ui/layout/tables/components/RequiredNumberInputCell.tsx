@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   NumericTextInput,
-  useDebounceCallback,
   NumericTextInputProps,
 } from '@openmsupply-client/common';
 import { MRT_Cell, MRT_RowData } from 'material-react-table';
@@ -21,8 +20,7 @@ export const RequiredNumberInputCell = <T extends MRT_RowData>({
 }: NumberInputCellProps<T>) => {
   const value = cell.getValue<number>();
   const [inputState, setInputState] = useState<number | undefined>(value);
-
-  const updater = useDebounceCallback(updateFn, [updateFn], 250);
+  const { defaultValue } = numericTextProps;
 
   return (
     <NumericTextInput
@@ -30,14 +28,12 @@ export const RequiredNumberInputCell = <T extends MRT_RowData>({
       defaultValue={1}
       value={inputState}
       onChange={newValue => {
-        // newValue could be undefined, while the user is inputting
-        // (e.g. they clear the field to enter a new pack size)
-        // In that case, we keep the local input state as undefined
-        // but set the row value to 1 (so we always have valid state to save)
-
-        // NumericTextInput will reset to our default (1) on blur if the field is empty!
+        // newValue is undefined while the field is empty mid-edit; fall back to
+        // defaultValue so the parent always has a valid number. Propagate
+        // synchronously — debouncing here lets a click handler read stale state
+        // immediately after clearing the input (issue #11624).
         setInputState(newValue);
-        updater(newValue ?? 1);
+        updateFn(newValue ?? defaultValue ?? 1);
       }}
       onKeyDown={e => {
         // Allow using arrow keys to move input cursor without

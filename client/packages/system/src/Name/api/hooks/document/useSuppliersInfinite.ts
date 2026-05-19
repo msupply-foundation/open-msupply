@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   NameFilterInput,
   useInfiniteQuery,
 } from '@openmsupply-client/common';
@@ -22,9 +23,15 @@ const useSuppliersInfiniteBase = ({
     filter,
   };
 
-  return useInfiniteQuery(
-    [...api.keys.list(), 'suppliers', 'infinite', external, filter],
-    async ({ pageParam }) => {
+  return useInfiniteQuery({
+    queryKey: [
+      ...api.keys.list(),
+      'suppliers',
+      'infinite',
+      external,
+      filter,
+    ],
+    queryFn: async ({ pageParam }) => {
       const pageNumber = Number(pageParam ?? 0);
 
       const data = await api.get.suppliers({
@@ -39,10 +46,15 @@ const useSuppliersInfiniteBase = ({
         pageNumber,
       };
     },
+    initialPageParam: 0,
+    getNextPageParam: lastPage =>
+      (lastPage.pageNumber + 1) * rowsPerPage < (lastPage.data?.totalCount ?? 0)
+        ? lastPage.pageNumber + 1
+        : undefined,
     // Keep the previous filter's pages on screen while a new filter is in
     // flight, so the dropdown doesn't flash empty between keystrokes.
-    { keepPreviousData: true }
-  );
+    placeholderData: keepPreviousData,
+  });
 };
 
 export const useSuppliersInfinite = (
