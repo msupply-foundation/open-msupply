@@ -38,7 +38,12 @@ export const StocktakeErrorModal = () => {
   );
 
   return (
-    <BasicModal width={560} height={360} open={isModalOpen} onClose={closeModal}>
+    <BasicModal
+      width={560}
+      height={360}
+      open={isModalOpen}
+      onClose={closeModal}
+    >
       <Grid container gap={1} flex={1} padding={4} flexDirection="column">
         <Grid container gap={1} flexDirection="row" alignItems="center">
           <AlertIcon color="error" />
@@ -70,8 +75,7 @@ export const StocktakeErrorModal = () => {
                 key={lineId}
                 padding={2}
                 sx={{
-                  borderBottom: theme =>
-                    `1px solid ${theme.palette.divider}`,
+                  borderBottom: theme => `1px solid ${theme.palette.divider}`,
                   '&:last-child': { borderBottom: 'none' },
                 }}
               >

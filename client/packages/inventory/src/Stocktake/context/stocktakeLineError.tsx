@@ -1,5 +1,6 @@
 import { PropsWithChildrenOnly, RecordWithId } from '@common/types';
 import React, { createContext, useContext, useState } from 'react';
+import { LocaleKey, noOtherVariants } from '@openmsupply-client/common';
 import {
   AdjustmentReasonNotProvidedErrorFragment,
   AdjustmentReasonNotValidErrorFragment,
@@ -15,7 +16,7 @@ export type StocktakeLineError =
 
 export const stocktakeLineErrorMessageKey = (
   typename: StocktakeLineError['__typename']
-) => {
+): LocaleKey => {
   switch (typename) {
     case 'StockLineReducedBelowZero':
       return 'error.reduced-below-zero';
@@ -25,6 +26,8 @@ export const stocktakeLineErrorMessageKey = (
       return 'error.provide-reason';
     case 'AdjustmentReasonNotValid':
       return 'error.provide-valid-reason';
+    default:
+      return noOtherVariants(typename);
   }
 };
 

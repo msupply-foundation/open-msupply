@@ -10,24 +10,21 @@ interface StocktakeLineErrorBannerProps {
   draftLines: DraftStocktakeLine[];
 }
 
-export const StocktakeLineEditErrorBanner: React.FC<StocktakeLineErrorBannerProps> = ({
-  draftLines,
-}) => {
+export const StocktakeLineEditErrorBanner = ({ draftLines }: StocktakeLineErrorBannerProps) => {
   const t = useTranslation();
   const { errors } = useStocktakeLineErrorContext();
 
-  const visibleErrors = draftLines
-    .map(line => {
-      const error = errors[line.id];
-      if (!error) return null;
-      return { line, error };
-    })
-    .filter(<T,>(x: T | null): x is T => x !== null);
+  const visibleErrors = draftLines.flatMap(line => {
+    const error = errors[line.id];
+    return error ? [{ line, error }] : [];
+  });
 
   if (visibleErrors.length === 0) return null;
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 1 }}>
+    <Box
+      sx={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 1 }}
+    >
       {visibleErrors.map(({ line, error }) => (
         <Alert key={line.id} severity="error">
           {line.batch ? `${line.batch}: ` : ''}
