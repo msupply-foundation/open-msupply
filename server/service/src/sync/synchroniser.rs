@@ -204,9 +204,9 @@ impl SynchroniserV5V6 {
         } else {
             match CentralServerConfig::get() {
                 CentralServerConfig::NotConfigured => return Err(SyncError::V6NotConfigured),
-                CentralServerConfig::IsCentralServer | CentralServerConfig::ForcedCentralServer => {
-                    None
-                }
+                CentralServerConfig::IsCentralServer
+                | CentralServerConfig::ForcedCentralServer
+                | CentralServerConfig::StandaloneCentral => None,
                 CentralServerConfig::CentralServerUrl(url) => Some(SynchroniserV6::new(
                     &url,
                     &self.sync_v5_settings,

@@ -1,7 +1,7 @@
 use std::{future::Future, sync::Arc};
 
 use crate::service_provider::ServiceProvider;
-use crate::sync::is_initialised;
+use crate::sync::{is_initialised, CentralServerConfig};
 
 use super::{settings::SyncSettings, synchroniser_runner::Synchroniser};
 use tokio::{
@@ -44,6 +44,13 @@ impl SynchroniserDriver {
     ///    * If not initialised await only for manual trigger
     ///    * do sync if any of the above were triggered
     pub async fn run(mut self, service_provider: Arc<ServiceProvider>, force_run: bool) {
+        // Standalone central has no upstream to sync with, park forever.
+        if CentralServerConfig::is_standalone_central() {
+            log::info!("Standalone central server. Sync driver disabled");
+            std::future::pending::<()>().await;
+            return;
+        }
+
         if force_run || is_initialised(&service_provider) {
             self.sync(service_provider.clone()).await;
         }
