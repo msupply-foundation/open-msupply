@@ -41,6 +41,11 @@ export interface AutocompleteWithPaginationProps<
   // only renders when `value` is non-null, so the wrapper provides this
   // path for the "typed but unselected" state.
   onClear?: () => void;
+  // When true, the spinner shows in the input adornment but the listbox
+  // keeps rendering existing options instead of swapping to "Loading...".
+  // Useful for debounced server-side filtering where the previous results
+  // are still a useful preview while a refetch is in flight.
+  loadingInputOnly?: boolean;
 }
 
 export function AutocompleteWithPagination<T extends RecordWithId>({
@@ -74,6 +79,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   onPageChange,
   onClear,
   mapOptions,
+  loadingInputOnly = false,
   sx,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteWithPaginationProps<T>>) {
@@ -201,7 +207,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       value={value}
       getOptionDisabled={getOptionDisabled}
       filterOptions={filter}
-      loading={loading}
+      loading={loadingInputOnly ? false : loading}
       loadingText={loadingText ?? t('loading')}
       noOptionsText={noOptionsText ?? t('label.no-options')}
       options={options}
