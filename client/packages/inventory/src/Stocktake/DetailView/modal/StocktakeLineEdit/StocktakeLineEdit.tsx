@@ -39,6 +39,7 @@ import {
 } from './StocktakeLineEditTables';
 import { StocktakeLineEditModal } from './StocktakeLineEditModal';
 import { DraftStocktakeLine } from './utils';
+import { StocktakeLineEditErrorBanner } from './StocktakeLineEditErrorBanner';
 
 // A stocktake line auto-seeded by the server (e.g. all-items stocktake
 // creates one row for an item with no stock) — nothing filled in yet.
@@ -322,6 +323,7 @@ export const StocktakeLineEdit = ({
             ) : null}
             {!!currentItem ? (
               <>
+                <StocktakeLineEditErrorBanner draftLines={draftLines} />
                 <Divider margin={5} />
                 {tableContent}
                 <ItemVariantSelectPanel
