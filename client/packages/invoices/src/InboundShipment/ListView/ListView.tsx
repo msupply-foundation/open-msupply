@@ -7,6 +7,7 @@ import {
   useTranslation,
   NothingHere,
   useToggle,
+  useUrlQuery,
   useUrlQueryParams,
   ColumnType,
   ColumnDef,
@@ -74,11 +75,20 @@ export const InboundListView = () => {
     ],
   });
 
+  const { urlQuery } = useUrlQuery({ skipParse: ['tab'] });
+  const tab = urlQuery['tab'];
+
   // Only include invoice types the user has permissions to view
   const invoiceTypes: InvoiceTypeInput[] = [];
-  if (userHasPermission(UserPermission.InboundShipmentQuery))
+  if (
+    tab !== 'external' &&
+    userHasPermission(UserPermission.InboundShipmentQuery)
+  )
     invoiceTypes.push(InvoiceTypeInput.InboundShipment);
-  if (userHasPermission(UserPermission.InboundShipmentExternalQuery))
+  if (
+    tab !== 'internal' &&
+    userHasPermission(UserPermission.InboundShipmentExternalQuery)
+  )
     invoiceTypes.push(InvoiceTypeInput.InboundShipmentExternal);
 
   const listParams = {
