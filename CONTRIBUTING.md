@@ -76,7 +76,7 @@ yarn start
 
 # Option 2: run client against the demo server API (no Rust required)
 cd ./client
-OMS_BACKEND_URL=https://demo-open.msupply.org yarn start
+yarn start-remote
 
 # Option 3: run full stack locally without legacy mSupply (initialise from bundled reference data)
 cd ./server
@@ -86,7 +86,7 @@ yarn start
 ```
 
 This will compile the React app and launch a browser on <http://localhost:3003>. We're using mostly chrome and firefox.. but you be you!
-Setting `OMS_BACKEND_URL=https://demo-open.msupply.org` points the dev-server proxy at our [demo server](https://demo-open.msupply.org/) — the browser still talks to localhost, webpack forwards the API calls through.
+Running `yarn start-remote` points the dev-server proxy at our [demo server](https://demo-open.msupply.org/) — the browser still talks to localhost, webpack forwards the API calls through.
 You can log in using:
 
 *User*: developer

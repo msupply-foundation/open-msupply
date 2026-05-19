@@ -33,7 +33,7 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 
 `yarn start` (proxies API calls to `http://localhost:8000` — ensure you have already gone through the `server` setup instructions)
 
-`OMS_BACKEND_URL=https://demo-open.msupply.org yarn start` (using demo server API)
+`yarn start-remote` (using demo server API)
 
 `OMS_BACKEND_URL=http://localhost:8001 yarn start` (using custom backend URL, see [config.ts](./packages/config/src/config.ts) and [webpack.config.js](./packages/host/webpack.config.js))
 
