@@ -575,6 +575,9 @@ mod tests {
         let (_, connection, connection_manager, _) =
             setup_all("get_token_rejects_invalid_auth", MockDataInserts::none()).await;
         test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
+            .unwrap();
         let service_provider = ServiceProvider::new(connection_manager);
 
         // Site not found
