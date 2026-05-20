@@ -17,10 +17,15 @@ const hasAllPermissions = (
   userHasPermission: (p: UserPermission) => boolean
 ) => !permissions?.length || permissions.every(userHasPermission);
 
-const PluginNavLink: React.FC<{ to: string; label: string }> = ({
+const PluginNavLink: React.FC<{
+  to: string;
+  label: string;
+  icon?: JSX.Element;
+}> = ({
   to,
   label,
-}) => <AppNavLink to={to} text={label} />;
+  icon,
+}) => <AppNavLink to={to} text={label} icon={icon} />;
 
 /**
  * Plugin nav links targeting an existing category. Render inside that

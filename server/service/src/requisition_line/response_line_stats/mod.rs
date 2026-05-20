@@ -139,7 +139,7 @@ mod test {
         RequisitionLineRow {
             id: "requisition_line_one_a".to_string(),
             requisition_id: "requisition_one".to_string(),
-            item_link_id: "item_d".to_string(),
+            item_id: "item_d".to_string(),
             requested_quantity: 20.0,
             approved_quantity: 12.0,
             ..Default::default()
@@ -150,7 +150,7 @@ mod test {
         RequisitionLineRow {
             id: "requisition_line_one_b".to_string(),
             requisition_id: "requisition_one".to_string(),
-            item_link_id: "item_e".to_string(),
+            item_id: "item_e".to_string(),
             requested_quantity: 15.0,
             available_stock_on_hand: 10.0,
             average_monthly_consumption: 50.0,
@@ -178,7 +178,7 @@ mod test {
         RequisitionLineRow {
             id: "requisition_line_two_a".to_string(),
             requisition_id: "requisition_two".to_string(),
-            item_link_id: "item_e".to_string(),
+            item_id: "item_e".to_string(),
             requested_quantity: 20.0,
             approved_quantity: 10.0,
             ..Default::default()
@@ -204,7 +204,7 @@ mod test {
         RequisitionLineRow {
             id: "requisition_line_three_a".to_string(),
             requisition_id: "requisition_three".to_string(),
-            item_link_id: "item_e".to_string(),
+            item_id: "item_e".to_string(),
             requested_quantity: 25.0,
             approved_quantity: 18.0,
             ..Default::default()
@@ -230,7 +230,7 @@ mod test {
         RequisitionLineRow {
             id: "requisition_line_four_a".to_string(),
             requisition_id: "requisition_four".to_string(),
-            item_link_id: "item_e".to_string(),
+            item_id: "item_e".to_string(),
             requested_quantity: 10.0,
             ..Default::default()
         }
@@ -254,7 +254,7 @@ mod test {
         RequisitionLineRow {
             id: "requisition_line_five_a".to_string(),
             requisition_id: "requisition_five".to_string(),
-            item_link_id: "item_e".to_string(),
+            item_id: "item_e".to_string(),
             requested_quantity: 6.0,
             ..Default::default()
         }
@@ -278,7 +278,7 @@ mod test {
         RequisitionLineRow {
             id: "request_requisition_a_line_a".to_string(),
             requisition_id: "request_requisition_a".to_string(),
-            item_link_id: "item_e".to_string(),
+            item_id: "item_e".to_string(),
             requested_quantity: 100.0,
             ..Default::default()
         }
@@ -302,7 +302,7 @@ mod test {
         RequisitionLineRow {
             id: "request_requisition_b_line_a".to_string(),
             requisition_id: "request_requisition_b".to_string(),
-            item_link_id: "item_e".to_string(),
+            item_id: "item_e".to_string(),
             requested_quantity: 100.0,
             ..Default::default()
         }

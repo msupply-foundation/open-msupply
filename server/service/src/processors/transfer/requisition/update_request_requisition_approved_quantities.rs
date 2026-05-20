@@ -79,7 +79,7 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
         for line in response_lines.iter() {
             requisition_line_row_repository.update_approved_quantity_by_item_id(
                 &request_requisition.requisition_row.id,
-                &line.requisition_line_row.item_link_id,
+                &line.requisition_line_row.item_id,
                 line.requisition_line_row.approved_quantity,
             )?;
         }

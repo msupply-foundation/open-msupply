@@ -234,7 +234,7 @@ mod test {
             .unwrap();
         assert_eq!(line, {
             let mut expected = line.clone();
-            expected.item_link_id = default_service_item.item_row.id;
+            expected.item_id = default_service_item.item_row.id;
             expected.item_name = default_service_item.item_row.name;
             expected
         });
@@ -265,7 +265,7 @@ mod test {
             let mut expected = line.clone();
             expected.id = "new_line2_id".to_string();
             expected.invoice_id = mock_full_draft_outbound_shipment_a().invoice.id;
-            expected.item_link_id = mock_item_service_item().id;
+            expected.item_id = mock_item_service_item().id;
             expected.item_name = "modified name".to_string();
             expected.total_before_tax = 0.3;
             expected.tax_percentage = Some(0.1);

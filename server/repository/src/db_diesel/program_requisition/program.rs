@@ -1,7 +1,7 @@
 use super::program_row::program;
 use crate::{
     db_diesel::{
-        item_link_row::item_link, item_row::item, master_list_line_row::master_list_line,
+        item_row::item, master_list_line_row::master_list_line,
         master_list_row::master_list, name_row::name, store_row::store,
     },
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
@@ -145,7 +145,7 @@ impl<'a> ProgramRepository<'a> {
                         master_list_line::table
                             .on(program::master_list_id
                                 .eq(master_list_line::master_list_id.nullable()))
-                            .left_join(item_link::table.left_join(item::table)),
+                            .left_join(item::table),
                     )
                     .into_boxed();
 
