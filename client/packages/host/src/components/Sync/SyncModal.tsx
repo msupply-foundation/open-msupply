@@ -77,11 +77,10 @@ const useHostSync = (enabled: boolean) => {
       keepAwake();
     } else {
       allowSleep();
-      queryClient.invalidateQueries(); // refresh the page user is on after sync finishes
 
-      // Reload custom translations, in case we received new ones via sync
       // Shouldn't run on first mount, when translations might still be loading - see issue #9042
       if (!isInitialMount) {
+        queryClient.invalidateQueries(); // refresh the page user is on after sync finishes
         invalidateCustomTranslations();
         updateUser();
       }
@@ -126,15 +125,10 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
     isLoading,
     onManualSync,
   } = useHostSync(open);
-  const { updateUserIsLoading, updateUser } = useAuthContext();
+  const { updateUserIsLoading } = useAuthContext();
   const error =
     syncStatus?.error &&
     mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
-
-  const sync = async () => {
-    await updateUser();
-    await onManualSync();
-  };
 
   const durationAsDate = new Date(
     0,
@@ -270,7 +264,7 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
             startIcon={<RadioIcon />}
             variant="contained"
             disabled={false}
-            onClick={sync}
+            onClick={onManualSync}
             label={t('button.sync-now')}
             sx={theme => ({
               marginRight: 1,
