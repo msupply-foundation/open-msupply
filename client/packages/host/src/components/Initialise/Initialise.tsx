@@ -12,13 +12,20 @@ import {
   Box,
   Stack,
   useIsExtraSmallScreen,
+  Grid,
+  Typography,
+  Theme,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
-import { InitialiseLayout, InitMode } from './InitialiseLayout';
 import { useInitialiseForm } from './hooks';
 import { SyncProgress } from '../SyncProgress';
 import { mapSyncError } from 'packages/system/src';
 import { StandaloneCentralTab } from './StandaloneCentralTab';
+import { AppVersion } from '../AppVersion';
+import { LanguageButton } from '../LanguageButton';
+import { LoginIcon } from '../Login/LoginIcon';
+
+type InitMode = 'remote' | 'central';
 
 export const Initialise = () => {
   const t = useTranslation();
@@ -32,6 +39,7 @@ export const Initialise = () => {
 
   const isAndroid = EnvUtils.platform === Platform.Android;
   const isInputDisabled = formState.isInitialising || formState.isLoading;
+  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const ModeSelector = () => {
     return isAndroid ? undefined : (
@@ -55,11 +63,58 @@ export const Initialise = () => {
   };
 
   return (
-    <InitialiseLayout>
-      <ModeSelector />
-      {mode === 'remote' && <RemoteForm formState={formState} />}
-      {mode === 'central' && <StandaloneCentralTab />}
-    </InitialiseLayout>
+    <Grid container sx={{ flex: 1 }}>
+      <Grid
+        container
+        size={{ xs: 12, sm: 6 }}
+        sx={theme => ({
+          backgroundImage: theme.mixins.gradient.secondary,
+          padding: '0 80px 7% 80px',
+          [theme.breakpoints.down('sm')]: {
+            padding: '2em',
+          },
+        })}
+      >
+        <Welcome />
+      </Grid>
+      <Grid
+        size={{ xs: 12, sm: 6 }}
+        sx={theme => ({
+          display: 'flex',
+          flexDirection: 'column',
+          [theme.breakpoints.down('sm')]: {
+            overflowY: 'unset',
+          },
+          backgroundColor: 'background.login',
+          overflowY: 'scroll',
+        })}
+      >
+        <Stack
+          sx={theme => ({
+            [theme.breakpoints.down('sm')]: {
+              justifyContent: 'flex-start',
+              paddingTop: '1.5em',
+            },
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+          })}
+        >
+          <Stack spacing={isExtraSmallScreen ? 2 : 3}>
+            <Stack direction="row" sx={{ justifyContent: 'center' }}>
+              <LoginIcon small />
+            </Stack>
+            <ModeSelector />
+            {mode === 'remote' && <RemoteForm formState={formState} />}
+            {mode === 'central' && <StandaloneCentralTab />}
+          </Stack>
+        </Stack>
+        <Box>
+          <AppVersion style={{ opacity: 0.4 }} />
+        </Box>
+        <LanguageButton />
+      </Grid>
+    </Grid>
   );
 };
 
@@ -171,5 +226,46 @@ const RemoteForm = ({ formState }: { formState: InitialiseFormState }) => {
         {syncError && <BoxedErrorWithDetails {...syncError} width="100%" />}
       </Box>
     </>
+  );
+};
+
+const Welcome = () => {
+  const t = useTranslation();
+  return (
+    <Stack spacing="45px" justifyContent="center">
+      <Typography
+        sx={{
+          color: (theme: Theme) => theme.typography.login.color,
+          fontSize: {
+            xs: '20px',
+            sm: '20px',
+            md: '48px',
+            lg: '64px',
+            xl: '64px',
+          },
+          fontWeight: 'bold',
+          lineHeight: 'normal',
+          whiteSpace: 'pre-line',
+        }}
+      >
+        {t('initialise.heading')}
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: {
+            xs: '14px',
+            sm: '14px',
+            md: '16px',
+            lg: '20px',
+            xl: '20px',
+          },
+          color: (theme: Theme) => theme.typography.login.color,
+          fontWeight: 600,
+          whiteSpace: 'pre-line',
+        }}
+      >
+        {t('initialise.body')}
+      </Typography>
+    </Stack>
   );
 };
