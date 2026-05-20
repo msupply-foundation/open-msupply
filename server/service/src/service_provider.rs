@@ -74,6 +74,7 @@ use crate::{
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
     sync::{
+        settings::BatchSize,
         site_auth::{SiteAuthService, SiteAuthTrait},
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
@@ -209,6 +210,7 @@ pub struct ServiceProvider {
     // Subscription trigger handle — used by SyncLogger and changelog callbacks
     // to send events to the shared subscription worker.
     pub subscription_trigger: SubscriptionTriggerHandle,
+    pub(crate) batch_size: BatchSize,
 }
 
 pub struct ServiceContext {
@@ -217,6 +219,7 @@ pub struct ServiceContext {
     pub(crate) frontend_plugins_cache: FrontendPluginCache,
     pub user_id: String,
     pub store_id: String,
+    pub batch_size: BatchSize,
 }
 
 impl ServiceProvider {
@@ -234,6 +237,7 @@ impl ServiceProvider {
             SiteIsInitialisedTrigger::new_void(),
             None, // Mail not required for test/CLI setups
             SubscriptionTriggerHandle::new_void(),
+            BatchSize::default(),
         )
     }
 
@@ -245,6 +249,7 @@ impl ServiceProvider {
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
         mail_settings: Option<MailSettings>,
         subscription_trigger: SubscriptionTriggerHandle,
+        batch_size: BatchSize,
     ) -> Self {
         ServiceProvider {
             connection_manager: connection_manager.clone(),
@@ -269,6 +274,7 @@ impl ServiceProvider {
             general_service: Box::new(GeneralService {}),
             report_service: Box::new(ReportService {}),
             settings: Box::new(SettingsService),
+            batch_size,
             document_service: Box::new(DocumentService {}),
             document_registry_service: Box::new(DocumentRegistryService {}),
             form_schema_service: Box::new(FormSchemaService {}),
@@ -336,6 +342,7 @@ impl ServiceProvider {
             user_id: "".to_string(),
             store_id: "".to_string(),
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
+            batch_size: self.batch_size.clone(),
         })
     }
 
@@ -349,6 +356,7 @@ impl ServiceProvider {
             user_id: SYSTEM_USER_ID.to_string(),
             store_id: store_id.unwrap_or("".to_string()),
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
+            batch_size: self.batch_size.clone(),
         })
     }
 
@@ -363,6 +371,7 @@ impl ServiceProvider {
             user_id,
             store_id,
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
+            batch_size: self.batch_size.clone(),
         })
     }
 
@@ -381,6 +390,7 @@ impl ServiceContext {
             user_id: "".to_string(),
             store_id: "".to_string(),
             frontend_plugins_cache: FrontendPluginCache::new(),
+            batch_size: BatchSize::default(),
         }
     }
 }
