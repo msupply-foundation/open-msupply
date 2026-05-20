@@ -177,7 +177,7 @@ mod test {
             InvoiceLineRow {
                 id: "wrong_store_return_line".to_string(),
                 invoice_id: wrong_store().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 ..Default::default()
             }
         }
@@ -337,7 +337,7 @@ mod test {
             InvoiceLineRow {
                 id: "line_to_delete".to_string(),
                 invoice_id: mock_customer_return_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 number_of_packs: 5.0,
                 ..Default::default()
             }

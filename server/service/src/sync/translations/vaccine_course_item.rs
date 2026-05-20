@@ -109,4 +109,23 @@ mod tests {
             assert_eq!(translation_result, record.translated_record);
         }
     }
+
+    /// `try_translate_to_upsert_sync_record` serializes `VaccineCourseItemRow`
+    /// directly. Push is currently gated off (`should_translate_to_sync_record`
+    /// returns false for `PushToOmSupplyCentral`), but this test guards the wire
+    /// format so re-enabling push doesn't silently break older remote clients
+    /// that expect `item_link_id` when pulling from an upgraded central.
+    #[test]
+    fn test_push_wire_format_uses_legacy_field_names() {
+        let row = VaccineCourseItemRow {
+            item_id: "test_item".to_string(),
+            ..Default::default()
+        };
+        let json = serde_json::to_value(&row).unwrap();
+        assert_eq!(json["item_link_id"], "test_item");
+        assert!(
+            json.get("item_id").is_none(),
+            "JSON should not contain `item_id`; expected legacy name `item_link_id`"
+        );
+    }
 }

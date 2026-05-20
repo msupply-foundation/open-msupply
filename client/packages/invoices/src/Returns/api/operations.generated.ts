@@ -483,6 +483,7 @@ export type SupplierReturnByIdQuery = {
         transportReference?: string | null;
         lines: {
           __typename: 'InvoiceLineConnector';
+          totalCount: number;
           nodes: Array<{
             __typename: 'InvoiceLineNode';
             id: string;
@@ -1182,6 +1183,7 @@ export const SupplierReturnByIdDocument = gql`
           nodes {
             ...SupplierReturnLine
           }
+          totalCount
         }
       }
     }
