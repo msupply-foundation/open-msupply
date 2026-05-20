@@ -3,7 +3,9 @@ use repository::{ChangelogTableName, StorageConnection, SyncBufferRow};
 use crate::sync::{
     translations::{
         name::NameTranslation,
-        special::merge::{apply_name_merge, build_central_merge_message, MergeMessageBody, MergeOutcome},
+        special::merge::{
+            apply_name_merge, build_central_merge_message, MergeMessageBody, MergeOutcome,
+        },
         IntegrationOperation, PullTranslateResult, SyncTranslation,
     },
     CentralServerConfig,
@@ -52,9 +54,7 @@ impl SyncTranslation for NameMergeTranslation {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::{
-        synchroniser::integrate_and_translate_sync_buffer,
-    };
+    use crate::sync::synchroniser::integrate_and_translate_sync_buffer;
 
     use repository::{
         mock::MockDataInserts, test_db::setup_all, EqualFilter, NameLinkRow, NameLinkRowRepository,
@@ -112,8 +112,7 @@ mod tests {
         SyncBufferRepository::new(&connection)
             .insert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, 0)
-            .unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, 0).unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
         let mut name_links = name_link_repo.find_many_by_name_id("name_c").unwrap();
@@ -130,8 +129,7 @@ mod tests {
         SyncBufferRepository::new(&connection)
             .insert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, 0)
-            .unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, 0).unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
         let mut name_links = name_link_repo.find_many_by_name_id("name_c").unwrap();
@@ -209,8 +207,7 @@ mod tests {
             .insert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, None, 0)
-            .unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, 0).unwrap();
 
         assert_eq!(count_name_store_join("name_a"), 0);
         assert_eq!(count_name_store_join("name2"), 0);
