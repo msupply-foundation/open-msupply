@@ -8,43 +8,27 @@ import {
   DetailTabs,
   useBreadcrumbs,
   useEditModal,
-  useAuthContext,
-  useNonPaginatedMaterialTable,
-  MaterialTable,
-  NothingHere,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar/Toolbar';
-import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { useResponse, ResponseLineFragment } from '../api';
-import { IndicatorsTab, Documents } from './Tabs';
+import { useResponse } from '../api';
+import { DetailsTab, IndicatorsTab, Documents } from './Tabs';
 import { ResponseRequisitionLineErrorProvider } from '../context';
-import { ResponseLineEditModal } from './ResponseLineEdit';
-import { useResponseColumns } from './columns';
-import { isResponseLinePlaceholderRow } from '../../utils';
-import { useResponseLines } from '../api/hooks/line/useResponseLines';
+import { CustomerRequisitionDetailTabs } from './types';
 
 const DetailViewInner = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const { store } = useAuthContext();
+  const { urlQuery, updateQuery } = useUrlQuery();
 
-  const {
-    onOpen,
-    onClose,
-    mode,
-    entity: itemId,
-    isOpen,
-  } = useEditModal<string | null>();
+  const lineEditModal = useEditModal<string | null>();
 
-  const { data, isLoading, isFetching, isError, invalidateQueries } =
-    useResponse.document.get();
-  const { lines } = useResponseLines();
-  const { columns } = useResponseColumns();
+  const { data, isLoading, invalidateQueries } = useResponse.document.get();
   const isDisabled = useResponse.utils.isDisabled();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useResponse.document.indicators(
@@ -54,38 +38,20 @@ const DetailViewInner = () => {
       !!data
     );
 
-  const onRowClick = useCallback(
-    (line: ResponseLineFragment) => {
-      onOpen(line.item.id);
-    },
-    [onOpen]
-  );
-
-  const onAddItem = () => {
-    onOpen();
-  };
+  const onAddItem = useCallback(() => {
+    // The line-edit modal lives inside the Details tab. If the user is on
+    // another tab, switch first so the modal mounts.
+    const currentTab =
+      urlQuery['tab'] ?? CustomerRequisitionDetailTabs.Details;
+    if (currentTab !== CustomerRequisitionDetailTabs.Details) {
+      updateQuery({ tab: CustomerRequisitionDetailTabs.Details });
+    }
+    lineEditModal.onOpen();
+  }, [lineEditModal, urlQuery, updateQuery]);
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.requisitionNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.requisitionNumber]);
-
-  const { table, selectedRows } = useNonPaginatedMaterialTable({
-    tableId: 'response-requisition-detail',
-    columns,
-    data: lines,
-    isLoading: isFetching,
-    isError,
-    getIsPlaceholderRow: row => isResponseLinePlaceholderRow(row.original),
-    onRowClick,
-    initialSort: { key: 'itemName', dir: 'asc' },
-    noDataElement: (
-      <NothingHere
-        body={t('error.no-requisition-items')}
-        onCreate={isDisabled ? undefined : onAddItem}
-        buttonText={t('button.add-item')}
-      />
-    ),
-  });
 
   if (isLoading) return <DetailViewSkeleton />;
 
@@ -97,7 +63,7 @@ const DetailViewInner = () => {
 
   const tabs = [
     {
-      Component: <MaterialTable table={table} />,
+      Component: <DetailsTab lineEdit={lineEditModal} />,
       value: 'Details',
     },
     {
@@ -135,21 +101,7 @@ const DetailViewInner = () => {
       />
       <Toolbar />
       <DetailTabs tabs={tabs} />
-      <Footer
-        selectedRows={selectedRows}
-        resetRowSelection={table.resetRowSelection}
-      />
       <SidePanel />
-      {isOpen && (
-        <ResponseLineEditModal
-          requisition={data}
-          itemId={itemId}
-          store={store}
-          mode={mode}
-          isOpen={isOpen}
-          onClose={onClose}
-        />
-      )}
     </>
   ) : (
     <AlertModal

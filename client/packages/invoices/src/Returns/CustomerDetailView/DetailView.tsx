@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   DetailViewSkeleton,
   AlertModal,
@@ -8,75 +8,55 @@ import {
   DetailTabs,
   useEditModal,
   useBreadcrumbs,
-  useNonPaginatedMaterialTable,
-  NothingHere,
-  MaterialTable,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { CustomerReturnLineFragment, useReturns } from '../api';
+import { useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { SidePanel } from './SidePanel/SidePanel';
 import { ActivityLogList } from '@openmsupply-client/system';
-import { Footer } from './Footer';
-import { CustomerReturnEditModal } from '../modals';
-import { getNextItemId } from '../../utils';
-import { useCustomerReturnColumns } from './columns';
+import { DetailsTab } from './Tabs/Details';
+import { CustomerReturnDetailTabs } from './types';
 
 export const CustomerReturnDetailView = () => {
   const { data, isLoading } = useReturns.document.customerReturn();
-  const { lines } = useReturns.lines.customerReturnRows();
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
+  const { urlQuery, updateQuery } = useUrlQuery();
 
-  const {
-    onOpen,
-    onClose,
-    isOpen,
-    entity: itemId,
-    mode,
-  } = useEditModal<string>();
+  const lineEditModal = useEditModal<string>();
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.invoiceNumber]);
 
-  const isDisabled = useReturns.utils.customerIsDisabled();
-  const columns = useCustomerReturnColumns();
+  const onAddItem = useCallback(
+    (itemId?: string | null) => {
+      // The line-edit modal lives inside the Details tab. If the user is on
+      // another tab, switch first so the modal mounts.
+      const currentTab = urlQuery['tab'] ?? CustomerReturnDetailTabs.Details;
+      if (currentTab !== CustomerReturnDetailTabs.Details) {
+        updateQuery({ tab: CustomerReturnDetailTabs.Details });
+      }
+      lineEditModal.onOpen(itemId);
+    },
+    [lineEditModal, urlQuery, updateQuery]
+  );
 
-  const { table, selectedRows } =
-    useNonPaginatedMaterialTable<CustomerReturnLineFragment>({
-      tableId: 'purchase-order-detail-view',
-      onRowClick: row => onOpen(row.itemId),
-      columns,
-      isLoading,
-      data: lines,
-      grouping: { field: 'itemCode' },
-      enableRowSelection: !isDisabled,
-      noDataElement: (
-        <NothingHere
-          body={t('error.no-customer-return-items')}
-          onCreate={isDisabled ? undefined : () => onOpen()}
-          buttonText={t('button.add-item')}
-        />
-      ),
-    });
+  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   const tabs = [
     {
-      Component: <MaterialTable table={table} />,
-      value: t('label.details'),
+      Component: <DetailsTab lineEdit={lineEditModal} />,
+      value: CustomerReturnDetailTabs.Details,
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
-      value: t('label.log'),
+      value: CustomerReturnDetailTabs.Log,
     },
   ];
-
-  const nextItemId = getNextItemId(lines ?? [], itemId);
-
-  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   return (
     <React.Suspense
@@ -84,35 +64,10 @@ export const CustomerReturnDetailView = () => {
     >
       {data ? (
         <>
-          <AppBarButtons onAddItem={onOpen} />
-          {isOpen && (
-            <CustomerReturnEditModal
-              isOpen={isOpen}
-              onClose={onClose}
-              outboundShipmentLineIds={[]}
-              customerId={data.otherPartyId}
-              returnId={data.id}
-              initialItemId={itemId}
-              modalMode={mode}
-              loadNextItem={() => {
-                if (nextItemId) onOpen(nextItemId);
-                else {
-                  // Closing and re-opening forces the modal to launch with the
-                  // item selector in focus
-                  onClose();
-                  setTimeout(() => onOpen(), 50);
-                }
-              }}
-              hasNextItem={!!nextItemId}
-            />
-          )}
+          <AppBarButtons onAddItem={onAddItem} />
           <Toolbar />
           <DetailTabs tabs={tabs} />
           <SidePanel />
-          <Footer
-            selectedRows={selectedRows}
-            resetRowSelection={table.resetRowSelection}
-          />
         </>
       ) : (
         <AlertModal
