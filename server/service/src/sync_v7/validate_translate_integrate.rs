@@ -9,8 +9,8 @@ use crate::{
 };
 
 use super::validate::*;
-use repository::*;
 use repository::syncv7::{SyncRecordSerializeError, INTEGRATION_ORDER};
+use repository::*;
 use serde::de::Error as _;
 use thiserror::Error;
 use util::{datetime_now, format_error};
@@ -36,6 +36,8 @@ enum Error {
     RepositoryError(#[from] RepositoryError),
     #[error("Error during record translation")]
     TranslationError(#[from] serde_json::Error),
+    #[error("Delete translator not found for table: {0}")]
+    DeleteTranslatorNotFound(ChangelogTableName),
     #[error("Error during record deserialization: {0}")]
     DeserializeError(#[from] SyncRecordSerializeError),
     #[error("Error during record validation")]
@@ -201,10 +203,7 @@ fn translate_delete(
         | ChangelogTableName::VaccineCourseDose
         | ChangelogTableName::VaccineCourseItem
         | ChangelogTableName::VaccineCourseStoreConfig => {
-            return Err(Error::TranslationError(serde_json::Error::custom(format!(
-                "No delete translator for table {:?}",
-                table_name
-            ))));
+            return Err(Error::DeleteTranslatorNotFound(table_name.clone()));
         }
     };
 
