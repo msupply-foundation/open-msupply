@@ -228,7 +228,7 @@ const RemoteForm = ({ formState }: { formState: InitialiseFormState }) => {
 const Welcome = () => {
   const t = useTranslation();
   return (
-    <Stack spacing="45px" justifyContent="end">
+    <Stack spacing="45px" justifyContent="center" sx={{ height: '100%' }}>
       <Typography
         sx={{
           color: (theme: Theme) => theme.typography.login.color,
