@@ -37,6 +37,7 @@ mod tests {
     use crate::service_provider::ServiceProvider;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, SiteRow, SiteRowRepository, StorageConnection,
+        SyncVersion,
     };
 
     fn site(connection: &StorageConnection, token: Option<String>) -> SiteRow {
@@ -48,6 +49,7 @@ mod tests {
             hashed_password: "hash".to_string(),
             hardware_id: Some("hw-1".to_string()),
             token,
+            sync_version: SyncVersion::V5V6,
         };
         SiteRowRepository::new(connection).upsert(&row).unwrap();
         row

@@ -1,20 +1,16 @@
 use async_graphql::*;
 use chrono::{DateTime, NaiveDateTime, Utc};
-use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
-};
 use service::{
-    auth::{Resource, ResourceAccessRequest},
     sync::sync_status::status::{SyncStatus, SyncStatusWithProgress},
     sync_v7::sync_status::status::FullSyncStatusV7,
 };
+
+use crate::queries::sync_status::SyncStatusNode;
 
 use super::sync_api_error::SyncErrorV7Node;
 
 pub struct SyncStatusV7Node {
     started: NaiveDateTime,
-    duration_in_seconds: i32,
     finished: Option<NaiveDateTime>,
 }
 
@@ -22,10 +18,6 @@ pub struct SyncStatusV7Node {
 impl SyncStatusV7Node {
     async fn started(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_naive_utc_and_offset(self.started, Utc)
-    }
-
-    async fn duration_in_seconds(&self) -> i32 {
-        self.duration_in_seconds
     }
 
     async fn finished(&self) -> Option<DateTime<Utc>> {
@@ -70,7 +62,7 @@ pub struct FullSyncStatusV7Node {
     pull: Option<SyncStatusWithProgressV7Node>,
     waiting_for_integration: Option<SyncStatusV7Node>,
     integration: Option<SyncStatusWithProgressV7Node>,
-    last_successful_sync: Option<SyncStatusV7Node>,
+    last_successful_sync: Option<SyncStatusNode>,
     warning_threshold: i64,
     error_threshold: i64,
 }
@@ -78,11 +70,10 @@ pub struct FullSyncStatusV7Node {
 impl FullSyncStatusV7Node {
     pub fn from_sync_status(
         status: FullSyncStatusV7,
-        last_successful_sync: Option<FullSyncStatusV7>,
+        last_successful_sync: Option<SyncStatus>,
     ) -> Self {
         let to_node = |s: SyncStatus| SyncStatusV7Node {
             started: s.started,
-            duration_in_seconds: s.duration_in_seconds,
             finished: s.finished,
         };
         let to_progress_node = |s: SyncStatusWithProgress| SyncStatusWithProgressV7Node {
@@ -100,49 +91,11 @@ impl FullSyncStatusV7Node {
             pull: status.pull.map(&to_progress_node),
             waiting_for_integration: status.waiting_for_integration.map(&to_node),
             integration: status.integration.map(to_progress_node),
-            last_successful_sync: last_successful_sync.map(|s| to_node(s.summary)),
+            last_successful_sync: last_successful_sync.map(SyncStatusNode::from_sync_status),
             warning_threshold: 1,
             error_threshold: 3,
         }
     }
-}
-
-pub fn latest_sync_status_v7(
-    ctx: &Context<'_>,
-    with_auth: bool,
-) -> Result<Option<FullSyncStatusV7Node>> {
-    if with_auth {
-        validate_auth(
-            ctx,
-            &ResourceAccessRequest {
-                resource: Resource::SyncInfo,
-                store_id: None,
-            },
-        )?;
-    }
-
-    let service_provider = ctx.service_provider();
-    let ctx = service_provider.basic_context()?;
-    let sync_status = match service_provider
-        .sync_status_v7_service
-        .get_latest_sync_status_v7(&ctx)?
-    {
-        Some(sync_status) => sync_status,
-        None => return Ok(None),
-    };
-    let last_successful_sync_status = service_provider
-        .sync_status_v7_service
-        .get_latest_successful_sync_status_v7(&ctx)
-        .map_err(|error| {
-            let formatted_error = format!("{error:#?}");
-            StandardGraphqlError::InternalError(formatted_error).extend()
-        })
-        .unwrap_or(None);
-
-    Ok(Some(FullSyncStatusV7Node::from_sync_status(
-        sync_status,
-        last_successful_sync_status,
-    )))
 }
 
 #[cfg(test)]
@@ -171,19 +124,19 @@ mod test {
         .await;
 
         let query = r#"{
-            latestSyncStatusV7 {
+            latestSyncStatus { __typename ... on FullSyncStatusV7Node {
                 isSyncing
-                summary { started finished durationInSeconds }
+                summary { started finished }
                 error { variant fullError }
                 push { started finished total done }
                 pull { started finished total done }
                 integration { started finished total done }
-                waitingForIntegration { started finished durationInSeconds }
-            }
+                waitingForIntegration { started finished }
+            } }
         }"#;
 
         let expected = json!({
-            "latestSyncStatusV7": null
+            "latestSyncStatus": null
         });
         assert_graphql_query!(&settings, query, &None, expected, None);
     }
@@ -215,17 +168,18 @@ mod test {
         .await;
 
         let query = r#"{
-            latestSyncStatusV7 {
+            latestSyncStatus { __typename ... on FullSyncStatusV7Node {
                 isSyncing
                 summary { started finished }
                 error { variant fullError }
                 push { started finished total done }
                 pull { started finished total done }
-            }
+            } }
         }"#;
 
         let expected = json!({
-            "latestSyncStatusV7": {
+            "latestSyncStatus": {
+                "__typename": "FullSyncStatusV7Node",
                 "isSyncing": true,
                 "summary": {
                     "started": "2025-06-01T10:00:00+00:00",
@@ -272,14 +226,15 @@ mod test {
         .await;
 
         let query = r#"{
-            latestSyncStatusV7 {
+            latestSyncStatus { __typename ... on FullSyncStatusV7Node {
                 isSyncing
                 error { variant fullError }
-            }
+            } }
         }"#;
 
         let expected = json!({
-            "latestSyncStatusV7": {
+            "latestSyncStatus": {
+                "__typename": "FullSyncStatusV7Node",
                 "isSyncing": false,
                 "error": {
                     "variant": "CONNECTION_ERROR",
@@ -328,30 +283,29 @@ mod test {
         .await;
 
         let query = r#"{
-            latestSyncStatusV7 {
+            latestSyncStatus { __typename ... on FullSyncStatusV7Node {
                 isSyncing
-                summary { started finished durationInSeconds }
+                summary { started finished }
                 error { variant fullError }
-                lastSuccessfulSync { started finished durationInSeconds }
+                lastSuccessfulSync { started finished }
                 push { started finished total done }
                 pull { started finished total done }
                 integration { started finished total done }
-            }
+            } }
         }"#;
 
         let expected = json!({
-            "latestSyncStatusV7": {
+            "latestSyncStatus": {
+                "__typename": "FullSyncStatusV7Node",
                 "isSyncing": false,
                 "summary": {
                     "started": "2025-06-01T10:00:00+00:00",
                     "finished": "2025-06-01T10:01:00+00:00",
-                    "durationInSeconds": 60,
                 },
                 "error": null,
                 "lastSuccessfulSync": {
                     "started": "2025-06-01T10:00:00+00:00",
                     "finished": "2025-06-01T10:01:00+00:00",
-                    "durationInSeconds": 60,
                 },
                 "push": {
                     "started": "2025-06-01T10:00:05+00:00",

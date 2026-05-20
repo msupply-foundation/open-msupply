@@ -54,6 +54,9 @@ pub mod android {
                 base_dir: files_dir.to_str().unwrap().to_string(),
                 machine_uid: Some(android_id),
                 override_is_central_server: false,
+                standalone_store_name: None,
+                standalone_admin_username: None,
+                standalone_admin_password: None,
             },
             database: DatabaseSettings {
                 username: "n/a".to_string(),
@@ -78,6 +81,7 @@ pub mod android {
             mail: None,
             // Feature flags won't work using tablet as a server. Run in client mode and connect to a desktop server instead
             features: None,
+            changelog_partition: None,
         };
 
         logging_init(settings.logging.clone(), None);

@@ -1,10 +1,11 @@
-use std::ops::Deref;
+use std::{ops::Deref, str::FromStr};
 
 use super::StorageConnection;
 use crate::{
     diesel_macros::{diesel_json_type, diesel_string_enum},
     migrations::Version,
     repository_error::RepositoryError,
+    KeyType, KeyValueStoreRepository,
 };
 use chrono::{NaiveDateTime, Utc};
 use diesel::prelude::*;
@@ -28,6 +29,49 @@ diesel_string_enum! {
         #[strum(serialize = "V5_V6")]
         V5V6,
         V7,
+    }
+}
+
+impl SyncVersion {
+    /// Single source of truth for which sync flow this site should run.
+    /// `is_central` is passed by the caller (`CentralServerConfig::is_central_server()`
+    /// lives in the `service` crate) — when true, V5V6 is forced regardless of the
+    /// stored value.
+    pub fn get(
+        connection: &StorageConnection,
+        is_central: bool,
+    ) -> Result<SyncVersion, RepositoryError> {
+        if is_central {
+            return Ok(SyncVersion::V5V6);
+        }
+        let raw =
+            KeyValueStoreRepository::new(connection).get_string(KeyType::SettingsSyncVersion)?;
+        Ok(raw
+            .and_then(|s| SyncVersion::from_str(&s).ok())
+            .unwrap_or_default())
+    }
+
+    pub fn set(
+        connection: &StorageConnection,
+        version: SyncVersion,
+    ) -> Result<(), RepositoryError> {
+        KeyValueStoreRepository::new(connection)
+            .set_string(KeyType::SettingsSyncVersion, Some(version.to_string()))
+    }
+
+    /// Parse the free-text `sync_version` field from the legacy server (4D
+    /// site row, v5 site_info response, etc). Anything other than "v7"
+    /// (case-insensitive, trimmed) — including empty, missing, or unknown —
+    /// maps to V5V6.
+    pub fn from_legacy_string(raw: Option<&str>) -> SyncVersion {
+        match raw
+            .map(str::trim)
+            .map(str::to_ascii_lowercase)
+            .as_deref()
+        {
+            Some("v7") => SyncVersion::V7,
+            _ => SyncVersion::V5V6,
+        }
     }
 }
 
@@ -336,11 +380,8 @@ mod test {
 
     #[actix_rt::test]
     async fn test_sync_buffer_insert_and_query() {
-        let (_, connection, _, _) = test_db::setup_all(
-            "test_sync_buffer_insert_and_query",
-            MockDataInserts::none(),
-        )
-        .await;
+        let (_, connection, _, _) =
+            test_db::setup_all("test_sync_buffer_insert_and_query", MockDataInserts::none()).await;
 
         let repo = SyncBufferRepository::new(&connection);
 

@@ -4,10 +4,7 @@ use crate::sync::CentralServerConfig;
 
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
-    ChangelogRow, ChangelogTableName,
-    ItemLinkRowRepository, StorageConnection, VaccinationRow,
-    Row,
-
+    ChangelogRow, ChangelogTableName, ItemLinkRowRepository, Row, StorageConnection, VaccinationRow,
 };
 
 /*
@@ -145,7 +142,11 @@ impl SyncTranslation for VaccinationLegacyTranslation {
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(PushTranslateResult::upsert(changelog, LEGACY_VACCINATION_TABLE_NAME, json_record))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            LEGACY_VACCINATION_TABLE_NAME,
+            json_record,
+        ))
     }
 }
 
@@ -158,14 +159,12 @@ mod tests {
     use repository::mock::{
         mock_immunisation_encounter_a, mock_immunisation_program_enrolment_a, mock_patient,
         mock_store_a, mock_user_account_a, mock_vaccine_course_a_dose_a, mock_vaccine_item_a,
-    
     };
     use repository::{
         mock::MockDataInserts,
         test_db::setup_all,
         vaccination_row::{VaccinationRow, VaccinationRowRepository},
         ChangelogRepository,
-    
     };
 
     #[actix_rt::test]
@@ -179,9 +178,7 @@ mod tests {
         .await;
 
         // Get the current cursor value
-        let cursor = ChangelogRepository::new(&connection)
-            .max_cursor()
-            .unwrap();
+        let cursor = ChangelogRepository::new(&connection).max_cursor().unwrap();
 
         // Create a new VaccinationRow (this will get a changelog entry created automatically)
         let vaccination_row = VaccinationRow {
@@ -206,8 +203,25 @@ mod tests {
             .upsert_one(&vaccination_row)
             .unwrap();
 
-        let entry = ChangelogRepository::new(&connection).query_with_data(repository::ChangelogCondition::True(), repository::CursorAndLimit { cursor: cursor as i64, limit: 100 }).unwrap().pop().unwrap();
-        let repository::RowOrDelete::Row { changelog: changelog_row, row } = entry else { panic!("expected upsert row") };
+        let entry = ChangelogRepository::new(&connection)
+            .query_with_data(
+                repository::ChangelogCondition::True(),
+                repository::CursorAndLimit {
+                    cursor: cursor as i64,
+                    limit: 100,
+                },
+            )
+            .unwrap()
+            .rows
+            .pop()
+            .unwrap();
+        let repository::RowOrDelete::Row {
+            changelog: changelog_row,
+            row,
+        } = entry
+        else {
+            panic!("expected upsert row")
+        };
 
         // Shouldn't translate if not a central server
         test_util_set_is_central_server(false);
@@ -230,10 +244,7 @@ mod tests {
         match translation_result {
             PushTranslateResult::PushRecord(records) => {
                 assert_eq!(records[0].record.record_id, "test_vaccination_id");
-                assert_eq!(
-                    records[0].record.table_name,
-                    LEGACY_VACCINATION_TABLE_NAME
-                );
+                assert_eq!(records[0].record.table_name, LEGACY_VACCINATION_TABLE_NAME);
             }
             _ => panic!("Expected Upsert result"),
         }

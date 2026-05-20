@@ -71,7 +71,7 @@ async fn migration_2_01_00() {
     assert!(!check_item_needs_translation(&connection));
 
     // Run this migration
-    migrate(&connection, Some(version.clone())).unwrap();
+    migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
     assert_eq!(get_database_version(&connection), version);
 
     // Check that the item row needs to be translated

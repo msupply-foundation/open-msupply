@@ -1,13 +1,10 @@
 use crate::{
-    db_diesel::{
-        changelog::changelog_cursor_tracker::ChangelogCursorTracker, store_row::store,
-    },
+    db_diesel::{changelog::changelog_cursor_tracker::ChangelogCursorTracker, store_row::store},
     diesel_macros::diesel_string_enum,
     dynamic_query_filter::create_condition,
     name_store_join::name_store_join,
     vaccination_row::vaccination,
-    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection,
-    TransactionNotification,
+    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, TransactionNotification,
 };
 use diesel::{dsl::LeftJoinQuerySource, prelude::*};
 use serde::{Deserialize, Serialize};
@@ -17,13 +14,31 @@ use ts_rs::TS;
 
 use super::sync_style::{ChangeLogSyncStyle, SyncVersions};
 
+// Underlying table — INSERTs target this. Carries raw `*_link_id` columns.
 table! {
+    #[sql_name = "changelog"]
+    changelog_with_links (cursor) {
+        cursor -> BigInt,
+        table_name -> Text,
+        record_id -> Text,
+        row_action -> Text,
+        store_id -> Nullable<Text>,
+        is_sync_update -> Bool,
+        source_site_id -> Nullable<Integer>,
+        transfer_store_id -> Nullable<Text>,
+        patient_link_id -> Nullable<Text>,
+    }
+}
+
+// View — SELECTs target this. Exposes resolved `patient_id`
+// (via LEFT JOIN name_link on the patient_link_id column).
+table! {
+    #[sql_name = "changelog_view"]
     changelog (cursor) {
         cursor -> BigInt,
         table_name -> Text,
         record_id -> Text,
         row_action -> Text,
-        name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
         source_site_id -> Nullable<Integer>,
@@ -92,7 +107,7 @@ type Source = LeftJoinQuerySource<
 
 diesel_string_enum! {
     #[derive(Clone, Eq, Serialize, Deserialize, TS)]
-    #[strum(serialize_all = "snake_case")]
+    #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
     pub enum RowActionType {
         #[default]
         Upsert,
@@ -103,89 +118,70 @@ diesel_string_enum! {
 diesel_string_enum! {
     #[derive(Clone, Eq, Hash, Serialize, Deserialize, strum::EnumIter, TS)]
     #[strum(serialize_all = "snake_case")]
-    // Variants are grouped by `sync_style()` and sorted alphabetically within each group.
-    // Keep this layout in sync with the match in `sync_style` below.
+    // The set of tables tracked by the changelog. How each one syncs is
+    // defined separately in `sync_style.rs`.
     pub enum ChangelogTableName {
-        // ---- Legacy — Remote (not v6) ----
+        Abbreviation,
         ActivityLog,
-        Barcode,
-        Clinician,
-        ClinicianStoreJoin,
-        Currency,
-        Document,
-        IndicatorValue,
-        InsuranceProvider,
-        Item,
-        Location,
-        LocationMovement,
-        Name,
-        NameInsuranceJoin,
-        NameStoreJoin,
-        PurchaseOrder,
-        PurchaseOrderLine,
-        Sensor,
-        StockLine,
-        Stocktake,
-        StocktakeLine,
-        TemperatureBreach,
-        TemperatureLog,
-        VVMStatusLog,
-
-        // ---- Legacy — Remote + Transfer (not v6) ----
-        Requisition,
-        RequisitionLine,
-
-        // ---- Legacy — Remote + Transfer + Patient (not v6) ----
-        Invoice,
-        InvoiceLine,
-
-        // ---- Central (v6) ----
+        Asset,
         AssetCatalogueItem,
         AssetCatalogueType,
         AssetCategory,
         AssetClass,
+        AssetInternalLocation,
+        AssetLog,
         AssetLogReason,
         AssetProperty,
         BackendPlugin,
+        Barcode,
         BundledItem,
         Campaign,
-        Demographic,
-        FormSchema,
-        FrontendPlugin,
-        ItemVariant,
-        NameOmsFields,
-        NameProperty,
-        PackagingVariant,
-        Property,
-        Report,
-        VaccineCourse,
-        VaccineCourseDose,
-        VaccineCourseItem,
-        VaccineCourseStoreConfig,
-
-        // ---- Central (not v6) ----
-        Abbreviation,
         Category,
+        Clinician,
+        ClinicianStoreJoin,
         Contact,
+        ContactForm,
         ContactTrace,
         Context,
+        Currency,
+        Demographic,
         DemographicIndicator,
         Diagnosis,
+        Document,
         DocumentRegistry,
+        Encounter,
+        FormSchema,
+        FrontendPlugin,
         IndicatorColumn,
         IndicatorLine,
+        IndicatorValue,
+        InsuranceProvider,
+        Invoice,
+        InvoiceLine,
+        Item,
         ItemCategoryJoin,
         ItemDirection,
         ItemStoreJoin,
+        ItemVariant,
         ItemWarningJoin,
+        Location,
+        LocationMovement,
         LocationType,
         MasterList,
         MasterListLine,
         MasterListNameJoin,
+        Name,
+        NameInsuranceJoin,
+        NameOmsFields,
+        NameProperty,
+        NameStoreJoin,
         NameTag,
         NameTagJoin,
+        PackagingVariant,
         Period,
         PeriodSchedule,
+        PluginData,
+        Preference,
         Printer,
         Program,
         ProgramEnrolment,
@@ -193,46 +189,44 @@ diesel_string_enum! {
         ProgramIndicator,
         ProgramRequisitionOrderType,
         ProgramRequisitionSettings,
+        Property,
+        PurchaseOrder,
+        PurchaseOrderLine,
         ReasonOption,
+        Report,
+        Requisition,
+        RequisitionLine,
+        RnrForm,
+        RnrFormLine,
+        Sensor,
         ShippingMethod,
+        Site,
+        StockLine,
+        Stocktake,
+        StocktakeLine,
         Store,
         StorePreference,
+        #[default]
+        SyncFileReference,
+        SyncMessage,
+        SystemLog,
+        TemperatureBreach,
+        TemperatureLog,
         Unit,
         UserAccount,
         UserPermission,
         UserStoreJoin,
         VVMStatus,
-
-        // ---- ToLegacyCentralOnly (not v6) ----
-        Site,
-
-        // ---- Remote (v6) ----
-        Asset,
-        AssetInternalLocation,
-        AssetLog,
-        RnrForm,
-        RnrFormLine,
-        SyncMessage,
-
-        // ---- Remote + Patient (v6) ----
-        Encounter,
+        VVMStatusLog,
         Vaccination,
-
-        // ---- File (v6) ----
-        #[default]
-        SyncFileReference,
-
-        // ---- RemoteAndCentral (v6) ----
-        PluginData,
-        Preference,
-
-        // ---- RemoteToCentral (v6) ----
-        ContactForm,
-        SystemLog,
+        VaccineCourse,
+        VaccineCourseDose,
+        VaccineCourseItem,
+        VaccineCourseStoreConfig,
     }
 }
 
-pub(crate) enum SourceSiteId {
+pub enum SourceSiteId {
     SourceSiteId(Option<i32>),
     CurrentSiteId,
 }
@@ -243,10 +237,7 @@ pub(crate) enum RowOrId<'a, T> {
 }
 
 impl SourceSiteId {
-    pub(crate) fn get_id(
-        &self,
-        connection: &StorageConnection,
-    ) -> Result<Option<i32>, RepositoryError> {
+    pub fn get_id(&self, connection: &StorageConnection) -> Result<Option<i32>, RepositoryError> {
         match self {
             SourceSiteId::SourceSiteId(id) => Ok(*id),
             SourceSiteId::CurrentSiteId => {
@@ -257,7 +248,7 @@ impl SourceSiteId {
 }
 
 #[derive(Debug, Clone, PartialEq, Insertable, Default)]
-#[diesel(table_name = changelog)]
+#[diesel(table_name = changelog_with_links)]
 pub struct ChangeLogInsertRow {
     pub table_name: ChangelogTableName,
     pub record_id: String,
@@ -265,18 +256,20 @@ pub struct ChangeLogInsertRow {
     pub store_id: Option<String>,
     pub source_site_id: Option<i32>,
     pub transfer_store_id: Option<String>,
+    // At the time of inserts a patient_id is the patient_link_id.
+    // If the patient info changes the changelog view will resolve to
+    // the correct patient_id via name_link join.
+    #[diesel(column_name = "patient_link_id")]
     pub patient_id: Option<String>,
 }
 
-#[derive(Clone, Queryable, Debug, PartialEq, Insertable, Serialize, Deserialize, TS, Default)]
+#[derive(Clone, Queryable, Debug, PartialEq, Serialize, Deserialize, TS, Default)]
 #[diesel(table_name = changelog)]
 pub struct ChangelogRow {
     pub cursor: i64,
     pub table_name: ChangelogTableName,
     pub record_id: String,
     pub row_action: RowActionType,
-    #[diesel(column_name = "name_link_id")]
-    pub name_id: Option<String>,
     pub store_id: Option<String>,
     pub is_sync_update: bool,
     pub source_site_id: Option<i32>,
@@ -288,6 +281,13 @@ pub struct ChangelogRepository<'a> {
     pub(super) connection: &'a StorageConnection,
 }
 
+pub struct ChangelogQuery {
+    pub rows: Vec<ChangelogRow>,
+    pub max_cursor: u64,
+    // Defaults to max cursor
+    pub last_cursor_in_batch: u64,
+}
+
 impl<'a> ChangelogRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         ChangelogRepository { connection }
@@ -297,29 +297,52 @@ impl<'a> ChangelogRepository<'a> {
         &self,
         filter: ChangelogCondition::Inner,
         CursorAndLimit { cursor, limit }: CursorAndLimit,
-    ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let mut conditions = vec![
-            filter,
-            ChangelogCondition::cursor::greater_than(cursor),
-        ];
-        if let Some(safe) = ChangelogCursorTracker::max_safe_cursor(self.connection) {
-            // `lower_than(safe + 1)` expresses `cursor <= safe`; the macro does
-            // not generate a `lower_than_or_equal` helper.
-            conditions.push(ChangelogCondition::cursor::lower_than(safe + 1));
+    ) -> Result<ChangelogQuery, RepositoryError> {
+        // Each sub-query scans at most this many cursor values. Bounding the cursor
+        // range gives the planner a tight window to drive an index scan on
+        // changelog_pkey, instead of a full bitmap scan + sort across the whole table.
+        // TODO make this configurable
+        const CURSOR_WINDOW: i64 = 250_000;
+
+        let max_cursor = self.max_cursor()? as i64;
+        let mut results: Vec<ChangelogRow> = Vec::new();
+        let mut current_cursor = cursor;
+
+        while (results.len() as i64) < limit && current_cursor < max_cursor {
+            let window_end = current_cursor.saturating_add(CURSOR_WINDOW).min(max_cursor);
+            let remaining = limit - results.len() as i64;
+
+            let sub_filter = ChangelogCondition::And(vec![
+                filter.clone(),
+                ChangelogCondition::cursor::greater_than(current_cursor),
+                // `lower_than(window_end + 1)` expresses `cursor <= window_end`;
+                // the macro does not generate a `lower_than_or_equal` helper.
+                ChangelogCondition::cursor::lower_than(window_end + 1),
+            ]);
+
+            let sub_query = query()
+                .filter(sub_filter.to_boxed())
+                .order(changelog::cursor.asc())
+                .limit(remaining)
+                .select(changelog::all_columns);
+
+            let sub_results: Vec<ChangelogRow> =
+                sub_query.load(self.connection.lock().connection())?;
+
+            results.extend(sub_results);
+            current_cursor = window_end;
         }
-        let filter = ChangelogCondition::And(conditions);
 
-        let query = query()
-            .filter(filter.to_boxed())
-            .order(changelog::cursor.asc())
-            .limit(limit)
-            .select(changelog::all_columns);
+        let last_cursor_in_batch = results
+            .last()
+            .map(|r| r.cursor as u64)
+            .unwrap_or(max_cursor as u64);
 
-        // Debug diesel query
-        // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
-        let result: Vec<ChangelogRow> = query.load(self.connection.lock().connection())?;
-
-        Ok(result)
+        Ok(ChangelogQuery {
+            rows: results,
+            max_cursor: max_cursor as u64,
+            last_cursor_in_batch,
+        })
     }
 
     /// Returns latest/max change log cursor.
@@ -333,15 +356,16 @@ impl<'a> ChangelogRepository<'a> {
         if let Some(safe) = ChangelogCursorTracker::max_safe_cursor(self.connection) {
             return Ok(safe.max(0) as u64);
         }
-        let result = changelog::table
-            .select(diesel::dsl::max(changelog::cursor))
+        let result = changelog_with_links::table
+            .select(diesel::dsl::max(changelog_with_links::cursor))
             .first::<Option<i64>>(self.connection.lock().connection())?;
         Ok(result.unwrap_or(0) as u64)
     }
 
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<(), RepositoryError> {
         ChangelogCursorTracker::track(self.connection)?;
-        diesel::insert_into(changelog::table)
+
+        diesel::insert_into(changelog_with_links::table)
             .values(row)
             .execute(self.connection.lock().connection())?;
         self.connection
@@ -352,7 +376,8 @@ impl<'a> ChangelogRepository<'a> {
     pub fn batch_insert(&self, rows: Vec<ChangeLogInsertRow>) -> Result<(), RepositoryError> {
         //TODO: Need to handle batch insert size limit
         ChangelogCursorTracker::track(self.connection)?;
-        diesel::insert_into(changelog::table)
+
+        diesel::insert_into(changelog_with_links::table)
             .values(rows)
             .execute(self.connection.lock().connection())?;
         self.connection
@@ -417,12 +442,21 @@ impl ChangelogFilter {
                 Central | File => C::And(vec![
                     // We have central and remote records with same table_name, so need to make sure to include only central ones (where store_id is null)
                     C::store_id::is_null(),
+                    // We have patients that are also central data, therefore patient_id should be null
+                    C::patient_id::is_null(),
                 ]),
                 ToLegacyCentralOnly | RemoteToCentral => {
                     // Don't sync
                     continue;
                 }
                 Remote => C::site_id::equal(site_id),
+                RemoteOwned => {
+                    // Central never has edits to push back — relay only during initialisation.
+                    if !is_initialising {
+                        continue;
+                    }
+                    C::site_id::equal(site_id)
+                }
                 Transfer => C::transfer_site_id::equal(site_id),
                 Patient => C::patient_site_id::equal(site_id),
             };
@@ -461,12 +495,13 @@ impl ChangelogFilter {
         use ChangeLogSyncStyle::*;
         use ChangelogCondition as C;
 
-        let remote_table_names = Remote.get_table_names_for_sync_style(None);
+        let mut store_scoped_table_names = Remote.get_table_names_for_sync_style(None);
+        store_scoped_table_names.extend(RemoteOwned.get_table_names_for_sync_style(None));
         let transfer_table_names = Transfer.get_table_names_for_sync_style(None);
 
         C::Or(vec![
             C::And(vec![
-                C::table_name::any(remote_table_names),
+                C::table_name::any(store_scoped_table_names),
                 C::store_id::equal(store_id.to_string()),
             ]),
             C::And(vec![
@@ -511,7 +546,7 @@ impl ChangelogFilter {
             }
 
             match sync_style {
-                ToLegacyCentralOnly | Remote | Transfer | Patient => {
+                ToLegacyCentralOnly | Remote | RemoteOwned | Transfer | Patient => {
                     inner_or_conditions.push(C::table_name::any(table_names))
                 }
                 Central | RemoteToCentral | File => continue,
@@ -529,5 +564,37 @@ impl ChangelogFilter {
     // Push from OMS remote
     pub fn all_data_edited_on_site(site_id: i32) -> ChangelogCondition::Inner {
         ChangelogCondition::source_site_id::equal(site_id)
+    }
+}
+
+#[cfg(test)]
+mod print_query_tests {
+    use super::*;
+    use crate::DBType;
+    use diesel::debug_query;
+
+    // Remove ignore when you need to print the query
+    #[ignore]
+    #[test]
+    fn print_all_data_for_site_query_for_site_300() {
+        let filter = ChangelogFilter::all_data_for_site(300, false, None);
+
+        let q = query()
+            .filter(filter.to_boxed())
+            .order(changelog::cursor.asc())
+            .limit(100)
+            .select(changelog::all_columns);
+
+        println!("{}", debug_query::<DBType, _>(&q));
+    }
+
+    /// Locks the Rust↔DB contract for `row_action`: the column was the PG enum
+    /// `row_action_type` with labels 'UPSERT'/'DELETE' until v3.0.0, then cast
+    /// to TEXT preserving those labels. The strum serialization here must keep
+    /// matching them.
+    #[test]
+    fn row_action_type_serializes_uppercase() {
+        assert_eq!(RowActionType::Upsert.to_string(), "UPSERT");
+        assert_eq!(RowActionType::Delete.to_string(), "DELETE");
     }
 }

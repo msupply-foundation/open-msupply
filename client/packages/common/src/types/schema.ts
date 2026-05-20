@@ -3022,8 +3022,14 @@ export type FrontendPluginMetadataNode = {
   path: Scalars['String']['output'];
 };
 
-export type FullSyncStatusNode = {
-  __typename: 'FullSyncStatusNode';
+/**
+ * Discriminated union covering both v5_v6 and v7 sync statuses.
+ * The frontend dispatches on `__typename`.
+ */
+export type FullSyncStatusNode = FullSyncStatusV5V6Node | FullSyncStatusV7Node;
+
+export type FullSyncStatusV5V6Node = {
+  __typename: 'FullSyncStatusV5V6Node';
   error?: Maybe<SyncErrorNode>;
   errorThreshold: Scalars['Int']['output'];
   integration?: Maybe<SyncStatusWithProgressNode>;
@@ -3045,7 +3051,7 @@ export type FullSyncStatusV7Node = {
   errorThreshold: Scalars['Int']['output'];
   integration?: Maybe<SyncStatusWithProgressV7Node>;
   isSyncing: Scalars['Boolean']['output'];
-  lastSuccessfulSync?: Maybe<SyncStatusV7Node>;
+  lastSuccessfulSync?: Maybe<SyncStatusNode>;
   pull?: Maybe<SyncStatusWithProgressV7Node>;
   push?: Maybe<SyncStatusWithProgressV7Node>;
   summary: SyncStatusV7Node;
@@ -3186,7 +3192,10 @@ export enum InitialisationStatusType {
   PreInitialisation = 'PRE_INITIALISATION',
 }
 
-export type InitialiseSiteResponse = SyncErrorNode | SyncSettingsNode;
+export type InitialiseSiteResponse =
+  | SyncErrorNode
+  | SyncErrorV7Node
+  | SyncSettingsNode;
 
 export type InsertAssetCatalogueItemError = {
   __typename: 'InsertAssetCatalogueItemError';
@@ -7610,7 +7619,6 @@ export type Queries = {
   labelPrinterSettings?: Maybe<LabelPrinterSettingNode>;
   lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
-  latestSyncStatusV7?: Maybe<FullSyncStatusV7Node>;
   ledger: LedgerResponse;
   /** Query omSupply "location_type" entries */
   locationTypes: LocationTypesResponse;
@@ -9894,6 +9902,7 @@ export enum SyncErrorVariant {
   SiteUuidIsBeingChanged = 'SITE_UUID_IS_BEING_CHANGED',
   Unknown = 'UNKNOWN',
   V6ApiVersionIncompatible = 'V6_API_VERSION_INCOMPATIBLE',
+  V7UpgradeFailed = 'V7_UPGRADE_FAILED',
 }
 
 export enum SyncErrorVariantV7 {
@@ -9910,8 +9919,10 @@ export enum SyncErrorVariantV7 {
   Other = 'OTHER',
   ParsingError = 'PARSING_ERROR',
   RecordNotFound = 'RECORD_NOT_FOUND',
+  RequestSiteAuthError = 'REQUEST_SITE_AUTH_ERROR',
   SiteIdMismatch = 'SITE_ID_MISMATCH',
   SiteIdNotSet = 'SITE_ID_NOT_SET',
+  SiteIsNotV7 = 'SITE_IS_NOT_V7',
   SiteLockError = 'SITE_LOCK_ERROR',
   SyncRecordSerializeError = 'SYNC_RECORD_SERIALIZE_ERROR',
   SyncVersionMismatch = 'SYNC_VERSION_MISMATCH',
@@ -9965,14 +9976,12 @@ export type SyncSettingsNode = {
 
 export type SyncStatusNode = {
   __typename: 'SyncStatusNode';
-  durationInSeconds: Scalars['Int']['output'];
   finished?: Maybe<Scalars['DateTime']['output']>;
   started: Scalars['DateTime']['output'];
 };
 
 export type SyncStatusV7Node = {
   __typename: 'SyncStatusV7Node';
-  durationInSeconds: Scalars['Int']['output'];
   finished?: Maybe<Scalars['DateTime']['output']>;
   started: Scalars['DateTime']['output'];
 };
@@ -11197,7 +11206,10 @@ export enum UpdateSupplierReturnStatusInput {
   Shipped = 'SHIPPED',
 }
 
-export type UpdateSyncSettingsResponse = SyncErrorNode | SyncSettingsNode;
+export type UpdateSyncSettingsResponse =
+  | SyncErrorNode
+  | SyncErrorV7Node
+  | SyncSettingsNode;
 
 export type UpdateTemperatureBreachInput = {
   comment?: InputMaybe<Scalars['String']['input']>;

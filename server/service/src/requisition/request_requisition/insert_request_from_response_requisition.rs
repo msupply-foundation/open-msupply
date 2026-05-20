@@ -1,8 +1,8 @@
 use chrono::Utc;
 use repository::{
-    ActivityLogType, NumberRowType, RepositoryError, Requisition, RequisitionLineRow,
+    ActivityLogType, EqualFilter, NumberRowType, RepositoryError, Requisition, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RequisitionStatus,
-    RequisitionType,
+    RequisitionType, StoreFilter, StoreRepository,
 };
 use util::uuid::uuid;
 
@@ -145,6 +145,10 @@ fn generate(
             RepositoryError::NotFound,
         ))?;
 
+    let other_party_store = StoreRepository::new(connection).query_one(
+        StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.clone())),
+    )?;
+
     let requisition = RequisitionRow {
         id: id.clone(),
         user_id: Some(ctx.user_id.clone()),
@@ -154,6 +158,7 @@ fn generate(
             &ctx.store_id,
         )?,
         name_id: other_party_id.clone(),
+        name_store_id: other_party_store.map(|store| store.store_row.id),
         store_id: ctx.store_id.clone(),
         r#type: RequisitionType::Request,
         status: match status {

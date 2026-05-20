@@ -38,6 +38,7 @@ pub enum KeyType {
     AssignRequisitionNumberProcessorCursor,
     AddCentralPatientVisibilityProcessorCursor,
     RequisitionAutoFinaliseProcessorCursor,
+    MergeSyncMessageProcessorCursor,
     // Nested key value store to store dynamic cursor values as JSON text
     DynamicCursor,
 
@@ -50,6 +51,7 @@ pub enum KeyType {
     SettingsSyncSiteUuid,
     SettingsSyncIsDisabled,
     SettingsSyncV7Token,
+    SettingsSyncVersion,
     SettingsTokenSecret,
 
     DatabaseVersion,
@@ -65,6 +67,8 @@ pub enum KeyType {
     LogFileName,
 
     LastLedgerFixRun,
+
+    IsStandaloneCentral,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]

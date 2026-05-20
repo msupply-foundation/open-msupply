@@ -32,6 +32,7 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS goods_received_line_view;  -- removed but keep drop for cleanup
                 DROP VIEW IF EXISTS item_variant_view;
                 DROP VIEW IF EXISTS program_event_view;
+                DROP VIEW IF EXISTS changelog_view;
             "#
         )?;
 
@@ -260,6 +261,15 @@ impl ViewMigrationFragment for ViewMigration {
                     program_event
                 LEFT JOIN
                     name_link AS patient_link ON program_event.patient_link_id = patient_link.id;
+
+                CREATE VIEW changelog_view AS
+                SELECT
+                    changelog.*,
+                    patient_link.name_id AS patient_id
+                FROM
+                    changelog
+                LEFT JOIN
+                    name_link AS patient_link ON changelog.patient_link_id = patient_link.id;
             "#
         )?;
 

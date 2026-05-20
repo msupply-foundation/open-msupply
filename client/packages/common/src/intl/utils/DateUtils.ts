@@ -210,6 +210,27 @@ export const DateUtils = {
     formatString: string = 'HH:mm:ss'
   ): string => formatIfValid(dateInputHandler(date), formatString),
 
+  /**
+   * Whole seconds elapsed between `start` and `end`. Returns 0 if either is
+   * missing or the result would be negative.
+   */
+  durationInSeconds: (
+    start: Date | string | number | null | undefined,
+    end: Date | string | number | null | undefined
+  ): number => {
+    if (!start || !end) return 0;
+    const startMs = dateInputHandler(start).getTime();
+    const endMs = dateInputHandler(end).getTime();
+    return Math.max(0, Math.floor((endMs - startMs) / 1000));
+  },
+
+  /**
+   * Pack a number of seconds into a Date (year/month/day = 0). Useful with
+   * `getHours()`/`getMinutes()`/`getSeconds()` to break a duration into parts:
+   * 3725s → Date with hours=1 minutes=2 seconds=5.
+   */
+  secondsAsDate: (seconds: number): Date => new Date(0, 0, 0, 0, 0, seconds),
+
   /** Number of milliseconds in one second, i.e. SECOND = 1000*/
   SECOND,
   /** Number of milliseconds in one minute */

@@ -4,7 +4,7 @@ use crate::{
     db_diesel::changelog::ChangelogRepository,
     diesel_macros::define_linked_tables,
     repository_error::RepositoryError,
-    ChangelogSyncType, ChangelogTableName, Delete, Upsert,
+    ChangelogSyncType, ChangelogTableName, RowActionType, SourceSiteId, Upsert,
 };
 
 use chrono::NaiveDate;
@@ -102,7 +102,13 @@ impl<'a> StoreRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
-        Ok(())
+        let changelog = StoreRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub async fn insert_one(&self, store_row: &StoreRow) -> Result<(), RepositoryError> {
@@ -137,48 +143,22 @@ impl<'a> StoreRowRepository<'a> {
         let result = store::table.load(self.connection.lock().connection())?;
         Ok(result)
     }
-
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(store_with_links::table.filter(store_with_links::id.eq(id)))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct StoreRowDelete(pub String);
-// TODO soft delete
-impl Delete for StoreRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        StoreRowRepository::new(con).delete(&self.0)?;
-        if let ChangelogSyncType::SyncTypeV7 { changelog_row } = sync_type {
-            ChangelogRepository::new(con).insert(&changelog_row)?;
-        }
-        Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            StoreRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
 }
 
 impl Upsert for StoreRow {
     fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
-        StoreRowRepository::new(con).upsert_one(self)?;
-        match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { .. } => Ok(()),
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => {
-                ChangelogRepository::new(con).insert(&changelog_row)?;
-                Ok(())
-            }
-        }
+        StoreRowRepository::new(con)._upsert(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => StoreRow::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {

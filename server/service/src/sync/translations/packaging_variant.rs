@@ -1,12 +1,11 @@
-use repository::item_variant::packaging_variant_row::{
-    PackagingVariantRow, PackagingVariantRowRepository,
-
-};
-use repository::{ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, Row};
+use repository::item_variant::packaging_variant_row::PackagingVariantRow;
+use repository::{ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow};
 
 use crate::sync::translations::item_variant::ItemVariantTranslation;
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
+use super::{
+    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+};
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -32,7 +31,9 @@ impl SyncTranslation for PackagingVariantTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Ok(PullTranslateResult::upsert(serde_json::from_value::<
             PackagingVariantRow,
-        >(sync_record.data.0.clone())?))
+        >(
+            sync_record.data.0.clone()
+        )?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -65,7 +66,11 @@ impl SyncTranslation for PackagingVariantTranslation {
 
         let row = packaging_variant_row;
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(row)?,
+        ))
     }
 }
 

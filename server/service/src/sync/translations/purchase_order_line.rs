@@ -1,18 +1,15 @@
 use crate::sync::translations::{
     item::ItemTranslation, purchase_order::PurchaseOrderTranslation, PullTranslateResult,
     PushTranslateResult, SyncTranslation,
-
 };
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, PurchaseOrderLineDelete, PurchaseOrderLineRow, PurchaseOrderLineStatus, StorageConnection, SyncBufferRow,
-    Row,
-
+    ChangelogRow, ChangelogTableName, PurchaseOrderLineDelete, PurchaseOrderLineRow,
+    PurchaseOrderLineStatus, Row, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, zero_date_as_option, zero_f64_as_none,
-
 };
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -238,7 +235,11 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             oms_fields: Some(LegacyPurchaseOrderLineRowOmsFields { status }),
         };
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 
     fn try_translate_to_delete_sync_record(
@@ -256,8 +257,9 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RowOrDelete,
-};
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
+        CursorAndLimit, FilterBuilder, RowOrDelete,
+    };
     use serde_json::json;
 
     #[actix_rt::test]
@@ -300,16 +302,20 @@ mod tests {
         .await;
 
         let translator = PurchaseOrderLineTranslation {};
-        let entries = ChangelogRepository::new(&connection).query_with_data(
-            ChangelogCondition::table_name::equal(ChangelogTableName::PurchaseOrderLine),
-            CursorAndLimit {
-                cursor: -1,
-                limit: 1_000_000,
-            },
-        )
-        .unwrap();
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::PurchaseOrderLine),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
+            )
+            .unwrap();
 
-        for entry in entries { let RowOrDelete::Row { changelog, row } = entry else { panic!("expected upsert row") };
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral

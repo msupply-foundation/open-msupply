@@ -1,6 +1,7 @@
+use super::serde_utils::deserialize_sync_version;
 use super::{PullTranslateResult, SyncTranslation};
 use crate::sync::CentralServerConfig;
-use repository::{SiteRow, SiteRowDelete, StorageConnection, SyncBufferRow};
+use repository::{SiteRow, SiteRowDelete, StorageConnection, SyncBufferRow, SyncVersion};
 use serde::{Deserialize, Serialize};
 
 #[allow(non_snake_case)]
@@ -16,6 +17,10 @@ pub struct LegacySiteRow {
     #[serde(rename = "hardwareID")]
     pub hardware_id: Option<String>,
     pub code: Option<String>,
+    /// 4D site.sync_version is a free-text field; "v7" upgrades the site,
+    /// anything else (including empty) is treated as v5/v6.
+    #[serde(default, deserialize_with = "deserialize_sync_version")]
+    pub(crate) sync_version: SyncVersion,
 }
 
 // Needs to be added to all_translators()
@@ -56,6 +61,7 @@ impl SyncTranslation for SiteTranslation {
             code: data.code.unwrap_or_default(),
             // token is OMS-managed and never comes from OG
             token: None,
+            sync_version: data.sync_version,
         };
 
         Ok(PullTranslateResult::upsert(result))

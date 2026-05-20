@@ -181,6 +181,10 @@ fn generate(
     }: InsertProgramResponseRequisition,
 ) -> Result<GenerateResult, RepositoryError> {
     let connection = &ctx.connection;
+
+    let customer_store = StoreRepository::new(connection)
+        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.clone())))?;
+
     let requisition = RequisitionRow {
         id,
         user_id: Some(ctx.user_id.clone()),
@@ -190,6 +194,9 @@ fn generate(
             &ctx.store_id,
         )?,
         name_id: other_party_id.clone(),
+        name_store_id: customer_store
+            .as_ref()
+            .map(|store| store.store_row.id.clone()),
         store_id: ctx.store_id.clone(),
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,
@@ -242,9 +249,6 @@ fn generate(
     } else {
         vec![]
     };
-
-    let customer_store = StoreRepository::new(connection)
-        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.to_string())))?;
 
     let indicator_values = match customer_store {
         Some(_) => generate_program_indicator_values(

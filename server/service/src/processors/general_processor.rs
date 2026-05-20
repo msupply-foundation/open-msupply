@@ -22,7 +22,8 @@ use crate::{
 use super::{
     add_central_patient_visibility::AddPatientVisibilityForCentral,
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
-    load_plugin::LoadPlugin, plugin_processor::PluginProcessor,
+    load_plugin::LoadPlugin, merge_sync_message::MergeSyncMessageProcessor,
+    plugin_processor::PluginProcessor,
     requisition_auto_finalise::RequisitionAutoFinaliseProcessor,
 };
 
@@ -54,6 +55,7 @@ pub enum ProcessorType {
     AddPatientVisibilityForCentral,
     Plugins,
     RequisitionAutoFinalise,
+    MergeSyncMessage,
 }
 
 impl ProcessorType {
@@ -70,6 +72,7 @@ impl ProcessorType {
             ProcessorType::RequisitionAutoFinalise => {
                 vec![Box::new(RequisitionAutoFinaliseProcessor)]
             }
+            ProcessorType::MergeSyncMessage => vec![Box::new(MergeSyncMessageProcessor)],
         }
     }
 
@@ -123,13 +126,15 @@ impl ProcessorFilter {
             ProcessorFilter::Compatibility(f) => {
                 changelog_repo.compatibility_query(cursor, CHANGELOG_BATCH_SIZE, Some(f.clone()))
             }
-            ProcessorFilter::Normal(f) => changelog_repo.query(
-                f.clone(),
-                CursorAndLimit {
-                    cursor: cursor as i64,
-                    limit: CHANGELOG_BATCH_SIZE as i64,
-                },
-            ),
+            ProcessorFilter::Normal(f) => changelog_repo
+                .query(
+                    f.clone(),
+                    CursorAndLimit {
+                        cursor: cursor as i64,
+                        limit: CHANGELOG_BATCH_SIZE as i64,
+                    },
+                )
+                .map(|q| q.rows),
         }
     }
 }

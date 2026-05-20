@@ -45,6 +45,9 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
             base_dir: "test_output".to_string(),
             machine_uid: None,
             override_is_central_server: false,
+            standalone_store_name: None,
+            standalone_admin_username: None,
+            standalone_admin_password: None,
         },
         database: db_settings,
         sync: None,
@@ -60,6 +63,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
             interval: 1,
         }),
         features: None,
+        changelog_partition: None,
     };
     let (sync_trigger, _) = SynchroniserDriver::init();
     let (ledger_fix_trigger, _) = LedgerFixDriver::init();

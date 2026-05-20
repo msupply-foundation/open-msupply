@@ -1,14 +1,18 @@
+use crate::subscription::{SubscriptionTrigger, SubscriptionTriggerHandle, SyncLogRow};
 use log::{debug, error, info};
 use repository::{
-    RepositoryError, StorageConnection, SyncApiErrorCode, SyncLogRow, SyncLogRowRepository,
+    RepositoryError, StorageConnection, SyncApiErrorCode, SyncLogV5V6Row, SyncLogV5V6RowRepository,
 };
 use thiserror::Error;
-use crate::subscription::{SubscriptionTrigger, SubscriptionTriggerHandle};
 use util::format_error;
 
 use crate::sync::{
     api::{SyncApiErrorVariantV5, SyncErrorCodeV5},
+    api_v6::{SyncApiErrorVariantV6, SyncApiV6CreatingError, SyncParsedErrorV6},
     central_data_synchroniser::CentralPullError,
+    central_data_synchroniser_v6::{
+        CentralPullErrorV6, RemotePushErrorV6, WaitForSyncOperationErrorV6,
+    },
     remote_data_synchroniser::{
         PostInitialisationError, RemotePullError, RemotePushError, WaitForSyncOperationError,
     },
@@ -23,20 +27,29 @@ pub(crate) enum SyncStep {
     Push,
     PullCentral,
     PullRemote,
+    PullCentralV6,
     Integrate,
+    PushCentralV6,
 }
 
 #[derive(Clone)]
 pub(crate) enum SyncStepProgress {
     PullCentral,
     PullRemote,
+    PullCentralV6,
     Push,
+    PushCentralV6,
     Integrate,
 }
 
+enum SyncApiErrorVariant<'a> {
+    V5(&'a SyncApiErrorVariantV5),
+    V6(&'a SyncApiErrorVariantV6),
+}
+
 pub struct SyncLogger<'a> {
-    sync_log_repo: SyncLogRowRepository<'a>,
-    row: SyncLogRow,
+    sync_log_repo: SyncLogV5V6RowRepository<'a>,
+    row: SyncLogV5V6Row,
     subscription_trigger: Option<SubscriptionTriggerHandle>,
 }
 
@@ -61,13 +74,13 @@ impl<'a> SyncLogger<'a> {
 
     pub fn start(connection: &'a StorageConnection) -> Result<SyncLogger<'a>, SyncLoggerError> {
         info!("Sync started");
-        let row = SyncLogRow {
+        let row = SyncLogV5V6Row {
             id: util::uuid::uuid(),
             started_datetime: chrono::Utc::now().naive_utc(),
             ..Default::default()
         };
 
-        let sync_log_repo = SyncLogRowRepository::new(connection);
+        let sync_log_repo = SyncLogV5V6RowRepository::new(connection);
         let logger = SyncLogger {
             sync_log_repo,
             row,
@@ -87,16 +100,16 @@ impl<'a> SyncLogger<'a> {
     fn update(&self) -> Result<(), SyncLoggerError> {
         self.sync_log_repo.upsert_one(&self.row)?;
         if let Some(handle) = &self.subscription_trigger {
-            handle.send(SubscriptionTrigger::SyncStatus(self.row.clone()));
+            handle.send(SubscriptionTrigger::SyncStatus(SyncLogRow::V5V6(
+                self.row.clone(),
+            )));
         }
         Ok(())
     }
 
     pub fn done(&mut self) -> Result<(), SyncLoggerError> {
-        self.row = SyncLogRow {
+        self.row = SyncLogV5V6Row {
             finished_datetime: Some(chrono::Utc::now().naive_utc()),
-            duration_in_seconds: (chrono::Utc::now().naive_utc() - self.row.started_datetime)
-                .num_seconds() as i32,
             ..self.row.clone()
         };
 
@@ -108,29 +121,35 @@ impl<'a> SyncLogger<'a> {
     pub(crate) fn start_step(&mut self, step: SyncStep) -> Result<(), SyncLoggerError> {
         info!("Sync step started {step:?}");
         self.row = match step {
-            SyncStep::PrepareInitial => SyncLogRow {
+            SyncStep::PrepareInitial => SyncLogV5V6Row {
                 prepare_initial_started_datetime: Some(chrono::Utc::now().naive_utc()),
                 ..self.row.clone()
             },
-            SyncStep::Push => SyncLogRow {
+            SyncStep::Push => SyncLogV5V6Row {
                 push_started_datetime: Some(chrono::Utc::now().naive_utc()),
                 ..self.row.clone()
             },
-            SyncStep::PullCentral => SyncLogRow {
+            SyncStep::PullCentral => SyncLogV5V6Row {
                 pull_central_started_datetime: Some(chrono::Utc::now().naive_utc()),
                 ..self.row.clone()
             },
-            SyncStep::PullRemote => SyncLogRow {
+            SyncStep::PullRemote => SyncLogV5V6Row {
                 pull_remote_started_datetime: Some(chrono::Utc::now().naive_utc()),
                 ..self.row.clone()
             },
-            SyncStep::Integrate => SyncLogRow {
+            SyncStep::Integrate => SyncLogV5V6Row {
                 integration_started_datetime: Some(chrono::Utc::now().naive_utc()),
                 ..self.row.clone()
             },
+            SyncStep::PullCentralV6 => SyncLogV5V6Row {
+                pull_v6_started_datetime: Some(chrono::Utc::now().naive_utc()),
+                ..self.row.clone()
+            },
+            SyncStep::PushCentralV6 => SyncLogV5V6Row {
+                push_v6_started_datetime: Some(chrono::Utc::now().naive_utc()),
+                ..self.row.clone()
+            },
         };
-        self.row.duration_in_seconds =
-            (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds() as i32;
 
         self.update()?;
         Ok(())
@@ -138,13 +157,13 @@ impl<'a> SyncLogger<'a> {
 
     pub(crate) fn done_step(&mut self, step: SyncStep) -> Result<(), SyncLoggerError> {
         self.row = match step {
-            SyncStep::PrepareInitial => SyncLogRow {
+            SyncStep::PrepareInitial => SyncLogV5V6Row {
                 prepare_initial_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                 ..self.row.clone()
             },
             SyncStep::Push => {
                 Self::log(self.row.push_progress_done.unwrap_or(0), "Pushed");
-                SyncLogRow {
+                SyncLogV5V6Row {
                     push_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                     ..self.row.clone()
                 }
@@ -154,7 +173,7 @@ impl<'a> SyncLogger<'a> {
                     self.row.pull_central_progress_done.unwrap_or(0),
                     "Pulled central",
                 );
-                SyncLogRow {
+                SyncLogV5V6Row {
                     pull_central_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                     ..self.row.clone()
                 }
@@ -164,20 +183,38 @@ impl<'a> SyncLogger<'a> {
                     self.row.pull_remote_progress_done.unwrap_or(0),
                     "Pulled remote",
                 );
-                SyncLogRow {
+                SyncLogV5V6Row {
                     pull_remote_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                     ..self.row.clone()
                 }
             }
-            SyncStep::Integrate => SyncLogRow {
+            SyncStep::Integrate => SyncLogV5V6Row {
                 integration_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                 ..self.row.clone()
             },
+            SyncStep::PullCentralV6 => {
+                Self::log(
+                    self.row.pull_v6_progress_done.unwrap_or(0),
+                    "Pulled central v6",
+                );
+                SyncLogV5V6Row {
+                    pull_v6_finished_datetime: Some(chrono::Utc::now().naive_utc()),
+                    ..self.row.clone()
+                }
+            }
+            SyncStep::PushCentralV6 => {
+                Self::log(
+                    self.row.push_v6_progress_done.unwrap_or(0),
+                    "Pushed central v6",
+                );
+                SyncLogV5V6Row {
+                    push_v6_finished_datetime: Some(chrono::Utc::now().naive_utc()),
+                    ..self.row.clone()
+                }
+            }
         };
 
         info!("Sync step finished {step:?}");
-        self.row.duration_in_seconds =
-            (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds() as i32;
 
         self.update()?;
         Ok(())
@@ -190,7 +227,7 @@ impl<'a> SyncLogger<'a> {
 
         let SyncLogError { message, code } = SyncLogError::from_sync_error(error);
 
-        self.row = SyncLogRow {
+        self.row = SyncLogV5V6Row {
             error_message: Some(message),
             error_code: code,
             ..self.row.clone()
@@ -237,7 +274,7 @@ impl<'a> SyncLogger<'a> {
             SyncStepProgress::PullCentral => {
                 let (total, done) = get_progress(remaining, self.row.pull_central_progress_total);
 
-                SyncLogRow {
+                SyncLogV5V6Row {
                     pull_central_progress_total: total,
                     pull_central_progress_done: done,
                     ..self.row.clone()
@@ -246,7 +283,7 @@ impl<'a> SyncLogger<'a> {
             SyncStepProgress::PullRemote => {
                 let (total, done) = get_progress(remaining, self.row.pull_remote_progress_total);
 
-                SyncLogRow {
+                SyncLogV5V6Row {
                     pull_remote_progress_total: total,
                     pull_remote_progress_done: done,
                     ..self.row.clone()
@@ -255,23 +292,37 @@ impl<'a> SyncLogger<'a> {
             SyncStepProgress::Push => {
                 let (total, done) = get_progress(remaining, self.row.push_progress_total);
 
-                SyncLogRow {
+                SyncLogV5V6Row {
                     push_progress_total: total,
                     push_progress_done: done,
                     ..self.row.clone()
                 }
             }
+            SyncStepProgress::PullCentralV6 => {
+                let (total, done) = get_progress(remaining, self.row.pull_v6_progress_total);
+                SyncLogV5V6Row {
+                    pull_v6_progress_total: total,
+                    pull_v6_progress_done: done,
+                    ..self.row.clone()
+                }
+            }
+            SyncStepProgress::PushCentralV6 => {
+                let (total, done) = get_progress(remaining, self.row.push_v6_progress_total);
+                SyncLogV5V6Row {
+                    push_v6_progress_total: total,
+                    push_v6_progress_done: done,
+                    ..self.row.clone()
+                }
+            }
             SyncStepProgress::Integrate => {
                 let (total, done) = get_progress(remaining, self.row.integration_progress_total);
-                SyncLogRow {
+                SyncLogV5V6Row {
                     integration_progress_total: total,
                     integration_progress_done: done,
                     ..self.row.clone()
                 }
             }
         };
-        self.row.duration_in_seconds =
-            (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds() as i32;
 
         self.update()?;
         Ok(())
@@ -282,6 +333,18 @@ impl SyncLogError {
     /// Map SyncError to SyncLogError, to be queried later and translated in front end
     fn from_sync_error(sync_error: &SyncError) -> Self {
         match &sync_error {
+            SyncError::V6NotConfigured
+            | SyncError::SyncApiV6CreatingError(SyncApiV6CreatingError::CannotParseSyncUrl(_, _)) => {
+                Self::new(SyncApiErrorCode::CentralV6NotConfigured, sync_error)
+            }
+
+            // v7_url_and_upgrade failure has its own stable error code so the
+            // frontend can surface a distinct message regardless of which v5
+            // error happened underneath.
+            SyncError::V7UpgradeFailed(_) => {
+                Self::new(SyncApiErrorCode::V7UpgradeFailed, sync_error)
+            }
+
             // Sync Api Error
             SyncError::SyncApiError(error)
             | SyncError::CentralPullError(CentralPullError::SyncApiError(error))
@@ -293,10 +356,17 @@ impl SyncLogError {
                 PostInitialisationError::WaitForInitialisationError(
                     WaitForSyncOperationError::SyncApiError(error),
                 ),
-            ) => Self::from_sync_api_error(&error.source, sync_error),
+            ) => Self::from_sync_api_error(SyncApiErrorVariant::V5(&error.source), sync_error),
+
+            // SyncApiErrorV6
+            SyncError::CentralPullErrorV6(CentralPullErrorV6::SyncApiError(error))
+            | SyncError::RemotePushErrorV6(RemotePushErrorV6::SyncApiError(error))
+            | SyncError::WaitForIntegrationErrorV6(WaitForSyncOperationErrorV6::SyncApiError(
+                error,
+            )) => Self::from_sync_api_error(SyncApiErrorVariant::V6(&error.source), sync_error),
 
             // Integration timeout reached
-            SyncError::WaitForIntegrationError(_) => {
+            SyncError::WaitForIntegrationError(_) | SyncError::WaitForIntegrationErrorV6(_) => {
                 Self::new(SyncApiErrorCode::IntegrationTimeoutReached, sync_error)
             }
 
@@ -310,13 +380,21 @@ impl SyncLogError {
         }
     }
 
-    fn from_sync_api_error(variant: &SyncApiErrorVariantV5, sync_error: &SyncError) -> Self {
-        let sync_v5_error_code = match variant {
+    fn from_sync_api_error(variant: SyncApiErrorVariant, sync_error: &SyncError) -> Self {
+        let sync_v5_error_code = match &variant {
             // V5 parsing error, pull out error code
-            SyncApiErrorVariantV5::ParsedError { source, .. } => &source.code,
+            SyncApiErrorVariant::V5(SyncApiErrorVariantV5::ParsedError { source, .. })
+            | SyncApiErrorVariant::V6(SyncApiErrorVariantV6::ParsedError(
+                SyncParsedErrorV6::LegacyServerError(source),
+            )) => &source.code,
+
+            SyncApiErrorVariant::V6(SyncApiErrorVariantV6::ParsedError(
+                SyncParsedErrorV6::SyncVersionMismatch(_, _, _),
+            )) => return Self::new(SyncApiErrorCode::V6ApiVersionIncompatible, sync_error),
 
             // map connection errors
-            SyncApiErrorVariantV5::ConnectionError { .. } => {
+            SyncApiErrorVariant::V6(SyncApiErrorVariantV6::ConnectionError(_))
+            | SyncApiErrorVariant::V5(SyncApiErrorVariantV5::ConnectionError { .. }) => {
                 return Self::new(SyncApiErrorCode::ConnectionError, sync_error)
             }
             // Internal errors

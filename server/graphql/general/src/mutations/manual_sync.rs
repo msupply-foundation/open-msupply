@@ -6,15 +6,10 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    initialisation_status::get_initialisation_status,
     sync::sync_status::status::InitialisationStatus,
 };
 
-pub fn manual_sync(
-    ctx: &Context<'_>,
-    with_auth: bool,
-    fetch_patient_id: Option<String>,
-) -> Result<String> {
+pub fn manual_sync(ctx: &Context<'_>, with_auth: bool) -> Result<String> {
     if with_auth {
         validate_auth(
             ctx,
@@ -28,8 +23,9 @@ pub fn manual_sync(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    let initialisation_status =
-        get_initialisation_status(&service_provider, &service_context)?;
+    let initialisation_status = service_provider
+        .sync_status_service
+        .get_initialisation_status(&service_context)?;
 
     if initialisation_status == InitialisationStatus::PreInitialisation {
         return Err(StandardGraphqlError::BadUserInput(
@@ -38,7 +34,7 @@ pub fn manual_sync(
         .extend());
     };
 
-    service_provider.sync_trigger.trigger(fetch_patient_id);
+    service_provider.sync_trigger.trigger();
 
     Ok("Sync triggered".to_string())
 }

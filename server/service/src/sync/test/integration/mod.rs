@@ -9,7 +9,7 @@ mod transfer;
 use self::central_server_configurations::NewSiteProperties;
 use crate::{
     sync::{
-        synchroniser::Synchroniser, translation_and_integration::integrate,
+        synchroniser::SynchroniserV5V6, translation_and_integration::integrate,
         translations::IntegrationOperation,
     },
     test_helpers::{setup_all_and_service_provider, ServiceTestContext},
@@ -23,7 +23,7 @@ use std::{error::Error, future::Future};
 pub(super) struct FullSiteConfig {
     config: SiteConfiguration,
     context: ServiceTestContext,
-    synchroniser: Synchroniser,
+    synchroniser: SynchroniserV5V6,
 }
 
 pub(super) async fn init_test_context(
@@ -45,8 +45,8 @@ pub(super) async fn init_test_context(
     let SiteConfiguration { sync_settings, .. } = &config;
 
     service_provider
-        .site_info_service
-        .request_and_set_site_info(service_provider, sync_settings)
+        .site_auth_service
+        .request_and_set_site_auth(service_provider, sync_settings)
         .await
         .unwrap();
     service_provider
@@ -55,7 +55,7 @@ pub(super) async fn init_test_context(
         .unwrap();
 
     let synchroniser =
-        Synchroniser::new(sync_settings.clone(), service_provider.clone().into()).unwrap();
+        SynchroniserV5V6::new(sync_settings.clone(), service_provider.clone().into()).unwrap();
 
     FullSiteConfig {
         config,

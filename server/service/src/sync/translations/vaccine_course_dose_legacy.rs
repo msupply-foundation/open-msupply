@@ -3,12 +3,7 @@ use serde::Serialize;
 use crate::sync::CentralServerConfig;
 
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
-use repository::{
-    ChangelogRow,
-    ChangelogTableName, StorageConnection,
-    Row,
-
-};
+use repository::{ChangelogRow, ChangelogTableName, Row, StorageConnection};
 
 /*
     This translator is only used to push VaccineCourseDose rows to the legacy mSupply server.
@@ -90,7 +85,11 @@ impl SyncTranslation for VaccineCourseDoseLegacyTranslation {
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(PushTranslateResult::upsert(changelog, LEGACY_VACCINE_COURSE_DOSE_TABLE_NAME, json_record))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            LEGACY_VACCINE_COURSE_DOSE_TABLE_NAME,
+            json_record,
+        ))
     }
 }
 
@@ -101,8 +100,11 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all,
-        vaccine_course::vaccine_course_dose_row::{VaccineCourseDoseRow, VaccineCourseDoseRowRepository},
+        mock::MockDataInserts,
+        test_db::setup_all,
+        vaccine_course::vaccine_course_dose_row::{
+            VaccineCourseDoseRow, VaccineCourseDoseRowRepository,
+        },
         ChangelogRepository,
     };
 
@@ -122,9 +124,7 @@ mod tests {
         .await;
 
         // Get the current cursor value
-        let cursor = ChangelogRepository::new(&connection)
-            .max_cursor()
-            .unwrap();
+        let cursor = ChangelogRepository::new(&connection).max_cursor().unwrap();
 
         // Create a new VaccineCourseDoseRow (this will get a changelog entry created automatically)
         let vaccine_course_dose_row = VaccineCourseDoseRow {
@@ -142,8 +142,25 @@ mod tests {
             .upsert_one(&vaccine_course_dose_row)
             .unwrap();
 
-        let entry = ChangelogRepository::new(&connection).query_with_data(repository::ChangelogCondition::True(), repository::CursorAndLimit { cursor: cursor as i64, limit: 100 }).unwrap().pop().unwrap();
-        let repository::RowOrDelete::Row { changelog: changelog_row, row } = entry else { panic!("expected upsert row") };
+        let entry = ChangelogRepository::new(&connection)
+            .query_with_data(
+                repository::ChangelogCondition::True(),
+                repository::CursorAndLimit {
+                    cursor: cursor as i64,
+                    limit: 100,
+                },
+            )
+            .unwrap()
+            .rows
+            .pop()
+            .unwrap();
+        let repository::RowOrDelete::Row {
+            changelog: changelog_row,
+            row,
+        } = entry
+        else {
+            panic!("expected upsert row")
+        };
 
         // Shouldn't translate if not a central server
         test_util_set_is_central_server(false);
