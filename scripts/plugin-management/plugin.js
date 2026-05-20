@@ -116,6 +116,21 @@ function removeLocalExclude(submodulePath) {
   }
 }
 
+function pruneGitmodulesEntry(submodulePath) {
+  if (!fs.existsSync(GITMODULES)) return;
+  const normalized = submodulePath.split(path.sep).join('/');
+  spawnSync(
+    'git',
+    ['config', '-f', GITMODULES, '--remove-section', `submodule.${normalized}`],
+    { cwd: REPO_ROOT, stdio: 'ignore' }
+  );
+  // Drop the file entirely once no submodule sections remain.
+  const content = fs.readFileSync(GITMODULES, 'utf8');
+  if (!/\[submodule\b/.test(content)) {
+    fs.rmSync(GITMODULES, { force: true });
+  }
+}
+
 function removeSubmodule(submodulePath) {
   info(`removing submodule ${submodulePath}`);
   removeLocalExclude(submodulePath);
@@ -141,6 +156,7 @@ function removeSubmodule(submodulePath) {
     recursive: true,
     force: true,
   });
+  pruneGitmodulesEntry(submodulePath);
 }
 
 function resetAllPlugins() {
@@ -202,8 +218,6 @@ function cmdGet(args) {
   // direct repo URL/spec and let git tell us if it's invalid.
   const url = map[nameOrUrl] || nameOrUrl;
 
-  resetAllPlugins();
-
   const folder = folderNameFromUrl(url);
   const submodulePath = path.posix.join(
     'client',
@@ -211,6 +225,18 @@ function cmdGet(args) {
     'plugins',
     folder
   );
+
+  // If this exact plugin folder already exists, replace it (other plugins
+  // are left alone). Abort if the existing one has uncommitted changes.
+  if (fs.existsSync(path.join(REPO_ROOT, submodulePath))) {
+    if (isSubmoduleDirty(submodulePath)) {
+      die(
+        `${submodulePath} has uncommitted changes; commit or stash inside the submodule, then re-run.`
+      );
+    }
+    info(`replacing existing ${submodulePath}`);
+    removeSubmodule(submodulePath);
+  }
   // .gitmodules is gitignored in this repo. `git submodule add` refuses unless
   // the file already exists in the working tree, so touch it first; --force then
   // bypasses the gitignore check on the submodule path itself.
@@ -232,24 +258,59 @@ function cmdGet(args) {
   info(`done. plugin available at ${submodulePath}`);
 }
 
-function cmdReset() {
-  resetAllPlugins();
+function cmdReset(args) {
+  if (args.length === 0) {
+    resetAllPlugins();
+    return;
+  }
+  if (args.length > 1) die('usage: yarn plugin reset [<selector>]');
+  const submodulePath = findPluginPathBySelector(args[0]);
+  if (isSubmoduleDirty(submodulePath)) {
+    die(
+      `${submodulePath} has uncommitted changes; commit or stash inside the submodule, then re-run.`
+    );
+  }
+  removeSubmodule(submodulePath);
 }
 
-function findCurrentPlugin() {
-  const existing = findExistingPluginPaths();
-  if (existing.length === 0) {
-    die(
-      `no plugin submodule found under ${PLUGINS_DIR}/. run "yarn plugin get <name>" first.`
-    );
+function dieNoPlugins() {
+  die(
+    `no plugin submodule found under ${PLUGINS_DIR}/. run "yarn plugin get <name>" first.`
+  );
+}
+
+function dieAmbiguous(installed, action) {
+  die(
+    `multiple plugins installed; specify which one to ${action}:\n` +
+      installed.map(p => `  - ${path.basename(p)}`).join('\n')
+  );
+}
+
+function findPluginPathBySelector(selector) {
+  // Resolve a name/folder/map-key to an installed submodule path. Match against
+  // folder basenames first; if not found, look up in the map and try the URL's
+  // basename. Used by commands that operate on a single specific plugin.
+  const installed = findExistingPluginPaths();
+  if (installed.length === 0) dieNoPlugins();
+  const byFolder = new Map(installed.map(p => [path.basename(p), p]));
+  if (byFolder.has(selector)) return byFolder.get(selector);
+  const mapped = readMap()[selector];
+  if (mapped) {
+    const folder = folderNameFromUrl(mapped);
+    if (byFolder.has(folder)) return byFolder.get(folder);
   }
-  if (existing.length > 1) {
-    die(
-      `expected exactly one plugin submodule, found:\n` +
-        existing.map(p => `  - ${p}`).join('\n')
-    );
-  }
-  return existing[0];
+  die(
+    `no installed plugin matches "${selector}". installed: ${
+      [...byFolder.keys()].join(', ') || '(none)'
+    }`
+  );
+}
+
+function findSinglePluginPath(action) {
+  const installed = findExistingPluginPaths();
+  if (installed.length === 0) dieNoPlugins();
+  if (installed.length > 1) dieAmbiguous(installed, action);
+  return installed[0];
 }
 
 function readStoredAuth() {
@@ -278,6 +339,7 @@ function writeStoredAuth(effective) {
 function cmdInstall(args) {
   const flags = {};
   let target = null; // null = both, 'frontend', or 'backend'
+  let selector = null;
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === '--url') flags.url = args[++i];
@@ -286,6 +348,8 @@ function cmdInstall(args) {
     else if (a === 'frontend' || a === 'backend') {
       if (target) die(`install target already set to "${target}"`);
       target = a;
+    } else if (!selector) {
+      selector = a;
     } else die(`unknown argument for install: ${a}`);
   }
 
@@ -296,40 +360,51 @@ function cmdInstall(args) {
 
   const { url, username, password } = effective;
 
-  const pluginPath = findCurrentPlugin();
-  if (target && !fs.existsSync(path.join(REPO_ROOT, pluginPath, target))) {
-    die(`expected ${pluginPath}/${target} directory, not found`);
+  const pluginPaths = selector
+    ? [findPluginPathBySelector(selector)]
+    : findExistingPluginPaths();
+  if (pluginPaths.length === 0) dieNoPlugins();
+
+  for (const pluginPath of pluginPaths) {
+    if (target && !fs.existsSync(path.join(REPO_ROOT, pluginPath, target))) {
+      die(`expected ${pluginPath}/${target} directory, not found`);
+    }
+
+    // The rust CLI walks the input dir recursively, running yarn install and
+    // yarn build-plugin for every package.json it finds, then bundles the dist
+    // output. So no pre-build is needed here — just point it at the right level.
+    const inputPath = target
+      ? path.posix.join('..', pluginPath, target)
+      : path.posix.join('..', pluginPath);
+
+    info(
+      `\n>>> generate-and-install-plugin-bundle (-i ${inputPath}) against ${url} as ${username}`
+    );
+    const cargoArgs = [
+      'run',
+      '--bin',
+      'remote_server_cli',
+      '--',
+      'generate-and-install-plugin-bundle',
+      '-i',
+      inputPath,
+      '--url',
+      url,
+      '--username',
+      username,
+      '--password',
+      password,
+    ];
+    run('cargo', cargoArgs, { cwd: path.join(REPO_ROOT, 'server') });
   }
-
-  // The rust CLI walks the input dir recursively, running yarn install and
-  // yarn build-plugin for every package.json it finds, then bundles the dist
-  // output. So no pre-build is needed here — just point it at the right level.
-  const inputPath = target
-    ? path.posix.join('..', pluginPath, target)
-    : path.posix.join('..', pluginPath);
-
-  info(`\n>>> generate-and-install-plugin-bundle (-i ${inputPath}) against ${url} as ${username}`);
-  const cargoArgs = [
-    'run',
-    '--bin',
-    'remote_server_cli',
-    '--',
-    'generate-and-install-plugin-bundle',
-    '-i',
-    inputPath,
-    '--url',
-    url,
-    '--username',
-    username,
-    '--password',
-    password,
-  ];
-  run('cargo', cargoArgs, { cwd: path.join(REPO_ROOT, 'server') });
   info('\ndone.');
 }
 
-function cmdOpen() {
-  const pluginPath = findCurrentPlugin();
+function cmdOpen(args) {
+  if (args.length > 1) die('usage: yarn plugin open [<selector>]');
+  const pluginPath = args[0]
+    ? findPluginPathBySelector(args[0])
+    : findSinglePluginPath('open');
   const full = path.join(REPO_ROOT, pluginPath);
   info(`opening ${pluginPath} in GitHub Desktop`);
   if (process.platform === 'darwin') {
@@ -341,17 +416,30 @@ function cmdOpen() {
   }
 }
 
+function cmdList() {
+  const installed = findExistingPluginPaths();
+  if (installed.length === 0) {
+    info('no plugin submodules installed');
+    return;
+  }
+  for (const p of installed) info(`${path.basename(p)}  (${p})`);
+}
+
 function usage() {
   console.log(`usage:
   yarn plugin get <name|url> [-b <branch>]
-                                          add a plugin submodule (resets any existing first).
+                                          add a plugin submodule (replaces it if already present).
                                           <name> is looked up in pluginRepoMap.json;
                                           anything else is used directly as a repo URL.
-  yarn plugin install [frontend|backend] [--url U] [--username U] [--password P]
-                                          build and install the current plugin into the local server
-                                          (omit target to install both frontend and backend)
-  yarn plugin open                        open the current plugin submodule in GitHub Desktop
-  yarn plugin reset                       remove all plugin submodules under ${PLUGINS_DIR}/`);
+                                          Other installed plugins are left alone.
+  yarn plugin install [<selector>] [frontend|backend] [--url U] [--username U] [--password P]
+                                          build and install plugins into the local server.
+                                          With no selector, installs every plugin in turn.
+                                          Pass frontend or backend to limit to one half.
+  yarn plugin open [<selector>]           open the plugin submodule in GitHub Desktop.
+                                          Selector required if more than one plugin is installed.
+  yarn plugin list                        list installed plugin submodules.
+  yarn plugin reset [<selector>]          remove all plugin submodules, or just the named one.`);
 }
 
 function main() {
@@ -362,9 +450,12 @@ function main() {
     case 'install':
       return cmdInstall(rest);
     case 'open':
-      return cmdOpen();
+      return cmdOpen(rest);
+    case 'list':
+    case 'ls':
+      return cmdList();
     case 'reset':
-      return cmdReset();
+      return cmdReset(rest);
     case undefined:
     case '-h':
     case '--help':

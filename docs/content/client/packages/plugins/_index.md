@@ -188,17 +188,24 @@ cp scripts/plugin-management/pluginRepoMap.example.json scripts/plugin-managemen
 Then:
 
 ```
-yarn plugin get <name>            # reset any current plugin submodule and add the named one
-yarn plugin get <repo-url>        # or pass a repo URL directly, no map entry needed
-yarn plugin get <name> -b <branch> # same, but check out a specific branch
-yarn plugin reset                 # remove all plugin submodules (no replacement)
-yarn plugin install               # build and install both frontend and backend
-yarn plugin install frontend      # only the frontend
-yarn plugin install backend       # only the backend
-yarn plugin open                  # open the current plugin submodule in GitHub Desktop
+yarn plugin get <name>             # add a plugin submodule, replacing it if already present.
+                                   # Other installed plugins are left alone.
+yarn plugin get <repo-url>         # pass a repo URL directly, no map entry needed
+yarn plugin get <name> -b <branch> # check out a specific branch
+yarn plugin list                   # show what's currently installed
+yarn plugin install                # build and install every installed plugin (both frontend and backend)
+yarn plugin install <selector>     # only the named plugin
+yarn plugin install [...] frontend # only the frontend half
+yarn plugin install [...] backend  # only the backend half
+yarn plugin open                   # open the plugin in GitHub Desktop (must specify if >1 installed)
+yarn plugin open <selector>        # open a specific plugin
+yarn plugin reset                  # remove all plugin submodules
+yarn plugin reset <selector>       # remove just the named plugin
 ```
 
-`yarn plugin install` defaults to `http://localhost:8000` with credentials `admin`/`pass`. Override with `--url`, `--username`, `--password`. Any override gets persisted to a gitignored `scripts/plugin-management/.pluginAuth` file and reused on subsequent runs — so you only have to type them when they change. Pass the defaults explicitly to clear a stored override. Reset aborts if any plugin submodule has uncommitted changes — commit or stash inside it first.
+`<selector>` is either an installed plugin's folder name (e.g. `core-plugins`) or a short name from `pluginRepoMap.json` (e.g. `core`).
+
+`yarn plugin install` defaults to `http://localhost:8000` with credentials `admin`/`pass`. Override with `--url`, `--username`, `--password`. Any override gets persisted to a gitignored `scripts/plugin-management/.pluginAuth` file and reused on subsequent runs — so you only have to type them when they change. Pass the defaults explicitly to clear a stored override. Get/reset abort if the affected plugin submodule has uncommitted changes — commit or stash inside it first.
 
 > You will need to have github authentication set up to add restricted access repos from command line. [github cli](https://cli.github.com/) can conveniently set up github command line authentication access. Other [alternative methods](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-authentication-to-github) are also available.
 
