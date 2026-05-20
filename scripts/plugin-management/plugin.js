@@ -12,7 +12,20 @@ const MAP_FILE = path.join(REPO_ROOT, MAP_DIR, 'pluginRepoMap.json');
 const EXAMPLE_MAP_FILE = path.join(MAP_DIR, 'pluginRepoMap.example.json');
 const AUTH_FILE = path.join(REPO_ROOT, MAP_DIR, 'pluginAuth.json');
 const GITMODULES = path.join(REPO_ROOT, '.gitmodules');
-const GIT_LOCAL_EXCLUDE = path.join(REPO_ROOT, '.git', 'info', 'exclude');
+
+function gitLocalExcludePath() {
+  // Ask git directly so this works with worktrees/submodules where `.git` is a
+  // file pointing elsewhere, not a directory.
+  try {
+    const out = execFileSync('git', ['rev-parse', '--git-path', 'info/exclude'], {
+      cwd: REPO_ROOT,
+      encoding: 'utf8',
+    }).trim();
+    return path.isAbsolute(out) ? out : path.join(REPO_ROOT, out);
+  } catch {
+    return null;
+  }
+}
 
 const INSTALL_DEFAULTS = {
   url: 'http://localhost:8000',
@@ -93,26 +106,30 @@ function isSubmoduleDirty(submodulePath) {
 }
 
 function addLocalExclude(submodulePath) {
-  // .git/info/exclude is git's per-clone ignore list — never committed, never
-  // appears in diffs. Hides the submodule directory from `git status` without
-  // touching the tracked .gitignore.
+  // info/exclude is git's per-clone ignore list — never committed, never appears
+  // in diffs. Hides the submodule directory from `git status` without touching
+  // the tracked .gitignore.
+  const excludePath = gitLocalExcludePath();
+  if (!excludePath) return;
   const entry = submodulePath.split(path.sep).join('/');
   let lines = [];
-  if (fs.existsSync(GIT_LOCAL_EXCLUDE)) {
-    lines = fs.readFileSync(GIT_LOCAL_EXCLUDE, 'utf8').split('\n');
+  if (fs.existsSync(excludePath)) {
+    lines = fs.readFileSync(excludePath, 'utf8').split('\n');
   }
   if (lines.some(l => l.trim() === entry)) return;
   lines.push(entry);
-  fs.writeFileSync(GIT_LOCAL_EXCLUDE, lines.join('\n'));
+  fs.mkdirSync(path.dirname(excludePath), { recursive: true });
+  fs.writeFileSync(excludePath, lines.join('\n'));
 }
 
 function removeLocalExclude(submodulePath) {
-  if (!fs.existsSync(GIT_LOCAL_EXCLUDE)) return;
+  const excludePath = gitLocalExcludePath();
+  if (!excludePath || !fs.existsSync(excludePath)) return;
   const entry = submodulePath.split(path.sep).join('/');
-  const lines = fs.readFileSync(GIT_LOCAL_EXCLUDE, 'utf8').split('\n');
+  const lines = fs.readFileSync(excludePath, 'utf8').split('\n');
   const filtered = lines.filter(l => l.trim() !== entry);
   if (filtered.length !== lines.length) {
-    fs.writeFileSync(GIT_LOCAL_EXCLUDE, filtered.join('\n'));
+    fs.writeFileSync(excludePath, filtered.join('\n'));
   }
 }
 
