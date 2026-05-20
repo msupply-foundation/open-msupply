@@ -27,7 +27,7 @@ pub fn generate(
         tax_percentage,
         note,
         item_code: item.code,
-        item_link_id: item.id,
+        item_id: item.id,
         item_name: name.unwrap_or(item.name),
         r#type: InvoiceLineType::Service,
         foreign_currency_price_before_tax: calculate_foreign_currency_total(

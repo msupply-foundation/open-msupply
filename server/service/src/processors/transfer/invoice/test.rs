@@ -89,7 +89,7 @@ async fn invoice_transfers() {
     // Will use default_sell_price_per_pack for pricing
     let item1_store_properties = ItemStoreJoinRow {
         id: uuid(),
-        item_link_id: item1.id.clone(),
+        item_id: item1.id.clone(),
         store_id: inbound_store.id.clone(),
         default_sell_price_per_pack: 20.0,
         ignore_for_orders: false,
@@ -100,7 +100,7 @@ async fn invoice_transfers() {
     // No default price - will use cost price + margin for pricing
     let item3_store_properties = ItemStoreJoinRow {
         id: uuid(),
-        item_link_id: item3.id.clone(),
+        item_id: item3.id.clone(),
         store_id: inbound_store.id.clone(),
         default_sell_price_per_pack: 0.0,
         ignore_for_orders: false,
@@ -372,7 +372,7 @@ async fn invoice_transfers_with_merged_name() {
 
     let item1_store_properties = ItemStoreJoinRow {
         id: uuid(),
-        item_link_id: item1.id.clone(),
+        item_id: item1.id.clone(),
         store_id: inbound_store.id.clone(),
         default_sell_price_per_pack: 20.0,
         ignore_for_orders: false,
@@ -382,7 +382,7 @@ async fn invoice_transfers_with_merged_name() {
 
     let item3_store_properties = ItemStoreJoinRow {
         id: uuid(),
-        item_link_id: item3.id.clone(),
+        item_id: item3.id.clone(),
         store_id: inbound_store.id.clone(),
         default_sell_price_per_pack: 15.0,
         ignore_for_orders: false,
@@ -650,7 +650,7 @@ impl InvoiceTransferTester {
         let stock_line1 = StockLineRow {
             id: uuid(),
             store_id: outbound_store.id.clone(),
-            item_link_id: item1.id.clone(),
+            item_id: item1.id.clone(),
             batch: Some(uuid()),
             expiry_date: Some(NaiveDate::from_ymd_opt(2025, 3, 1).unwrap()),
             pack_size: 10.0,
@@ -665,7 +665,7 @@ impl InvoiceTransferTester {
             r#type: InvoiceLineType::StockOut,
             pack_size: stock_line1.pack_size,
             number_of_packs: 2.0,
-            item_link_id: item1.id.clone(),
+            item_id: item1.id.clone(),
             item_name: item1.name.clone(),
             item_code: item1.code.clone(),
             cost_price_per_pack: 20.0,
@@ -681,7 +681,7 @@ impl InvoiceTransferTester {
         let stock_line2 = StockLineRow {
             id: uuid(),
             store_id: outbound_store.id.clone(),
-            item_link_id: item2.id.clone(),
+            item_id: item2.id.clone(),
             batch: Some(uuid()),
             pack_size: 10.0,
             total_number_of_packs: 200.0,
@@ -696,7 +696,7 @@ impl InvoiceTransferTester {
             r#type: InvoiceLineType::StockOut,
             pack_size: stock_line2.pack_size,
             number_of_packs: 6.0,
-            item_link_id: item2.id.clone(),
+            item_id: item2.id.clone(),
             item_name: item2.name.clone(),
             item_code: item2.code.clone(),
             cost_price_per_pack: 15.0,
@@ -712,7 +712,7 @@ impl InvoiceTransferTester {
         let stock_line3 = StockLineRow {
             id: uuid(),
             store_id: outbound_store.id.clone(),
-            item_link_id: item3.id.clone(),
+            item_id: item3.id.clone(),
             batch: Some(uuid()),
             expiry_date: Some(NaiveDate::from_ymd_opt(2025, 10, 1).unwrap()),
             pack_size: 5.0,
@@ -727,7 +727,7 @@ impl InvoiceTransferTester {
             r#type: InvoiceLineType::StockOut,
             pack_size: stock_line3.pack_size,
             number_of_packs: 2.0,
-            item_link_id: item3.id.clone(),
+            item_id: item3.id.clone(),
             item_name: item3.name.clone(),
             item_code: item3.code.clone(),
             cost_price_per_pack: 10.0,
@@ -744,7 +744,7 @@ impl InvoiceTransferTester {
             id: uuid(),
             invoice_id: outbound_shipment.id.clone(),
             r#type: InvoiceLineType::Service,
-            item_link_id: service_item.id.clone(),
+            item_id: service_item.id.clone(),
             item_name: service_item.name.clone(),
             item_code: service_item.code.clone(),
             total_before_tax: 100.0,
@@ -760,7 +760,7 @@ impl InvoiceTransferTester {
             r#type: InvoiceLineType::UnallocatedStock,
             pack_size: 1.0,
             number_of_packs: 10.0,
-            item_link_id: item2.id.clone(),
+            item_id: item2.id.clone(),
             item_name: item2.name.clone(),
             item_code: item2.code.clone(),
             tax_percentage: Some(0.0),
@@ -790,7 +790,7 @@ impl InvoiceTransferTester {
             r#type: InvoiceLineType::StockOut,
             pack_size: stock_line1.pack_size,
             number_of_packs: 2.0,
-            item_link_id: item1.id.clone(),
+            item_id: item1.id.clone(),
             item_name: item1.name.clone(),
             item_code: item1.code.clone(),
             cost_price_per_pack: 20.0,
@@ -990,7 +990,7 @@ impl InvoiceTransferTester {
             &inbound_shipment.id,
             &inbound_shipment.store_id,
             &self.outbound_shipment_line1,
-            self.outbound_shipment_line1.item_link_id.clone(),
+            self.outbound_shipment_line1.item_id.clone(),
             self.outbound_name.as_ref(),
         );
 
@@ -1005,7 +1005,7 @@ impl InvoiceTransferTester {
             &inbound_shipment.id,
             &inbound_shipment.store_id,
             &self.outbound_shipment_line2,
-            self.outbound_shipment_line2.item_link_id.clone(),
+            self.outbound_shipment_line2.item_id.clone(),
             self.outbound_name.as_ref(),
         );
 
@@ -1020,7 +1020,7 @@ impl InvoiceTransferTester {
             &inbound_shipment.id,
             &inbound_shipment.store_id,
             &self.outbound_shipment_line3,
-            self.outbound_shipment_line3.item_link_id.clone(),
+            self.outbound_shipment_line3.item_id.clone(),
             self.outbound_name.as_ref(),
         );
         check_line(
@@ -1510,7 +1510,7 @@ fn check_line(connection: &StorageConnection, inbound_id: &str, outbound_line: &
             InvoiceLineFilter::new()
                 .invoice_id(EqualFilter::equal_to(inbound_id.to_string()))
                 .item_id(EqualFilter::equal_to(
-                    outbound_line.item_link_id.to_string(),
+                    outbound_line.item_id.to_string(),
                 )),
         )
         .unwrap();
@@ -1544,7 +1544,7 @@ fn check_line_pricing(
             InvoiceLineFilter::new()
                 .invoice_id(EqualFilter::equal_to(inbound_id.to_string()))
                 .item_id(EqualFilter::equal_to(
-                    outbound_line.item_link_id.to_string(),
+                    outbound_line.item_id.to_string(),
                 )),
         )
         .unwrap();

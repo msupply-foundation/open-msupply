@@ -154,6 +154,7 @@ impl ConfigureCentralServer {
                 // fresh data file has 230 central change logs
                 // and a small number makes integration tests super slow
                 batch_size: Default::default(),
+                disable_integration_transaction: false,
             },
             new_site_properties,
         })

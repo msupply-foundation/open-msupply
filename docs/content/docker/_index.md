@@ -29,7 +29,6 @@ To-Do: if we find we need to run this script on a Linux machine, we should updat
 auto-detect the current system and modify cross-compilation instructions accordingly
 -->
 
-
 The rest of this page documents the CI pipeline and manual steps if you need more control over the process.
 
 ## CI/CD (GitHub Actions)
@@ -146,8 +145,6 @@ cd server && cargo build --release --bin remote_server --bin remote_server_cli -
 
 **Important:** When using Docker, the rust image version must match the version in the Dockerfile (`rust:1.94-slim`) to avoid glibc version mismatches.
 
-[docker-hub.md](./docker-hub.md) explains the feature set of the docker image.
-
 `entry.sh` calls cli before starting server or allows use of cli as an argument.
 
 `entry-postgres.sh` starts an embedded PostgreSQL instance, optionally imports a dump file, then hands off to `entry.sh`.
@@ -255,6 +252,10 @@ docker push msupplyfoundation/omsupply:v2.7.3-arm64-postgres-dev
 
 ## Running the images
 
+<div class="alert alert-info">
+<strong>Apple Silicon note:</strong> on M-series Macs, add <code>--platform linux/amd64</code> to the first <code>docker run</code> (or <code>docker pull</code>) for amd64 images, or use an <code>-arm64</code> tag where available. This applies to every <code>docker run</code> example on this page.
+</div>
+
 ### SQLite
 
 Basic usage:
@@ -263,7 +264,7 @@ Basic usage:
 docker run -p 9000:8000 msupplyfoundation/omsupply:v2.7.3
 ```
 
-To mount an existing SQLite database, mount the **folder** containing the `.sqlite` file to `/database`. The database file must be named `omsupply-database.sqlite` (or override the name with `APP_DATABASE__DATABASE_NAME`):
+To mount an existing SQLite database, mount the **folder** (directory) containing the `.sqlite` file to `/database` — `/database` is a directory mount, not a file mount. The database file inside that folder must be named `omsupply-database.sqlite` (or override the name with `APP_DATABASE__DATABASE_NAME`):
 
 ```bash
 docker run -v "/path/to/folder":/database -p 9000:8000 msupplyfoundation/omsupply:v2.7.3
@@ -277,26 +278,170 @@ docker run -e LOAD_REFERENCE_FILE=reference1 -p 9000:8000 msupplyfoundation/omsu
 
 ### Postgres
 
-The postgres image runs its own PostgreSQL server inside the container. Basic usage (starts with an empty database):
+The postgres image runs its own PostgreSQL server inside the container. The container uses two mount points:
+
+- `/database` — **directory** mount for persistent state. The postgres data directory lives at `/database/postgres/data`. Mount a host directory or named volume here to persist across container recreations.
+- `/import.dump` — optional **file** mount for a single `pg_dump --format custom` dump file. If present at startup, it's restored into the database before the server starts.
+
+Basic usage (ephemeral — empty database, lost when the container is removed):
 
 ```bash
 docker run -p 9000:8000 msupplyfoundation/omsupply:v2.7.3-postgres
 ```
 
-To import an existing database dump (`pg_dump --format custom`) on launch, mount the dump file to `/database/import.dump`:
+To import an existing database dump on launch (still ephemeral):
 
 ```bash
-docker run -v /path/to/my_dump.dump:/database/import.dump -p 9000:8000 \
+docker run -v /path/to/my_dump.dump:/import.dump -p 9000:8000 \
+  msupplyfoundation/omsupply:v2.7.3-postgres
+```
+
+For production / persistent deployments, mount a host directory at `/database`:
+
+```bash
+docker run -v /path/to/data-dir:/database -p 9000:8000 \
+  msupplyfoundation/omsupply:v2.7.3-postgres
+```
+
+To seed a persistent deployment from a dump on first run, combine both mounts. Remove the `-v .../import.dump` mount on subsequent runs — otherwise the dump will be re-imported every restart on top of the existing data:
+
+```bash
+docker run -v /path/to/data-dir:/database \
+  -v /path/to/my_dump.dump:/import.dump \
+  -p 9000:8000 \
   msupplyfoundation/omsupply:v2.7.3-postgres
 ```
 
 The database name can be overridden via environment variable:
 
 ```bash
-docker run -v /path/to/my_dump.dump:/database/import.dump -p 9000:8000 \
+docker run -v /path/to/data-dir:/database \
+  -v /path/to/my_dump.dump:/import.dump \
+  -p 9000:8000 \
   -e APP_DATABASE__DATABASE_NAME="my-database" \
   msupplyfoundation/omsupply:v2.7.3-postgres
 ```
+
+### Hardware id
+
+The hardware id is used to verify a connection is coming from the same host on the central server. Without a stable id, a copied or restored database could accidentally sync as if it were the original site.
+
+By default, if `/etc/machine-id` is not mounted, the container generates a fresh UUID on every start. This means each new container instance has a unique hardware id — a logical database dump restored into a fresh container will automatically get a different id and the central server will detect the mismatch.
+
+This is fine for ephemeral or short-lived deployments. For production use where the container may be recreated (e.g. after an upgrade), mount a stable id file so the site identity is preserved across restarts.
+
+<div class="alert alert-warning">
+<strong>Important — this is a file mount, not a folder mount.</strong> <code>/etc/machine-id</code> inside the container is a single file. Docker bind-mounts create whatever the host source path is missing, so if no <code>machine-id</code> file exists on the host, Docker will silently create a <strong>directory</strong> at that path and the container will fail to start (or behave incorrectly) because it expects a file. <strong>Always create the host-side file first</strong> with <code>touch machine-id</code> (or by writing a value into it) before running <code>docker run</code>.
+</div>
+
+There are two ways to use the mount:
+
+**Option A — pre-generate the id on the host.** Write a UUID into the file before first run; the container uses it as-is and never overwrites it:
+
+```bash
+# Linux:
+cat /proc/sys/kernel/random/uuid > machine-id
+# macOS:
+uuidgen | tr '[:upper:]' '[:lower:]' > machine-id
+
+
+docker run -v /path/to/data-dir:/database \
+  -v "$(pwd)/machine-id":/etc/machine-id:ro \
+  -p 9000:8000 \
+  msupplyfoundation/omsupply:v2.7.3
+```
+
+**Option B — let the container generate and persist the id.** Create an empty file with `touch`, then mount it read-write (no `:ro`). On first run the container writes a fresh UUID into the mounted file; subsequent runs reuse it:
+
+```bash
+touch machine-id   # MUST exist before docker run — see warning above
+docker run -v /path/to/data-dir:/database \
+  -v "$(pwd)/machine-id":/etc/machine-id \
+  -p 9000:8000 \
+  msupplyfoundation/omsupply:v2.7.3
+```
+
+Either way, keep this file separate from the `/database` volume — a database dump does not contain it, so a restored dump on a new deployment will generate a fresh id as expected.
+
+**Option C - use the host's own machine-id (not recommended if you have multiple deployments on the same host).**
+
+On Linux you can bind-mount the host's own `/etc/machine-id` to tie the deployment to that machine (only suitable if you have one deployment per host, otherwise multiple containers on the same host will share a hardware id):
+
+```bash
+docker run -v /path/to/data-dir:/database \
+  -v /etc/machine-id:/etc/machine-id:ro \
+  -p 9000:8000 \
+  msupplyfoundation/omsupply:v2.7.3
+```
+
+For macOS you can generate a `machine-id` file from the host's `IOPlatformUUID`:
+
+```bash
+ioreg -rd1 -c IOPlatformExpertDevice | awk '/IOPlatformUUID/ { print $3 }' | tr -d '"' > machine-id
+```
+
+### Running CLI commands
+
+The image also exposes `remote_server_cli` — pass arguments after the image name and the container runs the CLI instead of starting the server. For example, to export the GraphQL schema to a host folder:
+
+```bash
+docker run --rm -v "$(pwd)/putschemahere":/schemafolder \
+  msupplyfoundation/omsupply:v2.7.3 export-graphql-schema -p /schemafolder/schema.graphql
+```
+
+Pass `--help` instead of a subcommand to list the available CLI commands.
+
+### Date imitation
+
+For tests and stable demos it can be useful to shift or pin the server's idea of "now".
+
+`SHOULD_REFRESH_DATES` rolls every date in the loaded database forward so the most recent date becomes today:
+
+```bash
+docker run -e LOAD_REFERENCE_FILE=reference1 -e SHOULD_REFRESH_DATES=true \
+  -p 9000:8000 msupplyfoundation/omsupply:v2.7.3
+```
+
+`FAKETIME` pins the server clock to a specific date/time. This does **not** affect dates generated in the front end (e.g. cold-chain default filters, dashboard date ranges):
+
+```bash
+docker run -e LOAD_REFERENCE_FILE=reference1 -e FAKETIME="@2023-05-20 11:30:00" \
+  -p 9000:8000 msupplyfoundation/omsupply:v2.7.3
+```
+
+### Dev image
+
+The `-dev` flavour bundles Node, Yarn, and the client source with dependencies pre-installed, so you can work on the front end against a running server. Make sure your host-side `clientdev` folder is empty first.
+
+Copy the client source onto the host (may take a few minutes):
+
+```bash
+docker run --rm -v "$(pwd)/clientdev":/usr/src/omsupply/clientcopy \
+  -ti --entrypoint="/bin/bash" -w /usr/src/omsupply/ \
+  msupplyfoundation/omsupply:v2.7.3-dev \
+  -c "rsync -av --exclude='/node_modules' client/ clientdev/"
+```
+
+Overriding `--entrypoint` like this lets you drop the trailing CLI args and bash into the image when needed.
+
+Start the front end. The anonymous `-v /usr/src/omsupply/client/node_modules` mount preserves the image's prebuilt `node_modules`, hiding the empty host folder underneath:
+
+```bash
+docker run -p 9003:3003 \
+  -v "$(pwd)/clientdev":/usr/src/omsupply/client \
+  -v /usr/src/omsupply/client/node_modules \
+  -ti --entrypoint="/bin/bash" -w /usr/src/omsupply/client \
+  msupplyfoundation/omsupply:v2.7.3-dev \
+  -c "yarn start --env API_HOST='http://localhost:9000'"
+```
+
+Start the server in a second terminal:
+
+```bash
+docker run -p 9000:8000 msupplyfoundation/omsupply:v2.7.3
+```
+
+Edit files in `clientdev/client` and the web app should pick them up. Hot reload is not always reliable in this setup — you may need to refresh the page.
 
 ### Configuration overrides
 

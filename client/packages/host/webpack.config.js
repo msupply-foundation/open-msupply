@@ -54,7 +54,6 @@ module.exports = env => {
         'Access-Control-Allow-Headers':
           'X-Requested-With, content-type, Authorization',
       },
-      open: false,
       // Proxy every backend route through to the Rust server so dev runs
       // single-origin. `ws: true` carries /graphql/ws (subscriptions); webpack's
       // own HMR WS uses a separate /ws path, untouched by this.

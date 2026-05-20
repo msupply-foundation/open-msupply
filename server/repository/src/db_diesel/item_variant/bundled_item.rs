@@ -162,14 +162,14 @@ mod tests {
         item_variant_repo
             .upsert_one(&ItemVariantRow {
                 id: principal_id.clone(),
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 ..Default::default()
             })
             .unwrap();
         item_variant_repo
             .upsert_one(&ItemVariantRow {
                 id: bundled_id.clone(),
-                item_link_id: mock_item_b().id,
+                item_id: mock_item_b().id,
                 ..Default::default()
             })
             .unwrap();

@@ -79,6 +79,7 @@ export const Toolbar = () => {
               Input={
                 <InternalSupplierSearchInput
                   disabled={isDisabled || isProgram}
+                  width={250}
                   value={otherParty ?? null}
                   onChange={otherParty =>
                     update({ otherParty: otherParty ?? undefined })

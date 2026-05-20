@@ -1,32 +1,40 @@
 use super::{
-    item_link_row::item_link, master_list_line_row::master_list_line::dsl::*,
+    item_row::item, master_list_line_row::master_list_line::dsl::*,
     master_list_row::master_list, StorageConnection,
 };
+use crate::diesel_macros::define_linked_tables;
 use crate::repository_error::RepositoryError;
 use crate::{Delete, Upsert};
 
 use diesel::prelude::*;
 
-table! {
-    master_list_line (id) {
-        id -> Text,
-        item_link_id -> Text,
+define_linked_tables! {
+    view: master_list_line = "master_list_line_view",
+    core: master_list_line_with_links = "master_list_line",
+    struct: MasterListLineRow,
+    repo: MasterListLineRowRepository,
+    shared: {
         master_list_id -> Text,
         price_per_unit -> Nullable<Double>,
+    },
+    links: {
+        item_link_id -> item_id,
+    },
+    optional_links: {
     }
 }
 
+joinable!(master_list_line -> item (item_id));
 joinable!(master_list_line -> master_list (master_list_id));
-joinable!(master_list_line -> item_link (item_link_id));
-allow_tables_to_appear_in_same_query!(master_list_line, item_link);
 
-#[derive(Clone, Insertable, Queryable, Debug, Default, PartialEq, AsChangeset)]
+#[derive(Clone, Queryable, Debug, Default, PartialEq)]
 #[diesel(table_name = master_list_line)]
 pub struct MasterListLineRow {
     pub id: String,
-    pub item_link_id: String,
     pub master_list_id: String,
     pub price_per_unit: Option<f64>,
+    // Resolved from item_link - must be last to match view column order
+    pub item_id: String,
 }
 
 pub struct MasterListLineRowRepository<'a> {
@@ -39,12 +47,7 @@ impl<'a> MasterListLineRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(master_list_line)
-            .values(row)
-            .on_conflict(id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         Ok(())
     }
 
@@ -60,8 +63,10 @@ impl<'a> MasterListLineRowRepository<'a> {
     }
 
     pub fn delete(&self, line_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(master_list_line.filter(id.eq(line_id)))
-            .execute(self.connection.lock().connection())?;
+        diesel::delete(
+            master_list_line_with_links::table.filter(master_list_line_with_links::id.eq(line_id)),
+        )
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
