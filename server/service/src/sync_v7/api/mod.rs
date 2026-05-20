@@ -7,9 +7,11 @@ use reqwest::{
 use serde::{de::DeserializeOwned, Serialize};
 use util::{format_error, with_retries, RetrySeconds};
 
+pub mod get_token;
+pub mod patient_data_for_site;
+pub mod patient_search;
 pub mod pull;
 pub mod push;
-pub mod site_info;
 pub mod status;
 
 pub const HARDWARE_ID_HEADER: &str = "hardware-id";
@@ -106,6 +108,18 @@ pub(crate) struct SyncApiV7 {
 }
 
 impl SyncApiV7 {
+    pub fn new(service_provider: &ServiceProvider, sync_url: &str) -> Result<Self, SyncError> {
+        let common = Common::load(service_provider)?;
+        let auth_headers = common.to_auth_headers()?;
+        let url = sync_url
+            .parse()
+            .map_err(|e: url::ParseError| SyncError::ConnectionError {
+                url: sync_url.to_string(),
+                e: format!("Failed to parse central server url: {e}"),
+            })?;
+        Ok(SyncApiV7 { url, auth_headers })
+    }
+
     pub async fn op<I: Serialize, O: DeserializeOwned>(
         &self,
         route: &str,
@@ -145,9 +159,19 @@ async fn response_or_err<T: DeserializeOwned>(
         Err(error) => {
             let formatted_error = format_error(&error);
             if error.is_connect() {
+                // InvalidContentType is rustls signalling it received plaintext instead of a TLS
+                // handshake — happens when the URL uses https:// but the server is HTTP only.
+                let e = if formatted_error.contains("InvalidContentType") {
+                    format!(
+                        "Server is not configured for HTTPS — try http:// instead. ({})",
+                        formatted_error
+                    )
+                } else {
+                    formatted_error
+                };
                 return Err(SyncError::ConnectionError {
                     url: url.to_string(),
-                    e: formatted_error,
+                    e,
                 });
             } else {
                 return Err(SyncError::Other(formatted_error));

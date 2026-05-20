@@ -137,7 +137,7 @@ impl CommonSyncRecord {
 mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all, SyncBufferRepository};
 
-    use crate::sync::translations::special::item_merge::ItemMergeMessage;
+    use crate::sync::translations::special::merge::MergeMessageBody;
 
     use super::*;
 
@@ -245,7 +245,7 @@ mod tests {
         assert_eq!(
             rows.iter()
                 .filter(|r| r.action == SyncActionRepo::Merge
-                    && serde_json::from_value::<ItemMergeMessage>(r.data.0.clone())
+                    && serde_json::from_value::<MergeMessageBody>(r.data.0.clone())
                         .unwrap()
                         .merge_id_to_keep
                         == "itemA")

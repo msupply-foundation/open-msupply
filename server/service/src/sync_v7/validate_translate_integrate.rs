@@ -1,6 +1,8 @@
 use crate::{
     sync::{
-        sync_buffer::{write_sync_buffer_error, write_sync_buffer_success},
+        sync_buffer::{
+            write_sync_buffer_error, write_sync_buffer_ignored, write_sync_buffer_success,
+        },
         ActiveStoresOnSite,
     },
     sync_v7::{serde::deserialize, sync_logger::SyncLogger},
@@ -10,10 +12,9 @@ use super::validate::*;
 use repository::syncv7::{SyncRecordSerializeError, INTEGRATION_ORDER};
 use repository::{
     ChangeLogInsertRow, ChangelogSyncType, ChangelogTableName, CurrencyRowDelete, CursorDirection,
-    Delete, InvoiceLineRowDelete, InvoiceRowDelete, ItemRowDelete, LocationTypeRowDelete,
-    NameRowDelete, PendingQuery, RepositoryError, RowActionType, StockLineRowDelete,
-    StorageConnection, StoreRowDelete, SyncAction, SyncBufferRepository, SyncBufferRow,
-    SyncVersion, UnitRowDelete, Upsert,
+    Delete, InvoiceLineRowDelete, InvoiceRowDelete, ItemRowDelete, NameRowDelete, PendingQuery,
+    RepositoryError, RowActionType, StockLineRowDelete, StorageConnection, SyncAction,
+    SyncBufferRepository, SyncBufferRow, SyncVersion, UnitRowDelete, Upsert,
 };
 use serde::de::Error as _;
 use thiserror::Error;
@@ -23,12 +24,15 @@ const PROGRESS_INTERVAL: i64 = 1000;
 
 pub(crate) enum SyncContext {
     Central {
-        active_stores: ActiveStoresOnSite,
+        source_site_active_store_ids: Vec<String>,
     },
     Remote {
         is_initialising: bool,
         active_stores: ActiveStoresOnSite,
     },
+    /// Records arrived via a patient-lookup pull. They belong to other sites'
+    /// stores.
+    PatientLookup,
 }
 
 #[derive(Error, Debug)]
@@ -55,22 +59,6 @@ fn parse_table_name(table_name: &str) -> Result<ChangelogTableName, Error> {
         .map_err(|_| Error::UnknownTableName(table_name.to_string()))
 }
 
-fn sync_type(table_name: &ChangelogTableName) -> &'static SyncType {
-    match table_name {
-        ChangelogTableName::Unit
-        | ChangelogTableName::Currency
-        | ChangelogTableName::Name
-        | ChangelogTableName::Store
-        | ChangelogTableName::LocationType
-        | ChangelogTableName::Item => &SyncType::Central,
-        ChangelogTableName::StockLine
-        | ChangelogTableName::Invoice
-        | ChangelogTableName::InvoiceLine => &SyncType::Remote,
-        // Default to Remote for unknown types
-        _ => &SyncType::Remote,
-    }
-}
-
 fn changelog(
     table_name: ChangelogTableName,
     action: RowActionType,
@@ -84,7 +72,6 @@ fn changelog(
         source_site_id: Some(row.source_site_id),
         transfer_store_id: row.transfer_store_id.clone(),
         patient_id: row.patient_id.clone(),
-        ..Default::default()
     }
 }
 
@@ -116,8 +103,6 @@ fn translate_delete(
         ChangelogTableName::Unit => Box::new(UnitRowDelete(id)),
         ChangelogTableName::Currency => Box::new(CurrencyRowDelete(id)),
         ChangelogTableName::Name => Box::new(NameRowDelete(id)),
-        ChangelogTableName::Store => Box::new(StoreRowDelete(id)),
-        ChangelogTableName::LocationType => Box::new(LocationTypeRowDelete(id)),
         ChangelogTableName::Item => Box::new(ItemRowDelete(id)),
         ChangelogTableName::StockLine => Box::new(StockLineRowDelete(id)),
         ChangelogTableName::Invoice => Box::new(InvoiceRowDelete(id)),
@@ -158,14 +143,16 @@ fn validate_translate_integrate_one(
     sync_context: &SyncContext,
 ) -> Result<(), Error> {
     let table_name = parse_table_name(&row.table_name)?;
-    let st = sync_type(&table_name);
 
     match sync_context {
-        SyncContext::Central { active_stores } => validate_on_central(row, st, active_stores)?,
+        SyncContext::Central {
+            source_site_active_store_ids: source_site_store_ids,
+        } => validate_on_central(row, &table_name, source_site_store_ids)?,
         SyncContext::Remote {
             is_initialising,
             active_stores,
-        } => validate_on_remote(row, st, active_stores, *is_initialising)?,
+        } => validate_on_remote(row, &table_name, active_stores, *is_initialising)?,
+        SyncContext::PatientLookup => {} // Patient records belong to another store
     };
 
     match row.action {
@@ -181,13 +168,57 @@ fn validate_translate_integrate_one(
     }
 }
 
-// TODO transactions
-pub fn validate_translate_integrate<'a>(
+pub(crate) fn validate_translate_integrate<'a>(
+    connection: &StorageConnection,
+    logger: Option<&mut SyncLogger<'a>>,
+    source_site_id: i32,
+    reference: Option<&str>,
+    sync_context: SyncContext,
+    is_initialising: bool,
+) -> Result<(), RepositoryError> {
+    // During initialisation we don't need transaction as user can't access database
+    // and processors are not running, however we still want it for sqlite as it speeds it up
+    let dont_wrap_in_tx = is_initialising && cfg!(not(feature = "postgres"));
+    let wrap_in_outer_tx = !dont_wrap_in_tx;
+
+    // When not initialising, isolate each record + changelog write in its own
+    // nested transaction so a single failure doesn't roll back the whole batch.
+    // This is not needed for sqlite as it doesn't poison transaction on failure
+    let wrap_record_in_tx = wrap_in_outer_tx && cfg!(feature = "postgres");
+
+    // Even when initialising
+    if wrap_in_outer_tx {
+        return connection
+            .transaction_sync(move |t_con| {
+                validate_translate_integrate_inner(
+                    t_con,
+                    logger,
+                    source_site_id,
+                    reference,
+                    sync_context,
+                    wrap_record_in_tx,
+                )
+            })
+            .map_err(|e| e.to_inner_error());
+    }
+
+    validate_translate_integrate_inner(
+        connection,
+        logger,
+        source_site_id,
+        reference,
+        sync_context,
+        wrap_record_in_tx,
+    )
+}
+
+fn validate_translate_integrate_inner<'a>(
     connection: &StorageConnection,
     mut logger: Option<&mut SyncLogger<'a>>,
     source_site_id: i32,
     reference: Option<&str>,
     sync_context: SyncContext,
+    wrap_record_in_tx: bool,
 ) -> Result<(), RepositoryError> {
     // TODO this is too hacky, prefer active store cache
     let mut sync_context = sync_context;
@@ -206,21 +237,38 @@ pub fn validate_translate_integrate<'a>(
                                action: SyncAction,
                                direction: CursorDirection|
      -> Result<(), RepositoryError> {
+        log::info!("Integrating table {table} with action {action}");
+
         let rows = repo.pending_ordered_by_cursor(PendingQuery {
             source_site_id,
             sync_version: SyncVersion::V7,
             reference,
-            table_name: &table.to_string(),
-            action,
+            table_name: table.as_ref(),
+            action: action.clone(),
             direction,
         })?;
+
+        log::info!("Number of records to integrate  {}", rows.len());
 
         let had_store_records = *table == ChangelogTableName::Store && !rows.is_empty();
 
         for row in &rows {
             let started = datetime_now();
-            match validate_translate_integrate_one(connection, row, &sync_context) {
+            let one_result = if wrap_record_in_tx {
+                connection
+                    .transaction_sync_etc(
+                        |sub| validate_translate_integrate_one(sub, row, &sync_context),
+                        false,
+                    )
+                    .map_err(|e| e.to_inner_error())
+            } else {
+                validate_translate_integrate_one(connection, row, &sync_context)
+            };
+            match one_result {
                 Ok(()) => write_sync_buffer_success(connection, row.cursor, started)?,
+                Err(e @ Error::ValidationError(_)) => {
+                    write_sync_buffer_ignored(connection, row.cursor, started, &format_error(&e))?;
+                }
                 Err(e) => {
                     write_sync_buffer_error(connection, row.cursor, started, &format_error(&e))?;
                 }
@@ -238,6 +286,7 @@ pub fn validate_translate_integrate<'a>(
 
         // Refresh active stores after any Store batch (upsert or delete)
         // so downstream Remote records validate against fresh state.
+        // Central path doesn't need refresh — Store rows are Central records
         if had_store_records {
             if let SyncContext::Remote {
                 is_initialising: _,
@@ -267,4 +316,55 @@ pub fn validate_translate_integrate<'a>(
     }
 
     Ok(())
+}
+
+pub(crate) fn validate_translate_integrate_in_memory(
+    connection: &StorageConnection,
+    rows: &[SyncBufferRow],
+    sync_context: SyncContext,
+) -> Result<(), RepositoryError> {
+    connection
+        .transaction_sync(|con| -> Result<(), RepositoryError> {
+            let by_table_action = |table: &ChangelogTableName, action: SyncAction| {
+                let table_name = table.to_string();
+                let mut filtered: Vec<&SyncBufferRow> = rows
+                    .iter()
+                    .filter(|r| r.table_name == table_name && r.action == action)
+                    .collect();
+                match action {
+                    SyncAction::Delete => filtered.sort_by_key(|r| std::cmp::Reverse(r.cursor)),
+                    _ => filtered.sort_by_key(|r| r.cursor),
+                };
+                filtered
+            };
+
+            for table in INTEGRATION_ORDER {
+                for row in by_table_action(table, SyncAction::Upsert) {
+                    validate_translate_integrate_one(con, row, &sync_context).map_err(|e| {
+                        RepositoryError::as_db_error(
+                            &format!(
+                                "Patient lookup integration ({} {} {})",
+                                row.table_name, row.action, row.record_id
+                            ),
+                            format_error(&e),
+                        )
+                    })?;
+                }
+            }
+            for table in INTEGRATION_ORDER.iter().rev() {
+                for row in by_table_action(table, SyncAction::Delete) {
+                    validate_translate_integrate_one(con, row, &sync_context).map_err(|e| {
+                        RepositoryError::as_db_error(
+                            &format!(
+                                "Patient lookup integration ({} {} {})",
+                                row.table_name, row.action, row.record_id
+                            ),
+                            format_error(&e),
+                        )
+                    })?;
+                }
+            }
+            Ok(())
+        })
+        .map_err(|e| e.to_inner_error())
 }

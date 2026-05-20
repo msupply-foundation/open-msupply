@@ -1,4 +1,7 @@
-use crate::{ChangelogSyncType, Delete, RepositoryError, StorageConnection, Upsert};
+use crate::{
+    db_diesel::changelog::ChangelogRepository, ChangelogSyncType, Delete, RepositoryError,
+    RowActionType, SourceSiteId, StorageConnection, SyncVersion, Upsert,
+};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -11,6 +14,7 @@ table! {
         hashed_password -> Text,
         hardware_id -> Nullable<Text>,
         token -> Nullable<Text>,
+        sync_version -> Text,
     }
 }
 
@@ -27,6 +31,7 @@ pub struct SiteRow {
     pub hashed_password: String,
     pub hardware_id: Option<String>,
     pub token: Option<String>,
+    pub sync_version: SyncVersion,
 }
 
 pub struct SiteRowRepository<'a> {
@@ -38,7 +43,7 @@ impl<'a> SiteRowRepository<'a> {
         SiteRowRepository { connection }
     }
 
-    pub fn upsert(&self, row: &SiteRow) -> Result<(), RepositoryError> {
+    fn _upsert(&self, row: &SiteRow) -> Result<(), RepositoryError> {
         diesel::insert_into(site::table)
             .values(row)
             .on_conflict(site::id)
@@ -47,6 +52,17 @@ impl<'a> SiteRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
 
         Ok(())
+    }
+
+    pub fn upsert(&self, row: &SiteRow) -> Result<(), RepositoryError> {
+        self._upsert(row)?;
+        let changelog = SiteRow::generate_changelog(
+            row.id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, id: i32) -> Result<Option<SiteRow>, RepositoryError> {
@@ -71,16 +87,41 @@ impl<'a> SiteRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    pub fn delete(&self, id: i32) -> Result<(), RepositoryError> {
+    fn _delete(&self, id: i32) -> Result<(), RepositoryError> {
         diesel::delete(site::table.filter(site::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn delete(&self, id: i32) -> Result<(), RepositoryError> {
+        self._delete(id)?;
+        let changelog = SiteRow::generate_changelog(
+            id.to_string(),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
 }
 
 impl Upsert for SiteRow {
-    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
-        SiteRowRepository::new(con).upsert(self)?;
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        SiteRowRepository::new(con)._upsert(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => SiteRow::generate_changelog(
+                self.id.to_string(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
         Ok(())
     }
 
@@ -96,11 +137,26 @@ impl Upsert for SiteRow {
 #[derive(Debug, Clone)]
 pub struct SiteRowDelete(pub String);
 impl Delete for SiteRowDelete {
-    fn delete_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         let repo = SiteRowRepository::new(con);
-        if let Some(site) = repo.find_one_by_og_id(&self.0)? {
-            repo.delete(site.id)?;
-        }
+        let Some(site) = repo.find_one_by_og_id(&self.0)? else {
+            return Ok(());
+        };
+        repo._delete(site.id)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => SiteRow::generate_changelog(
+                site.id.to_string(),
+                con,
+                RowActionType::Delete,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
         Ok(())
     }
 
@@ -127,6 +183,7 @@ mod tests {
             hashed_password: "hash_a".to_string(),
             hardware_id: Some("hw-id-a".to_string()),
             token: None,
+            sync_version: SyncVersion::V5V6,
         }
     }
 
@@ -139,6 +196,7 @@ mod tests {
             hashed_password: "hash_b".to_string(),
             hardware_id: None,
             token: Some("token_b".to_string()),
+            sync_version: SyncVersion::V5V6,
         }
     }
 

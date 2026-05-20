@@ -1,10 +1,13 @@
 use async_graphql::*;
 
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
-use service::initialisation_status::get_initialisation_status;
 use service::sync::sync_status::status::InitialisationStatus;
 
-use crate::{queries::sync_settings::SyncSettingsNode, sync_api_error::SyncErrorNode};
+use crate::{
+    queries::sync_settings::SyncSettingsNode,
+    sync_api_error::{map_request_auth_error, SyncErrorEither, SyncErrorNode},
+    sync_v7::sync_api_error::SyncErrorV7Node,
+};
 
 use super::common::SyncSettingsInput;
 
@@ -12,6 +15,7 @@ use super::common::SyncSettingsInput;
 pub enum InitialiseSiteResponse {
     Response(SyncSettingsNode),
     Error(SyncErrorNode),
+    ErrorV7(SyncErrorV7Node),
 }
 
 pub async fn initialise_site(
@@ -21,8 +25,9 @@ pub async fn initialise_site(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    let initialisation_status =
-        get_initialisation_status(&service_provider, &service_context)?;
+    let initialisation_status = service_provider
+        .sync_status_service
+        .get_initialisation_status(&service_context)?;
     if initialisation_status != InitialisationStatus::PreInitialisation {
         return Err(StandardGraphqlError::from_str_slice(
             "Cannot initialise after PreInitialisation sync state",
@@ -32,22 +37,23 @@ pub async fn initialise_site(
     let sync_settings = input.to_domain();
 
     if let Err(error) = service_provider
-        .site_info_service
-        .request_and_set_site_info(service_provider, &sync_settings)
+        .site_auth_service
+        .request_and_set_site_auth(service_provider, &sync_settings)
         .await
     {
-        return Ok(InitialiseSiteResponse::Error(SyncErrorNode::map_error(
-            error,
-        )?));
+        return Ok(match map_request_auth_error(error)? {
+            SyncErrorEither::V5V6(node) => InitialiseSiteResponse::Error(node),
+            SyncErrorEither::V7(node) => InitialiseSiteResponse::ErrorV7(node),
+        });
     }
 
-    // request_and_set_site_info above should validate settings, can consider all error in update_sync_settings as internal error
+    // request_and_set_site_auth above should validate settings, can consider all error in update_sync_settings as internal error
     service_provider
         .settings
         .update_sync_settings(&service_context, &sync_settings)
         .map_err(StandardGraphqlError::from_debug)?;
 
-    service_provider.sync_trigger.trigger(None);
+    service_provider.sync_trigger.trigger();
 
     Ok(InitialiseSiteResponse::Response(SyncSettingsNode {
         settings: sync_settings,

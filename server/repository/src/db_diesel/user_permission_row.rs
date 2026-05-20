@@ -1,12 +1,11 @@
 use super::StorageConnection;
-
 use crate::repository_error::RepositoryError;
-use crate::{
-    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert,
-};
+use crate::{ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert};
 use diesel::prelude::*;
-
 use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
+use strum::{AsRefStr, EnumIter};
+use util::uuid::{deterministic_uuid, Uuid};
 
 table! {
   user_permission (id) {
@@ -18,9 +17,11 @@ table! {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(test, derive(strum::EnumIter))]
+#[derive(
+    DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, EnumIter, AsRefStr,
+)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+#[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
 pub enum PermissionType {
     ServerAdmin,
 
@@ -106,7 +107,9 @@ pub enum PermissionType {
     MutateClinician,
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = user_permission)]
 pub struct UserPermissionRow {
@@ -117,6 +120,38 @@ pub struct UserPermissionRow {
     /// An optional resource associated with this permission.
     /// The resource value is only used for certain Permission variants.
     pub context_id: Option<String>,
+}
+
+impl UserPermissionRow {
+    /// Stable id for a non-context-bound permission keyed by `(user_id, store_id,
+    /// permission)`. Context-bound permissions (synced from `om_user_permission`)
+    /// keep using the legacy OG id — see the `user_permission` translator.
+    pub fn deterministic_id(
+        user_id: &str,
+        store_id: Option<&str>,
+        permission: &PermissionType,
+    ) -> String {
+        Self::deterministic_id_from_db_form(user_id, store_id, permission.as_ref())
+    }
+
+    /// String-keyed variant used by migrations, which read `permission` as raw text
+    /// so they don't have to deserialize into the live `PermissionType` enum (which
+    /// may have evolved since the migration was written). Callers must pass the
+    /// `SCREAMING_SNAKE_CASE` form stored in the DB (e.g. `"STORE_ACCESS"`) so the
+    /// hash matches [`Self::deterministic_id`].
+    pub(crate) fn deterministic_id_from_db_form(
+        user_id: &str,
+        store_id: Option<&str>,
+        permission_db_form: &str,
+    ) -> String {
+        // Project-local namespace; do not change without a migration plan.
+        const NAMESPACE: Uuid = Uuid::from_u128(0x5d8e2b1a_4f3c_4a6e_9b7d_0c1e2f3a4b5c);
+        let store = store_id.unwrap_or("");
+        deterministic_uuid(
+            &NAMESPACE,
+            &format!("{user_id}:{store}:{permission_db_form}"),
+        )
+    }
 }
 
 pub struct UserPermissionRowRepository<'a> {

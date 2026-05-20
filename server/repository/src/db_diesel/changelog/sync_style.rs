@@ -2,10 +2,11 @@ use strum::IntoEnumIterator;
 
 use super::changelog::ChangelogTableName;
 
-#[derive(strum::EnumIter, PartialEq, Eq, Debug)]
-pub(crate) enum ChangeLogSyncStyle {
-    Central, // Data created on Open-mSupply central server
-    Remote,
+#[derive(strum::EnumIter, PartialEq, Eq, Debug, Clone, Copy)]
+pub enum ChangeLogSyncStyle {
+    Central,     // Data created on Open-mSupply central server
+    Remote,      // Store-scoped; editable by the owning store and by central stores
+    RemoteOwned, // Store-scoped; editable only by the owning store
     File,
     ToLegacyCentralOnly,
     Transfer,
@@ -40,22 +41,15 @@ pub struct SyncVersions {
 
 // When adding a new change log record type, specify how it should be synced
 // If new requirements are needed a different ChangeLogSyncStyle can be added
-//
-// Variants are grouped to match the order of `ChangelogTableName` above and
-// sorted alphabetically within each group. Keep the two in sync.
 impl ChangelogTableName {
-    pub(crate) fn sync_style(&self) -> (Vec<ChangeLogSyncStyle>, SyncVersions) {
+    pub fn sync_style(&self) -> (Vec<ChangeLogSyncStyle>, SyncVersions) {
         use ChangeLogSyncStyle::*;
         use ChangelogTableName::*;
         match self {
             // ----------------------------------------------------------
             // Legacy — Remote (not v6)
             // ----------------------------------------------------------
-            ActivityLog | Barcode | Clinician | ClinicianStoreJoin | Currency | IndicatorValue
-            | InsuranceProvider | Item | Location | LocationMovement | Name | NameInsuranceJoin
-            | NameStoreJoin | PurchaseOrder | PurchaseOrderLine | Sensor | StockLine
-            | Stocktake | StocktakeLine | TemperatureBreach | TemperatureLog | SyncMessage
-            | VVMStatusLog => (
+            NameInsuranceJoin | NameStoreJoin => (
                 vec![Remote],
                 SyncVersions {
                     is_v6: false,
@@ -64,10 +58,13 @@ impl ChangelogTableName {
             ),
 
             // ----------------------------------------------------------
-            // Legacy — Remote + Transfer (not v6)
+            // Legacy — RemoteOwned (not v6)
             // ----------------------------------------------------------
-            Requisition | RequisitionLine => (
-                vec![Remote, Transfer],
+            ActivityLog | Clinician | ClinicianStoreJoin | IndicatorValue | InsuranceProvider
+            | Location | LocationMovement | PurchaseOrder | PurchaseOrderLine | Sensor
+            | StockLine | Stocktake | StocktakeLine | TemperatureBreach | TemperatureLog
+            | VVMStatusLog => (
+                vec![RemoteOwned],
                 SyncVersions {
                     is_v6: false,
                     is_v5: true,
@@ -75,10 +72,34 @@ impl ChangelogTableName {
             ),
 
             // ----------------------------------------------------------
-            // Legacy — Remote + Transfer + Patient (not v6)
+            // Legacy — Remote + Central (hybrid, not v6)
+            // Routes to a single owning site when the row carries a store_id,
+            // otherwise fans out to every site.
+            // ----------------------------------------------------------
+            SyncMessage => (
+                vec![Remote, Central],
+                SyncVersions {
+                    is_v6: false,
+                    is_v5: true,
+                },
+            ),
+
+            // ----------------------------------------------------------
+            // Legacy — RemoteOwned + Transfer (not v6)
+            // ----------------------------------------------------------
+            Requisition | RequisitionLine => (
+                vec![RemoteOwned, Transfer],
+                SyncVersions {
+                    is_v6: false,
+                    is_v5: true,
+                },
+            ),
+
+            // ----------------------------------------------------------
+            // Legacy — RemoteOwned + Transfer + Patient (not v6)
             // ----------------------------------------------------------
             Invoice | InvoiceLine => (
-                vec![Remote, Transfer, Patient],
+                vec![RemoteOwned, Transfer, Patient],
                 SyncVersions {
                     is_v6: false,
                     is_v5: true,
@@ -123,15 +144,18 @@ impl ChangelogTableName {
             // more specific sync style.
             // ----------------------------------------------------------
             Abbreviation
+            | Barcode
             | Category
             | Contact
             | ContactTrace
             | Context
+            | Currency
             | DemographicIndicator
             | Diagnosis
             | DocumentRegistry
             | IndicatorColumn
             | IndicatorLine
+            | Item
             | ItemCategoryJoin
             | ItemDirection
             | ItemStoreJoin
@@ -179,9 +203,9 @@ impl ChangelogTableName {
             ),
 
             // ----------------------------------------------------------
-            // Remote (v6) — store-scoped data that syncs to the owning site
+            // Remote (v6)
             // ----------------------------------------------------------
-            Asset | AssetInternalLocation | AssetLog | RnrForm | RnrFormLine => (
+            Asset | AssetInternalLocation => (
                 vec![Remote],
                 SyncVersions {
                     is_v6: true,
@@ -190,15 +214,46 @@ impl ChangelogTableName {
             ),
 
             // ----------------------------------------------------------
-            // Remote + Patient (v6) — store-scoped patient records that
-            // also flow to sites where the patient is visible (via
-            // name_store_join on the patient_id).
+            // RemoteOwned (v6)
             // ----------------------------------------------------------
-            Encounter | Vaccination | Document => (
+            AssetLog | RnrForm | RnrFormLine => (
+                vec![RemoteOwned],
+                SyncVersions {
+                    is_v6: true,
+                    is_v5: false,
+                },
+            ),
+
+            // ----------------------------------------------------------
+            // Central + Patient (not v6) — central rows, plus patient rows routed to visible sites
+            // ----------------------------------------------------------
+            Name => (
+                vec![Central, Patient],
+                SyncVersions {
+                    is_v6: true,
+                    is_v5: true,
+                },
+            ),
+
+            // ----------------------------------------------------------
+            // Remote + Patient (v6) — store-scoped data also routed to sites where the patient is visible
+            // ----------------------------------------------------------
+            Encounter | Vaccination => (
                 vec![Remote, Patient],
                 SyncVersions {
                     is_v6: true,
                     is_v5: false,
+                },
+            ),
+
+            // ----------------------------------------------------------
+            // Patient (v6) — routed only to sites where the patient is visible
+            // ----------------------------------------------------------
+            Document => (
+                vec![Patient],
+                SyncVersions {
+                    is_v6: false,
+                    is_v5: true,
                 },
             ),
 
@@ -214,7 +269,7 @@ impl ChangelogTableName {
             ),
 
             // ----------------------------------------------------------
-            // RemoteAndCentral (v6) — Remote when store_id is set, otherwise Central
+            // Remote + Central (v6) — Remote when store_id is set, otherwise Central
             // ----------------------------------------------------------
             PluginData | Preference => (
                 vec![Remote, Central],
