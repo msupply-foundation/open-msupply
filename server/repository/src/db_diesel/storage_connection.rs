@@ -150,6 +150,14 @@ impl From<TransactionError<RepositoryError>> for RepositoryError {
     }
 }
 
+impl Drop for StorageConnection {
+    /// Safety net: ensure this connection is removed from the cursor tracker even if a
+    /// transaction path missed the explicit untrack (e.g. early return, panic).
+    fn drop(&mut self) {
+        ChangelogCursorTracker::untrack(self);
+    }
+}
+
 impl StorageConnection {
     pub fn new(
         connection: DBConnection,
@@ -192,17 +200,21 @@ impl StorageConnection {
     where
         F: FnOnce(&StorageConnection) -> Result<T, E>,
     {
-        let current_level = {
-            let mut guard = self.lock();
-            let current_level = guard.transaction_level()?;
-            if current_level > 0 && reuse_tx {
-                drop(guard);
-                return match f(self) {
-                    Ok(ok) => Ok(ok),
-                    Err(err) => Err(TransactionError::Inner(err)),
-                };
-            }
+        // Lock is dropped in this line
+        let current_level = self.lock().transaction_level()?;
 
+        // If we are re-using transaction just call the underlying function, error will propagate
+        // to the original closure for the transaction.
+        if current_level > 0 && reuse_tx {
+            return match f(self) {
+                Ok(ok) => Ok(ok),
+                Err(err) => Err(TransactionError::Inner(err)),
+            };
+        }
+
+        // Start a new outer or inner transaction, acquire lock that will be dropped when closure exits
+        {
+            let mut guard = self.lock();
             let con: &mut DBBackendConnection = guard.connection();
             if current_level == 0 {
                 // sqlite can only have 1 writer, so to avoid concurrency issues,
@@ -212,51 +224,49 @@ impl StorageConnection {
                 AnsiTransactionManager::begin_transaction(con)
             }
             .map_err(|e| map_begin_transaction_error(e, current_level))?;
-            current_level
         };
 
-        let result = f(self);
+        let inner_result = f(self);
 
-        match result {
-            Ok(value) => {
-                let mut guard = self.raw_connection.lock().unwrap();
-                let con: &mut DBBackendConnection = &mut guard;
-                AnsiTransactionManager::commit_transaction(con).map_err(|err| {
-                    error!("Failed to end tx: {err:?}");
-                    TransactionError::Transaction {
-                        msg: format!("Failed to end tx: {err}"),
-                        level: current_level + 1,
+        // Try commit or rollback based on inner_result
+        // Closure is needed for guard to be dropped
+        let result = {
+            let mut guard = self.raw_connection.lock().unwrap();
+            let con: &mut DBBackendConnection = &mut guard;
+
+            match inner_result {
+                Ok(value) => match AnsiTransactionManager::commit_transaction(con) {
+                    Ok(_) => Ok(value),
+                    Err(err) => {
+                        error!("Failed to end tx: {err:?}");
+                        Err(TransactionError::Transaction {
+                            msg: format!("Failed to end tx: {err}"),
+                            level: current_level + 1,
+                        })
                     }
-                })?;
-                drop(guard);
-                // After outermost commit: untrack BEFORE firing notifications.
-                // Notifications can wake processor tasks on other threads that
-                // immediately run `query()` / `max_cursor()` against the changelog —
-                // if the tracker still holds this connection's clamp those reads
-                // hide the rows we just committed.
-                if current_level == 0 {
-                    ChangelogCursorTracker::untrack(self);
-                    self.flush_notifications();
-                }
-                Ok(value)
-            }
-            Err(e) => {
-                let mut guard = self.raw_connection.lock().unwrap();
-                let con: &mut DBBackendConnection = &mut guard;
-                AnsiTransactionManager::rollback_transaction(con).map_err(|err| {
-                    error!("Failed to rollback tx: {err:?}");
-                    TransactionError::Transaction {
-                        msg: format!("Failed to rollback tx: {err}"),
-                        level: current_level + 1,
+                },
+                Err(e) => match AnsiTransactionManager::rollback_transaction(con) {
+                    Ok(_) => Err(TransactionError::Inner(e)),
+                    Err(err) => {
+                        error!("Failed to rollback tx: {err:?}");
+                        Err(TransactionError::Transaction {
+                            msg: format!("Failed to rollback tx: {err}"),
+                            level: current_level + 1,
+                        })
                     }
-                })?;
-                drop(guard);
-                if current_level == 0 {
-                    ChangelogCursorTracker::untrack(self);
-                }
-                Err(TransactionError::Inner(e))
+                },
             }
+        };
+
+        // If we are closing off the outermost transaction, flush notifications and untrack changelog cursor
+        if current_level == 0 {
+            if result.is_ok() {
+                self.flush_notifications();
+            }
+            ChangelogCursorTracker::untrack(self);
         }
+
+        result
     }
 }
 
