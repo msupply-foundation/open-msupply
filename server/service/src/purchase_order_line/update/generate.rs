@@ -1,4 +1,5 @@
 use repository::{PurchaseOrderLineRow, RepositoryError};
+use util::round_currency;
 
 use crate::purchase_order_line::update::UpdatePurchaseOrderLineInput;
 
@@ -68,8 +69,4 @@ pub fn generate(
         status: status.unwrap_or(purchase_order_line.status),
         ..purchase_order_line
     })
-}
-
-fn round_currency(value: f64) -> f64 {
-    (value * 100.0).round() / 100.0
 }

@@ -17,6 +17,7 @@ use repository::{
     InvoiceLineStatus, InvoiceLineType, InvoiceRow, ItemRow, RepositoryError, StockLineRow,
     StorageConnection,
 };
+use util::round_currency;
 
 use super::UpdateStockInLine;
 use crate::NullableUpdate;
@@ -228,7 +229,7 @@ fn generate_line(
     update_line.total_before_tax = if let Some(total_before_tax) = total_before_tax {
         total_before_tax
     } else if number_of_packs.is_some() || cost_price_per_pack.is_some() {
-        update_line.cost_price_per_pack * update_line.number_of_packs
+        round_currency(update_line.cost_price_per_pack * update_line.number_of_packs)
     } else {
         update_line.total_before_tax
     };

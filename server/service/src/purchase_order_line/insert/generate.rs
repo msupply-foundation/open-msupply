@@ -4,6 +4,7 @@ use repository::{
     ItemRow, NumberRowType, PurchaseOrderLineRow, PurchaseOrderLineStatus, RepositoryError,
     StorageConnection,
 };
+use util::round_currency;
 
 pub fn generate(
     connection: &StorageConnection,
@@ -65,8 +66,4 @@ pub fn generate(
         adjusted_number_of_units: None,
         stock_on_hand_in_units: 0.0,
     })
-}
-
-fn round_currency(value: f64) -> f64 {
-    (value * 100.0).round() / 100.0
 }

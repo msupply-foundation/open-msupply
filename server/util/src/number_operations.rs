@@ -2,6 +2,12 @@ pub fn fraction_is_integer(fraction: f64) -> bool {
     fraction.fract() == 0.0
 }
 
+/// Rounds to 2 decimal places. Assumes 2dp currencies — does not honour
+/// currency-specific precision (e.g. JPY 0dp, BHD 3dp).
+pub fn round_currency(value: f64) -> f64 {
+    (value * 100.0).round() / 100.0
+}
+
 pub fn pos_zero(value: f64) -> f64 {
     // This would make -0.0 = positive 0.0
     if value == 0.0 {
