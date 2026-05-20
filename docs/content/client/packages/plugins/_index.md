@@ -205,7 +205,48 @@ yarn plugin reset <selector>       # remove just the named plugin
 
 `<selector>` is either an installed plugin's folder name (e.g. `core-plugins`) or a short name from `pluginRepoMap.json` (e.g. `core`).
 
-`yarn plugin install` defaults to `http://localhost:8000` with credentials `admin`/`pass`. Override with `--url`, `--username`, `--password`. Any override gets persisted to a gitignored `scripts/plugin-management/.pluginAuth` file and reused on subsequent runs — so you only have to type them when they change. Pass the defaults explicitly to clear a stored override. Get/reset abort if the affected plugin submodule has uncommitted changes — commit or stash inside it first.
+`yarn plugin install` defaults to `http://localhost:8000` with credentials `admin`/`pass`. Override with `--url`, `--username`, `--password`. Get/reset abort if the affected plugin submodule has uncommitted changes — commit or stash inside it first.
+
+#### Auth profiles
+
+Auth values are stored as **profiles** in a gitignored `scripts/plugin-management/pluginAuth.json`. The `_default` profile is the implicit fallback, and you can define any number of named profiles for other servers. Example:
+
+```json
+{
+  "_default": {
+    "url": "http://localhost:8000",
+    "username": "admin",
+    "password": "pass"
+  },
+  "staging": {
+    "url": "https://staging.example.com",
+    "username": "alice",
+    "password": "secret"
+  }
+}
+```
+
+Pick a profile with `--auth=<name>`:
+
+```
+yarn plugin install --auth=staging
+```
+
+Per-field precedence (highest → lowest):
+1. inline flag (`--url`/`--username`/`--password`)
+2. the named profile from `--auth`
+3. the `_default` profile
+4. hard-coded constants
+
+Each field falls through independently, so you can have e.g. a profile that only sets `url` and inherit `username`/`password` from `_default`.
+
+**First-time setup of a new server**: pass `--auth` with a new name plus the values. The profile is auto-created (a notice is printed so typos don't slip through):
+
+```
+yarn plugin install --auth=staging --url=https://staging.example.com --username=alice --password=secret
+```
+
+Subsequent inline flags update the active profile (the one in `--auth`, or `_default` if none). Stored values are saved verbatim — to remove or rename a stored value, hand-edit `pluginAuth.json`.
 
 > You will need to have github authentication set up to add restricted access repos from command line. [github cli](https://cli.github.com/) can conveniently set up github command line authentication access. Other [alternative methods](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-authentication-to-github) are also available.
 

@@ -10,7 +10,7 @@ const PLUGINS_DIR = path.join('client', 'packages', 'plugins');
 const MAP_DIR = path.join('scripts', 'plugin-management');
 const MAP_FILE = path.join(REPO_ROOT, MAP_DIR, 'pluginRepoMap.json');
 const EXAMPLE_MAP_FILE = path.join(MAP_DIR, 'pluginRepoMap.example.json');
-const AUTH_FILE = path.join(REPO_ROOT, MAP_DIR, '.pluginAuth');
+const AUTH_FILE = path.join(REPO_ROOT, MAP_DIR, 'pluginAuth.json');
 const GITMODULES = path.join(REPO_ROOT, '.gitmodules');
 const GIT_LOCAL_EXCLUDE = path.join(REPO_ROOT, '.git', 'info', 'exclude');
 
@@ -316,35 +316,57 @@ function findSinglePluginPath(action) {
 function readStoredAuth() {
   if (!fs.existsSync(AUTH_FILE)) return {};
   try {
-    return JSON.parse(fs.readFileSync(AUTH_FILE, 'utf8')) || {};
+    const parsed = JSON.parse(fs.readFileSync(AUTH_FILE, 'utf8'));
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed
+      : {};
   } catch {
     return {};
   }
 }
 
-function writeStoredAuth(effective) {
-  // Persist only fields that differ from the hard-coded defaults, so passing the
-  // default value explicitly clears a previously-stored override.
-  const overrides = {};
-  for (const k of Object.keys(INSTALL_DEFAULTS)) {
-    if (effective[k] !== INSTALL_DEFAULTS[k]) overrides[k] = effective[k];
-  }
-  if (Object.keys(overrides).length === 0) {
-    if (fs.existsSync(AUTH_FILE)) fs.rmSync(AUTH_FILE, { force: true });
-    return;
-  }
-  fs.writeFileSync(AUTH_FILE, JSON.stringify(overrides, null, 2) + '\n');
+function resolveAuth(map, profileName, flags) {
+  // Per-field precedence: CLI flag > named profile > _default profile > hardcoded.
+  const def = map._default || {};
+  const named = profileName ? map[profileName] || {} : {};
+  return { ...INSTALL_DEFAULTS, ...def, ...named, ...flags };
+}
+
+function writeStoredAuth(map, profileName, flags) {
+  // Only flag values get written; fallback values stay where they came from. No
+  // filtering against hardcoded defaults — passing the default value pins it.
+  if (Object.keys(flags).length === 0) return;
+  const active = profileName || '_default';
+  const next = {
+    ...map,
+    [active]: { ...(map[active] || {}), ...flags },
+  };
+  fs.writeFileSync(AUTH_FILE, JSON.stringify(next, null, 2) + '\n');
 }
 
 function cmdInstall(args) {
   const flags = {};
   let target = null; // null = both, 'frontend', or 'backend'
   let selector = null;
+  let profileName = null;
+  // Accept both `--flag value` and `--flag=value` for every named flag.
+  const eqMatch = a => {
+    const eq = a.indexOf('=');
+    return eq > 0 ? [a.slice(0, eq), a.slice(eq + 1)] : null;
+  };
   for (let i = 0; i < args.length; i++) {
-    const a = args[i];
-    if (a === '--url') flags.url = args[++i];
-    else if (a === '--username') flags.username = args[++i];
-    else if (a === '--password') flags.password = args[++i];
+    let a = args[i];
+    let inlineValue = null;
+    const m = eqMatch(a);
+    if (m) {
+      a = m[0];
+      inlineValue = m[1];
+    }
+    const next = () => (inlineValue !== null ? inlineValue : args[++i]);
+    if (a === '--url') flags.url = next();
+    else if (a === '--username') flags.username = next();
+    else if (a === '--password') flags.password = next();
+    else if (a === '--auth') profileName = next();
     else if (a === 'frontend' || a === 'backend') {
       if (target) die(`install target already set to "${target}"`);
       target = a;
@@ -353,10 +375,19 @@ function cmdInstall(args) {
     } else die(`unknown argument for install: ${a}`);
   }
 
-  // Precedence: CLI flag > stored override > hard-coded default.
-  const stored = readStoredAuth();
-  const effective = { ...INSTALL_DEFAULTS, ...stored, ...flags };
-  writeStoredAuth(effective);
+  if (profileName === '_default') {
+    die('"_default" is the implicit fallback profile and cannot be named explicitly');
+  }
+  if (profileName === '') {
+    die('--auth requires a profile name');
+  }
+
+  const map = readStoredAuth();
+  if (profileName && !map[profileName]) {
+    info(`>>> creating new auth profile "${profileName}"`);
+  }
+  const effective = resolveAuth(map, profileName, flags);
+  writeStoredAuth(map, profileName, flags);
 
   const { url, username, password } = effective;
 
@@ -377,8 +408,9 @@ function cmdInstall(args) {
       ? path.posix.join('..', pluginPath, target)
       : path.posix.join('..', pluginPath);
 
+    const profileSuffix = profileName ? ` (profile: ${profileName})` : '';
     info(
-      `\n>>> generate-and-install-plugin-bundle (-i ${inputPath}) against ${url} as ${username}`
+      `\n>>> generate-and-install-plugin-bundle (-i ${inputPath}) against ${url} as ${username}${profileSuffix}`
     );
     const cargoArgs = [
       'run',
@@ -432,10 +464,13 @@ function usage() {
                                           <name> is looked up in pluginRepoMap.json;
                                           anything else is used directly as a repo URL.
                                           Other installed plugins are left alone.
-  yarn plugin install [<selector>] [frontend|backend] [--url U] [--username U] [--password P]
+  yarn plugin install [<selector>] [frontend|backend]
+                      [--auth <profile>] [--url U] [--username U] [--password P]
                                           build and install plugins into the local server.
                                           With no selector, installs every plugin in turn.
                                           Pass frontend or backend to limit to one half.
+                                          --auth picks an auth profile from pluginAuth.json
+                                          (auto-created if it doesn't exist yet).
   yarn plugin open [<selector>]           open the plugin submodule in GitHub Desktop.
                                           Selector required if more than one plugin is installed.
   yarn plugin list                        list installed plugin submodules.
