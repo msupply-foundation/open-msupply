@@ -3,6 +3,9 @@ use crate::StorageConnection;
 
 mod add_is_standalone_central_pg_enum;
 mod add_merge_sync_message_processor_cursor_pg_enum;
+mod add_name_properties_jsonb;
+mod add_property_system_v2;
+mod add_property_v2_value_lookup_index;
 mod add_site_sync_version;
 mod add_sync_log_v7;
 mod add_sync_v7_cursor_pg_enum;
@@ -54,6 +57,12 @@ impl Migration for V3_00_00 {
             Box::new(add_is_standalone_central_pg_enum::Migrate),
             Box::new(add_merge_sync_message_processor_cursor_pg_enum::Migrate),
             Box::new(create_changelog_indexes::Migrate),
+            // Properties KDD prototype (option 1) — V2 schema + JSONB legacy
+            // mirror. Kept at the end of v3.0.0 since they're additive and
+            // don't interact with the sync v7 changelog migrations above.
+            Box::new(add_property_system_v2::Migrate),
+            Box::new(add_name_properties_jsonb::Migrate),
+            Box::new(add_property_v2_value_lookup_index::Migrate),
         ]
     }
 }

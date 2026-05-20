@@ -11,6 +11,30 @@ fragment NameRow on NameNode {
   }
 }
 
+# Wider variant used by the customers/suppliers list views, which need the
+# V2 property values to render the per-property columns added by the KDD
+# prototype. Kept separate from `NameRow` so other consumers (e.g. invoice
+# toolbars) don't have to fan their otherParty selections out.
+fragment NameRowWithPropertyV2Values on NameNode {
+  ...NameRow
+  propertyV2Values {
+    id
+    property {
+      id
+      name
+      type
+    }
+    option {
+      id
+      name
+    }
+    valueText
+    valueNumber
+    valueReal
+    valueDate
+  }
+}
+
 fragment FacilityNameRow on NameNode {
   code
   id
@@ -24,6 +48,25 @@ fragment FacilityNameRow on NameNode {
     code
   }
   properties
+  # Per-store V2 property values — used by the stores list to display the
+  # KDD-prototype properties side-by-side with the legacy `properties` JSON
+  # for the perf comparison.
+  propertyV2Values {
+    id
+    property {
+      id
+      name
+      type
+    }
+    option {
+      id
+      name
+    }
+    valueText
+    valueNumber
+    valueReal
+    valueDate
+  }
 }
 
 fragment Name on NameNode {
@@ -58,6 +101,11 @@ fragment Name on NameNode {
     id
     code
   }
+  # Values from the new property system (KDD option 1). Resolved via the
+  # PropertyV2ValuesByNameRecordLoader so list rows are batched.
+  propertyV2Values {
+    ...PropertyV2Value
+  }
 }
 
 fragment Property on PropertyNode {
@@ -66,6 +114,26 @@ fragment Property on PropertyNode {
   name
   allowedValues
   valueType
+}
+
+# Definition shape used by the property filter on the names list (KDD option 1).
+# Includes the `option` rows so the UI can render a dropdown for option-typed
+# properties without a second query per property.
+fragment NamePropertyV2 on PropertyV2Node {
+  id
+  name
+  type
+  options {
+    id
+    name
+    isDeleted
+  }
+}
+
+query namePropertyV2Definitions {
+  propertiesV2ForTable(table: NAME) {
+    ...NamePropertyV2
+  }
 }
 
 query names(
@@ -85,7 +153,7 @@ query names(
     ... on NameConnector {
       __typename
       nodes {
-        ...NameRow
+        ...NameRowWithPropertyV2Values
       }
       totalCount
     }
@@ -96,6 +164,7 @@ query facilities(
   $storeId: String!
   $key: NameSortFieldInput!
   $desc: Boolean
+  $propertyKey: String
   $first: Int
   $offset: Int
   $filter: NameFilterInput
@@ -103,7 +172,7 @@ query facilities(
   names(
     storeId: $storeId
     page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
+    sort: { key: $key, desc: $desc, propertyKey: $propertyKey }
     filter: $filter
   ) {
     ... on NameConnector {

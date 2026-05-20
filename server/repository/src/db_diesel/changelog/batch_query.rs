@@ -481,6 +481,14 @@ fn fetch_rows_for_table(
                     out.insert(r.id.clone(), Row::Property(r));
                 }
             }
+            // Prototype property V2 tables are classified as Central/v6 in
+            // sync_style.rs, so they should never reach this v7 batch fetcher.
+            // Keep them as no-ops to satisfy exhaustiveness; if v7 routing is
+            // added later, wire up `Row::PropertyV2*` variants alongside.
+            ChangelogTableName::PropertyV2
+            | ChangelogTableName::PropertyV2Option
+            | ChangelogTableName::PropertyV2Table
+            | ChangelogTableName::PropertyV2Value => {}
             ChangelogTableName::Report => {
                 for r in ReportRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::Report(r));

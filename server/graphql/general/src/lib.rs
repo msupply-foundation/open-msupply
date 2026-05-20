@@ -21,11 +21,21 @@ use service::sync::CentralServerConfig;
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
     AbbreviationNode, CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, DiagnosisNode,
-    MasterListFilterInput, StorePreferenceNode,
+    MasterListFilterInput, PropertyV2Node, PropertyV2ParentTableEnum, PropertyV2ValueNode,
+    StorePreferenceNode,
+};
+use queries::name_property::{
+    configure_name_properties, name_properties, ConfigureNamePropertiesResponse,
+    ConfigureNamePropertyInput, NamePropertyResponse,
+};
+use queries::property::{
+    properties, properties_for_table, property_by_id, property_values,
 };
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
     common::SyncSettingsInput,
+    configure_property::{configure_property_v2_mutation, ConfigurePropertyV2GqlInput},
+    delete_property_value::delete_property_v2_value_mutation,
     display_settings::{
         update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsResponse,
     },
@@ -47,6 +57,7 @@ use mutations::{
         update_name_properties, UpdateNamePropertiesInput, UpdateNamePropertiesResponse,
     },
     update_user,
+    upsert_property_value::{upsert_property_v2_value_mutation, UpsertPropertyV2ValueGqlInput},
 };
 use queries::{
     abbreviation::AbbreviationFilterInput,
@@ -283,6 +294,43 @@ impl GeneralQueries {
         activity_logs(ctx, store_id, page, filter, sort)
     }
 
+    /// All V2 properties (KDD option 1). Used by the central-admin list view.
+    pub async fn properties_v2(&self, ctx: &Context<'_>) -> Result<Vec<PropertyV2Node>> {
+        properties(ctx)
+    }
+
+    /// V2 properties (KDD option 1) attached to a given parent table.
+    pub async fn properties_v2_for_table(
+        &self,
+        ctx: &Context<'_>,
+        table: PropertyV2ParentTableEnum,
+    ) -> Result<Vec<PropertyV2Node>> {
+        properties_for_table(ctx, table)
+    }
+
+    /// One V2 property by id (admin detail view).
+    pub async fn property_v2_by_id(
+        &self,
+        ctx: &Context<'_>,
+        id: String,
+    ) -> Result<Option<PropertyV2Node>> {
+        property_by_id(ctx, id)
+    }
+
+    /// All V2 property values written for one record of a given parent table.
+    pub async fn property_v2_values(
+        &self,
+        ctx: &Context<'_>,
+        table: PropertyV2ParentTableEnum,
+        record_id: String,
+    ) -> Result<Vec<PropertyV2ValueNode>> {
+        property_values(ctx, table, record_id)
+    }
+
+    pub async fn name_properties(&self, ctx: &Context<'_>) -> Result<NamePropertyResponse> {
+        name_properties(ctx)
+    }
+
     /// Available without authorisation in operational and initialisation states
     pub async fn initialisation_status(
         &self,
@@ -462,10 +510,6 @@ impl GeneralQueries {
         label_printer_settings(ctx)
     }
 
-    pub async fn name_properties(&self, ctx: &Context<'_>) -> Result<NamePropertyResponse> {
-        name_properties(ctx)
-    }
-
     pub async fn reason_options(
         &self,
         ctx: &Context<'_>,
@@ -642,6 +686,35 @@ impl GeneralMutations {
         input: UpdateInsuranceInput,
     ) -> Result<UpdateInsuranceResponse> {
         update_insurance(ctx, &store_id, input)
+    }
+
+    /// Create or update a V2 property (KDD option 1) — central admin only.
+    pub async fn configure_property_v2(
+        &self,
+        ctx: &Context<'_>,
+        input: ConfigurePropertyV2GqlInput,
+    ) -> Result<PropertyV2Node> {
+        configure_property_v2_mutation(ctx, input)
+    }
+
+    /// Write a typed V2 value against one property on one record.
+    pub async fn upsert_property_v2_value(
+        &self,
+        ctx: &Context<'_>,
+        input: UpsertPropertyV2ValueGqlInput,
+    ) -> Result<PropertyV2ValueNode> {
+        upsert_property_v2_value_mutation(ctx, input)
+    }
+
+    /// Clear a V2 property's value on one record. Returns whether a row existed.
+    pub async fn delete_property_v2_value(
+        &self,
+        ctx: &Context<'_>,
+        table: PropertyV2ParentTableEnum,
+        record_id: String,
+        property_id: String,
+    ) -> Result<bool> {
+        delete_property_v2_value_mutation(ctx, table, record_id, property_id)
     }
 }
 

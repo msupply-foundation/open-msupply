@@ -189,6 +189,13 @@ diesel_string_enum! {
         ProgramRequisitionOrderType,
         ProgramRequisitionSettings,
         Property,
+        // Prototype property V2 (KDD comparison harness). Sync-style currently
+        // mirrors `Property` (Central / v6); see sync_style.rs for the v7
+        // follow-up TODO.
+        PropertyV2,
+        PropertyV2Option,
+        PropertyV2Table,
+        PropertyV2Value,
         PurchaseOrder,
         PurchaseOrderLine,
         ReasonOption,

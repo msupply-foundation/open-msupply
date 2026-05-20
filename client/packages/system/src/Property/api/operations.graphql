@@ -1,0 +1,103 @@
+fragment PropertyV2Option on PropertyV2OptionNode {
+  __typename
+  id
+  propertyId
+  name
+  translationKey
+  isDeleted
+}
+
+fragment PropertyV2Attachment on PropertyV2TableNode {
+  __typename
+  id
+  propertyId
+  table
+}
+
+fragment PropertyV2Detail on PropertyV2Node {
+  __typename
+  id
+  name
+  type
+  translationKey
+  options {
+    ...PropertyV2Option
+  }
+  attachedTo {
+    ...PropertyV2Attachment
+  }
+}
+
+fragment PropertyV2Value on PropertyV2ValueNode {
+  __typename
+  id
+  recordId
+  parentTable
+  property {
+    ...PropertyV2Detail
+  }
+  option {
+    ...PropertyV2Option
+  }
+  valueText
+  valueNumber
+  valueReal
+  valueDate
+}
+
+# All V2 properties — used by the admin list view.
+query propertiesV2 {
+  propertiesV2 {
+    ...PropertyV2Detail
+  }
+}
+
+# Single V2 property by id — used by the admin detail view.
+query propertyV2ById($id: String!) {
+  propertyV2ById(id: $id) {
+    ...PropertyV2Detail
+  }
+}
+
+# Fetches every V2 property attached to a given parent table. Used by
+# record-detail views to know which rows to render.
+query propertiesV2ForTable($table: PropertyV2ParentTableEnum!) {
+  propertiesV2ForTable(table: $table) {
+    ...PropertyV2Detail
+  }
+}
+
+# Values written against a single record. Used by PropertySection on
+# record-detail pages when standalone (not via the parent node resolver).
+query propertyV2ValuesForRecord(
+  $table: PropertyV2ParentTableEnum!
+  $recordId: String!
+) {
+  propertyV2Values(table: $table, recordId: $recordId) {
+    ...PropertyV2Value
+  }
+}
+
+mutation configurePropertyV2($input: ConfigurePropertyV2GqlInput!) {
+  configurePropertyV2(input: $input) {
+    ...PropertyV2Detail
+  }
+}
+
+mutation upsertPropertyV2Value($input: UpsertPropertyV2ValueGqlInput!) {
+  upsertPropertyV2Value(input: $input) {
+    ...PropertyV2Value
+  }
+}
+
+mutation deletePropertyV2Value(
+  $table: PropertyV2ParentTableEnum!
+  $recordId: String!
+  $propertyId: String!
+) {
+  deletePropertyV2Value(
+    table: $table
+    recordId: $recordId
+    propertyId: $propertyId
+  )
+}

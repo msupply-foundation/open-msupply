@@ -14,6 +14,10 @@ const EquipmentService = React.lazy(
   () => import('@openmsupply-client/coldchain/src/ColdchainService')
 );
 
+const PropertyService = React.lazy(
+  () => import('@openmsupply-client/system/src/Property/Service')
+);
+
 const fullFacilitiesPath = RouteBuilder.create(AppRoute.Manage)
   .addPart(AppRoute.Stores)
   .addWildCard()
@@ -24,6 +28,11 @@ const fullEquipmentPath = RouteBuilder.create(AppRoute.Manage)
   .addWildCard()
   .build();
 
+const fullPropertiesPath = RouteBuilder.create(AppRoute.Manage)
+  .addPart(AppRoute.Properties)
+  .addWildCard()
+  .build();
+
 const fullManagePath = RouteBuilder.create(AppRoute.Manage)
   .addWildCard()
   .build();
@@ -31,6 +40,7 @@ const fullManagePath = RouteBuilder.create(AppRoute.Manage)
 export const ManageRouter: FC = () => {
   const gotoFacilities = useMatch(fullFacilitiesPath);
   const gotoEquipment = useMatch(fullEquipmentPath);
+  const gotoProperties = useMatch(fullPropertiesPath);
   const goToManage = useMatch(fullManagePath);
 
   if (gotoFacilities) {
@@ -39,6 +49,10 @@ export const ManageRouter: FC = () => {
 
   if (gotoEquipment) {
     return <EquipmentService />;
+  }
+
+  if (gotoProperties) {
+    return <PropertyService />;
   }
 
   // Put this last to catch all other routes

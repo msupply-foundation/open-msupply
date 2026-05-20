@@ -1585,6 +1585,21 @@ export type ConfigureNamePropertyInput = {
   valueType: PropertyNodeValueType;
 };
 
+export type ConfigurePropertyV2GqlInput = {
+  attachedTo: Array<PropertyV2AttachmentGqlInput>;
+  id: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  options: Array<ConfigurePropertyV2OptionGqlInput>;
+  translationKey?: InputMaybe<Scalars['String']['input']>;
+  type: PropertyV2TypeEnum;
+};
+
+export type ConfigurePropertyV2OptionGqlInput = {
+  id: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  translationKey?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type ConnectionError = CentralPatientSearchErrorInterface &
   LinkPatientPatientToStoreErrorInterface &
   UpdateUserErrorInterface & {
@@ -4536,6 +4551,7 @@ export type InvoiceFilterInput = {
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
   isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
   linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
+  linkedOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
   nameId?: InputMaybe<EqualFilterStringInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
@@ -5027,6 +5043,7 @@ export type ItemNode = {
   name: Scalars['String']['output'];
   outerPackSize: Scalars['Int']['output'];
   programs?: Maybe<Array<ProgramNode>>;
+  propertyV2Values: Array<PropertyV2ValueNode>;
   restrictedLocationType?: Maybe<LocationTypeNode>;
   restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   stats: ItemStatsNode;
@@ -5264,6 +5281,22 @@ export type LedgerWouldGoBelowZero = InsertInventoryAdjustmentErrorInterface & {
   __typename: 'LedgerWouldGoBelowZero';
   description: Scalars['String']['output'];
   stockLine: StockLineNode;
+};
+
+export type LegacyPropertyFilterInput = {
+  /**
+   * Property key as defined in `name_property` — restricted to ASCII
+   * alphanumeric/underscore characters server-side.
+   */
+  key: Scalars['String']['input'];
+  /** Range filter for integer-valued JSON properties. */
+  numberValue?: InputMaybe<NumberRangeFilterInput>;
+  /**
+   * Text/option-style filter — applies against the JSON-extracted value
+   * treated as text. Mutually exclusive with `numberValue` in practice
+   * (set whichever matches the property's value type).
+   */
+  value?: InputMaybe<StringFilterInput>;
 };
 
 export type LineDeleteError = DeleteResponseRequisitionErrorInterface & {
@@ -5571,6 +5604,8 @@ export type Mutations = {
   batchResponseRequisition: BatchResponseRequisitionResponse;
   batchStocktake: BatchStocktakeResponse;
   centralServer: CentralServerMutationNode;
+  /** Create or update a V2 property (KDD option 1) — central admin only. */
+  configurePropertyV2: PropertyV2Node;
   createInventoryAdjustment: CreateInventoryAdjustmentResponse;
   /**
    * Create shipment for response requisition
@@ -5594,6 +5629,8 @@ export type Mutations = {
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
+  /** Clear a V2 property's value on one record. Returns whether a row existed. */
+  deletePropertyV2Value: Scalars['Boolean']['output'];
   deletePurchaseOrder: DeletePurchaseOrderResponse;
   deletePurchaseOrderLines: Array<DeletePurchaseOrderLineResponseWithId>;
   deleteRequestRequisition: DeleteRequestRequisitionResponse;
@@ -5726,6 +5763,8 @@ export type Mutations = {
   updateUser: UpdateUserResponse;
   updateVaccination: UpdateVaccinationResponse;
   updateVvmStatusLog: UpdateVvmStatusResponse;
+  /** Write a typed V2 value against one property on one record. */
+  upsertPropertyV2Value: PropertyV2ValueNode;
   /** Set requested for each line in request requisition to calculated */
   useSuggestedQuantity: UseSuggestedQuantityResponse;
 };
@@ -5793,6 +5832,10 @@ export type MutationsBatchResponseRequisitionArgs = {
 export type MutationsBatchStocktakeArgs = {
   input: BatchStocktakeInput;
   storeId: Scalars['String']['input'];
+};
+
+export type MutationsConfigurePropertyV2Args = {
+  input: ConfigurePropertyV2GqlInput;
 };
 
 export type MutationsCreateInventoryAdjustmentArgs = {
@@ -5878,6 +5921,12 @@ export type MutationsDeletePrescriptionArgs = {
 export type MutationsDeletePrescriptionLineArgs = {
   input: DeletePrescriptionLineInput;
   storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeletePropertyV2ValueArgs = {
+  propertyId: Scalars['String']['input'];
+  recordId: Scalars['String']['input'];
+  table: PropertyV2ParentTableEnum;
 };
 
 export type MutationsDeletePurchaseOrderArgs = {
@@ -6440,6 +6489,10 @@ export type MutationsUpdateVvmStatusLogArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsUpsertPropertyV2ValueArgs = {
+  input: UpsertPropertyV2ValueGqlInput;
+};
+
 export type MutationsUseSuggestedQuantityArgs = {
   input: UseSuggestedQuantityInput;
   storeId: Scalars['String']['input'];
@@ -6479,9 +6532,21 @@ export type NameFilterInput = {
   isSystemName?: InputMaybe<Scalars['Boolean']['input']>;
   /** Visibility in current store (based on store_id parameter and existence of name_store_join record) */
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
+  /**
+   * Perf-comparison: filter by legacy JSON property values via the
+   * text-JSON source column (parsed per row).
+   */
+  legacyProperty?: InputMaybe<Array<LegacyPropertyFilterInput>>;
+  /** Perf-comparison twin reading the read-only JSONB column instead. */
+  legacyPropertyJsonb?: InputMaybe<Array<LegacyPropertyFilterInput>>;
   /** Filter by name */
   name?: InputMaybe<StringFilterInput>;
   phone?: InputMaybe<StringFilterInput>;
+  /**
+   * Filter by relational property values. Multiple entries AND together —
+   * a name must satisfy every condition to be returned.
+   */
+  property?: InputMaybe<Array<PropertyV2ValueFilterInput>>;
   /** Code of the store if store is linked to name */
   storeCode?: InputMaybe<StringFilterInput>;
   supplyingStoreId?: InputMaybe<EqualFilterStringInput>;
@@ -6521,6 +6586,7 @@ export type NameNode = {
   phone?: Maybe<Scalars['String']['output']>;
   /** Returns a JSON string of the name properties e.g {"property_key": "value"} */
   properties: Scalars['String']['output'];
+  propertyV2Values: Array<PropertyV2ValueNode>;
   store?: Maybe<StoreNode>;
   type: NameNodeType;
   website?: Maybe<Scalars['String']['output']>;
@@ -6555,7 +6621,20 @@ export type NameRequired = UpsertSiteErrorInterface & {
 
 export enum NameSortFieldInput {
   Code = 'code',
+  /**
+   * Perf-comparison: sort by a legacy name property value, reading the
+   * text-JSON source column. Requires `propertyKey` on the sort input.
+   */
+  LegacyProperty = 'legacyProperty',
+  /** Same as `LegacyProperty` but reads the read-only JSONB twin column. */
+  LegacyPropertyJsonb = 'legacyPropertyJsonb',
   Name = 'name',
+  /**
+   * Perf-comparison: sort by a V2 (KDD prototype) property value via a
+   * correlated subquery over `property_v2_value`. `propertyKey` must hold
+   * the property_v2 id.
+   */
+  PropertyV2 = 'propertyV2',
 }
 
 export type NameSortInput = {
@@ -6566,6 +6645,11 @@ export type NameSortInput = {
   desc?: InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: NameSortFieldInput;
+  /**
+   * Required when `key` is `LegacyProperty` or `LegacyPropertyJsonb`. The
+   * JSON property key to sort on (must match a name property definition).
+   */
+  propertyKey?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type NameStoreJoinNode = {
@@ -6712,6 +6796,15 @@ export type NullableStringUpdate = {
 export type NumberNode = {
   __typename: 'NumberNode';
   number: Scalars['Int']['output'];
+};
+
+/**
+ * Range filter for integer-typed property values shared by the legacy and
+ * V2 number filter inputs. `min`/`max` both optional; equality is min=max.
+ */
+export type NumberRangeFilterInput = {
+  max?: InputMaybe<Scalars['Int']['input']>;
+  min?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type OkResponse = {
@@ -7499,6 +7592,115 @@ export enum PropertyNodeValueType {
   String = 'STRING',
 }
 
+export type PropertyV2AttachmentGqlInput = {
+  id: Scalars['String']['input'];
+  table: PropertyV2ParentTableEnum;
+};
+
+export type PropertyV2Node = {
+  __typename: 'PropertyV2Node';
+  attachedTo: Array<PropertyV2TableNode>;
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  options: Array<PropertyV2OptionNode>;
+  translationKey?: Maybe<Scalars['String']['output']>;
+  type: PropertyV2TypeEnum;
+};
+
+export type PropertyV2OptionNode = {
+  __typename: 'PropertyV2OptionNode';
+  id: Scalars['String']['output'];
+  isDeleted: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  propertyId: Scalars['String']['output'];
+  translationKey?: Maybe<Scalars['String']['output']>;
+};
+
+export enum PropertyV2ParentTableEnum {
+  InvoiceLine = 'INVOICE_LINE',
+  Item = 'ITEM',
+  Name = 'NAME',
+}
+
+export type PropertyV2TableNode = {
+  __typename: 'PropertyV2TableNode';
+  id: Scalars['String']['output'];
+  propertyId: Scalars['String']['output'];
+  table: PropertyV2ParentTableEnum;
+};
+
+export enum PropertyV2TypeEnum {
+  Date = 'DATE',
+  Number = 'NUMBER',
+  Option = 'OPTION',
+  Real = 'REAL',
+  Text = 'TEXT',
+}
+
+export type PropertyV2ValueFilterInput = {
+  /**
+   * Anchors the condition to a single property definition. Required —
+   * without it the condition would match across unrelated properties.
+   */
+  propertyId: EqualFilterStringInput;
+  valueDate?: InputMaybe<DateFilterInput>;
+  /** Range filter on `value_number`; equality is `min == max`. */
+  valueNumber?: InputMaybe<NumberRangeFilterInput>;
+  valueOptionId?: InputMaybe<EqualFilterStringInput>;
+  valueReal?: InputMaybe<EqualFilterBigFloatingNumberInput>;
+  valueText?: InputMaybe<StringFilterInput>;
+};
+
+export type PropertyV2ValueGqlInput =
+  | {
+      date: Scalars['NaiveDate']['input'];
+      number?: never;
+      optionId?: never;
+      real?: never;
+      text?: never;
+    }
+  | {
+      date?: never;
+      number: Scalars['Int']['input'];
+      optionId?: never;
+      real?: never;
+      text?: never;
+    }
+  | {
+      date?: never;
+      number?: never;
+      optionId: Scalars['String']['input'];
+      real?: never;
+      text?: never;
+    }
+  | {
+      date?: never;
+      number?: never;
+      optionId?: never;
+      real: Scalars['Float']['input'];
+      text?: never;
+    }
+  | {
+      date?: never;
+      number?: never;
+      optionId?: never;
+      real?: never;
+      text: Scalars['String']['input'];
+    };
+
+export type PropertyV2ValueNode = {
+  __typename: 'PropertyV2ValueNode';
+  id: Scalars['String']['output'];
+  option?: Maybe<PropertyV2OptionNode>;
+  parentTable: PropertyV2ParentTableEnum;
+  property: PropertyV2Node;
+  recordId: Scalars['String']['output'];
+  valueDate?: Maybe<Scalars['NaiveDate']['output']>;
+  valueNumber?: Maybe<Scalars['Int']['output']>;
+  valueReal?: Maybe<Scalars['Float']['output']>;
+  valueText?: Maybe<Scalars['String']['output']>;
+};
+
 export type PurchaseOrderConnector = {
   __typename: 'PurchaseOrderConnector';
   nodes: Array<PurchaseOrderNode>;
@@ -7835,6 +8037,14 @@ export type Queries = {
   programIndicators: ProgramIndicatorResponse;
   programRequisitionSettingsByCustomer: CustomerProgramRequisitionSettingNode;
   programs: ProgramsResponse;
+  /** All V2 properties (KDD option 1). Used by the central-admin list view. */
+  propertiesV2: Array<PropertyV2Node>;
+  /** V2 properties (KDD option 1) attached to a given parent table. */
+  propertiesV2ForTable: Array<PropertyV2Node>;
+  /** One V2 property by id (admin detail view). */
+  propertyV2ById?: Maybe<PropertyV2Node>;
+  /** All V2 property values written for one record of a given parent table. */
+  propertyV2Values: Array<PropertyV2ValueNode>;
   purchaseOrder: PurchaseOrderResponse;
   purchaseOrderLine: PurchaseOrderLineResponse;
   purchaseOrderLines: PurchaseOrderLinesResponse;
@@ -8398,6 +8608,19 @@ export type QueriesProgramsArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<ProgramSortInput>;
   storeId: Scalars['String']['input'];
+};
+
+export type QueriesPropertiesV2ForTableArgs = {
+  table: PropertyV2ParentTableEnum;
+};
+
+export type QueriesPropertyV2ByIdArgs = {
+  id: Scalars['String']['input'];
+};
+
+export type QueriesPropertyV2ValuesArgs = {
+  recordId: Scalars['String']['input'];
+  table: PropertyV2ParentTableEnum;
 };
 
 export type QueriesPurchaseOrderArgs = {
@@ -11702,6 +11925,14 @@ export type UpsertPreferencesInput = {
     Array<WarnWhenMissingRecentStocktakeInput>
   >;
   warningForExcessRequest?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type UpsertPropertyV2ValueGqlInput = {
+  id: Scalars['String']['input'];
+  propertyId: Scalars['String']['input'];
+  recordId: Scalars['String']['input'];
+  table: PropertyV2ParentTableEnum;
+  value: PropertyV2ValueGqlInput;
 };
 
 export type UpsertSiteError = {

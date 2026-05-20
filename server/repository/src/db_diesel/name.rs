@@ -8,8 +8,10 @@ use crate::{
         apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
     },
     name_oms_fields_alias,
+    property_v2_value_row::property_v2_value,
     repository_error::RepositoryError,
-    EqualFilter, NameOmsFieldsRow, NameRowType, Pagination, Sort, StoreFilter, StoreRepository,
+    EqualFilter, NameOmsFieldsRow, NameRowType, NumberRangeFilter, Pagination,
+    PropertyV2ValueFilter, PropertyV2ValueRepository, Sort, StoreFilter, StoreRepository,
     StringFilter,
 };
 
@@ -56,6 +58,33 @@ pub struct NameFilter {
 
     pub code_or_name: Option<StringFilter>,
     pub store: Option<StoreFilter>,
+
+    /// Filter by relational property values. Each entry becomes its own
+    /// `record_id IN (SELECT record_id FROM property_value WHERE …)`
+    /// sub-query, so multiple entries AND together.
+    pub property: Option<Vec<PropertyV2ValueFilter>>,
+
+    /// Perf-comparison: filter by legacy JSON properties via
+    /// `json_extract(name_oms_fields.properties, '$.<key>')` (SQLite) /
+    /// `(name_oms_fields.properties::jsonb) ->> '<key>'` (Postgres).
+    /// Reads the text-JSON source column — parsed on every row.
+    pub legacy_property: Option<Vec<LegacyPropertyFilter>>,
+
+    /// Perf-comparison twin of `legacy_property` that reads the read-only
+    /// `name_oms_fields.properties_jsonb` column instead — no per-row parse.
+    pub legacy_property_jsonb: Option<Vec<LegacyPropertyFilter>>,
+}
+
+#[derive(Clone, PartialEq, Debug, Default)]
+pub struct LegacyPropertyFilter {
+    pub key: String,
+    /// Text/option-style filter — `LIKE`/`equal_to` against the JSON-extracted
+    /// value treated as text.
+    pub value: Option<StringFilter>,
+    /// Range filter for integer-valued JSON properties — emitted as
+    /// `CAST(json_extract(...) AS INTEGER) BETWEEN ? AND ?` (or backend
+    /// equivalent). Both bounds optional; equality is `min == max`.
+    pub number_value: Option<NumberRangeFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -67,6 +96,16 @@ pub enum NameSortField {
     Address2,
     Country,
     Email,
+    /// Perf-comparison: ORDER BY `json_extract(name_oms_fields.properties, '$.<key>')`.
+    /// The String payload is the property key (validated as ASCII alphanumeric/underscore
+    /// before interpolation into raw SQL).
+    LegacyProperty(String),
+    /// Same as LegacyProperty but sorts against `properties_jsonb`.
+    LegacyPropertyJsonb(String),
+    /// Perf-comparison: ORDER BY a value pulled from `property_v2_value` via a
+    /// correlated subquery keyed on `(record_id, property_id, table_name='name')`.
+    /// The String payload is the property_v2 id (validated before interpolation).
+    PropertyV2(String),
 }
 
 pub type NameSort = Sort<NameSortField>;
@@ -125,7 +164,7 @@ impl<'a> NameRepository<'a> {
         let mut query = Self::create_filtered_query(store_id.to_string(), filter);
 
         if let Some(sort) = sort {
-            match sort.key {
+            match &sort.key {
                 NameSortField::Name => {
                     apply_sort_no_case!(query, sort, name::name_);
                 }
@@ -137,6 +176,15 @@ impl<'a> NameRepository<'a> {
                 NameSortField::Address2 => apply_sort_no_case!(query, sort, name::address2),
                 NameSortField::Country => apply_sort_no_case!(query, sort, name::country),
                 NameSortField::Email => apply_sort_no_case!(query, sort, name::email),
+                NameSortField::LegacyProperty(key) => {
+                    query = apply_legacy_property_sort(query, key, false, sort.desc);
+                }
+                NameSortField::LegacyPropertyJsonb(key) => {
+                    query = apply_legacy_property_sort(query, key, true, sort.desc);
+                }
+                NameSortField::PropertyV2(property_id) => {
+                    query = apply_property_v2_sort(query, property_id, sort.desc);
+                }
             }
         } else {
             query = query.order(name::id.asc())
@@ -193,6 +241,9 @@ impl<'a> NameRepository<'a> {
                 code_or_name,
                 supplying_store_id,
                 store,
+                property,
+                legacy_property,
+                legacy_property_jsonb,
             } = f;
 
             // or filter need to be applied before and filters
@@ -254,6 +305,33 @@ impl<'a> NameRepository<'a> {
                 let store_ids = StoreRepository::create_filtered_query(store).select(store::id);
                 query = query.filter(store::id.eq_any(store_ids));
             }
+
+            // Each property filter becomes its own EXISTS-style sub-query keyed on
+            // `table_name = "name"`. Multiple entries AND together so a name must
+            // have a matching `property_v2_value` row for *every* condition.
+            if let Some(property_filters) = property {
+                for cond in property_filters {
+                    let sub = PropertyV2ValueRepository::create_filtered_query(Some(
+                        cond.table_name(EqualFilter::equal_to("name".to_string())),
+                    ))
+                    .select(property_v2_value::record_id);
+                    query = query.filter(name::id.eq_any(sub));
+                }
+            }
+
+            // Legacy text-JSON property filters — parses `properties` per row.
+            if let Some(legacy_filters) = legacy_property {
+                for cond in legacy_filters {
+                    query = apply_legacy_property_filter(query, &cond, false);
+                }
+            }
+
+            // Read-only JSONB twin column — no per-row parse.
+            if let Some(legacy_filters) = legacy_property_jsonb {
+                for cond in legacy_filters {
+                    query = apply_legacy_property_filter(query, &cond, true);
+                }
+            }
         };
 
         // Only return active (not deleted) names
@@ -296,6 +374,189 @@ fn query(store_id: String) -> _ {
 }
 
 type BoxedNameQuery = IntoBoxed<'static, query, DBType>;
+
+/// Reject keys with anything other than ASCII alphanumeric or underscore.
+/// The validated key is interpolated directly into raw SQL, so this is the
+/// injection boundary — only matches what JSON property keys can legitimately be.
+fn is_safe_property_key(key: &str) -> bool {
+    !key.is_empty() && key.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+}
+
+/// Build the SQL expression that extracts a legacy property value as text.
+/// `use_jsonb` switches between the text-JSON source column and the
+/// read-only JSONB twin. Caller is responsible for having validated `key`
+/// via [`is_safe_property_key`].
+///
+/// Columns are referenced via the unaliased `name` table — both `properties`
+/// and `properties_jsonb` live on `name` itself (the Diesel `name_oms_fields`
+/// schema is an alias for the same physical table, used only so it can be
+/// joined a second time with a different selection).
+fn legacy_property_extract_sql(key: &str, use_jsonb: bool) -> String {
+    if cfg!(feature = "postgres") {
+        if use_jsonb {
+            format!("name.properties_jsonb ->> '{key}'")
+        } else {
+            // `properties` is TEXT on Postgres — cast to jsonb per row.
+            format!("(name.properties::jsonb) ->> '{key}'")
+        }
+    } else {
+        let column = if use_jsonb {
+            "properties_jsonb"
+        } else {
+            "properties"
+        };
+        // `json_extract` accepts both text JSON and jsonb input transparently;
+        // on the jsonb column it skips the parse step.
+        format!("json_extract(name.{column}, '$.{key}')")
+    }
+}
+
+fn apply_legacy_property_filter(
+    mut query: BoxedNameQuery,
+    cond: &LegacyPropertyFilter,
+    use_jsonb: bool,
+) -> BoxedNameQuery {
+    use diesel::dsl::sql;
+    use diesel::sql_types::{Bool, Integer, Text};
+
+    if !is_safe_property_key(&cond.key) {
+        // Silently no-op on a bad key. The frontend only ever sends keys from
+        // the `name_property` definitions list, so this branch is defensive.
+        return query;
+    }
+    let extract = legacy_property_extract_sql(&cond.key, use_jsonb);
+    let like_op = if cfg!(feature = "postgres") {
+        "ILIKE"
+    } else {
+        "LIKE"
+    };
+
+    if let Some(value) = &cond.value {
+        if let Some(v) = &value.equal_to {
+            query = query.filter(
+                sql::<Bool>(&format!("{extract} = ")).bind::<Text, _>(v.clone()),
+            );
+        }
+        if let Some(v) = &value.not_equal_to {
+            query = query.filter(
+                sql::<Bool>(&format!("{extract} <> ")).bind::<Text, _>(v.clone()),
+            );
+        }
+        if let Some(v) = &value.like {
+            query = query.filter(
+                sql::<Bool>(&format!("{extract} {like_op} "))
+                    .bind::<Text, _>(format!("%{v}%")),
+            );
+        }
+        if let Some(v) = &value.starts_with {
+            query = query.filter(
+                sql::<Bool>(&format!("{extract} {like_op} "))
+                    .bind::<Text, _>(format!("{v}%")),
+            );
+        }
+        if let Some(v) = &value.ends_with {
+            query = query.filter(
+                sql::<Bool>(&format!("{extract} {like_op} "))
+                    .bind::<Text, _>(format!("%{v}")),
+            );
+        }
+        // `equal_any` / `not_equal_all` intentionally not implemented for this
+        // perf-comparison prototype — the frontend only emits text `like`
+        // filters and exact `equal_to` matches for now.
+    }
+
+    if let Some(range) = &cond.number_value {
+        // Cast the JSON-extracted value to integer for the comparison. On
+        // SQLite `json_extract` already returns the typed numeric for numeric
+        // JSON, so CAST is a cheap no-op there. On Postgres the value is text
+        // (->> ) so the CAST is necessary.
+        let cast_sql = if cfg!(feature = "postgres") {
+            format!("({extract})::integer")
+        } else {
+            format!("CAST({extract} AS INTEGER)")
+        };
+        if let Some(min) = range.min {
+            query = query.filter(
+                sql::<Bool>(&format!("{cast_sql} >= ")).bind::<Integer, _>(min),
+            );
+        }
+        if let Some(max) = range.max {
+            query = query.filter(
+                sql::<Bool>(&format!("{cast_sql} <= ")).bind::<Integer, _>(max),
+            );
+        }
+    }
+    query
+}
+
+fn apply_legacy_property_sort(
+    query: BoxedNameQuery,
+    key: &str,
+    use_jsonb: bool,
+    desc: Option<bool>,
+) -> BoxedNameQuery {
+    use diesel::dsl::sql;
+    use diesel::sql_types::Text;
+
+    if !is_safe_property_key(key) {
+        return query;
+    }
+    let extract = legacy_property_extract_sql(key, use_jsonb);
+    let direction = if desc.unwrap_or(false) { "DESC" } else { "ASC" };
+    query.order(sql::<Text>(&format!("{extract} {direction}")))
+}
+
+/// Property V2 IDs are UUID-ish — alphanumeric plus underscore/hyphen.
+/// Same idea as [`is_safe_property_key`]: it gates raw-SQL interpolation.
+fn is_safe_property_v2_id(id: &str) -> bool {
+    !id.is_empty()
+        && id
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+}
+
+fn apply_property_v2_sort(
+    query: BoxedNameQuery,
+    property_id: &str,
+    desc: Option<bool>,
+) -> BoxedNameQuery {
+    use diesel::dsl::sql;
+    use diesel::sql_types::Text;
+
+    if !is_safe_property_v2_id(property_id) {
+        return query;
+    }
+    let direction = if desc.unwrap_or(false) { "DESC" } else { "ASC" };
+    // Correlated subquery returning a single sortable representation per name:
+    // text for TEXT, stringified numbers for NUMBER/REAL, ISO text for DATE,
+    // and the option's name for OPTION-typed properties. Both SQLite and
+    // Postgres accept this form. NULLs (missing values) sort consistently.
+    let cast = if cfg!(feature = "postgres") {
+        // Postgres `text` cast for numerics, `to_char` for dates kept as text.
+        "COALESCE(\
+            pv.value_text, \
+            pv.value_number::text, \
+            pv.value_real::text, \
+            pv.value_date::text, \
+            (SELECT pvo.name FROM property_v2_option pvo WHERE pvo.id = pv.value_option_id) \
+         )"
+    } else {
+        "COALESCE(\
+            pv.value_text, \
+            CAST(pv.value_number AS TEXT), \
+            CAST(pv.value_real AS TEXT), \
+            pv.value_date, \
+            (SELECT pvo.name FROM property_v2_option pvo WHERE pvo.id = pv.value_option_id) \
+         )"
+    };
+    let order_sql = format!(
+        "(SELECT {cast} FROM property_v2_value pv \
+          WHERE pv.record_id = name.id \
+            AND pv.table_name = 'name' \
+            AND pv.property_id = '{property_id}') {direction}"
+    );
+    query.order(sql::<Text>(&order_sql))
+}
 
 impl NameFilter {
     pub fn new() -> NameFilter {
@@ -364,6 +625,21 @@ impl NameFilter {
 
     pub fn store(mut self, filter: StoreFilter) -> Self {
         self.store = Some(filter);
+        self
+    }
+
+    pub fn property(mut self, filters: Vec<PropertyV2ValueFilter>) -> Self {
+        self.property = Some(filters);
+        self
+    }
+
+    pub fn legacy_property(mut self, filters: Vec<LegacyPropertyFilter>) -> Self {
+        self.legacy_property = Some(filters);
+        self
+    }
+
+    pub fn legacy_property_jsonb(mut self, filters: Vec<LegacyPropertyFilter>) -> Self {
+        self.legacy_property_jsonb = Some(filters);
         self
     }
 }
@@ -439,7 +715,8 @@ mod tests {
             mock_name_1, mock_test_name_query_store_1, mock_test_name_query_store_2,
             MockDataInserts,
         },
-        test_db, NameFilter, NameRepository, NameRow, NameRowRepository, Pagination, StringFilter,
+        test_db, NameFilter, NameRepository, NameRow, NameRowRepository, NumberRangeFilter,
+        Pagination, StringFilter,
     };
 
     use std::convert::TryFrom;
@@ -757,5 +1034,147 @@ mod tests {
             )
             .unwrap();
         assert_eq!(result.first().unwrap().name_row.code, "code3");
+    }
+
+    #[actix_rt::test]
+    async fn test_name_query_filter_by_property() {
+        use crate::{
+            mock::{
+                mock_name_a, mock_name_b, mock_name_c, mock_property_date, mock_property_number,
+                mock_property_option, mock_property_option_a, mock_property_option_b,
+                mock_property_real, mock_property_text,
+            },
+            DateFilter, EqualFilter, PropertyV2ValueFilter, PropertyV2ValueRow,
+            PropertyV2ValueRowRepository, StringFilter,
+        };
+        use chrono::NaiveDate;
+
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_name_query_filter_by_property",
+            MockDataInserts::none().names().properties(),
+        )
+        .await;
+        let repo = NameRepository::new(&connection);
+        let store_id = "any_store";
+
+        // value_text: like — only name_a's "abc" matches.
+        let result = repo
+            .query_by_filter(
+                store_id,
+                NameFilter::new().property(vec![PropertyV2ValueFilter::new()
+                    .property_id(EqualFilter::equal_to(mock_property_text().id))
+                    .value_text(StringFilter::like("ab"))]),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].name_row.id, mock_name_a().id);
+
+        // value_option_id: equal_to — only name_b is attached to option_a.
+        let result = repo
+            .query_by_filter(
+                store_id,
+                NameFilter::new().property(vec![PropertyV2ValueFilter::new()
+                    .property_id(EqualFilter::equal_to(mock_property_option().id))
+                    .value_option_id(EqualFilter::equal_to(mock_property_option_a().id))]),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].name_row.id, mock_name_b().id);
+
+        // value_option_id: equal_any across both options — both name_b and name_c match.
+        let result = repo
+            .query_by_filter(
+                store_id,
+                NameFilter::new().property(vec![PropertyV2ValueFilter::new()
+                    .property_id(EqualFilter::equal_to(mock_property_option().id))
+                    .value_option_id(EqualFilter::equal_any(vec![
+                        mock_property_option_a().id,
+                        mock_property_option_b().id,
+                    ]))]),
+            )
+            .unwrap();
+        let ids: Vec<_> = result.into_iter().map(|n| n.name_row.id).collect();
+        assert!(ids.contains(&mock_name_b().id));
+        assert!(ids.contains(&mock_name_c().id));
+        assert_eq!(ids.len(), 2);
+
+        // value_number / value_real / value_date — each pinpoints name_a.
+        for filter in [
+            PropertyV2ValueFilter::new()
+                .property_id(EqualFilter::equal_to(mock_property_number().id))
+                .value_number(NumberRangeFilter::equal_to(42)),
+            PropertyV2ValueFilter::new()
+                .property_id(EqualFilter::equal_to(mock_property_real().id))
+                .value_real(EqualFilter::equal_to(1.5)),
+            PropertyV2ValueFilter::new()
+                .property_id(EqualFilter::equal_to(mock_property_date().id))
+                .value_date(DateFilter::equal_to(
+                    NaiveDate::from_ymd_opt(2024, 1, 15).unwrap(),
+                )),
+        ] {
+            let result = repo
+                .query_by_filter(store_id, NameFilter::new().property(vec![filter]))
+                .unwrap();
+            assert_eq!(result.len(), 1);
+            assert_eq!(result[0].name_row.id, mock_name_a().id);
+        }
+
+        // AND across multiple property conditions — only name_b has BOTH
+        // text="xyz" and option=option_a.
+        let result = repo
+            .query_by_filter(
+                store_id,
+                NameFilter::new().property(vec![
+                    PropertyV2ValueFilter::new()
+                        .property_id(EqualFilter::equal_to(mock_property_text().id))
+                        .value_text(StringFilter::equal_to("xyz")),
+                    PropertyV2ValueFilter::new()
+                        .property_id(EqualFilter::equal_to(mock_property_option().id))
+                        .value_option_id(EqualFilter::equal_to(mock_property_option_a().id)),
+                ]),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].name_row.id, mock_name_b().id);
+
+        // No row matches both text="abc" AND option=option_a — name_a has the
+        // text but no option, name_b has the option but a different text.
+        let result = repo
+            .query_by_filter(
+                store_id,
+                NameFilter::new().property(vec![
+                    PropertyV2ValueFilter::new()
+                        .property_id(EqualFilter::equal_to(mock_property_text().id))
+                        .value_text(StringFilter::equal_to("abc")),
+                    PropertyV2ValueFilter::new()
+                        .property_id(EqualFilter::equal_to(mock_property_option().id))
+                        .value_option_id(EqualFilter::equal_to(mock_property_option_a().id)),
+                ]),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 0);
+
+        // table_name guard: an `item` row with the same value_text must NOT
+        // surface in name results (proves the sub-query pins table_name="name").
+        PropertyV2ValueRowRepository::new(&connection)
+            .upsert_one(&PropertyV2ValueRow {
+                id: "item_property_value_decoy".to_string(),
+                table_name: "item".to_string(),
+                record_id: "item_a".to_string(),
+                property_id: mock_property_text().id,
+                value_text: Some("abc".to_string()),
+                ..Default::default()
+            })
+            .unwrap();
+        let result = repo
+            .query_by_filter(
+                store_id,
+                NameFilter::new().property(vec![PropertyV2ValueFilter::new()
+                    .property_id(EqualFilter::equal_to(mock_property_text().id))
+                    .value_text(StringFilter::equal_to("abc"))]),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].name_row.id, mock_name_a().id);
     }
 }

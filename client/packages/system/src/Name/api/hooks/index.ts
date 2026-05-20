@@ -16,6 +16,7 @@ export const useName = {
     storesAll: Document.useStoresAll,
     donors: Document.useDonors,
     properties: Document.useNameProperties,
+    namePropertyDefinitions: Document.useNamePropertyDefinitions,
   },
   utils: {
     nextStoreId: Utils.useNextStoreId,

@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { PropertyV2ValueFragmentDoc } from '../../Property/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type NameRowFragment = {
   __typename: 'NameNode';
@@ -11,6 +12,36 @@ export type NameRowFragment = {
   isSupplier: boolean;
   isOnHold: boolean;
   name: string;
+  store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+};
+
+export type NameRowWithPropertyV2ValuesFragment = {
+  __typename: 'NameNode';
+  code: string;
+  id: string;
+  isCustomer: boolean;
+  isSupplier: boolean;
+  isOnHold: boolean;
+  name: string;
+  propertyV2Values: Array<{
+    __typename: 'PropertyV2ValueNode';
+    id: string;
+    valueText?: string | null;
+    valueNumber?: number | null;
+    valueReal?: number | null;
+    valueDate?: string | null;
+    property: {
+      __typename: 'PropertyV2Node';
+      id: string;
+      name: string;
+      type: Types.PropertyV2TypeEnum;
+    };
+    option?: {
+      __typename: 'PropertyV2OptionNode';
+      id: string;
+      name: string;
+    } | null;
+  }>;
   store?: { __typename: 'StoreNode'; id: string; code: string } | null;
 };
 
@@ -25,6 +56,25 @@ export type FacilityNameRowFragment = {
   name: string;
   properties: string;
   store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  propertyV2Values: Array<{
+    __typename: 'PropertyV2ValueNode';
+    id: string;
+    valueText?: string | null;
+    valueNumber?: number | null;
+    valueReal?: number | null;
+    valueDate?: string | null;
+    property: {
+      __typename: 'PropertyV2Node';
+      id: string;
+      name: string;
+      type: Types.PropertyV2TypeEnum;
+    };
+    option?: {
+      __typename: 'PropertyV2OptionNode';
+      id: string;
+      name: string;
+    } | null;
+  }>;
 };
 
 export type NameFragment = {
@@ -54,6 +104,45 @@ export type NameFragment = {
   freightFactor?: number | null;
   store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   currency?: { __typename: 'CurrencyNode'; id: string; code: string } | null;
+  propertyV2Values: Array<{
+    __typename: 'PropertyV2ValueNode';
+    id: string;
+    recordId: string;
+    parentTable: Types.PropertyV2ParentTableEnum;
+    valueText?: string | null;
+    valueNumber?: number | null;
+    valueReal?: number | null;
+    valueDate?: string | null;
+    property: {
+      __typename: 'PropertyV2Node';
+      id: string;
+      name: string;
+      type: Types.PropertyV2TypeEnum;
+      translationKey?: string | null;
+      options: Array<{
+        __typename: 'PropertyV2OptionNode';
+        id: string;
+        propertyId: string;
+        name: string;
+        translationKey?: string | null;
+        isDeleted: boolean;
+      }>;
+      attachedTo: Array<{
+        __typename: 'PropertyV2TableNode';
+        id: string;
+        propertyId: string;
+        table: Types.PropertyV2ParentTableEnum;
+      }>;
+    };
+    option?: {
+      __typename: 'PropertyV2OptionNode';
+      id: string;
+      propertyId: string;
+      name: string;
+      translationKey?: string | null;
+      isDeleted: boolean;
+    } | null;
+  }>;
 };
 
 export type PropertyFragment = {
@@ -63,6 +152,39 @@ export type PropertyFragment = {
   name: string;
   allowedValues?: string | null;
   valueType: Types.PropertyNodeValueType;
+};
+
+export type NamePropertyV2Fragment = {
+  __typename: 'PropertyV2Node';
+  id: string;
+  name: string;
+  type: Types.PropertyV2TypeEnum;
+  options: Array<{
+    __typename: 'PropertyV2OptionNode';
+    id: string;
+    name: string;
+    isDeleted: boolean;
+  }>;
+};
+
+export type NamePropertyV2DefinitionsQueryVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type NamePropertyV2DefinitionsQuery = {
+  __typename: 'Queries';
+  propertiesV2ForTable: Array<{
+    __typename: 'PropertyV2Node';
+    id: string;
+    name: string;
+    type: Types.PropertyV2TypeEnum;
+    options: Array<{
+      __typename: 'PropertyV2OptionNode';
+      id: string;
+      name: string;
+      isDeleted: boolean;
+    }>;
+  }>;
 };
 
 export type NamesQueryVariables = Types.Exact<{
@@ -87,6 +209,25 @@ export type NamesQuery = {
       isSupplier: boolean;
       isOnHold: boolean;
       name: string;
+      propertyV2Values: Array<{
+        __typename: 'PropertyV2ValueNode';
+        id: string;
+        valueText?: string | null;
+        valueNumber?: number | null;
+        valueReal?: number | null;
+        valueDate?: string | null;
+        property: {
+          __typename: 'PropertyV2Node';
+          id: string;
+          name: string;
+          type: Types.PropertyV2TypeEnum;
+        };
+        option?: {
+          __typename: 'PropertyV2OptionNode';
+          id: string;
+          name: string;
+        } | null;
+      }>;
       store?: { __typename: 'StoreNode'; id: string; code: string } | null;
     }>;
   };
@@ -96,6 +237,7 @@ export type FacilitiesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   key: Types.NameSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  propertyKey?: Types.InputMaybe<Types.Scalars['String']['input']>;
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   filter?: Types.InputMaybe<Types.NameFilterInput>;
@@ -117,6 +259,25 @@ export type FacilitiesQuery = {
       name: string;
       properties: string;
       store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      propertyV2Values: Array<{
+        __typename: 'PropertyV2ValueNode';
+        id: string;
+        valueText?: string | null;
+        valueNumber?: number | null;
+        valueReal?: number | null;
+        valueDate?: string | null;
+        property: {
+          __typename: 'PropertyV2Node';
+          id: string;
+          name: string;
+          type: Types.PropertyV2TypeEnum;
+        };
+        option?: {
+          __typename: 'PropertyV2OptionNode';
+          id: string;
+          name: string;
+        } | null;
+      }>;
     }>;
   };
 };
@@ -162,6 +323,45 @@ export type NameByIdQuery = {
         id: string;
         code: string;
       } | null;
+      propertyV2Values: Array<{
+        __typename: 'PropertyV2ValueNode';
+        id: string;
+        recordId: string;
+        parentTable: Types.PropertyV2ParentTableEnum;
+        valueText?: string | null;
+        valueNumber?: number | null;
+        valueReal?: number | null;
+        valueDate?: string | null;
+        property: {
+          __typename: 'PropertyV2Node';
+          id: string;
+          name: string;
+          type: Types.PropertyV2TypeEnum;
+          translationKey?: string | null;
+          options: Array<{
+            __typename: 'PropertyV2OptionNode';
+            id: string;
+            propertyId: string;
+            name: string;
+            translationKey?: string | null;
+            isDeleted: boolean;
+          }>;
+          attachedTo: Array<{
+            __typename: 'PropertyV2TableNode';
+            id: string;
+            propertyId: string;
+            table: Types.PropertyV2ParentTableEnum;
+          }>;
+        };
+        option?: {
+          __typename: 'PropertyV2OptionNode';
+          id: string;
+          propertyId: string;
+          name: string;
+          translationKey?: string | null;
+          isDeleted: boolean;
+        } | null;
+      }>;
     }>;
   };
 };
@@ -229,6 +429,45 @@ export type UpdateNamePropertiesMutation = {
           id: string;
           code: string;
         } | null;
+        propertyV2Values: Array<{
+          __typename: 'PropertyV2ValueNode';
+          id: string;
+          recordId: string;
+          parentTable: Types.PropertyV2ParentTableEnum;
+          valueText?: string | null;
+          valueNumber?: number | null;
+          valueReal?: number | null;
+          valueDate?: string | null;
+          property: {
+            __typename: 'PropertyV2Node';
+            id: string;
+            name: string;
+            type: Types.PropertyV2TypeEnum;
+            translationKey?: string | null;
+            options: Array<{
+              __typename: 'PropertyV2OptionNode';
+              id: string;
+              propertyId: string;
+              name: string;
+              translationKey?: string | null;
+              isDeleted: boolean;
+            }>;
+            attachedTo: Array<{
+              __typename: 'PropertyV2TableNode';
+              id: string;
+              propertyId: string;
+              table: Types.PropertyV2ParentTableEnum;
+            }>;
+          };
+          option?: {
+            __typename: 'PropertyV2OptionNode';
+            id: string;
+            propertyId: string;
+            name: string;
+            translationKey?: string | null;
+            isDeleted: boolean;
+          } | null;
+        }>;
       }
     | {
         __typename: 'UpdateNamePropertiesError';
@@ -250,6 +489,28 @@ export const NameRowFragmentDoc = gql`
     }
   }
 `;
+export const NameRowWithPropertyV2ValuesFragmentDoc = gql`
+  fragment NameRowWithPropertyV2Values on NameNode {
+    ...NameRow
+    propertyV2Values {
+      id
+      property {
+        id
+        name
+        type
+      }
+      option {
+        id
+        name
+      }
+      valueText
+      valueNumber
+      valueReal
+      valueDate
+    }
+  }
+  ${NameRowFragmentDoc}
+`;
 export const FacilityNameRowFragmentDoc = gql`
   fragment FacilityNameRow on NameNode {
     code
@@ -264,6 +525,22 @@ export const FacilityNameRowFragmentDoc = gql`
       code
     }
     properties
+    propertyV2Values {
+      id
+      property {
+        id
+        name
+        type
+      }
+      option {
+        id
+        name
+      }
+      valueText
+      valueNumber
+      valueReal
+      valueDate
+    }
   }
 `;
 export const NameFragmentDoc = gql`
@@ -299,7 +576,11 @@ export const NameFragmentDoc = gql`
       id
       code
     }
+    propertyV2Values {
+      ...PropertyV2Value
+    }
   }
+  ${PropertyV2ValueFragmentDoc}
 `;
 export const PropertyFragmentDoc = gql`
   fragment Property on PropertyNode {
@@ -309,6 +590,26 @@ export const PropertyFragmentDoc = gql`
     allowedValues
     valueType
   }
+`;
+export const NamePropertyV2FragmentDoc = gql`
+  fragment NamePropertyV2 on PropertyV2Node {
+    id
+    name
+    type
+    options {
+      id
+      name
+      isDeleted
+    }
+  }
+`;
+export const NamePropertyV2DefinitionsDocument = gql`
+  query namePropertyV2Definitions {
+    propertiesV2ForTable(table: NAME) {
+      ...NamePropertyV2
+    }
+  }
+  ${NamePropertyV2FragmentDoc}
 `;
 export const NamesDocument = gql`
   query names(
@@ -328,19 +629,20 @@ export const NamesDocument = gql`
       ... on NameConnector {
         __typename
         nodes {
-          ...NameRow
+          ...NameRowWithPropertyV2Values
         }
         totalCount
       }
     }
   }
-  ${NameRowFragmentDoc}
+  ${NameRowWithPropertyV2ValuesFragmentDoc}
 `;
 export const FacilitiesDocument = gql`
   query facilities(
     $storeId: String!
     $key: NameSortFieldInput!
     $desc: Boolean
+    $propertyKey: String
     $first: Int
     $offset: Int
     $filter: NameFilterInput
@@ -348,7 +650,7 @@ export const FacilitiesDocument = gql`
     names(
       storeId: $storeId
       page: { first: $first, offset: $offset }
-      sort: { key: $key, desc: $desc }
+      sort: { key: $key, desc: $desc, propertyKey: $propertyKey }
       filter: $filter
     ) {
       ... on NameConnector {
@@ -434,6 +736,24 @@ export function getSdk(
   withWrapper: SdkFunctionWrapper = defaultWrapper
 ) {
   return {
+    namePropertyV2Definitions(
+      variables?: NamePropertyV2DefinitionsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<NamePropertyV2DefinitionsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<NamePropertyV2DefinitionsQuery>({
+            document: NamePropertyV2DefinitionsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'namePropertyV2Definitions',
+        'query',
+        variables
+      );
+    },
     names(
       variables: NamesQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,

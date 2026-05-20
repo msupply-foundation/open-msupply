@@ -189,6 +189,9 @@ mod graphql {
                 code_or_name: _,
                 supplying_store_id: _,
                 store: _,
+                property: _,
+                legacy_property: _,
+                legacy_property_jsonb: _,
             } = filter.unwrap();
 
             assert_eq!(

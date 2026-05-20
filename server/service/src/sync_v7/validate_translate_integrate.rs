@@ -188,6 +188,11 @@ fn translate_delete(
         | ChangelogTableName::ProgramEvent
         | ChangelogTableName::ProgramIndicator
         | ChangelogTableName::Property
+        // Prototype property V2 tables — Central/v6 classified; not v7-routed.
+        | ChangelogTableName::PropertyV2
+        | ChangelogTableName::PropertyV2Option
+        | ChangelogTableName::PropertyV2Table
+        | ChangelogTableName::PropertyV2Value
         | ChangelogTableName::ReasonOption
         | ChangelogTableName::ShippingMethod
         | ChangelogTableName::Store

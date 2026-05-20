@@ -127,6 +127,15 @@ impl ChangelogTableName {
             | NameProperty
             | PackagingVariant
             | Property
+            // TODO: Prototype property V2 tables — classified alongside legacy
+            // Property/NameProperty for the KDD comparison harness only. Before
+            // production rollout, revisit whether these should be v7-native and
+            // whether `populate_changelog_with_rows_for_sync_v7_tables.rs`
+            // needs to seed initial changelog rows for them.
+            | PropertyV2
+            | PropertyV2Option
+            | PropertyV2Table
+            | PropertyV2Value
             | Report
             | VaccineCourse
             | VaccineCourseDose

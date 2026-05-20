@@ -278,6 +278,7 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut item_variant::test_v6_central_push_records());
     test_records.append(&mut packaging_variant::test_v6_central_push_records());
     test_records.append(&mut property::test_v6_central_push_records());
+    test_records.append(&mut name_property::test_v6_central_push_records());
     test_records.append(&mut backend_plugin::test_v6_push_records());
     test_records.append(&mut om_report::test_v6_central_push_records());
     test_records.append(&mut om_form_schema::test_v6_central_push_records());
@@ -292,7 +293,6 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut asset_log_reason::test_v6_records());
     test_records.append(&mut sync_file_reference::test_v6_records());
     test_records.append(&mut asset_property::test_v6_central_push_records());
-    test_records.append(&mut name_property::test_v6_central_push_records());
     test_records.append(&mut rnr_form::test_v6_records());
     test_records.append(&mut rnr_form_line::test_v6_records());
     test_records.append(&mut demographic::test_v6_records());

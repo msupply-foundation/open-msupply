@@ -3,6 +3,7 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 import { NameRowFragmentDoc } from '../../Name/api/operations.generated';
+import { PropertyV2ValueFragmentDoc } from '../../Property/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type StockLineFragment = {
   __typename: 'StockLineNode';
@@ -555,6 +556,45 @@ export type ItemFragment = {
     defaultSellPricePerPack: number;
     ignoreForOrders: boolean;
   } | null;
+  propertyV2Values: Array<{
+    __typename: 'PropertyV2ValueNode';
+    id: string;
+    recordId: string;
+    parentTable: Types.PropertyV2ParentTableEnum;
+    valueText?: string | null;
+    valueNumber?: number | null;
+    valueReal?: number | null;
+    valueDate?: string | null;
+    property: {
+      __typename: 'PropertyV2Node';
+      id: string;
+      name: string;
+      type: Types.PropertyV2TypeEnum;
+      translationKey?: string | null;
+      options: Array<{
+        __typename: 'PropertyV2OptionNode';
+        id: string;
+        propertyId: string;
+        name: string;
+        translationKey?: string | null;
+        isDeleted: boolean;
+      }>;
+      attachedTo: Array<{
+        __typename: 'PropertyV2TableNode';
+        id: string;
+        propertyId: string;
+        table: Types.PropertyV2ParentTableEnum;
+      }>;
+    };
+    option?: {
+      __typename: 'PropertyV2OptionNode';
+      id: string;
+      propertyId: string;
+      name: string;
+      translationKey?: string | null;
+      isDeleted: boolean;
+    } | null;
+  }>;
 };
 
 export type ItemsWithStockLinesQueryVariables = Types.Exact<{
@@ -799,6 +839,45 @@ export type ItemsWithStockLinesQuery = {
         defaultSellPricePerPack: number;
         ignoreForOrders: boolean;
       } | null;
+      propertyV2Values: Array<{
+        __typename: 'PropertyV2ValueNode';
+        id: string;
+        recordId: string;
+        parentTable: Types.PropertyV2ParentTableEnum;
+        valueText?: string | null;
+        valueNumber?: number | null;
+        valueReal?: number | null;
+        valueDate?: string | null;
+        property: {
+          __typename: 'PropertyV2Node';
+          id: string;
+          name: string;
+          type: Types.PropertyV2TypeEnum;
+          translationKey?: string | null;
+          options: Array<{
+            __typename: 'PropertyV2OptionNode';
+            id: string;
+            propertyId: string;
+            name: string;
+            translationKey?: string | null;
+            isDeleted: boolean;
+          }>;
+          attachedTo: Array<{
+            __typename: 'PropertyV2TableNode';
+            id: string;
+            propertyId: string;
+            table: Types.PropertyV2ParentTableEnum;
+          }>;
+        };
+        option?: {
+          __typename: 'PropertyV2OptionNode';
+          id: string;
+          propertyId: string;
+          name: string;
+          translationKey?: string | null;
+          isDeleted: boolean;
+        } | null;
+      }>;
     }>;
   };
 };
@@ -1161,6 +1240,45 @@ export type ItemByIdQuery = {
         defaultSellPricePerPack: number;
         ignoreForOrders: boolean;
       } | null;
+      propertyV2Values: Array<{
+        __typename: 'PropertyV2ValueNode';
+        id: string;
+        recordId: string;
+        parentTable: Types.PropertyV2ParentTableEnum;
+        valueText?: string | null;
+        valueNumber?: number | null;
+        valueReal?: number | null;
+        valueDate?: string | null;
+        property: {
+          __typename: 'PropertyV2Node';
+          id: string;
+          name: string;
+          type: Types.PropertyV2TypeEnum;
+          translationKey?: string | null;
+          options: Array<{
+            __typename: 'PropertyV2OptionNode';
+            id: string;
+            propertyId: string;
+            name: string;
+            translationKey?: string | null;
+            isDeleted: boolean;
+          }>;
+          attachedTo: Array<{
+            __typename: 'PropertyV2TableNode';
+            id: string;
+            propertyId: string;
+            table: Types.PropertyV2ParentTableEnum;
+          }>;
+        };
+        option?: {
+          __typename: 'PropertyV2OptionNode';
+          id: string;
+          propertyId: string;
+          name: string;
+          translationKey?: string | null;
+          isDeleted: boolean;
+        } | null;
+      }>;
     }>;
   };
 };
@@ -1976,12 +2094,16 @@ export const ItemFragmentDoc = gql`
       defaultSellPricePerPack
       ignoreForOrders
     }
+    propertyV2Values {
+      ...PropertyV2Value
+    }
   }
   ${LocationTypeFragmentDoc}
   ${StockLineFragmentDoc}
   ${ItemVariantFragmentDoc}
   ${AncillaryItemFragmentDoc}
   ${ItemDirectionFragmentDoc}
+  ${PropertyV2ValueFragmentDoc}
 `;
 export const ItemsWithStatsFragmentDoc = gql`
   fragment ItemsWithStats on ItemNode {

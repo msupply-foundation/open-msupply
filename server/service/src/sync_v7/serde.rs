@@ -174,6 +174,14 @@ pub fn deserialize(
         ChangelogTableName::NameProperty => from_value::<NamePropertyRow>(data),
         ChangelogTableName::PackagingVariant => from_value::<PackagingVariantRow>(data),
         ChangelogTableName::Property => from_value::<PropertyRow>(data),
+        // Prototype property V2 tables — not routed through v7 yet; they're
+        // classified as Central/v6 in sync_style.rs. See follow-up TODO there.
+        ChangelogTableName::PropertyV2
+        | ChangelogTableName::PropertyV2Option
+        | ChangelogTableName::PropertyV2Table
+        | ChangelogTableName::PropertyV2Value => Err(SyncRecordSerializeError::SerdeError(
+            "PropertyV2 tables are not yet routed via sync v7".to_string(),
+        )),
         ChangelogTableName::Report => from_value::<ReportRow>(data),
         ChangelogTableName::VaccineCourse => from_value::<VaccineCourseRow>(data),
         ChangelogTableName::VaccineCourseDose => from_value::<VaccineCourseDoseRow>(data),

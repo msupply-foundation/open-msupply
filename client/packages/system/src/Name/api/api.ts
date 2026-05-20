@@ -9,7 +9,9 @@ import {
 import {
   Sdk,
   NameRowFragment,
+  NameRowWithPropertyV2ValuesFragment,
   FacilityNameRowFragment,
+  NamePropertyV2Fragment,
   UpdateNamePropertiesMutation,
 } from './operations.generated';
 
@@ -140,28 +142,56 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
       offset,
       sortBy,
       filterBy,
+      filter: extraFilter,
     }: {
       offset?: number;
       first?: number;
       sortBy?: SortBy<NameRowFragment>;
       filterBy?: FilterBy | null;
+      // Extra filter shape for the perf-comparison toolbar — sends typed
+      // `legacyProperty[Jsonb]` and `property` arrays that don't fit the
+      // loose `FilterBy` URL-query shape.
+      filter?: Pick<
+        NameFilterInput,
+        'legacyProperty' | 'legacyPropertyJsonb' | 'property'
+      > | null;
     }): Promise<{
       nodes: FacilityNameRowFragment[];
       totalCount: number;
     }> => {
-      const key =
-        sortBy?.key === 'name'
-          ? NameSortFieldInput.Name
-          : NameSortFieldInput.Code;
+      // Sort key precedence:
+      //  - "legacyJsonb.<key>" → JSONB twin property sort
+      //  - "legacy.<key>"      → text-JSON property sort
+      //  - "v2.<propertyId>"   → V2 relational property sort
+      //  - "name" / "code"     → existing column sort
+      const sortKeyRaw = sortBy?.key ?? 'name';
+      let key: NameSortFieldInput;
+      let propertyKey: string | undefined;
+      if (sortKeyRaw.startsWith('legacyJsonb.')) {
+        key = NameSortFieldInput.LegacyPropertyJsonb;
+        propertyKey = sortKeyRaw.slice('legacyJsonb.'.length);
+      } else if (sortKeyRaw.startsWith('legacy.')) {
+        key = NameSortFieldInput.LegacyProperty;
+        propertyKey = sortKeyRaw.slice('legacy.'.length);
+      } else if (sortKeyRaw.startsWith('v2.')) {
+        key = NameSortFieldInput.PropertyV2;
+        propertyKey = sortKeyRaw.slice('v2.'.length);
+      } else if (sortKeyRaw === 'code') {
+        key = NameSortFieldInput.Code;
+      } else {
+        key = NameSortFieldInput.Name;
+      }
 
       const result = await sdk.facilities({
         first,
         offset,
         key,
         desc: !!sortBy?.isDesc,
+        propertyKey,
         storeId,
         filter: {
           ...filterBy,
+          ...extraFilter,
           isStore: true,
         },
       });
@@ -173,8 +203,11 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
       first,
       offset,
       sortBy,
-    }: ListParams): Promise<{
-      nodes: NameRowFragment[];
+      filter,
+    }: ListParams & {
+      filter?: Pick<NameFilterInput, 'property'> | null;
+    }): Promise<{
+      nodes: NameRowWithPropertyV2ValuesFragment[];
       totalCount: number;
     }> => {
       const key =
@@ -191,6 +224,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         filter: {
           [type === 'customer' ? 'isCustomer' : 'isSupplier']: true,
           type: { equalAny: [NameNodeType.Facility, NameNodeType.Store] },
+          ...filter,
         },
       });
 
@@ -203,6 +237,12 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         return result?.nameProperties?.nodes;
       }
       throw new Error('Unable to fetch properties');
+    },
+    // KDD option 1: definitions (id, type, options) for properties attached to
+    // the `name` table. Powers the property filter dropdowns on the list view.
+    propertyDefinitions: async (): Promise<NamePropertyV2Fragment[]> => {
+      const result = await sdk.namePropertyV2Definitions();
+      return result?.propertiesV2ForTable ?? [];
     },
   },
   updateNameProperties: async (

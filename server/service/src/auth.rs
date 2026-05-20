@@ -36,6 +36,11 @@ pub enum Resource {
     QueryName,
     MutateNameProperties,
     ConfigureNameProperties,
+    // property (KDD option 1 — new four-table system)
+    QueryProperty,
+    QueryPropertyConfig,
+    MutateProperty,
+    ConfigureProperty,
     // location
     QueryLocation,
     MutateLocation,
@@ -197,6 +202,33 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     map.insert(
         Resource::ConfigureNameProperties,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasPermission(PermissionType::EditCentralData),
+            PermissionDSL::HasPermission(PermissionType::NamePropertiesMutate),
+        ]),
+    );
+
+    // property (KDD option 1) — for the prototype, reuse the
+    // NameProperties permission bits so existing admins can drive the new
+    // system without a fresh permission rollout.
+    //
+    // `QueryProperty` is used by record-detail / record-list paths
+    // (propertiesForTable, propertyValues) — open to any authenticated user
+    // since property attachments and values are part of record data.
+    // `QueryPropertyConfig` is used by the central admin pages (list all
+    // properties, fetch by id) — gated on EditCentralData so non-admins
+    // can't introspect every configured property.
+    map.insert(Resource::QueryProperty, PermissionDSL::NoPermissionRequired);
+    map.insert(
+        Resource::QueryPropertyConfig,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
+    );
+    map.insert(
+        Resource::MutateProperty,
+        PermissionDSL::HasPermission(PermissionType::NamePropertiesMutate),
+    );
+    map.insert(
+        Resource::ConfigureProperty,
         PermissionDSL::And(vec![
             PermissionDSL::HasPermission(PermissionType::EditCentralData),
             PermissionDSL::HasPermission(PermissionType::NamePropertiesMutate),

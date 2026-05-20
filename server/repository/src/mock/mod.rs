@@ -234,6 +234,11 @@ pub struct MockData {
     pub asset_logs: Vec<AssetLogRow>,
     pub demographics: Vec<DemographicRow>,
     pub properties: Vec<PropertyRow>,
+    pub name_properties: Vec<NamePropertyRow>,
+    pub properties_v2: Vec<PropertyV2Row>,
+    pub property_v2_tables: Vec<PropertyV2TableRow>,
+    pub property_v2_options: Vec<PropertyV2OptionRow>,
+    pub property_v2_values: Vec<PropertyV2ValueRow>,
     pub rnr_forms: Vec<RnRFormRow>,
     pub rnr_form_lines: Vec<RnRFormLineRow>,
     pub vaccinations: Vec<VaccinationRow>,
@@ -328,6 +333,9 @@ pub struct MockDataInserts {
     pub asset_logs: bool,
     pub demographics: bool,
     pub properties: bool,
+    pub name_properties: bool,
+    pub properties_v2: bool,
+    pub property_v2_values: bool,
     pub rnr_forms: bool,
     pub rnr_form_lines: bool,
     pub vaccinations: bool,
@@ -413,6 +421,9 @@ impl MockDataInserts {
             asset_logs: true,
             demographics: true,
             properties: true,
+            name_properties: true,
+            properties_v2: true,
+            property_v2_values: true,
             rnr_forms: true,
             rnr_form_lines: true,
             vaccinations: true,
@@ -707,7 +718,11 @@ impl MockDataInserts {
     }
 
     pub fn properties(mut self) -> Self {
-        self.demographics = true;
+        self.properties = true;
+        self.name_properties = true;
+        self.properties_v2 = true;
+        self.property_v2_values = true;
+        self.names = true;
         self
     }
 
@@ -919,6 +934,11 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             asset_logs: mock_asset_logs(),
             demographics: mock_demographics(),
             properties: mock_properties(),
+            name_properties: vec![],
+            properties_v2: mock_properties_v2(),
+            property_v2_tables: mock_property_tables(),
+            property_v2_options: mock_property_options(),
+            property_v2_values: mock_property_values(),
             rnr_forms: mock_rnr_forms(),
             rnr_form_lines: mock_rnr_form_lines(),
             vaccinations: mock_vaccinations(),
@@ -1382,6 +1402,37 @@ pub fn insert_mock_data(
             }
         }
 
+        if inserts.name_properties {
+            let repo = NamePropertyRowRepository::new(connection);
+            for row in &mock_data.name_properties {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.properties_v2 {
+            let repo = PropertyV2RowRepository::new(connection);
+            for row in &mock_data.properties_v2 {
+                repo.upsert_one(row).unwrap();
+            }
+            let table_repo = PropertyV2TableRowRepository::new(connection);
+            for row in &mock_data.property_v2_tables {
+                table_repo.upsert_one(row).unwrap();
+            }
+            let option_repo = PropertyV2OptionRowRepository::new(connection);
+            for row in &mock_data.property_v2_options {
+                option_repo.upsert_one(row).unwrap();
+            }
+        }
+
+        // property_v2_values must be inserted after names (FK to record_id) and
+        // after properties_v2/options (FK to property_id, value_option_id).
+        if inserts.property_v2_values {
+            let repo = PropertyV2ValueRowRepository::new(connection);
+            for row in &mock_data.property_v2_values {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
         if inserts.rnr_forms {
             let repo = RnRFormRowRepository::new(connection);
             for row in &mock_data.rnr_forms {
@@ -1608,6 +1659,11 @@ impl MockData {
             mut currencies,
             mut demographics,
             mut properties,
+            mut name_properties,
+            mut properties_v2,
+            mut property_v2_tables,
+            mut property_v2_options,
+            mut property_v2_values,
             mut rnr_forms,
             mut rnr_form_lines,
             mut vaccinations,
@@ -1690,6 +1746,11 @@ impl MockData {
         self.asset_logs.append(&mut asset_logs);
         self.demographics.append(&mut demographics);
         self.properties.append(&mut properties);
+        self.name_properties.append(&mut name_properties);
+        self.properties_v2.append(&mut properties_v2);
+        self.property_v2_tables.append(&mut property_v2_tables);
+        self.property_v2_options.append(&mut property_v2_options);
+        self.property_v2_values.append(&mut property_v2_values);
         self.rnr_forms.append(&mut rnr_forms);
         self.rnr_form_lines.append(&mut rnr_form_lines);
         self.vaccinations.append(&mut vaccinations);
