@@ -5,10 +5,10 @@ use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
     loader::{
-        AvailableVolumeOnRequisitionLoader, AvailableVolumeOnRequisitionLoaderInput,
-        InvoiceLineForRequisitionLine, ItemLoader, ItemStatsLoaderInput, ItemsStatsForItemLoader,
-        LinkedRequisitionLineLoader, ReasonOptionLoader, RequisitionAndItemId,
-        RequisitionLineSupplyStatusLoader,
+        AncillaryItemsByAncillaryIdLoader, AvailableVolumeOnRequisitionLoader,
+        AvailableVolumeOnRequisitionLoaderInput, InvoiceLineForRequisitionLine, ItemLoader,
+        ItemStatsLoaderInput, ItemsStatsForItemLoader, LinkedRequisitionLineLoader,
+        ReasonOptionLoader, RequisitionAndItemId, RequisitionLineSupplyStatusLoader,
     },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -95,6 +95,30 @@ impl RequisitionLineNode {
 
     pub async fn price_per_unit(&self) -> &Option<f64> {
         &self.row().price_per_unit
+    }
+
+    /// Items that have this line's item configured as an ancillary. Empty when
+    /// the line is not an ancillary of anything. Used by the UI to flag
+    /// ancillary lines and surface their parents in a popover. Batched per
+    /// request via dataloader so a 200-line requisition issues two queries
+    /// (link rows + parent items), not 400.
+    pub async fn ancillary_parents(&self, ctx: &Context<'_>) -> Result<Vec<ItemNode>> {
+        let links_loader = ctx.get_loader::<DataLoader<AncillaryItemsByAncillaryIdLoader>>();
+        let parent_links = links_loader
+            .load_one(self.item_row().id.clone())
+            .await?
+            .unwrap_or_default();
+        if parent_links.is_empty() {
+            return Ok(vec![]);
+        }
+        let item_loader = ctx.get_loader::<DataLoader<ItemLoader>>();
+        let parent_ids: Vec<String> = parent_links.into_iter().map(|p| p.item_id).collect();
+        let items = item_loader.load_many(parent_ids.clone()).await?;
+        Ok(parent_ids
+            .into_iter()
+            .filter_map(|id| items.get(&id).cloned())
+            .map(ItemNode::from_domain)
+            .collect())
     }
 
     /// OutboundShipment lines linked to requisitions line

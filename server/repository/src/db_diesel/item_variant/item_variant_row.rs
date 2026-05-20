@@ -101,6 +101,15 @@ impl<'a> ItemVariantRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, item_variant_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = item_variant::table
+            .filter(item_variant::id.eq(item_variant_id))
+            .select(item_variant::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn find_one_by_name(
         &self,
         item_variant_name: &str,

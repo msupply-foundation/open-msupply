@@ -6,8 +6,10 @@ use crate::sync::translations::{
 
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, StockLine, StockLineFilter, StockLineRepository,
-    StockLineRow, StorageConnection, SyncBufferRow,
+    campaign_row::CampaignRowRepository, item_variant::item_variant_row::ItemVariantRowRepository,
+    vvm_status::vvm_status_row::VVMStatusRowRepository, BarcodeRowRepository, ChangelogRow,
+    ChangelogTableName, EqualFilter, LocationRowRepository, ProgramRowRepository, StockLine,
+    StockLineFilter, StockLineRepository, StockLineRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -15,10 +17,9 @@ use util::sync_serde::{
     zero_date_as_option,
 };
 
-use super::{
-    utils::{clear_invalid_barcode_id, clear_invalid_location_id},
-    PullTranslateResult, PushTranslateResult, SyncTranslation,
-};
+use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
+
+const RECORD_TABLE: &str = "stock_line";
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, Default)]
@@ -137,14 +138,67 @@ impl SyncTranslation for StockLineTranslation {
             volume_per_pack,
         } = serde_json::from_str::<LegacyStockLineRow>(&sync_record.data)?;
 
-        let barcode_id = clear_invalid_barcode_id(connection, barcode_id)?;
-        let location_id = clear_invalid_location_id(connection, location_ID)?;
+        let barcode_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "barcode_id",
+            barcode_id,
+            |c, id| BarcodeRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let location_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "location_id",
+            location_ID,
+            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let item_variant_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "item_variant_id",
+            item_variant_id,
+            |c, id| ItemVariantRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let vvm_status_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "vvm_status_id",
+            vvm_status_id,
+            |c, id| VVMStatusRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let StockLineRowOmsFields {
             campaign_id,
             program_id,
             manufacture_date,
         } = oms_fields.unwrap_or_default();
+
+        let campaign_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "campaign_id",
+            campaign_id,
+            |c, id| CampaignRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let program_id = clear_invalid_fk(
+            connection,
+            RECORD_TABLE,
+            &ID,
+            "program_id",
+            program_id,
+            |c, id| ProgramRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let result = StockLineRow {
             id: ID,
@@ -280,7 +334,11 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+        campaign_row::CampaignRow,
+        mock::{MockData, MockDataInserts},
+        system_log_row::{SystemLogRowRepository, SystemLogType},
+        test_db::{setup_all, setup_all_with_data},
+        ChangelogFilter, ChangelogRepository, ContextRow, ProgramRow, SyncAction,
     };
     use serde_json::json;
 
@@ -289,8 +347,34 @@ mod tests {
         use crate::sync::test::test_data::stock_line as test_data;
         let translator = StockLineTranslation {};
 
-        let (_, connection, _, _) =
-            setup_all("test_stock_line_translation", MockDataInserts::none()).await;
+        // Pre-populate program_a and campaign_a (referenced by ITEM_LINE_1 in test data)
+        // so that FK validation in the translator doesn't null them out.
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_stock_line_translation",
+            MockDataInserts::none(),
+            MockData {
+                contexts: vec![ContextRow {
+                    id: "test_ctx".to_string(),
+                    name: "test ctx".to_string(),
+                }],
+                programs: vec![ProgramRow {
+                    id: "program_a".to_string(),
+                    master_list_id: None,
+                    name: "program_a".to_string(),
+                    context_id: "test_ctx".to_string(),
+                    is_immunisation: false,
+                    elmis_code: None,
+                    deleted_datetime: None,
+                }],
+                campaigns: vec![CampaignRow {
+                    id: "campaign_a".to_string(),
+                    name: "Campaign A".to_string(),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
@@ -299,6 +383,118 @@ mod tests {
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    /// When optional FKs reference records that don't exist, the translator should:
+    ///  - null out each invalid FK on the translated row
+    ///  - write a `system_log` row of type `SyncTranslationFkError` for each invalid FK
+    /// so the integration upstream of this translator doesn't fail on FK constraint violations.
+    #[actix_rt::test]
+    async fn test_stock_line_clears_invalid_optional_fks_and_writes_system_log() {
+        let translator = StockLineTranslation {};
+        let (_, connection, _, _) = setup_all(
+            "test_stock_line_clears_invalid_optional_fks_and_writes_system_log",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let sync_record = SyncBufferRow {
+            table_name: "item_line".to_string(),
+            record_id: "ITEM_LINE_FK_INVALID".to_string(),
+            data: r#"{
+                "ID": "ITEM_LINE_FK_INVALID",
+                "store_ID": "store_a",
+                "item_ID": "item_a",
+                "available": 1.0,
+                "barcodeID": "missing_barcode",
+                "batch": "",
+                "cost_price": 0,
+                "expiry_date": "0000-00-00",
+                "hold": false,
+                "location_ID": "missing_location",
+                "name_ID": "",
+                "note": "",
+                "pack_size": 1,
+                "quantity": 1,
+                "sell_price": 0,
+                "total_volume": 0,
+                "volume_per_pack": 0,
+                "vvm_status_id": "missing_vvm",
+                "om_item_variant_id": "missing_item_variant",
+                "oms_fields": {
+                    "campaign_id": "missing_campaign",
+                    "program_id": "does_not_exist_program"
+                }
+            }"#
+            .to_string(),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        let result = translator
+            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .unwrap();
+
+        let expected = PullTranslateResult::upsert(StockLineRow {
+            id: "ITEM_LINE_FK_INVALID".to_string(),
+            store_id: "store_a".to_string(),
+            item_link_id: "item_a".to_string(),
+            location_id: None,
+            batch: None,
+            pack_size: 1.0,
+            cost_price_per_pack: 0.0,
+            sell_price_per_pack: 0.0,
+            available_number_of_packs: 1.0,
+            total_number_of_packs: 1.0,
+            expiry_date: None,
+            on_hold: false,
+            note: None,
+            supplier_id: None,
+            barcode_id: None,
+            item_variant_id: None,
+            donor_id: None,
+            manufacturer_id: None,
+            manufacture_date: None,
+            vvm_status_id: None,
+            campaign_id: None,
+            program_id: None,
+            volume_per_pack: 0.0,
+            total_volume: 0.0,
+        });
+        assert_eq!(result, expected);
+
+        // One system_log entry per invalid FK
+        let logs = SystemLogRowRepository::new(&connection)
+            .find_all()
+            .unwrap();
+        let fk_errors: Vec<_> = logs
+            .iter()
+            .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
+            .collect();
+        assert_eq!(fk_errors.len(), 6, "got {fk_errors:?}");
+        let messages: String = fk_errors
+            .iter()
+            .filter_map(|l| l.message.as_deref())
+            .collect::<Vec<_>>()
+            .join("\n");
+        for fk_field in [
+            "barcode_id",
+            "location_id",
+            "item_variant_id",
+            "vvm_status_id",
+            "campaign_id",
+            "program_id",
+        ] {
+            assert!(
+                messages.contains(fk_field),
+                "{}",
+                format!("expected message to mention {fk_field}; got:\n{messages}")
+            );
+            assert!(
+                messages.contains("ITEM_LINE_FK_INVALID"),
+                "expected message to include the record id"
+            );
         }
     }
 

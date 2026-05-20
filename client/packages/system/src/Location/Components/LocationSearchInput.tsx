@@ -45,50 +45,30 @@ const getOptionLabel = (option: LocationOption) =>
 const optionRenderer = (
   props: React.HTMLAttributes<HTMLLIElement>,
   location: LocationOption
-) => {
-  const { style, ...rest } = props;
-
-  return location.value === null ? (
-    <MenuItem
-      {...rest}
-      sx={{
-        ...style,
-        display: 'inline-flex',
-        flex: 1,
-        width: '100%',
-        borderTop: '1px solid',
-        borderTopColor: 'divider',
+) => (
+  <MenuItem
+    {...props}
+    key={location.value}
+    sx={{ justifyContent: 'space-between !important' }}
+  >
+    <span
+      style={{
+        whiteSpace: 'nowrap',
+        maxWidth: '80%',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
       }}
-      key={location.label}
     >
-      <span style={{ whiteSpace: 'nowrap', flex: 1 }}>{location.label}</span>
-      <CloseIcon sx={{ color: 'gray.dark' }} />
-    </MenuItem>
-  ) : (
-    <MenuItem
-      {...props}
-      key={location.label}
-      sx={{ justifyContent: 'space-between !important' }}
+      {getOptionLabel(location)}
+    </span>
+    <Typography
+      component="span"
+      sx={{ color: 'gray.dark', fontSize: 'smaller' }}
     >
-      <span
-        style={{
-          whiteSpace: 'nowrap',
-          maxWidth: '80%',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-      >
-        {getOptionLabel(location)}
-      </span>
-      <Typography
-        component="span"
-        sx={{ color: 'gray.dark', fontSize: 'smaller' }}
-      >
-        {location.volumeUsed}
-      </Typography>
-    </MenuItem>
-  );
-};
+      {location.volumeUsed}
+    </Typography>
+  </MenuItem>
+);
 
 enum LocationFilter {
   All = 'all',
@@ -123,22 +103,31 @@ export const LocationSearchInput = ({
   filterRef.current = filter;
   const setFilterRef = useRef(setFilter);
   setFilterRef.current = setFilter;
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  const hasVolumeFilter = typeof volumeRequired === 'number';
 
   const paperSlot = useMemo(() => {
-    if (typeof volumeRequired !== 'number') return undefined;
+    if (!hasVolumeFilter && !includeRemoveOption) return undefined;
     return ({
       children,
       ...paperProps
     }: React.ComponentProps<typeof Paper> & { children?: React.ReactNode }) => (
       <Paper {...paperProps} sx={{ minWidth: '300px' }}>
-        <LocationFilters
-          filter={filterRef.current}
-          setFilter={setFilterRef.current}
-        />
+        {hasVolumeFilter && (
+          <LocationFilters
+            filter={filterRef.current}
+            setFilter={setFilterRef.current}
+          />
+        )}
         {children}
+        {includeRemoveOption && (
+          <StickyRemoveButton onChangeRef={onChangeRef} />
+        )}
       </Paper>
     );
-  }, [volumeRequired]);
+  }, [hasVolumeFilter, includeRemoveOption]);
 
   const {
     query: { data, isLoading },
@@ -193,15 +182,6 @@ export const LocationSearchInput = ({
     volumeUsed: getVolumeUsedLabel(l),
   }));
 
-  if (
-    includeRemoveOption &&
-    filteredLocations.length > 0 &&
-    selectedLocation !== null &&
-    selectedLocation !== undefined
-  ) {
-    options.push({ value: null, label: t('label.remove'), volumeUsed: '0' });
-  }
-
   // Define separately - even if the selected location doesn't match current
   // filter, we still want to show it as the selected option
   // Same goes if the location is not valid given the location type restriction
@@ -250,6 +230,9 @@ export const LocationSearchInput = ({
       slots={{
         paper: paperSlot,
       }}
+      slotProps={{
+        listbox: { style: { maxHeight: '35vh' } },
+      }}
     />
   );
 };
@@ -257,6 +240,38 @@ export const LocationSearchInput = ({
 export const formatLocationLabel = (location: LocationRowFragment) => {
   const { name, locationType } = location;
   return `${name}${locationType ? ` (${locationType.name})` : ''}`;
+};
+
+const StickyRemoveButton = ({
+  onChangeRef,
+}: {
+  onChangeRef: React.RefObject<(location: LocationRowFragment | null) => void>;
+}) => {
+  const t = useTranslation();
+
+  return (
+    <MenuItem
+      onMouseDown={e => {
+        e.stopPropagation();
+        e.preventDefault();
+        onChangeRef.current?.(null);
+      }}
+      sx={{
+        display: 'inline-flex',
+        flex: 1,
+        width: '100%',
+        borderTop: '1px solid',
+        borderTopColor: 'divider',
+        position: 'sticky',
+        bottom: 0,
+        backgroundColor: 'background.paper',
+        zIndex: 1,
+      }}
+    >
+      <span style={{ whiteSpace: 'nowrap', flex: 1 }}>{t('label.remove')}</span>
+      <CloseIcon sx={{ color: 'gray.dark' }} />
+    </MenuItem>
+  );
 };
 
 const LocationFilters = ({

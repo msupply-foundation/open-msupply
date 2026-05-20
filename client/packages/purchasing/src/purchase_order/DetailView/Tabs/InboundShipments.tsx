@@ -103,6 +103,7 @@ export const InboundShipments = () => {
     columns,
     data: data?.nodes,
     initialSort: { key: 'createdDatetime', dir: 'desc' },
+    localStateOnly: true,
     enableRowSelection: false,
     noDataElement: (
       <NothingHere body={t('error.no-inbound-shipments-linked')} />

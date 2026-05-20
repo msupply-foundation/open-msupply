@@ -25,7 +25,6 @@ pub enum UpdatePurchaseOrderError {
     UpdatedRecordNotFound,
     NotASupplier,
     DonorDoesNotExist,
-    UserUnableToAuthorisePurchaseOrder,
     CannotEditSentPurchaseOrder,
     DatabaseError(RepositoryError),
     ItemsCannotBeOrdered(Vec<PurchaseOrderLine>),
@@ -130,13 +129,11 @@ pub fn update_purchase_order(
     ctx: &ServiceContext,
     store_id: &str,
     input: UpdatePurchaseOrderInput,
-    user_has_auth_permission: Option<bool>,
 ) -> Result<PurchaseOrderRow, UpdatePurchaseOrderError> {
     let purchase_order = ctx
         .connection
         .transaction_sync(|connection: &repository::StorageConnection| {
-            let (purchase_order, next_status) =
-                validate(&input, store_id, connection, user_has_auth_permission)?;
+            let (purchase_order, next_status) = validate(&input, store_id, connection)?;
             let existing_purchase_order = purchase_order.clone();
             let mut purchase_order_input = input.clone();
             if let Some(new_status) = next_status {

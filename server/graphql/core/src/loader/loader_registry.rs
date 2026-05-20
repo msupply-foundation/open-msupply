@@ -461,6 +461,18 @@ pub async fn get_loaders(
         tokio::spawn,
     ));
     loaders.insert(DataLoader::new(
+        AncillaryItemsByItemIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        AncillaryItemsByAncillaryIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
         ProgramByIdLoader {
             connection_manager: connection_manager.clone(),
         },
@@ -566,6 +578,13 @@ pub async fn get_loaders(
 
     loaders.insert(DataLoader::new(
         CurrencyByIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    ));
+
+    loaders.insert(DataLoader::new(
+        HomeCurrencyLoader {
             connection_manager: connection_manager.clone(),
         },
         tokio::spawn,

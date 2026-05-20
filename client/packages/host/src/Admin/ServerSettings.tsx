@@ -94,31 +94,32 @@ export const ServerSettings = () => {
         component={
           <Tooltip
             title={
-              databaseSettings?.databaseType !== DatabaseType.SqLite
-                ? t('message.database-not-sqlite')
-                : nativeMode !== NativeMode.Server
-                  ? t('message.database-not-local')
-                  : t('label.download-database')
+              nativeMode !== NativeMode.Server
+                ? t('message.database-not-local')
+                : t('label.download-database')
             }
           >
             <span>
               <LoadingButton
-                disabled={
-                  databaseSettings?.databaseType !== DatabaseType.SqLite ||
-                  nativeMode !== NativeMode.Server
-                }
+                disabled={nativeMode !== NativeMode.Server}
                 isLoading={isDownloading}
                 startIcon={<DownloadIcon />}
                 onClick={async () => {
                   setIsDownloading(true);
-                  const vacuum = await fetch(
-                    `${Environment.API_HOST}/support/vacuum`,
-                    {
-                      method: 'POST',
+                  if (
+                    databaseSettings?.databaseType === DatabaseType.SqLite
+                  ) {
+                    const vacuum = await fetch(
+                      `${Environment.API_HOST}/support/vacuum`,
+                      {
+                        method: 'POST',
+                      }
+                    );
+                    if (vacuum.ok) {
+                      await saveDatabase();
                     }
-                  );
-                  if (vacuum.ok) {
-                    await saveDatabase();
+                  } else {
+                    window.location.href = `${Environment.API_HOST}/support/database`;
                   }
                   setIsDownloading(false);
                 }}
@@ -143,22 +144,12 @@ export const ServerSettings = () => {
       <Setting
         title={t('label.download-database')}
         component={
-          <Tooltip
-            title={
-              databaseSettings?.databaseType !== DatabaseType.SqLite
-                ? t('message.database-not-sqlite')
-                : t('label.download-database')
-            }
-          >
+          <Tooltip title={t('label.download-database')}>
             <span>
               <BaseButton
-                disabled={
-                  databaseSettings?.databaseType !== DatabaseType.SqLite
-                }
                 startIcon={<DownloadIcon />}
                 onClick={() => {
-                  ((window.location.href = `${Environment.API_HOST}/support/database`),
-                    '_blank');
+                  window.location.href = `${Environment.API_HOST}/support/database`;
                 }}
               >
                 {t('button.download')}

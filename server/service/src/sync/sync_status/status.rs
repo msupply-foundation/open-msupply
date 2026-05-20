@@ -1,11 +1,8 @@
-use std::sync::RwLock;
-
 use chrono::{NaiveDateTime, Utc};
 use repository::{
     ChangelogRepository, DatetimeFilter, EqualFilter, KeyType, Pagination, RepositoryError, Sort,
     SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
 };
-
 
 use crate::{
     cursor_controller::CursorController,
@@ -271,7 +268,6 @@ fn get_latest_sync_status(ctx: &ServiceContext) -> Result<Option<FullSyncStatus>
 fn get_latest_successful_sync_status(
     ctx: &ServiceContext,
 ) -> Result<Option<FullSyncStatus>, RepositoryError> {
-
     let sort = Sort {
         key: SyncLogSortField::StartedDatetime,
         desc: Some(true),
@@ -297,7 +293,6 @@ fn get_latest_successful_sync_status(
 
     Ok(Some(result))
 }
-
 
 #[derive(Debug)]
 pub enum NumberOfRecordsInPushQueueError {

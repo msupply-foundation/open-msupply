@@ -1,3 +1,4 @@
+mod ancillary_item;
 mod asset;
 mod asset_catalogue_item;
 mod asset_category;
@@ -15,6 +16,7 @@ mod demographic;
 mod diagnosis;
 mod document;
 mod document_registry;
+mod home_currency;
 mod insurance_provider;
 mod invoice;
 mod invoice_line;
@@ -67,6 +69,7 @@ mod vvm_status;
 mod vvm_status_log;
 mod warning;
 
+pub use ancillary_item::*;
 pub use asset::*;
 pub use asset_catalogue_item::*;
 pub use asset_category::*;
@@ -84,6 +87,7 @@ pub use demographic::*;
 pub use diagnosis::*;
 pub use document::*;
 pub use document_registry::*;
+pub use home_currency::*;
 pub use insurance_provider::*;
 pub use invoice::*;
 pub use invoice_line::*;

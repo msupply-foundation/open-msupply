@@ -3,7 +3,10 @@ import { useHostApi } from '../utils/useHostApi';
 
 export const useLabelPrinterSettings = () => {
   const api = useHostApi();
-  return useQuery(api.keys.labelPrinterSettings(), async () =>
-    api.get.labelPrinterSettings()
-  );
+  return useQuery({
+    queryKey: api.keys.labelPrinterSettings(),
+
+    queryFn: async () =>
+      api.get.labelPrinterSettings()
+  });
 };

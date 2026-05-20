@@ -20,6 +20,7 @@ type LoginLayoutProps = {
   ErrorMessage: ReactNode;
   SyncErrorMessage: ReactNode;
   SiteInfo: React.ReactNode;
+  SaveLogLink?: ReactNode;
   onInitialise: () => Promise<void>;
 };
 
@@ -31,6 +32,7 @@ export const InitialiseLayout = ({
   ErrorMessage,
   SyncProgress,
   SiteInfo,
+  SaveLogLink,
   SyncErrorMessage,
   onInitialise,
 }: LoginLayoutProps) => {
@@ -159,6 +161,11 @@ export const InitialiseLayout = ({
             {SyncErrorMessage}
           </Box>
         </Box>
+        {SaveLogLink && (
+          <Box display="flex" justifyContent="center" sx={{ opacity: 0.6 }}>
+            {SaveLogLink}
+          </Box>
+        )}
         <Box>
           <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
         </Box>
