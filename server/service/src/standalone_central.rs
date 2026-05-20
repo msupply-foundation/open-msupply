@@ -14,7 +14,7 @@ use strum::IntoEnumIterator;
 use util::uuid::uuid;
 
 pub const STANDALONE_CENTRAL_SITE_ID: i32 = 1;
-const CENTRAL_CONFIG_STORE_CODE: &str = "CENTRAL_CONFIG";
+const CENTRAL_CONFIG_CODE: &str = "CENTRAL_CONFIG";
 
 pub struct InitialiseAsCentralServerInput {
     pub store_name: String,
@@ -75,7 +75,7 @@ impl StandaloneCentralServiceTrait for StandaloneCentralService {
 
                 SiteRowRepository::new(con).upsert(&SiteRow {
                     id: STANDALONE_CENTRAL_SITE_ID,
-                    code: CENTRAL_CONFIG_STORE_CODE.to_string(),
+                    code: CENTRAL_CONFIG_CODE.to_string(),
                     name: store_name.clone(),
                     hardware_id: (!hardware_id.is_empty()).then(|| hardware_id.clone()),
                     ..Default::default()
@@ -85,7 +85,7 @@ impl StandaloneCentralServiceTrait for StandaloneCentralService {
                 NameRowRepository::new(con).upsert_one(&NameRow {
                     id: name_id.clone(),
                     name: store_name.clone(),
-                    code: CENTRAL_CONFIG_STORE_CODE.to_string(),
+                    code: CENTRAL_CONFIG_CODE.to_string(),
                     r#type: NameRowType::Store,
                     is_customer: false,
                     is_supplier: false,
@@ -96,7 +96,7 @@ impl StandaloneCentralServiceTrait for StandaloneCentralService {
                 let store_id = uuid();
                 StoreRowRepository::new(con).upsert_one(&StoreRow {
                     id: store_id.clone(),
-                    code: CENTRAL_CONFIG_STORE_CODE.to_string(),
+                    code: CENTRAL_CONFIG_CODE.to_string(),
                     site_id: STANDALONE_CENTRAL_SITE_ID,
                     name_id: name_id.clone(),
                     created_date: Some(Utc::now().naive_utc().date()),

@@ -560,6 +560,15 @@ impl GeneralMutations {
         initialise_site(ctx, input).await
     }
 
+    // Only available for graphql introspection, error will be thrown after PreInitialisation state
+    pub async fn initialise_as_central_server(
+        &self,
+        ctx: &Context<'_>,
+        input: InitialiseAsCentralServerInputNode,
+    ) -> Result<InitialiseAsCentralServerResponse> {
+        initialise_as_central_server(ctx, input).await
+    }
+
     pub async fn manual_sync(
         &self,
         ctx: &Context<'_>,
