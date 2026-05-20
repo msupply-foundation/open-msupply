@@ -327,12 +327,10 @@ impl<'a> SyncV7<'a> {
             let max_cursor = batch.max_cursor;
 
             let site_id = batch.site_id;
-            let Some(batch_max_cursor) = batch.records.last().map(|r| r.cursor) else {
-                break;
-            };
-            logger.progress(max_cursor as i64 - batch_max_cursor)?;
+            let batch_last_cursor = batch.last_cursor_in_batch;
+            logger.progress((max_cursor - batch_last_cursor) as i64)?;
 
-            info!("Pulled {record_count} max batch cursor {batch_max_cursor} cursor {cursor} max cursor {}", batch.max_cursor);
+            info!("Pulled {record_count} batch last cursor {batch_last_cursor} cursor {cursor} max cursor {}", batch.max_cursor);
 
             // V7 pull: records arrive without an originating app_version (it isn't
             // carried through the central server), so app_version is None here.
@@ -345,7 +343,7 @@ impl<'a> SyncV7<'a> {
             self.connection
                 .transaction_sync(|t_con| {
                     SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows)?;
-                    cursor_controller.update(self.connection, batch_max_cursor as u64)
+                    cursor_controller.update(self.connection, batch_last_cursor as u64)
                 })
                 .map_err(|e| e.to_inner_error())?;
 

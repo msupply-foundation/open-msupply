@@ -7,6 +7,7 @@ export const useName = {
     get: Document.useName,
     updateProperties: Document.useUpdateProperties,
     customers: Document.useCustomers,
+    customersInfinite: Document.useCustomersInfinite,
     internalSuppliers: Document.useInternalSuppliers,
     list: Document.useNames,
     suppliers: Document.useSuppliers,

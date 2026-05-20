@@ -124,6 +124,15 @@ impl<'a> StoreRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, store_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = store::table
+            .filter(store::id.eq(store_id))
+            .select(store::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn find_one_by_name_id(&self, name_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
         let result = store::table
             .filter(store::name_id.eq(name_id))

@@ -84,6 +84,12 @@ export const usePurchaseOrderColumns = (currencyCode?: string) => {
         size: 90,
       },
       {
+        accessorKey: 'item.unitName',
+        header: t('label.unit-name'),
+        accessorFn: row => row.item.unitName,
+        size: 100,
+      },
+      {
         accessorKey: 'requestedNumberOfUnits',
         header: t('label.requested-units'),
         columnType: ColumnType.Number,
