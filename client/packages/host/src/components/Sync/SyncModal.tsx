@@ -51,6 +51,7 @@ const useHostSync = (enabled: boolean) => {
   const [isInitialMount, setIsInitialMount] = useState(true);
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { allowSleep, keepAwake } = useNativeClient();
+  const { updateUser } = useAuthContext();
 
   // true by default to wait for first syncStatus api result
   const [isLoading, setIsLoading] = useState(true);
@@ -80,7 +81,10 @@ const useHostSync = (enabled: boolean) => {
 
       // Reload custom translations, in case we received new ones via sync
       // Shouldn't run on first mount, when translations might still be loading - see issue #9042
-      !isInitialMount && invalidateCustomTranslations();
+      if (!isInitialMount) {
+        invalidateCustomTranslations();
+        updateUser();
+      }
     }
   }, [syncStatus?.isSyncing]);
 
@@ -122,7 +126,7 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
     isLoading,
     onManualSync,
   } = useHostSync(open);
-  const { updateUserIsLoading, updateUser, setStore, store } = useAuthContext();
+  const { updateUserIsLoading, updateUser } = useAuthContext();
   const error =
     syncStatus?.error &&
     mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
@@ -130,9 +134,6 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
   const sync = async () => {
     await updateUser();
     await onManualSync();
-    if (!!store) {
-      await setStore(store);
-    }
   };
 
   const durationAsDate = new Date(
@@ -246,7 +247,7 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
               marginTop:
                 (!!numberOfRecordsInPushQueue &&
                   numberOfRecordsInPushQueue >= 100) ||
-                error
+                  error
                   ? '5'
                   : '20',
             }}
