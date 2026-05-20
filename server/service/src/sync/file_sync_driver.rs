@@ -19,20 +19,24 @@ const FILE_SYNC_UPLOAD_DELAY: Duration = Duration::from_millis(100); // This jus
 const FILE_SYNC_NO_FILES_DELAY: Duration = Duration::from_millis(10000); // If there's nothing to upload or there was an error, wait a longer before checking again
 
 pub enum FileSyncMessage {
-    Start,   // Start sync (could be manual trigger, or automatic on server startup)
-    Stop,    // Stop sync (could be manual trigger, or automatic on server shutdown)
-    Pause, // Pause sync this is called by the main sync process to pause the file sync during a normal sync operation
-    UnPause, // Restart sync if it's not Stopped
+    Start, // Start sync (could be manual trigger, or automatic on server startup)
+    Stop,  // Stop sync (could be manual trigger, or automatic on server shutdown)
 }
 
 pub struct FileSyncDriver {
     receiver: Receiver<FileSyncMessage>,
     static_file_service: Arc<StaticFileService>,
+    /// Pause is a *state* (currently paused or not), not an event — set synchronously by
+    /// `FileSyncTrigger::pause` / `unpause` so it takes effect immediately even while the driver
+    /// is mid-file. Going through the mpsc channel would have queued the message behind the
+    /// in-flight upload and the pause wouldn't be observed until the file finished.
+    pause_flag: Arc<AtomicBool>,
 }
 
 #[derive(Clone)]
 pub struct FileSyncTrigger {
     sender: Sender<FileSyncMessage>,
+    pause_flag: Arc<AtomicBool>,
 }
 
 /// Used to 'drive' file sync synchronisation, it's tasks:
@@ -48,11 +52,18 @@ impl FileSyncDriver {
                 .expect("Failed to create static file service"),
         );
 
+        // Default to paused so file sync should un-pause once the first `sync` completes.
+        let pause_flag = Arc::new(AtomicBool::new(true));
+
         (
-            FileSyncTrigger { sender },
+            FileSyncTrigger {
+                sender,
+                pause_flag: pause_flag.clone(),
+            },
             FileSyncDriver {
                 receiver,
                 static_file_service,
+                pause_flag,
             },
         )
     }
@@ -67,12 +78,7 @@ impl FileSyncDriver {
     ///    * If not initialised await only for start trigger
     ///    * do sync if any of the above were triggered
     pub async fn run(mut self, service_provider: Arc<ServiceProvider>) {
-        // Default to paused so file sync only starts once the first normal `sync` completes and
-        // sends UnPause. The flag is shared (Arc<AtomicBool>) so it can be read from inside the
-        // tus chunk loop in `upload_file`, allowing a pause that arrives mid-file to take effect
-        // after the current chunk is durably ACKed rather than after the whole file finishes.
         let mut stopped = false;
-        let pause_flag = Arc::new(AtomicBool::new(true));
         let mut files_to_upload = 0;
 
         loop {
@@ -92,14 +98,6 @@ impl FileSyncDriver {
                                 log::info!("Stopping file sync");
                                 stopped = true;
                         },
-                            FileSyncMessage::Pause => {
-                                log::info!("Pausing file sync");
-                                pause_flag.store(true, Ordering::Relaxed);
-                            },
-                            FileSyncMessage::UnPause => {
-                                log::info!("Unpausing file sync");
-                                pause_flag.store(false, Ordering::Relaxed);
-                            },
                         }
                     },
                     // OR wait between downloading files
@@ -123,12 +121,12 @@ impl FileSyncDriver {
             // If not stopped or paused and we have central server URL
             if let (false, false, CentralServerConfig::CentralServerUrl(url)) = (
                 stopped,
-                pause_flag.load(Ordering::Relaxed),
+                self.pause_flag.load(Ordering::Relaxed),
                 CentralServerConfig::get(),
             ) {
                 // for now we only sync if we're not the central server
                 files_to_upload = self
-                    .sync(&url, service_provider.clone(), pause_flag.clone())
+                    .sync(&url, service_provider.clone(), self.pause_flag.clone())
                     .await;
             }
         }
@@ -189,15 +187,17 @@ impl FileSyncTrigger {
     }
 
     pub fn pause(&self) {
-        if let Err(error) = self.sender.try_send(FileSyncMessage::Pause) {
-            log::error!("Problem pausing file sync {error:#?}")
-        }
+        // Set the shared flag synchronously rather than enqueuing a channel message. The driver
+        // doesn't poll its receiver while a file upload is in flight, so a channel-delivered pause
+        // would only be observed after the current file finished — defeating the per-chunk pause
+        // boundary in `SyncApiV6::upload_file`.
+        log::info!("Pausing file sync");
+        self.pause_flag.store(true, Ordering::Relaxed);
     }
 
     pub fn unpause(&self) {
-        if let Err(error) = self.sender.try_send(FileSyncMessage::UnPause) {
-            log::error!("Problem unpausing file sync {error:#?}")
-        }
+        log::info!("Unpausing file sync");
+        self.pause_flag.store(false, Ordering::Relaxed);
     }
 }
 
