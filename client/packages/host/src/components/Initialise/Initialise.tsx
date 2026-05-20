@@ -41,31 +41,9 @@ export const Initialise = () => {
   const isInputDisabled = formState.isInitialising || formState.isLoading;
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
-  const ModeSelector = () => {
-    return isAndroid ? undefined : (
-      <TabList
-        value={mode}
-        onChange={(_, v) => !isInputDisabled && setMode(v as InitMode)}
-        variant="fullWidth"
-      >
-        <Tab
-          value="remote"
-          label={t('initialise.remote-sync')}
-          disabled={isInputDisabled}
-        />
-        <Tab
-          value="central"
-          label={t('initialise.central-standalone')}
-          disabled={isInputDisabled}
-        />
-      </TabList>
-    );
-  };
-
   return (
     <Grid container sx={{ flex: 1 }}>
       <Grid
-        container
         size={{ xs: 12, sm: 6 }}
         sx={theme => ({
           backgroundImage: theme.mixins.gradient.secondary,
@@ -103,7 +81,26 @@ export const Initialise = () => {
             <Stack direction="row" sx={{ justifyContent: 'center' }}>
               <LoginIcon small />
             </Stack>
-            <ModeSelector />
+            {!isAndroid && (
+              <TabList
+                value={mode}
+                onChange={(_, v) =>
+                  !isInputDisabled && setMode(v as InitMode)
+                }
+                variant="fullWidth"
+              >
+                <Tab
+                  value="remote"
+                  label={t('initialise.remote-sync')}
+                  disabled={isInputDisabled}
+                />
+                <Tab
+                  value="central"
+                  label={t('initialise.central-standalone')}
+                  disabled={isInputDisabled}
+                />
+              </TabList>
+            )}
             {mode === 'remote' && <RemoteForm formState={formState} />}
             {mode === 'central' && <StandaloneCentralTab />}
           </Stack>
