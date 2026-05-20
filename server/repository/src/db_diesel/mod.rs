@@ -185,6 +185,7 @@ pub use assets::*;
 pub use backend_plugin_row::*;
 pub use barcode_row::*;
 pub use campaign::*;
+pub use category_row::*;
 pub use changelog::*;
 pub use clinician::*;
 pub use clinician_link_row::*;

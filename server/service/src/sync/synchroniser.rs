@@ -204,9 +204,9 @@ impl SynchroniserV5V6 {
         } else {
             match CentralServerConfig::get() {
                 CentralServerConfig::NotConfigured => return Err(SyncError::V6NotConfigured),
-                CentralServerConfig::IsCentralServer | CentralServerConfig::ForcedCentralServer => {
-                    None
-                }
+                CentralServerConfig::IsCentralServer
+                | CentralServerConfig::ForcedCentralServer
+                | CentralServerConfig::StandaloneCentral => None,
                 CentralServerConfig::CentralServerUrl(url) => Some(SynchroniserV6::new(
                     &url,
                     &self.sync_v5_settings,
@@ -380,6 +380,9 @@ pub(crate) fn run_post_sync_triggers(
 
     ctx.processors_trigger
         .trigger_processor(ProcessorType::RequisitionAutoFinalise);
+
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::MergeSyncMessage);
 }
 
 /// Translation And Integration of sync buffer, pub since used in CLI

@@ -21,6 +21,7 @@ mod assign_requisition_number;
 mod contact_form;
 mod general_processor;
 mod load_plugin;
+mod merge_sync_message;
 mod plugin_processor;
 mod requisition_auto_finalise;
 pub use general_processor::ProcessorType;
