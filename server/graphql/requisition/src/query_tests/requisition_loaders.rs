@@ -192,7 +192,7 @@ mod test {
                         "totalCount": 1,
                          "nodes": [{
                             "id": &response_requisition.lines[0].id,
-                            "itemId":&response_requisition.lines[0].item_link_id,
+                            "itemId":&response_requisition.lines[0].item_id,
                             "itemName": &response_requisition.lines[0].item_name,
                             "requestedQuantity": &response_requisition.lines[0].requested_quantity,
                             "supplyQuantity": &response_requisition.lines[0].supply_quantity,
@@ -262,14 +262,14 @@ mod test {
                     "lines": {
                          "nodes": [{
                              "item": {
-                                 "id": request_requisition.lines[0].item_link_id
+                                 "id": request_requisition.lines[0].item_id
                              },
                              "linkedRequisitionLine": {
                                 "id": response_requisition.lines[0].id,
                              }
                          },{
                             "item": {
-                                "id": request_requisition.lines[1].item_link_id
+                                "id": request_requisition.lines[1].item_id
                             },
                             "linkedRequisitionLine": null
                         }]
@@ -279,7 +279,7 @@ mod test {
                     "lines": {
                          "nodes": [{
                              "item": {
-                                 "id": response_requisition.lines[0].item_link_id
+                                 "id": response_requisition.lines[0].item_id
                              },
                              "linkedRequisitionLine": {
                                 "id": request_requisition.lines[0].id,
