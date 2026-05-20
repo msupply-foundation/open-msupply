@@ -258,7 +258,7 @@ mod item_count_service_test {
                     }],
                     lines: vec![MasterListLineRow {
                         id: "listline1".to_string(),
-                        item_link_id: "item1".to_string(),
+                        item_id: "item1".to_string(),
                         master_list_id: "list1".to_string(),
                         ..Default::default()
                     }],
@@ -266,7 +266,7 @@ mod item_count_service_test {
                 stock_lines: vec![
                     StockLineRow {
                         id: "stock_line1".to_string(),
-                        item_link_id: "item2".to_string(),
+                        item_id: "item2".to_string(),
                         store_id: mock_store_b().id,
                         available_number_of_packs: 5.0,
                         total_number_of_packs: 5.0,
@@ -275,7 +275,7 @@ mod item_count_service_test {
                     },
                     StockLineRow {
                         id: "stock_line2".to_string(),
-                        item_link_id: "item3".to_string(),
+                        item_id: "item3".to_string(),
                         store_id: mock_store_b().id,
                         available_number_of_packs: 0.0,
                         total_number_of_packs: 0.0,
