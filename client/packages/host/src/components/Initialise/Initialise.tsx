@@ -86,7 +86,6 @@ export const Initialise = () => {
             overflowY: 'unset',
           },
           backgroundColor: 'background.login',
-          overflowY: 'scroll',
         })}
       >
         <Stack
