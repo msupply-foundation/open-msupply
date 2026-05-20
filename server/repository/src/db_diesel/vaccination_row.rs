@@ -86,16 +86,13 @@ pub struct VaccinationRow {
     pub not_given_reason: Option<String>,
     pub comment: Option<String>,
     // Resolved from link tables - must be last to match view column order.
-    // Central servers always run the latest version, but remote clients may be older:
-    // - `rename` keeps the JSON field names as `*_link_id` so older remote clients
-    //   can still deserialize records they pull from an upgraded central server.
-    // - `alias` lets the central server deserialize JSON pushed by older remote
-    //   clients (which still emit `*_link_id`).
-    #[serde(rename = "patient_link_id", alias = "patient_id")]
+    // `rename` keeps the wire format emitting `*_link_id` so older remote clients
+    // serialising/deserialising via this struct still see the legacy field name.
+    #[serde(rename = "patient_link_id")]
     pub patient_id: String,
-    #[serde(rename = "item_link_id", alias = "item_id")]
+    #[serde(rename = "item_link_id")]
     pub item_id: Option<String>,
-    #[serde(rename = "facility_name_link_id", alias = "facility_name_id")]
+    #[serde(rename = "facility_name_link_id")]
     pub facility_name_id: Option<String>,
 }
 
