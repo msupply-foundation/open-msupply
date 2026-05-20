@@ -12,7 +12,7 @@ use repository::{
     DiagnosisRowRepository, EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, InvoiceRow,
     InvoiceRowDelete, InvoiceRowRepository, InvoiceStatus, InvoiceType, KeyValueStoreRepository,
     NameRow, NameRowRepository, Row, StorageConnection, StoreFilter, StoreRepository, StoreRowRepository,
-    SyncBufferRow, SyncRecordData, UserAccountRow, UserAccountRowRepository,
+    SyncBufferRow, UserAccountRow, UserAccountRowRepository,
 };
 use repository::name_insurance_join_row::NameInsuranceJoinRowRepository;
 use serde::{Deserialize, Serialize};
@@ -1092,7 +1092,7 @@ mod tests {
         test_db::{setup_all, setup_all_with_data},
         ChangelogCondition, ChangelogRepository, CurrencyRow, CurrencyRowRepository, DiagnosisRow,
         InsuranceProviderRow, CursorAndLimit, FilterBuilder, KeyType,
-        KeyValueStoreRow, ShippingMethodRow, SyncAction, Upsert, RowOrDelete,
+        KeyValueStoreRow, ShippingMethodRow, SyncAction, SyncRecordData, RowOrDelete,
     };
     use serde_json::json;
 

@@ -8,8 +8,8 @@ use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository,
     ReasonOptionRowRepository, RequisitionFilter, RequisitionLineRow, RequisitionLineRowDelete,
-    RequisitionLineRowRepository, RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository, Row,
-    StorageConnection, SyncBufferRow, SyncRecordData,
+    RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository, Row,
+    StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
@@ -345,7 +345,7 @@ mod tests {
         mock::MockDataInserts,
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::setup_all,
-        ChangelogCondition, ChangelogRepository, SyncAction,
+        ChangelogCondition, ChangelogRepository, SyncAction, SyncRecordData,
         CursorAndLimit, FilterBuilder, RowOrDelete,
     };
     use serde_json::json;

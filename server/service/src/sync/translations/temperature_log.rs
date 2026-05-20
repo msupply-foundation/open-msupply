@@ -11,7 +11,7 @@ use util::sync_serde::{
 };
 
 use repository::{
-    ChangelogRow, ChangelogTableName, LocationRowRepository, StorageConnection, SyncBufferRow, SyncRecordData,
+    ChangelogRow, ChangelogTableName, LocationRowRepository, StorageConnection, SyncBufferRow,
     TemperatureBreachRowRepository, TemperatureLogRow, Row,
 
 };
@@ -168,7 +168,7 @@ mod tests {
         mock::MockDataInserts,
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::setup_all,
-        SyncAction,
+        SyncAction, SyncRecordData,
     };
 
     #[actix_rt::test]

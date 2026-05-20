@@ -9,7 +9,7 @@ use repository::{
     campaign_row::CampaignRowRepository, item_variant::item_variant_row::ItemVariantRowRepository,
     vvm_status::vvm_status_row::VVMStatusRowRepository, BarcodeRowRepository, ChangelogRow, Row,
     ChangelogTableName, EqualFilter, LocationRowRepository, ProgramRowRepository, StockLine,
-    StockLineFilter, StockLineRepository, StockLineRow, StorageConnection, SyncBufferRow, SyncRecordData,
+    StockLineFilter, StockLineRepository, StockLineRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -343,7 +343,7 @@ mod tests {
         mock::{MockData, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogCondition, ChangelogRepository, ContextRow, ProgramRow, SyncAction,
+        ChangelogCondition, ChangelogRepository, ContextRow, ProgramRow, SyncAction, SyncRecordData,
         CursorAndLimit, FilterBuilder, RowOrDelete,
     };
     use serde_json::json;

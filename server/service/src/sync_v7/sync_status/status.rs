@@ -1,14 +1,8 @@
-use chrono::Utc;
-use repository::{
-    syncv7::SyncError, FilterBuilder, RepositoryError, SyncLogV7Condition, SyncLogV7Repository,
-    SyncLogV7Row,
-};
+use repository::{syncv7::SyncError, SyncLogV7Row};
 
 use crate::{
     i32_to_u32,
-    service_provider::ServiceContext,
-    settings_service::{SettingsService, SettingsServiceTrait},
-    sync::sync_status::status::{InitialisationStatus, SyncStatus, SyncStatusWithProgress},
+    sync::sync_status::status::{SyncStatus, SyncStatusWithProgress},
 };
 
 #[derive(Debug, Clone, PartialEq)]
