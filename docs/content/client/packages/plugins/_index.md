@@ -189,6 +189,7 @@ Then:
 
 ```
 yarn plugin get <name>            # reset any current plugin submodule and add the named one
+yarn plugin get <repo-url>        # or pass a repo URL directly, no map entry needed
 yarn plugin get <name> -b <branch> # same, but check out a specific branch
 yarn plugin reset                 # remove all plugin submodules (no replacement)
 yarn plugin install               # build and install both frontend and backend

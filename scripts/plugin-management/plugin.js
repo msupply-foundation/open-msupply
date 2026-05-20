@@ -165,14 +165,7 @@ function resetAllPlugins() {
 }
 
 function readMap() {
-  if (!fs.existsSync(MAP_FILE)) {
-    const relMap = path.join(MAP_DIR, 'pluginRepoMap.json');
-    die(
-      `${relMap} not found.\n` +
-        `create one based on ${EXAMPLE_MAP_FILE}, e.g.:\n` +
-        `  cp ${EXAMPLE_MAP_FILE} ${relMap}`
-    );
-  }
+  if (!fs.existsSync(MAP_FILE)) return {};
   try {
     return JSON.parse(fs.readFileSync(MAP_FILE, 'utf8'));
   } catch (e) {
@@ -201,15 +194,13 @@ function cmdGet(args) {
     }
   }
   if (positional.length !== 1) {
-    die('usage: yarn plugin get <name> [-b <branch>]');
+    die('usage: yarn plugin get <name|url> [-b <branch>]');
   }
-  const name = positional[0];
+  const nameOrUrl = positional[0];
   const map = readMap();
-  const url = map[name];
-  if (!url) {
-    const known = Object.keys(map).join(', ') || '(none)';
-    die(`no entry for "${name}" in pluginRepoMap.json. known: ${known}`);
-  }
+  // Look up in the map first; if there's no match, treat the argument as a
+  // direct repo URL/spec and let git tell us if it's invalid.
+  const url = map[nameOrUrl] || nameOrUrl;
 
   resetAllPlugins();
 
@@ -352,7 +343,10 @@ function cmdOpen() {
 
 function usage() {
   console.log(`usage:
-  yarn plugin get <name> [-b <branch>]   add a plugin submodule (resets any existing first)
+  yarn plugin get <name|url> [-b <branch>]
+                                          add a plugin submodule (resets any existing first).
+                                          <name> is looked up in pluginRepoMap.json;
+                                          anything else is used directly as a repo URL.
   yarn plugin install [frontend|backend] [--url U] [--username U] [--password P]
                                           build and install the current plugin into the local server
                                           (omit target to install both frontend and backend)
