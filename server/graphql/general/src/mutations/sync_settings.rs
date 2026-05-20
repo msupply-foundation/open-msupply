@@ -6,7 +6,11 @@ use graphql_core::{
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
-use crate::{queries::sync_settings::SyncSettingsNode, sync_api_error::SyncErrorNode};
+use crate::{
+    queries::sync_settings::SyncSettingsNode,
+    sync_api_error::{map_request_auth_error, SyncErrorEither, SyncErrorNode},
+    sync_v7::sync_api_error::SyncErrorV7Node,
+};
 
 use super::common::SyncSettingsInput;
 
@@ -14,6 +18,7 @@ use super::common::SyncSettingsInput;
 pub enum UpdateSyncSettingsResponse {
     Response(SyncSettingsNode),
     Error(SyncErrorNode),
+    ErrorV7(SyncErrorV7Node),
 }
 
 pub async fn update_sync_settings(
@@ -45,9 +50,10 @@ pub async fn update_sync_settings(
             .request_and_set_site_auth(service_provider, &sync_settings)
             .await
         {
-            return Ok(UpdateSyncSettingsResponse::Error(SyncErrorNode::map_error(
-                error,
-            )?));
+            return Ok(match map_request_auth_error(error)? {
+                SyncErrorEither::V5V6(node) => UpdateSyncSettingsResponse::Error(node),
+                SyncErrorEither::V7(node) => UpdateSyncSettingsResponse::ErrorV7(node),
+            });
         }
     }
 
