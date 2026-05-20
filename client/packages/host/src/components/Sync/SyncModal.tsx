@@ -80,7 +80,9 @@ const useHostSync = (enabled: boolean) => {
 
       // Shouldn't run on first mount, when translations might still be loading - see issue #9042
       if (!isInitialMount) {
-        queryClient.invalidateQueries(); // refresh the page user is on after sync finishes
+        // Mark all queries stale but don't refetch active ones immediately.
+        // This avoids surrounding UI components to jump around
+        queryClient.invalidateQueries({ refetchType: 'none' });
         invalidateCustomTranslations();
         updateUser();
       }
