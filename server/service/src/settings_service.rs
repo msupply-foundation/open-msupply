@@ -2,7 +2,10 @@ use repository::{KeyType, KeyValueStoreRepository, RepositoryError};
 use reqwest::Url;
 use thiserror::Error;
 
-use crate::{service_provider::ServiceContext, sync::settings::SyncSettings};
+use crate::{
+    service_provider::ServiceContext,
+    sync::settings::SyncSettings,
+};
 
 #[derive(Debug, Error)]
 pub enum UpdateSettingsError {
@@ -29,7 +32,8 @@ fn validate(settings: &SyncSettings) -> Result<(), UpdateSettingsError> {
 }
 
 pub trait SettingsServiceTrait: Sync + Send {
-    /// Loads sync settings from the DB
+    /// Loads sync settings from the DB. Batch sizes come from `ctx.batch_size`
+    /// (YAML or defaults), not from the DB.
     fn sync_settings(&self, ctx: &ServiceContext) -> Result<Option<SyncSettings>, RepositoryError> {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
@@ -38,6 +42,8 @@ pub trait SettingsServiceTrait: Sync + Send {
         let password_sha256 = key_value_store.get_string(KeyType::SettingsSyncPasswordSha256)?;
         let interval_seconds = key_value_store.get_i64(KeyType::SettingsSyncIntervalSeconds)?;
 
+        let batch_size = ctx.batch_size.clone();
+
         // `?` inside this closure would result in closure returning `None`
         let make_settings = || {
             Some(SyncSettings {
@@ -45,7 +51,7 @@ pub trait SettingsServiceTrait: Sync + Send {
                 username: username?,
                 password_sha256: password_sha256?,
                 interval_seconds: interval_seconds? as u64,
-                batch_size: Default::default(),
+                batch_size,
             })
         };
 
@@ -94,4 +100,5 @@ pub trait SettingsServiceTrait: Sync + Send {
 }
 
 pub struct SettingsService;
+
 impl SettingsServiceTrait for SettingsService {}
