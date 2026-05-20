@@ -27,6 +27,7 @@ struct SyncIntegrationTransferContext {
     site_2_processors_task: JoinHandle<()>,
     item1: ItemRow,
     item2: ItemRow,
+    item3: ItemRow,
     service_item: ItemRow,
 }
 
@@ -60,7 +61,7 @@ async fn initialise_transfer_sites(identifier: &str) -> SyncIntegrationTransferC
         .await
         .expect("Problem inserting central data");
 
-    let (item1, item2, service_item, _currency, central_data) = items_and_currency();
+    let (item1, item2, item3, service_item, _currency, central_data) = items_and_currency();
     central_server_configurations
         .upsert_records(central_data)
         .await
@@ -79,6 +80,7 @@ async fn initialise_transfer_sites(identifier: &str) -> SyncIntegrationTransferC
         site_2_processors_task,
         item1,
         item2,
+        item3,
         service_item,
     }
 }
@@ -101,7 +103,14 @@ fn to_site_context_and_processors_task(config: FullSiteConfig) -> (SiteContext, 
     )
 }
 
-fn items_and_currency() -> (ItemRow, ItemRow, ItemRow, CurrencyRow, serde_json::Value) {
+fn items_and_currency() -> (
+    ItemRow,
+    ItemRow,
+    ItemRow,
+    ItemRow,
+    CurrencyRow,
+    serde_json::Value,
+) {
     let item1 = ItemRow {
         id: uuid(),
         code: uuid(),
@@ -109,6 +118,12 @@ fn items_and_currency() -> (ItemRow, ItemRow, ItemRow, CurrencyRow, serde_json::
     };
 
     let item2 = ItemRow {
+        id: uuid(),
+        code: uuid(),
+        ..Default::default()
+    };
+
+    let item3 = ItemRow {
         id: uuid(),
         code: uuid(),
         ..Default::default()
@@ -134,6 +149,7 @@ fn items_and_currency() -> (ItemRow, ItemRow, ItemRow, CurrencyRow, serde_json::
         "item": [
             {"ID": item1.id, "type_of": "general", "code": item1.code},
             {"ID": item2.id, "type_of": "general", "code": item2.code},
+            {"ID": item3.id, "type_of": "general", "code": item3.code},
             {"ID": service_item.id, "type_of": "service", "code": service_item.code},
         ],
         "currency": [
@@ -141,7 +157,7 @@ fn items_and_currency() -> (ItemRow, ItemRow, ItemRow, CurrencyRow, serde_json::
         ]
     });
 
-    (item1, item2, service_item, currency, json)
+    (item1, item2, item3, service_item, currency, json)
 }
 
 async fn new_instance_of_existing_site(

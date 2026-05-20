@@ -11,13 +11,16 @@ use util::sync_serde::{
 };
 
 use repository::{
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, TemperatureLogRow,
-    Row,
+    ChangelogRow, ChangelogTableName, LocationRowRepository, StorageConnection, SyncBufferRow,
+    TemperatureBreachRowRepository, TemperatureLogRow, Row,
 
 };
 use serde::{Deserialize, Serialize};
 
-use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{
+    to_legacy_time, utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult,
+    SyncTranslation,
+};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -72,7 +75,7 @@ impl SyncTranslation for TemperatureLogTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyTemperatureLogRow>()?;
@@ -88,6 +91,25 @@ impl SyncTranslation for TemperatureLogTranslation {
             temperature_breach_id,
             datetime,
         } = data;
+
+        let location_id = clear_invalid_fk(
+            connection,
+            "temperature_log",
+            &id,
+            "location_id",
+            location_id,
+            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
+        let temperature_breach_id = clear_invalid_fk(
+            connection,
+            "temperature_log",
+            &id,
+            "temperature_breach_id",
+            temperature_breach_id,
+            |c, id| TemperatureBreachRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let result = TemperatureLogRow {
             id,
@@ -142,7 +164,12 @@ impl SyncTranslation for TemperatureLogTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts,
+        system_log_row::{SystemLogRowRepository, SystemLogType},
+        test_db::setup_all,
+        SyncAction, SyncRecordData,
+    };
 
     #[actix_rt::test]
     async fn test_temperature_log_translation() {
@@ -160,5 +187,57 @@ mod tests {
 
             assert_eq!(translation_result, record.translated_record);
         }
+    }
+
+    #[actix_rt::test]
+    async fn test_temperature_log_clears_invalid_optional_fks_and_writes_system_log() {
+        let translator = TemperatureLogTranslation {};
+        let (_, connection, _, _) = setup_all(
+            "test_temperature_log_clears_invalid_optional_fks_and_writes_system_log",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let sync_record = SyncBufferRow {
+            table_name: "temperature_log".to_string(),
+            record_id: "TEMP_LOG_FK_INVALID".to_string(),
+            data: SyncRecordData(serde_json::from_str(r#"{
+                "ID": "TEMP_LOG_FK_INVALID",
+                "temperature": 5.0,
+                "sensor_ID": "sensor_a",
+                "location_ID": "does_not_exist_location",
+                "store_ID": "store_a",
+                "date": "2024-01-01",
+                "time": "12:00:00",
+                "temperature_breach_ID": "does_not_exist_breach",
+                "om_datetime": "2024-01-01T12:00:00"
+            }"#).unwrap()),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        let result = translator
+            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .unwrap();
+        let debug = format!("{result:?}");
+        assert!(
+            debug.contains("location_id: None"),
+            "{}",
+            format!("expected location_id None; got:\n{debug}")
+        );
+        assert!(
+            debug.contains("temperature_breach_id: None"),
+            "{}",
+            format!("expected temperature_breach_id None; got:\n{debug}")
+        );
+
+        let logs = SystemLogRowRepository::new(&connection)
+            .find_all()
+            .unwrap();
+        let fk_errors: Vec<_> = logs
+            .iter()
+            .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
+            .collect();
+        assert_eq!(fk_errors.len(), 2, "got {fk_errors:?}");
     }
 }

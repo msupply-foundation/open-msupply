@@ -15,6 +15,10 @@ import {
   Grid,
   Typography,
   Theme,
+  useNativeClient,
+  useExportLog,
+  useNotification,
+  MuiLink,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { useInitialiseForm } from './hooks';
@@ -40,6 +44,19 @@ export const Initialise = () => {
   const isAndroid = EnvUtils.platform === Platform.Android;
   const isInputDisabled = formState.isInitialising || formState.isLoading;
   const isExtraSmallScreen = useIsExtraSmallScreen();
+  const nativeClient = useNativeClient();
+  const exportLog = useExportLog();
+  const { warning } = useNotification();
+
+  const onSaveLog = async () => {
+    if (!isAndroid) return;
+    const log = await nativeClient.readLog();
+    if (!log?.trim()) {
+      warning(t('error.unable-to-load-server-log'))();
+      return;
+    }
+    await exportLog(log, 'remote_server');
+  };
 
   return (
     <Grid container sx={{ flex: 1 }}>
@@ -84,9 +101,7 @@ export const Initialise = () => {
             {!isAndroid && (
               <TabList
                 value={mode}
-                onChange={(_, v) =>
-                  !isInputDisabled && setMode(v as InitMode)
-                }
+                onChange={(_, v) => !isInputDisabled && setMode(v as InitMode)}
                 variant="fullWidth"
               >
                 <Tab
@@ -105,6 +120,19 @@ export const Initialise = () => {
             {mode === 'central' && <StandaloneCentralTab />}
           </Stack>
         </Stack>
+        {isAndroid && (
+          <Box display="flex" justifyContent="center" sx={{ opacity: 0.6 }}>
+            <MuiLink
+              component="button"
+              type="button"
+              onClick={onSaveLog}
+              underline="hover"
+              sx={{ fontSize: '0.8rem', color: 'gray.main' }}
+            >
+              {t('button.save-log')}
+            </MuiLink>
+          </Box>
+        )}
         <Box>
           <AppVersion style={{ opacity: 0.4 }} />
         </Box>
@@ -132,6 +160,7 @@ const RemoteForm = ({ formState }: { formState: InitialiseFormState }) => {
     siteCredentialsError: error,
     syncStatus,
   } = formState;
+
   const t = useTranslation();
   const isExtraSmallScreen = useIsExtraSmallScreen();
   const syncError =
