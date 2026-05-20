@@ -53,14 +53,12 @@ const createStatusLog = (
 };
 
 interface FooterProps {
-  showStatusBar: boolean;
   status: PurchaseOrderNodeStatus;
   selectedRows: PurchaseOrderLineFragment[];
   resetRowSelection: () => void;
 }
 
 export const Footer = ({
-  showStatusBar,
   status,
   selectedRows,
   resetRowSelection,
@@ -190,7 +188,7 @@ export const Footer = ({
               resetRowSelection={resetRowSelection}
             />
           )}
-          {data && selectedRows.length === 0 && showStatusBar ? (
+          {data && selectedRows.length === 0 ? (
             <Box
               gap={2}
               display="flex"
