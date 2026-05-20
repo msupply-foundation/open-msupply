@@ -303,15 +303,99 @@ const { mutate: update } = usePluginData.update();
 
 You can watch [this video for example](https://drive.google.com/file/d/1JnmPU9hRaQD4R1hTDKbbNj78FnM2l00A/view?usp=drive_link) (TODO: make public).
 
-The simplest way to begin is by forking or copy-pasting [this template repo](https://github.com/msupply-foundation/open-msupply-plugins), then adding it as a submodule under `client/packages/plugins/`:
+The simplest way to begin is by forking or copy-pasting [this template repo](https://github.com/msupply-foundation/open-msupply-plugins), then adding it as a submodule under `client/packages/plugins/` using the `yarn plugin` helper.
+
+### Using the `yarn plugin` helper
+
+First-time setup, from the repo root:
 
 ```
-git submodule add [your-plugin-bundle-repo-url] client/packages/plugins/myPluginBundle
+cp scripts/plugin-management/pluginRepoMap.example.json scripts/plugin-management/pluginRepoMap.json
 ```
 
-> You will need GitHub authentication set up to add a private repo from the command line — [github cli](https://cli.github.com/) is the easiest, or use one of the [alternative methods](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-authentication-to-github).
+`pluginRepoMap.json` is gitignored — edit it to add short names for the repos you work with, e.g.:
 
-The `myPluginBundle` directory name can be anything. The submodule and the main repo are treated as separate git repositories — changes in each only affect that repo. Make sure you don't commit the `.gitmodules` file or anything under `client/packages/plugins/<your bundle>/` to the main app.
+```json
+{
+  "core": "https://github.com/msupply-foundation/open-msupply-plugins",
+  "civ": "https://github.com/msupply-foundation/civ-plugins"
+}
+```
+
+Then:
+
+```
+yarn plugin get <name>             # add a plugin submodule, replacing it if already present.
+                                   # Other installed plugins are left alone.
+yarn plugin get <repo-url>         # pass a repo URL directly, no map entry needed
+yarn plugin get <name> -b <branch> # check out a specific branch
+yarn plugin list                   # show what's currently installed
+yarn plugin install                # build and install every installed plugin (both frontend and backend)
+yarn plugin install <selector>     # only the named plugin
+yarn plugin install [...] frontend # only the frontend half
+yarn plugin install [...] backend  # only the backend half
+yarn plugin open                   # open the plugin in GitHub Desktop (must specify if >1 installed)
+yarn plugin open <selector>        # open a specific plugin
+yarn plugin reset                  # remove all plugin submodules
+yarn plugin reset <selector>       # remove just the named plugin
+```
+
+`<selector>` is either an installed plugin's folder name (e.g. `core-plugins`) or a short name from `pluginRepoMap.json` (e.g. `core`).
+
+`yarn plugin install` defaults to `http://localhost:8000` with credentials `admin`/`pass`. Override with `--url`, `--username`, `--password`. Get/reset abort if the affected plugin submodule has uncommitted changes — commit or stash inside it first.
+
+#### Auth profiles
+
+Auth values are stored as **profiles** in a gitignored `scripts/plugin-management/pluginAuth.json`. The `_default` profile is the implicit fallback, and you can define any number of named profiles for other servers. Example:
+
+```json
+{
+  "_default": {
+    "url": "http://localhost:8000",
+    "username": "admin",
+    "password": "pass"
+  },
+  "staging": {
+    "url": "https://staging.example.com",
+    "username": "alice",
+    "password": "secret"
+  }
+}
+```
+
+Pick a profile with `--auth=<name>`:
+
+```
+yarn plugin install --auth=staging
+```
+
+Per-field precedence (highest → lowest):
+1. inline flag (`--url`/`--username`/`--password`)
+2. the named profile from `--auth`
+3. the `_default` profile
+4. hard-coded constants
+
+Each field falls through independently, so you can have e.g. a profile that only sets `url` and inherit `username`/`password` from `_default`.
+
+**First-time setup of a new server**: pass `--auth` with a new name plus the values. The profile is auto-created (a notice is printed so typos don't slip through):
+
+```
+yarn plugin install --auth=staging --url=https://staging.example.com --username=alice --password=secret
+```
+
+Subsequent inline flags update the active profile (the one in `--auth`, or `_default` if none). Stored values are saved verbatim — to remove or rename a stored value, hand-edit `pluginAuth.json`.
+
+> You will need GitHub authentication set up to add a private repo — [github cli](https://cli.github.com/) is the easiest, or use one of the [alternative methods](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-authentication-to-github).
+
+### What `yarn plugin get` does under the hood
+
+It runs the equivalent of:
+
+```
+git submodule add [-b <branch>] <repo-url> client/packages/plugins/<repo-basename>
+```
+
+The submodule and the main repo are treated as separate git repositories — changes in each only affect that repo. `.gitmodules` and the files under `client/packages/plugins/<your bundle>/` are gitignored — they are intentionally not committed to the main app.
 
 Once added:
 
@@ -326,7 +410,7 @@ Once added:
 To pin a submodule to a specific branch, add `-b` when first adding it:
 
 ```
-git submodule add [your-plugin-bundle-repo-url] -b [your-branch] client/packages/plugins/myPluginBundle
+yarn plugin get <name> -b <branch>
 ```
 
 This adds a `branch` field to `.gitmodules`:
@@ -338,7 +422,7 @@ This adds a `branch` field to `.gitmodules`:
     branch = fix-plugin-data-saving
 ```
 
-Re-running the command with a different branch updates it. Alternatively, edit `.gitmodules` by hand and pull:
+Re-run `yarn plugin get <name> -b <other-branch>` to switch branches. Alternatively, edit `.gitmodules` by hand and pull:
 
 ```
 git submodule update --remote
@@ -347,6 +431,8 @@ git submodule update --remote
 > Note: the `branch` field accepts branch names only, not SHAs or tags.
 
 ### Removing a submodule
+
+Run `yarn plugin reset` from the repo root. It handles the full cleanup (deinit, working tree, `.gitmodules`, and `.git/modules/...` cache) — doing this by hand is error-prone, and leaving any of those behind silently breaks the next `git submodule add`. If you ever need to do it manually, the equivalent commands are:
 
 ```bash
 rm -rf .gitmodules
