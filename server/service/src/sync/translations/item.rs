@@ -1,10 +1,10 @@
 use chrono::Utc;
 use repository::{
     item_category::{ItemCategoryFilter, ItemCategoryRepository},
-    item_category_row::ItemCategoryJoinRow, ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete,
-    ItemType, LocationTypeRowRepository, Row, StorageConnection, SyncBufferRow, SyncRecordData, UnitRowRepository,
-    VENCategory,
-
+    item_category_row::ItemCategoryJoinRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemType,
+    LocationTypeRowRepository, Row, StorageConnection, SyncBufferRow, SyncRecordData,
+    UnitRowRepository, VENCategory,
 };
 use serde::{Deserialize, Serialize};
 
@@ -14,7 +14,6 @@ use crate::sync::{
         unit::UnitTranslation, utils::clear_invalid_fk,
     },
     CentralServerConfig,
-
 };
 
 use util::sync_serde::empty_str_as_option_string;
@@ -245,7 +244,11 @@ impl SyncTranslation for ItemTranslation {
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), json_record))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            json_record,
+        ))
     }
 }
 
@@ -358,7 +361,9 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "item".to_string(),
             record_id: "ITEM_FK_INVALID".to_string(),
-            data: SyncRecordData(serde_json::from_str(r#"{
+            data: SyncRecordData(
+                serde_json::from_str(
+                    r#"{
                 "ID": "ITEM_FK_INVALID",
                 "item_name": "Bad FK Item",
                 "code": "code",
@@ -373,7 +378,10 @@ mod tests {
                 "restricted_location_type_ID": "does_not_exist_location_type",
                 "volume_per_pack": 0,
                 "universalcodes_code": ""
-            }"#).unwrap()),
+            }"#,
+                )
+                .unwrap(),
+            ),
             action: SyncAction::Upsert,
             ..Default::default()
         };
@@ -393,9 +401,7 @@ mod tests {
             format!("expected restricted_location_type_id None; got:\n{debug}")
         );
 
-        let logs = SystemLogRowRepository::new(&connection)
-            .find_all()
-            .unwrap();
+        let logs = SystemLogRowRepository::new(&connection).find_all().unwrap();
         let fk_errors: Vec<_> = logs
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
