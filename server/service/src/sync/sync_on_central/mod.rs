@@ -3,7 +3,13 @@ use std::{
     vec,
 };
 
-use repository::{ChangelogRepository, SyncBufferRowRepository};
+use actix_multipart::form::tempfile::TempFile;
+use chrono::Utc;
+use repository::SyncFileDirection;
+use repository::{
+    ChangelogRepository, SyncBufferRowRepository, SyncFileReferenceRow,
+    SyncFileReferenceRowRepository, SyncFileStatus,
+};
 use util::format_error;
 
 use crate::{
@@ -25,7 +31,7 @@ use super::{
     api_v6::{
         SiteStatusRequestV6, SyncBatchV6, SyncDownloadFileRequestV6, SyncParsedErrorV6,
         SyncPatientPullRequestV6, SyncPullRequestV6, SyncPushRequestV6, SyncPushSuccessV6,
-        SyncRecordV6,
+        SyncRecordV6, SyncUploadFileRequestV6,
     },
     translations::translate_changelogs_to_sync_records,
 };
@@ -382,6 +388,110 @@ pub async fn download_file(
     let named_file =
         actix_files::NamedFile::open(&file_description.path).map_err(|e| Error::from_error(&e))?;
     Ok((named_file, file_description))
+}
+
+/// Backwards-compatibility handler for the legacy `PUT /central/sync/upload_file` multipart
+/// route. Newer remote clients speak tus 1.0.0 against `/central/sync/files` (see
+/// `server/server/src/central/tus.rs`), but remote sites that haven't been upgraded yet still
+/// call this endpoint. Keep it working until all deployed remote sites have moved to tus, then
+/// remove this handler, the route in `central/sync.rs`, and the
+/// `SyncUploadFileRequest/ResponseV6` types in `api_v6/mod.rs`.
+///
+/// If you need to fix a bug in the upload bookkeeping (sync_file_reference status, stop-gap
+/// row creation, auth, etc.), apply the same fix to the tus path in `central/tus.rs` — the
+/// two implementations must stay behaviourally consistent so that a mixed fleet of old and
+/// new remotes sees the same outcome.
+pub async fn upload_file(
+    settings: &Settings,
+    service_provider: &ServiceProvider,
+    SyncUploadFileRequestV6 {
+        file_id,
+        sync_v5_settings,
+        sync_v6_version,
+        record_id,
+        table_name,
+    }: SyncUploadFileRequestV6,
+    file_part: TempFile,
+) -> Result<(), SyncParsedErrorV6> {
+    use SyncParsedErrorV6 as Error;
+
+    log::info!("Receiving a file via legacy multipart upload : {file_id}");
+
+    if !CentralServerConfig::is_central_server() {
+        return Err(Error::NotACentralServer);
+    }
+
+    if !is_sync_version_compatible(sync_v6_version) {
+        return Err(Error::SyncVersionMismatch(
+            MIN_VERSION,
+            MAX_VERSION,
+            sync_v6_version,
+        ));
+    }
+
+    let ctx = service_provider.basic_context()?;
+    validate_site_auth(&ctx, &sync_v5_settings)
+        .await
+        .map_err(|e| Error::OtherServerError(format_error(&e)))?;
+
+    let file_service = StaticFileService::new(&settings.server.base_dir)?;
+    let ctx = service_provider.basic_context()?;
+
+    let repo = SyncFileReferenceRowRepository::new(&ctx.connection);
+    let sync_file_reference = match repo.find_one_by_id(&file_id) {
+        Ok(Some(file)) => file,
+        Ok(None) => {
+            // Older clients that don't send table_name/record_id cannot create a stop-gap row.
+            // Newer-but-still-legacy clients do send them and we can proceed. This stop-gap row
+            // is overwritten when the proper sync_file_reference arrives via the regular sync
+            // push from the remote (which is the source of truth for the terminal status).
+            match (table_name.clone(), record_id.clone()) {
+                (Some(table_name), Some(record_id)) => SyncFileReferenceRow {
+                    id: file_id.clone(),
+                    file_name: file_part.file_name.clone().unwrap_or("unknown".to_string()),
+                    table_name,
+                    record_id,
+                    uploaded_bytes: 0,
+                    downloaded_bytes: 0,
+                    total_bytes: 0, // Will be updated later
+                    status: SyncFileStatus::Done,
+                    error: None,
+                    mime_type: None,
+                    retries: 0,
+                    retry_at: None,
+                    direction: SyncFileDirection::Upload,
+                    created_datetime: Utc::now().naive_utc(),
+                    deleted_datetime: None,
+                },
+                _ => {
+                    return Err(Error::SyncFileNotFound(file_id.clone()));
+                }
+            }
+        }
+        Err(e) => return Err(Error::OtherServerError(format_error(&e))),
+    };
+
+    file_service.move_temp_file(
+        &file_part,
+        &StaticFileCategory::SyncFile(
+            sync_file_reference.table_name.clone(),
+            sync_file_reference.record_id.clone(),
+        ),
+        Some(file_id),
+    )?;
+
+    // Local bookkeeping only — no changelog. uploaded_bytes is a local-only field, and producing
+    // a changelog from here would echo central's stale `status` back to the remote and risk
+    // overwriting the remote's authoritative Done/Error transition. The remote's own upsert for
+    // the terminal transition is the source of truth and reaches central via the normal sync
+    // push. (The tus handler in `central/tus.rs` uses the same upsert_without_changelog for the
+    // same reason — keep them aligned.)
+    repo.upsert_without_changelog(&SyncFileReferenceRow {
+        uploaded_bytes: sync_file_reference.total_bytes,
+        ..sync_file_reference
+    })?;
+
+    Ok(())
 }
 
 static SITES_BEING_INTEGRATED: RwLock<Vec<i32>> = RwLock::new(vec![]);
