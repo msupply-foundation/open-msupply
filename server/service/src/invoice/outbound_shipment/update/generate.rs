@@ -14,7 +14,8 @@ use crate::{
     invoice::{
         common::{
             calculate_foreign_currency_total, calculate_total_after_tax,
-            generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
+            generate_batches_total_number_of_packs_update, get_invoice_status_datetime,
+            InvoiceLineHasNoStockLine,
         },
         invoice_date_utils::handle_new_backdated_datetime,
         stock_effect::{stock_effects, StockEffect},
@@ -248,7 +249,8 @@ fn set_new_status_datetime(
         return;
     }
 
-    let current_datetime = Utc::now().naive_utc();
+    // Use the invoice's backdated datetime if it's set, otherwise use now
+    let current_datetime = get_invoice_status_datetime(invoice);
 
     // Status sequence for outbound shipment: New, Allocated, Picked, Shipped
     match (&invoice.status, new_status) {

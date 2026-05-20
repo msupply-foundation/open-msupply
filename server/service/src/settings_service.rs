@@ -2,10 +2,7 @@ use repository::{KeyType, KeyValueStoreRepository, RepositoryError};
 use reqwest::Url;
 use thiserror::Error;
 
-use crate::{
-    service_provider::ServiceContext,
-    sync::settings::SyncSettings,
-};
+use crate::{service_provider::ServiceContext, sync::settings::SyncSettings};
 
 #[derive(Debug, Error)]
 pub enum UpdateSettingsError {
@@ -52,6 +49,7 @@ pub trait SettingsServiceTrait: Sync + Send {
                 password_sha256: password_sha256?,
                 interval_seconds: interval_seconds? as u64,
                 batch_size,
+                disable_integration_transaction: false,
             })
         };
 

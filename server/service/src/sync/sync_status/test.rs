@@ -570,6 +570,7 @@ async fn run_server_and_sync(
             remote_push: 1,
             central_pull: 1,
         },
+        disable_integration_transaction: false,
     };
 
     let synchroniser =

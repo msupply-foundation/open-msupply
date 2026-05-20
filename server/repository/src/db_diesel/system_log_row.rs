@@ -31,6 +31,7 @@ pub enum SystemLogType {
     LedgerFix,
     Migration,
     ServerStatus,
+    SyncTranslationFkError,
 }
 
 impl SystemLogType {
@@ -41,6 +42,7 @@ impl SystemLogType {
             SystemLogType::LedgerFix => false,
             SystemLogType::Migration => false,
             SystemLogType::ServerStatus => false,
+            SystemLogType::SyncTranslationFkError => true,
         }
     }
 }

@@ -50,14 +50,21 @@ export function AutocompleteMulti<
   slotProps,
   loadingText,
   noOptionsText,
+  inputProps,
   ...restOfAutocompleteProps
 }: PropsWithChildren<
   AutocompleteMultiProps<T, true, DisableClearable, FreeSolo, ChipComponent>
 >): JSX.Element {
   const t = useTranslation();
+  // Pull `error` out so it drives the *outer* wrapper's border instead of the
+  // inner TextField's. Otherwise the inner input draws its own red border
+  // inside this component's padded gray box, producing a visibly inset
+  // rectangle (see BasicTextInput's slotProps.input.sx border rule).
+  const { error: inputError, ...restInputProps } = inputProps ?? {};
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       {...props}
+      {...restInputProps}
       autoFocus={autoFocus}
       slotProps={{
         input: {
@@ -115,6 +122,8 @@ export function AutocompleteMulti<
         borderRadius: 2,
         paddingTop: 0.5,
         paddingBottom: 0.5,
+        border: theme =>
+          inputError ? `2px solid ${theme.palette.error.main}` : 'none',
         '& .MuiChip-deleteIcon': {
           fill: theme => theme.palette.background.drawer,
           borderRadius: 2,

@@ -11,7 +11,6 @@ use crate::{
 use super::validate::*;
 use repository::syncv7::{SyncRecordSerializeError, INTEGRATION_ORDER};
 use repository::*;
-use serde::de::Error as _;
 use thiserror::Error;
 use util::{datetime_now, format_error};
 
@@ -147,7 +146,8 @@ fn translate_delete(
         ChangelogTableName::Name => Box::new(NameRowDelete(id)),
         ChangelogTableName::Sensor => Box::new(SensorRowDelete(id)),
         // Tables without a delete translator / do not delete
-        ChangelogTableName::AssetCatalogueItem
+        ChangelogTableName::AncillaryItem
+        | ChangelogTableName::AssetCatalogueItem
         | ChangelogTableName::AssetCatalogueType
         | ChangelogTableName::AssetCategory
         | ChangelogTableName::AssetClass

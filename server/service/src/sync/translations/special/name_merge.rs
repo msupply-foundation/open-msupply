@@ -112,7 +112,7 @@ mod tests {
         SyncBufferRepository::new(&connection)
             .insert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, 0).unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, 0, true).unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
         let mut name_links = name_link_repo.find_many_by_name_id("name_c").unwrap();
@@ -129,7 +129,7 @@ mod tests {
         SyncBufferRepository::new(&connection)
             .insert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, 0).unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, 0, true).unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
         let mut name_links = name_link_repo.find_many_by_name_id("name_c").unwrap();
@@ -207,7 +207,7 @@ mod tests {
             .insert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, None, 0).unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, 0, true).unwrap();
 
         assert_eq!(count_name_store_join("name_a"), 0);
         assert_eq!(count_name_store_join("name2"), 0);

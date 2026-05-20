@@ -63,12 +63,12 @@ export const usePluginData = ({
 
   const {
     mutateAsync: create,
-    isLoading: isCreating,
+    isPending: isCreating,
     isError: createError,
   } = useMutation({
     mutationFn: insertMutation,
     onSuccess: () => {
-      queryClient.invalidateQueries([PLUGIN_DATA, pluginCode, ...queryKey]);
+      queryClient.invalidateQueries({ queryKey: [PLUGIN_DATA, pluginCode, ...queryKey] });
     },
   });
 
@@ -89,12 +89,12 @@ export const usePluginData = ({
 
   const {
     mutateAsync: update,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     isError: updateError,
   } = useMutation({
     mutationFn: updateMutation,
     onSuccess: () => {
-      queryClient.invalidateQueries([PLUGIN_DATA, pluginCode, ...queryKey]);
+      queryClient.invalidateQueries({ queryKey: [PLUGIN_DATA, pluginCode, ...queryKey] });
     },
   });
 

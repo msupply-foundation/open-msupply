@@ -16,7 +16,7 @@ import { SettingsSubHeading } from '../../Admin/SettingsSection';
 export const StandaloneCentralTab = () => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { mutateAsync, isLoading } = useSync.sync.initialiseAsCentralServer();
+  const { mutateAsync, isPending: isLoading } = useSync.sync.initialiseAsCentralServer();
 
   const [storeName, setStoreName] = useState('');
   const [username, setUsername] = useState('');
