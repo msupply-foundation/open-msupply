@@ -1,8 +1,8 @@
 use chrono::{Duration, Utc};
 use std::cmp;
-use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use thiserror::Error;
+use tokio::sync::watch;
 use util::format_error;
 
 use repository::{
@@ -124,7 +124,7 @@ impl FileSynchroniser {
 
     pub(crate) async fn sync(
         &self,
-        pause_flag: Arc<AtomicBool>,
+        pause_rx: watch::Receiver<bool>,
     ) -> Result<usize /* number of files */, FileSyncError> {
         let ctx = self.service_provider.basic_context()?;
 
@@ -163,7 +163,7 @@ impl FileSynchroniser {
 
         let upload_result = self
             .sync_api_v6
-            .upload_file(sync_file_reference, &file.name, file_handle, pause_flag)
+            .upload_file(sync_file_reference, &file.name, file_handle, pause_rx)
             .await;
 
         let error = match upload_result {

@@ -1,4 +1,3 @@
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use crate::sync::is_initialised;
@@ -10,7 +9,10 @@ use crate::{
 use super::settings::SyncSettings;
 use super::CentralServerConfig;
 use tokio::{
-    sync::mpsc::{self, Receiver, Sender},
+    sync::{
+        mpsc::{self, Receiver, Sender},
+        watch,
+    },
     time::Duration,
 };
 use util::format_error;
@@ -26,17 +28,17 @@ pub enum FileSyncMessage {
 pub struct FileSyncDriver {
     receiver: Receiver<FileSyncMessage>,
     static_file_service: Arc<StaticFileService>,
-    /// Pause is a *state* (currently paused or not), not an event — set synchronously by
-    /// `FileSyncTrigger::pause` / `unpause` so it takes effect immediately even while the driver
-    /// is mid-file. Going through the mpsc channel would have queued the message behind the
-    /// in-flight upload and the pause wouldn't be observed until the file finished.
-    pause_flag: Arc<AtomicBool>,
+    /// Pause is a *state* (currently paused or not), not an event — `FileSyncTrigger::pause` /
+    /// `unpause` write to this watch synchronously so the transition takes effect immediately
+    /// even while the driver is mid-file. The chunk loop in `SyncApiV6::upload_file` reads the
+    /// current value via `borrow()` after each tus PATCH ACK and yields cleanly if set.
+    pause_rx: watch::Receiver<bool>,
 }
 
 #[derive(Clone)]
 pub struct FileSyncTrigger {
     sender: Sender<FileSyncMessage>,
-    pause_flag: Arc<AtomicBool>,
+    pause_tx: Arc<watch::Sender<bool>>,
 }
 
 /// Used to 'drive' file sync synchronisation, it's tasks:
@@ -44,7 +46,6 @@ pub struct FileSyncTrigger {
 /// * Trigger sync every SyncSettings.interval_seconds (only when initialised)
 impl FileSyncDriver {
     pub fn init(settings: &Settings) -> (FileSyncTrigger, FileSyncDriver) {
-        // We use a multi-element channel so that we don't block sync if someone tries to stop at the same time as a pause message
         let (sender, receiver) = mpsc::channel(10);
 
         let static_file_service = Arc::new(
@@ -52,18 +53,20 @@ impl FileSyncDriver {
                 .expect("Failed to create static file service"),
         );
 
-        // Default to paused so file sync should un-pause once the first `sync` completes.
-        let pause_flag = Arc::new(AtomicBool::new(true));
+        // Default to paused so file sync only starts once the first normal `sync` completes and
+        // calls unpause(). The watch carries the *state* (paused or not); the mpsc channel above
+        // carries lifecycle *events* (Start/Stop).
+        let (pause_tx, pause_rx) = watch::channel(true);
 
         (
             FileSyncTrigger {
                 sender,
-                pause_flag: pause_flag.clone(),
+                pause_tx: Arc::new(pause_tx),
             },
             FileSyncDriver {
                 receiver,
                 static_file_service,
-                pause_flag,
+                pause_rx,
             },
         )
     }
@@ -87,8 +90,7 @@ impl FileSyncDriver {
                 tokio::select! {
                     // Wait for message
                     Some(message) = self.receiver.recv() => {
-                        match message
-                         {
+                        match message {
                             FileSyncMessage::Start => {
                                 log::info!("Starting file sync");
                                 stopped = false;
@@ -97,9 +99,13 @@ impl FileSyncDriver {
                             FileSyncMessage::Stop => {
                                 log::info!("Stopping file sync");
                                 stopped = true;
-                        },
+                            },
                         }
                     },
+                    // Wake immediately on any pause/unpause transition so an unpause doesn't sit
+                    // unobserved for up to FILE_SYNC_NO_FILES_DELAY. The match against Ok ignores
+                    // sender-dropped errors (which only happen during shutdown).
+                    Ok(()) = self.pause_rx.changed() => {},
                     // OR wait between downloading files
                     _ = async {
                         if files_to_upload == 0 {
@@ -107,7 +113,7 @@ impl FileSyncDriver {
                         } else {
                             tokio::time::sleep(FILE_SYNC_UPLOAD_DELAY).await;
                         }
-                     } => {},
+                    } => {},
                     else => break,
                 };
             } else {
@@ -119,14 +125,12 @@ impl FileSyncDriver {
             }
 
             // If not stopped or paused and we have central server URL
-            if let (false, false, CentralServerConfig::CentralServerUrl(url)) = (
-                stopped,
-                self.pause_flag.load(Ordering::Relaxed),
-                CentralServerConfig::get(),
-            ) {
+            if let (false, false, CentralServerConfig::CentralServerUrl(url)) =
+                (stopped, *self.pause_rx.borrow(), CentralServerConfig::get())
+            {
                 // for now we only sync if we're not the central server
                 files_to_upload = self
-                    .sync(&url, service_provider.clone(), self.pause_flag.clone())
+                    .sync(&url, service_provider.clone(), self.pause_rx.clone())
                     .await;
             }
         }
@@ -136,7 +140,7 @@ impl FileSyncDriver {
         &self,
         sync_v6_url: &str,
         service_provider: Arc<ServiceProvider>,
-        pause_flag: Arc<AtomicBool>,
+        pause_rx: watch::Receiver<bool>,
     ) -> usize {
         // ...Try to upload a file
 
@@ -155,7 +159,7 @@ impl FileSyncDriver {
             }
         };
 
-        let result = synchroniser.sync(pause_flag).await;
+        let result = synchroniser.sync(pause_rx).await;
 
         let files_to_upload = match result {
             Ok(num_of_files) => num_of_files,
@@ -187,17 +191,18 @@ impl FileSyncTrigger {
     }
 
     pub fn pause(&self) {
-        // Set the shared flag synchronously rather than enqueuing a channel message. The driver
-        // doesn't poll its receiver while a file upload is in flight, so a channel-delivered pause
-        // would only be observed after the current file finished — defeating the per-chunk pause
-        // boundary in `SyncApiV6::upload_file`.
+        // Set the shared state synchronously rather than enqueuing a channel message. The driver
+        // doesn't poll its mpsc receiver while a file upload is in flight, so a channel-delivered
+        // pause would only be observed after the current file finished — defeating the per-chunk
+        // pause boundary in `SyncApiV6::upload_file`. send_replace never blocks and returns the
+        // previous value, which we don't need.
         log::info!("Pausing file sync");
-        self.pause_flag.store(true, Ordering::Relaxed);
+        self.pause_tx.send_replace(true);
     }
 
     pub fn unpause(&self) {
         log::info!("Unpausing file sync");
-        self.pause_flag.store(false, Ordering::Relaxed);
+        self.pause_tx.send_replace(false);
     }
 }
 
