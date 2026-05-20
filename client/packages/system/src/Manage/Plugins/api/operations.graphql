@@ -1,0 +1,32 @@
+fragment InstalledPluginNode on InstalledPluginNode {
+  __typename
+  id
+  code
+  version
+  kind
+  types
+}
+
+query installedPlugins {
+  centralServer {
+    plugin {
+      installedPlugins {
+        __typename
+        totalCount
+        nodes {
+          ...InstalledPluginNode
+        }
+      }
+    }
+  }
+}
+
+mutation installUploadedPlugin($fileId: String!) {
+  centralServer {
+    plugins {
+      installUploadedPlugin(fileId: $fileId) {
+        pluginInfo
+      }
+    }
+  }
+}
