@@ -37,7 +37,7 @@ pub fn generate(
         store_id: store_id.to_string(),
         purchase_order_id,
         line_number,
-        item_link_id: item.id,
+        item_id: item.id,
         item_name: item.name.clone(),
         requested_number_of_units: requested_number_of_units.unwrap_or_default(),
         requested_pack_size: requested_pack_size.unwrap_or_default(),

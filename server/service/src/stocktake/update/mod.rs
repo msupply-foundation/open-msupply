@@ -230,7 +230,7 @@ mod test {
                 stock_line_id: Some(mock_existing_stock_line().id),
                 counted_number_of_packs: Some(20.0),
                 snapshot_number_of_packs: 20.0,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 cost_price_per_pack: Some(1.0),
                 sell_price_per_pack: Some(2.0),
                 ..Default::default()
@@ -240,7 +240,7 @@ mod test {
         fn mock_existing_stock_line() -> StockLineRow {
             StockLineRow {
                 id: "existing_stock_a".to_string(),
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 store_id: "store_a".to_string(),
                 available_number_of_packs: 20.0,
                 pack_size: 1.0,
@@ -273,7 +273,7 @@ mod test {
                 stocktake_id: mock_stocktake_no_counted_packs().id,
                 stock_line_id: Some(mock_existing_stock_line_b().id),
                 snapshot_number_of_packs: 10.0,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 batch: Some("updated batch name".to_string()),
                 counted_number_of_packs: None,
                 ..Default::default()
@@ -286,7 +286,7 @@ mod test {
             // exercises the snapshot-mismatch path on an uncounted line.
             StockLineRow {
                 id: "existing_stock_b".to_string(),
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 store_id: "store_a".to_string(),
                 available_number_of_packs: 5.0,
                 pack_size: 2.0,
@@ -782,7 +782,7 @@ mod test {
                     id: "stocktake_line_ext_auth_test".to_string(),
                     stocktake_id: "stocktake_ext_auth_test".to_string(),
                     counted_number_of_packs: Some(10.0),
-                    item_link_id: mock_item_a().id,
+                    item_id: mock_item_a().id,
                     batch: Some("new_batch".to_string()),
                     pack_size: Some(1.0),
                     cost_price_per_pack: Some(5.0),
@@ -843,7 +843,7 @@ mod test {
 
         let stock_line_with_invisible_program = StockLineRow {
             id: "stock_line_invisible_program".to_string(),
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             store_id: mock_store_a().id,
             pack_size: 1.0,
             available_number_of_packs: 5.0,
@@ -868,7 +868,7 @@ mod test {
             id: "stocktake_line_program_not_visible".to_string(),
             stocktake_id: stocktake.id.clone(),
             stock_line_id: Some(stock_line_with_invisible_program.id.clone()),
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             // Force inventory addition path (counted > snapshot)
             snapshot_number_of_packs: 5.0,
             counted_number_of_packs: Some(10.0),

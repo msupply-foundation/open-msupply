@@ -100,4 +100,26 @@ mod tests {
             assert_eq!(translation_result, record.translated_record);
         }
     }
+
+    /// `try_translate_to_upsert_sync_record` serializes `ItemVariantRow` directly.
+    /// The JSON wire format must keep the legacy `*_link_id` field names so older
+    /// remote clients can still deserialize records pulled from an upgraded central.
+    #[test]
+    fn test_push_wire_format_uses_legacy_field_names() {
+        let row = ItemVariantRow {
+            item_id: "test_item".to_string(),
+            manufacturer_id: Some("test_manufacturer".to_string()),
+            ..Default::default()
+        };
+        let json = serde_json::to_value(&row).unwrap();
+        assert_eq!(json["item_link_id"], "test_item");
+        assert_eq!(json["manufacturer_link_id"], "test_manufacturer");
+        for renamed_field in ["item_id", "manufacturer_id"] {
+            assert!(
+                json.get(renamed_field).is_none(),
+                "JSON should not contain `{}`; expected legacy `*_link_id` name",
+                renamed_field
+            );
+        }
+    }
 }

@@ -92,7 +92,7 @@ mod query {
 
         let stock_line = StockLineRow {
             id: stock_line_id.clone(),
-            item_link_id: ITEM_ID.to_string(),
+            item_id: ITEM_ID.to_string(),
             pack_size,
             available_number_of_packs: new_number_of_packs,
             total_number_of_packs: new_number_of_packs,
@@ -106,7 +106,7 @@ mod query {
         let invoice_line = InvoiceLineRow {
             id: format!("invoice_line_{invoice_number}"),
             invoice_id: invoice.id.clone(),
-            item_link_id: ITEM_ID.to_string(),
+            item_id: ITEM_ID.to_string(),
             stock_line_id: Some(stock_line_id),
             pack_size,
             number_of_packs: number_of_packs.abs(),
