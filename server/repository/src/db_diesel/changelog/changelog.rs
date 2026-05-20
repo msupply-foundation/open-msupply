@@ -348,13 +348,13 @@ impl<'a> ChangelogRepository<'a> {
     /// Returns latest/max change log cursor.
     ///
     /// If the `ChangelogCursorTracker` reports an in-flight cursor, the safe cursor
-    /// (`min(in_flight) - 1`) is returned without a database query — it is
+    /// (`min(in_flight)`) is returned without a database query — it is
     /// always at most the DB MAX visible to this connection (every committed
     /// changelog row passed through `track`, registering a value <= its actual
     /// cursor).
     pub fn max_cursor(&self) -> Result<u64, RepositoryError> {
         if let Some(safe) = ChangelogCursorTracker::max_safe_cursor(self.connection) {
-            return Ok(safe.max(0) as u64);
+            return Ok(safe);
         }
         let result = changelog_with_links::table
             .select(diesel::dsl::max(changelog_with_links::cursor))

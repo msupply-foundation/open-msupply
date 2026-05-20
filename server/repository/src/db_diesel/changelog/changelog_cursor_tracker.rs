@@ -11,11 +11,11 @@ use super::changelog::changelog_with_links;
 
 /// Per-`StorageConnectionManager` tracker of in-flight (uncommitted) changelog
 /// boundaries. Each `StorageConnection` registers a single entry on its first
-/// changelog insert of a transaction: the value is `MAX(cursor) + 1` at the
+/// changelog insert of a transaction: the value is `MAX(cursor)` at the
 /// time of that first insert, i.e. a lower bound on the cursors this
 /// transaction will produce.
 ///
-/// Readers compute `max_safe_cursor = min(values) - 1` to avoid advancing past
+/// Readers compute `max_safe_cursor = min(values)` to avoid advancing past
 /// any in-flight cursor.
 ///
 /// Crash-safe: on process crash the in-memory map is lost, but the database
@@ -23,7 +23,7 @@ use super::changelog::changelog_with_links;
 /// consistent with the database.
 #[derive(Default)]
 pub struct ChangelogCursorTracker {
-    inner: Mutex<HashMap<String, i64>>,
+    inner: Mutex<HashMap<String, u64>>,
 }
 
 impl ChangelogCursorTracker {
@@ -54,24 +54,24 @@ impl ChangelogCursorTracker {
         let max_cursor = changelog_with_links::table
             .select(diesel::dsl::max(changelog_with_links::cursor))
             .first::<Option<i64>>(connection.lock().connection())?
-            .unwrap_or(0);
+            .unwrap_or(0) as u64;
 
         tracker
             .inner
             .lock()
             .unwrap()
-            .insert(connection.uuid().to_string(), max_cursor + 1);
+            .insert(connection.uuid().to_string(), max_cursor);
 
         Ok(())
     }
 
     /// Returns the maximum cursor that is currently safe to read up to. If any
-    /// transaction is mid-flight, returns `Some(min(registered) - 1)`; if not,
+    /// transaction is mid-flight, returns `Some(min(registered))`; if not,
     /// returns `None` (no clamp).
-    pub fn max_safe_cursor(connection: &StorageConnection) -> Option<i64> {
+    pub fn max_safe_cursor(connection: &StorageConnection) -> Option<u64> {
         let tracker = connection.changelog_cursor_tracker();
         let guard = tracker.inner.lock().unwrap();
-        guard.values().min().map(|m| m - 1)
+        guard.values().min().map(|m| *m)
     }
 
     /// Remove the connection's entry. Called from the outermost
