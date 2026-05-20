@@ -19,7 +19,18 @@ table! {
 allow_tables_to_appear_in_same_query!(category, item_link);
 allow_tables_to_appear_in_same_query!(category, item);
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Insertable,
+    Queryable,
+    Debug,
+    PartialEq,
+    AsChangeset,
+    Eq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = category)]
 pub struct CategoryRow {
     pub id: String,

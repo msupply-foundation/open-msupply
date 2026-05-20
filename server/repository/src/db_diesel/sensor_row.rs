@@ -1,8 +1,6 @@
 use super::{location_row::location, store_row::store, StorageConnection};
 
-use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert,
-};
+use crate::{repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert};
 use crate::{ChangelogRepository, RowActionType};
 
 use chrono::NaiveDateTime;
@@ -111,7 +109,7 @@ impl<'a> SensorRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    fn _soft_delete(&self, sensor_id: &str) -> Result<(), RepositoryError> {
+    fn _mark_deleted(&self, sensor_id: &str) -> Result<(), RepositoryError> {
         diesel::update(sensor::table)
             .filter(sensor::id.eq(sensor_id))
             .set(sensor::is_active.eq(false))
@@ -133,9 +131,9 @@ impl Delete for SensorRowDelete {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                let row = repo.find_one_by_id(&self.0)?.ok_or_else(|| {
-                    RepositoryError::NotFound
-                })?;
+                let row = repo
+                    .find_one_by_id(&self.0)?
+                    .ok_or_else(|| RepositoryError::NotFound)?;
                 row.generate_changelog(
                     con,
                     RowActionType::Upsert,
@@ -145,7 +143,7 @@ impl Delete for SensorRowDelete {
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
-        repo._soft_delete(&self.0)?;
+        repo._mark_deleted(&self.0)?;
         ChangelogRepository::new(con).insert(&changelog)?;
         Ok(())
     }

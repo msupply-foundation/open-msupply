@@ -3,11 +3,9 @@ use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyRowRepository, GenderType, NameRow, NameRowDelete,
     NameRowType, Row, StorageConnection, SyncBufferRow, SyncRecordData,
-
 };
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
-
 };
 
 use serde::{Deserialize, Serialize};
@@ -288,7 +286,7 @@ impl SyncTranslation for NameTranslation {
 
         // No DB-level FK constraint on supplying_store_id, because the store records also rely on name.
         // We don't want to blank out supplying_store_id if the store record just hasn't been synced yet
-        
+
         let currency_id = clear_invalid_fk(
             connection,
             "name",
@@ -463,7 +461,11 @@ impl SyncTranslation for NameTranslation {
             custom_data: None,
         };
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 
     // TODO soft delete
@@ -552,7 +554,9 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "name".to_string(),
             record_id: "NAME_FK_INVALID".to_string(),
-            data: SyncRecordData(serde_json::from_str(r#"{
+            data: SyncRecordData(
+                serde_json::from_str(
+                    r#"{
                 "ID": "NAME_FK_INVALID",
                 "name": "Bad FK Name",
                 "code": "code",
@@ -583,7 +587,10 @@ mod tests {
                 "om_created_datetime": "",
                 "om_gender": "",
                 "currency_ID": "does_not_exist_currency"
-            }"#).unwrap()),
+            }"#,
+                )
+                .unwrap(),
+            ),
             action: SyncAction::Upsert,
             ..Default::default()
         };
@@ -605,9 +612,7 @@ mod tests {
             format!("expected currency_id None; got:\n{debug}")
         );
 
-        let logs = SystemLogRowRepository::new(&connection)
-            .find_all()
-            .unwrap();
+        let logs = SystemLogRowRepository::new(&connection).find_all().unwrap();
         let fk_errors: Vec<_> = logs
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)

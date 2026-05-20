@@ -26,8 +26,8 @@ use std::sync::RwLock;
 
 use log::info;
 use repository::{
-    EqualFilter, KeyValueStoreRepository, RepositoryError, StorageConnection, Store, StoreFilter,
-    StoreRepository,
+    EqualFilter, KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, Store,
+    StoreFilter, StoreRepository,
 };
 
 use serde::{Deserialize, Serialize};
@@ -101,6 +101,7 @@ pub enum CentralServerConfig {
     IsCentralServer,
     CentralServerUrl(String),
     ForcedCentralServer,
+    StandaloneCentral,
 }
 
 static CENTRAL_SERVER_CONFIG: RwLock<CentralServerConfig> =
@@ -109,7 +110,10 @@ static IS_INITIALISED: RwLock<bool> = RwLock::new(false);
 
 impl CentralServerConfig {
     fn inner_is_central_server(&self) -> bool {
-        matches!(self, Self::IsCentralServer | Self::ForcedCentralServer)
+        matches!(
+            self,
+            Self::IsCentralServer | Self::ForcedCentralServer | Self::StandaloneCentral
+        )
     }
 
     fn new(site_info: &SiteInfoV5) -> Self {
@@ -126,6 +130,13 @@ impl CentralServerConfig {
             .inner_is_central_server()
     }
 
+    pub fn is_standalone_central() -> bool {
+        matches!(
+            *CENTRAL_SERVER_CONFIG.read().unwrap(),
+            CentralServerConfig::StandaloneCentral
+        )
+    }
+
     pub fn get() -> Self {
         CENTRAL_SERVER_CONFIG.read().unwrap().clone()
     }
@@ -135,6 +146,11 @@ impl CentralServerConfig {
         // Need to drop read before write
         {
             let current_config = CENTRAL_SERVER_CONFIG.read().unwrap();
+
+            // Standalone central never syncs upstream
+            if matches!(*current_config, CentralServerConfig::StandaloneCentral) {
+                return;
+            }
 
             if new_config == *current_config {
                 return;
@@ -152,6 +168,22 @@ impl CentralServerConfig {
     pub fn set_is_central_server_on_startup() {
         info!("Running as central from override");
         *CENTRAL_SERVER_CONFIG.write().unwrap() = CentralServerConfig::ForcedCentralServer;
+    }
+
+    pub fn set_standalone_central() {
+        info!("Running as standalone central");
+        *CENTRAL_SERVER_CONFIG.write().unwrap() = CentralServerConfig::StandaloneCentral;
+    }
+
+    pub fn restore_central_standalone(
+        connection: &StorageConnection,
+    ) -> Result<(), RepositoryError> {
+        if let Some(true) =
+            KeyValueStoreRepository::new(connection).get_bool(KeyType::IsStandaloneCentral)?
+        {
+            Self::set_standalone_central();
+        }
+        Ok(())
     }
 }
 pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
