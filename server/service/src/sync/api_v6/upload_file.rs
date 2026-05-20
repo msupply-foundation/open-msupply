@@ -4,16 +4,35 @@ use repository::SyncFileReferenceRow;
 use reqwest::{Client, StatusCode};
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 /// Chunk size for tus PATCH bodies. 4 MiB balances roundtrip overhead vs retry granularity —
 /// a network blip wastes at most 4 MiB before resume picks up at the last server-acked offset.
 const CHUNK_SIZE: u64 = 4 * 1024 * 1024;
 const TUS_VERSION: &str = "1.0.0";
 
+/// Result of a single `upload_file` call. The PATCH loop voluntarily yields between chunks when
+/// the shared pause flag is set, returning `Paused` so the caller can leave the file's state alone
+/// and let the next driver tick re-enter (tus HEAD will resume from the durable server offset).
+#[derive(Debug, PartialEq)]
+pub enum UploadOutcome {
+    /// Whole file uploaded, server-side offset equals total_bytes.
+    Done,
+    /// Pause was observed after a successful chunk ACK; `bytes_uploaded` is the durable offset
+    /// the server has on disk. Resume on the next call.
+    Paused { bytes_uploaded: u64 },
+}
+
 impl SyncApiV6 {
     /// Upload a file to central using the tus 1.0.0 resumable protocol. Idempotent: on retry
     /// (or restart) it issues a HEAD against the upload URL to discover the current offset and
     /// resumes from there, so a partial upload doesn't cost the whole file's bandwidth.
+    ///
+    /// `pause_flag` is checked after each successful PATCH ACK; if set, the function returns
+    /// `Ok(UploadOutcome::Paused { .. })` cleanly so the caller can wait for unpause and re-enter.
+    /// The check happens at the only well-defined safe boundary — once the server has durably
+    /// ACKed chunk N, no work is repeated on resume.
     ///
     /// `file_handle` must be openable; we read the file in chunks bounded by `CHUNK_SIZE`, so the
     /// peak memory footprint is one chunk regardless of how big the file is.
@@ -22,7 +41,8 @@ impl SyncApiV6 {
         sync_file_reference_row: &SyncFileReferenceRow,
         file_name: &str,
         mut file_handle: File,
-    ) -> Result<(), SyncApiErrorV6> {
+        pause_flag: Arc<AtomicBool>,
+    ) -> Result<UploadOutcome, SyncApiErrorV6> {
         let Self {
             sync_v5_settings,
             url,
@@ -151,9 +171,18 @@ impl SyncApiV6 {
             offset = parse_upload_offset_header(&patch).map_err(|e| {
                 error_with_url(patch_route, SyncApiErrorVariantV6::Other(e))
             })?;
+
+            // Pause boundary: the server has durably ACKed the chunk we just sent, so stopping
+            // here means no work is repeated on resume. If the upload is complete the while
+            // condition will exit naturally on the next iteration.
+            if offset < total_bytes && pause_flag.load(Ordering::Relaxed) {
+                return Ok(UploadOutcome::Paused {
+                    bytes_uploaded: offset,
+                });
+            }
         }
 
-        Ok(())
+        Ok(UploadOutcome::Done)
     }
 }
 

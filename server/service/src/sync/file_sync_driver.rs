@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use crate::sync::is_initialised;
@@ -66,9 +67,12 @@ impl FileSyncDriver {
     ///    * If not initialised await only for start trigger
     ///    * do sync if any of the above were triggered
     pub async fn run(mut self, service_provider: Arc<ServiceProvider>) {
-        // Default to a paused so file sync should un-pause once the first `sync` completes
+        // Default to paused so file sync only starts once the first normal `sync` completes and
+        // sends UnPause. The flag is shared (Arc<AtomicBool>) so it can be read from inside the
+        // tus chunk loop in `upload_file`, allowing a pause that arrives mid-file to take effect
+        // after the current chunk is durably ACKed rather than after the whole file finishes.
         let mut stopped = false;
-        let mut paused = true;
+        let pause_flag = Arc::new(AtomicBool::new(true));
         let mut files_to_upload = 0;
 
         loop {
@@ -90,11 +94,11 @@ impl FileSyncDriver {
                         },
                             FileSyncMessage::Pause => {
                                 log::info!("Pausing file sync");
-                                paused = true;
+                                pause_flag.store(true, Ordering::Relaxed);
                             },
                             FileSyncMessage::UnPause => {
                                 log::info!("Unpausing file sync");
-                                paused = false;
+                                pause_flag.store(false, Ordering::Relaxed);
                             },
                         }
                     },
@@ -117,16 +121,25 @@ impl FileSyncDriver {
             }
 
             // If not stopped or paused and we have central server URL
-            if let (false, false, CentralServerConfig::CentralServerUrl(url)) =
-                (stopped, paused, CentralServerConfig::get())
-            {
+            if let (false, false, CentralServerConfig::CentralServerUrl(url)) = (
+                stopped,
+                pause_flag.load(Ordering::Relaxed),
+                CentralServerConfig::get(),
+            ) {
                 // for now we only sync if we're not the central server
-                files_to_upload = self.sync(&url, service_provider.clone()).await;
+                files_to_upload = self
+                    .sync(&url, service_provider.clone(), pause_flag.clone())
+                    .await;
             }
         }
     }
 
-    pub async fn sync(&self, sync_v6_url: &str, service_provider: Arc<ServiceProvider>) -> usize {
+    pub async fn sync(
+        &self,
+        sync_v6_url: &str,
+        service_provider: Arc<ServiceProvider>,
+        pause_flag: Arc<AtomicBool>,
+    ) -> usize {
         // ...Try to upload a file
 
         let synchroniser = FileSynchroniser::new(
@@ -144,7 +157,7 @@ impl FileSyncDriver {
             }
         };
 
-        let result = synchroniser.sync().await;
+        let result = synchroniser.sync(pause_flag).await;
 
         let files_to_upload = match result {
             Ok(num_of_files) => num_of_files,
