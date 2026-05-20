@@ -11,10 +11,6 @@ import {
   useBreadcrumbs,
   useEditModal,
   useToggle,
-  useNonPaginatedMaterialTable,
-  usePluginProvider,
-  NothingHere,
-  MaterialTable,
   useUrlQuery,
 } from '@openmsupply-client/common';
 import {
@@ -22,17 +18,14 @@ import {
   DocumentsTable,
   UploadDocumentModal,
 } from '@openmsupply-client/system';
-import { RequestLineFragment, useHideOverStocked, useRequest } from '../api';
+import { useRequest } from '../api';
 import { Toolbar } from './Toolbar';
-import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { AppRoute } from '@openmsupply-client/config';
 import { RequestRequisitionLineErrorProvider } from '../context';
 import { IndicatorsTab } from './IndicatorsTab';
-import { RequestLineEditModal } from './RequestLineEdit';
-import { useRequestColumns } from './columns';
-import { isRequestLinePlaceholderRow } from '../../utils';
+import { DetailsTab } from './Tabs/Details';
 import { InternalOrderDetailTabs } from './types';
 
 export const DetailView = () => {
@@ -40,13 +33,7 @@ export const DetailView = () => {
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { store } = useAuthContext();
-  const {
-    onOpen,
-    onClose,
-    mode,
-    entity: itemId,
-    isOpen,
-  } = useEditModal<string | null>();
+  const lineEditModal = useEditModal<string | null>();
 
   const { data, isLoading, invalidateQueries } = useRequest.document.get();
   const isDisabled = useRequest.utils.isDisabled();
@@ -73,16 +60,20 @@ export const DetailView = () => {
     return undefined;
   }, [data?.status]);
 
-  const onRowClick = useCallback(
-    (line: RequestLineFragment) => onOpen(line.item.id),
-    [onOpen]
-  );
-
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.requisitionNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, data?.requisitionNumber]);
 
-  const onAddItem = () => onOpen();
+  const onAddItem = useCallback(() => {
+    // The line-edit modal lives inside the Details tab. If the user is on
+    // another tab, switch first so the modal mounts.
+    const currentTab = urlQuery['tab'] ?? InternalOrderDetailTabs.Details;
+    if (currentTab !== InternalOrderDetailTabs.Details) {
+      updateQuery({ tab: InternalOrderDetailTabs.Details });
+    }
+    lineEditModal.onOpen();
+  }, [lineEditModal, urlQuery, updateQuery]);
+
   const onOpenUploadModal = useCallback(() => {
     toggleUploadModal();
     const currentTab = urlQuery['tab'] ?? InternalOrderDetailTabs.Details;
@@ -90,36 +81,6 @@ export const DetailView = () => {
       updateQuery({ tab: InternalOrderDetailTabs.Documents });
     }
   }, [toggleUploadModal, urlQuery, updateQuery]);
-
-  const { lines, itemFilter, isError, isFetching } = useRequest.line.list();
-  const { on } = useHideOverStocked();
-  const { plugins } = usePluginProvider();
-  const isFiltered = !!itemFilter || on;
-
-  const columns = useRequestColumns();
-
-  const { table, selectedRows } = useNonPaginatedMaterialTable({
-    tableId: 'internal-order-detail',
-    columns,
-    data: lines,
-    isLoading: isFetching,
-    isError,
-    getIsPlaceholderRow: row => isRequestLinePlaceholderRow(row.original),
-    onRowClick,
-    initialSort: { key: 'itemName', dir: 'asc' },
-    manualFiltering: true,
-    noDataElement: (
-      <NothingHere
-        body={
-          isFiltered
-            ? t('error.no-items-filter-on')
-            : t('error.no-internal-order-items')
-        }
-        onCreate={isDisabled ? undefined : onAddItem}
-        buttonText={t('button.add-item')}
-      />
-    ),
-  });
 
   if (isLoading) return <DetailViewSkeleton />;
   if (!data)
@@ -140,20 +101,7 @@ export const DetailView = () => {
 
   const tabs = [
     {
-      Component: (
-        <>
-          {plugins.requestRequisitionLine?.tableStateLoader?.map(
-            (StateLoader, index) => (
-              <StateLoader
-                key={index}
-                requestLines={lines}
-                requisition={data}
-              />
-            )
-          )}
-          <MaterialTable table={table} />
-        </>
-      ),
+      Component: <DetailsTab lineEdit={lineEditModal} />,
       value: 'Details',
     },
     {
@@ -205,21 +153,7 @@ export const DetailView = () => {
 
       <DetailTabs tabs={tabs} />
 
-      <Footer
-        selectedRows={selectedRows}
-        resetRowSelection={table.resetRowSelection}
-      />
       <SidePanel />
-      {isOpen && (
-        <RequestLineEditModal
-          requisition={data}
-          itemId={itemId}
-          isOpen={isOpen}
-          onClose={onClose}
-          mode={mode}
-          store={store}
-        />
-      )}
 
       {isUploadModalOpen && (
         <UploadDocumentModal
