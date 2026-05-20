@@ -69,10 +69,9 @@
     {
       "label": "dev: frontend",
       "type": "shell",
-      "command": "yarn workspace @openmsupply-client/host webpack-cli serve --port ${input:frontendPort}",
+      "command": "yarn workspace @openmsupply-client/host webpack-cli serve --port ${input:frontendPort} --env OMS_BACKEND_URL=http://localhost:${input:backendPort}",
       "options": {
-        "cwd": "${workspaceFolder}/client",
-        "env": { "OMS_BACKEND_URL": "http://localhost:${input:backendPort}" }
+        "cwd": "${workspaceFolder}/client"
       },
       "presentation": {
         "panel": "new",
@@ -111,10 +110,9 @@
     {
       "label": "dev: frontend (env)",
       "type": "shell",
-      "command": "yarn workspace @openmsupply-client/host webpack-cli serve --port $(${workspaceFolder}/.vscode/read-frontend-port.sh ${input:envName})",
+      "command": "yarn workspace @openmsupply-client/host webpack-cli serve --port $(${workspaceFolder}/.vscode/read-frontend-port.sh ${input:envName}) --env OMS_BACKEND_URL=http://localhost:${input:backendPort}",
       "options": {
-        "cwd": "${workspaceFolder}/client",
-        "env": { "OMS_BACKEND_URL": "http://localhost:${input:backendPort}" }
+        "cwd": "${workspaceFolder}/client"
       },
       "presentation": {
         "panel": "new",

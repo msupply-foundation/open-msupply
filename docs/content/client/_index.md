@@ -35,7 +35,7 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 
 `yarn start-remote` (using demo server API)
 
-`OMS_BACKEND_URL=http://localhost:8001 yarn start` (using custom backend URL, see [config.ts](./packages/config/src/config.ts) and [webpack.config.js](./packages/host/webpack.config.js))
+`yarn start -- --env OMS_BACKEND_URL=http://localhost:8001` (using custom backend URL, see [config.ts](./packages/config/src/config.ts) and [webpack.config.js](./packages/host/webpack.config.js))
 
 - Bundle for production:
 

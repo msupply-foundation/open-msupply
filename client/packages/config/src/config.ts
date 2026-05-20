@@ -5,8 +5,8 @@
 // In development, webpack-dev-server proxies backend routes through to the Rust
 // server (see webpack.config.js), so the frontend is single-origin with its API
 // just like production. To point dev at a different backend (e.g. the demo
-// server), set OMS_BACKEND_URL when starting webpack — the proxy target moves,
-// the bundle stays same-origin.
+// server), pass `--env OMS_BACKEND_URL=...` when starting webpack — the proxy
+// target moves, the bundle stays same-origin.
 
 const { port, hostname, protocol } = window.location;
 const apiHost = `${protocol}//${hostname}:${port}`;

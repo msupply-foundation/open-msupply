@@ -9,13 +9,6 @@ const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
-// Where the dev-server proxies backend routes. The VSCode `dev: all` task picks
-// a free port for cargo and exports OMS_BACKEND_URL pointed at it; the fallback
-// covers running webpack alone against a server on the conventional 8000.
-// Point at a remote backend (e.g. demo) by setting the same env var:
-//   OMS_BACKEND_URL=https://demo-open.msupply.org yarn start
-const backendTarget = process.env.OMS_BACKEND_URL || 'http://localhost:8000';
-
 class DummyWebpackPlugin {
   apply(compiler) {
     compiler.hooks.run.tap('DummyWebpackPlugin', () => {});
@@ -24,6 +17,12 @@ class DummyWebpackPlugin {
 
 module.exports = env => {
   const isProduction = !!env.production;
+  // Where the dev-server proxies backend routes. The VSCode `dev: all` task picks
+  // a free port for cargo and appends `--env OMS_BACKEND_URL=...` pointed at it.
+  // Point at a remote backend (e.g. demo) the same way:
+  //   yarn start --env OMS_BACKEND_URL=https://demo-open.msupply.org
+  // Fallback covers running webpack alone against a server on the conventional 8000.
+  const backendTarget = env.OMS_BACKEND_URL || 'http://localhost:8000';
   const bundleAnalyzerPlugin = !!env.stats
     ? new BundleAnalyzerPlugin({
         /**
@@ -46,17 +45,7 @@ module.exports = env => {
         ? path.join(__dirname, 'dist')
         : path.join(__dirname, 'public'),
 
-      // Listen port comes from webpack's `--port` CLI flag (set by the VSCode
-      // task or `yarn start -- --port N`).
-      // OSC 2: set the pane/tab title to include the bound URL. Picked up by zellij,
-      // VS Code's terminal, iTerm2, etc. — invisible in the output stream.
-      // BEL (\x07) terminator is the original xterm convention and the one zellij
-      // parses most reliably; ST (\x1b\\) sometimes loses the trailing backslash
-      // through layered shells.
-      onListening: devServer => {
-        const port = devServer.server.address().port;
-        process.stdout.write(`\x1b]2;client http://localhost:${port}\x07`);
-      },
+      port: 3003,
       historyApiFallback: true,
       headers: {
         'Access-Control-Allow-Origin': '*',

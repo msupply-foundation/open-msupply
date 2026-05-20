@@ -125,8 +125,40 @@ From version 2.0 omSupply would require both legacy and omSupply central server 
 - Configure one site to be central server by checking `Site is open mSupply central server` and entering the URL with which remote sites can reach this site in the field `This site url`
 - `cargo run` twice but change port, database and sync settings in yaml file or overwrite with env variables
 
-For example, two sites running locally from the same repo, **central** and **test**, for **central** site `Site is open mSupply central server` is checked and `This site url` is http://localhost:2055.
-Comment out all sync settings in yaml and can start **central** with `APP__SERVER__PORT=2055 APP__DATABASE__DATABASE_NAME="central_test" cargo run`. The front end would be started with `OMS_BACKEND_URL=http://localhost:2055 yarn start -- --port 3005` (--port is for webpack port), and then start **test** with `cargo run` and `yarn && yarn start` from respective folders. The first site would be initialised with `central` site credentials first, and second sites with **test** credentials, **test** site would sync with both legacy mSupply and omSupply central server (this **central** site), and **central** site would synchronise with legacy mSupply server only
+For example, two sites running locally from the same repo, **central** and **remote**, for the **central** site `Site is open mSupply central server` is checked and `This site url` is http://localhost:2055.
+
+Two ways to launch them:
+
+1. **Per-environment yaml files (cleaner for repeated use).** `AppEnvironment::get()` reads `APP_ENVIRONMENT` and loads `server/configuration/<name>.yaml` on top of `base.yaml`, so you can park each site's port/database/sync settings in its own file:
+
+   ```sh
+   # server/configuration/central.yaml — port 2055, database central_test, sync settings commented out
+   # server/configuration/remote.yaml  — port 8000 (or any other), database remote_test, sync pointed at central
+   ```
+
+   Then start each site by name (yaml files matching this pattern are ignored by `.gitignore` so they stay local):
+
+   ```sh
+   APP_ENVIRONMENT=central cargo run    # central site
+   APP_ENVIRONMENT=remote  cargo run    # remote site
+   ```
+
+   And the front end for the central site:
+
+   ```sh
+   yarn start -- --port 3005 --env OMS_BACKEND_URL=http://localhost:2055
+   ```
+
+2. **Inline env-var overrides (one-off).** Comment out sync settings in local.yaml and override per-process:
+
+   ```sh
+   APP__SERVER__PORT=2055 APP__DATABASE__DATABASE_NAME=central_test cargo run    # central
+   cargo run                                                                     # remote (defaults)
+   yarn start -- --port 3005 --env OMS_BACKEND_URL=http://localhost:2055         # central front end
+   yarn start                                                                    # remote front end
+   ```
+
+In either case, initialise the **central** site first with central-site credentials, then the **remote** site with remote-site credentials. The **remote** site syncs with both legacy mSupply and the omSupply central site; the **central** site syncs with legacy mSupply only.
 
 ### Start server in watch mode
 
