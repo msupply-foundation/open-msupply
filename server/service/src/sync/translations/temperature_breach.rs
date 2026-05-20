@@ -11,7 +11,7 @@ use util::sync_serde::{
 
 use repository::{
     ChangelogRow, ChangelogTableName, LocationRowRepository, StorageConnection, SyncBufferRow,
-    TemperatureBreachRow, Row, TemperatureBreachRowRepository, TemperatureBreachType,
+    TemperatureBreachRow, Row, TemperatureBreachType,
 };
 use serde::{Deserialize, Serialize};
 

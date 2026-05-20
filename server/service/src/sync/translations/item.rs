@@ -3,7 +3,7 @@ use repository::{
     item_category::{ItemCategoryFilter, ItemCategoryRepository},
     item_category_row::ItemCategoryJoinRow,
     ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemType,
-    LocationTypeRowRepository, Row, StorageConnection, SyncBufferRow, SyncRecordData,
+    LocationTypeRowRepository, Row, StorageConnection, SyncBufferRow,
     UnitRowRepository, VENCategory,
 };
 use serde::{Deserialize, Serialize};
@@ -298,7 +298,7 @@ mod tests {
         mock::{MockData, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        LocationTypeRow, SyncAction, UnitRow,
+        LocationTypeRow, SyncAction, SyncRecordData, UnitRow,
     };
 
     #[actix_rt::test]

@@ -12,7 +12,7 @@ use repository::{
     InvoiceLineRowDelete, InvoiceLineStatus, InvoiceLineType, InvoiceRowRepository, InvoiceType,
     ItemRowRepository,
     LocationRowRepository, ProgramRowRepository, ReasonOptionRowRepository, Row,
-    StockLineRowRepository, StorageConnection, SyncBufferRow, SyncRecordData,
+    StockLineRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -596,7 +596,7 @@ mod tests {
         test_db::{setup_all, setup_all_with_data},
         ChangelogCondition, ChangelogRepository, ContextRow, CursorAndLimit, FilterBuilder, KeyType,
         KeyValueStoreRow, ProgramRow,
-        SyncAction, RowOrDelete,
+        SyncAction, SyncRecordData, RowOrDelete,
     };
     use serde_json::json;
 

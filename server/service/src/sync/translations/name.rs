@@ -2,7 +2,7 @@ use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyRowRepository, GenderType, NameRow, NameRowDelete,
-    NameRowType, Row, StorageConnection, SyncBufferRow, SyncRecordData,
+    NameRowType, Row, StorageConnection, SyncBufferRow,
 };
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
@@ -485,7 +485,7 @@ mod tests {
         mock::{MockData, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        CurrencyRow, SyncAction,
+        CurrencyRow, SyncAction, SyncRecordData,
     };
 
     #[actix_rt::test]

@@ -11,7 +11,7 @@ use repository::{
     ChangelogRow, ChangelogTableName,
     EqualFilter, LocationRowRepository, ProgramRowRepository, ReasonOptionRowRepository,
     Row, StockLineRowRepository, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
-    StocktakeLineRow, StorageConnection, SyncBufferRow, SyncRecordData,
+    StocktakeLineRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -376,7 +376,7 @@ mod tests {
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
         vvm_status::vvm_status_row::VVMStatusRow,
-        ChangelogCondition, ChangelogRepository, ContextRow, ProgramRow, SyncAction,
+        ChangelogCondition, ChangelogRepository, ContextRow, ProgramRow, SyncAction, SyncRecordData,
         CursorAndLimit, FilterBuilder, RowOrDelete,
     };
     use serde_json::json;
