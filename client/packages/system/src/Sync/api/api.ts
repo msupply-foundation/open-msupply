@@ -5,6 +5,7 @@ import {
   ErrorWithDetailsProps,
   SyncErrorVariant,
   SyncErrorVariantV7,
+  InitialiseAsCentralServerInputNode,
 } from '@openmsupply-client/common';
 
 import {
@@ -55,6 +56,12 @@ export const getSyncQueries = (sdk: Sdk) => ({
       syncSettings: cleanSyncSettings(settings),
     });
     return result?.updateSyncSettings;
+  },
+  initialiseAsCentralServer: async (
+    input: InitialiseAsCentralServerInputNode
+  ) => {
+    const result = await sdk.initialiseAsCentralServer({ input });
+    return result.initialiseAsCentralServer;
   },
 });
 
