@@ -444,7 +444,15 @@ When using a private repo, you'll need to be logged in as a user with read acces
 
 ## Testing the production build
 
-You can work on a plugin as if it were part of the app — types are shared, autocomplete and hot reload work. To test it as a production bundle:
+You can work on a plugin as if it were part of the app — types are shared, autocomplete and hot reload work. To test it as a production bundle, the easiest path is:
+
+```
+yarn plugin install
+```
+
+This walks the active plugin directory, runs `yarn install` + `yarn build-plugin` for every `package.json` it finds under `frontend/` and `backend/`, then bundles and uploads to the local server. Use the `--auth` flag (or auth profiles in `pluginAuth.json`) to target a different server — see [the auth section above](#auth-profiles).
+
+Under the hood, the rust CLI handles the bundle + upload. If you want the intermediate `pluginbundle.json` file or to drive the steps individually:
 
 ```bash
 # From the server directory
