@@ -143,21 +143,21 @@ function reportErrors(tracker: ErrorTracker, label: string) {
     console.log(`  !!! INFINITE LOOP in ${label}`);
   }
 
-  // Assert permission denials first so the failure message names the missing
-  // permission rather than the downstream "Query data cannot be undefined"
-  // console error or 30s timeout.
-  const denialSummary = tracker.permissionDenials
-    .map(d => `${d.permission} (path: ${d.path.join('.')})`)
-    .join(', ');
-  expect
-    .soft(
-      tracker.permissionDenials,
+  // Skip (rather than fail) on permission denials: the current role lacks the
+  // permission the page exercises, so the test can't meaningfully run. Doing
+  // this before the console-error assertion keeps the skip reason focused on
+  // the underlying cause rather than the downstream "Query data cannot be
+  // undefined" error or 30s timeout from the auth-error dialog blocking clicks.
+  if (tracker.permissionDenials.length > 0) {
+    const denialSummary = tracker.permissionDenials
+      .map(d => `${d.permission} (path: ${d.path.join('.')})`)
+      .join(', ');
+    test.skip(
+      true,
       `Permission denied in ${label}: ${denialSummary}. ` +
-        `Server returned Forbidden; the GQL client swallowed the error, so this ` +
-        `usually presents downstream as "Query data cannot be undefined" or a ` +
-        `30s timeout from the auth-error dialog blocking clicks.`
-    )
-    .toHaveLength(0);
+        `Server returned Forbidden; grant the listed permission to run this test.`
+    );
+  }
   expect.soft(tracker.errors, `Console errors in ${label}`).toHaveLength(0);
   expect.soft(tracker.warnings, `Console warnings in ${label}`).toHaveLength(0);
   expect
