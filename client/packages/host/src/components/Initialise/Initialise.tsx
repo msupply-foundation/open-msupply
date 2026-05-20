@@ -9,19 +9,63 @@ import {
   BoxedErrorWithDetails,
   EnvUtils,
   Platform,
+  Box,
+  Stack,
+  useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { InitialiseLayout, InitMode } from './InitialiseLayout';
 import { useInitialiseForm } from './hooks';
 import { SyncProgress } from '../SyncProgress';
-import { SiteInfo } from '../SiteInfo';
 import { mapSyncError } from 'packages/system/src';
+import { StandaloneCentralTab } from './StandaloneCentralTab';
 
 export const Initialise = () => {
   const t = useTranslation();
   const { setPageTitle } = useHostContext();
   const [mode, setMode] = useState<InitMode>('remote');
+  const formState = useInitialiseForm();
 
+  useEffect(() => {
+    setPageTitle(`${t('messages.not-initialised')} | ${t('app')} `);
+  }, [setPageTitle, t]);
+
+  const isAndroid = EnvUtils.platform === Platform.Android;
+  const isInputDisabled = formState.isInitialising || formState.isLoading;
+
+  const ModeSelector = () => {
+    return isAndroid ? undefined : (
+      <TabList
+        value={mode}
+        onChange={(_, v) => !isInputDisabled && setMode(v as InitMode)}
+        variant="fullWidth"
+      >
+        <Tab
+          value="remote"
+          label={t('initialise.remote-sync')}
+          disabled={isInputDisabled}
+        />
+        <Tab
+          value="central"
+          label={t('initialise.central-standalone')}
+          disabled={isInputDisabled}
+        />
+      </TabList>
+    );
+  };
+
+  return (
+    <InitialiseLayout>
+      <ModeSelector />
+      {mode === 'remote' && <RemoteForm formState={formState} />}
+      {mode === 'central' && <StandaloneCentralTab />}
+    </InitialiseLayout>
+  );
+};
+
+type InitialiseFormState = ReturnType<typeof useInitialiseForm>;
+
+const RemoteForm = ({ formState }: { formState: InitialiseFormState }) => {
   const {
     isValid,
     isLoading,
@@ -36,117 +80,96 @@ export const Initialise = () => {
     setUrl,
     siteCredentialsError: error,
     syncStatus,
-    siteName,
-  } = useInitialiseForm();
-
+  } = formState;
+  const t = useTranslation();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
   const syncError =
     syncStatus?.error &&
     mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
-
-  useEffect(() => {
-    setPageTitle(`${t('messages.not-initialised')} | ${t('app')} `);
-  }, [setPageTitle, t]);
-
   const isInputDisabled = isInitialising || isLoading;
-  const isAndroid = EnvUtils.platform === Platform.Android;
 
-  const ModeSelector = isAndroid ? undefined : (
-    <TabList
-      value={mode}
-      onChange={(_, v) => !isInputDisabled && setMode(v as InitMode)}
-      variant="fullWidth"
-    >
-      <Tab
-        value="remote"
-        label={t('initialise.remote-sync')}
-        disabled={isInputDisabled}
-      />
-      <Tab
-        value="central"
-        label={t('initialise.central-standalone')}
-        disabled={isInputDisabled}
-      />
-    </TabList>
-  );
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === 'Enter') {
+      onInitialise();
+    }
+  };
 
   return (
-    <InitialiseLayout
-      mode={mode}
-      ModeSelector={ModeSelector}
-      UsernameInput={
-        <LoginTextInput
-          fullWidth
-          label={t('label.settings-username')}
-          value={username}
-          disabled={isInputDisabled}
-          onChange={e => setUsername(e.target.value)}
-          slotProps={{
-            htmlInput: {
-              autoComplete: 'username',
-              autoCapitalize: 'off',
-            },
-          }}
-          autoFocus
-        />
-      }
-      PasswordInput={
-        <LoginTextInput
-          fullWidth
-          label={t('label.settings-password')}
-          type="password"
-          value={password}
-          disabled={isInputDisabled}
-          onChange={e => setPassword(e.target.value)}
-          slotProps={{
-            htmlInput: {
-              autoComplete: 'current-password',
-              autoCapitalize: 'off',
-            },
-          }}
-        />
-      }
-      UrlInput={
-        <LoginTextInput
-          fullWidth
-          label={t('label.settings-url')}
-          value={url}
-          disabled={isInputDisabled}
-          onChange={e => setUrl(e.target.value)}
-        />
-      }
-      SyncProgress={
-        syncStatus && (
+    <>
+      <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>
+        <Stack spacing={isExtraSmallScreen ? 3 : 5}>
+          <LoginTextInput
+            fullWidth
+            label={t('label.settings-url')}
+            value={url}
+            disabled={isInputDisabled}
+            onChange={e => setUrl(e.target.value)}
+          />
+          <LoginTextInput
+            fullWidth
+            label={t('label.settings-username')}
+            value={username}
+            disabled={isInputDisabled}
+            onChange={e => setUsername(e.target.value)}
+            slotProps={{
+              htmlInput: {
+                autoComplete: 'username',
+                autoCapitalize: 'off',
+              },
+            }}
+            autoFocus
+          />
+          <LoginTextInput
+            fullWidth
+            label={t('label.settings-password')}
+            type="password"
+            value={password}
+            disabled={isInputDisabled}
+            onChange={e => setPassword(e.target.value)}
+            slotProps={{
+              htmlInput: {
+                autoComplete: 'current-password',
+                autoCapitalize: 'off',
+              },
+            }}
+          />
+          {error && <BoxedErrorWithDetails {...error} />}
+          <Box display="flex" justifyContent="flex-end">
+            <LoadingButton
+              isLoading={isLoading}
+              loadingStyle={{ iconColor: 'secondary.main' }}
+              onClick={isInitialising ? onRetry : onInitialise}
+              variant="outlined"
+              startIcon={<SaveIcon />}
+              disabled={
+                !isValid &&
+                !isInitialising /* isValid would be false if isInitialising since password is emptied out */
+              }
+              /* Retry will only be shown when not loading and is initialised (when sync error occurred) */
+              label={
+                isInitialising ? t('button.retry') : t('button.initialise')
+              }
+            />
+          </Box>
+        </Stack>
+      </form>
+      <Box pt={2} width="100%">
+        {syncStatus && (
           <SyncProgress
             syncStatus={syncStatus}
             isOperational={false}
             colour="secondary"
           />
-        )
-      }
-      Button={
-        <LoadingButton
-          isLoading={isLoading}
-          loadingStyle={{ iconColor: 'secondary.main' }}
-          onClick={isInitialising ? onRetry : onInitialise}
-          variant="outlined"
-          startIcon={<SaveIcon />}
-          disabled={
-            !isValid &&
-            !isInitialising /* isValid would be false if isInitialising since password is emptied out */
-          }
-          /* Retry will only be shown when not loading and is initialised (when sync error occurred) */
-          label={isInitialising ? t('button.retry') : t('button.initialise')}
-        />
-      }
-      ErrorMessage={error && <BoxedErrorWithDetails {...error} />}
-      SyncErrorMessage={
-        syncError && <BoxedErrorWithDetails {...syncError} width="100%" />
-      }
-      onInitialise={async () => {
-        /* onInitialise from layout only happens on form key event, form is disabled when isInitialising */
-        if (isValid) await onInitialise();
-      }}
-      SiteInfo={<SiteInfo siteName={siteName} />}
-    />
+        )}
+      </Box>
+      <Box
+        pt={4}
+        justifyItems="center"
+        width="auto"
+        px={isExtraSmallScreen ? 4 : 20}
+      >
+        {syncError && <BoxedErrorWithDetails {...syncError} width="100%" />}
+      </Box>
+    </>
   );
 };
