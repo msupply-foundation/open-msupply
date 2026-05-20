@@ -27,7 +27,6 @@ export const PluginCategoryNav: React.FC<{ category: PluginNewCategory }> = ({
   if (!visiblePages.length) return null;
 
   const categoryPath = `/${category.key}`;
-  const firstPagePath = pluginPagePath(category.key, visiblePages[0]!);
 
   return (
     <AppNavSection isActive={isActive} to={categoryPath}>
@@ -44,7 +43,6 @@ export const PluginCategoryNav: React.FC<{ category: PluginNewCategory }> = ({
               key={`${page.pluginCode}/${page.route}`}
               to={pluginPagePath(category.key, page)}
               label={page.menu.label}
-              icon={resolvePluginIcon(category.icon)}
             />
           ))}
         </List>
