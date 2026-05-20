@@ -125,9 +125,8 @@ impl SyncApiV6 {
             ));
         }
 
-        let mut offset = parse_upload_offset_header(&head).map_err(|e| {
-            error_with_url(head_route, SyncApiErrorVariantV6::Other(e))
-        })?;
+        let mut offset = parse_upload_offset_header(&head)
+            .map_err(|e| error_with_url(head_route, SyncApiErrorVariantV6::Other(e)))?;
 
         // 3. Loop chunks until the file is fully uploaded.
         let patch_route = "files/{file_id} (PATCH)";
@@ -168,20 +167,26 @@ impl SyncApiV6 {
                 ));
             }
 
-            offset = parse_upload_offset_header(&patch).map_err(|e| {
-                error_with_url(patch_route, SyncApiErrorVariantV6::Other(e))
-            })?;
+            offset = parse_upload_offset_header(&patch)
+                .map_err(|e| error_with_url(patch_route, SyncApiErrorVariantV6::Other(e)))?;
+
+            log::debug!(
+                "tus chunk uploaded for {file_id}: {offset}/{total_bytes} bytes ({:.1}%)",
+                (offset as f64 / total_bytes as f64) * 100.0
+            );
 
             // Pause boundary: the server has durably ACKed the chunk we just sent, so stopping
             // here means no work is repeated on resume. If the upload is complete the while
             // condition will exit naturally on the next iteration.
             if offset < total_bytes && pause_flag.load(Ordering::Relaxed) {
+                log::info!("Pausing tus upload for {file_id} at {offset}/{total_bytes} bytes");
                 return Ok(UploadOutcome::Paused {
                     bytes_uploaded: offset,
                 });
             }
         }
 
+        log::info!("Finished tus upload for {file_id} ({total_bytes} bytes)");
         Ok(UploadOutcome::Done)
     }
 }
