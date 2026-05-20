@@ -10,45 +10,16 @@ import { LoginIcon } from '../Login/LoginIcon';
 import { Theme } from '@common/styles';
 import { AppVersion } from '../AppVersion';
 import { LanguageButton } from '../LanguageButton';
-import { StandaloneCentralTab } from './StandaloneCentralTab';
 
 export type InitMode = 'remote' | 'central';
 
 type LoginLayoutProps = {
-  mode: InitMode;
-  UsernameInput: ReactNode;
-  PasswordInput: ReactNode;
-  UrlInput: ReactNode;
-  Button: ReactNode;
-  SyncProgress: ReactNode;
-  ErrorMessage: ReactNode;
-  SyncErrorMessage: ReactNode;
-  SiteInfo: React.ReactNode;
-  ModeSelector?: ReactNode;
-  onInitialise: () => Promise<void>;
+  children: ReactNode[];
 };
 
-export const InitialiseLayout = ({
-  mode,
-  UsernameInput,
-  PasswordInput,
-  UrlInput,
-  Button,
-  ErrorMessage,
-  SyncProgress,
-  SiteInfo,
-  SyncErrorMessage,
-  ModeSelector,
-  onInitialise,
-}: LoginLayoutProps) => {
+export const InitialiseLayout = ({ children }: LoginLayoutProps) => {
   const t = useTranslation();
   const isExtraSmallScreen = useIsExtraSmallScreen();
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
-    if (e.key === 'Enter') {
-      onInitialise();
-    }
-  };
 
   return (
     <Box
@@ -143,38 +114,12 @@ export const InitialiseLayout = ({
               <Box display="flex" justifyContent="center">
                 <LoginIcon small />
               </Box>
-              {ModeSelector}
-              {mode === 'central' ? (
-                <StandaloneCentralTab />
-              ) : (
-                <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>
-                  <Stack spacing={isExtraSmallScreen ? 3 : 5}>
-                    {UrlInput}
-                    {UsernameInput}
-                    {PasswordInput}
-                    {ErrorMessage}
-                    <Box display="flex" justifyContent="flex-end">
-                      {Button}
-                    </Box>
-                  </Stack>
-                </form>
-              )}
+              {...children}
             </Stack>
-          </Box>
-          <Box pt={2} width="100%">
-            {SyncProgress}
-          </Box>
-          <Box
-            pt={4}
-            justifyItems="center"
-            width="auto"
-            px={isExtraSmallScreen ? 4 : 20}
-          >
-            {SyncErrorMessage}
           </Box>
         </Box>
         <Box>
-          <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
+          <AppVersion style={{ opacity: 0.4 }} />
         </Box>
         <LanguageButton />
       </Box>
