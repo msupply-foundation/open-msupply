@@ -1,9 +1,8 @@
-use repository::{syncv7::SyncError, SyncLogV7Row};
-
 use crate::{
     i32_to_u32,
     sync::sync_status::status::{SyncStatus, SyncStatusWithProgress},
 };
+use repository::{syncv7::SyncError, SyncLogV7Row};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FullSyncStatusV7 {
@@ -73,4 +72,3 @@ impl FullSyncStatusV7 {
         }
     }
 }
-
