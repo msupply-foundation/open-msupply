@@ -91,11 +91,10 @@
     {
       "label": "dev: backend (env)",
       "type": "shell",
-      "command": "cargo run",
+      "command": "cargo run -- --config-path configuration/${input:envName}.yaml",
       "options": {
         "cwd": "${workspaceFolder}/server",
         "env": {
-          "APP_ENVIRONMENT": "${input:envName}",
           "APP__SERVER__PORT": "${input:backendPort}"
         }
       },

@@ -129,18 +129,18 @@ For example, two sites running locally from the same repo, **central** and **rem
 
 Two ways to launch them:
 
-1. **Per-environment yaml files (cleaner for repeated use).** `AppEnvironment::get()` reads `APP_ENVIRONMENT` and loads `server/configuration/<name>.yaml` on top of `base.yaml`, so you can park each site's port/database/sync settings in its own file:
+1. **Per-environment yaml files (cleaner for repeated use).** `--config-path` points the server at any `<name>.yaml` in `server/configuration/`; `base.yaml` from the same directory is layered underneath, so you can park each site's port/database/sync settings in its own file:
 
    ```sh
    # server/configuration/central.yaml — port 2055, database central_test, sync settings commented out
    # server/configuration/remote.yaml  — port 8000 (or any other), database remote_test, sync pointed at central
    ```
 
-   Then start each site by name (yaml files matching this pattern are ignored by `.gitignore` so they stay local):
+   Then start each site by file (yaml files matching this pattern are ignored by `.gitignore` so they stay local):
 
    ```sh
-   APP_ENVIRONMENT=central cargo run    # central site
-   APP_ENVIRONMENT=remote  cargo run    # remote site
+   cargo run -- --config-path configuration/central.yaml    # central site
+   cargo run -- --config-path configuration/remote.yaml     # remote site
    ```
 
    And the front end for the central site:
