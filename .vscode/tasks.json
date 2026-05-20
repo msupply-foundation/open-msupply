@@ -1,5 +1,11 @@
 {
   "version": "2.0.0",
+  "options": {
+    "shell": {
+      "executable": "${env:SHELL}",
+      "args": ["-l", "-c"]
+    }
+  },
   "inputs": [
     {
       "id": "frontendPort",

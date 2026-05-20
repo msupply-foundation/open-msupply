@@ -160,6 +160,18 @@ Two ways to launch them:
 
 In either case, initialise the **central** site first with central-site credentials, then the **remote** site with remote-site credentials. The **remote** site syncs with both legacy mSupply and the omSupply central site; the **central** site syncs with legacy mSupply only.
 
+#### VS Code: launching dev sites via tasks
+
+If you use VS Code, the repo ships `.vscode/tasks.json` with three tasks that wire up the cargo backend + webpack dev server (and the proxy between them) without typing env vars:
+
+- **`dev: all`** — pick a free port for cargo, spawn backend + frontend in split terminals, wire the dev-server proxy at `OMS_BACKEND_URL` to match. Good for a single default site.
+- **`dev: all (choose env)`** — prompts you for a `server/configuration/<name>.yaml` (e.g. `central`, `remote`), runs the backend with `--config-path` against it, and points the front end at the matching port read from the yaml. Use this for the multi-site walkthrough above — run it once per site.
+- **`dev: open browser`** — opens the chosen env's URL.
+
+Run any of them via **Cmd/Ctrl-Shift-P → "Tasks: Run Task"**, or set a keybinding to `workbench.action.tasks.runTask`. `dev: all` is also bound to the default build group (Cmd/Ctrl-Shift-B). The `dev: all` and `dev: all (choose env)` tasks are distinct task labels, so you can have both running at once for central + remote.
+
+Requires the `augustocdias.tasks-shell-input` extension (auto-suggested via `.vscode/extensions.json`) to evaluate the dynamic inputs.
+
 ### Start server in watch mode
 
 Sometimes it's nice to have your dev server automatically rebuild and restart on changes.

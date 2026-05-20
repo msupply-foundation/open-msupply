@@ -21,8 +21,10 @@ module.exports = env => {
   // a free port for cargo and appends `--env OMS_BACKEND_URL=...` pointed at it.
   // Point at a remote backend (e.g. demo) the same way:
   //   yarn start --env OMS_BACKEND_URL=https://demo-open.msupply.org
+  // `API_HOST` is the legacy env-var form, kept so old workflows keep working.
   // Fallback covers running webpack alone against a server on the conventional 8000.
-  const backendTarget = env.OMS_BACKEND_URL || 'http://localhost:8000';
+  const backendTarget =
+    env.OMS_BACKEND_URL || process.env.API_HOST || 'http://localhost:8000';
   const bundleAnalyzerPlugin = !!env.stats
     ? new BundleAnalyzerPlugin({
         /**
