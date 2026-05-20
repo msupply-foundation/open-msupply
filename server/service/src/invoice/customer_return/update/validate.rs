@@ -5,7 +5,7 @@ use crate::{
     },
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
-use repository::{InvoiceRow, InvoiceType, Name, StorageConnection};
+use repository::{InvoiceLineRowRepository, InvoiceRow, InvoiceType, Name, StorageConnection};
 
 use super::{UpdateCustomerReturn, UpdateCustomerReturnError};
 
@@ -42,6 +42,12 @@ pub fn validate(
             }
             InvoiceRowStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
         })?;
+
+        let lines =
+            InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(&patch.id)?;
+        if lines.is_empty() {
+            return Err(CannotIssueCustomerReturnWithNoLines);
+        }
     }
     // Other party check
     let other_party_id = match &patch.other_party_id {
