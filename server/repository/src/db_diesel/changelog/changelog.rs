@@ -325,6 +325,12 @@ impl<'a> ChangelogRepository<'a> {
                 .limit(remaining)
                 .select(changelog::all_columns);
 
+            // Debug diesel query
+            // println!(
+            //     "{}",
+            //     diesel::debug_query::<crate::DBType, _>(&sub_query).to_string()
+            // );
+
             let sub_results: Vec<ChangelogRow> =
                 sub_query.load(self.connection.lock().connection())?;
 

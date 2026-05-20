@@ -63,7 +63,9 @@ pub async fn run_pending_sync_requests(
             cursor_type: CursorType::Dynamic(format!("push_{reference_id}")),
         }),
         reference_id: Some(reference_id),
-        is_initialising: false,
+        // Any auxilary sync requests go with initialising flag
+        // When pulling store data for a transfered store for example
+        is_initialising: true,
         run_post_sync_triggers: false,
     };
 
