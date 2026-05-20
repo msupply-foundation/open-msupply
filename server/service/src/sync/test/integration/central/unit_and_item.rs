@@ -136,8 +136,8 @@ impl SyncRecordTester for UnitAndItemTester {
         result.push(TestStepData {
             central_delete: json!({ "item": [item_row2.id], "unit": [unit_row1.id] }),
             integration_records: vec![
-                IntegrationOperation::delete(UnitRowDelete(unit_row1.id)),
-                IntegrationOperation::delete(ItemRowDelete(item_row2.id)),
+                IntegrationOperation::upsert(UnitRowDelete(unit_row1.id)),
+                IntegrationOperation::upsert(ItemRowDelete(item_row2.id)),
             ],
             ..Default::default()
         });
