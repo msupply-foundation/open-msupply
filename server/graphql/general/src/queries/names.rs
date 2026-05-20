@@ -11,7 +11,10 @@ use graphql_core::{
 };
 use graphql_types::types::{NameNode, NameNodeType};
 use repository::{DateFilter, EqualFilter, NameType, PaginationOption, StringFilter};
-use repository::{Name, NameFilter, NameSort, NameSortField, PropertyV2ValueFilter};
+use repository::{
+    LegacyPropertyFilter, Name, NameFilter, NameSort, NameSortField, NumberRangeFilter,
+    PropertyV2ValueFilter,
+};
 
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -23,6 +26,15 @@ use service::{
 pub enum NameSortFieldInput {
     Name,
     Code,
+    /// Perf-comparison: sort by a legacy name property value, reading the
+    /// text-JSON source column. Requires `propertyKey` on the sort input.
+    LegacyProperty,
+    /// Same as `LegacyProperty` but reads the read-only JSONB twin column.
+    LegacyPropertyJsonb,
+    /// Perf-comparison: sort by a V2 (KDD prototype) property value via a
+    /// correlated subquery over `property_v2_value`. `propertyKey` must hold
+    /// the property_v2 id.
+    PropertyV2,
 }
 
 #[derive(InputObject)]
@@ -32,6 +44,9 @@ pub struct NameSortInput {
     /// Sort query result is sorted descending or ascending (if not provided the default is
     /// ascending)
     desc: Option<bool>,
+    /// Required when `key` is `LegacyProperty` or `LegacyPropertyJsonb`. The
+    /// JSON property key to sort on (must match a name property definition).
+    property_key: Option<String>,
 }
 
 #[derive(InputObject, Clone)]
@@ -76,6 +91,36 @@ pub struct NameFilterInput {
     /// Filter by relational property values. Multiple entries AND together —
     /// a name must satisfy every condition to be returned.
     pub property: Option<Vec<PropertyV2ValueFilterInput>>,
+
+    /// Perf-comparison: filter by legacy JSON property values via the
+    /// text-JSON source column (parsed per row).
+    pub legacy_property: Option<Vec<LegacyPropertyFilterInput>>,
+
+    /// Perf-comparison twin reading the read-only JSONB column instead.
+    pub legacy_property_jsonb: Option<Vec<LegacyPropertyFilterInput>>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct LegacyPropertyFilterInput {
+    /// Property key as defined in `name_property` — restricted to ASCII
+    /// alphanumeric/underscore characters server-side.
+    pub key: String,
+    /// Text/option-style filter — applies against the JSON-extracted value
+    /// treated as text. Mutually exclusive with `numberValue` in practice
+    /// (set whichever matches the property's value type).
+    pub value: Option<StringFilterInput>,
+    /// Range filter for integer-valued JSON properties.
+    pub number_value: Option<NumberRangeFilterInput>,
+}
+
+impl From<LegacyPropertyFilterInput> for LegacyPropertyFilter {
+    fn from(f: LegacyPropertyFilterInput) -> Self {
+        LegacyPropertyFilter {
+            key: f.key,
+            value: f.value.map(StringFilter::from),
+            number_value: f.number_value.map(NumberRangeFilter::from),
+        }
+    }
 }
 
 #[derive(InputObject, Clone)]
@@ -85,9 +130,27 @@ pub struct PropertyV2ValueFilterInput {
     pub property_id: EqualFilterStringInput,
     pub value_text: Option<StringFilterInput>,
     pub value_option_id: Option<EqualFilterStringInput>,
-    pub value_number: Option<EqualFilterNumberInput>,
+    /// Range filter on `value_number`; equality is `min == max`.
+    pub value_number: Option<NumberRangeFilterInput>,
     pub value_real: Option<EqualFilterBigFloatingNumberInput>,
     pub value_date: Option<DateFilterInput>,
+}
+
+/// Range filter for integer-typed property values shared by the legacy and
+/// V2 number filter inputs. `min`/`max` both optional; equality is min=max.
+#[derive(InputObject, Clone)]
+pub struct NumberRangeFilterInput {
+    pub min: Option<i32>,
+    pub max: Option<i32>,
+}
+
+impl From<NumberRangeFilterInput> for NumberRangeFilter {
+    fn from(f: NumberRangeFilterInput) -> Self {
+        NumberRangeFilter {
+            min: f.min,
+            max: f.max,
+        }
+    }
 }
 
 impl From<PropertyV2ValueFilterInput> for PropertyV2ValueFilter {
@@ -107,7 +170,7 @@ impl From<PropertyV2ValueFilterInput> for PropertyV2ValueFilter {
             property_id: Some(EqualFilter::from(property_id)),
             value_text: value_text.map(StringFilter::from),
             value_option_id: value_option_id.map(EqualFilter::from),
-            value_number: value_number.map(EqualFilter::from),
+            value_number: value_number.map(NumberRangeFilter::from),
             value_real: value_real.map(EqualFilter::from),
             value_date: value_date.map(DateFilter::from),
         }
@@ -190,6 +253,8 @@ impl NameFilterInput {
             code_or_name,
             supplying_store_id,
             property,
+            legacy_property,
+            legacy_property_jsonb,
         } = self;
 
         NameFilter {
@@ -215,6 +280,10 @@ impl NameFilterInput {
             store: None,
             property: property
                 .map(|filters| filters.into_iter().map(PropertyV2ValueFilter::from).collect()),
+            legacy_property: legacy_property
+                .map(|filters| filters.into_iter().map(LegacyPropertyFilter::from).collect()),
+            legacy_property_jsonb: legacy_property_jsonb
+                .map(|filters| filters.into_iter().map(LegacyPropertyFilter::from).collect()),
         }
     }
 }
@@ -232,9 +301,16 @@ impl NameSortInput {
     pub fn to_domain(self) -> NameSort {
         use NameSortField as to;
         use NameSortFieldInput as from;
+        // `propertyKey` is required when sorting by a legacy property — fall
+        // back to `Name` if missing to keep the resolver infallible. The
+        // frontend always sends it for the legacy-sort variants.
+        let property_key = self.property_key.unwrap_or_default();
         let key = match self.key {
             from::Name => to::Name,
             from::Code => to::Code,
+            from::LegacyProperty => to::LegacyProperty(property_key),
+            from::LegacyPropertyJsonb => to::LegacyPropertyJsonb(property_key),
+            from::PropertyV2 => to::PropertyV2(property_key),
         };
 
         NameSort {

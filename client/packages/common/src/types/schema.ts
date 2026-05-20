@@ -5157,6 +5157,22 @@ export type LedgerWouldGoBelowZero = InsertInventoryAdjustmentErrorInterface & {
   stockLine: StockLineNode;
 };
 
+export type LegacyPropertyFilterInput = {
+  /**
+   * Property key as defined in `name_property` — restricted to ASCII
+   * alphanumeric/underscore characters server-side.
+   */
+  key: Scalars['String']['input'];
+  /** Range filter for integer-valued JSON properties. */
+  numberValue?: InputMaybe<NumberRangeFilterInput>;
+  /**
+   * Text/option-style filter — applies against the JSON-extracted value
+   * treated as text. Mutually exclusive with `numberValue` in practice
+   * (set whichever matches the property's value type).
+   */
+  value?: InputMaybe<StringFilterInput>;
+};
+
 export type LineDeleteError = DeleteResponseRequisitionErrorInterface & {
   __typename: 'LineDeleteError';
   description: Scalars['String']['output'];
@@ -6385,6 +6401,13 @@ export type NameFilterInput = {
   isSystemName?: InputMaybe<Scalars['Boolean']['input']>;
   /** Visibility in current store (based on store_id parameter and existence of name_store_join record) */
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
+  /**
+   * Perf-comparison: filter by legacy JSON property values via the
+   * text-JSON source column (parsed per row).
+   */
+  legacyProperty?: InputMaybe<Array<LegacyPropertyFilterInput>>;
+  /** Perf-comparison twin reading the read-only JSONB column instead. */
+  legacyPropertyJsonb?: InputMaybe<Array<LegacyPropertyFilterInput>>;
   /** Filter by name */
   name?: InputMaybe<StringFilterInput>;
   phone?: InputMaybe<StringFilterInput>;
@@ -6462,7 +6485,20 @@ export type NamePropertyResponse = NamePropertyConnector;
 
 export enum NameSortFieldInput {
   Code = 'code',
+  /**
+   * Perf-comparison: sort by a legacy name property value, reading the
+   * text-JSON source column. Requires `propertyKey` on the sort input.
+   */
+  LegacyProperty = 'legacyProperty',
+  /** Same as `LegacyProperty` but reads the read-only JSONB twin column. */
+  LegacyPropertyJsonb = 'legacyPropertyJsonb',
   Name = 'name',
+  /**
+   * Perf-comparison: sort by a V2 (KDD prototype) property value via a
+   * correlated subquery over `property_v2_value`. `propertyKey` must hold
+   * the property_v2 id.
+   */
+  PropertyV2 = 'propertyV2',
 }
 
 export type NameSortInput = {
@@ -6473,6 +6509,11 @@ export type NameSortInput = {
   desc?: InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: NameSortFieldInput;
+  /**
+   * Required when `key` is `LegacyProperty` or `LegacyPropertyJsonb`. The
+   * JSON property key to sort on (must match a name property definition).
+   */
+  propertyKey?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type NameStoreJoinNode = {
@@ -6614,6 +6655,15 @@ export type NullableStringUpdate = {
 export type NumberNode = {
   __typename: 'NumberNode';
   number: Scalars['Int']['output'];
+};
+
+/**
+ * Range filter for integer-typed property values shared by the legacy and
+ * V2 number filter inputs. `min`/`max` both optional; equality is min=max.
+ */
+export type NumberRangeFilterInput = {
+  max?: InputMaybe<Scalars['Int']['input']>;
+  min?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type OkResponse = {
@@ -7448,7 +7498,8 @@ export type PropertyV2ValueFilterInput = {
    */
   propertyId: EqualFilterStringInput;
   valueDate?: InputMaybe<DateFilterInput>;
-  valueNumber?: InputMaybe<EqualFilterNumberInput>;
+  /** Range filter on `value_number`; equality is `min == max`. */
+  valueNumber?: InputMaybe<NumberRangeFilterInput>;
   valueOptionId?: InputMaybe<EqualFilterStringInput>;
   valueReal?: InputMaybe<EqualFilterBigFloatingNumberInput>;
   valueText?: InputMaybe<StringFilterInput>;

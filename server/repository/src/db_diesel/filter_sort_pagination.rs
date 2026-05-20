@@ -295,6 +295,30 @@ impl DateFilter {
     }
 }
 
+/// Range filter for integer-typed property values. `min` and `max` are both
+/// optional — set both for `BETWEEN`, one for an open-ended bound, or both to
+/// the same value for equality. If both are `None` the filter no-ops.
+#[derive(Clone, Debug, PartialEq, Default, TS, Serialize, Deserialize)]
+pub struct NumberRangeFilter {
+    #[ts(optional)]
+    pub min: Option<i32>,
+    #[ts(optional)]
+    pub max: Option<i32>,
+}
+
+impl NumberRangeFilter {
+    pub fn between(min: i32, max: i32) -> Self {
+        Self {
+            min: Some(min),
+            max: Some(max),
+        }
+    }
+
+    pub fn equal_to(value: i32) -> Self {
+        Self::between(value, value)
+    }
+}
+
 #[derive(PartialEq, Debug)]
 pub struct Sort<T> {
     pub key: T,

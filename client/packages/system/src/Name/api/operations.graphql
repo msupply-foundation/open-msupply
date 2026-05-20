@@ -48,6 +48,25 @@ fragment FacilityNameRow on NameNode {
     code
   }
   properties
+  # Per-store V2 property values — used by the stores list to display the
+  # KDD-prototype properties side-by-side with the legacy `properties` JSON
+  # for the perf comparison.
+  propertyV2Values {
+    id
+    property {
+      id
+      name
+      type
+    }
+    option {
+      id
+      name
+    }
+    valueText
+    valueNumber
+    valueReal
+    valueDate
+  }
 }
 
 fragment Name on NameNode {
@@ -145,6 +164,7 @@ query facilities(
   $storeId: String!
   $key: NameSortFieldInput!
   $desc: Boolean
+  $propertyKey: String
   $first: Int
   $offset: Int
   $filter: NameFilterInput
@@ -152,7 +172,7 @@ query facilities(
   names(
     storeId: $storeId
     page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
+    sort: { key: $key, desc: $desc, propertyKey: $propertyKey }
     filter: $filter
   ) {
     ... on NameConnector {

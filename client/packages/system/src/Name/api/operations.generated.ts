@@ -56,6 +56,25 @@ export type FacilityNameRowFragment = {
   name: string;
   properties: string;
   store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  propertyV2Values: Array<{
+    __typename: 'PropertyV2ValueNode';
+    id: string;
+    valueText?: string | null;
+    valueNumber?: number | null;
+    valueReal?: number | null;
+    valueDate?: string | null;
+    property: {
+      __typename: 'PropertyV2Node';
+      id: string;
+      name: string;
+      type: Types.PropertyV2TypeEnum;
+    };
+    option?: {
+      __typename: 'PropertyV2OptionNode';
+      id: string;
+      name: string;
+    } | null;
+  }>;
 };
 
 export type NameFragment = {
@@ -218,6 +237,7 @@ export type FacilitiesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   key: Types.NameSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  propertyKey?: Types.InputMaybe<Types.Scalars['String']['input']>;
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   filter?: Types.InputMaybe<Types.NameFilterInput>;
@@ -239,6 +259,25 @@ export type FacilitiesQuery = {
       name: string;
       properties: string;
       store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      propertyV2Values: Array<{
+        __typename: 'PropertyV2ValueNode';
+        id: string;
+        valueText?: string | null;
+        valueNumber?: number | null;
+        valueReal?: number | null;
+        valueDate?: string | null;
+        property: {
+          __typename: 'PropertyV2Node';
+          id: string;
+          name: string;
+          type: Types.PropertyV2TypeEnum;
+        };
+        option?: {
+          __typename: 'PropertyV2OptionNode';
+          id: string;
+          name: string;
+        } | null;
+      }>;
     }>;
   };
 };
@@ -486,6 +525,22 @@ export const FacilityNameRowFragmentDoc = gql`
       code
     }
     properties
+    propertyV2Values {
+      id
+      property {
+        id
+        name
+        type
+      }
+      option {
+        id
+        name
+      }
+      valueText
+      valueNumber
+      valueReal
+      valueDate
+    }
   }
 `;
 export const NameFragmentDoc = gql`
@@ -587,6 +642,7 @@ export const FacilitiesDocument = gql`
     $storeId: String!
     $key: NameSortFieldInput!
     $desc: Boolean
+    $propertyKey: String
     $first: Int
     $offset: Int
     $filter: NameFilterInput
@@ -594,7 +650,7 @@ export const FacilitiesDocument = gql`
     names(
       storeId: $storeId
       page: { first: $first, offset: $offset }
-      sort: { key: $key, desc: $desc }
+      sort: { key: $key, desc: $desc, propertyKey: $propertyKey }
       filter: $filter
     ) {
       ... on NameConnector {
