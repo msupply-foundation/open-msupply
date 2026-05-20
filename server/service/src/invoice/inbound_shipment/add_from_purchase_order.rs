@@ -5,7 +5,7 @@ use repository::{
     PurchaseOrderLineRepository, PurchaseOrderLineStatus, PurchaseOrderRowRepository,
 };
 use repository::{InvoiceLineRow, InvoiceLineRowRepository, StorageConnection};
-use util::uuid::uuid;
+use util::{round_currency, uuid::uuid};
 
 pub fn add_from_purchase_order(
     connection: &StorageConnection,
@@ -53,7 +53,11 @@ pub fn add_from_purchase_order(
         let shipped_number_of_units = purchase_order_line_stats.shipped_number_of_units;
         let pack_size = purchase_order_line.requested_pack_size;
         let remaining_units = (total_units - shipped_number_of_units).max(0.0);
-        let number_of_packs = remaining_units / pack_size;
+        let number_of_packs = if pack_size > 0.0 {
+            remaining_units / pack_size
+        } else {
+            0.0
+        };
 
         // Use stored total from the PO line, pro-rated for remaining units
         let remaining_ratio = if total_units > 0.0 {
@@ -78,14 +82,14 @@ pub fn add_from_purchase_order(
             pack_size,
             cost_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
             sell_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
-            total_before_tax: foreign_total * exchange_rate,
-            total_after_tax: foreign_total * exchange_rate,
+            total_before_tax: round_currency(foreign_total * exchange_rate),
+            total_after_tax: round_currency(foreign_total * exchange_rate),
             tax_percentage: None,
             r#type: InvoiceLineType::StockIn,
             number_of_packs,
             prescribed_quantity: None,
             note: None,
-            foreign_currency_price_before_tax: Some(foreign_total),
+            foreign_currency_price_before_tax: Some(round_currency(foreign_total)),
             item_variant_id: None,
             linked_invoice_id: None,
             donor_id: None,
