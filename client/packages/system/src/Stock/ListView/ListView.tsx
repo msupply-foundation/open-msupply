@@ -62,12 +62,7 @@ export const StockListView = () => {
   // Stock-line-specific filters don't apply in grouped mode (and vice versa
   // there are no grouped-only filters yet). Clear them on toggle so stale URL
   // params don't silently affect the ungrouped query when the user switches back.
-  const stockLineFilterKeys = [
-    'location.code',
-    'masterList.name',
-    'expiryDate',
-    'vvmStatusId',
-  ];
+  const stockLineFilterKeys = ['location.code', 'expiryDate', 'vvmStatusId'];
   const initialRender = useRef(true);
   useEffect(() => {
     if (initialRender.current) {
