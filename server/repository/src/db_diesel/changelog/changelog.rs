@@ -576,7 +576,7 @@ impl ChangelogFilter {
             }
 
             match sync_style {
-                Remote | File | Patient | RemoteToCentral => {
+                Remote | File | Patient | RemoteToCentral | RemoteOwned => {
                     inner_or_conditions.push(C::table_name::any(table_names))
                 }
                 Central | ToLegacyCentralOnly | SyncRequest | Transfer => {

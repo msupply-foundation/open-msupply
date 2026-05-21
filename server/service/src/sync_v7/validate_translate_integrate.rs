@@ -202,6 +202,7 @@ fn translate_delete(
         | ChangelogTableName::VaccineCourse
         | ChangelogTableName::VaccineCourseDose
         | ChangelogTableName::VaccineCourseItem
+        | ChangelogTableName::SyncRequest
         | ChangelogTableName::VaccineCourseStoreConfig => {
             return Err(Error::DeleteTranslatorNotFound(table_name.clone()));
         }
