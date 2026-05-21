@@ -197,9 +197,9 @@ yarn plugin install                     # build and install every installed plug
 yarn plugin install <selector>          # only the named plugin
 yarn plugin install [...] frontend      # only the frontend half
 yarn plugin install [...] backend       # only the backend half
-yarn plugin uninstall <code>            # remove a plugin from the server (both frontend and backend rows)
-yarn plugin uninstall <code> frontend   # remove just the frontend row for that code
-yarn plugin uninstall <code> backend    # remove just the backend row for that code
+yarn plugin uninstall <selector>        # remove a plugin from the server (both frontend and backend rows)
+yarn plugin uninstall <selector> frontend # remove just the frontend row
+yarn plugin uninstall <selector> backend  # remove just the backend row
 yarn plugin uninstall --all             # wipe every plugin currently installed on the server (prompts first)
 yarn plugin open                        # open the plugin in GitHub Desktop (must specify if >1 installed)
 yarn plugin open <selector>             # open a specific plugin
@@ -207,9 +207,9 @@ yarn plugin reset                       # remove all plugin submodules from your
 yarn plugin reset <selector>            # remove just the named plugin submodule
 ```
 
-`<selector>` (for `install`/`open`/`reset`) is either an installed plugin's folder name (e.g. `core-plugins`) or a short name from `pluginRepoMap.json` (e.g. `core`).
+`<selector>` (for `install`/`uninstall`/`open`/`reset`) is either an installed plugin's folder name (e.g. `core-plugins`) or a short name from `pluginRepoMap.json` (e.g. `core`). For `uninstall`, the script then reads the plugin's actual code(s) from the local submodule's `package.json` and sends those to the server — so `yarn plugin uninstall civ` is symmetric with `yarn plugin install civ`.
 
-`<code>` (for `uninstall`) is the plugin's npm-package name as stored on the server — what shows up in the **code** column of Manage → Plugins, or in `yarn plugin uninstall --all`'s preview list. The local submodule doesn't have to be present for `uninstall` to work; it talks to the server only.
+If no local submodule matches, `uninstall` falls back to treating the argument as a literal plugin code (the npm-package name as stored on the server — what shows up in the **code** column of Manage → Plugins, or in `yarn plugin uninstall --all`'s preview list). So you can still uninstall a plugin on a server where the submodule isn't checked out locally — just pass the code directly.
 
 `yarn plugin install` and `yarn plugin uninstall` default to `http://localhost:8000` with credentials `admin`/`pass`. Override with `--url`, `--username`, `--password`, or pick a stored profile with `--auth=<name>` (see _Auth profiles_ below). Get/reset abort if the affected plugin submodule has uncommitted changes — commit or stash inside it first.
 
@@ -221,7 +221,7 @@ The `reset` and `uninstall` commands deliberately do different things, and you u
 | ------------------------------------------ | -------------------------------- | ------------------------------------ |
 | Remove a plugin submodule from your repo   | `yarn plugin reset <selector>`   | Working tree only                    |
 | Remove all plugin submodules               | `yarn plugin reset`              | Working tree only                    |
-| Uninstall a plugin from the server         | `yarn plugin uninstall <code>`   | Server DB (syncs out to remote sites)|
+| Uninstall a plugin from the server         | `yarn plugin uninstall <selector>` | Server DB (syncs out to remote sites)|
 | Wipe every plugin from the server          | `yarn plugin uninstall --all`    | Server DB                            |
 
 `uninstall` doesn't touch your local submodule, and `reset` doesn't touch the server. To start completely fresh against a dev server, run both. Single-plugin server deletes are also available from the UI (Manage → Plugins → trash icon, central server admins only).
