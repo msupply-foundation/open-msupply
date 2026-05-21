@@ -574,4 +574,94 @@ mod tests {
         service.disable_sync(&ctx).unwrap();
         assert!(s.sync().await.is_ok());
     }
+
+    // V6 stores cursors as `last_cursor + 1` (>= semantics).
+    // When copying to v7 (which uses > semantics), we subtract 1 so the first
+    // v7 query fetches exactly the same records the next v6 query would have.
+    #[actix_rt::test]
+    async fn v6_to_v7_cursor_copy_subtracts_one() {
+        use repository::{
+            test_db::{setup_test, SetupOption, SetupResult},
+            KeyType,
+        };
+        use crate::cursor_controller::CursorController;
+
+        let SetupResult { connection, .. } = setup_test(SetupOption {
+            db_name: "v6_to_v7_cursor_copy_subtracts_one",
+            ..Default::default()
+        })
+        .await;
+
+        // Set v6 cursors as a v6 remote would: last seen record was 199/99,
+        // so stored values are 200/100.
+        CursorController::new(KeyType::SyncPullCursorV6)
+            .update(&connection, 200)
+            .unwrap();
+        CursorController::new(KeyType::SyncPushCursorV6)
+            .update(&connection, 100)
+            .unwrap();
+
+        // Apply the same copy logic as try_upgrade_to_v7
+        let v6_pull = CursorController::new(KeyType::SyncPullCursorV6)
+            .get(&connection)
+            .unwrap();
+        CursorController::new(KeyType::SyncPullCursorV7)
+            .update(&connection, v6_pull.saturating_sub(1))
+            .unwrap();
+
+        let v6_push = CursorController::new(KeyType::SyncPushCursorV6)
+            .get(&connection)
+            .unwrap();
+        CursorController::new(KeyType::SyncPushCursorV7)
+            .update(&connection, v6_push.saturating_sub(1))
+            .unwrap();
+
+        // V7 cursors should be exactly 1 less: v7 queries `> 199` / `> 99`,
+        // equivalent to v6's `>= 200` / `>= 100`.
+        assert_eq!(
+            CursorController::new(KeyType::SyncPullCursorV7)
+                .get(&connection)
+                .unwrap(),
+            199
+        );
+        assert_eq!(
+            CursorController::new(KeyType::SyncPushCursorV7)
+                .get(&connection)
+                .unwrap(),
+            99
+        );
+    }
+
+    // Edge case: a site that never ran v6 has cursors at 0.
+    // saturating_sub must not underflow.
+    #[actix_rt::test]
+    async fn v6_to_v7_cursor_copy_zero_does_not_underflow() {
+        use repository::{
+            test_db::{setup_test, SetupOption, SetupResult},
+            KeyType,
+        };
+        use crate::cursor_controller::CursorController;
+
+        let SetupResult { connection, .. } = setup_test(SetupOption {
+            db_name: "v6_to_v7_cursor_copy_zero_does_not_underflow",
+            ..Default::default()
+        })
+        .await;
+
+        let v6_pull = CursorController::new(KeyType::SyncPullCursorV6)
+            .get(&connection)
+            .unwrap();
+        assert_eq!(v6_pull, 0);
+
+        CursorController::new(KeyType::SyncPullCursorV7)
+            .update(&connection, v6_pull.saturating_sub(1))
+            .unwrap();
+
+        assert_eq!(
+            CursorController::new(KeyType::SyncPullCursorV7)
+                .get(&connection)
+                .unwrap(),
+            0
+        );
+    }
 }

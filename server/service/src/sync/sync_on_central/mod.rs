@@ -487,3 +487,130 @@ fn set_integrating(site_id: i32, is_integrating: bool) {
 fn is_sync_version_compatible(sync_v6_version: u32) -> bool {
     MIN_VERSION <= sync_v6_version && sync_v6_version <= MAX_VERSION
 }
+
+#[cfg(test)]
+mod tests {
+    use repository::{
+        mock::{mock_location_1, mock_location_2, MockDataInserts},
+        test_db::setup_all,
+        ChangelogCondition, ChangelogRepository, CursorAndLimit, LocationRowRepository,
+    };
+
+    // The v6 pull endpoint applies `cursor.saturating_sub(1)` before querying
+    // with `>` to compensate for v6 remotes storing cursors as `last_cursor + 1`
+    // (old >= semantics). These tests verify the adjustment produces the same
+    // window as the original `>= cursor` would have.
+    #[actix_rt::test]
+    async fn v6_pull_adjustment_does_not_resend_last_seen_record() {
+        let (_, connection, _, _) = setup_all(
+            "v6_pull_adjustment_does_not_resend_last_seen_record",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let repo = ChangelogRepository::new(&connection);
+        let location_repo = LocationRowRepository::new(&connection);
+
+        location_repo.upsert_one(&mock_location_1()).unwrap();
+        let last_cursor = repo.max_cursor().unwrap() as i64;
+
+        // V6 remote received this record and stored last_cursor + 1.
+        let v6_cursor = last_cursor + 1;
+        let adjusted = (v6_cursor as i64).saturating_sub(1); // == last_cursor
+
+        // Central queries `> adjusted` — must not re-send the record at last_cursor.
+        let result = repo
+            .query(
+                ChangelogCondition::True(),
+                CursorAndLimit {
+                    cursor: adjusted,
+                    limit: 10,
+                },
+            )
+            .unwrap();
+        assert_eq!(result.rows.len(), 0, "already-seen record must not be re-sent");
+    }
+
+    #[actix_rt::test]
+    async fn v6_pull_adjustment_returns_new_records() {
+        let (_, connection, _, _) = setup_all(
+            "v6_pull_adjustment_returns_new_records",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let repo = ChangelogRepository::new(&connection);
+        let location_repo = LocationRowRepository::new(&connection);
+
+        location_repo.upsert_one(&mock_location_1()).unwrap();
+        let last_cursor = repo.max_cursor().unwrap() as i64;
+
+        // V6 remote has seen up to last_cursor, stored last_cursor + 1.
+        let v6_cursor = last_cursor + 1;
+        let adjusted = (v6_cursor as i64).saturating_sub(1);
+
+        // A new record arrives on central after the remote's last sync.
+        location_repo.upsert_one(&mock_location_2()).unwrap();
+        let new_cursor = repo.max_cursor().unwrap() as i64;
+
+        let result = repo
+            .query(
+                ChangelogCondition::True(),
+                CursorAndLimit {
+                    cursor: adjusted,
+                    limit: 10,
+                },
+            )
+            .unwrap();
+
+        assert_eq!(result.rows.len(), 1, "new record must be returned");
+        assert_eq!(result.rows[0].cursor, new_cursor);
+    }
+
+    #[actix_rt::test]
+    async fn v6_pull_without_adjustment_would_miss_first_new_record() {
+        let (_, connection, _, _) = setup_all(
+            "v6_pull_without_adjustment_would_miss_first_new_record",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let repo = ChangelogRepository::new(&connection);
+        let location_repo = LocationRowRepository::new(&connection);
+
+        location_repo.upsert_one(&mock_location_1()).unwrap();
+        let last_cursor = repo.max_cursor().unwrap() as i64;
+
+        location_repo.upsert_one(&mock_location_2()).unwrap();
+        let new_cursor = repo.max_cursor().unwrap() as i64;
+        assert_eq!(new_cursor, last_cursor + 1, "cursors are sequential");
+
+        // V6 remote stored last_cursor + 1 as its next pull cursor.
+        let v6_cursor = last_cursor + 1;
+
+        // Without the adjustment, central queries `> v6_cursor` = `> last_cursor + 1`,
+        // which skips the record at new_cursor (== last_cursor + 1).
+        let result_no_adjust = repo
+            .query(
+                ChangelogCondition::True(),
+                CursorAndLimit {
+                    cursor: v6_cursor,
+                    limit: 10,
+                },
+            )
+            .unwrap();
+        assert_eq!(result_no_adjust.rows.len(), 0, "without adjustment the new record is skipped");
+
+        // With the adjustment, `> v6_cursor - 1` correctly returns it.
+        let result_adjusted = repo
+            .query(
+                ChangelogCondition::True(),
+                CursorAndLimit {
+                    cursor: v6_cursor - 1,
+                    limit: 10,
+                },
+            )
+            .unwrap();
+        assert_eq!(result_adjusted.rows.len(), 1, "with adjustment the new record is returned");
+    }
+}
