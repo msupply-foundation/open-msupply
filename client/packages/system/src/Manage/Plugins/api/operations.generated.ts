@@ -53,6 +53,26 @@ export type InstallUploadedPluginMutation = {
   };
 };
 
+export type UninstallPluginMutationVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+}>;
+
+export type UninstallPluginMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    plugins: {
+      __typename: 'CentralPluginMutations';
+      uninstallPlugin: {
+        __typename: 'UninstallPluginNode';
+        id: string;
+        code: string;
+        kind: Types.InstalledPluginKindType;
+      };
+    };
+  };
+};
+
 export const InstalledPluginNodeFragmentDoc = gql`
   fragment InstalledPluginNode on InstalledPluginNode {
     __typename
@@ -85,6 +105,19 @@ export const InstallUploadedPluginDocument = gql`
       plugins {
         installUploadedPlugin(fileId: $fileId) {
           pluginInfo
+        }
+      }
+    }
+  }
+`;
+export const UninstallPluginDocument = gql`
+  mutation uninstallPlugin($id: String!) {
+    centralServer {
+      plugins {
+        uninstallPlugin(id: $id) {
+          id
+          code
+          kind
         }
       }
     }
@@ -142,6 +175,24 @@ export function getSdk(
             signal,
           }),
         'installUploadedPlugin',
+        'mutation',
+        variables
+      );
+    },
+    uninstallPlugin(
+      variables: UninstallPluginMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UninstallPluginMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UninstallPluginMutation>({
+            document: UninstallPluginDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'uninstallPlugin',
         'mutation',
         variables
       );
