@@ -113,6 +113,15 @@ impl SyncTranslation for MessageTranslation {
             return Err(anyhow::anyhow!("Message not found"));
         };
 
+        // SupportUpload messages are an open-mSupply-only flow (processed by
+        // SupportUploadFilesProcessor on the receiving site, files uploaded
+        // to OMS central via TUS) — legacy mSupply has no handler for them.
+        // OmSyncMessageTranslation owns that path; we skip here so we don't
+        // double-sync the same row to both centrals.
+        if matches!(message.r#type, SyncMessageRowType::SupportUpload) {
+            return Ok(PushTranslateResult::NotMatched);
+        }
+
         let SyncMessageRow {
             id,
             to_store_id,

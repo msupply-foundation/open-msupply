@@ -4,7 +4,7 @@ use super::{
 };
 use repository::{
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, SyncMessageRow,
-    SyncMessageRowRepository,
+    SyncMessageRowRepository, SyncMessageRowType,
 };
 
 // Needs to be added to all_translators()
@@ -63,6 +63,14 @@ impl SyncTranslation for OmSyncMessageTranslation {
                 "Sync message row ({}) not found",
                 changelog.record_id
             )))?;
+
+        // Only the SupportUpload flow uses OMS central — everything else goes
+        // via legacy mSupply through `MessageTranslation`. Without this filter,
+        // both translators emit for every sync_message changelog and the same
+        // row gets pushed to both centrals.
+        if !matches!(row.r#type, SyncMessageRowType::SupportUpload) {
+            return Ok(PushTranslateResult::NotMatched);
+        }
 
         Ok(PushTranslateResult::upsert(
             changelog,
