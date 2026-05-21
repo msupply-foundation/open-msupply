@@ -85,6 +85,7 @@ export const DetailsTab = ({ lineEdit }: DetailsTabProps) => {
     isOpen: returnsIsOpen,
     entity: stockLineIds,
     mode: returnModalMode,
+    setMode: setReturnMode,
   } = useEditModal<string[]>();
 
   const onRowClick = useCallback(
@@ -146,7 +147,11 @@ export const DetailsTab = ({ lineEdit }: DetailsTabProps) => {
       line => line.stockLine?.id ?? ''
     );
     onOpenReturns(selectedStockLineIds);
-  }, [data, selectedRows, info, onOpenReturns, t]);
+    // onOpenReturns auto-sets mode to Update because the entity (stock line ids
+    // array) is truthy; override to Create to match the pre-refactor behaviour
+    // — drives the zero-quantity alert severity in SupplierReturnEditModal.
+    setReturnMode(ModalMode.Create);
+  }, [data, selectedRows, info, onOpenReturns, setReturnMode, t]);
 
   // The InboundLineEdit modal walks items in the current sort order when the
   // user hits "next"; capture the sort from this tab's table so the modal
