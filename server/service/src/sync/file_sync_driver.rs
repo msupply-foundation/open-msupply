@@ -124,9 +124,14 @@ impl FileSyncDriver {
                 }
             }
 
+            // Snapshot pause state into a local so the `watch::Ref` borrow guard
+            // is dropped before the `.await` below — otherwise the guard lives
+            // across the await point and the whole `run` future becomes !Send.
+            let paused = *self.pause_rx.borrow();
+
             // If not stopped or paused and we have central server URL
             if let (false, false, CentralServerConfig::CentralServerUrl(url)) =
-                (stopped, *self.pause_rx.borrow(), CentralServerConfig::get())
+                (stopped, paused, CentralServerConfig::get())
             {
                 // for now we only sync if we're not the central server
                 files_to_upload = self
