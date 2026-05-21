@@ -23,6 +23,7 @@ import {
 import {
   ApiException,
   InvoiceNodeStatus,
+  InvoiceTypeInput,
   RequisitionNodeStatus,
   UserPermission,
 } from '@common/types';
@@ -96,8 +97,8 @@ export const ReplenishmentWidget = ({
     modalControl.toggleOn
   );
 
-  const internalTab = 'internal';
-  const externalTab = 'external';
+  const internalType = InvoiceTypeInput.InboundShipment;
+  const externalType = InvoiceTypeInput.InboundShipmentExternal;
 
   const corePanels = [
     <StatsPanel
@@ -115,7 +116,7 @@ export const ReplenishmentWidget = ({
             .addPart(AppRoute.InboundShipment)
             .addQuery({
               createdDatetime: getTodayUrlQuery(),
-              tab: internalTab,
+              type: internalType,
             })
             .build(),
           statContext: `${inboundInternalPanelContext}-today`,
@@ -127,7 +128,7 @@ export const ReplenishmentWidget = ({
             .addPart(AppRoute.InboundShipment)
             .addQuery({
               createdDatetime: getThisWeekUrlQuery(),
-              tab: internalTab,
+              type: internalType,
             })
             .build(),
           statContext: `${inboundInternalPanelContext}-this-week`,
@@ -139,7 +140,7 @@ export const ReplenishmentWidget = ({
             .addPart(AppRoute.InboundShipment)
             .addQuery({
               status: `${InvoiceNodeStatus.Shipped},${InvoiceNodeStatus.New}`,
-              tab: internalTab,
+              type: internalType,
             })
             .build(),
           statContext: `${inboundInternalPanelContext}-not-delivered`,
@@ -166,7 +167,7 @@ export const ReplenishmentWidget = ({
                   .addPart(AppRoute.InboundShipment)
                   .addQuery({
                     createdDatetime: getTodayUrlQuery(),
-                    tab: externalTab,
+                    type: externalType,
                   })
                   .build(),
                 statContext: `${inboundExternalPanelContext}-today`,
@@ -178,7 +179,7 @@ export const ReplenishmentWidget = ({
                   .addPart(AppRoute.InboundShipment)
                   .addQuery({
                     createdDatetime: getThisWeekUrlQuery(),
-                    tab: externalTab,
+                    type: externalType,
                   })
                   .build(),
                 statContext: `${inboundExternalPanelContext}-this-week`,
@@ -190,7 +191,7 @@ export const ReplenishmentWidget = ({
                   .addPart(AppRoute.InboundShipment)
                   .addQuery({
                     status: `${InvoiceNodeStatus.Shipped},${InvoiceNodeStatus.New}`,
-                    tab: externalTab,
+                    type: externalType,
                   })
                   .build(),
                 statContext: `${inboundExternalPanelContext}-not-delivered`,
@@ -198,7 +199,7 @@ export const ReplenishmentWidget = ({
             ]}
             link={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.InboundShipment)
-              .addQuery({ tab: externalTab })
+              .addQuery({ type: externalType })
               .build()}
           />,
         ]

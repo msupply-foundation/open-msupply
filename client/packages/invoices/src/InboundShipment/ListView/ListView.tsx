@@ -7,7 +7,6 @@ import {
   useTranslation,
   NothingHere,
   useToggle,
-  useUrlQuery,
   useUrlQueryParams,
   ColumnType,
   ColumnDef,
@@ -66,6 +65,7 @@ export const InboundListView = () => {
         condition: 'between',
       },
       { key: 'status', condition: 'equalAny' },
+      { key: 'type', condition: 'equalAny' },
       { key: 'theirReference' },
       {
         key: 'linkedOrderNumber',
@@ -75,18 +75,23 @@ export const InboundListView = () => {
     ],
   });
 
-  const { urlQuery } = useUrlQuery({ skipParse: ['tab'] });
-  const tab = urlQuery['tab'];
+  const {
+    type: { equalAny: requestedTypes } = {},
+    ...restFilterBy
+  } = (filterBy ?? {}) as {
+    type?: { equalAny?: InvoiceTypeInput[] };
+  };
 
-  // Only include invoice types the user has permissions to view
   const invoiceTypes: InvoiceTypeInput[] = [];
   if (
-    tab !== 'external' &&
+    (!requestedTypes ||
+      requestedTypes.includes(InvoiceTypeInput.InboundShipment)) &&
     userHasPermission(UserPermission.InboundShipmentQuery)
   )
     invoiceTypes.push(InvoiceTypeInput.InboundShipment);
   if (
-    tab !== 'internal' &&
+    (!requestedTypes ||
+      requestedTypes.includes(InvoiceTypeInput.InboundShipmentExternal)) &&
     userHasPermission(UserPermission.InboundShipmentExternalQuery)
   )
     invoiceTypes.push(InvoiceTypeInput.InboundShipmentExternal);
@@ -95,7 +100,7 @@ export const InboundListView = () => {
     sortBy,
     first,
     offset,
-    filterBy,
+    filterBy: restFilterBy,
     type: invoiceTypes,
   };
 
@@ -196,11 +201,11 @@ export const InboundListView = () => {
       onRowClick: row =>
         row.purchaseOrder
           ? navigate(
-              RouteBuilder.create(AppRoute.Replenishment)
-                .addPart(AppRoute.InboundShipmentExternal)
-                .addPart(row.id)
-                .build()
-            )
+            RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.InboundShipmentExternal)
+              .addPart(row.id)
+              .build()
+          )
           : navigate(row.id),
       columns,
       data: data?.nodes ?? [],
