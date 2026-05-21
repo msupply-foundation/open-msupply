@@ -449,176 +449,6 @@ function cmdInstall(args) {
   info('\ndone.');
 }
 
-function promptYesNo(question) {
-  const readline = require('readline');
-  return new Promise(resolve => {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-    rl.question(question, answer => {
-      rl.close();
-      const a = answer.trim().toLowerCase();
-      resolve(a === 'y' || a === 'yes');
-    });
-  });
-}
-
-async function cmdUninstall(args) {
-  const flags = {};
-  let selectorCode = null;
-  let kindFilter = null; // null | 'frontend' | 'backend'
-  let profileName = null;
-  let allFlag = false;
-
-  const eqMatch = a => {
-    const eq = a.indexOf('=');
-    return eq > 0 ? [a.slice(0, eq), a.slice(eq + 1)] : null;
-  };
-  for (let i = 0; i < args.length; i++) {
-    let a = args[i];
-    let inlineValue = null;
-    const m = eqMatch(a);
-    if (m) {
-      a = m[0];
-      inlineValue = m[1];
-    }
-    const next = () => (inlineValue !== null ? inlineValue : args[++i]);
-    if (a === '--url') flags.url = next();
-    else if (a === '--username') flags.username = next();
-    else if (a === '--password') flags.password = next();
-    else if (a === '--auth') profileName = next();
-    else if (a === '--all') allFlag = true;
-    else if (a === 'frontend' || a === 'backend') {
-      if (kindFilter) die(`uninstall kind already set to "${kindFilter}"`);
-      kindFilter = a;
-    } else if (!selectorCode && !a.startsWith('-')) {
-      selectorCode = a;
-    } else die(`unknown argument for uninstall: ${a}`);
-  }
-
-  if (allFlag && (selectorCode || kindFilter)) {
-    die('--all cannot be combined with a code/kind selector');
-  }
-  if (!allFlag && !selectorCode) {
-    die(
-      'usage: yarn plugin uninstall <code> [frontend|backend]  OR  yarn plugin uninstall --all'
-    );
-  }
-  if (profileName === '_default') {
-    die(
-      '"_default" is the implicit fallback profile and cannot be named explicitly'
-    );
-  }
-  if (profileName === '') die('--auth requires a profile name');
-
-  const map = readStoredAuth();
-  if (profileName && !map[profileName]) {
-    info(`>>> creating new auth profile "${profileName}"`);
-  }
-  const effective = resolveAuth(map, profileName, flags);
-  writeStoredAuth(map, profileName, flags);
-  const { url, username, password } = effective;
-
-  // Discover installed plugins via the rust CLI's list-installed-plugins
-  // subcommand, which prints the nodes array as JSON on stdout.
-  info(`\n>>> list-installed-plugins against ${url} as ${username}`);
-  const listJson = runCapture(
-    'cargo',
-    [
-      'run',
-      '-q',
-      '--bin',
-      'remote_server_cli',
-      '--',
-      'list-installed-plugins',
-      '--url',
-      url,
-      '--username',
-      username,
-      '--password',
-      password,
-    ],
-    { cwd: path.join(REPO_ROOT, 'server') }
-  );
-
-  let installed;
-  try {
-    installed = JSON.parse(listJson);
-  } catch (e) {
-    die(
-      `could not parse installedPlugins JSON: ${e.message}\n--- output ---\n${listJson}`
-    );
-  }
-  if (!Array.isArray(installed)) {
-    die(`unexpected installedPlugins payload: ${JSON.stringify(installed)}`);
-  }
-
-  let toUninstall;
-  if (allFlag) {
-    toUninstall = installed;
-  } else {
-    const kindFilterUpper = kindFilter ? kindFilter.toUpperCase() : null;
-    toUninstall = installed.filter(
-      p =>
-        p.code === selectorCode &&
-        (!kindFilterUpper || p.kind === kindFilterUpper)
-    );
-  }
-
-  if (toUninstall.length === 0) {
-    info(
-      allFlag
-        ? 'no installed plugins to uninstall.'
-        : `no installed plugin matches code "${selectorCode}"${
-            kindFilter ? ` (kind ${kindFilter})` : ''
-          }.`
-    );
-    return;
-  }
-
-  info(`\nWill uninstall ${toUninstall.length} plugin row(s):`);
-  for (const p of toUninstall) {
-    info(
-      `  - ${p.code} ${p.version} (${p.kind.toLowerCase()})  [id: ${p.id}]`
-    );
-  }
-
-  if (allFlag) {
-    const ok = await promptYesNo(`\nContinue? [y/N] `);
-    if (!ok) {
-      info('aborted.');
-      return;
-    }
-  }
-
-  for (const p of toUninstall) {
-    info(`\n>>> uninstall-plugin --id ${p.id}`);
-    run(
-      'cargo',
-      [
-        'run',
-        '-q',
-        '--bin',
-        'remote_server_cli',
-        '--',
-        'uninstall-plugin',
-        '--id',
-        p.id,
-        '--url',
-        url,
-        '--username',
-        username,
-        '--password',
-        password,
-      ],
-      { cwd: path.join(REPO_ROOT, 'server') }
-    );
-  }
-
-  info('\ndone.');
-}
-
 function cmdOpen(args) {
   if (args.length > 1) die('usage: yarn plugin open [<selector>]');
   const pluginPath = args[0]
@@ -658,15 +488,6 @@ function usage() {
                                           Pass frontend or backend to limit to one half.
                                           --auth picks an auth profile from pluginAuth.json
                                           (auto-created if it doesn't exist yet).
-  yarn plugin uninstall <code> [frontend|backend]
-                      [--auth <profile>] [--url U] [--username U] [--password P]
-                                          uninstall plugins from the server by their code.
-                                          Pass frontend or backend to limit to one half.
-                                          Leaves the local submodule alone (use reset for that).
-  yarn plugin uninstall --all
-                      [--auth <profile>] [--url U] [--username U] [--password P]
-                                          uninstall every plugin currently on the server
-                                          (prompts before deleting).
   yarn plugin open [<selector>]           open the plugin submodule in GitHub Desktop.
                                           Selector required if more than one plugin is installed.
   yarn plugin list                        list installed plugin submodules.
@@ -680,8 +501,6 @@ function main() {
       return cmdGet(rest);
     case 'install':
       return cmdInstall(rest);
-    case 'uninstall':
-      return cmdUninstall(rest);
     case 'open':
       return cmdOpen(rest);
     case 'list':
@@ -701,7 +520,4 @@ function main() {
   }
 }
 
-Promise.resolve(main()).catch(err => {
-  console.error(err && err.stack ? err.stack : err);
-  process.exit(1);
-});
+main();
