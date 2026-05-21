@@ -99,7 +99,7 @@ export const Initialise = () => {
             justifyContent: 'center',
           })}
         >
-          <Stack spacing={isExtraSmallScreen ? 2 : 3}>
+          <Stack spacing={isExtraSmallScreen ? 2 : 3} width="100%" maxWidth={360}>
             <Stack direction="row" sx={{ justifyContent: 'center' }}>
               <LoginIcon small />
             </Stack>
@@ -121,7 +121,12 @@ export const Initialise = () => {
                 />
               </TabList>
             )}
-            {mode === 'remote' && <RemoteForm formState={formState} isCentralServer={isCentralServer} />}
+            {mode === 'remote' && (
+              <RemoteForm
+                formState={formState}
+                isCentralServer={isCentralServer}
+              />
+            )}
             {mode === 'central' && isCentralServer && <StandaloneCentralTab />}
           </Stack>
         </Stack>
@@ -154,7 +159,10 @@ interface RemoteFormProps {
   isCentralServer: boolean;
 }
 
-const RemoteForm: React.FC<RemoteFormProps> = ({ formState, isCentralServer = false }) => {
+const RemoteForm: React.FC<RemoteFormProps> = ({
+  formState,
+  isCentralServer = false,
+}) => {
   const {
     isValid,
     isLoading,
@@ -189,7 +197,11 @@ const RemoteForm: React.FC<RemoteFormProps> = ({ formState, isCentralServer = fa
       <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>
         <Stack spacing={isExtraSmallScreen ? 3 : 5}>
           <LoginTextInput
-            label={isCentralServer ? t('label.settings-legacy-url') : t('label.settings-url')}
+            label={
+              isCentralServer
+                ? t('label.settings-legacy-url')
+                : t('label.settings-url')
+            }
             value={url}
             disabled={isInputDisabled}
             onChange={e => setUrl(e.target.value)}
@@ -233,7 +245,6 @@ const RemoteForm: React.FC<RemoteFormProps> = ({ formState, isCentralServer = fa
                 !isValid &&
                 !isInitialising /* isValid would be false if isInitialising since password is emptied out */
               }
-              /* Retry will only be shown when not loading and is initialised (when sync error occurred) */
               label={
                 isInitialising ? t('button.retry') : t('button.initialise')
               }
@@ -250,12 +261,7 @@ const RemoteForm: React.FC<RemoteFormProps> = ({ formState, isCentralServer = fa
           />
         )}
       </Box>
-      <Box
-        pt={4}
-        justifyItems="center"
-        width="auto"
-        px={isExtraSmallScreen ? 4 : 20}
-      >
+      <Box pt={4} justifyItems="center" px={isExtraSmallScreen ? 4 : 20}>
         {syncError && <BoxedErrorWithDetails {...syncError} width="100%" />}
       </Box>
     </>
