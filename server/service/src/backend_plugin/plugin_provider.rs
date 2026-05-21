@@ -34,7 +34,6 @@ pub enum PluginInstanceVariant {
     BoaJs(Vec<u8>),
 }
 pub struct PluginInstance {
-    pub id: String,
     pub code: String,
     variant: PluginInstanceVariant,
     pub version: Version,
@@ -123,7 +122,6 @@ impl PluginInstance {
 
     pub fn bind(
         BackendPluginRow {
-            id,
             bundle_base64,
             variant_type,
             types,
@@ -155,7 +153,6 @@ impl PluginInstance {
         let plugin_bundle = BASE64_STANDARD.decode(bundle_base64).unwrap();
         let plugin = match variant_type {
             PluginVariantType::BoaJs => PluginInstance {
-                id,
                 code: code.clone(),
                 variant: PluginInstanceVariant::BoaJs(plugin_bundle),
                 version,
@@ -170,13 +167,5 @@ impl PluginInstance {
         (*plugins).retain(|p| p.instance.code != code);
 
         (*plugins).push(Plugin { types, instance });
-    }
-
-    /// Drop any cached backend plugin whose row id matches. Used when a plugin
-    /// row is deleted (via the uninstall mutation or a sync delete record) so
-    /// the in-memory cache doesn't outlive the database row.
-    pub fn unbind_by_id(id: &str) {
-        let mut plugins = PLUGINS.write().unwrap();
-        plugins.retain(|p| p.instance.id != id);
     }
 }

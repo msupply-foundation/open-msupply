@@ -188,43 +188,24 @@ cp scripts/plugin-management/pluginRepoMap.example.json scripts/plugin-managemen
 Then:
 
 ```
-yarn plugin get <name>                  # add a plugin submodule, replacing it if already present.
-                                        # Other installed plugins are left alone.
-yarn plugin get <repo-url>              # pass a repo URL directly, no map entry needed
-yarn plugin get <name> -b <branch>      # check out a specific branch
-yarn plugin list                        # show what's currently installed locally
-yarn plugin install                     # build and install every installed plugin (both frontend and backend)
-yarn plugin install <selector>          # only the named plugin
-yarn plugin install [...] frontend      # only the frontend half
-yarn plugin install [...] backend       # only the backend half
-yarn plugin uninstall <code>            # remove a plugin from the server (both frontend and backend rows)
-yarn plugin uninstall <code> frontend   # remove just the frontend row for that code
-yarn plugin uninstall <code> backend    # remove just the backend row for that code
-yarn plugin uninstall --all             # wipe every plugin currently installed on the server (prompts first)
-yarn plugin open                        # open the plugin in GitHub Desktop (must specify if >1 installed)
-yarn plugin open <selector>             # open a specific plugin
-yarn plugin reset                       # remove all plugin submodules from your working tree
-yarn plugin reset <selector>            # remove just the named plugin submodule
+yarn plugin get <name>             # add a plugin submodule, replacing it if already present.
+                                   # Other installed plugins are left alone.
+yarn plugin get <repo-url>         # pass a repo URL directly, no map entry needed
+yarn plugin get <name> -b <branch> # check out a specific branch
+yarn plugin list                   # show what's currently installed
+yarn plugin install                # build and install every installed plugin (both frontend and backend)
+yarn plugin install <selector>     # only the named plugin
+yarn plugin install [...] frontend # only the frontend half
+yarn plugin install [...] backend  # only the backend half
+yarn plugin open                   # open the plugin in GitHub Desktop (must specify if >1 installed)
+yarn plugin open <selector>        # open a specific plugin
+yarn plugin reset                  # remove all plugin submodules
+yarn plugin reset <selector>       # remove just the named plugin
 ```
 
-`<selector>` (for `install`/`open`/`reset`) is either an installed plugin's folder name (e.g. `core-plugins`) or a short name from `pluginRepoMap.json` (e.g. `core`).
+`<selector>` is either an installed plugin's folder name (e.g. `core-plugins`) or a short name from `pluginRepoMap.json` (e.g. `core`).
 
-`<code>` (for `uninstall`) is the plugin's npm-package name as stored on the server — what shows up in the **code** column of Manage → Plugins, or in `yarn plugin uninstall --all`'s preview list. The local submodule doesn't have to be present for `uninstall` to work; it talks to the server only.
-
-`yarn plugin install` and `yarn plugin uninstall` default to `http://localhost:8000` with credentials `admin`/`pass`. Override with `--url`, `--username`, `--password`, or pick a stored profile with `--auth=<name>` (see _Auth profiles_ below). Get/reset abort if the affected plugin submodule has uncommitted changes — commit or stash inside it first.
-
-#### Local cleanup vs server cleanup
-
-The `reset` and `uninstall` commands deliberately do different things, and you usually want both for a true clean slate:
-
-| Goal                                       | Command                          | Touches                              |
-| ------------------------------------------ | -------------------------------- | ------------------------------------ |
-| Remove a plugin submodule from your repo   | `yarn plugin reset <selector>`   | Working tree only                    |
-| Remove all plugin submodules               | `yarn plugin reset`              | Working tree only                    |
-| Uninstall a plugin from the server         | `yarn plugin uninstall <code>`   | Server DB (syncs out to remote sites)|
-| Wipe every plugin from the server          | `yarn plugin uninstall --all`    | Server DB                            |
-
-`uninstall` doesn't touch your local submodule, and `reset` doesn't touch the server. To start completely fresh against a dev server, run both. Single-plugin server deletes are also available from the UI (Manage → Plugins → trash icon, central server admins only).
+`yarn plugin install` defaults to `http://localhost:8000` with credentials `admin`/`pass`. Override with `--url`, `--username`, `--password`. Get/reset abort if the affected plugin submodule has uncommitted changes — commit or stash inside it first.
 
 #### Auth profiles
 
@@ -391,7 +372,7 @@ which are storing the provider state locally and providing that to an instance o
 
 When using private repository submodule you will have to be logged in as the user with adequate permissions to the repository.
 
-To remove a plugin **submodule** (local working tree only), run `yarn plugin reset` from the repo root. It handles the full cleanup (deinit, working tree, `.gitmodules`, and `.git/modules/...` cache) — doing this by hand is error-prone, and leaving any of those behind silently breaks the next `git submodule add`.
+To remove a plugin submodule, run `yarn plugin reset` from the repo root. It handles the full cleanup (deinit, working tree, `.gitmodules`, and `.git/modules/...` cache) — doing this by hand is error-prone, and leaving any of those behind silently breaks the next `git submodule add`.
 
 If you ever need to do it manually, the equivalent commands are:
 
@@ -400,8 +381,6 @@ rm -rf .gitmodules
 rm -rf client/packages/plugins/myPluginBundle/
 rm -rf .git/modules/client/packages/plugins/myPluginBundle/
 ```
-
-To remove a plugin **from a server** (so it stops syncing out to remote sites), use `yarn plugin uninstall <code>` instead — see the command list above. `reset` only touches your local working tree; it doesn't talk to any server.
 
 NOTE: When running some plugins in the backend in dev mode you may get a stack overflow error. To resolve this increase your stack size e.g. export RUST_MIN_STACK=8388608; cargo run
 

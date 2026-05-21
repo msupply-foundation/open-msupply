@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use repository::{
     BackendPluginRowRepository, ChangelogRow, ChangelogTableName, FrontendPluginRowRepository,
-    KeyType, RowActionType,
+    KeyType,
 };
 
 use crate::{
@@ -27,8 +27,8 @@ impl Processor for LoadPlugin {
         service_provider: &ServiceProvider,
         changelog: &ChangelogRow,
     ) -> Result<Option<String>, ProcessorError> {
-        match (&changelog.table_name, &changelog.row_action) {
-            (ChangelogTableName::BackendPlugin, RowActionType::Upsert) => {
+        match changelog.table_name {
+            ChangelogTableName::BackendPlugin => {
                 let plugin = BackendPluginRowRepository::new(&ctx.connection)
                     .find_one_by_id(&changelog.record_id)?
                     .ok_or(ProcessorError::RecordNotFound(
@@ -38,10 +38,7 @@ impl Processor for LoadPlugin {
 
                 PluginInstance::bind(plugin);
             }
-            (ChangelogTableName::BackendPlugin, RowActionType::Delete) => {
-                PluginInstance::unbind_by_id(&changelog.record_id);
-            }
-            (ChangelogTableName::FrontendPlugin, RowActionType::Upsert) => {
+            ChangelogTableName::FrontendPlugin => {
                 let plugin = FrontendPluginRowRepository::new(&ctx.connection)
                     .find_one_by_id(&changelog.record_id)?
                     .ok_or(ProcessorError::RecordNotFound(
@@ -52,11 +49,6 @@ impl Processor for LoadPlugin {
                 service_provider
                     .plugin_service
                     .bind_frontend_plugin(ctx, plugin);
-            }
-            (ChangelogTableName::FrontendPlugin, RowActionType::Delete) => {
-                service_provider
-                    .plugin_service
-                    .unbind_frontend_plugin_by_id(ctx, &changelog.record_id);
             }
             _ => {}
         }

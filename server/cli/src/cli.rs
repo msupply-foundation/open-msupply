@@ -49,10 +49,8 @@ use cli::LoadTest;
 use cli::{
     all_tests, generate_and_install_plugin_bundle, generate_plugin_bundle,
     generate_plugin_typescript_types, generate_report_data, generate_reports_recursive,
-    install_plugin_bundle, list_installed_plugins, uninstall_plugin,
-    GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
-    ListInstalledPlugins, RefreshDatesRepository, ReportError, TestCredentials, TestData,
-    UninstallPlugin,
+    install_plugin_bundle, GenerateAndInstallPluginBundle, GeneratePluginBundle,
+    InstallPluginBundle, RefreshDatesRepository, ReportError, TestCredentials, TestData,
 };
 
 const DATA_EXPORT_FOLDER: &str = "data";
@@ -182,10 +180,6 @@ enum Action {
     InstallPluginBundle(InstallPluginBundle),
     /// Will generate and then install  plugin bundle
     GenerateAndInstallPluginBundle(GenerateAndInstallPluginBundle),
-    /// Uninstall a single plugin row by id (use list-installed-plugins to discover ids)
-    UninstallPlugin(UninstallPlugin),
-    /// List installed plugins as JSON (stdout)
-    ListInstalledPlugins(ListInstalledPlugins),
     UpsertReports {
         /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
         #[clap(short, long, num_args=0..)]
@@ -673,12 +667,6 @@ async fn main() -> anyhow::Result<()> {
         }
         Action::GenerateAndInstallPluginBundle(arguments) => {
             generate_and_install_plugin_bundle(arguments).await?;
-        }
-        Action::UninstallPlugin(arguments) => {
-            uninstall_plugin(arguments).await?;
-        }
-        Action::ListInstalledPlugins(arguments) => {
-            list_installed_plugins(arguments).await?;
         }
         Action::ShowReport {
             path,
