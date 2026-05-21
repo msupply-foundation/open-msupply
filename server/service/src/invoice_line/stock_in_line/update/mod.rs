@@ -118,7 +118,7 @@ pub enum UpdateStockInLineError {
     ManufacturerNotVisible,
     ManufacturerIsNotAManufacturer,
     VVMStatusDoesNotExist,
-    ProgramNotVisible,
+    ProgramDoesNotExist,
     IncorrectLocationType,
     CampaignDoesNotExist,
     WrongInboundShipmentType,
@@ -188,7 +188,7 @@ mod test {
             InvoiceLineRow {
                 id: "verified_return_line".to_string(),
                 invoice_id: verified_return().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockIn,
                 ..Default::default()
             }
@@ -197,7 +197,7 @@ mod test {
             InvoiceLineRow {
                 id: "item_line_with_restricted_location_type_b".to_string(),
                 invoice_id: mock_inbound_shipment_a().id,
-                item_link_id: mock_item_restricted_location_type_b().id,
+                item_id: mock_item_restricted_location_type_b().id,
                 r#type: InvoiceLineType::StockIn,
                 number_of_packs: 30.0,
                 ..Default::default()
@@ -359,21 +359,35 @@ mod test {
             Err(ServiceError::BatchIsReserved)
         );
 
-        // ProgramNotVisible
+        // ProgramDoesNotExist
         assert_eq!(
             update_stock_in_line(
                 &context,
                 UpdateStockInLine {
                     id: mock_customer_return_a_invoice_line_a().id,
                     program_id: Some(NullableUpdate {
-                        value: Some(mock_immunisation_program_a().id)
-                    }), // Master list not visible to store_b
+                        value: Some("does-not-exist".to_string()),
+                    }),
                     ..Default::default()
                 },
                 None
             ),
-            Err(ServiceError::ProgramNotVisible)
+            Err(ServiceError::ProgramDoesNotExist)
         );
+
+        // Program exists but is not visible to this store — accepted (see #11600).
+        update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: mock_customer_return_a_invoice_line_a().id,
+                program_id: Some(NullableUpdate {
+                    value: Some(mock_immunisation_program_a().id),
+                }),
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
 
         // ManufacturerDoesNotExist
         assert_eq!(
@@ -611,7 +625,7 @@ mod test {
             InvoiceLineRow {
                 id: "received_inbound_passed_line".to_string(),
                 invoice_id: received_inbound().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockIn,
                 status: Some(InvoiceLineStatus::Passed),
                 number_of_packs: 10.0,
@@ -704,7 +718,7 @@ mod test {
             InvoiceLineRow {
                 id: "internal_supplier_line".to_string(),
                 invoice_id: internal_supplier_inbound().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockIn,
                 cost_price_per_pack: 100_000.0,
                 number_of_packs: 1.0,

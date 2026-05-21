@@ -9,6 +9,11 @@
 #
 # Authored by Claude Code (claude.ai/code)
 
+# If docker is not found but podman is, alias docker to podman
+if ! command -v docker &> /dev/null && command -v podman &> /dev/null; then
+  alias docker=podman
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$REPO_ROOT"

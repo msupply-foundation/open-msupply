@@ -18,6 +18,7 @@ import {
   MultilineTextInput,
   DateInput,
   commonLabelProps,
+  inputSlotProps,
   InfoRow,
   Grid,
 } from '@openmsupply-client/common';
@@ -162,20 +163,13 @@ export const PurchaseOrderLineEdit = ({
                     onChange={manufacturer =>
                       update({ manufacturer: manufacturer || null })
                     }
-                    textSx={
-                      disabled
-                        ? {
-                            backgroundColor: theme =>
-                              theme.palette.background.toolbar,
-                            boxShadow: 'none',
-                          }
-                        : {
-                            backgroundColor: theme =>
-                              theme.palette.background.white,
-                            boxShadow: theme => theme.shadows[2],
-                          }
-                    }
                     width={185}
+                    textSx={
+                      inputSlotProps(
+                        disabled ||
+                          isFieldDisabled(status, StatusGroup.AfterConfirmed)
+                      ).input.sx
+                    }
                   />
                 }
                 label={t('label.manufacturer')}

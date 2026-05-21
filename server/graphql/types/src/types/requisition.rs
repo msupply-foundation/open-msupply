@@ -117,7 +117,7 @@ impl AncillaryDeltaNode {
 impl AncillaryDeltaNode {
     fn from_domain(delta: AncillaryDelta) -> Self {
         Self {
-            item_id: delta.item_link_id,
+            item_id: delta.item_id,
             required_quantity: delta.required_quantity,
             current_quantity: delta.current_quantity,
         }

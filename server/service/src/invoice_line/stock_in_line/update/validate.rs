@@ -1,3 +1,4 @@
+use crate::common::check_program_exists;
 use crate::invoice::inbound_shipment::InboundShipmentType;
 use crate::{
     campaign::check_campaign_exists,
@@ -5,7 +6,7 @@ use crate::{
     check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        stock_in_line::{check_batch, check_pack_size, check_program_visible_to_store},
+        stock_in_line::{check_batch, check_pack_size},
         validate::{
             check_item_exists, check_line_belongs_to_invoice, check_line_exists,
             check_number_of_packs,
@@ -97,9 +98,12 @@ pub fn validate(
         return Err(NotThisInvoiceLine(line.invoice_line_row.invoice_id));
     }
 
-    if let Some(program_id) = &input.program_id {
-        if !check_program_visible_to_store(connection, store_id, &program_id.value)? {
-            return Err(ProgramNotVisible);
+    if let Some(NullableUpdate {
+        value: Some(program_id),
+    }) = &input.program_id
+    {
+        if check_program_exists(connection, program_id)?.is_none() {
+            return Err(ProgramDoesNotExist);
         }
     }
 
