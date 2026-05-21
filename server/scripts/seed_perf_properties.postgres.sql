@@ -5,7 +5,7 @@
 -- Idempotent: re-running upserts/no-ops on existing rows. Property values for
 -- previously-seeded stores are *not* mutated on re-run — only newly-created
 -- stores get fresh values. Adjust the `generate_series(1, …)` upper bound to
--- scale the dataset (default 10000).
+-- scale the dataset (default 100000).
 --
 -- Usage:
 --   psql "$DATABASE_URL" -f server/scripts/seed_perf_properties.postgres.sql
@@ -51,8 +51,8 @@ INSERT INTO property_v2_option (id, property_id, name, translation_key, deleted_
 ON CONFLICT (id) DO NOTHING;
 
 -- 6) Generate the dataset of stores. Edit the second `generate_series` arg
---    below to scale (default 10000). IDs are deterministic so re-runs no-op.
-WITH seq AS (SELECT generate_series(1, 10000) AS i)
+--    below to scale (default 100000). IDs are deterministic so re-runs no-op.
+WITH seq AS (SELECT generate_series(1, 100000) AS i)
 INSERT INTO name (
   id, name, code,
   is_customer, is_supplier, type,

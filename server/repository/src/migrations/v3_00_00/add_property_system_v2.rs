@@ -56,17 +56,11 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
-        if cfg!(feature = "postgres") {
-            sql!(
-                connection,
-                r#"
-                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'property_v2';
-                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'property_v2_table';
-                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'property_v2_option';
-                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'property_v2_value';
-                "#
-            )?;
-        }
+        // Note: under sync v7 `changelog.table_name` is plain TEXT (the
+        // `changelog_table_name` postgres enum is dropped earlier in
+        // v3.0.0 by `alter_changelog_table_for_sync_v7`). Rust-side
+        // validation gates the values, so no DDL is needed to register
+        // the new property_v2* table names.
 
         Ok(())
     }

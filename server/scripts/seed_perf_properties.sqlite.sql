@@ -56,11 +56,11 @@ INSERT OR IGNORE INTO property_v2_option (id, property_id, name, translation_key
 ;
 
 -- 6) Generate the dataset of stores. Edit the `WHERE i < N` clause below to
---    scale (default 10000). IDs are deterministic so re-runs no-op cleanly.
+--    scale (default 100000). IDs are deterministic so re-runs no-op cleanly.
 WITH RECURSIVE seq(i) AS (
   SELECT 1
   UNION ALL
-  SELECT i + 1 FROM seq WHERE i < 10000
+  SELECT i + 1 FROM seq WHERE i < 100000
 )
 INSERT OR IGNORE INTO name (
   id, name, code,

@@ -3,5 +3,5 @@ import { useSyncApi } from '../utils/useSyncApi';
 
 export const useInitialiseAsCentralServer = () => {
   const api = useSyncApi();
-  return useMutation(api.initialiseAsCentralServer);
+  return useMutation({ mutationFn: api.initialiseAsCentralServer });
 };

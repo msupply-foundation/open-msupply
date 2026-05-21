@@ -21,7 +21,7 @@ Three property definitions, mirrored across the legacy and V2 systems:
 | Favourite Bean | option (enum) | Black / Pinto / Navy / Kidney / Lima |
 | Beans | number | int `(i * 7) % 100` |
 
-10000 stores by default (`perf_store_00001` … `perf_store_10000`), each with
+100000 stores by default (`perf_store_00001` … `perf_store_100000`), each with
 all three property values populated in both systems plus the JSONB twin.
 
 ## Running
@@ -46,8 +46,8 @@ the same so the output is identical).
 
 Edit the upper bound in the row-generating CTE near the middle of each script:
 
-- SQLite: `WHERE i < 10000` in the `WITH RECURSIVE seq(i)` block.
-- Postgres: `generate_series(1, 10000)` in the `WITH seq` block.
+- SQLite: `WHERE i < 100000` in the `WITH RECURSIVE seq(i)` block.
+- Postgres: `generate_series(1, 100000)` in the `WITH seq` block.
 
 ## Cleaning up
 

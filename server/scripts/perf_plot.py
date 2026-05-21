@@ -13,7 +13,7 @@ that are clipped and overlaid with a striped pattern + the actual value
 printed above so nothing is hidden.
 
 Usage:
-    pip install --user matplotlib numpy
+    pip install --user matplotlib numpy psycopg2-binary
     python3 server/scripts/perf_plot.py \\
         --sqlite /tmp/perf-seed-test.sqlite \\
         --postgres "postgresql://brian@localhost:5432/tmp" \\
@@ -33,6 +33,12 @@ from typing import Callable, Dict, List, Optional, Tuple
 import numpy as np  # noqa: F401  (matplotlib needs numpy on import)
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
+
+try:
+    import psycopg2  # type: ignore
+    HAVE_PSYCOPG2 = True
+except ImportError:
+    HAVE_PSYCOPG2 = False
 
 
 # -------------------------------------------------------------------- queries
@@ -219,9 +225,45 @@ def make_sqlite_runner(
 def make_psql_runner(
     conn_str: str, timeout_ms: float
 ) -> Callable[[str], Callable[[], None]]:
-    """Postgres has `SET statement_timeout` — set it once on the persistent
-    psql session so any single query past the limit comes back as an error
-    rather than running to completion."""
+    """Persistent postgres session with `SET statement_timeout` so any single
+    query past the limit comes back as an error rather than running to
+    completion. Prefers psycopg2 (libpq via FFI — no per-query process spawn);
+    falls back to a `psql` subprocess if psycopg2 isn't installed."""
+    if HAVE_PSYCOPG2:
+        return _make_psycopg2_runner(conn_str, timeout_ms)
+    return _make_psql_subprocess_runner(conn_str, timeout_ms)
+
+
+def _make_psycopg2_runner(
+    conn_str: str, timeout_ms: float
+) -> Callable[[str], Callable[[], None]]:
+    conn = psycopg2.connect(conn_str)
+    conn.autocommit = True
+    cur = conn.cursor()
+    cur.execute(f"SET statement_timeout = {int(timeout_ms)}")
+    cur.close()
+
+    def runner(sql: str) -> Callable[[], None]:
+        def run():
+            cur = conn.cursor()
+            try:
+                cur.execute(sql)
+                try:
+                    cur.fetchall()
+                except psycopg2.ProgrammingError:
+                    # Statements with no result set (rare for our queries).
+                    pass
+            except psycopg2.errors.QueryCanceled:
+                raise QueryTimeout()
+            finally:
+                cur.close()
+        return run
+    return runner
+
+
+def _make_psql_subprocess_runner(
+    conn_str: str, timeout_ms: float
+) -> Callable[[str], Callable[[], None]]:
     proc = subprocess.Popen(
         ["psql", conn_str, "-A", "-t", "-q", "-X", "-v", "ON_ERROR_STOP=0"],
         stdin=subprocess.PIPE,
@@ -618,7 +660,7 @@ def main() -> None:
     ap.add_argument(
         "--cap",
         type=float,
-        default=50.0,
+        default=200.0,
         help="Y-axis cap in ms; bars over this are clipped + striped. "
         "Below the cap matplotlib autoscales and no guide line is drawn.",
     )
