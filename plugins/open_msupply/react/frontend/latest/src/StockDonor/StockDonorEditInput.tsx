@@ -24,7 +24,7 @@ const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
 );
 
 const StockDonorEditInput: StockDonorEditPlugin = ({ stockLine, events }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const [donor, setDonor] = React.useState<string>('');
   const { data: stockLineNodes } = usePluginData.data([stockLine.id]);
   const { mutate: insert } = usePluginData.insert();

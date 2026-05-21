@@ -12,7 +12,9 @@ import { ReportingDailyPage } from './Pages/ReportingDailyPage';
 
 const ReplenishmentAndSyncStatus: Plugins = {
   inboundShipmentAppBar: [ShippingStatus],
-  dashboard: [Replenishment, SyncStatus],
+  dashboard: {
+    widget: [{ Component: Replenishment }, { Component: SyncStatus }],
+  },
   stockLine: {
     tableStateLoader: [stockDonor.StateLoader],
     tableColumn: [stockDonor.StockDonorColumn],

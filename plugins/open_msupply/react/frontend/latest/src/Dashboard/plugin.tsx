@@ -3,7 +3,9 @@ import Replenishment from './Replenishment';
 import SyncStatus from './SyncStatus';
 
 const ReplenishmentAndSyncStatus: Plugins = {
-  dashboard: [Replenishment, SyncStatus],
+  dashboard: {
+    widget: [{ Component: Replenishment }, { Component: SyncStatus }],
+  },
 };
 
 export default ReplenishmentAndSyncStatus;

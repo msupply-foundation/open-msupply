@@ -12,13 +12,13 @@ import {
 import { useFormatNumber, useTranslation } from '@common/intl';
 import { ApiException, PropsWithChildrenOnly } from '@common/types';
 import { useDashboard } from './api';
-import { useInbound } from '@openmsupply-client/invoices';
+import { useInboundShipment } from '@openmsupply-client/invoices';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
 
 const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const modalControl = useToggle(false);
   const { error: errorNotification } = useNotification();
-  const t = useTranslation('dashboard');
+  const t = useTranslation();
   const formatNumber = useFormatNumber();
   const { data, isLoading, isError, error } = useDashboard.statistics.inbound();
   const {
@@ -28,7 +28,9 @@ const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
     error: requisitionCountError,
   } = useDashboard.statistics.requisitions();
 
-  const { mutateAsync: onCreate } = useInbound.document.insert();
+  const {
+    create: { create: onCreate },
+  } = useInboundShipment();
   const onError = (e: unknown) => {
     const message = (e as Error).message ?? '';
     const errorSnack = errorNotification(
@@ -45,13 +47,14 @@ const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
           onClose={modalControl.toggleOff}
           onChange={async ({ id: otherPartyId }) => {
             modalControl.toggleOff();
-            await onCreate(
-              {
+            try {
+              await onCreate({
                 id: FnUtils.generateUUID(),
                 otherPartyId,
-              },
-              { onError }
-            );
+              });
+            } catch (e) {
+              onError(e);
+            }
           }}
         />
       ) : null}
@@ -64,38 +67,44 @@ const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
         >
           <Grid>
             <StatsPanel
-              error={error as ApiException}
+              error={error as unknown as ApiException}
               isError={isError}
               isLoading={isLoading}
               title={t('inbound-shipment', { ns: 'app' })}
+              panelContext="inbound-shipment"
               stats={[
                 {
                   label: t('label.today', { ns: 'dashboard' }),
                   value: formatNumber.round(data?.today),
+                  statContext: 'inbound-today',
                 },
                 {
                   label: t('label.this-week', { ns: 'dashboard' }),
                   value: formatNumber.round(data?.thisWeek),
+                  statContext: 'inbound-this-week',
                 },
                 {
                   label: t('label.inbound-not-delivered', {
                     ns: 'dashboard',
                   }),
                   value: formatNumber.round(data?.notDelivered),
+                  statContext: 'inbound-not-delivered',
                 },
               ]}
             />
           </Grid>
           <Grid>
             <StatsPanel
-              error={requisitionCountError as ApiException}
+              error={requisitionCountError as unknown as ApiException}
               isError={isRequisitionCountError}
               isLoading={isRequisitionCountLoading}
               title={t('internal-order', { ns: 'app' })}
+              panelContext="internal-order"
               stats={[
                 {
                   label: t('label.new'),
                   value: formatNumber.round(requisitionCount?.request?.draft),
+                  statContext: 'internal-order-new',
                 },
               ]}
             />

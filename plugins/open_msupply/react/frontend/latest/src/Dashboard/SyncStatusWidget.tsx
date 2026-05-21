@@ -12,7 +12,7 @@ import {
 import { mapSyncError, useSync } from '@openmsupply-client/system';
 
 const FormattedSyncDate = ({ date }: { date: Date | null }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { localisedDistanceToNow } = useFormatDateTime();
 
   if (!date) return null;
@@ -62,7 +62,7 @@ const Row: React.FC<PropsWithChildren<{ title: string }>> = ({
 
 const SyncStatusWidget = () => {
   const { syncStatus } = useSync.utils.syncInfo();
-  const t = useTranslation('app');
+  const t = useTranslation();
 
   return (
     <Widget title={t('heading.synchronise-status')}>
