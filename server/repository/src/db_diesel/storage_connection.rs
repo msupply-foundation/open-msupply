@@ -212,7 +212,7 @@ impl StorageConnection {
             };
         }
 
-        // Start a new outer or inner transaction, acquire lock that will be dropped when closure exits
+        // Start a new outer or inner transaction, acquire lock that will be dropped when block exits
         {
             let mut guard = self.lock();
             let con: &mut DBBackendConnection = guard.connection();
@@ -229,7 +229,7 @@ impl StorageConnection {
         let inner_result = f(self);
 
         // Try commit or rollback based on inner_result
-        // Closure is needed for guard to be dropped
+        // Block is needed for guard to be dropped
         let result = {
             let mut guard = self.raw_connection.lock().unwrap();
             let con: &mut DBBackendConnection = &mut guard;
@@ -259,11 +259,12 @@ impl StorageConnection {
         };
 
         // If we are closing off the outermost transaction, flush notifications and untrack changelog cursor
+        // Untrack first in case notifications triggers something that uses changelog
         if current_level == 0 {
+            ChangelogCursorTracker::untrack(self);
             if result.is_ok() {
                 self.flush_notifications();
             }
-            ChangelogCursorTracker::untrack(self);
         }
 
         result
