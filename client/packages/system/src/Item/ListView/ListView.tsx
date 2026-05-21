@@ -27,6 +27,7 @@ export const ItemListView = () => {
       { key: 'maxMonthsOfStock', condition: 'isNumber' },
       { key: 'stockStatus' },
       { key: 'productsAtRiskOfBeingOutOfStock', condition: '=' },
+      { key: 'masterListId', condition: 'equalTo' },
     ],
   });
   const { data, isError, isLoading } = useVisibleOrOnHandItems(queryParams);
