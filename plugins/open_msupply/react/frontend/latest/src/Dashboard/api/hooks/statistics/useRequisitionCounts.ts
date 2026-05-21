@@ -3,8 +3,9 @@ import { useDashboardApi } from '../utils/useDashboardApi';
 
 export const useRequisitionCounts = () => {
   const api = useDashboardApi();
-  return useQuery(api.keys.requisition(), api.get.requisitionCounts, {
+  return useQuery({
+    queryKey: api.keys.requisition(),
+    queryFn: api.get.requisitionCounts,
     retry: false,
-    onError: () => {},
   });
 };

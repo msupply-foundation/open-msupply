@@ -25,20 +25,17 @@ const usePluginData = (ids: string[]) => {
   // need to share this
   const dataIdentifier = 'AGGREGATE_AMC_REQUISITION_LINE';
 
-  return useQuery(
-    pluginCode + ids,
-    async () =>
+  return useQuery({
+    queryKey: [pluginCode + ids],
+    queryFn: async () =>
       sdk.pluginData({
         storeId,
         dataIdentifier,
         pluginCode,
         requisitionLineIds: ids,
       }),
-    {
-      retry: false,
-      onError: () => {},
-    }
-  );
+    retry: false,
+  });
 };
 
 const useColumnStore = create<PluginDataStore<RequestLineFragment, string>>(

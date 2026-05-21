@@ -5,7 +5,9 @@ export const useInsertPluginData = () => {
   const api = usePluginApi();
   const queryClient = useQueryClient();
 
-  return useMutation(api.insert, {
-    onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
+  return useMutation({
+    mutationFn: api.insert,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: api.keys.base() }),
   });
 };
