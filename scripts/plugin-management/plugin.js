@@ -464,6 +464,70 @@ function promptYesNo(question) {
   });
 }
 
+function readCodesFromSubmodulePath(pluginPath) {
+  // Walk the submodule for plugin manifests and return each package.json's
+  // `name` field. Mirrors how the rust CLI's process_manifest decides what's
+  // a plugin (must have name + omSupplyPlugin + version; everything else
+  // is silently skipped). Same ignore list as the rust side.
+  const codes = [];
+  const skip = new Set(['node_modules', 'dist', 'target', '.git']);
+  const root = path.join(REPO_ROOT, pluginPath);
+  const walk = dir => {
+    let entries;
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (skip.has(entry.name)) continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isFile() && entry.name === 'package.json') {
+        try {
+          const pkg = JSON.parse(fs.readFileSync(full, 'utf8'));
+          if (pkg && pkg.name && pkg.omSupplyPlugin && pkg.version) {
+            codes.push(pkg.name);
+          }
+        } catch {
+          // ignore unparseable package.json — matches rust CLI's behavior
+        }
+      } else if (entry.isDirectory()) {
+        walk(full);
+      }
+    }
+  };
+  walk(root);
+  return codes;
+}
+
+function resolvePluginCodesFromSelector(selector) {
+  // Resolve a selector to a list of plugin codes by looking at a matching
+  // local submodule, the same way install/reset/open do. Returns null if no
+  // local submodule matches (so the caller can fall back to treating the
+  // selector as a literal plugin code).
+  const installed = findExistingPluginPaths();
+  if (installed.length === 0) return null;
+  const byFolder = new Map(installed.map(p => [path.basename(p), p]));
+  let pluginPath = null;
+  let resolvedVia = null;
+  if (byFolder.has(selector)) {
+    pluginPath = byFolder.get(selector);
+    resolvedVia = `folder "${selector}"`;
+  } else {
+    const mapped = readMap()[selector];
+    if (mapped) {
+      const folder = folderNameFromUrl(mapped);
+      if (byFolder.has(folder)) {
+        pluginPath = byFolder.get(folder);
+        resolvedVia = `pluginRepoMap.json (${selector} → ${folder})`;
+      }
+    }
+  }
+  if (!pluginPath) return null;
+  const codes = readCodesFromSubmodulePath(pluginPath);
+  return { pluginPath, resolvedVia, codes };
+}
+
 async function cmdUninstall(args) {
   const flags = {};
   let selectorCode = null;
@@ -502,7 +566,7 @@ async function cmdUninstall(args) {
   }
   if (!allFlag && !selectorCode) {
     die(
-      'usage: yarn plugin uninstall <code> [frontend|backend]  OR  yarn plugin uninstall --all'
+      'usage: yarn plugin uninstall <selector|code> [frontend|backend]  OR  yarn plugin uninstall --all'
     );
   }
   if (profileName === '_default') {
@@ -558,10 +622,29 @@ async function cmdUninstall(args) {
   if (allFlag) {
     toUninstall = installed;
   } else {
+    // Resolve the selector the same way install/reset do: prefer a local
+    // submodule folder name (or a pluginRepoMap.json entry pointing at one),
+    // and pull the plugin code(s) out of the submodule's package.json files.
+    // If nothing matches locally, fall back to treating the selector as a
+    // literal plugin code so `yarn plugin uninstall <code>` still works on a
+    // server where the submodule isn't checked out.
+    let targetCodes = [selectorCode];
+    const resolved = resolvePluginCodesFromSelector(selectorCode);
+    if (resolved) {
+      if (resolved.codes.length === 0) {
+        die(
+          `selector "${selectorCode}" resolved to ${resolved.pluginPath} but no plugin package.json files were found inside.`
+        );
+      }
+      info(
+        `>>> resolved "${selectorCode}" via ${resolved.resolvedVia} → codes: ${resolved.codes.join(', ')}`
+      );
+      targetCodes = resolved.codes;
+    }
     const kindFilterUpper = kindFilter ? kindFilter.toUpperCase() : null;
     toUninstall = installed.filter(
       p =>
-        p.code === selectorCode &&
+        targetCodes.includes(p.code) &&
         (!kindFilterUpper || p.kind === kindFilterUpper)
     );
   }
@@ -658,9 +741,17 @@ function usage() {
                                           Pass frontend or backend to limit to one half.
                                           --auth picks an auth profile from pluginAuth.json
                                           (auto-created if it doesn't exist yet).
-  yarn plugin uninstall <code> [frontend|backend]
+  yarn plugin uninstall <selector|code> [frontend|backend]
                       [--auth <profile>] [--url U] [--username U] [--password P]
-                                          uninstall plugins from the server by their code.
+                                          uninstall plugins from the server.
+                                          <selector> works the same way as install:
+                                          a folder name (e.g. "civ-plugins") or a
+                                          short name from pluginRepoMap.json (e.g. "civ").
+                                          The plugin code is read from the local submodule's
+                                          package.json. If no local submodule matches, the
+                                          argument is treated as a literal plugin code
+                                          (so this also works on a server where the
+                                          submodule isn't checked out).
                                           Pass frontend or backend to limit to one half.
                                           Leaves the local submodule alone (use reset for that).
   yarn plugin uninstall --all
