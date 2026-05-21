@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_plugin_data_datetime_field;
 mod add_plugin_data_indexes;
 
 pub(crate) struct V2_20_00;
@@ -14,7 +15,10 @@ impl Migration for V2_20_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(add_plugin_data_indexes::Migrate)]
+        vec![
+            Box::new(add_plugin_data_indexes::Migrate),
+            Box::new(add_plugin_data_datetime_field::Migrate),
+        ]
     }
 }
 
