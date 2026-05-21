@@ -58,7 +58,7 @@ const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
           }}
         />
       ) : null}
-      <Widget title={t('replenishment', { ns: 'app' })}>
+      <Widget title={t('replenishment')}>
         <Grid
           container
           justifyContent="flex-start"
@@ -70,23 +70,21 @@ const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
               error={error as unknown as ApiException}
               isError={isError}
               isLoading={isLoading}
-              title={t('inbound-shipment', { ns: 'app' })}
+              title={t('inbound-shipment')}
               panelContext="inbound-shipment"
               stats={[
                 {
-                  label: t('label.today', { ns: 'dashboard' }),
+                  label: t('label.today'),
                   value: formatNumber.round(data?.today),
                   statContext: 'inbound-today',
                 },
                 {
-                  label: t('label.this-week', { ns: 'dashboard' }),
+                  label: t('label.this-week'),
                   value: formatNumber.round(data?.thisWeek),
                   statContext: 'inbound-this-week',
                 },
                 {
-                  label: t('label.inbound-not-delivered', {
-                    ns: 'dashboard',
-                  }),
+                  label: t('label.inbound-not-delivered'),
                   value: formatNumber.round(data?.notDelivered),
                   statContext: 'inbound-not-delivered',
                 },
@@ -98,7 +96,7 @@ const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
               error={requisitionCountError as unknown as ApiException}
               isError={isRequisitionCountError}
               isLoading={isRequisitionCountLoading}
-              title={t('internal-order', { ns: 'app' })}
+              title={t('internal-order')}
               panelContext="internal-order"
               stats={[
                 {

@@ -25,7 +25,7 @@ const ShowTracking: InboundShipmentAppBar = ({ shipment }) => {
   const [loading, setLoading] = React.useState(false);
   const { i18n } = useIntl();
 
-  i18n.addResourceBundle('en', 'plugin', {
+  i18n.addResourceBundle('en', 'common', {
     'heading.show-shipping-status': 'Show Shipping Status',
   });
 
