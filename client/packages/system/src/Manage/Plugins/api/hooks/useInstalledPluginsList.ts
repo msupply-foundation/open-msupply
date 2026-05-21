@@ -8,13 +8,9 @@ export const useInstalledPlugins = () => {
   const { mutateAsync: installMutation, isPending: installLoading } =
     useInstallUploadedPlugin();
 
-  const { mutateAsync: uninstallMutation, isPending: uninstallLoading } =
-    useUninstallPlugin();
-
   return {
     query: { data, isFetching, isError },
     install: { installMutation, installLoading },
-    uninstall: { uninstallMutation, uninstallLoading },
   };
 };
 
@@ -42,21 +38,6 @@ const useInstallUploadedPlugin = () => {
   const mutationFn = async (fileId: string) => {
     const result = await pluginApi.installUploadedPlugin({ fileId });
     return result?.centralServer?.plugins?.installUploadedPlugin;
-  };
-
-  return useMutation({
-    mutationFn,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: [INSTALLED_PLUGINS] }),
-  });
-};
-
-const useUninstallPlugin = () => {
-  const { pluginApi, queryClient } = usePluginsGraphQL();
-
-  const mutationFn = async (id: string) => {
-    const result = await pluginApi.uninstallPlugin({ id });
-    return result?.centralServer?.plugins?.uninstallPlugin;
   };
 
   return useMutation({

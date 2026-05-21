@@ -30,15 +30,3 @@ mutation installUploadedPlugin($fileId: String!) {
     }
   }
 }
-
-mutation uninstallPlugin($id: String!) {
-  centralServer {
-    plugins {
-      uninstallPlugin(id: $id) {
-        id
-        code
-        kind
-      }
-    }
-  }
-}
