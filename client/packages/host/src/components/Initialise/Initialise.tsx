@@ -19,6 +19,7 @@ import {
   useExportLog,
   useNotification,
   MuiLink,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { useInitialiseForm } from './hooks';
@@ -41,6 +42,7 @@ export const Initialise = () => {
     setPageTitle(`${t('messages.not-initialised')} | ${t('app')} `);
   }, [setPageTitle, t]);
 
+  const isCentralServer = useIsCentralServerApi();
   const isAndroid = EnvUtils.platform === Platform.Android;
   const isInputDisabled = formState.isInitialising || formState.isLoading;
   const isExtraSmallScreen = useIsExtraSmallScreen();
@@ -98,7 +100,7 @@ export const Initialise = () => {
             <Stack direction="row" sx={{ justifyContent: 'center' }}>
               <LoginIcon small />
             </Stack>
-            {!isAndroid && (
+            {!isAndroid && isCentralServer && (
               <TabList
                 value={mode}
                 onChange={(_, v) => !isInputDisabled && setMode(v as InitMode)}
@@ -106,7 +108,7 @@ export const Initialise = () => {
               >
                 <Tab
                   value="remote"
-                  label={t('initialise.remote-sync')}
+                  label={t('initialise.legacy-sync')}
                   disabled={isInputDisabled}
                 />
                 <Tab
@@ -116,8 +118,8 @@ export const Initialise = () => {
                 />
               </TabList>
             )}
-            {mode === 'remote' && <RemoteForm formState={formState} />}
-            {mode === 'central' && <StandaloneCentralTab />}
+            {mode === 'remote' && <RemoteForm formState={formState} isCentralServer={isCentralServer} />}
+            {mode === 'central' && isCentralServer && <StandaloneCentralTab />}
           </Stack>
         </Stack>
         {isAndroid && (
@@ -144,7 +146,12 @@ export const Initialise = () => {
 
 type InitialiseFormState = ReturnType<typeof useInitialiseForm>;
 
-const RemoteForm = ({ formState }: { formState: InitialiseFormState }) => {
+interface RemoteFormProps {
+  formState: InitialiseFormState;
+  isCentralServer: boolean;
+}
+
+const RemoteForm: React.FC<RemoteFormProps> = ({ formState, isCentralServer = false }) => {
   const {
     isValid,
     isLoading,
@@ -180,7 +187,7 @@ const RemoteForm = ({ formState }: { formState: InitialiseFormState }) => {
         <Stack spacing={isExtraSmallScreen ? 3 : 5}>
           <LoginTextInput
             fullWidth
-            label={t('label.settings-url')}
+            label={isCentralServer ? t('label.settings-legacy-url') : t('label.settings-url')}
             value={url}
             disabled={isInputDisabled}
             onChange={e => setUrl(e.target.value)}
