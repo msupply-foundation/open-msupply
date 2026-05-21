@@ -1,3 +1,7 @@
+// Demo plugin page — illustrates the new `pages` slot in the open-mSupply plugin
+// infrastructure. See https://github.com/msupply-foundation/open-msupply/pull/11702
+// for the host-side implementation this page pairs with.
+
 import React from 'react';
 import {
   AppBarButtonsPortal,
