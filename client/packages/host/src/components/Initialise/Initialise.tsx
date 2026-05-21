@@ -61,6 +61,9 @@ export const Initialise = () => {
   return (
     <Grid container sx={{ flex: 1 }}>
       <Grid
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
         size={{ xs: 12, sm: 6 }}
         sx={theme => ({
           backgroundImage: theme.mixins.gradient.secondary,
@@ -257,7 +260,7 @@ const RemoteForm = ({ formState }: { formState: InitialiseFormState }) => {
 const Welcome = () => {
   const t = useTranslation();
   return (
-    <Stack spacing="45px" justifyContent="center" sx={{ height: '100%' }}>
+    <Stack spacing="45px">
       <Typography
         sx={{
           color: (theme: Theme) => theme.typography.login.color,
