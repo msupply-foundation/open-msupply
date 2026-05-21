@@ -97,11 +97,16 @@ fn form_group(active: Vec<SyncRequestRow>) -> Option<(String, Vec<SyncRequestRow
         None => active,
     };
 
-    let reference_id = first_reference_id.unwrap_or_else(util::uuid::uuid);
-
-    for m in &mut members {
-        m.reference_id = Some(reference_id.clone());
-    }
+    let reference_id = match first_reference_id {
+        Some(r) => r,
+        None => {
+            let r = util::uuid::uuid();
+            for m in &mut members {
+                m.reference_id = Some(r.clone());
+            }
+            r
+        }
+    };
 
     Some((reference_id, members))
 }

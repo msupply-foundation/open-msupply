@@ -277,6 +277,8 @@ impl<'a> SyncV7<'a> {
 
             logger.progress(remaining as i64)?;
 
+            self.sync_api_v7.push(batch).await?;
+
             cursor_controller.update(self.connection, last_cursor_in_batch)?;
 
             if remaining == 0 {
@@ -343,7 +345,6 @@ impl<'a> SyncV7<'a> {
             let record_count = batch.records.len();
             let max_cursor = batch.max_cursor;
             let site_id = batch.site_id;
-            let is_last_batch = record_count == 0;
             let batch_last_cursor = batch.last_cursor_in_batch;
             logger.progress((max_cursor - batch_last_cursor) as i64)?;
 
@@ -366,7 +367,7 @@ impl<'a> SyncV7<'a> {
                 })
                 .map_err(|e| e.to_inner_error())?;
 
-            if is_last_batch {
+            if record_count < self.batch_size.remote_pull as usize {
                 break;
             }
         }
