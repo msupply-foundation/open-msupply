@@ -50,6 +50,7 @@ pub enum Row {
     AssetLogReason(AssetLogReasonRow),
     AssetProperty(AssetPropertyRow),
     BackendPlugin(BackendPluginRow),
+    AncillaryItem(AncillaryItemRow),
     BundledItem(BundledItemRow),
     Campaign(CampaignRow),
     Demographic(DemographicRow),
@@ -429,6 +430,11 @@ fn fetch_rows_for_table(
             ChangelogTableName::BackendPlugin => {
                 for r in BackendPluginRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::BackendPlugin(r));
+                }
+            }
+            ChangelogTableName::AncillaryItem => {
+                for r in AncillaryItemRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::AncillaryItem(r));
                 }
             }
             ChangelogTableName::BundledItem => {

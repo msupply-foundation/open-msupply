@@ -107,7 +107,7 @@ mod tests {
         SyncBufferRepository::new(&connection)
             .insert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, 0).unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, 0, true).unwrap();
 
         let clinician_link_repo = ClinicianLinkRowRepository::new(&connection);
         let mut clinician_links = clinician_link_repo
@@ -128,7 +128,8 @@ mod tests {
             .insert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, None, 0).unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, 0, true)
+            .unwrap();
 
         let clinician_link_repo = ClinicianLinkRowRepository::new(&connection);
         let mut clinician_links = clinician_link_repo

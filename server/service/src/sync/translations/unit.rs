@@ -49,7 +49,6 @@ impl SyncTranslation for UnitTranslation {
         Ok(PullTranslateResult::upsert(result))
     }
 
-    // TODO soft delete
     fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,

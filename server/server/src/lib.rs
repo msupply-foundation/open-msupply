@@ -31,7 +31,8 @@ use log::info;
 use repository::{
     get_storage_connection_manager,
     migrations::{migrate, MigrationConfig},
-    system_log_row::SystemLogType, StorageConnection,
+    system_log_row::SystemLogType,
+    StorageConnection,
 };
 
 use scheduled_tasks::spawn_scheduled_task_runner;
@@ -46,10 +47,11 @@ use service::{
     processors::Processors,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
+    standalone_central::InitialiseAsCentralServerInput,
     standard_reports::StandardReports,
     subscription::{SubscriptionTrigger, SubscriptionWorker},
-    sync::sync_status::status::InitialisationStatus,
     sync::{
+        sync_status::status::InitialisationStatus,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
         CentralServerConfig,
     },
@@ -150,6 +152,11 @@ pub async fn start_server(
     let (site_is_initialise_trigger, site_is_initialised_callback) =
         SiteIsInitialisedCallback::init();
 
+    let batch_size = settings
+        .sync
+        .as_ref()
+        .map(|s| s.batch_size.clone())
+        .unwrap_or_default();
     let service_provider = Data::new(ServiceProvider::new_with_triggers(
         connection_manager.clone(),
         processors_trigger,
@@ -158,6 +165,7 @@ pub async fn start_server(
         site_is_initialise_trigger,
         settings.mail.clone(),
         subscription_trigger,
+        batch_size,
     ));
     let loaders = get_loaders(&connection_manager, service_provider.clone()).await;
     let certificates = Certificates::try_load(&settings.server).unwrap();
@@ -351,6 +359,53 @@ pub async fn start_server(
 
     add_migration_results_to_system_log(&connection, messages).unwrap();
     info!("Run DB migrations...done");
+
+    if let Err(e) = CentralServerConfig::restore_central_standalone(&connection) {
+        log::error!(
+            "Failed to restore standalone central state: {}",
+            format_error(&e)
+        );
+    }
+
+    if settings.server.override_is_central_server {
+        let non_empty =
+            |s: &Option<String>| s.as_deref().filter(|s| !s.is_empty()).map(str::to_owned);
+        if let (Some(store_name), Some(admin_username), Some(admin_password)) = (
+            non_empty(&settings.server.standalone_store_name),
+            non_empty(&settings.server.standalone_admin_username),
+            non_empty(&settings.server.standalone_admin_password),
+        ) {
+            match service_provider
+                .sync_status_service
+                .get_initialisation_status(&service_context)
+            {
+                Ok(InitialisationStatus::PreInitialisation) => {
+                    match service_provider.standalone_central_service.initialise(
+                        &service_provider,
+                        InitialiseAsCentralServerInput {
+                            store_name,
+                            admin_username,
+                            admin_password,
+                        },
+                    ) {
+                        Ok(()) => {
+                            info!("Standalone central initialised from YAML configuration");
+                        }
+                        Err(e) => {
+                            log::error!("Failed to auto-initialise standalone central: {:?}", e)
+                        }
+                    }
+                }
+                Ok(_) => {
+                    // DB already initialised — YAML creds are ignored.
+                }
+                Err(e) => log::error!(
+                    "Could not check initialisation status for standalone central bootstrap: {}",
+                    format_error(&e)
+                ),
+            }
+        }
+    }
 
     // Persist token secret now that the key_value_store table is guaranteed to exist
     save_token_secret(&connection, &token_secret_copy);

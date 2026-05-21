@@ -61,6 +61,20 @@ pub async fn get_token(
     let site = get_site_by_name(&ctx.connection, &input.name)?
         .ok_or(SyncError::InvalidSiteNameOrPassword)?;
 
+    // Reject before password check — a remote must not authenticate as the central site itself.
+    let central_site_id = SourceSiteId::CurrentSiteId
+        .get_id(&ctx.connection)?
+        .ok_or(SyncError::SiteIdNotSet)?;
+    if site.id == central_site_id {
+        log::warn!(
+            "Device with hardware_id: {} attempted to authenticate as the central site (name: {}, id: {}). Rejecting.",
+            input.hardware_id,
+            input.name,
+            site.id
+        );
+        return Err(SyncError::InvalidSiteNameOrPassword);
+    }
+
     let valid = bcrypt::verify(&input.password_sha256, &site.hashed_password)
         .map_err(|e| SyncError::Other(e.to_string()))?;
     if !valid {
@@ -567,6 +581,9 @@ mod tests {
         let (_, connection, connection_manager, _) =
             setup_all("get_token_rejects_invalid_auth", MockDataInserts::none()).await;
         test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
+            .unwrap();
         let service_provider = ServiceProvider::new(connection_manager);
 
         // Site not found

@@ -63,6 +63,7 @@ pub const INTEGRATION_ORDER: &[ChangelogTableName] = &[
     ChangelogTableName::VaccineCourse,
     ChangelogTableName::ActivityLog,
     ChangelogTableName::AssetCatalogueItem,
+    ChangelogTableName::AncillaryItem,
     ChangelogTableName::BundledItem,
     ChangelogTableName::Clinician,
     ChangelogTableName::ContactForm,

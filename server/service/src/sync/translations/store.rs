@@ -1,7 +1,8 @@
 use chrono::NaiveDate;
 use repository::{
-    ChangelogFilter, KeyType, KeyValueStoreRepository, NameRowRepository, StorageConnection,
-    StoreMode, StoreRow, StoreRowRepository, SyncBufferRow, SyncRequestFilter, SyncRequestRow,
+    ChangelogFilter, KeyType, KeyValueStoreRepository, NameLinkRowRepository, NameRowRepository,
+    StorageConnection, StoreMode, StoreRow, StoreRowRepository, SyncBufferRow, SyncRequestFilter,
+    SyncRequestRow,
 };
 
 use crate::sync::{translations::name::NameTranslation, CentralServerConfig};
@@ -65,11 +66,10 @@ impl SyncTranslation for StoreTranslation {
         // HIS -> Hospital Information System (no name_id)
         // SM -> Supervisor Store
         // DRG -> Drug Registration (name_id exists but no name with that id)
-        // TODO: Ideally we want another state, `Ignored`
-        // (i.e. return type) Translation Not Matches, Translation Ignored (with message ?) and Translated records
+        // Other names that don't exist are handled below...
         if let "HIS" | "DRG" | "SM" = &data.code[..] {
             return Ok(PullTranslateResult::Ignored(
-                "System names not implemented".to_string(),
+                "System names not implemented for store translation".to_string(),
             ));
         }
 
@@ -77,6 +77,19 @@ impl SyncTranslation for StoreTranslation {
             return Ok(PullTranslateResult::Ignored(
                 "Store has no name".to_string(),
             ));
+        }
+
+        // Check the name_link exists before attempting upsert — if the name was not integrated
+        // (e.g. ignored or not synced), the FK constraint would cause a costly savepoint rollback
+        // in PostgreSQL for every affected store record.
+        if NameLinkRowRepository::new(connection)
+            .find_one_by_id(&data.name_id)?
+            .is_none()
+        {
+            return Ok(PullTranslateResult::Ignored(format!(
+                "Name link not found for name_id {} linked to store_id {} ({})",
+                data.name_id, data.id, data.code
+            )));
         }
 
         let store_mode = match data.store_mode {
@@ -159,15 +172,35 @@ fn sync_request_for_site_change(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{MockData, MockDataInserts},
+        test_db::setup_all_with_data,
+        NameLinkRow, NameRow,
+    };
 
     #[actix_rt::test]
     async fn test_store_translation() {
         use crate::sync::test::test_data::store as test_data;
         let translator = StoreTranslation {};
 
-        let (_, connection, _, _) =
-            setup_all("test_store_translation", MockDataInserts::none()).await;
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_store_translation",
+            MockDataInserts::none(),
+            MockData {
+                names: vec![NameRow {
+                    id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+                    name: "General".to_string(),
+                    code: "GEN".to_string(),
+                    ..Default::default()
+                }],
+                name_links: vec![NameLinkRow {
+                    id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+                    name_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
