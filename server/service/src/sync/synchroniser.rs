@@ -333,12 +333,19 @@ impl SynchroniserV5V6 {
         kv.set_string(KeyType::SettingsSyncUrl, Some(response.v7_url))?;
         SyncVersion::set(&ctx.connection, SyncVersion::V7)?;
 
-        // Carry v6 cursors over to v7. Both index the same `changelog` table
-        // so copying the values preserves position.
+        // Carry v6 cursors over to v7. V6 stored cursors as `last_cursor + 1`
+        // (>= semantics); v7 uses `>` semantics and stores `last_cursor` directly,
+        // so subtract 1 when copying.
         let v6_push = CursorController::new(KeyType::SyncPushCursorV6).get(&ctx.connection)?;
-        CursorController::new(KeyType::SyncPushCursorV7).update(&ctx.connection, v6_push)?;
+        let v7_push = v6_push.saturating_sub(1);
+        log::debug!("V6->V7 cursor copy: push {} -> {}", v6_push, v7_push);
+        CursorController::new(KeyType::SyncPushCursorV7)
+            .update(&ctx.connection, v7_push)?;
         let v6_pull = CursorController::new(KeyType::SyncPullCursorV6).get(&ctx.connection)?;
-        CursorController::new(KeyType::SyncPullCursorV7).update(&ctx.connection, v6_pull)?;
+        let v7_pull = v6_pull.saturating_sub(1);
+        log::debug!("V6->V7 cursor copy: pull {} -> {}", v6_pull, v7_pull);
+        CursorController::new(KeyType::SyncPullCursorV7)
+            .update(&ctx.connection, v7_pull)?;
 
         // The v7 token is acquired lazily at the start of the next sync cycle
         // (see `SynchroniserV7::sync`), so any get_token failure surfaces

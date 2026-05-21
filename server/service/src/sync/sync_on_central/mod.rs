@@ -84,6 +84,17 @@ pub async fn pull(
             is_v5: false,
         }),
     );
+    
+    // V6 remotes store cursor as `last_cursor + 1` (>= semantics); the
+    // query filter now uses `>`, so subtract 1 to keep the same window.
+    let adjusted_cursor = (cursor as i64).saturating_sub(1);
+    log::debug!(
+        "V6 pull site {} cursor {} adjusted to {}",
+        response.site_id,
+        cursor,
+        adjusted_cursor
+    );
+
     let QueryWithData {
         rows,
         remaining,
@@ -92,7 +103,7 @@ pub async fn pull(
     } = ChangelogRepository::new(&ctx.connection).query_with_data(
         filter,
         CursorAndLimit {
-            cursor: cursor as i64,
+            cursor: adjusted_cursor,
             limit: batch_size as i64,
         },
     )?;
@@ -108,9 +119,11 @@ pub async fn pull(
     .collect();
 
     log::info!(
-        "Sending {} records to site {}",
+        "V6 pull site {} sending {} records, last_cursor_in_batch {} remaining {}",
+        response.site_id,
         records.len(),
-        response.site_id
+        last_cursor_in_batch,
+        remaining
     );
     log::debug!("Sending records as central server: {records:#?}");
 
@@ -248,7 +261,9 @@ pub async fn patient_pull(
     } = ChangelogRepository::new(&ctx.connection).query_with_data(
         filter,
         CursorAndLimit {
-            cursor: cursor as i64,
+            // V6 remotes store cursor as `last_cursor + 1` (>= semantics); this
+            // endpoint now uses `>`, so subtract 1 to keep the same window.
+            cursor: (cursor as i64).saturating_sub(1),
             limit: batch_size as i64,
         },
     )?;
