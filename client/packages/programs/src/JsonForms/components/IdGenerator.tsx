@@ -309,7 +309,9 @@ const UIComponent = (props: ControlProps) => {
   const { customErrors } = config;
 
   const { mutateAsync: mutateGenerateId } = useMutation(
-    async (input: GenerateIdInput): Promise<string> => generateId(input)
+    {
+      mutationFn: async (input: GenerateIdInput): Promise<string> => generateId(input)
+    }
   );
   const { mutateAsync: allocateNumber } = useDocument.utils.allocateNumber();
 

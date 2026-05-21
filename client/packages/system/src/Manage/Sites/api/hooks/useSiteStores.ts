@@ -27,7 +27,7 @@ export const useStoresForSite = (siteId: number, enabled = true) => {
     queryKey: [SITE, SITE_STORES, siteId],
     queryFn,
     enabled,
-    cacheTime: 0,
+    gcTime: 0,
   });
 };
 
@@ -43,7 +43,7 @@ export const useAssignStoresToSite = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([SITE, SITE_STORES]);
+      queryClient.invalidateQueries({ queryKey: [SITE, SITE_STORES] });
     },
     onError: (e: unknown) => {
       console.error(e);

@@ -109,7 +109,8 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // Central (v6) — created on the Open-mSupply central server
             // ----------------------------------------------------------
-            AssetCatalogueItem
+            AncillaryItem
+            | AssetCatalogueItem
             | AssetCatalogueType
             | AssetCategory
             | AssetClass
