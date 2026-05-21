@@ -18,19 +18,17 @@ export const useRequest = (): UseQueryResult<RequestFragment> & {
   const id = useRequestId();
   const api = useRequestApi();
   const { queryClient } = useRequestRequisitionGraphql();
-  const query = useQuery(
-    api.keys.detail(id),
-    () => api.get.byId(id),
-    // Don't refetch when the edit modal opens, for example. But, don't cache data when this query
-    // is inactive. For example, when navigating away from the page and back again, refetch.
-    {
-      refetchOnMount: false,
-      cacheTime: 0,
-    }
-  );
+  const query = useQuery({
+    queryKey: api.keys.detail(id),
+    queryFn: () => api.get.byId(id),
+    refetchOnMount: false,
+    gcTime: 0
+  });
 
   return {
     ...query,
-    invalidateQueries: () => queryClient.invalidateQueries(api.keys.base()),
+    invalidateQueries: () => queryClient.invalidateQueries({
+      queryKey: api.keys.base()
+    }),
   };
 };

@@ -103,7 +103,7 @@ export const SitesList = () => {
   );
 
   const onRowClick = (row: SiteRowFragment) => {
-    const selected = data?.nodes.find(site => site.id === row.id);
+    const selected = data?.nodes.find((site: SiteRowFragment) => site.id === row.id);
     if (selected) {
       updateDraft({
         id: selected.id,

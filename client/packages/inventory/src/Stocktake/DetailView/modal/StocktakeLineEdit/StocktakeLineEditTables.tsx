@@ -244,6 +244,9 @@ export const BatchTable = ({
     tableId: 'stocktake-batches',
     columns,
     data: batches,
+    // Modal table state should not be synced to URL (would otherwise clobber
+    // the parent detail view's sort/filter URL params on open/close).
+    localStateOnly: true,
     noDataElement: (
       <Typography sx={{ color: 'gray.dark', padding: 2 }}>
         {t('label.add-new-line')}
@@ -322,6 +325,9 @@ export const PricingTable = ({
     tableId: 'stocktake-pricing',
     columns,
     data: batches,
+    // Modal table state should not be synced to URL (would otherwise clobber
+    // the parent detail view's sort/filter URL params on open/close).
+    localStateOnly: true,
     noDataElement: (
       <Typography sx={{ color: 'gray.dark', padding: 2 }}>
         {t('label.add-new-line')}
@@ -462,6 +468,9 @@ export const LocationTable = ({
     tableId: 'stocktake-location',
     columns,
     data: batches,
+    // Modal table state should not be synced to URL (would otherwise clobber
+    // the parent detail view's sort/filter URL params on open/close).
+    localStateOnly: true,
     noDataElement: (
       <Typography sx={{ color: 'gray.dark', padding: 2 }}>
         {t('label.add-new-line')}

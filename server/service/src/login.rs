@@ -362,6 +362,7 @@ impl LoginService {
             phone_number: user_info.user.phone1,
             job_title: user_info.user.job_title,
             last_successful_sync: Some(Utc::now().naive_utc()),
+            is_active: user_info.user.active,
         };
         let stores_permissions: Vec<StorePermissions> = user_info
             .user_stores
@@ -522,6 +523,9 @@ pub fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permissio
             Permissions::AuthorisePurchaseOrders => {
                 output.insert(PermissionType::PurchaseOrderAuthorise);
             }
+            Permissions::FinalisePurchaseOrders => {
+                output.insert(PermissionType::PurchaseOrderFinalise);
+            }
             // goods received
             Permissions::ViewGoodsReceived => {
                 output.insert(PermissionType::InboundShipmentExternalQuery);
@@ -615,7 +619,7 @@ mod test {
         EqualFilter, KeyType, KeyValueStoreRepository, UserFilter, UserPermissionFilter,
         UserPermissionRepository, UserRepository,
     };
-    use util::{assert_matches, assert_variant};
+    use util::assert_matches;
 
     use crate::{
         apis::login_v4::LoginResponseV4,
@@ -748,7 +752,7 @@ mod test {
 
             assert!(result.is_ok());
         }
-        // check login error handling when empty password hash and can't connect to mSupply
+
         {
             let mock_server = MockServer::start();
             mock_server.mock(|when, then| {
@@ -770,10 +774,12 @@ mod test {
             )
             .await;
 
-            assert_matches!(result, Err(LoginError::MSupplyCentralNotReached));
+            assert_matches!(
+                result,
+                Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+            );
         }
 
-        // check login error handling when empty password hash and can connect to mSupply
         {
             let mock_server = MockServer::start();
             mock_server.mock(|when, then| {
@@ -798,13 +804,12 @@ mod test {
                 },
                 0,
             )
-            .await
-            .inspect_err(|e| {
-                let err_message = assert_variant!(e, LoginError::InternalError(err) => err);
-                assert_eq!(err_message, "Corrupted credentials")
-            });
+            .await;
 
-            assert!(result.is_err());
+            assert_matches!(
+                result,
+                Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+            );
         }
         // If server password has changed, and trying to login with old password, return LoginError::LoginFailure
         {

@@ -6,14 +6,11 @@ export const useResponseLineStatsData = (
   requisitionLineId?: string
 ) => {
   const api = useResponseApi();
-  return useQuery(
-    api.keys.statsData(requisitionLineId ?? ''),
-    () => api.get.stats(requisitionLineId ?? ''),
-    {
-      refetchOnMount: false,
-      cacheTime: 0,
-      onError: () => {},
-      enabled: !!requisitionLineId && enabled,
-    }
-  );
+  return useQuery({
+    queryKey: api.keys.statsData(requisitionLineId ?? ''),
+    queryFn: () => api.get.stats(requisitionLineId ?? ''),
+    refetchOnMount: false,
+    gcTime: 0,
+    enabled: !!requisitionLineId && enabled
+  });
 };

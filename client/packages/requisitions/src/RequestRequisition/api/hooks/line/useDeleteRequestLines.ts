@@ -18,8 +18,12 @@ export const useDeleteRequestLines = (
   const queryClient = useQueryClient();
   const requestId = useRequestId();
   const isDisabled = useIsRequestDisabled();
-  const { mutateAsync } = useMutation(api.deleteLines, {
-    onSettled: () => queryClient.invalidateQueries(api.keys.detail(requestId)),
+  const { mutateAsync } = useMutation({
+    mutationFn: api.deleteLines,
+
+    onSettled: () => queryClient.invalidateQueries({
+      queryKey: api.keys.detail(requestId)
+    })
   });
 
   const onDelete = async () => {

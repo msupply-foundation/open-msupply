@@ -123,6 +123,7 @@ diesel_string_enum! {
     pub enum ChangelogTableName {
         Abbreviation,
         ActivityLog,
+        AncillaryItem,
         Asset,
         AssetCatalogueItem,
         AssetCatalogueType,
