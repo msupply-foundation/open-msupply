@@ -63,7 +63,7 @@ export const Initialise = () => {
       <Grid
         display="flex"
         justifyContent="center"
-        alignItems="center"
+        alignItems="end"
         size={{ xs: 12, sm: 6 }}
         sx={theme => ({
           backgroundImage: theme.mixins.gradient.secondary,
@@ -182,14 +182,12 @@ const RemoteForm = ({ formState }: { formState: InitialiseFormState }) => {
       <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>
         <Stack spacing={isExtraSmallScreen ? 3 : 5}>
           <LoginTextInput
-            fullWidth
             label={t('label.settings-url')}
             value={url}
             disabled={isInputDisabled}
             onChange={e => setUrl(e.target.value)}
           />
           <LoginTextInput
-            fullWidth
             label={t('label.settings-username')}
             value={username}
             disabled={isInputDisabled}
