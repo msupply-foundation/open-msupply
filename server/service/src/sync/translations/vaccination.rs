@@ -109,4 +109,28 @@ mod tests {
             assert_eq!(translation_result, record.translated_record);
         }
     }
+
+    /// `try_translate_to_upsert_sync_record` serializes `VaccinationRow` directly.
+    /// The JSON wire format must keep the legacy `*_link_id` field names so older
+    /// remote clients can still deserialize records pulled from an upgraded central.
+    #[test]
+    fn test_push_wire_format_uses_legacy_field_names() {
+        let row = VaccinationRow {
+            patient_id: "test_patient".to_string(),
+            item_id: Some("test_item".to_string()),
+            facility_name_id: Some("test_facility".to_string()),
+            ..Default::default()
+        };
+        let json = serde_json::to_value(&row).unwrap();
+        assert_eq!(json["patient_link_id"], "test_patient");
+        assert_eq!(json["item_link_id"], "test_item");
+        assert_eq!(json["facility_name_link_id"], "test_facility");
+        for renamed_field in ["patient_id", "item_id", "facility_name_id"] {
+            assert!(
+                json.get(renamed_field).is_none(),
+                "JSON should not contain `{}`; expected legacy `*_link_id` name",
+                renamed_field
+            );
+        }
+    }
 }

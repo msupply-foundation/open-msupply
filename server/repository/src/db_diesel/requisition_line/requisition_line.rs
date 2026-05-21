@@ -1,17 +1,14 @@
 use crate::{
-    db_diesel::item_row::item, diesel_macros::apply_equal_filter, item_link,
-    repository_error::RepositoryError, requisition_row::requisition, DBType, ItemLinkRow, ItemRow,
+    db_diesel::item_row::item, diesel_macros::apply_equal_filter,
+    repository_error::RepositoryError, requisition_row::requisition, DBType, ItemRow,
     RequisitionRow, StorageConnection,
 };
 
-use diesel::{
-    dsl::{InnerJoin, IntoBoxed},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 use super::{requisition_line_row::requisition_line, RequisitionLineFilter, RequisitionLineRow};
 
-type RequisitionLineJoin = (RequisitionLineRow, (ItemLinkRow, ItemRow), RequisitionRow);
+type RequisitionLineJoin = (RequisitionLineRow, ItemRow, RequisitionRow);
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct RequisitionLine {
@@ -63,7 +60,7 @@ impl<'a> RequisitionLineRepository<'a> {
         Ok(result
             .into_iter()
             .map(
-                |(requisition_line_row, (_, item_row), requisition_row)| RequisitionLine {
+                |(requisition_line_row, item_row, requisition_row)| RequisitionLine {
                     requisition_line_row,
                     item_row,
                     requisition_row,
@@ -73,22 +70,19 @@ impl<'a> RequisitionLineRepository<'a> {
     }
 }
 
-type BoxedRequisitionLineQuery = IntoBoxed<
-    'static,
-    InnerJoin<
-        InnerJoin<requisition_line::table, InnerJoin<item_link::table, item::table>>,
-        requisition::table,
-    >,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    requisition_line::table
+        .inner_join(item::table)
+        .inner_join(requisition::table)
+}
+
+type BoxedRequisitionLineQuery = IntoBoxed<'static, query, DBType>;
 
 fn create_filtered_query(
     filter: Option<RequisitionLineFilter>,
 ) -> Result<BoxedRequisitionLineQuery, RepositoryError> {
-    let mut query = requisition_line::table
-        .inner_join(item_link::table.inner_join(item::table))
-        .inner_join(requisition::table)
-        .into_boxed();
+    let mut query = query().into_boxed();
 
     if let Some(f) = filter {
         apply_equal_filter!(query, f.id, requisition_line::id);

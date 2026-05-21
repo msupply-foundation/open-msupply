@@ -7,6 +7,8 @@ server/report_builder/config.yaml
 # Temp export files
 server/data
 .gitmodules
+scripts/plugin-management/pluginRepoMap.json
+scripts/plugin-management/pluginAuth.json
 node_modules/
 
 # Yarn 4
@@ -35,3 +37,6 @@ server/configuration/*.yaml
 !configuration/base.yaml
 !configuration/example.yaml
 server/target-postgres/
+
+# Playwright MCP scratch logs / page dumps
+.playwright-mcp/

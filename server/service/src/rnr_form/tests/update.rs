@@ -287,7 +287,7 @@ mod update {
             RnRFormLineRow {
                 id: mock_rnr_form_b_line_a().id,
                 rnr_form_id: mock_rnr_form_b().id,
-                item_link_id: mock_rnr_form_b_line_a().item_link_id,
+                item_id: mock_rnr_form_b_line_a().item_id,
                 requisition_line_id: None,
                 initial_balance: 10.0,
                 snapshot_quantity_received: 5.0,
