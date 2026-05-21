@@ -1,6 +1,9 @@
 pub mod changelog;
 pub use self::changelog::*;
 
+pub mod changelog_cursor_tracker;
+pub use self::changelog_cursor_tracker::*;
+
 pub mod sync_style;
 pub use self::sync_style::*;
 
