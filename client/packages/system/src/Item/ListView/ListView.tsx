@@ -10,6 +10,7 @@ import {
   usePaginatedMaterialTable,
   MaterialTable,
   UnitsAndDosesCell,
+  ChipTableCell,
 } from '@openmsupply-client/common';
 import { useVisibleOrOnHandItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
@@ -59,6 +60,13 @@ export const ItemListView = () => {
         size: 350,
         enableSorting: true,
         enableColumnFilter: true,
+      },
+      {
+        id: 'masterLists',
+        header: t('label.master-lists'),
+        accessorFn: row => row.masterLists?.map(m => m.name) ?? [],
+        Cell: ChipTableCell,
+        size: 200,
       },
       {
         id: 'unitName',
