@@ -3,9 +3,76 @@ import {
   FrontendPluginMetadataNode,
   isArray,
   mergeWith,
+  PluginPage,
   Plugins,
 } from '@openmsupply-client/common';
-import { Environment } from '@openmsupply-client/config';
+import { AppRoute, Environment } from '@openmsupply-client/config';
+
+const VALID_SEGMENT = /^[a-z0-9_-]+$/;
+const RESERVED_TOP_LEVEL_SEGMENTS: ReadonlySet<string> = new Set(
+  Object.values(AppRoute) as string[]
+);
+
+const isValidSegment = (value: string | undefined): value is string =>
+  typeof value === 'string' && VALID_SEGMENT.test(value);
+
+const stampAndValidatePages = (
+  bundle: Plugins,
+  code: string,
+  seen: Set<string>
+): Plugins => {
+  if (!bundle.pages?.length) return bundle;
+
+  if (!isValidSegment(code)) {
+    console.warn(
+      `Plugin code "${code}" is not a valid URL segment; skipping its pages.`
+    );
+    return { ...bundle, pages: [] };
+  }
+
+  const validated: PluginPage[] = [];
+  for (const page of bundle.pages) {
+    if (!isValidSegment(page.route)) {
+      console.warn(
+        `Plugin "${code}" page route "${page.route}" is not a valid URL segment; skipping.`
+      );
+      continue;
+    }
+
+    let categoryKey: string;
+    if (page.menu.category.type === 'existing') {
+      categoryKey = page.menu.category.appRoute;
+    } else {
+      const newKey = page.menu.category.key;
+      if (!isValidSegment(newKey)) {
+        console.warn(
+          `Plugin "${code}" new category key "${newKey}" is not a valid URL segment; skipping.`
+        );
+        continue;
+      }
+      if (RESERVED_TOP_LEVEL_SEGMENTS.has(newKey)) {
+        console.warn(
+          `Plugin "${code}" new category key "${newKey}" shadows a built-in route; skipping.`
+        );
+        continue;
+      }
+      categoryKey = newKey;
+    }
+
+    const dedupeKey = `${categoryKey}/${page.route}`;
+    if (seen.has(dedupeKey)) {
+      console.warn(
+        `Plugin "${code}" page "${dedupeKey}" already registered by another plugin; skipping.`
+      );
+      continue;
+    }
+    seen.add(dedupeKey);
+
+    validated.push({ ...page, pluginCode: code });
+  }
+
+  return { ...bundle, pages: validated };
+};
 
 // PLUGIN PROVIDER
 type PluginProvider = {
@@ -26,11 +93,17 @@ export const usePluginProvider = create<PluginProvider>(set => {
           [code]: pluginBundle,
         };
 
+        // Re-validate every cached bundle on each registration. Duplicate
+        // detection runs across the merged set, so the `seen` set is rebuilt
+        // each time rather than carried in state.
+        const seen = new Set<string>();
         // TODO: Here can determine if version is suitable
-        const plugins = Object.values(cachedPluginBundles).reduce(
-          (acc, pluginBundle) =>
-            mergeWith(acc, pluginBundle, (a, b) =>
-              isArray(a) ? a.concat(b) : undefined
+        const plugins = Object.entries(cachedPluginBundles).reduce(
+          (acc, [bundleCode, bundle]) =>
+            mergeWith(
+              acc,
+              stampAndValidatePages(bundle, bundleCode, seen),
+              (a, b) => (isArray(a) ? a.concat(b) : undefined)
             ),
           {}
         );

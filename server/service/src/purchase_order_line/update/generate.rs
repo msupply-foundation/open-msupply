@@ -42,7 +42,7 @@ pub fn generate(
     };
 
     Ok(PurchaseOrderLineRow {
-        item_link_id: item_id.clone().unwrap_or(purchase_order_line.item_link_id),
+        item_id: item_id.clone().unwrap_or(purchase_order_line.item_id),
         requested_pack_size: updated_pack_size,
         requested_number_of_units: updated_requested_units,
         adjusted_number_of_units: updated_adjusted_units,

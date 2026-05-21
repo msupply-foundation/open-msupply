@@ -1,6 +1,8 @@
 use super::StorageConnection;
 
-use crate::{diesel_macros::apply_equal_filter, item_link, EqualFilter, RepositoryError};
+use crate::{
+    db_diesel::item_row::item, diesel_macros::apply_equal_filter, EqualFilter, RepositoryError,
+};
 use diesel::prelude::*;
 
 // Points to the store_stock_on_hand view (no cross join, only items with stock).
@@ -34,8 +36,8 @@ pub struct StockOnHandFilter {
     pub store_id: Option<EqualFilter<String>>,
 }
 
-joinable!(store_stock_on_hand -> item_link (item_id));
-allow_tables_to_appear_in_same_query!(item_link, store_stock_on_hand);
+joinable!(store_stock_on_hand -> item (item_id));
+allow_tables_to_appear_in_same_query!(item, store_stock_on_hand);
 
 pub struct StockOnHandRepository<'a> {
     connection: &'a StorageConnection,

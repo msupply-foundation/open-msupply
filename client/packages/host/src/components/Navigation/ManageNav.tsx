@@ -14,6 +14,7 @@ import {
 import { SlidersIcon } from '@common/icons';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
+import { usePluginNavLinksForCategory } from './usePluginNavLinks';
 
 export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
   const { isActive } = useNestedNav(
@@ -24,6 +25,7 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
   const vaccineModuleEnabled = store?.preferences.vaccineModule;
   const { userHasPermission } = useAuthContext();
   const isServerAdmin = userHasPermission(UserPermission.ServerAdmin);
+  const pluginLinks = usePluginNavLinksForCategory(AppRoute.Manage);
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Manage}>
@@ -84,6 +86,7 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
               .build()}
             text={t('plugins')}
           />
+          {pluginLinks}
         </List>
       </Collapse>
     </AppNavSection>

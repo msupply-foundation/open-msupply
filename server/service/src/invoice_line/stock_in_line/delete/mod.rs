@@ -133,7 +133,7 @@ mod test {
             InvoiceLineRow {
                 id: "verified_return_line".to_string(),
                 invoice_id: verified_return().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockIn,
                 ..Default::default()
             }
@@ -234,7 +234,7 @@ mod test {
             StockLineRow {
                 id: "test_stock_line".to_string(),
                 store_id: mock_store_b().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 ..Default::default()
             }
         }
@@ -243,7 +243,7 @@ mod test {
                 id: "return_line".to_string(),
                 invoice_id: mock_customer_return_a().id,
                 stock_line_id: Some(stock_line().id),
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockIn,
                 ..Default::default()
             }

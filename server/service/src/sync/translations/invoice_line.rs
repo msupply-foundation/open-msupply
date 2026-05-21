@@ -367,7 +367,7 @@ impl SyncTranslation for InvoiceLineTranslation {
         let result = InvoiceLineRow {
             id,
             invoice_id,
-            item_link_id: item_id,
+            item_id: item_id,
             item_name,
             item_code,
             stock_line_id,
@@ -439,7 +439,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                 InvoiceLineRow {
                     id,
                     invoice_id,
-                    item_link_id: _,
+                    item_id: _,
                     item_name,
                     item_code,
                     stock_line_id,
@@ -633,7 +633,7 @@ mod tests {
                 item_variants: vec![ItemVariantRow {
                     id: "5fb99f9c-03f4-47f2-965b-c9ecd083c675".to_string(),
                     name: "test variant".to_string(),
-                    item_link_id: mock_item_a().id,
+                    item_id: mock_item_a().id,
                     location_type_id: None,
                     manufacturer_id: None,
                     deleted_datetime: None,
