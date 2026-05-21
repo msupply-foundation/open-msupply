@@ -47,6 +47,24 @@ enum SyncApiErrorVariant<'a> {
     V6(&'a SyncApiErrorVariantV6),
 }
 
+/// Connection-free state that can cross thread boundaries (e.g. into
+/// `tokio::task::spawn_blocking`). Re-attach with `with_connection`.
+pub struct SyncLoggerHandle {
+    row: SyncLogV5V6Row,
+    subscription_trigger: Option<SubscriptionTriggerHandle>,
+}
+
+impl SyncLoggerHandle {
+    /// Attach a connection to make a usable `SyncLogger`.
+    pub fn with_connection<'a>(self, connection: &'a StorageConnection) -> SyncLogger<'a> {
+        SyncLogger {
+            sync_log_repo: SyncLogV5V6RowRepository::new(connection),
+            row: self.row,
+            subscription_trigger: self.subscription_trigger,
+        }
+    }
+}
+
 pub struct SyncLogger<'a> {
     sync_log_repo: SyncLogV5V6RowRepository<'a>,
     row: SyncLogV5V6Row,
@@ -88,6 +106,23 @@ impl<'a> SyncLogger<'a> {
         };
         logger.update()?;
         Ok(logger)
+    }
+
+    /// Detach the connection-bound logger into a `Send + 'static` handle so
+    /// it can cross a thread boundary (e.g. into `spawn_blocking`).
+    /// Pair with `SyncLoggerHandle::with_connection` on the other side.
+    pub fn into_handle(&self) -> SyncLoggerHandle {
+        SyncLoggerHandle {
+            row: self.row.clone(),
+            subscription_trigger: self.subscription_trigger.clone(),
+        }
+    }
+
+    /// Replace this logger's state with a returned handle (e.g. after a
+    /// blocking task hands the handle back). Connection is unchanged.
+    pub fn restore(&mut self, handle: SyncLoggerHandle) {
+        self.row = handle.row;
+        self.subscription_trigger = handle.subscription_trigger;
     }
 
     /// Attach a subscription trigger handle for sending sync status updates
@@ -188,10 +223,22 @@ impl<'a> SyncLogger<'a> {
                     ..self.row.clone()
                 }
             }
-            SyncStep::Integrate => SyncLogV5V6Row {
-                integration_finished_datetime: Some(chrono::Utc::now().naive_utc()),
-                ..self.row.clone()
-            },
+            SyncStep::Integrate => {
+                let duration = self
+                    .row
+                    .integration_started_datetime
+                    .map(|started| (chrono::Utc::now().naive_utc() - started).num_seconds())
+                    .unwrap_or(0);
+                info!(
+                    "Integrated ({}) records in {}s",
+                    self.row.integration_progress_done.as_ref().unwrap_or(&0),
+                    duration
+                );
+                SyncLogV5V6Row {
+                    integration_finished_datetime: Some(chrono::Utc::now().naive_utc()),
+                    ..self.row.clone()
+                }
+            }
             SyncStep::PullCentralV6 => {
                 Self::log(
                     self.row.pull_v6_progress_done.unwrap_or(0),

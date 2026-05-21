@@ -80,6 +80,12 @@ export type RequestLineFragment = {
     doses: number;
     availableStockOnHand: number;
   };
+  ancillaryParents: Array<{
+    __typename: 'ItemNode';
+    id: string;
+    name: string;
+    code: string;
+  }>;
   reason?: {
     __typename: 'ReasonOptionNode';
     id: string;
@@ -109,6 +115,37 @@ export type RequestFragment = {
   programName?: string | null;
   orderType?: string | null;
   isEmergency: boolean;
+  ancillaryState: {
+    __typename: 'AncillaryStateResponse';
+    state: Types.AncillaryStateNode;
+    count: number;
+    toAdd: Array<{
+      __typename: 'AncillaryDeltaNode';
+      itemId: string;
+      requiredQuantity: number;
+      currentQuantity?: number | null;
+      item: {
+        __typename: 'ItemNode';
+        id: string;
+        name: string;
+        code: string;
+        unitName?: string | null;
+      };
+    }>;
+    toUpdate: Array<{
+      __typename: 'AncillaryDeltaNode';
+      itemId: string;
+      requiredQuantity: number;
+      currentQuantity?: number | null;
+      item: {
+        __typename: 'ItemNode';
+        id: string;
+        name: string;
+        code: string;
+        unitName?: string | null;
+      };
+    }>;
+  };
   documents: {
     __typename: 'SyncFileReferenceConnector';
     nodes: Array<{
@@ -169,6 +206,12 @@ export type RequestFragment = {
         doses: number;
         availableStockOnHand: number;
       };
+      ancillaryParents: Array<{
+        __typename: 'ItemNode';
+        id: string;
+        name: string;
+        code: string;
+      }>;
       reason?: {
         __typename: 'ReasonOptionNode';
         id: string;
@@ -296,6 +339,11 @@ export const RequestLineFragmentDoc = gql`
     item {
       ...ItemWithAvailableStock
     }
+    ancillaryParents {
+      id
+      name
+      code
+    }
     reason {
       ...ReasonOptionRow
     }
@@ -315,6 +363,32 @@ export const RequestFragmentDoc = gql`
     createdDatetime
     sentDatetime
     finalisedDatetime
+    ancillaryState {
+      state
+      count
+      toAdd {
+        itemId
+        requiredQuantity
+        currentQuantity
+        item {
+          id
+          name
+          code
+          unitName
+        }
+      }
+      toUpdate {
+        itemId
+        requiredQuantity
+        currentQuantity
+        item {
+          id
+          name
+          code
+          unitName
+        }
+      }
+    }
     requisitionNumber
     colour
     theirReference

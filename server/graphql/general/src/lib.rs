@@ -8,6 +8,7 @@ pub mod types;
 
 use std::collections::HashMap;
 
+pub use self::queries::item::{ItemSortFieldInput, ItemSortInput, ItemsResponse};
 pub use self::queries::sync_status::*;
 use self::queries::*;
 pub use self::subscriptions::{InitialisationSubscriptions, SyncStatusSubscriptions};
@@ -27,6 +28,10 @@ use mutations::{
     common::SyncSettingsInput,
     display_settings::{
         update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsResponse,
+    },
+    initialise_as_central_server::{
+        initialise_as_central_server, InitialiseAsCentralServerInputNode,
+        InitialiseAsCentralServerResponse,
     },
     initialise_site::{initialise_site, InitialiseSiteResponse},
     insert_insurance::{insert_insurance, InsertInsuranceInput, InsertInsuranceResponse},
@@ -556,6 +561,15 @@ impl GeneralMutations {
         initialise_site(ctx, input).await
     }
 
+    // Only available for graphql introspection, error will be thrown after PreInitialisation state
+    pub async fn initialise_as_central_server(
+        &self,
+        ctx: &Context<'_>,
+        input: InitialiseAsCentralServerInputNode,
+    ) -> Result<InitialiseAsCentralServerResponse> {
+        initialise_as_central_server(ctx, input).await
+    }
+
     pub async fn manual_sync(
         &self,
         ctx: &Context<'_>,
@@ -672,6 +686,14 @@ impl InitialisationMutations {
         input: SyncSettingsInput,
     ) -> Result<InitialiseSiteResponse> {
         initialise_site(ctx, input).await
+    }
+
+    pub async fn initialise_as_central_server(
+        &self,
+        ctx: &Context<'_>,
+        input: InitialiseAsCentralServerInputNode,
+    ) -> Result<InitialiseAsCentralServerResponse> {
+        initialise_as_central_server(ctx, input).await
     }
 
     pub async fn manual_sync(

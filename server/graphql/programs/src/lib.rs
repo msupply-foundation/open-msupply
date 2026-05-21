@@ -3,7 +3,6 @@ use chrono::DateTime;
 use chrono::Utc;
 use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::validate_auth;
-use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::types::contact_trace::ContactTraceFilterInput;
 use graphql_types::types::contact_trace::ContactTraceResponse;

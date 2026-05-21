@@ -16,7 +16,6 @@ pub use self::error::*;
 pub(crate) use get_central_records::*;
 pub(crate) use get_site_info::*;
 pub(crate) use get_site_status::*;
-pub(crate) use v7_url_and_upgrade::*;
 #[cfg(test)]
 pub(crate) use post_queued_records::*;
 

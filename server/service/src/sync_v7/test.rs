@@ -235,7 +235,6 @@ mod test_sync_v7_client_api {
         let ServiceTestContext {
             service_provider,
             connection,
-            service_context,
             ..
         } = setup_all_with_data_and_service_provider(db_name, MockDataInserts::none(), mock_data)
             .await;
@@ -454,7 +453,6 @@ mod test_sync_v7_client_api {
 
     /// Records arriving children-before-parents still all integrate because
     /// the loop iterates INTEGRATION_ORDER, not sync_buffer arrival order.
-
     async fn test_sync_v7_integrates_records_out_of_fk_order() {
         let (connection, _) = run_sync_v7_test(Test {
             db_name: "test_sync_v7_integrates_records_out_of_fk_order",

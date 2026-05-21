@@ -21,7 +21,6 @@ export const ExpiryDateInput = ({
     <DateTimePickerInput
       disabled={disabled}
       views={['year', 'month']}
-      format="dd/MM/yyyy"
       value={value}
       onChange={d => {
         // Only set the date to last day of month if done through the picker,
