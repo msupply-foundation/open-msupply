@@ -1,4 +1,5 @@
 use async_graphql::*;
+use chrono::{DateTime, Utc};
 use repository::{PluginData, PluginDataRow};
 use service::ListResult;
 
@@ -37,6 +38,13 @@ impl PluginDataNode {
 
     pub async fn data(&self) -> &String {
         &self.row().data
+    }
+
+    /// Optional, plugin-controlled timestamp (e.g. an "update time").
+    pub async fn datetime(&self) -> Option<DateTime<Utc>> {
+        self.row()
+            .datetime
+            .map(|d| DateTime::<Utc>::from_naive_utc_and_offset(d, Utc))
     }
 }
 
