@@ -29,6 +29,7 @@ export type UserStoreNodeFragment = {
     monthsItemsExpire: number;
     stocktakeFrequency: number;
     extraFieldsInRequisition: boolean;
+    keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
     manuallyLinkInternalOrderToInboundShipment: boolean;
     useConsumptionAndStockFromCustomersForInternalOrders: boolean;
     editPrescribedQuantityOnPrescription: boolean;
@@ -98,6 +99,7 @@ export type MeQuery = {
         monthsItemsExpire: number;
         stocktakeFrequency: number;
         extraFieldsInRequisition: boolean;
+        keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
         manuallyLinkInternalOrderToInboundShipment: boolean;
         useConsumptionAndStockFromCustomersForInternalOrders: boolean;
         editPrescribedQuantityOnPrescription: boolean;
@@ -132,6 +134,7 @@ export type MeQuery = {
           monthsItemsExpire: number;
           stocktakeFrequency: number;
           extraFieldsInRequisition: boolean;
+          keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
           manuallyLinkInternalOrderToInboundShipment: boolean;
           useConsumptionAndStockFromCustomersForInternalOrders: boolean;
           editPrescribedQuantityOnPrescription: boolean;
@@ -325,6 +328,7 @@ export const UserStoreNodeFragmentDoc = gql`
       monthsItemsExpire
       stocktakeFrequency
       extraFieldsInRequisition
+      keepRequisitionLinesWithZeroRequestedQuantityOnFinalised
       manuallyLinkInternalOrderToInboundShipment
       useConsumptionAndStockFromCustomersForInternalOrders
       editPrescribedQuantityOnPrescription

@@ -1,0 +1,99 @@
+name: Claude Auto Review
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  review:
+    if: |
+      contains(github.event.comment.body, '@review') &&
+      github.event.issue.pull_request != null &&
+      contains(
+        fromJson('["OWNER","MEMBER","COLLABORATOR"]'),
+        github.event.comment.author_association
+      )
+    # Don't run multiple reviews at the same time on the same PR
+    concurrency:
+      group: claude-review-${{ github.event.issue.number }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+      actions: read
+    steps:
+      - name: React with eyes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api \
+            repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions \
+            --method POST \
+            -f content="eyes"
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Claude Code Review
+        id: claude_review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Restores .claude, .mcp.json, .claude.json, .gitmodules, .ripgreprc from develop (PR head is untrusted)
+          base_branch: develop
+          claude_args: |
+            --allowedTools "Read,Glob,Grep,mcp__github__pull_request_read,mcp__github__search_pull_requests,mcp__github__list_commits,mcp__github__get_commit,mcp__github__get_file_contents,mcp__github__issue_read,mcp__github__search_issues,mcp__github__pull_request_review_write,mcp__github__add_comment_to_pending_review"
+            --mcp-config '{"mcpServers":{"github":{"command":"docker","args":["run","-i","--rm","-e","GITHUB_PERSONAL_ACCESS_TOKEN","ghcr.io/github/github-mcp-server"],"env":{"GITHUB_PERSONAL_ACCESS_TOKEN":"${{ secrets.GITHUB_TOKEN }}"}}}}'
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.issue.number }}
+
+            Review this pull request and submit a single unified GitHub review using the MCP tools.
+            Note: The PR branch is already checked out in the current working directory.
+
+            Steps:
+            1. Use `mcp__github__pull_request_read` with method `get_diff` to read the diff
+            2. Use `mcp__github__pull_request_review_write` with method `create_pending` to open a pending review
+            3. For each file-specific finding, use `mcp__github__add_comment_to_pending_review`
+               with owner, repo, pullNumber, path, line, side ("RIGHT"), subjectType ("LINE"), and body
+            4. Use `mcp__github__pull_request_review_write` to submit with:
+               - event: "REQUEST_CHANGES" if any must fix severity findings exist
+               - event: "COMMENT" if only should fix/nit findings
+               - body: a summary of all findings grouped by severity
+
+            Make sure to find any associated issue(s) and compare the features implemented by the PR with the associated issue(s).
+            Make sure there is complete coverage of the issue and note anything added by the PR that isn't in the issue.
+            Note any tests that would be important to add not already in the PR.
+            Note this in the main summary body.
+
+            Severity guide:
+            - 🔴 **Must fix** — bugs, security issues, data loss risks
+            - 🟡 **Should fix** — code quality, consistency, maintainability
+            - 🟢 **Nit** — style, naming, minor suggestions
+
+            If you run into a critical permission issue or other error stopping you from completing the review, abort the review and simply post a review comment on the PR detailing what went wrong, what permission you need and why you need it.
+
+      - name: Upload Claude logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-logs
+          path: /home/runner/work/_temp/claude-execution-output.json
+
+      - name: React with failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api \
+            repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions \
+            --method POST \
+            -f content="confused"
+
+          gh api \
+            repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments \
+            --method POST \
+            -f body="❌ Claude review failed — check the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details."

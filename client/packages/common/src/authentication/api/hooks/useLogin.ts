@@ -85,7 +85,7 @@ export const getStore = async (
 export const useLogin = (
   setCookie: React.Dispatch<React.SetStateAction<AuthCookie | undefined>>
 ) => {
-  const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
+  const { mutateAsync, isPending: isLoggingIn } = useGetAuthToken();
   const { changeLanguage, getLocaleCode, getUserLocale } = useIntlUtils();
   const { setSkipRequest } = useGql();
   const { mutateAsync: getUserDetails } = useGetUserDetails();

@@ -7,6 +7,7 @@ import {
   useQuery,
   useMutation,
   useTranslation,
+  keepPreviousData,
   LIST_KEY,
   SiteFilterInput,
   SiteSortFieldInput,
@@ -50,19 +51,19 @@ export const useSites = (queryParams?: ListParams) => {
 
   const {
     mutateAsync: upsertMutation,
-    isLoading: isUpserting,
+    isPending: isUpserting,
     error: upsertError,
   } = useUpsertSite();
 
   const {
     mutateAsync: deleteMutation,
-    isLoading: isDeleting,
+    isPending: isDeleting,
     error: deleteError,
   } = useDeleteSite();
 
   const {
     mutateAsync: clearSyncTokenMutation,
-    isLoading: isClearingSyncToken,
+    isPending: isClearingSyncToken,
     error: clearSyncTokenError,
   } = useClearSiteToken();
 
@@ -109,7 +110,7 @@ const useGetList = (queryParams?: ListParams) => {
     return { nodes, totalCount };
   };
 
-  return useQuery({ queryKey, queryFn, keepPreviousData: true });
+  return useQuery({ queryKey, queryFn, placeholderData: keepPreviousData });
 };
 
 const toSortInput = (sortBy?: SortBy<SiteRowFragment>) => ({
@@ -174,7 +175,7 @@ const useUpsertSite = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([SITE]);
+      queryClient.invalidateQueries({ queryKey: [SITE] });
     },
     onError: (e: unknown) => {
       console.error(e);
@@ -193,7 +194,7 @@ const useDeleteSite = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([SITE]);
+      queryClient.invalidateQueries({ queryKey: [SITE] });
     },
     onError: (e: unknown) => {
       console.error(e);
@@ -212,7 +213,7 @@ const useClearSiteToken = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([SITE]);
+      queryClient.invalidateQueries({ queryKey: [SITE] });
     },
     onError: (e: unknown) => {
       console.error(e);

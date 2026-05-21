@@ -17,16 +17,16 @@ export const useItemStockOnHandInfinite = ({
 
   const api = useItemApi();
 
-  return useInfiniteQuery(
-    api.keys.paramList({
+  return useInfiniteQuery({
+    queryKey: api.keys.paramList({
       ...queryParams,
       // pagination cache managed by useInfiniteQuery, don't include in query keys
       // (default values for compiler)
       first: 0,
       offset: 0,
     }),
-    async ({ pageParam }) => {
-      const pageNumber = Number(pageParam ?? 0);
+    queryFn: async ({ pageParam }) => {
+      const pageNumber = Number(pageParam);
 
       const data = await api.get.itemStockOnHand({
         ...queryParams,
@@ -38,10 +38,13 @@ export const useItemStockOnHandInfinite = ({
         pageNumber,
       };
     },
-    {
-      refetchOnWindowFocus: false,
-      cacheTime: 5 * 60 * 1000,
-      staleTime: 2 * 60 * 1000,
-    }
-  );
+    initialPageParam: 0,
+    getNextPageParam: lastPage =>
+      (lastPage.pageNumber + 1) * rowsPerPage < (lastPage.data?.totalCount ?? 0)
+        ? lastPage.pageNumber + 1
+        : undefined,
+    refetchOnWindowFocus: false,
+    gcTime: 5 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
+  });
 };

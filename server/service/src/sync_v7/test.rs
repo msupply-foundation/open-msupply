@@ -269,6 +269,7 @@ mod test_sync_v7_client_api {
                 password_sha256: "test_pass".to_string(),
                 interval_seconds: 0,
                 batch_size,
+                ..Default::default()
             },
             is_initialising,
         )

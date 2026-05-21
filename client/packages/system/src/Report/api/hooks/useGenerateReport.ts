@@ -23,7 +23,7 @@ export const useGenerateReport = () => {
     return result?.generateReport;
   };
 
-  const { mutateAsync, isLoading } = useMutation({
+  const { mutateAsync, isPending: isLoading } = useMutation({
     mutationFn,
   });
 

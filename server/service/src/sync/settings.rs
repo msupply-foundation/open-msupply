@@ -14,6 +14,10 @@ pub struct SyncSettings {
     // Number of records to pull or push in one API call
     #[serde(default)]
     pub batch_size: BatchSize,
+    /// Disable the outer transaction wrapping integration. Set to true if PostgreSQL runs out of
+    /// shared memory (max_locks_per_transaction) during large initial syncs.
+    #[serde(default)]
+    pub disable_integration_transaction: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]

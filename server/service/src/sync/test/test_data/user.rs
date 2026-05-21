@@ -111,6 +111,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 phone_number: None,
                 job_title: Some("Support".to_string()),
                 last_successful_sync: None,
+                is_active: true,
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -128,6 +129,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 phone_number: None,
                 job_title: Some("Support".to_string()),
                 last_successful_sync: None,
+                is_active: true,
             },
         ),
     ]

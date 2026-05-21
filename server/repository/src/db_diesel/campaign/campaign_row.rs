@@ -1,6 +1,6 @@
 use crate::{
-    ChangelogRepository, ChangelogSyncType,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
 };
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -67,6 +67,15 @@ impl<'a> CampaignRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    pub fn check_exists_by_id(&self, campaign_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = campaign::table
+            .filter(campaign::id.eq(campaign_id))
+            .select(campaign::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<CampaignRow>, RepositoryError> {

@@ -8,6 +8,7 @@ pub mod types;
 
 use std::collections::HashMap;
 
+pub use self::queries::item::{ItemSortFieldInput, ItemSortInput, ItemsResponse};
 pub use self::queries::sync_status::*;
 use self::queries::*;
 pub use self::subscriptions::{InitialisationSubscriptions, SyncStatusSubscriptions};
@@ -558,6 +559,15 @@ impl GeneralMutations {
         input: SyncSettingsInput,
     ) -> Result<InitialiseSiteResponse> {
         initialise_site(ctx, input).await
+    }
+
+    // Only available for graphql introspection, error will be thrown after PreInitialisation state
+    pub async fn initialise_as_central_server(
+        &self,
+        ctx: &Context<'_>,
+        input: InitialiseAsCentralServerInputNode,
+    ) -> Result<InitialiseAsCentralServerResponse> {
+        initialise_as_central_server(ctx, input).await
     }
 
     pub async fn manual_sync(

@@ -10,13 +10,14 @@ export const useLinesFromInternalOrder = () => {
   const queryClient = useQueryClient();
   const api = useInboundApi();
   const { invoiceId = '' } = useParams();
-  return useMutation(
-    (lines: { invoiceId: string; requisitionLineId: string }[]) => {
+  return useMutation({
+    mutationFn: (lines: { invoiceId: string; requisitionLineId: string }[]) => {
       return api.insertLinesFromInternalOrder(lines, false);
     },
-    {
-      onSettled: () =>
-        queryClient.invalidateQueries([INBOUND, INBOUND_LINE, invoiceId]),
-    }
-  );
+
+    onSettled: () =>
+      queryClient.invalidateQueries({
+        queryKey: [INBOUND, INBOUND_LINE, invoiceId]
+      })
+  });
 };

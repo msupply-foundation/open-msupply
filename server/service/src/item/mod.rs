@@ -1,7 +1,12 @@
+pub mod ancillary_item;
 pub mod bundled_item;
 pub mod item;
 pub mod item_variant;
 pub mod packaging_variant;
+use ancillary_item::{
+    delete_ancillary_item, get_ancillary_items, upsert_ancillary_item, DeleteAncillaryItem,
+    DeleteAncillaryItemError, UpsertAncillaryItem, UpsertAncillaryItemError,
+};
 use bundled_item::{
     delete_bundled_item, get_bundled_items, upsert_bundled_item, DeleteBundledItem,
     DeleteBundledItemError, UpsertBundledItem, UpsertBundledItemError,
@@ -17,6 +22,8 @@ use packaging_variant::{
     UpsertPackagingVariantError,
 };
 use repository::{
+    ancillary_item::AncillaryItemFilter,
+    ancillary_item_row::AncillaryItemRow,
     item_variant::{
         bundled_item::BundledItemFilter,
         bundled_item_row::BundledItemRow,
@@ -105,6 +112,31 @@ pub trait ItemServiceTrait: Sync + Send {
         input: DeleteBundledItem,
     ) -> Result<String, DeleteBundledItemError> {
         delete_bundled_item(ctx, input)
+    }
+
+    fn get_ancillary_items(
+        &self,
+        ctx: &ServiceContext,
+        pagination: Option<PaginationOption>,
+        filter: Option<AncillaryItemFilter>,
+    ) -> Result<ListResult<AncillaryItemRow>, ListError> {
+        get_ancillary_items(&ctx.connection, pagination, filter)
+    }
+
+    fn upsert_ancillary_item(
+        &self,
+        ctx: &ServiceContext,
+        input: UpsertAncillaryItem,
+    ) -> Result<AncillaryItemRow, UpsertAncillaryItemError> {
+        upsert_ancillary_item(ctx, input)
+    }
+
+    fn delete_ancillary_item(
+        &self,
+        ctx: &ServiceContext,
+        input: DeleteAncillaryItem,
+    ) -> Result<String, DeleteAncillaryItemError> {
+        delete_ancillary_item(ctx, input)
     }
 }
 
