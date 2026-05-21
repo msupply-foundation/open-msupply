@@ -15,13 +15,20 @@ export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
   const { manageVvmStatusForStock } = usePreferences();
   const { data: vmmStatuses } = useVvmStatusesEnabled();
 
-  const searchFilter = [
+  // Item-level filters apply in both grouped and ungrouped modes.
+  const itemFilters = [
     {
       type: 'text',
       name: t('messages.search'),
       urlParameter: 'search',
       placeholder: t('messages.search'),
       isDefault: true,
+    },
+    {
+      type: 'text',
+      name: t('label.master-list'),
+      urlParameter: 'masterList.name',
+      placeholder: t('placeholder.search-by-master-list-name'),
     },
   ] satisfies FilterDefinition[];
 
@@ -31,12 +38,6 @@ export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
       name: t('label.location'),
       urlParameter: 'location.code',
       placeholder: t('placeholder.search-by-location-code'),
-    },
-    {
-      type: 'text',
-      name: t('label.master-list'),
-      urlParameter: 'masterList.name',
-      placeholder: t('placeholder.search-by-master-list-name'),
     },
     {
       type: 'group',
@@ -58,16 +59,16 @@ export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
     },
     ...(manageVvmStatusForStock
       ? [
-          {
-            type: 'enum',
-            name: t('label.vvm-status'),
-            urlParameter: 'vvmStatusId',
-            options: vmmStatuses?.map(status => ({
-              label: status.description ?? '',
-              value: status.id,
-            })),
-          } as FilterDefinition,
-        ]
+        {
+          type: 'enum',
+          name: t('label.vvm-status'),
+          urlParameter: 'vvmStatusId',
+          options: vmmStatuses?.map(status => ({
+            label: status.description ?? '',
+            value: status.id,
+          })),
+        } as FilterDefinition,
+      ]
       : []),
   ] satisfies (FilterDefinition | GroupFilterDefinition)[];
 
@@ -83,7 +84,7 @@ export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
       <Box display="flex" gap={1}>
         <FilterMenu
           filters={
-            isGrouped ? searchFilter : [...searchFilter, ...stockLineFilters]
+            isGrouped ? itemFilters : [...itemFilters, ...stockLineFilters]
           }
         />
       </Box>
