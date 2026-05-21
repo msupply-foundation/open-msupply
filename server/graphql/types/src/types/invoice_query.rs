@@ -520,6 +520,10 @@ impl InvoiceNode {
         Ok(result)
     }
 
+    pub async fn purchase_order_id(&self) -> &Option<String> {
+        &self.row().purchase_order_id
+    }
+
     pub async fn purchase_order(&self, ctx: &Context<'_>) -> Result<Option<PurchaseOrderNode>> {
         // &self.row().purchase_order_id
         let Some(purchase_order_id) = &self.row().purchase_order_id else {

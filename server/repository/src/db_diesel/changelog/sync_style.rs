@@ -4,8 +4,9 @@ use super::changelog::ChangelogTableName;
 
 #[derive(strum::EnumIter, PartialEq, Eq, Debug, Clone, Copy)]
 pub enum ChangeLogSyncStyle {
-    Central, // Data created on Open-mSupply central server
-    Remote,
+    Central,     // Data created on Open-mSupply central server
+    Remote,      // Store-scoped; editable by the owning store and by central stores
+    RemoteOwned, // Store-scoped; editable only by the owning store
     File,
     ToLegacyCentralOnly,
     Transfer,
@@ -53,11 +54,22 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // Legacy — Remote (not v6)
             // ----------------------------------------------------------
-            ActivityLog | Clinician | ClinicianStoreJoin | IndicatorValue | InsuranceProvider
-            | Location | LocationMovement | NameInsuranceJoin | NameStoreJoin | PurchaseOrder
-            | PurchaseOrderLine | Sensor | StockLine | Stocktake | StocktakeLine
-            | TemperatureBreach | TemperatureLog | VVMStatusLog => (
+            NameInsuranceJoin | NameStoreJoin => (
                 vec![Remote],
+                SyncVersions {
+                    is_v6: false,
+                    is_v5: true,
+                },
+            ),
+
+            // ----------------------------------------------------------
+            // Legacy — RemoteOwned (not v6)
+            // ----------------------------------------------------------
+            ActivityLog | Clinician | ClinicianStoreJoin | IndicatorValue | InsuranceProvider
+            | Location | LocationMovement | PurchaseOrder | PurchaseOrderLine | Sensor
+            | StockLine | Stocktake | StocktakeLine | TemperatureBreach | TemperatureLog
+            | VVMStatusLog => (
+                vec![RemoteOwned],
                 SyncVersions {
                     is_v6: false,
                     is_v5: true,
@@ -78,10 +90,10 @@ impl ChangelogTableName {
             ),
 
             // ----------------------------------------------------------
-            // Legacy — Remote + Transfer (not v6)
+            // Legacy — RemoteOwned + Transfer (not v6)
             // ----------------------------------------------------------
             Requisition | RequisitionLine => (
-                vec![Remote, Transfer],
+                vec![RemoteOwned, Transfer],
                 SyncVersions {
                     is_v6: false,
                     is_v5: true,
@@ -89,10 +101,10 @@ impl ChangelogTableName {
             ),
 
             // ----------------------------------------------------------
-            // Legacy — Remote + Transfer + Patient (not v6)
+            // Legacy — RemoteOwned + Transfer + Patient (not v6)
             // ----------------------------------------------------------
             Invoice | InvoiceLine => (
-                vec![Remote, Transfer, Patient],
+                vec![RemoteOwned, Transfer, Patient],
                 SyncVersions {
                     is_v6: false,
                     is_v5: true,
@@ -102,7 +114,8 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // Central (v6) — created on the Open-mSupply central server
             // ----------------------------------------------------------
-            AssetCatalogueItem
+            AncillaryItem
+            | AssetCatalogueItem
             | AssetCatalogueType
             | AssetCategory
             | AssetClass
@@ -196,10 +209,21 @@ impl ChangelogTableName {
             ),
 
             // ----------------------------------------------------------
-            // Remote (v6) — store-scoped data that syncs to the owning site
+            // Remote (v6)
             // ----------------------------------------------------------
-            Asset | AssetInternalLocation | AssetLog | RnrForm | RnrFormLine => (
+            Asset | AssetInternalLocation => (
                 vec![Remote],
+                SyncVersions {
+                    is_v6: true,
+                    is_v5: false,
+                },
+            ),
+
+            // ----------------------------------------------------------
+            // RemoteOwned (v6)
+            // ----------------------------------------------------------
+            AssetLog | RnrForm | RnrFormLine => (
+                vec![RemoteOwned],
                 SyncVersions {
                     is_v6: true,
                     is_v5: false,

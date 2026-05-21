@@ -44,9 +44,7 @@ impl SyncLogRow {
             SyncLogRow::V5V6(row) => {
                 FullSyncStatus::V5V6(FullSyncStatusV5V6::from_sync_log_row(row))
             }
-            SyncLogRow::V7(row) => {
-                FullSyncStatus::V7(FullSyncStatusV7::from_sync_log_v7_row(row))
-            }
+            SyncLogRow::V7(row) => FullSyncStatus::V7(FullSyncStatusV7::from_sync_log_v7_row(row)),
         }
     }
 }

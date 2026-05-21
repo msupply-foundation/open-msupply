@@ -47,6 +47,7 @@ pub enum UserPermission {
     PurchaseOrderQuery,
     PurchaseOrderMutate,
     PurchaseOrderAuthorise,
+    PurchaseOrderFinalise,
     InboundShipmentExternalQuery,
     InboundShipmentExternalMutate,
     InboundShipmentExternalAuthorise,

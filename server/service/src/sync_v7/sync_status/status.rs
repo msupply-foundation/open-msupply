@@ -1,14 +1,12 @@
 use chrono::Utc;
 use repository::{
-    syncv7::SyncError, FilterBuilder, RepositoryError, SyncLogV7Condition, SyncLogV7Repository,
-    SyncLogV7Row, SyncRequestCondition, SyncRequestRepository, StorageConnection,
+    syncv7::SyncError, FilterBuilder, RepositoryError, StorageConnection, SyncLogV7Condition,
+    SyncLogV7Repository, SyncLogV7Row, SyncRequestCondition, SyncRequestRepository,
 };
 
 use crate::{
     i32_to_u32,
-    service_provider::ServiceContext,
-    settings_service::{SettingsService, SettingsServiceTrait},
-    sync::sync_status::status::{InitialisationStatus, SyncStatus, SyncStatusWithProgress},
+    sync::sync_status::status::{SyncStatus, SyncStatusWithProgress},
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -37,7 +35,9 @@ impl FullSyncStatusV7 {
     ) -> Result<FullSyncStatusV7, RepositoryError> {
         let linked_descriptions = match row.reference_id.as_deref() {
             Some(reference_id) => SyncRequestRepository::new(connection)
-                .query(SyncRequestCondition::ReferenceId::equal(reference_id.to_string()))?
+                .query(SyncRequestCondition::ReferenceId::equal(
+                    reference_id.to_string(),
+                ))?
                 .into_iter()
                 .map(|r| r.description)
                 .collect(),
@@ -106,4 +106,3 @@ impl FullSyncStatusV7 {
         }
     }
 }
-

@@ -337,6 +337,7 @@ export const ResponseLineEdit = ({
               sx={{
                 pt: 1,
               }}
+              roundUp
               {...commonProps}
             />
             <ResponseNumInputRow
@@ -344,6 +345,7 @@ export const ResponseLineEdit = ({
               value={mos() ?? 0}
               disabledOverride={true}
               endAdornmentOverride={t('label.months')}
+              decimalLimit={1}
               sx={{
                 mb: 0,
               }}

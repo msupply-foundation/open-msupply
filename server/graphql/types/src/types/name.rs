@@ -73,9 +73,7 @@ impl NameNode {
     }
 
     pub async fn gender(&self) -> Option<GenderTypeNode> {
-        Some(GenderTypeNode::from(
-            self.row().gender.clone().unwrap_or_default(),
-        ))
+        self.row().gender.clone().map(GenderTypeNode::from)
     }
 
     pub async fn phone(&self) -> &Option<String> {

@@ -45,6 +45,11 @@ export type InitialiseSiteMutation = {
         fullError: string;
       }
     | {
+        __typename: 'SyncErrorV7Node';
+        fullError: string;
+        variantV7: Types.SyncErrorVariantV7;
+      }
+    | {
         __typename: 'SyncSettingsNode';
         intervalSeconds: number;
         url: string;
@@ -65,6 +70,11 @@ export type UpdateSyncSettingsMutation = {
         __typename: 'SyncErrorNode';
         variant: Types.SyncErrorVariant;
         fullError: string;
+      }
+    | {
+        __typename: 'SyncErrorV7Node';
+        fullError: string;
+        variantV7: Types.SyncErrorVariantV7;
       }
     | {
         __typename: 'SyncSettingsNode';
@@ -486,6 +496,26 @@ export type ManualSyncMutation = {
   manualSync: string;
 };
 
+export type InitialiseAsCentralServerMutationVariables = Types.Exact<{
+  input: Types.InitialiseAsCentralServerInputNode;
+}>;
+
+export type InitialiseAsCentralServerMutation = {
+  __typename: 'Mutations';
+  initialiseAsCentralServer:
+    | {
+        __typename: 'InitialiseAsCentralServerError';
+        error:
+          | { __typename: 'AdminPasswordRequired'; description: string }
+          | { __typename: 'AdminUserCreationFailed'; description: string }
+          | { __typename: 'AdminUsernameRequired'; description: string }
+          | { __typename: 'AlreadyInitialised'; description: string }
+          | { __typename: 'NotSupportedOnAndroid'; description: string }
+          | { __typename: 'StoreNameRequired'; description: string };
+      }
+    | { __typename: 'StandaloneCentralInitialisedNode'; success: boolean };
+};
+
 export type SyncInfoUpdatedSubscriptionVariables = Types.Exact<{
   [key: string]: never;
 }>;
@@ -765,10 +795,14 @@ export const InitialiseSiteDocument = gql`
       ... on SyncErrorNode {
         ...SyncError
       }
+      ... on SyncErrorV7Node {
+        ...SyncErrorV7
+      }
     }
   }
   ${SyncSettingsFragmentDoc}
   ${SyncErrorFragmentDoc}
+  ${SyncErrorV7FragmentDoc}
 `;
 export const UpdateSyncSettingsDocument = gql`
   mutation updateSyncSettings($syncSettings: SyncSettingsInput!) {
@@ -780,10 +814,14 @@ export const UpdateSyncSettingsDocument = gql`
       ... on SyncErrorNode {
         ...SyncError
       }
+      ... on SyncErrorV7Node {
+        ...SyncErrorV7
+      }
     }
   }
   ${SyncSettingsFragmentDoc}
   ${SyncErrorFragmentDoc}
+  ${SyncErrorV7FragmentDoc}
 `;
 export const SyncInfoDocument = gql`
   query syncInfo {
@@ -819,6 +857,24 @@ export const SyncStatusDocument = gql`
 export const ManualSyncDocument = gql`
   mutation manualSync($fetchPatientId: String) {
     manualSync(fetchPatientId: $fetchPatientId)
+  }
+`;
+export const InitialiseAsCentralServerDocument = gql`
+  mutation initialiseAsCentralServer(
+    $input: InitialiseAsCentralServerInputNode!
+  ) {
+    initialiseAsCentralServer(input: $input) {
+      __typename
+      ... on StandaloneCentralInitialisedNode {
+        success
+      }
+      ... on InitialiseAsCentralServerError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
   }
 `;
 export const SyncInfoUpdatedDocument = gql`
@@ -963,6 +1019,24 @@ export function getSdk(
             signal,
           }),
         'manualSync',
+        'mutation',
+        variables
+      );
+    },
+    initialiseAsCentralServer(
+      variables: InitialiseAsCentralServerMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InitialiseAsCentralServerMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InitialiseAsCentralServerMutation>({
+            document: InitialiseAsCentralServerDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'initialiseAsCentralServer',
         'mutation',
         variables
       );

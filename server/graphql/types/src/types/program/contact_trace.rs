@@ -253,9 +253,7 @@ impl ContactTraceNode {
     }
 
     pub async fn gender(&self) -> Option<GenderTypeNode> {
-        Some(GenderTypeNode::from(
-            self.trace_row().gender.clone().unwrap_or_default(),
-        ))
+        self.trace_row().gender.clone().map(GenderTypeNode::from)
     }
 
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {

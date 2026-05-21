@@ -97,6 +97,37 @@ export type RequestByNumberQuery = {
           margin?: number | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         };
+        ancillaryState: {
+          __typename: 'AncillaryStateResponse';
+          state: Types.AncillaryStateNode;
+          count: number;
+          toAdd: Array<{
+            __typename: 'AncillaryDeltaNode';
+            itemId: string;
+            requiredQuantity: number;
+            currentQuantity?: number | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            };
+          }>;
+          toUpdate: Array<{
+            __typename: 'AncillaryDeltaNode';
+            itemId: string;
+            requiredQuantity: number;
+            currentQuantity?: number | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            };
+          }>;
+        };
         documents: {
           __typename: 'SyncFileReferenceConnector';
           nodes: Array<{
@@ -157,6 +188,12 @@ export type RequestByNumberQuery = {
               doses: number;
               availableStockOnHand: number;
             };
+            ancillaryParents: Array<{
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+            }>;
             reason?: {
               __typename: 'ReasonOptionNode';
               id: string;
@@ -249,6 +286,37 @@ export type RequestByIdQuery = {
           margin?: number | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         };
+        ancillaryState: {
+          __typename: 'AncillaryStateResponse';
+          state: Types.AncillaryStateNode;
+          count: number;
+          toAdd: Array<{
+            __typename: 'AncillaryDeltaNode';
+            itemId: string;
+            requiredQuantity: number;
+            currentQuantity?: number | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            };
+          }>;
+          toUpdate: Array<{
+            __typename: 'AncillaryDeltaNode';
+            itemId: string;
+            requiredQuantity: number;
+            currentQuantity?: number | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            };
+          }>;
+        };
         documents: {
           __typename: 'SyncFileReferenceConnector';
           nodes: Array<{
@@ -309,6 +377,12 @@ export type RequestByIdQuery = {
               doses: number;
               availableStockOnHand: number;
             };
+            ancillaryParents: Array<{
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+            }>;
             reason?: {
               __typename: 'ReasonOptionNode';
               id: string;
@@ -468,6 +542,30 @@ export type RequestsQuery = {
       lines: { __typename: 'RequisitionLineConnector'; totalCount: number };
     }>;
   };
+};
+
+export type RefreshAncillaryItemsMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.RefreshAncillaryItemsInput;
+}>;
+
+export type RefreshAncillaryItemsMutation = {
+  __typename: 'Mutations';
+  refreshAncillaryItems:
+    | {
+        __typename: 'RefreshAncillaryItemsError';
+        error:
+          | { __typename: 'CannotEditRequisition'; description: string }
+          | {
+              __typename: 'ForeignKeyError';
+              description: string;
+              key: Types.ForeignKey;
+            };
+      }
+    | {
+        __typename: 'RefreshAncillaryItemsSuccess';
+        lines: Array<{ __typename: 'RequisitionLineNode'; id: string }>;
+      };
 };
 
 export type InsertRequestLineMutationVariables = Types.Exact<{
@@ -1295,6 +1393,37 @@ export const RequestsDocument = gql`
   }
   ${RequestRowFragmentDoc}
 `;
+export const RefreshAncillaryItemsDocument = gql`
+  mutation refreshAncillaryItems(
+    $storeId: String!
+    $input: RefreshAncillaryItemsInput!
+  ) {
+    refreshAncillaryItems(storeId: $storeId, input: $input) {
+      __typename
+      ... on RefreshAncillaryItemsSuccess {
+        __typename
+        lines {
+          id
+        }
+      }
+      ... on RefreshAncillaryItemsError {
+        __typename
+        error {
+          description
+          ... on CannotEditRequisition {
+            __typename
+            description
+          }
+          ... on ForeignKeyError {
+            __typename
+            description
+            key
+          }
+        }
+      }
+    }
+  }
+`;
 export const InsertRequestLineDocument = gql`
   mutation insertRequestLine(
     $storeId: String!
@@ -1755,6 +1884,24 @@ export function getSdk(
           }),
         'requests',
         'query',
+        variables
+      );
+    },
+    refreshAncillaryItems(
+      variables: RefreshAncillaryItemsMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<RefreshAncillaryItemsMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<RefreshAncillaryItemsMutation>({
+            document: RefreshAncillaryItemsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'refreshAncillaryItems',
+        'mutation',
         variables
       );
     },

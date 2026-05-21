@@ -27,6 +27,7 @@ interface ResponseNumInputRowProps {
   sx?: SxProps<Theme>;
   overrideDoseDisplay?: boolean;
   roundUp?: boolean;
+  decimalLimit?: number;
 }
 
 export const ResponseNumInputRow = ({
@@ -44,6 +45,7 @@ export const ResponseNumInputRow = ({
   unitName,
   sx,
   roundUp,
+  decimalLimit,
 }: ResponseNumInputRowProps) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
@@ -94,6 +96,7 @@ export const ResponseNumInputRow = ({
       sx={sx}
       caption={dosesCaption}
       roundUp={roundUp}
+      decimalLimit={decimalLimit}
     />
   );
 };

@@ -28,6 +28,9 @@ mutation initialiseSite($syncSettings: SyncSettingsInput!) {
     ... on SyncErrorNode {
       ...SyncError
     }
+    ... on SyncErrorV7Node {
+      ...SyncErrorV7
+    }
   }
 }
 
@@ -39,6 +42,9 @@ mutation updateSyncSettings($syncSettings: SyncSettingsInput!) {
     }
     ... on SyncErrorNode {
       ...SyncError
+    }
+    ... on SyncErrorV7Node {
+      ...SyncErrorV7
     }
   }
 }
@@ -170,6 +176,23 @@ query syncStatus {
 
 mutation manualSync($fetchPatientId: String) {
   manualSync(fetchPatientId: $fetchPatientId)
+}
+
+mutation initialiseAsCentralServer(
+  $input: InitialiseAsCentralServerInputNode!
+) {
+  initialiseAsCentralServer(input: $input) {
+    __typename
+    ... on StandaloneCentralInitialisedNode {
+      success
+    }
+    ... on InitialiseAsCentralServerError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
 }
 
 subscription syncInfoUpdated {

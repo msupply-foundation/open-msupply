@@ -3,7 +3,8 @@ use crate::{
     Pagination, SingleRecordError,
 };
 use repository::{
-    EqualFilter, PaginationOption, StockLine, StockLineFilter, StockLineRepository, StockLineSort,
+    EqualFilter, Item, ItemSort, PaginationOption, StockLine, StockLineFilter, StockLineRepository,
+    StockLineSort,
 };
 
 pub const MAX_LIMIT: u32 = 5000;
@@ -37,5 +38,30 @@ pub fn get_stock_lines(
     Ok(ListResult {
         rows: repository.query(pagination, filter.clone(), sort, store_id.clone())?,
         count: i64_to_u32(repository.count(filter, store_id)?),
+    })
+}
+
+/// Returns items that have at least one stock_line matching `filter` in
+/// `store_id`. Companion to `get_stock_lines` — same filter shape, but the
+/// result is one row per item (sorted by item attributes), so it's safe to
+/// use as the source for a grouped/aggregated stock view.
+pub fn get_items_by_stock_line_filter(
+    ctx: &ServiceContext,
+    pagination: Option<PaginationOption>,
+    filter: Option<StockLineFilter>,
+    sort: Option<ItemSort>,
+    store_id: Option<String>,
+) -> Result<ListResult<Item>, ListError> {
+    let pagination = get_pagination_or_default(pagination)?;
+    let repository = StockLineRepository::new(&ctx.connection);
+
+    Ok(ListResult {
+        rows: repository.query_items_by_filter(
+            pagination,
+            filter.clone(),
+            sort,
+            store_id.clone(),
+        )?,
+        count: i64_to_u32(repository.count_items_by_filter(filter, store_id)?),
     })
 }
