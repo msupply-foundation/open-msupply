@@ -13,6 +13,7 @@ pub mod sync_request;
 pub mod sync_request_runner;
 pub mod sync_status;
 pub mod synchroniser;
+pub mod translations;
 pub mod validate;
 pub mod validate_translate_integrate;
 

@@ -21,15 +21,10 @@ impl MigrationFragment for Migrate {
                 -- "push_<reference_id>". Logical (not enforced) FK target for
                 -- sync_log_v7.reference_id and sync_buffer.reference_id.
                 reference_id TEXT,
-                -- Free-text description shown by the UI verbatim. Frontend
-                -- resolves sync_log_v7.reference_id -> sync_request rows and
-                -- displays this string as-is.
-                description TEXT NOT NULL,
-                -- The store this sync_request targets. Used as the routing key by
-                -- the SyncRequest sync style: central pulls the row to whichever
-                -- site currently has this store active. NULL for local-only rows
-                -- (e.g. self-resync of the sync_request table during migration).
-                store_id TEXT,
+                -- Localisable description payload (JSON). The frontend resolves
+                -- sync_log_v7.reference_id -> sync_request rows and renders
+                -- each description using the user's locale.
+                description {JSON} NOT NULL,
                 -- ChangelogCondition::Inner serialized; NULL = no pull side.
                 pull_filter {JSON},
                 push_filter {JSON},

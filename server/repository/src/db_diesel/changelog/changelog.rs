@@ -208,7 +208,6 @@ diesel_string_enum! {
         #[default]
         SyncFileReference,
         SyncMessage,
-        SyncRequest,
         SystemLog,
         TemperatureBreach,
         TemperatureLog,
@@ -454,12 +453,6 @@ impl ChangelogFilter {
                 }
                 Transfer => C::transfer_site_id::equal(site_id),
                 Patient => C::patient_site_id::equal(site_id),
-                SyncRequest => {
-                    if is_initialising {
-                        continue;
-                    }
-                    C::site_id::equal(site_id)
-                }
             };
 
             inner_or_conditions.push(C::And(vec![pre_condition, condition]));
@@ -550,8 +543,7 @@ impl ChangelogFilter {
                 ToLegacyCentralOnly | Remote | RemoteOwned | Transfer | Patient => {
                     inner_or_conditions.push(C::table_name::any(table_names))
                 }
-                // SyncRequest is OMS-only (central->remote). Doesn't reach legacy mSupply.
-                Central | RemoteToCentral | File | SyncRequest => continue,
+                Central | RemoteToCentral | File => continue,
             };
         }
 
@@ -579,7 +571,7 @@ impl ChangelogFilter {
                 Remote | File | Patient | RemoteToCentral | RemoteOwned => {
                     inner_or_conditions.push(C::table_name::any(table_names))
                 }
-                Central | ToLegacyCentralOnly | SyncRequest | Transfer => {
+                Central | ToLegacyCentralOnly | Transfer => {
                     // Don't sync
                 }
             };

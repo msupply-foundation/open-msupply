@@ -273,7 +273,6 @@ mod test_sync_v7_client_api {
             }),
             reference_id: None,
             is_initialising,
-            run_post_sync_triggers: true,
         };
         let result = sync_v7(
             &service_provider,

@@ -70,7 +70,6 @@ impl SynchroniserV7 {
             }),
             reference_id: None,
             is_initialising: !was_initialised,
-            run_post_sync_triggers: true,
         };
 
         sync_v7(&self.service_provider, &ctx, self.settings.clone(), request).await?;

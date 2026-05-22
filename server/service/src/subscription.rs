@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use repository::{SyncLogV5V6Row, SyncLogV7Row};
+use repository::{Description, SyncLogV5V6Row, SyncLogV7Row};
 use tokio::sync::{broadcast, mpsc};
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
@@ -17,25 +17,30 @@ const PUSH_QUEUE_DEBOUNCE: Duration = Duration::from_secs(30);
 
 // ── Triggers (inbound to worker) ──
 
-/// Discriminated row carrying either v5_v6 or v7 sync log data.
+/// Discriminated row carrying either v5_v6 or v7 sync log data. V7 also
+/// carries the sync_request descriptions linked to the run via
+/// `reference_id`, cached by the logger so the worker doesn't re-query.
 #[derive(Clone, Debug)]
 pub enum SyncLogRow {
     V5V6(SyncLogV5V6Row),
-    V7(SyncLogV7Row),
+    V7 {
+        row: SyncLogV7Row,
+        linked_descriptions: Vec<Description>,
+    },
 }
 
 impl SyncLogRow {
     fn push_progress_total(&self) -> i32 {
         match self {
             SyncLogRow::V5V6(row) => row.push_progress_total.unwrap_or(0),
-            SyncLogRow::V7(row) => row.push_progress_total.unwrap_or(0),
+            SyncLogRow::V7 { row, .. } => row.push_progress_total.unwrap_or(0),
         }
     }
 
     fn push_progress_done(&self) -> i32 {
         match self {
             SyncLogRow::V5V6(row) => row.push_progress_done.unwrap_or(0),
-            SyncLogRow::V7(row) => row.push_progress_done.unwrap_or(0),
+            SyncLogRow::V7 { row, .. } => row.push_progress_done.unwrap_or(0),
         }
     }
 
@@ -44,7 +49,13 @@ impl SyncLogRow {
             SyncLogRow::V5V6(row) => {
                 FullSyncStatus::V5V6(FullSyncStatusV5V6::from_sync_log_row(row))
             }
-            SyncLogRow::V7(row) => FullSyncStatus::V7(FullSyncStatusV7::from_sync_log_v7_row(row)),
+            SyncLogRow::V7 {
+                row,
+                linked_descriptions,
+            } => FullSyncStatus::V7(FullSyncStatusV7::from_sync_log_v7_row(
+                row,
+                linked_descriptions,
+            )),
         }
     }
 }

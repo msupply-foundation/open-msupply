@@ -22,9 +22,6 @@ pub struct SyncRequest {
     /// a reference_id) must always be false — the central pull filter and the
     /// integration transaction wrapping behave differently when initialising.
     pub is_initialising: bool,
-    /// True only for the main sync. Auxiliary requests skip post-sync triggers
-    /// to avoid fanning out processors for narrow data slices.
-    pub run_post_sync_triggers: bool,
 }
 
 pub struct SyncRequestStep {
