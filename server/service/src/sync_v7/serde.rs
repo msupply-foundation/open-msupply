@@ -4,6 +4,10 @@ use repository::{
 };
 use serde::de::DeserializeOwned;
 
+use crate::sync_v7::{
+    translations::store::translate_store, validate_translate_integrate::create_changelog,
+};
+
 fn from_value<T: DeserializeOwned + Upsert + 'static>(
     data: &serde_json::Value,
 ) -> Result<Box<dyn Upsert>, SyncRecordSerializeError> {
@@ -75,7 +79,6 @@ pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeErro
         Row::RnrForm(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::RnrFormLine(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::SyncMessage(r) => serde_json::to_value(r).map_err(map_serde_err),
-        Row::SyncRequest(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Vaccination(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::SyncFileReference(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::PluginData(r) => serde_json::to_value(r).map_err(map_serde_err),
@@ -122,15 +125,23 @@ pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeErro
     }
 }
 
+pub(crate) type DeserializeResult =
+    Result<Vec<(Box<dyn Upsert>, ChangeLogInsertRow)>, SyncRecordSerializeError>;
+
 pub fn deserialize(
+    connection: &StorageConnection,
     table_name: &ChangelogTableName,
-    data: &serde_json::Value,
-) -> Result<Box<dyn Upsert>, SyncRecordSerializeError> {
-    match table_name {
+    row: &SyncBufferRow,
+) -> DeserializeResult {
+    let changelog_insert = create_changelog(table_name.clone(), RowActionType::Upsert, row);
+    let data = &row.data;
+    let upsert = match table_name {
+        // Special
+        ChangelogTableName::Store => return translate_store(connection, changelog_insert, data),
+        // Basic
         ChangelogTableName::Unit => from_value::<UnitRow>(data),
         ChangelogTableName::Currency => from_value::<CurrencyRow>(data),
         ChangelogTableName::Name => from_value::<NameRow>(data),
-        ChangelogTableName::Store => from_value::<StoreRow>(data),
         ChangelogTableName::LocationType => from_value::<LocationTypeRow>(data),
         ChangelogTableName::Item => from_value::<ItemRow>(data),
         ChangelogTableName::StockLine => from_value::<StockLineRow>(data),
@@ -229,12 +240,13 @@ pub fn deserialize(
         ChangelogTableName::RnrForm => from_value::<RnRFormRow>(data),
         ChangelogTableName::RnrFormLine => from_value::<RnRFormLineRow>(data),
         ChangelogTableName::SyncMessage => from_value::<SyncMessageRow>(data),
-        ChangelogTableName::SyncRequest => from_value::<SyncRequestRow>(data),
         ChangelogTableName::Vaccination => from_value::<VaccinationRow>(data),
         ChangelogTableName::SyncFileReference => from_value::<SyncFileReferenceRow>(data),
         ChangelogTableName::PluginData => from_value::<PluginDataRow>(data),
         ChangelogTableName::Preference => from_value::<PreferenceRow>(data),
         ChangelogTableName::ContactForm => from_value::<ContactFormRow>(data),
         ChangelogTableName::SystemLog => from_value::<SystemLogRow>(data),
-    }
+    }?;
+
+    Ok(vec![(upsert, changelog_insert)])
 }

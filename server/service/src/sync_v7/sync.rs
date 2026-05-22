@@ -190,9 +190,7 @@ async fn sync_inner<'a>(
 
     logger.finish()?;
 
-    if request.run_post_sync_triggers {
-        run_post_sync_triggers(&ctx, service_provider, !request.is_initialising);
-    }
+    run_post_sync_triggers(&ctx, service_provider, !request.is_initialising);
 
     Ok(())
 }

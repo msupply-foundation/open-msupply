@@ -49,13 +49,7 @@ enum Error {
     UnsupportedAction(SyncAction),
 }
 
-fn parse_table_name(table_name: &str) -> Result<ChangelogTableName, Error> {
-    table_name
-        .parse::<ChangelogTableName>()
-        .map_err(|_| Error::UnknownTableName(table_name.to_string()))
-}
-
-fn changelog(
+pub(crate) fn create_changelog(
     table_name: ChangelogTableName,
     action: RowActionType,
     row: &SyncBufferRow,
@@ -71,25 +65,24 @@ fn changelog(
     }
 }
 
-fn integrate_upsert(
+fn parse_table_name(table_name: &str) -> Result<ChangelogTableName, Error> {
+    table_name
+        .parse::<ChangelogTableName>()
+        .map_err(|_| Error::UnknownTableName(table_name.to_string()))
+}
+
+fn integrate_upserts(
     connection: &StorageConnection,
-    upsert: Box<dyn Upsert>,
-    table_name: ChangelogTableName,
-    row: &SyncBufferRow,
+    upsert: Vec<(Box<dyn Upsert>, ChangeLogInsertRow)>,
 ) -> Result<(), Error> {
-    let changelog = changelog(table_name, RowActionType::Upsert, row);
-    upsert
-        .upsert_sync(
-            connection,
-            ChangelogSyncType::SyncTypeV7 {
-                changelog_row: changelog,
-            },
-        )
-        .map_err(Error::IntegrationError)?;
+    for (upsert, changelog_row) in upsert {
+        upsert
+            .upsert_sync(connection, ChangelogSyncType::SyncTypeV7 { changelog_row })
+            .map_err(Error::IntegrationError)?;
+    }
 
     Ok(())
 }
-
 fn translate_delete(
     table_name: &ChangelogTableName,
     record_id: &str,
@@ -202,7 +195,6 @@ fn translate_delete(
         | ChangelogTableName::VaccineCourse
         | ChangelogTableName::VaccineCourseDose
         | ChangelogTableName::VaccineCourseItem
-        | ChangelogTableName::SyncRequest
         | ChangelogTableName::VaccineCourseStoreConfig => {
             return Err(Error::DeleteTranslatorNotFound(table_name.clone()));
         }
@@ -217,14 +209,9 @@ fn integrate_delete(
     table_name: ChangelogTableName,
     row: &SyncBufferRow,
 ) -> Result<(), Error> {
-    let changelog = changelog(table_name, RowActionType::Delete, row);
+    let changelog_row = create_changelog(table_name, RowActionType::Delete, row);
     delete
-        .delete_sync(
-            connection,
-            ChangelogSyncType::SyncTypeV7 {
-                changelog_row: changelog,
-            },
-        )
+        .delete_sync(connection, ChangelogSyncType::SyncTypeV7 { changelog_row })
         .map_err(Error::IntegrationError)?;
 
     Ok(())
@@ -250,8 +237,8 @@ fn validate_translate_integrate_one(
 
     match row.action {
         SyncAction::Upsert => {
-            let upsert = deserialize(&table_name, &row.data)?;
-            integrate_upsert(connection, upsert, table_name, row)
+            let upserts = deserialize(connection, &table_name, &row)?;
+            integrate_upserts(connection, upserts)
         }
         SyncAction::Delete => {
             let delete = translate_delete(&table_name, &row.record_id)?;

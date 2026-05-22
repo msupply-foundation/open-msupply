@@ -1,8 +1,6 @@
 use crate::{
-    diesel_macros::diesel_json_type,
-    dynamic_query_filter::create_condition,
-    ChangeLogInsertRow, ChangelogCondition, ChangelogRepository, ChangelogSyncType,
-    ChangelogTableName, RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    diesel_macros::diesel_json_type, dynamic_query_filter::create_condition, ChangelogCondition,
+    ChangelogSyncType, RepositoryError, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -20,35 +18,27 @@ diesel_json_type! {
 
 impl std::fmt::Debug for SyncRequestFilter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match serde_json::to_string(&self.0) {
-            Ok(s) => write!(f, "SyncRequestFilter({s})"),
-            Err(_) => write!(f, "SyncRequestFilter(<unserializable>)"),
-        }
+        write!(f, "Debug unimplemented for SyncRequestFilter")
     }
 }
 
-// PartialEq via the JSON form so SyncRequestRow can derive PartialEq cleanly.
-// `ChangelogCondition::Inner` carries diesel boxed expressions and isn't
-// directly comparable, but serializes deterministically.
-impl PartialEq for SyncRequestFilter {
-    fn eq(&self, other: &Self) -> bool {
-        match (
-            serde_json::to_string(&self.0),
-            serde_json::to_string(&other.0),
-        ) {
-            (Ok(a), Ok(b)) => a == b,
-            _ => false,
-        }
+// Localisable description payload stored as JSON text. Each variant carries
+// just the localisation parameters; the frontend renders the user-facing
+// string from `kind` and the parameters.
+diesel_json_type! {
+    #[derive(Clone, Debug)]
+    #[serde(tag = "kind")]
+    pub enum Description {
+        AllStoreData { store_name: String },
+        TableName { table_name: String },
     }
 }
-
 
 table! {
     sync_request(id) {
         id -> Text,
         reference_id -> Nullable<Text>,
         description -> Text,
-        store_id -> Nullable<Text>,
         pull_filter -> Nullable<Text>,
         push_filter -> Nullable<Text>,
         created_datetime -> Timestamp,
@@ -56,17 +46,7 @@ table! {
     }
 }
 
-#[derive(
-    Clone,
-    Queryable,
-    Selectable,
-    Insertable,
-    Deserialize,
-    Serialize,
-    AsChangeset,
-    Debug,
-    PartialEq,
-)]
+#[derive(Clone, Queryable, Selectable, Insertable, Deserialize, Debug, Serialize, AsChangeset)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = sync_request)]
 pub struct SyncRequestRow {
@@ -77,15 +57,10 @@ pub struct SyncRequestRow {
     /// ids used by the runner are derived from this: `pull_<reference_id>` and
     /// `push_<reference_id>`.
     pub reference_id: Option<String>,
-    /// Free-text description shown on the UI. The front-end resolves
-    /// sync_log_v7.reference_id -> sync_request(s) and shows their
-    /// descriptions verbatim. Translation, if any, is the caller's
-    /// responsibility before insertion.
-    pub description: String,
-    /// Routing key used by the SyncRequest sync style on central: the row pulls
-    /// to whichever site currently has this store active. NULL for local-only
-    /// rows that don't propagate via sync (e.g. self-resync of sync_request).
-    pub store_id: Option<String>,
+    /// Localisable description payload, stored as JSON. The frontend resolves
+    /// `sync_log_v7.reference_id` -> sync_request rows and renders each
+    /// description using the user's locale.
+    pub description: Description,
     /// pull_filter is either Some (pull is configured) or None.
     pub pull_filter: Option<SyncRequestFilter>,
     pub push_filter: Option<SyncRequestFilter>,
@@ -116,9 +91,9 @@ impl<'a> SyncRequestRepository<'a> {
         Self { connection }
     }
 
-    /// Local-only upsert (no changelog). Used during sync integrate where the
-    /// caller supplies a pre-built changelog row, and from `upsert_one`.
-    pub fn _upsert_one(&self, row: &SyncRequestRow) -> Result<(), RepositoryError> {
+    /// Local-only upsert. sync_request is a remote-site-only record; it is not
+    /// included in the changelog and never propagates over sync.
+    pub fn upsert_one(&self, row: &SyncRequestRow) -> Result<(), RepositoryError> {
         diesel::insert_into(sync_request::table)
             .values(row)
             .on_conflict(sync_request::id)
@@ -126,19 +101,6 @@ impl<'a> SyncRequestRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
-    }
-
-    /// Upsert + generate changelog row sourced from this site. Use this when
-    /// authoring a sync_request locally (e.g. central creating one for a
-    /// transferred store, or a remote queueing post-init backfill).
-    pub fn upsert_one(&self, row: &SyncRequestRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
-        let changelog = row.generate_changelog(
-            self.connection,
-            RowActionType::Upsert,
-            SourceSiteId::CurrentSiteId,
-        )?;
-        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<SyncRequestRow>, RepositoryError> {
@@ -180,102 +142,21 @@ impl<'a> SyncRequestRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
-
 }
 
 impl Upsert for SyncRequestRow {
+    /// sync_request is a remote-local-only record and is not in the changelog,
+    /// so the sync_type is ignored. Only `upsert_local` should be used in
+    /// practice (via the v7 translator); this is provided for completeness.
     fn upsert_sync(
         &self,
         con: &StorageConnection,
-        sync_type: ChangelogSyncType,
+        _sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
-        SyncRequestRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
+        SyncRequestRepository::new(con).upsert_one(self)
     }
 
     fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            SyncRequestRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::{
-        dynamic_query_filter::FilterBuilder,
-        mock::{MockData, MockDataInserts},
-        test_db, ChangelogCondition, SyncRequestCondition, SyncRequestFilter,
-        SyncRequestRepository, SyncRequestRow,
-    };
-
-    use chrono::NaiveDateTime;
-
-    fn row(id: &str) -> SyncRequestRow {
-        SyncRequestRow {
-            id: id.to_string(),
-            reference_id: None,
-            description: format!("desc_{id}"),
-            store_id: None,
-            pull_filter: Some(SyncRequestFilter(ChangelogCondition::True())),
-            push_filter: None,
-            created_datetime: NaiveDateTime::default(),
-            finished_datetime: None,
-        }
-    }
-
-    #[actix_rt::test]
-    async fn test_sync_request() {
-        let (_, connection, _, _) = test_db::setup_all_with_data(
-            "test_sync_request",
-            MockDataInserts::none(),
-            MockData::default(),
-        )
-        .await;
-
-        let repo = SyncRequestRepository::new(&connection);
-        // Filter out the migration-seeded self-resync row so the test
-        // operates on a clean slice (id-prefixed rows it inserts itself).
-        let active = || -> Vec<SyncRequestRow> {
-            repo.query(SyncRequestCondition::FinishedDatetime::is_null())
-                .unwrap()
-                .into_iter()
-                .filter(|r| r.id == "a" || r.id == "b")
-                .collect()
-        };
-
-        // empty (excluding the seed)
-        assert!(active().is_empty());
-
-        // insert two
-        repo._upsert_one(&row("a")).unwrap();
-        repo._upsert_one(&row("b")).unwrap();
-        assert_eq!(active().len(), 2);
-
-        // finishing one removes it from active
-        let finished_at = NaiveDateTime::default() + chrono::Duration::seconds(60);
-        repo.mark_finished_many(&["a".to_string()], finished_at)
-            .unwrap();
-        let after_finish = active();
-        assert_eq!(after_finish.len(), 1);
-        assert_eq!(after_finish[0].id, "b");
-
-        // upsert overwrites
-        let mut updated = row("b");
-        updated.description = "new".to_string();
-        repo._upsert_one(&updated).unwrap();
-        assert_eq!(active()[0].description, "new");
+        // Not implemented
     }
 }

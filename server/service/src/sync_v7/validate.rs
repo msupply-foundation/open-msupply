@@ -72,19 +72,6 @@ pub(crate) fn validate_on_remote(
             File => return Ok(()),
             ToLegacyCentralOnly => last_err = ValidationError::UnexpectedSyncStyleForV7,
             RemoteToCentral => last_err = ValidationError::UnexpectedSyncStyleForV7,
-            // Central→remote only; accepted when store is active and site is not initialising.
-            SyncRequest => match &sync_buffer_row.store_id {
-                Some(id) if !active_store_ids.iter().any(|s| s == id) => {
-                    last_err = ValidationError::InactiveStore
-                }
-                _ => {
-                    if is_initialising {
-                        last_err = ValidationError::SiteAlreadyInitialised
-                    } else {
-                        return Ok(());
-                    }
-                }
-            },
         }
     }
 
@@ -121,8 +108,6 @@ pub(crate) fn validate_on_central(
             File => return Ok(()),
             ToLegacyCentralOnly => last_err = ValidationError::UnexpectedSyncStyleForV7,
             RemoteToCentral => return Ok(()),
-            // Push from remote is excluded entirely for this style.
-            SyncRequest => last_err = ValidationError::UnexpectedSyncStyleForV7,
         }
     }
 

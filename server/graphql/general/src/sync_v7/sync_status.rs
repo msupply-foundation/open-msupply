@@ -1,5 +1,6 @@
 use async_graphql::*;
 use chrono::{DateTime, NaiveDateTime, Utc};
+use repository::Description;
 use service::{
     sync::sync_status::status::{SyncStatus, SyncStatusWithProgress},
     sync_v7::sync_status::status::FullSyncStatusV7,
@@ -8,6 +9,51 @@ use service::{
 use crate::queries::sync_status::SyncStatusNode;
 
 use super::sync_api_error::SyncErrorV7Node;
+
+/// "All data for store X" — emitted when a store transfers to this site and
+/// the remote needs to backfill that store's data.
+pub struct AllStoreDataDescription {
+    pub store_name: String,
+}
+
+#[Object]
+impl AllStoreDataDescription {
+    async fn store_name(&self) -> &str {
+        &self.store_name
+    }
+}
+
+/// "All data in table X" — emitted by migrations that re-request a specific
+/// table (e.g. the user-table backfill).
+pub struct TableNameDescription {
+    pub table_name: String,
+}
+
+#[Object]
+impl TableNameDescription {
+    async fn table_name(&self) -> &str {
+        &self.table_name
+    }
+}
+
+#[derive(Union)]
+pub enum SyncRequestDescriptionNode {
+    AllStoreData(AllStoreDataDescription),
+    TableName(TableNameDescription),
+}
+
+impl SyncRequestDescriptionNode {
+    pub fn from_description(description: Description) -> Self {
+        match description {
+            Description::AllStoreData { store_name } => {
+                Self::AllStoreData(AllStoreDataDescription { store_name })
+            }
+            Description::TableName { table_name } => {
+                Self::TableName(TableNameDescription { table_name })
+            }
+        }
+    }
+}
 
 pub struct SyncStatusV7Node {
     started: NaiveDateTime,
@@ -65,11 +111,12 @@ pub struct FullSyncStatusV7Node {
     last_successful_sync: Option<SyncStatusNode>,
     warning_threshold: i64,
     error_threshold: i64,
-    /// Free-text descriptions of every sync_request linked to this run via
-    /// `reference_id`. Empty for the main sync (no reference_id) and for
-    /// runs whose reference_id no longer matches any sync_request row. The
-    /// front-end displays each string verbatim.
-    linked_sync_requests: Vec<String>,
+    /// Localisable description payloads for every sync_request linked to
+    /// this run via `reference_id`. Empty for the main sync (no
+    /// reference_id) and for runs whose reference_id no longer matches any
+    /// sync_request row. Each variant carries the parameters the front-end
+    /// needs to render a localised string.
+    linked_descriptions: Vec<SyncRequestDescriptionNode>,
 }
 
 impl FullSyncStatusV7Node {
@@ -99,7 +146,11 @@ impl FullSyncStatusV7Node {
             last_successful_sync: last_successful_sync.map(SyncStatusNode::from_sync_status),
             warning_threshold: 1,
             error_threshold: 3,
-            linked_sync_requests: status.linked_descriptions,
+            linked_descriptions: status
+                .linked_descriptions
+                .into_iter()
+                .map(SyncRequestDescriptionNode::from_description)
+                .collect(),
         }
     }
 }

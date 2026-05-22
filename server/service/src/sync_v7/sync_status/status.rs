@@ -1,7 +1,6 @@
-use chrono::Utc;
 use repository::{
-    syncv7::SyncError, FilterBuilder, RepositoryError, StorageConnection, SyncLogV7Condition,
-    SyncLogV7Repository, SyncLogV7Row, SyncRequestCondition, SyncRequestRepository,
+    syncv7::SyncError, Description, FilterBuilder, RepositoryError, StorageConnection,
+    SyncLogV7Row, SyncRequestCondition, SyncRequestRepository,
 };
 
 use crate::{
@@ -21,34 +20,18 @@ pub struct FullSyncStatusV7 {
     /// Descriptions of every sync_request whose `reference_id` matches this
     /// sync_log_v7 row's `reference_id`. Empty for the main sync
     /// (reference_id NULL) and for runs whose reference_id no longer links
-    /// to any process row.
-    pub linked_descriptions: Vec<String>,
+    /// to any sync_request row.
+    pub linked_descriptions: Vec<Description>,
 }
 
 impl FullSyncStatusV7 {
-    /// Looks up linked sync_request rows by `reference_id` and includes their
-    /// descriptions. Use `from_sync_log_v7_row` when descriptions aren't
-    /// needed (e.g. summary-only callsites).
-    pub fn from_sync_log_v7_row_with_links(
-        connection: &StorageConnection,
+    /// Single mapper. Caller supplies the linked descriptions (either fetched
+    /// once when the logger started, or looked up on demand for one-shot
+    /// queries via [`Self::lookup_descriptions`]).
+    pub fn from_sync_log_v7_row(
         row: SyncLogV7Row,
-    ) -> Result<FullSyncStatusV7, RepositoryError> {
-        let linked_descriptions = match row.reference_id.as_deref() {
-            Some(reference_id) => SyncRequestRepository::new(connection)
-                .query(SyncRequestCondition::ReferenceId::equal(
-                    reference_id.to_string(),
-                ))?
-                .into_iter()
-                .map(|r| r.description)
-                .collect(),
-            None => Vec::new(),
-        };
-        let mut status = Self::from_sync_log_v7_row(row);
-        status.linked_descriptions = linked_descriptions;
-        Ok(status)
-    }
-
-    pub fn from_sync_log_v7_row(row: SyncLogV7Row) -> FullSyncStatusV7 {
+        linked_descriptions: Vec<Description>,
+    ) -> FullSyncStatusV7 {
         let SyncLogV7Row {
             id: _,
             started_datetime,
@@ -102,7 +85,26 @@ impl FullSyncStatusV7 {
                 total: push_progress_total.map(i32_to_u32),
                 done: push_progress_done.map(i32_to_u32),
             }),
-            linked_descriptions: Vec::new(),
+            linked_descriptions,
         }
+    }
+
+    /// One-shot lookup: query sync_request rows by `reference_id` and return
+    /// their descriptions. Use this on the query path (e.g. `latest_sync_status`)
+    /// where there's no logger holding cached descriptions.
+    pub fn lookup_descriptions(
+        connection: &StorageConnection,
+        reference_id: Option<&str>,
+    ) -> Result<Vec<Description>, RepositoryError> {
+        let Some(reference_id) = reference_id else {
+            return Ok(Vec::new());
+        };
+        Ok(SyncRequestRepository::new(connection)
+            .query(SyncRequestCondition::ReferenceId::equal(
+                reference_id.to_string(),
+            ))?
+            .into_iter()
+            .map(|r| r.description)
+            .collect())
     }
 }

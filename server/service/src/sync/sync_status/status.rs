@@ -325,10 +325,12 @@ fn get_latest_v7(ctx: &ServiceContext) -> Result<Option<FullSyncStatusV7>, Repos
     else {
         return Ok(None);
     };
-    Ok(Some(FullSyncStatusV7::from_sync_log_v7_row_with_links(
-        &ctx.connection,
+    let linked_descriptions =
+        FullSyncStatusV7::lookup_descriptions(&ctx.connection, row.reference_id.as_deref())?;
+    Ok(Some(FullSyncStatusV7::from_sync_log_v7_row(
         row,
-    )?))
+        linked_descriptions,
+    )))
 }
 
 /// Summary of the most recent successful sync — v7 first (always more recent
@@ -342,7 +344,9 @@ fn get_latest_successful_sync_status(
             SyncLogV7Condition::Error::is_null(),
         ]))?
     {
-        return Ok(Some(FullSyncStatusV7::from_sync_log_v7_row(row).summary));
+        return Ok(Some(
+            FullSyncStatusV7::from_sync_log_v7_row(row, Vec::new()).summary,
+        ));
     }
 
     Ok(SyncLogV5V6Repository::new(&ctx.connection)

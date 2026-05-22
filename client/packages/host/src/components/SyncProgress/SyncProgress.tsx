@@ -17,6 +17,8 @@ import {
   AccordionDetails,
   AccordionSummary,
   Typography,
+  ArrayElement,
+  noOtherVariants,
 } from '@openmsupply-client/common';
 import {
   FullSyncStatusV5V6Fragment,
@@ -62,19 +64,38 @@ export const SyncProgress: FC<SyncProgressProps> = ({
         <HorizontalStepper steps={steps} colour={colour} />
       )}
       {isSyncStatusV7(syncStatus) &&
-        syncStatus.linkedSyncRequests.length > 0 && (
-          <LinkedSyncProcesses
-            descriptions={syncStatus.linkedSyncRequests}
-          />
+        syncStatus.linkedDescriptions.length > 0 && (
+          <LinkedSyncProcesses descriptions={syncStatus.linkedDescriptions} />
         )}
     </Box>
   );
 };
 
+type LinkedDescriptions = FullSyncStatusV7Fragment['linkedDescriptions'];
+
+// Exhaustive renderer
+const renderDescription = (
+  t: TypedTFunction<LocaleKey>,
+  description: ArrayElement<LinkedDescriptions>
+): string => {
+  switch (description.__typename) {
+    case 'AllStoreDataDescription':
+      return t('sync-status.description.all-store-data', {
+        storeName: description.storeName,
+      });
+    case 'TableNameDescription':
+      return t('sync-status.description.table-name', {
+        tableName: description.tableName,
+      });
+    default:
+      return noOtherVariants(description);
+  }
+};
+
 const LinkedSyncProcesses = ({
   descriptions,
 }: {
-  descriptions: string[];
+  descriptions: LinkedDescriptions;
 }) => {
   const t = useTranslation();
   return (
@@ -90,7 +111,7 @@ const LinkedSyncProcesses = ({
         <Box display="flex" flexDirection="column" gap={0.5}>
           {descriptions.map((d, i) => (
             <Typography key={i} variant="body2">
-              {d}
+              {renderDescription(t, d)}
             </Typography>
           ))}
         </Box>

@@ -2825,6 +2825,8 @@
   "sync-info.syncing": "Syncing...",
   "sync-info.updating-user": "Updating user...",
   "sync-info.user-last-updated": "User configuration last updated",
+  "sync-status.description.all-store-data": "All data for store {{storeName}}",
+  "sync-status.description.table-name": "All data in {{tableName}}",
   "sync-status.integrate": "Integrate",
   "sync-status.linked-sync-requests": "Special syncs ({{count}})",
   "sync-status.prepare": "Prepare",

@@ -21,7 +21,7 @@ use repository::{
 };
 
 use crate::{
-    cursor_controller::CursorType,
+    cursor_controller::{CursorController, CursorType},
     service_provider::{ServiceContext, ServiceProvider},
     sync::settings::SyncSettings,
     sync_v7::{
@@ -62,17 +62,24 @@ pub async fn run_pending_sync_requests(
             filter,
             cursor_type: CursorType::Dynamic(format!("push_{reference_id}")),
         }),
-        reference_id: Some(reference_id),
-        // Any auxilary sync requests go with initialising flag
-        // When pulling store data for a transfered store for example
+        reference_id: Some(reference_id.clone()),
+        // Any auxiliary sync requests go with initialising flag
+        // When pulling store data for a transferred store for example
         is_initialising: true,
-        run_post_sync_triggers: false,
     };
 
     sync_v7(service_provider, ctx, settings.clone(), request).await?;
 
     let ids: Vec<String> = members.iter().map(|m| m.id.clone()).collect();
     repo.mark_finished_many(&ids, chrono::Utc::now().naive_utc())?;
+
+    // The group's dynamic cursors are no longer needed — purge them so the
+    // KV JSON blob doesn't grow unbounded. Idempotent on missing keys; only
+    // runs on Ok so a retry from a partial failure can resume the cursors.
+    CursorController::from_cursor_type(CursorType::Dynamic(format!("pull_{reference_id}")))
+        .delete(&ctx.connection)?;
+    CursorController::from_cursor_type(CursorType::Dynamic(format!("push_{reference_id}")))
+        .delete(&ctx.connection)?;
 
     Ok(())
 }
