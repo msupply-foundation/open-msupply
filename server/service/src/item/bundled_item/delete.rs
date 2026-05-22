@@ -35,7 +35,7 @@ pub fn delete_bundled_item(
 
             Ok(result)
         })
-        .map_err(|error| error.to_inner_error())?;
+        .map_err(|error: TransactionError<DeleteBundledItemError>| error.to_inner_error())?;
     Ok(input.id)
 }
 
