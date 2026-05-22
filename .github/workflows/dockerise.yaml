@@ -229,3 +229,24 @@ jobs:
       image_tag: ${{ needs.dockerise.outputs.image_tag }}-dev
     secrets:
       ORG_WORKFLOW_TOKEN: ${{ secrets.ORG_WORKFLOW_TOKEN }}
+
+  trigger-sync-suite-tests:
+    name: Trigger Sync Suite Tests
+    needs: [dockerise]
+    # Runs on all tags (release + RC + develop) — all produce a sqlite-amd64 image
+    if: always() && !failure() && !cancelled()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch oms-release to tmf-testing
+        run: |
+          curl -s -f -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.TMFTESTING_PAT }}" \
+            https://api.github.com/repos/${{ secrets.TMFTESTING_REPO }}/dispatches \
+            -d "{
+              \"event_type\": \"oms-release\",
+              \"client_payload\": {
+                \"oms_image\": \"msupplyfoundation/omsupply:${{ needs.dockerise.outputs.image_tag }}-sqlite-amd64\",
+                \"release_tag\": \"${{ needs.dockerise.outputs.image_tag }}\"
+              }
+            }"
