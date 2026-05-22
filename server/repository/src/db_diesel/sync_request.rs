@@ -26,7 +26,7 @@ impl std::fmt::Debug for SyncRequestFilter {
 // just the localisation parameters; the frontend renders the user-facing
 // string from `kind` and the parameters.
 diesel_json_type! {
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, PartialEq)]
     #[serde(tag = "kind")]
     pub enum Description {
         AllStoreData { store_name: String },
@@ -156,7 +156,7 @@ impl Upsert for SyncRequestRow {
         SyncRequestRepository::new(con).upsert_one(self)
     }
 
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, _con: &StorageConnection) {
         // Not implemented
     }
 }
