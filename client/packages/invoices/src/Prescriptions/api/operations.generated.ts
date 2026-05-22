@@ -5,6 +5,20 @@ import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type PrescriptionRowFragment = {
   __typename: 'InvoiceNode';
+  id: string;
+  invoiceNumber: number;
+  type: Types.InvoiceNodeType;
+  status: Types.InvoiceNodeStatus;
+  colour?: string | null;
+  comment?: string | null;
+  createdDatetime: string;
+  otherPartyName: string;
+  theirReference?: string | null;
+  prescriptionDate?: string | null;
+};
+
+export type PrescriptionFragment = {
+  __typename: 'InvoiceNode';
   comment?: string | null;
   createdDatetime: string;
   pickedDatetime?: string | null;
@@ -346,42 +360,70 @@ export type PrescriptionsQuery = {
     totalCount: number;
     nodes: Array<{
       __typename: 'InvoiceNode';
-      theirReference?: string | null;
-      comment?: string | null;
-      createdDatetime: string;
-      pickedDatetime?: string | null;
-      verifiedDatetime?: string | null;
-      cancelledDatetime?: string | null;
-      isCancellation: boolean;
       id: string;
       invoiceNumber: number;
-      otherPartyName: string;
-      clinicianId?: string | null;
       type: Types.InvoiceNodeType;
       status: Types.InvoiceNodeStatus;
       colour?: string | null;
-      nameInsuranceJoinId?: string | null;
-      insuranceDiscountAmount?: number | null;
-      insuranceDiscountPercentage?: number | null;
-      currencyRate: number;
-      diagnosisId?: string | null;
-      programId?: string | null;
+      comment?: string | null;
+      createdDatetime: string;
+      otherPartyName: string;
+      theirReference?: string | null;
       prescriptionDate?: string | null;
-      patientId: string;
-      pricing: {
-        __typename: 'PricingNode';
-        totalAfterTax: number;
-        totalBeforeTax: number;
-        stockTotalBeforeTax: number;
-        stockTotalAfterTax: number;
-        serviceTotalAfterTax: number;
-        serviceTotalBeforeTax: number;
-        taxPercentage?: number | null;
-      };
-      user?: {
-        __typename: 'UserNode';
-        username: string;
-        email?: string | null;
+    }>;
+  };
+};
+
+export type PrescriptionHistoryRowFragment = {
+  __typename: 'InvoiceNode';
+  id: string;
+  invoiceNumber: number;
+  createdDatetime: string;
+  pickedDatetime?: string | null;
+  clinician?: {
+    __typename: 'ClinicianNode';
+    firstName?: string | null;
+    lastName: string;
+  } | null;
+  lines: {
+    __typename: 'InvoiceLineConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'InvoiceLineNode';
+      id: string;
+      itemName: string;
+      numberOfPacks: number;
+      packSize: number;
+      note?: string | null;
+      item: { __typename: 'ItemNode'; id: string };
+    }>;
+  };
+};
+
+export type PrescriptionHistoryQueryVariables = Types.Exact<{
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  key: Types.InvoiceSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  filter?: Types.InputMaybe<Types.InvoiceFilterInput>;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type PrescriptionHistoryQuery = {
+  __typename: 'Queries';
+  invoices: {
+    __typename: 'InvoiceConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'InvoiceNode';
+      id: string;
+      invoiceNumber: number;
+      createdDatetime: string;
+      pickedDatetime?: string | null;
+      clinician?: {
+        __typename: 'ClinicianNode';
+        firstName?: string | null;
+        lastName: string;
       } | null;
       lines: {
         __typename: 'InvoiceLineConnector';
@@ -389,133 +431,13 @@ export type PrescriptionsQuery = {
         nodes: Array<{
           __typename: 'InvoiceLineNode';
           id: string;
-          type: Types.InvoiceLineNodeType;
-          batch?: string | null;
-          expiryDate?: string | null;
-          numberOfPacks: number;
-          prescribedQuantity?: number | null;
-          packSize: number;
-          invoiceId: string;
-          costPricePerPack: number;
-          sellPricePerPack: number;
-          note?: string | null;
-          totalBeforeTax: number;
-          totalAfterTax: number;
-          taxPercentage?: number | null;
           itemName: string;
-          item: {
-            __typename: 'ItemNode';
-            id: string;
-            name: string;
-            code: string;
-            unitName?: string | null;
-            isVaccine: boolean;
-            doses: number;
-            itemDirections: Array<{
-              __typename: 'ItemDirectionNode';
-              directions: string;
-              id: string;
-              itemId: string;
-              priority: number;
-            }>;
-            warnings: Array<{
-              __typename: 'WarningNode';
-              warningText: string;
-              id: string;
-              itemId: string;
-              priority: boolean;
-              code: string;
-            }>;
-          };
-          location?: {
-            __typename: 'LocationNode';
-            id: string;
-            name: string;
-            code: string;
-            onHold: boolean;
-          } | null;
-          stockLine?: {
-            __typename: 'StockLineNode';
-            id: string;
-            itemId: string;
-            batch?: string | null;
-            availableNumberOfPacks: number;
-            totalNumberOfPacks: number;
-            onHold: boolean;
-            sellPricePerPack: number;
-            costPricePerPack: number;
-            packSize: number;
-            expiryDate?: string | null;
-            volumePerPack: number;
-            item: {
-              __typename: 'ItemNode';
-              name: string;
-              code: string;
-              isVaccine: boolean;
-              doses: number;
-              itemDirections: Array<{
-                __typename: 'ItemDirectionNode';
-                directions: string;
-                id: string;
-                itemId: string;
-                priority: number;
-              }>;
-              warnings: Array<{
-                __typename: 'WarningNode';
-                warningText: string;
-                id: string;
-                itemId: string;
-                priority: boolean;
-                code: string;
-              }>;
-            };
-            vvmStatus?: {
-              __typename: 'VvmstatusNode';
-              id: string;
-              priority: number;
-              unusable: boolean;
-              description: string;
-            } | null;
-          } | null;
+          numberOfPacks: number;
+          packSize: number;
+          note?: string | null;
+          item: { __typename: 'ItemNode'; id: string };
         }>;
       };
-      patient?: {
-        __typename: 'PatientNode';
-        id: string;
-        name: string;
-        code: string;
-        gender?: Types.GenderTypeNode | null;
-        dateOfBirth?: string | null;
-        isDeceased: boolean;
-      } | null;
-      clinician?: {
-        __typename: 'ClinicianNode';
-        id: string;
-        firstName?: string | null;
-        lastName: string;
-      } | null;
-      currency?: {
-        __typename: 'CurrencyNode';
-        id: string;
-        code: string;
-        rate: number;
-        isHomeCurrency: boolean;
-      } | null;
-      diagnosis?: {
-        __typename: 'DiagnosisNode';
-        id: string;
-        code: string;
-        description: string;
-      } | null;
-      insurancePolicy?: {
-        __typename: 'InsurancePolicyNode';
-        policyNumber: string;
-        insuranceProviders?: {
-          __typename: 'InsuranceProviderNode';
-          providerName: string;
-        } | null;
-      } | null;
-      store: { __typename: 'StoreNode'; id: string };
     }>;
   };
 };
@@ -1225,6 +1147,21 @@ export type SavePrescriptionItemLinesMutation = {
   savePrescriptionItemLines: { __typename: 'InvoiceNode'; id: string };
 };
 
+export const PrescriptionRowFragmentDoc = gql`
+  fragment PrescriptionRow on InvoiceNode {
+    __typename
+    id
+    invoiceNumber
+    type
+    status
+    colour
+    comment
+    createdDatetime
+    prescriptionDate: backdatedDatetime
+    otherPartyName
+    theirReference
+  }
+`;
 export const ItemDirectionFragmentDoc = gql`
   fragment ItemDirection on ItemDirectionNode {
     __typename
@@ -1324,8 +1261,8 @@ export const PrescriptionLineFragmentDoc = gql`
   ${ItemDirectionFragmentDoc}
   ${WarningFragmentDoc}
 `;
-export const PrescriptionRowFragmentDoc = gql`
-  fragment PrescriptionRow on InvoiceNode {
+export const PrescriptionFragmentDoc = gql`
+  fragment Prescription on InvoiceNode {
     __typename
     comment
     createdDatetime
@@ -1447,6 +1384,34 @@ export const PartialPrescriptionLineFragmentDoc = gql`
   ${ItemDirectionFragmentDoc}
   ${WarningFragmentDoc}
 `;
+export const PrescriptionHistoryRowFragmentDoc = gql`
+  fragment PrescriptionHistoryRow on InvoiceNode {
+    __typename
+    id
+    invoiceNumber
+    createdDatetime
+    pickedDatetime
+    clinician {
+      firstName
+      lastName
+    }
+    lines {
+      __typename
+      nodes {
+        __typename
+        id
+        itemName
+        numberOfPacks
+        packSize
+        note
+        item {
+          id
+        }
+      }
+      totalCount
+    }
+  }
+`;
 export const HistoricalStockLineFragmentDoc = gql`
   fragment historicalStockLine on StockLineNode {
     id
@@ -1498,13 +1463,38 @@ export const PrescriptionsDocument = gql`
         __typename
         nodes {
           ...PrescriptionRow
-          theirReference
         }
         totalCount
       }
     }
   }
   ${PrescriptionRowFragmentDoc}
+`;
+export const PrescriptionHistoryDocument = gql`
+  query prescriptionHistory(
+    $first: Int
+    $offset: Int
+    $key: InvoiceSortFieldInput!
+    $desc: Boolean
+    $filter: InvoiceFilterInput
+    $storeId: String!
+  ) {
+    invoices(
+      page: { first: $first, offset: $offset }
+      sort: { key: $key, desc: $desc }
+      filter: $filter
+      storeId: $storeId
+    ) {
+      ... on InvoiceConnector {
+        __typename
+        nodes {
+          ...PrescriptionHistoryRow
+        }
+        totalCount
+      }
+    }
+  }
+  ${PrescriptionHistoryRowFragmentDoc}
 `;
 export const PrescriptionByNumberDocument = gql`
   query prescriptionByNumber($invoiceNumber: Int!, $storeId: String!) {
@@ -1530,11 +1520,11 @@ export const PrescriptionByNumberDocument = gql`
         }
       }
       ... on InvoiceNode {
-        ...PrescriptionRow
+        ...Prescription
       }
     }
   }
-  ${PrescriptionRowFragmentDoc}
+  ${PrescriptionFragmentDoc}
 `;
 export const PrescriptionByIdDocument = gql`
   query prescriptionById($invoiceId: String!, $storeId: String!) {
@@ -1556,11 +1546,11 @@ export const PrescriptionByIdDocument = gql`
         }
       }
       ... on InvoiceNode {
-        ...PrescriptionRow
+        ...Prescription
       }
     }
   }
-  ${PrescriptionRowFragmentDoc}
+  ${PrescriptionFragmentDoc}
 `;
 export const InsertPrescriptionDocument = gql`
   mutation insertPrescription(
@@ -1901,6 +1891,24 @@ export function getSdk(
             signal,
           }),
         'prescriptions',
+        'query',
+        variables
+      );
+    },
+    prescriptionHistory(
+      variables: PrescriptionHistoryQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<PrescriptionHistoryQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PrescriptionHistoryQuery>({
+            document: PrescriptionHistoryDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'prescriptionHistory',
         'query',
         variables
       );

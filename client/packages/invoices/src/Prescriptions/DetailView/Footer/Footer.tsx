@@ -18,14 +18,14 @@ import {
 import { getStatusTranslator, prescriptionStatuses } from '../../../utils';
 import { StatusChangeButton } from './StatusChangeButton';
 import {
+  PrescriptionFragment,
   PrescriptionLineFragment,
-  PrescriptionRowFragment,
   usePrescription,
   usePrescriptionLines,
 } from '../../api';
 import { usePrintLabels } from '../hooks/usePrinter';
 
-const createStatusLog = (invoice: PrescriptionRowFragment) => {
+const createStatusLog = (invoice: PrescriptionFragment) => {
   const statusIdx = prescriptionStatuses.findIndex(s => invoice.status === s);
 
   const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
