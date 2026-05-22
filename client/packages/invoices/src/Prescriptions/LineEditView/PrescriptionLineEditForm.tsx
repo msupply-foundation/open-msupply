@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   TextArea,
   InputWithLabelRow,
+  useShallow,
 } from '@openmsupply-client/common';
 import { AccordionPanelSection } from './PanelSection';
 import { getPrescriptionDirections } from './getPrescriptionDirections';
@@ -32,14 +33,16 @@ export const PrescriptionLineEditForm = ({
   const t = useTranslation();
 
   const { draftLines, item, note, allocatedQuantity, allocateInType, setNote } =
-    useAllocationContext(state => ({
-      draftLines: state.draftLines,
-      item: state.item,
-      note: state.note,
-      setNote: state.setNote,
-      allocatedQuantity: getAllocatedQuantity(state),
-      allocateInType: state.allocateIn.type,
-    }));
+    useAllocationContext(
+      useShallow(state => ({
+        draftLines: state.draftLines,
+        item: state.item,
+        note: state.note,
+        setNote: state.setNote,
+        allocatedQuantity: getAllocatedQuantity(state),
+        allocateInType: state.allocateIn.type,
+      }))
+    );
 
   const [defaultDirection, setDefaultDirection] = useState('');
   const [abbreviation, setAbbreviation] = useState('');
