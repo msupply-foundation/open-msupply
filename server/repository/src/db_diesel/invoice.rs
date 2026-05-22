@@ -2,7 +2,7 @@ use super::{
     clinician_link_row::clinician_link, clinician_row::clinician, invoice_line_row::invoice_line,
     invoice_row::invoice, name_link_row::name_link, name_row::name, store_row::store, ClinicianRow,
     DBType, InvoiceRow, InvoiceStatus, InvoiceType, NameRow, RepositoryError, StorageConnection,
-    StoreRow,
+    StoreRow, StoreRowWithoutLogo,
 };
 
 use crate::{
@@ -86,7 +86,7 @@ pub struct InvoiceRepository<'a> {
 type InvoiceJoin = (
     InvoiceRow,
     (NameLinkRow, NameRow),
-    StoreRow,
+    StoreRowWithoutLogo,
     Option<(ClinicianLinkRow, ClinicianRow)>,
 );
 
@@ -178,9 +178,15 @@ impl<'a> InvoiceRepository<'a> {
         }
 
         // Debug diesel query
-        // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
+        println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
         let result = query
+            .select((
+                invoice::all_columns,
+                (name_link::all_columns, name::all_columns),
+                store_without_logo_columns(),
+                (clinician_link::all_columns, clinician::all_columns).nullable(),
+            ))
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<InvoiceJoin>(self.connection.lock().connection())?;
@@ -194,15 +200,44 @@ impl<'a> InvoiceRepository<'a> {
             .inner_join(name_link::table.inner_join(name::table))
             .inner_join(store::table)
             .left_join(clinician_link::table.inner_join(clinician::table))
+            .select((
+                invoice::all_columns,
+                (name_link::all_columns, name::all_columns),
+                store_without_logo_columns(),
+                (clinician_link::all_columns, clinician::all_columns).nullable(),
+            ))
             .first::<InvoiceJoin>(self.connection.lock().connection())?)
     }
+}
+
+/// Select all `store` columns except `logo`. The logo can be a large base64
+/// blob; including it in joined-row queries (e.g. listing invoices) explodes
+/// memory because the value is duplicated into every result row.
+fn store_without_logo_columns() -> (
+    store::id,
+    store::name_link_id,
+    store::code,
+    store::site_id,
+    store::store_mode,
+    store::created_date,
+    store::is_disabled,
+) {
+    (
+        store::id,
+        store::name_link_id,
+        store::code,
+        store::site_id,
+        store::store_mode,
+        store::created_date,
+        store::is_disabled,
+    )
 }
 
 fn to_domain((invoice_row, (_, name_row), store_row, clinician_link_join): InvoiceJoin) -> Invoice {
     Invoice {
         invoice_row,
         name_row,
-        store_row,
+        store_row: store_row.into(),
         clinician_row: clinician_link_join.map(|(_, clinician_row)| clinician_row),
     }
 }

@@ -59,6 +59,35 @@ pub struct StoreRow {
     pub is_disabled: bool,
 }
 
+/// Same as `StoreRow` but without the `logo` column. Use this in joins where
+/// the logo is not needed — it can be a large base64 TEXT and including it in
+/// every joined row blows up memory (e.g. listing invoices).
+#[derive(Clone, Queryable, Debug, PartialEq, Eq, Default)]
+pub struct StoreRowWithoutLogo {
+    pub id: String,
+    pub name_link_id: String,
+    pub code: String,
+    pub site_id: i32,
+    pub store_mode: StoreMode,
+    pub created_date: Option<NaiveDate>,
+    pub is_disabled: bool,
+}
+
+impl From<StoreRowWithoutLogo> for StoreRow {
+    fn from(s: StoreRowWithoutLogo) -> Self {
+        StoreRow {
+            id: s.id,
+            name_link_id: s.name_link_id,
+            code: s.code,
+            site_id: s.site_id,
+            logo: None,
+            store_mode: s.store_mode,
+            created_date: s.created_date,
+            is_disabled: s.is_disabled,
+        }
+    }
+}
+
 pub struct StoreRowRepository<'a> {
     connection: &'a StorageConnection,
 }
