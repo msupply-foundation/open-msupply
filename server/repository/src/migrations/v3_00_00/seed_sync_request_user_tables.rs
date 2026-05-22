@@ -76,7 +76,10 @@ fn pull_has_started(connection: &StorageConnection) -> anyhow::Result<bool> {
     }
 
     let row: Option<One> = sql_query(
-        "SELECT 1 AS v FROM sync_log_v7 WHERE pull_started_datetime IS NOT NULL LIMIT 1",
+        "SELECT 1 AS v FROM sync_log_v7 WHERE pull_started_datetime IS NOT NULL \
+         UNION \
+         SELECT 1 AS v FROM sync_log WHERE pull_central_started_datetime IS NOT NULL \
+         LIMIT 1",
     )
     .get_result(connection.lock().connection())
     .optional()?;
