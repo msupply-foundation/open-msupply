@@ -35,7 +35,7 @@ pub fn delete_packaging_variant(
 
             Ok(result)
         })
-        .map_err(|error| error.to_inner_error())?;
+        .map_err(|error: TransactionError<DeletePackagingVariantError>| error.to_inner_error())?;
     Ok(input.id)
 }
 
