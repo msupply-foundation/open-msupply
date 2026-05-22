@@ -2,11 +2,13 @@ use crate::types::PluginDataConnector;
 use async_graphql::*;
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use repository::{
-    DatetimeFilter, EqualFilter, PluginDataFilter, PluginDataSort, PluginDataSortField,
+    DatetimeFilter, EqualFilter, PaginationOption, PluginDataFilter, PluginDataSort,
+    PluginDataSortField,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -45,6 +47,7 @@ pub fn get_plugin_data(
     ctx: &Context<'_>,
     store_id: &str,
     plugin_code: &str,
+    page: Option<PaginationInput>,
     filter: Option<PluginDataFilterInput>,
     sort: Option<Vec<PluginDataSortInput>>,
 ) -> Result<PluginDataResponse> {
@@ -67,6 +70,7 @@ pub fn get_plugin_data(
         .plugin_data_service
         .get_plugin_data(
             &service_context,
+            page.map(PaginationOption::from),
             Some(filter),
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|s| s.to_domain()),
