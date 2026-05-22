@@ -603,6 +603,9 @@ macro_rules! define_linked_tables {
 /// Defines an enum that is stored as plain `TEXT` in the database via `strum` serialization
 /// (`snake_case` by default). No database migration is needed when adding new variants.
 ///
+/// Variants may optionally include a single-field payload (e.g.
+/// `Unknown(String)`). The fallback variant should carry `#[strum(default)]`
+///
 /// Usage:
 /// ```
 /// diesel_string_enum! {
@@ -611,6 +614,8 @@ macro_rules! define_linked_tables {
 ///         #[default]
 ///         VariantA,
 ///         VariantB,
+///         #[strum(default)]
+///         Unknown(String),
 ///     }
 /// }
 /// ```
@@ -620,7 +625,7 @@ macro_rules! diesel_string_enum {
         $vis:vis enum $name:ident {
             $(
                 $(#[$variant_meta:meta])*
-                $variant:ident
+                $variant:ident $(( $($variant_payload:tt)* ))?
             ),* $(,)?
         }
     ) => {
@@ -639,7 +644,7 @@ macro_rules! diesel_string_enum {
         $vis enum $name {
             $(
                 $(#[$variant_meta])*
-                $variant
+                $variant $(( $($variant_payload)* ))?
             ),*
         }
 
