@@ -1,10 +1,11 @@
 use repository::{
-    Pagination, PluginData, PluginDataFilter, PluginDataRepository, PluginDataSort, RepositoryError,
+    PaginationOption, PluginData, PluginDataFilter, PluginDataRepository, PluginDataSort,
+    RepositoryError,
 };
 
 use crate::i64_to_u32;
 use crate::service_provider::ServiceContext;
-use crate::ListResult;
+use crate::{get_default_pagination_unlimited, ListResult};
 mod insert;
 pub use self::insert::*;
 mod update;
@@ -14,13 +15,15 @@ pub trait PluginDataServiceTrait: Sync + Send {
     fn get_plugin_data(
         &self,
         ctx: &ServiceContext,
+        pagination: Option<PaginationOption>,
         filter: Option<PluginDataFilter>,
         sort: Option<PluginDataSort>,
     ) -> Result<ListResult<PluginData>, RepositoryError> {
+        let pagination = get_default_pagination_unlimited(pagination);
         let repository = PluginDataRepository::new(&ctx.connection);
 
         Ok(ListResult {
-            rows: repository.query(Pagination::new(), filter.clone(), sort)?,
+            rows: repository.query(pagination, filter.clone(), sort)?,
             count: i64_to_u32(repository.count(filter)?),
         })
     }

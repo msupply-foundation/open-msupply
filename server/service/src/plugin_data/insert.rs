@@ -151,7 +151,7 @@ mod test {
             .unwrap();
 
         let plugin_data = service
-            .get_plugin_data(&context, None, None)
+            .get_plugin_data(&context, None, None, None)
             .unwrap()
             .rows
             .pop()
