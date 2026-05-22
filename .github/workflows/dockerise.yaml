@@ -234,7 +234,7 @@ jobs:
     name: Trigger Sync Suite Tests
     needs: [dockerise]
     # Runs on all tags (release + RC + develop) — all produce a sqlite-amd64 image
-    if: always() && !failure() && !cancelled()
+    if: ${{ success() }}
     runs-on: ubuntu-latest
     steps:
       - name: Dispatch oms-release to tmf-testing
