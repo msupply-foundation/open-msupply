@@ -12,6 +12,7 @@ import {
   useEditModal,
   useToggle,
   useUrlQuery,
+  AppFooterStatusPortal,
 } from '@openmsupply-client/common';
 import {
   ActivityLogList,
@@ -22,6 +23,7 @@ import { useRequest } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
+import { StatusFooter } from './Footer';
 import { AppRoute } from '@openmsupply-client/config';
 import { RequestRequisitionLineErrorProvider } from '../context';
 import { IndicatorsTab } from './IndicatorsTab';
@@ -152,6 +154,11 @@ export const DetailView = () => {
       <Toolbar />
 
       <DetailTabs tabs={tabs} />
+
+      {/* Fallback status footer for tabs that don't own the lines table.
+        The Details tab's `Footer` mounts an `AppFooterPortal` only when rows
+        are selected; otherwise this portal shows the status crumbs. */}
+      <AppFooterStatusPortal Content={<StatusFooter />} />
 
       <SidePanel />
 

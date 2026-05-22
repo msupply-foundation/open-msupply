@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
 import {
   AlertModal,
+  AppFooterStatusPortal,
   DetailTabs,
   DetailViewSkeleton,
   RouteBuilder,
@@ -17,6 +18,7 @@ import { usePurchaseOrder } from '../api';
 import { Details, Documents, GeneralTab, InboundShipments } from './Tabs';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
+import { StatusFooter } from './Footer';
 import { SidePanel } from './SidePanel';
 import { PurchaseOrderLineErrorProvider } from '../context';
 import { PurchaseOrderDetailTabs } from './types';
@@ -101,6 +103,11 @@ const DetailViewInner = () => {
       />
       <Toolbar isDisabled={isDisabled} />
       <DetailTabs tabs={tabs} />
+      {/* Default footer: status crumbs + status-change button, shown on every
+        tab. The General tab's `Footer` only mounts an `AppFooterPortal` when
+        rows are selected (to show row-selection actions); the status portal
+        steps aside automatically while that's mounted. */}
+      <AppFooterStatusPortal Content={<StatusFooter />} />
       <SidePanel />
     </>
   ) : (
