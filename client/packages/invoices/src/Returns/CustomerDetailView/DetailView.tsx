@@ -9,6 +9,7 @@ import {
   useEditModal,
   useBreadcrumbs,
   useUrlQuery,
+  AppFooterStatusPortal,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -18,6 +19,7 @@ import { SidePanel } from './SidePanel/SidePanel';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { DetailsTab } from './Tabs/Details';
 import { CustomerReturnDetailTabs } from './types';
+import { StatusFooter } from './Footer';
 
 export const CustomerReturnDetailView = () => {
   const { data, isLoading } = useReturns.document.customerReturn();
@@ -67,6 +69,10 @@ export const CustomerReturnDetailView = () => {
           <AppBarButtons onAddItem={onAddItem} />
           <Toolbar />
           <DetailTabs tabs={tabs} />
+          {/* Fallback status footer for tabs that don't own the lines table.
+            The Details tab's `Footer` mounts an `AppFooterPortal` only when
+            rows are selected; otherwise this portal shows the status crumbs. */}
+          <AppFooterStatusPortal Content={<StatusFooter />} />
           <SidePanel />
         </>
       ) : (

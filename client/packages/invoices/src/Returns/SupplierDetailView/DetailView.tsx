@@ -9,11 +9,13 @@ import {
   DetailTabs,
   useBreadcrumbs,
   useUrlQuery,
+  AppFooterStatusPortal,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
+import { StatusFooter } from './Footer';
 import { useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { DetailsTab } from './Tabs/Details';
@@ -63,6 +65,10 @@ export const SupplierReturnsDetailView = () => {
           <AppBarButtons onAddItem={onAddItem} />
           <Toolbar />
           <DetailTabs tabs={tabs} />
+          {/* Fallback status footer for tabs that don't own the lines table.
+            The Details tab's `Footer` mounts an `AppFooterPortal` only when
+            rows are selected; otherwise this portal shows the status crumbs. */}
+          <AppFooterStatusPortal Content={<StatusFooter />} />
           <SidePanel />
         </>
       ) : (
