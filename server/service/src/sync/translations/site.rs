@@ -1,12 +1,14 @@
 use super::serde_utils::deserialize_sync_version;
 use super::{PullTranslateResult, SyncTranslation};
 use crate::sync::CentralServerConfig;
-use repository::{SiteRow, SiteRowDelete, StorageConnection, SyncBufferRow, SyncVersion};
+use crate::sync::translations::PushTranslateResult;
+use repository::{ChangelogRow, ChangelogTableName, Row, SiteRow, SiteRowDelete, StorageConnection, SyncBufferRow, SyncVersion};
 use serde::{Deserialize, Serialize};
+use util::sync_serde::{empty_str_as_option_string, option_string_as_empty_str};
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Debug)]
-pub struct LegacySiteRow {
+#[derive(Deserialize, Debug)]
+pub struct LegacySitePullRow {
     #[serde(rename = "ID")]
     pub id: String,
     #[serde(rename = "site_ID")]
@@ -14,13 +16,19 @@ pub struct LegacySiteRow {
     pub name: String,
     #[serde(rename = "password_hash")]
     pub hashed_password: String,
-    #[serde(rename = "hardwareID")]
+    #[serde(rename = "hardwareID", deserialize_with = "empty_str_as_option_string")]
     pub hardware_id: Option<String>,
     pub code: Option<String>,
     /// 4D site.sync_version is a free-text field; "v7" upgrades the site,
     /// anything else (including empty) is treated as v5/v6.
     #[serde(default, deserialize_with = "deserialize_sync_version")]
     pub(crate) sync_version: SyncVersion,
+}
+
+#[derive(Serialize, Debug)]
+pub struct LegacySitePushRow {
+    #[serde(rename = "hardwareID", serialize_with = "option_string_as_empty_str")]
+    pub hardware_id: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -40,6 +48,10 @@ impl SyncTranslation for SiteTranslation {
         vec![]
     }
 
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::Site)
+    }
+
     fn should_translate_from_sync_record(&self, row: &SyncBufferRow) -> bool {
         // Site rows are only integrated on the central server
         row.table_name == self.table_name() && CentralServerConfig::is_central_server()
@@ -50,7 +62,7 @@ impl SyncTranslation for SiteTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_value::<LegacySiteRow>(sync_record.data.0.clone())?;
+        let data = serde_json::from_value::<LegacySitePullRow>(sync_record.data.0.clone())?;
 
         let result = SiteRow {
             id: data.site_id,
@@ -65,6 +77,21 @@ impl SyncTranslation for SiteTranslation {
         };
 
         Ok(PullTranslateResult::upsert(result))
+    }
+    
+    fn try_translate_to_upsert_sync_record(
+        &self,
+        _connection: &StorageConnection,
+        changelog: &ChangelogRow,
+        row: Row,
+    ) -> Result<PushTranslateResult, anyhow::Error>
+    {
+        let Row::Site(site_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+        
+        let result = LegacySitePushRow { hardware_id: site_row.hardware_id };
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(result)?))
     }
 
     fn try_translate_from_delete_sync_record(
