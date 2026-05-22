@@ -124,6 +124,13 @@ pub struct UserPermissionRow {
     pub context_id: Option<String>,
 }
 
+impl PermissionType {
+    pub fn known_iter() -> impl Iterator<Item = PermissionType> {
+        use strum::IntoEnumIterator;
+        PermissionType::iter().filter(|p| !matches!(p, PermissionType::Unknown(_)))
+    }
+}
+
 impl UserPermissionRow {
     /// Stable id for a non-context-bound permission keyed by `(user_id, store_id,
     /// permission)`. Context-bound permissions (synced from `om_user_permission`)
@@ -309,8 +316,7 @@ mod test {
         .await;
 
         let repo = UserPermissionRowRepository::new(&connection);
-        // Try upsert all variants of PermissionType, confirm that diesel enums match postgres
-        for permission in PermissionType::iter() {
+        for permission in PermissionType::known_iter() {
             let row_id = format!("{permission:?}");
 
             let result = repo.upsert_one(&UserPermissionRow {
@@ -319,10 +325,23 @@ mod test {
                 store_id: Some("store_a".to_string()),
                 ..Default::default()
             });
-            assert_eq!(result, Ok(()), "\n \n HINT: Failed to insert permission for type {row_id:?}. Have you created a migration to add this type to the postgres database enum? \n");
+            assert_eq!(result, Ok(()), "Failed to insert permission {row_id:?}");
 
             let found = repo.find_one_by_id(&row_id).unwrap().unwrap();
             assert_eq!(found.permission, permission);
         }
+
+        repo.upsert_one(&UserPermissionRow {
+            id: "unknown_perm".to_string(),
+            permission: PermissionType::Unknown("FUTURE_PERMISSION".to_string()),
+            store_id: Some("store_a".to_string()),
+            ..Default::default()
+        })
+        .unwrap();
+        let found = repo.find_one_by_id("unknown_perm").unwrap().unwrap();
+        assert_eq!(
+            found.permission,
+            PermissionType::Unknown("FUTURE_PERMISSION".to_string())
+        );
     }
 }
