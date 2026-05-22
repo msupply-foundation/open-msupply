@@ -3758,6 +3758,8 @@ export type InsertPatientResponse = PatientNode;
 export type InsertPluginDataInput = {
   data: Scalars['String']['input'];
   dataIdentifier: Scalars['String']['input'];
+  /** Optional plugin-controlled timestamp. */
+  datetime?: InputMaybe<Scalars['DateTime']['input']>;
   id: Scalars['String']['input'];
   pluginCode: Scalars['String']['input'];
   relatedRecordId?: InputMaybe<Scalars['String']['input']>;
@@ -6878,6 +6880,7 @@ export type PluginDataConnector = {
 
 export type PluginDataFilterInput = {
   dataIdentifier?: InputMaybe<EqualFilterStringInput>;
+  datetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   relatedRecordId?: InputMaybe<EqualFilterStringInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
@@ -6887,6 +6890,8 @@ export type PluginDataNode = {
   __typename: 'PluginDataNode';
   data: Scalars['String']['output'];
   dataIdentifier: Scalars['String']['output'];
+  /** Optional, plugin-controlled timestamp (e.g. an "update time"). */
+  datetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   pluginCode: Scalars['String']['output'];
   relatedRecordId?: Maybe<Scalars['String']['output']>;
@@ -6896,6 +6901,7 @@ export type PluginDataNode = {
 export type PluginDataResponse = PluginDataConnector;
 
 export enum PluginDataSortFieldInput {
+  Datetime = 'datetime',
   Id = 'id',
   PluginCode = 'pluginCode',
 }
@@ -10733,6 +10739,8 @@ export type UpdatePatientResponse = PatientNode;
 export type UpdatePluginDataInput = {
   data: Scalars['String']['input'];
   dataIdentifier: Scalars['String']['input'];
+  /** Optional plugin-controlled timestamp. */
+  datetime?: InputMaybe<Scalars['DateTime']['input']>;
   id: Scalars['String']['input'];
   pluginCode: Scalars['String']['input'];
   relatedRecordId?: InputMaybe<Scalars['String']['input']>;

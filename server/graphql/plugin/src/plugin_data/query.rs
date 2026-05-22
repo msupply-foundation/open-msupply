@@ -1,11 +1,13 @@
 use crate::types::PluginDataConnector;
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::EqualFilterStringInput,
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::{EqualFilter, PluginDataFilter, PluginDataSort, PluginDataSortField};
+use repository::{
+    DatetimeFilter, EqualFilter, PluginDataFilter, PluginDataSort, PluginDataSortField,
+};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Union)]
@@ -19,6 +21,7 @@ pub struct PluginDataFilterInput {
     pub store_id: Option<EqualFilterStringInput>,
     pub related_record_id: Option<EqualFilterStringInput>,
     pub data_identifier: Option<EqualFilterStringInput>,
+    pub datetime: Option<DatetimeFilterInput>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -26,6 +29,7 @@ pub struct PluginDataFilterInput {
 pub enum PluginDataSortFieldInput {
     Id,
     PluginCode,
+    Datetime,
 }
 
 #[derive(InputObject)]
@@ -82,6 +86,7 @@ impl PluginDataFilterInput {
             plugin_code: None, // This is passed in the main graphql request as a dedicated parameter
             related_record_id: self.related_record_id.map(EqualFilter::from),
             data_identifier: self.data_identifier.map(EqualFilter::from),
+            datetime: self.datetime.map(DatetimeFilter::from),
         }
     }
 }
@@ -93,6 +98,7 @@ impl PluginDataSortInput {
         let key = match self.key {
             from::Id => to::Id,
             from::PluginCode => to::PluginCode,
+            from::Datetime => to::Datetime,
         };
 
         PluginDataSort {
