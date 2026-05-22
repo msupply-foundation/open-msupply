@@ -14,7 +14,7 @@ import {
 import { Draft } from 'packages/invoices/src/StockOut';
 
 import { useHistoryColumns } from './columns';
-import { usePrescriptionList } from '../../api';
+import { usePrescriptionHistoryList } from '../../api';
 
 interface HistoryModalModalProps {
   isOpen: boolean;
@@ -42,7 +42,7 @@ export const HistoryModal: React.FC<HistoryModalModalProps> = ({
 }) => {
   const {
     query: { data, isLoading },
-  } = usePrescriptionList({
+  } = usePrescriptionHistoryList({
     filterBy: {
       id: { notEqualTo: invoiceId },
       otherPartyId: { equalTo: patientId },
