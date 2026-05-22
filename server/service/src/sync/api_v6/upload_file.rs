@@ -1,7 +1,7 @@
 use super::*;
 use repository::SyncFileReferenceRow;
 use reqwest::multipart;
-use reqwest::Client;
+use util::https_client;
 use std::fs::File;
 use std::io::Read;
 
@@ -29,7 +29,7 @@ impl SyncApiV6 {
             }
         };
 
-        let client = Client::new();
+        let client = https_client();
 
         let json_request = SyncUploadFileRequestV6 {
             file_id: sync_file_reference_row.id.clone(),
