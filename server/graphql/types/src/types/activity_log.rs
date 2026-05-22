@@ -84,6 +84,7 @@ pub enum ActivityLogNodeType {
     DemographicProjectionUpdated,
     InvoiceStatusCancelled,
     ItemVariantCreated,
+    ItemVariantUpdated,
     ItemVariantDeleted,
     ItemVariantUpdatedName,
     ItemVariantUpdateLocationType,
@@ -112,6 +113,12 @@ pub enum ActivityLogNodeType {
     PatientCreated,
     PatientUpdated,
     InvoiceDateBackdated,
+    PackagingVariantCreated,
+    PackagingVariantUpdated,
+    PackagingVariantDeleted,
+    BundledItemCreated,
+    BundledItemUpdated,
+    BundledItemDeleted,
 }
 
 #[Object]
