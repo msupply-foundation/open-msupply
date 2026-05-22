@@ -36,8 +36,8 @@ export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
     {
       type: 'text',
       name: t('label.location'),
-      urlParameter: 'location.code',
-      placeholder: t('placeholder.search-by-location-code'),
+      urlParameter: 'location.codeOrName',
+      placeholder: t('placeholder.search-by-location-code-or-name'),
     },
     {
       type: 'group',
