@@ -1,10 +1,10 @@
 use super::StorageConnection;
+use crate::diesel_macros::diesel_string_enum;
 use crate::repository_error::RepositoryError;
 use crate::{ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert};
 use diesel::prelude::*;
-use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
-use strum::{AsRefStr, EnumIter};
+use strum::EnumIter;
 use util::uuid::{deterministic_uuid, Uuid};
 
 table! {
@@ -12,100 +12,101 @@ table! {
       id -> Text,
       user_id -> Text,
       store_id -> Nullable<Text>,
-      permission -> crate::db_diesel::user_permission_row::PermissionTypeMapping,
+      permission -> Text,
       context_id -> Nullable<Text>,
     }
 }
 
-#[derive(
-    DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, EnumIter, AsRefStr,
-)]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-#[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
-pub enum PermissionType {
-    ServerAdmin,
+diesel_string_enum! {
+    #[derive(Clone, Eq, Hash, Serialize, Deserialize, EnumIter)]
+    #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
+    pub enum PermissionType {
+        ServerAdmin,
 
-    /// User has access to the store this permission is associated with.
-    /// This acts like a master switch to enable/disable all user's permissions associated with a store.
-    #[default]
-    StoreAccess,
-    // location,
-    LocationMutate,
-    // sensor,
-    SensorMutate,
-    SensorQuery,
-    TemperatureBreachQuery,
-    TemperatureLogQuery,
-    // stock line
-    StockLineQuery,
-    StockLineMutate,
-    CreateRepack,
-    // stocktake
-    StocktakeQuery,
-    StocktakeMutate,
-    // inventory adjustment
-    InventoryAdjustmentMutate,
-    // requisition
-    RequisitionQuery,
-    RequisitionMutate,
-    RequisitionSend,
-    RequisitionCreateOutboundShipment,
-    // r&r form,
-    RnrFormQuery,
-    RnrFormMutate,
-    // outbound shipment
-    OutboundShipmentQuery,
-    OutboundShipmentMutate,
-    // inbound shipment
-    InboundShipmentQuery,
-    InboundShipmentMutate,
-    InboundShipmentVerify,
-    // supplier return
-    SupplierReturnQuery,
-    SupplierReturnMutate,
-    // customer return
-    CustomerReturnQuery,
-    CustomerReturnMutate,
-    // prescription
-    PrescriptionQuery,
-    PrescriptionMutate,
-    CancelFinalisedInvoices,
-    // purchase orders
-    PurchaseOrderQuery,
-    PurchaseOrderMutate,
-    PurchaseOrderAuthorise,
-    PurchaseOrderFinalise,
-    // inbound shipment external
-    InboundShipmentExternalQuery,
-    InboundShipmentExternalMutate,
-    InboundShipmentExternalVerify,
-    InboundShipmentExternalAuthorise,
-    // reporting
-    Report,
-    // log
-    LogQuery,
-    // items
-    ItemMutate,
-    ItemNamesCodesAndUnitsMutate,
-    PatientQuery,
-    PatientMutate,
-    // Document
-    DocumentQuery,
-    DocumentMutate,
-    // Cold chain
-    ColdChainApi,
-    AssetQuery,
-    AssetMutate,
-    AssetMutateViaDataMatrix,
-    AssetCatalogueItemMutate,
-    AssetStatusMutate,
-    // Names
-    NamePropertiesMutate,
-    // Central Server
-    EditCentralData,
-    ViewAndEditVvmStatus,
-    // clinician
-    MutateClinician,
+        /// User has access to the store this permission is associated with.
+        /// This acts like a master switch to enable/disable all user's permissions associated with a store.
+        #[default]
+        StoreAccess,
+        // location,
+        LocationMutate,
+        // sensor,
+        SensorMutate,
+        SensorQuery,
+        TemperatureBreachQuery,
+        TemperatureLogQuery,
+        // stock line
+        StockLineQuery,
+        StockLineMutate,
+        CreateRepack,
+        // stocktake
+        StocktakeQuery,
+        StocktakeMutate,
+        // inventory adjustment
+        InventoryAdjustmentMutate,
+        // requisition
+        RequisitionQuery,
+        RequisitionMutate,
+        RequisitionSend,
+        RequisitionCreateOutboundShipment,
+        // r&r form,
+        RnrFormQuery,
+        RnrFormMutate,
+        // outbound shipment
+        OutboundShipmentQuery,
+        OutboundShipmentMutate,
+        // inbound shipment
+        InboundShipmentQuery,
+        InboundShipmentMutate,
+        InboundShipmentVerify,
+        // supplier return
+        SupplierReturnQuery,
+        SupplierReturnMutate,
+        // customer return
+        CustomerReturnQuery,
+        CustomerReturnMutate,
+        // prescription
+        PrescriptionQuery,
+        PrescriptionMutate,
+        CancelFinalisedInvoices,
+        // purchase orders
+        PurchaseOrderQuery,
+        PurchaseOrderMutate,
+        PurchaseOrderAuthorise,
+        PurchaseOrderFinalise,
+        // inbound shipment external
+        InboundShipmentExternalQuery,
+        InboundShipmentExternalMutate,
+        InboundShipmentExternalVerify,
+        InboundShipmentExternalAuthorise,
+        // reporting
+        Report,
+        // log
+        LogQuery,
+        // items
+        ItemMutate,
+        ItemNamesCodesAndUnitsMutate,
+        PatientQuery,
+        PatientMutate,
+        // Document
+        DocumentQuery,
+        DocumentMutate,
+        // Cold chain
+        ColdChainApi,
+        AssetQuery,
+        AssetMutate,
+        AssetMutateViaDataMatrix,
+        AssetCatalogueItemMutate,
+        AssetStatusMutate,
+        // Names
+        NamePropertiesMutate,
+        // Central Server
+        EditCentralData,
+        ViewAndEditVvmStatus,
+        // clinician
+        MutateClinician,
+        #[strum(default, transparent)]
+        Unknown(String),
+    }
 }
 
 #[derive(
@@ -298,7 +299,6 @@ mod test {
         mock::MockDataInserts, test_db::setup_all, PermissionType, UserPermissionRow,
         UserPermissionRowRepository,
     };
-    use strum::IntoEnumIterator;
 
     #[actix_rt::test]
     async fn user_permission_row_type_enum() {
