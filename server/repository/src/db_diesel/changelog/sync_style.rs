@@ -87,19 +87,8 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // Legacy — RemoteOwned + Transfer (not v6)
             // ----------------------------------------------------------
-            Requisition | RequisitionLine => (
+            Requisition | RequisitionLine | Invoice | InvoiceLine => (
                 vec![RemoteOwned, Transfer],
-                SyncVersions {
-                    is_v6: false,
-                    is_v5: true,
-                },
-            ),
-
-            // ----------------------------------------------------------
-            // Legacy — RemoteOwned + Transfer + Patient (not v6)
-            // ----------------------------------------------------------
-            Invoice | InvoiceLine => (
-                vec![RemoteOwned, Transfer, Patient],
                 SyncVersions {
                     is_v6: false,
                     is_v5: true,
