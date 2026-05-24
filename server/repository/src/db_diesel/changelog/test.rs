@@ -1008,9 +1008,9 @@ async fn test_max_cursor_clamped_by_in_flight_tx() {
         )
         .unwrap();
     assert!(
-        rows_during.is_empty(),
+        rows_during.rows.is_empty(),
         "expected no rows past clamp while in-flight tx open, got {} rows",
-        rows_during.len()
+        rows_during.rows.len()
     );
 
     // Release the slow tx; once it commits the tracker entry is removed.
@@ -1034,6 +1034,6 @@ async fn test_max_cursor_clamped_by_in_flight_tx() {
             },
         )
         .unwrap();
-    assert_eq!(rows_after.len(), 1);
-    assert_eq!(rows_after[0].record_id, "clinician_in_flight");
+    assert_eq!(rows_after.rows.len(), 1);
+    assert_eq!(rows_after.rows[0].record_id, "clinician_in_flight");
 }
