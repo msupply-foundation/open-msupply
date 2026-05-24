@@ -197,6 +197,38 @@ export type PermissionsQuery = {
   };
 };
 
+export type UpdateUserFragment = {
+  __typename: 'UpdateUserNode';
+  lastSuccessfulSync?: string | null;
+};
+
+export type UpdateUserMutationVariables = Types.Exact<{ [key: string]: never }>;
+
+export type UpdateUserMutation = {
+  __typename: 'Mutations';
+  updateUser:
+    | {
+        __typename: 'UpdateUserError';
+        error:
+          | { __typename: 'ConnectionError'; description: string }
+          | { __typename: 'InvalidCredentials'; description: string }
+          | { __typename: 'MissingCredentials'; description: string };
+      }
+    | { __typename: 'UpdateUserNode'; lastSuccessfulSync?: string | null };
+};
+
+export type LastSuccessfulUserSyncQueryVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type LastSuccessfulUserSyncQuery = {
+  __typename: 'Queries';
+  lastSuccessfulUserSync: {
+    __typename: 'UpdateUserNode';
+    lastSuccessfulSync?: string | null;
+  };
+};
+
 export type PreferencesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
@@ -300,6 +332,11 @@ export const UserStoreNodeFragmentDoc = gql`
     createdDate
     homeCurrencyCode
     isDisabled
+  }
+`;
+export const UpdateUserFragmentDoc = gql`
+  fragment UpdateUser on UpdateUserNode {
+    lastSuccessfulSync
   }
 `;
 export const AuthTokenDocument = gql`
@@ -426,6 +463,43 @@ export const PermissionsDocument = gql`
       }
     }
   }
+`;
+export const UpdateUserDocument = gql`
+  mutation updateUser {
+    updateUser {
+      __typename
+      ... on UpdateUserNode {
+        ...UpdateUser
+      }
+      ... on UpdateUserError {
+        __typename
+        error {
+          ... on InvalidCredentials {
+            __typename
+            description
+          }
+          ... on ConnectionError {
+            __typename
+            description
+          }
+          ... on MissingCredentials {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+  ${UpdateUserFragmentDoc}
+`;
+export const LastSuccessfulUserSyncDocument = gql`
+  query lastSuccessfulUserSync {
+    lastSuccessfulUserSync {
+      __typename
+      ...UpdateUser
+    }
+  }
+  ${UpdateUserFragmentDoc}
 `;
 export const PreferencesDocument = gql`
   query preferences($storeId: String!) {
@@ -598,6 +672,42 @@ export function getSdk(
             signal,
           }),
         'permissions',
+        'query',
+        variables
+      );
+    },
+    updateUser(
+      variables?: UpdateUserMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UpdateUserMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdateUserMutation>({
+            document: UpdateUserDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'updateUser',
+        'mutation',
+        variables
+      );
+    },
+    lastSuccessfulUserSync(
+      variables?: LastSuccessfulUserSyncQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<LastSuccessfulUserSyncQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<LastSuccessfulUserSyncQuery>({
+            document: LastSuccessfulUserSyncDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'lastSuccessfulUserSync',
         'query',
         variables
       );

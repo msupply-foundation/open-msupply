@@ -11,6 +11,7 @@ import { PropsWithChildrenOnly, UserPermission } from '@common/types';
 import { RouteBuilder } from '../utils/navigation';
 import { matchPath } from 'react-router-dom';
 import { createRegisteredContext } from 'react-singleton-context';
+import { useUpdateUserInfo } from './hooks/useUpdateUserInfo';
 import { useUserActivity } from './hooks/useUserActivity';
 
 const AUTH_TOKEN_LIFETIME_MINUTES = 60;
@@ -58,6 +59,10 @@ interface AuthControl {
   token: string;
   user?: User;
   userHasPermission: (permission: UserPermission) => boolean;
+  updateUserIsLoading: boolean;
+  lastSuccessfulSync?: string | null;
+  updateUserError?: string | null;
+  updateUser: () => Promise<void>;
 }
 
 export const getAuthCookie = (): AuthCookie => {
@@ -85,11 +90,13 @@ const authControl = {
   isLoggingIn: false,
   login: (_username: string, _password: string) =>
     new Promise<AuthenticationResponse>(() => ({ token: 'token' })),
-  logout: () => {},
+  logout: () => { },
   setStore: (_store: UserStoreNodeFragment) => new Promise<void>(() => ({})),
   storeId: 'store-id',
   token: '',
   userHasPermission: (_permission: UserPermission) => false,
+  updateUserIsLoading: false,
+  updateUser: () => new Promise<void>(() => { }),
 };
 
 const AuthContext = createRegisteredContext<AuthControl>(
@@ -111,11 +118,13 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   } = useLogin(setCookie);
   const getUserPermissions = useGetUserPermissions();
   const { isActive } = useUserActivity();
-  const { refreshToken } = useRefreshToken(() => {
-    Cookies.remove('auth');
-    setCookie(undefined);
-    setError(AuthError.Timeout);
-  });
+  const { refreshToken } = useRefreshToken(
+    () => {
+      Cookies.remove('auth');
+      setCookie(undefined);
+      setError(AuthError.Timeout);
+    },
+  );
 
   const mostRecentUsername = mostRecentCredentials[0]?.username ?? undefined;
 
@@ -136,6 +145,13 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     setAuthCookie(newCookie);
     setCookie(newCookie);
   };
+
+  const {
+    isLoading: updateUserIsLoading,
+    lastSuccessfulSync,
+    updateUser,
+    error: updateUserError,
+  } = useUpdateUserInfo(setCookie, cookie, mostRecentCredentials);
 
   const logout = () => {
     Cookies.remove('auth');
@@ -160,6 +176,10 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       setStore,
       setError,
       userHasPermission,
+      updateUserIsLoading,
+      lastSuccessfulSync,
+      updateUserError,
+      updateUser,
     }),
     [
       login,
