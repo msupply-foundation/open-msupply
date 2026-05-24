@@ -61,6 +61,9 @@ export const Initialise = () => {
   return (
     <Grid container sx={{ flex: 1 }}>
       <Grid
+        display="flex"
+        justifyContent="center"
+        alignItems="end"
         size={{ xs: 12, sm: 6 }}
         sx={theme => ({
           backgroundImage: theme.mixins.gradient.secondary,
@@ -179,14 +182,12 @@ const RemoteForm = ({ formState }: { formState: InitialiseFormState }) => {
       <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>
         <Stack spacing={isExtraSmallScreen ? 3 : 5}>
           <LoginTextInput
-            fullWidth
             label={t('label.settings-url')}
             value={url}
             disabled={isInputDisabled}
             onChange={e => setUrl(e.target.value)}
           />
           <LoginTextInput
-            fullWidth
             label={t('label.settings-username')}
             value={username}
             disabled={isInputDisabled}
@@ -257,7 +258,7 @@ const RemoteForm = ({ formState }: { formState: InitialiseFormState }) => {
 const Welcome = () => {
   const t = useTranslation();
   return (
-    <Stack spacing="45px" justifyContent="center" sx={{ height: '100%' }}>
+    <Stack spacing="45px">
       <Typography
         sx={{
           color: (theme: Theme) => theme.typography.login.color,
