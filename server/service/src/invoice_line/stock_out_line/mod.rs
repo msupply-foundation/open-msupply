@@ -48,7 +48,10 @@ impl TryFrom<&InvoiceType> for StockOutType {
             InvoiceType::Prescription => Ok(StockOutType::Prescription),
             InvoiceType::SupplierReturn => Ok(StockOutType::SupplierReturn),
             InvoiceType::InventoryReduction => Ok(StockOutType::InventoryReduction),
-            _ => Err(()),
+            InvoiceType::InboundShipment
+            | InvoiceType::InventoryAddition
+            | InvoiceType::Repack
+            | InvoiceType::CustomerReturn => Err(()),
         }
     }
 }
