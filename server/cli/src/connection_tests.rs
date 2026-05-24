@@ -2,10 +2,10 @@ use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use log::info;
 use repository::{get_storage_connection_manager, migrations::Version};
-use reqwest::Url;
+use reqwest::{Client, Url};
 use server::configuration;
 use service::{
-    apis::central_user_login::{central_user_login, CentralUserLoginError},
+    apis::login_v4::{LoginApiV4, LoginInputV4, LoginUserTypeV4},
     app_data::{AppDataService, AppDataServiceTrait},
     email::{EmailService, EmailServiceError, EmailServiceTrait},
     service_provider::ServiceProvider,
@@ -143,15 +143,22 @@ impl Test for LoginTest {
         info!("    Username: {username}");
         info!("    Password: {password}");
 
-        match central_user_login(&sync_settings.url, &username, &password).await {
-            Ok(()) => Ok("Successfully logged in".to_string()),
-            Err(CentralUserLoginError::InvalidCredentials) => {
-                Err(anyhow!("Login rejected: invalid credentials"))
-            }
-            Err(CentralUserLoginError::Unreachable(reason)) => {
-                Err(anyhow!("Could not reach central user login: {reason}"))
-            }
-        }
+        let client = Client::new();
+        let login_api = LoginApiV4::new(client, Url::parse(&sync_settings.url)?);
+
+        let login_input = LoginInputV4 {
+            username,
+            password,
+            login_type: LoginUserTypeV4::User,
+            site_name: Some("null".to_string()),
+        };
+
+        let _info = login_api
+            .login(login_input)
+            .await
+            .map_err(|err| anyhow!("Failed to login: {err:?}"))?;
+
+        Ok("Successfully logged in".to_string())
     }
 }
 

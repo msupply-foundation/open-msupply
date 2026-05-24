@@ -36,6 +36,14 @@ impl InvalidCredentials {
     }
 }
 
+pub struct MissingCredentials;
+#[Object]
+impl MissingCredentials {
+    pub async fn description(&self) -> &str {
+        "Missing credentials"
+    }
+}
+
 pub struct CentralSyncRequired;
 #[Object]
 impl CentralSyncRequired {
@@ -135,6 +143,12 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
                     StandardGraphqlError::InternalError(formatted_error)
                 }
                 LoginError::DatabaseError(_) => {
+                    StandardGraphqlError::InternalError(formatted_error)
+                }
+                LoginError::FetchUserError(_) => {
+                    StandardGraphqlError::InternalError(formatted_error)
+                }
+                LoginError::UpdateUserError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
             };
