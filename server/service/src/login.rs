@@ -32,7 +32,7 @@ const CONNECTION_TIMEOUT_SEC: u64 = 10;
 /// Minimum response time on a failed login. Disguises whether the username
 /// exists by making "wrong password" and "no such user" indistinguishable by
 /// latency. Must be longer than the worst-case bcrypt verify time.
-pub const MIN_ERR_RESPONSE_TIME_SEC: u64 = 6;
+pub const MIN_ERR_RESPONSE_TIME_SEC: u64 = 3;
 
 #[derive(Debug)]
 pub enum FetchUserError {
@@ -164,10 +164,9 @@ impl LoginService {
         // already kept current by the sync translations.
         let sync_version = {
             let ctx = service_provider.basic_context()?;
-            SyncVersion::get(&ctx.connection, CentralServerConfig::is_central_server())
-                .map_err(|err| {
-                    LoginError::InternalError(format!("Failed to read sync version: {err:?}"))
-                })?
+            SyncVersion::get(&ctx.connection, CentralServerConfig::is_central_server()).map_err(
+                |err| LoginError::InternalError(format!("Failed to read sync version: {err:?}")),
+            )?
         };
 
         let user_account = match sync_version {
@@ -289,12 +288,8 @@ impl LoginService {
         let mut central_verified = false;
         let mut connection_failure = false;
         if !CentralServerConfig::is_central_server() {
-            match central_user_login(
-                &input.central_server_url,
-                &input.username,
-                &input.password,
-            )
-            .await
+            match central_user_login(&input.central_server_url, &input.username, &input.password)
+                .await
             {
                 Ok(()) => central_verified = true,
                 Err(CentralUserLoginError::InvalidCredentials) => {
