@@ -52,7 +52,7 @@ export const SyncProgress: FC<SyncProgressProps> = ({
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
   return (
-    <Box display="flex" flexDirection={'column'}>
+    <Box display="flex" flexDirection={'column'} alignItems="center">
       {!isExtraSmallScreen && (
         <HorizontalStepper steps={steps} colour={colour} />
       )}
@@ -73,6 +73,7 @@ const ProgressIndicator = ({
     fontSize={12}
     color={`${colour}.light`}
     whiteSpace="nowrap"
+    minWidth="8em"
   >
     {progress ? `${progress.done} / ${progress.total}` : null}
   </Box>
