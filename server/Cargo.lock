@@ -6941,6 +6941,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dce6dd36094cac388f119d2e9dc82dc730ef91c32a6222170d630e5414b956e6"
 
 [[package]]
+name = "mock_msupply"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "base64",
+ "clap",
+ "log",
+ "serde",
+ "serde_json",
+ "sha2",
+ "simple-log",
+ "uuid",
+]
+
+[[package]]
 name = "moxcms"
 version = "0.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -66,6 +66,7 @@ members = [
   "android",
   "report_builder",
   "repository",
+  "mock_msupply",
   "graphql",
   "server",
   "service",
