@@ -23,8 +23,7 @@ use repository::{
     syncv7::{SiteLockError, SyncError},
     ChangelogCondition, ChangelogFilter, EqualFilter, FilterBuilder, KeyType,
     KeyValueStoreRepository, Pagination, RepositoryError, SiteFilter, SiteRepository, SiteRow,
-    SiteRowRepository, SourceSiteId, StorageConnection, StringFilter, SyncBufferRepository,
-    SyncVersion,
+    SiteRowRepository, SourceSiteId, StorageConnection, SyncBufferRepository, SyncVersion,
 };
 use std::{
     collections::HashMap,
@@ -193,12 +192,7 @@ fn get_site_by_name(
     connection: &StorageConnection,
     name: &str,
 ) -> Result<Option<SiteRow>, SyncError> {
-    let rows = SiteRepository::new(connection).query(
-        Pagination::one(),
-        Some(SiteFilter::new().name(StringFilter::equal_to(name))),
-        None,
-    )?;
-    Ok(rows.into_iter().next())
+    Ok(SiteRowRepository::new(connection).find_one_by_name_case_insensitive(name)?)
 }
 
 fn get_site_by_token(
@@ -601,6 +595,28 @@ mod tests {
             .await
             .unwrap_err();
         assert!(matches!(err, SyncError::TokenAlreadyAllocated));
+    }
+
+    #[actix_rt::test]
+    async fn get_token_site_lookup_is_case_insensitive() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "get_token_site_lookup_is_case_insensitive",
+            MockDataInserts::none(),
+        )
+        .await;
+        test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
+            .unwrap();
+        test_site(&connection, None);
+        let service_provider = ServiceProvider::new(connection_manager);
+
+        let mut mixed_case = input();
+        mixed_case.name = SITE_NAME.to_uppercase();
+        let output = get_token(&service_provider, mixed_case).await.unwrap();
+
+        assert_eq!(output.site_id, 1);
+        assert!(!output.token.is_empty());
     }
 
     #[actix_rt::test]
