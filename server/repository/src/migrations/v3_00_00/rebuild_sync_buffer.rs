@@ -118,7 +118,8 @@ impl MigrationFragment for Migrate {
                 r#"
                 ALTER SEQUENCE sync_buffer_new_cursor_seq RENAME TO sync_buffer_cursor_seq;
                 CREATE INDEX index_sync_buffer_pending
-                    ON sync_buffer_pending (source_site_id, reference_id, sync_version, table_name);
+                    ON sync_buffer_pending (source_site_id, reference_id, sync_version, table_name)
+                    WHERE is_integrated = FALSE;
                 "#
             )?;
         } else {

@@ -1,19 +1,18 @@
 // Seeds three sync_request rows on existing remote installs so that
 // user_account, user_permission and user_store_join get re-pulled by the
-// sync_request_runner on the next tick. These three tables are marked
-// `Central` (and thus already routed central→remote) but haven't always
-// been actively backfilled — this migration explicitly requests them.
-//
-// Skipped on fresh installs (no sync_log_v7 row with `pull_started_datetime`
-// yet): the upcoming initial sync covers everything and a queued request
-// would just sit there until the auxiliary runner picks it up post-init.
+// sync_request_runner on the next tick.
+// When remote site migrates to v7, it could miss those rows as cursors for v7
+// will be set to v6 cursor positions, and any new tables in v7 will be skipped
+// Skipped on fresh installs (no sync_log row with `pull_central_started_datetime`
+// and no sync_log_v7 row with `pull_started_datetime` yet): the upcoming initial
+// sync covers everything and a queued request would just sit there until the
+// auxiliary runner picks it up post-init.
 
 use diesel::{sql_query, OptionalExtension, RunQueryDsl};
 
 use crate::{
-    dynamic_query_filter::FilterBuilder,
-    migrations::*,
-    ChangelogCondition, ChangelogTableName, Description, SyncRequestFilter,
+    dynamic_query_filter::FilterBuilder, migrations::*, ChangelogCondition, ChangelogTableName,
+    Description, SyncRequestFilter,
 };
 
 pub(crate) struct Migrate;
@@ -39,6 +38,7 @@ impl MigrationFragment for Migrate {
     }
 }
 
+// TODO extract this method to migration helpers
 fn insert_request(
     connection: &StorageConnection,
     table_name: ChangelogTableName,
@@ -75,10 +75,18 @@ fn pull_has_started(connection: &StorageConnection) -> anyhow::Result<bool> {
         v: i32,
     }
 
-    let row: Option<One> = sql_query(
-        "SELECT 1 AS v FROM sync_log_v7 WHERE pull_started_datetime IS NOT NULL LIMIT 1",
+    let v7: Option<One> =
+        sql_query("SELECT 1 AS v FROM sync_log_v7 WHERE pull_started_datetime IS NOT NULL LIMIT 1")
+            .get_result(connection.lock().connection())
+            .optional()?;
+    if v7.is_some() {
+        return Ok(true);
+    }
+
+    let v5v6: Option<One> = sql_query(
+        "SELECT 1 AS v FROM sync_log WHERE pull_central_started_datetime IS NOT NULL LIMIT 1",
     )
     .get_result(connection.lock().connection())
     .optional()?;
-    Ok(row.is_some())
+    Ok(v5v6.is_some())
 }

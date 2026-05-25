@@ -64,11 +64,7 @@ impl SyncVersion {
     /// (case-insensitive, trimmed) — including empty, missing, or unknown —
     /// maps to V5V6.
     pub fn from_legacy_string(raw: Option<&str>) -> SyncVersion {
-        match raw
-            .map(str::trim)
-            .map(str::to_ascii_lowercase)
-            .as_deref()
-        {
+        match raw.map(str::trim).map(str::to_ascii_lowercase).as_deref() {
             Some("v7") => SyncVersion::V7,
             _ => SyncVersion::V5V6,
         }
@@ -266,6 +262,8 @@ impl<'a> SyncBufferRepository<'a> {
 
         if let Some(reference_id) = reference_id {
             q = q.filter(sync_buffer::reference_id.eq(reference_id.to_string()));
+        } else {
+            q = q.filter(sync_buffer::reference_id.is_null());
         }
 
         let rows = match direction {
@@ -296,6 +294,8 @@ impl<'a> SyncBufferRepository<'a> {
 
         if let Some(reference_id) = reference_id {
             q = q.filter(sync_buffer::reference_id.eq(reference_id.to_string()));
+        } else {
+            q = q.filter(sync_buffer::reference_id.is_null());
         }
 
         let count: i64 = q.count().get_result(self.connection.lock().connection())?;
@@ -414,7 +414,7 @@ mod test {
         ])
         .unwrap();
 
-        // Filter by source_site_id + sync_version, no reference filter
+        // reference_id: None matches IS NULL — c1 (batch-x) is excluded
         let rows = repo
             .pending_ordered_by_cursor(PendingQuery {
                 source_site_id: 1,
@@ -426,7 +426,7 @@ mod test {
             })
             .unwrap();
         let ids: Vec<_> = rows.iter().map(|r| r.record_id.as_str()).collect();
-        assert_eq!(ids, vec!["a1", "a2", "c1"]);
+        assert_eq!(ids, vec!["a1", "a2"]);
 
         // Filter narrowed to the batch reference
         let rows = repo
@@ -454,7 +454,7 @@ mod test {
             })
             .unwrap();
         let ids: Vec<_> = rows.iter().map(|r| r.record_id.as_str()).collect();
-        assert_eq!(ids, vec!["c1", "a2", "a1"]);
+        assert_eq!(ids, vec!["a2", "a1"]);
 
         // V7 partition is isolated
         let rows = repo
