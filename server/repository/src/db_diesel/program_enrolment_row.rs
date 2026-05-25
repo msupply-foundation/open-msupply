@@ -86,8 +86,7 @@ impl<'a> ProgramEnrolmentRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &ProgramEnrolmentRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
-        let changelog = ProgramEnrolmentRow::generate_changelog(
-            row.id.clone(),
+        let changelog = row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -105,8 +104,7 @@ impl Upsert for ProgramEnrolmentRow {
         ProgramEnrolmentRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),
