@@ -137,6 +137,8 @@ export type PurchaseOrderFragment = {
       fileName: string;
       recordId: string;
       createdDatetime: string;
+      status: Types.SyncFileReferenceNodeStatus;
+      error?: string | null;
     }>;
   };
   currency?: {
@@ -370,6 +372,8 @@ export type PurchaseOrderByIdQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            status: Types.SyncFileReferenceNodeStatus;
+            error?: string | null;
           }>;
         };
         currency?: {
