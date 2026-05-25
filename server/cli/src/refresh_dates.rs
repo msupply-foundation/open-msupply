@@ -111,6 +111,8 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
         ("sync_log_v7", "pull_finished_datetime"),
         ("sync_log_v7", "integration_started_datetime"),
         ("sync_log_v7", "integration_finished_datetime"),
+        ("sync_request", "created_datetime"),
+        ("sync_request", "finished_datetime"),
         ("user_account", "last_successful_sync"),
         ("activity_log", "datetime"),
         ("asset_log", "log_datetime"),

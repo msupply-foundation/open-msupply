@@ -327,6 +327,12 @@ impl<'a> ChangelogRepository<'a> {
                 .limit(remaining)
                 .select(changelog::all_columns);
 
+            // Debug diesel query
+            // println!(
+            //     "{}",
+            //     diesel::debug_query::<crate::DBType, _>(&sub_query).to_string()
+            // );
+
             let sub_results: Vec<ChangelogRow> =
                 sub_query.load(self.connection.lock().connection())?;
 
@@ -492,7 +498,7 @@ impl ChangelogFilter {
         ])
     }
 
-    pub fn data_for_store(store_id: i32) -> ChangelogCondition::Inner {
+    pub fn data_for_store(store_id: &str) -> ChangelogCondition::Inner {
         use ChangeLogSyncStyle::*;
         use ChangelogCondition as C;
 
