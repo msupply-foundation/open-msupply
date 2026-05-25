@@ -49,7 +49,7 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // Legacy — Remote (not v6)
             // ----------------------------------------------------------
-              NameStoreJoin => (
+            NameStoreJoin | ItemStoreJoin | ClinicianStoreJoin => (
                 vec![Remote],
                 SyncVersions {
                     is_v6: false,
@@ -60,12 +60,11 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // Legacy — RemoteOwned (not v6)
             // ----------------------------------------------------------
-            ActivityLog  | IndicatorValue
-            | Location | LocationMovement | PurchaseOrder | PurchaseOrderLine | Sensor
-            | StockLine | Stocktake | StocktakeLine | TemperatureBreach | TemperatureLog
-            | VVMStatusLog => (
+            ActivityLog | IndicatorValue | Location | LocationMovement | PurchaseOrder
+            | PurchaseOrderLine | Sensor | StockLine | Stocktake | StocktakeLine
+            | TemperatureBreach | TemperatureLog | VVMStatusLog => (
                 vec![RemoteOwned],
-                SyncVersions { 
+                SyncVersions {
                     is_v6: false,
                     is_v5: true,
                 },
@@ -87,7 +86,7 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // Legacy — RemoteOwned + Transfer (not v6)
             // ----------------------------------------------------------
-            Requisition | RequisitionLine | Invoice | InvoiceLine => (
+            Requisition | RequisitionLine => (
                 vec![RemoteOwned, Transfer],
                 SyncVersions {
                     is_v6: false,
@@ -95,6 +94,16 @@ impl ChangelogTableName {
                 },
             ),
 
+            // ----------------------------------------------------------
+            // Legacy — RemoteOwned + Transfer + Patient (not v6)
+            // ----------------------------------------------------------
+            Invoice | InvoiceLine => (
+                vec![RemoteOwned, Transfer, Patient],
+                SyncVersions {
+                    is_v6: false,
+                    is_v5: true,
+                },
+            ),
             // ----------------------------------------------------------
             // Central (v6) — created on the Open-mSupply central server
             // ----------------------------------------------------------
@@ -137,7 +146,6 @@ impl ChangelogTableName {
             | Barcode
             | Category
             | Clinician
-            | ClinicianStoreJoin
             | Contact
             | Context
             | Currency
@@ -205,7 +213,7 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // RemoteOwned (v6)
             // ----------------------------------------------------------
-            AssetLog | RnrForm | RnrFormLine | ItemStoreJoin => (
+            AssetLog | RnrForm | RnrFormLine => (
                 vec![RemoteOwned],
                 SyncVersions {
                     is_v6: true,
@@ -227,7 +235,7 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // Remote + Patient (v6) — store-scoped data also routed to sites where the patient is visible
             // ----------------------------------------------------------
-            Encounter | Vaccination   | ContactTrace => (
+            Encounter | Vaccination | ContactTrace => (
                 vec![Remote, Patient],
                 SyncVersions {
                     is_v6: true,
@@ -238,7 +246,7 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // Patient (v6) — routed only to sites where the patient is visible
             // ----------------------------------------------------------
-            Document | NameInsuranceJoin   | ProgramEnrolment  | ProgramEvent => (
+            Document | NameInsuranceJoin | ProgramEnrolment | ProgramEvent => (
                 vec![Patient],
                 SyncVersions {
                     is_v6: false,

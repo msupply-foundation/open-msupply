@@ -60,13 +60,13 @@ The classification below mirrors what's in the code. When a table appears in two
 
 ### Legacy, Remote
 
-`NameInsuranceJoin`, `NameStoreJoin`
+`NameStoreJoin`, `ItemStoreJoin`, `ClinicianStoreJoin`
 
-Store-scoped tables that central legitimately edits — `NameStoreJoin` in particular is rewritten on central whenever a name's patient visibility changes. Because central authors edits, the return path is on every cycle (not just at initialisation).
+Store-scoped join tables that central legitimately edits — `NameStoreJoin` in particular is rewritten on central whenever a name's patient visibility changes, or whenever the customer/supplier flag on a name flips (which cascades across every site's join row for that name). Because central authors edits, the return path is on every cycle (not just at initialisation).
 
 ### Legacy, RemoteOwned
 
-`ActivityLog`, `Clinician`, `ClinicianStoreJoin`, `IndicatorValue`, `InsuranceProvider`, `Location`, `LocationMovement`, `PurchaseOrder`, `PurchaseOrderLine`, `Sensor`, `StockLine`, `Stocktake`, `StocktakeLine`, `TemperatureBreach`, `TemperatureLog`, `VVMStatusLog`
+`ActivityLog`, `IndicatorValue`, `Location`, `LocationMovement`, `PurchaseOrder`, `PurchaseOrderLine`, `Sensor`, `StockLine`, `Stocktake`, `StocktakeLine`, `TemperatureBreach`, `TemperatureLog`, `VVMStatusLog`
 
 Site-owned data on the legacy transport. A remote pushes these up to legacy 4D central, which fans them back out via its own routing. From the OMS central perspective there is nothing to send back, so the OMS-side return path is suppressed except at initialisation.
 
@@ -90,7 +90,7 @@ Adds patient routing on top of RemoteOwned+Transfer; an invoice also follows its
 
 ### Legacy, Central
 
-`Abbreviation`, `Barcode`, `Category`, `Contact`, `ContactTrace`, `Context`, `Currency`, `DemographicIndicator`, `Diagnosis`, `DocumentRegistry`, `IndicatorColumn`, `IndicatorLine`, `Item`, `ItemCategoryJoin`, `ItemDirection`, `ItemStoreJoin`, `ItemWarningJoin`, `LocationType`, `MasterList`, `MasterListLine`, `MasterListNameJoin`, `NameTag`, `NameTagJoin`, `Period`, `PeriodSchedule`, `Printer`, `Program`, `ProgramEnrolment`, `ProgramEvent`, `ProgramIndicator`, `ProgramRequisitionOrderType`, `ProgramRequisitionSettings`, `ReasonOption`, `ShippingMethod`, `Store`, `StorePreference`, `Unit`, `UserAccount`, `UserPermission`, `UserStoreJoin`, `VVMStatus`
+`Abbreviation`, `Barcode`, `Category`, `Clinician`, `Contact`, `Context`, `Currency`, `DemographicIndicator`, `Diagnosis`, `DocumentRegistry`, `IndicatorColumn`, `IndicatorLine`, `InsuranceProvider`, `Item`, `ItemCategoryJoin`, `ItemDirection`, `ItemWarningJoin`, `LocationType`, `MasterList`, `MasterListLine`, `MasterListNameJoin`, `NameTag`, `NameTagJoin`, `Period`, `PeriodSchedule`, `Printer`, `Program`, `ProgramIndicator`, `ProgramRequisitionOrderType`, `ProgramRequisitionSettings`, `ReasonOption`, `ShippingMethod`, `Store`, `StorePreference`, `Unit`, `UserAccount`, `UserPermission`, `UserStoreJoin`, `VVMStatus`
 
 Central data still served from legacy 4D. This bucket also acts as a catch-all for tables that exist in the changelog but haven't been classified into a more specific style yet.
 
@@ -102,7 +102,7 @@ Names are central data — every site needs the full directory — but a patient
 
 ### Legacy, Patient
 
-`Document`
+`Document`, `NameInsuranceJoin`, `ProgramEnrolment`, `ProgramEvent`
 
 Pure patient-scoped data on the legacy transport. The changelog row carries only the patient, no store, so routing is purely by Patient and the record follows the patient across stores.
 
@@ -114,7 +114,7 @@ Pushed to legacy 4D central; never re-sent down to remotes.
 
 ### OMS-native, Central
 
-`AssetCatalogueItem`, `AssetCatalogueType`, `AssetCategory`, `AssetClass`, `AssetLogReason`, `AssetProperty`, `BackendPlugin`, `BundledItem`, `Campaign`, `Demographic`, `FormSchema`, `FrontendPlugin`, `ItemVariant`, `NameOmsFields`, `NameProperty`, `PackagingVariant`, `Property`, `Report`, `VaccineCourse`, `VaccineCourseDose`, `VaccineCourseItem`, `VaccineCourseStoreConfig`
+`AncillaryItem`, `AssetCatalogueItem`, `AssetCatalogueType`, `AssetCategory`, `AssetClass`, `AssetLogReason`, `AssetProperty`, `BackendPlugin`, `BundledItem`, `Campaign`, `Demographic`, `FormSchema`, `FrontendPlugin`, `ItemVariant`, `NameOmsFields`, `NameProperty`, `PackagingVariant`, `Property`, `Report`, `VaccineCourse`, `VaccineCourseDose`, `VaccineCourseItem`, `VaccineCourseStoreConfig`
 
 Authored on OMS central, fans out to every v6 site. A few of these (notably `NameOmsFields`) also allow remote → central writebacks. Some (notably the vaccine-course family) are re-published to legacy 4D so v5-only stores still receive them.
 
@@ -132,7 +132,7 @@ Site-owned data on the OMS-native transport. Central does not author edits; the 
 
 ### OMS-native, Remote + Patient
 
-`Encounter`, `Vaccination`
+`Encounter`, `Vaccination`, `ContactTrace`
 
 Store-scoped clinical records that should also follow the patient. Each row carries the authoring store *and* the patient. The Remote clause delivers it to the owning site; the Patient clause delivers it to every other site that knows the patient. The Central clause never matches because `patient_link_id` is set.
 
@@ -185,12 +185,12 @@ When a record is mutated, a changelog row is generated. The patterns differ by w
 | Pattern | Tables (examples) | What the changelog records |
 |---|---|---|
 | Store + transfer-store | `Invoice`, `Requisition`, `RnrForm`, `NameStoreJoin` | The row's own store, plus the store backing a referenced name (resolved from the name's home store). Used for both store-owner routing and Transfer routing. `Invoice` additionally tags prescriptions with the patient id so they also route via Patient. |
-| Store only | `StockLine`, `Stocktake`, `Location`, `PurchaseOrder`, `Preference`, `Sensor`, `TemperatureLog`, `VVMStatusLog`, `LocationMovement`, `ActivityLog`, `ContactForm`, `Asset`, `PluginData`, `VaccineCourseStoreConfig` | Just the row's own store. |
+| Store only | `StockLine`, `Stocktake`, `Location`, `PurchaseOrder`, `Preference`, `Sensor`, `TemperatureBreach`, `TemperatureLog`, `VVMStatusLog`, `LocationMovement`, `ActivityLog`, `ContactForm`, `Asset`, `PluginData`, `VaccineCourseStoreConfig`, `ClinicianStoreJoin`, `IndicatorValue`, `ItemStoreJoin` | Just the row's own store. |
 | Destination store | `SyncMessage` | The message's `to_store_id` (when set) is copied to the changelog's `store_id`, which makes the hybrid Remote + Central routing work — Remote for messages addressed to a specific store, Central for fanout messages. |
 | Line inherits parent | `InvoiceLine` ← `Invoice`, `StocktakeLine` ← `Stocktake`, `RequisitionLine` ← `Requisition`, `RnrFormLine` ← `RnrForm` | The line's changelog is built from the parent's, then `table_name` and `record_id` are overridden to point at the line. Guarantees parent and line stay aligned for store / transfer-store / patient / source-site, so they route together. |
 | Line emits parent **and** child | `PurchaseOrderLine` → `PurchaseOrder` (upsert) + `PurchaseOrderLine` | Mutating a line also emits a changelog for the parent, so the parent re-syncs and is always at least as fresh as its children on the receiver. The parent entry is always an upsert, even when the line is a delete. |
-| Patient + store | `Encounter`, `Vaccination` | Carries both, so the Remote clause delivers to the owning site and the Patient clause fans out to every other site that knows the patient. |
-| Patient only | `Document` | The changelog row has no store; routing is purely by Patient. The record follows the patient across stores. |
+| Patient + store | `Encounter`, `Vaccination`, `ContactTrace` | Carries both, so the Remote clause delivers to the owning site and the Patient clause fans out to every other site that knows the patient. |
+| Patient only | `Document`, `NameInsuranceJoin`, `ProgramEnrolment`, `ProgramEvent` | The changelog row has no store; routing is purely by Patient. The record follows the patient across stores. |
 | Cross-table store lookup | `AssetLog` (looks up the asset's store), `AssetInternalLocation` (looks up the location's store, falls back to the asset's store) | The record itself doesn't carry a store directly, so the generator queries a related row to find one. |
 | `record_id` only | All Central-style tables (`Property`, `Demographic`, `VaccineCourse*`, `Abbreviation`, etc.) and a handful of legacy reference tables (`Clinician`, `Currency`, `Barcode`, `MasterList`, …) | No row metadata beyond table+id is needed — these tables filter purely by table name and route to everyone. |
 | `record_id` only, with patient flag | `Name` | Same as `record_id` only, except that when the name's type is *patient* the changelog row also carries the name's own id as `patient_link_id`. Non-patient names match the Central clause (store and patient both null) and route to every site; patient names fail the Central clause and instead match the Patient clause, so they fan out to every site that knows the patient. |
