@@ -27,6 +27,47 @@ import { getStatusTranslator, purchaseOrderStatuses } from './utils';
 import { StatusChangeButton } from './StatusChangeButton';
 import { UpdateDeliveryDateModal } from './UpdateDeliveryDateModal';
 
+/**
+ * The status crumbs + status-change button row, extracted so the parent
+ * `DetailView` can render it through `AppFooterStatusPortal` on tabs that
+ * don't own the lines table (Details/Documents/Log/Inbound Shipments).
+ */
+export const StatusFooter = (): ReactElement | null => {
+  const t = useTranslation();
+  const { authorisePurchaseOrder = false } = usePreferences();
+  const {
+    query: { data },
+  } = usePurchaseOrder();
+
+  if (!data) return null;
+
+  const filteredStatuses = authorisePurchaseOrder
+    ? purchaseOrderStatuses
+    : purchaseOrderStatuses.filter(
+        status => status !== PurchaseOrderNodeStatus.RequestApproval
+      );
+
+  return (
+    <Box
+      gap={2}
+      display="flex"
+      flexDirection="row"
+      alignItems="center"
+      height={64}
+    >
+      <StatusCrumbs
+        statuses={filteredStatuses}
+        statusLog={createStatusLog(data, authorisePurchaseOrder)}
+        statusFormatter={getStatusTranslator(t)}
+        width={280}
+      />
+      <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+        <StatusChangeButton />
+      </Box>
+    </Box>
+  );
+};
+
 const createStatusLog = (
   purchaseOrder: PurchaseOrderFragment,
   requiresAuthorisation: boolean
@@ -53,14 +94,12 @@ const createStatusLog = (
 };
 
 interface FooterProps {
-  showStatusBar: boolean;
   status: PurchaseOrderNodeStatus;
   selectedRows: PurchaseOrderLineFragment[];
   resetRowSelection: () => void;
 }
 
 export const Footer = ({
-  showStatusBar,
   status,
   selectedRows,
   resetRowSelection,
@@ -77,12 +116,7 @@ export const Footer = ({
     toggleOn: toggleRequestedDateOn,
     toggleOff: toggleRequestedDateOff,
   } = useToggle();
-  const { authorisePurchaseOrder = false } = usePreferences();
-
-  const {
-    query: { data },
-    isDisabled,
-  } = usePurchaseOrder();
+  const { isDisabled } = usePurchaseOrder();
   const {
     updateLines,
     delete: { deleteLines },
@@ -173,62 +207,41 @@ export const Footer = ({
     });
   }
 
-  const filteredStatuses = authorisePurchaseOrder
-    ? purchaseOrderStatuses
-    : purchaseOrderStatuses.filter(
-        status => status !== PurchaseOrderNodeStatus.RequestApproval
-      );
-
+  // Only mount the footer portal when there's a selection to show actions for.
+  // When nothing is selected, we leave the slot free so the parent
+  // `AppFooterStatusPortal` (status crumbs + status-change button) shows
+  // through — no need to duplicate the status footer here.
   return (
-    <AppFooterPortal
-      Content={
-        <>
-          {selectedRows.length !== 0 && (
+    <>
+      {selectedRows.length !== 0 && (
+        <AppFooterPortal
+          Content={
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
               resetRowSelection={resetRowSelection}
             />
-          )}
-          {data && selectedRows.length === 0 && showStatusBar ? (
-            <Box
-              gap={2}
-              display="flex"
-              flexDirection="row"
-              alignItems="center"
-              height={64}
-            >
-              <StatusCrumbs
-                statuses={filteredStatuses}
-                statusLog={createStatusLog(data, authorisePurchaseOrder)}
-                statusFormatter={getStatusTranslator(t)}
-                width={280}
-              />
-              <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-                <StatusChangeButton />
-              </Box>
-            </Box>
-          ) : null}
-          {isExpectedDateOn && (
-            <UpdateDeliveryDateModal
-              dateType="expected"
-              selectedRows={selectedRows}
-              isOpen={isExpectedDateOn}
-              onClose={toggleExpectedDateOff}
-              resetRowSelection={resetRowSelection}
-            />
-          )}
-          {isRequestedDateOn && (
-            <UpdateDeliveryDateModal
-              dateType="requested"
-              selectedRows={selectedRows}
-              isOpen={isRequestedDateOn}
-              onClose={toggleRequestedDateOff}
-              resetRowSelection={resetRowSelection}
-            />
-          )}
-        </>
-      }
-    />
+          }
+        />
+      )}
+      {isExpectedDateOn && (
+        <UpdateDeliveryDateModal
+          dateType="expected"
+          selectedRows={selectedRows}
+          isOpen={isExpectedDateOn}
+          onClose={toggleExpectedDateOff}
+          resetRowSelection={resetRowSelection}
+        />
+      )}
+      {isRequestedDateOn && (
+        <UpdateDeliveryDateModal
+          dateType="requested"
+          selectedRows={selectedRows}
+          isOpen={isRequestedDateOn}
+          onClose={toggleRequestedDateOff}
+          resetRowSelection={resetRowSelection}
+        />
+      )}
+    </>
   );
 };
