@@ -15,7 +15,6 @@ pub struct UpsertSiteInput {
     pub code: Option<String>,
     pub name: String,
     pub password: Option<String>,
-    pub clear_hardware_id: Option<bool>,
 }
 
 pub struct CodeRequired;
@@ -113,7 +112,6 @@ impl UpsertSiteInput {
             code,
             name,
             password,
-            clear_hardware_id,
         } = self;
 
         UpsertSite {
@@ -121,7 +119,6 @@ impl UpsertSiteInput {
             code,
             name,
             password,
-            clear_hardware_id: clear_hardware_id.unwrap_or(false),
         }
     }
 }
