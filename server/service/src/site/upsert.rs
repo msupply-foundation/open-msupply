@@ -1,12 +1,13 @@
 use crate::service_provider::ServiceContext;
 use bcrypt::{hash, DEFAULT_COST};
-use repository::{RepositoryError, SiteRow, SiteRowRepository};
+use repository::{RepositoryError, SiteRow, SiteRowRepository, StorageConnection};
 
 #[derive(PartialEq, Debug)]
 pub enum UpsertSiteError {
     CodeRequired,
     NameRequired,
     PasswordRequired,
+    DuplicateSiteName,
     DatabaseError(RepositoryError),
 }
 
@@ -26,7 +27,7 @@ pub fn upsert_site(ctx: &ServiceContext, input: UpsertSite) -> Result<SiteRow, U
             let repo = SiteRowRepository::new(connection);
             let existing = repo.find_one_by_id(input.id)?;
 
-            validate(&input, &existing)?;
+            validate(connection, &input, &existing)?;
             let row = generate(input, existing);
             repo.upsert(&row)?;
 
@@ -41,7 +42,11 @@ impl From<RepositoryError> for UpsertSiteError {
     }
 }
 
-fn validate(input: &UpsertSite, existing: &Option<SiteRow>) -> Result<(), UpsertSiteError> {
+fn validate(
+    connection: &StorageConnection,
+    input: &UpsertSite,
+    existing: &Option<SiteRow>,
+) -> Result<(), UpsertSiteError> {
     match (&input.code, existing) {
         (Some(code), _) if code.trim().is_empty() => return Err(UpsertSiteError::CodeRequired),
         (None, None) => return Err(UpsertSiteError::CodeRequired),
@@ -50,6 +55,14 @@ fn validate(input: &UpsertSite, existing: &Option<SiteRow>) -> Result<(), Upsert
 
     if input.name.trim().is_empty() {
         return Err(UpsertSiteError::NameRequired);
+    }
+
+    if let Some(other) =
+        SiteRowRepository::new(connection).find_one_by_name_case_insensitive(input.name.trim())?
+    {
+        if other.id != input.id {
+            return Err(UpsertSiteError::DuplicateSiteName);
+        }
     }
 
     match (&input.password, existing) {
@@ -336,6 +349,58 @@ mod tests {
 
         let site = repo.find_one_by_id(1).unwrap().unwrap();
         assert_eq!(site.hardware_id, None);
+    }
+
+    #[actix_rt::test]
+    async fn upsert_site_rejects_duplicate_name_case_insensitive() {
+        let (_, _, connection_manager, _) = setup_all(
+            "upsert_site_rejects_duplicate_name_case_insensitive",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+
+        upsert_site(
+            &context,
+            UpsertSite {
+                id: 1,
+                code: Some("code1".to_string()),
+                name: "Site A".to_string(),
+                password: Some("password".to_string()),
+                clear_hardware_id: false,
+            },
+        )
+        .unwrap();
+
+        // Different id, same name (different case) — should be rejected.
+        assert_eq!(
+            upsert_site(
+                &context,
+                UpsertSite {
+                    id: 2,
+                    code: Some("code2".to_string()),
+                    name: "SITE a".to_string(),
+                    password: Some("password".to_string()),
+                    clear_hardware_id: false,
+                },
+            ),
+            Err(UpsertSiteError::DuplicateSiteName)
+        );
+
+        // Same id is allowed — updating the same site is not a duplicate.
+        upsert_site(
+            &context,
+            UpsertSite {
+                id: 1,
+                code: None,
+                name: "site a".to_string(),
+                password: None,
+                clear_hardware_id: false,
+            },
+        )
+        .unwrap();
     }
 
     #[actix_rt::test]
