@@ -72,6 +72,7 @@ export enum AppRoute {
 
   PageNotFound = 'page-not-found',
   PurchaseOrderOutstandingLines = 'outstanding-lines',
+  SyncMessage = 'sync-message',
 }
 
 export enum ExternalURL {
