@@ -154,6 +154,8 @@ export type RequestFragment = {
       fileName: string;
       recordId: string;
       createdDatetime: string;
+      status: Types.SyncFileReferenceNodeStatus;
+      error?: string | null;
     }>;
   };
   user?: {
