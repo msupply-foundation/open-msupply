@@ -72,8 +72,9 @@ function cleanSyncSettings({
   password,
   url,
   intervalSeconds,
+  batchSize,
 }: SyncSettingsInput): SyncSettingsInput {
-  return { username, password, url, intervalSeconds };
+  return { username, password, url, intervalSeconds, batchSize };
 }
 
 export function mapSyncError(
