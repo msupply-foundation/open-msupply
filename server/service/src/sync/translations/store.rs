@@ -1,5 +1,8 @@
 use chrono::NaiveDate;
-use repository::{NameLinkRowRepository, StorageConnection, StoreMode, StoreRow, StoreRowDelete, SyncBufferRow};
+use repository::{
+    NameLinkRowRepository, StorageConnection, StoreMode, StoreRowDelete, StoreRowWithLogo,
+    SyncBufferRow,
+};
 
 use crate::sync::translations::name::NameTranslation;
 use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
@@ -93,7 +96,7 @@ impl SyncTranslation for StoreTranslation {
             LegacyStoreMode::Dispensary => StoreMode::Dispensary,
         };
 
-        let result = StoreRow {
+        let result = StoreRowWithLogo {
             id: data.id,
             name_link_id: data.name_id,
             code: data.code,

@@ -19,7 +19,6 @@ impl SyncRecordTester for ClinicianRecordTester {
             name_link_id: new_site_properties.name_id.to_string(),
             code: small_uuid(),
             site_id: new_site_properties.site_id as i32,
-            logo: None,
             store_mode: StoreMode::Dispensary,
             created_date: NaiveDate::from_ymd_opt(2021, 1, 1),
             is_disabled: false,
