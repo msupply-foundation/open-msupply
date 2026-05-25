@@ -100,7 +100,7 @@ fn generate(
         id,
         og_id: existing_og_id,
         code: code.or(existing_code).unwrap_or_default(),
-        name,
+        name: name.trim().to_string(),
         hashed_password,
         hardware_id: if clear_hardware_id {
             None
