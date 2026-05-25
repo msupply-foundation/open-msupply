@@ -1,6 +1,5 @@
 import {
   AuthError,
-  InternalServerError,
   LocaleKey,
   LocalStorage,
   NetworkError,
@@ -11,7 +10,7 @@ import { Sdk, AuthTokenQuery, RefreshTokenQuery } from './operations.generated';
 export type AuthenticationError = {
   message: string;
   detail?: string;
-  stdError?: string | undefined;
+  cause?: Error;
   timeoutRemaining?: number;
 };
 
@@ -80,15 +79,13 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         if (err?.message) console.error(err.message);
 
         const isNetwork = e instanceof NetworkError;
-        const stdError =
-          e instanceof InternalServerError ? err.detail : undefined;
 
         return {
           token: '',
           error: {
             message: isNetwork ? 'ConnectionError' : 'UnknownError',
             detail: err?.detail ?? err?.message,
-            stdError,
+            cause: e instanceof Error ? e : undefined,
           },
         };
       }
