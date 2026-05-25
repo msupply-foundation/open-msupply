@@ -84,6 +84,7 @@ pub async fn pull(
             is_v5: false,
         }),
     );
+
     let QueryWithData {
         rows,
         remaining,
@@ -92,7 +93,7 @@ pub async fn pull(
     } = ChangelogRepository::new(&ctx.connection).query_with_data(
         filter,
         CursorAndLimit {
-            cursor: cursor as i64,
+            cursor: adjust_v6_pull_cursor(cursor),
             limit: batch_size as i64,
         },
     )?;
@@ -108,9 +109,11 @@ pub async fn pull(
     .collect();
 
     log::info!(
-        "Sending {} records to site {}",
+        "V6 pull site {} sending {} records, last_cursor_in_batch {} remaining {}",
+        response.site_id,
         records.len(),
-        response.site_id
+        last_cursor_in_batch,
+        remaining
     );
     log::debug!("Sending records as central server: {records:#?}");
 
@@ -248,7 +251,7 @@ pub async fn patient_pull(
     } = ChangelogRepository::new(&ctx.connection).query_with_data(
         filter,
         CursorAndLimit {
-            cursor: cursor as i64,
+            cursor: adjust_v6_pull_cursor(cursor),
             limit: batch_size as i64,
         },
     )?;
@@ -471,4 +474,22 @@ fn set_integrating(site_id: i32, is_integrating: bool) {
 
 fn is_sync_version_compatible(sync_v6_version: u32) -> bool {
     MIN_VERSION <= sync_v6_version && sync_v6_version <= MAX_VERSION
+}
+
+// V6 remotes store the pull cursor as `last_seen + 1` (matching the old `>= cursor`
+// query). V7 queries use `> cursor`, so subtract 1 before querying to keep the same
+// window.
+fn adjust_v6_pull_cursor(v6_cursor: u64) -> i64 {
+    v6_cursor.saturating_sub(1) as i64
+}
+
+#[cfg(test)]
+mod tests {
+    use super::adjust_v6_pull_cursor;
+
+    #[test]
+    fn adjusts_v6_pull_cursor_for_greater_than_queries() {
+        assert_eq!(adjust_v6_pull_cursor(200), 199);
+        assert_eq!(adjust_v6_pull_cursor(0), 0);
+    }
 }

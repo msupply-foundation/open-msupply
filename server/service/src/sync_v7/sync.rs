@@ -18,7 +18,7 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
         settings::{BatchSize, SyncSettings},
-        site_auth::{SiteAuthService, SiteAuthTrait},
+        site_auth::{RequestAndSetSiteAuthError, SiteAuthService, SiteAuthTrait},
         synchroniser::run_post_sync_triggers,
         ActiveStoresOnSite,
     },
@@ -202,8 +202,10 @@ async fn load_or_request_auth<'a>(
             SiteAuthService
                 .request_and_set_site_auth(service_provider, settings)
                 .await
-                // TODO can it be more concrete error for SyncError ?
-                .map_err(|e| SyncError::RequestSiteAuthError(format_error(&e)))?;
+                .map_err(|e| match e {
+                    RequestAndSetSiteAuthError::SyncV7Error(sync_error) => sync_error,
+                    other => SyncError::RequestSiteAuthError(format_error(&other)),
+                })?;
             Common::load(service_provider)?
         }
         Err(e) => return Err(e),

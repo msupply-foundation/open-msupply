@@ -546,6 +546,7 @@
   "error.site-incorrect-hardware-id": "Incorrect hardware ID",
   "error.site-incorrect-password": "Incorrect site name or password",
   "error.site-is-not-v7": "This site has not been upgraded to V7 sync yet. Run a sync to complete the upgrade.",
+  "error.token-already-allocated": "Site is already registered",
   "error.site-mismatch": "Site mismatch",
   "error.site-name-not-found": "Site name not found",
   "error.snapshot-total-mismatch": "The stock quantity is now different from when the stocktake was started because some of the stock has been issued in outbound shipments or prescriptions. Please delete the line and try again.",
