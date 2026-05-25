@@ -5,8 +5,8 @@
 
 use repository::{
     syncv7::SyncRecordSerializeError, ChangeLogInsertRow, ChangelogFilter, Description, KeyType,
-    KeyValueStoreRepository, StorageConnection, StoreRow, StoreRowRepository, SyncBufferRow,
-    SyncRequestFilter, SyncRequestRow, Upsert,
+    KeyValueStoreRepository, StorageConnection, StoreRow, StoreRowRepository, SyncRequestFilter,
+    SyncRequestRow, Upsert,
 };
 
 use crate::sync_v7::serde::DeserializeResult;

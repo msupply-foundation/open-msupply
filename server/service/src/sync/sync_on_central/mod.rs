@@ -227,7 +227,6 @@ pub async fn patient_pull(
     }
 
     let ctx = service_provider.basic_context()?;
-    let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
     // We don't need a filter here, as we are filtering in the repository layer
     let filter = ChangelogCondition::And(vec![
@@ -252,10 +251,6 @@ pub async fn patient_pull(
             limit: batch_size as i64,
         },
     )?;
-    let max_cursor = changelog_repo.max_cursor()?;
-
-    // Total = remaining records to process based on max cursor
-    let total_records = max_cursor.saturating_sub(cursor);
 
     let records: Vec<SyncRecordV6> = translate_rows_to_sync_records(
         &ctx.connection,
@@ -274,10 +269,10 @@ pub async fn patient_pull(
     );
     log::debug!("Patient Pull: Sending records as central server: {records:#?}");
 
-    let is_last_batch = total_records <= batch_size as u64;
+    let is_last_batch = remaining == 0;
 
     Ok(SyncBatchV6 {
-        total_records,
+        total_records: remaining,
         end_cursor: last_cursor_in_batch,
         records,
         is_last_batch,

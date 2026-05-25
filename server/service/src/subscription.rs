@@ -175,7 +175,7 @@ async fn subscription_worker_loop(
                 }
                 last_status = Some(status.clone());
 
-                let res = tx.send(ResolvedSubscription::SyncInfo {
+                let _ = tx.send(ResolvedSubscription::SyncInfo {
                     status,
                     last_successful: last_successful.clone(),
                     push_queue_count,
@@ -195,8 +195,7 @@ async fn subscription_worker_loop(
                             .get_initialisation_status(&ctx)
                         {
                             Ok(status) => {
-                                let res =
-                                    tx.send(ResolvedSubscription::InitialisationStatus(status));
+                                let _ = tx.send(ResolvedSubscription::InitialisationStatus(status));
                             }
                             Err(e) => {
                                 log::error!("Failed to get initialisation status: {e:?}");
