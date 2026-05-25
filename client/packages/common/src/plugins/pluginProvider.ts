@@ -99,12 +99,16 @@ export const usePluginProvider = create<PluginProvider>(set => {
         const seen = new Set<string>();
         // TODO: Here can determine if version is suitable
         const plugins = Object.entries(cachedPluginBundles).reduce(
-          (acc, [bundleCode, bundle]) =>
-            mergeWith(
-              acc,
-              stampAndValidatePages(bundle, bundleCode, seen),
-              (a, b) => (isArray(a) ? a.concat(b) : undefined)
-            ),
+          (acc, [bundleCode, bundle]) => {
+            // `configuration` is per-plugin (looked up by code from
+            // cachedPluginBundles) and must not be merged across bundles —
+            // deep-merging two plugins' configurations would corrupt them.
+            const { configuration: _configuration, ...mergeable } =
+              stampAndValidatePages(bundle, bundleCode, seen);
+            return mergeWith(acc, mergeable, (a, b) =>
+              isArray(a) ? a.concat(b) : undefined
+            );
+          },
           {}
         );
 

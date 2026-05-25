@@ -5567,6 +5567,7 @@ __metadata:
   dependencies:
     "@bcyesil/capacitor-plugin-printer": "npm:^0.0.4"
     "@capacitor/geolocation": "npm:^6.0.1"
+    "@jsonforms/core": "npm:3.5.1"
     "@openmsupply-client/common": "npm:^0.0.1"
     "@openmsupply-client/config": "npm:^0.0.0"
     "@openmsupply-client/requisitions": "npm:^0.0.0"
