@@ -115,7 +115,6 @@ pub async fn pull(
         last_cursor_in_batch,
         remaining
     );
-    log::debug!("Sending records as central server: {records:#?}");
 
     let is_last_batch = remaining == 0;
 
@@ -166,7 +165,6 @@ pub async fn push(
         batch.total_records,
         response.site_id
     );
-    log::debug!("Receiving records as central server: {batch:#?}");
 
     let SyncBatchV6 {
         records,
@@ -270,7 +268,6 @@ pub async fn patient_pull(
         records.len(),
         response.site_id
     );
-    log::debug!("Patient Pull: Sending records as central server: {records:#?}");
 
     let is_last_batch = remaining == 0;
 
