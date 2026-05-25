@@ -1,5 +1,5 @@
 use crate::{
-    db_diesel::changelog::ChangelogRepository, ChangelogSyncType, Delete, RepositoryError,
+    db_diesel::changelog::ChangelogRepository, lower, ChangelogSyncType, Delete, RepositoryError,
     RowActionType, SourceSiteId, StorageConnection, SyncVersion, Upsert,
 };
 use diesel::prelude::*;
@@ -76,6 +76,17 @@ impl<'a> SiteRowRepository<'a> {
     pub fn find_one_by_og_id(&self, og_id: &str) -> Result<Option<SiteRow>, RepositoryError> {
         let result = site::table
             .filter(site::og_id.eq(og_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn find_one_by_name_case_insensitive(
+        &self,
+        name: &str,
+    ) -> Result<Option<SiteRow>, RepositoryError> {
+        let result = site::table
+            .filter(lower(site::name).eq(lower(name)))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -220,6 +231,35 @@ mod tests {
         };
         repo.upsert(&updated).unwrap();
         assert_eq!(repo.find_one_by_id(1).unwrap(), Some(updated));
+    }
+
+    #[actix_rt::test]
+    async fn site_row_repository_find_by_name_case_insensitive() {
+        let (_, connection, _, _) = setup_all(
+            "site_row_repository_find_by_name_case_insensitive",
+            MockDataInserts::none(),
+        )
+        .await;
+        let repo = SiteRowRepository::new(&connection);
+
+        repo.upsert(&site_row_a()).unwrap();
+
+        assert_eq!(
+            repo.find_one_by_name_case_insensitive("site_a").unwrap(),
+            Some(site_row_a())
+        );
+        assert_eq!(
+            repo.find_one_by_name_case_insensitive("SITE_A").unwrap(),
+            Some(site_row_a())
+        );
+        assert_eq!(
+            repo.find_one_by_name_case_insensitive("Site_A").unwrap(),
+            Some(site_row_a())
+        );
+        assert_eq!(
+            repo.find_one_by_name_case_insensitive("unknown").unwrap(),
+            None
+        );
     }
 
     #[actix_rt::test]
