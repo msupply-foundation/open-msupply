@@ -5,7 +5,7 @@ use crate::{
     sync::{
         api_v6::{SyncBatchV6, SyncRecordV6},
         sync_status::logger::SyncStepProgress,
-        ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
+        ActiveStoresOnSite, GetActiveStoresOnSiteError,
     },
 };
 

@@ -1,8 +1,10 @@
 use crate::{
-    db_diesel::store_row::store, diesel_macros::diesel_string_enum,
-    dynamic_query_filter::create_condition, name_store_join::name_store_join,
-    vaccination_row::vaccination, KeyType, KeyValueStoreRepository, RepositoryError,
-    StorageConnection, TransactionNotification,
+    db_diesel::{changelog::changelog_cursor_tracker::ChangelogCursorTracker, store_row::store},
+    diesel_macros::diesel_string_enum,
+    dynamic_query_filter::create_condition,
+    name_store_join::name_store_join,
+    vaccination_row::vaccination,
+    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, TransactionNotification,
 };
 use diesel::{dsl::LeftJoinQuerySource, prelude::*};
 use serde::{Deserialize, Serialize};
@@ -121,6 +123,7 @@ diesel_string_enum! {
     pub enum ChangelogTableName {
         Abbreviation,
         ActivityLog,
+        AncillaryItem,
         Asset,
         AssetCatalogueItem,
         AssetCatalogueType,
@@ -254,8 +257,8 @@ pub struct ChangeLogInsertRow {
     pub store_id: Option<String>,
     pub source_site_id: Option<i32>,
     pub transfer_store_id: Option<String>,
-    // At the time of inserts a patient_id is the patient_link_id. 
-    // If the patient info changes the changelog view will resolve to 
+    // At the time of inserts a patient_id is the patient_link_id.
+    // If the patient info changes the changelog view will resolve to
     // the correct patient_id via name_link join.
     #[diesel(column_name = "patient_link_id")]
     pub patient_id: Option<String>,
@@ -343,10 +346,17 @@ impl<'a> ChangelogRepository<'a> {
         })
     }
 
-    /// Returns latest/max change log cursor. Queries the underlying table
-    /// (not the view) so it works during migrations, before `changelog_view`
-    /// gets rebuilt at the end of the migration run.
+    /// Returns latest/max change log cursor.
+    ///
+    /// If the `ChangelogCursorTracker` reports an in-flight cursor, the safe cursor
+    /// (`min(in_flight)`) is returned without a database query — it is
+    /// always at most the DB MAX visible to this connection (every committed
+    /// changelog row passed through `track`, registering a value <= its actual
+    /// cursor).
     pub fn max_cursor(&self) -> Result<u64, RepositoryError> {
+        if let Some(safe) = ChangelogCursorTracker::max_safe_cursor(self.connection) {
+            return Ok(safe);
+        }
         let result = changelog_with_links::table
             .select(diesel::dsl::max(changelog_with_links::cursor))
             .first::<Option<i64>>(self.connection.lock().connection())?;
@@ -354,6 +364,8 @@ impl<'a> ChangelogRepository<'a> {
     }
 
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<(), RepositoryError> {
+        ChangelogCursorTracker::track(self.connection)?;
+
         diesel::insert_into(changelog_with_links::table)
             .values(row)
             .execute(self.connection.lock().connection())?;
@@ -364,6 +376,8 @@ impl<'a> ChangelogRepository<'a> {
 
     pub fn batch_insert(&self, rows: Vec<ChangeLogInsertRow>) -> Result<(), RepositoryError> {
         //TODO: Need to handle batch insert size limit
+        ChangelogCursorTracker::track(self.connection)?;
+
         diesel::insert_into(changelog_with_links::table)
             .values(rows)
             .execute(self.connection.lock().connection())?;

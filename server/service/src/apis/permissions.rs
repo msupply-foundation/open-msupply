@@ -532,6 +532,9 @@ pub fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permissio
             Permissions::AuthorisePurchaseOrders => {
                 output.insert(PermissionType::PurchaseOrderAuthorise);
             }
+            Permissions::FinalisePurchaseOrders => {
+                output.insert(PermissionType::PurchaseOrderFinalise);
+            }
             // goods received
             Permissions::ViewGoodsReceived => {
                 output.insert(PermissionType::InboundShipmentExternalQuery);
