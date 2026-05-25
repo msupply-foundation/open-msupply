@@ -1,7 +1,8 @@
 use super::*;
 use base64::{prelude::BASE64_STANDARD, Engine};
 use repository::SyncFileReferenceRow;
-use reqwest::{Client, StatusCode};
+use reqwest::StatusCode;
+use util::https_client;
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use tokio::sync::watch;
@@ -73,7 +74,7 @@ impl SyncApiV6 {
         )
         .map_err(|e| error_with_url(create_route, SyncApiErrorVariantV6::Other(e)))?;
 
-        let client = Client::new();
+        let client = https_client();
 
         // 1. Create the upload (or no-op if it already exists from a prior attempt).
         let post = client
