@@ -1,8 +1,6 @@
 use crate::{
-    diesel_macros::apply_sort,
-    dynamic_query_filter::create_condition,
-    syncv7::SyncError,
-    DBType, Pagination, RepositoryError, Sort, StorageConnection,
+    diesel_macros::apply_sort, dynamic_query_filter::create_condition, syncv7::SyncError, DBType,
+    Pagination, RepositoryError, Sort, StorageConnection,
 };
 
 use chrono::NaiveDateTime;
@@ -95,11 +93,6 @@ create_condition!(
         FinishedDatetime,
         NaiveDateTime,
         sync_log_v7::finished_datetime
-    ),
-    (
-        PullStartedDatetime,
-        NaiveDateTime,
-        sync_log_v7::pull_started_datetime
     ),
     (
         IntegrationFinishedDatetime,

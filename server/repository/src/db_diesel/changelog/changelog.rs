@@ -557,30 +557,7 @@ impl ChangelogFilter {
 impl ChangelogFilter {
     // Push from OMS remote
     pub fn all_data_edited_on_site(site_id: i32) -> ChangelogCondition::Inner {
-        use ChangeLogSyncStyle::*;
-        use ChangelogCondition as C;
-        let mut inner_or_conditions = vec![];
-        for sync_style in ChangeLogSyncStyle::iter() {
-            let table_names = sync_style.get_table_names_for_sync_style(None);
-
-            if table_names.is_empty() {
-                continue;
-            }
-
-            match sync_style {
-                Remote | File | Patient | RemoteToCentral | RemoteOwned => {
-                    inner_or_conditions.push(C::table_name::any(table_names))
-                }
-                Central | ToLegacyCentralOnly | Transfer => {
-                    // Don't sync
-                }
-            };
-        }
-
-        C::And(vec![
-            C::Or(inner_or_conditions),
-            C::source_site_id::equal(site_id),
-        ])
+        ChangelogCondition::source_site_id::equal(site_id)
     }
 }
 

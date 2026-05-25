@@ -358,9 +358,8 @@ impl<'a> SyncV7<'a> {
 
             self.connection
                 .transaction_sync(|t_con| {
-                    if !sync_buffer_rows.is_empty() {
-                        SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows)?;
-                    }
+                    SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows)?;
+
                     cursor_controller.update(self.connection, batch_last_cursor)
                 })
                 .map_err(|e| e.to_inner_error())?;
