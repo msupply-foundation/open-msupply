@@ -84,7 +84,7 @@ pub async fn pull(
             is_v5: false,
         }),
     );
-    
+
     let QueryWithData {
         rows,
         remaining,
