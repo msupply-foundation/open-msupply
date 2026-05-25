@@ -478,10 +478,9 @@ fn is_sync_version_compatible(sync_v6_version: u32) -> bool {
 
 // V6 remotes store the pull cursor as `last_seen + 1` (matching the old `>= cursor`
 // query). V7 queries use `> cursor`, so subtract 1 before querying to keep the same
-// window. Sites that never ran v6 have cursor == 0 and end up at -1, which is
-// harmless — the repo's `> -1` returns the first record (cursor 0) onward.
+// window.
 fn adjust_v6_pull_cursor(v6_cursor: u64) -> i64 {
-    (v6_cursor as i64).saturating_sub(1)
+    v6_cursor.saturating_sub(1) as i64
 }
 
 #[cfg(test)]
@@ -491,6 +490,6 @@ mod tests {
     #[test]
     fn adjusts_v6_pull_cursor_for_greater_than_queries() {
         assert_eq!(adjust_v6_pull_cursor(200), 199);
-        assert_eq!(adjust_v6_pull_cursor(0), -1);
+        assert_eq!(adjust_v6_pull_cursor(0), 0);
     }
 }
