@@ -6,7 +6,7 @@ use graphql_core::{
 use repository::{KeyType, KeyValueStoreRepository};
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    sync::settings::SyncSettings,
+    sync::settings::{BatchSize, SyncSettings},
 };
 
 #[derive(Debug)]
@@ -50,6 +50,27 @@ impl SyncSettingsNode {
         let value = KeyValueStoreRepository::new(&service_context.connection)
             .get_i32(KeyType::SettingsSyncSiteId)?;
         Ok(value)
+    }
+
+    /// Configured sync batch size. Returns Some only when all three underlying
+    /// values are equal and differ from the defaults, so the UI can pre-fill
+    /// its single input. Non-uniform legacy values are reported as None.
+    pub async fn batch_size(&self) -> Option<u32> {
+        let BatchSize {
+            remote_pull,
+            remote_push,
+            central_pull,
+        } = self.settings.batch_size;
+        let defaults = BatchSize::default();
+        let uniform = remote_pull == remote_push && remote_push == central_pull;
+        let is_default = remote_pull == defaults.remote_pull
+            && remote_push == defaults.remote_push
+            && central_pull == defaults.central_pull;
+        if uniform && !is_default {
+            Some(remote_pull)
+        } else {
+            None
+        }
     }
 }
 

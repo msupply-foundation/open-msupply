@@ -1,4 +1,5 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useState } from 'react';
+import { intervalToDuration } from 'date-fns';
 import {
   LocaleKey,
   TypedTFunction,
@@ -49,6 +50,28 @@ export const SyncProgress: FC<SyncProgressProps> = ({
   const error =
     syncStatus.error &&
     mapSyncError(t, syncStatus.error, 'error.unknown-sync-error');
+
+  const activeCandidates = isSyncStatusV7(syncStatus)
+    ? [
+        syncStatus.push,
+        syncStatus.waitingForIntegration,
+        syncStatus.pull,
+        syncStatus.integration,
+      ]
+    : [
+        syncStatus.prepareInitial,
+        syncStatus.pullCentral,
+        syncStatus.pullRemote,
+        syncStatus.pullV6,
+        syncStatus.push,
+        syncStatus.pushV6,
+        syncStatus.integration,
+      ];
+  const hasActiveStep = activeCandidates.some(
+    s => !!s?.started && !s?.finished
+  );
+  const now = useNowEverySecond(hasActiveStep && !error);
+
   const steps = getSteps({
     t,
     colour,
@@ -56,6 +79,7 @@ export const SyncProgress: FC<SyncProgressProps> = ({
     syncStatus,
     isError: !!error,
     isOperational,
+    now,
   });
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
@@ -70,6 +94,36 @@ export const SyncProgress: FC<SyncProgressProps> = ({
         )}
     </Box>
   );
+};
+
+const useNowEverySecond = (active: boolean) => {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!active) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [active]);
+  return now;
+};
+
+const getStepElapsed = (
+  progress: Step | null | undefined,
+  now: number
+): string | undefined => {
+  if (!progress?.started) return undefined;
+  const startMs = new Date(progress.started).getTime();
+  if (!Number.isFinite(startMs)) return undefined;
+  const endMs = progress.finished
+    ? new Date(progress.finished).getTime()
+    : now;
+  const {
+    hours = 0,
+    minutes = 0,
+    seconds = 0,
+  } = intervalToDuration({ start: startMs, end: Math.max(startMs, endMs) });
+  if (hours > 0) return `${hours}h ${String(minutes).padStart(2, '0')}m`;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
 };
 
 type LinkedDescriptions = FullSyncStatusV7Fragment['linkedDescriptions'];
@@ -136,20 +190,25 @@ const LinkedSyncProcesses = ({
 
 const ProgressIndicator = ({
   progress,
+  elapsed,
   colour,
 }: {
   progress?: Progress;
+  elapsed?: string;
   colour: StepperColour;
 }) => (
   <Box
     display={'flex'}
+    flexDirection="column"
+    alignItems="center"
     justifyContent="center"
     fontSize={12}
     color={`${colour}.light`}
     whiteSpace="nowrap"
     width="9em"
   >
-    {progress ? `${progress.done} / ${progress.total}` : null}
+    {progress ? <span>{`${progress.done} / ${progress.total}`}</span> : null}
+    {elapsed !== undefined ? <span>{elapsed}</span> : null}
   </Box>
 );
 
@@ -170,6 +229,7 @@ const toStepDefinition = (
   t: TypedTFunction<LocaleKey>,
   colour: StepperColour,
   isError: boolean,
+  now: number,
   { labelKey, step, icon }: RawStep,
   index: number,
   furthestStartedIndex: number
@@ -195,7 +255,13 @@ const toStepDefinition = (
     error: isActiveAndError,
     icon: isActiveAndError ? <AlertIcon sx={{ color: 'error.main' }} /> : icon,
     label: t(labelKey),
-    optional: <ProgressIndicator progress={progress} colour={colour} />,
+    optional: (
+      <ProgressIndicator
+        progress={progress}
+        elapsed={getStepElapsed(step, now)}
+        colour={colour}
+      />
+    ),
   };
 };
 
@@ -206,6 +272,7 @@ const getSteps = ({
   syncStatus,
   isError,
   isOperational,
+  now,
 }: {
   t: TypedTFunction<LocaleKey>;
   colour: StepperColour;
@@ -213,6 +280,7 @@ const getSteps = ({
   syncStatus: SyncStatus;
   isError: boolean;
   isOperational: boolean;
+  now: number;
 }): StepDefinition[] => {
   const pullDown = <ChevronsDownIcon />;
   const pushUp = <ChevronsDownIcon sx={{ transform: 'rotate(180deg)' }} />;
@@ -273,6 +341,6 @@ const getSteps = ({
   });
 
   return raws.map((raw, i) =>
-    toStepDefinition(t, colour, isError, raw, i, furthestStartedIndex)
+    toStepDefinition(t, colour, isError, now, raw, i, furthestStartedIndex)
   );
 };
