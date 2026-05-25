@@ -984,7 +984,10 @@ mod test {
             );
         }
 
-        // Central unreachable + empty local hash → MSupplyCentralNotReached
+        // Central unreachable + empty local hash → InvalidCredentials.
+        // find_one_by_user_name filters out users with an empty hash, so the
+        // user looks like "doesn't exist" to the local verify path — the same
+        // shape the V5V6 flow exhibits.
         {
             let mock_server = MockServer::start();
             mock_server.mock(|when, then| {
@@ -1004,7 +1007,10 @@ mod test {
             )
             .await;
 
-            assert_matches!(result, Err(LoginError::MSupplyCentralNotReached));
+            assert_matches!(
+                result,
+                Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+            );
         }
 
         // Valid creds but no store join on this site → NoSiteAccess
