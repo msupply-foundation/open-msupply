@@ -7,20 +7,20 @@ import {
 } from '@openmsupply-client/common';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { LIST, PRESCRIPTION } from './keys';
-import { PrescriptionHistoryRowFragment } from '../operations.generated';
+import { PrescriptionWithLinesFragment } from '../operations.generated';
 import { sortFieldMap } from './utils';
 
-export type HistoryListParams = {
+export type PrescriptionsWithLinesParams = {
   first?: number;
   offset?: number;
-  sortBy?: SortBy<PrescriptionHistoryRowFragment>;
+  sortBy?: SortBy<PrescriptionWithLinesFragment>;
   filterBy: FilterBy | null;
 };
 
-const HISTORY = 'history';
+const WITH_LINES = 'with-lines';
 
-export const usePrescriptionHistoryList = (
-  queryParams?: HistoryListParams
+export const usePrescriptionsWithLines = (
+  queryParams?: PrescriptionsWithLinesParams
 ) => {
   const { prescriptionApi, storeId } = usePrescriptionGraphQL();
 
@@ -37,7 +37,7 @@ export const usePrescriptionHistoryList = (
   const queryKey = [
     LIST,
     PRESCRIPTION,
-    HISTORY,
+    WITH_LINES,
     storeId,
     sortBy,
     first,
@@ -46,7 +46,7 @@ export const usePrescriptionHistoryList = (
   ];
 
   const queryFn = async (): Promise<{
-    nodes: PrescriptionHistoryRowFragment[];
+    nodes: PrescriptionWithLinesFragment[];
     totalCount: number;
   }> => {
     const filter = {
@@ -57,7 +57,7 @@ export const usePrescriptionHistoryList = (
     const sortKey = (sortFieldMap[sortBy.key] ||
       InvoiceSortFieldInput.PickedDatetime) as InvoiceSortFieldInput;
 
-    const query = await prescriptionApi.prescriptionHistory({
+    const query = await prescriptionApi.prescriptionsWithLines({
       storeId,
       first,
       offset,
