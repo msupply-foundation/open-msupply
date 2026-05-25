@@ -49,7 +49,7 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // Legacy — Remote (not v6)
             // ----------------------------------------------------------
-            NameInsuranceJoin | NameStoreJoin => (
+            NameStoreJoin | ItemStoreJoin | ClinicianStoreJoin => (
                 vec![Remote],
                 SyncVersions {
                     is_v6: false,
@@ -60,10 +60,9 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // Legacy — RemoteOwned (not v6)
             // ----------------------------------------------------------
-            ActivityLog | Clinician | ClinicianStoreJoin | IndicatorValue | InsuranceProvider
-            | Location | LocationMovement | PurchaseOrder | PurchaseOrderLine | Sensor
-            | StockLine | Stocktake | StocktakeLine | TemperatureBreach | TemperatureLog
-            | VVMStatusLog => (
+            ActivityLog | IndicatorValue | Location | LocationMovement | PurchaseOrder
+            | PurchaseOrderLine | Sensor | StockLine | Stocktake | StocktakeLine
+            | TemperatureBreach | TemperatureLog | VVMStatusLog => (
                 vec![RemoteOwned],
                 SyncVersions {
                     is_v6: false,
@@ -105,7 +104,6 @@ impl ChangelogTableName {
                     is_v5: true,
                 },
             ),
-
             // ----------------------------------------------------------
             // Central (v6) — created on the Open-mSupply central server
             // ----------------------------------------------------------
@@ -147,8 +145,8 @@ impl ChangelogTableName {
             Abbreviation
             | Barcode
             | Category
+            | Clinician
             | Contact
-            | ContactTrace
             | Context
             | Currency
             | DemographicIndicator
@@ -156,10 +154,10 @@ impl ChangelogTableName {
             | DocumentRegistry
             | IndicatorColumn
             | IndicatorLine
+            | InsuranceProvider
             | Item
             | ItemCategoryJoin
             | ItemDirection
-            | ItemStoreJoin
             | ItemWarningJoin
             | LocationType
             | MasterList
@@ -171,8 +169,6 @@ impl ChangelogTableName {
             | PeriodSchedule
             | Printer
             | Program
-            | ProgramEnrolment
-            | ProgramEvent
             | ProgramIndicator
             | ProgramRequisitionOrderType
             | ProgramRequisitionSettings
@@ -239,7 +235,7 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // Remote + Patient (v6) — store-scoped data also routed to sites where the patient is visible
             // ----------------------------------------------------------
-            Encounter | Vaccination => (
+            Encounter | Vaccination | ContactTrace => (
                 vec![Remote, Patient],
                 SyncVersions {
                     is_v6: true,
@@ -250,7 +246,7 @@ impl ChangelogTableName {
             // ----------------------------------------------------------
             // Patient (v6) — routed only to sites where the patient is visible
             // ----------------------------------------------------------
-            Document => (
+            Document | NameInsuranceJoin | ProgramEnrolment | ProgramEvent => (
                 vec![Patient],
                 SyncVersions {
                     is_v6: false,
