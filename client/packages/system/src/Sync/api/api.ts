@@ -155,7 +155,7 @@ function mapSyncErrorV7(
     [SyncErrorVariantV7.DatabaseError]: 'error.internal-error',
     [SyncErrorVariantV7.SyncRecordSerializeError]: 'error.internal-error',
     [SyncErrorVariantV7.RecordNotFound]: 'error.internal-error',
-    [SyncErrorVariantV7.TokenAlreadyAllocated]: 'error.internal-error',
+    [SyncErrorVariantV7.TokenAlreadyAllocated]: 'error.token-already-allocated',
     [SyncErrorVariantV7.TokenNotFound]: 'error.internal-error',
     [SyncErrorVariantV7.FailedToGetHardwareId]: 'error.internal-error',
     [SyncErrorVariantV7.MissingAuthHeader]: 'error.internal-error',
