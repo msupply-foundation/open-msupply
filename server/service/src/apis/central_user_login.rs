@@ -4,7 +4,7 @@ use reqwest::{ClientBuilder, StatusCode, Url};
 use serde::{Deserialize, Serialize};
 
 const CONNECTION_TIMEOUT_SEC: u64 = 10;
-const REQUEST_TIMEOUT_SEC: u64 = 30;
+const REQUEST_TIMEOUT_SEC: u64 = 10;
 
 #[derive(Debug)]
 pub enum CentralUserLoginError {
