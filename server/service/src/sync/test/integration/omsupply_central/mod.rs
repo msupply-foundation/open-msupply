@@ -3,7 +3,7 @@ mod plugin_data;
 mod test;
 mod vaccine_card;
 
-use std::time::Duration;
+use std::{env, time::Duration};
 
 use reqwest::Client;
 use url::Url;
@@ -43,6 +43,8 @@ async fn test_omsupply_central_records(identifier: &str, tester: &dyn SyncRecord
         panic!("Not a remote site or central server not configured in legacy mSupply");
     };
 
+    let token = get_auth_token(&central_server_url).await;
+
     for (index, step_data) in steps_data.into_iter().enumerate() {
         println!(
             "test_omsupply_central_records_{}_step{}",
@@ -56,10 +58,10 @@ async fn test_omsupply_central_records(identifier: &str, tester: &dyn SyncRecord
             .expect("Problem inserting central data");
 
         // Sync omSupply central server first
-        sync_omsupply_central(&central_server_url).await;
+        sync_omsupply_central(&central_server_url, &token).await;
         // Integrate omSupply central server records via graphql
         for graphql_operation in step_data.om_supply_central_graphql_operations {
-            graphql(&central_server_url, graphql_operation).await;
+            graphql(&central_server_url, Some(&token), graphql_operation).await;
         }
 
         site_config.synchroniser.sync(None).await.unwrap();
@@ -89,6 +91,8 @@ async fn test_omsupply_central_remote_records(identifier: &str, tester: &dyn Syn
 
     let central_server_url = assert_variant!(CentralServerConfig::get(), CentralServerConfig::CentralServerUrl(url) => url);
 
+    let token = get_auth_token(&central_server_url).await;
+
     let mut previous_connection = site_config.context.connection;
     let mut previous_synchroniser = site_config.synchroniser;
 
@@ -102,10 +106,10 @@ async fn test_omsupply_central_remote_records(identifier: &str, tester: &dyn Syn
             .expect("Problem inserting central data");
 
         // Sync omSupply central server first
-        sync_omsupply_central(&central_server_url).await;
+        sync_omsupply_central(&central_server_url, &token).await;
         // Integrate omSupply central server records via graphql
         for graphql_operation in step_data.om_supply_central_graphql_operations {
-            graphql(&central_server_url, graphql_operation).await;
+            graphql(&central_server_url, Some(&token), graphql_operation).await;
         }
 
         previous_synchroniser.sync(None).await.unwrap();
@@ -127,19 +131,48 @@ async fn test_omsupply_central_remote_records(identifier: &str, tester: &dyn Syn
     }
 }
 
-// Helper for graphql queries
-async fn graphql(url: &str, graphql: GraphqlRequest) -> serde_json::Value {
+// Logs into the OMS central server and returns a bearer token for subsequent GraphQL requests.
+// Reads credentials from CENTRAL_SERVER_USERNAME and CENTRAL_SERVER_PASSWORD env variables.
+async fn get_auth_token(url: &str) -> String {
+    let username =
+        env::var("CENTRAL_SERVER_USERNAME").expect("CENTRAL_SERVER_USERNAME env variable missing");
+    let password =
+        env::var("CENTRAL_SERVER_PASSWORD").expect("CENTRAL_SERVER_PASSWORD env variable missing");
+
+    let result = graphql(
+        url,
+        None,
+        GraphqlRequest {
+            query: format!(
+                r#"query {{ authToken(username: "{}", password: "{}") {{ ... on AuthToken {{ token }} }} }}"#,
+                username, password
+            ),
+            ..Default::default()
+        },
+    )
+    .await;
+
+    result["authToken"]["token"]
+        .as_str()
+        .expect("Failed to get auth token from OMS central server — check CENTRAL_SERVER_USERNAME and CENTRAL_SERVER_PASSWORD")
+        .to_string()
+}
+
+// Helper for graphql queries. Pass Some(token) for authenticated requests, None for login.
+async fn graphql(url: &str, token: Option<&str>, request: GraphqlRequest) -> serde_json::Value {
     let mut url = Url::parse(url).unwrap();
     url = url.join("graphql").unwrap();
 
-    let result = Client::new()
+    let mut builder = Client::new()
         .post(url.clone())
-        .body(serde_json::to_string(&graphql).unwrap())
-        .send()
-        .await;
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&request).unwrap());
 
-    let response_text = result.unwrap().text().await.unwrap();
+    if let Some(token) = token {
+        builder = builder.bearer_auth(token);
+    }
 
+    let response_text = builder.send().await.unwrap().text().await.unwrap();
     let response_json: serde_json::Value = serde_json::from_str(&response_text).unwrap();
 
     assert_eq!(
@@ -153,9 +186,10 @@ async fn graphql(url: &str, graphql: GraphqlRequest) -> serde_json::Value {
 }
 
 // Call manual sync mutation and then wait for synchronisation
-pub(crate) async fn sync_omsupply_central(url: &str) {
+pub(crate) async fn sync_omsupply_central(url: &str, token: &str) {
     graphql(
         url,
+        Some(token),
         GraphqlRequest {
             query: "mutation { manualSync }".to_string(),
             ..Default::default()
@@ -168,8 +202,9 @@ pub(crate) async fn sync_omsupply_central(url: &str) {
         tokio::time::sleep(Duration::from_secs(1)).await;
         let result = graphql(
             url,
+            Some(token),
             GraphqlRequest {
-                query: r#" 
+                query: r#"
                     query {
                         latestSyncStatus {
                             isSyncing

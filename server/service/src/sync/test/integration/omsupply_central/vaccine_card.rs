@@ -17,6 +17,7 @@ use repository::{GenderType, NameRow, NameRowType, VaccinationRow};
 use serde_json::json;
 use util::uuid::uuid;
 
+use super::get_auth_token;
 use super::graphql;
 
 static ADD_VACCINE_COURSE: &str = r#"
@@ -114,11 +115,13 @@ pub(super) async fn test_vaccine_card() {
     };
 
     // For mSupply central records to get to omSupply central
-    sync_omsupply_central(&central_server_url).await;
+    let token = get_auth_token(&central_server_url).await;
+    sync_omsupply_central(&central_server_url, &token).await;
 
     // Add vaccine central data
     graphql(
         &central_server_url,
+        Some(&token),
         GraphqlRequest {
             query: ADD_VACCINE_COURSE.to_string(),
             variables: json!({

@@ -20,8 +20,14 @@ struct SyncSite {
     #[serde(rename = "site_ID")]
     site_id: u32,
     name: String,
-    #[serde(rename = "password")]
-    password_sha256: String,
+}
+
+impl SyncSite {
+    // 4D excludes site.password (SHA256) from sync responses for security.
+    // TESTUtil_createSite sets password = sha256("pass " + site_name), so we reproduce that here.
+    fn password_sha256(&self) -> String {
+        util::hash::sha256(&format!("pass {}", self.name))
+    }
 }
 #[derive(Deserialize)]
 struct SyncStore {
@@ -77,7 +83,7 @@ impl SyncApiV5 {
         let check_site_api = SyncApiV5 {
             settings: SyncApiSettings {
                 username: site_response.site.name.clone(),
-                password_sha256: site_response.site.password_sha256.clone(),
+                password_sha256: site_response.site.password_sha256(),
                 ..self.settings.clone()
             },
             ..self.clone()
@@ -143,6 +149,7 @@ impl ConfigureCentralServer {
     ) -> anyhow::Result<SiteConfiguration> {
         let result = with_retry(|| self.api.create_sync_site(visible_name_ids.clone())).await?;
 
+        let site_password_sha256 = result.site.password_sha256();
         let new_site_properties = NewSiteProperties {
             store_id: result.store.id,
             name_id: result.store.name_id,
@@ -153,8 +160,8 @@ impl ConfigureCentralServer {
         Ok(SiteConfiguration {
             sync_settings: SyncSettings {
                 url: self.server_url.clone(),
-                username: result.site.name,
-                password_sha256: result.site.password_sha256,
+                username: result.site.name.clone(),
+                password_sha256: site_password_sha256,
                 interval_seconds: 10000000,
                 // TODO make this adjustable after initialisation
                 // to check cursor is being updated correctly
