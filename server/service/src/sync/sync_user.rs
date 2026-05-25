@@ -1,11 +1,12 @@
 use chrono::NaiveDateTime;
 use log::info;
-use repository::{RepositoryError, UserAccountRow, UserAccountRowRepository};
+use repository::{RepositoryError, SyncVersion, UserAccountRow, UserAccountRowRepository};
 
 use crate::{
     auth_data::AuthData,
     login::{FetchUserError, LoginError, LoginFailure, LoginInput, LoginService, UpdateUserError},
     service_provider::ServiceProvider,
+    sync::CentralServerConfig,
 };
 
 pub struct SyncUser {}
@@ -19,6 +20,19 @@ impl SyncUser {
         user_id: &str,
     ) -> Result<UserAccountRow, LoginError> {
         let ctx = service_provider.basic_context()?;
+
+        // V7 sites get user rows + permissions + password_hash via sync
+        // translations, so there's nothing to re-fetch from legacy here.
+        // Return the existing local row so the GraphQL response stays
+        // shaped the same on both flows.
+        let sync_version =
+            SyncVersion::get(&ctx.connection, CentralServerConfig::is_central_server())?;
+        if matches!(sync_version, SyncVersion::V7) {
+            let user = UserAccountRowRepository::new(&ctx.connection)
+                .find_one_by_id(user_id)?
+                .ok_or(LoginError::DatabaseError(RepositoryError::NotFound))?;
+            return Ok(user);
+        }
 
         let central_server_url = service_provider
             .settings

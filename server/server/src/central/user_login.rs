@@ -4,18 +4,12 @@ use actix_web::{
     web::{self, Data, Json},
     HttpResponse,
 };
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use service::{
+    apis::central_user_login::UserLoginInput,
     login::{LoginService, MIN_ERR_RESPONSE_TIME_SEC},
     service_provider::ServiceProvider,
 };
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct UserLoginInput {
-    pub username: String,
-    pub password: String,
-}
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
