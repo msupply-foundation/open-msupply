@@ -49,6 +49,11 @@ const PluginBreadcrumbs: React.FC<{ pageLabel: string }> = ({ pageLabel }) => {
  * Returns `<Route>` children for every registered plugin page. Rendered
  * inside the top-level `<Routes>` in Site.tsx; React Router picks these
  * static paths over the wildcard category routers by specificity.
+ *
+ * The trailing `/*` lets a plugin page host its own React Router and own
+ * any subpaths beneath its registered route — useful for list → detail
+ * style flows where the plugin framework's single-segment `route` rule
+ * would otherwise require a second top-level `PluginPage` registration.
  */
 export const usePluginRoutes = (): React.ReactNode => {
   const { plugins } = usePluginProvider();
@@ -61,7 +66,7 @@ export const usePluginRoutes = (): React.ReactNode => {
       return (
         <Route
           key={path}
-          path={path}
+          path={`${path}/*`}
           element={
             <React.Suspense fallback={<DetailLoadingSkeleton />}>
               <PluginPageGuard permissions={page.menu.permissions}>
