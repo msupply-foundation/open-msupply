@@ -17,7 +17,6 @@ use crate::{
 use central_server_configurations::{ConfigureCentralServer, SiteConfiguration};
 use repository::{mock::MockDataInserts, ChangelogRepository, StorageConnection};
 use serde::Serialize;
-use serde_json::json;
 use std::{error::Error, future::Future};
 
 pub(super) struct FullSiteConfig {
