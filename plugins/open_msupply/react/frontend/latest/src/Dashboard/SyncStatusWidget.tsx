@@ -10,6 +10,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { mapSyncError, useSync } from '@openmsupply-client/system';
+import { usePluginConfiguration } from '../Configuration';
 
 const FormattedSyncDate = ({ date }: { date: Date | null }) => {
   const t = useTranslation();
@@ -63,9 +64,18 @@ const Row: React.FC<PropsWithChildren<{ title: string }>> = ({
 const SyncStatusWidget = () => {
   const { syncStatus } = useSync.utils.syncInfo();
   const t = useTranslation();
+  const { enabled, logPrefix } = usePluginConfiguration();
 
+  if (!enabled) return null;
+
+  // NOTE: driving a user-visible title from a free-text plugin config is for
+  // demo purposes only. For real plugins, prefer adding the string to the
+  // plugin's translation files and looking it up by key — that way the title
+  // localises with the user's language instead of being a single fixed
+  // string. Configuration is the right home for behavioural toggles like
+  // `enabled`, not for translatable copy.
   return (
-    <Widget title={t('heading.synchronise-status')}>
+    <Widget title={logPrefix || t('heading.synchronise-status')}>
       <Grid
         container
         justifyContent="flex-start"
