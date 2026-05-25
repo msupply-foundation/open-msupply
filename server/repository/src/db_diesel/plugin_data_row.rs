@@ -5,6 +5,7 @@ use super::{
 
 use crate::{repository_error::RepositoryError, Upsert};
 
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
 use serde::{Deserialize, Serialize};
@@ -18,6 +19,7 @@ table! {
         related_record_id -> Nullable<Text>,
         data_identifier -> Text,
         data -> Text,
+        datetime -> Nullable<Timestamp>,
     }
 }
 
@@ -35,6 +37,10 @@ pub struct PluginDataRow {
     pub related_record_id: Option<String>,
     pub data_identifier: String, // Used by the plugin to identify the data, often would be a table name
     pub data: String,
+    /// Optional, plugin-controlled timestamp (e.g. "update time"). Kept as a
+    /// distinct column to allow efficient filtering by date range.
+    #[serde(default)]
+    pub datetime: Option<NaiveDateTime>,
 }
 
 pub struct PluginDataRowRepository<'a> {
