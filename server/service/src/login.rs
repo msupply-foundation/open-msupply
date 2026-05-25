@@ -224,30 +224,33 @@ impl LoginService {
     ) -> Result<UserAccountRow, LoginError> {
         let mut username = input.username.clone();
         let mut connection_failure = false;
-        match LoginService::fetch_user_from_central(service_provider, input).await {
-            Ok(user_info) => {
-                let service_ctx =
-                    service_provider.context("".to_string(), user_info.user.id.clone())?;
-                username.clone_from(&user_info.user.name);
-                LoginService::update_user(&service_ctx, &input.password, user_info)
-                    .map_err(LoginError::UpdateUserError)?;
-            }
-            Err(err) => match err {
-                FetchUserError::Unauthenticated => {
-                    return Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+        // Don't do login via v5 and v6 on central server, permissions with v3 and up will come via sync
+        if !CentralServerConfig::is_central_server() {
+            match LoginService::fetch_user_from_central(service_provider, input).await {
+                Ok(user_info) => {
+                    let service_ctx =
+                        service_provider.context("".to_string(), user_info.user.id.clone())?;
+                    username.clone_from(&user_info.user.name);
+                    LoginService::update_user(&service_ctx, &input.password, user_info)
+                        .map_err(LoginError::UpdateUserError)?;
                 }
-                FetchUserError::AccountBlocked(timeout_remaining) => {
-                    return Err(LoginError::LoginFailure(LoginFailure::AccountBlocked(
-                        timeout_remaining,
-                    )))
-                }
-                FetchUserError::ConnectionError(_) => {
-                    info!("{err:?}");
-                    connection_failure = true;
-                }
-                FetchUserError::InternalError(_) => info!("{err:?}"),
-            },
-        };
+                Err(err) => match err {
+                    FetchUserError::Unauthenticated => {
+                        return Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+                    }
+                    FetchUserError::AccountBlocked(timeout_remaining) => {
+                        return Err(LoginError::LoginFailure(LoginFailure::AccountBlocked(
+                            timeout_remaining,
+                        )))
+                    }
+                    FetchUserError::ConnectionError(_) => {
+                        info!("{err:?}");
+                        connection_failure = true;
+                    }
+                    FetchUserError::InternalError(_) => info!("{err:?}"),
+                },
+            };
+        }
 
         let service_ctx = service_provider.basic_context()?;
         let user_service = UserAccountService::new(&service_ctx.connection);
@@ -287,18 +290,16 @@ impl LoginService {
     ) -> Result<UserAccountRow, LoginError> {
         let mut central_verified = false;
         let mut connection_failure = false;
-        if !CentralServerConfig::is_central_server() {
-            match central_user_login(&input.central_server_url, &input.username, &input.password)
-                .await
-            {
-                Ok(()) => central_verified = true,
-                Err(CentralUserLoginError::InvalidCredentials) => {
-                    return Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials));
-                }
-                Err(CentralUserLoginError::Unreachable(reason)) => {
-                    info!("central user login unreachable, falling back to local: {reason}");
-                    connection_failure = true;
-                }
+
+        match central_user_login(&input.central_server_url, &input.username, &input.password).await
+        {
+            Ok(()) => central_verified = true,
+            Err(CentralUserLoginError::InvalidCredentials) => {
+                return Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials));
+            }
+            Err(CentralUserLoginError::Unreachable(reason)) => {
+                info!("central user login unreachable, falling back to local: {reason}");
+                connection_failure = true;
             }
         }
 
