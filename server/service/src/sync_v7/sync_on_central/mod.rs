@@ -1,3 +1,18 @@
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
+
+use repository::{
+    migrations::Version,
+    syncv7::{SiteLockError, SyncError},
+    ChangelogCondition, ChangelogFilter, EqualFilter, FilterBuilder, KeyType,
+    KeyValueStoreRepository, Pagination, RepositoryError, SiteFilter, SiteRepository, SiteRow,
+    SiteRowRepository, SourceSiteId, StorageConnection, SyncBufferRepository, SyncVersion,
+};
+use thiserror::Error;
+use util::format_error;
+
 use crate::{
     apis::patient_v4::PatientV4,
     programs::patient::patient_updated::create_patient_name_store_join,
@@ -18,20 +33,6 @@ use crate::{
         validate_translate_integrate::{validate_translate_integrate, SyncContext},
     },
 };
-use repository::{
-    migrations::Version,
-    syncv7::{SiteLockError, SyncError},
-    ChangelogCondition, ChangelogFilter, EqualFilter, FilterBuilder, KeyType,
-    KeyValueStoreRepository, Pagination, RepositoryError, SiteFilter, SiteRepository, SiteRow,
-    SiteRowRepository, SourceSiteId, StorageConnection, StringFilter, SyncBufferRepository,
-    SyncVersion,
-};
-use std::{
-    collections::HashMap,
-    sync::{Arc, RwLock},
-};
-use thiserror::Error;
-use util::format_error;
 
 /// TODO: revisit token format
 pub async fn get_token(
@@ -193,12 +194,7 @@ fn get_site_by_name(
     connection: &StorageConnection,
     name: &str,
 ) -> Result<Option<SiteRow>, SyncError> {
-    let rows = SiteRepository::new(connection).query(
-        Pagination::one(),
-        Some(SiteFilter::new().name(StringFilter::equal_to(name))),
-        None,
-    )?;
-    Ok(rows.into_iter().next())
+    Ok(SiteRowRepository::new(connection).find_one_by_name_case_insensitive(name)?)
 }
 
 fn get_site_by_token(
@@ -276,7 +272,11 @@ pub async fn pull(
 ) -> pull::Response {
     let (site, ctx) = validate(service_provider, &common)?;
 
-    let filter = ChangelogFilter::all_data_for_site(site.id, input.is_initialising, None);
+    let base = ChangelogFilter::all_data_for_site(site.id, input.is_initialising, None);
+    let filter = match input.filter {
+        Some(extra) => ChangelogCondition::And(vec![base, extra]),
+        None => base,
+    };
 
     let batch = SyncBatchV7::generate(
         &ctx.connection,
@@ -384,7 +384,7 @@ pub async fn push(
 
     let sync_buffer_rows = records
         .into_iter()
-        .map(|record| sync_record_to_buffer_row(record, site_id, app_version.clone()))
+        .map(|record| sync_record_to_buffer_row(record, site_id, app_version.clone(), None))
         .collect::<Vec<_>>();
 
     ctx.connection
@@ -604,6 +604,28 @@ mod tests {
     }
 
     #[actix_rt::test]
+    async fn get_token_site_lookup_is_case_insensitive() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "get_token_site_lookup_is_case_insensitive",
+            MockDataInserts::none(),
+        )
+        .await;
+        test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
+            .unwrap();
+        test_site(&connection, None);
+        let service_provider = ServiceProvider::new(connection_manager);
+
+        let mut mixed_case = input();
+        mixed_case.name = SITE_NAME.to_uppercase();
+        let output = get_token(&service_provider, mixed_case).await.unwrap();
+
+        assert_eq!(output.site_id, 1);
+        assert!(!output.token.is_empty());
+    }
+
+    #[actix_rt::test]
     async fn authenticate_site_validates_token_and_hardware_id() {
         let (_, connection, connection_manager, _) = setup_all(
             "authenticate_site_validates_token_and_hardware_id",
@@ -687,6 +709,7 @@ mod tests {
                 cursor: 0,
                 batch_size: 100,
                 is_initialising: true,
+                filter: None,
             },
         )
         .await
@@ -741,6 +764,7 @@ mod tests {
                 cursor: 0,
                 batch_size: 100,
                 is_initialising: true,
+                filter: None,
             },
         )
         .await;

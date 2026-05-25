@@ -1,3 +1,4 @@
+use repository::ChangelogCondition;
 use serde::{Deserialize, Serialize};
 
 use super::{ApiResponse, SyncApiV7};
@@ -11,6 +12,12 @@ pub struct Input {
     pub cursor: i64,
     pub batch_size: u32,
     pub is_initialising: bool,
+    /// Extra filter ANDed onto the central server's standard pull filter
+    /// (`all_data_for_site`). Sent only by callers that want to scope pull to
+    /// a specific slice (auxiliary sync). Defaults to None for backwards
+    /// compatibility with older clients.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub filter: Option<ChangelogCondition::Inner>,
 }
 
 static ROUTE: &str = "pull";

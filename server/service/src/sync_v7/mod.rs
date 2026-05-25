@@ -9,8 +9,11 @@ pub mod serde;
 pub mod sync;
 pub mod sync_logger;
 pub mod sync_on_central;
+pub mod sync_request;
+pub mod sync_request_runner;
 pub mod sync_status;
 pub mod synchroniser;
+pub mod translations;
 pub mod validate;
 pub mod validate_translate_integrate;
 

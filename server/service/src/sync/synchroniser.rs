@@ -72,7 +72,7 @@ pub(crate) enum SyncError {
     #[error("Error while pulling remote records")]
     RemotePullError(#[from] RemotePullError),
     #[error("Error while integrating records")]
-    IntegrationError(RepositoryError),
+    IntegrationError(#[source] RepositoryError),
     #[error("Other error: {0}")]
     Other(String),
 }
