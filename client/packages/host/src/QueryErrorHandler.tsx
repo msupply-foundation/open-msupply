@@ -31,7 +31,8 @@ const SILENT_PERMISSION_DENIED_PATHS = new Set([
 ]);
 
 const isSilentPermissionDenied = (e: PermissionDeniedError): boolean =>
-  (e.path ?? []).every(p => SILENT_PERMISSION_DENIED_PATHS.has(p));
+  !!e.path?.length &&
+  e.path.every(p => SILENT_PERMISSION_DENIED_PATHS.has(p));
 
 type RoutedToast =
   | { kind: 'none' }
