@@ -101,7 +101,29 @@ export type Plugins = {
     tableColumn: ColumnDef<MasterListRowFragment>[];
   };
   pages?: PluginPage[];
+  // Configuration UI for this plugin. Surfaced from Manage > Plugins. A plugin
+  // provides ONE of `Component` (free-form React) or `jsonForms` (schema-driven,
+  // rendered by the host using the shared JSON Forms renderer). `defaultConfig`
+  // seeds the form when no plugin_data row exists yet for this plugin.
+  configuration?: PluginConfiguration;
 };
+
+export type PluginConfiguration<TConfig = unknown> = {
+  defaultConfig: TConfig;
+  Component?: React.ComponentType<{
+    value: TConfig;
+    onChange: (next: TConfig) => void;
+  }>;
+  jsonForms?: { schema: object; uiSchema: object };
+};
+
+// Shared React-Query key for a plugin's configuration row. Both the host's
+// save hook and any plugin-side read hook should use this so the host's
+// invalidate-on-save triggers a live refetch in the plugin without a reload.
+// (The host and plugin bundles share the same QueryClient via the federated
+// `@openmsupply-client/common` package.)
+export const pluginConfigurationQueryKey = (pluginCode: string) =>
+  ['pluginConfiguration', pluginCode] as const;
 
 type PluginData<D> = { relatedRecordId?: string | null; data: D };
 export type PluginDataStore<T, D> = {
