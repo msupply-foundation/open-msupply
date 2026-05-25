@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactElement } from 'react';
 import {
   Box,
   ButtonWithIcon,
@@ -37,6 +37,61 @@ import {
 import { OnHoldButton } from './OnHoldButton';
 import { StatusChangeButton } from './StatusChangeButton';
 
+/**
+ * Status crumbs + on-hold/close/status-change buttons. Extracted so the parent
+ * `DetailView` can render it through `AppFooterStatusPortal` on every tab —
+ * the Details tab's own `Footer` only takes over to show row-selection
+ * actions.
+ */
+export const StatusFooter = (): ReactElement | null => {
+  const t = useTranslation();
+  const { navigateUpOne } = useBreadcrumbs();
+  const { invoiceStatusOptions } = usePreferences();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+  const {
+    query: { data },
+  } = useInboundShipment();
+
+  if (!data) return null;
+
+  const shipmentType = getInboundShipmentType(data);
+  const statuses = getStatusSequence(InvoiceNodeType.InboundShipment, {
+    inboundShipmentType: shipmentType,
+  }).filter(status =>
+    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
+  );
+
+  return (
+    <Box
+      gap={2}
+      display="flex"
+      flexDirection="row"
+      alignItems="center"
+      height={64}
+    >
+      {!isExtraSmallScreen && <OnHoldButton />}
+      <StatusCrumbs
+        statuses={statuses}
+        statusLog={createStatusLog(data, statuses)}
+        statusFormatter={getStatusTranslator(t)}
+      />
+
+      <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+        <ButtonWithIcon
+          shrinkThreshold="lg"
+          Icon={<XCircleIcon />}
+          label={t('button.close')}
+          color="secondary"
+          sx={{ fontSize: '12px' }}
+          onClick={() => navigateUpOne()}
+        />
+
+        <StatusChangeButton />
+      </Box>
+    </Box>
+  );
+};
+
 interface FooterComponentProps {
   onReturnLines: () => void;
   selectedRows: InboundLineFragment[];
@@ -51,11 +106,8 @@ export const FooterComponent = ({
   showLineStatus,
 }: FooterComponentProps) => {
   const t = useTranslation();
-  const { navigateUpOne } = useBreadcrumbs();
   const { info } = useNotification();
   const changeCampaignOrProgramModal = useEditModal();
-  const { invoiceStatusOptions } = usePreferences();
-  const isExtraSmallScreen = useIsExtraSmallScreen();
 
   const {
     query: { data },
@@ -79,7 +131,6 @@ export const FooterComponent = ({
     selectedRows,
     resetRowSelection
   );
-  const shipmentType = data ? getInboundShipmentType(data) : undefined;
 
   const handleCampaignClick = () => {
     if (isDisabled) {
@@ -157,64 +208,35 @@ export const FooterComponent = ({
       },
     ]);
   }
-  const statuses = getStatusSequence(InvoiceNodeType.InboundShipment, {
-    inboundShipmentType: shipmentType,
-  }).filter(status =>
-    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
-  );
 
+  // Only mount the footer portal when there's a selection. Otherwise leave the
+  // slot free so the parent `AppFooterStatusPortal` (status crumbs) shows
+  // through. The campaign-change confirmation modal is opened from one of the
+  // row actions but renders via its own portal, so it can stay mounted
+  // outside the conditional.
   return (
-    <AppFooterPortal
-      Content={
-        <>
-          {selectedRows.length !== 0 && (
+    <>
+      {selectedRows.length !== 0 && (
+        <AppFooterPortal
+          Content={
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
               resetRowSelection={resetRowSelection}
             />
-          )}
-          {data && selectedRows.length === 0 ? (
-            <Box
-              gap={2}
-              display="flex"
-              flexDirection="row"
-              alignItems="center"
-              height={64}
-            >
-              {!isExtraSmallScreen && <OnHoldButton />}
-              <StatusCrumbs
-                statuses={statuses}
-                statusLog={createStatusLog(data, statuses)}
-                statusFormatter={getStatusTranslator(t)}
-              />
-
-              <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-                <ButtonWithIcon
-                  shrinkThreshold="lg"
-                  Icon={<XCircleIcon />}
-                  label={t('button.close')}
-                  color="secondary"
-                  sx={{ fontSize: '12px' }}
-                  onClick={() => navigateUpOne()}
-                />
-
-                <StatusChangeButton />
-              </Box>
-            </Box>
-          ) : null}
-          {changeCampaignOrProgramModal.isOpen && (
-            <ChangeCampaignOrProgramConfirmationModal
-              isOpen={changeCampaignOrProgramModal.isOpen}
-              onCancel={changeCampaignOrProgramModal.onClose}
-              clearSelected={resetRowSelection}
-              rows={selectedRows}
-              onChange={mutateAsync}
-            />
-          )}
-        </>
-      }
-    />
+          }
+        />
+      )}
+      {changeCampaignOrProgramModal.isOpen && (
+        <ChangeCampaignOrProgramConfirmationModal
+          isOpen={changeCampaignOrProgramModal.isOpen}
+          onCancel={changeCampaignOrProgramModal.onClose}
+          clearSelected={resetRowSelection}
+          rows={selectedRows}
+          onChange={mutateAsync}
+        />
+      )}
+    </>
   );
 };
 
