@@ -1051,18 +1051,18 @@ export type UpdateVvmStatusLogMutation = {
   updateVvmStatusLog: { __typename: 'IdResponse'; id: string };
 };
 
-export type StockItemsGroupedQueryVariables = Types.Exact<{
+export type ItemsByStockLineFilterQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   key: Types.ItemSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
-  filter?: Types.InputMaybe<Types.ItemFilterInput>;
+  filter?: Types.InputMaybe<Types.StockLineFilterInput>;
   storeId: Types.Scalars['String']['input'];
 }>;
 
-export type StockItemsGroupedQuery = {
+export type ItemsByStockLineFilterQuery = {
   __typename: 'Queries';
-  items: {
+  itemsByStockLineFilter: {
     __typename: 'ItemConnector';
     totalCount: number;
     nodes: Array<{
@@ -1611,16 +1611,16 @@ export const UpdateVvmStatusLogDocument = gql`
     }
   }
 `;
-export const StockItemsGroupedDocument = gql`
-  query stockItemsGrouped(
+export const ItemsByStockLineFilterDocument = gql`
+  query itemsByStockLineFilter(
     $first: Int
     $offset: Int
     $key: ItemSortFieldInput!
     $desc: Boolean
-    $filter: ItemFilterInput
+    $filter: StockLineFilterInput
     $storeId: String!
   ) {
-    items(
+    itemsByStockLineFilter(
       storeId: $storeId
       page: { first: $first, offset: $offset }
       sort: { key: $key, desc: $desc }
@@ -1920,20 +1920,20 @@ export function getSdk(
         variables
       );
     },
-    stockItemsGrouped(
-      variables: StockItemsGroupedQueryVariables,
+    itemsByStockLineFilter(
+      variables: ItemsByStockLineFilterQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<StockItemsGroupedQuery> {
+    ): Promise<ItemsByStockLineFilterQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<StockItemsGroupedQuery>({
-            document: StockItemsGroupedDocument,
+          client.request<ItemsByStockLineFilterQuery>({
+            document: ItemsByStockLineFilterDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'stockItemsGrouped',
+        'itemsByStockLineFilter',
         'query',
         variables
       );

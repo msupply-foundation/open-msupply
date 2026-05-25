@@ -43,7 +43,17 @@ pub enum ReasonOptionType {
     RequisitionLineVariance,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = reason_option)]
 pub struct ReasonOptionRow {
@@ -92,16 +102,22 @@ impl<'a> ReasonOptionRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(
-        &self,
-        ids: &[String],
-    ) -> Result<Vec<ReasonOptionRow>, RepositoryError> {
+    pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = reason_option::table
+            .filter(reason_option::id.eq(lookup_id))
+            .select(reason_option::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ReasonOptionRow>, RepositoryError> {
         Ok(reason_option::table
             .filter(reason_option::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
 
-    fn _soft_delete(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
+    fn _mark_deleted(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
         diesel::update(reason_option::table)
             .filter(reason_option::id.eq(reason_option_id))
             .set(reason_option::is_active.eq(false))
@@ -109,8 +125,8 @@ impl<'a> ReasonOptionRowRepository<'a> {
         Ok(())
     }
 
-    pub fn soft_delete(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
-        self._soft_delete(reason_option_id)?;
+    pub fn mark_deleted(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
+        self._mark_deleted(reason_option_id)?;
         let changelog = ReasonOptionRow::generate_changelog(
             reason_option_id.to_string(),
             self.connection,
@@ -144,17 +160,20 @@ impl Delete for ReasonOptionRowDelete {
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
-        repo._soft_delete(&self.0)?;
+        repo._mark_deleted(&self.0)?;
         ChangelogRepository::new(con).insert(&changelog)?;
         Ok(())
     }
 
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
+        assert!(matches!(
             ReasonOptionRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
+            Ok(Some(ReasonOptionRow {
+                is_active: false,
+                ..
+            })) | Ok(None)
+        ));
     }
 }
 

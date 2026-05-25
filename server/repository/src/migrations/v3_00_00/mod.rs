@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_is_standalone_central_pg_enum;
 mod add_merge_sync_message_processor_cursor_pg_enum;
 mod add_site_sync_version;
 mod add_sync_log_v7;
@@ -11,6 +12,7 @@ mod add_v7_upgrade_failed_error_code;
 mod alter_changelog_table_for_sync_v7;
 mod alter_sqlite_changelog_table_for_syncv7;
 mod alter_sync_buffer_for_sync_v7;
+mod convert_user_permission_to_text;
 mod create_changelog_indexes;
 mod create_site_table;
 mod migrate_user_permission_to_deterministic_id;
@@ -47,9 +49,11 @@ impl Migration for V3_00_00 {
             // Must precede `populate_changelog_with_rows_for_sync_v7_tables` so
             // the backfilled changelog rows reference the new deterministic ids.
             Box::new(migrate_user_permission_to_deterministic_id::Migrate),
+            Box::new(convert_user_permission_to_text::Migrate),
             Box::new(alter_sqlite_changelog_table_for_syncv7::Migrate),
             Box::new(partition_changelog_by_cursor::Migrate),
             Box::new(populate_changelog_with_rows_for_sync_v7_tables::Migrate),
+            Box::new(add_is_standalone_central_pg_enum::Migrate),
             Box::new(add_merge_sync_message_processor_cursor_pg_enum::Migrate),
             Box::new(create_changelog_indexes::Migrate),
         ]

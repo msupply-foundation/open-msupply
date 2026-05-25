@@ -6,8 +6,8 @@ export const useSaveOutboundLines = (outboundId: string) => {
   const { keys, sdk, storeId } = useOutboundApi();
   const queryClient = useQueryClient();
 
-  return useMutation(
-    async ({
+  return useMutation({
+    mutationFn: async ({
       itemId,
       lines,
       placeholderQuantity,
@@ -33,10 +33,11 @@ export const useSaveOutboundLines = (outboundId: string) => {
         },
       });
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(keys.detail(outboundId));
-      },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: keys.detail(outboundId)
+      });
     }
-  );
+  });
 };
