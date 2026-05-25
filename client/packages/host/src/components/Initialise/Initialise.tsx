@@ -19,6 +19,7 @@ import {
   useExportLog,
   useNotification,
   MuiLink,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { useInitialiseForm } from './hooks';
@@ -41,6 +42,7 @@ export const Initialise = () => {
     setPageTitle(`${t('messages.not-initialised')} | ${t('app')} `);
   }, [setPageTitle, t]);
 
+  const isCentralServer = useIsCentralServerApi();
   const isAndroid = EnvUtils.platform === Platform.Android;
   const isInputDisabled = formState.isInitialising || formState.isLoading;
   const isExtraSmallScreen = useIsExtraSmallScreen();
@@ -61,6 +63,9 @@ export const Initialise = () => {
   return (
     <Grid container sx={{ flex: 1 }}>
       <Grid
+        display="flex"
+        justifyContent="center"
+        alignItems="end"
         size={{ xs: 12, sm: 6 }}
         sx={theme => ({
           backgroundImage: theme.mixins.gradient.secondary,
@@ -94,11 +99,11 @@ export const Initialise = () => {
             justifyContent: 'center',
           })}
         >
-          <Stack spacing={isExtraSmallScreen ? 2 : 3}>
+          <Stack spacing={isExtraSmallScreen ? 2 : 3} width="100%" maxWidth={360}>
             <Stack direction="row" sx={{ justifyContent: 'center' }}>
               <LoginIcon small />
             </Stack>
-            {!isAndroid && (
+            {!isAndroid && isCentralServer && (
               <TabList
                 value={mode}
                 onChange={(_, v) => !isInputDisabled && setMode(v as InitMode)}
@@ -106,7 +111,7 @@ export const Initialise = () => {
               >
                 <Tab
                   value="remote"
-                  label={t('initialise.remote-sync')}
+                  label={t('initialise.legacy-sync')}
                   disabled={isInputDisabled}
                 />
                 <Tab
@@ -116,8 +121,13 @@ export const Initialise = () => {
                 />
               </TabList>
             )}
-            {mode === 'remote' && <RemoteForm formState={formState} />}
-            {mode === 'central' && <StandaloneCentralTab />}
+            {mode === 'remote' && (
+              <RemoteForm
+                formState={formState}
+                isCentralServer={isCentralServer}
+              />
+            )}
+            {mode === 'central' && isCentralServer && <StandaloneCentralTab />}
           </Stack>
         </Stack>
         {isAndroid && (
@@ -144,7 +154,15 @@ export const Initialise = () => {
 
 type InitialiseFormState = ReturnType<typeof useInitialiseForm>;
 
-const RemoteForm = ({ formState }: { formState: InitialiseFormState }) => {
+interface RemoteFormProps {
+  formState: InitialiseFormState;
+  isCentralServer: boolean;
+}
+
+const RemoteForm: React.FC<RemoteFormProps> = ({
+  formState,
+  isCentralServer = false,
+}) => {
   const {
     isValid,
     isLoading,
@@ -179,14 +197,16 @@ const RemoteForm = ({ formState }: { formState: InitialiseFormState }) => {
       <form onSubmit={onInitialise} onKeyDown={handleKeyDown}>
         <Stack spacing={isExtraSmallScreen ? 3 : 5}>
           <LoginTextInput
-            fullWidth
-            label={t('label.settings-url')}
+            label={
+              isCentralServer
+                ? t('label.settings-legacy-url')
+                : t('label.settings-url')
+            }
             value={url}
             disabled={isInputDisabled}
             onChange={e => setUrl(e.target.value)}
           />
           <LoginTextInput
-            fullWidth
             label={t('label.settings-username')}
             value={username}
             disabled={isInputDisabled}
@@ -225,7 +245,6 @@ const RemoteForm = ({ formState }: { formState: InitialiseFormState }) => {
                 !isValid &&
                 !isInitialising /* isValid would be false if isInitialising since password is emptied out */
               }
-              /* Retry will only be shown when not loading and is initialised (when sync error occurred) */
               label={
                 isInitialising ? t('button.retry') : t('button.initialise')
               }
@@ -242,12 +261,7 @@ const RemoteForm = ({ formState }: { formState: InitialiseFormState }) => {
           />
         )}
       </Box>
-      <Box
-        pt={4}
-        justifyItems="center"
-        width="auto"
-        px={isExtraSmallScreen ? 4 : 20}
-      >
+      <Box pt={4} justifyItems="center" px={isExtraSmallScreen ? 4 : 20}>
         {syncError && <BoxedErrorWithDetails {...syncError} width="100%" />}
       </Box>
     </>
@@ -257,7 +271,7 @@ const RemoteForm = ({ formState }: { formState: InitialiseFormState }) => {
 const Welcome = () => {
   const t = useTranslation();
   return (
-    <Stack spacing="45px" justifyContent="center" sx={{ height: '100%' }}>
+    <Stack spacing="45px">
       <Typography
         sx={{
           color: (theme: Theme) => theme.typography.login.color,
