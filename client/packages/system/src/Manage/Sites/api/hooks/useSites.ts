@@ -25,7 +25,6 @@ export type DraftSite = {
   code: string;
   name: string;
   password: string;
-  clearHardwareId: boolean;
   hardwareId?: string | null;
   isNew: boolean;
 };
@@ -35,7 +34,6 @@ export const defaultDraftSite: DraftSite = {
   code: '',
   name: '',
   password: '',
-  clearHardwareId: false,
   hardwareId: undefined,
   isNew: true,
 };
@@ -67,6 +65,12 @@ export const useSites = (queryParams?: ListParams) => {
     error: clearSyncTokenError,
   } = useClearSiteToken();
 
+  const {
+    mutateAsync: clearHardwareId,
+    isPending: isClearingHardwareId,
+    error: clearHardwareIdError,
+  } = useClearHardwareId();
+
   const upsert = async () => {
     return await upsertMutation(draft);
   };
@@ -88,6 +92,11 @@ export const useSites = (queryParams?: ListParams) => {
       isClearingSyncToken,
       clearSyncTokenError,
     },
+    clearHardwareId: {
+      clearHardwareId,
+      isClearingHardwareId,
+      clearHardwareIdError,
+    },
     draft,
     updateDraft,
   };
@@ -105,8 +114,10 @@ const useGetList = (queryParams?: ListParams) => {
       sort: toSortInput(sortBy),
       filter: filterBy,
     });
-    const { nodes, totalCount } =
-      query?.centralServer?.site?.sites ?? { nodes: [], totalCount: 0 };
+    const { nodes, totalCount } = query?.centralServer?.site?.sites ?? {
+      nodes: [],
+      totalCount: 0,
+    };
     return { nodes, totalCount };
   };
 
@@ -135,7 +146,7 @@ const useUpsertSite = () => {
         code: draft.code || undefined,
         name: draft.name,
         password: draft.password || undefined,
-        clearHardwareId: draft.clearHardwareId || undefined,
+
       },
     });
     const upsertResult = result?.centralServer?.site?.upsertSite;
@@ -208,6 +219,25 @@ const useClearSiteToken = () => {
   const mutationFn = async (siteId: number) => {
     const result = await siteApi.clearSiteToken({ siteId });
     return result?.centralServer?.site?.clearSiteToken;
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [SITE] });
+    },
+    onError: (e: unknown) => {
+      console.error(e);
+    },
+  });
+};
+
+const useClearHardwareId = () => {
+  const { siteApi, queryClient } = useSiteGraphQL();
+
+  const mutationFn = async (siteId: number) => {
+    const result = await siteApi.clearSiteHardwareId({ siteId });
+    return result?.centralServer?.site?.clearSiteHardwareId;
   };
 
   return useMutation({

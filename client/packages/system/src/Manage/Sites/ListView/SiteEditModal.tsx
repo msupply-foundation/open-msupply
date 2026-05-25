@@ -12,7 +12,6 @@ import {
   // IconButton,
   XCircleIcon,
   LoadingButton,
-  Typography,
   useConfirmationModal,
 } from '@openmsupply-client/common';
 import { DraftSite, useSiteStoresDraft } from '../api';
@@ -26,6 +25,8 @@ interface SiteEditModalProps {
   updateDraft: (patch: Partial<DraftSite>) => void;
   clearSyncToken: (siteId: number) => Promise<unknown>;
   isClearingSyncToken: boolean;
+  clearHardwareId: (siteId: number) => Promise<unknown>;
+  isClearingHardwareId: boolean;
   // upsert: (afterUpsert: () => Promise<void>) => Promise<void>;
   // onDelete: () => void;
 }
@@ -37,13 +38,15 @@ export const SiteEditModal = ({
   updateDraft,
   clearSyncToken,
   isClearingSyncToken,
+  clearHardwareId,
+  isClearingHardwareId,
 }: // upsert,
-  // onDelete,
-  SiteEditModalProps) => {
+// onDelete,
+SiteEditModalProps) => {
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const { id, code, name, clearHardwareId, hardwareId, isNew } = site;
+  const { id, code, name, hardwareId, isNew } = site;
   const isExisting = !isNew;
 
   // const isValidCode = code.trim().length > 0 || (isExisting && code === '');
@@ -64,6 +67,12 @@ export const SiteEditModal = ({
     onConfirm: () => clearSyncToken(id),
   });
 
+  const confirmClearHardwareId = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-clear-hardware-id'),
+    onConfirm: () => clearHardwareId(id),
+  })
+
   // const handleOk = async () => {
   //   await upsert(storesDraft.save);
   // };
@@ -72,20 +81,21 @@ export const SiteEditModal = ({
     <Modal
       title={isExisting ? t('title.edit-site') : t('title.create-site')}
       cancelButton={<DialogButton variant="cancel" onClick={handleClose} />}
-    // deleteButton={
-    //   isExisting ? (
-    //     <DialogButton variant="delete" onClick={onDelete} />
-    //   ) : undefined
-    // }
-    // okButton={
-    //   <DialogButton variant="ok" onClick={handleOk} disabled={!canSave} />
-    // }
+      // deleteButton={
+      //   isExisting ? (
+      //     <DialogButton variant="delete" onClick={onDelete} />
+      //   ) : undefined
+      // }
+      // okButton={
+      //   <DialogButton variant="ok" onClick={handleOk} disabled={!canSave} />
+      // }
     >
       <DetailContainer>
         <Box display="flex" flexDirection="column" gap={2}>
           <InputWithLabelRow
             key="code"
             label={t('label.code')}
+            labelWidth="130px"
             Input={
               <BasicTextInput
                 fullWidth
@@ -99,6 +109,7 @@ export const SiteEditModal = ({
           <InputWithLabelRow
             key="name"
             label={t('label.name')}
+            labelWidth="130px"
             Input={
               <BasicTextInput
                 fullWidth
@@ -128,24 +139,24 @@ export const SiteEditModal = ({
             <InputWithLabelRow
               key="hardware-id"
               label={t('label.hardware-id')}
-              Input={
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="flex-end"
-                  gap={0.5}
-                  flex={1}
-                >
-                  <Typography textAlign="right">
-                    {clearHardwareId ? '' : hardwareId ?? ''}
-                  </Typography>
-                  {/* {!clearHardwareId && !!hardwareId && (
-                    <IconButton
-                      icon={<XCircleIcon fontSize="small" />}
-                      label={t('label.clear-hardware-id')}
-                      onClick={() => updateDraft({ clearHardwareId: true })}
-                    />
-                  )} */}
+              labelWidth="130px"
+                Input={
+                <Box display="flex" alignItems="center" gap={1} width="100%">
+                  <BasicTextInput
+                    fullWidth
+                    sx={{ flex: 1, minWidth: 0 }}
+                    value={hardwareId ?? ''}
+                    disabled
+                  />
+                  <LoadingButton
+                    color="secondary"
+                    variant="contained"
+                    startIcon={<XCircleIcon />}
+                    isLoading={isClearingHardwareId}
+                    label={t('label.clear-hardware-id')}
+                    onClick={() => confirmClearHardwareId()}
+                    sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}
+                  />
                 </Box>
               }
             />
@@ -154,7 +165,8 @@ export const SiteEditModal = ({
             <InputWithLabelRow
               key="sync-token"
               label={t('label.clear-sync-token')}
-              Input={
+              labelWidth="130px"
+                Input={
                 <Box display="flex" justifyContent="flex-end" flex={1}>
                   <LoadingButton
                     color="secondary"
