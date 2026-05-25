@@ -35,3 +35,26 @@ pub fn https_client() -> Client {
         .build()
         .expect("Failed to build HTTPS client with bundled root certificates")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Guards against rustls-version drift: if our direct `rustls` workspace
+    // dep resolves to a different major version than reqwest's transitive
+    // rustls, `use_preconfigured_tls` downcasts to a different `ClientConfig`
+    // type and `ClientBuilder::build()` returns `Err("Unknown TLS backend
+    // passed to use_preconfigured_tls")` at runtime. Compiling alone won't
+    // catch it — this test forces the build path.
+    #[test]
+    fn https_client_builds() {
+        let _ = https_client();
+    }
+
+    // Catches a future webpki-roots release shipping an empty/broken set.
+    #[test]
+    fn bundled_root_store_is_populated() {
+        let count = webpki_roots::TLS_SERVER_ROOTS.len();
+        assert!(count > 100, "bundled CA root store unexpectedly small: {count}");
+    }
+}
