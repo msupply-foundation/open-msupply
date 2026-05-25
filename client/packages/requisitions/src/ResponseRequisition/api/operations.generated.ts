@@ -176,6 +176,8 @@ export type ResponseFragment = {
       fileName: string;
       recordId: string;
       createdDatetime: string;
+      status: Types.SyncFileReferenceNodeStatus;
+      error?: string | null;
     }>;
   };
   user?: {
@@ -339,6 +341,8 @@ export type ResponseByNumberQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            status: Types.SyncFileReferenceNodeStatus;
+            error?: string | null;
           }>;
         };
         user?: {
@@ -510,6 +514,8 @@ export type ResponseByIdQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            status: Types.SyncFileReferenceNodeStatus;
+            error?: string | null;
           }>;
         };
         user?: {
@@ -671,6 +677,8 @@ export type ResponseRowFragment = {
       fileName: string;
       recordId: string;
       createdDatetime: string;
+      status: Types.SyncFileReferenceNodeStatus;
+      error?: string | null;
     }>;
   };
   period?: {
@@ -723,6 +731,8 @@ export type ResponsesQuery = {
           fileName: string;
           recordId: string;
           createdDatetime: string;
+          status: Types.SyncFileReferenceNodeStatus;
+          error?: string | null;
         }>;
       };
       period?: {

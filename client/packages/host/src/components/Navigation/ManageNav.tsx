@@ -82,6 +82,13 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
           <AppNavLink
             visible={isCentralServer && isServerAdmin}
             to={RouteBuilder.create(AppRoute.Manage)
+              .addPart(AppRoute.SyncMessage)
+              .build()}
+            text={t('sync-message')}
+          />
+          <AppNavLink
+            visible={isCentralServer && isServerAdmin}
+            to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.Plugins)
               .build()}
             text={t('plugins')}
