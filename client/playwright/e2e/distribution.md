@@ -92,7 +92,16 @@ The Playwright spec at [`client/playwright/e2e/distribution-regression.spec.ts`]
 6. **Status-history popover** — hovering the status sequence in the footer shows a popover that overlays the Confirm buttons. `page.mouse.move(0, 0)` before clicking Confirm dismisses it.
 7. **Network-idle is too weak for debounced filters** — the request hasn't fired yet. Wait for the actual GraphQL request with text matching the search term.
 8. **Column indices in the list table** (default order): 0 checkbox, 1 Name, 2 Status, 3 Number, 4 Created, 5 Reference, 6 Comment, 7 Total. **Columns are reorderable in the UI**, so anyone reordering them in their browser session breaks tests.
-9. **`detail-panel` testid** — the sidebar drawer has `data-testid="detail-panel"`. Scope sidebar assertions to it to avoid matching `Reference` etc. that exist elsewhere on the page (e.g. "Customer reference" label).
+9. **Testids available** — prefer these over `.MuiDialog-root` / label-text traversal:
+   - `detail-panel` — sidebar drawer
+   - `confirmation-modal` + `confirmation-modal-ok` — "Are you sure?" and "Confirm status as X" dialogs
+   - `customer-search-modal` — New Shipment customer picker
+   - `add-item-modal` — Add Item dialog
+   - `dialog-button-{variant}` — every `DialogButton` (ok, cancel, save, delete, …)
+   - `comment-field`, `customer-reference-field`, `transport-reference-field` — sidebar/toolbar text inputs
+   - `on-hold-button` — Hold toggle in footer (checkbox still nested: `.locator('input[type="checkbox"]')`)
+   - `status-change-button-main`, `status-change-button-dropdown` — split-button halves
+   - `status-crumbs` — footer status sequence (for hover popover tests)
 10. **The dialog accept button is `OK`** — not Confirm/Yes/Delete. Use `name: 'OK', exact: true`.
 
 ## Test-data assumptions
@@ -100,15 +109,13 @@ The Playwright spec at [`client/playwright/e2e/distribution-regression.spec.ts`]
 - Tamaki Store on `http://localhost:3005`, user `admin`
 - At least one customer named "General" visible
 - Items with stock for `pickItemWithStock` to find quickly (it tries up to 30 items alphabetically)
-- For `cannot delete a Shipped shipment` and `filter by Reference`: needs an existing Shipped shipment / a shipment with a reference. Tests `test.skip()` if not found rather than fail.
+- For `cannot delete a Shipped shipment`, `filter by Reference`, and `pagination next-page`: needs an existing Shipped shipment / a shipment with a reference / >20 shipments. Tests `test.skip()` if conditions aren't met rather than fail.
 - **Tests leave behind data** — every run creates several shipments. No cleanup. Fine for dev, but as shipment count grows the pagination/filter tests could slow.
 
 ## Known technical debt
 
-- `clickConfirmAndWait` uses `.MuiDialog-root` (unreliable) for the inner confirmation OK; the Hold test had to inline a more robust version. Worth refactoring.
 - Column-index based assertions are fragile if anyone reorders columns. Better: find column by header text, derive index dynamically.
 - Several tests duplicate the "shipment URL → reload → assert" pattern; could become its own helper.
-- `data-testid`s added to key MUI dialogs/buttons would eliminate most of the brittle locator work. The existing `detail-panel` testid is a good precedent — pushing for more on the dev side would dramatically reduce future test maintenance.
 
 ## Suggested next batches (priority order)
 
