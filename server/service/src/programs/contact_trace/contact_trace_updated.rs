@@ -22,8 +22,7 @@ pub(crate) fn update_contact_trace_row(
     let datetime = DateTime::parse_from_rfc3339(&contact_trace.datetime)
         .map_err(|err| {
             UpsertContactTraceError::InternalError(format!(
-                "Invalid contact trace datetime format: {}",
-                err
+                "Invalid contact trace datetime format: {err}"
             ))
         })?
         .naive_utc();
@@ -79,8 +78,7 @@ pub(crate) fn update_contact_trace_row(
                 c.date_of_birth.as_ref().map(|date_of_birth| {
                     NaiveDate::from_str(date_of_birth).map_err(|err| {
                         UpsertContactTraceError::InternalError(format!(
-                            "Invalid date of birth format: {}",
-                            err
+                            "Invalid date of birth format: {err}"
                         ))
                     })
                 })

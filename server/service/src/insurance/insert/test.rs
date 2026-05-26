@@ -40,7 +40,7 @@ mod insert {
         // Insert the insurance record
         let input = InsertInsurance {
             id: "insurance_a".to_string(),
-            name_link_id: mock_name_a().id.clone(),
+            name_id: mock_name_a().id.clone(),
             insurance_provider_id: "insurance_provider_id".to_string(),
             policy_number_family: "123".to_string(),
             policy_number_person: "ABC".to_string(),
@@ -85,7 +85,7 @@ mod insert {
 
         let input = InsertInsurance {
             id: "insurance_a".to_string(),
-            name_link_id: mock_name_a().id.clone(),
+            name_id: mock_name_a().id.clone(),
             insurance_provider_id: "insurance_provider_id".to_string(),
             policy_number_family: "123".to_string(),
             policy_number_person: "ABC".to_string(),

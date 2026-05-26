@@ -140,7 +140,7 @@ fn generate(
             RequisitionLineRow {
                 id: uuid(),
                 requisition_id: requisition_row.id.clone(),
-                item_link_id: item.item_row.id.clone(),
+                item_id: item.item_row.id.clone(),
                 item_name: item.item_row.name,
                 snapshot_datetime: Some(Utc::now().naive_utc()),
                 price_per_unit: if let Some(price_list) = &price_list {
@@ -171,6 +171,9 @@ fn generate(
                 approval_comment: None,
                 available_volume: None,
                 location_type_id: None,
+                forecast_total_units: None,
+                forecast_total_doses: None,
+                vaccine_courses: None,
             }
         })
         .collect();
@@ -308,18 +311,18 @@ mod test {
                 joins: vec![MasterListNameJoinRow {
                     id: join1,
                     master_list_id: id.clone(),
-                    name_link_id: mock_name_store_a().id,
+                    name_id: mock_name_store_a().id,
                 }],
                 lines: vec![
                     MasterListLineRow {
                         id: line1.clone(),
-                        item_link_id: mock_item_a().id,
+                        item_id: mock_item_a().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
                     MasterListLineRow {
                         id: line2.clone(),
-                        item_link_id: mock_item_b().id,
+                        item_id: mock_item_b().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },

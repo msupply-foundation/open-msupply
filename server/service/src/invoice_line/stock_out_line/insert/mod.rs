@@ -41,6 +41,7 @@ pub struct InsertStockOutLine {
     pub program_id: Option<NullableUpdate<String>>,
     pub item_variant_id: Option<NullableUpdate<String>>,
     pub donor_id: Option<NullableUpdate<String>>,
+    pub manufacturer_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -394,7 +395,7 @@ mod test {
             new_outbound_line,
             InvoiceLineRow {
                 id: "new outbound line id".to_string(),
-                item_link_id: mock_item_a().id.clone(),
+                item_id: mock_item_a().id.clone(),
                 pack_size: 1.0,
                 number_of_packs: 1.0,
                 ..new_outbound_line.clone()
@@ -558,7 +559,7 @@ mod test {
             new_prescription_line,
             InvoiceLineRow {
                 id: "new prescription line id".to_string(),
-                item_link_id: mock_item_a().id.clone(),
+                item_id: mock_item_a().id.clone(),
                 pack_size: 1.0,
                 number_of_packs: 1.0,
                 ..new_prescription_line.clone()
@@ -589,7 +590,7 @@ mod test {
         let earlier_stock_in_invoice = InvoiceRow {
             id: earlier_invoice_id.clone(),
             invoice_number: -7,
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             r#type: InvoiceType::InboundShipment,
             store_id: context.store_id.clone(),
             created_datetime: datetime,
@@ -607,7 +608,7 @@ mod test {
         let current_invoice = InvoiceRow {
             id: "stock_in_invoice_id-0".to_string(),
             invoice_number: 0,
-            name_link_id: mock_name_store_a().id,
+            name_id: mock_name_store_a().id,
             r#type: InvoiceType::InboundShipment,
             store_id: context.store_id.clone(),
             created_datetime: datetime,
@@ -624,7 +625,7 @@ mod test {
         let stock_line_id = "stock_line_id".to_string();
         let stock_line = StockLineRow {
             id: stock_line_id.clone(),
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             pack_size: 10.0,
             available_number_of_packs: 20.0,
             total_number_of_packs: 20.0,
@@ -641,7 +642,7 @@ mod test {
         let invoice_line = InvoiceLineRow {
             id: "invoice_line-7".to_string(),
             invoice_id: earlier_invoice_id,
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             stock_line_id: Some(stock_line_id.clone()),
             pack_size: 10.0,
             number_of_packs: 10.0,
@@ -656,7 +657,7 @@ mod test {
         let invoice_line = InvoiceLineRow {
             id: "invoice_line-0".to_string(),
             invoice_id: current_invoice.id,
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             stock_line_id: Some(stock_line_id.clone()),
             pack_size: 10.0,
             number_of_packs: 10.0,
@@ -673,7 +674,7 @@ mod test {
         let prescription_invoice = InvoiceRow {
             id: prescription_id.clone(),
             invoice_number: 999,
-            name_link_id: mock_patient().id,
+            name_id: mock_patient().id,
             r#type: InvoiceType::Prescription,
             store_id: context.store_id.clone(),
             created_datetime: chrono::Utc::now().naive_utc(), // Created now

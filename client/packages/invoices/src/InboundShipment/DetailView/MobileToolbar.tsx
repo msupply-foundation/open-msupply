@@ -5,11 +5,13 @@ import {
   Typography,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useInbound } from '../api';
+import { useInboundShipment } from '../api';
 
 export const MobileToolbar = () => {
   const t = useTranslation();
-  const { data: shipment } = useInbound.document.get();
+  const {
+    query: { data: shipment },
+  } = useInboundShipment();
 
   // Don't render anything if there's no content to show
   if (!shipment?.otherPartyName && !shipment?.theirReference) {

@@ -1,14 +1,17 @@
 use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
+    time::Instant,
 };
 
 use base64::{prelude::BASE64_STANDARD, Engine};
+use log::info;
 use repository::{
     migrations::Version, BackendPluginRowRepository, FrontendPluginFile, FrontendPluginRow,
     FrontendPluginRowRepository, PluginType, RepositoryError,
 };
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 use thiserror::Error;
 
 use crate::{
@@ -59,6 +62,10 @@ pub struct FrontendPluginMetadata {
     pub code: String,
     pub version: Version,
     pub entry_point: String,
+    /// Hex-encoded SHA-256 of the concatenated file contents — used as a
+    /// cache-busting URL token so the browser only refetches when the bundle
+    /// actually changes.
+    pub hash: String,
 }
 
 #[derive(Debug)]
@@ -92,8 +99,57 @@ pub enum FrontendPluginFileRequestError {
     CannotFindFile,
 }
 
+/// A unified view of an installed plugin (backend or frontend)
+#[derive(Clone, Debug)]
+pub struct InstalledPlugin {
+    pub id: String,
+    pub code: String,
+    pub version: String,
+    pub kind: InstalledPluginKind,
+    pub types: Vec<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum InstalledPluginKind {
+    Backend,
+    Frontend,
+}
+
 // TODO should really pass through StaticFileService
 pub trait PluginServiceTrait: Sync + Send {
+    fn installed_plugins(
+        &self,
+        ctx: &ServiceContext,
+    ) -> Result<Vec<InstalledPlugin>, RepositoryError> {
+        let mut plugins = Vec::new();
+
+        let backend_repo = BackendPluginRowRepository::new(&ctx.connection);
+        for row in backend_repo.all()? {
+            plugins.push(InstalledPlugin {
+                id: row.id,
+                code: row.code,
+                version: row.version,
+                kind: InstalledPluginKind::Backend,
+                types: row.types.0.iter().filter_map(|t| {
+                    serde_json::to_value(t).ok().and_then(|v| v.as_str().map(ToString::to_string))
+                }).collect(),
+            });
+        }
+
+        let frontend_repo = FrontendPluginRowRepository::new(&ctx.connection);
+        for row in frontend_repo.all()? {
+            plugins.push(InstalledPlugin {
+                id: row.id,
+                code: row.code,
+                version: row.version,
+                kind: InstalledPluginKind::Frontend,
+                types: row.types.0,
+            });
+        }
+
+        Ok(plugins)
+    }
+
     fn get_uploaded_plugin_info(
         &self,
         settings: &Settings,
@@ -150,6 +206,10 @@ pub trait PluginServiceTrait: Sync + Send {
             ..
         }: FrontendPluginRow,
     ) {
+        let started = Instant::now();
+        let file_count = files.0.len();
+        let total_bytes: usize = files.0.iter().map(|f| f.file_content_base64.len()).sum();
+
         let version = Version::from_str(&version);
         let app_version = Version::from_package_json();
 
@@ -182,11 +242,23 @@ pub trait PluginServiceTrait: Sync + Send {
             );
         }
 
+        // Hash all files (sorted by name for stability) so the URL token only
+        // changes when the bundle's bytes change.
+        let mut hasher = Sha256::new();
+        let mut file_names: Vec<&String> = files_content.keys().collect();
+        file_names.sort();
+        for name in file_names {
+            hasher.update(name.as_bytes());
+            hasher.update(&files_content[name]);
+        }
+        let hash = hex::encode(hasher.finalize());
+
         let mut plugins = ctx.frontend_plugins_cache.0.write().unwrap();
         // Remove all plugins with this code
         (*plugins).remove(&code);
 
         // Add plugin with this code
+        let code_for_log = code.clone();
         (*plugins).insert(
             code.clone(),
             FrontendPlugin {
@@ -194,16 +266,25 @@ pub trait PluginServiceTrait: Sync + Send {
                     code,
                     version,
                     entry_point,
+                    hash,
                 },
                 files_content,
             },
+        );
+
+        info!(
+            "Loaded frontend plugin '{}' ({} files, {} base64 bytes) in {:?}",
+            code_for_log,
+            file_count,
+            total_bytes,
+            started.elapsed(),
         );
     }
 
     fn get_frontend_plugins_metadata(&self, ctx: &ServiceContext) -> Vec<FrontendPluginMetadata> {
         let plugins = ctx.frontend_plugins_cache.0.read().unwrap();
 
-        plugins.iter().map(|(_, p)| p.metadata.clone()).collect()
+        plugins.values().map(|p| p.metadata.clone()).collect()
     }
 
     fn install_uploaded_plugin(
@@ -266,8 +347,80 @@ mod test {
     };
     use repository::{
         mock::{MockData, MockDataInserts},
-        BackendPluginRow, BackendPluginRowRepository,
+        BackendPluginRow, BackendPluginRowRepository, FrontendPluginRow,
+        FrontendPluginRowRepository, FrontendPluginTypes, PluginType, PluginTypes,
     };
+
+    use super::InstalledPluginKind;
+
+    #[actix_rt::test]
+    async fn installed_plugins() {
+        let backend_row = BackendPluginRow {
+            id: "backend-1".to_string(),
+            code: "my_backend_plugin".to_string(),
+            version: "1.2.3".to_string(),
+            types: PluginTypes(vec![
+                PluginType::AverageMonthlyConsumption,
+                PluginType::GetConsumption,
+            ]),
+            ..Default::default()
+        };
+
+        let ServiceTestContext {
+            service_provider,
+            service_context,
+            connection,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "installed_plugins",
+            MockDataInserts::none(),
+            MockData {
+                backend_plugin: vec![backend_row.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        // Insert a frontend plugin directly (no MockData field for frontend plugins)
+        let frontend_row = FrontendPluginRow {
+            id: "frontend-1".to_string(),
+            code: "my_frontend_plugin".to_string(),
+            version: "2.0.0".to_string(),
+            types: FrontendPluginTypes(vec!["report".to_string(), "dashboard".to_string()]),
+            ..Default::default()
+        };
+        FrontendPluginRowRepository::new(&connection)
+            .upsert_one(frontend_row.clone())
+            .unwrap();
+
+        let mut plugins = service_provider
+            .plugin_service
+            .installed_plugins(&service_context)
+            .unwrap();
+
+        // Sort for deterministic ordering
+        plugins.sort_by(|a, b| a.id.cmp(&b.id));
+
+        assert_eq!(plugins.len(), 2);
+
+        let backend = &plugins[0];
+        assert_eq!(backend.id, "backend-1");
+        assert_eq!(backend.code, "my_backend_plugin");
+        assert_eq!(backend.version, "1.2.3");
+        assert_eq!(backend.kind, InstalledPluginKind::Backend);
+        // Verify serde snake_case formatting, not Rust Debug (e.g. not "AverageMonthlyConsumption")
+        assert_eq!(
+            backend.types,
+            vec!["average_monthly_consumption", "get_consumption"]
+        );
+
+        let frontend = &plugins[1];
+        assert_eq!(frontend.id, "frontend-1");
+        assert_eq!(frontend.code, "my_frontend_plugin");
+        assert_eq!(frontend.version, "2.0.0");
+        assert_eq!(frontend.kind, InstalledPluginKind::Frontend);
+        assert_eq!(frontend.types, vec!["report", "dashboard"]);
+    }
 
     #[actix_rt::test]
     async fn install_uploaded_plugin() {

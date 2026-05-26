@@ -55,7 +55,7 @@ const STORE_1: (&str, &str) = (
 fn store_1() -> TestSyncIncomingRecord {
     let store_row = StoreRow {
         id: STORE_1.0.to_string(),
-        name_link_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+        name_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
         code: "GEN".to_string(),
         site_id: 1,
         created_date: NaiveDate::from_ymd_opt(2021, 9, 3),

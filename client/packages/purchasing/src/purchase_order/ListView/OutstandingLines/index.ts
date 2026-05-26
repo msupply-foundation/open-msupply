@@ -1,1 +1,1 @@
-export { OutstandingPurchaseOrderLinesListView } from './OutstandingLines';
+export { OutstandingLinesListView } from './OutstandingLines';

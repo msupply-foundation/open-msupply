@@ -52,7 +52,7 @@ export const NothingHere: React.FC<NothingHereProps> = ({
           {heading}
         </Typography>
       </Box>
-      <Box display="inline">
+      <Box display="inline" textAlign="center">
         {Body}
         {CreateButton}
       </Box>

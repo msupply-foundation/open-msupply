@@ -6,13 +6,71 @@ import {
   FilterMenu,
   usePreferences,
   FilterDefinition,
+  GroupFilterDefinition,
 } from '@openmsupply-client/common';
 import { useVvmStatusesEnabled } from '../api';
 
-export const Toolbar = () => {
+export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
   const t = useTranslation();
   const { manageVvmStatusForStock } = usePreferences();
   const { data: vmmStatuses } = useVvmStatusesEnabled();
+
+  // Item-level filters apply in both grouped and ungrouped modes.
+  const itemFilters = [
+    {
+      type: 'text',
+      name: t('messages.search'),
+      urlParameter: 'search',
+      placeholder: t('messages.search'),
+      isDefault: true,
+    },
+    {
+      type: 'text',
+      name: t('label.master-list'),
+      urlParameter: 'masterList.name',
+      placeholder: t('placeholder.search-by-master-list-name'),
+    },
+  ] satisfies FilterDefinition[];
+
+  const stockLineFilters = [
+    {
+      type: 'text',
+      name: t('label.location'),
+      urlParameter: 'location.code',
+      placeholder: t('placeholder.search-by-location-code'),
+    },
+    {
+      type: 'group',
+      name: t('label.expiry'),
+      elements: [
+        {
+          type: 'date',
+          name: t('label.from-expiry'),
+          urlParameter: 'expiryDate',
+          range: 'from',
+        },
+        {
+          type: 'date',
+          name: t('label.to-expiry'),
+          urlParameter: 'expiryDate',
+          range: 'to',
+        },
+      ],
+    },
+    ...(manageVvmStatusForStock
+      ? [
+        {
+          type: 'enum',
+          name: t('label.vvm-status'),
+          urlParameter: 'vvmStatusId',
+          options: vmmStatuses?.map(status => ({
+            label: status.description ?? '',
+            value: status.id,
+          })),
+        } as FilterDefinition,
+      ]
+      : []),
+  ] satisfies (FilterDefinition | GroupFilterDefinition)[];
 
   return (
     <AppBarContentPortal
@@ -25,58 +83,9 @@ export const Toolbar = () => {
     >
       <Box display="flex" gap={1}>
         <FilterMenu
-          filters={[
-            {
-              type: 'text',
-              name: t('messages.search'),
-              urlParameter: 'search',
-              placeholder: t('messages.search'),
-              isDefault: true,
-            },
-            {
-              type: 'text',
-              name: t('label.location'),
-              urlParameter: 'location.code',
-              placeholder: t('placeholder.search-by-location-code'),
-            },
-            {
-              type: 'text',
-              name: t('label.master-list'),
-              urlParameter: 'masterList.name',
-              placeholder: t('placeholder.search-by-master-list-name'),
-            },
-            {
-              type: 'group',
-              name: t('label.expiry'),
-              elements: [
-                {
-                  type: 'date',
-                  name: t('label.from-expiry'),
-                  urlParameter: 'expiryDate',
-                  range: 'from',
-                },
-                {
-                  type: 'date',
-                  name: t('label.to-expiry'),
-                  urlParameter: 'expiryDate',
-                  range: 'to',
-                },
-              ],
-            },
-            ...(manageVvmStatusForStock
-              ? [
-                  {
-                    type: 'enum',
-                    name: t('label.vvm-status'),
-                    urlParameter: 'vvmStatusId',
-                    options: vmmStatuses?.map(status => ({
-                      label: status.description ?? '',
-                      value: status.id,
-                    })),
-                  } as FilterDefinition,
-                ]
-              : []),
-          ]}
+          filters={
+            isGrouped ? itemFilters : [...itemFilters, ...stockLineFilters]
+          }
         />
       </Box>
     </AppBarContentPortal>

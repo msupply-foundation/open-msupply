@@ -11,7 +11,7 @@ export const Toolbar: FC = () => {
   const t = useTranslation();
   const {
     numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts:
-      numMonthsConsumption,
+    numMonthsConsumption,
   } = usePreferences();
 
   return (
@@ -61,33 +61,33 @@ export const Toolbar: FC = () => {
               name: t('label.min-mos'),
               urlParameter: 'minMonthsOfStock',
               minValue: 0,
-              decimalLimit: 0,
+              decimalLimit: 2,
             },
             {
               type: 'number',
               name: t('label.max-mos'),
               urlParameter: 'maxMonthsOfStock',
               minValue: 0,
-              decimalLimit: 0,
+              decimalLimit: 2,
             },
             ...(numMonthsConsumption
               ? [
-                  {
-                    type: 'enum' as const,
-                    name: t('label.products-at-risk-of-being-out-of-stock'),
-                    urlParameter: 'productsAtRiskOfBeingOutOfStock',
-                    options: [
-                      {
-                        label: t('label.show-products-at-risk'),
-                        value: 'true',
-                      },
-                      {
-                        label: t('label.show-products-not-at-risk'),
-                        value: 'false',
-                      },
-                    ],
-                  },
-                ]
+                {
+                  type: 'enum' as const,
+                  name: t('label.products-at-risk-of-being-out-of-stock'),
+                  urlParameter: 'productsAtRiskOfBeingOutOfStock',
+                  options: [
+                    {
+                      label: t('label.show-products-at-risk'),
+                      value: 'true',
+                    },
+                    {
+                      label: t('label.show-products-not-at-risk'),
+                      value: 'false',
+                    },
+                  ],
+                },
+              ]
               : []),
           ]}
         />

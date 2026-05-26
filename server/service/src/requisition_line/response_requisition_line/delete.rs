@@ -75,11 +75,12 @@ fn validate(
     }
 
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
-        InvoiceLineFilter::new().requisition_id(EqualFilter::equal_to(requisition_row.id.to_string())),
+        InvoiceLineFilter::new()
+            .requisition_id(EqualFilter::equal_to(requisition_row.id.to_string())),
     )?;
 
     if invoice_lines.iter().any(|invoice_line| {
-        requisition_line_row.item_link_id == invoice_line.invoice_line_row.item_link_id
+        requisition_line_row.item_id == invoice_line.invoice_line_row.item_id
     }) {
         return Err(OutError::CannotDeleteLineLinkedToShipment);
     }
@@ -121,7 +122,7 @@ mod test {
                     .requisition
                     .id,
             ),
-            name_link_id: "name_a".to_string(),
+            name_id: "name_a".to_string(),
             status: InvoiceStatus::New,
             ..Default::default()
         }
@@ -131,8 +132,8 @@ mod test {
         InvoiceLineRow {
             id: "invoice_line_linked_to_requisition_line".to_string(),
             invoice_id: invoice_linked_to_req().id,
-            item_link_id: mock_full_new_response_requisition_for_update_test().lines[0]
-                .item_link_id
+            item_id: mock_full_new_response_requisition_for_update_test().lines[0]
+                .item_id
                 .clone(),
             ..Default::default()
         }

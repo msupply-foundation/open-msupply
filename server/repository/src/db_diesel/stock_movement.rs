@@ -147,7 +147,7 @@ mod test {
         fn store() -> StoreRow {
             StoreRow {
                 id: "store".to_string(),
-                name_link_id: name().id,
+                name_id: name().id,
                 code: "n/a".to_string(),
                 ..Default::default()
             }
@@ -159,14 +159,14 @@ mod test {
                 invoices: vec![InvoiceRow {
                     id: invoice_id.clone(),
                     store_id: store().id,
-                    name_link_id: mock_name_a().id,
+                    name_id: mock_name_a().id,
                     r#type: InvoiceType::OutboundShipment,
                     ..Default::default()
                 }],
                 invoice_lines: vec![InvoiceLineRow {
-                    id: format!("{}line", invoice_id),
+                    id: format!("{invoice_id}line"),
                     invoice_id: invoice_id.clone(),
-                    item_link_id: mock_item_a().id,
+                    item_id: mock_item_a().id,
                     r#type: InvoiceLineType::StockOut,
                     pack_size: 1.0,
                     ..Default::default()
@@ -281,7 +281,7 @@ mod test {
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
                 );
-                u.invoice_lines[0].item_link_id = mock_item_b().id;
+                u.invoice_lines[0].item_id = mock_item_b().id;
                 u.invoice_lines[0].r#type = InvoiceLineType::StockIn;
                 u.invoice_lines[0].number_of_packs = 50.0;
                 u

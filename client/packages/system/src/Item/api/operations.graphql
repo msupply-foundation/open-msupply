@@ -2,6 +2,7 @@ fragment StockLine on StockLineNode {
   availableNumberOfPacks
   batch
   expiryDate
+  manufactureDate
   id
   itemId
   location {
@@ -158,6 +159,29 @@ fragment BundledItem on BundledItemNode {
   }
 }
 
+fragment AncillaryItemRow on ItemNode {
+  __typename
+  id
+  name
+  code
+  unitName
+}
+
+fragment AncillaryItem on AncillaryItemNode {
+  __typename
+  id
+  itemQuantity
+  ancillaryQuantity
+  itemId
+  ancillaryItemId
+  item {
+    ...AncillaryItemRow
+  }
+  ancillaryItem {
+    ...AncillaryItemRow
+  }
+}
+
 fragment ItemVariant on ItemVariantNode {
   __typename
   id
@@ -233,6 +257,9 @@ fragment Item on ItemNode {
   }
   variants {
     ...ItemVariant
+  }
+  ancillaryItems {
+    ...AncillaryItem
   }
   itemDirections {
     ...ItemDirection
@@ -504,6 +531,49 @@ mutation deleteBundledItem($storeId: String!, $input: DeleteBundledItemInput!) {
   }
 }
 
+mutation upsertAncillaryItem(
+  $storeId: String!
+  $input: UpsertAncillaryItemInput!
+) {
+  centralServer {
+    ancillaryItem {
+      upsertAncillaryItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on AncillaryItemNode {
+          ...AncillaryItem
+        }
+        ... on UpsertAncillaryItemError {
+          error {
+            __typename
+            description
+            ... on AncillaryMaxDepthExceeded {
+              max
+              actual
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation deleteAncillaryItem(
+  $storeId: String!
+  $input: DeleteAncillaryItemInput!
+) {
+  centralServer {
+    ancillaryItem {
+      deleteAncillaryItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
 fragment ItemLedger on ItemLedgerNode {
   id
   balance
@@ -515,6 +585,7 @@ fragment ItemLedger on ItemLedgerNode {
   invoiceId
   invoiceStatus
   invoiceType
+  isExternal
   name
   packSize
   movementInUnits
@@ -522,6 +593,9 @@ fragment ItemLedger on ItemLedgerNode {
   sellPricePerPack
   totalBeforeTax
   numberOfPacks
+  user {
+    username
+  }
 }
 
 query itemLedger(

@@ -1,5 +1,6 @@
 import React, { ReactElement } from 'react';
 import {
+  AppBarButtonsPortal,
   ButtonWithIcon,
   useTranslation,
   useToggle,
@@ -28,22 +29,23 @@ export const Documents = ({
 
   return (
     <>
+      <AppBarButtonsPortal>
+        <ButtonWithIcon
+          color="primary"
+          onClick={uploadDocumentController.toggleOn}
+          disabled={disable}
+          Icon={<PlusCircleIcon />}
+          label={t('label.upload-document')}
+        />
+      </AppBarButtonsPortal>
       <Grid flex={1} display="flex" flexDirection="column">
-        <Grid justifyContent="flex-end" display="flex" padding={1}>
-          <ButtonWithIcon
-            color="primary"
-            onClick={uploadDocumentController.toggleOn}
-            disabled={disable}
-            Icon={<PlusCircleIcon />}
-            label={t('label.upload-document')}
-          />
-        </Grid>
         <Grid flex={1} sx={{ boxShadow: theme => theme.shadows[2] }}>
           <DocumentsTable
             recordId={data?.id ?? ''}
             documents={data?.documents?.nodes ?? []}
             tableName="purchase_order"
             invalidateQueries={invalidateQueries}
+            deletableDocumentIds={disable ? new Set<string>() : undefined}
           />
         </Grid>
       </Grid>

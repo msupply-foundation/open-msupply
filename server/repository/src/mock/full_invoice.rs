@@ -18,7 +18,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
     FullMockInvoice {
         invoice: InvoiceRow {
             id: invoice_id.clone(),
-            name_link_id: String::from("name_store_b"),
+            name_id: String::from("name_store_b"),
             store_id: String::from("store_c"),
             invoice_number: 10,
             r#type: InvoiceType::OutboundShipment,
@@ -35,7 +35,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     id: invoice_line_a_id,
                     stock_line_id: Some(stock_line_a_id.clone()),
                     invoice_id: invoice_id.clone(),
-                    item_link_id: String::from("item_a"),
+                    item_id: String::from("item_a"),
                     item_name: String::from("Item A"),
                     item_code: String::from("item_a_code"),
                     pack_size: 4.0,
@@ -50,7 +50,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                 },
                 stock_line: StockLineRow {
                     id: stock_line_a_id,
-                    item_link_id: String::from("item_a"),
+                    item_id: String::from("item_a"),
                     store_id: String::from("store_c"),
                     available_number_of_packs: 20.0,
                     pack_size: 4.0,
@@ -65,7 +65,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     id: invoice_line_b_id,
                     stock_line_id: Some(stock_line_b_id.clone()),
                     invoice_id: invoice_id.clone(),
-                    item_link_id: String::from("item_a"),
+                    item_id: String::from("item_a"),
                     item_name: String::from("Item A"),
                     item_code: String::from("item_a_code"),
                     pack_size: 2.0,
@@ -79,7 +79,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                 },
                 stock_line: StockLineRow {
                     id: stock_line_b_id,
-                    item_link_id: String::from("item_a"),
+                    item_id: String::from("item_a"),
                     store_id: String::from("store_c"),
                     available_number_of_packs: 10.0,
                     pack_size: 2.0,
@@ -99,7 +99,7 @@ pub fn mock_full_draft_inbound_shipment_on_hold() -> FullMockInvoice {
     FullMockInvoice {
         invoice: InvoiceRow {
             id: invoice_id.clone(),
-            name_link_id: String::from("name_store_a"),
+            name_id: String::from("name_store_a"),
             store_id: String::from("store_a"),
             invoice_number: 11,
             r#type: InvoiceType::InboundShipment,
@@ -121,7 +121,7 @@ pub fn mock_full_draft_outbound_shipment_on_hold() -> FullMockInvoice {
     FullMockInvoice {
         invoice: InvoiceRow {
             id: invoice_id.clone(),
-            name_link_id: String::from("name_store_a"),
+            name_id: String::from("name_store_a"),
             store_id: String::from("store_c"),
             invoice_number: 11,
             r#type: InvoiceType::OutboundShipment,

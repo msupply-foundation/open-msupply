@@ -1,9 +1,8 @@
 use repository::{
-    indicator_column::{IndicatorColumnFilter, IndicatorColumnRepository},
     indicator_line::{IndicatorLineFilter, IndicatorLineRepository},
     indicator_value::{IndicatorValue, IndicatorValueFilter, IndicatorValueRepository},
-    EqualFilter, IndicatorValueRow, IndicatorValueRowRepository, IndicatorValueType,
-    RepositoryError, StorageConnection,
+    EqualFilter, IndicatorColumnRowRepository, IndicatorValueRow, IndicatorValueRowRepository,
+    IndicatorValueType, RepositoryError, StorageConnection,
 };
 
 use crate::{requisition::common::indicator_value_type, service_provider::ServiceContext};
@@ -41,7 +40,8 @@ pub fn update_indicator_value(
 
             IndicatorValueRepository::new(connection)
                 .query_one(
-                    IndicatorValueFilter::new().id(EqualFilter::equal_to(updated_row.id.to_string())),
+                    IndicatorValueFilter::new()
+                        .id(EqualFilter::equal_to(updated_row.id.to_string())),
                 )
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::IndicatorValueDoesNotExist)
@@ -64,16 +64,18 @@ fn validate(
     }
 
     let indicator_line = IndicatorLineRepository::new(connection)
-        .query_by_filter(IndicatorLineFilter::new().id(EqualFilter::equal_to(indicator_value_row.indicator_line_id.to_string())))?
+        .query_by_filter(IndicatorLineFilter::new().id(EqualFilter::equal_to(
+            indicator_value_row.indicator_line_id.to_string(),
+        )))?
         .pop()
         .ok_or(OutError::IndicatorLineDoesNotExist)?;
 
-    let indicator_column = IndicatorColumnRepository::new(connection)
-        .query_by_filter(
-            IndicatorColumnFilter::new().id(EqualFilter::equal_to(indicator_value_row.indicator_column_id.to_string())),
-        )?
-        .pop()
+    let indicator_column = IndicatorColumnRowRepository::new(connection)
+        .find_one_by_id(&indicator_value_row.indicator_column_id)?
         .ok_or(OutError::IndicatorColumnDoesNotExist)?;
+
+    // TODO: Future when mSupply supports enabling and disabling columns (or OMS Central)
+    // Check that the colum is active before allowing update of value.
 
     if let Some(IndicatorValueType::Number) =
         indicator_value_type(&indicator_line, &indicator_column)
@@ -100,7 +102,7 @@ fn generate(
 ) -> IndicatorValueRow {
     IndicatorValueRow {
         id: indicator_value_row.id,
-        customer_name_link_id: indicator_value_row.customer_name_link_id,
+        customer_name_id: indicator_value_row.customer_name_id,
         store_id: indicator_value_row.store_id,
         period_id: indicator_value_row.period_id,
         indicator_line_id: indicator_value_row.indicator_line_id,
@@ -135,7 +137,7 @@ mod test {
         RequisitionRow {
             id: "response_program_req".to_string(),
             requisition_number: 3,
-            name_link_id: mock_name_store_b().id,
+            name_id: mock_name_store_b().id,
             store_id: mock_store_a().id,
             r#type: RequisitionType::Response,
             status: RequisitionStatus::New,
@@ -153,7 +155,7 @@ mod test {
     fn test_indicator_value() -> IndicatorValueRow {
         IndicatorValueRow {
             id: "test_indicator_value".to_string(),
-            customer_name_link_id: mock_name_store_b().id,
+            customer_name_id: mock_name_store_b().id,
             store_id: mock_store_a().id,
             period_id: mock_period().id,
             indicator_line_id: mock_indicator_line_c().id,

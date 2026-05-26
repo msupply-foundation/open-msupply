@@ -93,10 +93,37 @@ impl<'a> TemperatureBreachRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
+    }
+
+    pub fn update_location_id_by_sensor_id(
+        &self,
+        sensor_id: &str,
+        location_id: &str,
+    ) -> Result<(), RepositoryError> {
+        let rows_updated = diesel::update(temperature_breach::table)
+            .filter(temperature_breach::sensor_id.eq(sensor_id))
+            .filter(temperature_breach::location_id.is_null())
+            .set(temperature_breach::location_id.eq(Some(location_id)))
+            .execute(self.connection.lock().connection())?;
+
+        if rows_updated == 0 {
+            return Ok(());
+        }
+
+        let breaches = temperature_breach::table
+            .filter(temperature_breach::sensor_id.eq(sensor_id))
+            .filter(temperature_breach::location_id.eq(location_id))
+            .load::<TemperatureBreachRow>(self.connection.lock().connection())?;
+
+        for breach in &breaches {
+            self.insert_changelog(breach, RowActionType::Upsert)?;
+        }
+
+        Ok(())
     }
 
     pub fn find_one_by_id(

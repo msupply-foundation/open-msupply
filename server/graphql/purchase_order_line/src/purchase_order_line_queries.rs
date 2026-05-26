@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::EqualFilterStringInput,
+    generic_filters::{DateFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput, StringFilterInput},
     map_filter,
     pagination::PaginationInput,
     simple_generic_errors::RecordNotFound,
@@ -11,8 +11,8 @@ use graphql_types::types::{
     PurchaseOrderLineConnector, PurchaseOrderLineNode, PurchaseOrderLineStatusNode,
 };
 use repository::{
-    EqualFilter, PaginationOption, PurchaseOrderLineFilter, PurchaseOrderLineSort,
-    PurchaseOrderLineSortField, PurchaseOrderLineStatus,
+    DateFilter, EqualFilter, PaginationOption, PurchaseOrderLineFilter, PurchaseOrderLineSort,
+    PurchaseOrderLineSortField, PurchaseOrderLineStatus, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -40,6 +40,10 @@ pub struct PurchaseOrderLineFilterInput {
     pub purchase_order_id: Option<EqualFilterStringInput>,
     pub status: Option<EqualFilterPurchaseOrderLineStatusInput>,
     pub received_less_than_adjusted: Option<bool>,
+    pub supplier_name: Option<StringFilterInput>,
+    pub purchase_order_number: Option<EqualFilterBigNumberInput>,
+    pub item_name: Option<StringFilterInput>,
+    pub expected_delivery_date: Option<DateFilterInput>,
 }
 
 #[derive(InputObject, Clone)]
@@ -78,7 +82,7 @@ pub fn get_purchase_order_line(
 
     match service_provider
         .purchase_order_line_service
-        .get_purchase_order_line(&service_context, Some(&store_id), id)
+        .get_purchase_order_line(&service_context, Some(store_id), id)
         .map_err(StandardGraphqlError::from_repository_error)
     {
         Ok(line) => {
@@ -115,7 +119,7 @@ pub fn get_purchase_order_lines(
         .purchase_order_line_service
         .get_purchase_order_lines(
             &service_context,
-            Some(&store_id),
+            Some(store_id),
             page.map(PaginationOption::from),
             filter.map(|filter| filter.to_domain()),
             sort.and_then(|mut sort_list| sort_list.pop())
@@ -128,6 +132,33 @@ pub fn get_purchase_order_lines(
     ))
 }
 
+pub fn get_units_ordered_in_other_purchase_orders(
+    ctx: &Context<'_>,
+    store_id: &str,
+    item_id: &str,
+    exclude_purchase_order_id: &str,
+) -> Result<f64> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryPurchaseOrder,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+
+    service_provider
+        .purchase_order_line_service
+        .get_units_ordered_in_other_purchase_orders(
+            &service_context,
+            store_id,
+            item_id,
+            exclude_purchase_order_id,
+        )
+        .map_err(StandardGraphqlError::from_repository_error)
+}
+
 impl PurchaseOrderLineFilterInput {
     pub fn to_domain(self) -> PurchaseOrderLineFilter {
         PurchaseOrderLineFilter {
@@ -135,13 +166,16 @@ impl PurchaseOrderLineFilterInput {
             purchase_order_id: self.purchase_order_id.map(EqualFilter::from),
             status: self
                 .status
-                .map(|s| map_filter!(s, |t| PurchaseOrderLineStatus::from(t))),
-
+                .map(|s| map_filter!(s, PurchaseOrderLineStatus::from)),
             received_less_than_adjusted: self.received_less_than_adjusted,
             store_id: None,
             requested_pack_size: None,
             item_id: None,
             purchase_order: None,
+            supplier_name: self.supplier_name.map(StringFilter::from),
+            purchase_order_number: self.purchase_order_number.map(EqualFilter::from),
+            item_name: self.item_name.map(StringFilter::from),
+            expected_delivery_date: self.expected_delivery_date.map(DateFilter::from),
         }
     }
 }

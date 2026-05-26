@@ -103,8 +103,9 @@ fn generate_stocktake_lines(
         .has_packs_in_store(true);
 
     if let Some(master_list_id) = master_list_id {
-        stock_line_filter = stock_line_filter
-            .master_list(MasterListFilter::new().id(EqualFilter::equal_to(master_list_id.to_string())))
+        stock_line_filter = stock_line_filter.master_list(
+            MasterListFilter::new().id(EqualFilter::equal_to(master_list_id.to_string())),
+        )
     }
 
     if let Some(location_id) = location_id {
@@ -113,7 +114,8 @@ fn generate_stocktake_lines(
     }
 
     if let Some(vvm_status_id) = vvm_status_id {
-        stock_line_filter = stock_line_filter.vvm_status_id(EqualFilter::equal_to(vvm_status_id.to_string()));
+        stock_line_filter =
+            stock_line_filter.vvm_status_id(EqualFilter::equal_to(vvm_status_id.to_string()));
     }
 
     if let Some(expires_before_date) = expires_before {
@@ -141,16 +143,18 @@ fn generate_stocktake_lines(
                          note,
                          item_variant_id,
                          volume_per_pack,
-                         donor_link_id,
+                         donor_id: donor_link_id,
+                         manufacturer_id,
                          campaign_id,
                          program_id,
                          vvm_status_id,
-                         item_link_id: _,
-                         supplier_link_id: _,
+                         item_id: _,
+                         supplier_id: _,
                          store_id: _,
                          on_hold: _,
                          available_number_of_packs: _,
                          barcode_id: _,
+                         manufacture_date,
                          total_volume: _,
                      },
                  item_row,
@@ -164,18 +168,20 @@ fn generate_stocktake_lines(
                     id: uuid(),
                     stocktake_id: id.to_string(),
                     snapshot_number_of_packs: total_number_of_packs,
-                    item_link_id: item_row.id,
+                    item_id: item_row.id,
                     item_name: item_row.name,
                     location_id,
                     batch,
                     expiry_date,
+                    manufacture_date,
                     note,
                     stock_line_id: Some(stock_line_id),
                     pack_size: Some(pack_size),
                     cost_price_per_pack: Some(cost_price_per_pack),
                     sell_price_per_pack: Some(sell_price_per_pack),
                     item_variant_id,
-                    donor_link_id,
+                    donor_id: donor_link_id,
+                    manufacturer_id,
                     vvm_status_id,
                     volume_per_pack,
                     campaign_id,
@@ -212,13 +218,14 @@ fn generate_lines_initial_stocktake(
         .map(|item| StocktakeLineRow {
             id: uuid(),
             stocktake_id: stocktake_id.to_string(),
-            item_link_id: item.id,
+            item_id: item.id,
             item_name: item.name,
             // Defaults
             snapshot_number_of_packs: 0.0,
             location_id: None,
             batch: None,
             expiry_date: None,
+            manufacture_date: None,
             note: None,
             stock_line_id: None,
             pack_size: None,
@@ -227,7 +234,8 @@ fn generate_lines_initial_stocktake(
             comment: None,
             counted_number_of_packs: None,
             item_variant_id: None,
-            donor_link_id: None,
+            donor_id: None,
+            manufacturer_id: None,
             reason_option_id: None,
             vvm_status_id: None,
             volume_per_pack: 0.0,
@@ -307,11 +315,12 @@ fn generate_lines_from_item_ids(
                 id: uuid(),
                 stocktake_id: stocktake_id.to_string(),
                 snapshot_number_of_packs: 0.0,
-                item_link_id: item_id.to_string(),
+                item_id: item_id.to_string(),
                 item_name,
                 location_id: None,
                 batch: None,
                 expiry_date: None,
+                manufacture_date: None,
                 note: None,
                 stock_line_id: None,
                 pack_size: None,
@@ -321,7 +330,8 @@ fn generate_lines_from_item_ids(
                 counted_number_of_packs: None,
                 reason_option_id: None,
                 item_variant_id: None,
-                donor_link_id: None,
+                donor_id: None,
+                manufacturer_id: None,
                 vvm_status_id: None,
                 volume_per_pack: 0.0,
                 campaign_id: None,
@@ -331,7 +341,7 @@ fn generate_lines_from_item_ids(
             stock_lines.into_iter().for_each(|line| {
                 let StockLineRow {
                     id: stock_line_id,
-                    item_link_id: _,
+                    item_id: _,
                     location_id,
                     batch,
                     pack_size,
@@ -344,13 +354,15 @@ fn generate_lines_from_item_ids(
                     campaign_id,
                     program_id,
                     item_variant_id,
-                    donor_link_id,
+                    donor_id: donor_link_id,
+                    manufacturer_id,
                     vvm_status_id,
-                    supplier_link_id: _,
+                    supplier_id: _,
                     store_id: _,
                     on_hold: _,
                     available_number_of_packs: _,
                     barcode_id: _,
+                    manufacture_date,
                     total_volume: _,
                 } = line.stock_line_row;
 
@@ -358,18 +370,20 @@ fn generate_lines_from_item_ids(
                     id: uuid(),
                     stocktake_id: stocktake_id.to_string(),
                     snapshot_number_of_packs: total_number_of_packs,
-                    item_link_id: line.item_row.id,
+                    item_id: line.item_row.id,
                     item_name: line.item_row.name,
                     location_id,
                     batch,
                     expiry_date,
+                    manufacture_date,
                     note,
                     stock_line_id: Some(stock_line_id),
                     pack_size: Some(pack_size),
                     cost_price_per_pack: Some(cost_price_per_pack),
                     sell_price_per_pack: Some(sell_price_per_pack),
                     item_variant_id,
-                    donor_link_id,
+                    donor_id: donor_link_id,
+                    manufacturer_id,
                     vvm_status_id,
                     volume_per_pack,
                     campaign_id,

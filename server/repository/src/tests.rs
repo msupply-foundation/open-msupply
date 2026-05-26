@@ -17,7 +17,7 @@ mod repository_test {
         pub fn store_1() -> StoreRow {
             StoreRow {
                 id: "store1".to_string(),
-                name_link_id: "name1".to_string(),
+                name_id: "name1".to_string(),
                 code: "code1".to_string(),
                 ..Default::default()
             }
@@ -56,7 +56,7 @@ mod repository_test {
         pub fn stock_line_1() -> StockLineRow {
             StockLineRow {
                 id: "StockLine1".to_string(),
-                item_link_id: "item1".to_string(),
+                item_id: "item1".to_string(),
                 store_id: "store1".to_string(),
                 batch: Some("batch1".to_string()),
                 available_number_of_packs: 6.0,
@@ -68,7 +68,7 @@ mod repository_test {
                 on_hold: false,
                 note: None,
                 location_id: None,
-                supplier_link_id: Some(String::from("name1")),
+                supplier_id: Some(String::from("name1")),
                 ..Default::default()
             }
         }
@@ -98,7 +98,7 @@ mod repository_test {
         pub fn master_list_line_1() -> MasterListLineRow {
             MasterListLineRow {
                 id: "masterlistline1".to_string(),
-                item_link_id: item_1().id.to_string(),
+                item_id: item_1().id.to_string(),
                 master_list_id: master_list_1().id.to_string(),
                 ..Default::default()
             }
@@ -107,7 +107,7 @@ mod repository_test {
         pub fn master_list_line_upsert_1() -> MasterListLineRow {
             MasterListLineRow {
                 id: "masterlistline1".to_string(),
-                item_link_id: item_2().id.to_string(),
+                item_id: item_2().id.to_string(),
                 master_list_id: master_list_1().id.to_string(),
                 ..Default::default()
             }
@@ -117,14 +117,14 @@ mod repository_test {
             MasterListNameJoinRow {
                 id: "masterlistnamejoin1".to_string(),
                 master_list_id: master_list_1().id.to_string(),
-                name_link_id: name_1().id.to_string(),
+                name_id: name_1().id.to_string(),
             }
         }
 
         pub fn invoice_1() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice1".to_string(),
-                name_link_id: name_1().id.to_string(),
+                name_id: name_1().id.to_string(),
                 store_id: store_1().id.to_string(),
                 invoice_number: 12,
                 r#type: InvoiceType::InboundShipment,
@@ -140,7 +140,7 @@ mod repository_test {
         pub fn invoice_2() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice2".to_string(),
-                name_link_id: name_1().id.to_string(),
+                name_id: name_1().id.to_string(),
                 store_id: store_1().id.to_string(),
                 invoice_number: 12,
                 r#type: InvoiceType::OutboundShipment,
@@ -155,7 +155,7 @@ mod repository_test {
         pub fn invoice_line_1() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "test1".to_string(),
-                item_link_id: item_1().id.to_string(),
+                item_id: item_1().id.to_string(),
                 item_name: item_1().name.to_string(),
                 item_code: item_1().code.to_string(),
                 invoice_id: invoice_1().id.to_string(),
@@ -176,7 +176,7 @@ mod repository_test {
         pub fn invoice_line_2() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "test2-with-optional".to_string(),
-                item_link_id: item_1().id.to_string(),
+                item_id: item_1().id.to_string(),
                 item_name: item_1().name.to_string(),
                 item_code: item_1().code.to_string(),
                 invoice_id: invoice_1().id.to_string(),
@@ -198,7 +198,7 @@ mod repository_test {
         pub fn invoice_line_3() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "test3".to_string(),
-                item_link_id: item_2().id.to_string(),
+                item_id: item_2().id.to_string(),
                 item_name: item_2().name.to_string(),
                 item_code: item_2().code.to_string(),
                 invoice_id: invoice_2().id.to_string(),
@@ -220,7 +220,7 @@ mod repository_test {
         pub fn invoice_line_service() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "test_service_item".to_string(),
-                item_link_id: item_service_1().id.to_string(),
+                item_id: item_service_1().id.to_string(),
                 item_name: item_service_1().name.to_string(),
                 item_code: item_service_1().code.to_string(),
                 invoice_id: invoice_1().id.to_string(),
@@ -639,7 +639,7 @@ mod repository_test {
             .query_by_filter(
                 InvoiceFilter::new()
                     .r#type(InvoiceType::OutboundShipment.equal_to())
-                    .name_id(EqualFilter::equal_to(item1.name_link_id.to_string())),
+                    .name_id(EqualFilter::equal_to(item1.name_id.to_string())),
             )
             .unwrap();
         assert_eq!(1, loaded_item.len());
@@ -1157,7 +1157,7 @@ mod repository_test {
                     let sleep_duration = SystemTime::now()
                         .duration_since(start_dt)
                         .expect("Time went backwards");
-                    println!("A: Slept for {:?}", sleep_duration);
+                    println!("A: Slept for {sleep_duration:?}");
                     println!("A: writing");
                     repo.upsert_one(&ItemRow {
                         id: "tx_deadlock_id2".to_string(),
@@ -1196,7 +1196,7 @@ mod repository_test {
                     println!("B: write 2");
                     Ok(())
                 });
-            println!("B: Returning {:?}", result);
+            println!("B: Returning {result:?}");
             result
         });
 

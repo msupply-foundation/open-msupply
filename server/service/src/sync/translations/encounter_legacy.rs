@@ -4,8 +4,7 @@ use crate::sync::CentralServerConfig;
 
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
-    ChangelogRow, ChangelogTableName, EncounterRowRepository, NameLinkRowRepository,
-    StorageConnection,
+    ChangelogRow, ChangelogTableName, EncounterRowRepository, StorageConnection,
 };
 
 /*
@@ -78,22 +77,12 @@ impl SyncTranslation for EncounterLegacyTranslation {
                 changelog.record_id
             )))?;
 
-        let name_link_repo = NameLinkRowRepository::new(connection);
-
-        let patient_name_id = name_link_repo
-            .find_one_by_id(&encounter_row.patient_link_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Patient name link ({}) not found",
-                encounter_row.patient_link_id
-            )))?
-            .id;
-
         let legacy_row = LegacyEncounterRow {
             ID: encounter_row.id,
             document_type: encounter_row.document_type,
             document_name: encounter_row.document_name,
             program_ID: encounter_row.program_id,
-            name_ID: patient_name_id,
+            name_ID: encounter_row.patient_id,
             created_datetime: encounter_row.created_datetime.and_utc().to_rfc3339(),
             start_datetime: encounter_row.start_datetime.and_utc().to_rfc3339(),
             end_datetime: encounter_row
@@ -101,7 +90,7 @@ impl SyncTranslation for EncounterLegacyTranslation {
                 .map(|dt| dt.and_utc().to_rfc3339()),
             status: encounter_row
                 .status
-                .map(|s| format!("{:?}", s).to_uppercase()),
+                .map(|s| format!("{s:?}").to_uppercase()),
             prescriber_ID: encounter_row.clinician_link_id,
             store_ID: encounter_row.store_id,
         };
@@ -144,7 +133,7 @@ mod tests {
             document_type: "Test Document Type".to_string(),
             document_name: "Test Document Name".to_string(),
             program_id: mock_immunisation_program_enrolment_a().program_id,
-            patient_link_id: mock_encounter_a().patient_link_id,
+            patient_id: mock_encounter_a().patient_id,
             created_datetime: mock_encounter_a().created_datetime,
             start_datetime: mock_encounter_a().start_datetime,
             end_datetime: None,

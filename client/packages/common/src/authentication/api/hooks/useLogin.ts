@@ -85,7 +85,7 @@ export const getStore = async (
 export const useLogin = (
   setCookie: React.Dispatch<React.SetStateAction<AuthCookie | undefined>>
 ) => {
-  const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
+  const { mutateAsync, isPending: isLoggingIn } = useGetAuthToken();
   const { changeLanguage, getLocaleCode, getUserLocale } = useIntlUtils();
   const { setSkipRequest } = useGql();
   const { mutateAsync: getUserDetails } = useGetUserDetails();
@@ -154,13 +154,17 @@ export const useLogin = (
       },
     };
 
-    const userLocale = getUserLocale(username);
-    if (userLocale === undefined) {
-      changeLanguage(getLocaleCode(userDetails?.language as LanguageTypeNode));
+    if (token) {
+      const userLocale = getUserLocale(username);
+      if (userLocale === undefined) {
+        changeLanguage(
+          getLocaleCode(userDetails?.language as LanguageTypeNode)
+        );
+      }
+      upsertMostRecentCredential(username, store);
+      setAuthCookie(authCookie);
+      setCookie(authCookie);
     }
-    upsertMostRecentCredential(username, store);
-    setAuthCookie(authCookie);
-    setCookie(authCookie);
     setLoginError(!!token, !!store);
     setSkipRequest(
       () => LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned

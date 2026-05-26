@@ -8,8 +8,9 @@ use graphql_core::{
 };
 use graphql_types::types::InvoiceLineNode;
 
+use graphql_core::generic_inputs::InboundShipmentType;
 use repository::InvoiceLine;
-use service::auth::{Resource, ResourceAccessRequest};
+use service::auth::ResourceAccessRequest;
 use service::invoice_line::inbound_shipment_service_line::{
     UpdateInboundShipmentServiceLine as ServiceInput,
     UpdateInboundShipmentServiceLineError as ServiceError,
@@ -27,11 +28,16 @@ pub struct UpdateInput {
     note: Option<String>,
 }
 
-pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+pub fn update(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: UpdateInput,
+    r#type: InboundShipmentType,
+) -> Result<UpdateResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateInboundShipment,
+            resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -42,7 +48,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     map_response(
         service_provider
             .invoice_line_service
-            .update_inbound_shipment_service_line(&service_context, input.to_domain()),
+            .update_inbound_shipment_service_line(&service_context, input.to_domain(), Some(r#type.to_domain())),
     )
 }
 
@@ -105,7 +111,7 @@ impl UpdateInput {
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -124,6 +130,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         }
         // Standard Graphql Errors
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
+        ServiceError::WrongInboundShipmentType => BadUserInput(formatted_error),
         ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
@@ -169,6 +176,7 @@ mod test {
             &self,
             _: &ServiceContext,
             input: ServiceInput,
+            _: Option<service::invoice::inbound_shipment::InboundShipmentType>,
         ) -> Result<InvoiceLine, ServiceError> {
             self.0(input)
         }

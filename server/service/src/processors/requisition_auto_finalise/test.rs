@@ -33,7 +33,7 @@ async fn test_requisition_auto_finalise() {
 
     let store = StoreRow {
         id: uuid(),
-        name_link_id: response_store_name.id.clone(),
+        name_id: response_store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -62,7 +62,7 @@ async fn test_requisition_auto_finalise() {
 
     let stock_line_1 = StockLineRow {
         id: uuid(),
-        item_link_id: item_1.id.clone(),
+        item_id: item_1.id.clone(),
         store_id: store.id.clone(),
         total_number_of_packs: 100.0,
         available_number_of_packs: 100.0,
@@ -72,7 +72,7 @@ async fn test_requisition_auto_finalise() {
 
     let stock_line_2 = StockLineRow {
         id: uuid(),
-        item_link_id: item_2.id.clone(),
+        item_id: item_2.id.clone(),
         store_id: store.id.clone(),
         total_number_of_packs: 100.0,
         available_number_of_packs: 100.0,
@@ -83,7 +83,7 @@ async fn test_requisition_auto_finalise() {
     let requisition = RequisitionRow {
         id: uuid(),
         requisition_number: 1,
-        name_link_id: customer_name.id.clone(),
+        name_id: customer_name.id.clone(),
         store_id: store.id.clone(),
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,
@@ -128,7 +128,7 @@ async fn test_requisition_auto_finalise() {
     let requisition_line_1 = RequisitionLineRow {
         id: uuid(),
         requisition_id: requisition.id.clone(),
-        item_link_id: item_1.id.clone(),
+        item_id: item_1.id.clone(),
         requested_quantity: 100.0,
         ..Default::default()
     };
@@ -140,7 +140,7 @@ async fn test_requisition_auto_finalise() {
     let mut linked_invoice = InvoiceRow {
         id: uuid(),
         store_id: store.id.clone(),
-        name_link_id: customer_name.id.clone(),
+        name_id: customer_name.id.clone(),
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::Allocated,
         requisition_id: Some(requisition.id.clone()),
@@ -154,7 +154,7 @@ async fn test_requisition_auto_finalise() {
     let mut invoice_line_1 = repository::InvoiceLineRow {
         id: uuid(),
         invoice_id: linked_invoice.id.clone(),
-        item_link_id: item_1.id.clone(),
+        item_id: item_1.id.clone(),
         number_of_packs: 99.0,
         pack_size: 1.0,
         r#type: InvoiceLineType::StockOut,
@@ -207,7 +207,7 @@ async fn test_requisition_auto_finalise() {
     let mut linked_invoice_2 = InvoiceRow {
         id: uuid(),
         store_id: store.id.clone(),
-        name_link_id: customer_name.id.clone(),
+        name_id: customer_name.id.clone(),
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::New,
         requisition_id: Some(requisition.id.clone()),
@@ -219,7 +219,7 @@ async fn test_requisition_auto_finalise() {
     let mut invoice_line_2 = repository::InvoiceLineRow {
         id: uuid(),
         invoice_id: linked_invoice_2.id.clone(),
-        item_link_id: item_1.id.clone(),
+        item_id: item_1.id.clone(),
         number_of_packs: 3.0,
         pack_size: 20.0,
         r#type: InvoiceLineType::StockOut,
@@ -281,7 +281,7 @@ async fn test_requisition_auto_finalise() {
     let mut requisition_line_2 = RequisitionLineRow {
         id: uuid(),
         requisition_id: requisition.id.clone(),
-        item_link_id: item_2.id.clone(),
+        item_id: item_2.id.clone(),
         requested_quantity: 5.0,
         ..Default::default()
     };
@@ -352,7 +352,7 @@ async fn run_processor(ctx: &ServiceContext) {
 }
 
 fn requisition_get(conn: &StorageConnection, id: &str) -> RequisitionRow {
-    RequisitionRowRepository::new(&conn)
+    RequisitionRowRepository::new(conn)
         .find_one_by_id(id)
         .unwrap()
         .unwrap()

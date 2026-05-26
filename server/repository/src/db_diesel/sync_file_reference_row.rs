@@ -49,9 +49,10 @@ table! {
     }
 }
 
-#[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
-)]
+// Local/synced split lives in `SyncFileReferenceWire` (below). Anything absent
+// from the wire DTO is local-only by construction; the pull translator merges
+// the wire payload over an existing row to preserve those local fields.
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
 #[diesel(table_name = sync_file_reference)]
 pub struct SyncFileReferenceRow {
     pub id: String,
@@ -59,31 +60,78 @@ pub struct SyncFileReferenceRow {
     pub record_id: String,
     pub file_name: String,
     pub mime_type: Option<String>,
-    #[serde(skip_serializing)]
-    #[serde(default)]
     pub uploaded_bytes: i32,
-    #[serde(skip_serializing)]
-    #[serde(default)]
     pub downloaded_bytes: i32,
-    #[serde(default)]
     pub total_bytes: i32,
-    #[serde(skip_serializing)]
-    #[serde(default)]
     pub retries: i32,
-    #[serde(skip_serializing)]
-    #[serde(default)]
     pub retry_at: Option<NaiveDateTime>,
-    #[serde(skip_serializing)]
-    #[serde(default)]
     pub direction: SyncFileDirection,
-    #[serde(skip_serializing)]
-    #[serde(default)]
     pub status: SyncFileStatus,
-    #[serde(skip_serializing)]
-    #[serde(default)]
     pub error: Option<String>,
     pub created_datetime: NaiveDateTime,
     pub deleted_datetime: Option<NaiveDateTime>,
+}
+
+/// Subset of `SyncFileReferenceRow` that crosses sync. Anything not listed here
+/// is local-only per-site state (retry counters, transfer progress, direction).
+/// On pull, [`Self::into_row`] merges the wire payload over the existing local row
+/// so a status sync from central never clobbers our own bookkeeping.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SyncFileReferenceWire {
+    pub id: String,
+    pub table_name: String,
+    pub record_id: String,
+    pub file_name: String,
+    #[serde(default)]
+    pub mime_type: Option<String>,
+    #[serde(default)]
+    pub total_bytes: i32,
+    #[serde(default)]
+    pub status: SyncFileStatus,
+    #[serde(default)]
+    pub error: Option<String>,
+    pub created_datetime: NaiveDateTime,
+    #[serde(default)]
+    pub deleted_datetime: Option<NaiveDateTime>,
+}
+
+impl SyncFileReferenceWire {
+    pub fn from_row(row: &SyncFileReferenceRow) -> Self {
+        SyncFileReferenceWire {
+            id: row.id.clone(),
+            table_name: row.table_name.clone(),
+            record_id: row.record_id.clone(),
+            file_name: row.file_name.clone(),
+            mime_type: row.mime_type.clone(),
+            total_bytes: row.total_bytes,
+            status: row.status.clone(),
+            error: row.error.clone(),
+            created_datetime: row.created_datetime,
+            deleted_datetime: row.deleted_datetime,
+        }
+    }
+
+    pub fn into_row(self, existing: Option<SyncFileReferenceRow>) -> SyncFileReferenceRow {
+        let local = existing.unwrap_or_default();
+        SyncFileReferenceRow {
+            id: self.id,
+            table_name: self.table_name,
+            record_id: self.record_id,
+            file_name: self.file_name,
+            mime_type: self.mime_type,
+            total_bytes: self.total_bytes,
+            status: self.status,
+            error: self.error,
+            created_datetime: self.created_datetime,
+            deleted_datetime: self.deleted_datetime,
+            // Local-only fields preserved from the existing row.
+            uploaded_bytes: local.uploaded_bytes,
+            downloaded_bytes: local.downloaded_bytes,
+            retries: local.retries,
+            retry_at: local.retry_at,
+            direction: local.direction,
+        }
+    }
 }
 
 pub struct SyncFileReferenceRowRepository<'a> {
@@ -113,7 +161,10 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         sync_file_reference_row: &SyncFileReferenceRow,
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(sync_file_reference_row)?;
-        self.insert_changelog(sync_file_reference_row.id.to_string(), RowActionType::Upsert)
+        self.insert_changelog(
+            sync_file_reference_row.id.to_string(),
+            RowActionType::Upsert,
+        )
     }
 
     fn insert_changelog(
@@ -168,8 +219,17 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         Ok(result)
     }
 
-    // Note this deliberately doesn't create change log records to avoid triggering sync updates to central server for local only information
-    pub fn update_status(
+    /// Persists the row WITHOUT producing a changelog entry, so the change is not synced to
+    /// other sites. Use only for transitions that are meaningful only locally:
+    ///
+    /// - `status = InProgress` (an in-flight flicker that's about to settle to `Done`/`Error`)
+    /// - Bumping `retries` / `retry_at` between failed attempts
+    /// - Updating `uploaded_bytes` / `downloaded_bytes` mid-transfer
+    ///
+    /// For terminal transitions (`Done`, `Error`, `PermanentFailure`) or any change to `error`,
+    /// call `upsert_one` instead so the outcome propagates to central / other sites — see
+    /// `SyncFileReferenceWire` for which fields cross the wire.
+    pub fn upsert_without_changelog(
         &self,
         sync_file_reference_row: &SyncFileReferenceRow,
     ) -> Result<(), RepositoryError> {

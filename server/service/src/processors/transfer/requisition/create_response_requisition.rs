@@ -268,7 +268,7 @@ fn generate_response_requisition(
     let result = RequisitionRow {
         id: uuid(),
         requisition_number,
-        name_link_id: store_name.id,
+        name_id: store_name.id,
         store_id,
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,
@@ -284,7 +284,7 @@ fn generate_response_requisition(
         period_id: request_requisition_row.period_id.clone(),
         order_type: request_requisition_row.order_type.clone(),
         is_emergency: request_requisition_row.is_emergency,
-        original_customer_id: request_requisition_row.original_customer_id.clone(),
+        destination_customer_id: request_requisition_row.destination_customer_id.clone(),
         created_from_requisition_id: request_requisition_row.created_from_requisition_id.clone(),
         // Default
         user_id: None,
@@ -303,7 +303,8 @@ fn generate_response_requisition_lines(
     request_requisition: &RequisitionRow,
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
     let request_lines = get_lines_for_requisition(connection, &request_requisition.id)?;
-    let populate_price_per_unit = get_indicative_price_pref(connection, &response_requisition.store_id)?;
+    let populate_price_per_unit =
+        get_indicative_price_pref(connection, &response_requisition.store_id)?;
     let price_list = if populate_price_per_unit {
         Some(get_pricing_for_items(
             connection,
@@ -327,7 +328,7 @@ fn generate_response_requisition_lines(
                 requisition_id: _,
                 approved_quantity: _,
                 approval_comment: _,
-                item_link_id: _,
+                item_id: _,
                 supply_quantity: _,
                 requested_quantity,
                 suggested_quantity,
@@ -347,6 +348,9 @@ fn generate_response_requisition_lines(
                 price_per_unit,
                 available_volume,
                 location_type_id,
+                forecast_total_doses,
+                forecast_total_units,
+                vaccine_courses,
             },
         item_row: ItemRow { id: item_id, .. },
         requisition_row: _,
@@ -370,7 +374,7 @@ fn generate_response_requisition_lines(
         response_lines.push(RequisitionLineRow {
             id: uuid(),
             requisition_id: response_requisition.id.to_string(),
-            item_link_id: item_id,
+            item_id: item_id,
             requested_quantity,
             suggested_quantity,
             available_stock_on_hand,
@@ -388,11 +392,14 @@ fn generate_response_requisition_lines(
             option_id,
             available_volume,
             location_type_id,
+            price_per_unit,
+            forecast_total_units,
+            forecast_total_doses,
+            vaccine_courses,
             // Default
             supply_quantity: 0.0,
             approved_quantity: 0.0,
             approval_comment: None,
-            price_per_unit,
         });
     }
 
@@ -575,7 +582,7 @@ mod test {
         let requisition_line_1 = RequisitionLineRow {
             id: "line_1".to_string(),
             requisition_id: requisition_row.id.to_string(),
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             price_per_unit: Some(0.0),
             ..Default::default()
         };
@@ -583,7 +590,7 @@ mod test {
         let requisition_line_2 = RequisitionLineRow {
             id: "line_2".to_string(),
             requisition_id: requisition_row.id.to_string(),
-            item_link_id: mock_item_b().id,
+            item_id: mock_item_b().id,
             price_per_unit: None,
             ..Default::default()
         };

@@ -48,9 +48,7 @@ pub fn send_email(
         .multipart(MultiPart::alternative_plain_html(text_body, html_body))
         .map_err(|_e| EmailSendError::MessageBuildError)?;
 
-    mailer
-        .send(&message)
-        .map_err(|e| EmailSendError::SmtpError(e))?;
+    mailer.send(&message).map_err(EmailSendError::SmtpError)?;
 
     Ok(())
 }

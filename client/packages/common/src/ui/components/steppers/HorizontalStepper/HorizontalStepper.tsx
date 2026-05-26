@@ -189,10 +189,11 @@ export const HorizontalStepper = ({
   nowrap = false,
 }: StepperProps) => {
   const paletteColour = usePaletteColour(colour);
+  const theme = useTheme();
   const StyledConnector = getConnector(paletteColour);
 
   return (
-    <Box flex={1}>
+    <Box flex={1} dir={theme.direction}>
       <GlobalStyles styles={getAnimationStyles(colour)} />
       <Stepper
         connector={<StyledConnector />}

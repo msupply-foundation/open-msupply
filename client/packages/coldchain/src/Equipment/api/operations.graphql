@@ -127,6 +127,7 @@ fragment Asset on AssetNode {
 
 fragment ColdchainAssetLog on AssetLogNode {
   comment
+  createdDatetime
   id
   logDatetime
   reason {

@@ -63,6 +63,8 @@ export const useStatusChangeButton = () => {
         errorsContext.setErrors(mappedErrors);
         return t('error.cannot-order-items');
       }
+      case 'InboundShipmentsNotVerified':
+        return t('error.inbound-shipments-not-verified');
       default:
         return;
     }
@@ -95,38 +97,37 @@ export const useStatusChangeButton = () => {
     }
   };
 
-  // TODO: Use when received lines is implemented
-  const hasOutstandingLines = false;
-  // const hasOutstandingLines =
-  //   status === PurchaseOrderNodeStatus.Sent &&
-  //   (lines?.nodes ?? []).some(
-  //     line =>
-  //       line?.adjustedNumberOfUnits ||
-  //       line.requestedNumberOfUnits < line.receivedNumberOfUnits ||
-  //       line.receivedNumberOfUnits === 0
-  //   );
+  const isFinalising =
+    selectedOption?.value === PurchaseOrderNodeStatus.Finalised;
+
+  const hasOutstandingLines = useMemo(() => {
+    if (!isFinalising || !lines?.nodes) return false;
+    return lines.nodes.some(line => {
+      const ordered = line.adjustedNumberOfUnits ?? line.requestedNumberOfUnits;
+      return line.receivedNumberOfUnits < ordered;
+    });
+  }, [isFinalising, lines]);
 
   const getInfoMessage = () => {
-    switch (selectedOption?.value) {
-      case PurchaseOrderNodeStatus.Finalised:
-        return hasOutstandingLines
-          ? t('messages.purchase-order-outstanding-lines')
-          : undefined;
-      case PurchaseOrderNodeStatus.Confirmed:
-        return t('messages.purchase-order-ready-to-send');
-      default:
-        return undefined;
+    if (selectedOption?.value === PurchaseOrderNodeStatus.Confirmed) {
+      return t('messages.purchase-order-ready-to-send');
     }
+    return undefined;
   };
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t('messages.confirm-status-as', {
-      status: selectedOption?.value
-        ? getStatusTranslation(selectedOption?.value)
-        : '',
-    }),
+    message: isFinalising
+      ? hasOutstandingLines
+        ? t('messages.purchase-order-outstanding-lines')
+        : t('messages.purchase-order-finalise-warning')
+      : t('messages.confirm-status-as', {
+          status: selectedOption?.value
+            ? getStatusTranslation(selectedOption?.value)
+            : '',
+        }),
     info: getInfoMessage(),
+    buttonLabel: isFinalising ? t('button.finalise-anyway') : undefined,
     onConfirm: handleConfirm,
   });
 

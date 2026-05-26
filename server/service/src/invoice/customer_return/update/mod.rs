@@ -75,7 +75,7 @@ pub fn update_customer_return(
                 )?;
             }
 
-            get_invoice(ctx, None, &updated_return.id)
+            get_invoice(ctx, None, &updated_return.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
@@ -94,6 +94,7 @@ pub enum UpdateCustomerReturnError {
     CannotReverseInvoiceStatus,
     ReturnIsNotEditable,
     CannotChangeStatusOfInvoiceOnHold,
+    CannotIssueCustomerReturnWithNoLines,
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
@@ -180,7 +181,7 @@ mod test {
         fn not_a_supplier_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "not_a_supplier_join".to_string(),
-                name_link_id: not_a_supplier().id,
+                name_id: not_a_supplier().id,
                 store_id: mock_store_a().id,
                 name_is_supplier: false,
                 ..Default::default()
@@ -191,7 +192,7 @@ mod test {
             InvoiceRow {
                 id: "verified_return".to_string(),
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_store_a().id,
+                name_id: mock_name_store_a().id,
                 currency_id: Some(currency_a().id),
                 r#type: InvoiceType::CustomerReturn,
                 status: InvoiceStatus::Verified,
@@ -202,11 +203,22 @@ mod test {
             InvoiceRow {
                 id: "on_hold_return".to_string(),
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_store_a().id,
+                name_id: mock_name_store_a().id,
                 currency_id: Some(currency_a().id),
                 r#type: InvoiceType::CustomerReturn,
                 status: InvoiceStatus::New,
                 on_hold: true,
+                ..Default::default()
+            }
+        }
+        fn empty_return() -> InvoiceRow {
+            InvoiceRow {
+                id: "empty_customer_return".to_string(),
+                store_id: mock_store_a().id,
+                name_id: mock_name_store_a().id,
+                currency_id: Some(currency_a().id),
+                r#type: InvoiceType::CustomerReturn,
+                status: InvoiceStatus::New,
                 ..Default::default()
             }
         }
@@ -217,7 +229,7 @@ mod test {
             MockData {
                 names: vec![not_visible(), not_a_supplier()],
                 name_store_joins: vec![not_a_supplier_join()],
-                invoices: vec![verified_return(), on_hold_return()],
+                invoices: vec![verified_return(), on_hold_return(), empty_return()],
                 ..Default::default()
             },
         )
@@ -288,6 +300,19 @@ mod test {
                 }
             ),
             Err(ServiceError::CannotChangeStatusOfInvoiceOnHold)
+        );
+
+        //CannotIssueCustomerReturnWithNoLines
+        assert_eq!(
+            service.update_customer_return(
+                &context,
+                UpdateCustomerReturn {
+                    id: empty_return().id,
+                    status: Some(UpdateCustomerReturnStatus::Received),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::CannotIssueCustomerReturnWithNoLines)
         );
     }
 

@@ -1,17 +1,27 @@
-import { useQueryClient, useMutation } from '@openmsupply-client/common';
-import { useInboundId } from '../document/useInbound';
+import {
+  useQueryClient,
+  useMutation,
+  useParams,
+} from '@openmsupply-client/common';
 import { useInboundApi } from '../utils/useInboundApi';
 import { InboundFragment } from '../../operations.generated';
+import { INBOUND, INBOUND_LINE } from '../document/keys';
 
-export const useDeleteInboundLines = () => {
-  const inboundId = useInboundId();
+export const useDeleteInboundLines = (isExternal: boolean) => {
+  const { invoiceId: inboundId = '' } = useParams();
   const queryClient = useQueryClient();
   const api = useInboundApi();
-  const queryKey = api.keys.detail(inboundId);
+  const queryKey = [INBOUND, INBOUND_LINE, inboundId];
 
-  return useMutation(api.deleteLines, {
+  return useMutation({
+    mutationFn: (lines: { id: string }[]) => {
+      return api.deleteLines(lines, isExternal);
+    },
+
     onMutate: async lines => {
-      await queryClient.cancelQueries(queryKey);
+      await queryClient.cancelQueries({
+        queryKey: queryKey
+      });
       const previous = queryClient.getQueryData<InboundFragment>(queryKey);
       if (previous) {
         const nodes = previous.lines.nodes.filter(
@@ -28,6 +38,7 @@ export const useDeleteInboundLines = () => {
       }
       return { previous, lines };
     },
+
     onError: (_error, _vars, ctx) => {
       // Having issues typing this correctly. If typing ctx in the args list,
       // then TS infers the wrong type for the useMutation call and all
@@ -38,6 +49,9 @@ export const useDeleteInboundLines = () => {
       };
       queryClient.setQueryData(queryKey, context?.previous);
     },
-    onSettled: () => queryClient.invalidateQueries(queryKey),
+
+    onSettled: () => queryClient.invalidateQueries({
+      queryKey: queryKey
+    })
   });
 };

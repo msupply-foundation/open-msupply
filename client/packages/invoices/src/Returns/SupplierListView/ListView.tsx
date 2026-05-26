@@ -38,7 +38,7 @@ export const SupplierReturnListView = () => {
     ],
   });
   const navigate = useNavigate();
-  const modalController = useToggle();
+  const { toggleOff, isOn, toggleOn } = useToggle();
   const { info } = useNotification();
   const { disableManualReturns } = usePreferences();
 
@@ -58,7 +58,7 @@ export const SupplierReturnListView = () => {
 
   const openModal = useCallbackWithPermission(
     UserPermission.SupplierReturnMutate,
-    modalController.toggleOn
+    toggleOn
   );
 
   const handleClick = (): void => {
@@ -108,7 +108,7 @@ export const SupplierReturnListView = () => {
       },
       {
         accessorKey: 'invoiceNumber',
-        header: t('label.invoice-number'),
+        header: t('label.number'),
         description: t('description.invoice-number'),
         enableSorting: true,
         columnType: ColumnType.Number,
@@ -141,7 +141,7 @@ export const SupplierReturnListView = () => {
     totalCount: data?.totalCount ?? 0,
     isLoading: isFetching,
     isError,
-    getIsRestrictedRow: isOutboundDisabled,
+    getIsRestrictedRow: row => isOutboundDisabled(row.original),
     onRowClick: r => navigate(r.id),
     noDataElement: (
       <NothingHere
@@ -154,7 +154,11 @@ export const SupplierReturnListView = () => {
   return (
     <>
       <Toolbar />
-      <AppBarButtons modalController={modalController} onNew={handleClick} />
+      <AppBarButtons
+        onNew={handleClick}
+        isOpen={isOn}
+        onCloseModal={toggleOff}
+      />
       <MaterialTable table={table} />
       <Footer
         selectedRows={selectedRows}

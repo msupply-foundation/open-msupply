@@ -14,6 +14,6 @@ impl Preference for StoreCustomColour {
     }
 
     fn value_type(&self) -> PreferenceValueType {
-        PreferenceValueType::String
+        PreferenceValueType::Colour
     }
 }

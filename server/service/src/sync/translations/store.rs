@@ -102,7 +102,7 @@ impl SyncTranslation for StoreTranslation {
         // load-bearing.
         let store_row = StoreRow {
             id: data.id.clone(),
-            name_link_id: data.name_id,
+            name_id: data.name_id,
             code: data.code,
             site_id: data.site_id,
             store_mode,

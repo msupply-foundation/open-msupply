@@ -22,6 +22,7 @@ pub struct UpdateInput {
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NullableUpdateInput<NaiveDate>>,
+    pub manufacture_date: Option<NullableUpdateInput<NaiveDate>>,
     pub batch: Option<String>,
     pub on_hold: Option<bool>,
     /// Empty barcode will unlink barcode from StockLine
@@ -32,6 +33,7 @@ pub struct UpdateInput {
     pub campaign_id: Option<NullableUpdateInput<String>>,
     pub program_id: Option<NullableUpdateInput<String>>,
     pub volume_per_pack: Option<f64>,
+    pub manufacturer_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(Interface)]
@@ -94,6 +96,7 @@ impl UpdateInput {
             cost_price_per_pack,
             sell_price_per_pack,
             expiry_date,
+            manufacture_date,
             batch,
             on_hold,
             barcode,
@@ -103,6 +106,7 @@ impl UpdateInput {
             campaign_id,
             program_id,
             volume_per_pack,
+            manufacturer_id,
         } = self;
 
         ServiceInput {
@@ -114,6 +118,9 @@ impl UpdateInput {
             sell_price_per_pack,
             expiry_date: expiry_date.map(|expiry_date| NullableUpdate {
                 value: expiry_date.value,
+            }),
+            manufacture_date: manufacture_date.map(|manufacture_date| NullableUpdate {
+                value: manufacture_date.value,
             }),
             batch,
             on_hold,
@@ -132,13 +139,16 @@ impl UpdateInput {
                 value: program_id.value,
             }),
             volume_per_pack,
+            manufacturer_id: manufacturer_id.map(|manufacturer_id| NullableUpdate {
+                value: manufacturer_id.value,
+            }),
         }
     }
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -152,6 +162,9 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::DonorDoesNotExist
         | ServiceError::DonorNotVisible
         | ServiceError::DonorIsNotADonor
+        | ServiceError::ManufacturerDoesNotExist
+        | ServiceError::ManufacturerNotVisible
+        | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::VVMStatusDoesNotExist
         | ServiceError::StockDoesNotBelongToStore
         | ServiceError::LocationDoesNotExist

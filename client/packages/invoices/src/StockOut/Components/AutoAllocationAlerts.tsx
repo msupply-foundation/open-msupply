@@ -3,9 +3,7 @@ import { Alert, Grid } from '@openmsupply-client/common';
 import { useAllocationContext } from '../useAllocationContext';
 
 export const AutoAllocationAlerts = () => {
-  const { alerts } = useAllocationContext(({ alerts }) => ({
-    alerts,
-  }));
+  const alerts = useAllocationContext(state => state.alerts);
   if (alerts.length === 0) return null;
 
   return (

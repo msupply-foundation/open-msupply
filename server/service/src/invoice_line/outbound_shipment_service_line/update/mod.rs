@@ -94,7 +94,6 @@ mod test {
         test_db::setup_all,
         InvoiceLineRow, InvoiceLineRowRepository,
     };
-   
 
     use crate::{
         invoice_line::{
@@ -277,7 +276,7 @@ mod test {
         assert_eq!(
             line,
             InvoiceLineRow {
-                item_link_id: mock_item_service_item().id.clone(),
+                item_id: mock_item_service_item().id.clone(),
                 item_name: "modified name".to_string(),
                 total_before_tax: 1.0,
                 tax_percentage: Some(10.0),
