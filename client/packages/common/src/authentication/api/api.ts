@@ -5,7 +5,7 @@ import {
   GraphqlStdError,
   TypedTFunction,
 } from '../..';
-import { Sdk, AuthTokenQuery, RefreshTokenQuery } from './operations.generated';
+import { Sdk, AuthTokenQuery } from './operations.generated';
 
 export type AuthenticationError = {
   message: string;
@@ -22,9 +22,6 @@ export interface AuthenticationResponse {
   error?: AuthenticationError;
 }
 
-export interface RefreshResponse {
-  token: string;
-}
 const authTokenGuard = (
   authTokenQuery: AuthTokenQuery,
   t: TypedTFunction<LocaleKey>
@@ -50,16 +47,6 @@ const authTokenGuard = (
     token: '',
     error: { message: t('error.authentication-error') },
   };
-};
-
-const refreshTokenGuard = (
-  refreshTokenQuery: RefreshTokenQuery
-): RefreshResponse => {
-  if (refreshTokenQuery.refreshToken.__typename === 'RefreshToken') {
-    return { token: refreshTokenQuery.refreshToken.token };
-  }
-
-  return { token: '' };
 };
 
 export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
@@ -96,10 +83,6 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
           },
         };
       }
-    },
-    refreshToken: async (): Promise<RefreshResponse> => {
-      const result = await sdk.refreshToken();
-      return refreshTokenGuard(result);
     },
     isCentralServer: async () => {
       const result = await sdk.isCentralServer();
