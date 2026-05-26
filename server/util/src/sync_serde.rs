@@ -82,13 +82,6 @@ pub fn date_from_date_time(date_time: &NaiveDateTime) -> NaiveDate {
     NaiveDate::from_ymd_opt(date_time.year(), date_time.month(), date_time.day()).unwrap()
 }
 
-pub fn option_string_as_empty_str<S>(x: &Option<String>, s: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    x.as_deref().unwrap_or("").serialize(s)
-}
-
 /// V5 gives us a NaiveDate but V3 receives a NaiveDateTime
 pub fn date_to_isostring<S>(x: &NaiveDate, s: S) -> Result<S::Ok, S::Error>
 where
