@@ -27,6 +27,7 @@ interface SiteEditModalProps {
   isClearingSyncToken: boolean;
   clearHardwareId: (siteId: number) => Promise<unknown>;
   isClearingHardwareId: boolean;
+  currentSiteId: number | null | undefined;
   // upsert: (afterUpsert: () => Promise<void>) => Promise<void>;
   // onDelete: () => void;
 }
@@ -40,14 +41,15 @@ export const SiteEditModal = ({
   isClearingSyncToken,
   clearHardwareId,
   isClearingHardwareId,
+  currentSiteId,
 }: // upsert,
 // onDelete,
 SiteEditModalProps) => {
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-
   const { id, code, name, hardwareId, isNew } = site;
   const isExisting = !isNew;
+  const showClearButtons = currentSiteId != null && currentSiteId !== id;
 
   // const isValidCode = code.trim().length > 0 || (isExisting && code === '');
   // const isValidName = name.trim().length > 0;
@@ -71,7 +73,7 @@ SiteEditModalProps) => {
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-clear-hardware-id'),
     onConfirm: () => clearHardwareId(id),
-  })
+  });
 
   // const handleOk = async () => {
   //   await upsert(storesDraft.save);
@@ -140,7 +142,7 @@ SiteEditModalProps) => {
               key="hardware-id"
               label={t('label.hardware-id')}
               labelWidth="130px"
-                Input={
+              Input={
                 <Box display="flex" alignItems="center" gap={1} width="100%">
                   <BasicTextInput
                     fullWidth
@@ -148,15 +150,17 @@ SiteEditModalProps) => {
                     value={hardwareId ?? ''}
                     disabled
                   />
-                  <LoadingButton
-                    color="secondary"
-                    variant="contained"
-                    startIcon={<XCircleIcon />}
-                    isLoading={isClearingHardwareId}
-                    label={t('label.clear-hardware-id')}
-                    onClick={() => confirmClearHardwareId()}
-                    sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}
-                  />
+                  {showClearButtons && (
+                    <LoadingButton
+                      color="secondary"
+                      variant="contained"
+                      startIcon={<XCircleIcon />}
+                      isLoading={isClearingHardwareId}
+                      label={t('label.clear-hardware-id')}
+                      onClick={() => confirmClearHardwareId()}
+                      sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}
+                    />
+                  )}
                 </Box>
               }
             />
@@ -166,16 +170,18 @@ SiteEditModalProps) => {
               key="sync-token"
               label={t('label.clear-sync-token')}
               labelWidth="130px"
-                Input={
+              Input={
                 <Box display="flex" justifyContent="flex-end" flex={1}>
-                  <LoadingButton
-                    color="secondary"
-                    variant="contained"
-                    startIcon={<XCircleIcon />}
-                    isLoading={isClearingSyncToken}
-                    label={t('label.clear-sync-token')}
-                    onClick={() => confirmClearSyncToken()}
-                  />
+                  {showClearButtons && (
+                    <LoadingButton
+                      color="secondary"
+                      variant="contained"
+                      startIcon={<XCircleIcon />}
+                      isLoading={isClearingSyncToken}
+                      label={t('label.clear-sync-token')}
+                      onClick={() => confirmClearSyncToken()}
+                    />
+                  )}
                 </Box>
               }
             />
