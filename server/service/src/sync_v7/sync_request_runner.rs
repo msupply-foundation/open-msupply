@@ -70,8 +70,13 @@ pub async fn run_pending_sync_requests(
 
     sync_v7(service_provider, ctx, settings.clone(), request).await?;
 
-    let ids: Vec<String> = members.iter().map(|m| m.id.clone()).collect();
-    repo.mark_finished_many(&ids, chrono::Utc::now().naive_utc())?;
+    let finished_datetime = chrono::Utc::now().naive_utc();
+    for member in &members {
+        repo.upsert_one(&SyncRequestRow {
+            finished_datetime: Some(finished_datetime),
+            ..member.clone()
+        })?;
+    }
 
     // The group's dynamic cursors are no longer needed — purge them so the
     // KV JSON blob doesn't grow unbounded. Idempotent on missing keys; only
