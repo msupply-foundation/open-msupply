@@ -127,21 +127,6 @@ impl<'a> SyncRequestRepository<'a> {
         Ok(rows)
     }
 
-    /// Mark a set of requests finished in one statement. Errors propagate from
-    /// the surrounding transaction.
-    pub fn mark_finished_many(
-        &self,
-        ids: &[String],
-        finished_datetime: NaiveDateTime,
-    ) -> Result<(), RepositoryError> {
-        if ids.is_empty() {
-            return Ok(());
-        }
-        diesel::update(sync_request::table.filter(sync_request::id.eq_any(ids)))
-            .set(sync_request::finished_datetime.eq(Some(finished_datetime)))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
 }
 
 impl Upsert for SyncRequestRow {
