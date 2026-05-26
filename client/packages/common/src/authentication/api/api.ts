@@ -15,6 +15,9 @@ export type AuthenticationError = {
 };
 
 export interface AuthenticationResponse {
+  // Opaque session token returned by the server. The web client doesn't use it (the HttpOnly
+  // cookie handles auth); we just expose it as a "did login succeed?" signal and for
+  // backwards-compatible API integrations.
   token: string;
   error?: AuthenticationError;
 }
@@ -102,14 +105,10 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
       const result = await sdk.isCentralServer();
       return result.isCentralServer;
     },
-    me: async (token?: string) => {
+    // Identity is read from the HttpOnly session cookie. No Authorization header needed.
+    me: async () => {
       try {
-        const result = await sdk.me(
-          {},
-          {
-            Authorization: `Bearer ${token}`,
-          }
-        );
+        const result = await sdk.me({});
         return result.me;
       } catch (e) {
         console.error(e);
@@ -117,20 +116,9 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         LocalStorage.setItem('/error/server', (e as Error).message);
       }
     },
-    permissions: async ({
-      storeId,
-      token,
-    }: {
-      storeId: string;
-      token?: string;
-    }) => {
+    permissions: async ({ storeId }: { storeId: string }) => {
       try {
-        const result = await sdk.permissions(
-          { storeId },
-          {
-            Authorization: `Bearer ${token}`,
-          }
-        );
+        const result = await sdk.permissions({ storeId });
         return result?.me?.permissions;
       } catch (e) {
         console.error(e);

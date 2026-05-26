@@ -82,7 +82,6 @@ pub async fn update_user(ctx: &Context<'_>) -> Result<UpdateResponse> {
                 | LoginError::LoginFailure(LoginFailure::NoSiteAccess)
                 | LoginError::InternalError(_)
                 | LoginError::DatabaseError(_)
-                | LoginError::FailedToGenerateToken(_)
                 | LoginError::MSupplyCentralNotReached => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }

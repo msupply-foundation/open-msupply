@@ -103,45 +103,35 @@ pub struct RequestUserData {
     // Used for self execution of graphql queries for plugins
     pub override_user_id: Option<String>,
     pub auth_token: Option<String>,
-    pub refresh_token: Option<String>,
 }
 
-pub fn auth_data_from_request(http_req: &HttpRequest) -> RequestUserData {
+/// Extracts the session token from the request. Reads `Authorization: Bearer …` first (used by
+/// API integrations like Sage), then falls back to the HttpOnly `session_{suffix}` cookie used by
+/// the web client. Returns `None` if neither is present.
+pub fn auth_data_from_request(http_req: &HttpRequest, cookie_suffix: &str) -> RequestUserData {
     let headers = http_req.headers();
-    // retrieve auth token
-    let auth_token = headers.get("Authorization").and_then(|header_value| {
-        header_value.to_str().ok().and_then(|header| {
-            if header.starts_with("Bearer ") {
-                return Some(header["Bearer ".len()..header.len()].to_string());
-            }
-            None
-        })
-    });
-
-    // retrieve refresh token
-    let refresh_token = headers.get(COOKIE).and_then(|header_value| {
-        header_value
-            .to_str()
-            .ok()
-            .and_then(|header| {
-                let cookies = header.split(' ').collect::<Vec<&str>>();
-                cookies
-                    .into_iter()
-                    .map(|raw_cookie| Cookie::parse(raw_cookie).ok())
-                    .find(|cookie_option| match &cookie_option {
-                        Some(cookie) => cookie.name() == "refresh_token",
-                        None => false,
-                    })
-                    .flatten()
-            })
-            .map(|cookie| cookie.value().to_owned())
-    });
+    let auth_token = headers
+        .get("Authorization")
+        .and_then(|header_value| header_value.to_str().ok())
+        .and_then(|header| header.strip_prefix("Bearer ").map(|t| t.to_string()))
+        .or_else(|| session_cookie_value(http_req, cookie_suffix));
 
     RequestUserData {
         auth_token,
-        refresh_token,
         override_user_id: None,
     }
+}
+
+fn session_cookie_value(http_req: &HttpRequest, cookie_suffix: &str) -> Option<String> {
+    let cookie_name = format!("session_{cookie_suffix}");
+    let header = http_req.headers().get(COOKIE)?.to_str().ok()?;
+    // A `Cookie:` header is a `; `-separated list of name=value pairs, but historically this code
+    // split on space alone — keep that behaviour to avoid surprises with malformed headers.
+    header
+        .split(' ')
+        .filter_map(|raw_cookie| Cookie::parse(raw_cookie).ok())
+        .find(|cookie| cookie.name() == cookie_name)
+        .map(|cookie| cookie.value().to_owned())
 }
 
 #[macro_export]

@@ -1,5 +1,4 @@
 import { createClient, Client } from 'graphql-ws';
-import { getAuthCookie } from '../authentication/AuthContext';
 
 let subscriptionClient: Client | null = null;
 let currentUrl: string | null = null;
@@ -7,6 +6,10 @@ let currentUrl: string | null = null;
 /**
  * Get or create a shared graphql-ws subscription client.
  * Lazily connects on first subscription; reconnects automatically.
+ *
+ * Auth: the WebSocket upgrade request carries the HttpOnly `session_{port}` cookie
+ * automatically, so we no longer pass a Bearer token in `connectionParams`. The server reads
+ * the cookie at connect time the same way it does for HTTP requests.
  */
 export const getSubscriptionClient = (httpUrl: string): Client => {
   const wsUrl = httpToWsUrl(httpUrl) + '/ws';
@@ -25,10 +28,6 @@ export const getSubscriptionClient = (httpUrl: string): Client => {
   subscriptionClient = createClient({
     url: wsUrl,
     lazy: true,
-    connectionParams: () => {
-      const { token } = getAuthCookie();
-      return token ? { Authorization: `Bearer ${token}` } : {};
-    },
     retryAttempts: Infinity,
     retryWait: async attempt => {
       // Exponential backoff: 1s, 2s, 4s, 8s, max 30s
@@ -41,9 +40,9 @@ export const getSubscriptionClient = (httpUrl: string): Client => {
 };
 
 /**
- * Force the WebSocket to reconnect (e.g. after token change).
+ * Force the WebSocket to reconnect (e.g. after login/logout).
  * Closes the current connection; the client automatically reconnects
- * and all active subscriptions resubscribe with fresh connectionParams.
+ * and all active subscriptions resubscribe — picking up the latest session cookie.
  */
 export const reconnectSubscriptionClient = () => {
   if (subscriptionClient) {

@@ -33,12 +33,14 @@ impl SyncUser {
                 "Could not find user".to_string(),
             )))?
             .username;
-        let password = get_password(auth_data, user_id);
-        if password.is_empty() {
-            return Err(LoginError::UpdateUserError(
-                UpdateUserError::MissingCredentials,
-            ));
-        }
+        let password = match get_password(auth_data, user_id) {
+            Some(pw) if !pw.is_empty() => pw,
+            _ => {
+                return Err(LoginError::UpdateUserError(
+                    UpdateUserError::MissingCredentials,
+                ))
+            }
+        };
 
         match LoginService::fetch_user_from_central(
             service_provider,
@@ -91,12 +93,12 @@ impl SyncUser {
     }
 }
 
-fn get_password(auth_data: &AuthData, user_id: &str) -> String {
-    let token_bucket = auth_data
-        .token_bucket
+fn get_password(auth_data: &AuthData, user_id: &str) -> Option<String> {
+    let session_store = auth_data
+        .session_store
         .read()
         .map_err(|_| LoginError::InternalError("Concurrent error".to_string()))
         .unwrap();
 
-    token_bucket.get_password(user_id)
+    session_store.get_password(user_id)
 }

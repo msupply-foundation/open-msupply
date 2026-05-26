@@ -4,22 +4,46 @@ use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 
 use http2::header::SET_COOKIE;
 use service::{
-    login::{LoginError, LoginFailure, LoginInput, LoginService},
-    token::TokenPair,
+    auth_data::AuthData,
+    login::{LoginError, LoginFailure, LoginInput, LoginService, LoginSuccess},
+    session_store::SESSION_LIFETIME,
 };
 
 // Fixed login response time in case of an error (see service)
 const MIN_ERR_RESPONSE_TIME_SEC: u64 = 6;
 
 pub struct AuthToken {
-    pub pair: TokenPair,
+    /// Opaque session token (issued by `SessionStore::create`).
+    pub token: String,
+    /// Unix-timestamp [s] when the session expires if no further activity arrives.
+    pub expiry_date: usize,
 }
 
 #[Object]
 impl AuthToken {
-    /// Bearer token
+    /// Bearer token. Web clients ignore this — the browser sends the HttpOnly `session_{port}`
+    /// cookie automatically. Kept in the response for backwards-compatible API integrations
+    /// (e.g. Sage) that pass it as `Authorization: Bearer`.
     pub async fn token(&self) -> &str {
-        &self.pair.token
+        &self.token
+    }
+
+    /// When the session expires, as a unix timestamp [s].
+    pub async fn expiry_date(&self) -> usize {
+        self.expiry_date
+    }
+
+    /// **Deprecated** — there is no longer a separate refresh token. Returned as a duplicate of
+    /// `token` purely so existing integrations that read this field don't break.
+    pub async fn refresh(&self) -> &str {
+        &self.token
+    }
+
+    /// **Deprecated** — there is no longer a separate refresh-token expiry. Returned as a
+    /// duplicate of `expiry_date` purely so existing integrations that read this field don't
+    /// break.
+    pub async fn refresh_expiry_date(&self) -> usize {
+        self.expiry_date
     }
 }
 
@@ -101,7 +125,7 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
             "Sync settings not available".to_string(),
         ))?;
 
-    let pair = match LoginService::login(
+    let success = match LoginService::login(
         service_provider,
         auth_data,
         LoginInput {
@@ -113,7 +137,7 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
     )
     .await
     {
-        Ok(pair) => pair,
+        Ok(success) => success,
         Err(error) => {
             let formatted_error = format!("{error:#?}");
             let graphql_error = match error {
@@ -139,55 +163,53 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
                         error: AuthTokenErrorInterface::NoSiteAccess(NoSiteAccess),
                     }))
                 }
-                LoginError::FailedToGenerateToken(_) => {
-                    StandardGraphqlError::InternalError(formatted_error)
-                }
-                LoginError::InternalError(_) => {
-                    StandardGraphqlError::InternalError(formatted_error)
-                }
-                LoginError::DatabaseError(_) => {
-                    StandardGraphqlError::InternalError(formatted_error)
-                }
-                LoginError::FetchUserError(_) => {
-                    StandardGraphqlError::InternalError(formatted_error)
-                }
-                LoginError::UpdateUserError(_) => {
-                    StandardGraphqlError::InternalError(formatted_error)
-                }
+                LoginError::InternalError(_)
+                | LoginError::DatabaseError(_)
+                | LoginError::FetchUserError(_)
+                | LoginError::UpdateUserError(_) => StandardGraphqlError::InternalError(formatted_error),
             };
             return Err(graphql_error.extend());
         }
     };
 
-    let now = Utc::now().timestamp() as usize;
-    set_refresh_token_cookie(
-        ctx,
-        &pair.refresh,
-        pair.refresh_expiry_date - now,
-        auth_data.no_ssl,
-    );
+    let LoginSuccess { user_id, password } = success;
+    let token = auth_data
+        .session_store
+        .write()
+        .map_err(|e| {
+            StandardGraphqlError::InternalError(format!("Session store lock poisoned: {e}"))
+        })?
+        .create(&user_id, &password);
 
-    Ok(AuthTokenResponse::Response(AuthToken { pair }))
+    let expiry_date = (Utc::now() + SESSION_LIFETIME).timestamp() as usize;
+    let max_age = SESSION_LIFETIME.num_seconds() as usize;
+    set_session_cookie(ctx, &token, max_age, auth_data);
+
+    Ok(AuthTokenResponse::Response(AuthToken { token, expiry_date }))
 }
 
-/// Store refresh token in a cookie:
-/// - HttpOnly cookie (not readable from js).
-/// - Secure (https only)
-/// - SameSite (only attached to request originating from the same site)
-///
-/// Also see:
-///     https://hasura.io/blog/best-practices-of-using-jwt-with-graphql/
-pub fn set_refresh_token_cookie(
-    ctx: &Context<'_>,
-    refresh_token: &str,
-    max_age: usize,
-    no_ssl: bool,
-) {
-    let secure = if no_ssl { "" } else { "; Secure" };
+/// Stores the opaque session token in an HttpOnly cookie. The cookie name is suffixed with the
+/// server port (via [`AuthData::cookie_suffix`]) so multiple instances on the same domain don't
+/// overwrite each other's cookies.
+pub fn set_session_cookie(ctx: &Context<'_>, token: &str, max_age: usize, auth_data: &AuthData) {
+    let secure = if auth_data.no_ssl { "" } else { "; Secure" };
+    let name = session_cookie_name(&auth_data.cookie_suffix);
     ctx.insert_http_header(
         SET_COOKIE,
-        format!(
-            "refresh_token={refresh_token}; Max-Age={max_age}{secure}; HttpOnly; SameSite=Strict"
-        ),
+        format!("{name}={token}; Max-Age={max_age}; Path=/{secure}; HttpOnly; SameSite=Strict"),
     );
+}
+
+/// Clears the session cookie (used by logout).
+pub fn clear_session_cookie(ctx: &Context<'_>, auth_data: &AuthData) {
+    let secure = if auth_data.no_ssl { "" } else { "; Secure" };
+    let name = session_cookie_name(&auth_data.cookie_suffix);
+    ctx.insert_http_header(
+        SET_COOKIE,
+        format!("{name}=; Max-Age=0; Path=/{secure}; HttpOnly; SameSite=Strict"),
+    );
+}
+
+pub fn session_cookie_name(suffix: &str) -> String {
+    format!("session_{suffix}")
 }

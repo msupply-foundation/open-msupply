@@ -64,15 +64,22 @@ async fn do_login(
     )
     .await
     {
-        Ok(token) => {
+        Ok(success) => {
+            let token = match auth_data.session_store.write() {
+                Ok(mut store) => store.create(&success.user_id, &success.password),
+                Err(err) => {
+                    error!("Session store lock poisoned: {err}");
+                    return Ok(None);
+                }
+            };
             match validate_access(
                 &service_provider,
                 &service_context,
                 &auth_data,
-                Some(token.token.clone()),
+                Some(token.clone()),
             ) {
                 Ok(_) => Some(
-                    Cookie::build(COOKIE_NAME, token.token)
+                    Cookie::build(COOKIE_NAME, token)
                         .path(URL_PATH)
                         .http_only(true)
                         .finish(),

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from '@common/intl';
-import { AuthCookie } from '../AuthContext';
+import { AuthState, setAuthState } from '../AuthContext';
 import {
   useGetUserPermissions,
   useLastSuccessfulUserSync,
@@ -12,8 +12,8 @@ import { noOtherVariants } from '../../utils/types';
 import { AuthenticationCredentials } from '../../localStorage';
 
 export const useUpdateUserInfo = (
-  setCookie: React.Dispatch<React.SetStateAction<AuthCookie | undefined>>,
-  cookie?: AuthCookie,
+  setState: React.Dispatch<React.SetStateAction<AuthState>>,
+  state?: AuthState,
   mostRecentCredentials?: AuthenticationCredentials[]
 ) => {
   const t = useTranslation();
@@ -33,26 +33,24 @@ export const useUpdateUserInfo = (
         const update = await updateUser();
 
         if (update.__typename === 'UpdateUserNode') {
-          const permissions = await getUserPermissions(
-            cookie?.token,
-            cookie?.store
-          );
-          const userDetails = await getUserDetails(cookie?.token);
+          const permissions = await getUserPermissions(state?.store);
+          const userDetails = await getUserDetails();
           const store = await getStore(userDetails, mostRecentCredentials);
 
-          const authCookie = {
-            ...cookie,
+          const next: AuthState = {
+            ...state,
+            isAuthenticated: state?.isAuthenticated ?? true,
             store,
-            token: cookie?.token ?? '',
             user: {
               id: userDetails?.userId ?? '',
-              name: cookie?.user?.name ?? '',
+              name: state?.user?.name ?? '',
               permissions,
               email: userDetails?.email,
               jobTitle: userDetails?.jobTitle,
             },
           };
-          setCookie(authCookie);
+          setAuthState(next);
+          setState(next);
           return;
         }
 

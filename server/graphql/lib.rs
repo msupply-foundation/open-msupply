@@ -332,6 +332,9 @@ pub struct GraphqlSchema {
     migration: MigrationSchema,
     /// Set on startup based on InitialisationStatus and then updated via SiteIsInitialisedCallback after initialisation
     operational_status: Data<RwLock<OperationalStatus>>,
+    /// Copy of [`service::auth_data::AuthData::cookie_suffix`] so `auth_data_from_request` can
+    /// look up the right cookie name without reaching into the schema's data map.
+    cookie_suffix: String,
 }
 
 pub struct GraphSchemaData {
@@ -355,6 +358,7 @@ impl GraphqlSchema {
             validated_plugins,
             subscription_broadcast,
         } = data;
+        let cookie_suffix = auth.cookie_suffix.clone();
         let subscription_broadcast = Data::new(subscription_broadcast);
 
         // Self requester schema is a copy of operational schema, used for reports
@@ -412,6 +416,7 @@ impl GraphqlSchema {
             initialisation: initialisation_builder.finish(),
             migration: migration_builder.finish(),
             operational_status: operational_status_ref.clone(),
+            cookie_suffix,
         }
     }
 
@@ -430,7 +435,7 @@ impl GraphqlSchema {
         match &*self.operational_status.read().await {
             OperationalStatus::Operational => {
                 // auth_data is only available in schema in operational mode
-                let user_data = auth_data_from_request(&http_req);
+                let user_data = auth_data_from_request(&http_req, &self.cookie_suffix);
                 self.operational.execute(req.data(user_data)).await
             }
             OperationalStatus::MigratingDatabase => self.migration.execute(req).await,
@@ -477,7 +482,6 @@ async fn graphql_ws(
             let token = token.strip_prefix("Bearer ").unwrap_or(token);
             data.insert(RequestUserData {
                 auth_token: Some(token.to_string()),
-                refresh_token: None,
                 override_user_id: None,
             });
         }
@@ -586,7 +590,6 @@ impl ExecuteGraphql for PluginExecuteGraphql {
             .data(RequestUserData {
                 override_user_id: Some(override_user_id.to_string()),
                 auth_token: None,
-                refresh_token: None,
             });
         let response = self.0.operational.execute(request).await;
         // Response is either success with data field populated or error with errors field populated

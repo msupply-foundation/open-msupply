@@ -17,8 +17,8 @@ import { PropsWithChildrenOnly, UserStoreNodeFragment } from '@common/types';
 export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { store, setStore, token } = useAuthContext();
-  const { data, isLoading } = useUserDetails(token);
+  const { store, setStore } = useAuthContext();
+  const { data, isLoading } = useUserDetails();
   const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
 
   const rootNavigationPath = useRootNavigationPath();
