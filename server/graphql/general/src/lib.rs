@@ -673,6 +673,11 @@ impl InitialisationQueries {
     pub async fn migration_status(&self, ctx: &Context<'_>) -> Result<MigrationStatusNode> {
         migration_status(ctx).await
     }
+
+    /// Available without authorisation/authentication
+    pub async fn is_central_server(&self) -> bool {
+        CentralServerConfig::is_central_server()
+    }
 }
 /// Auth is not checked during initialisation stage
 #[derive(Default, Clone)]

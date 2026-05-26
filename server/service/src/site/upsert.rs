@@ -1,12 +1,13 @@
 use crate::service_provider::ServiceContext;
 use bcrypt::{hash, DEFAULT_COST};
-use repository::{RepositoryError, SiteRow, SiteRowRepository};
+use repository::{RepositoryError, SiteRow, SiteRowRepository, StorageConnection};
 
 #[derive(PartialEq, Debug)]
 pub enum UpsertSiteError {
     CodeRequired,
     NameRequired,
     PasswordRequired,
+    DuplicateSiteName,
     DatabaseError(RepositoryError),
 }
 
@@ -23,7 +24,7 @@ pub fn upsert_site(ctx: &ServiceContext, input: UpsertSite) -> Result<SiteRow, U
             let repo = SiteRowRepository::new(connection);
             let existing = repo.find_one_by_id(input.id)?;
 
-            validate(&input, &existing)?;
+            validate(connection, &input, &existing)?;
             let row = generate(input, existing);
             repo.upsert(&row)?;
 
@@ -38,7 +39,11 @@ impl From<RepositoryError> for UpsertSiteError {
     }
 }
 
-fn validate(input: &UpsertSite, existing: &Option<SiteRow>) -> Result<(), UpsertSiteError> {
+fn validate(
+    connection: &StorageConnection,
+    input: &UpsertSite,
+    existing: &Option<SiteRow>,
+) -> Result<(), UpsertSiteError> {
     match (&input.code, existing) {
         (Some(code), _) if code.trim().is_empty() => return Err(UpsertSiteError::CodeRequired),
         (None, None) => return Err(UpsertSiteError::CodeRequired),
@@ -47,6 +52,14 @@ fn validate(input: &UpsertSite, existing: &Option<SiteRow>) -> Result<(), Upsert
 
     if input.name.trim().is_empty() {
         return Err(UpsertSiteError::NameRequired);
+    }
+
+    if let Some(other) =
+        SiteRowRepository::new(connection).find_one_by_name_case_insensitive(input.name.trim())?
+    {
+        if other.id != input.id {
+            return Err(UpsertSiteError::DuplicateSiteName);
+        }
     }
 
     match (&input.password, existing) {
@@ -83,7 +96,7 @@ fn generate(
         id,
         og_id: existing_og_id,
         code: code.or(existing_code).unwrap_or_default(),
-        name,
+        name: name.trim().to_string(),
         hashed_password,
         hardware_id: existing_hardware_id,
         token: existing_token,
@@ -194,7 +207,6 @@ mod tests {
                     code: Some("code1".to_string()),
                     name: "Site A".to_string(),
                     password: Some("".to_string()),
-
                 },
             ),
             Err(UpsertSiteError::PasswordRequired)
