@@ -7,7 +7,7 @@ use repository::{
     SyncBufferRow, SyncVersion,
 };
 use serde::{Deserialize, Serialize};
-use util::sync_serde::{empty_str_as_option_string, option_string_as_empty_str};
+use util::sync_serde::empty_str_as_option_string;
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug)]
@@ -32,7 +32,7 @@ pub struct LegacySitePullRow {
 pub struct LegacySitePushRow {
     #[serde(rename = "ID")]
     pub id: String,
-    #[serde(rename = "hardwareID", serialize_with = "option_string_as_empty_str")]
+    #[serde(rename = "hardwareID")]
     pub hardware_id: Option<String>,
 }
 
@@ -107,7 +107,7 @@ impl SyncTranslation for SiteTranslation {
             id: og_id.clone(),
             hardware_id: site_row.hardware_id,
         };
-        
+
         Ok(PushTranslateResult::upsert_with_record_id(
             changelog,
             self.table_name(),
@@ -231,7 +231,7 @@ mod tests {
         // Wire recordId must be OG's UUID (from og_id), not the local i32 site_id.
         assert_eq!(record.record.record_id, og_uuid);
         assert_eq!(record.record.record_data["ID"], og_uuid);
-        assert_eq!(record.record.record_data["hardwareID"], "");
+        assert!(record.record.record_data["hardwareID"].is_null());
     }
 
     #[actix_rt::test]
