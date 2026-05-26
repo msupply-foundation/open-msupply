@@ -4,7 +4,6 @@ use repository::{
     SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
 };
 
-
 use crate::{
     cursor_controller::CursorController,
     i32_to_u32,
@@ -230,7 +229,10 @@ fn get_initialisation_status(
 
     // Get sync site name
     // Safe to unwrap since sync settings will be available after initialisation
-    let site_name = SettingsService.sync_settings(ctx)?.unwrap().username;
+    let site_name = SettingsService::new(None)
+        .sync_settings(ctx)?
+        .unwrap()
+        .username;
 
     Ok(InitialisationStatus::Initialised(site_name))
 }
@@ -269,7 +271,6 @@ fn get_latest_sync_status(ctx: &ServiceContext) -> Result<Option<FullSyncStatus>
 fn get_latest_successful_sync_status(
     ctx: &ServiceContext,
 ) -> Result<Option<FullSyncStatus>, RepositoryError> {
-
     let sort = Sort {
         key: SyncLogSortField::StartedDatetime,
         desc: Some(true),
@@ -295,7 +296,6 @@ fn get_latest_successful_sync_status(
 
     Ok(Some(result))
 }
-
 
 #[derive(Debug)]
 pub enum NumberOfRecordsInPushQueueError {

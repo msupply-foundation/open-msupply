@@ -130,13 +130,11 @@ impl SyncTranslation for NameMergeTranslation {
                             && nsj_delete.name_store_join.name_is_supplier)
                     {
                         operations.push(IntegrationOperation::upsert(NameStoreJoinRow {
-                            id: nsj_keep.name_store_join.id.clone(),
-                            name_link_id: nsj_keep.name_store_join.name_link_id.clone(),
-                            store_id: nsj_keep.name_store_join.store_id.clone(),
                             name_is_customer: nsj_keep.name_store_join.name_is_customer
                                 || nsj_delete.name_store_join.name_is_customer,
                             name_is_supplier: nsj_keep.name_store_join.name_is_supplier
                                 || nsj_delete.name_store_join.name_is_supplier,
+                            ..nsj_keep.name_store_join.clone()
                         }));
                     }
 

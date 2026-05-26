@@ -5,9 +5,13 @@ export const useUpdateSupplierReturnOtherParty = () => {
   const queryClient = useQueryClient();
   const api = useReturnsApi();
 
-  return useMutation(api.updateOtherParty, {
+  return useMutation({
+    mutationFn: api.updateOtherParty,
+
     onSuccess: () => {
-      queryClient.invalidateQueries(api.keys.base());
-    },
+      queryClient.invalidateQueries({
+        queryKey: api.keys.base()
+      });
+    }
   });
 };

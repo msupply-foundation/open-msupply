@@ -88,7 +88,7 @@ export const MobileNavBar = () => {
   const drawer = useDrawer();
   const theme = useTheme();
   const t = useTranslation();
-  const { logout, userHasPermission, store } = useAuthContext();
+  const { userHasPermission, store } = useAuthContext();
   const navigate = useNavigate();
 
   const publicDocsUrl = useExternalUrl(ExternalURL.PublicDocs);
@@ -98,7 +98,6 @@ export const MobileNavBar = () => {
 
   const handleLogout = () => {
     navigate(RouteBuilder.create(AppRoute.Login).build());
-    logout();
   };
 
   const showConfirmation = useConfirmationModal({

@@ -1,7 +1,11 @@
 import React, { useMemo } from 'react';
 import { useDialog, useWindowDimensions } from '@common/hooks';
 import { useTranslation } from '@common/intl';
-import { LinkedRequestLineFragment, useInbound } from '../api';
+import { LinkedRequestLineFragment } from '../api';
+import {
+  useLinesFromInternalOrder,
+  useListInternalOrderLines,
+} from '../api/hooks/utils';
 import {
   ColumnDef,
   ColumnType,
@@ -26,8 +30,8 @@ export const AddFromInternalOrder = ({
   const t = useTranslation();
   const { width, height } = useWindowDimensions();
   const { Modal } = useDialog({ isOpen, onClose });
-  const { mutateAsync } = useInbound.lines.insertFromInternalOrder();
-  const { data, isLoading } = useInbound.document.listInternalOrderLines(
+  const { mutateAsync } = useLinesFromInternalOrder();
+  const { data, isLoading } = useListInternalOrderLines(
     requisitionId ?? ''
   );
 

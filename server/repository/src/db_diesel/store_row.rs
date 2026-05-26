@@ -1,28 +1,14 @@
-use super::{item_link_row::item_link, name_link_row::name_link, StorageConnection};
+use super::{item_link_row::item_link, name_row::name, StorageConnection};
 
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{
+    diesel_macros::define_linked_tables, repository_error::RepositoryError, Delete, Upsert,
+};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
-
-// Default `store` mapping: everything except `logo`. Used by all joins and
-// generic reads. The logo column is large (base64-encoded image) and is
-// almost never needed alongside other store columns — fetch it via
-// `store_logo_row` instead.
-table! {
-    store (id) {
-        id -> Text,
-        name_link_id -> Text,
-        code -> Text,
-        site_id -> Integer,
-        store_mode -> crate::db_diesel::store_row::StoreModeMapping,
-        created_date -> Nullable<Date>,
-        is_disabled -> Bool,
-    }
-}
 
 // Just `(id, logo)` on the same underlying SQL `store` table. Two callers:
 // the GraphQL dataloader that resolves `StoreNode.logo` lazily, and sync
@@ -34,7 +20,6 @@ table! {
         logo -> Nullable<Text>,
     }
 }
-
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, TS)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -44,8 +29,26 @@ pub enum StoreMode {
     Dispensary,
 }
 
-joinable!(store -> name_link (name_link_id));
-allow_tables_to_appear_in_same_query!(store, name_link);
+define_linked_tables! {
+    view: store = "store_view",
+    core: store_with_links = "store",
+    struct: StoreRow,
+    repo: StoreRowRepository,
+    shared: {
+        code -> Text,
+        site_id -> Integer,
+        store_mode -> crate::db_diesel::store_row::StoreModeMapping,
+        created_date -> Nullable<Date>,
+        is_disabled -> Bool,
+    },
+    links: {
+        name_link_id -> name_id,
+    },
+    optional_links: {
+    }
+}
+
+joinable!(store -> name (name_id));
 allow_tables_to_appear_in_same_query!(store, item_link);
 
 #[derive(
@@ -64,12 +67,13 @@ allow_tables_to_appear_in_same_query!(store, item_link);
 #[diesel(table_name = store)]
 pub struct StoreRow {
     pub id: String,
-    pub name_link_id: String,
     pub code: String,
     pub site_id: i32,
     pub store_mode: StoreMode,
     pub created_date: Option<NaiveDate>,
     pub is_disabled: bool,
+    // Resolved from name_link - must be last to match view column order
+    pub name_id: String,
 }
 
 /// `(id, logo)` projection. Used in two places:
@@ -107,19 +111,12 @@ impl<'a> StoreRowRepository<'a> {
     /// Upsert a lean store row. Does NOT touch the `logo` column — existing
     /// logo data in the DB is preserved across this call.
     pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(store::table)
-            .values(row)
-            .on_conflict(store::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         Ok(())
     }
 
     pub async fn insert_one(&self, store_row: &StoreRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(store::table)
-            .values(store_row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(store_row)?;
         Ok(())
     }
 
@@ -191,7 +188,7 @@ impl<'a> StoreRowRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(store::table.filter(store::id.eq(id)))
+        diesel::delete(store_with_links::table.filter(store_with_links::id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

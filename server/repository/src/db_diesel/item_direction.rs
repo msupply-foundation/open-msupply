@@ -1,11 +1,10 @@
 use super::item_row::item;
 use super::{item_direction_row::item_direction, ItemDirectionRow, StorageConnection};
-use super::{item_link, ItemLinkRow, ItemRow};
+use super::ItemRow;
 
 use crate::diesel_macros::apply_equal_filter;
 
 use crate::{repository_error::RepositoryError, DBType, EqualFilter};
-use diesel::dsl::InnerJoin;
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Clone, Default, PartialEq, Debug)]
@@ -14,7 +13,7 @@ pub struct ItemDirection {
     pub item_row: ItemRow,
 }
 
-type ItemDirectionJoin = (ItemDirectionRow, (ItemLinkRow, ItemRow));
+type ItemDirectionJoin = (ItemDirectionRow, ItemRow);
 
 #[derive(Clone, Default, PartialEq, Debug)]
 pub struct ItemDirectionFilter {
@@ -59,23 +58,22 @@ impl<'a> ItemDirectionRepository<'a> {
     }
 }
 
-fn to_domain((item_direction_row, (_, item_row)): ItemDirectionJoin) -> ItemDirection {
+fn to_domain((item_direction_row, item_row): ItemDirectionJoin) -> ItemDirection {
     ItemDirection {
         item_direction_row,
         item_row,
     }
 }
 
-type BoxedItemDirectionQuery = IntoBoxed<
-    'static,
-    InnerJoin<item_direction::table, InnerJoin<item_link::table, item::table>>,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    item_direction::table.inner_join(item::table)
+}
+
+type BoxedItemDirectionQuery = IntoBoxed<'static, query, DBType>;
 
 fn create_filtered_query(filter: Option<ItemDirectionFilter>) -> BoxedItemDirectionQuery {
-    let mut query = item_direction::table
-        .inner_join(item_link::table.inner_join(item::table))
-        .into_boxed();
+    let mut query = query().into_boxed();
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, item_direction::id);

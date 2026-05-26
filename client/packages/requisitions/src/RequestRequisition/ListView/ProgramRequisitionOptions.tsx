@@ -97,9 +97,11 @@ const useProgramRequisitionOptions = (
       return acc;
     }, []);
 
-  const availablePrograms = programSettings.filter(program =>
-    program.suppliers.some(supplier => supplier.id)
-  );
+  const availablePrograms = supplier
+    ? programSettings.filter(program =>
+        program.suppliers.some(s => s.id === supplier.id)
+      )
+    : programSettings;
 
   const allOptions: {
     programs: Common<ProgramSetting>;

@@ -32,6 +32,8 @@ pub struct LegacyStocktakeLineRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub program_id: Option<String>,
+    #[serde(default)]
+    pub manufacture_date: Option<NaiveDate>,
 }
 
 #[allow(non_snake_case)]
@@ -80,6 +82,10 @@ pub struct LegacyStocktakeLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub vvm_status_id: Option<String>,
     pub volume_per_pack: f64,
+    #[serde(rename = "manufacturer_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(default)]
+    pub manufacturer_id: Option<String>,
     #[serde(default)]
     #[serde(deserialize_with = "object_fields_as_option")]
     pub oms_fields: Option<LegacyStocktakeLineRowOmsFields>,
@@ -140,6 +146,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             donor_id,
             vvm_status_id,
             volume_per_pack,
+            manufacturer_id,
             oms_fields,
         } = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
 
@@ -163,9 +170,9 @@ impl SyncTranslation for StocktakeLineTranslation {
             true,
         )?;
 
-        let (campaign_id, program_id) = oms_fields
-            .map(|fields| (fields.campaign_id, fields.program_id))
-            .unwrap_or((None, None));
+        let (campaign_id, program_id, manufacture_date) = oms_fields
+            .map(|fields| (fields.campaign_id, fields.program_id, fields.manufacture_date))
+            .unwrap_or((None, None, None));
 
         let location_id = clear_invalid_fk(
             connection,
@@ -223,16 +230,18 @@ impl SyncTranslation for StocktakeLineTranslation {
             comment,
             snapshot_number_of_packs: snapshot_qty,
             counted_number_of_packs,
-            item_link_id: item_ID,
+            item_id: item_ID,
             item_name,
             batch: Batch,
             expiry_date: expiry,
+            manufacture_date,
             pack_size: Some(snapshot_packsize),
             cost_price_per_pack: Some(cost_price),
             sell_price_per_pack: Some(sell_price),
             note,
             item_variant_id,
-            donor_link_id: donor_id,
+            donor_id,
+            manufacturer_id,
             reason_option_id,
             vvm_status_id,
             volume_per_pack,
@@ -269,16 +278,18 @@ impl SyncTranslation for StocktakeLineTranslation {
                     comment,
                     snapshot_number_of_packs,
                     counted_number_of_packs,
-                    item_link_id: _,
+                    item_id: _,
                     item_name,
                     batch,
                     expiry_date,
+                    manufacture_date,
                     pack_size,
                     cost_price_per_pack,
                     sell_price_per_pack,
                     note,
                     item_variant_id,
-                    donor_link_id: donor_id,
+                    donor_id,
+                    manufacturer_id,
                     reason_option_id,
                     vvm_status_id,
                     volume_per_pack,
@@ -290,11 +301,12 @@ impl SyncTranslation for StocktakeLineTranslation {
             ..
         } = stocktake_line;
 
-        let oms_fields = match (&campaign_id, &program_id) {
-            (None, None) => None,
+        let oms_fields = match (&campaign_id, &program_id, &manufacture_date) {
+            (None, None, None) => None,
             _ => Some(LegacyStocktakeLineRowOmsFields {
                 campaign_id,
                 program_id,
+                manufacture_date,
             }),
         };
 
@@ -321,6 +333,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             donor_id,
             vvm_status_id,
             volume_per_pack,
+            manufacturer_id,
             oms_fields,
         };
 
@@ -472,7 +485,7 @@ mod tests {
             comment: None,
             snapshot_number_of_packs: 1.0,
             counted_number_of_packs: None,
-            item_link_id: "item_a".to_string(),
+            item_id: "item_a".to_string(),
             item_name: "Item A".to_string(),
             batch: None,
             expiry_date: None,
@@ -481,7 +494,9 @@ mod tests {
             sell_price_per_pack: Some(0.0),
             note: None,
             item_variant_id: None,
-            donor_link_id: None,
+            donor_id: None,
+            manufacturer_id: None,
+            manufacture_date: None,
             reason_option_id: None,
             vvm_status_id: Some("does_not_exist_vvm".to_string()),
             volume_per_pack: 0.0,

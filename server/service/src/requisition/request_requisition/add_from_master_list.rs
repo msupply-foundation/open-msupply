@@ -67,8 +67,9 @@ pub fn add_from_master_list(
             }
 
             match RequisitionLineRepository::new(connection).query_by_filter(
-                RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to(input.request_requisition_id.to_string())),
+                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(
+                    input.request_requisition_id.to_string(),
+                )),
             ) {
                 Ok(lines) => Ok(lines),
                 Err(error) => Err(OutError::DatabaseError(error)),
@@ -279,24 +280,24 @@ mod test {
                 joins: vec![MasterListNameJoinRow {
                     id: join1,
                     master_list_id: id.clone(),
-                    name_link_id: mock_name_store_a().id,
+                    name_id: mock_name_store_a().id,
                 }],
                 lines: vec![
                     MasterListLineRow {
                         id: line1.clone(),
-                        item_link_id: mock_item_a().id,
+                        item_id: mock_item_a().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
                     MasterListLineRow {
                         id: line2.clone(),
-                        item_link_id: test_item_stats::item().id,
+                        item_id: test_item_stats::item().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
                     MasterListLineRow {
                         id: line3.clone(),
-                        item_link_id: test_item_stats::item2().id,
+                        item_id: test_item_stats::item2().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
@@ -362,7 +363,7 @@ mod test {
         assert_eq!(item_ids, test_item_ids);
         let line = lines
             .iter()
-            .find(|line| line.requisition_line_row.item_link_id == test_item_stats::item().id)
+            .find(|line| line.requisition_line_row.item_id == test_item_stats::item().id)
             .unwrap();
 
         assert_eq!(
@@ -381,7 +382,7 @@ mod test {
 
         let line = lines
             .iter()
-            .find(|line| line.requisition_line_row.item_link_id == test_item_stats::item2().id)
+            .find(|line| line.requisition_line_row.item_id == test_item_stats::item2().id)
             .unwrap();
 
         assert_eq!(

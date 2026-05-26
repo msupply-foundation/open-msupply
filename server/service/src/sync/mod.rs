@@ -15,7 +15,6 @@ pub mod sync_buffer;
 pub mod sync_on_central;
 pub mod sync_status;
 pub mod sync_user;
-pub(crate) mod sync_utils;
 pub mod synchroniser;
 pub mod synchroniser_driver;
 pub(crate) mod translation_and_integration;
@@ -180,8 +179,8 @@ pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
     // We cache the initialised state to avoid having to check the database every time. This stops
     // unnecessary database queries and avoids having to unwrap the database connection. We still
     // unwrap on the first check as there's no point starting up without the database.
-    if IS_INITIALISED.read().unwrap().clone() {
-        return true;
+    if *IS_INITIALISED.read().unwrap() {
+        true
     } else {
         let ctx = service_provider.basic_context().unwrap();
         let is_initialised = service_provider
@@ -208,4 +207,12 @@ pub fn test_util_set_is_central_server(is_central: bool) {
                 CentralServerConfig::CentralServerUrl("".to_string());
         }
     }
+}
+
+// TEST ONLY — override the central server URL the FileSyncDriver reads on
+// each iteration. Used by integration tests that need to route file uploads
+// through toxiproxy after the initial sync has populated the config with the
+// real central URL.
+pub fn test_util_set_central_server_url(url: String) {
+    *CENTRAL_SERVER_CONFIG.write().unwrap() = CentralServerConfig::CentralServerUrl(url);
 }

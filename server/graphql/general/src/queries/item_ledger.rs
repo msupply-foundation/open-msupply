@@ -1,7 +1,8 @@
-use async_graphql::*;
+use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    loader::{InvoiceByIdLoader, UserLoader},
     map_filter,
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -10,6 +11,7 @@ use graphql_core::{
 
 use graphql_types::types::{
     EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput, InvoiceNodeStatus, InvoiceNodeType,
+    UserNode,
 };
 use repository::{
     DatetimeFilter, EqualFilter, InvoiceStatus, InvoiceType, ItemLedgerFilter, ItemLedgerRow,
@@ -103,6 +105,39 @@ impl ItemLedgerNode {
     pub async fn number_of_packs(&self) -> &f64 {
         &self.item_ledger.number_of_packs
     }
+
+    /// True when the invoice is an external inbound shipment (i.e. linked to a
+    /// purchase order). The client uses this to route to the correct detail
+    /// page, since internal and external inbound shipments live on separate
+    /// routes.
+    pub async fn is_external(&self, ctx: &Context<'_>) -> Result<bool> {
+        if !matches!(self.item_ledger.invoice_type, InvoiceType::InboundShipment) {
+            return Ok(false);
+        }
+        let loader = ctx.get_loader::<DataLoader<InvoiceByIdLoader>>();
+        let invoice = loader
+            .load_one(self.item_ledger.invoice_id.clone())
+            .await?;
+        Ok(invoice
+            .and_then(|i| i.invoice_row.purchase_order_id)
+            .is_some())
+    }
+
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
+        let loader = ctx.get_loader::<DataLoader<UserLoader>>();
+
+        let user_id = match &self.item_ledger.user_id {
+            Some(user_id) => user_id,
+            None => return Ok(None),
+        };
+
+        let result = loader
+            .load_one(user_id.clone())
+            .await?
+            .map(UserNode::from_domain);
+
+        Ok(result)
+    }
 }
 
 #[derive(SimpleObject)]
@@ -168,8 +203,8 @@ impl ItemLedgerFilterInput {
         ItemLedgerFilter {
             item_id: item_id.map(EqualFilter::from),
             datetime: datetime.map(DatetimeFilter::from),
-            invoice_type: invoice_type.map(|t| map_filter!(t, |i| InvoiceType::from(i))),
-            invoice_status: invoice_status.map(|s| map_filter!(s, |i| InvoiceStatus::from(i))),
+            invoice_type: invoice_type.map(|t| map_filter!(t, InvoiceType::from)),
+            invoice_status: invoice_status.map(|s| map_filter!(s, InvoiceStatus::from)),
             store_id: None,
         }
     }

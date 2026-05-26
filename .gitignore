@@ -2,21 +2,41 @@
 # common location for local config file containing connection credentials
 server/report_builder/config.yaml
 .vscode/*
+!.vscode/extensions.json
 
 # Temp export files
 server/data
 .gitmodules
+scripts/plugin-management/pluginRepoMap.json
+scripts/plugin-management/pluginAuth.json
+node_modules/
 
+# Yarn 4
+client/.yarn/*
+!client/.yarn/patches
+!client/.yarn/plugins
+!client/.yarn/releases
+!client/.yarn/sdks
+!client/.yarn/versions
 
 standard_reports/test-config.json
 client/dist
 
 # IDEs
 .idea/
-backup/*
-.claude/*.local.json
+
+## Claude
+# `claude -w "feature-name"` will create "/.claude/worktrees/feature-name" for your worktree. Back at root though, git picks up this whole directory copy of the repo!
+worktrees
+**/.claude/*.local.json
+# Default path for backups
+backup/
+!docs/content/server/cli/backup/
 server/configuration/*.yaml
 # Keep the example and base configuration files
 !configuration/base.yaml
 !configuration/example.yaml
 server/target-postgres/
+
+# Playwright MCP scratch logs / page dumps
+.playwright-mcp/

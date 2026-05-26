@@ -7,8 +7,12 @@ export const useStocktakeDeleteLines = () => {
   const stocktakeId = useStocktakeId();
 
   const api = useStocktakeApi();
-  return useMutation(api.deleteLines, {
+  return useMutation({
+    mutationFn: api.deleteLines,
+
     onSuccess: () =>
-      queryClient.invalidateQueries(api.keys.detail(stocktakeId)),
+      queryClient.invalidateQueries({
+        queryKey: api.keys.detail(stocktakeId)
+      })
   });
 };

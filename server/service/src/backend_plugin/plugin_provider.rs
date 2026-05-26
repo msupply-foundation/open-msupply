@@ -66,7 +66,7 @@ where
         PluginInstanceVariant::BoaJs(bundle) => boajs::call_method(
             input,
             vec!["plugins", &plugin_type_to_string(r#type)],
-            &bundle,
+            bundle,
         )
         .map_err(Into::into),
     };

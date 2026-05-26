@@ -72,7 +72,7 @@ fn map_response(result: Result<String, ServiceError>) -> Result<DeleteCampaignRe
 
 fn map_error(error: ServiceError) -> Result<DeleteCampaignErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::CampaignDoesNotExist => {

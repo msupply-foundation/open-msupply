@@ -166,6 +166,9 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
             <>
               {assetProperties &&
                 ArrayUtils.uniqBy(assetProperties, 'key').map(property => {
+                  const isReadOnlyMappingDate =
+                    property.key === 'initial_mapping_date' ||
+                    property.key === 'most_recent_mapping_date';
                   const isCatalogue =
                     draft.parsedCatalogProperties?.hasOwnProperty(
                       property.key
@@ -198,7 +201,7 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
                             },
                           })
                         }
-                        disabled={isCatalogue}
+                        disabled={isCatalogue || isReadOnlyMappingDate}
                         textSx={
                           isExtraSmallScreen
                             ? {

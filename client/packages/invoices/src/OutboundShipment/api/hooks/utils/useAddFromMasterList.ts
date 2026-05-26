@@ -16,9 +16,13 @@ export const useAddFromMasterList = () => {
     'id'
   ]);
   const api = useOutboundApi();
-  const mutationState = useMutation(api.addFromMasterList, {
+  const mutationState = useMutation({
+    mutationFn: api.addFromMasterList,
+
     onSettled: () =>
-      queryClient.invalidateQueries(api.keys.detail(String(shipmentId))),
+      queryClient.invalidateQueries({
+        queryKey: api.keys.detail(String(shipmentId))
+      })
   });
 
   const t = useTranslation();

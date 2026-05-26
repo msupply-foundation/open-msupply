@@ -74,7 +74,7 @@ impl SyncTranslation for VaccineCourseItemLegacyTranslation {
         let legacy_row = LegacyVaccineCourseItemRow {
             ID: row.id.clone(),
             vaccine_course_ID: row.vaccine_course_id.clone(),
-            item_ID: row.item_link_id.clone(),
+            item_ID: row.item_id.clone(),
             deleted_datetime: row.deleted_datetime.map(|dt| dt.and_utc().to_rfc3339()),
         };
 
@@ -123,7 +123,7 @@ mod tests {
         let vaccine_course_item_row = VaccineCourseItemRow {
             id: "test_vaccine_course_item_id".to_string(),
             vaccine_course_id: "vaccine_course_a".to_string(),
-            item_link_id: "item_a".to_string(),
+            item_id: "item_a".to_string(),
             deleted_datetime: None,
         };
 
@@ -139,13 +139,10 @@ mod tests {
 
         // Shouldn't translate if not a central server
         test_util_set_is_central_server(false);
-        assert_eq!(
-            translator.should_translate_to_sync_record(
-                &changelog_row,
-                &ToSyncRecordTranslationType::PushToLegacyCentral
-            ),
-            false
-        );
+        assert!(!translator.should_translate_to_sync_record(
+            &changelog_row,
+            &ToSyncRecordTranslationType::PushToLegacyCentral
+        ));
 
         // Should translate if a central server
         test_util_set_is_central_server(true);

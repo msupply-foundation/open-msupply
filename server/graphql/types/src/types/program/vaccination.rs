@@ -61,7 +61,7 @@ impl VaccinationNode {
     }
 
     pub async fn facility_name_id(&self) -> &Option<String> {
-        &self.row().facility_name_link_id
+        &self.row().facility_name_id
     }
 
     pub async fn facility_name(&self) -> Option<String> {

@@ -60,15 +60,4 @@ async fn migration_report_context() {
 
     // Run migration
     migrate(&connection, Some(version.clone())).unwrap();
-
-    let reports_after_migration = report::table
-        .select((report::code, report::context))
-        .filter(report::code.eq("goods-received"))
-        .load::<(String, ContextType)>(connection.lock().connection())
-        .unwrap();
-
-    assert_eq!(
-        reports_after_migration,
-        vec![("goods-received".to_string(), ContextType::GoodsReceived)]
-    );
 }

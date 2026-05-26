@@ -4,8 +4,8 @@ use crate::sync::CentralServerConfig;
 
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
-    vaccination_row::VaccinationRowRepository, ChangelogRow, ChangelogTableName,
-    ItemLinkRowRepository, NameLinkRowRepository, StorageConnection, VaccinationRow,
+    vaccination_row::VaccinationRowRepository, ChangelogRow, ChangelogTableName, StorageConnection,
+    VaccinationRow,
 };
 
 /*
@@ -84,15 +84,15 @@ impl SyncTranslation for VaccinationLegacyTranslation {
             given_store_id,
             program_enrolment_id,
             encounter_id,
-            patient_link_id,
+            patient_id,
             user_id,
             vaccine_course_dose_id,
             created_datetime,
-            facility_name_link_id,
+            facility_name_id,
             facility_free_text: _,
             invoice_id,
             stock_line_id,
-            item_link_id,
+            item_id,
             clinician_link_id,
             vaccination_date,
             given,
@@ -105,34 +105,9 @@ impl SyncTranslation for VaccinationLegacyTranslation {
                 changelog.record_id
             )))?;
 
-        let name_link_repo = NameLinkRowRepository::new(connection);
-
-        let patient_name_id = name_link_repo
-            .find_one_by_id(&patient_link_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Patient name link ({}) not found",
-                patient_link_id
-            )))?
-            .id;
-
-        // If the facility name link is not set, or not found, we use None
-        let facility_name_id = match facility_name_link_id {
-            Some(facility_name_link_id) => name_link_repo
-                .find_one_by_id(&facility_name_link_id)?
-                .map(|name_link| name_link.id),
-            None => None,
-        };
-
-        // Look up item link ID, if it exists
-
-        let item_link_repo = ItemLinkRowRepository::new(connection);
-
-        let item_id = match item_link_id {
-            Some(item_link_id) => item_link_repo
-                .find_one_by_id(&item_link_id)?
-                .map(|item_link| item_link.id),
-            None => None,
-        };
+        // patient_id and facility_name_id are already resolved by the view
+        let patient_name_id = patient_id;
+        let legacy_facility_name_id = facility_name_id;
 
         let legacy_row = LegacyVaccinationRow {
             ID: id,
@@ -148,7 +123,7 @@ impl SyncTranslation for VaccinationLegacyTranslation {
             not_given_reason,
             comment,
             name_ID: patient_name_id,
-            facility_ID: facility_name_id,
+            facility_ID: legacy_facility_name_id,
             item_ID: item_id,
             encounter_ID: Some(encounter_id),
             program_enrolment_ID: Some(program_enrolment_id),
@@ -205,8 +180,8 @@ mod tests {
             encounter_id: mock_immunisation_encounter_a().id,
             given: true,
             given_store_id: Some(mock_store_a().id),
-            item_link_id: Some(mock_vaccine_item_a().id),
-            patient_link_id: mock_patient().id,
+            item_id: Some(mock_vaccine_item_a().id),
+            patient_id: mock_patient().id,
             created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -226,13 +201,10 @@ mod tests {
 
         // Shouldn't translate if not a central server
         test_util_set_is_central_server(false);
-        assert_eq!(
-            translator.should_translate_to_sync_record(
-                &changelog_row,
-                &ToSyncRecordTranslationType::PushToLegacyCentral
-            ),
-            false
-        );
+        assert!(!translator.should_translate_to_sync_record(
+            &changelog_row,
+            &ToSyncRecordTranslationType::PushToLegacyCentral
+        ));
 
         // Should translate if a central server
         test_util_set_is_central_server(true);

@@ -4,11 +4,20 @@
  */
 
 import React, { useMemo } from 'react';
-import { MRT_Column, MRT_RowData } from 'material-react-table';
 import {
+  MRT_Column,
+  MRT_RowData,
+  MRT_Cell,
+  MRT_Row,
+  MRT_TableInstance,
+} from 'material-react-table';
+import {
+  defaultAggregationFn,
   mergeCellProps,
+  multipleKeys,
   Tooltip,
   useGetColumnTypeDefaults,
+  useTranslation,
 } from '@openmsupply-client/common';
 
 import { ColumnDef } from './types';
@@ -16,6 +25,7 @@ import { ColumnDef } from './types';
 export const useMaterialTableColumns = <T extends MRT_RowData>(
   omsColumns: ColumnDef<T>[]
 ) => {
+  const t = useTranslation();
   const getColumnTypeDefaults = useGetColumnTypeDefaults();
 
   const tableDefinition = useMemo(() => {
@@ -63,10 +73,46 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
           };
         }
 
+        // Default aggregation cell that shows '[multiple]' if there are multiple values, otherwise renders as normal cell
+        const DefaultAggregationCell = (props: {
+          cell: MRT_Cell<T, unknown>;
+          column: MRT_Column<T, unknown>;
+          row: MRT_Row<T>;
+          table: MRT_TableInstance<T>;
+          staticColumnIndex?: number;
+          staticRowIndex?: number;
+        }) => {
+          const cellProps = {
+            renderedCellValue: props.cell.renderValue()?.toString(),
+            ...props,
+          };
+          return (
+            <>
+              {props.cell.getValue() === multipleKeys
+                ? // show '[multiple]' if the aggregation function returned it
+                  t('multiple')
+                : // otherwise render the cell using the column's Cell renderer
+                  // would be nice to replace this with an internal MRT component but the most suitable one (MRT_TableBodyCellValue) causes an infinite loop
+                  (
+                    col.Cell ??
+                    // fallback to column type default Cell renderer
+                    columnDefaults.Cell ??
+                    // fallback to rendering the cell value as a string
+                    (({ cell }) => cell.renderValue()?.toString() ?? '')
+                  )(cellProps)}
+            </>
+          );
+        };
+
         return {
           grow: true,
           Header: ColumnHeaderWithTooltip, // can't define this globally for the table unfortunately
+          aggregationFn: defaultAggregationFn,
+          GroupedCell: DefaultAggregationCell,
+          AggregatedCell: DefaultAggregationCell,
+          PlaceholderCell: DefaultAggregationCell,
           ...columnDefaults,
+          enableGrouping: false, // removes the "group by" option from the column menu
           enableSorting: col.enableSorting ?? false,
           enableColumnFilter: col.enableColumnFilter ?? false,
           ...col,
@@ -89,7 +135,6 @@ const ColumnHeaderWithTooltip = <T extends MRT_RowData>({
   <Tooltip title={column.columnDef.header} placement="top">
     <div
       style={{
-        whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
       }}

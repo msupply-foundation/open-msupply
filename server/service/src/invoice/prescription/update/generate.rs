@@ -1,6 +1,6 @@
 use chrono::Utc;
 
-use repository::{InvoiceRow, InvoiceStatus, StockLineRow, StorageConnection};
+use repository::{InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow, StorageConnection};
 
 use crate::invoice::{
     common::{
@@ -8,6 +8,7 @@ use crate::invoice::{
         InvoiceLineHasNoStockLine,
     },
     invoice_date_utils::handle_new_backdated_datetime,
+    stock_effect::{stock_effects, StockEffect},
 };
 
 use super::{UpdatePrescription, UpdatePrescriptionError, UpdatePrescriptionStatus};
@@ -15,6 +16,7 @@ use super::{UpdatePrescription, UpdatePrescriptionError, UpdatePrescriptionStatu
 pub(crate) struct GenerateResult {
     pub(crate) batches_to_update: Option<Vec<StockLineRow>>,
     pub(crate) update_invoice: InvoiceRow,
+    pub(crate) stock_effect: Option<StockEffect>,
 }
 
 pub(crate) fn generate(
@@ -36,8 +38,12 @@ pub(crate) fn generate(
     }: UpdatePrescription,
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdatePrescriptionError> {
+    let new_status = UpdatePrescriptionStatus::full_status_option(&input_status);
+    let stock_effect = new_status
+        .as_ref()
+        .map(|to| stock_effects(&InvoiceType::Prescription, &existing_invoice.status, to));
     let should_update_batches_total_number_of_packs =
-        should_update_batches_total_number_of_packs(&existing_invoice, &input_status);
+        stock_effect == Some(StockEffect::ReduceStock);
     let mut update_invoice = existing_invoice.clone();
 
     if let Some(backdated_datetime) = backdated_datetime_input {
@@ -52,7 +58,7 @@ pub(crate) fn generate(
 
     set_new_status_datetime(&mut update_invoice, &input_status);
 
-    update_invoice.name_link_id = input_patient_id.unwrap_or(update_invoice.name_link_id);
+    update_invoice.name_id = input_patient_id.unwrap_or(update_invoice.name_id);
     if let Some(clinician_link_id) = input_clinician_id {
         update_invoice.clinician_link_id = clinician_link_id.value;
     }
@@ -104,22 +110,8 @@ pub(crate) fn generate(
     Ok(GenerateResult {
         batches_to_update,
         update_invoice,
+        stock_effect,
     })
-}
-
-fn should_update_batches_total_number_of_packs(
-    invoice: &InvoiceRow,
-    status: &Option<UpdatePrescriptionStatus>,
-) -> bool {
-    if let Some(new_invoice_status) = UpdatePrescriptionStatus::full_status_option(status) {
-        let invoice_status_index = invoice.status.index();
-        let new_invoice_status_index = new_invoice_status.index();
-
-        new_invoice_status_index >= InvoiceStatus::Picked.index()
-            && invoice_status_index < InvoiceStatus::Picked.index()
-    } else {
-        false
-    }
 }
 
 fn set_new_status_datetime(invoice: &mut InvoiceRow, status: &Option<UpdatePrescriptionStatus>) {

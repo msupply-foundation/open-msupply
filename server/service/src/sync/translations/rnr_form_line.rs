@@ -115,4 +115,21 @@ mod tests {
             assert_eq!(translation_result, record.translated_record);
         }
     }
+
+    /// `try_translate_to_upsert_sync_record` serializes `RnRFormLineRow` directly.
+    /// The JSON wire format must keep the legacy `item_link_id` field name so older
+    /// remote clients can still deserialize records pulled from an upgraded central.
+    #[test]
+    fn test_push_wire_format_uses_legacy_field_names() {
+        let row = RnRFormLineRow {
+            item_id: "test_item".to_string(),
+            ..Default::default()
+        };
+        let json = serde_json::to_value(&row).unwrap();
+        assert_eq!(json["item_link_id"], "test_item");
+        assert!(
+            json.get("item_id").is_none(),
+            "JSON should not contain `item_id`; expected legacy name `item_link_id`"
+        );
+    }
 }

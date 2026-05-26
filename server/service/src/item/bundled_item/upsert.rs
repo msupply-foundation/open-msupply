@@ -92,15 +92,19 @@ fn validate(
 
     // Check that item_ids are not the same
     // Technically this has a problem if the item is merged but should be very rare...
-    if principal_item_variant.item_link_id == bundled_item_variant.item_link_id {
+    if principal_item_variant.item_id == bundled_item_variant.item_id {
         return Err(UpsertBundledItemError::CanNotBundleItemWithItself);
     }
 
     // Check for existing bundled item pair that matches this one
     let count = BundledItemRepository::new(connection).count(Some(
         BundledItemFilter::new()
-            .principal_item_variant_id(EqualFilter::equal_to(input.principal_item_variant_id.to_string()))
-            .bundled_item_variant_id(EqualFilter::equal_to(input.bundled_item_variant_id.to_string()))
+            .principal_item_variant_id(EqualFilter::equal_to(
+                input.principal_item_variant_id.to_string(),
+            ))
+            .bundled_item_variant_id(EqualFilter::equal_to(
+                input.bundled_item_variant_id.to_string(),
+            ))
             .id(EqualFilter::not_equal_to(input.id.to_string())),
     ))?;
 
@@ -109,19 +113,21 @@ fn validate(
     }
 
     // Check for nested bundled items
-    let count = BundledItemRepository::new(connection)
-        .count(Some(BundledItemFilter::new().principal_item_variant_id(
-            EqualFilter::equal_to(input.bundled_item_variant_id.to_string()),
-        )))?;
+    let count = BundledItemRepository::new(connection).count(Some(
+        BundledItemFilter::new().principal_item_variant_id(EqualFilter::equal_to(
+            input.bundled_item_variant_id.to_string(),
+        )),
+    ))?;
 
     if count > 0 {
         return Err(UpsertBundledItemError::CanNotNestBundledItems);
     }
 
-    let count = BundledItemRepository::new(connection)
-        .count(Some(BundledItemFilter::new().bundled_item_variant_id(
-            EqualFilter::equal_to(input.principal_item_variant_id.to_string()),
-        )))?;
+    let count = BundledItemRepository::new(connection).count(Some(
+        BundledItemFilter::new().bundled_item_variant_id(EqualFilter::equal_to(
+            input.principal_item_variant_id.to_string(),
+        )),
+    ))?;
 
     if count > 0 {
         return Err(UpsertBundledItemError::CanNotNestBundledItems);

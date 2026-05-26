@@ -100,7 +100,7 @@ impl SyncTranslation for RnRFormTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
@@ -119,5 +119,22 @@ mod tests {
 
             assert_eq!(translation_result, record.translated_record);
         }
+    }
+
+    /// `try_translate_to_upsert_sync_record` serializes `RnRFormRow` directly.
+    /// The JSON wire format must keep the legacy `name_link_id` field name so older
+    /// remote clients can still deserialize records pulled from an upgraded central.
+    #[test]
+    fn test_push_wire_format_uses_legacy_field_names() {
+        let row = RnRFormRow {
+            name_id: "test_name".to_string(),
+            ..Default::default()
+        };
+        let json = serde_json::to_value(&row).unwrap();
+        assert_eq!(json["name_link_id"], "test_name");
+        assert!(
+            json.get("name_id").is_none(),
+            "JSON should not contain `name_id`; expected legacy name `name_link_id`"
+        );
     }
 }

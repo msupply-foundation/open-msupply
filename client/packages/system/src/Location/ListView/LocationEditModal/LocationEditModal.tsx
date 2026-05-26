@@ -11,6 +11,7 @@ import {
   InlineSpinner,
   NumericTextInput,
   Box,
+  useNotification,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocationList, useLocation } from '../../api';
 import { LocationTypeInput } from '@openmsupply-client/system';
@@ -99,9 +100,20 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
 }) => {
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation();
+  const { error } = useNotification();
   const { draft, onUpdate, onChangeLocation, onSave, isLoading } =
     useDraftLocation(location, mode);
   const isInvalid = !draft.code.trim() || !draft.name.trim();
+
+  const handleSave = async () => {
+    try {
+      await onSave();
+      return true;
+    } catch (e) {
+      error(e instanceof Error ? e.message : t('error.cant-save'))();
+      return false;
+    }
+  };
 
   return (
     <Modal
@@ -110,8 +122,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
           variant="ok"
           disabled={isInvalid}
           onClick={async () => {
-            await onSave();
-            onClose();
+            if (await handleSave()) onClose();
           }}
         />
       }
@@ -121,8 +132,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
           variant="next-and-ok"
           disabled={isInvalid}
           onClick={async () => {
-            await onSave();
-            onChangeLocation();
+            if (await handleSave()) onChangeLocation();
             return true;
           }}
         />
