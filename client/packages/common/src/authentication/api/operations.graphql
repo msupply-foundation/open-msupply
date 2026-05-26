@@ -92,6 +92,15 @@ query isCentralServer {
   isCentralServer
 }
 
+query logout {
+  logout {
+    ... on Logout {
+      __typename
+      userId
+    }
+  }
+}
+
 query permissions($storeId: String!) {
   me {
     ... on UserNode {

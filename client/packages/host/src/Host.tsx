@@ -28,7 +28,7 @@ import {
   useIsCentralServerApi,
   useInitialisationStatus,
   InitialisationStatusType,
-  useAuthContext,
+  useLogout,
 } from '@openmsupply-client/common';
 // import { ReactQueryDevtools } from 'react-query/devtools';
 import { AppRoute, Environment } from '@openmsupply-client/config';
@@ -63,7 +63,7 @@ const skipRequest = () =>
   LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned;
 
 const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const { logout } = useAuthContext();
+  const logout = useLogout();
   const data = useInitialisationStatus(false);
 
   // Query still loading — don't render children yet, but don't logout either
