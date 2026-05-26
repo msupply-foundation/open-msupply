@@ -23,7 +23,7 @@ struct SyncSite {
 }
 
 impl SyncSite {
-    // 4D excludes site.password (SHA256) from sync responses for security.
+    // OG mSupply excludes site.password (SHA256) from sync responses for security.
     // TESTUtil_createSite sets password = sha256("pass " + site_name), so we reproduce that here.
     fn password_sha256(&self) -> String {
         util::hash::sha256(&format!("pass {}", self.name))
