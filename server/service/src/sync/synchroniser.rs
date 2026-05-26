@@ -25,6 +25,7 @@ use super::{
     },
     settings::{SyncSettings, SYNC_V5_VERSION, SYNC_V6_VERSION},
     sync_buffer::get_ordered_sync_buffer_records,
+    sync_on_central::adjust_v6_cursor,
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
     translations::{all_translators, pull_integration_order},
@@ -333,15 +334,13 @@ impl SynchroniserV5V6 {
         kv.set_string(KeyType::SettingsSyncUrl, Some(response.v7_url))?;
         SyncVersion::set(&ctx.connection, SyncVersion::V7)?;
 
-        // Carry v6 cursors over to v7. V6 stored cursors as `last_cursor + 1`
-        // (>= semantics); v7 uses `>` semantics and stores `last_cursor` directly,
-        // so subtract 1 when copying.
+        // Carry v6 cursors over to v7. See `adjust_v6_pull_cursor` for why we subtract 1.
         let v6_push = CursorController::new(KeyType::SyncPushCursorV6).get(&ctx.connection)?;
-        let v7_push = v6_push.saturating_sub(1);
+        let v7_push = adjust_v6_cursor(v6_push) as u64;
         log::info!("V6->V7 cursor copy: push {} -> {}", v6_push, v7_push);
         CursorController::new(KeyType::SyncPushCursorV7).update(&ctx.connection, v7_push)?;
         let v6_pull = CursorController::new(KeyType::SyncPullCursorV6).get(&ctx.connection)?;
-        let v7_pull = v6_pull.saturating_sub(1);
+        let v7_pull = adjust_v6_cursor(v6_pull) as u64;
         log::info!("V6->V7 cursor copy: pull {} -> {}", v6_pull, v7_pull);
         CursorController::new(KeyType::SyncPullCursorV7).update(&ctx.connection, v7_pull)?;
 

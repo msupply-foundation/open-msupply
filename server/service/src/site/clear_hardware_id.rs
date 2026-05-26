@@ -2,18 +2,23 @@ use crate::service_provider::ServiceContext;
 use repository::{KeyType, KeyValueStoreRepository, RepositoryError, SiteRow, SiteRowRepository};
 
 #[derive(PartialEq, Debug)]
-pub enum ClearSiteTokenError {
+pub enum ClearSiteHardwareIdError {
     SiteDoesNotExist,
     SameSite,
     DatabaseError(RepositoryError),
 }
 
-pub fn clear_site_token(ctx: &ServiceContext, site_id: i32) -> Result<i32, ClearSiteTokenError> {
+/// Clear the `hardware_id` for the site with id `site_id`.
+/// Returns `Result` with the site's id if successful or a `ClearSiteHardwareIdError`
+pub fn clear_site_hardware_id(
+    ctx: &ServiceContext,
+    site_id: i32,
+) -> Result<i32, ClearSiteHardwareIdError> {
     let current_site_id =
         KeyValueStoreRepository::new(&ctx.connection).get_i32(KeyType::SettingsSyncSiteId)?;
 
     if current_site_id == Some(site_id) {
-        return Err(ClearSiteTokenError::SameSite);
+        return Err(ClearSiteHardwareIdError::SameSite);
     }
 
     ctx.connection
@@ -22,10 +27,10 @@ pub fn clear_site_token(ctx: &ServiceContext, site_id: i32) -> Result<i32, Clear
 
             let site = repo
                 .find_one_by_id(site_id)?
-                .ok_or(ClearSiteTokenError::SiteDoesNotExist)?;
+                .ok_or(ClearSiteHardwareIdError::SiteDoesNotExist)?;
 
             repo.upsert(&SiteRow {
-                token: None,
+                hardware_id: None,
                 ..site
             })?;
             Ok(site_id)
@@ -33,88 +38,90 @@ pub fn clear_site_token(ctx: &ServiceContext, site_id: i32) -> Result<i32, Clear
         .map_err(|e| e.to_inner_error())
 }
 
-impl From<RepositoryError> for ClearSiteTokenError {
+impl From<RepositoryError> for ClearSiteHardwareIdError {
     fn from(error: RepositoryError) -> Self {
-        ClearSiteTokenError::DatabaseError(error)
+        ClearSiteHardwareIdError::DatabaseError(error)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::service_provider::ServiceProvider;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, KeyType, KeyValueStoreRepository, SiteRow,
-        SiteRowRepository, StorageConnection, SyncVersion,
+        mock::MockDataInserts, test_db::setup_all, KeyType, KeyValueStoreRepository,
+        StorageConnection, SyncVersion,
     };
 
-    fn site(connection: &StorageConnection, token: Option<String>) -> SiteRow {
+    use crate::service_provider::ServiceProvider;
+
+    use super::*;
+
+    fn site(connection: &StorageConnection, hardware_id: Option<String>) -> SiteRow {
         let row = SiteRow {
             id: 1,
             og_id: None,
             code: "code1".to_string(),
             name: "Site A".to_string(),
             hashed_password: "hash".to_string(),
-            hardware_id: Some("hw-1".to_string()),
-            token,
-            sync_version: SyncVersion::V5V6,
+            hardware_id,
+            token: Some("token".to_string()),
+            sync_version: SyncVersion::V7,
         };
         SiteRowRepository::new(connection).upsert(&row).unwrap();
         row
     }
 
     #[actix_rt::test]
-    async fn clear_site_token_errors() {
+    async fn clear_site_hardware_id_errors() {
         let (_, _, connection_manager, _) =
-            setup_all("clear_site_token_errors", MockDataInserts::none()).await;
+            setup_all("clear_site_hardware_id_errors", MockDataInserts::none()).await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
 
         assert_eq!(
-            clear_site_token(&context, 999),
-            Err(ClearSiteTokenError::SiteDoesNotExist)
+            clear_site_hardware_id(&context, 1001),
+            Err(ClearSiteHardwareIdError::SiteDoesNotExist)
         );
     }
 
     #[actix_rt::test]
-    async fn clear_site_token_same_site_errors() {
+    async fn clear_site_hardware_id_same_site_errors() {
         let (_, connection, connection_manager, _) =
-            setup_all("clear_site_token_same_site", MockDataInserts::none()).await;
+            setup_all("clear_site_hardware_id_same_site", MockDataInserts::none()).await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
 
-        let site = site(&connection, Some("token".to_string()));
+        let site = site(&connection, Some("hw-id".to_string()));
         KeyValueStoreRepository::new(&connection)
             .set_i32(KeyType::SettingsSyncSiteId, Some(site.id))
             .unwrap();
 
         assert_eq!(
-            clear_site_token(&context, site.id),
-            Err(ClearSiteTokenError::SameSite)
+            clear_site_hardware_id(&context, site.id),
+            Err(ClearSiteHardwareIdError::SameSite)
         );
     }
 
     #[actix_rt::test]
-    async fn clear_site_token_success() {
+    async fn clear_site_hardware_id_success() {
         let (_, connection, connection_manager, _) =
-            setup_all("clear_site_token_success", MockDataInserts::none()).await;
+            setup_all("clear_site_hardware_id_success", MockDataInserts::none()).await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
 
-        let site = site(&connection, Some("existing_token".to_string()));
+        let site = site(&connection, Some("existing_hardware_id".to_string()));
 
-        let id = clear_site_token(&context, site.id).unwrap();
+        let id = clear_site_hardware_id(&context, site.id).unwrap();
         assert_eq!(id, site.id);
 
         let stored = SiteRowRepository::new(&connection)
             .find_one_by_id(site.id)
             .unwrap()
             .unwrap();
-        assert_eq!(stored.token, None);
-        assert_eq!(stored.hardware_id.as_deref(), Some("hw-1"));
+        assert!(stored.hardware_id.is_none());
+        assert_eq!(stored.token, Some("token".to_string()));
         assert_eq!(stored.name, "Site A");
     }
 }
