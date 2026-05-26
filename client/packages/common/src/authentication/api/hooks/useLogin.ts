@@ -34,7 +34,6 @@ const skipNoStoreRequests = (documentNode?: DocumentNode) => {
     case AuthError.NoStoreAssigned:
     case AuthError.Unauthenticated:
     case AuthError.Timeout:
-    case AuthError.ServerError:
       return true;
     default:
       return false;
@@ -113,8 +112,6 @@ export const useLogin = (
   };
 
   const setLoginError = (isLoggedIn: boolean, hasValidStore: boolean) => {
-    if (LocalStorage.getItem('/error/auth') === AuthError.ServerError) return;
-
     switch (true) {
       case isLoggedIn && hasValidStore: {
         removeError();
