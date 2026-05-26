@@ -1,14 +1,16 @@
 import { useQuery } from '@openmsupply-client/common';
-import { DASHBOARD, INTERNAL_ORDER } from './keys';
+import { DASHBOARD, REQUISITION } from './keys';
 import { useApi } from './useApi';
 
 export const useInternalOrderCounts = () => {
   const { storeId, api } = useApi();
 
+  // Uses the same query key as useRequisitionCounts so both hooks deduplicate
+  // to one HTTP request. The combined operation fetches all requisition count fields.
   const { data, ...rest } = useQuery(
-    [DASHBOARD, INTERNAL_ORDER, storeId],
+    [DASHBOARD, REQUISITION, storeId],
     () =>
-      api.internalOrderCounts({
+      api.dashboardRequisitionCounts({
         storeId,
       }),
     {

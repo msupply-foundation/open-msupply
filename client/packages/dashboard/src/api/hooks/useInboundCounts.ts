@@ -5,10 +5,12 @@ import { useApi } from './useApi';
 export const useInboundCounts = () => {
   const { storeId, api } = useApi();
 
+  // Shares query key with useOutboundCounts so both hooks deduplicate to one
+  // HTTP request via react-query caching.
   const { data, ...rest } = useQuery(
     [DASHBOARD, INBOUND, storeId],
     () =>
-      api.inboundCounts({
+      api.dashboardInvoiceCounts({
         storeId,
       }),
     {

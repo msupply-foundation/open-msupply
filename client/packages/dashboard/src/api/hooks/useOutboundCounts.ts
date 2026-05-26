@@ -1,14 +1,16 @@
 import { useQuery } from '@openmsupply-client/common';
-import { DASHBOARD, OUTBOUND } from './keys';
+import { DASHBOARD, INBOUND } from './keys';
 import { useApi } from './useApi';
 
 export const useOutboundCounts = () => {
   const { storeId, api } = useApi();
 
+  // Uses the same query key as useInboundCounts so both hooks deduplicate to
+  // one HTTP request. The combined operation fetches all invoice count fields.
   const { data, ...rest } = useQuery(
-    [DASHBOARD, OUTBOUND, storeId],
+    [DASHBOARD, INBOUND, storeId],
     () =>
-      api.outboundCounts({
+      api.dashboardInvoiceCounts({
         storeId,
       }),
     {

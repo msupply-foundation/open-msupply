@@ -8,7 +8,7 @@ export const useRequisitionCounts = () => {
   const { data, ...rest } = useQuery(
     [DASHBOARD, REQUISITION, storeId],
     () =>
-      api.requisitionCounts({
+      api.dashboardRequisitionCounts({
         storeId,
       }),
     {

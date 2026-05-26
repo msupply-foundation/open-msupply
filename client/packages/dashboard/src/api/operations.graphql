@@ -12,7 +12,7 @@ query itemCounts($storeId: String!, $lowStockThreshold: Int!) {
   }
 }
 
-query inboundCounts($storeId: String!) {
+query dashboardInvoiceCounts($storeId: String!) {
   invoiceCounts(storeId: $storeId) {
     inbound {
       created {
@@ -21,32 +21,22 @@ query inboundCounts($storeId: String!) {
       }
       notDelivered
     }
-  }
-}
-
-query outboundCounts($storeId: String!) {
-  invoiceCounts(storeId: $storeId) {
     outbound {
       notShipped
     }
   }
 }
 
-query internalOrderCounts($storeId: String!) {
-  requisitionCounts(storeId: $storeId) {
-    request {
-      draft
-    }
-  }
-}
-
-query requisitionCounts($storeId: String!) {
+query dashboardRequisitionCounts($storeId: String!) {
   requisitionCounts(storeId: $storeId) {
     response {
       new
     }
     emergency {
       new
+    }
+    request {
+      draft
     }
   }
 }
