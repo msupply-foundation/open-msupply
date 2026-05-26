@@ -76,7 +76,6 @@ mod tests {
             code: Some(format!("code{id}")),
             name: format!("Site {id}"),
             password: Some("password".to_string()),
-            clear_hardware_id: false,
         }
     }
 

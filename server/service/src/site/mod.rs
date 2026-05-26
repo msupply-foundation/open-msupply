@@ -5,10 +5,15 @@ use self::{
     query::get_sites,
     upsert::{upsert_site, UpsertSite, UpsertSiteError},
 };
-use crate::{service_provider::ServiceContext, ListError, ListResult};
+use crate::{
+    service_provider::ServiceContext,
+    site::clear_hardware_id::{clear_site_hardware_id, ClearSiteHardwareIdError},
+    ListError, ListResult,
+};
 use repository::{PaginationOption, SiteFilter, SiteRow, SiteSort};
 
 pub mod assign_stores;
+pub mod clear_hardware_id;
 pub mod clear_token;
 pub mod delete;
 pub mod query;
@@ -51,6 +56,16 @@ pub trait SiteServiceTrait: Sync + Send {
         site_id: i32,
     ) -> Result<i32, ClearSiteTokenError> {
         clear_site_token(ctx, site_id)
+    }
+
+    /// Clears the `hardware_id` for a `Site` whose id is `site_id`.
+    /// Sets the field to `NULL`` in the underlying `site` table
+    fn clear_site_hardware_id(
+        &self,
+        ctx: &ServiceContext,
+        site_id: i32,
+    ) -> Result<i32, ClearSiteHardwareIdError> {
+        clear_site_hardware_id(ctx, site_id)
     }
 }
 

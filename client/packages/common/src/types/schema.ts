@@ -1467,6 +1467,7 @@ export type CentralServerQueryNode = {
 export type CentralSiteMutations = {
   __typename: 'CentralSiteMutations';
   assignStoresToSite: AssignStoresToSiteNode;
+  clearSiteHardwareId: ClearSiteHardwareIdNode;
   clearSiteToken: ClearSiteTokenNode;
   deleteSite: DeleteSiteNode;
   upsertSite: UpsertSiteResponse;
@@ -1474,6 +1475,10 @@ export type CentralSiteMutations = {
 
 export type CentralSiteMutationsAssignStoresToSiteArgs = {
   input: AssignStoresToSiteInput;
+};
+
+export type CentralSiteMutationsClearSiteHardwareIdArgs = {
+  siteId: Scalars['Int']['input'];
 };
 
 export type CentralSiteMutationsClearSiteTokenArgs = {
@@ -1502,6 +1507,11 @@ export type CentralSiteQueriesSitesArgs = {
 export type CentralSyncRequired = AuthTokenErrorInterface & {
   __typename: 'CentralSyncRequired';
   description: Scalars['String']['output'];
+};
+
+export type ClearSiteHardwareIdNode = {
+  __typename: 'ClearSiteHardwareIdNode';
+  id: Scalars['Int']['output'];
 };
 
 export type ClearSiteTokenNode = {
@@ -4536,6 +4546,7 @@ export type InvoiceFilterInput = {
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
   isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
   linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
+  linkedOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
   nameId?: InputMaybe<EqualFilterStringInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
@@ -10425,7 +10436,8 @@ export type UniqueValueViolation = InsertAssetCatalogueItemErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
   UpsertCampaignErrorInterface &
-  UpsertItemVariantErrorInterface & {
+  UpsertItemVariantErrorInterface &
+  UpsertSiteErrorInterface & {
     __typename: 'UniqueValueViolation';
     description: Scalars['String']['output'];
     field: UniqueValueKey;
@@ -11714,7 +11726,6 @@ export type UpsertSiteErrorInterface = {
 };
 
 export type UpsertSiteInput = {
-  clearHardwareId?: InputMaybe<Scalars['Boolean']['input']>;
   code?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['Int']['input'];
   name: Scalars['String']['input'];
