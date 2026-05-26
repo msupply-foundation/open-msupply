@@ -20,10 +20,10 @@ import { AppRoute } from '@openmsupply-client/config';
 import { PropsWithChildrenOnly } from '@common/types';
 
 export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
-  const { user, token } = useAuthContext();
+  const { user } = useAuthContext();
   const navigate = useNavigate();
   const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
-  const { isLoading } = useUserDetails(token);
+  const { isLoading } = useUserDetails();
   const t = useTranslation();
   const { getLocalisedFullName } = useIntlUtils();
   const LABEL_WIDTH = 150;

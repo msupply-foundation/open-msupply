@@ -68,7 +68,7 @@ export const useLoginForm = (
 
     const userDetails = queryClient.getQueryData<{
       stores?: { nodes?: { id: string; isDisabled?: boolean }[] };
-    }>(authApi.keys.me(token));
+    }>(authApi.keys.me());
     const enabledStoreCount =
       userDetails?.stores?.nodes?.filter(s => !s.isDisabled).length ?? 0;
     const skipPrefs = LocalStorage.getItem('/login/skip-store-selector') ?? {};

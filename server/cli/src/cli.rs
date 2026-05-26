@@ -22,6 +22,7 @@ use service::{
     login::{LoginInput, LoginService},
     plugin::validation::sign_plugin,
     service_provider::{ServiceContext, ServiceProvider},
+    session_store::SessionStore,
     settings::Settings,
     standard_reports::{ReportData, ReportsData, StandardReports},
     sync::{
@@ -29,7 +30,6 @@ use service::{
         sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
         synchroniser_driver::SynchroniserDriver,
     },
-    token_bucket::TokenBucket,
 };
 use std::{
     env::current_dir,
@@ -274,8 +274,8 @@ async fn initialise_from_central(
     let central_server_url = sync_settings.url.clone();
 
     let auth_data = AuthData {
-        auth_token_secret: "secret".to_string(),
-        token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
+        session_store: Arc::new(RwLock::new(SessionStore::new())),
+        cookie_suffix: "cli".to_string(),
         no_ssl: true,
         debug_no_access_control: false,
     };

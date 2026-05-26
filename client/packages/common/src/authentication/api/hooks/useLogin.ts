@@ -1,4 +1,4 @@
-import { AuthCookie, AuthError, setAuthCookie } from '../../AuthContext';
+import { AuthError, AuthState, setAuthState } from '../../AuthContext';
 import { useGetAuthToken } from './useGetAuthToken';
 import {
   AuthenticationCredentials,
@@ -83,7 +83,7 @@ export const getStore = async (
 };
 
 export const useLogin = (
-  setCookie: React.Dispatch<React.SetStateAction<AuthCookie | undefined>>
+  setState: React.Dispatch<React.SetStateAction<AuthState>>
 ) => {
   const { mutateAsync, isPending: isLoggingIn } = useGetAuthToken();
   const { changeLanguage, getLocaleCode, getUserLocale } = useIntlUtils();
@@ -132,16 +132,21 @@ export const useLogin = (
   };
 
   const login = async (username: string, password: string) => {
+    // The session cookie is set by the server in the `Set-Cookie` response header — JS never
+    // touches the token. We only use the response's `token` field as a "did login succeed?"
+    // signal for legacy reasons.
     const { token, error } = await mutateAsync({ username, password });
-    const userDetails = await getUserDetails(token);
-    queryClient.setQueryData(api.keys.me(token), userDetails);
+    const isLoggedIn = !!token;
+
+    const userDetails = await getUserDetails();
+    queryClient.setQueryData(api.keys.me(), userDetails);
     const store = await getStore(userDetails, mostRecentCredentials);
-    const permissions = await getUserPermissions(token, store);
+    const permissions = await getUserPermissions(store);
     setSkipRequest(skipNoStoreRequests);
 
-    const authCookie = {
+    const next: AuthState = {
+      isAuthenticated: isLoggedIn,
       store,
-      token,
       user: {
         id: userDetails?.userId ?? '',
         name: username,
@@ -154,7 +159,7 @@ export const useLogin = (
       },
     };
 
-    if (token) {
+    if (isLoggedIn) {
       const userLocale = getUserLocale(username);
       if (userLocale === undefined) {
         changeLanguage(
@@ -162,10 +167,10 @@ export const useLogin = (
         );
       }
       upsertMostRecentCredential(username, store);
-      setAuthCookie(authCookie);
-      setCookie(authCookie);
+      setAuthState(next);
+      setState(next);
     }
-    setLoginError(!!token, !!store);
+    setLoginError(isLoggedIn, !!store);
     setSkipRequest(
       () => LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned
     );

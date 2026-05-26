@@ -2,14 +2,12 @@ use actix_web::cookie::Cookie;
 use actix_web::http::header::COOKIE;
 use actix_web::web::{self};
 use actix_web::HttpRequest;
-use service::token::TokenService;
 use service::{
     auth::{
         validate_auth, AuthDeniedKind, AuthError, Resource, ResourceAccessRequest, ValidatedUser,
     },
     auth_data::AuthData,
     service_provider::{ServiceContext, ServiceProvider},
-    settings::is_develop,
 };
 
 mod database;
@@ -34,65 +32,32 @@ fn validate_request(
     service_provider: &ServiceProvider,
     auth_data: &AuthData,
 ) -> Result<ValidatedUser, AuthError> {
-    // TODO: Refactor to use authentication::validate_cookie_auth
-
     let service_context = service_provider
         .basic_context()
         .map_err(|err| AuthError::Denied(AuthDeniedKind::NotAuthenticated(err.to_string())))?;
 
-    // We use the refresh token to get the user's access token here, as the actual access token isn't easily passed as a header in a download link
-
-    // retrieve refresh token (from cookie)
-    // Lots of code copied from graphql/core/src/lib.rs refactor opportunity!
-    let refresh_token = request.headers().get(COOKIE).and_then(|header_value| {
-        header_value
-            .to_str()
-            .ok()
-            .and_then(|header| {
-                let cookies = header.split(' ').collect::<Vec<&str>>();
-                cookies
-                    .into_iter()
-                    .map(|raw_cookie| Cookie::parse(raw_cookie).ok())
-                    .find(|cookie_option| match &cookie_option {
-                        Some(cookie) => cookie.name() == "refresh_token",
-                        None => false,
-                    })
-                    .flatten()
-            })
-            .map(|cookie| cookie.value().to_owned())
+    // The support endpoint is hit from a regular browser session (e.g. download link), so we read
+    // the session token from the HttpOnly cookie. There's no longer a separate refresh token —
+    // the session cookie IS the auth token, and `validate_auth` slides its expiry as a side
+    // effect of validation.
+    let cookie_name = format!("session_{}", auth_data.cookie_suffix);
+    let session_token = request.headers().get(COOKIE).and_then(|header_value| {
+        header_value.to_str().ok().and_then(|header| {
+            header
+                .split(' ')
+                .filter_map(|raw_cookie| Cookie::parse(raw_cookie).ok())
+                .find(|cookie| cookie.name() == cookie_name)
+                .map(|cookie| cookie.value().to_owned())
+        })
     });
 
-    let refresh_token = match refresh_token {
-        Some(token) => token,
-        None => {
-            return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
-                "No refresh token found".to_string(),
-            )));
-        }
-    };
+    if session_token.is_none() {
+        return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
+            "No session cookie found".to_string(),
+        )));
+    }
 
-    let mut service = TokenService::new(
-        &auth_data.token_bucket,
-        auth_data.auth_token_secret.as_bytes(),
-        !is_develop(),
-    );
-    let max_age_token = service::auth_data::TOKEN_LIFETIME_SEC;
-    let max_age_refresh = service::auth_data::REFRESH_TOKEN_LIFETIME_SEC;
-    let pair = match service.refresh_token(&refresh_token, max_age_token, max_age_refresh, None) {
-        Ok(pair) => pair,
-        Err(err) => {
-            return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
-                format!("Error refreshing token: {err:?}"),
-            )));
-        }
-    };
-
-    validate_access(
-        service_provider,
-        &service_context,
-        auth_data,
-        Some(pair.token),
-    )
+    validate_access(service_provider, &service_context, auth_data, session_token)
 }
 
 /// Validates current user is authenticated and authorized

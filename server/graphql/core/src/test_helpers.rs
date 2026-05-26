@@ -13,7 +13,9 @@ use repository::{
     StorageConnection, StorageConnectionManager,
 };
 
-use service::{auth_data::AuthData, service_provider::ServiceProvider, token_bucket::TokenBucket};
+use service::{
+    auth_data::AuthData, service_provider::ServiceProvider, session_store::SessionStore,
+};
 
 use crate::{
     auth_data_from_request,
@@ -47,8 +49,8 @@ pub async fn run_test_gql_query<
     let loader_registry_data = actix_web::web::Data::new(LoaderRegistry { loaders });
 
     let auth_data = Data::new(AuthData {
-        auth_token_secret: "n/a".to_string(),
-        token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
+        session_store: Arc::new(RwLock::new(SessionStore::new())),
+        cookie_suffix: "test".to_string(),
         // TODO: configure ssl
         no_ssl: true,
         debug_no_access_control: true,
@@ -97,7 +99,7 @@ async fn graphql<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clon
     http_req: HttpRequest,
     req: GraphQLRequest,
 ) -> GraphQLResponse {
-    let user_data = auth_data_from_request(&http_req);
+    let user_data = auth_data_from_request(&http_req, "test");
     let query = req.into_inner().data(user_data);
     schema.execute(query).await.into()
 }
