@@ -341,24 +341,6 @@ impl<'a> SyncBufferRepository<'a> {
         Ok(result)
     }
 
-    /// Escape hatch: returns rows for the given table whose JSON `data` matches the LIKE pattern,
-    /// ordered by cursor DESC so callers see the most recent first.
-    pub fn find_by_table_and_data_like(
-        &self,
-        table_name: &str,
-        data_pattern: &str,
-    ) -> Result<Vec<SyncBufferRow>, RepositoryError> {
-        let result = sync_buffer::table
-            .filter(
-                sync_buffer::table_name
-                    .eq(table_name)
-                    .and(sync_buffer::data.like(data_pattern)),
-            )
-            .order(sync_buffer::cursor.desc())
-            .load(self.connection.lock().connection())?;
-        Ok(result)
-    }
-
     pub fn get_all(&self) -> Result<Vec<SyncBufferRow>, RepositoryError> {
         Ok(sync_buffer::table
             .order(sync_buffer::cursor.asc())
