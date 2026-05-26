@@ -167,7 +167,6 @@ export const OutboundLineEdit = ({
           onClick={() => handleSave(onClose)}
         />
       }
-      height={800}
       width={1200}
       contentProps={{
         sx: {

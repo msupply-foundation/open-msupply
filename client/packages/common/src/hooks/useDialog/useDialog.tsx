@@ -281,12 +281,28 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
           >
             {slideAnimation ? (
               <Slide in={slideConfig.in} direction={slideConfig.direction}>
-                <div style={{ flex: 1, minHeight: 0 }}>
+                <div
+                  style={{
+                    flex: 1,
+                    minHeight: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                >
                   {slideConfig.in && children}
                 </div>
               </Slide>
             ) : (
-              <div style={{ flex: 1, minHeight: 0 }}>{children}</div>
+              <div
+                style={{
+                  flex: 1,
+                  minHeight: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                {children}
+              </div>
             )}
           </DialogContent>
           <DialogActions

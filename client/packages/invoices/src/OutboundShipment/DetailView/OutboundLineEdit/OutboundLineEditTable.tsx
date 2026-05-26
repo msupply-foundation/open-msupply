@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import { MRT_ShowHideColumnsButton } from 'material-react-table';
 import {
   Divider,
   Box,
@@ -118,31 +119,29 @@ export const OutboundLineEditTable = ({
     [draftLines, nonAllocatableLines]
   );
 
+  // Disable MRT's built-in bottom toolbar — we render our own outside the
+  // scrollable table so it can never be scrolled off-screen.
   const table = useSimpleMaterialTable<DraftStockOutLineFragment>({
     tableId: 'outbound-line-edit',
     columns,
     data: lines,
     getIsRestrictedRow: row => getIsDisabled(row.original),
-    bottomToolbarContent: (
-      <Box
-        sx={{
-          display: 'flex',
-          width: '100%',
-          justifyContent: 'flex-end',
-        }}
-      >
-        <PlaceholderAndTotal
-          allocatedQuantity={allocatedQuantity + (placeholderQuantity ?? 0)}
-          inDoses={allocateIn.type === AllocateInType.Doses}
-          placeholderQuantity={
-            // If no stock lines, show placeholder: 0. Otherwise don't show placeholder unless >0
-            placeholderQuantity === 0 && lines.length
-              ? null
-              : placeholderQuantity
-          }
-        />
-      </Box>
-    ),
+    enableBottomToolbar: false,
+    muiTablePaperProps: {
+      sx: {
+        width: '100%',
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        '& > .MuiBox-root': { minHeight: '2.5rem', height: 'unset' },
+        '& > .MuiBox-root > .MuiBox-root': { paddingY: 0 },
+        boxShadow: 'none',
+      },
+    },
+    muiTableContainerProps: {
+      sx: { flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto' },
+    },
     renderEmptyRowsFallback: () => (
       <Box sx={{ margin: 'auto' }}>
         <Typography>{t('messages.no-stock-available')}</Typography>
@@ -161,17 +160,41 @@ export const OutboundLineEditTable = ({
       }}
     >
       <Divider margin={10} />
+      {/* Table takes remaining space; rows scroll inside the MRT TableContainer */}
       <Box
         style={{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
           minHeight: 0,
-          overflowX: 'auto',
-          overflowY: 'auto',
+          overflow: 'hidden',
         }}
       >
         <MaterialTable table={table} />
+      </Box>
+      {/* Bottom bar is a flex sibling — always visible below the table */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          width: '100%',
+          justifyContent: 'space-between',
+          borderTop: '1px solid',
+          borderColor: 'divider',
+          flexShrink: 0,
+        }}
+      >
+        <MRT_ShowHideColumnsButton table={table} />
+        <PlaceholderAndTotal
+          allocatedQuantity={allocatedQuantity + (placeholderQuantity ?? 0)}
+          inDoses={allocateIn.type === AllocateInType.Doses}
+          placeholderQuantity={
+            // If no stock lines, show placeholder: 0. Otherwise don't show placeholder unless >0
+            placeholderQuantity === 0 && lines.length
+              ? null
+              : placeholderQuantity
+          }
+        />
       </Box>
     </Box>
   );
