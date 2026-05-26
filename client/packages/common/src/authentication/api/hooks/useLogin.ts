@@ -82,9 +82,7 @@ export const getStore = async (
   return !!stores && stores?.length > 0 ? stores?.[0] : undefined;
 };
 
-export const useLogin = (
-  setState: React.Dispatch<React.SetStateAction<AuthState>>
-) => {
+export const useLogin = () => {
   const { mutateAsync, isPending: isLoggingIn } = useGetAuthToken();
   const { changeLanguage, getLocaleCode, getUserLocale } = useIntlUtils();
   const { setSkipRequest } = useGql();
@@ -168,7 +166,6 @@ export const useLogin = (
       }
       upsertMostRecentCredential(username, store);
       setAuthState(next);
-      setState(next);
     }
     setLoginError(isLoggedIn, !!store);
     setSkipRequest(

@@ -5,6 +5,7 @@ import {
   FlatButton,
   PaperPopoverSection,
   useAuthContext,
+  useSelectStore,
   useTranslation,
   useNavigate,
   useUserDetails,
@@ -17,7 +18,8 @@ import { PropsWithChildrenOnly, UserStoreNodeFragment } from '@common/types';
 export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { store, setStore } = useAuthContext();
+  const { store } = useAuthContext();
+  const setStore = useSelectStore();
   const { data, isLoading } = useUserDetails();
   const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
 

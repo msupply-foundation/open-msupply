@@ -13,6 +13,7 @@ import {
   UserStoreNodeFragment,
   getMostRecentCredentials,
   useAuthContext,
+  useSelectStore,
   useLocalStorage,
   useTranslation,
   useUserDetails,
@@ -98,7 +99,8 @@ export const LoginStoreSelectorPanel = ({
     (storeId: string) => `${listboxId}-${storeId}`,
     [listboxId]
   );
-  const { store: currentStore, setStore } = useAuthContext();
+  const { store: currentStore } = useAuthContext();
+  const setStore = useSelectStore();
   const { data, isLoading } = useUserDetails();
   const [skipPrefs, setSkipPrefs] = useLocalStorage(
     '/login/skip-store-selector',
