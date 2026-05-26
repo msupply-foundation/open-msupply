@@ -165,23 +165,21 @@ SiteEditModalProps) => {
               }
             />
           )}
-          {isExisting && (
+          {isExisting && showClearButtons && (
             <InputWithLabelRow
               key="sync-token"
               label={t('label.clear-sync-token')}
               labelWidth="130px"
               Input={
                 <Box display="flex" justifyContent="flex-end" flex={1}>
-                  {showClearButtons && (
-                    <LoadingButton
-                      color="secondary"
-                      variant="contained"
-                      startIcon={<XCircleIcon />}
-                      isLoading={isClearingSyncToken}
-                      label={t('label.clear-sync-token')}
-                      onClick={() => confirmClearSyncToken()}
-                    />
-                  )}
+                  <LoadingButton
+                    color="secondary"
+                    variant="contained"
+                    startIcon={<XCircleIcon />}
+                    isLoading={isClearingSyncToken}
+                    label={t('label.clear-sync-token')}
+                    onClick={() => confirmClearSyncToken()}
+                  />
                 </Box>
               }
             />
