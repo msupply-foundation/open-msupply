@@ -70,7 +70,8 @@ export type UpsertSiteMutation = {
             error:
               | { __typename: 'CodeRequired'; description: string }
               | { __typename: 'NameRequired'; description: string }
-              | { __typename: 'PasswordRequired'; description: string };
+              | { __typename: 'PasswordRequired'; description: string }
+              | { __typename: 'UniqueValueViolation'; description: string };
           };
     };
   };

@@ -10436,7 +10436,8 @@ export type UniqueValueViolation = InsertAssetCatalogueItemErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
   UpsertCampaignErrorInterface &
-  UpsertItemVariantErrorInterface & {
+  UpsertItemVariantErrorInterface &
+  UpsertSiteErrorInterface & {
     __typename: 'UniqueValueViolation';
     description: Scalars['String']['output'];
     field: UniqueValueKey;
@@ -11725,7 +11726,6 @@ export type UpsertSiteErrorInterface = {
 };
 
 export type UpsertSiteInput = {
-  clearHardwareId?: InputMaybe<Scalars['Boolean']['input']>;
   code?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['Int']['input'];
   name: Scalars['String']['input'];
