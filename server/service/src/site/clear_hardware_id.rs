@@ -9,7 +9,7 @@ pub enum ClearSiteHardwareIdError {
 }
 
 /// Clear the `hardware_id` for the site with id `site_id`.
-/// Returns `Result`` with the site's id if successful or a `ClearSiteHardwareIdError`
+/// Returns `Result` with the site's id if successful or a `ClearSiteHardwareIdError`
 pub fn clear_site_hardware_id(
     ctx: &ServiceContext,
     site_id: i32,
