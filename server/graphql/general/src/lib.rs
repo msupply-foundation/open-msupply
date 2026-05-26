@@ -69,8 +69,8 @@ impl GeneralQueries {
         env!("CARGO_PKG_VERSION").to_string()
     }
 
-    /// Retrieves a new auth bearer and refresh token
-    /// The refresh token is returned as a cookie
+    /// Authenticate with username + password. Issues an opaque session token, returned both in
+    /// the response body and as an HttpOnly session cookie. There is no separate refresh token.
     pub async fn auth_token(
         &self,
         ctx: &Context<'_>,
@@ -93,8 +93,9 @@ impl GeneralQueries {
         logout(ctx)
     }
 
-    /// Retrieves a new auth bearer and refresh token
-    /// The refresh token is returned as a cookie
+    /// Slides the existing session's expiry forward (no token rotation). Kept for backwards
+    /// compatibility — web clients no longer need to call this, since the session slides on every
+    /// authenticated request.
     pub async fn refresh_token(&self, ctx: &Context<'_>) -> RefreshTokenResponse {
         refresh_token(ctx)
     }
