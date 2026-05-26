@@ -65,6 +65,7 @@ export const AdditionalInfoSectionComponent: FC = () => {
             update({ comment: e.target.value });
           }}
           value={commentBuffer}
+          inputProps={{ 'data-testid': 'comment-field' }}
         />
       </Grid>
     </DetailPanelSection>
