@@ -142,10 +142,7 @@ export const SitesList = () => {
           updateDraft={updateDraft}
           clearSyncToken={clearSyncToken}
           isClearingSyncToken={isClearingSyncToken}
-          clearHardwareId={async (siteId: number) => {
-            await clearHardwareId(siteId);
-            updateDraft({ hardwareId: null });
-          }}
+          clearHardwareId={clearHardwareId}
           isClearingHardwareId={isClearingHardwareId}
           currentSiteId={syncSettings?.syncSiteId}
         />

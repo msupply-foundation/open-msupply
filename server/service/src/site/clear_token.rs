@@ -9,9 +9,8 @@ pub enum ClearSiteTokenError {
 }
 
 pub fn clear_site_token(ctx: &ServiceContext, site_id: i32) -> Result<i32, ClearSiteTokenError> {
-    let current_site_id = KeyValueStoreRepository::new(&ctx.connection)
-        .get_i32(KeyType::SettingsSyncSiteId)
-        .map_err(ClearSiteTokenError::DatabaseError)?;
+    let current_site_id =
+        KeyValueStoreRepository::new(&ctx.connection).get_i32(KeyType::SettingsSyncSiteId)?;
 
     if current_site_id == Some(site_id) {
         return Err(ClearSiteTokenError::SameSite);
