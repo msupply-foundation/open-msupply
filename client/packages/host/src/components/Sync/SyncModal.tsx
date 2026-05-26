@@ -8,6 +8,8 @@ import {
   RadioIcon,
   Typography,
   useAuthContext,
+  useSelectStore,
+  useUpdateUserInfo,
   useFormatDateTime,
   useNativeClient,
   useQueryClient,
@@ -110,7 +112,9 @@ const useHostSync = (enabled: boolean) => {
 export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { userHasPermission } = useAuthContext();
+  const { userHasPermission, store } = useAuthContext();
+  const setStore = useSelectStore();
+  const { isLoading: updateUserIsLoading, updateUser } = useUpdateUserInfo();
   const theme = useAppTheme();
   const { localisedTime, localisedDate } = useFormatDateTime();
   const isExtraSmallScreen = useIsExtraSmallScreen();
@@ -122,7 +126,6 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
     isLoading,
     onManualSync,
   } = useHostSync(open);
-  const { updateUserIsLoading, updateUser, setStore, store } = useAuthContext();
   const error =
     syncStatus?.error &&
     mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
