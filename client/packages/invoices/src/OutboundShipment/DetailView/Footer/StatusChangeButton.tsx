@@ -184,6 +184,7 @@ export const StatusChangeButton = () => {
       onSelectOption={setSelectedOption}
       Icon={<ArrowRightIcon />}
       onClick={onStatusClick}
+      testId="status-change-button"
     />
   );
 };

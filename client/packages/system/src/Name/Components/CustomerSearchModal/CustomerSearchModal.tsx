@@ -34,7 +34,12 @@ const CustomerSearchComponent: FC<NameSearchProps> = props => {
   const { open, onClose } = props;
 
   return (
-    <BasicModal open={open} onClose={onClose} height={modalHeight}>
+    <BasicModal
+      open={open}
+      onClose={onClose}
+      height={modalHeight}
+      data-testid="customer-search-modal"
+    >
       <ModalTitle title={t('customers')} />
       <Box padding={2}>{input}</Box>
     </BasicModal>
