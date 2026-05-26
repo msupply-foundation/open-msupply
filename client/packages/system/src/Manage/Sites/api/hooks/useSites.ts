@@ -66,7 +66,7 @@ export const useSites = (queryParams?: ListParams) => {
   } = useClearSiteToken();
 
   const {
-    mutateAsync: clearHardwareId,
+    mutateAsync: clearHardwareIdMutation,
     isPending: isClearingHardwareId,
     error: clearHardwareIdError,
   } = useClearHardwareId();
@@ -81,6 +81,14 @@ export const useSites = (queryParams?: ListParams) => {
 
   const clearSyncToken = async (siteId: number) => {
     return await clearSyncTokenMutation(siteId);
+  };
+
+  // Wrap so the draft reflects the cleared state without waiting for the
+  // refetch — keeps the modal UI in sync with the mutation.
+  const clearHardwareId = async (siteId: number) => {
+    const result = await clearHardwareIdMutation(siteId);
+    updateDraft({ hardwareId: null });
+    return result;
   };
 
   return {

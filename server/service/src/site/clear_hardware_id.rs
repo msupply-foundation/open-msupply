@@ -14,9 +14,8 @@ pub fn clear_site_hardware_id(
     ctx: &ServiceContext,
     site_id: i32,
 ) -> Result<i32, ClearSiteHardwareIdError> {
-    let current_site_id = KeyValueStoreRepository::new(&ctx.connection)
-        .get_i32(KeyType::SettingsSyncSiteId)
-        .map_err(ClearSiteHardwareIdError::DatabaseError)?;
+    let current_site_id =
+        KeyValueStoreRepository::new(&ctx.connection).get_i32(KeyType::SettingsSyncSiteId)?;
 
     if current_site_id == Some(site_id) {
         return Err(ClearSiteHardwareIdError::SameSite);
