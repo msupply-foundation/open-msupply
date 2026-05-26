@@ -1,9 +1,10 @@
 use crate::service_provider::ServiceContext;
-use repository::{RepositoryError, SiteRow, SiteRowRepository};
+use repository::{KeyType, KeyValueStoreRepository, RepositoryError, SiteRow, SiteRowRepository};
 
 #[derive(PartialEq, Debug)]
 pub enum ClearSiteHardwareIdError {
     SiteDoesNotExist,
+    SameSite,
     DatabaseError(RepositoryError),
 }
 
@@ -13,6 +14,14 @@ pub fn clear_site_hardware_id(
     ctx: &ServiceContext,
     site_id: i32,
 ) -> Result<i32, ClearSiteHardwareIdError> {
+    let current_site_id = KeyValueStoreRepository::new(&ctx.connection)
+        .get_i32(KeyType::SettingsSyncSiteId)
+        .map_err(ClearSiteHardwareIdError::DatabaseError)?;
+
+    if current_site_id == Some(site_id) {
+        return Err(ClearSiteHardwareIdError::SameSite);
+    }
+
     ctx.connection
         .transaction_sync(|connection| {
             let repo = SiteRowRepository::new(connection);
@@ -38,7 +47,10 @@ impl From<RepositoryError> for ClearSiteHardwareIdError {
 
 #[cfg(test)]
 mod tests {
-    use repository::{mock::MockDataInserts, test_db::setup_all, StorageConnection, SyncVersion};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, KeyType, KeyValueStoreRepository,
+        StorageConnection, SyncVersion,
+    };
 
     use crate::service_provider::ServiceProvider;
 
@@ -70,6 +82,25 @@ mod tests {
         assert_eq!(
             clear_site_hardware_id(&context, 1001),
             Err(ClearSiteHardwareIdError::SiteDoesNotExist)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn clear_site_hardware_id_same_site_errors() {
+        let (_, connection, connection_manager, _) =
+            setup_all("clear_site_hardware_id_same_site", MockDataInserts::none()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+
+        let site = site(&connection, Some("hw-id".to_string()));
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(site.id))
+            .unwrap();
+
+        assert_eq!(
+            clear_site_hardware_id(&context, site.id),
+            Err(ClearSiteHardwareIdError::SameSite)
         );
     }
 

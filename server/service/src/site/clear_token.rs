@@ -1,13 +1,22 @@
 use crate::service_provider::ServiceContext;
-use repository::{RepositoryError, SiteRow, SiteRowRepository};
+use repository::{KeyType, KeyValueStoreRepository, RepositoryError, SiteRow, SiteRowRepository};
 
 #[derive(PartialEq, Debug)]
 pub enum ClearSiteTokenError {
     SiteDoesNotExist,
+    SameSite,
     DatabaseError(RepositoryError),
 }
 
 pub fn clear_site_token(ctx: &ServiceContext, site_id: i32) -> Result<i32, ClearSiteTokenError> {
+    let current_site_id = KeyValueStoreRepository::new(&ctx.connection)
+        .get_i32(KeyType::SettingsSyncSiteId)
+        .map_err(ClearSiteTokenError::DatabaseError)?;
+
+    if current_site_id == Some(site_id) {
+        return Err(ClearSiteTokenError::SameSite);
+    }
+
     ctx.connection
         .transaction_sync(|connection| {
             let repo = SiteRowRepository::new(connection);
@@ -36,8 +45,8 @@ mod tests {
     use super::*;
     use crate::service_provider::ServiceProvider;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, SiteRow, SiteRowRepository, StorageConnection,
-        SyncVersion,
+        mock::MockDataInserts, test_db::setup_all, KeyType, KeyValueStoreRepository, SiteRow,
+        SiteRowRepository, StorageConnection, SyncVersion,
     };
 
     fn site(connection: &StorageConnection, token: Option<String>) -> SiteRow {
@@ -66,6 +75,25 @@ mod tests {
         assert_eq!(
             clear_site_token(&context, 999),
             Err(ClearSiteTokenError::SiteDoesNotExist)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn clear_site_token_same_site_errors() {
+        let (_, connection, connection_manager, _) =
+            setup_all("clear_site_token_same_site", MockDataInserts::none()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+
+        let site = site(&connection, Some("token".to_string()));
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(site.id))
+            .unwrap();
+
+        assert_eq!(
+            clear_site_token(&context, site.id),
+            Err(ClearSiteTokenError::SameSite)
         );
     }
 
