@@ -15,6 +15,7 @@ import {
 import { Toolbar } from './Toolbar';
 import { SiteEditModal } from './SiteEditModal';
 import { SiteRowFragment, defaultDraftSite, DraftSite, useSites } from '../api';
+import { useSyncSettings } from '../../../Sync/api/hooks/settings/useSyncSettings';
 
 // TODO: Site create/edit/delete is disabled for now and will be revisited in
 // the future.
@@ -40,6 +41,7 @@ export const SitesList = () => {
   } = useSites(queryParams);
 
   const { isOpen, onClose, onOpen } = useEditModal();
+  const { data: syncSettings } = useSyncSettings();
   // const { error, success } = useNotification();
 
   const handleClose = () => {
@@ -145,6 +147,7 @@ export const SitesList = () => {
             updateDraft({ hardwareId: null });
           }}
           isClearingHardwareId={isClearingHardwareId}
+          currentSiteId={syncSettings?.syncSiteId}
         />
       )}
       {/* <Footer
