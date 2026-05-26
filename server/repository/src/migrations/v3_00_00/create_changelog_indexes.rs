@@ -21,6 +21,8 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
+            CREATE INDEX index_changelog_table_name
+                ON changelog (table_name);
             CREATE INDEX index_changelog_source_site_id
                 ON changelog (source_site_id);
             CREATE INDEX index_changelog_store_id

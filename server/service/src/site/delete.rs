@@ -68,7 +68,6 @@ mod tests {
                 code: Some("code1".to_string()),
                 name: "Site A".to_string(),
                 password: Some("password".to_string()),
-                clear_hardware_id: false,
             },
         )
         .unwrap();

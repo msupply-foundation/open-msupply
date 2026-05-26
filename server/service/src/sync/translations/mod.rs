@@ -367,11 +367,28 @@ impl PushTranslateResult {
         table_name: &str,
         record_data: serde_json::Value,
     ) -> Self {
+        Self::upsert_with_record_id(
+            changelog,
+            table_name,
+            changelog.record_id.clone(),
+            record_data,
+        )
+    }
+
+    /// Like `upsert`, but lets the translator override the wire `recordId`.
+    /// Needed when the row's local primary key differs from the OG primary
+    /// key (e.g. `site.id` is an i32 while OG keys on the `og_id` UUID).
+    pub(crate) fn upsert_with_record_id(
+        changelog: &ChangelogRow,
+        table_name: &str,
+        record_id: String,
+        record_data: serde_json::Value,
+    ) -> Self {
         Self::PushRecord(vec![PushSyncRecord {
             cursor: changelog.cursor,
             record: CommonSyncRecord {
                 table_name: table_name.to_string(),
-                record_id: changelog.record_id.clone(),
+                record_id,
                 action: SyncAction::Update,
                 record_data,
             },
