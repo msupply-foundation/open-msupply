@@ -10,22 +10,6 @@ use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-// Default `store` mapping: everything except `logo`. Used by all joins and
-// generic reads. The logo column is large (base64-encoded image) and is
-// almost never needed alongside other store columns — fetch it via
-// `store_logo_row` instead.
-table! {
-    store (id) {
-        id -> Text,
-        name_link_id -> Text,
-        code -> Text,
-        site_id -> Integer,
-        store_mode -> crate::db_diesel::store_row::StoreModeMapping,
-        created_date -> Nullable<Date>,
-        is_disabled -> Bool,
-    }
-}
-
 // Just `(id, logo)` on the same underlying SQL `store` table. Two callers:
 // the GraphQL dataloader that resolves `StoreNode.logo` lazily, and sync
 // translation which writes the logo separately from the lean `StoreRow`.
@@ -46,6 +30,10 @@ pub enum StoreMode {
     Dispensary,
 }
 
+// Default `store` mapping: everything except `logo`. Used by all joins and
+// generic reads. The logo column is large (base64-encoded image) and is
+// almost never needed alongside other store columns — fetch it via
+// `store_logo_row` instead.
 define_linked_tables! {
     view: store = "store_view",
     core: store_with_links = "store",
@@ -54,7 +42,6 @@ define_linked_tables! {
     shared: {
         code -> Text,
         site_id -> Integer,
-        logo -> Nullable<Text>,
         store_mode -> crate::db_diesel::store_row::StoreModeMapping,
         created_date -> Nullable<Date>,
         is_disabled -> Bool,
