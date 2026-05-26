@@ -7,11 +7,7 @@ export const useRequisitionCounts = () => {
 
   const { data, ...rest } = useQuery({
     queryKey: [DASHBOARD, REQUISITION, storeId],
-
-    queryFn: () =>
-      api.requisitionCounts({
-        storeId,
-      }),
+    queryFn: () => api.dashboardRequisitionCounts({ storeId }),
     enabled: !!storeId,
     retry: false,
   });

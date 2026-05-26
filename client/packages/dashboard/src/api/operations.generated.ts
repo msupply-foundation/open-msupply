@@ -72,23 +72,11 @@ export type OutboundCountsQuery = {
   };
 };
 
-export type InternalOrderCountsQueryVariables = Types.Exact<{
+export type DashboardRequisitionCountsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
 
-export type InternalOrderCountsQuery = {
-  __typename: 'Queries';
-  requisitionCounts: {
-    __typename: 'RequisitionCounts';
-    request: { __typename: 'RequestRequisitionCounts'; draft: number };
-  };
-};
-
-export type RequisitionCountsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-}>;
-
-export type RequisitionCountsQuery = {
+export type DashboardRequisitionCountsQuery = {
   __typename: 'Queries';
   requisitionCounts: {
     __typename: 'RequisitionCounts';
@@ -97,6 +85,7 @@ export type RequisitionCountsQuery = {
       __typename: 'EmergencyResponseRequisitionCounts';
       new: number;
     };
+    request: { __typename: 'RequestRequisitionCounts'; draft: number };
   };
 };
 
@@ -168,23 +157,17 @@ export const OutboundCountsDocument = gql`
     }
   }
 `;
-export const InternalOrderCountsDocument = gql`
-  query internalOrderCounts($storeId: String!) {
-    requisitionCounts(storeId: $storeId) {
-      request {
-        draft
-      }
-    }
-  }
-`;
-export const RequisitionCountsDocument = gql`
-  query requisitionCounts($storeId: String!) {
+export const DashboardRequisitionCountsDocument = gql`
+  query dashboardRequisitionCounts($storeId: String!) {
     requisitionCounts(storeId: $storeId) {
       response {
         new
       }
       emergency {
         new
+      }
+      request {
+        draft
       }
     }
   }
@@ -291,38 +274,20 @@ export function getSdk(
         variables
       );
     },
-    internalOrderCounts(
-      variables: InternalOrderCountsQueryVariables,
+    dashboardRequisitionCounts(
+      variables: DashboardRequisitionCountsQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<InternalOrderCountsQuery> {
+    ): Promise<DashboardRequisitionCountsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InternalOrderCountsQuery>({
-            document: InternalOrderCountsDocument,
+          client.request<DashboardRequisitionCountsQuery>({
+            document: DashboardRequisitionCountsDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'internalOrderCounts',
-        'query',
-        variables
-      );
-    },
-    requisitionCounts(
-      variables: RequisitionCountsQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
-    ): Promise<RequisitionCountsQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<RequisitionCountsQuery>({
-            document: RequisitionCountsDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'requisitionCounts',
+        'dashboardRequisitionCounts',
         'query',
         variables
       );

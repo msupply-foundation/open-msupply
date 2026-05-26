@@ -46,21 +46,16 @@ query outboundCounts($storeId: String!) {
   }
 }
 
-query internalOrderCounts($storeId: String!) {
-  requisitionCounts(storeId: $storeId) {
-    request {
-      draft
-    }
-  }
-}
-
-query requisitionCounts($storeId: String!) {
+query dashboardRequisitionCounts($storeId: String!) {
   requisitionCounts(storeId: $storeId) {
     response {
       new
     }
     emergency {
       new
+    }
+    request {
+      draft
     }
   }
 }
