@@ -159,7 +159,7 @@ export const OutboundLineEditTable = ({
         overflow: 'hidden',
       }}
     >
-      <Divider margin={10} />
+      <Divider margin={4} />
       {/* Table takes remaining space; rows scroll inside the MRT TableContainer */}
       <Box
         style={{

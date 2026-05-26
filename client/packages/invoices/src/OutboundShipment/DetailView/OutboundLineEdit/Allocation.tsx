@@ -8,7 +8,6 @@ import {
   Grid,
   useIntlUtils,
   BasicSpinner,
-  Divider,
   useFormatNumber,
   usePreferences,
 } from '@openmsupply-client/common';
@@ -165,10 +164,8 @@ const AllocationInner = () => {
         </Grid>
       </ModalRow>
       <Grid container gap="4px" width="100%">
-        <Divider margin={10} />
-
         <Box display="flex" alignItems="flex-start" gap={2}>
-          <Grid container alignItems="center" pt={1} gap={1}>
+          <Grid container alignItems="center" pt={0} gap={1}>
             <AutoAllocateField />
             <AllocateInSelector includePackSizeOptions />
           </Grid>
