@@ -153,32 +153,6 @@ export type IsCentralServerQuery = {
   isCentralServer: boolean;
 };
 
-export type RefreshTokenQueryVariables = Types.Exact<{ [key: string]: never }>;
-
-export type RefreshTokenQuery = {
-  __typename: 'Queries';
-  refreshToken:
-    | { __typename: 'RefreshToken'; token: string }
-    | {
-        __typename: 'RefreshTokenError';
-        error:
-          | {
-              __typename: 'DatabaseError';
-              description: string;
-              fullError: string;
-            }
-          | {
-              __typename: 'InternalError';
-              description: string;
-              fullError: string;
-            }
-          | { __typename: 'InvalidToken'; description: string }
-          | { __typename: 'NoRefreshTokenProvided'; description: string }
-          | { __typename: 'NotARefreshToken'; description: string }
-          | { __typename: 'TokenExpired'; description: string };
-      };
-};
-
 export type PermissionsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
@@ -409,48 +383,6 @@ export const IsCentralServerDocument = gql`
     isCentralServer
   }
 `;
-export const RefreshTokenDocument = gql`
-  query refreshToken {
-    refreshToken {
-      ... on RefreshToken {
-        __typename
-        token
-      }
-      ... on RefreshTokenError {
-        __typename
-        error {
-          description
-          ... on DatabaseError {
-            __typename
-            description
-            fullError
-          }
-          ... on TokenExpired {
-            __typename
-            description
-          }
-          ... on NotARefreshToken {
-            __typename
-            description
-          }
-          ... on NoRefreshTokenProvided {
-            __typename
-            description
-          }
-          ... on InvalidToken {
-            __typename
-            description
-          }
-          ... on InternalError {
-            __typename
-            description
-            fullError
-          }
-        }
-      }
-    }
-  }
-`;
 export const PermissionsDocument = gql`
   query permissions($storeId: String!) {
     me {
@@ -640,24 +572,6 @@ export function getSdk(
             signal,
           }),
         'isCentralServer',
-        'query',
-        variables
-      );
-    },
-    refreshToken(
-      variables?: RefreshTokenQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
-    ): Promise<RefreshTokenQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<RefreshTokenQuery>({
-            document: RefreshTokenDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'refreshToken',
         'query',
         variables
       );
