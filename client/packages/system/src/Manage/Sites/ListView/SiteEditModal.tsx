@@ -16,6 +16,7 @@ import {
 } from '@openmsupply-client/common';
 import { DraftSite, useSiteStoresDraft } from '../api';
 import { SiteStoresSection } from './SiteStoresSection';
+import { useSync } from '../../../Sync';
 
 // TODO: Edit/delete is disabled for now and will be revisited in the future.
 interface SiteEditModalProps {
@@ -27,7 +28,6 @@ interface SiteEditModalProps {
   isClearingSyncToken: boolean;
   clearHardwareId: (siteId: number) => Promise<unknown>;
   isClearingHardwareId: boolean;
-  currentSiteId: number | null | undefined;
   // upsert: (afterUpsert: () => Promise<void>) => Promise<void>;
   // onDelete: () => void;
 }
@@ -41,7 +41,6 @@ export const SiteEditModal = ({
   isClearingSyncToken,
   clearHardwareId,
   isClearingHardwareId,
-  currentSiteId,
 }: // upsert,
 // onDelete,
 SiteEditModalProps) => {
@@ -49,6 +48,8 @@ SiteEditModalProps) => {
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const { id, code, name, hardwareId, isNew } = site;
   const isExisting = !isNew;
+  const { data: syncSettings } = useSync.settings.syncSettings();
+  const currentSiteId = syncSettings?.syncSiteId;
   const showClearButtons = currentSiteId != null && currentSiteId !== id;
 
   // const isValidCode = code.trim().length > 0 || (isExisting && code === '');
