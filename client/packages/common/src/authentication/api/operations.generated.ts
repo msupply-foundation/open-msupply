@@ -153,6 +153,13 @@ export type IsCentralServerQuery = {
   isCentralServer: boolean;
 };
 
+export type LogoutQueryVariables = Types.Exact<{ [key: string]: never }>;
+
+export type LogoutQuery = {
+  __typename: 'Queries';
+  logout: { __typename: 'Logout'; userId: string };
+};
+
 export type PermissionsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
@@ -383,6 +390,16 @@ export const IsCentralServerDocument = gql`
     isCentralServer
   }
 `;
+export const LogoutDocument = gql`
+  query logout {
+    logout {
+      ... on Logout {
+        __typename
+        userId
+      }
+    }
+  }
+`;
 export const PermissionsDocument = gql`
   query permissions($storeId: String!) {
     me {
@@ -572,6 +589,24 @@ export function getSdk(
             signal,
           }),
         'isCentralServer',
+        'query',
+        variables
+      );
+    },
+    logout(
+      variables?: LogoutQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<LogoutQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<LogoutQuery>({
+            document: LogoutDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'logout',
         'query',
         variables
       );

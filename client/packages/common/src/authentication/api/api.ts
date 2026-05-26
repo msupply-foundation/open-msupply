@@ -88,6 +88,16 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
       const result = await sdk.isCentralServer();
       return result.isCentralServer;
     },
+    // Revokes the server-side session and clears the HttpOnly cookie. Best-effort: if the call
+    // fails (network down, session already expired, etc.) we still proceed with client-side
+    // cleanup — the goal is "ensure no live session", not "confirm with the server".
+    logout: async () => {
+      try {
+        await sdk.logout();
+      } catch {
+        // ignore
+      }
+    },
     // Identity is read from the HttpOnly session cookie. No Authorization header needed.
     me: async () => {
       try {

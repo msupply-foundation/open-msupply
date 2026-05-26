@@ -5,7 +5,7 @@ import {
   useInterval,
   LoadingButton,
   useHostContext,
-  useAuthContext,
+  useLogout,
   LocalStorage,
   useFormatDateTime,
   BoxedErrorWithDetails,
@@ -20,7 +20,7 @@ import { useHost } from '../../api';
 export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
   const t = useTranslation();
   const { setPageTitle } = useHostContext();
-  const { logout } = useAuthContext();
+  const logout = useLogout();
   const hashInput = {
     logo: LocalStorage.getItem('/theme/logohash') ?? '',
     theme: LocalStorage.getItem('/theme/customhash') ?? '',
