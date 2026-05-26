@@ -92,4 +92,13 @@ impl PluginMutations {
     ) -> Result<plugin_data::mutations::update::UpdateResponse> {
         plugin_data::mutations::update::update_plugin_data(ctx, &store_id, input)
     }
+
+    async fn delete_plugin_data(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<plugin_data::mutations::delete::DeleteResponse> {
+        plugin_data::mutations::delete::delete_plugin_data(ctx, &store_id, id)
+    }
 }
