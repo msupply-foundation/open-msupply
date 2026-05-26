@@ -48,6 +48,7 @@ use service::{
 
 use actix_web::{web, web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
+use std::time::Instant;
 use util::format_error;
 
 mod authentication;
@@ -115,6 +116,7 @@ pub async fn start_server(
     }
 
     info!("Run DB migrations...");
+    let migrations_start = Instant::now();
     let connection = connection_manager.connection().unwrap();
     let (version, messages) = match migrate(&connection, None) {
         Ok(result) => result,
@@ -123,6 +125,10 @@ pub async fn start_server(
             std::process::exit(1);
         }
     };
+    info!(
+        "DB migrations completed in {} ms",
+        migrations_start.elapsed().as_millis()
+    );
     // Log the server starting message with the startup timestamp
     let status_log = StatusLog(&connection);
     status_log.no_console_with_timestamp(&server_start_message, server_start_timestamp);
@@ -141,13 +147,13 @@ pub async fn start_server(
     // Wire transaction notifications to the subscription worker.
     // Fired after outermost transaction commits.
     let commit_trigger = subscription_trigger.clone();
-    connection_manager.set_on_commit(std::sync::Arc::new(move |notification| {
-        match notification {
+    connection_manager.set_on_commit(std::sync::Arc::new(
+        move |notification| match notification {
             repository::TransactionNotification::ChangelogInsert => {
                 commit_trigger.send(SubscriptionTrigger::PushQueueChanged);
             }
-        }
-    }));
+        },
+    ));
     let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
     let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init(file_sync_trigger.clone()); // Cloning as we want to expose this for stop messages
     let (ledger_fix_trigger, ledger_fix_driver) = LedgerFixDriver::init();
@@ -164,7 +170,12 @@ pub async fn start_server(
         subscription_trigger,
     ));
     let loaders = get_loaders(&connection_manager, service_provider.clone()).await;
+    let cert_start = Instant::now();
     let certificates = Certificates::try_load(&settings.server).unwrap();
+    info!(
+        "Certificates loaded in {} ms",
+        cert_start.elapsed().as_millis()
+    );
     let token_bucket = Arc::new(RwLock::new(TokenBucket::new()));
     let token_secret = get_or_create_token_secret(&connection_manager.connection().unwrap());
     let auth = auth_data(&settings.server, token_bucket, token_secret, &certificates);
@@ -278,10 +289,7 @@ pub async fn start_server(
     } else {
         OperationalStatus::Initialising
     };
-    info!(
-        "Creating graphql schema in {:?} mode..",
-        initial_status
-    );
+    info!("Creating graphql schema in {:?} mode..", initial_status);
 
     let validated_plugins = ValidatedPluginBucket::new(&settings.server.base_dir).unwrap();
     let validated_plugins = Data::new(Mutex::new(validated_plugins));
@@ -306,7 +314,10 @@ pub async fn start_server(
         let graphql_schema = graphql_schema.clone();
         site_is_initialised_callback.on_trigger(async move {
             info!("Changing graphql schema to operational mode");
-            graphql_schema.clone().set_operational_status(OperationalStatus::Operational).await;
+            graphql_schema
+                .clone()
+                .set_operational_status(OperationalStatus::Operational)
+                .await;
         });
     }
     info!("Creating graphql schema..done");
@@ -416,12 +427,24 @@ pub async fn start_server(
         http_server = http_server.workers(workers);
     }
 
+    let bind_start = Instant::now();
+    info!(
+        "Binding listener on {} (tls={})",
+        settings.server.address(),
+        certificates.config().is_some()
+    );
     http_server = match certificates.config() {
         Some(config) => http_server
             .bind_rustls_0_23(settings.server.address(), config)
             .unwrap(),
         None => http_server.bind(settings.server.address()).unwrap(),
     };
+    let bind_elapsed_ms = bind_start.elapsed().as_millis();
+    info!(
+        "Listener bound in {} ms (tls={})",
+        bind_elapsed_ms,
+        certificates.is_https()
+    );
     info!("Initialising http server..done",);
 
     let running_server = http_server.run();
@@ -431,6 +454,10 @@ pub async fn start_server(
         settings.server.port, version
     );
     // run server in another task so that we can handle restart/off events here
+    info!(
+        "Spawning accept loop ({} ms after bind)",
+        bind_start.elapsed().as_millis()
+    );
     tokio::spawn(running_server);
 
     tokio::select! {
