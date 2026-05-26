@@ -106,8 +106,8 @@ The Playwright spec at [`client/playwright/e2e/distribution-regression.spec.ts`]
 
 ## Test-data assumptions
 
-- Tamaki Store on `http://localhost:3005`, user `admin`
-- At least one customer named "General" visible
+- A populated dev datafile served on the configured `BASE_URL`, user `admin`
+- At least one customer visible in the list
 - Items with stock for `pickItemWithStock` to find quickly (it tries up to 30 items alphabetically)
 - For `cannot delete a Shipped shipment`, `filter by Reference`, and `pagination next-page`: needs an existing Shipped shipment / a shipment with a reference / >20 shipments. Tests `test.skip()` if conditions aren't met rather than fail.
 - **Tests leave behind data** — every run creates several shipments. No cleanup. Fine for dev, but as shipment count grows the pagination/filter tests could slow.
