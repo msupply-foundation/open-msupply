@@ -146,6 +146,15 @@ fragment FullSyncStatusV7 on FullSyncStatusV7Node {
   }
   errorThreshold
   warningThreshold
+  linkedDescriptions {
+    __typename
+    ... on AllStoreDataDescription {
+      storeName
+    }
+    ... on TableNameDescription {
+      tableName
+    }
+  }
 }
 
 query syncInfo {

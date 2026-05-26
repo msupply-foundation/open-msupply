@@ -322,6 +322,11 @@ export type AdminUsernameRequired = InitialiseAsCentralServerErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type AllStoreDataDescription = {
+  __typename: 'AllStoreDataDescription';
+  storeName: Scalars['String']['output'];
+};
+
 export type AllocateOutboundShipmentUnallocatedLineError = {
   __typename: 'AllocateOutboundShipmentUnallocatedLineError';
   error: AllocateOutboundShipmentUnallocatedLineErrorInterface;
@@ -3179,6 +3184,14 @@ export type FullSyncStatusV7Node = {
   integration?: Maybe<SyncStatusWithProgressV7Node>;
   isSyncing: Scalars['Boolean']['output'];
   lastSuccessfulSync?: Maybe<SyncStatusNode>;
+  /**
+   * Localisable description payloads for every sync_request linked to
+   * this run via `reference_id`. Empty for the main sync (no
+   * reference_id) and for runs whose reference_id no longer matches any
+   * sync_request row. Each variant carries the parameters the front-end
+   * needs to render a localised string.
+   */
+  linkedDescriptions: Array<SyncRequestDescriptionNode>;
   pull?: Maybe<SyncStatusWithProgressV7Node>;
   push?: Maybe<SyncStatusWithProgressV7Node>;
   summary: SyncStatusV7Node;
@@ -10206,6 +10219,10 @@ export type SyncInfoUpdatedNode = {
   syncStatus?: Maybe<FullSyncStatusNode>;
 };
 
+export type SyncRequestDescriptionNode =
+  | AllStoreDataDescription
+  | TableNameDescription;
+
 export type SyncSettingsInput = {
   /** Sync interval */
   intervalSeconds: Scalars['Int']['input'];
@@ -10254,6 +10271,11 @@ export type SyncStatusWithProgressV7Node = {
   finished?: Maybe<Scalars['DateTime']['output']>;
   started: Scalars['DateTime']['output'];
   total?: Maybe<Scalars['Int']['output']>;
+};
+
+export type TableNameDescription = {
+  __typename: 'TableNameDescription';
+  tableName: Scalars['String']['output'];
 };
 
 export type TaxInput = {
