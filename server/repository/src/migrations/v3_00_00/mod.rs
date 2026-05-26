@@ -5,6 +5,8 @@ mod add_is_standalone_central_pg_enum;
 mod add_merge_sync_message_processor_cursor_pg_enum;
 mod add_site_sync_version;
 mod add_sync_log_v7;
+mod add_sync_log_v7_reference;
+mod add_sync_request;
 mod add_sync_v7_cursor_pg_enum;
 mod add_sync_v7_token_pg_enum;
 mod add_sync_version;
@@ -20,6 +22,7 @@ mod partition_changelog_by_cursor;
 mod populate_changelog_with_rows_for_sync_v7_tables;
 mod populate_sync_version;
 mod rebuild_sync_buffer;
+mod seed_sync_request_user_tables;
 mod update_changelog_for_sync_v7;
 
 pub(crate) struct V3_00_00;
@@ -42,10 +45,12 @@ impl Migration for V3_00_00 {
             Box::new(alter_changelog_table_for_sync_v7::Migrate),
             Box::new(alter_sync_buffer_for_sync_v7::Migrate),
             Box::new(add_sync_log_v7::Migrate),
+            Box::new(add_sync_log_v7_reference::Migrate),
             Box::new(update_changelog_for_sync_v7::Migrate),
             Box::new(create_site_table::Migrate),
             Box::new(add_site_sync_version::Migrate),
             Box::new(rebuild_sync_buffer::Migrate),
+            Box::new(add_sync_request::Migrate),
             // Must precede `populate_changelog_with_rows_for_sync_v7_tables` so
             // the backfilled changelog rows reference the new deterministic ids.
             Box::new(migrate_user_permission_to_deterministic_id::Migrate),
@@ -56,6 +61,7 @@ impl Migration for V3_00_00 {
             Box::new(add_is_standalone_central_pg_enum::Migrate),
             Box::new(add_merge_sync_message_processor_cursor_pg_enum::Migrate),
             Box::new(create_changelog_indexes::Migrate),
+            Box::new(seed_sync_request_user_tables::Migrate),
         ]
     }
 }

@@ -1,3 +1,18 @@
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
+
+use repository::{
+    migrations::Version,
+    syncv7::{SiteLockError, SyncError},
+    ChangelogCondition, ChangelogFilter, EqualFilter, FilterBuilder, KeyType,
+    KeyValueStoreRepository, Pagination, RepositoryError, SiteFilter, SiteRepository, SiteRow,
+    SiteRowRepository, SourceSiteId, StorageConnection, SyncBufferRepository, SyncVersion,
+};
+use thiserror::Error;
+use util::format_error;
+
 use crate::{
     apis::patient_v4::PatientV4,
     programs::patient::patient_updated::create_patient_name_store_join,
@@ -18,19 +33,6 @@ use crate::{
         validate_translate_integrate::{validate_translate_integrate, SyncContext},
     },
 };
-use repository::{
-    migrations::Version,
-    syncv7::{SiteLockError, SyncError},
-    ChangelogCondition, ChangelogFilter, EqualFilter, FilterBuilder, KeyType,
-    KeyValueStoreRepository, Pagination, RepositoryError, SiteFilter, SiteRepository, SiteRow,
-    SiteRowRepository, SourceSiteId, StorageConnection, SyncBufferRepository, SyncVersion,
-};
-use std::{
-    collections::HashMap,
-    sync::{Arc, RwLock},
-};
-use thiserror::Error;
-use util::format_error;
 
 /// TODO: revisit token format
 pub async fn get_token(
@@ -270,7 +272,11 @@ pub async fn pull(
 ) -> pull::Response {
     let (site, ctx) = validate(service_provider, &common)?;
 
-    let filter = ChangelogFilter::all_data_for_site(site.id, input.is_initialising, None);
+    let base = ChangelogFilter::all_data_for_site(site.id, input.is_initialising, None);
+    let filter = match input.filter {
+        Some(extra) => ChangelogCondition::And(vec![base, extra]),
+        None => base,
+    };
 
     let batch = SyncBatchV7::generate(
         &ctx.connection,
@@ -378,7 +384,7 @@ pub async fn push(
 
     let sync_buffer_rows = records
         .into_iter()
-        .map(|record| sync_record_to_buffer_row(record, site_id, app_version.clone()))
+        .map(|record| sync_record_to_buffer_row(record, site_id, app_version.clone(), None))
         .collect::<Vec<_>>();
 
     ctx.connection
@@ -703,6 +709,7 @@ mod tests {
                 cursor: 0,
                 batch_size: 100,
                 is_initialising: true,
+                filter: None,
             },
         )
         .await
@@ -757,6 +764,7 @@ mod tests {
                 cursor: 0,
                 batch_size: 100,
                 is_initialising: true,
+                filter: None,
             },
         )
         .await;

@@ -72,7 +72,7 @@ pub(crate) fn get_ordered_sync_buffer_records(
         let mut rows = repo.pending_ordered_by_cursor(PendingQuery {
             source_site_id,
             sync_version: SyncVersion::V5V6,
-            reference: None,
+            reference_id: None,
             table_name,
             action: action.clone(),
             direction,

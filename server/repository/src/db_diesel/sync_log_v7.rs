@@ -1,8 +1,6 @@
 use crate::{
-    diesel_macros::apply_sort,
-    dynamic_query_filter::create_condition,
-    syncv7::SyncError,
-    DBType, Pagination, RepositoryError, Sort, StorageConnection,
+    diesel_macros::apply_sort, dynamic_query_filter::create_condition, syncv7::SyncError, DBType,
+    Pagination, RepositoryError, Sort, StorageConnection,
 };
 
 use chrono::NaiveDateTime;
@@ -30,6 +28,7 @@ table! {
         integration_progress_total -> Nullable<Integer>,
         integration_progress_done -> Nullable<Integer>,
         error -> Nullable<Text>,
+        reference_id -> Nullable<Text>,
     }
 }
 
@@ -67,6 +66,7 @@ pub struct SyncLogV7Row {
     pub integration_progress_total: Option<i32>,
     pub integration_progress_done: Option<i32>,
     pub error: Option<SyncError>,
+    pub reference_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -100,6 +100,7 @@ create_condition!(
         sync_log_v7::integration_finished_datetime
     ),
     (Error, string, sync_log_v7::error),
+    (ReferenceId, string, sync_log_v7::reference_id),
 );
 
 impl<'a> SyncLogV7Repository<'a> {
