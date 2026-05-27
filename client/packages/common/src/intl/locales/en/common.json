@@ -1885,6 +1885,7 @@
   "log.stock-sell-price-change": "Sell price changed",
   "log.stocktake-created": "Created",
   "log.stocktake-deleted": "Deleted",
+  "log.stocktake-edited": "Edited",
   "log.stocktake-status-finalised": "Finalised",
   "log.user-logged-in": "User logged in",
   "log.volume-per-pack-changed": "Volume per pack changed",
