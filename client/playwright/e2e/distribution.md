@@ -81,6 +81,8 @@ The Playwright spec at [`client/playwright/e2e/distribution-regression.spec.ts`]
 - `addLineToShipment(page)` — Add Item with first stocked item, qty 2, includes the OK-button retry pattern (the dialog needs 2-3 OK clicks because of a React state race)
 - `pickItemWithStock(page, dialog)` — walks the item autocomplete looking for one with `Available: N > 0`. Dismisses popups after picking.
 - `clickConfirmAndWait(page, regex)` — clicks a footer Confirm button, handles the optional "Are you sure?" confirmation dialog, waits for network settle. Includes `page.mouse.move(0, 0)` to dismiss the status-history hover popover that otherwise blocks clicks.
+- `getColumnIndex(page, headerText)` — looks up a column's zero-based index by header text. Use this instead of hard-coded `td.nth(N)` so tests survive column reordering.
+- `assertFieldPersistsAcrossReload(page, shipmentUrl, testid, value)` — fills a debounced detail-view text field, waits for the `updateOutboundShipment` mutation, reloads via `shipmentUrl`, and asserts the value persisted.
 
 ## Patterns / gotchas that took real time to discover
 
@@ -91,7 +93,7 @@ The Playwright spec at [`client/playwright/e2e/distribution-regression.spec.ts`]
 5. **Hold short-circuit** — clicking a Confirm button on a held shipment shows the polite "Cannot change status because on hold" info toast and skips the confirmation dialog entirely. Source: `StatusChangeButton.tsx`'s `onStatusClick`.
 6. **Status-history popover** — hovering the status sequence in the footer shows a popover that overlays the Confirm buttons. `page.mouse.move(0, 0)` before clicking Confirm dismisses it.
 7. **Network-idle is too weak for debounced filters** — the request hasn't fired yet. Wait for the actual GraphQL request with text matching the search term.
-8. **Column indices in the list table** (default order): 0 checkbox, 1 Name, 2 Status, 3 Number, 4 Created, 5 Reference, 6 Comment, 7 Total. **Columns are reorderable in the UI**, so anyone reordering them in their browser session breaks tests.
+8. **Column indices in the list table** (default order): 0 checkbox, 1 Name, 2 Status, 3 Number, 4 Created, 5 Reference, 6 Comment, 7 Total. Columns are reorderable in the UI, so tests use `getColumnIndex(page, 'Name')` to look up the position by header text rather than hard-coding `td.nth(N)`.
 9. **Testids available** — prefer these over `.MuiDialog-root` / label-text traversal:
    - `detail-panel` — sidebar drawer
    - `confirmation-modal` + `confirmation-modal-ok` — "Are you sure?" and "Confirm status as X" dialogs
@@ -111,11 +113,6 @@ The Playwright spec at [`client/playwright/e2e/distribution-regression.spec.ts`]
 - Items with stock for `pickItemWithStock` to find quickly (it tries up to 30 items alphabetically)
 - For `cannot delete a Shipped shipment`, `filter by Reference`, and `pagination next-page`: needs an existing Shipped shipment / a shipment with a reference / >20 shipments. Tests `test.skip()` if conditions aren't met rather than fail.
 - **Tests leave behind data** — every run creates several shipments. No cleanup. Fine for dev, but as shipment count grows the pagination/filter tests could slow.
-
-## Known technical debt
-
-- Column-index based assertions are fragile if anyone reorders columns. Better: find column by header text, derive index dynamically.
-- Several tests duplicate the "shipment URL → reload → assert" pattern; could become its own helper.
 
 ## Suggested next batches (priority order)
 
