@@ -319,8 +319,8 @@ export const InboundLineEdit = ({
 
   const okDisabled = hasPurchaseOrder
     ? !selectedPOLine ||
-      draftLines.length === 0 ||
-      manualLinesWithZeroNumberOfPacks
+    draftLines.length === 0 ||
+    manualLinesWithZeroNumberOfPacks
     : !currentItem || manualLinesWithZeroNumberOfPacks;
 
   const cards = (
@@ -372,7 +372,7 @@ export const InboundLineEdit = ({
       title={
         mode === ModalMode.Create
           ? t('heading.add-item')
-          : t('heading.edit-item')
+          : t('heading.edit-line')
       }
       headerActions={
         <ButtonWithIcon
