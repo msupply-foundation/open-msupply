@@ -62,7 +62,7 @@ pub fn run(
     if lines.is_empty() {
         return Ok(());
     }
-    let item_ids: Vec<String> = lines.iter().map(|l| l.item_link_id.clone()).collect();
+    let item_ids: Vec<String> = lines.iter().map(|l| l.item_id.clone()).collect();
     let display_population = DisplayPopulationBasedForecasting
         .load(&ctx.connection, None)
         .unwrap_or(false);
@@ -104,7 +104,7 @@ pub fn run(
     let contexts: HashMap<String, LineContext> = lines
         .iter()
         .map(|l| {
-            let item_id = l.item_link_id.clone();
+            let item_id = l.item_id.clone();
             let ancillary_parents = ancillary_parents.get(&item_id).cloned().unwrap_or_default();
             let population = population_map
                 .get(&item_id)
@@ -134,7 +134,7 @@ pub fn run(
             l.forecast_method
                 .as_deref()
                 .and_then(ForecastMethod::from_storage)
-                .map(|m| (l.item_link_id.clone(), m))
+                .map(|m| (l.item_id.clone(), m))
         })
         .collect();
     let methods: HashMap<String, ForecastMethod> = contexts
@@ -208,7 +208,7 @@ pub fn run(
     // still tags itself with the attempted method.
     for line in lines.iter_mut() {
         let snap = snapshots
-            .get(&line.item_link_id)
+            .get(&line.item_id)
             .expect("snapshot computed above");
         line.forecast_method = Some(method_for_snapshot(snap).to_storage());
         line.set_forecast_snapshot(snap);
@@ -386,7 +386,7 @@ fn compute_ancillary_ratio(
     let mut total_monthly_usage = 0.0;
     let line_id_by_item: HashMap<&str, &str> = lines
         .iter()
-        .map(|l| (l.item_link_id.as_str(), l.id.as_str()))
+        .map(|l| (l.item_id.as_str(), l.id.as_str()))
         .collect();
     for parent in &c.ancillary_parents {
         let Some(parent_snap) = snapshots.get(&parent.parent_item_id) else {
@@ -469,7 +469,7 @@ mod tests {
     fn line(id: &str, item: &str, amc: f64, soh: f64) -> RequisitionLineRow {
         RequisitionLineRow {
             id: id.into(),
-            item_link_id: item.into(),
+            item_id: item.into(),
             item_name: item.into(),
             average_monthly_consumption: amc,
             available_stock_on_hand: soh,

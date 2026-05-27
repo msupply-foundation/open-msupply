@@ -194,7 +194,7 @@ export const StockLineForm = ({
             />
           </Box>
           <Box>
-            <Grid container gap={isNewModal ? undefined : 10}>
+            <Grid container gap={isNewModal ? 2 : 10}>
               <Grid container flex={1} flexDirection="column" gap={1}>
                 <StyledInputRow
                   label={t('label.pack-quantity')}
@@ -418,6 +418,7 @@ export const StockLineForm = ({
                     <Checkbox
                       checked={draft.onHold}
                       onChange={(_, onHold) => onUpdate({ onHold })}
+                      sx={{ pr: 0 }}
                     />
                   }
                 />
@@ -493,13 +494,12 @@ export const StockLineForm = ({
                 {showVVMStatus && (
                   <StyledInputRow
                     label={t('label.vvm-status')}
-                    labelWidth={isNewModal ? '212px' : null}
                     Input={
                       <VVMStatusSearchInput
                         selected={draft?.vvmStatus ?? null}
                         onChange={vvmStatus => onUpdate({ vvmStatus })}
                         disabled={!isNewModal}
-                        width={!isNewModal ? 160 : undefined}
+                        width={160}
                         useDefault={isNewModal}
                       />
                     }

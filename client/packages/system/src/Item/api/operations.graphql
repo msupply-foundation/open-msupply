@@ -352,6 +352,10 @@ fragment ItemsWithStats on ItemNode {
   isVaccine
   doses
   availableStockOnHand(storeId: $storeId)
+  masterLists(storeId: $storeId) {
+    id
+    name
+  }
   stats(storeId: $storeId) {
     __typename
     averageMonthlyConsumption
@@ -541,6 +545,16 @@ mutation upsertAncillaryItem(
         __typename
         ... on AncillaryItemNode {
           ...AncillaryItem
+        }
+        ... on UpsertAncillaryItemError {
+          error {
+            __typename
+            description
+            ... on AncillaryMaxDepthExceeded {
+              max
+              actual
+            }
+          }
         }
       }
     }

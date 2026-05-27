@@ -5,9 +5,11 @@ export const useCustomerReturnDelete = () => {
   const queryClient = useQueryClient();
   const api = useReturnsApi();
 
-  return useMutation(api.deleteCustomer, {
+  return useMutation({
+    mutationFn: api.deleteCustomer,
     // `void` is load-bearing: returning the invalidateQueries promise would make
     // mutateAsync await the refetch of the just-deleted detail query and hang.
-    onSuccess: () => void queryClient.invalidateQueries(api.keys.base()),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: api.keys.base() }),
   });
 };

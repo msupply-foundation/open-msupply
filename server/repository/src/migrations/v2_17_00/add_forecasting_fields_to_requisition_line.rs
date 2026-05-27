@@ -242,7 +242,7 @@ mod tests {
 
         // Query via raw SQL: `forecast_total_doses` and `vaccine_courses` were
         // added by this migration but later replaced by `forecast_method` /
-        // `forecast_data` in v2.18.00. The Diesel schema no longer contains
+        // `forecast_data` in v2.20.00. The Diesel schema no longer contains
         // them, so use raw rows here instead of the typed table.
         #[derive(QueryableByName, Debug, PartialEq)]
         struct ForecastingFields {

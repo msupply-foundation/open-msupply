@@ -25,6 +25,7 @@ pub(crate) fn plugin_data() -> PluginDataRow {
         related_record_id: Some("Some related record".to_string()),
         data_identifier: "Some data identifier".to_string(),
         data: "can be json".to_string(),
+        datetime: None,
     }
 }
 

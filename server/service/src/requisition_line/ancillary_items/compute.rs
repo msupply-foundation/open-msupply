@@ -5,6 +5,9 @@ use util::f64_approx_eq;
 /// Max number of edges we'll follow when chasing ancillary chains. Matches the
 /// cap enforced on insert so this is defensive — real chains can't exceed it.
 const MAX_ANCILLARY_DEPTH: u32 = 5;
+/// Small fudge subtracted before `ceil()` so float drift (e.g. 100 * 1.1 =
+/// 110.0000000…01) doesn't bump exact integers up to the next whole unit.
+const CEIL_EPSILON: f64 = 1e-6;
 
 /// Whether a requisition has missing or stale ancillary lines.
 ///
@@ -22,11 +25,14 @@ pub enum AncillaryState {
 /// A single ancillary item that either needs adding or updating.
 #[derive(Debug, Clone, PartialEq)]
 pub struct AncillaryDelta {
-    pub item_link_id: String,
+    pub item_id: String,
     pub required_quantity: f64,
     /// The existing requisition line for this ancillary, if any. Present for
     /// updates, absent for adds.
     pub existing_line_id: Option<String>,
+    /// Quantity currently on the requisition line, if a line already exists.
+    /// Always populated for updates so callers can render before/after.
+    pub current_quantity: Option<f64>,
 }
 
 /// Breakdown of which ancillary items need action on a given requisition.
@@ -83,12 +89,12 @@ pub fn compute_ancillary_plan(
     // other line's item. Walking from every line would double-count: after the
     // first Add the ancillary items themselves become lines, and if we walked
     // from them too they'd add to demand again via the chain.
-    let line_items: HashSet<&str> = lines.iter().map(|l| l.item_link_id.as_str()).collect();
+    let line_items: HashSet<&str> = lines.iter().map(|l| l.item_id.as_str()).collect();
     let mut dependent_items: HashSet<&str> = HashSet::new();
     for line in lines {
         let mut visited: HashSet<&str> = HashSet::new();
         collect_reachable_line_items(
-            &line.item_link_id,
+            &line.item_id,
             &graph,
             &line_items,
             &mut dependent_items,
@@ -101,12 +107,12 @@ pub fn compute_ancillary_plan(
     // ancillary item down its chain.
     let mut required: HashMap<String, f64> = HashMap::new();
     for line in lines {
-        if dependent_items.contains(line.item_link_id.as_str()) {
+        if dependent_items.contains(line.item_id.as_str()) {
             continue;
         }
         let mut visited: HashSet<&str> = HashSet::new();
         chase(
-            &line.item_link_id,
+            &line.item_id,
             line.requested_quantity,
             &graph,
             &mut required,
@@ -115,27 +121,29 @@ pub fn compute_ancillary_plan(
         );
     }
 
-    // Group existing lines by item_link_id so we can tell if the ancillary
+    // Group existing lines by item_id so we can tell if the ancillary
     // already has a line — and compare its quantity to what's required.
     let mut existing: HashMap<&str, &RequisitionLineRow> = HashMap::new();
     for line in lines {
-        existing.insert(&line.item_link_id, line);
+        existing.insert(&line.item_id, line);
     }
 
     let mut plan = AncillaryPlan::default();
-    for (item_link_id, required_quantity) in required {
-        match existing.get(item_link_id.as_str()) {
+    for (item_id, required_quantity) in required {
+        match existing.get(item_id.as_str()) {
             None => plan.to_add.push(AncillaryDelta {
-                item_link_id,
+                item_id,
                 required_quantity,
                 existing_line_id: None,
+                current_quantity: None,
             }),
             Some(line) => {
                 if !f64_approx_eq(line.requested_quantity, required_quantity) {
                     plan.to_update.push(AncillaryDelta {
-                        item_link_id,
+                        item_id,
                         required_quantity,
                         existing_line_id: Some(line.id.clone()),
+                        current_quantity: Some(line.requested_quantity),
                     });
                 }
             }
@@ -143,9 +151,9 @@ pub fn compute_ancillary_plan(
     }
 
     // Stable ordering for deterministic results
-    plan.to_add.sort_by(|a, b| a.item_link_id.cmp(&b.item_link_id));
+    plan.to_add.sort_by(|a, b| a.item_id.cmp(&b.item_id));
     plan.to_update
-        .sort_by(|a, b| a.item_link_id.cmp(&b.item_link_id));
+        .sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
     plan
 }
@@ -186,6 +194,11 @@ fn chase<'a>(
     visited: &mut HashSet<&'a str>,
     depth: u32,
 ) {
+    // No demand from a zero-quantity parent — skip the whole subtree so we
+    // don't add ancillary lines for items the user hasn't actually requested.
+    if quantity <= 0.0 {
+        return;
+    }
     if depth >= MAX_ANCILLARY_DEPTH {
         return;
     }
@@ -197,7 +210,11 @@ fn chase<'a>(
 
     if let Some(children) = graph.get(current) {
         for (child, ratio) in children {
-            let child_qty = quantity * ratio;
+            // Round up: ancillary lines need to be editable as whole units
+            // (you can't easily correct a 1.1 suggestion in the UI). Propagate
+            // the ceiled value downstream so deeper ancillaries see the same
+            // quantity the user will actually order.
+            let child_qty = (quantity * ratio - CEIL_EPSILON).ceil().max(0.0);
             *required.entry((*child).to_string()).or_default() += child_qty;
             chase(child, child_qty, graph, required, visited, depth + 1);
         }
@@ -213,7 +230,7 @@ mod tests {
     fn line(id: &str, item: &str, qty: f64) -> RequisitionLineRow {
         RequisitionLineRow {
             id: id.to_string(),
-            item_link_id: item.to_string(),
+            item_id: item.to_string(),
             requested_quantity: qty,
             ..Default::default()
         }
@@ -246,7 +263,7 @@ mod tests {
         assert_eq!(plan.state(), AncillaryState::NeedsAdd { count: 1 });
         assert_eq!(plan.to_add.len(), 1);
         let delta = &plan.to_add[0];
-        assert_eq!(delta.item_link_id, "safety_box");
+        assert_eq!(delta.item_id, "safety_box");
         assert!(f64_approx_eq(delta.required_quantity, 1.0));
     }
 
@@ -274,14 +291,14 @@ mod tests {
         assert_eq!(plan.state(), AncillaryState::NeedsUpdate { count: 1 });
         assert_eq!(plan.to_update.len(), 1);
         let delta = &plan.to_update[0];
-        assert_eq!(delta.item_link_id, "safety_box");
+        assert_eq!(delta.item_id, "safety_box");
         assert_eq!(delta.existing_line_id.as_deref(), Some("l2"));
         assert!(f64_approx_eq(delta.required_quantity, 1.0));
     }
 
     #[test]
     fn wastage_non_integer_ratio() {
-        // 1 vaccine → 1.1 syringe (10% wastage) for 50 vaccines → 55 syringes
+        // 1 vaccine → 1.1 syringe (10% wastage) for 50 vaccines → 55 syringes (whole)
         let plan = compute_ancillary_plan(
             &[line("l1", "vaccine", 50.0)],
             &[link("vaccine", "syringe", 1.0, 1.1)],
@@ -293,8 +310,8 @@ mod tests {
     #[test]
     fn chain_cascades_through_multiple_levels() {
         // vaccine -> syringe -> safety_box
-        // 100 vaccines, each vaccine needs 1.1 syringes (110 syringes),
-        // each 100 syringes need 1 safety_box (1.1 safety_boxes)
+        // 100 vaccines, each vaccine needs 1.1 syringes → ceil(110) = 110
+        // 110 syringes / 100 per safety_box = 1.1 → ceil = 2 safety boxes
         let plan = compute_ancillary_plan(
             &[line("l1", "vaccine", 100.0)],
             &[
@@ -306,20 +323,23 @@ mod tests {
         let syringe = plan
             .to_add
             .iter()
-            .find(|d| d.item_link_id == "syringe")
+            .find(|d| d.item_id == "syringe")
             .unwrap();
         let safety_box = plan
             .to_add
             .iter()
-            .find(|d| d.item_link_id == "safety_box")
+            .find(|d| d.item_id == "safety_box")
             .unwrap();
         assert!(f64_approx_eq(syringe.required_quantity, 110.0));
-        assert!(f64_approx_eq(safety_box.required_quantity, 1.1));
+        assert!(f64_approx_eq(safety_box.required_quantity, 2.0));
     }
 
     #[test]
     fn multiple_principals_for_same_ancillary_sum() {
         // Two vaccine lines both needing safety boxes
+        // vaccine_a: 100/100 = 1, ceil = 1
+        // vaccine_b: 50/100 = 0.5, ceil = 1
+        // total = 2
         let plan = compute_ancillary_plan(
             &[line("l1", "vaccine_a", 100.0), line("l2", "vaccine_b", 50.0)],
             &[
@@ -328,7 +348,7 @@ mod tests {
             ],
         );
         assert_eq!(plan.to_add.len(), 1);
-        assert!(f64_approx_eq(plan.to_add[0].required_quantity, 1.5));
+        assert!(f64_approx_eq(plan.to_add[0].required_quantity, 2.0));
     }
 
     #[test]
@@ -407,15 +427,44 @@ mod tests {
         let syringe = plan
             .to_update
             .iter()
-            .find(|d| d.item_link_id == "syringe")
+            .find(|d| d.item_id == "syringe")
             .unwrap();
         let safety_box = plan
             .to_update
             .iter()
-            .find(|d| d.item_link_id == "safety_box")
+            .find(|d| d.item_id == "safety_box")
             .unwrap();
         assert!(f64_approx_eq(syringe.required_quantity, 200.0));
         assert!(f64_approx_eq(safety_box.required_quantity, 2.0));
+    }
+
+    #[test]
+    fn fractional_required_quantity_rounds_up() {
+        // 50 vaccines / 100 per safety_box = 0.5 → ceil = 1.
+        // Suggested quantities are whole units so the user can adjust them
+        // without first toggling between integer and decimal modes.
+        let plan = compute_ancillary_plan(
+            &[line("l1", "vaccine", 50.0)],
+            &[link("vaccine", "safety_box", 100.0, 1.0)],
+        );
+        assert_eq!(plan.to_add.len(), 1);
+        assert!(f64_approx_eq(plan.to_add[0].required_quantity, 1.0));
+    }
+
+    #[test]
+    fn zero_parent_quantity_adds_nothing() {
+        // A line with zero requested quantity shouldn't pull any ancillaries
+        // into the plan — there's no demand to fulfil.
+        let plan = compute_ancillary_plan(
+            &[line("l1", "vaccine", 0.0)],
+            &[
+                link("vaccine", "syringe", 1.0, 1.1),
+                link("syringe", "safety_box", 100.0, 1.0),
+            ],
+        );
+        assert_eq!(plan.state(), AncillaryState::None);
+        assert!(plan.to_add.is_empty());
+        assert!(plan.to_update.is_empty());
     }
 
     #[test]
@@ -434,7 +483,7 @@ mod tests {
                 link("f", "g", 1.0, 1.0), // would be depth 6 — skipped
             ],
         );
-        let item_ids: Vec<&str> = plan.to_add.iter().map(|d| d.item_link_id.as_str()).collect();
+        let item_ids: Vec<&str> = plan.to_add.iter().map(|d| d.item_id.as_str()).collect();
         assert!(item_ids.contains(&"e"));
         assert!(!item_ids.contains(&"g"));
     }

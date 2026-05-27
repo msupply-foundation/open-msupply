@@ -50,9 +50,9 @@ fn generate_given(
         .as_ref()
         .map(|sl| sl.stock_line_row.id.clone());
 
-    let item_link_id = new_stock_line
+    let item_id = new_stock_line
         .as_ref()
-        .map(|sl| sl.stock_line_row.item_link_id.clone());
+        .map(|sl| sl.stock_line_row.item_id.clone());
 
     let update_transactions = update_input.update_transactions.unwrap_or(false);
 
@@ -77,7 +77,7 @@ fn generate_given(
         given: true,
         given_store_id: Some(store_id.to_string()),
         stock_line_id,
-        item_link_id,
+        item_id,
         invoice_id: create_prescription
             .as_ref()
             .map(|p| p.create_prescription.id.clone()),
@@ -122,7 +122,7 @@ fn generate_not_given(
         given_store_id: None,
         not_given_reason,
 
-        item_link_id: None,
+        item_id: None,
         stock_line_id: None,
         invoice_id: None,
 
@@ -150,9 +150,9 @@ fn generate_change_stock_line(
         .as_ref()
         .map(|sl| sl.stock_line_row.id.clone());
 
-    let item_link_id = new_stock_line
+    let item_id = new_stock_line
         .as_ref()
-        .map(|sl| sl.stock_line_row.item_link_id.clone());
+        .map(|sl| sl.stock_line_row.item_id.clone());
 
     let update_transactions = update_input.update_transactions.unwrap_or(false);
 
@@ -182,7 +182,7 @@ fn generate_change_stock_line(
     // apply new stock and invoice ids
     let vaccination = VaccinationRow {
         stock_line_id,
-        item_link_id,
+        item_id,
         invoice_id: create_prescription
             .as_ref()
             .map(|p| p.create_prescription.id.clone()),
@@ -230,7 +230,7 @@ fn get_vaccination_with_updated_base_fields(
         not_given_reason,
         invoice_id,
         stock_line_id,
-        item_link_id,
+        item_id,
 
         comment,
         facility_name_id,
@@ -273,9 +273,9 @@ fn get_vaccination_with_updated_base_fields(
 
         // Not really "base" fields - but can be updated without changing status
         not_given_reason: update_input.not_given_reason.or(not_given_reason),
-        item_link_id: match update_input.item_id {
+        item_id: match update_input.item_id {
             Some(NullableUpdate { value }) => value,
-            None => item_link_id,
+            None => item_id,
         },
     }
 }

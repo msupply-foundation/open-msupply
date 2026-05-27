@@ -306,11 +306,13 @@ export const RequestLineEdit = ({
                 {...valueRowProps}
                 label={t(showExtraFields ? 'label.area-amc' : 'label.amc/amd')}
                 value={draft?.itemStats.averageMonthlyConsumption}
+                roundUp
               />
               <InfoRow
                 label={t('label.months-of-stock')}
                 value={draft?.itemStats?.availableMonthsOfStockOnHand}
                 packagingDisplay={t('label.months')}
+                decimalLimit={1}
               />
               {displayForecasting && line && (
                 <ForecastMethodPicker

@@ -65,27 +65,42 @@ export const InboundListView = () => {
         condition: 'between',
       },
       { key: 'status', condition: 'equalAny' },
+      { key: 'type', condition: 'equalAny' },
       { key: 'theirReference' },
       {
-        key: 'purchaseOrderNumber',
+        key: 'linkedOrderNumber',
         condition: 'equalTo',
         isNumber: true,
       },
     ],
   });
 
-  // Only include invoice types the user has permissions to view
+  const {
+    type: { equalAny: requestedTypes } = {},
+    ...restFilterBy
+  } = (filterBy ?? {}) as {
+    type?: { equalAny?: InvoiceTypeInput[] };
+  };
+
   const invoiceTypes: InvoiceTypeInput[] = [];
-  if (userHasPermission(UserPermission.InboundShipmentQuery))
+  if (
+    (!requestedTypes ||
+      requestedTypes.includes(InvoiceTypeInput.InboundShipment)) &&
+    userHasPermission(UserPermission.InboundShipmentQuery)
+  )
     invoiceTypes.push(InvoiceTypeInput.InboundShipment);
-  if (userHasPermission(UserPermission.InboundShipmentExternalQuery))
+  if (
+    (!requestedTypes ||
+      requestedTypes.includes(InvoiceTypeInput.InboundShipmentExternal)) &&
+    userHasPermission(UserPermission.InboundShipmentExternalQuery)
+  )
     invoiceTypes.push(InvoiceTypeInput.InboundShipmentExternal);
 
   const listParams = {
     sortBy,
     first,
     offset,
-    filterBy,
+    filterBy: restFilterBy,
     type: invoiceTypes,
   };
 
@@ -131,8 +146,8 @@ export const InboundListView = () => {
         enableSorting: true,
       },
       {
-        header: t('label.linked-po-requisition'),
-        id: 'purchaseOrderNumber',
+        header: t('label.linked-order'),
+        id: 'linkedOrderNumber',
         size: 180,
         align: 'right',
         enableColumnFilter: true,
@@ -186,11 +201,11 @@ export const InboundListView = () => {
       onRowClick: row =>
         row.purchaseOrder
           ? navigate(
-              RouteBuilder.create(AppRoute.Replenishment)
-                .addPart(AppRoute.InboundShipmentExternal)
-                .addPart(row.id)
-                .build()
-            )
+            RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.InboundShipmentExternal)
+              .addPart(row.id)
+              .build()
+          )
           : navigate(row.id),
       columns,
       data: data?.nodes ?? [],

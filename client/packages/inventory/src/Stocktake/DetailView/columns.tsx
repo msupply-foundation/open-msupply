@@ -4,6 +4,7 @@ import {
   usePreferences,
   ColumnDef,
   ColumnType,
+  ExpiryDateCell,
   UnitsAndDosesCell,
 } from '@openmsupply-client/common';
 import { StocktakeLineFragment } from '../api';
@@ -25,6 +26,11 @@ export const useStocktakeColumns = () => {
     [errors]
   );
 
+  const getRowHasError = useCallback(
+    (row: StocktakeLineFragment) => !!errors?.[row.id],
+    [errors]
+  );
+
   const columns = useMemo(() => {
     const cols: ColumnDef<StocktakeLineFragment>[] = [
       {
@@ -34,6 +40,7 @@ export const useStocktakeColumns = () => {
         size: 120,
         enableColumnFilter: true,
         enableSorting: true,
+        getIsError: getRowHasError,
       },
       {
         accessorKey: 'itemName',
@@ -56,6 +63,7 @@ export const useStocktakeColumns = () => {
         header: t('label.expiry-date'),
         size: 110,
         columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
         defaultHideOnMobile: true,
         enableColumnFilter: true,
         enableSorting: true,
@@ -170,7 +178,13 @@ export const useStocktakeColumns = () => {
       },
     ];
     return cols;
-  }, [t, manageVaccinesInDoses, allowTrackingOfStockByDonor, getIsError]);
+  }, [
+    t,
+    manageVaccinesInDoses,
+    allowTrackingOfStockByDonor,
+    getIsError,
+    getRowHasError,
+  ]);
 
   return columns;
 };

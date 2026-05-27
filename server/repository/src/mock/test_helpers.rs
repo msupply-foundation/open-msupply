@@ -62,7 +62,7 @@ pub fn make_movements_extended(
                 InvoiceLineRow {
                     id: format!("line_{invoice_id}"),
                     invoice_id,
-                    item_link_id: stock_line.item_link_id.clone(),
+                    item_id: stock_line.item_id.clone(),
                     stock_line_id: Some(stock_line.id.clone()),
                     pack_size: stock_line.pack_size,
                     number_of_packs: quantity.abs() as f64,

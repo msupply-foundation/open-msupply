@@ -12,6 +12,7 @@ import {
 import { InvoiceIcon } from '@common/icons';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
+import { usePluginNavLinksForCategory } from './usePluginNavLinks';
 
 export const ProgramsNav = ({ store }: { store?: UserStoreNodeFragment }) => {
   const { isActive } = useNestedNav(
@@ -21,6 +22,7 @@ export const ProgramsNav = ({ store }: { store?: UserStoreNodeFragment }) => {
   const isCentralServer = useIsCentralServerApi();
   const immunisationsVisible =
     isCentralServer && store?.preferences.vaccineModule;
+  const pluginLinks = usePluginNavLinksForCategory(AppRoute.Programs);
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Programs}>
@@ -40,6 +42,7 @@ export const ProgramsNav = ({ store }: { store?: UserStoreNodeFragment }) => {
               .build()}
             text={t('label.programs-immunisations')}
           />
+          {pluginLinks}
         </List>
       </Collapse>
     </AppNavSection>

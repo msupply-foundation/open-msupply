@@ -34,11 +34,47 @@ pub enum UpsertAncillaryItemResponse {
     Response(AncillaryItemNode),
 }
 
+pub struct DuplicateAncillaryItem;
+#[Object]
+impl DuplicateAncillaryItem {
+    pub async fn description(&self) -> &str {
+        "An ancillary item link with the same principal and ancillary already exists"
+    }
+}
+
+pub struct AncillaryCycleDetected;
+#[Object]
+impl AncillaryCycleDetected {
+    pub async fn description(&self) -> &str {
+        "Adding this link would create a cycle through existing ancillary item links"
+    }
+}
+
+pub struct AncillaryMaxDepthExceeded {
+    pub max: u32,
+    pub actual: u32,
+}
+#[Object]
+impl AncillaryMaxDepthExceeded {
+    pub async fn description(&self) -> &str {
+        "Adding this link would exceed the maximum allowed depth of ancillary item chains"
+    }
+    pub async fn max(&self) -> u32 {
+        self.max
+    }
+    pub async fn actual(&self) -> u32 {
+        self.actual
+    }
+}
+
 #[derive(Interface)]
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpsertAncillaryItemErrorInterface {
     InternalError(InternalError),
     DatabaseError(DatabaseError),
+    DuplicateAncillaryItem(DuplicateAncillaryItem),
+    AncillaryCycleDetected(AncillaryCycleDetected),
+    AncillaryMaxDepthExceeded(AncillaryMaxDepthExceeded),
 }
 
 pub fn upsert_ancillary_item(
@@ -101,19 +137,31 @@ fn map_error(error: ServiceError) -> Result<UpsertAncillaryItemErrorInterface> {
     let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
+        // User-visible structured errors — surfaced as typed variants so the
+        // client can render a translated message.
+        ServiceError::DuplicateAncillaryItem => {
+            return Ok(UpsertAncillaryItemErrorInterface::DuplicateAncillaryItem(
+                DuplicateAncillaryItem,
+            ))
+        }
+        ServiceError::CycleDetected => {
+            return Ok(UpsertAncillaryItemErrorInterface::AncillaryCycleDetected(
+                AncillaryCycleDetected,
+            ))
+        }
+        ServiceError::MaxDepthExceeded { max, actual } => {
+            return Ok(UpsertAncillaryItemErrorInterface::AncillaryMaxDepthExceeded(
+                AncillaryMaxDepthExceeded { max, actual },
+            ))
+        }
         // Internal errors
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
-        // Bad user input — surfaced via the standard GraphQL error path
+        // Bad user input that the UI prevents — surfaced via the standard GraphQL error path
         ServiceError::NotCentralServer => Forbidden(formatted_error),
         ServiceError::PrincipalItemDoesNotExist => BadUserInput(formatted_error),
         ServiceError::AncillaryItemDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::DuplicateAncillaryItem => BadUserInput(formatted_error),
         ServiceError::CanNotLinkItemWithItself => BadUserInput(formatted_error),
-        ServiceError::CycleDetected => BadUserInput(formatted_error),
-        ServiceError::MaxDepthExceeded { max, actual } => BadUserInput(format!(
-            "Ancillary item link would exceed max depth of {max} (would be {actual})"
-        )),
         ServiceError::RatioMustBePositive => BadUserInput(formatted_error),
     };
 

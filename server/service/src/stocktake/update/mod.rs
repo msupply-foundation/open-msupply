@@ -13,7 +13,7 @@ use repository::{
 };
 
 use crate::{
-    activity_log::activity_log_entry,
+    activity_log::{activity_log_entry, activity_log_entry_with_diff},
     invoice_line::{
         stock_in_line::{insert_stock_in_line, InsertStockInLineError},
         stock_out_line::{insert_stock_out_line, InsertStockOutLineError},
@@ -73,7 +73,13 @@ pub fn update_stocktake(
             let stocktake_id = input.id.clone();
             let (existing, stocktake_lines, status_changed) =
                 validate(connection, &ctx.store_id, &input)?;
-            let result = generate(ctx, input, existing, stocktake_lines, status_changed)?;
+            let result = generate(
+                ctx,
+                input,
+                existing.clone(),
+                stocktake_lines,
+                status_changed,
+            )?;
 
             // write data to the DB
             let stock_line_repo = StockLineRowRepository::new(connection);
@@ -155,15 +161,13 @@ pub fn update_stocktake(
                 vvm_status_log_repo.upsert_one(&vvm_status_log)?;
             }
 
-            if status_changed {
-                activity_log_entry(
-                    ctx,
-                    ActivityLogType::StocktakeStatusFinalised,
-                    Some(stocktake_id.to_string()),
-                    None,
-                    None,
-                )?;
-            }
+            activity_log_entry_with_diff(
+                ctx,
+                ActivityLogType::StocktakeEdited,
+                Some(stocktake_id.to_string()),
+                Some(&existing),
+                &result.stocktake,
+            )?;
 
             // return the updated stocktake
             let stocktake = get_stocktake(ctx, stocktake_id)?;
@@ -230,7 +234,7 @@ mod test {
                 stock_line_id: Some(mock_existing_stock_line().id),
                 counted_number_of_packs: Some(20.0),
                 snapshot_number_of_packs: 20.0,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 cost_price_per_pack: Some(1.0),
                 sell_price_per_pack: Some(2.0),
                 ..Default::default()
@@ -240,7 +244,7 @@ mod test {
         fn mock_existing_stock_line() -> StockLineRow {
             StockLineRow {
                 id: "existing_stock_a".to_string(),
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 store_id: "store_a".to_string(),
                 available_number_of_packs: 20.0,
                 pack_size: 1.0,
@@ -273,7 +277,7 @@ mod test {
                 stocktake_id: mock_stocktake_no_counted_packs().id,
                 stock_line_id: Some(mock_existing_stock_line_b().id),
                 snapshot_number_of_packs: 10.0,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 batch: Some("updated batch name".to_string()),
                 counted_number_of_packs: None,
                 ..Default::default()
@@ -286,7 +290,7 @@ mod test {
             // exercises the snapshot-mismatch path on an uncounted line.
             StockLineRow {
                 id: "existing_stock_b".to_string(),
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 store_id: "store_a".to_string(),
                 available_number_of_packs: 5.0,
                 pack_size: 2.0,
@@ -654,10 +658,7 @@ mod test {
             )
             .unwrap();
         let stock_line = stocktake_line[0].stock_line.clone().unwrap();
-        assert_eq!(
-            stock_line.supplier_id,
-            mock_stock_line_b().supplier_id
-        );
+        assert_eq!(stock_line.supplier_id, mock_stock_line_b().supplier_id);
 
         // success - prunes uncounted lines, and a stale snapshot on an
         // uncounted line does not block finalisation (regression for #11408)
@@ -782,7 +783,7 @@ mod test {
                     id: "stocktake_line_ext_auth_test".to_string(),
                     stocktake_id: "stocktake_ext_auth_test".to_string(),
                     counted_number_of_packs: Some(10.0),
-                    item_link_id: mock_item_a().id,
+                    item_id: mock_item_a().id,
                     batch: Some("new_batch".to_string()),
                     pack_size: Some(1.0),
                     cost_price_per_pack: Some(5.0),
@@ -829,6 +830,106 @@ mod test {
         assert!(
             stock_line.is_some(),
             "Stock line should be created for new stocktake line even when ExternalInboundShipmentLinesMustBeAuthorised is enabled"
+        );
+    }
+
+    #[actix_rt::test]
+    async fn finalise_stocktake_with_program_not_visible_to_store() {
+        // Regression test for #11600: finalising a stocktake must succeed even when the
+        // adjusted stock line carries a program_id that is not visible to this store.
+        // This happens in practice when stock was received via an upstream shipment whose
+        // program the customer store doesn't have visible — the stocktake should not be
+        // blocked by that.
+        use repository::mock::mock_immunisation_program_a;
+
+        let stock_line_with_invisible_program = StockLineRow {
+            id: "stock_line_invisible_program".to_string(),
+            item_id: mock_item_a().id,
+            store_id: mock_store_a().id,
+            pack_size: 1.0,
+            available_number_of_packs: 5.0,
+            total_number_of_packs: 5.0,
+            program_id: Some(mock_immunisation_program_a().id),
+            ..Default::default()
+        };
+
+        let stocktake = StocktakeRow {
+            id: "stocktake_program_not_visible".to_string(),
+            store_id: mock_store_a().id,
+            stocktake_number: 100,
+            created_datetime: NaiveDate::from_ymd_opt(2024, 1, 1)
+                .unwrap()
+                .and_hms_milli_opt(0, 0, 0, 0)
+                .unwrap(),
+            status: StocktakeStatus::New,
+            ..Default::default()
+        };
+
+        let stocktake_line = StocktakeLineRow {
+            id: "stocktake_line_program_not_visible".to_string(),
+            stocktake_id: stocktake.id.clone(),
+            stock_line_id: Some(stock_line_with_invisible_program.id.clone()),
+            item_id: mock_item_a().id,
+            // Force inventory addition path (counted > snapshot)
+            snapshot_number_of_packs: 5.0,
+            counted_number_of_packs: Some(10.0),
+            program_id: Some(mock_immunisation_program_a().id),
+            ..Default::default()
+        };
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "finalise_stocktake_with_program_not_visible_to_store",
+            MockDataInserts::all(),
+            MockData {
+                stock_lines: vec![stock_line_with_invisible_program.clone()],
+                stocktakes: vec![stocktake.clone()],
+                stocktake_lines: vec![stocktake_line],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+
+        let result = service_provider
+            .stocktake_service
+            .update_stocktake(
+                &context,
+                UpdateStocktake {
+                    id: stocktake.id.clone(),
+                    status: Some(UpdateStocktakeStatus::Finalised),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // The inventory adjustment line should have been created and the resulting stock
+        // line should still carry the program_id (we don't strip it, just don't require
+        // visibility).
+        let inventory_addition_id = result.inventory_addition_id.unwrap();
+        let inventory_addition_line = InvoiceLineRepository::new(&connection)
+            .query_by_filter(
+                repository::InvoiceLineFilter::new()
+                    .invoice_id(EqualFilter::equal_to(inventory_addition_id)),
+            )
+            .unwrap()
+            .pop()
+            .unwrap();
+        assert_eq!(
+            inventory_addition_line.invoice_line_row.r#type,
+            InvoiceLineType::StockIn
+        );
+        let updated_stock_line = StockLineRowRepository::new(&connection)
+            .find_one_by_id(&stock_line_with_invisible_program.id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(updated_stock_line.total_number_of_packs, 10.0);
+        assert_eq!(
+            updated_stock_line.program_id,
+            Some(mock_immunisation_program_a().id)
         );
     }
 }
