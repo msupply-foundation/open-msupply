@@ -109,6 +109,7 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 10.0,
             shipped_pack_size: Some(1.0),
             status: None,
+            received_number_of_packs: None,
         },
     )
 }
@@ -150,6 +151,7 @@ fn trans_line_1_push_record() -> TestSyncOutgoingRecord {
                 status: None,
                 manufacture_date: None,
                 purchase_order_line_id: None,
+                received_number_of_packs: None,
             }),
             volume_per_pack: 10.0,
             shipped_pack_size: Some(1.0),
@@ -255,6 +257,7 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
             status: None,
+            received_number_of_packs: None,
         },
     )
 }
@@ -296,6 +299,7 @@ fn trans_line_2_push_record() -> TestSyncOutgoingRecord {
                 status: None,
                 manufacture_date: None,
                 purchase_order_line_id: None,
+                received_number_of_packs: None,
             }),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
@@ -409,6 +413,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
             status: Some(repository::InvoiceLineStatus::Pending),
+            received_number_of_packs: None,
         },
     )
 }
@@ -449,6 +454,7 @@ fn trans_line_om_fields_push_record() -> TestSyncOutgoingRecord {
                 status: Some("PENDING".to_string()),
                 manufacture_date: None,
                 purchase_order_line_id: Some("test_purchase_order_a_line_1".to_string()),
+                received_number_of_packs: None,
             }),
             shipped_number_of_packs: Some(0.0),
             volume_per_pack: 0.0,
@@ -558,6 +564,7 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
             status: None,
+            received_number_of_packs: None,
         },
     )
 }
@@ -599,6 +606,7 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncOutgoingRecord {
                 status: None,
                 manufacture_date: None,
                 purchase_order_line_id: None,
+                received_number_of_packs: None,
             }),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
@@ -707,6 +715,7 @@ fn trans_line_negative_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
             status: None,
+            received_number_of_packs: None,
         },
     )
 }
@@ -748,6 +757,7 @@ fn trans_line_negative_push_record() -> TestSyncOutgoingRecord {
                 status: None,
                 manufacture_date: None,
                 purchase_order_line_id: None,
+                received_number_of_packs: None,
             }),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
@@ -857,6 +867,7 @@ fn trans_line_prescribed_quantity_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
             status: None,
+            received_number_of_packs: None,
         },
     )
 }
@@ -899,6 +910,7 @@ fn trans_line_prescribed_quantity_push_record() -> TestSyncOutgoingRecord {
                 status: None,
                 manufacture_date: None,
                 purchase_order_line_id: None,
+                received_number_of_packs: None,
             }),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
@@ -1006,6 +1018,7 @@ fn trans_line_invalid_stockline_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
             status: None,
+            received_number_of_packs: None,
         },
     )
 }
@@ -1047,6 +1060,7 @@ fn trans_line_invalid_stockline_push_record() -> TestSyncOutgoingRecord {
                 status: None,
                 manufacture_date: None,
                 purchase_order_line_id: None,
+                received_number_of_packs: None,
             }),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
@@ -1154,6 +1168,7 @@ fn trans_line_empty_stockline_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
             status: None,
+            received_number_of_packs: None,
         },
     )
 }
@@ -1196,6 +1211,7 @@ fn trans_line_empty_stockline_push_record() -> TestSyncOutgoingRecord {
                 status: None,
                 manufacture_date: None,
                 purchase_order_line_id: None,
+                received_number_of_packs: None,
             }),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),

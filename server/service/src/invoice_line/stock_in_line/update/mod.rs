@@ -47,6 +47,7 @@ pub struct UpdateStockInLine {
     pub volume_per_pack: Option<f64>,
     pub shipped_pack_size: Option<f64>,
     pub status: Option<NullableUpdate<InvoiceLineStatus>>,
+    pub reason_option_id: Option<NullableUpdate<String>>,
 }
 
 type OutError = UpdateStockInLineError;
@@ -133,6 +134,8 @@ pub enum UpdateStockInLineError {
     CampaignDoesNotExist,
     WrongInboundShipmentType,
     CannotEditCostPrice,
+    ReasonOptionDoesNotExist,
+    ReasonOptionTypeInvalid,
 }
 
 impl From<RepositoryError> for UpdateStockInLineError {
