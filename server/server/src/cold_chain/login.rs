@@ -53,8 +53,8 @@ async fn do_login(
         .sync_settings(&service_context)?
         .unwrap();
     let cookie = match LoginService::login(
-        &service_provider,
-        &auth_data,
+        service_provider.clone().into_inner(),
+        auth_data.clone().into_inner(),
         LoginInput {
             username: user_info.username.clone(),
             password: user_info.password.clone(),

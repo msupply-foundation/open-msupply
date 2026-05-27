@@ -1,8 +1,10 @@
 use std::{
     collections::HashSet,
+    sync::Arc,
     time::{Duration, SystemTime},
 };
 
+use actix_web::web::block;
 use bcrypt::BcryptError;
 use chrono::Utc;
 use log::info;
@@ -90,13 +92,13 @@ impl LoginService {
     /// we need to create the service context after the call where the compiler can deduce that we are
     /// not passing it to another thread.
     pub async fn login(
-        service_provider: &ServiceProvider,
-        auth_data: &AuthData,
+        service_provider: Arc<ServiceProvider>,
+        auth_data: Arc<AuthData>,
         input: LoginInput,
         min_err_response_time_sec: u64,
     ) -> Result<TokenPair, LoginError> {
         let now = SystemTime::now();
-        match LoginService::do_login(service_provider, auth_data, input).await {
+        let res = match LoginService::do_login(service_provider, auth_data, input).await {
             Ok(result) => Ok(result),
             Err(err) => {
                 let elapsed = now.elapsed().unwrap_or(Duration::from_secs(0));
@@ -107,102 +109,117 @@ impl LoginService {
 
                 Err(err)
             }
-        }
+        };
+        return res;
     }
 
     async fn do_login(
-        service_provider: &ServiceProvider,
-        auth_data: &AuthData,
+        service_provider: Arc<ServiceProvider>,
+        auth_data: Arc<AuthData>,
         input: LoginInput,
     ) -> Result<TokenPair, LoginError> {
         let mut username = input.username.clone();
         let mut connection_failure = false;
-        match LoginService::fetch_user_from_central(service_provider, &input).await {
-            Ok(user_info) => {
-                let service_ctx =
-                    service_provider.context("".to_string(), user_info.user.id.clone())?;
-                username.clone_from(&user_info.user.name);
-                LoginService::update_user(&service_ctx, &input.password, user_info)
-                    .map_err(LoginError::UpdateUserError)?;
-            }
-            Err(err) => match err {
-                FetchUserError::Unauthenticated => {
+        let user_info_to_update =
+            match LoginService::fetch_user_from_central(&service_provider, &input).await {
+                Ok(user_info) => {
+                    username.clone_from(&user_info.user.name);
+                    Some(user_info)
+                }
+                Err(FetchUserError::Unauthenticated) => {
                     return Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
                 }
-                FetchUserError::AccountBlocked(timeout_remaining) => {
+                Err(FetchUserError::AccountBlocked(timeout_remaining)) => {
                     return Err(LoginError::LoginFailure(LoginFailure::AccountBlocked(
                         timeout_remaining,
                     )))
                 }
-                FetchUserError::ConnectionError(_) => {
+                Err(err @ FetchUserError::ConnectionError(_)) => {
                     info!("{err:?}");
                     connection_failure = true;
+                    None
                 }
-                FetchUserError::InternalError(_) => info!("{err:?}"),
-            },
-        };
-        let mut service_ctx = service_provider.basic_context()?;
-        let user_service = UserAccountService::new(&service_ctx.connection);
-        let user_account = match user_service.verify_password(&username, &input.password) {
-            Ok(user) => user,
-            Err(err) => {
-                return Err(match err {
-                    VerifyPasswordError::UsernameDoesNotExist => {
-                        LoginError::LoginFailure(LoginFailure::InvalidCredentials)
-                    }
-                    VerifyPasswordError::InvalidCredentials => {
-                        LoginError::LoginFailure(LoginFailure::InvalidCredentials)
-                    }
-                    VerifyPasswordError::InvalidCredentialsBackend(_) => {
-                        LoginError::InternalError("Failed to read credentials".to_string())
-                    }
-                    VerifyPasswordError::DatabaseError(e) => LoginError::DatabaseError(e),
-                    VerifyPasswordError::EmptyHashedPassword => {
-                        if connection_failure {
-                            LoginError::MSupplyCentralNotReached
-                        } else {
-                            LoginError::InternalError("Corrupted credentials".to_string())
-                        }
-                    }
-                });
+                Err(err @ FetchUserError::InternalError(_)) => {
+                    info!("{err:?}");
+                    None
+                }
+            };
+
+        // The remaining work — bcrypt verify/hash and Diesel DB calls — is blocking.
+        // Hand it to the actix blocking thread pool so we don't stall the async runtime.
+        block(move || -> Result<TokenPair, LoginError> {
+            if let Some(user_info) = user_info_to_update {
+                let service_ctx =
+                    service_provider.context("".to_string(), user_info.user.id.clone())?;
+                LoginService::update_user(&service_ctx, &input.password, user_info)
+                    .map_err(LoginError::UpdateUserError)?;
             }
-        };
 
-        // Check that the logged in user has access to at least one store on the site
-        match user_service.find_user_active_on_this_site(&user_account.id) {
-            Ok(Some(_)) => (),
-            Ok(None) => return Err(LoginError::LoginFailure(LoginFailure::NoSiteAccess)),
-            Err(err) => return Err(err.into()),
-        };
+            let mut service_ctx = service_provider.basic_context()?;
+            let user_service = UserAccountService::new(&service_ctx.connection);
+            let user_account = match user_service.verify_password(&username, &input.password) {
+                Ok(user) => user,
+                Err(err) => {
+                    return Err(match err {
+                        VerifyPasswordError::UsernameDoesNotExist => {
+                            LoginError::LoginFailure(LoginFailure::InvalidCredentials)
+                        }
+                        VerifyPasswordError::InvalidCredentials => {
+                            LoginError::LoginFailure(LoginFailure::InvalidCredentials)
+                        }
+                        VerifyPasswordError::InvalidCredentialsBackend(_) => {
+                            LoginError::InternalError("Failed to read credentials".to_string())
+                        }
+                        VerifyPasswordError::DatabaseError(e) => LoginError::DatabaseError(e),
+                        VerifyPasswordError::EmptyHashedPassword => {
+                            if connection_failure {
+                                LoginError::MSupplyCentralNotReached
+                            } else {
+                                LoginError::InternalError("Corrupted credentials".to_string())
+                            }
+                        }
+                    });
+                }
+            };
 
-        service_ctx.user_id.clone_from(&user_account.id);
+            // Check that the logged in user has access to at least one store on the site
+            match user_service.find_user_active_on_this_site(&user_account.id) {
+                Ok(Some(_)) => (),
+                Ok(None) => return Err(LoginError::LoginFailure(LoginFailure::NoSiteAccess)),
+                Err(err) => return Err(err.into()),
+            };
 
-        activity_log_entry(
-            &service_ctx,
-            ActivityLogType::UserLoggedIn,
-            None,
-            None,
-            None,
-        )?;
+            service_ctx.user_id.clone_from(&user_account.id);
 
-        let mut token_service = TokenService::new(
-            &auth_data.token_bucket,
-            auth_data.auth_token_secret.as_bytes(),
-            !is_develop(),
-        );
-        let max_age_token = crate::auth_data::TOKEN_LIFETIME_SEC;
-        let max_age_refresh = crate::auth_data::REFRESH_TOKEN_LIFETIME_SEC;
+            activity_log_entry(
+                &service_ctx,
+                ActivityLogType::UserLoggedIn,
+                None,
+                None,
+                None,
+            )?;
 
-        let pair = match token_service.jwt_token(
-            &user_account.id,
-            &input.password,
-            max_age_token,
-            max_age_refresh,
-        ) {
-            Ok(pair) => pair,
-            Err(err) => return Err(LoginError::FailedToGenerateToken(err)),
-        };
-        Ok(pair)
+            let mut token_service = TokenService::new(
+                &auth_data.token_bucket,
+                auth_data.auth_token_secret.as_bytes(),
+                !is_develop(),
+            );
+            let max_age_token = crate::auth_data::TOKEN_LIFETIME_SEC;
+            let max_age_refresh = crate::auth_data::REFRESH_TOKEN_LIFETIME_SEC;
+
+            let pair = match token_service.jwt_token(
+                &user_account.id,
+                &input.password,
+                max_age_token,
+                max_age_refresh,
+            ) {
+                Ok(pair) => pair,
+                Err(err) => return Err(LoginError::FailedToGenerateToken(err)),
+            };
+            Ok(pair)
+        })
+        .await
+        .map_err(|e| LoginError::InternalError(format!("blocking pool error: {e}")))?
     }
 
     pub async fn fetch_user_from_central(
@@ -588,17 +605,17 @@ mod test {
             MockDataInserts::none().names().stores().user_accounts(),
         )
         .await;
-        let service_provider = ServiceProvider::new(connection_manager);
+        let service_provider = Arc::new(ServiceProvider::new(connection_manager));
         let context = service_provider
             .context("".to_string(), "".to_string())
             .unwrap();
 
-        let auth_data = AuthData {
+        let auth_data = Arc::new(AuthData {
             auth_token_secret: "secret".to_string(),
             token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
             no_ssl: true,
             debug_no_access_control: false,
-        };
+        });
 
         let expected: LoginResponseV4 = serde_json::from_str(LOGIN_V4_RESPONSE_1).unwrap();
         let expected_user_info = expected.user_info.unwrap();
@@ -619,8 +636,8 @@ mod test {
                 .unwrap();
 
             LoginService::login(
-                &service_provider,
-                &auth_data,
+                service_provider.clone(),
+                auth_data.clone(),
                 LoginInput {
                     username: "Gryffindor".to_string(),
                     password: "password".to_string(),
@@ -661,8 +678,8 @@ mod test {
             let central_server_url = mock_server.base_url();
 
             let result = LoginService::login(
-                &service_provider,
-                &auth_data,
+                service_provider.clone(),
+                auth_data.clone(),
                 LoginInput {
                     username: "Gryffindor".to_string(),
                     password: "password2".to_string(),
@@ -688,8 +705,8 @@ mod test {
             let central_server_url = mock_server.base_url();
 
             let result = LoginService::login(
-                &service_provider,
-                &auth_data,
+                service_provider.clone(),
+                auth_data.clone(),
                 LoginInput {
                     username: "Gryffindor".to_string(),
                     password: "password".to_string(),
@@ -712,8 +729,8 @@ mod test {
             let central_server_url = mock_server.base_url();
 
             let result = LoginService::login(
-                &service_provider,
-                &auth_data,
+                service_provider.clone(),
+                auth_data.clone(),
                 LoginInput {
                     username: mock_user_empty_hashed_password().username,
                     password: "password".to_string(),
@@ -744,8 +761,8 @@ mod test {
             let central_server_url = mock_server.base_url();
 
             let result = LoginService::login(
-                &service_provider,
-                &auth_data,
+                service_provider.clone(),
+                auth_data.clone(),
                 LoginInput {
                     username: mock_user_empty_hashed_password().username,
                     password: "password".to_string(),
@@ -771,8 +788,8 @@ mod test {
             let central_server_url = mock_server.base_url();
 
             let result = LoginService::login(
-                &service_provider,
-                &auth_data,
+                service_provider.clone(),
+                auth_data.clone(),
                 LoginInput {
                     username: "Gryffindor".to_string(),
                     password: "password2".to_string(),
@@ -803,8 +820,8 @@ mod test {
             let central_server_url = mock_server.base_url();
 
             let result = LoginService::login(
-                &service_provider,
-                &auth_data,
+                service_provider.clone(),
+                auth_data.clone(),
                 LoginInput {
                     username: "Gryffindor".to_string(),
                     password: "password".to_string(),

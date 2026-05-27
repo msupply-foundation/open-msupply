@@ -47,11 +47,7 @@ strum = { workspace = true }
 [features]
 default = ["sqlite"]
 sqlite = ["diesel/sqlite", "libsqlite3-sys", "diesel-derive-enum/sqlite"]
-postgres = [
-    "diesel/postgres",
-    "diesel/postgres_backend",
-    "diesel-derive-enum/postgres",
-]
+postgres = ["diesel/postgres", "diesel/postgres_backend", "diesel-derive-enum/postgres"]
 integration_test = []
 
 [build-dependencies]

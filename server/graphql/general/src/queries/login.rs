@@ -1,10 +1,13 @@
+use actix_web::web::{block, Data};
 use async_graphql::*;
 use chrono::Utc;
-use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use graphql_core::standard_graphql_error::StandardGraphqlError;
 
 use http2::header::SET_COOKIE;
 use service::{
+    auth_data::AuthData,
     login::{LoginError, LoginFailure, LoginInput, LoginService},
+    service_provider::ServiceProvider,
     token::TokenPair,
 };
 
@@ -91,23 +94,42 @@ pub enum AuthTokenResponse {
 }
 
 pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<AuthTokenResponse> {
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
-    let auth_data = ctx.get_auth_data();
-    let sync_settings = service_provider
-        .settings
-        .sync_settings(&service_context)?
-        .ok_or(StandardGraphqlError::InternalError(
-            "Sync settings not available".to_string(),
-        ))?;
+    let service_provider = ctx
+        .data_unchecked::<Data<ServiceProvider>>()
+        .clone()
+        .into_inner();
+    let auth_data = ctx
+        .data_unchecked::<Data<AuthData>>()
+        .clone()
+        .into_inner();
+
+    let central_server_url = {
+        let service_provider = service_provider.clone();
+        block(move || -> Result<String, StandardGraphqlError> {
+            let service_context = service_provider.basic_context()?;
+            let sync_settings = service_provider
+                .settings
+                .sync_settings(&service_context)?
+                .ok_or_else(|| {
+                    StandardGraphqlError::InternalError(
+                        "Sync settings not available".to_string(),
+                    )
+                })?;
+            Ok(sync_settings.url)
+        })
+        .await
+        .map_err(|e| {
+            StandardGraphqlError::InternalError(format!("blocking pool error: {e}"))
+        })??
+    };
 
     let pair = match LoginService::login(
         service_provider,
-        auth_data,
+        auth_data.clone(),
         LoginInput {
             username: username.to_string(),
             password: password.to_string(),
-            central_server_url: sync_settings.url.clone(),
+            central_server_url,
         },
         MIN_ERR_RESPONSE_TIME_SEC,
     )

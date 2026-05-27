@@ -273,12 +273,12 @@ async fn initialise_from_central(
         .ok_or(anyhow!("sync settings not set in yaml configurations"))?;
     let central_server_url = sync_settings.url.clone();
 
-    let auth_data = AuthData {
+    let auth_data = Arc::new(AuthData {
         auth_token_secret: "secret".to_string(),
         token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
         no_ssl: true,
         debug_no_access_control: false,
-    };
+    });
 
     let service_context = service_provider.basic_context()?;
     info!("Initialising from central");
@@ -303,7 +303,7 @@ async fn initialise_from_central(
             password: user[1].to_string(),
             central_server_url: central_server_url.clone(),
         };
-        LoginService::login(&service_provider, &auth_data, input.clone(), 0)
+        LoginService::login(service_provider.clone(), auth_data.clone(), input.clone(), 0)
             .await
             .map_err(|_| anyhow!("Cannot login with user {input:?}"))?;
     }
