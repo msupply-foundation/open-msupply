@@ -12,6 +12,7 @@ use async_trait::async_trait;
 use log::info;
 use repository::{
     migrations::Version, syncv7::SyncError, KeyType, KeyValueStoreRepository, RepositoryError,
+    SyncVersion,
 };
 use thiserror::Error;
 use util::format_error;
@@ -68,10 +69,14 @@ impl SiteAuthTrait for SiteAuthService {
         let ctx = service_provider.basic_context()?;
         let repo = KeyValueStoreRepository::new(&ctx.connection);
 
-        if CentralServerConfig::is_central_server() {
-            request_and_set_site_auth_v5(service_provider, settings, &repo).await
-        } else {
-            request_and_set_site_auth_v7(service_provider, settings, &repo).await
+        let version = SyncVersion::get(&ctx.connection, CentralServerConfig::is_central_server())?;
+        match version {
+            SyncVersion::V5V6 => {
+                request_and_set_site_auth_v5(service_provider, settings, &repo).await
+            }
+            SyncVersion::V7 => {
+                request_and_set_site_auth_v7(service_provider, settings, &repo).await
+            }
         }
     }
 
