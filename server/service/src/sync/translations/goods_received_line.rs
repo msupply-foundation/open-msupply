@@ -219,6 +219,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             purchase_order_line_id: data.order_line_ID,
             donor_id: None,
             manufacturer_id: None,
+            received_number_of_packs: None,
         };
 
         Ok(PullTranslateResult::upsert(line))

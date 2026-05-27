@@ -71,6 +71,7 @@ pub(crate) fn generate_inbound_lines(
                     status,
                     manufacture_date,
                     purchase_order_line_id,
+                    received_number_of_packs: _,
                 },
                 ItemRow {
                     id: item_id,
@@ -155,6 +156,7 @@ pub(crate) fn generate_inbound_lines(
                     stock_line_id: None,
                     location_id: None,
                     status,
+                    received_number_of_packs: None,
                 }
             },
         )
