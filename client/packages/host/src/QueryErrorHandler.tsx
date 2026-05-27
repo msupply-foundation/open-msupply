@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Bugsnag from '@bugsnag/js';
 import { useNotification } from '@common/hooks';
 import { useTranslation } from '@common/intl';
@@ -43,6 +43,13 @@ export const QueryErrorHandler = () => {
   const client = useQueryClient();
   const { errorWithDetail, error } = useNotification();
   const t = useTranslation();
+  // The onError defaults installed below are mount-only, but `t` rebinds
+  // on language change. Route through a ref so future errors always use
+  // the current translator without reinstalling the QueryClient defaults.
+  const tRef = useRef(t);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
   const [pending, setPending] = useState<RoutedToast>({ kind: 'none' });
   const location = useLocation();
   const [authError, setAuthError] = useLocalStorage('/error/auth');
@@ -73,6 +80,10 @@ export const QueryErrorHandler = () => {
       // replaces both with an imperative AuthOverlay (re-auth without
       // losing form state) and a dedicated permission-denied modal.
       if (e instanceof UnauthenticatedError) {
+        // Drop any toast queued by an earlier non-auth error. The auth
+        // modal supersedes it, and without this the queued message would
+        // fire later when `/error/auth` clears post-re-login.
+        setPending({ kind: 'none' });
         setAuthError(AuthError.Unauthenticated);
         return { kind: 'none' };
       }
@@ -85,7 +96,7 @@ export const QueryErrorHandler = () => {
 
       if (e instanceof InternalServerError) {
         Bugsnag.notify(e);
-        const message = e.detail ?? t('error.general-query-error');
+        const message = e.detail ?? tRef.current('error.general-query-error');
         return message.length > 100
           ? { kind: 'detail', message }
           : { kind: 'short', message };
@@ -97,7 +108,8 @@ export const QueryErrorHandler = () => {
 
       // Unknown error — likely a bug in a hook throwing something other
       // than the typed error classes. Treat as internal.
-      const message = (e as Error)?.message ?? t('error.general-query-error');
+      const message =
+        (e as Error)?.message ?? tRef.current('error.general-query-error');
       return { kind: 'short', message };
     };
 
