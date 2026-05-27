@@ -182,21 +182,31 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
         .create(&user_id, &password);
 
     let expiry_date = (Utc::now() + SESSION_LIFETIME).timestamp() as usize;
-    let max_age = SESSION_LIFETIME.num_seconds() as usize;
-    set_session_cookie(ctx, &token, max_age, auth_data);
+    set_session_cookie(ctx, &token, auth_data);
 
     Ok(AuthTokenResponse::Response(AuthToken { token, expiry_date }))
 }
 
+/// How long the browser is allowed to keep the session cookie. Intentionally **much longer** than
+/// [`SESSION_LIFETIME`] — the server is sole source of truth for whether a session is still
+/// valid, and we never re-emit `Set-Cookie` on individual authenticated responses. If we used the
+/// session lifetime here, the browser would silently drop the cookie 60 minutes after login
+/// regardless of activity (the server's sliding window only updates `SessionStore` in memory).
+/// With a long cookie lifetime the worst case for an inactive user is one trailing
+/// `Unauthenticated` response, which is the same as if the cookie had expired naturally.
+const COOKIE_MAX_AGE_SECONDS: usize = 60 * 60 * 24 * 30; // 30 days
+
 /// Stores the opaque session token in an HttpOnly cookie. The cookie name is suffixed with the
 /// server port (via [`AuthData::cookie_suffix`]) so multiple instances on the same domain don't
 /// overwrite each other's cookies.
-pub fn set_session_cookie(ctx: &Context<'_>, token: &str, max_age: usize, auth_data: &AuthData) {
+pub fn set_session_cookie(ctx: &Context<'_>, token: &str, auth_data: &AuthData) {
     let secure = if auth_data.no_ssl { "" } else { "; Secure" };
     let name = session_cookie_name(&auth_data.cookie_suffix);
     ctx.insert_http_header(
         SET_COOKIE,
-        format!("{name}={token}; Max-Age={max_age}; Path=/{secure}; HttpOnly; SameSite=Strict"),
+        format!(
+            "{name}={token}; Max-Age={COOKIE_MAX_AGE_SECONDS}; Path=/{secure}; HttpOnly; SameSite=Strict"
+        ),
     );
 }
 

@@ -44,7 +44,7 @@ fn validate_request(
     let session_token = request.headers().get(COOKIE).and_then(|header_value| {
         header_value.to_str().ok().and_then(|header| {
             header
-                .split(' ')
+                .split("; ")
                 .filter_map(|raw_cookie| Cookie::parse(raw_cookie).ok())
                 .find(|cookie| cookie.name() == cookie_name)
                 .map(|cookie| cookie.value().to_owned())
