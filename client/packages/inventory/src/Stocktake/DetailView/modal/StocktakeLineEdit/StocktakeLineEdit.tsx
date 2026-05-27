@@ -32,6 +32,7 @@ import {
   Tabs,
 } from './StocktakeLineEditTabs';
 import { StocktakeLineFragment, useStocktakeOld } from '../../../api';
+import { useStocktakeLineErrorContext } from '../../../context';
 import {
   LocationTable,
   BatchTable,
@@ -39,6 +40,7 @@ import {
 } from './StocktakeLineEditTables';
 import { StocktakeLineEditModal } from './StocktakeLineEditModal';
 import { DraftStocktakeLine } from './utils';
+import { StocktakeLineEditErrorBanner } from './StocktakeLineEditErrorBanner';
 
 // A stocktake line auto-seeded by the server (e.g. all-items stocktake
 // creates one row for an item with no stock) — nothing filled in yet.
@@ -75,8 +77,22 @@ export const StocktakeLineEdit = ({
 
   const { isDisabled, items, totalLineCount, lines } =
     useStocktakeOld.line.rows();
-  const { draftLines, update, addLine, isSaving, save, nextItem } =
-    useStocktakeLineEdit(currentItem, items, lines);
+  const {
+    draftLines,
+    update: updateLine,
+    addLine,
+    isSaving,
+    save,
+    nextItem,
+  } = useStocktakeLineEdit(currentItem, items, lines);
+  const { unsetError } = useStocktakeLineErrorContext();
+  const update: typeof updateLine = useCallback(
+    patch => {
+      unsetError(patch.id);
+      updateLine(patch);
+    },
+    [unsetError, updateLine]
+  );
   const t = useTranslation();
   const { error } = useNotification();
   const {
@@ -322,6 +338,7 @@ export const StocktakeLineEdit = ({
             ) : null}
             {!!currentItem ? (
               <>
+                <StocktakeLineEditErrorBanner draftLines={draftLines} />
                 <Divider margin={5} />
                 {tableContent}
                 <ItemVariantSelectPanel
