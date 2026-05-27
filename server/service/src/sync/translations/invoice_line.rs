@@ -132,8 +132,13 @@ pub struct LegacyTransLineRow {
     #[serde(rename = "manufacturer_ID")]
     #[serde(default)]
     pub manufacturer_id: Option<String>,
+    // Skip on serialise so push omits the key when None rather than emitting
+    // `"goods_received_lines_ID": null`. The internal-only column should never
+    // leak outward, and we don't want a None value to risk clobbering the
+    // legacy-side GR→line link.
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub goods_received_lines_ID: Option<String>,
 }
 
