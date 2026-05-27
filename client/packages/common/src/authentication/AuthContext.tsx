@@ -7,7 +7,7 @@ import { addMinutes } from 'date-fns/addMinutes';
 import { useLogin, useGetUserPermissions, useRefreshToken } from './api/hooks';
 import { AuthenticationResponse } from './api';
 import { useAuthApi } from './api/hooks/useAuthApi';
-import { UnauthenticatedError } from '../api/GqlContext';
+import { UnauthenticatedError } from '../api/errors';
 import { UserStoreNodeFragment } from './api/operations.generated';
 import { PropsWithChildrenOnly, UserPermission } from '@common/types';
 import { RouteBuilder } from '../utils/navigation';
