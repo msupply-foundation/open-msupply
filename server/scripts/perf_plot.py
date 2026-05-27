@@ -42,146 +42,27 @@ except ImportError:
 
 
 # -------------------------------------------------------------------- queries
+#
+# Query generation lives in perf_sql_test.py — we import it so both scripts
+# share the same SQL (and any new field is added in exactly one place).
+# `SORT_SHAPE` in perf_sql_test defaults to "leftjoin", which matches what
+# this script was hard-wired to before the merge.
 
-TEXT_LIKE = "%store 7%"
-NUM_MIN, NUM_MAX = 40, 60
-OPTION_TEXT = "Navy"
-OPTION_ID = "perf_opt_bean_navy"
-
-LEGACY_KEY = {"text": "beans_thoughts", "number": "beans_count", "option": "favourite_bean"}
-V2_ID = {
-    "text": "perf_propv2_beans_thoughts",
-    "number": "perf_propv2_beans_count",
-    "option": "perf_propv2_favourite_bean",
-}
-
-
-def queries_sqlite(field: str, method: str, limit: int) -> Tuple[str, str]:
-    if method in ("legacy", "legacyJsonb"):
-        col = "properties_jsonb" if method == "legacyJsonb" else "properties"
-        extract = f"json_extract(name.{col}, '$.{LEGACY_KEY[field]}')"
-        if field == "text":
-            f_sql = (
-                f"SELECT count(*) FROM (SELECT name.id FROM name "
-                f"WHERE {extract} LIKE '{TEXT_LIKE}' LIMIT {limit})"
-            )
-        elif field == "number":
-            f_sql = (
-                f"SELECT count(*) FROM (SELECT name.id FROM name "
-                f"WHERE CAST({extract} AS INTEGER) BETWEEN {NUM_MIN} AND {NUM_MAX} "
-                f"LIMIT {limit})"
-            )
-        else:
-            f_sql = (
-                f"SELECT count(*) FROM (SELECT name.id FROM name "
-                f"WHERE {extract} = '{OPTION_TEXT}' LIMIT {limit})"
-            )
-        s_sql = (
-            f"SELECT count(*) FROM (SELECT name.id FROM name "
-            f"ORDER BY {extract} LIMIT {limit})"
-        )
-        return f_sql, s_sql
-
-    prop = V2_ID[field]
-    if field == "text":
-        f_sql = (
-            f"SELECT count(*) FROM (SELECT n.id FROM name n "
-            f"JOIN property_v2_value pv ON pv.record_id = n.id AND pv.table_name = 'name' "
-            f"WHERE pv.property_id = '{prop}' AND pv.value_text LIKE '{TEXT_LIKE}' "
-            f"LIMIT {limit})"
-        )
-        order = "pv.value_text"
-    elif field == "number":
-        f_sql = (
-            f"SELECT count(*) FROM (SELECT n.id FROM name n "
-            f"JOIN property_v2_value pv ON pv.record_id = n.id AND pv.table_name = 'name' "
-            f"WHERE pv.property_id = '{prop}' "
-            f"AND pv.value_number BETWEEN {NUM_MIN} AND {NUM_MAX} LIMIT {limit})"
-        )
-        order = "pv.value_number"
-    else:
-        f_sql = (
-            f"SELECT count(*) FROM (SELECT n.id FROM name n "
-            f"JOIN property_v2_value pv ON pv.record_id = n.id AND pv.table_name = 'name' "
-            f"WHERE pv.property_id = '{prop}' "
-            f"AND pv.value_option_id = '{OPTION_ID}' LIMIT {limit})"
-        )
-        order = (
-            "(SELECT pvo.name FROM property_v2_option pvo "
-            "WHERE pvo.id = pv.value_option_id)"
-        )
-    s_sql = (
-        f"SELECT count(*) FROM (SELECT n.id FROM name n "
-        f"LEFT JOIN property_v2_value pv ON pv.record_id = n.id "
-        f"AND pv.table_name = 'name' AND pv.property_id = '{prop}' "
-        f"ORDER BY {order} LIMIT {limit}) t"
-    )
-    return f_sql, s_sql
-
-
-def queries_postgres(field: str, method: str, limit: int) -> Tuple[str, str]:
-    if method in ("legacy", "legacyJsonb"):
-        if method == "legacyJsonb":
-            extract = f"(name.properties_jsonb ->> '{LEGACY_KEY[field]}')"
-        else:
-            extract = f"((name.properties::jsonb) ->> '{LEGACY_KEY[field]}')"
-        if field == "text":
-            f_sql = (
-                f"SELECT count(*) FROM (SELECT name.id FROM name "
-                f"WHERE {extract} ILIKE '{TEXT_LIKE}' LIMIT {limit}) t"
-            )
-        elif field == "number":
-            f_sql = (
-                f"SELECT count(*) FROM (SELECT name.id FROM name "
-                f"WHERE {extract}::integer BETWEEN {NUM_MIN} AND {NUM_MAX} "
-                f"LIMIT {limit}) t"
-            )
-        else:
-            f_sql = (
-                f"SELECT count(*) FROM (SELECT name.id FROM name "
-                f"WHERE {extract} = '{OPTION_TEXT}' LIMIT {limit}) t"
-            )
-        s_sql = (
-            f"SELECT count(*) FROM (SELECT name.id FROM name "
-            f"ORDER BY {extract} LIMIT {limit}) t"
-        )
-        return f_sql, s_sql
-
-    prop = V2_ID[field]
-    if field == "text":
-        f_sql = (
-            f"SELECT count(*) FROM (SELECT n.id FROM name n "
-            f"JOIN property_v2_value pv ON pv.record_id = n.id AND pv.table_name = 'name' "
-            f"WHERE pv.property_id = '{prop}' AND pv.value_text ILIKE '{TEXT_LIKE}' "
-            f"LIMIT {limit}) t"
-        )
-        order = "pv.value_text"
-    elif field == "number":
-        f_sql = (
-            f"SELECT count(*) FROM (SELECT n.id FROM name n "
-            f"JOIN property_v2_value pv ON pv.record_id = n.id AND pv.table_name = 'name' "
-            f"WHERE pv.property_id = '{prop}' "
-            f"AND pv.value_number BETWEEN {NUM_MIN} AND {NUM_MAX} LIMIT {limit}) t"
-        )
-        order = "pv.value_number"
-    else:
-        f_sql = (
-            f"SELECT count(*) FROM (SELECT n.id FROM name n "
-            f"JOIN property_v2_value pv ON pv.record_id = n.id AND pv.table_name = 'name' "
-            f"WHERE pv.property_id = '{prop}' "
-            f"AND pv.value_option_id = '{OPTION_ID}' LIMIT {limit}) t"
-        )
-        order = (
-            "(SELECT pvo.name FROM property_v2_option pvo "
-            "WHERE pvo.id = pv.value_option_id)"
-        )
-    s_sql = (
-        f"SELECT count(*) FROM (SELECT n.id FROM name n "
-        f"LEFT JOIN property_v2_value pv ON pv.record_id = n.id "
-        f"AND pv.table_name = 'name' AND pv.property_id = '{prop}' "
-        f"ORDER BY {order} LIMIT {limit}) t"
-    )
-    return f_sql, s_sql
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from perf_sql_test import (  # noqa: E402
+    INDEXED_CASES,
+    NESTED_FIELDS_DENSE,
+    NESTED_FIELDS_SPARSE,
+    SPARSE_FIELDS,
+    applicable_methods,
+    exec_postgres_ddl,
+    exec_sqlite_ddl,
+    has_sparse_postgres,
+    has_sparse_sqlite,
+    queries_postgres,
+    queries_sqlite,
+)
 
 
 # -------------------------------------------------------------------- runners
@@ -387,8 +268,11 @@ def sample_case(
     return samples, False
 
 
-METHODS = ["legacy", "legacyJsonb", "v2"]
-FIELDS = ["text", "number", "option"]
+METHODS = ["legacy", "legacyJsonb", "v2", "indexed"]
+# Populated by main() — starts with the dense set + nested-dense; sparse +
+# nested-sparse fields are appended only when the sparse-properties seed has
+# actually been run.
+FIELDS: List[str] = ["text", "number", "option", "date"] + NESTED_FIELDS_DENSE
 OPS = ["filter", "sort"]
 
 
@@ -408,7 +292,9 @@ def collect(
     )
     results: Dict[str, CaseSamples] = {}
     for field in FIELDS:
-        for method in METHODS:
+        # Nested fields skip V2 (V2 has no nested model); applicable_methods
+        # returns just the legacy paths for those cases.
+        for method in applicable_methods(field):
             f_sql, s_sql = gen_queries(field, method, limit)
             for op, sql in (("filter", f_sql), ("sort", s_sql)):
                 runner = make_runner(sql)
@@ -417,7 +303,7 @@ def collect(
                         runner, iterations, do_warmup, timeout_ms
                     )
                 except Exception as e:
-                    print(f"  {op:6} {field:6} {method:11} ERROR: {e}")
+                    print(f"  {op:6} {field:24} {method:11} ERROR: {e}")
                     results[f"{op}_{field}_{method}"] = CaseSamples(
                         label, op, field, method
                     )
@@ -430,12 +316,80 @@ def collect(
                 )
                 marker = "  TIMEOUT" if timed_out else ""
                 print(
-                    f"  {op:6} {field:6} {method:11} "
+                    f"  {op:6} {field:24} {method:11} "
                     f"cold {cold:7.2f}ms  steady-median {steady:7.2f}ms  "
                     f"min {min(samples) if samples else 0:7.2f}  "
                     f"max {max(samples) if samples else 0:7.2f}{marker}"
                 )
     return results
+
+
+def collect_indexed_pass(
+    backend: str,
+    target,
+    label: str,
+    gen_queries,
+    make_runner,
+    iterations: int,
+    limit: int,
+    do_warmup: bool,
+    timeout_ms: float,
+    results: Dict[str, CaseSamples],
+) -> None:
+    """For each INDEXED_CASES entry: CREATE the functional index, time the
+    legacyJsonb queries (the planner will use the index automatically),
+    store results under method='indexed', then DROP. Merges into the same
+    results dict the main collect() produced so plotting picks them up as
+    the 4th method. `target` is the sqlite path or postgres conn string."""
+    print(f"\n=== {label} — indexed pass ===")
+    for case in INDEXED_CASES:
+        field = case["field"]
+        if field not in FIELDS:
+            continue
+        idx_name = case["index_name"]
+        expr = case["sqlite_expr"] if backend == "sqlite" else case["postgres_expr"]
+        ddl_create = f"CREATE INDEX IF NOT EXISTS {idx_name} ON name ({expr})"
+        ddl_drop = f"DROP INDEX IF EXISTS {idx_name}"
+        if backend == "sqlite":
+            exec_sqlite_ddl(target, ddl_create)
+            exec_sqlite_ddl(target, "ANALYZE name")
+        else:
+            exec_postgres_ddl(target, ddl_create)
+            exec_postgres_ddl(target, "ANALYZE name")
+        try:
+            f_sql, s_sql = gen_queries(field, "legacyJsonb", limit)
+            for op, sql in (("filter", f_sql), ("sort", s_sql)):
+                runner = make_runner(sql)
+                try:
+                    samples, timed_out = sample_case(
+                        runner, iterations, do_warmup, timeout_ms
+                    )
+                except Exception as e:
+                    print(f"  {op:6} {field:24} indexed     ERROR: {e}")
+                    results[f"{op}_{field}_indexed"] = CaseSamples(
+                        label, op, field, "indexed"
+                    )
+                    continue
+                cs = CaseSamples(label, op, field, "indexed", samples, timed_out)
+                results[f"{op}_{field}_indexed"] = cs
+                cold = samples[0] if samples else 0.0
+                steady = (
+                    statistics.median(samples[1:]) if len(samples) > 1 else cold
+                )
+                marker = "  TIMEOUT" if timed_out else ""
+                print(
+                    f"  {op:6} {field:24} indexed     "
+                    f"cold {cold:7.2f}ms  steady-median {steady:7.2f}ms  "
+                    f"min {min(samples) if samples else 0:7.2f}  "
+                    f"max {max(samples) if samples else 0:7.2f}{marker}"
+                )
+        finally:
+            # Always drop so the next run starts from the same unindexed
+            # baseline as the main matrix.
+            if backend == "sqlite":
+                exec_sqlite_ddl(target, ddl_drop)
+            else:
+                exec_postgres_ddl(target, ddl_drop)
 
 
 # -------------------------------------------------------------------- plotting
@@ -445,11 +399,13 @@ METHOD_COLORS = {
     "legacy": "#bfa15a",       # legacy text JSON
     "legacyJsonb": "#5aa5bf",  # JSONB twin
     "v2": "#7fbf6e",            # V2 relational
+    "indexed": "#9a6bbf",      # JSONB + functional index over the extract
 }
 METHOD_LABEL = {
     "legacy": "legacy (text JSON)",
     "legacyJsonb": "legacy (JSONB)",
     "v2": "V2 relational",
+    "indexed": "JSONB + index",
 }
 
 
@@ -457,8 +413,10 @@ def _draw_bars(ax, results: Dict[str, CaseSamples], op: str, cap_ms: float):
     """Grouped bars per field, hue per method. If any bar's median exceeds
     `cap_ms`, the y-axis is capped at `cap_ms`, the overflowing bars are
     striped + annotated with the real value, and a red guide line is drawn.
-    If everything fits under the cap the axis autoscales and no guide line
-    appears — keeps small-value plots from looking like dust under a ceiling."""
+
+    Sub-millisecond bars are drawn at a minimum height (`min_visible`) so
+    indexed / V2 cases stay visible alongside 250ms legacy bars; the real
+    value is annotated above any bar that got bumped up to the minimum."""
     n_fields = len(FIELDS)
     n_methods = len(METHODS)
     bar_w = 0.8 / n_methods
@@ -485,17 +443,29 @@ def _draw_bars(ax, results: Dict[str, CaseSamples], op: str, cap_ms: float):
         cells.append(row)
 
     y_limit = cap_ms if any_overflow else None  # None = matplotlib autoscale
+    y_top = cap_ms if y_limit is not None else max(
+        (m for r in cells for m, *_ in r if m > 0), default=1.0
+    )
+    # 3% of the visible range so sub-ms bars get a stub the eye can find,
+    # but bars in the working range aren't visibly inflated.
+    min_visible = y_top * 0.03
 
     for j, method in enumerate(METHODS):
         meds_lo_hi = cells[j]
-        meds = [m for m, _, _, _ in meds_lo_hi]
-        clipped_meds = [
-            min(m, cap_ms) if any_overflow else m for m in meds
+        # Bars with real data smaller than `min_visible` get bumped up to it;
+        # the real value is annotated above. Bars at exactly 0 (no data) stay
+        # at 0 and are skipped below.
+        drawn_heights = [
+            min(m, cap_ms) if any_overflow else m
+            for m, _, _, _ in meds_lo_hi
+        ]
+        drawn_heights = [
+            max(h, min_visible) if h > 0 else 0.0 for h in drawn_heights
         ]
         offs = -0.4 + bar_w / 2 + j * bar_w
         bars = ax.bar(
             x + offs,
-            clipped_meds,
+            drawn_heights,
             bar_w * 0.9,
             color=METHOD_COLORS[method],
             edgecolor="black",
@@ -537,9 +507,25 @@ def _draw_bars(ax, results: Dict[str, CaseSamples], op: str, cap_ms: float):
                     fontsize=7,
                     color="black",
                 )
+            elif med < min_visible:
+                # Real value is small enough that we had to bump the bar up
+                # to a visible stub; print the actual number above it.
+                # Rotated so adjacent sub-ms bars don't overlap horizontally.
+                ax.annotate(
+                    f"{med:.2f}ms" if med >= 0.1 else f"{med * 1000:.0f}µs",
+                    xy=(cx, min_visible),
+                    xytext=(0, 4),
+                    textcoords="offset points",
+                    ha="left",
+                    va="bottom",
+                    rotation=45,
+                    fontsize=6,
+                    color="black",
+                )
 
     ax.set_xticks(x)
-    ax.set_xticklabels(FIELDS)
+    # Rotate so the longer `*_sparse` labels don't pile on top of each other.
+    ax.set_xticklabels(FIELDS, rotation=25, ha="right")
     if y_limit is not None:
         ax.set_ylim(0, y_limit * 1.08)
         ax.axhline(y_limit, color="red", linestyle=":", linewidth=0.8, alpha=0.5)
@@ -556,8 +542,12 @@ def plot_latency(
 ):
     backends = list(by_backend.keys())
     n_cols = len(backends)
+    # Width per subplot grows with the field count — at 3 dense fields the
+    # original 5.5" was fine, but with 8 (dense + sparse) the bars overlap
+    # unless we give them more room.
+    col_w = max(5.5, 0.9 * len(FIELDS) + 2.0)
     fig, axes = plt.subplots(
-        nrows=2, ncols=n_cols, figsize=(5.5 * n_cols, 7), squeeze=False
+        nrows=2, ncols=n_cols, figsize=(col_w * n_cols, 7.5), squeeze=False
     )
     # Scan once so the shared legend only mentions clipping if any subplot
     # actually had to clip (overflow or timeout).
@@ -605,8 +595,9 @@ def plot_warmup(
     skew jumps out. Ratio == 1 → no warmup penalty; >> 1 → first sample much
     slower than steady-state."""
     backends = list(by_backend.keys())
+    col_w = max(5.5, 0.9 * len(FIELDS) + 2.0)
     fig, axes = plt.subplots(
-        nrows=2, ncols=len(backends), figsize=(5.5 * len(backends), 7), squeeze=False
+        nrows=2, ncols=len(backends), figsize=(col_w * len(backends), 7.5), squeeze=False
     )
     for col, backend in enumerate(backends):
         results = by_backend[backend]
@@ -636,7 +627,7 @@ def plot_warmup(
                 )
             ax.axhline(1.0, color="black", linewidth=0.7)
             ax.set_xticks(x)
-            ax.set_xticklabels(FIELDS)
+            ax.set_xticklabels(FIELDS, rotation=25, ha="right")
             ax.set_ylabel("first-sample / steady-median")
             ax.set_title(f"{backend} — {op} warmup ratio")
             ax.grid(axis="y", linestyle=":", alpha=0.35)
@@ -690,6 +681,27 @@ def main() -> None:
     if not args.sqlite and not args.postgres:
         ap.error("specify --sqlite and/or --postgres")
 
+    # Append sparse cases iff the sparse-properties seed has been applied to
+    # every backend we're about to run. Mixed state (one backend seeded, the
+    # other not) skips sparse — the plots share an x-axis per row and we'd
+    # otherwise compare apples-to-oranges across columns.
+    sparse_states = []
+    if args.sqlite:
+        sparse_states.append(has_sparse_sqlite(args.sqlite))
+    if args.postgres:
+        sparse_states.append(has_sparse_postgres(args.postgres))
+    if sparse_states and all(sparse_states):
+        FIELDS.extend(SPARSE_FIELDS)
+        FIELDS.extend(NESTED_FIELDS_SPARSE)
+        print(f"Sparse seed detected — including {SPARSE_FIELDS + NESTED_FIELDS_SPARSE}")
+    elif any(sparse_states):
+        print(
+            "Sparse seed present in only some backends — skipping sparse "
+            "cases so the per-backend plots stay comparable."
+        )
+    else:
+        print("No sparse seed — skipping *_sparse cases.")
+
     by_backend: Dict[str, Dict[str, CaseSamples]] = {}
 
     if args.sqlite:
@@ -703,6 +715,14 @@ def main() -> None:
             do_warmup=not args.no_warmup,
             timeout_ms=args.query_timeout,
         )
+        collect_indexed_pass(
+            "sqlite", args.sqlite, f"sqlite ({args.sqlite})",
+            queries_sqlite, runner,
+            args.iterations, args.limit,
+            do_warmup=not args.no_warmup,
+            timeout_ms=args.query_timeout,
+            results=by_backend["sqlite"],
+        )
 
     if args.postgres:
         runner = make_psql_runner(args.postgres, args.query_timeout)
@@ -714,6 +734,14 @@ def main() -> None:
             args.limit,
             do_warmup=not args.no_warmup,
             timeout_ms=args.query_timeout,
+        )
+        collect_indexed_pass(
+            "postgres", args.postgres, "postgres",
+            queries_postgres, runner,
+            args.iterations, args.limit,
+            do_warmup=not args.no_warmup,
+            timeout_ms=args.query_timeout,
+            results=by_backend["postgres"],
         )
 
     plot_latency(by_backend, cap_ms=args.cap, out_path=args.out)

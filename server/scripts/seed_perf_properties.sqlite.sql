@@ -21,29 +21,33 @@ BEGIN;
 INSERT OR IGNORE INTO property (id, key, name, value_type, allowed_values) VALUES
   ('perf_prop_beans_thoughts', 'beans_thoughts', 'Thoughts on beans', 'STRING',  NULL),
   ('perf_prop_beans_count',    'beans_count',    'Beans',             'INTEGER', NULL),
-  ('perf_prop_favourite_bean', 'favourite_bean', 'Favourite Bean',    'STRING',  'Black,Pinto,Navy,Kidney,Lima')
+  ('perf_prop_favourite_bean', 'favourite_bean', 'Favourite Bean',    'STRING',  'Black,Pinto,Navy,Kidney,Lima'),
+  ('perf_prop_visit_date',     'visit_date',     'Visit date',        'DATE',    NULL)
 ;
 
 -- 2) Attach each property definition to the names context.
 INSERT OR IGNORE INTO name_property (id, property_id, remote_editable) VALUES
   ('perf_np_beans_thoughts', 'perf_prop_beans_thoughts', 1),
   ('perf_np_beans_count',    'perf_prop_beans_count',    1),
-  ('perf_np_favourite_bean', 'perf_prop_favourite_bean', 1)
+  ('perf_np_favourite_bean', 'perf_prop_favourite_bean', 1),
+  ('perf_np_visit_date',     'perf_prop_visit_date',     1)
 ;
 
 -- 3) Property V2 definitions — mirrors the legacy set for an apples-to-apples
---    comparison. Types use the strings the V2 service expects (TEXT/NUMBER/OPTION).
+--    comparison. Types use the strings the V2 service expects (TEXT/NUMBER/OPTION/DATE).
 INSERT OR IGNORE INTO property_v2 (id, type, name, translation_key, deleted_datetime) VALUES
   ('perf_propv2_beans_thoughts', 'text',   'Thoughts on beans', NULL, NULL),
   ('perf_propv2_beans_count',    'number', 'Beans',             NULL, NULL),
-  ('perf_propv2_favourite_bean', 'option', 'Favourite Bean',    NULL, NULL)
+  ('perf_propv2_favourite_bean', 'option', 'Favourite Bean',    NULL, NULL),
+  ('perf_propv2_visit_date',     'date',   'Visit date',        NULL, NULL)
 ;
 
 -- 4) Attach the V2 properties to the `name` table.
 INSERT OR IGNORE INTO property_v2_table (id, property_id, table_name) VALUES
   ('perf_propv2t_beans_thoughts', 'perf_propv2_beans_thoughts', 'name'),
   ('perf_propv2t_beans_count',    'perf_propv2_beans_count',    'name'),
-  ('perf_propv2t_favourite_bean', 'perf_propv2_favourite_bean', 'name')
+  ('perf_propv2t_favourite_bean', 'perf_propv2_favourite_bean', 'name'),
+  ('perf_propv2t_visit_date',     'perf_propv2_visit_date',     'name')
 ;
 
 -- 5) Options for the `Favourite Bean` V2 property.
@@ -83,7 +87,37 @@ SELECT
      WHEN 2 THEN 'Navy'
      WHEN 3 THEN 'Kidney'
      ELSE        'Lima'
-   END || '"}'
+   END || '",' ||
+   '"visit_date":"' || date('2025-01-01', '+' || ((i - 1) % 365) || ' days') || '",' ||
+   -- Deeply nested blob for nested-JSON-extract perf tests. Not registered
+   -- as a UI column (no property/name_property entries) and not mirrored in
+   -- the V2 system (V2 stores flat scalars). Sibling junk at every level so
+   -- the JSON parser has real work to do before reaching the target key,
+   -- e.g. `$.metadata.location.address.primary.city`.
+   '"metadata":{' ||
+     '"schema_version":3,' ||
+     '"tags":["alpha","beta","gamma","delta","epsilon"],' ||
+     '"flags":{"active":true,"verified":false,"audit":true,"experimental":false,"premium":true},' ||
+     '"audit":{' ||
+       '"created_at":"2025-01-15T08:30:00Z",' ||
+       '"updated_at":"2025-02-20T12:45:00Z",' ||
+       '"actor":"system-import-pipeline-v2",' ||
+       '"checksum":"chk-' || i || '",' ||
+       '"notes":"Bulk seeded perf store, no special handling required for record ' || i || '."' ||
+     '},' ||
+     '"location":{' ||
+       '"region":"region-' || (i % 7) || '",' ||
+       '"timezone":"Pacific/Auckland",' ||
+       '"address":{' ||
+         '"lines":["' || i || ' Test Street","Suburb","Country"],' ||
+         '"primary":{' ||
+           '"city":"City ' || (i % 50) || '",' ||
+           '"country":"C' || (i % 10) || '",' ||
+           '"postcode":' || ((i * 13) % 1000) ||
+         '}' ||
+       '}' ||
+     '}' ||
+   '}}'
 FROM seq
 ;
 
@@ -137,6 +171,16 @@ SELECT
     WHEN 3 THEN 'perf_opt_bean_kidney'
     ELSE        'perf_opt_bean_lima'
   END
+FROM name WHERE id LIKE 'perf_store_%'
+;
+
+INSERT OR IGNORE INTO property_v2_value (id, table_name, record_id, property_id, value_text, value_number, value_real, value_date, value_option_id)
+SELECT
+  'perf_pv2val_visitdate_' || substr(id, length('perf_store_') + 1),
+  'name', id, 'perf_propv2_visit_date',
+  NULL, NULL, NULL,
+  date('2025-01-01', '+' || ((CAST(substr(id, length('perf_store_') + 1) AS INTEGER) - 1) % 365) || ' days'),
+  NULL
 FROM name WHERE id LIKE 'perf_store_%'
 ;
 

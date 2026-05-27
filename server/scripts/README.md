@@ -13,16 +13,22 @@ the stores list page:
 
 ## What gets seeded
 
-Three property definitions, mirrored across the legacy and V2 systems:
+Four property definitions, mirrored across the legacy and V2 systems:
 
 | Name | Type | Notes |
 |---|---|---|
 | Thoughts on beans | text | free-form string |
 | Favourite Bean | option (enum) | Black / Pinto / Navy / Kidney / Lima |
 | Beans | number | int `(i * 7) % 100` |
+| Visit date | date | `2025-01-01 + ((i - 1) % 365) days` — uniform over a year. V2 uses the typed `value_date` column; legacy stores ISO-8601 text in JSON. |
 
 100000 stores by default (`perf_store_00001` … `perf_store_100000`), each with
-all three property values populated in both systems plus the JSONB twin.
+all four property values populated in both systems plus the JSONB twin.
+
+> Note: the V2 schema has no `value_datetime` column — only `value_date`
+> (DATE). The visit-date property therefore exercises a date path, not
+> datetime. Datetime semantics on V2 would fall back to `value_text`, which
+> is already covered by the text property.
 
 ## Running
 
@@ -42,6 +48,36 @@ Re-running is safe — IDs are deterministic, all inserts skip on conflict, and
 the `properties_jsonb` backfill is the only unconditional statement (input is
 the same so the output is identical).
 
+## Optional: 30 variably-sparse properties
+
+To stress the V2 path under a realistic property catalog (and compare it
+against legacy under the same data shape), run the sparse-seed follow-up
+after the main seed completes:
+
+SQLite:
+
+```sh
+sqlite3 path/to/omsupply.sqlite < server/scripts/seed_perf_sparse_properties.sqlite.sql
+```
+
+Postgres:
+
+```sh
+psql "$DATABASE_URL" -f server/scripts/seed_perf_sparse_properties.postgres.sql
+```
+
+What it adds:
+
+- 30 V2 property definitions (10 text, 10 number, 5 option × 4 options each,
+  5 date), id-prefixed `perf_sparse_propv2_*`.
+- Per-store population at *variable* density (5%..94%, spread across the 30
+  properties so different properties have wildly different fill rates).
+- Mirrors the sparse keys into legacy `name.properties` / `properties_jsonb`
+  so the three-way comparison sees the same data shape.
+
+Depends on `seed_perf_properties.*` having created the `perf_store_%` rows.
+Idempotent — re-running is a no-op.
+
 ## Changing the dataset size
 
 Edit the upper bound in the row-generating CTE near the middle of each script:
@@ -52,13 +88,21 @@ Edit the upper bound in the row-generating CTE near the middle of each script:
 ## Cleaning up
 
 ```sql
-DELETE FROM property_v2_value WHERE record_id LIKE 'perf_store_%';
-DELETE FROM store             WHERE id        LIKE 'perf_store_%';
-DELETE FROM name_link         WHERE name_id   LIKE 'perf_store_%';
-DELETE FROM name              WHERE id        LIKE 'perf_store_%';
-DELETE FROM property_v2_option WHERE id LIKE 'perf_opt_bean_%';
-DELETE FROM property_v2_table  WHERE id LIKE 'perf_propv2t_%';
-DELETE FROM property_v2        WHERE id LIKE 'perf_propv2_%';
-DELETE FROM name_property      WHERE id LIKE 'perf_np_%';
-DELETE FROM property           WHERE id LIKE 'perf_prop_%';
+-- On Postgres, wrap in a transaction (psql -c runs multi-statement as one
+-- already, but BEGIN makes it explicit). On SQLite the FK enforcement is
+-- off by default so order is forgiving, but the same patterns work.
+BEGIN;
+DELETE FROM property_v2_value  WHERE record_id LIKE 'perf_store_%';
+DELETE FROM store              WHERE id LIKE 'perf_store_%';
+DELETE FROM name_link          WHERE name_id LIKE 'perf_store_%';
+DELETE FROM name               WHERE id LIKE 'perf_store_%';
+-- Match by `property_id` rather than `id` so we catch rows that may have
+-- been created with UUID ids elsewhere (e.g. sync) — anything pointing at
+-- our perf properties needs to go before we can drop them.
+DELETE FROM property_v2_option WHERE property_id LIKE 'perf_propv2_%' OR property_id LIKE 'perf_sparse_propv2_%';
+DELETE FROM property_v2_table  WHERE property_id LIKE 'perf_propv2_%' OR property_id LIKE 'perf_sparse_propv2_%';
+DELETE FROM property_v2        WHERE id LIKE 'perf_propv2_%' OR id LIKE 'perf_sparse_propv2_%';
+DELETE FROM name_property      WHERE id LIKE 'perf_np_%' OR id LIKE 'perf_sparse_np_%';
+DELETE FROM property           WHERE id LIKE 'perf_prop_%' OR id LIKE 'perf_sparse_prop_%';
+COMMIT;
 ```
