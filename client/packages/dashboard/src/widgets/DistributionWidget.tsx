@@ -32,7 +32,8 @@ export const DistributionWidget = ({
   const modalControl = useToggle(false);
   const navigate = useNavigate();
   const { error: errorNotification } = useNotification();
-  const { userHasPermission } = useAuthContext();
+  const { store, userHasPermission } = useAuthContext();
+  const omProgramModule = !!store?.preferences.omProgramModule;
   const formatNumber = useFormatNumber();
   const outbound = useOutboundCounts();
   const requisition = useRequisitionCounts();
@@ -103,18 +104,23 @@ export const DistributionWidget = ({
             .build(),
           statContext: `${customerRequisitionsPanelContext}-new`,
         },
-        {
-          label: t('label.emergency'),
-          value: formatNumber.round(requisition?.stats?.emergency),
-          link: RouteBuilder.create(AppRoute.Distribution)
-            .addPart(AppRoute.CustomerRequisition)
-            .addQuery({ isEmergency: true })
-            .addQuery({ status: RequisitionNodeStatus.New })
-            .build(),
-          statContext: `${customerRequisitionsPanelContext}-emergency`,
-          alertFlag:
-            !!requisition.stats?.emergency && requisition.stats?.emergency > 0,
-        },
+        ...(omProgramModule
+          ? [
+            {
+              label: t('label.emergency'),
+              value: formatNumber.round(requisition?.stats?.emergency),
+              link: RouteBuilder.create(AppRoute.Distribution)
+                .addPart(AppRoute.CustomerRequisition)
+                .addQuery({ isEmergency: true })
+                .addQuery({ status: RequisitionNodeStatus.New })
+                .build(),
+              statContext: `${customerRequisitionsPanelContext}-emergency`,
+              alertFlag:
+                !!requisition.stats?.emergency &&
+                requisition.stats?.emergency > 0,
+            },
+          ]
+          : []),
       ]}
       link={RouteBuilder.create(AppRoute.Distribution)
         .addPart(AppRoute.CustomerRequisition)
