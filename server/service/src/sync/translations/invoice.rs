@@ -521,6 +521,7 @@ impl SyncTranslation for InvoiceTranslation {
             shipping_method_id,
             charges_local_currency: oms_fields.charges_local_currency,
             charges_foreign_currency: oms_fields.charges_foreign_currency,
+            legacy_goods_received_id: data.goods_received_ID,
             ..Default::default()
         };
 
@@ -617,6 +618,7 @@ impl SyncTranslation for InvoiceTranslation {
                     shipping_method_id,
                     charges_local_currency,
                     charges_foreign_currency,
+                    legacy_goods_received_id: _,
                 },
             name_row,
             clinician_row,

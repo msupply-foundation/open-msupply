@@ -212,6 +212,7 @@ fn generate_line(
         prescribed_quantity: None,
         reason_option_id: None,
         status,
+        legacy_goods_received_line_id: None,
     }
 }
 

@@ -111,12 +111,33 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
 
         let gr_status = gr_sync_row.deserialize::<GoodsReceivedStatus>()?;
 
-        // Temporary fix, see this issue: https://github.com/msupply-foundation/open-msupply/issues/11829
+        // Finalised GR line: find the invoice_line that was spawned from this GR line
+        // via the `legacy_goods_received_line_id` column the invoice_line translator
+        // populated from `trans_line.goods_received_lines_ID`, and stamp the PO line link.
         if is_finalised(&gr_status.status) {
-            return Ok(PullTranslateResult::Ignored(format!(
-                "Skipped adding purchase order line id to invoice line when gr is finalised {}",
-                data.id
-            )));
+            let po_line_id = match &data.order_line_ID {
+                Some(id) => id.clone(),
+                None => {
+                    return Ok(PullTranslateResult::Ignored(format!(
+                        "goods_received_line {} has no order_line_ID, skipping PO line link",
+                        data.id
+                    )))
+                }
+            };
+
+            let linked_line = InvoiceLineRowRepository::new(connection)
+                .find_one_by_legacy_goods_received_line_id(&data.id)?;
+
+            return match linked_line {
+                Some(mut line) => {
+                    line.purchase_order_line_id = Some(po_line_id);
+                    Ok(PullTranslateResult::upsert(line))
+                }
+                None => Ok(PullTranslateResult::Ignored(format!(
+                    "no invoice_line with legacy_goods_received_line_id {} found",
+                    data.id
+                ))),
+            };
         }
 
         // Non-finalized GR: create invoice line
@@ -162,6 +183,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             purchase_order_line_id: data.order_line_ID,
             donor_id: None,
             manufacturer_id: None,
+            legacy_goods_received_line_id: None,
         };
 
         Ok(PullTranslateResult::upsert(line))

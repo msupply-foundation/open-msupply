@@ -55,6 +55,7 @@ define_linked_tables! {
         status -> Nullable<crate::db_diesel::invoice_line_row::InvoiceLineStatusMapping>,
         manufacture_date -> Nullable<Date>,
         purchase_order_line_id -> Nullable<Text>,
+        legacy_goods_received_line_id -> Nullable<Text>,
     },
     links: {
     },
@@ -146,6 +147,10 @@ pub struct InvoiceLineRow {
     pub status: Option<InvoiceLineStatus>,
     pub manufacture_date: Option<NaiveDate>,
     pub purchase_order_line_id: Option<String>,
+    /// Legacy `trans_line.goods_received_lines_ID` carried over from OG so the
+    /// goods_received_line translator can find the invoice_line spawned by a
+    /// finalised GR line without scanning sync_buffer. Internal only — never synced.
+    pub legacy_goods_received_line_id: Option<String>,
     // Resolved from name_link - must be last to match view column order
     pub donor_id: Option<String>,
     pub manufacturer_id: Option<String>,
@@ -284,6 +289,17 @@ impl<'a> InvoiceLineRowRepository<'a> {
         let result = invoice_line
             .filter(id.eq_any(ids))
             .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    pub fn find_one_by_legacy_goods_received_line_id(
+        &self,
+        goods_received_line_id: &str,
+    ) -> Result<Option<InvoiceLineRow>, RepositoryError> {
+        let result = invoice_line
+            .filter(legacy_goods_received_line_id.eq(goods_received_line_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
         Ok(result)
     }
 
