@@ -2315,6 +2315,7 @@
   "messages.no-data-found": "No data found",
   "messages.no-documents-uploaded": "No documents have been uploaded",
   "messages.no-encounters": "This patient has no encounters.",
+  "messages.no-encounters-configured": "There are no encounters configured! Please talk to your administrator or contact support@msupply.foundation for help.",
   "messages.no-insurance": "This patient has no insurance.",
   "messages.no-item-ledger": "This item has no stock movements to display",
   "messages.no-item-variants": "No item variants configured",
