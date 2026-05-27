@@ -13,7 +13,7 @@ use repository::{
 };
 
 use crate::{
-    activity_log::{activity_log_entry, activity_log_entry_with_diff},
+    activity_log::activity_log_entry_with_diff,
     invoice_line::{
         stock_in_line::{insert_stock_in_line, InsertStockInLineError},
         stock_out_line::{insert_stock_out_line, InsertStockOutLineError},
