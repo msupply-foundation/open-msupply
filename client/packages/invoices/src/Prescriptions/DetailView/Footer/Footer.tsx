@@ -20,7 +20,6 @@ import { getStatusTranslator } from '../../../utils';
 import { createStatusLog, getStatusSequence } from '../../../statuses';
 import { StatusChangeButton } from './StatusChangeButton';
 import {
-  PrescriptionFragment,
   PrescriptionLineFragment,
   usePrescription,
   usePrescriptionLines,
