@@ -72,8 +72,7 @@ impl SyncTranslation for SiteTranslation {
         // Token should persist and only set in OMS
         let token = SiteRowRepository::new(con)
             .find_one_by_id(data.site_id)?
-            .map(|row| row.token)
-            .flatten();
+            .and_then(|row| row.token);
 
         let result = SiteRow {
             id: data.site_id,
