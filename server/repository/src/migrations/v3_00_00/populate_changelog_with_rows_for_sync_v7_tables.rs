@@ -22,6 +22,7 @@ impl MigrationFragment for Migrate {
             "document_registry",
             "indicator_column",
             "indicator_line",
+            "item",
             "item_category_join",
             "item_direction",
             "item_store_join",
@@ -69,10 +70,7 @@ impl MigrationFragment for Migrate {
             ));
         }
 
-        connection
-            .lock()
-            .connection()
-            .batch_execute(&sql)?;
+        connection.lock().connection().batch_execute(&sql)?;
         Ok(())
     }
 }
@@ -161,7 +159,12 @@ mod tests {
         seed_central_site_id(&connection, 42);
 
         // Run all v3_00_00 migrations (this fragment + the others)
-        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
+        migrate(
+            &connection,
+            Some(version.clone()),
+            MigrationConfig::default(),
+        )
+        .unwrap();
         assert_eq!(get_database_version(&connection), version);
 
         // Helper: count changelog rows for a given (table_name, record_id)
@@ -195,9 +198,13 @@ mod tests {
                 changelog::transfer_store_id,
                 changelog::patient_link_id,
             ))
-            .first::<(String, Option<String>, Option<i32>, Option<String>, Option<String>)>(
-                connection.lock().connection(),
-            )
+            .first::<(
+                String,
+                Option<String>,
+                Option<i32>,
+                Option<String>,
+                Option<String>,
+            )>(connection.lock().connection())
             .unwrap();
         assert_eq!(
             row,
