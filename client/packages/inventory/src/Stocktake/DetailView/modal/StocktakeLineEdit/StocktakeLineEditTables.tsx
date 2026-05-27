@@ -246,7 +246,7 @@ export const BatchTable = ({
       },
     },
     muiTableContainerProps: {
-      sx: { flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto' },
+      sx: { flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto', maxHeight: 'unset' },
     },
   });
 
@@ -336,7 +336,7 @@ export const PricingTable = ({
       },
     },
     muiTableContainerProps: {
-      sx: { flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto' },
+      sx: { flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto', maxHeight: 'unset' },
     },
   });
 
@@ -488,7 +488,7 @@ export const LocationTable = ({
       },
     },
     muiTableContainerProps: {
-      sx: { flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto' },
+      sx: { flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto', maxHeight: 'unset' },
     },
   });
 

@@ -185,7 +185,7 @@ export const QuantityReturnedTableComponent = ({
       },
     },
     muiTableContainerProps: {
-      sx: { flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto' },
+      sx: { flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto', maxHeight: 'unset' },
     },
   });
 
