@@ -107,6 +107,7 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         return result.me;
       } catch (e) {
         console.error(e);
+        throw e;
       }
     },
     permissions: async ({

@@ -130,7 +130,20 @@ export const useLogin = (
 
   const login = async (username: string, password: string) => {
     const { token, error } = await mutateAsync({ username, password });
-    const userDetails = await getUserDetails(token);
+    if (!token) return { token, error };
+
+    let userDetails;
+    try {
+      userDetails = await getUserDetails(token);
+    } catch (e) {
+      return {
+        token: '',
+        error: {
+          message: 'ConnectionError',
+          detail: (e as Error)?.message,
+        },
+      };
+    }
     queryClient.setQueryData(api.keys.me(token), userDetails);
     const store = await getStore(userDetails, mostRecentCredentials);
     const permissions = await getUserPermissions(token, store);
