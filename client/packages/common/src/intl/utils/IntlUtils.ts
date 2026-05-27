@@ -232,8 +232,6 @@ export const useIntlUtils = () => {
     return t(localeKey, Formatter.fromCamelCase(serverKey));
   };
 
-
-
   const invalidateCustomTranslations = () => {
     // Clear from local storage cache
     Object.keys(localStorage)
@@ -244,14 +242,7 @@ export const useIntlUtils = () => {
       )
       .forEach(key => localStorage.removeItem(key));
 
-    // Clear from i18next cache (specifically for when we delete a translation)
-    for (const lang of i18n.languages) {
-      i18n.removeResourceBundle(lang, CUSTOM_TRANSLATIONS_NAMESPACE);
-    }
-
-    // Then reload from backend
-    // Note - this is still requires the components in question to
-    // re-render to pick up the new translations
+    // Reload from backend.
     i18n.reloadResources(undefined, CUSTOM_TRANSLATIONS_NAMESPACE);
   };
 
