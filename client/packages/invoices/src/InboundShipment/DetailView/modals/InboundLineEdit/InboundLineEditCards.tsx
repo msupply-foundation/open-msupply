@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   useAuthContext,
   useTranslation,
@@ -27,6 +27,7 @@ import {
   InvoiceLineStatusType,
   InvoiceNodeStatus,
   InfoIcon,
+  ReasonOptionNodeType,
   useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { Select, MenuItem } from '@mui/material';
@@ -40,6 +41,7 @@ import {
   LocationRowFragment,
   LocationSearchInput,
   ManufacturerSearchInput,
+  ReasonOptionsSearchInput,
   VVMStatusSearchInput,
 } from '@openmsupply-client/system';
 import { PatchDraftLineInput } from '../../../api';
@@ -193,8 +195,8 @@ export const InboundLineEditCards = ({
                 helperText={
                   isPlaceholder
                     ? t('error.field-must-be-specified', {
-                        field: t('label.packs-received'),
-                      })
+                      field: t('label.packs-received'),
+                    })
                     : undefined
                 }
               />
@@ -233,7 +235,7 @@ export const InboundLineEditCards = ({
                   const shouldClearSellPrice =
                     item?.defaultPackSize !== line.packSize &&
                     item?.itemStoreProperties?.defaultSellPricePerPack ===
-                      line.sellPricePerPack;
+                    line.sellPricePerPack;
 
                   updateDraftLine({
                     volumePerPack:
@@ -353,6 +355,39 @@ export const InboundLineEditCards = ({
           />
         ),
         defaultHideOnMobile: true,
+      },
+      {
+        accessorKey: 'reasonOption',
+        header: t('label.variance-reason'),
+        size: 180,
+        columnGroup: 'stockLineDetails',
+        Cell: ({ row }) => {
+          const line = row.original;
+          const hasVariance =
+            line.shippedNumberOfPacks != null &&
+            line.numberOfPacks !== line.shippedNumberOfPacks;
+
+          // Clear any stale reason once the variance is resolved.
+          useEffect(() => {
+            if (!hasVariance && line.reasonOption) {
+              updateDraftLine({ id: line.id, reasonOption: null });
+            }
+          }, [hasVariance, line.id, line.reasonOption]);
+
+          return (
+            <ReasonOptionsSearchInput
+              type={ReasonOptionNodeType.ShipmentVariance}
+              value={line.reasonOption}
+              onChange={reason =>
+                updateDraftLine({
+                  id: line.id,
+                  reasonOption: reason ?? null,
+                })
+              }
+              disabled={isDisabled || !hasVariance}
+            />
+          );
+        },
       },
       {
         accessorKey: 'receivedNumberOfUnits',
@@ -780,9 +815,9 @@ export const InboundLineEditCards = ({
   const groupIcons = simplified
     ? undefined
     : {
-        stockLineDetails: <StockIcon />,
-        moreInfo: <InfoIcon />,
-      };
+      stockLineDetails: <StockIcon />,
+      moreInfo: <InfoIcon />,
+    };
 
   return (
     <>
