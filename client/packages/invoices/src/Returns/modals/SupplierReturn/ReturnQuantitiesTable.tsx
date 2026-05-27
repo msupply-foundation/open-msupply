@@ -97,6 +97,18 @@ export const QuantityToReturnTableComponent = ({
     tableId: 'supplier-return-line-quantity',
     columns,
     data: lines,
+    muiTablePaperProps: {
+      sx: {
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: 'none',
+      },
+    },
+    muiTableContainerProps: {
+      sx: { flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto' },
+    },
   });
 
   return <MaterialTable table={table} />;

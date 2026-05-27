@@ -236,6 +236,18 @@ export const BatchTable = ({
         {t('label.add-new-line')}
       </Typography>
     ),
+    muiTablePaperProps: {
+      sx: {
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: 'none',
+      },
+    },
+    muiTableContainerProps: {
+      sx: { flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto' },
+    },
   });
 
   return <MaterialTable table={table} />;
@@ -314,6 +326,18 @@ export const PricingTable = ({
         {t('label.add-new-line')}
       </Typography>
     ),
+    muiTablePaperProps: {
+      sx: {
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: 'none',
+      },
+    },
+    muiTableContainerProps: {
+      sx: { flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto' },
+    },
   });
 
   return <MaterialTable table={table} />;
@@ -454,6 +478,18 @@ export const LocationTable = ({
         {t('label.add-new-line')}
       </Typography>
     ),
+    muiTablePaperProps: {
+      sx: {
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: 'none',
+      },
+    },
+    muiTableContainerProps: {
+      sx: { flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto' },
+    },
   });
 
   return <MaterialTable table={table} />;

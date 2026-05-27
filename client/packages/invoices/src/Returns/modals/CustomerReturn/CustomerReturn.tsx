@@ -193,10 +193,28 @@ export const CustomerReturnEditModal = ({
           : OkButton
       }
       nextButton={!isNewReturn ? OkAndNextButton : undefined}
-      height={700}
       width={1200}
+      sx={{ height: 'min(700px, calc(100vh - 64px))', '& .MuiDialogActions-root': { marginTop: '8px', marginBottom: '8px' } }}
+      contentProps={{
+        sx: {
+          overflowY: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          paddingTop: '4px',
+          paddingBottom: 0,
+        },
+      }}
     >
-      <Box ref={alertRef}>
+      <Box
+        ref={alertRef}
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          overflow: 'hidden',
+        }}
+      >
         {returnId && (
           <ItemSelector
             disabled={!!itemId}

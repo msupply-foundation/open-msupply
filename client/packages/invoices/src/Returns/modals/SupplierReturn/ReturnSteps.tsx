@@ -7,6 +7,7 @@ import {
   RecordPatch,
   Alert,
   AlertColor,
+  Box,
 } from '@openmsupply-client/common';
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
 import { ReturnReasonsTable } from '../ReturnReasonsTable';
@@ -58,29 +59,63 @@ export const ReturnSteps = ({
   const inputsDisabled = !!returnId && isDisabled;
 
   return (
-    <TabContext value={currentTab}>
-      <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
-      <TabPanel value={Tabs.Quantity}>
-        {zeroQuantityAlert && (
-          <Alert severity={zeroQuantityAlert}>{alertMessage}</Alert>
-        )}
-        <QuantityToReturnTable
-          isDisabled={inputsDisabled}
-          lines={lines}
-          updateLine={line => {
-            if (zeroQuantityAlert) setZeroQuantityAlert(undefined);
-            update(line);
+    <Box
+      sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        overflow: 'hidden',
+      }}
+    >
+      <TabContext value={currentTab}>
+        <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
+        <TabPanel
+          value={Tabs.Quantity}
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            padding: 0,
+            minHeight: 0,
+            overflow: 'hidden',
           }}
-        />
-      </TabPanel>
-      <TabPanel value={Tabs.Reason}>
-        <ReturnReasonsTable
-          isDisabled={inputsDisabled}
-          lines={lines.filter(l => l.numberOfPacksToReturn > 0)}
-          updateLine={line => update(line)}
-          disabledLinked={false}
-        />
-      </TabPanel>
-    </TabContext>
+        >
+          {zeroQuantityAlert && (
+            <Alert severity={zeroQuantityAlert}>{alertMessage}</Alert>
+          )}
+          <Box
+            sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+          >
+            <QuantityToReturnTable
+              isDisabled={inputsDisabled}
+              lines={lines}
+              updateLine={line => {
+                if (zeroQuantityAlert) setZeroQuantityAlert(undefined);
+                update(line);
+              }}
+            />
+          </Box>
+        </TabPanel>
+        <TabPanel
+          value={Tabs.Reason}
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            padding: 0,
+            minHeight: 0,
+            overflow: 'hidden',
+          }}
+        >
+          <ReturnReasonsTable
+            isDisabled={inputsDisabled}
+            lines={lines.filter(l => l.numberOfPacksToReturn > 0)}
+            updateLine={line => update(line)}
+            disabledLinked={false}
+          />
+        </TabPanel>
+      </TabContext>
+    </Box>
   );
 };

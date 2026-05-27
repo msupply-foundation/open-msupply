@@ -4,6 +4,7 @@ import {
   useTranslation,
   ModalMode,
   DialogButton,
+  Box,
 } from '@openmsupply-client/common';
 
 interface StocktakeLineEditModalProps {
@@ -44,11 +45,30 @@ export const StocktakeLineEditModal: FC<
       okButton={
         <DialogButton variant="ok" onClick={onOk} disabled={!isValid} />
       }
-      height={650}
       width={1260}
       slideAnimation={false}
+      sx={{ height: 'min(700px, calc(100vh - 64px))', '& .MuiDialogActions-root': { marginTop: '8px', marginBottom: '8px' } }}
+      contentProps={{
+        sx: {
+          overflowY: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          paddingTop: '4px',
+          paddingBottom: 0,
+        },
+      }}
     >
-      <>{children}</>
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          overflow: 'hidden',
+        }}
+      >
+        {children}
+      </Box>
     </Modal>
   );
 };

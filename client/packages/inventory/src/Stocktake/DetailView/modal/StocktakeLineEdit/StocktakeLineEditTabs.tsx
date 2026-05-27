@@ -19,14 +19,18 @@ export enum Tabs {
 }
 
 export const StyledTabPanel = styled(TabPanel)({
-  height: '100%',
+  flex: 1,
+  minHeight: 0,
+  display: 'flex',
+  flexDirection: 'column',
   padding: '16px 0 0 0',
 });
 
 export const StyledTabContainer = styled(Box)(() => ({
-  height: 325,
-  flexDirection: 'row',
+  flex: 1,
+  minHeight: 0,
   display: 'flex',
+  flexDirection: 'column',
 }));
 
 export const StocktakeLineEditTabs: FC<
@@ -39,36 +43,38 @@ export const StocktakeLineEditTabs: FC<
   const [currentTab, setCurrentTab] = useState(Tabs.Batch);
 
   return (
-    <TabContext value={currentTab}>
-      <TabKeybindings
-        tabs={[Tabs.Batch, Tabs.Pricing, Tabs.Other]}
-        onAdd={onAddLine}
-        setCurrentTab={setCurrentTab}
-      />
-      <Box flex={1} display="flex" justifyContent="space-between">
-        <Box flex={1} />
+    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <TabContext value={currentTab}>
+        <TabKeybindings
+          tabs={[Tabs.Batch, Tabs.Pricing, Tabs.Other]}
+          onAdd={onAddLine}
+          setCurrentTab={setCurrentTab}
+        />
+        <Box flex={1} display="flex" justifyContent="space-between">
+          <Box flex={1} />
 
-        <TabList
-          value={currentTab}
-          centered
-          onChange={(_, v) => setCurrentTab(v)}
-        >
-          <Tab value={Tabs.Batch} label={`${t('label.batch')} (Ctrl+1)`} />
-          <Tab value={Tabs.Pricing} label={`${t('label.pricing')} (Ctrl+2)`} />
-          <Tab value={Tabs.Other} label={`${t('heading.other')} (Ctrl+3)`} />
-        </TabList>
-        <Box flex={1} justifyContent="flex-end" display="flex">
-          <ButtonWithIcon
-            disabled={isDisabled}
-            color="primary"
-            variant="outlined"
-            onClick={onAddLine}
-            label={`${t('label.add-batch')} (+)`}
-            Icon={<PlusCircleIcon />}
-          />
+          <TabList
+            value={currentTab}
+            centered
+            onChange={(_, v) => setCurrentTab(v)}
+          >
+            <Tab value={Tabs.Batch} label={`${t('label.batch')} (Ctrl+1)`} />
+            <Tab value={Tabs.Pricing} label={`${t('label.pricing')} (Ctrl+2)`} />
+            <Tab value={Tabs.Other} label={`${t('heading.other')} (Ctrl+3)`} />
+          </TabList>
+          <Box flex={1} justifyContent="flex-end" display="flex">
+            <ButtonWithIcon
+              disabled={isDisabled}
+              color="primary"
+              variant="outlined"
+              onClick={onAddLine}
+              label={`${t('label.add-batch')} (+)`}
+              Icon={<PlusCircleIcon />}
+            />
+          </Box>
         </Box>
-      </Box>
-      {children}
-    </TabContext>
+        {children}
+      </TabContext>
+    </Box>
   );
 };

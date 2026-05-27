@@ -237,46 +237,40 @@ export const StocktakeLineEdit = ({
       hasNext={!!nextItem || hasMorePages}
       isValid={hasValidBatches && !isSaving}
     >
-      {(() => {
-        if (isSaving) {
-          return (
-            <Box sx={{ height: isMediumScreen ? 350 : 450 }}>
-              <BasicSpinner messageKey="saving" />
-            </Box>
-          );
-        }
-
-        return (
-          <>
-            <StocktakeLineEditForm
-              item={currentItem}
-              items={items}
-              onChangeItem={setCurrentItem}
-              mode={mode}
-              hasInvalidLocationLines={hasInvalidLocationLines ?? false}
-            />
-            {!currentItem ? (
-              <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
-            ) : null}
-            {!!currentItem ? (
-              <>
-                <Divider margin={5} />
-                {tableContent}
-                <ItemVariantSelectPanel
-                  itemId={currentItem.id}
-                  open={variantPanelOpen}
-                  onClose={() => setVariantPanelOpen(false)}
-                  onSelect={applyVariantToNewLine}
-                  onManual={() => {
-                    addLine();
-                    setVariantPanelOpen(false);
-                  }}
-                />
-              </>
-            ) : null}
-          </>
-        );
-      })()}
+      {isSaving ? (
+        <Box sx={{ height: isMediumScreen ? 350 : 450 }}>
+          <BasicSpinner messageKey="saving" />
+        </Box>
+      ) : (
+        <>
+          <StocktakeLineEditForm
+            item={currentItem}
+            items={items}
+            onChangeItem={setCurrentItem}
+            mode={mode}
+            hasInvalidLocationLines={hasInvalidLocationLines ?? false}
+          />
+          {!currentItem ? (
+            <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
+          ) : null}
+          {!!currentItem ? (
+            <>
+              <Divider margin={5} />
+              {tableContent}
+              <ItemVariantSelectPanel
+                itemId={currentItem.id}
+                open={variantPanelOpen}
+                onClose={() => setVariantPanelOpen(false)}
+                onSelect={applyVariantToNewLine}
+                onManual={() => {
+                  addLine();
+                  setVariantPanelOpen(false);
+                }}
+              />
+            </>
+          ) : null}
+        </>
+      )}
     </StocktakeLineEditModal>
   );
 };
