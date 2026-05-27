@@ -48,6 +48,7 @@ pub fn generate(
         volume_per_pack: 0.0,
         shipped_pack_size: None,
         status: None,
+        received_number_of_packs: None,
     };
 
     Ok(invoice_line)

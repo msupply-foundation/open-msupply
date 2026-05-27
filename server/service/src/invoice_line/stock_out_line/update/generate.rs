@@ -201,6 +201,7 @@ fn generate_line(
         reason_option_id: None,
         linked_invoice_id: None,
         status: None,
+        received_number_of_packs: None,
     };
 
     if let Some(number_of_packs) = input.number_of_packs {
