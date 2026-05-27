@@ -162,6 +162,7 @@ fn transact_1_pull_row() -> InvoiceRow {
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
         charges_local_currency: 15.5,
         charges_foreign_currency: 20.0,
+        legacy_goods_received_id: Some("some goods id".to_string()),
         ..Default::default()
     }
 }

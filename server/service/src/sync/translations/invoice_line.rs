@@ -132,6 +132,9 @@ pub struct LegacyTransLineRow {
     #[serde(rename = "manufacturer_ID")]
     #[serde(default)]
     pub manufacturer_id: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub goods_received_lines_ID: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -198,6 +201,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             volume_per_pack,
             shipped_pack_size,
             manufacturer_id,
+            goods_received_lines_ID,
         } = sync_record.deserialize()?;
 
         let line_type = match to_invoice_line_type(&r#type) {
@@ -404,6 +408,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             manufacture_date,
             purchase_order_line_id,
             manufacturer_id,
+            legacy_goods_received_line_id: goods_received_lines_ID,
         };
 
         let result = adjust_negative_values(result);
@@ -475,6 +480,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     manufacture_date,
                     purchase_order_line_id,
                     manufacturer_id,
+                    legacy_goods_received_line_id: _,
                 },
             item_row,
             ..
@@ -524,6 +530,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             volume_per_pack,
             shipped_pack_size,
             manufacturer_id,
+            goods_received_lines_ID: None,
         };
         Ok(PushTranslateResult::upsert(
             changelog,

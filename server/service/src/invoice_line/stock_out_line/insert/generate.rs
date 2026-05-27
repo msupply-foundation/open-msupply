@@ -260,6 +260,7 @@ fn generate_line(
         linked_invoice_id: None,
         reason_option_id: None,
         status: None,
+        legacy_goods_received_line_id: None,
     })
 }
 

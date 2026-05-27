@@ -100,12 +100,23 @@ impl SyncTranslation for GoodsReceivedTranslation {
             }
         };
 
-        // Temporary fix, see this issue: https://github.com/msupply-foundation/open-msupply/issues/11829
+        // Finalised GR: find the invoice that was spawned from this GR via the
+        // `legacy_goods_received_id` column the invoice translator populated from
+        // `transact.goods_received_ID`, and stamp the PO link onto it.
         if is_finalised(&data.status) {
-            return Ok(PullTranslateResult::Ignored(format!(
-                "Skipped adding purchase order id to invoice when gr is finalised {}",
-                data.id
-            )));
+            let linked_invoice = InvoiceRowRepository::new(connection)
+                .find_one_by_legacy_goods_received_id(&data.id)?;
+
+            return match linked_invoice {
+                Some(mut invoice) => {
+                    invoice.purchase_order_id = data.purchase_order_ID;
+                    Ok(PullTranslateResult::upsert(invoice))
+                }
+                None => Ok(PullTranslateResult::Ignored(format!(
+                    "no invoice with legacy_goods_received_id {} found",
+                    data.id
+                ))),
+            };
         }
 
         // Non-finalized GR: create a new InboundShipment invoice
@@ -162,6 +173,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
             default_donor_id: data.donor_id,
+            legacy_goods_received_id: None,
         };
 
         Ok(PullTranslateResult::upsert(invoice))

@@ -487,6 +487,7 @@ mod test {
             volume_per_pack: 0.0,
             shipped_pack_size: None,
             status: None,
+            legacy_goods_received_line_id: None,
         };
 
         invoice_line_row_repo.upsert_one(&invoice_line).unwrap();
