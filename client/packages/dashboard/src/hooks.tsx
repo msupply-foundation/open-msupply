@@ -19,7 +19,7 @@ export const useDashboardWidgets = (coreWidgets: React.ReactElement[]) => {
   const visibleCoreWidgets =
     hiddenContexts.size > 0
       ? coreWidgets.filter(
-          widget => !hiddenContexts.has(widget.props.widgetContext)
+          widget => !hiddenContexts.has((widget.props as { widgetContext?: string }).widgetContext ?? '')
         )
       : coreWidgets;
 
@@ -53,7 +53,7 @@ export const useDashboardPanels = (
   const visibleCorePanels =
     hiddenContexts.size > 0
       ? corePanels.filter(
-          panel => !hiddenContexts.has(panel.props.panelContext)
+          panel => !hiddenContexts.has((panel.props as { panelContext?: string }).panelContext ?? '')
         )
       : corePanels;
 

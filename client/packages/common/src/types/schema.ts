@@ -342,6 +342,87 @@ export type AllocateProgramNumberInput = {
 
 export type AllocateProgramNumberResponse = NumberNode;
 
+export type AncillaryCycleDetected = UpsertAncillaryItemErrorInterface & {
+  __typename: 'AncillaryCycleDetected';
+  description: Scalars['String']['output'];
+};
+
+export type AncillaryDeltaNode = {
+  __typename: 'AncillaryDeltaNode';
+  /**
+   * Current quantity on the existing requisition line. `None` for items that
+   * don't yet have a line (i.e. entries in `toAdd`).
+   */
+  currentQuantity?: Maybe<Scalars['Float']['output']>;
+  item: ItemNode;
+  itemId: Scalars['String']['output'];
+  requiredQuantity: Scalars['Float']['output'];
+};
+
+export type AncillaryItemMutations = {
+  __typename: 'AncillaryItemMutations';
+  deleteAncillaryItem: DeleteAncillaryItemResponse;
+  upsertAncillaryItem: UpsertAncillaryItemResponse;
+};
+
+export type AncillaryItemMutationsDeleteAncillaryItemArgs = {
+  input: DeleteAncillaryItemInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type AncillaryItemMutationsUpsertAncillaryItemArgs = {
+  input: UpsertAncillaryItemInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type AncillaryItemNode = {
+  __typename: 'AncillaryItemNode';
+  /** The ancillary item — the item to be added to the order as a supply for the principal. */
+  ancillaryItem?: Maybe<ItemNode>;
+  ancillaryItemId: Scalars['String']['output'];
+  /** Right-hand side of the stored `x:y` ratio (ancillary count). */
+  ancillaryQuantity: Scalars['Float']['output'];
+  id: Scalars['String']['output'];
+  /** The principal item — the item this ancillary supply should be ordered alongside. */
+  item?: Maybe<ItemNode>;
+  itemId: Scalars['String']['output'];
+  /** Left-hand side of the stored `x:y` ratio (principal count). */
+  itemQuantity: Scalars['Float']['output'];
+};
+
+export type AncillaryMaxDepthExceeded = UpsertAncillaryItemErrorInterface & {
+  __typename: 'AncillaryMaxDepthExceeded';
+  actual: Scalars['Int']['output'];
+  description: Scalars['String']['output'];
+  max: Scalars['Int']['output'];
+};
+
+/**
+ * Whether a request requisition has outstanding ancillary-item work to do.
+ * `NeedsAdd` takes priority over `NeedsUpdate`: once the user has added the
+ * missing lines, any remaining stale quantities surface as `NeedsUpdate`.
+ */
+export enum AncillaryStateNode {
+  NeedsAdd = 'NEEDS_ADD',
+  NeedsUpdate = 'NEEDS_UPDATE',
+  None = 'NONE',
+}
+
+export type AncillaryStateResponse = {
+  __typename: 'AncillaryStateResponse';
+  /** Number of ancillary items in the banner-worthy state. Zero when state is `None`. */
+  count: Scalars['Int']['output'];
+  state: AncillaryStateNode;
+  /**
+   * Items missing from the requisition that need to be added. Always populated
+   * from the underlying plan, regardless of `state` — the client can show the
+   * full breakdown even when the banner-relevant state is `NeedsUpdate`.
+   */
+  toAdd: Array<AncillaryDeltaNode>;
+  /** Items present on the requisition with stale quantities. */
+  toUpdate: Array<AncillaryDeltaNode>;
+};
+
 export enum ApplyToLinesInput {
   AssignIfNone = 'ASSIGN_IF_NONE',
   AssignToAll = 'ASSIGN_TO_ALL',
@@ -525,7 +606,7 @@ export type AssetLogNode = {
   createdDatetime: Scalars['NaiveDateTime']['output'];
   documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
-  logDatetime: Scalars['NaiveDateTime']['output'];
+  logDatetime: Scalars['DateTime']['output'];
   reason?: Maybe<AssetLogReasonNode>;
   status?: Maybe<AssetLogStatusNodeType>;
   type: AssetLogTypeNodeType;
@@ -623,7 +704,7 @@ export type AssetNode = {
   catalogProperties?: Maybe<Scalars['String']['output']>;
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
-  createdDatetime: Scalars['NaiveDateTime']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
   documents: SyncFileReferenceConnector;
   donor?: Maybe<NameNode>;
   donorNameId?: Maybe<Scalars['String']['output']>;
@@ -631,7 +712,7 @@ export type AssetNode = {
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
   locations: LocationConnector;
   lockedFields: LockedAssetFieldsNode;
-  modifiedDatetime: Scalars['NaiveDateTime']['output'];
+  modifiedDatetime: Scalars['DateTime']['output'];
   needsReplacement?: Maybe<Scalars['Boolean']['output']>;
   notes?: Maybe<Scalars['String']['output']>;
   /** Returns a JSON string of the asset properties (defined on the asset itself) e.g {"property_key": "value"} */
@@ -1206,6 +1287,7 @@ export type CannotEditRequisition = AddFromMasterListErrorInterface &
   DeleteResponseRequisitionLineErrorInterface &
   InsertRequestRequisitionLineErrorInterface &
   InsertResponseRequisitionLineErrorInterface &
+  RefreshAncillaryItemsErrorInterface &
   SupplyRequestedQuantityErrorInterface &
   UpdateRequestRequisitionErrorInterface &
   UpdateRequestRequisitionLineErrorInterface &
@@ -1311,6 +1393,7 @@ export type CentralPluginMutationsInstallUploadedPluginArgs = {
 
 export type CentralPluginQueries = {
   __typename: 'CentralPluginQueries';
+  installedPlugins: InstalledPluginConnector;
   uploadedPluginInfo: UploadedPluginInfoResponse;
 };
 
@@ -1329,6 +1412,7 @@ export type CentralReportMutationsInstallUploadedReportsArgs = {
 
 export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
+  ancillaryItem: AncillaryItemMutations;
   assetCatalogue: AssetCatalogueMutations;
   bundledItem: BundledItemMutations;
   campaign: CampaignMutations;
@@ -1345,6 +1429,7 @@ export type CentralServerMutationNode = {
 export type CentralServerQueryNode = {
   __typename: 'CentralServerQueryNode';
   plugin: CentralPluginQueries;
+  syncMessage: SyncMessageQueries;
 };
 
 export type CentralSyncRequired = AuthTokenErrorInterface & {
@@ -1707,6 +1792,7 @@ export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   UpdateDemographicProjectionErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
+  UpsertAncillaryItemErrorInterface &
   UpsertBundledItemErrorInterface &
   UpsertCampaignErrorInterface &
   UpsertItemVariantErrorInterface & {
@@ -1736,6 +1822,12 @@ export type DatetimeFilterInput = {
   beforeOrEqualTo?: InputMaybe<Scalars['DateTime']['input']>;
   equalTo?: InputMaybe<Scalars['DateTime']['input']>;
 };
+
+export type DeleteAncillaryItemInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteAncillaryItemResponse = DeleteResponse;
 
 export type DeleteAssetCatalogueItemError = {
   __typename: 'DeleteAssetCatalogueItemError';
@@ -2539,6 +2631,11 @@ export type DraftStockOutLineNodeDonorArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type DuplicateAncillaryItem = UpsertAncillaryItemErrorInterface & {
+  __typename: 'DuplicateAncillaryItem';
+  description: Scalars['String']['output'];
+};
+
 export type EmergencyResponseRequisitionCounts = {
   __typename: 'EmergencyResponseRequisitionCounts';
   new: Scalars['Int']['output'];
@@ -2825,6 +2922,12 @@ export type EqualFilterStringInput = {
   notEqualTo?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type EqualFilterSyncMessageStatusInput = {
+  equalAny?: InputMaybe<Array<SyncMessageNodeStatus>>;
+  equalTo?: InputMaybe<SyncMessageNodeStatus>;
+  notEqualTo?: InputMaybe<SyncMessageNodeStatus>;
+};
+
 export type EqualFilterTemperatureBreachRowTypeInput = {
   equalAny?: InputMaybe<Array<TemperatureBreachNodeType>>;
   equalTo?: InputMaybe<TemperatureBreachNodeType>;
@@ -2898,6 +3001,7 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface &
   InsertPurchaseOrderLineErrorInterface &
   InsertRequestRequisitionLineErrorInterface &
   InsertResponseRequisitionLineErrorInterface &
+  RefreshAncillaryItemsErrorInterface &
   SetPrescribedQuantityErrorInterface &
   UpdateInboundShipmentLineErrorInterface &
   UpdateInboundShipmentServiceLineErrorInterface &
@@ -3661,6 +3765,8 @@ export type InsertPatientResponse = PatientNode;
 export type InsertPluginDataInput = {
   data: Scalars['String']['input'];
   dataIdentifier: Scalars['String']['input'];
+  /** Optional plugin-controlled timestamp. */
+  datetime?: InputMaybe<Scalars['DateTime']['input']>;
   id: Scalars['String']['input'];
   pluginCode: Scalars['String']['input'];
   relatedRecordId?: InputMaybe<Scalars['String']['input']>;
@@ -4073,6 +4179,15 @@ export type InsertSupplierReturnResponse =
   | InsertSupplierReturnError
   | InvoiceNode;
 
+export type InsertSyncMessageInput = {
+  body?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  toStoreId?: InputMaybe<Scalars['String']['input']>;
+  type: SyncMessageRowTypeInput;
+};
+
+export type InsertSyncMessageResponse = IdResponse;
+
 export type InsertVvmStatusLogInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
@@ -4125,6 +4240,26 @@ export type InsertVaccineCourseInput = {
 export type InsertVaccineCourseResponse =
   | InsertVaccineCourseError
   | VaccineCourseNode;
+
+export type InstalledPluginConnector = {
+  __typename: 'InstalledPluginConnector';
+  nodes: Array<InstalledPluginNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export enum InstalledPluginKindType {
+  Backend = 'BACKEND',
+  Frontend = 'FRONTEND',
+}
+
+export type InstalledPluginNode = {
+  __typename: 'InstalledPluginNode';
+  code: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  kind: InstalledPluginKindType;
+  types: Array<Scalars['String']['output']>;
+  version: Scalars['String']['output'];
+};
 
 export type InsuranceConnector = {
   __typename: 'InsuranceConnector';
@@ -4213,6 +4348,7 @@ export type InternalError = InsertAssetCatalogueItemErrorInterface &
   UpdateDemographicProjectionErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
+  UpsertAncillaryItemErrorInterface &
   UpsertBundledItemErrorInterface &
   UpsertCampaignErrorInterface &
   UpsertItemVariantErrorInterface & {
@@ -4313,6 +4449,7 @@ export type InvoiceFilterInput = {
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
   isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
   linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
+  linkedOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
   nameId?: InputMaybe<EqualFilterStringInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
@@ -4509,6 +4646,7 @@ export type InvoiceNode = {
   program?: Maybe<ProgramNode>;
   programId?: Maybe<Scalars['String']['output']>;
   purchaseOrder?: Maybe<PurchaseOrderNode>;
+  purchaseOrderId?: Maybe<Scalars['String']['output']>;
   receivedDatetime?: Maybe<Scalars['DateTime']['output']>;
   /**
    * Response Requisition that is the origin of this Outbound Shipment
@@ -4750,6 +4888,13 @@ export type ItemLedgerNode = {
   invoiceNumber: Scalars['Int']['output'];
   invoiceStatus: InvoiceNodeStatus;
   invoiceType: InvoiceNodeType;
+  /**
+   * True when the invoice is an external inbound shipment (i.e. linked to a
+   * purchase order). The client uses this to route to the correct detail
+   * page, since internal and external inbound shipments live on separate
+   * routes.
+   */
+  isExternal: Scalars['Boolean']['output'];
   itemId: Scalars['String']['output'];
   movementInUnits: Scalars['Float']['output'];
   name: Scalars['String']['output'];
@@ -4766,6 +4911,16 @@ export type ItemLedgerResponse = ItemLedgerConnector;
 
 export type ItemNode = {
   __typename: 'ItemNode';
+  /**
+   * Ancillary item links where this item is the ancillary supply for some
+   * other (principal) item.
+   */
+  ancillaryFor: Array<AncillaryItemNode>;
+  /**
+   * Ancillary items configured against this item — i.e. items that should be
+   * ordered alongside it (e.g. syringes that go with a vaccine).
+   */
+  ancillaryItems: Array<AncillaryItemNode>;
   atcCategory: Scalars['String']['output'];
   availableBatches: StockLineConnector;
   availableStockOnHand: Scalars['Int']['output'];
@@ -5418,11 +5573,13 @@ export type Mutations = {
   insertStocktake: InsertStocktakeResponse;
   insertStocktakeLine: InsertStocktakeLineResponse;
   insertSupplierReturn: InsertSupplierReturnResponse;
+  insertSyncMessage: InsertSyncMessageResponse;
   insertVaccination: InsertVaccinationResponse;
   insertVvmStatusLog: InsertVvmStatusLogResponse;
   /** Links a patient to a store and thus effectively to a site */
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
+  refreshAncillaryItems: RefreshAncillaryItemsResponse;
   responseAddFromMasterList: ResponseAddFromMasterListResponse;
   saveOutboundShipmentItemLines: InvoiceNode;
   savePrescriptionItemLines: InvoiceNode;
@@ -5913,6 +6070,11 @@ export type MutationsInsertSupplierReturnArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsInsertSyncMessageArgs = {
+  input: InsertSyncMessageInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsInsertVaccinationArgs = {
   input: InsertVaccinationInput;
   storeId: Scalars['String']['input'];
@@ -5930,6 +6092,11 @@ export type MutationsLinkPatientToStoreArgs = {
 
 export type MutationsManualSyncArgs = {
   fetchPatientId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type MutationsRefreshAncillaryItemsArgs = {
+  input: RefreshAncillaryItemsInput;
+  storeId: Scalars['String']['input'];
 };
 
 export type MutationsResponseAddFromMasterListArgs = {
@@ -6735,6 +6902,7 @@ export type PluginDataConnector = {
 
 export type PluginDataFilterInput = {
   dataIdentifier?: InputMaybe<EqualFilterStringInput>;
+  datetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   relatedRecordId?: InputMaybe<EqualFilterStringInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
@@ -6744,6 +6912,8 @@ export type PluginDataNode = {
   __typename: 'PluginDataNode';
   data: Scalars['String']['output'];
   dataIdentifier: Scalars['String']['output'];
+  /** Optional, plugin-controlled timestamp (e.g. an "update time"). */
+  datetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   pluginCode: Scalars['String']['output'];
   relatedRecordId?: Maybe<Scalars['String']['output']>;
@@ -6753,6 +6923,7 @@ export type PluginDataNode = {
 export type PluginDataResponse = PluginDataConnector;
 
 export enum PluginDataSortFieldInput {
+  Datetime = 'datetime',
   Id = 'id',
   PluginCode = 'pluginCode',
 }
@@ -7520,6 +7691,15 @@ export type Queries = {
   itemVariantsConfigured: Scalars['Boolean']['output'];
   /** Query omSupply "item" entries */
   items: ItemsResponse;
+  /**
+   * Query for items that have at least one stock_line matching `filter`
+   * in `store_id`, sorted/paginated by item attributes. Companion to
+   * `stockLines`: same filter shape, but the result is one row per item
+   * (suitable for an aggregated/grouped stock view). Because the predicate
+   * is identical to what `stockLines` uses, an item appears here iff at
+   * least one of its stock lines would appear in `stockLines`.
+   */
+  itemsByStockLineFilter: ItemsResponse;
   labelPrinterSettings?: Maybe<LabelPrinterSettingNode>;
   lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
@@ -7979,6 +8159,13 @@ export type QueriesItemVariantsConfiguredArgs = {
 
 export type QueriesItemsArgs = {
   filter?: InputMaybe<ItemFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ItemSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesItemsByStockLineFilterArgs = {
+  filter?: InputMaybe<StockLineFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ItemSortInput>>;
   storeId: Scalars['String']['input'];
@@ -8499,6 +8686,37 @@ export type RecordProgramCombinationAlreadyExists =
       description: Scalars['String']['output'];
     };
 
+export enum RefreshAncillaryItemsAction {
+  /** Insert lines for every ancillary item that's missing from the requisition. */
+  Add = 'ADD',
+  /** Overwrite the quantity on every existing ancillary line whose quantity is stale. */
+  Update = 'UPDATE',
+}
+
+export type RefreshAncillaryItemsError = {
+  __typename: 'RefreshAncillaryItemsError';
+  error: RefreshAncillaryItemsErrorInterface;
+};
+
+export type RefreshAncillaryItemsErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type RefreshAncillaryItemsInput = {
+  action: RefreshAncillaryItemsAction;
+  requisitionId: Scalars['String']['input'];
+};
+
+export type RefreshAncillaryItemsResponse =
+  | RefreshAncillaryItemsError
+  | RefreshAncillaryItemsSuccess;
+
+export type RefreshAncillaryItemsSuccess = {
+  __typename: 'RefreshAncillaryItemsSuccess';
+  /** Lines that were inserted (Add) or whose quantity was updated (Update). */
+  lines: Array<RequisitionLineNode>;
+};
+
 export type RefreshToken = {
   __typename: 'RefreshToken';
   /** New Bearer token */
@@ -8694,6 +8912,14 @@ export type RequisitionLineNode = {
   additionInUnits: Scalars['Float']['output'];
   /** Quantity already issued in outbound shipments */
   alreadyIssued: Scalars['Float']['output'];
+  /**
+   * Items that have this line's item configured as an ancillary. Empty when
+   * the line is not an ancillary of anything. Used by the UI to flag
+   * ancillary lines and surface their parents in a popover. Batched per
+   * request via dataloader so a 200-line requisition issues two queries
+   * (link rows + parent items), not 400.
+   */
+  ancillaryParents: Array<ItemNode>;
   approvalComment?: Maybe<Scalars['String']['output']>;
   approvedQuantity: Scalars['Float']['output'];
   availableStockOnHand: Scalars['Float']['output'];
@@ -8772,6 +8998,12 @@ export type RequisitionLineWithItemIdExists =
 
 export type RequisitionNode = {
   __typename: 'RequisitionNode';
+  /**
+   * Whether this request requisition has ancillary items that need adding
+   * or updating, so the client can render the "add"/"update" banner.
+   * Always returns `None` for non-request requisitions.
+   */
+  ancillaryState: AncillaryStateResponse;
   approvalStatus: RequisitionNodeApprovalStatus;
   colour?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
@@ -9599,6 +9831,7 @@ export type StorePreferenceNode = {
   extraFieldsInRequisition: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
   issueInForeignCurrency: Scalars['Boolean']['output'];
+  keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: Scalars['Boolean']['output'];
   manuallyLinkInternalOrderToInboundShipment: Scalars['Boolean']['output'];
   monthlyConsumptionLookBackPeriod: Scalars['Float']['output'];
   monthsItemsExpire: Scalars['Float']['output'];
@@ -9777,18 +10010,105 @@ export type SyncFileReferenceConnector = {
 
 export type SyncFileReferenceNode = {
   __typename: 'SyncFileReferenceNode';
-  createdDatetime: Scalars['NaiveDateTime']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
+  error?: Maybe<Scalars['String']['output']>;
   fileName: Scalars['String']['output'];
   id: Scalars['String']['output'];
   mimeType?: Maybe<Scalars['String']['output']>;
   recordId: Scalars['String']['output'];
+  status: SyncFileReferenceNodeStatus;
   tableName: Scalars['String']['output'];
 };
+
+export enum SyncFileReferenceNodeStatus {
+  Done = 'DONE',
+  Error = 'ERROR',
+  InProgress = 'IN_PROGRESS',
+  New = 'NEW',
+  PermanentFailure = 'PERMANENT_FAILURE',
+}
 
 export type SyncInfoUpdatedNode = {
   __typename: 'SyncInfoUpdatedNode';
   numberOfRecordsInPushQueue: Scalars['Int']['output'];
   syncStatus?: Maybe<FullSyncStatusNode>;
+};
+
+export type SyncMessageConnector = {
+  __typename: 'SyncMessageConnector';
+  nodes: Array<SyncMessageNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type SyncMessageFilterInput = {
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  fromStoreId?: InputMaybe<EqualFilterStringInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  status?: InputMaybe<EqualFilterSyncMessageStatusInput>;
+  toStoreId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type SyncMessageListResponse = SyncMessageConnector;
+
+export type SyncMessageNode = {
+  __typename: 'SyncMessageNode';
+  body: Scalars['String']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
+  errorMessage?: Maybe<Scalars['String']['output']>;
+  files?: Maybe<SyncFileReferenceConnector>;
+  fromStore?: Maybe<StoreNode>;
+  id: Scalars['String']['output'];
+  status: SyncMessageNodeStatus;
+  toStore?: Maybe<StoreNode>;
+  type: SyncMessageNodeType;
+};
+
+export enum SyncMessageNodeStatus {
+  Error = 'error',
+  InProgress = 'inProgress',
+  New = 'new',
+  Processed = 'processed',
+}
+
+export enum SyncMessageNodeType {
+  Other = 'other',
+  RequestFieldChange = 'requestFieldChange',
+  SupportUpload = 'supportUpload',
+}
+
+export type SyncMessageQueries = {
+  __typename: 'SyncMessageQueries';
+  syncMessage: SyncMessageResponse;
+  syncMessages: SyncMessageListResponse;
+};
+
+export type SyncMessageQueriesSyncMessageArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type SyncMessageQueriesSyncMessagesArgs = {
+  filter?: InputMaybe<SyncMessageFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<SyncMessageSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type SyncMessageResponse = RecordNotFound | SyncMessageNode;
+
+export enum SyncMessageRowTypeInput {
+  SupportUpload = 'SUPPORT_UPLOAD',
+}
+
+export enum SyncMessageSortFieldInput {
+  CreatedDatetime = 'createdDatetime',
+  Id = 'id',
+  Status = 'status',
+}
+
+export type SyncMessageSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: SyncMessageSortFieldInput;
 };
 
 export type SyncSettingsInput = {
@@ -10528,6 +10848,8 @@ export type UpdatePatientResponse = PatientNode;
 export type UpdatePluginDataInput = {
   data: Scalars['String']['input'];
   dataIdentifier: Scalars['String']['input'];
+  /** Optional plugin-controlled timestamp. */
+  datetime?: InputMaybe<Scalars['DateTime']['input']>;
   id: Scalars['String']['input'];
   pluginCode: Scalars['String']['input'];
   relatedRecordId?: InputMaybe<Scalars['String']['input']>;
@@ -11131,6 +11453,29 @@ export enum UploadedPluginErrorVariant {
 
 export type UploadedPluginInfoResponse = PluginInfoNode | UploadedPluginError;
 
+export type UpsertAncillaryItemError = {
+  __typename: 'UpsertAncillaryItemError';
+  error: UpsertAncillaryItemErrorInterface;
+};
+
+export type UpsertAncillaryItemErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpsertAncillaryItemInput = {
+  ancillaryItemId: Scalars['String']['input'];
+  /** Right-hand side of the user-entered `x:y` ratio (ancillary count). */
+  ancillaryQuantity: Scalars['Float']['input'];
+  id: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  /** Left-hand side of the user-entered `x:y` ratio (principal count). */
+  itemQuantity: Scalars['Float']['input'];
+};
+
+export type UpsertAncillaryItemResponse =
+  | AncillaryItemNode
+  | UpsertAncillaryItemError;
+
 export type UpsertBundledItemError = {
   __typename: 'UpsertBundledItemError';
   error: UpsertBundledItemErrorInterface;
@@ -11352,6 +11697,7 @@ export enum UserPermission {
   PrescriptionMutate = 'PRESCRIPTION_MUTATE',
   PrescriptionQuery = 'PRESCRIPTION_QUERY',
   PurchaseOrderAuthorise = 'PURCHASE_ORDER_AUTHORISE',
+  PurchaseOrderFinalise = 'PURCHASE_ORDER_FINALISE',
   PurchaseOrderMutate = 'PURCHASE_ORDER_MUTATE',
   PurchaseOrderQuery = 'PURCHASE_ORDER_QUERY',
   Report = 'REPORT',

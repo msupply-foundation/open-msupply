@@ -5,6 +5,7 @@ mod queries;
 pub mod types;
 
 use async_graphql::*;
+use graphql_core::pagination::PaginationInput;
 use plugin_data::query::{PluginDataFilterInput, PluginDataResponse, PluginDataSortInput};
 use queries::uploaded_info::PluginInfoNode;
 
@@ -18,10 +19,11 @@ impl PluginQueries {
         ctx: &Context<'_>,
         store_id: String,
         plugin_code: String,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         filter: Option<PluginDataFilterInput>,
         sort: Option<Vec<PluginDataSortInput>>,
     ) -> Result<PluginDataResponse> {
-        plugin_data::query::get_plugin_data(ctx, &store_id, &plugin_code, filter, sort)
+        plugin_data::query::get_plugin_data(ctx, &store_id, &plugin_code, page, filter, sort)
     }
 
     async fn plugin_graphql_query(
@@ -45,6 +47,13 @@ impl CentralPluginQueries {
         file_id: String,
     ) -> Result<queries::uploaded_info::UploadedPluginInfoResponse> {
         queries::uploaded_info::uploaded_plugin_info(ctx, file_id)
+    }
+
+    async fn installed_plugins(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<queries::installed_plugins::InstalledPluginConnector> {
+        queries::installed_plugins::installed_plugins(ctx)
     }
 }
 

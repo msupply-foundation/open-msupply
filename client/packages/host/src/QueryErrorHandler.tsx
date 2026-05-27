@@ -113,18 +113,28 @@ export const QueryErrorHandler = () => {
       return { kind: 'short', message };
     };
 
+    // Query errors: subscribe to query cache events (v5 removed the
+    // queries.onError default). Mutation errors still flow through the
+    // mutations default-options callback below.
+    const unsubscribe = client.getQueryCache().subscribe(event => {
+      if (
+        event.type === 'updated' &&
+        event.action.type === 'error' &&
+        event.action.error
+      ) {
+        setPending(route(event.action.error));
+      }
+    });
+
     const currentDefaults = client.getDefaultOptions();
     client.setDefaultOptions({
-      queries: {
-        ...currentDefaults.queries,
-        notifyOnChangeProps: 'tracked',
-        onError: e => setPending(route(e)),
-      },
       mutations: {
         ...currentDefaults.mutations,
         onError: e => setPending(route(e)),
       },
     });
+
+    return unsubscribe;
   }, []);
 
   return <></>;

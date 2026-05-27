@@ -6,7 +6,6 @@ import {
   Box,
   AppThemeProvider,
   QueryClient,
-  // ReactQueryDevtools,
   QueryClientProvider,
   RouteBuilder,
   ErrorBoundary,
@@ -36,6 +35,7 @@ import {
   InitialisationStatusType,
   useAuthContext,
 } from '@openmsupply-client/common';
+// import { ReactQueryDevtools } from 'react-query/devtools';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
 import { MigrationInfoProvider } from './components/Migration';
@@ -53,22 +53,20 @@ const appVersion = require('../../../../package.json').version; // eslint-disabl
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // These are disabled during development because they're
-      // annoying to have constantly refetching.
-      refetchOnWindowFocus: EnvUtils.isProduction(),
+      // Creates unnecessary requests
+      refetchOnWindowFocus: false,
       // Only retry transport failures; auth/permission/internal errors
       // won't change on a retry, and the user is waiting.
       retry: (failureCount, error) =>
         error instanceof NetworkError && failureCount < 3,
       retryDelay: attempt => Math.min(1000 * 2 ** attempt, 10000),
-      // Suspense queries (usePreferences, useMigrationStatus, etc.) throw
-      // errors during render unless this is set, which would trip the
-      // global ErrorBoundary. Every typed GraphQL error is already
+      // Queries throw errors during render unless this is set, which would
+      // trip the global ErrorBoundary. Every typed GraphQL error is already
       // surfaced elsewhere — network by the connection banner, auth by
       // the existing auth-error modal, permission/internal/bad-input by
       // toasts in QueryErrorHandler — so none of them should escalate.
       // The error boundary stays as a backstop for unexpected throws.
-      useErrorBoundary: error =>
+      throwOnError: error =>
         !(
           error instanceof NetworkError ||
           error instanceof UnauthenticatedError ||
@@ -76,12 +74,6 @@ const queryClient = new QueryClient({
           error instanceof BadUserInputError ||
           error instanceof InternalServerError
         ),
-      // This is the default in v4 which is currently in alpha as it is
-      // what most users think the default is.
-      // This will subscribe components of a query only to the data they
-      // destructure. I.e. if the component does not read the isLoading
-      // field, the component will not re-render when the state changes.
-      notifyOnChangeProps: 'tracked',
     },
   },
 });
@@ -97,7 +89,7 @@ const skipRequest = () =>
 
 const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { logout } = useAuthContext();
-  const data = useInitialisationStatus(false, true);
+  const data = useInitialisationStatus(false);
   const status = data?.data?.status;
 
   // The server reporting anything other than Initialised means any cached
@@ -222,7 +214,7 @@ const Host = () => (
                       </ConfirmationModalProvider>
                     </AuthProvider>
                   </MigrationInfoProvider>
-                  {/* <ReactQueryDevtools initialIsOpen /> */}
+                  {/* <ReactQueryDevtools initialIsOpen={false} /> */}
                 </GqlProvider>
               </QueryClientProvider>
             </ErrorBoundary>

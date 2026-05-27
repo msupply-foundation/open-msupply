@@ -12,22 +12,14 @@ import { getSdk } from '../operations.generated';
 export const useMigrationStatus = (refetchInterval: number = 0) => {
   const { client } = useGql();
   const sdk = getSdk(client);
-  const result = useQuery(
-    'migrationStatus',
-    async () => {
+  const result = useQuery({
+    queryKey: ['migrationStatus'],
+    queryFn: async () => {
       const result = await sdk.migrationStatus();
       return result?.migrationStatus;
     },
-    {
-      // Stop polling once we hit an error. With suspense + no data, the
-      // status would flip back to 'loading' on each interval tick and
-      // re-suspend the tree — pulsing the loader forever. The caller
-      // renders a connection-lost gate when connectionLost is set.
-      refetchInterval: (_, query) =>
-        query.state.error ? false : refetchInterval,
-      suspense: true,
-    }
-  );
+    refetchInterval,
+  });
 
   // migrationStatus is a public query, so the only error worth gating
   // on is a transport failure. Anything else (auth misconfig, internal

@@ -49,9 +49,14 @@ jobs:
 
             const thresholdBytes = 2 * 1024;
 
+            // The build workflow writes this marker into result.txt when the
+            // base branch failed to build. In that case we always want to
+            // post (or update) the comment so the user sees the warning.
+            const isWarning = result.includes('Unable to run bundle size diff check');
+
             const diffBytes = Number('${{ steps.get-diff.outputs.diff_file_size }}');
             const exceedsThreshold = diffBytes !== null && Math.abs(diffBytes) > thresholdBytes;
-            const shouldComment = Boolean(existingComment) || exceedsThreshold;
+            const shouldComment = isWarning || Boolean(existingComment) || exceedsThreshold;
 
             if (!shouldComment) {
               core.info(`Skipping PR comment: bundle size change (${diffBytes ?? 'unknown'} bytes) is within ±2KB and no existing comment was found.`);

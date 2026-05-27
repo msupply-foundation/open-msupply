@@ -9,7 +9,7 @@
 )
 
 
-cd "client" && call yarn install --force --frozen-lockfile && call yarn build
+call corepack enable && cd "client" && call yarn install --immutable && call yarn build
 @if %errorlevel% neq 0 (
     @ECHO ERROR: Failed to prepare client
     exit /b %errorlevel%

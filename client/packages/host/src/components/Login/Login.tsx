@@ -14,6 +14,7 @@ import {
 import { LoginTextInput } from './LoginTextInput';
 import { useLoginForm } from './hooks';
 import { LoginLayout } from './LoginLayout';
+import { LoginStoreSelectorPanel } from './LoginStoreSelectorPanel';
 import { SiteInfo } from '../SiteInfo';
 import { useHost } from '../../api';
 
@@ -26,7 +27,7 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
     theme: LocalStorage.getItem('/theme/customhash') ?? '',
   };
   const { data: displaySettings } = useHost.settings.displaySettings(hashInput);
-  const passwordRef = React.useRef(null);
+  const passwordRef = React.useRef<HTMLInputElement>(null);
   const {
     isValid,
     password,
@@ -37,6 +38,8 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
     onLogin,
     error,
     siteName,
+    showStoreSelector,
+    dismissStoreSelector,
   } = useLoginForm(passwordRef, fullSize);
   const [timeoutRemaining, setTimeoutRemaining] = useState(
     error?.timeoutRemaining ?? 0
@@ -153,6 +156,14 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
 
   return (
     <LoginLayout
+      showStoreSelector={showStoreSelector}
+      StoreSelector={
+        <LoginStoreSelectorPanel
+          open={showStoreSelector}
+          onSelected={dismissStoreSelector}
+          username={username}
+        />
+      }
       UsernameInput={
         <LoginTextInput
           fullWidth
@@ -204,6 +215,7 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
             details={error.detail || ''}
             error={loginError.error}
             hint={loginError.hint}
+            width="100%"
           />
         )
       }

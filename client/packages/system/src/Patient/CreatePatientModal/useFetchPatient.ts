@@ -21,13 +21,15 @@ export const useFetchPatient = () => {
   const t = useTranslation();
   const [error, setError] = useState<string | undefined>(undefined);
 
-  const { mutateAsync: linkPatientToStore } = useMutation((nameId: string) =>
-    api.linkPatientToStore(nameId)
+  const { mutateAsync: linkPatientToStore } = useMutation({
+    mutationFn: (nameId: string) =>
+      api.linkPatientToStore(nameId)
+  }
   );
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { mutateAsync: getSyncStatus } = useSync.utils.mutateSyncStatus();
 
-  const hasErroredDuringSync = useRef<boolean>();
+  const hasErroredDuringSync = useRef(false);
 
   const pollTillSynced = useCallback(async () => {
     while (true) {
@@ -67,7 +69,9 @@ export const useFetchPatient = () => {
       setStep('Syncing');
       await manualSync(patientId);
       await pollTillSynced();
-      await queryClient.invalidateQueries(api.keys.list());
+      await queryClient.invalidateQueries({
+        queryKey: api.keys.list()
+      });
       if (!hasErroredDuringSync.current) setStep('Synced');
     },
     [api.keys, linkPatientToStore, manualSync, queryClient, pollTillSynced, t]

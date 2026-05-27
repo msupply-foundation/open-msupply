@@ -64,7 +64,9 @@ pub struct RnRFormRow {
     pub linked_requisition_id: Option<String>,
     pub their_reference: Option<String>,
     pub comment: Option<String>,
-    // Resolved from name_link - must be last to match view column order
+    // Resolved from name_link - must be last to match view column order.
+    // `rename` keeps the wire format emitting `name_link_id` for sync compatibility.
+    #[serde(rename = "name_link_id")]
     pub name_id: String,
 }
 

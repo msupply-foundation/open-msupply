@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { FC, memo, ReactElement } from 'react';
 import {
   Action,
   ActionsFooter,
@@ -26,6 +26,55 @@ import { StockOutLineFragment } from 'packages/invoices/src/StockOut';
 
 const outboundSequence = getStatusSequence(InvoiceNodeType.OutboundShipment);
 
+/**
+ * Status crumbs + on-hold/close/status-change buttons. Extracted so the parent
+ * `DetailView` can render it through `AppFooterStatusPortal` on every tab —
+ * the Details tab's own `Footer` only takes over to show row-selection
+ * actions.
+ */
+export const StatusFooter = (): ReactElement | null => {
+  const t = useTranslation();
+  const { navigateUpOne } = useBreadcrumbs();
+  const { invoiceStatusOptions } = usePreferences();
+  const { data } = useOutbound.document.get();
+
+  if (!data) return null;
+
+  const statuses = outboundSequence.filter(status =>
+    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
+  );
+
+  return (
+    <Box
+      gap={2}
+      display="flex"
+      flexDirection="row"
+      alignItems="center"
+      height={64}
+    >
+      <OnHoldButton />
+
+      <StatusCrumbs
+        statuses={statuses}
+        statusLog={createStatusLog(data, outboundSequence)}
+        statusFormatter={getStatusTranslator(t)}
+      />
+
+      <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+        <ButtonWithIcon
+          shrinkThreshold="lg"
+          Icon={<XCircleIcon />}
+          label={t('button.close')}
+          color="secondary"
+          sx={{ fontSize: '12px' }}
+          onClick={() => navigateUpOne()}
+        />
+        <StatusChangeButton />
+      </Box>
+    </Box>
+  );
+};
+
 interface FooterComponentProps {
   onReturnLines: (selectedLines: StockOutLineFragment[]) => void;
   selectedRows: StockOutLineFragment[];
@@ -38,10 +87,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
   resetRowSelection,
 }) => {
   const t = useTranslation();
-  const { navigateUpOne } = useBreadcrumbs();
-  const { invoiceStatusOptions } = usePreferences();
 
-  const { data } = useOutbound.document.get();
   const onDelete = useOutbound.line.deleteSelected(
     selectedRows,
     resetRowSelection
@@ -95,51 +141,19 @@ export const FooterComponent: FC<FooterComponentProps> = ({
     },
   ];
 
-  const statuses = outboundSequence.filter(status =>
-    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
-  );
+  // Only mount the footer portal when there's a selection. Otherwise leave the
+  // slot free so the parent `AppFooterStatusPortal` (status crumbs) shows
+  // through.
+  if (selectedRows.length === 0) return null;
 
   return (
     <AppFooterPortal
       Content={
-        <>
-          {selectedRows.length !== 0 && (
-            <ActionsFooter
-              actions={actions}
-              selectedRowCount={selectedRows.length}
-              resetRowSelection={resetRowSelection}
-            />
-          )}
-          {data && selectedRows.length === 0 && (
-            <Box
-              gap={2}
-              display="flex"
-              flexDirection="row"
-              alignItems="center"
-              height={64}
-            >
-              <OnHoldButton />
-
-              <StatusCrumbs
-                statuses={statuses}
-                statusLog={createStatusLog(data, outboundSequence)}
-                statusFormatter={getStatusTranslator(t)}
-              />
-
-              <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-                <ButtonWithIcon
-                  shrinkThreshold="lg"
-                  Icon={<XCircleIcon />}
-                  label={t('button.close')}
-                  color="secondary"
-                  sx={{ fontSize: '12px' }}
-                  onClick={() => navigateUpOne()}
-                />
-                <StatusChangeButton />
-              </Box>
-            </Box>
-          )}
-        </>
+        <ActionsFooter
+          actions={actions}
+          selectedRowCount={selectedRows.length}
+          resetRowSelection={resetRowSelection}
+        />
       }
     />
   );
