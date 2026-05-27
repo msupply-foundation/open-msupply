@@ -194,8 +194,7 @@ export const CustomerReturnEditModal = ({
       }
       nextButton={!isNewReturn ? OkAndNextButton : undefined}
       width={1200}
-      height={600}
-      sx={{ '& .MuiDialogActions-root': { marginTop: '8px', marginBottom: '8px' } }}
+      sx={{ height: 'min(750px, calc(100vh - 64px))', '& .MuiDialogActions-root': { marginTop: '8px', marginBottom: '8px' } }}
       contentProps={{
         sx: {
           overflowY: 'hidden',

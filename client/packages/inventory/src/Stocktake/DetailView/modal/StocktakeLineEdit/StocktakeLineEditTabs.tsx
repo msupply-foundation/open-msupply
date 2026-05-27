@@ -50,7 +50,7 @@ export const StocktakeLineEditTabs: FC<
           onAdd={onAddLine}
           setCurrentTab={setCurrentTab}
         />
-        <Box flex={1} display="flex" justifyContent="space-between">
+        <Box display="flex" justifyContent="space-between" sx={{ flexShrink: 0 }}>
           <Box flex={1} />
 
           <TabList

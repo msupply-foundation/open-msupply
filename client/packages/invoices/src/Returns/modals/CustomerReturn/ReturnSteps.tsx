@@ -85,7 +85,9 @@ export const ReturnSteps = ({
       }}
     >
       <TabContext value={currentTab}>
-        <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
+        <Box sx={{ flexShrink: 0 }}>
+          <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
+        </Box>
         <Box
           sx={{
             display: 'flex',
