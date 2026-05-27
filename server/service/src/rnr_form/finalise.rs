@@ -63,6 +63,21 @@ pub fn finalise_rnr_form(
 
             activity_log_entry(
                 ctx,
+                ActivityLogType::RequisitionCreated,
+                Some(requisition_row.id.clone()),
+                None,
+                None,
+            )?;
+            activity_log_entry(
+                ctx,
+                ActivityLogType::RequisitionStatusSent,
+                Some(requisition_row.id.clone()),
+                None,
+                None,
+            )?;
+
+            activity_log_entry(
+                ctx,
                 ActivityLogType::RnrFormFinalised,
                 Some(input.id.clone()),
                 None,
