@@ -70,7 +70,7 @@ The Playwright spec at [`client/playwright/e2e/distribution-regression.spec.ts`]
 
 ## How to run
 
-- All tests: `cd client && BASE_URL=http://localhost:3005 yarn e2e distribution-regression --headed --workers 1`
+- All tests: `cd client && BASE_URL=<your-base-url> yarn e2e distribution-regression --headed --workers 1` (e.g. `BASE_URL=http://localhost:3003`)
 - Filter to one: `-g "search by customer"` (case-insensitive substring match on test name)
 - Faster: drop `--headed` for headless (no visible browser)
 - HTML report after a run: `npx playwright show-report playwright/playwright-report`
