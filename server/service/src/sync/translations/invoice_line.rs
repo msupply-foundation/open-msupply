@@ -56,6 +56,8 @@ pub struct TransLineRowOmsFields {
     pub manufacture_date: Option<NaiveDate>,
     #[serde(default)]
     pub purchase_order_line_id: Option<String>,
+    #[serde(default)]
+    pub received_number_of_packs: Option<f64>,
 }
 
 #[allow(non_snake_case)]
@@ -343,6 +345,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             status,
             manufacture_date,
             purchase_order_line_id,
+            received_number_of_packs,
         } = oms_fields.unwrap_or_default();
 
         let campaign_id = clear_invalid_fk(
@@ -403,6 +406,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             },
             manufacture_date,
             purchase_order_line_id,
+            received_number_of_packs,
             manufacturer_id,
         };
 
@@ -470,6 +474,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     status,
                     manufacture_date,
                     purchase_order_line_id,
+                    received_number_of_packs,
                     manufacturer_id,
                 },
             item_row,
@@ -487,6 +492,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             },
             manufacture_date,
             purchase_order_line_id,
+            received_number_of_packs,
         });
 
         let legacy_row = LegacyTransLineRow {
