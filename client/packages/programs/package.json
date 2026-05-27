@@ -20,6 +20,5 @@
     "react-diff-viewer": "3.1.1",
     "react-dom": "^19.2.4",
     "zod": "3.23.8"
-  },
-  "devDependencies": {}
+  }
 }
