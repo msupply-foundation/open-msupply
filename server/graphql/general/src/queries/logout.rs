@@ -24,20 +24,20 @@ pub enum LogoutResponse {
 
 pub fn logout(ctx: &Context<'_>) -> Result<LogoutResponse> {
     let auth_data = ctx.get_auth_data();
-    // Clear the session cookie up-front — even if something below fails the browser-side cookie
+    // Clear the session cookie up-front — even if validation below fails the browser-side cookie
     // shouldn't linger.
     clear_session_cookie(ctx, auth_data);
 
     let token = ctx.get_auth_token();
-    let user_auth = match validate_auth(auth_data, &token) {
-        Ok(value) => value,
-        Err(err) => {
-            let formatted_error = format!("{err:#?}");
-            let graphql_error = match err {
-                AuthError::Denied(_) => StandardGraphqlError::Forbidden(formatted_error),
-                AuthError::InternalError(_) => StandardGraphqlError::InternalError(formatted_error),
-            };
-            return Err(graphql_error.extend());
+
+    // "Logout of an already-dead session" isn't an auth failure — it's a no-op. Validate softly
+    // and fall back to a synthetic user id rather than returning a Forbidden response. Only an
+    // honest internal error (e.g. lock poisoned) should bubble up.
+    let user_id = match validate_auth(auth_data, &token) {
+        Ok(validated) => validated.user_id,
+        Err(AuthError::Denied(_)) => String::new(),
+        Err(err @ AuthError::InternalError(_)) => {
+            return Err(StandardGraphqlError::InternalError(format!("{err:#?}")).extend());
         }
     };
 
@@ -52,7 +52,5 @@ pub fn logout(ctx: &Context<'_>) -> Result<LogoutResponse> {
             .revoke(&token);
     }
 
-    Ok(LogoutResponse::Response(Logout {
-        user_id: user_auth.user_id,
-    }))
+    Ok(LogoutResponse::Response(Logout { user_id }))
 }

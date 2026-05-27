@@ -108,7 +108,7 @@ pub fn refresh_token(ctx: &Context<'_>) -> RefreshTokenResponse {
         }
     };
 
-    let session = {
+    {
         let mut store = match auth_data.session_store.write() {
             Ok(s) => s,
             Err(e) => {
@@ -119,21 +119,17 @@ pub fn refresh_token(ctx: &Context<'_>) -> RefreshTokenResponse {
                 })
             }
         };
-        match store.validate_and_slide(&token) {
-            Some(s) => s,
-            None => {
-                return RefreshTokenResponse::Error(RefreshTokenError {
-                    error: RefreshTokenErrorInterface::TokenExpired(TokenExpired),
-                })
-            }
+        if store.validate_and_slide(&token).is_none() {
+            return RefreshTokenResponse::Error(RefreshTokenError {
+                error: RefreshTokenErrorInterface::TokenExpired(TokenExpired),
+            });
         }
-    };
+    }
 
-    // Re-set the cookie so the browser's Max-Age stays in sync with the server's sliding expiry.
-    let max_age = SESSION_LIFETIME.num_seconds() as usize;
-    set_session_cookie(ctx, &token, max_age, auth_data);
+    // Re-emit the cookie so legacy clients still see a Set-Cookie response. Browser-side this is
+    // a no-op for active users (Max-Age is server-fixed and far exceeds the session lifetime).
+    set_session_cookie(ctx, &token, auth_data);
 
     let expiry_date = (Utc::now() + SESSION_LIFETIME).timestamp() as usize;
-    let _ = session; // value unused; the slide is the side-effect we wanted
     RefreshTokenResponse::Response(RefreshToken { token, expiry_date })
 }

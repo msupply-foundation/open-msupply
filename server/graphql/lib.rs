@@ -475,17 +475,30 @@ async fn graphql_ws(
     req: HttpRequest,
     payload: web::Payload,
 ) -> Result<HttpResponse, actix_web::Error> {
-    let on_connection_init = |value: serde_json::Value| async move {
-        let mut data = async_graphql::Data::default();
-        // Client sends { "Authorization": "Bearer <token>" } in connectionParams
-        if let Some(token) = value.get("Authorization").and_then(|v| v.as_str()) {
-            let token = token.strip_prefix("Bearer ").unwrap_or(token);
-            data.insert(RequestUserData {
-                auth_token: Some(token.to_string()),
-                override_user_id: None,
-            });
+    // Pull the session token out of the WS upgrade request once. The browser sends the HttpOnly
+    // session cookie on the upgrade (same as any HTTP request) but `on_connection_init` only
+    // sees the client-supplied connectionParams JSON — it has no access to the request. We
+    // capture the cookie value here so the closure can use it as the auth fallback.
+    let cookie_token = auth_data_from_request(&req, &schema.cookie_suffix).auth_token;
+    let on_connection_init = move |value: serde_json::Value| {
+        let cookie_token = cookie_token.clone();
+        async move {
+            let mut data = async_graphql::Data::default();
+            // Prefer the explicit Authorization in connectionParams (used by API integrations
+            // that aren't cookie-based); fall back to the cookie captured from the upgrade.
+            let auth_token = value
+                .get("Authorization")
+                .and_then(|v| v.as_str())
+                .map(|t| t.strip_prefix("Bearer ").unwrap_or(t).to_string())
+                .or(cookie_token);
+            if auth_token.is_some() {
+                data.insert(RequestUserData {
+                    auth_token,
+                    override_user_id: None,
+                });
+            }
+            Ok(data)
         }
-        Ok(data)
     };
 
     match &*schema.operational_status.read().await {

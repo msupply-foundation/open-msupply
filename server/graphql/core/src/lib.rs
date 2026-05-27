@@ -125,10 +125,9 @@ pub fn auth_data_from_request(http_req: &HttpRequest, cookie_suffix: &str) -> Re
 fn session_cookie_value(http_req: &HttpRequest, cookie_suffix: &str) -> Option<String> {
     let cookie_name = format!("session_{cookie_suffix}");
     let header = http_req.headers().get(COOKIE)?.to_str().ok()?;
-    // A `Cookie:` header is a `; `-separated list of name=value pairs, but historically this code
-    // split on space alone — keep that behaviour to avoid surprises with malformed headers.
+    // RFC 6265: a Cookie header is a `; `-separated list of name=value pairs.
     header
-        .split(' ')
+        .split("; ")
         .filter_map(|raw_cookie| Cookie::parse(raw_cookie).ok())
         .find(|cookie| cookie.name() == cookie_name)
         .map(|cookie| cookie.value().to_owned())

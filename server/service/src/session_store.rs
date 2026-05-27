@@ -33,6 +33,12 @@ struct SessionEntry {
 /// `sync::sync_user::SyncUser::update_user`, which re-authenticates against the central server
 /// to refresh user permissions. This carries over the TODO from the old `TokenBucket`: once the
 /// remote server handles its own permission sync, the password cache can go.
+///
+/// **Concurrency note**: every authenticated request takes `RwLock::write` here because
+/// `validate_and_slide` mutates `expires_at`. For low-concurrency deployments this is fine
+/// (each lock hold is a single `HashMap::get_mut` + arithmetic). If contention shows up under
+/// load, options include sharding by token prefix or storing `expires_at` as `AtomicI64` inside
+/// `SessionEntry` so the slide path can become a read-lock + atomic update.
 #[derive(Default, Debug)]
 pub struct SessionStore {
     sessions: HashMap<SessionToken, SessionEntry>,
