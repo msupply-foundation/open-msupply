@@ -11,6 +11,14 @@ scripts/plugin-management/pluginRepoMap.json
 scripts/plugin-management/pluginAuth.json
 node_modules/
 
+# Yarn 4
+client/.yarn/*
+!client/.yarn/patches
+!client/.yarn/plugins
+!client/.yarn/releases
+!client/.yarn/sdks
+!client/.yarn/versions
+
 standard_reports/test-config.json
 client/dist
 

@@ -210,12 +210,27 @@ pub struct SyncDownloadFileRequestV6 {
     pub(crate) sync_v6_version: u32,
 }
 
+// ---------------------------------------------------------------------------
+// Backwards-compatibility: legacy multipart upload (PUT /central/sync/upload_file)
+// ---------------------------------------------------------------------------
+//
+// The current client speaks tus 1.0.0 against /central/sync/files (see upload_file.rs).
+// These request/response types only exist so that *older* remote sites — which have not yet
+// upgraded past the multipart PUT — can still upload files to a newer central server.
+//
+// Do NOT use these types from new client code. They are only referenced by the legacy server
+// handler in `sync_on_central::upload_file_legacy`. Once all deployed remote sites have moved
+// to the tus path these types and the handler can be removed together.
 #[derive(Deserialize, Debug, Serialize)]
 pub struct SyncUploadFileRequestV6 {
     pub file_id: String,
     pub sync_v5_settings: SyncApiSettings,
     #[serde(default)]
     pub(crate) sync_v6_version: u32,
+    #[serde(default)]
+    pub record_id: Option<String>,
+    #[serde(default)]
+    pub table_name: Option<String>,
 }
 
 #[derive(Deserialize, Debug, Serialize)]
@@ -231,6 +246,8 @@ async fn response_or_err<T: DeserializeOwned>(
     let response = match result {
         Ok(result) => result,
         Err(error) => {
+            log::info!("Request error: {:#?}", error);
+
             if error.is_connect() {
                 return Err(SyncApiErrorVariantV6::ConnectionError(error));
             } else {

@@ -5,14 +5,23 @@ import {
   FilterMenu,
   Box,
   usePreferences,
+  useAuthContext,
 } from '@openmsupply-client/common';
+import { useMasterLists } from '../../MasterList';
 
 export const Toolbar: FC = () => {
   const t = useTranslation();
+  const { store } = useAuthContext();
   const {
     numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts:
     numMonthsConsumption,
   } = usePreferences();
+  const { data: masterLists } = useMasterLists({
+    queryParams: {
+      filterBy: { existsForStoreId: { equalTo: store?.id } },
+      first: 1000,
+    },
+  });
 
   return (
     <AppBarContentPortal
@@ -70,6 +79,19 @@ export const Toolbar: FC = () => {
               minValue: 0,
               decimalLimit: 2,
             },
+            ...(masterLists?.nodes?.length
+              ? [
+                {
+                  type: 'enum' as const,
+                  name: t('label.master-list'),
+                  urlParameter: 'masterListId',
+                  options: masterLists.nodes.map(ml => ({
+                    label: ml.name,
+                    value: ml.id,
+                  })),
+                },
+              ]
+              : []),
             ...(numMonthsConsumption
               ? [
                 {
