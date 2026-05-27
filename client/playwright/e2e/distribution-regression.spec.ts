@@ -36,10 +36,10 @@ test.describe('Distribution: Outbound Shipments', () => {
     const firstRow = page.locator('tbody tr').first();
     await expect(firstRow).toBeVisible();
 
-    // The Name (customer) column is the second cell (index 1): index 0 is the
-    // row checkbox. The cell also contains a "Select a colour" button before
+    // The Name (customer) cell also contains a "Select a colour" button before
     // the text, so we strip that label out.
-    const customerCell = firstRow.locator('td').nth(1);
+    const nameColumn = await getColumnIndex(page, 'Name');
+    const customerCell = firstRow.locator('td').nth(nameColumn);
     const customerName = ((await customerCell.textContent()) ?? '')
       .replace(/Select a colour/i, '')
       .trim();
@@ -56,27 +56,32 @@ test.describe('Distribution: Outbound Shipments', () => {
 
     const term = customerName.split(/\s+/)[0]!;
 
-    // Wait for the debounced filter request to actually fire. networkidle is
-    // too weak — it returns immediately because the request hasn't gone out
-    // yet.
-    const filterRequest = page.waitForRequest(
-      req =>
-        req.url().includes('/graphql') &&
-        (req.postData() ?? '').toLowerCase().includes(term.toLowerCase()),
+    // Wait for the debounced filter RESPONSE (not just the request) so the
+    // table has actually re-rendered with the filtered rows before we sample
+    // rowCount. waitForRequest resolves when the request is sent, which can
+    // leave the loop iterating the pre-filter rows that then shrink mid-loop.
+    const filterResponse = page.waitForResponse(
+      resp =>
+        resp.url().includes('/graphql') &&
+        (resp.request().postData() ?? '').toLowerCase().includes(term.toLowerCase()),
       { timeout: 5000 }
     );
     await searchBox.fill(term);
-    await filterRequest;
-    await page.waitForLoadState('networkidle');
+    await filterResponse;
 
-    const rowCount = await page.locator('tbody tr').count();
-    expect(rowCount).toBeGreaterThan(0);
-    for (let i = 0; i < rowCount; i++) {
-      const name = ((await page.locator('tbody tr').nth(i).locator('td').nth(1).textContent()) ?? '')
-        .replace(/Select a colour/i, '')
-        .trim();
-      expect(name.toLowerCase()).toContain(term.toLowerCase());
-    }
+    // Snapshot all visible Name cells in a single locator call and retry
+    // until they stabilise. Iterating with per-row awaits races against the
+    // table re-rendering as filter results stream in.
+    await expect(async () => {
+      const names = await page
+        .locator(`tbody tr td:nth-child(${nameColumn + 1})`)
+        .allTextContents();
+      expect(names.length).toBeGreaterThan(0);
+      for (const raw of names) {
+        const name = raw.replace(/Select a colour/i, '').trim().toLowerCase();
+        expect(name).toContain(term.toLowerCase());
+      }
+    }).toPass({ timeout: 5000 });
   });
 
   test('delete a New-status shipment via bulk action', async ({ page }) => {
@@ -197,24 +202,7 @@ test.describe('Distribution: Outbound Shipments', () => {
     });
 
     await test.step('comment is editable and persists across reload', async () => {
-      const commentBox = page.getByTestId('comment-field');
-      const commentText = `test-comment-${Date.now()}`;
-      // Fill, then wait for the debounced updateOutboundShipment mutation to
-      // fire (the comment field uses a buffer + debounced save). Reloading
-      // before the request goes out loses the edit.
-      const updatePromise = page.waitForRequest(
-        req =>
-          req.url().includes('/graphql') &&
-          (req.postData() ?? '').includes('updateOutboundShipment') &&
-          (req.postData() ?? '').includes(commentText),
-        { timeout: 5000 }
-      );
-      await commentBox.fill(commentText);
-      await commentBox.blur();
-      await updatePromise;
-      // Reload to confirm the comment was saved (not just typed locally).
-      await page.goto(shipmentUrl, { waitUntil: 'networkidle' });
-      await expect(page.getByTestId('comment-field')).toHaveValue(commentText);
+      await assertFieldPersistsAcrossReload(page, shipmentUrl, 'comment-field', `test-comment-${Date.now()}`);
     });
 
     await test.step('Hold checkbox toggles on via confirmation dialog', async () => {
@@ -344,11 +332,12 @@ test.describe('Distribution: Outbound Shipments', () => {
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
 
     // Grab a real invoice number from the first row to search for.
+    const numberColumn = await getColumnIndex(page, 'Number');
     const firstNumber = ((await page
       .locator('tbody tr')
       .first()
       .locator('td')
-      .nth(3) // Number column (after checkbox, Name, Status)
+      .nth(numberColumn)
       .textContent()) ?? '').trim();
     expect(firstNumber).toMatch(/^\d+$/);
 
@@ -373,7 +362,7 @@ test.describe('Distribution: Outbound Shipments', () => {
     // Invoice numbers are unique — filter should leave exactly one row.
     // Use toHaveCount which polls until the UI re-renders.
     await expect(page.locator('tbody tr')).toHaveCount(1, { timeout: 5000 });
-    await expect(page.locator('tbody tr').first().locator('td').nth(3)).toContainText(firstNumber);
+    await expect(page.locator('tbody tr').first().locator('td').nth(numberColumn)).toContainText(firstNumber);
   });
 
   test('pagination next-page button changes the visible rows', async ({ page }) => {
@@ -384,12 +373,14 @@ test.describe('Distribution: Outbound Shipments', () => {
     const hasNextPage = await nextPage.isEnabled().catch(() => false);
     test.skip(!hasNextPage, 'Fewer than 21 shipments in the list — skipping pagination test');
 
+    const numberColumn = await getColumnIndex(page, 'Number');
+
     // Capture the first row's invoice number on page 1.
     const firstRowNumberPage1 = ((await page
       .locator('tbody tr')
       .first()
       .locator('td')
-      .nth(3)
+      .nth(numberColumn)
       .textContent()) ?? '').trim();
 
     await nextPage.click();
@@ -403,7 +394,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       .locator('tbody tr')
       .first()
       .locator('td')
-      .nth(3)
+      .nth(numberColumn)
       .textContent()) ?? '').trim();
     expect(firstRowNumberPage2).not.toBe(firstRowNumberPage1);
   });
@@ -415,12 +406,13 @@ test.describe('Distribution: Outbound Shipments', () => {
     // filter type from Name/Number.
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
 
-    // Find a row that has non-empty reference (Reference is td index 5).
+    // Find a row that has non-empty reference.
+    const referenceColumn = await getColumnIndex(page, 'Reference');
     const rows = page.locator('tbody tr');
     const rowCount = await rows.count();
     let referenceText: string | null = null;
     for (let i = 0; i < rowCount; i++) {
-      const ref = ((await rows.nth(i).locator('td').nth(5).textContent()) ?? '').trim();
+      const ref = ((await rows.nth(i).locator('td').nth(referenceColumn).textContent()) ?? '').trim();
       if (ref.length > 0) {
         referenceText = ref;
         break;
@@ -444,7 +436,7 @@ test.describe('Distribution: Outbound Shipments', () => {
     await filterRequest;
 
     // Every visible row's Reference cell should contain the searched text.
-    await expect(rows.first().locator('td').nth(5)).toContainText(referenceText!);
+    await expect(rows.first().locator('td').nth(referenceColumn)).toContainText(referenceText!);
   });
 
   test('multi-select master checkbox deletes multiple shipments', async ({ page }) => {
@@ -478,16 +470,18 @@ test.describe('Distribution: Outbound Shipments', () => {
   test('cannot delete a Shipped shipment via bulk action', async ({ page }) => {
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
 
-    // Find a row whose Status cell (td index 2) is "Shipped".
+    // Find a row whose Status cell is "Shipped".
+    const statusColumn = await getColumnIndex(page, 'Status');
+    const numberColumn = await getColumnIndex(page, 'Number');
     const rows = page.locator('tbody tr');
     const rowCount = await rows.count();
     let shippedRow = -1;
     let invoiceNumber = '';
     for (let i = 0; i < rowCount; i++) {
-      const status = ((await rows.nth(i).locator('td').nth(2).textContent()) ?? '').trim();
+      const status = ((await rows.nth(i).locator('td').nth(statusColumn).textContent()) ?? '').trim();
       if (status.toLowerCase() === 'shipped') {
         shippedRow = i;
-        invoiceNumber = ((await rows.nth(i).locator('td').nth(3).textContent()) ?? '').trim();
+        invoiceNumber = ((await rows.nth(i).locator('td').nth(numberColumn).textContent()) ?? '').trim();
         break;
       }
     }
@@ -521,41 +515,11 @@ test.describe('Distribution: Outbound Shipments', () => {
     const shipmentUrl = await createNewShipment(page);
 
     await test.step('customer reference persists across reload', async () => {
-      const customerRefField = page.getByTestId('customer-reference-field');
-      const ref = `cust-ref-${Date.now()}`;
-
-      const savePromise = page.waitForRequest(
-        req =>
-          req.url().includes('/graphql') &&
-          (req.postData() ?? '').includes('updateOutboundShipment') &&
-          (req.postData() ?? '').includes(ref),
-        { timeout: 5000 }
-      );
-      await customerRefField.fill(ref);
-      await customerRefField.blur();
-      await savePromise;
-
-      await page.goto(shipmentUrl, { waitUntil: 'networkidle' });
-      await expect(page.getByTestId('customer-reference-field')).toHaveValue(ref);
+      await assertFieldPersistsAcrossReload(page, shipmentUrl, 'customer-reference-field', `cust-ref-${Date.now()}`);
     });
 
     await test.step('transport reference persists across reload', async () => {
-      const refField = page.getByTestId('transport-reference-field');
-      const ref = `trans-${Date.now()}`;
-
-      const savePromise = page.waitForRequest(
-        req =>
-          req.url().includes('/graphql') &&
-          (req.postData() ?? '').includes('updateOutboundShipment') &&
-          (req.postData() ?? '').includes(ref),
-        { timeout: 5000 }
-      );
-      await refField.fill(ref);
-      await refField.blur();
-      await savePromise;
-
-      await page.goto(shipmentUrl, { waitUntil: 'networkidle' });
-      await expect(page.getByTestId('transport-reference-field')).toHaveValue(ref);
+      await assertFieldPersistsAcrossReload(page, shipmentUrl, 'transport-reference-field', `trans-${Date.now()}`);
     });
 
     await test.step('Log tab loads without error', async () => {
@@ -884,6 +848,52 @@ async function pickItemWithStock(page: Page, dialog: import('@playwright/test').
   }
 
   throw new Error(`No item with stock found in first ${MAX_TRIES} items`);
+}
+
+/**
+ * Resolve a column's zero-based index by its header text. Lets tests refer to
+ * columns by name so reordering them in the UI doesn't break assertions.
+ *
+ * Headers in this app render as e.g. "Name Sort by Name ascending Column
+ * Actions" (label + sort hint + column-actions menu), so we match on the
+ * start of the header rather than exact equality.
+ */
+async function getColumnIndex(page: Page, headerText: string): Promise<number> {
+  const headers = page.getByRole('columnheader');
+  const count = await headers.count();
+  if (count === 0) throw new Error('No column headers found in table');
+  const needle = headerText.toLowerCase();
+  for (let i = 0; i < count; i++) {
+    const text = ((await headers.nth(i).textContent()) ?? '').trim().toLowerCase();
+    if (text === needle || text.startsWith(needle)) return i;
+  }
+  throw new Error(`Column header "${headerText}" not found`);
+}
+
+/**
+ * Fill a debounced text field on the shipment detail view, wait for the
+ * updateOutboundShipment mutation to fire, then reload via the shipment URL
+ * and assert the value persisted.
+ */
+async function assertFieldPersistsAcrossReload(
+  page: Page,
+  shipmentUrl: string,
+  testid: string,
+  value: string
+) {
+  const field = page.getByTestId(testid);
+  const savePromise = page.waitForRequest(
+    req =>
+      req.url().includes('/graphql') &&
+      (req.postData() ?? '').includes('updateOutboundShipment') &&
+      (req.postData() ?? '').includes(value),
+    { timeout: 5000 }
+  );
+  await field.fill(value);
+  await field.blur();
+  await savePromise;
+  await page.goto(shipmentUrl, { waitUntil: 'networkidle' });
+  await expect(page.getByTestId(testid)).toHaveValue(value);
 }
 
 /**
