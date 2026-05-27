@@ -10,6 +10,7 @@ import {
   FilterController,
   usePreferences,
   InvoiceNodeType,
+  InvoiceTypeInput,
 } from '@openmsupply-client/common';
 import { getStatusSequence } from '../../statuses';
 import { getStatusTranslator } from '../../utils';
@@ -80,6 +81,21 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                   value: status,
                   label: getStatusTranslator(t)(status),
                 })),
+              },
+              {
+                type: 'enum',
+                name: t('label.type'),
+                urlParameter: 'type',
+                options: [
+                  {
+                    value: InvoiceTypeInput.InboundShipment,
+                    label: t('label.internal'),
+                  },
+                  {
+                    value: InvoiceTypeInput.InboundShipmentExternal,
+                    label: t('label.external'),
+                  },
+                ],
               },
               {
                 type: 'text',

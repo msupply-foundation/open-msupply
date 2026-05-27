@@ -76,6 +76,16 @@ impl StorageConnection {
         }
     }
 
+    /// Execute a raw SQL statement (or batch of statements) directly against the underlying
+    /// connection. Useful for backend-specific statements that diesel doesn't model — e.g. sqlite's
+    /// `VACUUM INTO 'path'`. Caller is responsible for any quoting/escaping in the SQL string.
+    pub fn batch_execute(&self, sql: &str) -> Result<(), RepositoryError> {
+        self.lock()
+            .connection()
+            .batch_execute(sql)
+            .map_err(RepositoryError::from)
+    }
+
     /// Queue a notification to be fired after the transaction commits.
     pub fn notify(&self, notification: TransactionNotification) {
         if self.on_commit.is_some() {
