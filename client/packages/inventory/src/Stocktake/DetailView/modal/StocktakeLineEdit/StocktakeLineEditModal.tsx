@@ -31,7 +31,7 @@ export const StocktakeLineEditModal: FC<
       title={
         mode === ModalMode.Create
           ? t('heading.add-item')
-          : t('heading.edit-item')
+          : t('heading.edit-line')
       }
       cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
       nextButton={
