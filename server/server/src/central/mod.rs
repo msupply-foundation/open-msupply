@@ -5,7 +5,8 @@ use crate::central_server_only;
 
 mod name_store_join;
 use name_store_join::patient_name_store_join;
-mod sync;
+pub(crate) mod sync;
+pub(crate) mod tus;
 
 pub fn config_central(cfg: &mut web::ServiceConfig) {
     cfg.service(

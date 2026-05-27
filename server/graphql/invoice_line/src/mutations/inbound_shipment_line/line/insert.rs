@@ -198,7 +198,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::ManufacturerDoesNotExist
         | ServiceError::ManufacturerNotVisible
         | ServiceError::ManufacturerIsNotAManufacturer
-        | ServiceError::ProgramNotVisible
+        | ServiceError::ProgramDoesNotExist
         | ServiceError::PurchaseOrderLineIdRequired
         | ServiceError::PurchaseOrderLineDoesNotExist
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),

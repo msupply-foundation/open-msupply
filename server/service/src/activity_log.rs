@@ -109,7 +109,7 @@ pub fn activity_log_entry_with_diff(
                     Some(serde_json::to_string(&from).unwrap_or_default()),
                     Some(serde_json::to_string(&to).unwrap_or_default()),
                 ),
-                None => (None, None), // No changes
+                None => return Ok(()),
             }
         }
         None => (

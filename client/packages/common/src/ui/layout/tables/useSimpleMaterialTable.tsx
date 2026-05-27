@@ -40,7 +40,9 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
         }}
       >
         <MRT_ShowHideColumnsButton table={table} />
-        {bottomToolbarContent}
+        {bottomToolbarContent && (
+          <Box sx={{ marginLeft: 'auto' }}>{bottomToolbarContent}</Box>
+        )}
       </Box>
     ),
 

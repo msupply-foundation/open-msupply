@@ -44,6 +44,7 @@ export const Toolbar = () => {
   const {
     query: { data: shipment },
     isDisabled,
+    isExternal,
     update: { update },
   } = useInboundShipment();
 
@@ -61,7 +62,7 @@ export const Toolbar = () => {
                 label={t('label.supplier-name')}
                 Input={
                   <SupplierSearchInput
-                    disabled={isDisabled || isTransfer}
+                    disabled={isDisabled || isTransfer || isExternal}
                     value={otherParty}
                     onChange={name => {
                       update({ otherParty: name ?? undefined });

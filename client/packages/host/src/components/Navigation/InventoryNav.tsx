@@ -10,12 +10,14 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
+import { usePluginNavLinksForCategory } from './usePluginNavLinks';
 
 export const InventoryNav: FC = () => {
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Inventory).addWildCard().build()
   );
   const t = useTranslation();
+  const pluginLinks = usePluginNavLinksForCategory(AppRoute.Inventory);
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Inventory}>
@@ -46,6 +48,7 @@ export const InventoryNav: FC = () => {
               .build()}
             text={t('stocktakes')}
           />
+          {pluginLinks}
         </List>
       </Collapse>
     </AppNavSection>

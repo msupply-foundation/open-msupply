@@ -23,6 +23,7 @@ import {
 import {
   ApiException,
   InvoiceNodeStatus,
+  InvoiceTypeInput,
   RequisitionNodeStatus,
   UserPermission,
 } from '@common/types';
@@ -96,13 +97,13 @@ export const ReplenishmentWidget = ({
     modalControl.toggleOn
   );
 
-  const internalTab = t('label.internal');
-  const externalTab = t('label.external');
+  const internalType = InvoiceTypeInput.InboundShipment;
+  const externalType = InvoiceTypeInput.InboundShipmentExternal;
 
   const corePanels = [
     <StatsPanel
       key={inboundInternalPanelContext}
-      error={inboundInternal.error as ApiException}
+      error={inboundInternal.error as unknown as ApiException}
       isError={inboundInternal.isError}
       isLoading={inboundInternal.isLoading}
       title={t('inbound-shipment')}
@@ -115,7 +116,7 @@ export const ReplenishmentWidget = ({
             .addPart(AppRoute.InboundShipment)
             .addQuery({
               createdDatetime: getTodayUrlQuery(),
-              tab: internalTab,
+              type: internalType,
             })
             .build(),
           statContext: `${inboundInternalPanelContext}-today`,
@@ -127,7 +128,7 @@ export const ReplenishmentWidget = ({
             .addPart(AppRoute.InboundShipment)
             .addQuery({
               createdDatetime: getThisWeekUrlQuery(),
-              tab: internalTab,
+              type: internalType,
             })
             .build(),
           statContext: `${inboundInternalPanelContext}-this-week`,
@@ -138,8 +139,8 @@ export const ReplenishmentWidget = ({
           link: RouteBuilder.create(AppRoute.Replenishment)
             .addPart(AppRoute.InboundShipment)
             .addQuery({
-              status: InvoiceNodeStatus.Shipped,
-              tab: internalTab,
+              status: `${InvoiceNodeStatus.Shipped},${InvoiceNodeStatus.New}`,
+              type: internalType,
             })
             .build(),
           statContext: `${inboundInternalPanelContext}-not-delivered`,
@@ -153,7 +154,7 @@ export const ReplenishmentWidget = ({
       ? [
           <StatsPanel
             key={inboundExternalPanelContext}
-            error={inboundExternal.error as ApiException}
+            error={inboundExternal.error as unknown as ApiException}
             isError={inboundExternal.isError}
             isLoading={inboundExternal.isLoading}
             title={t('dashboard.inbound-shipment-external')}
@@ -166,7 +167,7 @@ export const ReplenishmentWidget = ({
                   .addPart(AppRoute.InboundShipment)
                   .addQuery({
                     createdDatetime: getTodayUrlQuery(),
-                    tab: externalTab,
+                    type: externalType,
                   })
                   .build(),
                 statContext: `${inboundExternalPanelContext}-today`,
@@ -178,7 +179,7 @@ export const ReplenishmentWidget = ({
                   .addPart(AppRoute.InboundShipment)
                   .addQuery({
                     createdDatetime: getThisWeekUrlQuery(),
-                    tab: externalTab,
+                    type: externalType,
                   })
                   .build(),
                 statContext: `${inboundExternalPanelContext}-this-week`,
@@ -189,8 +190,8 @@ export const ReplenishmentWidget = ({
                 link: RouteBuilder.create(AppRoute.Replenishment)
                   .addPart(AppRoute.InboundShipment)
                   .addQuery({
-                    status: InvoiceNodeStatus.Shipped,
-                    tab: externalTab,
+                    status: `${InvoiceNodeStatus.Shipped},${InvoiceNodeStatus.New}`,
+                    type: externalType,
                   })
                   .build(),
                 statContext: `${inboundExternalPanelContext}-not-delivered`,
@@ -198,14 +199,14 @@ export const ReplenishmentWidget = ({
             ]}
             link={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.InboundShipment)
-              .addQuery({ tab: externalTab })
+              .addQuery({ type: externalType })
               .build()}
           />,
         ]
       : []),
     <StatsPanel
       key={internalOrdersPanelContext}
-      error={internalOrder.error as ApiException}
+      error={internalOrder.error as unknown as ApiException}
       isError={internalOrder.isError}
       isLoading={internalOrder.isLoading}
       title={t('internal-order')}

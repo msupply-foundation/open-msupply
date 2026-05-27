@@ -76,14 +76,11 @@ export const ConnectionLostBanner = () => {
       // timer, so we don't pulse the server while the user is idle.
       //
       // Filter on the success *transition* (`action.type === 'success'`)
-      // not the current status — `queryUpdated` fires for any state
-      // change on a query, including observer churn, so checking
+      // not the current status — `updated` fires for any state change on
+      // a query, including observer churn, so checking
       // `state.status === 'success'` would re-invalidate on every event
       // touching an already-successful query and cascade infinitely.
-      if (
-        event?.type === 'queryUpdated' &&
-        event.action.type === 'success'
-      ) {
+      if (event?.type === 'updated' && event.action.type === 'success') {
         queryClient.invalidateQueries({
           predicate: q => q.state.error instanceof NetworkError,
         });

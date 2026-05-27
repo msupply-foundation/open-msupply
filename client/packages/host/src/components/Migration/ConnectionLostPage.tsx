@@ -17,7 +17,7 @@ export const ConnectionLostPage = () => {
   const queryClient = useQueryClient();
 
   const onRetry = () => {
-    queryClient.invalidateQueries('migrationStatus');
+    queryClient.invalidateQueries({ queryKey: ['migrationStatus'] });
   };
 
   return (

@@ -43,6 +43,7 @@ use graphql_general::{
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
+use graphql_ancillary_item::AncillaryItemMutations;
 use graphql_item_bundle::BundledItemMutations;
 use graphql_item_variant::{ItemVariantMutations, ItemVariantQueries};
 use graphql_location::{LocationMutations, LocationQueries};
@@ -61,6 +62,7 @@ use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
+use graphql_sync_message::{SyncMessageMutations, SyncMessageQueries};
 use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
 use graphql_vvm::{VVMMutations, VVMQueries};
 
@@ -95,6 +97,9 @@ impl CentralServerMutationNode {
     }
     async fn bundled_item(&self) -> BundledItemMutations {
         BundledItemMutations
+    }
+    async fn ancillary_item(&self) -> AncillaryItemMutations {
+        AncillaryItemMutations
     }
     async fn asset_catalogue(&self) -> AssetCatalogueMutations {
         AssetCatalogueMutations
@@ -136,6 +141,10 @@ pub struct CentralServerQueryNode;
 impl CentralServerQueryNode {
     async fn plugin(&self) -> CentralPluginQueries {
         CentralPluginQueries
+    }
+
+    async fn sync_message(&self) -> SyncMessageQueries {
+        SyncMessageQueries
     }
 }
 
@@ -264,6 +273,7 @@ pub struct Mutations(
     pub ClinicianMutations,
     pub PurchaseOrderMutations,
     pub PurchaseOrderLineMutations,
+    pub SyncMessageMutations,
 );
 
 impl Mutations {
@@ -294,6 +304,7 @@ impl Mutations {
             ClinicianMutations,
             PurchaseOrderMutations,
             PurchaseOrderLineMutations,
+            SyncMessageMutations,
         )
     }
 }
@@ -387,6 +398,7 @@ impl GraphqlSchema {
         .data(service_provider.clone())
         .data(subscription_broadcast.clone())
         .data(operational_status_ref.clone())
+        .data(subscription_broadcast.clone())
         .extension(GraphQLRequestLogger);
 
         let migration_builder =
