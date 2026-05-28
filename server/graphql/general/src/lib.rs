@@ -390,13 +390,6 @@ impl GeneralQueries {
         log_level(ctx)
     }
 
-    pub async fn last_successful_user_sync(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<UpdateUserNode> {
-        last_successful_user_sync(ctx)
-    }
-
     pub async fn frontend_plugin_metadata(
         &self,
         ctx: &Context<'_>,

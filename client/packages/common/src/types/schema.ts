@@ -7813,7 +7813,6 @@ export type Queries = {
    */
   itemsByStockLineFilter: ItemsResponse;
   labelPrinterSettings?: Maybe<LabelPrinterSettingNode>;
-  lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
   ledger: LedgerResponse;
   /** Query omSupply "location_type" entries */
@@ -11487,11 +11486,6 @@ export type UpdateTemperatureBreachInput = {
 };
 
 export type UpdateTemperatureBreachResponse = TemperatureBreachNode;
-
-export type UpdateUserNode = {
-  __typename: 'UpdateUserNode';
-  lastSuccessfulSync?: Maybe<Scalars['DateTime']['output']>;
-};
 
 export type UpdateVvmStatusLogInput = {
   comment?: InputMaybe<Scalars['String']['input']>;

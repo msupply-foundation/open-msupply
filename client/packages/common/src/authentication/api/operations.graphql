@@ -149,17 +149,6 @@ query permissions($storeId: String!) {
   }
 }
 
-fragment UpdateUser on UpdateUserNode {
-  lastSuccessfulSync
-}
-
-query lastSuccessfulUserSync {
-  lastSuccessfulUserSync {
-    __typename
-    ...UpdateUser
-  }
-}
-
 query preferences($storeId: String!) {
   preferences(storeId: $storeId) {
     adjustForNumberOfDaysOutOfStock
