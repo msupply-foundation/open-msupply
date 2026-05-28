@@ -149,14 +149,18 @@ const DetailViewInner = () => {
     },
     ...(isExternal
       ? [
-          {
-            Component: <FinancialTab />,
-            value: InboundShipmentDetailTabs.Financial,
-          },
-          {
-            Component: <CurrencyTab />,
-            value: InboundShipmentDetailTabs.Currency,
-          },
+          ...(!isExtraSmallScreen
+            ? [
+                {
+                  Component: <FinancialTab />,
+                  value: InboundShipmentDetailTabs.Financial,
+                },
+                {
+                  Component: <CurrencyTab />,
+                  value: InboundShipmentDetailTabs.Currency,
+                },
+              ]
+            : []),
           {
             Component: <DeliveryTab />,
             value: InboundShipmentDetailTabs.Delivery,

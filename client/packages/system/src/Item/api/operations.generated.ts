@@ -875,6 +875,11 @@ export type ItemsWithStatsFragment = {
   isVaccine: boolean;
   doses: number;
   availableStockOnHand: number;
+  masterLists?: Array<{
+    __typename: 'MasterListNode';
+    id: string;
+    name: string;
+  }> | null;
   stats: {
     __typename: 'ItemStatsNode';
     averageMonthlyConsumption: number;
@@ -910,6 +915,11 @@ export type ItemsWithStatsQuery = {
       isVaccine: boolean;
       doses: number;
       availableStockOnHand: number;
+      masterLists?: Array<{
+        __typename: 'MasterListNode';
+        id: string;
+        name: string;
+      }> | null;
       stats: {
         __typename: 'ItemStatsNode';
         averageMonthlyConsumption: number;
@@ -1994,6 +2004,10 @@ export const ItemsWithStatsFragmentDoc = gql`
     isVaccine
     doses
     availableStockOnHand(storeId: $storeId)
+    masterLists(storeId: $storeId) {
+      id
+      name
+    }
     stats(storeId: $storeId) {
       __typename
       averageMonthlyConsumption
