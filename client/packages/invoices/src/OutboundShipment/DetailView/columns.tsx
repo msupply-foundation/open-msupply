@@ -106,7 +106,8 @@ export const useOutboundColumns = () => {
         enableSorting: true,
       },
       {
-        accessorKey: 'receivedNumberOfPacks',
+        id: 'receivedNumberOfPacks',
+        accessorFn: row => row.receivedNumberOfPacks ?? row.numberOfPacks,
         header: t('label.packs-received'),
         description: t('description.packs-received'),
         columnType: ColumnType.Number,
