@@ -45,6 +45,32 @@ pub(crate) fn write_sync_buffer_ignored(
     )
 }
 
+pub(crate) fn get_sync_buffer_for_table(
+    connection: &StorageConnection,
+    action: SyncAction,
+    table_name: &str,
+    source_site_id: i32,
+    limit: i64,
+) -> Result<Vec<SyncBufferRow>, RepositoryError> {
+    let direction = match action {
+        SyncAction::Delete => CursorDirection::Desc,
+        _ => CursorDirection::Asc,
+    };
+
+    let repo = SyncBufferRepository::new(connection);
+    let rows = repo.pending_ordered_by_cursor(PendingQuery {
+        source_site_id,
+        sync_version: SyncVersion::V5V6,
+        reference_id: None,
+        table_name,
+        action: action.clone(),
+        direction,
+        limit,
+    })?;
+
+    Ok(rows)
+}
+
 /// Get pending V5/V6 sync_buffer rows ready for integration.
 ///
 /// Caller walks `ordered_table_names` in FK dependency order for upserts and
@@ -76,6 +102,7 @@ pub(crate) fn get_ordered_sync_buffer_records(
             table_name,
             action: action.clone(),
             direction,
+            limit: i64::MAX,
         })?;
         result.append(&mut rows);
     }

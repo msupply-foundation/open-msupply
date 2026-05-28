@@ -1,11 +1,14 @@
 use crate::{
     processors::ProcessorType,
     service_provider::{ServiceContext, ServiceProvider},
-    sync::{sync_status::logger::SyncStep, CentralServerConfig},
+    sync::{
+        sync_buffer::get_sync_buffer_for_table, sync_status::logger::SyncStep, CentralServerConfig,
+    },
 };
 use log::warn;
 use repository::{
     KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, SyncAction,
+    SyncBufferRepository, SyncVersion,
 };
 
 use std::sync::Arc;
@@ -24,9 +27,8 @@ use super::{
         WaitForSyncOperationError,
     },
     settings::{SyncSettings, SYNC_V5_VERSION, SYNC_V6_VERSION},
-    sync_buffer::get_ordered_sync_buffer_records,
     sync_on_central::adjust_v6_cursor,
-    sync_status::logger::{SyncLogger, SyncLoggerError},
+    sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
     translations::{all_translators, pull_integration_order},
 };
@@ -441,7 +443,7 @@ async fn integrate_and_translate_sync_outer(
 /// Translation And Integration of sync buffer, pub since used in CLI
 pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
-    logger: Option<&mut SyncLogger<'_>>,
+    mut logger: Option<&mut SyncLogger<'_>>,
     source_site_id: i32,
     use_transaction: bool,
 ) -> Result<
@@ -461,7 +463,7 @@ pub fn integrate_and_translate_sync_buffer(
     // - not initialised: no transactions at all
 
     // Closure, to be run in a transaction or without a transaction
-    let integrate_and_translate = |connection: &StorageConnection| -> Result<
+    let mut integrate_and_translate = |connection: &StorageConnection| -> Result<
         (
             TranslationAndIntegrationResults,
             TranslationAndIntegrationResults,
@@ -472,58 +474,73 @@ pub fn integrate_and_translate_sync_buffer(
         let translators = all_translators();
         let table_order = pull_integration_order(&translators);
 
-        let translation_and_integration = TranslationAndIntegration::new(connection);
-
-        // Translate and integrate upserts (ordered by referential database constraints)
-        let upsert_sync_buffer_records = get_ordered_sync_buffer_records(
-            connection,
-            SyncAction::Upsert,
-            &table_order,
+        // Seed integration progress total with the global pending count so the logger
+        // reports a real total across all (action, table) batches, not just the first 10k slice.
+        let total_pending = SyncBufferRepository::new(connection).count_pending(
             source_site_id,
-        )?;
+            SyncVersion::V5V6,
+            None,
+        )? as u64;
+        let mut done_so_far: u64 = 0;
+        if let Some(logger) = logger.as_mut() {
+            logger
+                .progress(SyncStepProgress::Integrate, total_pending)
+                .map_err(SyncLoggerError::to_repository_error)?;
+        }
 
-        // Translate and integrate delete (ordered by referential database constraints, in reverse)
-        let delete_sync_buffer_records = get_ordered_sync_buffer_records(
-            connection,
-            SyncAction::Delete,
-            &table_order,
-            source_site_id,
-        )?;
-
-        let upsert_integration_result = translation_and_integration
-            .translate_and_integrate_sync_records(
-                &upsert_sync_buffer_records,
-                &translators,
-                logger,
+        let mut upserter = TranslationAndIntegration::new(connection);
+        for table in &table_order {
+            let records = get_sync_buffer_for_table(
+                connection,
+                SyncAction::Upsert,
+                table,
+                source_site_id,
+                10000,
             )?;
-
-        // pass the logger here
-        let delete_integration_result = translation_and_integration
-            .translate_and_integrate_sync_records(
-                &delete_sync_buffer_records,
+            upserter.translate_and_integrate_sync_records(
+                &records,
                 &translators,
-                None,
+                logger.as_deref_mut(),
+                total_pending,
+                &mut done_so_far,
             )?;
-
-        let merge_sync_buffer_records = get_ordered_sync_buffer_records(
-            connection,
-            SyncAction::Merge,
-            &table_order,
-            source_site_id,
-        )?;
-
-        let merge_integration_result: TranslationAndIntegrationResults =
-            translation_and_integration.translate_and_integrate_sync_records(
-                &merge_sync_buffer_records,
+        }
+        let mut deleter = TranslationAndIntegration::new(connection);
+        for table in &table_order {
+            let records = get_sync_buffer_for_table(
+                connection,
+                SyncAction::Delete,
+                table,
+                source_site_id,
+                10000,
+            )?;
+            deleter.translate_and_integrate_sync_records(
+                &records,
                 &translators,
-                None,
+                logger.as_deref_mut(),
+                total_pending,
+                &mut done_so_far,
             )?;
+        }
+        let mut merger = TranslationAndIntegration::new(connection);
+        for table in &table_order {
+            let records = get_sync_buffer_for_table(
+                connection,
+                SyncAction::Merge,
+                table,
+                source_site_id,
+                10000,
+            )?;
+            merger.translate_and_integrate_sync_records(
+                &records,
+                &translators,
+                logger.as_deref_mut(),
+                total_pending,
+                &mut done_so_far,
+            )?;
+        }
 
-        Ok((
-            upsert_integration_result,
-            delete_integration_result,
-            merge_integration_result,
-        ))
+        Ok((upserter.result, deleter.result, merger.result))
     };
 
     let result = if use_transaction {

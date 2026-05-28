@@ -3,7 +3,6 @@ use super::{
     sync_buffer::{write_sync_buffer_error, write_sync_buffer_ignored, write_sync_buffer_success},
     translations::{IntegrationOperation, PullTranslateResult, SyncTranslation, SyncTranslators},
 };
-use crate::usize_to_u64;
 use log::{debug, warn};
 use repository::*;
 use std::collections::HashMap;
@@ -14,6 +13,7 @@ static PROGRESS_STEP_LEN: usize = 1000;
 
 pub(crate) struct TranslationAndIntegration<'a> {
     connection: &'a StorageConnection,
+    pub(crate) result: TranslationAndIntegrationResults,
 }
 
 #[derive(Default, Debug)]
@@ -27,7 +27,10 @@ pub struct TranslationAndIntegrationResults(HashMap<TableName, TranslationAndInt
 
 impl<'a> TranslationAndIntegration<'a> {
     pub(crate) fn new(connection: &'a StorageConnection) -> TranslationAndIntegration<'a> {
-        TranslationAndIntegration { connection }
+        TranslationAndIntegration {
+            connection,
+            result: TranslationAndIntegrationResults::new(),
+        }
     }
 
     // Go through each translator, adding translations to result, if no translators matched return None
@@ -60,27 +63,28 @@ impl<'a> TranslationAndIntegration<'a> {
     }
 
     pub(crate) fn translate_and_integrate_sync_records(
-        &self,
+        &mut self,
         sync_records: &[SyncBufferRow],
         translators: &Vec<Box<dyn SyncTranslation>>,
         mut logger: Option<&mut SyncLogger>,
-    ) -> Result<TranslationAndIntegrationResults, RepositoryError> {
-        let step_progress = SyncStepProgress::Integrate;
-        let mut result = TranslationAndIntegrationResults::new();
+        total_pending: u64,
+        done_so_far: &mut u64,
+    ) -> Result<(), RepositoryError> {
         let mut error_count: u32 = 0;
-
-        // Try translate
-        // Record initial progress (will be set as total progress)
-        let total_to_integrate = sync_records.len();
 
         let mut last_progress_time = Instant::now();
 
-        // Helper to make below logic less verbose
-        let mut record_progress = |progress: usize| -> Result<(), RepositoryError> {
+        // Caller pre-seeds `integration_progress_total` via `count_pending` and threads
+        // `done_so_far` across batches, so the logger reports global progress rather than
+        // resetting `total` to the current batch's size.
+        let mut record_progress = |done: u64| -> Result<(), RepositoryError> {
             match logger.as_mut() {
                 None => Ok(()),
                 Some(logger) => logger
-                    .progress(step_progress.clone(), usize_to_u64(progress))
+                    .progress(
+                        SyncStepProgress::Integrate,
+                        total_pending.saturating_sub(done),
+                    )
                     .map_err(SyncLoggerError::to_repository_error),
             }
         };
@@ -99,7 +103,7 @@ impl<'a> TranslationAndIntegration<'a> {
                         started,
                         &format!("{:?}", translation_error),
                     )?;
-                    result.insert_error(&sync_record.table_name);
+                    self.result.insert_error(&sync_record.table_name);
                     error_count += 1; // We want to count these as errors as this is likely to be FK or other data issues, that might affect performance of integration and we want to track that.
                     warn!(
                         "{:?} {:?} {:?}",
@@ -129,7 +133,7 @@ impl<'a> TranslationAndIntegration<'a> {
                             started,
                             &ignore_message,
                         )?;
-                        result.insert_error(&sync_record.table_name);
+                        self.result.insert_error(&sync_record.table_name);
                         // Don't count this as an error in the count, it's valid to have records that are ignored based on translation logic.
 
                         debug!(
@@ -150,7 +154,7 @@ impl<'a> TranslationAndIntegration<'a> {
             if integration_records.is_empty() {
                 let error = "Translator for record not found";
                 write_sync_buffer_error(self.connection, cursor, started, error)?;
-                result.insert_error(&sync_record.table_name);
+                self.result.insert_error(&sync_record.table_name);
                 // Don't count this as an error in the count, it's valid to have no translators for a record matching.
                 warn!(
                     "{:?} {:?} {:?}",
@@ -165,13 +169,13 @@ impl<'a> TranslationAndIntegration<'a> {
             match integration_result {
                 Ok(_) => {
                     write_sync_buffer_success(self.connection, cursor, started)?;
-                    result.insert_success(&sync_record.table_name)
+                    self.result.insert_success(&sync_record.table_name)
                 }
                 // Record database_error in sync buffer and in result
                 Err(database_error) => {
                     let error = format!("{database_error:?}");
                     write_sync_buffer_error(self.connection, cursor, started, &error)?;
-                    result.insert_error(&sync_record.table_name);
+                    self.result.insert_error(&sync_record.table_name);
                     error_count += 1;
                     warn!(
                         "{:?} {:?} {:?}",
@@ -180,19 +184,19 @@ impl<'a> TranslationAndIntegration<'a> {
                 }
             }
 
-            if number_of_records_integrated % PROGRESS_STEP_LEN == 0 {
-                record_progress(total_to_integrate - number_of_records_integrated)?;
+            if (number_of_records_integrated + 1) % PROGRESS_STEP_LEN == 0 {
+                let done = *done_so_far + number_of_records_integrated as u64 + 1;
+                record_progress(done)?;
                 let elapsed = last_progress_time.elapsed();
-                let rec_per_sec = if number_of_records_integrated > 0 && elapsed.as_secs_f64() > 0.0
-                {
+                let rec_per_sec = if elapsed.as_secs_f64() > 0.0 {
                     PROGRESS_STEP_LEN as f64 / elapsed.as_secs_f64()
                 } else {
                     0.0
                 };
                 log::info!(
                     "Integration progress: integrated: {}, total: {}, errored: {} ({:.1} rec/s, last table: {})",
-                    number_of_records_integrated,
-                    total_to_integrate,
+                    done,
+                    total_pending,
                     error_count,
                     rec_per_sec,
                     sync_record.table_name
@@ -201,10 +205,10 @@ impl<'a> TranslationAndIntegration<'a> {
             }
         }
 
-        // Record final progress
-        record_progress(0)?;
+        *done_so_far += sync_records.len() as u64;
+        record_progress(*done_so_far)?;
 
-        Ok(result)
+        Ok(())
     }
 }
 
@@ -224,7 +228,10 @@ impl IntegrationOperation {
             }
 
             IntegrationOperation::Delete(delete) => {
-                delete.delete_sync(connection, ChangelogSyncType::SyncTypeV5V6 { source_site_id })?;
+                delete.delete_sync(
+                    connection,
+                    ChangelogSyncType::SyncTypeV5V6 { source_site_id },
+                )?;
                 Ok(())
             }
         }
@@ -258,7 +265,7 @@ pub(crate) fn integrate(
 }
 
 impl TranslationAndIntegrationResults {
-    fn new() -> TranslationAndIntegrationResults {
+    pub(crate) fn new() -> TranslationAndIntegrationResults {
         Default::default()
     }
 
