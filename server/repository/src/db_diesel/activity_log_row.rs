@@ -94,6 +94,7 @@ pub enum ActivityLogType {
     DemographicProjectionCreated,
     DemographicProjectionUpdated,
     ItemVariantCreated,
+    ItemVariantUpdated,
     ItemVariantDeleted,
     ItemVariantUpdatedName,
     // Renamed in 2.10.0 - keeping name in DB/sync for backwards compatibility
@@ -122,6 +123,12 @@ pub enum ActivityLogType {
     PatientCreated,
     InvoiceDateBackdated,
     InvoiceReceivedQtyUpdated,
+    PackagingVariantCreated,
+    PackagingVariantUpdated,
+    PackagingVariantDeleted,
+    BundledItemCreated,
+    BundledItemUpdated,
+    BundledItemDeleted,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
