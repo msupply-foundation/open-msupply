@@ -62,6 +62,7 @@ pub enum UpdateStockOutLineError {
     ReasonOptionDoesNotExist,
     ReasonOptionIsNotActive,
     ReasonOptionTypeInvalid,
+    ShipmentVarianceReasonNotProvided,
 }
 
 type OutError = UpdateStockOutLineError;

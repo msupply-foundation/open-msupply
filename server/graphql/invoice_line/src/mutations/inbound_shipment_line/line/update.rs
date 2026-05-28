@@ -6,7 +6,9 @@ use graphql_core::simple_generic_errors::{
 };
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
-use graphql_types::types::{InvoiceLineNode, InvoiceLineStatusType};
+use graphql_types::types::{
+    InvoiceLineNode, InvoiceLineStatusType, ShipmentVarianceReasonNotProvided,
+};
 
 use graphql_core::generic_inputs::InboundShipmentType;
 use repository::{InvoiceLine, InvoiceLineStatus};
@@ -109,6 +111,7 @@ pub enum UpdateErrorInterface {
     CannotEditInvoice(CannotEditInvoice),
     NotAnInboundShipment(NotAnInboundShipment),
     BatchIsReserved(BatchIsReserved),
+    ShipmentVarianceReasonNotProvided(ShipmentVarianceReasonNotProvided),
 }
 
 impl UpdateInput {
@@ -231,6 +234,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         }
         ServiceError::BatchIsReserved => {
             return Ok(UpdateErrorInterface::BatchIsReserved(BatchIsReserved {}))
+        }
+        ServiceError::ShipmentVarianceReasonNotProvided => {
+            return Ok(UpdateErrorInterface::ShipmentVarianceReasonNotProvided(
+                ShipmentVarianceReasonNotProvided,
+            ))
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreInvoice

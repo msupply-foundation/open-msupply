@@ -67,3 +67,12 @@ impl ReasonOptionConnector {
         }
     }
 }
+
+pub struct ShipmentVarianceReasonNotProvided;
+
+#[Object]
+impl ShipmentVarianceReasonNotProvided {
+    pub async fn description(&self) -> &str {
+        "Shipment variance reason not provided"
+    }
+}

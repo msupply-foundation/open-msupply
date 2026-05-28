@@ -6,7 +6,9 @@ use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
     ContextExt,
 };
-use graphql_types::types::InvoiceLineNode;
+use graphql_types::types::{
+    InvoiceLineNode, ShipmentVarianceReasonNotProvided as ShipmentVarianceReasonNotProvidedNode,
+};
 
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
@@ -86,6 +88,7 @@ pub enum UpdateErrorInterface {
     LocationNotFound(LocationNotFound),
     StockLineIsOnHold(StockLineIsOnHold),
     NotEnoughStockForReduction(NotEnoughStockForReduction),
+    ShipmentVarianceReasonNotProvided(ShipmentVarianceReasonNotProvidedNode),
 }
 
 impl UpdateInput {
@@ -170,6 +173,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                     stock_line_id,
                     line_id: Some(line_id),
                 },
+            ))
+        }
+        ShipmentVarianceReasonNotProvided => {
+            return Ok(UpdateErrorInterface::ShipmentVarianceReasonNotProvided(
+                ShipmentVarianceReasonNotProvidedNode,
             ))
         }
         // Standard Graphql Errors
