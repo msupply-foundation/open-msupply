@@ -262,6 +262,11 @@ impl<'a> SyncV7<'a> {
             step.filter.clone(),
         ]);
 
+        info!(
+            "Pushing v7 data with batch size {}",
+            self.batch_size.remote_push
+        );
+
         loop {
             let cursor = cursor_controller.get(self.connection)? as i64;
 
@@ -328,6 +333,11 @@ impl<'a> SyncV7<'a> {
         is_initialising: bool,
     ) -> Result<(), SyncError> {
         let cursor_controller = CursorController::from_cursor_type(step.cursor_type.clone());
+
+        info!(
+            "Pulling v7 data with batch size {}",
+            self.batch_size.remote_pull
+        );
 
         loop {
             let cursor = cursor_controller.get(self.connection)? as i64;
