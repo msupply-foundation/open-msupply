@@ -928,6 +928,10 @@ export type UpsertOutboundShipmentMutation = {
                 }
               | { __typename: 'RecordNotFound'; description: string }
               | {
+                  __typename: 'ShipmentVarianceReasonNotProvided';
+                  description: string;
+                }
+              | {
                   __typename: 'StockLineAlreadyExistsInInvoice';
                   description: string;
                 }
@@ -1092,7 +1096,15 @@ export type SaveOutboundShipmentItemLinesMutationVariables = Types.Exact<{
 
 export type SaveOutboundShipmentItemLinesMutation = {
   __typename: 'Mutations';
-  saveOutboundShipmentItemLines: { __typename: 'InvoiceNode'; id: string };
+  saveOutboundShipmentItemLines:
+    | { __typename: 'InvoiceNode'; id: string }
+    | {
+        __typename: 'SaveOutboundShipmentLinesError';
+        error: {
+          __typename: 'ShipmentVarianceReasonNotProvided';
+          description: string;
+        };
+      };
 };
 
 export type InsertBarcodeMutationVariables = Types.Exact<{
@@ -1966,6 +1978,13 @@ export const SaveOutboundShipmentItemLinesDocument = gql`
       ... on InvoiceNode {
         __typename
         id
+      }
+      ... on SaveOutboundShipmentLinesError {
+        __typename
+        error {
+          __typename
+          description
+        }
       }
     }
   }

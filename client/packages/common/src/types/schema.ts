@@ -5585,7 +5585,7 @@ export type Mutations = {
   manualSync: Scalars['String']['output'];
   refreshAncillaryItems: RefreshAncillaryItemsResponse;
   responseAddFromMasterList: ResponseAddFromMasterListResponse;
-  saveOutboundShipmentItemLines: InvoiceNode;
+  saveOutboundShipmentItemLines: SaveOutboundShipmentLinesResponse;
   savePrescriptionItemLines: InvoiceNode;
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
@@ -9327,12 +9327,25 @@ export type RnRFormSortInput = {
 
 export type RnRFormsResponse = RnRFormConnector;
 
+export type SaveOutboundShipmentLinesError = {
+  __typename: 'SaveOutboundShipmentLinesError';
+  error: SaveOutboundShipmentLinesErrorInterface;
+};
+
+export type SaveOutboundShipmentLinesErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type SaveOutboundShipmentLinesInput = {
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   lines: Array<OutboundShipmentLineInput>;
   placeholderQuantity?: InputMaybe<Scalars['Float']['input']>;
 };
+
+export type SaveOutboundShipmentLinesResponse =
+  | InvoiceNode
+  | SaveOutboundShipmentLinesError;
 
 export type SavePrescriptionLinesInput = {
   invoiceId: Scalars['String']['input'];
@@ -9435,6 +9448,14 @@ export type SetPrescribedQuantityWithId = {
   id: Scalars['String']['output'];
   response: SetPrescribedQuantityResponse;
 };
+
+export type ShipmentVarianceReasonNotProvided =
+  SaveOutboundShipmentLinesErrorInterface &
+    UpdateInboundShipmentLineErrorInterface &
+    UpdateOutboundShipmentLineErrorInterface & {
+      __typename: 'ShipmentVarianceReasonNotProvided';
+      description: Scalars['String']['output'];
+    };
 
 export type ShippingMethodConnector = {
   __typename: 'ShippingMethodConnector';

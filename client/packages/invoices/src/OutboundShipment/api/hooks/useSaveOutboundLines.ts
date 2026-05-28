@@ -1,10 +1,15 @@
-import { useMutation, useQueryClient } from '@openmsupply-client/common';
+import {
+  useMutation,
+  useQueryClient,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { useOutboundApi } from './utils/useOutboundApi';
 import { DraftStockOutLineFragment } from '../../../StockOut';
 
 export const useSaveOutboundLines = (outboundId: string) => {
   const { keys, sdk, storeId } = useOutboundApi();
   const queryClient = useQueryClient();
+  const t = useTranslation();
 
   return useMutation({
     mutationFn: async ({
@@ -16,7 +21,7 @@ export const useSaveOutboundLines = (outboundId: string) => {
       lines: DraftStockOutLineFragment[];
       placeholderQuantity: number | null;
     }) => {
-      return await sdk.saveOutboundShipmentItemLines({
+      const result = await sdk.saveOutboundShipmentItemLines({
         storeId,
         input: {
           invoiceId: outboundId,
@@ -34,6 +39,15 @@ export const useSaveOutboundLines = (outboundId: string) => {
           placeholderQuantity,
         },
       });
+
+      const response = result.saveOutboundShipmentItemLines;
+      if (response.__typename === 'SaveOutboundShipmentLinesError') {
+        switch (response.error.__typename) {
+          case 'ShipmentVarianceReasonNotProvided':
+            throw new Error(t('error.shipment-variance-reason-required'));
+        }
+      }
+      return result;
     },
 
     onSuccess: () => {
