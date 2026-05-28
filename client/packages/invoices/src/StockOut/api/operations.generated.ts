@@ -11,6 +11,7 @@ export type StockOutLineFragment = {
   batch?: string | null;
   expiryDate?: string | null;
   numberOfPacks: number;
+  receivedNumberOfPacks?: number | null;
   prescribedQuantity?: number | null;
   packSize: number;
   invoiceId: string;
@@ -23,6 +24,13 @@ export type StockOutLineFragment = {
   itemName: string;
   itemVariantId?: string | null;
   vvmStatusId?: string | null;
+  reasonOption?: {
+    __typename: 'ReasonOptionNode';
+    id: string;
+    reason: string;
+    type: Types.ReasonOptionNodeType;
+    isActive: boolean;
+  } | null;
   vvmStatus?: {
     __typename: 'VvmstatusNode';
     id: string;
@@ -72,6 +80,7 @@ export type DraftStockOutLineFragment = {
   id: string;
   stockLineId: string;
   numberOfPacks: number;
+  receivedNumberOfPacks?: number | null;
   packSize: number;
   batch?: string | null;
   expiryDate?: string | null;
@@ -83,6 +92,13 @@ export type DraftStockOutLineFragment = {
   itemVariantId?: string | null;
   vvmStatusId?: string | null;
   volumePerPack?: number | null;
+  reasonOption?: {
+    __typename: 'ReasonOptionNode';
+    id: string;
+    reason: string;
+    type: Types.ReasonOptionNodeType;
+    isActive: boolean;
+  } | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -138,6 +154,7 @@ export type GetOutboundEditLinesQuery = {
       id: string;
       stockLineId: string;
       numberOfPacks: number;
+      receivedNumberOfPacks?: number | null;
       packSize: number;
       batch?: string | null;
       expiryDate?: string | null;
@@ -149,6 +166,13 @@ export type GetOutboundEditLinesQuery = {
       itemVariantId?: string | null;
       vvmStatusId?: string | null;
       volumePerPack?: number | null;
+      reasonOption?: {
+        __typename: 'ReasonOptionNode';
+        id: string;
+        reason: string;
+        type: Types.ReasonOptionNodeType;
+        isActive: boolean;
+      } | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -182,6 +206,7 @@ export const StockOutLineFragmentDoc = gql`
     batch
     expiryDate
     numberOfPacks
+    receivedNumberOfPacks
     prescribedQuantity
     packSize
     invoiceId
@@ -195,6 +220,13 @@ export const StockOutLineFragmentDoc = gql`
     itemName
     itemVariantId
     vvmStatusId
+    reasonOption {
+      __typename
+      id
+      reason
+      type
+      isActive
+    }
     vvmStatus {
       id
       description
@@ -243,6 +275,7 @@ export const DraftStockOutLineFragmentDoc = gql`
     id
     stockLineId
     numberOfPacks
+    receivedNumberOfPacks
     packSize
     batch
     expiryDate
@@ -253,6 +286,13 @@ export const DraftStockOutLineFragmentDoc = gql`
     dosesPerUnit
     itemVariantId
     vvmStatusId
+    reasonOption {
+      __typename
+      id
+      reason
+      type
+      isActive
+    }
     location {
       __typename
       id
