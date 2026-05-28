@@ -56,6 +56,7 @@ define_linked_tables! {
         manufacture_date -> Nullable<Date>,
         purchase_order_line_id -> Nullable<Text>,
         received_number_of_packs -> Nullable<Double>,
+        linked_invoice_line_id -> Nullable<Text>,
     },
     links: {
         item_link_id -> item_id,
@@ -146,6 +147,7 @@ pub struct InvoiceLineRow {
     pub manufacture_date: Option<NaiveDate>,
     pub purchase_order_line_id: Option<String>,
     pub received_number_of_packs: Option<f64>,
+    pub linked_invoice_line_id: Option<String>,
     // Resolved from link tables - must be last to match view column order
     pub item_id: String,
     pub donor_id: Option<String>,
