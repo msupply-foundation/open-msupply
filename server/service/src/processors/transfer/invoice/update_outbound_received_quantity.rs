@@ -79,14 +79,22 @@ impl InvoiceTransferProcessor for UpdateOutboundReceivedQuantityProcessor {
 fn set_received_qty_on_outbound_lines(
     connection: &StorageConnection,
     inbound_invoice_id: &str,
-    _outbound_invoice_id: &str,
-) -> Result<(usize), RepositoryError> {
+    outbound_invoice_id: &str,
+) -> Result<usize, RepositoryError> {
     let line_repo = InvoiceLineRepository::new(connection);
     let line_row_repo = InvoiceLineRowRepository::new(connection);
 
     let inbound_lines = line_repo.query_by_filter(
         InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(inbound_invoice_id.to_string())),
     )?;
+    let outbound_lines_by_id: std::collections::HashMap<String, _> = line_repo
+        .query_by_filter(
+            InvoiceLineFilter::new()
+                .invoice_id(EqualFilter::equal_to(outbound_invoice_id.to_string())),
+        )?
+        .into_iter()
+        .map(|l| (l.invoice_line_row.id.clone(), l.invoice_line_row))
+        .collect();
 
     let mut updated = 0;
     for inbound_line in inbound_lines {
@@ -97,10 +105,11 @@ fn set_received_qty_on_outbound_lines(
         else {
             continue;
         };
-        let Some(mut row) = line_row_repo.find_one_by_id(outbound_line_id)? else {
+        let Some(outbound_line) = outbound_lines_by_id.get(outbound_line_id) else {
             continue;
         };
 
+        let mut row = outbound_line.clone();
         row.received_number_of_packs = Some(inbound_line.invoice_line_row.number_of_packs);
         row.reason_option_id = inbound_line.invoice_line_row.reason_option_id.clone();
         line_row_repo.upsert_one(&row)?;
