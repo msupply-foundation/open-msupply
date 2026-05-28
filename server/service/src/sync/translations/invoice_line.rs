@@ -117,6 +117,10 @@ pub struct LegacyTransLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "linked_transact_id")]
     pub linked_invoice_id: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "linked_trans_line_ID")]
+    pub linked_invoice_line_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub donor_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -193,6 +197,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
+            linked_invoice_line_id,
             donor_id,
             vvm_status_id,
             oms_fields,
@@ -390,6 +395,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
+            linked_invoice_line_id,
             donor_id,
             reason_option_id,
             vvm_status_id,
@@ -475,6 +481,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     manufacture_date,
                     purchase_order_line_id,
                     received_number_of_packs,
+                    linked_invoice_line_id,
                     manufacturer_id,
                 },
             item_row,
@@ -519,6 +526,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             item_variant_id,
             reason_option_id,
             linked_invoice_id,
+            linked_invoice_line_id,
             donor_id,
             vvm_status_id,
             oms_fields,
