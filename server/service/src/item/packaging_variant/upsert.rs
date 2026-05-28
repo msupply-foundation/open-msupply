@@ -1,6 +1,6 @@
 use repository::{
     item_variant::packaging_variant_row::{PackagingVariantRow, PackagingVariantRowRepository},
-    ActivityLogType, RepositoryError, StorageConnection, TransactionError,
+    ActivityLogType, RepositoryError, StorageConnection,
 };
 
 use crate::{
