@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   useAuthContext,
   useTranslation,
@@ -182,10 +182,15 @@ export const InboundLineEditCards = ({
                   if (packSize !== undefined) {
                     const packToUnits = packSize * value;
                     setPackRoundingMessage?.('');
+                    const clearsReason =
+                      shippedPacks != null &&
+                      value === shippedPacks &&
+                      line.reasonOption != null;
                     updateDraftLine({
                       receivedNumberOfUnits: packToUnits,
                       id: row.original.id,
                       numberOfPacks: value,
+                      ...(clearsReason ? { reasonOption: null } : {}),
                     });
                   }
                 }}
@@ -348,12 +353,6 @@ export const InboundLineEditCards = ({
           const hasVariance =
             line.shippedNumberOfPacks != null &&
             line.numberOfPacks !== line.shippedNumberOfPacks;
-
-          useEffect(() => { // Clear stale reason
-            if (!hasVariance && line.reasonOption) {
-              updateDraftLine({ id: line.id, reasonOption: null });
-            }
-          }, [hasVariance, line.id, line.reasonOption]);
 
           return (
             <ReasonOptionsSearchInput
