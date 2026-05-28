@@ -200,23 +200,6 @@ export type PermissionsQuery = {
   };
 };
 
-export type UpdateUserFragment = {
-  __typename: 'UpdateUserNode';
-  lastSuccessfulSync?: string | null;
-};
-
-export type LastSuccessfulUserSyncQueryVariables = Types.Exact<{
-  [key: string]: never;
-}>;
-
-export type LastSuccessfulUserSyncQuery = {
-  __typename: 'Queries';
-  lastSuccessfulUserSync: {
-    __typename: 'UpdateUserNode';
-    lastSuccessfulSync?: string | null;
-  };
-};
-
 export type PreferencesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
@@ -321,11 +304,6 @@ export const UserStoreNodeFragmentDoc = gql`
     createdDate
     homeCurrencyCode
     isDisabled
-  }
-`;
-export const UpdateUserFragmentDoc = gql`
-  fragment UpdateUser on UpdateUserNode {
-    lastSuccessfulSync
   }
 `;
 export const AuthTokenDocument = gql`
@@ -452,15 +430,6 @@ export const PermissionsDocument = gql`
       }
     }
   }
-`;
-export const LastSuccessfulUserSyncDocument = gql`
-  query lastSuccessfulUserSync {
-    lastSuccessfulUserSync {
-      __typename
-      ...UpdateUser
-    }
-  }
-  ${UpdateUserFragmentDoc}
 `;
 export const PreferencesDocument = gql`
   query preferences($storeId: String!) {
@@ -633,24 +602,6 @@ export function getSdk(
             signal,
           }),
         'permissions',
-        'query',
-        variables
-      );
-    },
-    lastSuccessfulUserSync(
-      variables?: LastSuccessfulUserSyncQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
-    ): Promise<LastSuccessfulUserSyncQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<LastSuccessfulUserSyncQuery>({
-            document: LastSuccessfulUserSyncDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'lastSuccessfulUserSync',
         'query',
         variables
       );

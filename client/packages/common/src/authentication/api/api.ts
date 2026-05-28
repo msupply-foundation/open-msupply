@@ -137,9 +137,5 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         return { nodes: [] };
       }
     },
-    lastSuccessfulUserSync: async () => {
-      return (await sdk.lastSuccessfulUserSync()).lastSuccessfulUserSync
-        .lastSuccessfulSync;
-    },
   },
 });
