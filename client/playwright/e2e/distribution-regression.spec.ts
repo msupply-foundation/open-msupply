@@ -24,6 +24,8 @@ test.describe('Distribution: Outbound Shipments', () => {
   // ─── List view tests (run first so they aren't affected by created data) ──
 
   test('list view renders core controls', async ({ page }) => {
+    // Wiki: Outbound Shipments (list overview) — New Shipment button,
+    // Status column header, rows-per-page footer.
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
     await expect(page.getByRole('button', { name: /New Shipment/i })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: /Status/i }).first()).toBeVisible();
@@ -31,6 +33,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('search by customer name filters results', async ({ page }) => {
+    // Wiki: Search by Customer Name
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
 
     const firstRow = page.locator('tbody tr').first();
@@ -85,6 +88,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('delete a New-status shipment via bulk action', async ({ page }) => {
+    // Wiki: Delete an Outbound Shipment
     // Create a fresh shipment so we know exactly which row to delete.
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
     await page.getByRole('button', { name: /New Shipment/i }).click();
@@ -141,6 +145,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('export to CSV triggers a download', async ({ page }) => {
+    // Wiki: Exporting Outbound Shipments
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
 
     const exportButton = page.getByRole('button', { name: /Export/i }).first();
@@ -161,6 +166,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   // ─── Detail-view sidebar panels ──────────────────────────────────────────
 
   test('sidebar panels render and respond to edits on a new shipment', async ({ page }) => {
+    // Wiki: Additional Info / Related Documents / Invoice Details / Transport Details
     // Spin up a fresh shipment so we can inspect its detail view.
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
     await page.getByRole('button', { name: /New Shipment/i }).click();
@@ -223,7 +229,83 @@ test.describe('Distribution: Outbound Shipments', () => {
     });
   });
 
+  test('colour picker updates the shipment colour', async ({ page }) => {
+    // Wiki: Additional Info — "When clicking on More, you will be able to
+    // change the colour…".
+    // At the default 1280×720 viewport, isLargeScreen flips the responsive
+    // sidebar shut, so openSidebar widens before clicking.
+    await createNewShipment(page);
+    await openSidebar(page);
+
+    const sidebar = page.getByTestId('detail-panel');
+    const colourButton = sidebar.getByRole('button', { name: /Select a colour/i });
+    await expect(colourButton).toBeVisible();
+    await colourButton.click();
+
+    // ColorMenu swatches render as MUI SvgIcons (CircleIcon) with role="button"
+    // and aria-label set to the colour name. The Popover renders into a portal,
+    // so look for the swatch from the page root, not the sidebar locator.
+    const greenSwatch = page.locator('[role="button"][aria-label="green"]');
+    await expect(greenSwatch).toBeVisible({ timeout: 3000 });
+
+    const updateRequest = page.waitForRequest(
+      req =>
+        req.url().includes('/graphql') &&
+        (req.postData() ?? '').includes('updateOutboundShipment') &&
+        (req.postData() ?? '').toLowerCase().includes('colour'),
+      { timeout: 5000 }
+    );
+    await greenSwatch.click();
+    await updateRequest;
+  });
+
+  test('Edit service charges modal: add charge then save', async ({ page }) => {
+    // Wiki: Invoice Details — Edit Service Charges modal supports Add /
+    // Cancel / Delete. This test covers add + save persistence on reload.
+    await createNewShipment(page);
+    await openSidebar(page);
+
+    const sidebar = page.getByTestId('detail-panel');
+    const editButton = sidebar.getByRole('button', { name: /Edit service charges/i });
+    await expect(editButton).toBeVisible();
+    await editButton.click();
+
+    const modal = page.getByRole('dialog', { name: /Service charges/i });
+    await expect(modal).toBeVisible();
+
+    // Add charge is disabled when no default service item is configured for
+    // the store (OutboundServiceLineEdit: `disabled={isDisabled || !defaultServiceItem}`).
+    // Skip rather than fail — the datafile, not the code, controls this.
+    const addCharge = modal.getByRole('button', { name: /Add charge/i });
+    const addEnabled = await addCharge.isEnabled().catch(() => false);
+    test.skip(!addEnabled, 'No default service item configured on this store — skipping');
+
+    await addCharge.click();
+    await expect(modal.locator('tbody tr')).toHaveCount(1, { timeout: 3000 });
+
+    // Save via OK. The save batches into updateOutboundShipment with an
+    // insertOutboundShipmentServiceLines payload.
+    const savePromise = page.waitForRequest(
+      req =>
+        req.url().includes('/graphql') &&
+        (req.postData() ?? '').includes('insertOutboundShipmentServiceLines'),
+      { timeout: 5000 }
+    );
+    await modal.getByTestId('dialog-button-ok').click();
+    await savePromise;
+
+    await expect(modal).toBeHidden();
+
+    // Re-open the modal — the saved row should still be there.
+    await sidebar.getByRole('button', { name: /Edit service charges/i }).click();
+    const reopened = page.getByRole('dialog', { name: /Service charges/i });
+    await expect(reopened).toBeVisible();
+    await expect(reopened.locator('tbody tr')).toHaveCount(1, { timeout: 3000 });
+  });
+
   test('Hold prevents status from advancing on a Picked shipment', async ({ page }) => {
+    // Wiki: Hold Checkbox — "Checking the Hold checkbox prevents the Outbound
+    // Shipment from being updated to the next status."
     // Build a Picked-status shipment, then enable Hold, then try to advance
     // to Shipped. This is where the polite "Cannot change status … on hold"
     // info toast appears.
@@ -309,6 +391,8 @@ test.describe('Distribution: Outbound Shipments', () => {
   // ─── List view: pagination & filters ─────────────────────────────────────
 
   test('rows-per-page selector changes page size', async ({ page }) => {
+    // Wiki: Outbound Shipments (list overview) — "You can also select a
+    // different number of rows to show per page".
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
 
     const rowsCombobox = page.getByRole('combobox', { name: /Rows per page/i });
@@ -329,6 +413,8 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('filter by Invoice number narrows the list', async ({ page }) => {
+    // Wiki: Search by Customer Name (covers the Filters dropdown's other
+    // criteria — Invoice number is a free-text filter, distinct from Status).
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
 
     // Grab a real invoice number from the first row to search for.
@@ -366,6 +452,9 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('pagination next-page button changes the visible rows', async ({ page }) => {
+    // Wiki: Outbound Shipments (list overview) — "you can navigate to the
+    // other pages by tapping on the page number or using the right or left
+    // arrows".
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
 
     // Need >20 shipments for page 2 to exist. The footer shows "Showing 1-20 of N".
@@ -400,10 +489,11 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('filter by Reference narrows the list', async ({ page }) => {
+    // Wiki: Search by Customer Name (Filters dropdown — Reference is the
+    // free-text customer-reference filter, distinct from Name/Invoice number
+    // even though they share the same UI shape).
     // Use the customer reference saved by an earlier test (cust-ref-…) if
-    // present; otherwise pick the first row's reference cell. Reference is
-    // a free-text filter like Name/Invoice number — exercises a different
-    // filter type from Name/Number.
+    // present; otherwise pick the first row's reference cell.
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
 
     // Find a row that has non-empty reference.
@@ -439,7 +529,91 @@ test.describe('Distribution: Outbound Shipments', () => {
     await expect(rows.first().locator('td').nth(referenceColumn)).toContainText(referenceText!);
   });
 
+  test('filter by Status narrows the list to the chosen status', async ({ page }) => {
+    // Wiki: Search by Customer Name (Filters dropdown — Status is the only
+    // select-type filter; filterVariant: 'select' in the column config).
+    await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
+
+    await page.getByRole('combobox', { name: /Filters/i }).click();
+    await page.getByRole('menuitem', { name: 'Status', exact: true }).click();
+
+    // A second combobox appears for the Status value. Open it and pick "New".
+    const statusFilter = page.getByRole('combobox', { name: 'Status', exact: true });
+    await expect(statusFilter).toBeVisible();
+    await statusFilter.click();
+
+    // Status filter uses `condition: 'equalAny'` so the GraphQL filter is an array.
+    const filterRequest = page.waitForRequest(
+      req =>
+        req.url().includes('/graphql') &&
+        (req.postData() ?? '').includes('"status"') &&
+        (req.postData() ?? '').toUpperCase().includes('NEW'),
+      { timeout: 5000 }
+    );
+
+    // MUI Select options use role="option" (or "menuitem" for some variants).
+    const newOption = page.getByRole('option', { name: 'New', exact: true });
+    if (await newOption.isVisible({ timeout: 500 }).catch(() => false)) {
+      await newOption.click();
+    } else {
+      await page.getByRole('menuitem', { name: 'New', exact: true }).click();
+    }
+    await filterRequest;
+
+    // Every visible row should now have status "New".
+    const statusColumn = await getColumnIndex(page, 'Status');
+    await expect(async () => {
+      const statuses = await page
+        .locator(`tbody tr td:nth-child(${statusColumn + 1})`)
+        .allTextContents();
+      expect(statuses.length).toBeGreaterThan(0);
+      for (const raw of statuses) {
+        expect(raw.trim().toLowerCase()).toBe('new');
+      }
+    }).toPass({ timeout: 5000 });
+  });
+
+  test('pagination page-number click jumps directly to that page', async ({ page }) => {
+    // Wiki: Outbound Shipments (list overview) — "you can navigate to the
+    // other pages by tapping on the page number".
+    // Sister test to 'pagination next-page' which uses the arrow. The control
+    // is MUI Pagination — each page renders its own "Go to page N" button.
+    await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
+
+    const page2Button = page.getByRole('button', { name: 'Go to page 2' });
+    const hasPage2 = await page2Button.isEnabled().catch(() => false);
+    test.skip(!hasPage2, 'Fewer than 21 shipments — skipping');
+
+    const numberColumn = await getColumnIndex(page, 'Number');
+    const firstNumberOnPage1 = ((await page
+      .locator('tbody tr')
+      .first()
+      .locator('td')
+      .nth(numberColumn)
+      .textContent()) ?? '').trim();
+
+    await page2Button.click();
+    await page.waitForLoadState('networkidle');
+
+    // We're on page 2: previous-page now enabled and the first-row Number differs.
+    await expect(page.getByRole('button', { name: 'Go to previous page' })).toBeEnabled();
+    const firstNumberOnPage2 = ((await page
+      .locator('tbody tr')
+      .first()
+      .locator('td')
+      .nth(numberColumn)
+      .textContent()) ?? '').trim();
+    expect(firstNumberOnPage2).not.toBe(firstNumberOnPage1);
+
+    // Page-1 button takes us back; previous-page disables again.
+    await page.getByRole('button', { name: 'Go to page 1' }).click();
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('button', { name: 'Go to previous page' })).toBeDisabled();
+  });
+
   test('multi-select master checkbox deletes multiple shipments', async ({ page }) => {
+    // Wiki: Delete an Outbound Shipment — "You can select more than one
+    // shipment to be deleted … using the master checkbox in the list headers."
     // Create two fresh New shipments so we have two known rows to delete.
     await createNewShipment(page);
     await createNewShipment(page);
@@ -468,6 +642,8 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('cannot delete a Shipped shipment via bulk action', async ({ page }) => {
+    // Wiki: Delete an Outbound Shipment — "You can only delete outbound
+    // shipments with statuses New, Allocated or Picked".
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
 
     // Find a row whose Status cell is "Shipped".
@@ -512,6 +688,8 @@ test.describe('Distribution: Outbound Shipments', () => {
   // ─── Detail-view: simple edits, Log tab, Close button ────────────────────
 
   test('customer ref, transport ref, log tab and close button', async ({ page }) => {
+    // Wiki: Creating an Outbound Shipment + Transport Details + Cancel and
+    // Confirm button (Close = Cancel in the wiki's naming).
     const shipmentUrl = await createNewShipment(page);
 
     await test.step('customer reference persists across reload', async () => {
@@ -540,13 +718,189 @@ test.describe('Distribution: Outbound Shipments', () => {
     });
   });
 
+  // ─── Detail-view: line operations ────────────────────────────────────────
+
+  test('Add Item: typing in the item field filters the options', async ({ page }) => {
+    // Wiki: Select an Item — "look up an item by typing some or all of the
+    // item name".
+    await createNewShipment(page);
+
+    await page.getByRole('button', { name: /Add Item/i }).first().click();
+    const addItemModal = page.getByTestId('add-item-modal');
+    await expect(addItemModal).toBeVisible();
+
+    const combobox = addItemModal.locator('input[role="combobox"]').first();
+    await combobox.click();
+    const firstOption = page.locator('[role="option"]').first();
+    await expect(firstOption).toBeVisible({ timeout: 5000 });
+
+    // Use first 4 chars of the first option's name. Options render as
+    // "<code> <name>" — strip the leading code so the search matches the name.
+    const optionText = ((await firstOption.textContent()) ?? '').trim();
+    const searchTerm = optionText.replace(/^\d+\s+/, '').slice(0, 4);
+    test.skip(searchTerm.length < 3, 'First option has no usable name to search');
+
+    await combobox.fill(searchTerm);
+
+    // Every visible option's text should contain the typed substring.
+    await expect(async () => {
+      const options = page.locator('[role="option"]');
+      const count = await options.count();
+      expect(count).toBeGreaterThan(0);
+      for (let i = 0; i < count; i++) {
+        const text = ((await options.nth(i).textContent()) ?? '').toLowerCase();
+        expect(text).toContain(searchTerm.toLowerCase());
+      }
+    }).toPass({ timeout: 5000 });
+
+    await addItemModal.getByTestId('dialog-button-cancel').click();
+  });
+
+  test('Edit shipment line: click row opens edit modal with item locked', async ({ page }) => {
+    // Wiki: Edit a Shipment Line — "Tap on the line you want to edit … you
+    // cannot change the item".
+    await createNewShipment(page);
+    await addLineToShipment(page);
+
+    // Click the line row to open the edit modal (same testid as Add Item — the
+    // dialog component is the same OutboundLineEdit, opened in edit mode).
+    await page.locator('tbody tr').first().click();
+
+    const editModal = page.getByTestId('add-item-modal');
+    await expect(editModal).toBeVisible();
+
+    // Item field should be disabled.
+    const itemCombobox = editModal.locator('input[role="combobox"]').first();
+    await expect(itemCombobox).toBeDisabled();
+
+    await editModal.getByTestId('dialog-button-cancel').click();
+    await expect(editModal).toBeHidden();
+  });
+
+  test('Add Item: OK & Next saves then resets the dialog for the next line', async ({ page }) => {
+    // Wiki: Confirm Item and Quantity — "When you are happy with the
+    // quantity, you can either press on OK, OK & Next and Cancel button."
+    await createNewShipment(page);
+
+    await page.getByRole('button', { name: /Add Item/i }).first().click();
+    const addItemModal = page.getByTestId('add-item-modal');
+    await expect(addItemModal).toBeVisible();
+
+    await pickItemWithStock(page, addItemModal);
+    await addItemModal.getByRole('textbox').first().fill('2');
+
+    const okAndNext = addItemModal.getByTestId('dialog-button-next-and-ok');
+    await expect(okAndNext).toBeEnabled();
+
+    // The Add Item dialog has the known React-state race after auto-allocate
+    // (see happy-path test). Retry the click until the item field clears,
+    // which is how OK & Next signals "ready for the next line".
+    const itemCombobox = addItemModal.locator('input[role="combobox"]').first();
+    for (let attempt = 0; attempt < 4; attempt++) {
+      await okAndNext.hover();
+      await okAndNext.click();
+      try {
+        await expect(itemCombobox).toHaveValue('', { timeout: 2000 });
+        break;
+      } catch {
+        if (attempt === 3) throw new Error('OK & Next did not reset the dialog after 4 clicks');
+      }
+    }
+
+    // Dialog stays open — the wiki says "OK & Next" leaves you ready to add
+    // the next line.
+    await expect(addItemModal).toBeVisible();
+    await addItemModal.getByTestId('dialog-button-cancel').click();
+
+    // One line should now be on the shipment.
+    await expect(page.locator('tbody tr').first()).toBeVisible();
+  });
+
+  test('Delete shipment line via row selection', async ({ page }) => {
+    // Wiki: Delete a shipment line — "Select the line(s) you want to delete
+    // by checking the box(es) … Select the action 'Delete selected lines'".
+    //
+    // The lines table groups by item.code (Details.tsx: `grouping: { field:
+    // 'item.code' }`), so when there's one batch the only tbody <tr> is the
+    // collapsed group header — its row checkbox isn't a leaf-line checkbox.
+    // Use the group's checkbox: checking it selects its children, which is
+    // what we want for a single-line shipment.
+    await createNewShipment(page);
+    await addLineToShipment(page);
+
+    // There should be exactly one tbody row (the group header for the one item).
+    const rows = page.locator('tbody tr');
+    await expect(rows.first()).toBeVisible();
+
+    // Click the row's checkbox (MUI Checkbox renders <input type=checkbox>
+    // nested inside a span — force the click in case the group header
+    // checkbox sits beneath an overlay).
+    const rowCheckbox = rows.first().locator('input[type="checkbox"]').first();
+    await rowCheckbox.click({ force: true });
+
+    // The actions footer mounts only when selection > 0. Look for the
+    // "Selected" count and the Delete action together.
+    await expect(page.getByText(/1\s+Selected/i)).toBeVisible({ timeout: 3000 });
+
+    // The Delete in the footer is labelled "Delete" (button.delete-lines).
+    await page.getByRole('button', { name: /^Delete$/i }).first().click();
+
+    const confirmModal = page.getByTestId('confirmation-modal');
+    await expect(confirmModal).toBeVisible({ timeout: 3000 });
+    await page.getByTestId('confirmation-modal-ok').click();
+    await expect(confirmModal).toBeHidden();
+
+    // After delete: lines table shows the empty-state row ("Nothing here").
+    // tbody still has rows (the empty state itself), so check for that text
+    // rather than row count.
+    await expect(page.getByText(/Nothing here/i)).toBeVisible({ timeout: 5000 });
+  });
+
+  // ─── Detail-view: locked-shipped enforcement ─────────────────────────────
+
+  test('Shipped: clicking a line does not open the edit modal', async ({ page }) => {
+    // Wiki: Confirming the Outbound Shipment shipping — "Once the shipping
+    // has been confirmed … You can no longer edit shipment lines". Find an
+    // existing Shipped shipment and verify clicking its line is a no-op.
+    await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
+
+    const statusColumn = await getColumnIndex(page, 'Status');
+    const rows = page.locator('tbody tr');
+    const rowCount = await rows.count();
+    let shippedRow = -1;
+    for (let i = 0; i < rowCount; i++) {
+      const status = ((await rows.nth(i).locator('td').nth(statusColumn).textContent()) ?? '')
+        .trim()
+        .toLowerCase();
+      if (status === 'shipped') {
+        shippedRow = i;
+        break;
+      }
+    }
+    test.skip(shippedRow === -1, 'No Shipped shipment visible — skipping');
+
+    await rows.nth(shippedRow).click();
+    await page.waitForURL(/\/distribution\/outbound-shipment\/[^/]+/, { timeout: 10000 });
+
+    // Wait for the line table to load. Try to click the first line row.
+    const lineRow = page.locator('tbody tr').first();
+    await expect(lineRow).toBeVisible({ timeout: 10000 });
+    await lineRow.click();
+
+    // The edit modal should NOT mount. Wait a short moment to be sure no late
+    // mount happens.
+    await page.waitForTimeout(1000);
+    await expect(page.getByTestId('add-item-modal')).toHaveCount(0);
+  });
+
   // ─── Status flow gaps ─────────────────────────────────────────────────────
 
   test('skip statuses: New → directly to Shipped via split-button', async ({ page }) => {
-    // The Confirm button is a split-button (main action + dropdown arrow).
-    // The arrow opens a menu of all later statuses so the user can skip
-    // intermediate transitions (md: "You can choose to skip some of them
-    // to go directly to Confirm Shipped for example").
+    // Wiki: Cancel and Confirm button — "You don't have to update a shipment
+    // to the next status in the sequence. You can choose to skip some of them
+    // to go directly to Confirm Shipped for example."
+    // The Confirm button is a split-button (main action + dropdown arrow);
+    // the arrow opens a menu of all later statuses to skip to.
     await createNewShipment(page);
     await addLineToShipment(page);
 
@@ -586,6 +940,8 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('Hold prevents status from advancing on an Allocated shipment', async ({ page }) => {
+    // Wiki: Hold Checkbox — verifies the same rejection toast at the
+    // Allocated → Picked boundary (sister to the Picked → Shipped variant).
     await createNewShipment(page);
     await addLineToShipment(page);
     await clickConfirmAndWait(page, /Confirm Allocated/i);
@@ -631,6 +987,8 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('un-holding allows status to advance again', async ({ page }) => {
+    // Wiki: Hold Checkbox — toggling Hold off releases the constraint and
+    // the status flow continues.
     await createNewShipment(page);
     await addLineToShipment(page);
     await clickConfirmAndWait(page, /Confirm Allocated/i);
@@ -661,6 +1019,8 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('hovering the status sequence shows the status-history popover', async ({ page }) => {
+    // Wiki: Outbound Shipment Status Sequence — "If you hover over the
+    // status sequence, a shipment history window appears."
     await createNewShipment(page);
 
     // The footer status sequence (StatusCrumbs) — hover reveals the popover.
@@ -676,6 +1036,9 @@ test.describe('Distribution: Outbound Shipments', () => {
   // ─── End-to-end create flow ──────────────────────────────────────────────
 
   test('happy path: create → allocate → pick → ship', async ({ page }) => {
+    // Wiki: Creating an Outbound Shipment + Processing an Outbound Shipment
+    // (Confirming Allocated → Picked → Shipped). End-to-end through every
+    // step of the wiki's status flow.
     // ─── Navigate to the list ────────────────────────────────────────────────
     await page.goto('/distribution/outbound-shipment', {
       waitUntil: 'networkidle',
@@ -755,7 +1118,6 @@ test.describe('Distribution: Outbound Shipments', () => {
 
     // ─── Status transitions ──────────────────────────────────────────────────
     // The footer "Confirm" button cycles through Allocated → Picked → Shipped.
-    // Wiki: pressing Confirm Allocated takes status to ALLOCATED, etc.
 
     await clickConfirmAndWait(page, /Confirm Allocated|Allocate/i);
     await expect(page.getByText(/Allocated/i).first()).toBeVisible();
@@ -767,6 +1129,127 @@ test.describe('Distribution: Outbound Shipments', () => {
     await expect(page.getByText(/Shipped/i).first()).toBeVisible();
   });
 });
+
+test.describe('Distribution: Customer Returns', () => {
+  test.describe.configure({ mode: 'serial' });
+
+  test('New return: pick customer creates a return and lands on detail', async ({ page }) => {
+    // Wiki: Create new Customer Return — "Go to 'Outbound shipments' >
+    // 'Customer Return' create a new customer return". Verifies the
+    // manually-created path: pick customer → return created → detail view.
+    await page.goto('/distribution/customer-return', { waitUntil: 'networkidle' });
+
+    await page.getByRole('button', { name: /New return/i }).click();
+
+    // CustomerSearchModal mounts — pick the first customer in the autocomplete.
+    const customerDialog = page.getByTestId('customer-search-modal');
+    await expect(customerDialog).toBeVisible();
+    await customerDialog.locator('input[role="combobox"]').first().click();
+    await page.locator('[role="option"]').first().click();
+
+    // Navigation to /distribution/customer-return/<id>.
+    await page.waitForURL(/\/distribution\/customer-return\/[^/]+/, { timeout: 10000 });
+
+    // Detail view loaded — manually-created returns show a banner and the
+    // status footer's Confirm cycle (Received → Delivered → Verified).
+    // The button starts disabled with no lines; presence is enough here.
+    await expect(
+      page.getByText(/This return was created manually/i)
+    ).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.getByRole('button', { name: /^Confirm (Received|Delivered|Verified)/i }).first()
+    ).toBeVisible();
+  });
+
+  test('list view renders core controls', async ({ page }) => {
+    // Wiki: Customer Returns (list overview) — verify the list page mounts
+    // with the New return button, Status column header, and rows-per-page.
+    // The "Return lines" bulk-action test (from an outbound) needs a
+    // Shipped-or-later shipment for the footer button to appear; left as
+    // future work alongside the DELIVERED / VERIFIED gaps.
+    await page.goto('/distribution/customer-return', { waitUntil: 'networkidle' });
+
+    await expect(page.getByRole('button', { name: /New return/i })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: /Status/i }).first()).toBeVisible();
+    await expect(page.getByText(/Rows per page/i).first()).toBeVisible();
+  });
+});
+
+test.describe('Distribution: Customer Requisitions', () => {
+  test.describe.configure({ mode: 'serial' });
+
+  test('list view renders core controls', async ({ page }) => {
+    // Wiki: Receiving Customer Requisitions / General UX/UI — "In the top
+    // right corner, you will see an Export button [and] the button New
+    // Requisition."
+    await page.goto('/distribution/customer-requisition', { waitUntil: 'networkidle' });
+
+    await expect(page.getByRole('button', { name: /New requisition/i })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: /Status/i }).first()).toBeVisible();
+    await expect(page.getByText(/Rows per page/i).first()).toBeVisible();
+  });
+
+  test('New requisition: pick customer creates a manual requisition', async ({ page }) => {
+    // Wiki: Creating a new (Manual) Requisition — "when you create a manual
+    // requisition, you are able to add items to it" — Add Item is enabled
+    // (unlike for auto-generated requisitions where it stays disabled).
+    await page.goto('/distribution/customer-requisition', { waitUntil: 'networkidle' });
+
+    await page.getByRole('button', { name: /New requisition/i }).click();
+
+    // CreateRequisitionModal opens. If any customer has program-requisition
+    // settings the dialog shows two tabs (Program + General); otherwise it's
+    // just the General customer-search. Switch to General if the Program tab
+    // is the default — General auto-creates when a customer is picked, no
+    // Create button required.
+    const newRequisitionModal = page.getByRole('dialog', { name: /New requisition/i });
+    await expect(newRequisitionModal).toBeVisible({ timeout: 5000 });
+
+    const generalTab = newRequisitionModal.getByRole('tab', { name: /General/i });
+    if (await generalTab.isVisible({ timeout: 500 }).catch(() => false)) {
+      await generalTab.click();
+    }
+
+    // The General tab's customer input is openOnFocus + autoFocus — the
+    // listbox opens automatically. Picking a customer fires onChange which
+    // creates the requisition.
+    const firstOption = page.locator('[role="option"]').first();
+    await expect(firstOption).toBeVisible({ timeout: 5000 });
+    await firstOption.click();
+
+    // Navigates to /distribution/customer-requisition/<id>.
+    await page.waitForURL(/\/distribution\/customer-requisition\/[^/]+/, { timeout: 10000 });
+
+    // Manual requisition: Add Item button should be ENABLED (auto-generated
+    // ones have it disabled per wiki).
+    await expect(page.getByRole('button', { name: /Add item/i }).first()).toBeEnabled({
+      timeout: 10000,
+    });
+  });
+});
+
+/**
+ * Make the sidebar (detail panel) visually open on the current detail view.
+ *
+ * The panel's responsive effect in DetailPanel.tsx auto-closes it when
+ * useMediaQuery(theme.breakpoints.down('xl')) is true — i.e. viewport <
+ * 1536px. The default Desktop Chrome viewport is 1280×720 so the sidebar
+ * sits at width:0 + overflow:hidden. Locators inside still resolve (Playwright
+ * considers descendants "visible" by bounding box), but clicks land on the
+ * lines table that's painted underneath. Widening the viewport flips
+ * isLargeScreen → false and the responsive effect auto-opens it.
+ *
+ * Clicking the "More" button doesn't work reliably from the test harness:
+ * useDetailPanel's open() guards on state.enabled which the mount-effect
+ * sets asynchronously, so a click that lands before the effect runs is
+ * silently dropped.
+ */
+async function openSidebar(page: Page) {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await expect(
+    page.getByTestId('detail-panel').getByRole('heading', { name: 'Additional info' })
+  ).toBeVisible();
+}
 
 /**
  * Create a fresh outbound shipment via the UI: New Shipment → pick the first
