@@ -46,7 +46,7 @@ export const StocktakeLineEditModal: FC<
         <DialogButton variant="ok" onClick={onOk} disabled={!isValid} />
       }
       width={1260}
-      height={600}
+      height={650}
       slideAnimation={false}
       sx={{ '& .MuiDialogActions-root': { marginTop: '8px', marginBottom: '8px' } }}
       contentProps={{
