@@ -39,6 +39,8 @@ pub struct DraftStockOutLine {
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
     pub volume_per_pack: f64,
+    pub received_number_of_packs: Option<f64>,
+    pub reason_option_id: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -301,6 +303,8 @@ impl DraftStockOutLine {
             campaign_id: line.stock_line_row.campaign_id,
             program_id: line.stock_line_row.program_id,
             volume_per_pack,
+            received_number_of_packs: None,
+            reason_option_id: None,
         }
     }
 
@@ -320,6 +324,8 @@ impl DraftStockOutLine {
             donor_id: donor_link_id,
             campaign_id,
             program_id,
+            received_number_of_packs,
+            reason_option_id,
             ..
         } = line.invoice_line_row;
 
@@ -365,6 +371,8 @@ impl DraftStockOutLine {
             campaign_id,
             program_id,
             volume_per_pack,
+            received_number_of_packs,
+            reason_option_id,
         })
     }
 }
