@@ -28,6 +28,8 @@ export const useSaveOutboundLines = (outboundId: string) => {
             campaignId: line.campaign?.id,
             programId: line.program?.id,
             vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : null,
+            receivedNumberOfPacks: line.receivedNumberOfPacks ?? null,
+            reasonOptionId: line.reasonOption?.id ?? null,
           })),
           placeholderQuantity,
         },

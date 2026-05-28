@@ -339,24 +339,6 @@ export const InboundLineEditCards = ({
         ),
       },
       {
-        accessorKey: 'shippedPackSize',
-        header: t('label.shipped-pack-size'),
-        size: 120,
-        columnGroup: 'stockLineDetails',
-        includeColumn: isManualShipment,
-        Cell: ({ row, cell }) => (
-          <NumberInputCell
-            cell={cell}
-            updateFn={(value: number) => {
-              updateDraftLine({ shippedPackSize: value, id: row.original.id });
-            }}
-            disabled={isDisabled}
-            min={1}
-          />
-        ),
-        defaultHideOnMobile: true,
-      },
-      {
         accessorKey: 'reasonOption',
         header: t('label.variance-reason'),
         size: 180,
@@ -367,8 +349,7 @@ export const InboundLineEditCards = ({
             line.shippedNumberOfPacks != null &&
             line.numberOfPacks !== line.shippedNumberOfPacks;
 
-          // Clear any stale reason once the variance is resolved.
-          useEffect(() => {
+          useEffect(() => { // Clear stale reason
             if (!hasVariance && line.reasonOption) {
               updateDraftLine({ id: line.id, reasonOption: null });
             }
@@ -388,6 +369,24 @@ export const InboundLineEditCards = ({
             />
           );
         },
+      },
+      {
+        accessorKey: 'shippedPackSize',
+        header: t('label.shipped-pack-size'),
+        size: 120,
+        columnGroup: 'stockLineDetails',
+        includeColumn: isManualShipment,
+        Cell: ({ row, cell }) => (
+          <NumberInputCell
+            cell={cell}
+            updateFn={(value: number) => {
+              updateDraftLine({ shippedPackSize: value, id: row.original.id });
+            }}
+            disabled={isDisabled}
+            min={1}
+          />
+        ),
+        defaultHideOnMobile: true,
       },
       {
         accessorKey: 'receivedNumberOfUnits',

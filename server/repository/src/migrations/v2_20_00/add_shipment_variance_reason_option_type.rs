@@ -12,8 +12,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    ALTER TYPE reason_option_type
-                      ADD VALUE IF NOT EXISTS 'SHIPMENT_VARIANCE' AFTER 'REQUISITION_LINE_VARIANCE';
+                    ALTER TYPE reason_option_type ADD VALUE IF NOT EXISTS 'SHIPMENT_VARIANCE';
                 "#
             )?;
         }

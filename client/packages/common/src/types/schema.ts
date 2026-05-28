@@ -2620,6 +2620,8 @@ export type DraftStockOutLineNode = {
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
   program?: Maybe<ProgramNode>;
+  reasonOption?: Maybe<ReasonOptionNode>;
+  receivedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
   stockLineId: Scalars['String']['output'];
   stockLineOnHold: Scalars['Boolean']['output'];
@@ -4537,6 +4539,7 @@ export type InvoiceLineNode = {
   program?: Maybe<ProgramNode>;
   purchaseOrderLine?: Maybe<PurchaseOrderLineNode>;
   reasonOption?: Maybe<ReasonOptionNode>;
+  receivedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
   returnReason?: Maybe<ReturnReasonNode>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
@@ -6682,6 +6685,8 @@ export type OutboundShipmentLineInput = {
   id: Scalars['String']['input'];
   numberOfPacks: Scalars['Float']['input'];
   programId?: InputMaybe<Scalars['String']['input']>;
+  reasonOptionId?: InputMaybe<Scalars['String']['input']>;
+  receivedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   stockLineId: Scalars['String']['input'];
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
