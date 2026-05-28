@@ -261,6 +261,7 @@ fn generate_line(
         reason_option_id: None,
         status: None,
         received_number_of_packs: None,
+        linked_invoice_line_id: None,
     })
 }
 

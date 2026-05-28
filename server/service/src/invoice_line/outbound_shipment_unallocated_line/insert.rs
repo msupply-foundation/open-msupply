@@ -138,6 +138,7 @@ fn generate(
         shipped_pack_size: None,
         status: None,
         received_number_of_packs: None,
+        linked_invoice_line_id: None,
     };
 
     Ok(new_line)
