@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_in_progress_and_error_statuses_sync_message;
+mod add_invoice_received_qty_updated_activity_log_type;
 mod add_linked_invoice_line_id_to_invoice_line;
 mod add_plugin_data_datetime_field;
 mod add_plugin_data_indexes;
@@ -30,6 +31,7 @@ impl Migration for V2_20_00 {
             Box::new(add_received_number_of_packs_to_invoice_line::Migrate),
             Box::new(add_linked_invoice_line_id_to_invoice_line::Migrate),
             Box::new(add_shipment_variance_reason_option_type::Migrate),
+            Box::new(add_invoice_received_qty_updated_activity_log_type::Migrate),
         ]
     }
 }

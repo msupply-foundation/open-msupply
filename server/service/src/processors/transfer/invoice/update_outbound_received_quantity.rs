@@ -1,9 +1,10 @@
 use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceStatus,
-    InvoiceType, RepositoryError, StorageConnection,
+    ActivityLogType, EqualFilter, InvoiceLineFilter, InvoiceLineRepository,
+    InvoiceLineRowRepository, InvoiceStatus, InvoiceType, RepositoryError, StorageConnection,
 };
 
 use crate::{
+    activity_log::system_activity_log_entry,
     processors::transfer::invoice::{InvoiceTransferOutput, Operation},
     service_provider::ServiceContext,
 };
@@ -66,6 +67,15 @@ impl InvoiceTransferProcessor for UpdateOutboundReceivedQuantityProcessor {
             &inbound_invoice.invoice_row.id,
             &outbound_invoice.invoice_row.id,
         )?;
+
+        if updated > 0 {
+            system_activity_log_entry(
+                &ctx.connection,
+                ActivityLogType::InvoiceReceivedQtyUpdated,
+                &outbound_invoice.invoice_row.store_id,
+                &outbound_invoice.invoice_row.id,
+            )?;
+        }
 
         let result = format!(
             "({}) outbound lines updated ({}) from inbound ({})",
