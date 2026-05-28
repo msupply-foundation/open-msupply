@@ -1,7 +1,8 @@
 use super::*;
 use crate::static_files::{StaticFile, StaticFileService};
 use repository::sync_file_reference_row::SyncFileReferenceRow;
-use reqwest::{Client, Response};
+use reqwest::Response;
+use util::https_client;
 
 impl SyncApiV6 {
     pub async fn download_file(
@@ -26,7 +27,7 @@ impl SyncApiV6 {
             sync_v6_version: *sync_v6_version,
         };
 
-        let request = Client::new().post(url.clone()).json(&request);
+        let request = https_client().post(url.clone()).json(&request);
         let result = request.send().await;
 
         let downloaded_file = match download_response_or_err(result).await {
