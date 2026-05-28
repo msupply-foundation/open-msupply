@@ -45,7 +45,7 @@
         "dateOfBirth": {
           "description": "Date of birth",
           "format": "date",
-          "type": "string"
+          "type": ["string", "null"]
         },
         "firstName": {
           "type": "string"
@@ -69,7 +69,7 @@
         "dateOfDeath": {
           "description": "Date of death",
           "format": "date",
-          "type": "string"
+          "type": ["string", "null"]
         },
         "isDeceased": {
           "description": "Person is deceased",

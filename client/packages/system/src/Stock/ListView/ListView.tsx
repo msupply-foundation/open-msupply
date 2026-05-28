@@ -54,7 +54,8 @@ export const StockListView = () => {
         condition: 'between',
       },
       {
-        key: 'masterList.name',
+        key: 'masterList.id',
+        condition: 'equalTo',
       },
     ],
   });

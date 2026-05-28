@@ -68,6 +68,14 @@ impl CentralPluginMutations {
     ) -> Result<PluginInfoNode> {
         mutations::install::install_uploaded_plugin(ctx, file_id)
     }
+
+    async fn uninstall_plugin(
+        &self,
+        ctx: &Context<'_>,
+        id: String,
+    ) -> Result<mutations::uninstall::UninstallPluginNode> {
+        mutations::uninstall::uninstall_plugin(ctx, id)
+    }
 }
 
 #[derive(Default, Clone)]

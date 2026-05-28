@@ -1,11 +1,12 @@
 use crate::{
+    activity_log::activity_log_entry_with_diff,
     invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
     service_provider::ServiceContext,
     NullableUpdate, WithDBError,
 };
 use chrono::NaiveDate;
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLine,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, ActivityLogType, InvoiceLine,
     InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRowRepository, RepositoryError,
     StockLineRowRepository,
 };
@@ -61,6 +62,8 @@ pub fn update_stock_in_line(
             let (line, item, invoice) =
                 validate(&input, &ctx.store_id, connection, inbound_shipment_type)?;
 
+            let existing_stock_line = line.stock_line_option.clone();
+
             let GenerateResult {
                 invoice_row_option,
                 updated_line,
@@ -72,6 +75,13 @@ pub fn update_stock_in_line(
             let stock_line_repository = StockLineRowRepository::new(connection);
             if let Some(upsert_batch) = upsert_batch_option {
                 stock_line_repository.upsert_one(&upsert_batch)?;
+                activity_log_entry_with_diff(
+                    ctx,
+                    ActivityLogType::StockLineEdit,
+                    Some(upsert_batch.id.clone()),
+                    existing_stock_line.as_ref(),
+                    &upsert_batch,
+                )?;
             }
 
             InvoiceLineRowRepository::new(connection).upsert_one(&updated_line)?;
