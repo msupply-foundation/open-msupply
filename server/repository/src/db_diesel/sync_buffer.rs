@@ -269,8 +269,6 @@ impl<'a> SyncBufferRepository<'a> {
             q = q.filter(sync_buffer::reference_id.is_null());
         }
 
-        // Why does cursor order matter? I believe one of the assertions of atomic sync is that we don't have
-        // worry about record order beyond table sort? If true then this order by is wasted CPU.
         let rows = match direction {
             CursorDirection::Asc => q
                 .order(sync_buffer::cursor.asc())
