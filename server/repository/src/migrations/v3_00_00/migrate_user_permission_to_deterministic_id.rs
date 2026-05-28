@@ -1,7 +1,6 @@
-use crate::db_diesel::user_permission_row::UserPermissionRow;
+use crate::db_diesel::user_permission_row::{user_permission, UserPermissionRow};
 use crate::migrations::*;
 use diesel::prelude::*;
-use diesel::sql_types::{Nullable, Text};
 
 /// Rewrite `user_permission.id` for non-context-bound rows to the deterministic
 /// UUID v5 derived from `(user_id, store_id, permission)`.
@@ -16,27 +15,40 @@ use diesel::sql_types::{Nullable, Text};
 /// `om_user_permission` using the legacy OG id and are left untouched here.
 pub(crate) struct Migrate;
 
+#[derive(Queryable)]
+struct UserPermissionIdRow {
+    id: String,
+    user_id: String,
+    store_id: Option<String>,
+    permission: String,
+}
+
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
         "migrate_user_permission_to_deterministic_id"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        // Read `permission` as TEXT so we don't have to map the Postgres enum
-        // type into the live Rust `PermissionType`, which may evolve later.
-        let select_sql = if cfg!(feature = "postgres") {
-            "SELECT id, user_id, store_id, permission::text AS permission \
-             FROM user_permission \
-             WHERE context_id IS NULL"
-        } else {
-            "SELECT id, user_id, store_id, permission \
-             FROM user_permission \
-             WHERE context_id IS NULL"
-        };
-
-        let rows: Vec<UserPermissionIdRow> = diesel::sql_query(select_sql)
+        // `permission` is a Postgres enum (`permission_type`) but the schema
+        // declares it as `Text`, so Diesel decodes it as `String` and we
+        // sidestep coupling to the live Rust `PermissionType`, which may
+        // evolve later.
+        let rows: Vec<UserPermissionIdRow> = user_permission::table
+            .filter(user_permission::context_id.is_null())
+            .select((
+                user_permission::id,
+                user_permission::user_id,
+                user_permission::store_id,
+                user_permission::permission,
+            ))
             .load(connection.lock().connection())?;
 
+        // No changelog rewrite for the UPDATEs below: `user_permission` only
+        // became a changelog table on the sync-v7 feature branch, so no v2.x
+        // DB has changelog entries pointing at the old ids. The
+        // populate_changelog fragment that runs after this one will produce
+        // the fresh v7 entries with the new ids.
+        let mut stale_duplicates: Vec<String> = Vec::new();
         for row in rows {
             let new_id = UserPermissionRow::deterministic_id_from_db_form(
                 &row.user_id,
@@ -46,34 +58,33 @@ impl MigrationFragment for Migrate {
             if new_id == row.id {
                 continue;
             }
-            diesel::sql_query(
-                "UPDATE user_permission SET id = $1 WHERE id = $2",
-            )
-            .bind::<Text, _>(&new_id)
-            .bind::<Text, _>(&row.id)
-            .execute(connection.lock().connection())?;
 
-            // No changelog rewrite: `user_permission` only became a changelog
-            // table on the sync-v7 feature branch, so no v2.x DB has changelog
-            // entries pointing at the old ids. The populate_changelog fragment
-            // that runs after this one will produce the fresh v7 entries with
-            // the new ids.
+            // If a row at `new_id` already exists, this one is a stale
+            // duplicate (same user/store/permission) — collect for deletion.
+            let collision = diesel::select(diesel::dsl::exists(
+                user_permission::table.filter(user_permission::id.eq(&new_id)),
+            ))
+            .get_result::<bool>(connection.lock().connection())?;
+
+            if collision {
+                stale_duplicates.push(row.id);
+                continue;
+            }
+
+            diesel::update(user_permission::table.filter(user_permission::id.eq(&row.id)))
+                .set(user_permission::id.eq(&new_id))
+                .execute(connection.lock().connection())?;
+        }
+
+        if !stale_duplicates.is_empty() {
+            diesel::delete(
+                user_permission::table.filter(user_permission::id.eq_any(&stale_duplicates)),
+            )
+            .execute(connection.lock().connection())?;
         }
 
         Ok(())
     }
-}
-
-#[derive(QueryableByName)]
-struct UserPermissionIdRow {
-    #[diesel(sql_type = Text)]
-    id: String,
-    #[diesel(sql_type = Text)]
-    user_id: String,
-    #[diesel(sql_type = Nullable<Text>)]
-    store_id: Option<String>,
-    #[diesel(sql_type = Text)]
-    permission: String,
 }
 
 #[cfg(test)]
@@ -157,7 +168,10 @@ mod tests {
             "STOCK_LINE_QUERY",
         );
 
-        assert!(ids.contains(&expected_1), "missing rewritten StoreAccess id");
+        assert!(
+            ids.contains(&expected_1),
+            "missing rewritten StoreAccess id"
+        );
         assert!(
             ids.contains(&expected_2),
             "missing rewritten StockLineQuery id"
@@ -170,6 +184,95 @@ mod tests {
             !ids.contains(&"old_random_1".to_string())
                 && !ids.contains(&"old_random_2".to_string()),
             "old non-context-bound ids should be gone"
+        );
+    }
+
+    #[actix_rt::test]
+    async fn drops_stale_duplicates_on_collision() {
+        let previous_version = V2_18_00.version();
+        let version = V3_00_00.version();
+
+        let SetupResult { connection, .. } = setup_test(SetupOption {
+            db_name: "migration_user_permission_deterministic_id_collision",
+            version: Some(previous_version.clone()),
+            ..Default::default()
+        })
+        .await;
+
+        let deterministic = UserPermissionRow::deterministic_id_from_db_form(
+            "user_a",
+            Some("store_a"),
+            "STORE_ACCESS",
+        );
+
+        // Seed three rows that all hash to the same deterministic id:
+        //   - one already at the deterministic id (collision target during the
+        //     UPDATE pass)
+        //   - two stale duplicates that must end up in the deletion vec
+        //
+        // Plus one unrelated permission to confirm unaffected rows survive.
+        let seed = format!(
+            r#"
+            INSERT INTO name (id, type, is_customer, is_supplier, code, name) VALUES
+                ('name_s', 'STORE', false, false, '', '');
+            INSERT INTO name_link (id, name_id) VALUES ('name_link_s', 'name_s');
+            INSERT INTO store (id, name_link_id, site_id, code) VALUES
+                ('store_a', 'name_link_s', 1, '');
+            INSERT INTO user_account (id, username, hashed_password) VALUES
+                ('user_a', 'user_a', '');
+
+            INSERT INTO user_permission (id, user_id, store_id, permission, context_id)
+            VALUES ('{deterministic}', 'user_a', 'store_a', 'STORE_ACCESS', NULL);
+
+            INSERT INTO user_permission (id, user_id, store_id, permission, context_id)
+            VALUES ('stale_dup_1', 'user_a', 'store_a', 'STORE_ACCESS', NULL);
+
+            INSERT INTO user_permission (id, user_id, store_id, permission, context_id)
+            VALUES ('stale_dup_2', 'user_a', 'store_a', 'STORE_ACCESS', NULL);
+
+            INSERT INTO user_permission (id, user_id, store_id, permission, context_id)
+            VALUES ('other_random', 'user_a', 'store_a', 'STOCK_LINE_QUERY', NULL);
+            "#
+        );
+
+        connection.lock().connection().batch_execute(&seed).unwrap();
+
+        migrate(
+            &connection,
+            Some(version.clone()),
+            crate::migrations::MigrationConfig::default(),
+        )
+        .unwrap();
+
+        let ids: Vec<String> = user_permission::table
+            .select(user_permission::id)
+            .order(user_permission::id.asc())
+            .load(connection.lock().connection())
+            .unwrap();
+
+        let other_expected = UserPermissionRow::deterministic_id_from_db_form(
+            "user_a",
+            Some("store_a"),
+            "STOCK_LINE_QUERY",
+        );
+
+        assert!(
+            ids.contains(&deterministic),
+            "row already at deterministic id should survive"
+        );
+        assert!(
+            ids.contains(&other_expected),
+            "unrelated permission should still get rewritten"
+        );
+        assert!(
+            !ids.contains(&"stale_dup_1".to_string()) && !ids.contains(&"stale_dup_2".to_string()),
+            "stale duplicates should be deleted, got {:?}",
+            ids
+        );
+        assert_eq!(
+            ids.iter().filter(|id| **id == deterministic).count(),
+            1,
+            "exactly one row should remain at the deterministic id"
         );
     }
 }
