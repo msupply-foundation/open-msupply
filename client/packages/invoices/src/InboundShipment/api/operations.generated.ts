@@ -1333,7 +1333,11 @@ export type UpsertInboundShipmentMutation = {
                   key: Types.ForeignKey;
                 }
               | { __typename: 'NotAnInboundShipment'; description: string }
-              | { __typename: 'RecordNotFound'; description: string };
+              | { __typename: 'RecordNotFound'; description: string }
+              | {
+                  __typename: 'ShipmentVarianceReasonNotProvided';
+                  description: string;
+                };
           };
     }> | null;
     insertInboundShipmentServiceLines?: Array<{
@@ -1510,7 +1514,11 @@ export type UpsertInboundShipmentExternalMutation = {
                   key: Types.ForeignKey;
                 }
               | { __typename: 'NotAnInboundShipment'; description: string }
-              | { __typename: 'RecordNotFound'; description: string };
+              | { __typename: 'RecordNotFound'; description: string }
+              | {
+                  __typename: 'ShipmentVarianceReasonNotProvided';
+                  description: string;
+                };
           };
     }> | null;
     insertInboundShipmentServiceLines?: Array<{
@@ -2666,6 +2674,10 @@ export const UpsertInboundShipmentDocument = gql`
                 __typename
                 description
               }
+              ... on ShipmentVarianceReasonNotProvided {
+                __typename
+                description
+              }
             }
           }
           ... on InvoiceLineNode {
@@ -2932,6 +2944,10 @@ export const UpsertInboundShipmentExternalDocument = gql`
                 key
               }
               ... on NotAnInboundShipment {
+                __typename
+                description
+              }
+              ... on ShipmentVarianceReasonNotProvided {
                 __typename
                 description
               }

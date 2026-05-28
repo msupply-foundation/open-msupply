@@ -40,7 +40,7 @@ export const OutboundLineEdit = ({
   getSortedItems,
 }: OutboundLineEditProps) => {
   const t = useTranslation();
-  const { info, warning } = useNotification();
+  const { info, warning, error } = useNotification();
   const [itemId, setItemId] = useState(openedWith?.itemId);
 
   // Used to determine if the item selector should be disabled. We want to allow
@@ -134,7 +134,7 @@ export const OutboundLineEdit = ({
 
       return onSaved();
     } catch (e) {
-      // Errors handled by main GraphQL handler
+      error((e as Error).message)();
     }
   };
 
