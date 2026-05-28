@@ -41,10 +41,6 @@ pub struct LoginInputV4 {
     pub username: String,
     pub password: String,
     pub login_type: LoginUserTypeV4,
-    // OG's 4D handler rejects `"siteName": null` ("Argument types are
-    // incompatible"). Omit the field entirely when None so OG treats it as
-    // "no site scope" and returns the user's stores across all sites.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub site_name: Option<String>,
 }
 

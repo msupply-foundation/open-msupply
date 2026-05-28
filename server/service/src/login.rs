@@ -339,6 +339,18 @@ impl LoginService {
         }
     }
 
+    /// # Warning
+    ///
+    /// Must not be called from COMS. The result is consumed by
+    /// [`Self::update_user`] → [`UserAccountService::upsert_user`], which deletes
+    /// `user_store_joins` not present in the OG response. OG narrows its response
+    /// to the calling site's stores, so on COMS this would wipe joins for stores
+    /// that belong to other ROMS sites and that COMS legitimately holds for the
+    /// user.
+    /// 
+    /// # Safety
+    /// Safe on ROMS — the wipe scope matches the OG response scope, since a ROMS
+    /// only holds joins for its own site.
     pub async fn fetch_user_from_central(
         service_provider: &ServiceProvider,
         input: &LoginInput,
@@ -355,26 +367,15 @@ impl LoginService {
         let username = &input.username;
         let password = &input.password;
 
-        // Scoping rule: a remote v6 sync site knows it only holds joins for its own site,
-        // so it asks OG to narrow the response to that site (using its sync
-        // username as the site name). Central holds joins across every site
-        // it syncs from, so it asks OG for the full unscoped response —
-        // otherwise the downstream wipe-and-replace in `upsert_user` would
-        // drop joins for sites OG didn't mention.
-        let site_name = if CentralServerConfig::is_central_server() {
-            None
-        } else {
-            let service_ctx = service_provider.basic_context().map_err(|err| {
-                FetchUserError::InternalError(format!("Failed to get service context: {err}"))
+        let service_ctx = service_provider.basic_context().map_err(|err| {
+            FetchUserError::InternalError(format!("Failed to get service context: {err}"))
+        })?;
+        let settings = service_provider
+            .settings
+            .sync_settings(&service_ctx)
+            .map_err(|err| {
+                FetchUserError::InternalError(format!("Failed to get sync settings: {err}"))
             })?;
-            service_provider
-                .settings
-                .sync_settings(&service_ctx)
-                .map_err(|err| {
-                    FetchUserError::InternalError(format!("Failed to get sync settings: {err}"))
-                })?
-                .map(|x| x.username)
-        };
 
         // Try login with central
         let login_result = login_api
@@ -382,7 +383,7 @@ impl LoginService {
                 username: username.clone(),
                 password: password.clone(),
                 login_type: LoginUserTypeV4::User,
-                site_name,
+                site_name: settings.map(|x| x.username),
             })
             .await;
 
