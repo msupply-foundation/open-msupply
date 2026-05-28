@@ -24,6 +24,10 @@ export const StyledTabPanel = styled(TabPanel)({
   display: 'flex',
   flexDirection: 'column',
   padding: '16px 0 0 0',
+  // display:flex overrides the UA-stylesheet's [hidden]{display:none}.
+  // Re-apply display:none for inactive panels so they don't share flex space
+  // with the active panel and shrink it to 1/3 of the available height.
+  '&[hidden]': { display: 'none' },
 });
 
 export const StyledTabContainer = styled(Box)(() => ({

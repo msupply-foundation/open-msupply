@@ -132,6 +132,7 @@ export const ReturnSteps = ({
             padding: 0,
             minHeight: 0,
             overflow: 'hidden',
+            '&[hidden]': { display: 'none' },
           }}
         >
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -172,6 +173,7 @@ export const ReturnSteps = ({
             padding: 0,
             minHeight: 0,
             overflow: 'hidden',
+            '&[hidden]': { display: 'none' },
           }}
         >
           <ReturnReasonsTable

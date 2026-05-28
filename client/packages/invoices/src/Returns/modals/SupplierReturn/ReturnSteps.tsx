@@ -81,6 +81,7 @@ export const ReturnSteps = ({
             padding: 0,
             minHeight: 0,
             overflow: 'hidden',
+            '&[hidden]': { display: 'none' },
           }}
         >
           {zeroQuantityAlert && (
@@ -108,6 +109,7 @@ export const ReturnSteps = ({
             padding: 0,
             minHeight: 0,
             overflow: 'hidden',
+            '&[hidden]': { display: 'none' },
           }}
         >
           <ReturnReasonsTable
