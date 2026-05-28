@@ -168,13 +168,12 @@ export const OutboundLineEdit = ({
         />
       }
       width={1200}
-      // On 150 % DPI / small viewports the default 30px top+bottom margin around
-      // the action buttons wastes ~60px of precious table height.  Tighten it to
-      // 8px for this modal only (scoped via PaperProps sx selector).
+      height={650}
       sx={{
+        '& .MuiDialogTitle-root': { py: 1.25 },
         '& .MuiDialogActions-root': {
-          marginTop: '8px',
-          marginBottom: '8px',
+          marginTop: '4px',
+          marginBottom: '4px',
         },
       }}
       contentProps={{
@@ -182,7 +181,7 @@ export const OutboundLineEdit = ({
           overflowY: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          paddingTop: '4px',
+          paddingTop: '2px',
           paddingBottom: 0,
         },
       }}

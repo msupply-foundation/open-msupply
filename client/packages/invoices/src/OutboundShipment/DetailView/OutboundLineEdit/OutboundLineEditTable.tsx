@@ -27,6 +27,26 @@ export interface OutboundLineEditTableProps {
   isExternalSupplier: boolean;
 }
 
+const compactTableContainerSx = {
+  flex: 1,
+  minHeight: 0,
+  overflowX: 'auto',
+  overflowY: 'auto',
+  '& .MuiTableBody-root .MuiTableRow-root': {
+    minHeight: '30px',
+  },
+  '& .MuiTableBody-root .MuiTableCell-root': {
+    paddingTop: '0.1rem',
+    paddingBottom: '0.1rem',
+  },
+  '& .MuiInputBase-root.MuiInput-root': {
+    minHeight: '32px',
+  },
+  '& .MuiPickersOutlinedInput-root': {
+    height: '32px',
+  },
+} as const;
+
 export const OutboundLineEditTable = ({
   currency,
   isExternalSupplier,
@@ -140,7 +160,7 @@ export const OutboundLineEditTable = ({
       },
     },
     muiTableContainerProps: {
-      sx: { flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto' },
+      sx: compactTableContainerSx,
     },
     renderEmptyRowsFallback: () => (
       <Box sx={{ margin: 'auto' }}>
@@ -159,7 +179,7 @@ export const OutboundLineEditTable = ({
         overflow: 'hidden',
       }}
     >
-      <Divider margin={4} />
+      <Divider margin={2} />
       {/* Table takes remaining space; rows scroll inside the MRT TableContainer */}
       <Box
         style={{
@@ -182,6 +202,7 @@ export const OutboundLineEditTable = ({
           borderTop: '1px solid',
           borderColor: 'divider',
           flexShrink: 0,
+          minHeight: '32px',
         }}
       >
         <MRT_ShowHideColumnsButton table={table} />

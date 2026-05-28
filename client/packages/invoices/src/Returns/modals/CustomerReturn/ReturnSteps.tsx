@@ -91,8 +91,8 @@ export const ReturnSteps = ({
         <Box
           sx={{
             display: 'flex',
-            gap: 8,
-            py: 1,
+            gap: 4,
+            py: 0.5,
             px: 2,
           }}
         >
@@ -135,7 +135,7 @@ export const ReturnSteps = ({
             '&[hidden]': { display: 'none' },
           }}
         >
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             {packSizeAlert && (
               <Alert severity="error">
                 {t('messages.alert-invalid-pack-size')}
@@ -146,7 +146,12 @@ export const ReturnSteps = ({
             )}
           </Box>
           <Box
-            sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+            sx={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: 0,
+            }}
           >
             <QuantityReturnedTable
               lines={lines}

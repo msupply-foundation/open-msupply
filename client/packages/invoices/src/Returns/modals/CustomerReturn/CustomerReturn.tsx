@@ -194,13 +194,17 @@ export const CustomerReturnEditModal = ({
       }
       nextButton={!isNewReturn ? OkAndNextButton : undefined}
       width={1200}
-      sx={{ height: 'min(700px, calc(100vh - 80px))', '& .MuiDialogActions-root': { marginTop: '8px', marginBottom: '8px' } }}
+      height={650}
+      sx={{
+        '& .MuiDialogTitle-root': { py: 1.25 },
+        '& .MuiDialogActions-root': { marginTop: '4px', marginBottom: '4px' },
+      }}
       contentProps={{
         sx: {
           overflowY: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          paddingTop: '4px',
+          paddingTop: '2px',
           paddingBottom: 0,
         },
       }}

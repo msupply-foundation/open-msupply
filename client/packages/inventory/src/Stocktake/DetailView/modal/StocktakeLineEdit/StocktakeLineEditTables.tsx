@@ -47,6 +47,27 @@ interface StocktakeLineEditTableProps {
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
 }
 
+const compactTableContainerSx = {
+  flex: 1,
+  minHeight: 0,
+  overflowX: 'auto',
+  overflowY: 'auto',
+  maxHeight: 'unset',
+  '& .MuiTableBody-root .MuiTableRow-root': {
+    minHeight: '30px',
+  },
+  '& .MuiTableBody-root .MuiTableCell-root': {
+    paddingTop: '0.1rem',
+    paddingBottom: '0.1rem',
+  },
+  '& .MuiInputBase-root.MuiInput-root': {
+    minHeight: '32px',
+  },
+  '& .MuiPickersOutlinedInput-root': {
+    height: '32px',
+  },
+} as const;
+
 export const BatchTable = ({
   batches,
   update,
@@ -246,7 +267,7 @@ export const BatchTable = ({
       },
     },
     muiTableContainerProps: {
-      sx: { flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto', maxHeight: 'unset' },
+      sx: compactTableContainerSx,
     },
   });
 
@@ -336,7 +357,7 @@ export const PricingTable = ({
       },
     },
     muiTableContainerProps: {
-      sx: { flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto', maxHeight: 'unset' },
+      sx: compactTableContainerSx,
     },
   });
 
@@ -488,7 +509,7 @@ export const LocationTable = ({
       },
     },
     muiTableContainerProps: {
-      sx: { flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto', maxHeight: 'unset' },
+      sx: compactTableContainerSx,
     },
   });
 
@@ -502,7 +523,7 @@ const getPackSizeChangePatch = (
   const shouldClearSellPrice =
     row.item.defaultPackSize !== newPackSize &&
     row.item.itemStoreProperties?.defaultSellPricePerPack ===
-    row.sellPricePerPack;
+      row.sellPricePerPack;
 
   return {
     id: row.id,
@@ -524,7 +545,7 @@ const getCountedPacksChangePatch = (
   const keepReason =
     typeof row.countedNumberOfPacks === 'number' &&
     countedPacks > row.snapshotNumberOfPacks ===
-    row.countedNumberOfPacks > row.snapshotNumberOfPacks;
+      row.countedNumberOfPacks > row.snapshotNumberOfPacks;
 
   return {
     id: row.id,

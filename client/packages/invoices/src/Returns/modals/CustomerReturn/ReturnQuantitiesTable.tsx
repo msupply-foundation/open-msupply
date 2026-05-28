@@ -185,7 +185,26 @@ export const QuantityReturnedTableComponent = ({
       },
     },
     muiTableContainerProps: {
-      sx: { flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'auto', maxHeight: 'unset' },
+      sx: {
+        flex: 1,
+        minHeight: 0,
+        overflowX: 'auto',
+        overflowY: 'auto',
+        maxHeight: 'unset',
+        '& .MuiTableBody-root .MuiTableRow-root': {
+          minHeight: '30px',
+        },
+        '& .MuiTableBody-root .MuiTableCell-root': {
+          paddingTop: '0.1rem',
+          paddingBottom: '0.1rem',
+        },
+        '& .MuiInputBase-root.MuiInput-root': {
+          minHeight: '32px',
+        },
+        '& .MuiPickersOutlinedInput-root': {
+          height: '32px',
+        },
+      },
     },
   });
 
