@@ -181,6 +181,7 @@ export enum ActivityLogNodeType {
   SensorLocationChanged = 'SENSOR_LOCATION_CHANGED',
   StocktakeCreated = 'STOCKTAKE_CREATED',
   StocktakeDeleted = 'STOCKTAKE_DELETED',
+  StocktakeEdited = 'STOCKTAKE_EDITED',
   StocktakeStatusFinalised = 'STOCKTAKE_STATUS_FINALISED',
   StockBatchChange = 'STOCK_BATCH_CHANGE',
   StockCostPriceChange = 'STOCK_COST_PRICE_CHANGE',
@@ -8253,6 +8254,7 @@ export type QueriesPeriodsArgs = {
 
 export type QueriesPluginDataArgs = {
   filter?: InputMaybe<PluginDataFilterInput>;
+  page?: InputMaybe<PaginationInput>;
   pluginCode: Scalars['String']['input'];
   sort?: InputMaybe<Array<PluginDataSortInput>>;
   storeId: Scalars['String']['input'];
