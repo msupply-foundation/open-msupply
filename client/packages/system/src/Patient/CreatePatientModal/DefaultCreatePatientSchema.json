@@ -19,7 +19,7 @@
         "dateOfBirth": {
           "description": "Date of birth",
           "format": "date",
-          "type": "string"
+          "type": ["string", "null"]
         },
         "firstName": {
           "type": "string"

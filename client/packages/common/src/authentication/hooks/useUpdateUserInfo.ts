@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from '@common/intl';
-import { AuthCookie } from '../AuthContext';
+import { AuthCookie, setAuthCookie } from '../AuthContext';
 import {
   useGetUserPermissions,
   useLastSuccessfulUserSync,
@@ -52,6 +52,7 @@ export const useUpdateUserInfo = (
               jobTitle: userDetails?.jobTitle,
             },
           };
+          setAuthCookie(authCookie);
           setCookie(authCookie);
           return;
         }
