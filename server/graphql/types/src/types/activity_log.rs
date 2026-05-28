@@ -37,6 +37,7 @@ pub enum ActivityLogNodeType {
     StocktakeCreated,
     StocktakeDeleted,
     StocktakeStatusFinalised,
+    StocktakeEdited,
     RequisitionCreated,
     RequisitionDeleted,
     RequisitionNumberAllocated,
