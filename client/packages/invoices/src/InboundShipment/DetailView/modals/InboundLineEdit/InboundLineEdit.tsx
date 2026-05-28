@@ -139,9 +139,7 @@ export const InboundLineEdit = ({
   }, [selectedPOLine, availablePOLines]);
 
   // Derive the item from selected PO line (external) or props (internal)
-  const currentItemFromPOLine = selectedPOLine
-    ? selectedPOLine.item
-    : null;
+  const currentItemFromPOLine = selectedPOLine ? selectedPOLine.item : null;
 
   // --- Item state (internal mode) ---
   const [currentItem, setCurrentItem] = useState<ItemRowFragment | null>(item);
@@ -184,6 +182,24 @@ export const InboundLineEdit = ({
   const simplifiedTabletView = useSimplifiedTabletUI();
   const [packRoundingMessage, setPackRoundingMessage] = useState('');
   const lastCardRef = useRef<HTMLDivElement>(null);
+
+  const scrollToLatestCard = useCallback(() => {
+    const scroll = () => {
+      lastCardRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+        inline: 'nearest',
+      });
+    };
+
+    // Wait for state updates and card layout to settle before scrolling.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(scroll);
+    });
+
+    // Fallback for slower renders where nested RAF can still be early.
+    setTimeout(scroll, 80);
+  }, []);
 
   // --- Item variant logic (both modes) ---
   const [variantAction, setVariantAction] = useState<'add' | 'first' | null>(
@@ -249,14 +265,9 @@ export const InboundLineEdit = ({
     } else {
       addDraftLine();
       setPackRoundingMessage('');
-      setTimeout(() => {
-        lastCardRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-        });
-      }, 0);
+      scrollToLatestCard();
     }
-  }, [hasVariants, addDraftLine]);
+  }, [hasVariants, addDraftLine, scrollToLatestCard]);
 
   // Check if saving these lines requires authorise permission.
   // Only lines the user actually changed (isUpdated/isCreated) matter.
@@ -408,7 +419,7 @@ export const InboundLineEdit = ({
       }
       height={700}
       width={1200}
-      contentProps={{ sx: { overflow: 'visible' } }}
+      contentProps={{ sx: { overflowY: 'auto' } }}
       enableAutocomplete /* Required for previously entered batches to be remembered and suggested in future shipments */
     >
       {isLoading ? (
@@ -449,12 +460,7 @@ export const InboundLineEdit = ({
                 if (variantAction === 'add') {
                   addDraftLine();
                   setPackRoundingMessage('');
-                  setTimeout(() => {
-                    lastCardRef.current?.scrollIntoView({
-                      behavior: 'smooth',
-                      block: 'nearest',
-                    });
-                  }, 0);
+                  scrollToLatestCard();
                 }
                 setVariantAction(null);
               }}
