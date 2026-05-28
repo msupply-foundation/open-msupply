@@ -1,12 +1,8 @@
-import { AuthCookie, setAuthCookie } from '../../AuthContext';
-import { useAuthApi } from './useAuthApi';
+import { AuthCookie } from '../../AuthContext';
 import { useGetUserPermissions } from './useGetUserPermissions';
 import { useGetUserDetails } from './useUserDetails';
 import { getStore } from './useLogin';
-import {
-  AuthenticationCredentials,
-  useQueryClient,
-} from '@openmsupply-client/common';
+import { AuthenticationCredentials } from '@openmsupply-client/common';
 
 export const useRefreshUserCookie = (
   setCookie: React.Dispatch<React.SetStateAction<AuthCookie | undefined>>,
@@ -15,31 +11,25 @@ export const useRefreshUserCookie = (
 ) => {
   const getUserPermissions = useGetUserPermissions();
   const { mutateAsync: getUserDetails } = useGetUserDetails();
-  const queryClient = useQueryClient();
-  const api = useAuthApi();
 
   const refreshUserCookie = async () => {
-    if (!cookie?.token) return;
-
-    const userDetails = await getUserDetails(cookie.token);
-    queryClient.setQueryData(api.keys.me(cookie.token), userDetails);
+    const permissions = await getUserPermissions(cookie?.token, cookie?.store);
+    const userDetails = await getUserDetails(cookie?.token);
     const store = await getStore(userDetails, mostRecentCredentials);
-    const permissions = await getUserPermissions(cookie.token, store);
 
-    const refreshed: AuthCookie = {
+    const authCookie = {
       ...cookie,
       store,
-      token: cookie.token,
+      token: cookie?.token ?? '',
       user: {
         id: userDetails?.userId ?? '',
-        name: cookie.user?.name ?? '',
+        name: cookie?.user?.name ?? '',
         permissions,
         email: userDetails?.email,
         jobTitle: userDetails?.jobTitle,
       },
     };
-    setAuthCookie(refreshed);
-    setCookie(refreshed);
+    setCookie(authCookie);
   };
 
   return { refreshUserCookie };
