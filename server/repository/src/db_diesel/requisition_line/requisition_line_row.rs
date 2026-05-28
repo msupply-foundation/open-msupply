@@ -104,11 +104,30 @@ impl RequisitionLineRow {
             .and_then(|json| serde_json::from_str::<ForecastSnapshot>(json).ok())
     }
 
-    /// Serialize the snapshot into `forecast_data`. Sets `forecast_monthly_usage`
-    /// from the snapshot's headline rate.
+    /// Serialize the snapshot into `forecast_data` and set the two
+    /// denormalised columns (`forecast_method`, `forecast_monthly_usage`)
+    /// derived from it. This is the only sanctioned writer for the three
+    /// forecast columns together — anything that bypasses it can drift the
+    /// denormalised columns out of step with the JSON.
+    ///
+    /// `update_request_requisition_line::generate` is the one legitimate site
+    /// that sets `forecast_method` alone: it records the user's method choice
+    /// ahead of the recompute pipeline, which then calls this helper to write
+    /// the matching snapshot.
     pub fn set_forecast_snapshot(&mut self, snapshot: &ForecastSnapshot) {
         self.forecast_data = serde_json::to_string(snapshot).ok();
+        self.forecast_method = Some(snapshot.method().to_storage());
         self.forecast_monthly_usage = Some(snapshot.forecast_monthly_usage());
+    }
+
+    /// Clear all three forecast columns together. Used at row-init sites
+    /// (master list / program insert, transfer creation before recompute) so
+    /// a grep for the field names returns only the helpers and the row
+    /// definition itself.
+    pub fn clear_forecast(&mut self) {
+        self.forecast_data = None;
+        self.forecast_method = None;
+        self.forecast_monthly_usage = None;
     }
 }
 

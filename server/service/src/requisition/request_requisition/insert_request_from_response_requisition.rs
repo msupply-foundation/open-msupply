@@ -228,7 +228,7 @@ fn generate(
                     }
                 });
 
-            RequisitionLineRow {
+            let mut row = RequisitionLineRow {
                 id: uuid(),
                 requisition_id: requisition.id.clone(),
                 item_id: line.item_id.clone(),
@@ -249,14 +249,11 @@ fn generate(
                 } else {
                     None
                 },
-                forecast_monthly_usage: population_forecast_for_item.map(|s| s.forecast_monthly_usage),
-                forecast_method: population_forecast_for_item.map(|_| "population".to_string()),
-                forecast_data: population_forecast_for_item.and_then(|s| {
-                    serde_json::to_string(&repository::ForecastSnapshot::Population(
-                        repository::PopulationOutcome::Ok(s.clone()),
-                    ))
-                    .ok()
-                }),
+                // Forecast columns are set below via the row helper so the
+                // three fields are kept in lock-step. Initialise to None here.
+                forecast_monthly_usage: None,
+                forecast_method: None,
+                forecast_data: None,
                 // Defaults
                 available_volume: None,
                 location_type_id: None,
@@ -271,7 +268,14 @@ fn generate(
                 expiring_units: 0.0,
                 days_out_of_stock: 0.0,
                 option_id: None,
+            };
+            if let Some(s) = population_forecast_for_item {
+                let snap = repository::ForecastSnapshot::Population(
+                    repository::PopulationOutcome::Ok(s.clone()),
+                );
+                row.set_forecast_snapshot(&snap);
             }
+            row
         })
         .collect::<Vec<_>>();
 

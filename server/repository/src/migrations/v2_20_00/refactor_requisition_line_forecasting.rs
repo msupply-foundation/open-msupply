@@ -1,6 +1,5 @@
 use crate::migrations::*;
 use diesel::{sql_query, RunQueryDsl};
-use serde_json::{json, Value};
 
 /// Generalises the v2.17.00 population-only forecasting fields on
 /// `requisition_line` into a method-tag + JSON snapshot pair, *and* expresses
@@ -75,39 +74,21 @@ fn reshape_population_rows(connection: &StorageConnection) -> anyhow::Result<()>
     .load(connection.lock().connection())?;
 
     for row in rows {
-        let courses_json = match row.vaccine_courses.as_deref() {
-            Some(s) => s,
-            None => continue,
+        let Some(snapshot) = crate::reshape_legacy_population_fields(
+            row.vaccine_courses.as_deref(),
+            row.forecast_total_doses,
+        ) else {
+            continue;
         };
-        let mut courses: Vec<Value> = serde_json::from_str(courses_json).unwrap_or_default();
-        let mut headline_monthly_usage = 0.0_f64;
-        for course in courses.iter_mut() {
-            let forecast_units = json_f64(course, "forecastUnits");
-            let supply = json_f64(course, "supplyPeriodMonths");
-            let buffer = json_f64(course, "bufferStockMonths");
-            let period = supply + buffer;
-            let monthly_usage = if period > 0.0 {
-                forecast_units / period
-            } else {
-                0.0
-            };
-            headline_monthly_usage += monthly_usage;
-            if let Value::Object(map) = course {
-                map.insert("forecastMonthlyUsage".into(), json!(monthly_usage));
-            }
-        }
 
-        let snapshot = json!({
-            "method": "population",
-            "status": "ok",
-            "forecastMonthlyUsage": headline_monthly_usage,
-            "forecastTotalDoses": row.forecast_total_doses.unwrap_or(0.0),
-            "vaccineCourses": courses,
-        });
+        let headline_monthly_usage = snapshot.forecast_monthly_usage();
         let snapshot_str = serde_json::to_string(&snapshot)?;
         let escaped_snapshot = snapshot_str.replace('\'', "''");
         let escaped_id = row.id.replace('\'', "''");
 
+        // forecast_total_units is renamed to forecast_monthly_usage by the
+        // ALTER TABLE that runs *after* this reshape — the column is still
+        // named forecast_total_units at this point.
         sql_query(format!(
             "UPDATE requisition_line \
              SET forecast_method = 'population', \
@@ -119,10 +100,6 @@ fn reshape_population_rows(connection: &StorageConnection) -> anyhow::Result<()>
     }
 
     Ok(())
-}
-
-fn json_f64(v: &Value, key: &str) -> f64 {
-    v.get(key).and_then(|x| x.as_f64()).unwrap_or(0.0)
 }
 
 #[cfg(test)]

@@ -6,7 +6,8 @@ use util::sync_serde::{empty_str_as_option, empty_str_as_option_string, object_f
 
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository,
+    reshape_legacy_population_fields, to_legacy_population_fields, ChangelogRow,
+    ChangelogTableName, EqualFilter, ForecastSnapshot, ItemLinkRowRepository,
     ReasonOptionRowRepository, RequisitionFilter, RequisitionLineRow, RequisitionLineRowDelete,
     RequisitionLineRowRepository, RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository,
     StorageConnection, SyncBufferRow,
@@ -26,6 +27,19 @@ pub struct RequisitionLineOmsFields {
     pub forecast_monthly_usage: Option<f64>,
     pub forecast_method: Option<String>,
     pub forecast_data: Option<String>,
+    // Legacy v2.17–v2.19 population fields, retained for back-compat with
+    // pre-v2.20 OMS sites. On push: derived from `forecast_data` when the
+    // snapshot is `Population(Ok)` so older receivers still see populated
+    // values. On pull: when `forecast_data` is missing but `vaccine_courses`
+    // is present, reshape these into a `ForecastSnapshot::Population` via
+    // `reshape_legacy_population_fields`. `#[serde(default)]` so newer
+    // senders that no longer emit these fields don't break deserialisation.
+    #[serde(default)]
+    pub forecast_total_units: Option<f64>,
+    #[serde(default)]
+    pub forecast_total_doses: Option<f64>,
+    #[serde(default)]
+    pub vaccine_courses: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -125,9 +139,11 @@ impl SyncTranslation for RequisitionLineTranslation {
             price_per_unit,
             available_volume,
             location_type_id,
-            forecast_monthly_usage,
-            forecast_method,
-            forecast_data,
+            mut forecast_monthly_usage,
+            mut forecast_method,
+            mut forecast_data,
+            legacy_total_doses,
+            legacy_vaccine_courses,
         ) = if let Some(oms_fields) = data.oms_fields {
             (
                 oms_fields.price_per_unit,
@@ -136,10 +152,30 @@ impl SyncTranslation for RequisitionLineTranslation {
                 oms_fields.forecast_monthly_usage,
                 oms_fields.forecast_method,
                 oms_fields.forecast_data,
+                oms_fields.forecast_total_doses,
+                oms_fields.vaccine_courses,
             )
         } else {
-            (None, None, None, None, None, None)
+            (None, None, None, None, None, None, None, None)
         };
+
+        // Back-compat: a pre-v2.20 OMS site sends `vaccine_courses` +
+        // `forecast_total_doses` but no `forecast_data`. Reshape the legacy
+        // fields into a `Population(Ok)` snapshot on ingest. The headline
+        // `forecast_monthly_usage` and `forecast_method` columns are then
+        // derived from the snapshot — same single-writer invariant the row
+        // helper enforces, just spelled out here because we're constructing
+        // the row from sync data rather than mutating in place.
+        if forecast_data.is_none() {
+            if let Some(snap) = reshape_legacy_population_fields(
+                legacy_vaccine_courses.as_deref(),
+                legacy_total_doses,
+            ) {
+                forecast_data = serde_json::to_string(&snap).ok();
+                forecast_method = Some(snap.method().to_storage());
+                forecast_monthly_usage = Some(snap.forecast_monthly_usage());
+            }
+        }
 
         let option_id = clear_invalid_fk(
             connection,
@@ -281,6 +317,28 @@ impl SyncTranslation for RequisitionLineTranslation {
             .as_ref()
             .map(|line| line.rnr_form_line_row.id.clone());
 
+        // Back-compat: derive the legacy population fields from
+        // `forecast_data` so pre-v2.20 OMS sites receiving this record can
+        // still render the population breakdown. For non-population methods
+        // there's no legacy equivalent — the older site simply shows no
+        // forecast, same as it did before this PR for any non-population
+        // line.
+        let legacy_population = forecast_data
+            .as_deref()
+            .and_then(|json| serde_json::from_str::<ForecastSnapshot>(json).ok())
+            .as_ref()
+            .and_then(to_legacy_population_fields);
+
+        let (legacy_total_units, legacy_total_doses, legacy_vaccine_courses) =
+            match legacy_population {
+                Some(l) => (
+                    Some(l.forecast_total_units),
+                    Some(l.forecast_total_doses),
+                    Some(l.vaccine_courses),
+                ),
+                None => (None, None, None),
+            };
+
         let oms_fields = Some(RequisitionLineOmsFields {
             rnr_form_line_id,
             expiry_date,
@@ -290,6 +348,9 @@ impl SyncTranslation for RequisitionLineTranslation {
             forecast_monthly_usage,
             forecast_method,
             forecast_data,
+            forecast_total_units: legacy_total_units,
+            forecast_total_doses: legacy_total_doses,
+            vaccine_courses: legacy_vaccine_courses,
         });
 
         let legacy_row = LegacyRequisitionLineRow {

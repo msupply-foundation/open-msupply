@@ -210,7 +210,6 @@ pub fn run(
         let snap = snapshots
             .get(&line.item_id)
             .expect("snapshot computed above");
-        line.forecast_method = Some(method_for_snapshot(snap).to_storage());
         line.set_forecast_snapshot(snap);
     }
 
@@ -334,24 +333,6 @@ fn invoke_plugin(
             plugin_version,
             message: format!("{err:?}"),
         }),
-    }
-}
-
-fn method_for_snapshot(snap: &ForecastSnapshot) -> ForecastMethod {
-    match snap {
-        ForecastSnapshot::Amc(_) => ForecastMethod::AverageMonthlyConsumption,
-        ForecastSnapshot::Population(_) => ForecastMethod::Population,
-        ForecastSnapshot::AncillaryRatio(_) => ForecastMethod::AncillaryRatio,
-        ForecastSnapshot::Plugin(PluginOutcome::Ok(s)) => {
-            ForecastMethod::Plugin(s.plugin_code.clone())
-        }
-        ForecastSnapshot::Plugin(PluginOutcome::Error(e)) => {
-            let code = match e {
-                PluginError::NotFound { plugin_code }
-                | PluginError::InvocationFailed { plugin_code, .. } => plugin_code.clone(),
-            };
-            ForecastMethod::Plugin(code)
-        }
     }
 }
 
