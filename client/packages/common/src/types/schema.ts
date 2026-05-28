@@ -1385,10 +1385,15 @@ export type CentralPatientSearchResponse =
 export type CentralPluginMutations = {
   __typename: 'CentralPluginMutations';
   installUploadedPlugin: PluginInfoNode;
+  uninstallPlugin: UninstallPluginNode;
 };
 
 export type CentralPluginMutationsInstallUploadedPluginArgs = {
   fileId: Scalars['String']['input'];
+};
+
+export type CentralPluginMutationsUninstallPluginArgs = {
+  id: Scalars['String']['input'];
 };
 
 export type CentralPluginQueries = {
@@ -10294,6 +10299,13 @@ export type UnallocatedLinesOnlyEditableInNewInvoice =
     __typename: 'UnallocatedLinesOnlyEditableInNewInvoice';
     description: Scalars['String']['output'];
   };
+
+export type UninstallPluginNode = {
+  __typename: 'UninstallPluginNode';
+  code: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  kind: InstalledPluginKindType;
+};
 
 export enum UniqueCombinationKey {
   Manufacturer = 'manufacturer',
