@@ -279,7 +279,9 @@ export const useOutboundLineEditColumns = ({
         defaultHideOnMobile: true,
       },
       {
-        accessorKey: 'receivedNumberOfPacks',
+        id: 'receivedNumberOfPacks',
+        // Pre-populate with issued packs; user can edit to record a variance.
+        accessorFn: row => row.receivedNumberOfPacks ?? row.numberOfPacks,
         header: t('label.packs-received'),
         description: t('description.packs-received'),
         columnType: ColumnType.Number,
