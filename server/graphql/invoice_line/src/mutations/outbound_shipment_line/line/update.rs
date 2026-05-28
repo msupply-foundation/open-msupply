@@ -112,6 +112,8 @@ impl UpdateInput {
             note: None,
             campaign_id: None,
             program_id: None,
+            received_number_of_packs: None,
+            reason_option_id: None,
         }
     }
 }
@@ -179,6 +181,9 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ItemDoesNotMatchStockLine
         | VVMStatusDoesNotExist
         | NotThisInvoiceLine(_)
+        | ReasonOptionDoesNotExist
+        | ReasonOptionIsNotActive
+        | ReasonOptionTypeInvalid
         | LineDoesNotReferenceStockLine => StandardGraphqlError::BadUserInput(formatted_error),
         AutoPickFailed(_) | DatabaseError(_) | UpdatedLineDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)
