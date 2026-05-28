@@ -106,6 +106,21 @@ export const useOutboundColumns = () => {
         enableSorting: true,
       },
       {
+        accessorKey: 'receivedNumberOfPacks',
+        header: t('label.packs-received'),
+        description: t('description.packs-received'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        aggregationFn: 'sum',
+      },
+      {
+        id: 'varianceReason',
+        accessorFn: row => row.reasonOption?.reason ?? '',
+        header: t('label.variance-reason'),
+        defaultHideOnMobile: true,
+        size: 160,
+      },
+      {
         id: 'unitQuantity',
         header: t('label.unit-quantity'),
         description: t('description.unit-quantity'),

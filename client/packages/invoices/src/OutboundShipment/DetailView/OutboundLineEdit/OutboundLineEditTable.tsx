@@ -45,6 +45,8 @@ export const OutboundLineEditTable = ({
     item,
     manualAllocate,
     setVvmStatus,
+    setReceivedNumberOfPacks,
+    setReasonOption,
   } = useAllocationContext(
     useShallow(state => {
       const { placeholderUnits, item, allocateIn } = state;
@@ -57,6 +59,8 @@ export const OutboundLineEditTable = ({
         item,
         manualAllocate: state.manualAllocate,
         setVvmStatus: state.setVvmStatus,
+        setReceivedNumberOfPacks: state.setReceivedNumberOfPacks,
+        setReasonOption: state.setReasonOption,
         // In packs & units: we show totals in units
         // In doses: we show totals in doses
         allocatedQuantity: getAllocatedQuantity({
@@ -118,6 +122,8 @@ export const OutboundLineEditTable = ({
     isExternalSupplier,
     allocateIn: allocateIn,
     setVvmStatus,
+    setReceivedNumberOfPacks,
+    setReasonOption,
     getIsDisabled,
   });
 
