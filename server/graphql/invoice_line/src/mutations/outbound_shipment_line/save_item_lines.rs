@@ -2,13 +2,14 @@ use async_graphql::*;
 
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
-use graphql_types::types::InvoiceNode;
+use graphql_types::types::{InvoiceNode, ShipmentVarianceReasonNotProvided};
 
 use repository::Invoice;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::save_stock_out_item_lines::{
     SaveStockOutInvoiceLine, SaveStockOutItemLines, SaveStockOutItemLinesError,
 };
+use service::invoice_line::stock_out_line::UpdateStockOutLineError;
 
 #[derive(InputObject)]
 pub struct SaveOutboundShipmentLinesInput {
@@ -34,7 +35,7 @@ pub fn save_outbound_shipment_item_lines(
     ctx: &Context<'_>,
     store_id: &str,
     input: SaveOutboundShipmentLinesInput,
-) -> Result<InvoiceNode> {
+) -> Result<SaveResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -53,13 +54,49 @@ pub fn save_outbound_shipment_item_lines(
     )
 }
 
-pub fn map_response(from: Result<Invoice, SaveStockOutItemLinesError>) -> Result<InvoiceNode> {
-    let result = match from {
-        Ok(invoice) => InvoiceNode::from_domain(invoice),
-        Err(error) => map_error(error)?,
-    };
+#[derive(SimpleObject)]
+#[graphql(name = "SaveOutboundShipmentLinesError")]
+pub struct SaveError {
+    pub error: SaveErrorInterface,
+}
 
-    Ok(result)
+#[derive(Union)]
+#[graphql(name = "SaveOutboundShipmentLinesResponse")]
+pub enum SaveResponse {
+    Error(SaveError),
+    Response(InvoiceNode),
+}
+
+#[derive(Interface)]
+#[graphql(name = "SaveOutboundShipmentLinesErrorInterface")]
+#[graphql(field(name = "description", ty = "&str"))]
+pub enum SaveErrorInterface {
+    ShipmentVarianceReasonNotProvided(ShipmentVarianceReasonNotProvided),
+}
+
+pub fn map_response(from: Result<Invoice, SaveStockOutItemLinesError>) -> Result<SaveResponse> {
+    match from {
+        Ok(invoice) => Ok(SaveResponse::Response(InvoiceNode::from_domain(invoice))),
+        Err(error) => {
+            if let Some(structured) = map_structured_error(&error) {
+                Ok(SaveResponse::Error(SaveError { error: structured }))
+            } else {
+                Err(map_error(error)?)
+            }
+        }
+    }
+}
+
+fn map_structured_error(error: &SaveStockOutItemLinesError) -> Option<SaveErrorInterface> {
+    match error {
+        SaveStockOutItemLinesError::LineUpdateError {
+            error: UpdateStockOutLineError::ShipmentVarianceReasonNotProvided,
+            ..
+        } => Some(SaveErrorInterface::ShipmentVarianceReasonNotProvided(
+            ShipmentVarianceReasonNotProvided,
+        )),
+        _ => None,
+    }
 }
 
 impl SaveOutboundShipmentLinesInput {
@@ -94,7 +131,7 @@ impl SaveOutboundShipmentLinesInput {
     }
 }
 
-fn map_error(error: SaveStockOutItemLinesError) -> Result<InvoiceNode> {
+fn map_error(error: SaveStockOutItemLinesError) -> Result<Error> {
     use SaveStockOutItemLinesError::*;
     let formatted_error = format!("{error:#?}");
 
@@ -118,5 +155,5 @@ fn map_error(error: SaveStockOutItemLinesError) -> Result<InvoiceNode> {
         }
     };
 
-    Err(graphql_error.extend())
+    Ok(graphql_error.extend())
 }
