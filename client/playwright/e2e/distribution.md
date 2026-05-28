@@ -16,21 +16,33 @@ The Playwright spec at [`client/playwright/e2e/distribution-regression.spec.ts`]
 - Search by Name filters results
 - Filter by Invoice number
 - Filter by Reference
-- Export to CSV downloads
+- Filter by Status (select-type filter)
 - Pagination next-page navigation
+- Pagination page-number click (jumps directly to chosen page)
+- Export to CSV downloads
 - Delete a New shipment (single row)
 - Multi-select master checkbox deletes multiple
 - Shipped shipments can't be deleted (rejection toast)
 
-**Outbound Shipments — detail view**
+**Outbound Shipments — detail view sidebar**
 
 - Sidebar panels render expected fields (Additional info, Related docs, Invoice details, Transport details)
 - Comment edit persists
 - Customer reference persists
 - Transport reference persists
 - Hold checkbox toggles on
+- Colour picker (selecting a colour fires the update mutation)
+- Edit Service Charges modal: add charge + save (skips if no default service item configured)
 - Log tab loads
 - Close button returns to list
+
+**Outbound Shipments — line operations**
+
+- Add Item: typing in the item field filters the options
+- Edit shipment line: click row opens edit modal with item field locked
+- Add Item: OK & Next saves then resets the dialog for the next line
+- Delete shipment line via row selection (group-aware: clicks the grouped row's checkbox)
+- Shipped: clicking a line does not open the edit modal
 
 **Outbound Shipments — status flow**
 
@@ -41,28 +53,54 @@ The Playwright spec at [`client/playwright/e2e/distribution-regression.spec.ts`]
 - Skip statuses via split-button (New → Shipped directly)
 - Status hover history popover
 
+**Customer Returns**
+
+- List view renders core controls (New return, Status header, rows-per-page)
+- New return: pick customer creates a manually-created return and lands on detail
+
+**Customer Requisitions**
+
+- List view renders core controls (New requisition, Status header, rows-per-page)
+- New requisition: pick customer creates a manual requisition (Add Item enabled on detail)
+
 ## Not tested ❌
 
 **Outbound Shipments**
 
-- Other filter types (Status, Created date, Shipped date)
-- Pagination: page-number clicks, last/first page buttons
-- Line edits (add via master list, edit existing line, delete line)
-- Pack-size dropdown, manual per-batch allocation
-- Placeholder lines + bulk allocate placeholders
-- OK & Next button
-- Type-to-filter on item/customer autocompletes
-- Edit service charges modal
-- Colour picker
-- View modes (Group by item, hide columns)
-- Shipped: lines locked (can't edit)
-- Barcode scanner, print PDFs, DELIVERED/VERIFIED (need external setup)
+- Other filter types: Created date, Shipped date (between-date pickers — MUI date picker is brittle in jsdom; left for follow-up)
+- Add from Master List
+- Pack-size dropdown, manual per-batch allocation (data-dependent: needs items with multi-pack-size / multi-batch stock)
+- Placeholder lines + bulk allocate placeholders (data-dependent: would need a stock-short item)
+- View modes (Group by item switch, Show / Hide columns) — both are MRT internals; smoke tests dropped as low-value
+- Return lines bulk action from an outbound (needs Shipped-or-later status — same workflow gap as DELIVERED/VERIFIED)
+- Print one or many shipments (PDF download)
+- Customer name change on existing shipment
 
-**Other sections — not started**
+**External-setup gaps (not doable on single store)**
 
-- Requisitions
-- Customer Returns
-- Customers
+- DELIVERED / VERIFIED status transitions (need customer-store confirmation)
+- Inbound shipment generated on Picked (cross-store visibility check)
+- Barcode scanner (hardware)
+- Sync working (needs a second sync endpoint)
+
+**Customer Returns**
+
+- Customer Return from an outbound shipment (Process return → Reason → Comment → Confirm)
+- From-stock: full Verified flow + ledger entry assertion
+- Hold checkbox on a return
+- Confirm Delivered / Confirm Verified status transitions
+
+**Customer Requisitions**
+
+- Receiving auto-generated customer requisitions (needs internal order from another store)
+- Item-edit page: SOH/AMC numbers reflect requesting store, Quantity to Supply editable, Next / Previous navigation
+- Finalise without outbound shipment shows warning prompt
+- Once Finalised, no edits possible
+
+**Customers — not started**
+
+- List shows visible customers per current store
+- Visibility configuration check (central-side)
 
 ---
 
@@ -83,6 +121,7 @@ The Playwright spec at [`client/playwright/e2e/distribution-regression.spec.ts`]
 - `clickConfirmAndWait(page, regex)` — clicks a footer Confirm button, handles the optional "Are you sure?" confirmation dialog, waits for network settle. Includes `page.mouse.move(0, 0)` to dismiss the status-history hover popover that otherwise blocks clicks.
 - `getColumnIndex(page, headerText)` — looks up a column's zero-based index by header text. Use this instead of hard-coded `td.nth(N)` so tests survive column reordering.
 - `assertFieldPersistsAcrossReload(page, shipmentUrl, testid, value)` — fills a debounced detail-view text field, waits for the `updateOutboundShipment` mutation, reloads via `shipmentUrl`, and asserts the value persisted.
+- `openSidebar(page)` — widens the viewport to ≥1536px so the responsive detail panel auto-opens. Locators inside the sidebar resolve even when it's at width:0, but clicks land underneath; call this before interacting with anything in the sidebar.
 
 ## Patterns / gotchas that took real time to discover
 
@@ -111,12 +150,27 @@ The Playwright spec at [`client/playwright/e2e/distribution-regression.spec.ts`]
 - A populated dev datafile served on the configured `BASE_URL`, user `admin`
 - At least one customer visible in the list
 - Items with stock for `pickItemWithStock` to find quickly (it tries up to 30 items alphabetically)
-- For `cannot delete a Shipped shipment`, `filter by Reference`, and `pagination next-page`: needs an existing Shipped shipment / a shipment with a reference / >20 shipments. Tests `test.skip()` if conditions aren't met rather than fail.
-- **Tests leave behind data** — every run creates several shipments. No cleanup. Fine for dev, but as shipment count grows the pagination/filter tests could slow.
+- Tests use `test.skip()` rather than fail when the datafile lacks the right shape. Skips kick in for:
+  - `filter by Reference` — no shipment with a non-empty reference
+  - `pagination next-page` / `pagination page-number click` — fewer than 21 shipments
+  - `cannot delete a Shipped shipment` / `Shipped: clicking a line` — no Shipped shipment in the visible page
+  - `Edit service charges modal` — no default service item configured on the store
+  - `Add Item: typing in the item field` — first item's name is too short to filter on
+- **Tests leave behind data** — every run creates several shipments. No cleanup. Fine for dev, but as shipment count grows the pagination / filter tests could slow.
 
 ## Suggested next batches (priority order)
 
-1. **More list-view filters & pagination** — other filter types (Status, Created date, Shipped date), page-number / first / last pagination buttons. Reuses patterns already in the spec.
-2. **Shipped-state enforcement** — lines can't be edited on a Shipped shipment (click an existing line on a Shipped shipment → expect no edit modal).
-3. **Line operations** — Add from Master List, Edit line, Delete line, Pack size dropdown, manual allocation, placeholder + allocate. Expect to re-encounter all the dialog gotchas above.
-4. **Move on to Requisitions, Customer Returns, Customers** — entire sections of the regression test untouched, but the patterns above should transfer.
+1. **Line operations on the outbound detail view** — the biggest remaining outbound gap. Add from Master List, Pack size dropdown, manual per-batch allocation, placeholder line on over-issue, and the bulk Allocate placeholder lines action. All single-store-doable; the last three depend on items with the right stock shape (multiple batches, low stock).
+2. **Customer Returns: the from-shipment flow** — currently only the manual flow is covered. Adding this needs a Shipped-or-later outbound first, then the bulk-action "Return lines" path with reason + comment + Confirm Delivered / Verified.
+3. **Customer Requisitions: auto-generated and finalise-flow** — receiving a customer requisition (needs an internal order from another store, so paired with the cross-store gap), item-edit page (SOH / AMC / Qty to Supply / Next / Previous), Finalise-without-shipment warning prompt, and the once-finalised lockdown.
+4. **Customers section** — entirely untouched. Visibility list smoke test is the only single-store-doable bit.
+
+## Out-of-scope / blocked
+
+- **Date-range filters** (Created date, Shipped date) — MUI date picker is brittle in jsdom-style tests; would need a dedicated approach.
+- **DELIVERED / VERIFIED status transitions** — need a customer-side mSupply store to confirm receipt.
+- **Inbound shipment visible to customer on Picked** — same cross-store dependency.
+- **Barcode scanner add-item** — hardware.
+- **Sync working** — needs a second sync endpoint.
+- **View modes** (Group by item switch, Show / Hide columns) — MRT internals; smoke-tested elsewhere, low signal here.
+- **Print** PDFs (one or many shipments, pick slip, delivery note, invoice) — covered by Playwright download capture, but not yet wired up.
