@@ -254,6 +254,7 @@
   "description.our-soh": "Our stock on hand",
   "description.pack-cost": "Cost price per pack",
   "description.pack-quantity": "Total quantity in number of packs",
+  "description.packs-received": "Quantity confirmed received by the customer",
   "description.patient-filter-note": "Filtering is by last name only",
   "description.po-price-converted-to-local": "PO price per pack converted to local currency using the exchange rate",
   "description.previous-deliveries": "The number of units previously delivered. This takes all received and verified shipments linked to the same purchase order and sums the number of units in them for matching items.",
