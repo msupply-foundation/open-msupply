@@ -87,6 +87,7 @@ export const useIndicatorsDemographicsColumns = ({
               value={headerDraft ? headerDraft[yearOffset].value : 0}
               min={0}
               max={100}
+              decimalLimit={2}
               endAdornment="%"
               onChange={value => {
                 if (!headerDraft) return;
