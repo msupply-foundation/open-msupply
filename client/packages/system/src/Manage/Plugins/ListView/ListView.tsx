@@ -10,6 +10,10 @@ import {
   usePluginProvider,
   SettingsIcon,
   useIsCentralServerApi,
+  IconButton,
+  DeleteIcon,
+  useConfirmationModal,
+  useNotification,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
 import { PluginUploadModal } from './PluginUploadModal';
@@ -18,10 +22,12 @@ import { InstalledPluginNodeFragment, useInstalledPlugins } from '../api';
 
 export const PluginsList = () => {
   const t = useTranslation();
+  const { success, error } = useNotification();
 
   const {
     query: { data, isError, isFetching },
     install: { installMutation, installLoading },
+    uninstall: { uninstallMutation, uninstallLoading },
   } = useInstalledPlugins();
 
   const { isOpen, onClose, onOpen } = useEditModal();
@@ -36,6 +42,27 @@ export const PluginsList = () => {
 
   const isConfigurable = (code: string) =>
     isCentralServer && !!cachedPluginBundles[code]?.configuration;
+
+  const showDeleteConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const onDelete = (plugin: InstalledPluginNodeFragment) => {
+    showDeleteConfirmation({
+      message: t('messages.confirm-delete-plugin', { code: plugin.code }),
+      onConfirm: async () => {
+        try {
+          await uninstallMutation(plugin.id);
+          success(t('messages.plugin-deleted-successfully'))();
+        } catch (e) {
+          const message = e instanceof Error ? e.message : String(e);
+          error(`${t('error.unable-to-delete-plugin')}: ${message}`)();
+        }
+      },
+    });
+  };
 
   const columns = useMemo(
     (): ColumnDef<InstalledPluginNodeFragment>[] => [
@@ -77,8 +104,24 @@ export const PluginsList = () => {
             />
           ) : null,
       },
+      {
+        id: 'actions',
+        header: '',
+        size: 60,
+        enableSorting: false,
+        enableColumnFilter: false,
+        Cell: ({ row }) => (
+          <IconButton
+            icon={<DeleteIcon />}
+            label={t('button.delete')}
+            disabled={uninstallLoading}
+            onClick={() => onDelete(row.original)}
+          />
+        ),
+      },
     ],
-    [t, cachedPluginBundles, isCentralServer]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, cachedPluginBundles, isCentralServer, uninstallLoading]
   );
 
   const { table } = useNonPaginatedMaterialTable({

@@ -23,6 +23,7 @@ mod general_processor;
 mod load_plugin;
 mod plugin_processor;
 mod requisition_auto_finalise;
+mod support_upload_files;
 pub use general_processor::ProcessorType;
 #[cfg(test)]
 mod test_helpers;

@@ -1,3 +1,4 @@
+use chrono::NaiveDateTime;
 use repository::{
     EqualFilter, PluginData, PluginDataFilter, PluginDataRepository, PluginDataRow,
     PluginDataRowRepository, RepositoryError,
@@ -21,6 +22,8 @@ pub struct InsertPluginData {
     pub related_record_id: Option<String>,
     pub data_identifier: String,
     pub data: String,
+    /// Optional plugin-controlled timestamp.
+    pub datetime: Option<NaiveDateTime>,
 }
 
 pub fn insert(
@@ -54,6 +57,7 @@ fn generate(
         related_record_id,
         data_identifier,
         data,
+        datetime,
     }: InsertPluginData,
 ) -> PluginDataRow {
     PluginDataRow {
@@ -63,6 +67,7 @@ fn generate(
         related_record_id,
         data_identifier,
         data,
+        datetime,
     }
 }
 
@@ -140,12 +145,13 @@ mod test {
                     related_record_id: Some("new_related_record_id".to_string()),
                     data_identifier: "StockLine".to_string(),
                     data: "hogwarts".to_string(),
+                    datetime: None,
                 },
             )
             .unwrap();
 
         let plugin_data = service
-            .get_plugin_data(&context, None, None)
+            .get_plugin_data(&context, None, None, None)
             .unwrap()
             .rows
             .pop()
@@ -161,6 +167,7 @@ mod test {
                 data_identifier: "StockLine".to_string(),
                 data: "hogwarts".to_string(),
                 store_id: Some(mock_store_a().id.to_string()),
+                datetime: None,
             }
         );
     }
