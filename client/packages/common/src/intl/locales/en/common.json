@@ -758,7 +758,7 @@
   "info.manual-shipment": "This shipment was created manually. The delivery status will not be automatically updated.",
   "info.no-shipment": "Finalising this requisition will prevent you from creating a shipment for it.",
   "info.server-restarting": "Server restarting...",
-  "initialise.body": "To get started, we'll need to configure the settings to synchronise with mSupply. Please enter the values and click Save.\n\nIf you're not sure what to enter, contact support@msupply.foundation.",
+  "initialise.body": "To get started, we'll need to configure the settings to synchronise with mSupply. Please enter the values and click Initialise.\n\nIf you're not sure what to enter, contact support@msupply.foundation.",
   "initialise.heading": "Welcome!",
   "internal-order": "Internal Orders",
   "inventory": "Inventory",
