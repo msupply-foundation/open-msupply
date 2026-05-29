@@ -232,6 +232,7 @@
   "description.customer-soh": "Customer's available stock on hand",
   "description.default-pack-size": "Default pack size",
   "description.doses-quantity": "With the '$t(preference.manageVaccinesInDoses)' preference on, you will also see the value in number of doses e.g. (100 $t(label.doses-short)) for vaccine items.",
+  "description.difference-packs": "The difference between the number of packs sent and the number of packs received",
   "description.entered": "The creation date",
   "description.expiry": "The closest expiry date of current stock on hand",
   "description.fc-cost-price": "Foreign currency cost price per pack",
