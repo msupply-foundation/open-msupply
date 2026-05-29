@@ -346,15 +346,14 @@ def collect_indexed_pass(
         field = case["field"]
         if field not in FIELDS:
             continue
-        idx_name = case["index_name"]
-        expr = case["sqlite_expr"] if backend == "sqlite" else case["postgres_expr"]
-        ddl_create = f"CREATE INDEX IF NOT EXISTS {idx_name} ON name ({expr})"
-        ddl_drop = f"DROP INDEX IF EXISTS {idx_name}"
+        indexes = case["sqlite_indexes" if backend == "sqlite" else "postgres_indexes"]
         if backend == "sqlite":
-            exec_sqlite_ddl(target, ddl_create)
+            for idx_name, expr in indexes:
+                exec_sqlite_ddl(target, f"CREATE INDEX IF NOT EXISTS {idx_name} ON name ({expr})")
             exec_sqlite_ddl(target, "ANALYZE name")
         else:
-            exec_postgres_ddl(target, ddl_create)
+            for idx_name, expr in indexes:
+                exec_postgres_ddl(target, f"CREATE INDEX IF NOT EXISTS {idx_name} ON name ({expr})")
             exec_postgres_ddl(target, "ANALYZE name")
         try:
             f_sql, s_sql = gen_queries(field, "legacyJsonb", limit)
@@ -384,12 +383,14 @@ def collect_indexed_pass(
                     f"max {max(samples) if samples else 0:7.2f}{marker}"
                 )
         finally:
-            # Always drop so the next run starts from the same unindexed
-            # baseline as the main matrix.
-            if backend == "sqlite":
-                exec_sqlite_ddl(target, ddl_drop)
-            else:
-                exec_postgres_ddl(target, ddl_drop)
+            # Always drop every index so the next run starts from the same
+            # unindexed baseline as the main matrix.
+            for idx_name, _ in indexes:
+                ddl_drop = f"DROP INDEX IF EXISTS {idx_name}"
+                if backend == "sqlite":
+                    exec_sqlite_ddl(target, ddl_drop)
+                else:
+                    exec_postgres_ddl(target, ddl_drop)
 
 
 # -------------------------------------------------------------------- plotting

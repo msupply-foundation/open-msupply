@@ -106,3 +106,71 @@ DELETE FROM name_property      WHERE id LIKE 'perf_np_%' OR id LIKE 'perf_sparse
 DELETE FROM property           WHERE id LIKE 'perf_prop_%' OR id LIKE 'perf_sparse_prop_%';
 COMMIT;
 ```
+
+## Scaling sweep
+
+`perf_sql_test.py` and `perf_plot.py` measure a *single* dataset size. To see
+how each storage approach scales with the number of stores, use
+`perf_scale.py` — it owns the full lifecycle (cleanup → seed dense → seed
+sparse → run matrix → repeat) so each size is measured against a freshly
+seeded DB.
+
+```sh
+python3 server/scripts/perf_scale.py \
+    --sqlite /tmp/perf-scale.sqlite \
+    --sizes 1000,10000,100000,300000,1000000
+```
+
+Both backends in one run (sweeps in series):
+
+```sh
+python3 server/scripts/perf_scale.py \
+    --sqlite /tmp/perf-scale.sqlite \
+    --postgres "postgresql://brian@localhost:5432/tmp" \
+    --sizes 1000,10000,100000
+```
+
+Outputs:
+
+- Per-size summary tables on stdout (same shape as `perf_sql_test.py`).
+- CSV at `--csv-out` (default `/tmp/perf_scale.csv`) with one row per
+  `(backend, size, op, field, method)` plus seed/cleanup timing per size.
+- Log-log scaling plot at `--plot-out` (default `/tmp/perf_scale.png`): grid
+  of subplots (rows = backend × op, cols = field) with one line per method.
+  Plotting also lives in [perf_scale_plot.py](perf_scale_plot.py) and can
+  be re-run standalone against the CSV without redoing the sweep:
+
+  ```sh
+  python3 server/scripts/perf_scale_plot.py \
+      --csv /tmp/perf_scale.csv --out /tmp/perf_scale.png
+  ```
+
+  The CSV is written incrementally (one block per size, with an `fflush`
+  after each), so a crash partway through still leaves all completed sizes
+  on disk. If you only have the stdout log (e.g. the sweep was teed to a
+  file and the CSV was clobbered), recover it with:
+
+  ```sh
+  python3 server/scripts/perf_scale_recover.py \
+      --log /path/to/captured.log --out /tmp/perf_scale.csv
+  ```
+
+Flags worth knowing:
+
+- `--skip-sparse` — drop the 30 sparse properties. Saves a *lot* of seed
+  time at large N (sparse adds ~30 × N rows to `property_v2_value`).
+- `--skip-indexed` — drop the functional-index pass.
+- `--iterations N` — *upper bound* on samples per query (default 10). See
+  `--per-case-budget-ms`.
+- `--per-case-budget-ms M` — soft time budget per query case (default 1500).
+  After the warmup sample, the script runs
+  `min(--iterations, floor(M / warmup_ms))` timed samples (floored at 1) so
+  slow cases (e.g. legacy sort at 1M ≈ 3–4s/sample) gracefully degrade to a
+  single sample instead of burning 40s on 11 of them. Per-case `n=` is
+  printed alongside the median.
+- `--sort-shape correlated` — use the correlated-subquery sort shape the
+  server currently emits, instead of the LEFT-JOIN rewrite (default).
+
+**Heads-up on runtime.** At N=1,000,000 with sparse, total seed time can
+run 20–40 min per backend and `property_v2_value` grows to ~30M rows. For
+a quick sanity pass use `--sizes 1000,10000,100000 --skip-sparse`.
