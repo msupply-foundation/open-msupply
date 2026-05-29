@@ -307,6 +307,19 @@ export const useOutboundLineEditColumns = ({
         ),
       },
       {
+        id: 'difference',
+        accessorFn: row =>
+          row.receivedNumberOfPacks == null
+            ? null
+            : row.receivedNumberOfPacks - row.numberOfPacks,
+        header: t('label.difference'),
+        description: t('description.difference-packs'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        size: 100,
+        includeColumn: isExternalSupplier,
+      },
+      {
         id: 'varianceReason',
         accessorFn: row => row.reasonOption?.reason ?? '',
         header: t('label.variance-reason'),

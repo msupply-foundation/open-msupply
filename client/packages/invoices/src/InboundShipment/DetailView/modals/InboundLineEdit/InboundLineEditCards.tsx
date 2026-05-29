@@ -344,6 +344,17 @@ export const InboundLineEditCards = ({
         ),
       },
       {
+        id: 'difference',
+        header: t('label.difference'),
+        description: t('description.difference-packs'),
+        size: 100,
+        columnGroup: 'stockLineDetails',
+        accessorFn: row =>
+          row.shippedNumberOfPacks == null
+            ? null
+            : row.shippedNumberOfPacks - row.numberOfPacks,
+      },
+      {
         accessorKey: 'reasonOption',
         header: t('label.variance-reason'),
         size: 180,

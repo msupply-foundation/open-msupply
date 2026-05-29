@@ -128,6 +128,18 @@ export const useInboundShipmentColumns = (
         size: 100,
       },
       {
+        id: 'difference',
+        accessorFn: row =>
+          row.shippedNumberOfPacks == null
+            ? null
+            : row.shippedNumberOfPacks - row.numberOfPacks,
+        header: t('label.difference'),
+        description: t('description.difference-packs'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        size: 100,
+      },
+      {
         id: 'unitQuantity',
         accessorFn: row => row.packSize * row.numberOfPacks,
         header: t('label.unit-quantity'),
