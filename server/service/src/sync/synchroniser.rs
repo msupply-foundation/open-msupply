@@ -490,54 +490,69 @@ pub fn integrate_and_translate_sync_buffer(
 
         let mut upserter = TranslationAndIntegration::new(connection);
         for table in &table_order {
-            let records = get_sync_buffer_for_table(
-                connection,
-                SyncAction::Upsert,
-                table,
-                source_site_id,
-                10000,
-            )?;
-            upserter.translate_and_integrate_sync_records(
-                &records,
-                &translators,
-                logger.as_deref_mut(),
-                total_pending,
-                &mut done_so_far,
-            )?;
+            loop {
+                let records = get_sync_buffer_for_table(
+                    connection,
+                    SyncAction::Upsert,
+                    table,
+                    source_site_id,
+                    10000,
+                )?;
+                if records.is_empty() {
+                    break;
+                }
+                upserter.translate_and_integrate_sync_records(
+                    &records,
+                    &translators,
+                    logger.as_deref_mut(),
+                    total_pending,
+                    &mut done_so_far,
+                )?;
+            }
         }
         let mut deleter = TranslationAndIntegration::new(connection);
         for table in &table_order {
-            let records = get_sync_buffer_for_table(
-                connection,
-                SyncAction::Delete,
-                table,
-                source_site_id,
-                10000,
-            )?;
-            deleter.translate_and_integrate_sync_records(
-                &records,
-                &translators,
-                logger.as_deref_mut(),
-                total_pending,
-                &mut done_so_far,
-            )?;
+            loop {
+                let records = get_sync_buffer_for_table(
+                    connection,
+                    SyncAction::Delete,
+                    table,
+                    source_site_id,
+                    10000,
+                )?;
+                if records.is_empty() {
+                    break;
+                }
+                deleter.translate_and_integrate_sync_records(
+                    &records,
+                    &translators,
+                    logger.as_deref_mut(),
+                    total_pending,
+                    &mut done_so_far,
+                )?;
+            }
         }
         let mut merger = TranslationAndIntegration::new(connection);
         for table in &table_order {
-            let records = get_sync_buffer_for_table(
-                connection,
-                SyncAction::Merge,
-                table,
-                source_site_id,
-                10000,
-            )?;
-            merger.translate_and_integrate_sync_records(
-                &records,
-                &translators,
-                logger.as_deref_mut(),
-                total_pending,
-                &mut done_so_far,
-            )?;
+            loop {
+                let records = get_sync_buffer_for_table(
+                    connection,
+                    SyncAction::Merge,
+                    table,
+                    source_site_id,
+                    10000,
+                )?;
+                if records.is_empty() {
+                    break;
+                }
+                merger.translate_and_integrate_sync_records(
+                    &records,
+                    &translators,
+                    logger.as_deref_mut(),
+                    total_pending,
+                    &mut done_so_far,
+                )?;
+            }
         }
 
         Ok((upserter.result, deleter.result, merger.result))
