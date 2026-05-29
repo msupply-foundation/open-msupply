@@ -122,16 +122,16 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
     isLoading,
     onManualSync,
   } = useHostSync(open);
-  const { setStore, store } = useAuthContext();
+  const { refreshUserCookie } = useAuthContext();
   const error =
     syncStatus?.error &&
     mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
 
   const sync = async () => {
     await onManualSync();
-    if (!!store) {
-      await setStore(store);
-    }
+    // Pick up permission/user-detail changes that sync just brought in,
+    // so the UI reflects them without forcing a re-login.
+    await refreshUserCookie();
   };
 
   const durationAsDate = DateUtils.secondsAsDate(

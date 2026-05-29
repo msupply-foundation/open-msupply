@@ -43,7 +43,6 @@ pub enum FetchUserError {
 }
 #[derive(Debug)]
 pub enum UpdateUserError {
-    MissingCredentials,
     PasswordHashError(BcryptError),
     DatabaseError(RepositoryError),
 }
@@ -340,6 +339,18 @@ impl LoginService {
         }
     }
 
+    /// # Warning
+    ///
+    /// Must not be called from COMS. The result is consumed by
+    /// [`Self::update_user`] → [`UserAccountService::upsert_user`], which deletes
+    /// `user_store_joins` not present in the OG response. OG narrows its response
+    /// to the calling site's stores, so on COMS this would wipe joins for stores
+    /// that belong to other ROMS sites and that COMS legitimately holds for the
+    /// user.
+    /// 
+    /// # Safety
+    /// Safe on ROMS — the wipe scope matches the OG response scope, since a ROMS
+    /// only holds joins for its own site.
     pub async fn fetch_user_from_central(
         service_provider: &ServiceProvider,
         input: &LoginInput,
