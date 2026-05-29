@@ -53,11 +53,22 @@ METHOD_COLORS = {
     "legacyJsonb": "#ff7f0e",
     "v2":          "#1f77b4",
     "indexed":     "#2ca02c",
+    "v2_indexed":  "#9467bd",
 }
 METHOD_MARKERS = {
-    "legacy": "o", "legacyJsonb": "s", "v2": "^", "indexed": "x",
+    "legacy": "o", "legacyJsonb": "s", "v2": "^",
+    "indexed": "x", "v2_indexed": "D",
 }
-METHOD_ORDER = ["legacy", "legacyJsonb", "v2", "indexed"]
+METHOD_ORDER = ["legacy", "legacyJsonb", "v2", "indexed", "v2_indexed"]
+# Display labels — what shows in legends / titles. Use the internal keys
+# (METHOD_ORDER) everywhere else; only the legend reads from here.
+METHOD_LABEL = {
+    "legacy":      "Json",
+    "legacyJsonb": "Jsonb",
+    "v2":          "Relational",
+    "indexed":     "Jsonb Indexed",
+    "v2_indexed":  "Relational Indexed",
+}
 
 
 def render(rows: List[Dict], out_path: str, yscale: str = "log") -> None:
@@ -85,7 +96,8 @@ def render(rows: List[Dict], out_path: str, yscale: str = "log") -> None:
     nrows = len(backends) * len(ops)
     ncols = len(fields)
     fig, axes = plt.subplots(
-        nrows, ncols, figsize=(3.2 * ncols, 2.6 * nrows), sharex=True,
+        nrows, ncols, figsize=(3.2 * ncols, 2.6 * nrows),
+        sharex=True, sharey="row",
         squeeze=False,
     )
 
@@ -109,12 +121,26 @@ def render(rows: List[Dict], out_path: str, yscale: str = "log") -> None:
                     ys = [p[1] for p in pts]
                     ax.plot(
                         xs, ys,
-                        label=m, color=METHOD_COLORS[m],
+                        label=METHOD_LABEL.get(m, m), color=METHOD_COLORS[m],
                         marker=METHOD_MARKERS[m],
                         linewidth=1.2, markersize=4,
                     )
                 ax.set_xscale("log")
                 ax.set_yscale(yscale)
+                if yscale == "log":
+                    # Human-friendly tick labels (10^2 → "100ms", 10^3 → "1s")
+                    # instead of matplotlib's default scientific notation.
+                    from matplotlib.ticker import FuncFormatter, LogLocator
+                    def _fmt_ms(y, _pos):
+                        if y >= 60000:
+                            return f"{y / 60000:g}min"
+                        if y >= 1000:
+                            return f"{y / 1000:g}s"
+                        if y >= 1:
+                            return f"{y:g}ms"
+                        return f"{y * 1000:g}µs"
+                    ax.yaxis.set_major_locator(LogLocator(base=10.0))
+                    ax.yaxis.set_major_formatter(FuncFormatter(_fmt_ms))
                 ax.grid(True, which="both", linestyle=":", alpha=0.4)
                 if row == 0:
                     ax.set_title(field, fontsize=9)
@@ -124,7 +150,26 @@ def render(rows: List[Dict], out_path: str, yscale: str = "log") -> None:
                     ax.set_xlabel("N stores", fontsize=8)
                 ax.tick_params(labelsize=7)
 
-    handles, labels = axes[0][0].get_legend_handles_labels()
+    # Collect handles/labels across ALL subplots and de-duplicate by label.
+    # Methods like `indexed` / `v2_indexed` only have data for the `date`
+    # column, so axes[0][0] alone (typically a non-date field) would omit
+    # them from the legend.
+    seen = set()
+    handles: list = []
+    labels: list = []
+    for row_axes in axes:
+        for ax in row_axes:
+            for h, l in zip(*ax.get_legend_handles_labels()):
+                if l in seen:
+                    continue
+                seen.add(l)
+                handles.append(h)
+                labels.append(l)
+    # Order by METHOD_ORDER (display labels) so the legend reads consistently.
+    order = {METHOD_LABEL.get(m, m): i for i, m in enumerate(METHOD_ORDER)}
+    pairs = sorted(zip(labels, handles), key=lambda p: order.get(p[0], 999))
+    labels = [p[0] for p in pairs]
+    handles = [p[1] for p in pairs]
     if handles:
         fig.legend(
             handles, labels, loc="upper right", fontsize=8,

@@ -87,90 +87,145 @@ Edit the upper bound in the row-generating CTE near the middle of each script:
 
 ## Cleaning up
 
-```sql
--- On Postgres, wrap in a transaction (psql -c runs multi-statement as one
--- already, but BEGIN makes it explicit). On SQLite the FK enforcement is
--- off by default so order is forgiving, but the same patterns work.
-BEGIN;
-DELETE FROM property_v2_value  WHERE record_id LIKE 'perf_store_%';
-DELETE FROM store              WHERE id LIKE 'perf_store_%';
-DELETE FROM name_link          WHERE name_id LIKE 'perf_store_%';
-DELETE FROM name               WHERE id LIKE 'perf_store_%';
--- Match by `property_id` rather than `id` so we catch rows that may have
--- been created with UUID ids elsewhere (e.g. sync) — anything pointing at
--- our perf properties needs to go before we can drop them.
-DELETE FROM property_v2_option WHERE property_id LIKE 'perf_propv2_%' OR property_id LIKE 'perf_sparse_propv2_%';
-DELETE FROM property_v2_table  WHERE property_id LIKE 'perf_propv2_%' OR property_id LIKE 'perf_sparse_propv2_%';
-DELETE FROM property_v2        WHERE id LIKE 'perf_propv2_%' OR id LIKE 'perf_sparse_propv2_%';
-DELETE FROM name_property      WHERE id LIKE 'perf_np_%' OR id LIKE 'perf_sparse_np_%';
-DELETE FROM property           WHERE id LIKE 'perf_prop_%' OR id LIKE 'perf_sparse_prop_%';
-COMMIT;
-```
-
-## Scaling sweep
-
-`perf_sql_test.py` and `perf_plot.py` measure a *single* dataset size. To see
-how each storage approach scales with the number of stores, use
-`perf_scale.py` — it owns the full lifecycle (cleanup → seed dense → seed
-sparse → run matrix → repeat) so each size is measured against a freshly
-seeded DB.
+The full cleanup block is in [cleanup_perf.sql](cleanup_perf.sql). The
+Python sweep runs it before each size; you can also invoke it manually:
 
 ```sh
-python3 server/scripts/perf_scale.py \
-    --sqlite /tmp/perf-scale.sqlite \
-    --sizes 1000,10000,100000,300000,1000000
+sqlite3 path/to/omsupply.sqlite < server/scripts/cleanup_perf.sql
+psql "$DATABASE_URL" -f server/scripts/cleanup_perf.sql
 ```
 
-Both backends in one run (sweeps in series):
+## Running via `perf_sql_test.py`
+
+`perf_sql_test.py` runs the legacy / legacyJsonb / V2 matrix (filter + sort
+queries per field) plus a JSONB-functional-index pass. It works against
+either backend (or both at once), at one size or sweeping across many,
+optionally seeding the DB before each size.
+
+### Single size, existing data (no seed)
+
+Run against whatever's already in the DB. Useful for poking at a real dev
+DB without touching its data:
 
 ```sh
-python3 server/scripts/perf_scale.py \
-    --sqlite /tmp/perf-scale.sqlite \
-    --postgres "postgresql://brian@localhost:5432/tmp" \
+python3 server/scripts/perf_sql_test.py --sqlite path/to/omsupply.sqlite
+```
+
+### Single size with seed lifecycle
+
+Cleanup + seed 100k stores, then run the matrix:
+
+```sh
+python3 server/scripts/perf_sql_test.py \
+    --sqlite /tmp/perf.sqlite \
+    --sizes 100000
+```
+
+### Standalone mode (no OMS instance needed)
+
+Add `--standalone` to use minimal per-size tables (`perf_name_<N>`,
+`perf_pv2_value_<N>`) created from
+[init_perf_schema.sql](init_perf_schema.sql). Works against a **fresh
+blank SQLite or Postgres** — no migrations, no OMS data, no FK linkage
+to worry about.
+
+```sh
+python3 server/scripts/perf_sql_test.py \
+    --sqlite /tmp/perf-standalone.sqlite \
+    --standalone \
     --sizes 1000,10000,100000
 ```
 
-Outputs:
+Why use it:
+- **Fast re-runs.** Each per-size table is idempotently seeded on first
+  use and reused thereafter — no 150s cleanup between sizes.
+- **Self-contained.** Doesn't need an OMS DB; doesn't touch one if you
+  have it (different table names).
+- **One-time setup cost.** The 1M dense seed still takes a couple of
+  minutes the first time, but only ever once per DB file.
 
-- Per-size summary tables on stdout (same shape as `perf_sql_test.py`).
-- CSV at `--csv-out` (default `/tmp/perf_scale.csv`) with one row per
-  `(backend, size, op, field, method)` plus seed/cleanup timing per size.
-- Log-log scaling plot at `--plot-out` (default `/tmp/perf_scale.png`): grid
-  of subplots (rows = backend × op, cols = field) with one line per method.
-  Plotting also lives in [perf_scale_plot.py](perf_scale_plot.py) and can
-  be re-run standalone against the CSV without redoing the sweep:
+### Multi-size sweep (scaling study)
 
-  ```sh
-  python3 server/scripts/perf_scale_plot.py \
-      --csv /tmp/perf_scale.csv --out /tmp/perf_scale.png
-  ```
+Each size is cleaned + reseeded fresh before its matrix runs. Both backends
+in one invocation if you want them measured side-by-side:
 
-  The CSV is written incrementally (one block per size, with an `fflush`
-  after each), so a crash partway through still leaves all completed sizes
-  on disk. If you only have the stdout log (e.g. the sweep was teed to a
-  file and the CSV was clobbered), recover it with:
+```sh
+python3 server/scripts/perf_sql_test.py \
+    --sqlite /tmp/perf.sqlite \
+    --postgres "postgresql://postgres@localhost:5432/tmp" \
+    --sizes 1000,10000,100000,300000,1000000 \
+    --csv-out /tmp/perf_scale.csv \
+    --plot-out /tmp/perf_scale.png
+```
 
-  ```sh
-  python3 server/scripts/perf_scale_recover.py \
-      --log /path/to/captured.log --out /tmp/perf_scale.csv
-  ```
+### Filtered runs (fast iteration on a single field/method)
 
-Flags worth knowing:
+```sh
+# Just the v2 sort at the largest size, with the indexed pass for context:
+python3 server/scripts/perf_sql_test.py --sqlite /tmp/perf.sqlite \
+    --fields date \
+    --methods v2,indexed
 
-- `--skip-sparse` — drop the 30 sparse properties. Saves a *lot* of seed
-  time at large N (sparse adds ~30 × N rows to `property_v2_value`).
-- `--skip-indexed` — drop the functional-index pass.
-- `--iterations N` — *upper bound* on samples per query (default 10). See
-  `--per-case-budget-ms`.
-- `--per-case-budget-ms M` — soft time budget per query case (default 1500).
-  After the warmup sample, the script runs
-  `min(--iterations, floor(M / warmup_ms))` timed samples (floored at 1) so
-  slow cases (e.g. legacy sort at 1M ≈ 3–4s/sample) gracefully degrade to a
-  single sample instead of burning 40s on 11 of them. Per-case `n=` is
-  printed alongside the median.
+# Skip the sparse seed (saves 5–10× seed time at large N):
+python3 server/scripts/perf_sql_test.py --sqlite /tmp/perf.sqlite \
+    --sizes 1000000 --skip-sparse
+```
+
+### Output
+
+- **Stdout** — per-size summary table (field rows × method columns).
+- **`--csv-out`** — one row per `(backend, size, op, field, method)` plus
+  seed/cleanup timing. **CSV is append-only by default** — re-running with
+  the same path adds rows rather than overwriting. Delete the file first
+  to start fresh.
+- **`--plot-out`** — log-log scaling lines (delegates to `perf_scale_plot`).
+
+### Plots from an existing CSV
+
+The CSV is the source of truth. Both plot scripts read it independently —
+no need to re-run measurements to tweak a plot.
+
+```sh
+# Scaling lines (x = N, lines per method):
+python3 server/scripts/perf_scale_plot.py \
+    --csv perf_scale.csv --out perf_scale.png --yscale log
+
+# Per-size bars (one bar per method per field):
+python3 server/scripts/perf_plot.py \
+    --csv perf_scale.csv --size 100000 --out perf_bars_100k.png --cap 500
+```
+
+### Flags worth knowing
+
+- `--iterations N` — *upper bound* on samples per query (default 10).
+- `--per-case-budget-ms M` — soft time budget per query case. With this set,
+  the timer runs `min(--iterations, floor(M / warmup_ms))` samples (floored
+  at 1) so slow cases (e.g. legacy sort at 1M stores ≈ 3–4s/sample)
+  gracefully degrade to one sample rather than burning 40s on 11. Default:
+  1500ms in sweep mode, unset otherwise. Per-case `n=` is printed alongside
+  the median so you can see when a case degraded.
 - `--sort-shape correlated` — use the correlated-subquery sort shape the
   server currently emits, instead of the LEFT-JOIN rewrite (default).
+- `--skip-sparse` — when seeding via `--sizes`, drop the 30 sparse
+  properties. Saves a lot of seed time at large N.
 
-**Heads-up on runtime.** At N=1,000,000 with sparse, total seed time can
-run 20–40 min per backend and `property_v2_value` grows to ~30M rows. For
-a quick sanity pass use `--sizes 1000,10000,100000 --skip-sparse`.
+### Runtime heads-up
+
+At N=1,000,000 with sparse on Postgres, total seed time runs 20–40 min per
+backend and `property_v2_value` grows to ~30M rows. For a quick pass use
+`--sizes 1000,10000,100000 --skip-sparse`.
+
+### Manual / debug invocation of the seed SQL
+
+The Python scripts call `psql -f` / `sqlite3.executescript()` on the
+[`seed_perf_properties.*`](seed_perf_properties.postgres.sql) files with the
+store count substituted at runtime. You can also run those files directly
+when debugging the SQL itself:
+
+```sh
+sqlite3 path/to/omsupply.sqlite < server/scripts/seed_perf_properties.sqlite.sql
+psql "$DATABASE_URL" -f server/scripts/seed_perf_properties.postgres.sql
+```
+
+The seed counts the file's hard-coded `generate_series(1, 100000)` / `WHERE
+i < 100000` bound as the default; edit it in place for direct runs.

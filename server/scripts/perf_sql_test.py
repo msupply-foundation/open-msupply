@@ -32,7 +32,7 @@ import statistics
 import subprocess
 import sys
 import time
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -140,23 +140,250 @@ def applicable_methods(field: str) -> List[str]:
 # filter and sort compare as TEXT (ISO-8601 sorts lexicographically the same
 # as chronologically, so no cast is needed and no IMMUTABLE-wrapper dance
 # is required for the index).
+# Each case lists `(idx_name, table, expr)` tuples per backend.
+# `query_method` says which gen_queries variant the pass should time against;
+# `result_key` is the column name used in the summary table / CSV / plot.
+#
+# Indexes are on the JSONB extract that the SORT query uses (`ORDER BY
+# (extract) LIMIT 50` — plain text extract, no cast). For dense fields
+# where the filter query uses the same expression (date, option), the
+# index helps both filter and sort. For text the filter is `LIKE '%…%'`
+# (uncacheable via btree), so the index only helps sort. For number the
+# filter casts to integer, so the index helps sort only — adding a second
+# integer-cast index for filter is doable but not worth the complexity.
 INDEXED_CASES = [
     {
+        "field": "text",
+        "query_method": "legacyJsonb",
+        "result_key": "indexed",
+        "sqlite_indexes": [(
+            "idx_perf_beans_thoughts_jsonb", "name",
+            "json_extract(properties_jsonb, '$.beans_thoughts')",
+        )],
+        "postgres_indexes": [(
+            "idx_perf_beans_thoughts_jsonb", "name",
+            "(properties_jsonb ->> 'beans_thoughts')",
+        )],
+    },
+    {
+        "field": "number",
+        "query_method": "legacyJsonb",
+        "result_key": "indexed",
+        "sqlite_indexes": [(
+            "idx_perf_beans_count_jsonb", "name",
+            "json_extract(properties_jsonb, '$.beans_count')",
+        )],
+        "postgres_indexes": [(
+            "idx_perf_beans_count_jsonb", "name",
+            "(properties_jsonb ->> 'beans_count')",
+        )],
+    },
+    {
+        "field": "option",
+        "query_method": "legacyJsonb",
+        "result_key": "indexed",
+        "sqlite_indexes": [(
+            "idx_perf_favourite_bean_jsonb", "name",
+            "json_extract(properties_jsonb, '$.favourite_bean')",
+        )],
+        "postgres_indexes": [(
+            "idx_perf_favourite_bean_jsonb", "name",
+            "(properties_jsonb ->> 'favourite_bean')",
+        )],
+    },
+    {
         "field": "date",
-        "sqlite_indexes": [
-            (
-                "idx_perf_visit_date_jsonb",
-                "json_extract(properties_jsonb, '$.visit_date')",
-            ),
-        ],
-        "postgres_indexes": [
-            # Text extract — matches the filter `WHERE (extract) BETWEEN '…'`
-            # and the sort `ORDER BY (extract)` (both use plain text compare).
-            (
-                "idx_perf_visit_date_jsonb",
-                "(properties_jsonb ->> 'visit_date')",
-            ),
-        ],
+        "query_method": "legacyJsonb",
+        "result_key": "indexed",
+        "sqlite_indexes": [(
+            "idx_perf_visit_date_jsonb", "name",
+            "json_extract(properties_jsonb, '$.visit_date')",
+        )],
+        "postgres_indexes": [(
+            "idx_perf_visit_date_jsonb", "name",
+            "(properties_jsonb ->> 'visit_date')",
+        )],
+    },
+    # Sparse fields — only the specific sparse properties the matrix
+    # actually queries (chosen at mid density in `SPARSE_LEGACY_KEY`).
+    # The other 26 sparse properties go unindexed.
+    {
+        "field": "text_sparse",
+        "query_method": "legacyJsonb",
+        "result_key": "indexed",
+        "sqlite_indexes": [(
+            "idx_perf_sparse_text_09_jsonb", "name",
+            "json_extract(properties_jsonb, '$.sparse_text_09')",
+        )],
+        "postgres_indexes": [(
+            "idx_perf_sparse_text_09_jsonb", "name",
+            "(properties_jsonb ->> 'sparse_text_09')",
+        )],
+    },
+    {
+        "field": "number_sparse",
+        "query_method": "legacyJsonb",
+        "result_key": "indexed",
+        "sqlite_indexes": [(
+            "idx_perf_sparse_num_04_jsonb", "name",
+            "json_extract(properties_jsonb, '$.sparse_num_04')",
+        )],
+        "postgres_indexes": [(
+            "idx_perf_sparse_num_04_jsonb", "name",
+            "(properties_jsonb ->> 'sparse_num_04')",
+        )],
+    },
+    {
+        "field": "option_sparse",
+        "query_method": "legacyJsonb",
+        "result_key": "indexed",
+        "sqlite_indexes": [(
+            "idx_perf_sparse_opt_04_jsonb", "name",
+            "json_extract(properties_jsonb, '$.sparse_opt_04')",
+        )],
+        "postgres_indexes": [(
+            "idx_perf_sparse_opt_04_jsonb", "name",
+            "(properties_jsonb ->> 'sparse_opt_04')",
+        )],
+    },
+    {
+        "field": "date_sparse",
+        "query_method": "legacyJsonb",
+        "result_key": "indexed",
+        "sqlite_indexes": [(
+            "idx_perf_sparse_date_05_jsonb", "name",
+            "json_extract(properties_jsonb, '$.sparse_date_05')",
+        )],
+        "postgres_indexes": [(
+            "idx_perf_sparse_date_05_jsonb", "name",
+            "(properties_jsonb ->> 'sparse_date_05')",
+        )],
+    },
+]
+
+
+# -- V2 indexed pass --------------------------------------------------------
+#
+# Best-attempt composite index per value-column type: `(table_name,
+# property_id, value_<type>)` on property_v2_value. Index expression is
+# identical between SQLite and Postgres. We expect:
+#   - filter (=, BETWEEN): index used, big win for number/option/date.
+#                          text filter is LIKE '%…%' → btree useless.
+#   - sort (LEFT JOIN ORDER BY pv.value_<type>): index NOT used because
+#     the LEFT JOIN forces a name-side drive. Empirically confirmed on
+#     both backends. Including these cases anyway because the user wants
+#     to see how much it actually helps for sparse where the LEFT JOIN
+#     scan can short-circuit on NOT-EXISTS earlier than on dense.
+V2_INDEXED_CASES = [
+    {
+        "field": "text",
+        "query_method": "v2",
+        "result_key": "v2_indexed",
+        "sqlite_indexes": [(
+            "idx_perf_pv2_value_text", "property_v2_value",
+            "table_name, property_id, value_text",
+        )],
+        "postgres_indexes": [(
+            "idx_perf_pv2_value_text", "property_v2_value",
+            "table_name, property_id, value_text",
+        )],
+    },
+    {
+        "field": "number",
+        "query_method": "v2",
+        "result_key": "v2_indexed",
+        "sqlite_indexes": [(
+            "idx_perf_pv2_value_number", "property_v2_value",
+            "table_name, property_id, value_number",
+        )],
+        "postgres_indexes": [(
+            "idx_perf_pv2_value_number", "property_v2_value",
+            "table_name, property_id, value_number",
+        )],
+    },
+    {
+        "field": "option",
+        "query_method": "v2",
+        "result_key": "v2_indexed",
+        "sqlite_indexes": [(
+            "idx_perf_pv2_value_option_id", "property_v2_value",
+            "table_name, property_id, value_option_id",
+        )],
+        "postgres_indexes": [(
+            "idx_perf_pv2_value_option_id", "property_v2_value",
+            "table_name, property_id, value_option_id",
+        )],
+    },
+    {
+        "field": "date",
+        "query_method": "v2",
+        "result_key": "v2_indexed",
+        "sqlite_indexes": [(
+            "idx_perf_pv2_value_date", "property_v2_value",
+            "table_name, property_id, value_date",
+        )],
+        "postgres_indexes": [(
+            "idx_perf_pv2_value_date", "property_v2_value",
+            "table_name, property_id, value_date",
+        )],
+    },
+    # Sparse variants reuse the same value-type indexes — they're keyed by
+    # (table_name, property_id, value_<type>), so the leading two cols pin
+    # the index to whichever property_id the query targets. We still define
+    # one case per sparse field because run_indexed_pass is keyed by field
+    # name; the index is recreated each case (~minute on 18M rows). If that
+    # turns out to dominate, we can teach the helper to batch related cases.
+    {
+        "field": "text_sparse",
+        "query_method": "v2",
+        "result_key": "v2_indexed",
+        "sqlite_indexes": [(
+            "idx_perf_pv2_value_text", "property_v2_value",
+            "table_name, property_id, value_text",
+        )],
+        "postgres_indexes": [(
+            "idx_perf_pv2_value_text", "property_v2_value",
+            "table_name, property_id, value_text",
+        )],
+    },
+    {
+        "field": "number_sparse",
+        "query_method": "v2",
+        "result_key": "v2_indexed",
+        "sqlite_indexes": [(
+            "idx_perf_pv2_value_number", "property_v2_value",
+            "table_name, property_id, value_number",
+        )],
+        "postgres_indexes": [(
+            "idx_perf_pv2_value_number", "property_v2_value",
+            "table_name, property_id, value_number",
+        )],
+    },
+    {
+        "field": "option_sparse",
+        "query_method": "v2",
+        "result_key": "v2_indexed",
+        "sqlite_indexes": [(
+            "idx_perf_pv2_value_option_id", "property_v2_value",
+            "table_name, property_id, value_option_id",
+        )],
+        "postgres_indexes": [(
+            "idx_perf_pv2_value_option_id", "property_v2_value",
+            "table_name, property_id, value_option_id",
+        )],
+    },
+    {
+        "field": "date_sparse",
+        "query_method": "v2",
+        "result_key": "v2_indexed",
+        "sqlite_indexes": [(
+            "idx_perf_pv2_value_date", "property_v2_value",
+            "table_name, property_id, value_date",
+        )],
+        "postgres_indexes": [(
+            "idx_perf_pv2_value_date", "property_v2_value",
+            "table_name, property_id, value_date",
+        )],
     },
 ]
 
@@ -228,93 +455,174 @@ def run_sql_postgres(conn_str: str, sql: str) -> None:
 # `perf_sql_test.py` itself via the `--seed N` flag. Living here keeps the
 # seed/cleanup logic in one place rather than duplicated across scripts.
 
-SEED_DENSE_SQLITE    = "seed_perf_properties.sqlite.sql"
-SEED_DENSE_POSTGRES  = "seed_perf_properties.postgres.sql"
-SEED_SPARSE_SQLITE   = "seed_perf_sparse_properties.sqlite.sql"
-SEED_SPARSE_POSTGRES = "seed_perf_sparse_properties.postgres.sql"
+# Unified seed files — same SQL for both modes, just different table-name
+# substitutions. See the seed files' headers for placeholder docs.
+SEED_DENSE_SQLITE      = "seed_perf_dense.sqlite.sql"
+SEED_DENSE_POSTGRES    = "seed_perf_dense.postgres.sql"
+SEED_SPARSE_SQLITE     = "seed_perf_sparse.sqlite.sql"
+SEED_SPARSE_POSTGRES   = "seed_perf_sparse.postgres.sql"
+
+# Mode-specific init scripts: OMS gets property_v2 / property defs + options
+# (FK targets the value rows reference); standalone gets the per-size table
+# schema + perf_pv2_option seed.
+INIT_OMS_SQLITE        = "init_perf_oms_metadata.sqlite.sql"
+INIT_OMS_POSTGRES      = "init_perf_oms_metadata.postgres.sql"
+INIT_SCHEMA_FILE       = "init_perf_schema.sql"  # standalone-only, single file
 
 
-def load_seed_sql(filename: str, size: Optional[int]) -> str:
-    """Read a seed SQL file from `SCRIPTS_DIR`, optionally substituting the
-    store-count bound.
-
-    `size=None` → load unchanged (sparse seed has no store-count bound).
-    Dense seeds hard-code 100000; we swap that for the requested N in
-    whichever pattern matches (`WHERE i < 100000` for SQLite,
-    `generate_series(1, 100000)` for Postgres).
-    """
+def _load_sql(filename: str, replacements: dict) -> str:
+    """Load `filename` from SCRIPTS_DIR and `str.replace` each (key → value).
+    Used by both modes to substitute the placeholders the SQL files use."""
     with open(os.path.join(SCRIPTS_DIR, filename), "r") as f:
         sql = f.read()
-    if size is None:
-        return sql
-    sqlite_marker = "WHERE i < 100000"
-    pg_marker = "generate_series(1, 100000)"
-    if sqlite_marker in sql:
-        return sql.replace(sqlite_marker, f"WHERE i < {size}")
-    if pg_marker in sql:
-        return sql.replace(pg_marker, f"generate_series(1, {size})")
-    raise RuntimeError(
-        f"size marker not found in {filename}; expected one of "
-        f"{sqlite_marker!r} or {pg_marker!r}"
-    )
+    for k, v in replacements.items():
+        sql = sql.replace(k, v)
+    return sql
 
 
-# Cleanup block from server/scripts/README.md. Order matters on Postgres
-# (FK enforcement); SQLite doesn't enforce FKs by default but the same order
-# works.
-CLEANUP_STATEMENTS: List[str] = [
-    "DELETE FROM property_v2_value  WHERE record_id LIKE 'perf_store_%'",
-    "DELETE FROM store              WHERE id LIKE 'perf_store_%'",
-    "DELETE FROM name_link          WHERE name_id LIKE 'perf_store_%'",
-    "DELETE FROM name               WHERE id LIKE 'perf_store_%'",
-    "DELETE FROM property_v2_option WHERE property_id LIKE 'perf_propv2_%' OR property_id LIKE 'perf_sparse_propv2_%'",
-    "DELETE FROM property_v2_table  WHERE property_id LIKE 'perf_propv2_%' OR property_id LIKE 'perf_sparse_propv2_%'",
-    "DELETE FROM property_v2        WHERE id LIKE 'perf_propv2_%' OR id LIKE 'perf_sparse_propv2_%'",
-    "DELETE FROM name_property      WHERE id LIKE 'perf_np_%' OR id LIKE 'perf_sparse_np_%'",
-    "DELETE FROM property           WHERE id LIKE 'perf_prop_%' OR id LIKE 'perf_sparse_prop_%'",
-]
+def _oms_replacements(size: int) -> dict:
+    return {
+        "__SIZE__":              str(size),
+        "__NAME_TABLE__":        "name",
+        "__PV2_VALUE_TABLE__":   "property_v2_value",
+        "__PV2_OPTION_TABLE__":  "property_v2_option",
+    }
+
+
+def _standalone_replacements(size: int, jsonb_type: str) -> dict:
+    return {
+        "__SIZE__":              str(size),
+        "__JSONB_TYPE__":        jsonb_type,
+        "__NAME_TABLE__":        f"perf_name_{size}",
+        "__PV2_VALUE_TABLE__":   f"perf_pv2_value_{size}",
+        "__PV2_OPTION_TABLE__":  "perf_pv2_option",
+    }
+
+
+# Cleanup SQL — OMS mode only. Standalone uses separate per-size tables
+# that don't conflict between sizes, so no inter-size cleanup is needed.
+CLEANUP_FILE = "cleanup_perf.sql"
+
+
+def _load_cleanup_sql() -> str:
+    with open(os.path.join(SCRIPTS_DIR, CLEANUP_FILE), "r") as f:
+        return f.read()
 
 
 def cleanup_sqlite(db_path: str) -> None:
-    run_sql_sqlite(db_path, "BEGIN;\n" + ";\n".join(CLEANUP_STATEMENTS) + ";\nCOMMIT;\n")
+    run_sql_sqlite(db_path, _load_cleanup_sql())
 
 
 def cleanup_postgres(conn_str: str) -> None:
-    run_sql_postgres(conn_str, "BEGIN;\n" + ";\n".join(CLEANUP_STATEMENTS) + ";\nCOMMIT;\n")
+    run_sql_postgres(conn_str, _load_cleanup_sql())
 
 
 def seed_lifecycle(
     backend: str, target: str, size: int, skip_sparse: bool = False,
 ) -> Tuple[float, float, float]:
-    """Run cleanup → seed dense → (optionally) seed sparse for one size.
-
-    Returns `(cleanup_ms, seed_dense_ms, seed_sparse_ms)`. Suitable for use
-    inside a per-size sweep loop and for one-shot seeding via `--seed N`.
-    """
+    """OMS-mode lifecycle: cleanup → init OMS metadata → seed dense
+    (+ optional sparse) using the unified seed files with OMS table names.
+    Returns `(cleanup_ms, seed_dense_ms, seed_sparse_ms)`."""
     if backend == "sqlite":
-        run_sql = run_sql_sqlite
-        cleanup = cleanup_sqlite
+        run_sql, init_file = run_sql_sqlite, INIT_OMS_SQLITE
         dense_file, sparse_file = SEED_DENSE_SQLITE, SEED_SPARSE_SQLITE
+        cleanup = cleanup_sqlite
     else:
-        run_sql = run_sql_postgres
-        cleanup = cleanup_postgres
+        run_sql, init_file = run_sql_postgres, INIT_OMS_POSTGRES
         dense_file, sparse_file = SEED_DENSE_POSTGRES, SEED_SPARSE_POSTGRES
+        cleanup = cleanup_postgres
+    repl = _oms_replacements(size)
 
     t0 = time.perf_counter()
     cleanup(target)
     cleanup_ms = (time.perf_counter() - t0) * 1000.0
 
+    # OMS metadata is small + idempotent — fold into dense_ms rather than
+    # report separately (it's a per-DB one-shot in practice).
     t0 = time.perf_counter()
-    run_sql(target, load_seed_sql(dense_file, size))
+    run_sql(target, _load_sql(init_file, repl))
+    run_sql(target, _load_sql(dense_file, repl))
     seed_dense_ms = (time.perf_counter() - t0) * 1000.0
 
     seed_sparse_ms = 0.0
     if not skip_sparse:
         t0 = time.perf_counter()
-        run_sql(target, load_seed_sql(sparse_file, None))
+        run_sql(target, _load_sql(sparse_file, repl))
         seed_sparse_ms = (time.perf_counter() - t0) * 1000.0
 
     return cleanup_ms, seed_dense_ms, seed_sparse_ms
+
+
+def probe_standalone_size_count(backend: str, target: str, size: int) -> int:
+    """Return row count of perf_name_<size>. Returns -1 if the table doesn't
+    exist (treated by callers as "must seed")."""
+    table = f"perf_name_{size}"
+    if backend == "sqlite":
+        conn = sqlite3.connect(target)
+        try:
+            cur = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                (table,),
+            )
+            if cur.fetchone() is None:
+                return -1
+            return int(conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
+        finally:
+            conn.close()
+    # Two-step probe — Postgres `COUNT(*) FROM <missing>` errors out.
+    exists = subprocess.run(
+        ["psql", target, "-A", "-t", "-q", "-X", "-c",
+         f"SELECT to_regclass('public.{table}') IS NOT NULL"],
+        capture_output=True, text=True, check=True,
+    )
+    if (exists.stdout.strip().splitlines()[-1] or "f").lower() in ("f", "false"):
+        return -1
+    count = subprocess.run(
+        ["psql", target, "-A", "-t", "-q", "-X", "-c",
+         f"SELECT COUNT(*) FROM {table}"],
+        capture_output=True, text=True, check=True,
+    )
+    return int(count.stdout.strip().splitlines()[-1] or "0")
+
+
+def ensure_perf_size(
+    backend: str, target: str, size: int, skip_sparse: bool = False,
+) -> Tuple[float, float, float]:
+    """Standalone-mode lifecycle: idempotent CREATE per-size tables + seed
+    dense (+ optional sparse) using the unified seed files with the
+    standalone table names. Returns `(init_ms, seed_dense_ms,
+    seed_sparse_ms)`. Re-runs at the same size short-circuit on count probe."""
+    if backend == "sqlite":
+        run_sql, jsonb_type = run_sql_sqlite, "TEXT"
+        dense_file, sparse_file = SEED_DENSE_SQLITE, SEED_SPARSE_SQLITE
+    else:
+        run_sql, jsonb_type = run_sql_postgres, "JSONB"
+        dense_file, sparse_file = SEED_DENSE_POSTGRES, SEED_SPARSE_POSTGRES
+    repl = _standalone_replacements(size, jsonb_type)
+
+    # Always run init — CREATE TABLE/INDEX IF NOT EXISTS is cheap.
+    t0 = time.perf_counter()
+    run_sql(target, _load_sql(INIT_SCHEMA_FILE, repl))
+    init_ms = (time.perf_counter() - t0) * 1000.0
+
+    # Probe count; skip dense seed if the table already has the requested N.
+    existing = probe_standalone_size_count(backend, target, size)
+    seed_dense_ms = 0.0
+    if existing < size:
+        t0 = time.perf_counter()
+        run_sql(target, _load_sql(dense_file, repl))
+        seed_dense_ms = (time.perf_counter() - t0) * 1000.0
+
+    seed_sparse_ms = 0.0
+    if not skip_sparse:
+        # The sparse seed is idempotent (ON CONFLICT DO NOTHING) so re-runs
+        # are cheap but not free — at large N the row-count check + LIKE
+        # filter still scans. We accept that for now.
+        t0 = time.perf_counter()
+        run_sql(target, _load_sql(sparse_file, repl))
+        seed_sparse_ms = (time.perf_counter() - t0) * 1000.0
+
+    return init_ms, seed_dense_ms, seed_sparse_ms
 
 
 # -- SIGINT handler for SQLite (interrupts the in-flight query) -------------
@@ -342,10 +650,119 @@ def install_sigint_handler() -> None:
     signal.signal(signal.SIGINT, handler)
 
 
+def run_indexed_pass(
+    backend: str,
+    target: str,
+    cases: List[dict],
+    gen_queries: Callable[..., Tuple[str, str]],
+    time_case: Callable[[str], Tuple[float, float, int]],
+    results: dict,
+    limit: int,
+    fields_filter: Optional[set] = None,
+    label_prefix: str = "",
+    tables: Optional[dict] = None,
+    size_suffix: str = "",
+) -> None:
+    """CREATE every index in each case, ANALYZE the touched tables, time
+    `gen_queries(field, case.query_method, limit)` against those indexes,
+    store under `results[op][field][case.result_key]`, then DROP.
+
+    In standalone mode, the case's logical table name (`name` or
+    `property_v2_value`) is resolved via `tables` and `size_suffix` is
+    appended to the index name so per-size indexes don't collide. OMS mode
+    leaves both untouched (size_suffix='', tables=OMS_TABLES)."""
+    for case in cases:
+        field = case["field"]
+        if field not in results["filter"]:
+            continue
+        if fields_filter is not None and field not in fields_filter:
+            continue
+        indexes = case["sqlite_indexes" if backend == "sqlite" else "postgres_indexes"]
+        query_method = case["query_method"]
+        result_key = case["result_key"]
+
+        # Resolve each index's table via the tables dict (standalone mode
+        # swaps to per-size tables). The `table` field in the case is the
+        # logical OMS name; `tables` maps it to the actual table name.
+        resolved_indexes = []
+        for idx_name, table, expr in indexes:
+            # Map literal OMS table name to its tables-dict key.
+            if tables is not None and tables is not OMS_TABLES:
+                key = {"name": "name",
+                       "property_v2_value": "pv2_value",
+                       "property_v2_option": "pv2_option"}.get(table, table)
+                actual_table = tables.get(key, table)
+            else:
+                actual_table = table
+            actual_idx = idx_name + size_suffix
+            resolved_indexes.append((actual_idx, actual_table, expr))
+
+        ddl_exec = exec_sqlite_ddl if backend == "sqlite" else exec_postgres_ddl
+        for idx_name, table, expr in resolved_indexes:
+            ddl_exec(target, f"CREATE INDEX IF NOT EXISTS {idx_name} ON {table} ({expr})")
+        for table in sorted({t for _, t, _ in resolved_indexes}):
+            ddl_exec(target, f"ANALYZE {table}")
+
+        try:
+            f_sql, s_sql = gen_queries(field, query_method, limit, tables)
+            for op, sql in (("filter", f_sql), ("sort", s_sql)):
+                label = f"{label_prefix}{op:6} {field:24} {result_key:11}"
+                try:
+                    med, p95, n = time_case(sql)
+                    results[op][field][result_key] = (med, p95)
+                    print(f"{label} ... median {fmt(med)}  p95 {fmt(p95)}  n={n}")
+                except Exception as e:
+                    results[op][field][result_key] = None
+                    print(f"{label} ... ERROR: {e}")
+        finally:
+            # Always drop every index so a follow-up run starts from the
+            # same unindexed baseline as the main matrix.
+            for idx_name, _, _ in resolved_indexes:
+                ddl_exec(target, f"DROP INDEX IF EXISTS {idx_name}")
+
+
 SORT_SHAPE = "leftjoin"  # set in main(); 'leftjoin' or 'correlated'
 
 
-def queries_sqlite(field: str, method: str, limit: int) -> Tuple[str, str]:
+# Logical → actual table-name resolution. OMS mode uses the schema as-is;
+# standalone mode swaps to per-size `perf_*_<N>` tables created from
+# `init_perf_schema.sql`. Queries here are built with the OMS names and
+# post-processed via `_substitute_tables` so the query SQL doesn't have to
+# care which mode it's running in.
+OMS_TABLES: dict = {
+    "name":       "name",
+    "pv2_value":  "property_v2_value",
+    "pv2_option": "property_v2_option",
+}
+
+
+def resolve_tables(standalone: bool, size: Optional[int]) -> dict:
+    if not standalone:
+        return OMS_TABLES
+    if size is None:
+        raise ValueError("standalone mode requires a size")
+    return {
+        "name":       f"perf_name_{size}",
+        "pv2_value":  f"perf_pv2_value_{size}",
+        "pv2_option": "perf_pv2_option",  # shared across sizes
+    }
+
+
+def _substitute_tables(sql: str, tables: dict) -> str:
+    """Swap OMS table refs for the resolved ones. Order matters — most
+    specific patterns first so we don't double-substitute. `FROM name n`
+    keeps the v2 alias; `FROM name` (no alias) becomes `FROM <new> AS name`
+    so legacy `name.col` column refs continue to resolve."""
+    if tables is OMS_TABLES:
+        return sql
+    sql = sql.replace("FROM name n", f"FROM {tables['name']} n")
+    sql = sql.replace("FROM name ",  f"FROM {tables['name']} AS name ")
+    sql = sql.replace("property_v2_value",  tables["pv2_value"])
+    sql = sql.replace("property_v2_option", tables["pv2_option"])
+    return sql
+
+
+def queries_sqlite(field: str, method: str, limit: int, tables: Optional[dict] = None) -> Tuple[str, str]:
     # Nested fields short-circuit the per-type matrix: they only run on the
     # legacy paths and use a deep JSON path with sibling junk to traverse.
     if is_nested(field):
@@ -487,7 +904,7 @@ def queries_sqlite(field: str, method: str, limit: int) -> Tuple[str, str]:
     return f_sql, s_sql
 
 
-def queries_postgres(field: str, method: str, limit: int) -> Tuple[str, str]:
+def queries_postgres(field: str, method: str, limit: int, tables: Optional[dict] = None) -> Tuple[str, str]:
     # Nested fields short-circuit the per-type matrix: they only run on the
     # legacy paths via `#>>` (jsonb path-to-text extract) so the parser walks
     # the deep path including sibling junk at each level.
@@ -804,6 +1221,206 @@ def make_psql_runner(
     return runner, close
 
 
+# -- CSV output -------------------------------------------------------------
+#
+# Shared between the per-size matrix runner here and the sweep loop. Format
+# matches what `perf_scale_plot.py` expects, so a CSV from any invocation
+# plots the same way.
+
+import csv  # noqa: E402
+
+CSV_FIELDNAMES = [
+    "backend", "size", "op", "field", "method",
+    "median_ms", "p95_ms",
+    "cleanup_ms", "seed_ms_dense", "seed_ms_sparse",
+]
+
+
+def _open_incremental_csv(path: str):
+    """Open CSV for incremental writes in APPEND mode (safer than 'w' —
+    won't clobber prior runs you forgot you cared about). Header is only
+    written if the file is new/empty. Flush after every appended row block
+    so worst-case crash loss is one size's worth of data.
+
+    To start fresh, delete the file first.
+    """
+    needs_header = (not os.path.exists(path)) or os.path.getsize(path) == 0
+    f = open(path, "a", newline="")
+    w = csv.DictWriter(f, fieldnames=CSV_FIELDNAMES)
+    if needs_header:
+        w.writeheader()
+        f.flush()
+    return f, w
+
+
+def parse_sizes(s: str) -> List[int]:
+    sizes = [int(x.strip()) for x in s.split(",") if x.strip()]
+    if not sizes:
+        raise argparse.ArgumentTypeError("at least one size required")
+    if any(n <= 0 for n in sizes):
+        raise argparse.ArgumentTypeError("sizes must be positive")
+    return sizes
+
+
+def has_sparse(backend: str, target: str) -> bool:
+    return has_sparse_sqlite(target) if backend == "sqlite" else has_sparse_postgres(target)
+
+
+def probe_perf_store_count(backend: str, target: str) -> int:
+    """Return number of perf_store_* rows currently in `name`. Used as the
+    'size' column in the CSV when running without --sizes (against an
+    existing DB) so plots can still place the data point on an N axis."""
+    sql = "SELECT COUNT(*) FROM name WHERE id LIKE 'perf_store_%'"
+    if backend == "sqlite":
+        conn = sqlite3.connect(target)
+        try:
+            return int(conn.execute(sql).fetchone()[0])
+        finally:
+            conn.close()
+    result = subprocess.run(
+        ["psql", target, "-A", "-t", "-q", "-X", "-c", sql],
+        capture_output=True, text=True, check=True,
+    )
+    return int((result.stdout.strip() or "0").splitlines()[-1])
+
+
+# -- Per-size matrix runner -------------------------------------------------
+
+
+def run_matrix_at_size(
+    backend: str,
+    target: str,
+    size_label: int,
+    gen_queries: Callable[..., Tuple[str, str]],
+    make_runner: Callable[[str], Callable[[], None]],
+    iterations: int,
+    limit: int,
+    budget_ms: Optional[float],
+    fields: List[str],
+    fields_filter: Optional[set],
+    methods_filter: Optional[set],
+    sparse_seeded: bool,  # noqa: ARG001 — present for future use
+    cleanup_ms: float = 0.0,
+    seed_dense_ms: float = 0.0,
+    seed_sparse_ms: float = 0.0,
+    csv_writer=None,
+    csv_file=None,
+    label_prefix: str = "",
+    tables: Optional[dict] = None,
+    size_suffix: str = "",
+) -> Dict:
+    """Run the legacy/legacyJsonb/v2 matrix + the two indexed passes against
+    the current DB state. Returns the results dict; optionally appends rows
+    to the open CSV writer (flushed per-size). `tables` and `size_suffix`
+    are threaded through to queries + indexed passes so standalone mode
+    targets the per-size `perf_*_<N>` tables (and per-size index names)."""
+
+    results: Dict[str, Dict[str, Dict[str, Optional[Tuple[float, float]]]]] = {
+        "filter": {f: {} for f in fields},
+        "sort":   {f: {} for f in fields},
+    }
+
+    def method_enabled(m: str) -> bool:
+        return methods_filter is None or m in methods_filter
+
+    def time_case(sql: str) -> Tuple[float, float, int]:
+        if budget_ms is not None:
+            return time_query_budgeted(make_runner(sql), iterations, budget_ms)
+        return time_query(make_runner(sql), iterations)
+
+    # Wrap gen_queries to apply table substitution at every return path
+    # (queries_*.py has three returns — nested/legacy/v2 — and adding
+    # substitution to each is fragile).
+    base_gen = gen_queries
+    def gen_queries_subst(field, method, limit, _tables=None):  # noqa: ARG001
+        f, s = base_gen(field, method, limit)
+        if tables is not None:
+            f = _substitute_tables(f, tables)
+            s = _substitute_tables(s, tables)
+        return f, s
+    gen_queries = gen_queries_subst
+
+    # Matrix
+    for field in fields:
+        for method in applicable_methods(field):
+            if not method_enabled(method):
+                continue
+            try:
+                f_sql, s_sql = gen_queries(field, method, limit, tables)
+            except Exception as e:
+                print(f"{label_prefix}  query-gen ERROR {field}/{method}: {e}")
+                continue
+            for op, sql in (("filter", f_sql), ("sort", s_sql)):
+                label = f"{label_prefix}{op:6} {field:24} {method:11}"
+                try:
+                    med, p95, n = time_case(sql)
+                    results[op][field][method] = (med, p95)
+                    print(f"{label} ... median {fmt(med)}  p95 {fmt(p95)}  n={n}")
+                except Exception as e:
+                    results[op][field][method] = None
+                    print(f"{label} ... ERROR: {e}")
+
+    # Indexed passes
+    if method_enabled("indexed"):
+        print(f"\n{label_prefix}== indexed pass (functional index on JSONB extracts) ==")
+        run_indexed_pass(
+            backend=backend, target=target, cases=INDEXED_CASES,
+            gen_queries=gen_queries, time_case=time_case,
+            results=results, limit=limit,
+            fields_filter=fields_filter, label_prefix=label_prefix,
+            tables=tables, size_suffix=size_suffix,
+        )
+    if method_enabled("v2_indexed"):
+        print(f"\n{label_prefix}== v2 indexed pass (composite index on property_v2_value) ==")
+        run_indexed_pass(
+            backend=backend, target=target, cases=V2_INDEXED_CASES,
+            gen_queries=gen_queries, time_case=time_case,
+            results=results, limit=limit,
+            fields_filter=fields_filter, label_prefix=label_prefix,
+            tables=tables, size_suffix=size_suffix,
+        )
+
+    # CSV append (per-size flush, like the old perf_scale.run_sweep)
+    if csv_writer is not None:
+        method_cols = ["legacy", "legacyJsonb", "v2", "indexed", "v2_indexed"]
+        for op in ("filter", "sort"):
+            for field in fields:
+                for m in method_cols:
+                    v = results[op][field].get(m)
+                    if v is None:
+                        continue
+                    csv_writer.writerow({
+                        "backend": backend, "size": size_label,
+                        "op": op, "field": field, "method": m,
+                        "median_ms": v[0], "p95_ms": v[1],
+                        "cleanup_ms": cleanup_ms,
+                        "seed_ms_dense": seed_dense_ms,
+                        "seed_ms_sparse": seed_sparse_ms,
+                    })
+        if csv_file is not None:
+            csv_file.flush()
+
+    return results
+
+
+def print_summary_tables(results: Dict, fields: List[str], backend: str, size_label: Optional[int] = None) -> None:
+    method_cols = ["legacy", "legacyJsonb", "v2", "indexed", "v2_indexed"]
+    col_labels = ["legacy", "jsonb", "v2", "indexed", "v2_idx"]
+    header_suffix = f", N={size_label:,}" if size_label is not None else ""
+    print()
+    for op in ("filter", "sort"):
+        print(f"== {op.upper()} median latency ({backend}{header_suffix}) ==")
+        print(f"{'field':<24}" + "".join(f"{lbl:>11}" for lbl in col_labels))
+        for field in fields:
+            row = results[op][field]
+            cells = []
+            for method in method_cols:
+                cell = row.get(method)
+                cells.append(fmt(cell[0]) if cell else "    —")
+            print(f"{field:<24}" + "".join(f"{c:>11}" for c in cells))
+        print()
+
+
 # -- Main -------------------------------------------------------------------
 
 
@@ -826,158 +1443,195 @@ def main() -> None:
         "'leftjoin' is the rewrite that pre-joins the lookup row.",
     )
     ap.add_argument(
-        "--seed", type=int, metavar="N",
-        help="Before running the matrix, cleanup + seed N stores. Without "
-        "this flag the script runs against whatever's already in the DB "
-        "(legacy behaviour).",
+        "--sizes", type=parse_sizes, default=None,
+        help="Comma-separated store counts. If given, the script runs as a "
+        "sweep: clean → seed → matrix for each size. If omitted, the matrix "
+        "runs once against whatever data is already in the DB (size column "
+        "in the CSV is the probed perf_store_% count).",
     )
     ap.add_argument(
         "--skip-sparse", action="store_true",
-        help="When seeding via --seed, skip the 30 variably-sparse "
-        "properties. Saves a lot of seed time at large N.",
+        help="When seeding via --sizes, skip the 30 variably-sparse properties.",
+    )
+    ap.add_argument(
+        "--standalone", action="store_true",
+        help="Use per-size standalone tables (perf_name_<N>, perf_pv2_value_<N>) "
+        "instead of the OMS schema. Doesn't require a pre-existing OMS DB and "
+        "skips the slow cleanup between sizes — idempotent CREATE+seed per "
+        "size, data persists across runs. Pair with --sizes.",
     )
     ap.add_argument(
         "--per-case-budget-ms", type=float, default=None,
-        help="Soft time budget per query case. When set, the timer runs "
-        "`min(--iterations, floor(budget / warmup_ms))` samples (floored "
-        "at 1) so slow cases gracefully degrade rather than running 11 "
-        "multi-second samples. Default: unset (use fixed --iterations).",
+        help="Soft time budget per query case. With this set the timer runs "
+        "`min(--iterations, floor(budget / warmup_ms))` samples (floored at 1) "
+        "so slow cases gracefully degrade. Default 1500 when --sizes used, "
+        "unset otherwise.",
     )
+    ap.add_argument(
+        "--fields", default=None,
+        help="Comma-separated list of fields to include (e.g. 'date' or "
+        "'date,number'). Default: all dense fields plus sparse/nested if "
+        "the data is present.",
+    )
+    ap.add_argument(
+        "--methods", default=None,
+        help="Comma-separated list of methods to run. Choices: legacy, "
+        "legacyJsonb, v2, indexed, v2_indexed. Default: all.",
+    )
+    ap.add_argument(
+        "--csv-out", default="/tmp/perf_sql_test.csv",
+        help="Stream results to this CSV path (incremental, append-only, "
+        "flush per-size). Default /tmp/perf_sql_test.csv.",
+    )
+    ap.add_argument("--plot-out", default=None,
+        help="Render a scaling plot at the end (calls perf_scale_plot).")
+    ap.add_argument("--yscale", choices=["log", "linear"], default="log",
+        help="Y-axis scale for --plot-out (default log).")
     args = ap.parse_args()
+
+    fields_filter = (
+        set(s.strip() for s in args.fields.split(",") if s.strip())
+        if args.fields else None
+    )
+    methods_filter = (
+        set(s.strip() for s in args.methods.split(",") if s.strip())
+        if args.methods else None
+    )
     global SORT_SHAPE
     SORT_SHAPE = args.sort_shape
+
     if not args.sqlite and not args.postgres:
-        ap.error("specify --sqlite or --postgres")
-    if args.sqlite and args.postgres:
-        ap.error("specify only one of --sqlite / --postgres")
+        ap.error("specify --sqlite and/or --postgres")
+
+    # Budget default depends on mode — sweep can run multi-second sort cases
+    # at large N, single-shot usually doesn't need a budget cap.
+    budget_ms = args.per_case_budget_ms
+    if budget_ms is None and args.sizes is not None:
+        budget_ms = 1500.0
 
     install_sigint_handler()
 
-    target = args.sqlite if args.sqlite else args.postgres
-    backend = "sqlite" if args.sqlite else "postgres"
-
-    if args.seed is not None:
-        print(f"[{backend}] cleanup + seed N={args.seed:,} "
-              f"(sparse {'skipped' if args.skip_sparse else 'included'}) …",
-              flush=True)
-        cleanup_ms, dense_ms, sparse_ms = seed_lifecycle(
-            backend, target, args.seed, skip_sparse=args.skip_sparse,
-        )
-        print(f"[{backend}] cleanup={cleanup_ms/1000:.1f}s  "
-              f"seed_dense={dense_ms/1000:.1f}s  "
-              f"seed_sparse={sparse_ms/1000:.1f}s")
-
+    backends: List[Tuple[str, str]] = []
     if args.sqlite:
-        make_runner, close_runner = make_sqlite_runner(args.sqlite)
-        gen_queries = queries_sqlite
-        sparse_seeded = has_sparse_sqlite(args.sqlite)
-    else:
-        make_runner, close_runner = make_psql_runner(args.postgres)
-        gen_queries = queries_postgres
-        sparse_seeded = has_sparse_postgres(args.postgres)
+        backends.append(("sqlite", args.sqlite))
+    if args.postgres:
+        backends.append(("postgres", args.postgres))
 
-    def time_case(sql: str) -> Tuple[float, float, int]:
-        if args.per_case_budget_ms is not None:
-            return time_query_budgeted(
-                make_runner(sql), args.iterations, args.per_case_budget_ms,
-            )
-        return time_query(make_runner(sql), args.iterations)
-
-    methods = ["legacy", "legacyJsonb", "v2"]
-    fields = ["text", "number", "option", "date"] + NESTED_FIELDS_DENSE
-    if sparse_seeded:
-        fields = fields + SPARSE_FIELDS + NESTED_FIELDS_SPARSE
-
-    print(f"Backend:    {backend}")
+    print(f"Backends:   {', '.join(b for b, _ in backends)}")
     print(f"Iterations: {args.iterations} (+1 warmup)   LIMIT: {args.limit}")
     print(f"V2 sort:    {SORT_SHAPE}")
-    print(f"Sparse:     {'present — *_sparse cases included' if sparse_seeded else 'not seeded — *_sparse cases skipped'}")
+    if args.sizes:
+        print(f"Sizes:      {', '.join(f'{n:,}' for n in args.sizes)}")
+        print(f"Sparse:     {'skipped' if args.skip_sparse else 'included'}")
+    else:
+        print(f"Sizes:      <run against existing DB state, no seed>")
+    if fields_filter is not None:
+        print(f"Fields:     {','.join(sorted(fields_filter))} (filtered)")
+    if methods_filter is not None:
+        print(f"Methods:    {','.join(sorted(methods_filter))} (filtered)")
     print()
 
-    results = {"filter": {}, "sort": {}}
-    try:
-      for field in fields:
-        results["filter"][field] = {}
-        results["sort"][field] = {}
-        for method in applicable_methods(field):
-            f_sql, s_sql = gen_queries(field, method, args.limit)
-            for op, sql in (("filter", f_sql), ("sort", s_sql)):
-                label = f"{op:6} {field:24} {method:11}"
-                try:
-                    med, p95, n = time_case(sql)
-                    results[op][field][method] = (med, p95)
-                    print(f"{label} ... median {fmt(med)}  p95 {fmt(p95)}  n={n}")
-                except Exception as e:
-                    results[op][field][method] = None
-                    print(f"{label} ... ERROR: {e}")
-
-      # Indexed pass: create a functional index over each configured JSONB
-      # extract, re-time the legacyJsonb queries (the planner will pick up
-      # the index automatically), record results under the "indexed" method,
-      # then drop the index. Done AFTER the main matrix so leftover indexes
-      # never accelerate the unindexed numbers above.
-      print()
-      print("== indexed pass (functional index on JSONB extracts) ==")
-      for case in INDEXED_CASES:
-        field = case["field"]
-        if field not in results["filter"]:
-            print(f"  skipping {field}: field not in matrix")
-            continue
-        indexes = case["sqlite_indexes" if backend == "sqlite" else "postgres_indexes"]
-        # Full index, not partial: SQLite (and PG) only use a partial index
-        # when the query includes a predicate matching the index's WHERE
-        # clause. The matrix queries don't filter by id, so the partial
-        # variant would be ignored and the indexed pass would look like a
-        # null result. Full index covers the whole `name` table for the
-        # duration of this case, then we drop it.
-        if backend == "sqlite":
-            for idx_name, expr in indexes:
-                exec_sqlite_ddl(args.sqlite, f"CREATE INDEX IF NOT EXISTS {idx_name} ON name ({expr})")
-            exec_sqlite_ddl(args.sqlite, "ANALYZE name")
-        else:
-            for idx_name, expr in indexes:
-                exec_postgres_ddl(args.postgres, f"CREATE INDEX IF NOT EXISTS {idx_name} ON name ({expr})")
-            exec_postgres_ddl(args.postgres, "ANALYZE name")
-        try:
-            f_sql, s_sql = gen_queries(field, "legacyJsonb", args.limit)
-            for op, sql in (("filter", f_sql), ("sort", s_sql)):
-                label = f"{op:6} {field:24} indexed    "
-                try:
-                    med, p95, n = time_case(sql)
-                    results[op][field]["indexed"] = (med, p95)
-                    print(f"{label} ... median {fmt(med)}  p95 {fmt(p95)}  n={n}")
-                except Exception as e:
-                    results[op][field]["indexed"] = None
-                    print(f"{label} ... ERROR: {e}")
-        finally:
-            # Always drop every index so a follow-up run starts from the
-            # same unindexed baseline as the main matrix.
-            for idx_name, _ in indexes:
-                ddl_drop = f"DROP INDEX IF EXISTS {idx_name}"
-                if backend == "sqlite":
-                    exec_sqlite_ddl(args.sqlite, ddl_drop)
-                else:
-                    exec_postgres_ddl(args.postgres, ddl_drop)
-    finally:
-      close_runner()
-
-    # Summary tables
-    print()
-    for op in ("filter", "sort"):
-        print(f"== {op.upper()} median latency ({backend}) ==")
-        print(
-            f"{'field':<24}{'legacy':>11}{'jsonb':>11}{'v2':>11}{'indexed':>11}"
-        )
-        for field in fields:
-            row = results[op][field]
-            cells = []
-            for method in methods + ["indexed"]:
-                cell = row.get(method)
-                cells.append(fmt(cell[0]) if cell else "    —")
-            print(
-                f"{field:<24}{cells[0]:>11}{cells[1]:>11}{cells[2]:>11}{cells[3]:>11}"
-            )
+    # CSV is opened upfront so a sweep crash mid-flight still leaves
+    # completed sizes on disk.
+    csv_file, csv_writer = (None, None)
+    if args.csv_out:
+        csv_file, csv_writer = _open_incremental_csv(args.csv_out)
+        print(f"streaming CSV → {args.csv_out}")
         print()
+
+    def make_runner_for(backend: str, target: str):
+        if backend == "sqlite":
+            return make_sqlite_runner(target)
+        return make_psql_runner(target)
+
+    def queries_for(backend: str):
+        return queries_sqlite if backend == "sqlite" else queries_postgres
+
+    try:
+        for backend, target in backends:
+            for size in (args.sizes if args.sizes is not None else [None]):
+                cleanup_ms = seed_dense_ms = seed_sparse_ms = 0.0
+                if args.standalone:
+                    if size is None:
+                        ap.error("--standalone requires --sizes (need an N to pick a table)")
+                    tables = resolve_tables(standalone=True, size=size)
+                    size_suffix = f"_{size}"
+                    print(f"=== {backend} N={size:,} (standalone) ===")
+                    print(f"[{backend}] ensure perf_*_{size} (sparse "
+                          f"{'skipped' if args.skip_sparse else 'included'}) …", flush=True)
+                    cleanup_ms, seed_dense_ms, seed_sparse_ms = ensure_perf_size(
+                        backend, target, size, skip_sparse=args.skip_sparse,
+                    )
+                    print(f"[{backend}] init={cleanup_ms/1000:.1f}s  "
+                          f"seed_dense={seed_dense_ms/1000:.1f}s  "
+                          f"seed_sparse={seed_sparse_ms/1000:.1f}s")
+                    size_label = size
+                    # In standalone, sparse presence is determined by whether
+                    # we just seeded (or pre-existing seeded) sparse data.
+                    sparse_seeded = not args.skip_sparse
+                elif size is not None:
+                    tables = None  # OMS_TABLES — use as-is
+                    size_suffix = ""
+                    print(f"=== {backend} N={size:,} ===")
+                    print(f"[{backend}] cleanup + seed (sparse "
+                          f"{'skipped' if args.skip_sparse else 'included'}) …", flush=True)
+                    cleanup_ms, seed_dense_ms, seed_sparse_ms = seed_lifecycle(
+                        backend, target, size, skip_sparse=args.skip_sparse,
+                    )
+                    print(f"[{backend}] cleanup={cleanup_ms/1000:.1f}s  "
+                          f"seed_dense={seed_dense_ms/1000:.1f}s  "
+                          f"seed_sparse={seed_sparse_ms/1000:.1f}s")
+                    size_label = size
+                    sparse_seeded = has_sparse(backend, target)
+                else:
+                    tables = None
+                    size_suffix = ""
+                    size_label = probe_perf_store_count(backend, target)
+                    print(f"=== {backend} (existing data, N={size_label:,}) ===")
+                    sparse_seeded = has_sparse(backend, target)
+
+                fields = ["text", "number", "option", "date"] + NESTED_FIELDS_DENSE
+                if sparse_seeded:
+                    fields = fields + SPARSE_FIELDS + NESTED_FIELDS_SPARSE
+                if fields_filter is not None:
+                    fields = [f for f in fields if f in fields_filter]
+
+                make_runner, close_runner = make_runner_for(backend, target)
+                try:
+                    results = run_matrix_at_size(
+                        backend=backend, target=target, size_label=size_label,
+                        gen_queries=queries_for(backend),
+                        make_runner=make_runner,
+                        iterations=args.iterations, limit=args.limit,
+                        budget_ms=budget_ms,
+                        fields=fields, fields_filter=fields_filter,
+                        methods_filter=methods_filter,
+                        sparse_seeded=sparse_seeded,
+                        cleanup_ms=cleanup_ms,
+                        seed_dense_ms=seed_dense_ms,
+                        seed_sparse_ms=seed_sparse_ms,
+                        csv_writer=csv_writer, csv_file=csv_file,
+                        label_prefix="  " if size is not None else "",
+                        tables=tables, size_suffix=size_suffix,
+                    )
+                finally:
+                    close_runner()
+                print_summary_tables(
+                    results, fields, backend,
+                    size_label=size_label if (size is not None or args.csv_out) else None,
+                )
+    finally:
+        if csv_file is not None:
+            csv_file.close()
+            print(f"wrote CSV: {args.csv_out}")
+
+    if args.plot_out and args.csv_out:
+        try:
+            from perf_scale_plot import render, load_csv
+            rows = load_csv(args.csv_out)
+            render(rows, args.plot_out, yscale=args.yscale)
+        except ImportError as e:
+            print(f"could not import perf_scale_plot: {e}")
 
 
 if __name__ == "__main__":
