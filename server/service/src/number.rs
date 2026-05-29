@@ -80,7 +80,7 @@ pub fn next_number(
 
 #[cfg(test)]
 mod test {
-    use std::{collections::HashSet, env};
+    use std::{collections::HashSet, env, time::Instant};
 
     use repository::{
         mock::{
@@ -334,5 +334,111 @@ mod test {
             let new_value = unique_numbers.insert(num);
             assert!(new_value);
         }
+    }
+
+    /// Throughput benchmark for `next_number` under concurrent load.
+    ///
+    /// Spawns `BENCH_THREADS` OS threads, each of which fetches the next number
+    /// `BENCH_OPS_PER_THREAD` times in a loop, and reports total wall-clock time
+    /// and throughput (operations/second). It also asserts that every number
+    /// handed out is unique, so it doubles as a correctness check under load.
+    ///
+    /// This is gated behind `RUN_CONCURRENT_TESTS=true` so it doesn't run in the
+    /// normal test suite. Run against each backend to compare:
+    ///
+    /// sqlite:
+    /// ```sh
+    /// RUN_CONCURRENT_TESTS=true cargo test --package service --lib --features=sqlite \
+    ///   -- number::test::bench_concurrent_next_number --exact --nocapture
+    /// ```
+    ///
+    /// postgres (requires a running postgres, see repository test config):
+    /// ```sh
+    /// RUN_CONCURRENT_TESTS=true cargo test --package service --lib --features=postgres \
+    ///   -- number::test::bench_concurrent_next_number --exact --nocapture
+    /// ```
+    ///
+    /// Concurrency and load are configurable via env vars:
+    ///   BENCH_THREADS         number of concurrent threads (default 10)
+    ///   BENCH_OPS_PER_THREAD  next_number calls per thread (default 100)
+    ///
+    /// Note: the connection pool defaults to 10 connections, so threads beyond
+    /// that will queue waiting for a connection (which mirrors production).
+    #[actix_rt::test]
+    async fn bench_concurrent_next_number() {
+        if env::var("RUN_CONCURRENT_TESTS").as_deref() != Ok("true") {
+            return;
+        }
+
+        let num_threads: u64 = env::var("BENCH_THREADS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(10);
+        let ops_per_thread: u64 = env::var("BENCH_OPS_PER_THREAD")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(100);
+        let total_ops = num_threads * ops_per_thread;
+
+        let backend = if cfg!(feature = "postgres") {
+            "postgres"
+        } else {
+            "sqlite"
+        };
+
+        let (_, _, connection_manager, _) = test_db::setup_all(
+            "bench_concurrent_next_number",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        // Create the first record up front to avoid the concurrent-insert race
+        // (that path is covered by test_concurrent_next_number); from here every
+        // call is an update, which is what we want to benchmark.
+        let connection = connection_manager.connection().unwrap();
+        let _num = next_number(&connection, &NumberRowType::Stocktake, "store_a").unwrap();
+
+        let start = Instant::now();
+
+        let mut handles = vec![];
+        for _ in 0..num_threads {
+            let manager = connection_manager.clone();
+            let handle = std::thread::spawn(move || {
+                let connection = manager.connection().unwrap();
+                let mut numbers = Vec::with_capacity(ops_per_thread as usize);
+                for _ in 0..ops_per_thread {
+                    let num =
+                        next_number(&connection, &NumberRowType::Stocktake, "store_a").unwrap();
+                    numbers.push(num);
+                }
+                numbers
+            });
+            handles.push(handle);
+        }
+
+        let mut unique_numbers = HashSet::with_capacity(total_ops as usize);
+        for handle in handles {
+            for num in handle.join().unwrap() {
+                // Every number handed out must be unique, even under contention.
+                assert!(unique_numbers.insert(num), "duplicate number: {}", num);
+            }
+        }
+
+        let elapsed = start.elapsed();
+        let ops_per_sec = total_ops as f64 / elapsed.as_secs_f64();
+
+        println!(
+            "\nnext_number benchmark [{}]\n  threads:        {}\n  ops/thread:     {}\n  total ops:      {}\n  elapsed:        {:.3?}\n  throughput:     {:.0} ops/sec\n  avg latency:    {:.3} ms/op\n",
+            backend,
+            num_threads,
+            ops_per_thread,
+            total_ops,
+            elapsed,
+            ops_per_sec,
+            elapsed.as_secs_f64() * 1000.0 / total_ops as f64,
+        );
+
+        // Sanity: we got exactly the number of unique values we expected.
+        assert_eq!(unique_numbers.len() as u64, total_ops);
     }
 }
