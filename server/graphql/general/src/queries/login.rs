@@ -37,14 +37,6 @@ impl InvalidCredentials {
     }
 }
 
-pub struct MissingCredentials;
-#[Object]
-impl MissingCredentials {
-    pub async fn description(&self) -> &str {
-        "Missing credentials"
-    }
-}
-
 pub struct CentralSyncRequired;
 #[Object]
 impl CentralSyncRequired {
