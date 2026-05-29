@@ -1,6 +1,6 @@
 import { act } from 'react';
 import { useIntlUtils } from '@common/intl';
-import { renderHookWithProvider } from '@common/utils';
+import { renderHookWithProvider } from '../utils/testing/renderHookWithProvider';
 
 describe('RTLProvider', () => {
   it('Sets the direction of the body to be rtl when a rtl language is the current locale', () => {

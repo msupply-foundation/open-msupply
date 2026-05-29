@@ -4,7 +4,7 @@ import { Autocomplete, AutocompleteOption } from '@common/components';
 import { CampaignNode } from '@common/types';
 import { useTranslation } from '@common/intl';
 import { ProgramFragment, useProgramList } from '@openmsupply-client/programs';
-import { isArray } from 'lodash';
+import isArray from 'lodash/isArray';
 
 enum OptionType {
   Campaign = 'campaign',

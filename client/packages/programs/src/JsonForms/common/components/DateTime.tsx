@@ -13,7 +13,8 @@ import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
 import { formatErrors } from '../formatErrors';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
-import { DateOrTimeView, PickersActionBarAction } from '@mui/x-date-pickers';
+import { PickersActionBarAction } from '@mui/x-date-pickers/PickersActionBar';
+import { DateOrTimeView } from '@mui/x-date-pickers/models';
 
 const Options = z
   .object({

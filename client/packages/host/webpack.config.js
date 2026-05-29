@@ -23,8 +23,8 @@ module.exports = env => {
          * In "static" mode single HTML file with bundle report will be generated.
          * In "json" mode single JSON file with bundle report will be generated
          */
-        analyzerMode: 'disabled',
-        generateStatsFile: true,
+        analyzerMode: 'json',
+        generateStatsFile: false,
       })
     : new DummyWebpackPlugin();
 
@@ -66,6 +66,36 @@ module.exports = env => {
     optimization: {
       splitChunks: {
         chunks: 'all',
+        // Default minSize is 20KB, which means a small module used in two
+        // feature chunks just gets inlined into both. Several internal
+        // helpers (e.g. `system/src/utils.ts`, ActivityLog/Report shared
+        // components) hit this case; lowering the threshold lets webpack
+        // pull them into a shared chunk instead.
+        minSize: 1024,
+        cacheGroups: {
+          // Vendor split: every npm package above the default threshold
+          // goes into its own shared vendor chunk.
+          defaultVendors: {
+            test: /[\\/]node_modules[\\/]/,
+            priority: -10,
+            reuseExistingChunk: true,
+          },
+          // Anything shared across 2+ feature chunks from our workspace
+          // is hoisted out, regardless of size.
+          sharedInternal: {
+            test: /[\\/]packages[\\/](system|common|programs|coldchain|invoices|requisitions|inventory|purchasing|reports|dashboard|config)[\\/]src[\\/]/,
+            minChunks: 2,
+            minSize: 0,
+            priority: -20,
+            reuseExistingChunk: true,
+            enforce: true,
+          },
+          default: {
+            minChunks: 2,
+            priority: -30,
+            reuseExistingChunk: true,
+          },
+        },
       },
       usedExports: true,
     },

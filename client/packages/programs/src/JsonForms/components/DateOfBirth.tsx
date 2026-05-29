@@ -26,7 +26,7 @@ import {
   FORM_LABEL_WIDTH,
   useZodOptionsValidation,
 } from '../common';
-import { PickersActionBarAction } from '@mui/x-date-pickers';
+import { PickersActionBarAction } from '@mui/x-date-pickers/PickersActionBar';
 
 const Options = z
   .object({

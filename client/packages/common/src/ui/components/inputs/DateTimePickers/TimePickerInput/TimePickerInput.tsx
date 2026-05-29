@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { TimePicker, TimePickerProps } from '@mui/x-date-pickers';
+import { TimePicker, TimePickerProps } from '@mui/x-date-pickers/TimePicker';
 import { DateUtils } from '@common/intl';
 import { useDebounceCallback } from '@common/hooks';
 import { getActionBarSx, getPaperSx, getTextFieldSx } from '../styles';

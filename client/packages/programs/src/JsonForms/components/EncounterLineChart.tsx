@@ -1,22 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { rankWith, uiTypeIs, ControlProps } from '@jsonforms/core';
 import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
-import {
-  Line,
-  LineChart,
-  useFormatDateTime,
-  XAxis,
-  YAxis,
-  Box,
-  FormLabel,
-} from '@openmsupply-client/common';
+import { useFormatDateTime, Box, FormLabel } from '@openmsupply-client/common';
 import { useZodOptionsValidation } from '../common';
 import {
   CartesianGrid,
+  Line,
+  LineChart,
   Tooltip,
   TooltipProps,
   Label,
   ReferenceLine,
+  XAxis,
+  YAxis,
 } from 'recharts';
 import { useEncounter } from '../../api';
 import { z } from 'zod';

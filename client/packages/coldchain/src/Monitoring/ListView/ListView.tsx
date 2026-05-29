@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, lazy, Suspense } from 'react';
 import { DetailTabs } from '@common/components';
 import { TemperatureLogList } from './TemperatureLog';
 import { useTranslation } from '@common/intl';
@@ -8,14 +8,23 @@ import {
 } from '@openmsupply-client/common';
 import { TemperatureBreachList } from './TemperatureBreach';
 import { AppBarButtons } from './AppBarButtons';
-import { TemperatureChart } from '../../common/Monitoring/TemperatureChart/';
+// Lazy-loaded: pulls in `recharts` only when the chart tab renders.
+const TemperatureChart = lazy(() =>
+  import('../../common/Monitoring/TemperatureChart/').then(m => ({
+    default: m.TemperatureChart,
+  }))
+);
 
 export const ListView: FC = () => {
   const t = useTranslation();
 
   const tabs = [
     {
-      Component: <TemperatureChart />,
+      Component: (
+        <Suspense fallback={null}>
+          <TemperatureChart />
+        </Suspense>
+      ),
       value: t('label.chart'),
       sort: {
         key: TemperatureLogSortFieldInput.Datetime,

@@ -1,7 +1,10 @@
 export * from './numbers';
 export * from './quantities';
 export * from './formatters';
-export * from './testing';
+// Note: './testing' is intentionally NOT re-exported here — it would otherwise
+// be pulled into the production bundle via the module-federation shared surface
+// of @openmsupply-client/common. Tests should import test utilities from
+// '../utils/testing/...' (relative) or '@common/testing'.
 export * from './arrays';
 export * from './regex';
 export * from './pricing';

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { lazy, Suspense, useCallback, useMemo } from 'react';
 import {
   ItemWithAvailableStockFragment,
   ItemWithStatsFragment,
@@ -26,8 +26,19 @@ import {
 import { DraftRequestLine } from './hooks';
 import { RequestLineFragment } from '../../api';
 import { RequestedSelection } from './RequestedSelection';
-import { ConsumptionHistory } from './ItemCharts/ConsumptionHistory';
-import { StockEvolution } from './ItemCharts/StockEvolution';
+// Lazy-loaded so the ~300KB `recharts` vendor chunk is fetched only when
+// the charts tab is actually rendered (these are the only consumers in
+// this feature).
+const ConsumptionHistory = lazy(() =>
+  import('./ItemCharts/ConsumptionHistory').then(m => ({
+    default: m.ConsumptionHistory,
+  }))
+);
+const StockEvolution = lazy(() =>
+  import('./ItemCharts/StockEvolution').then(m => ({
+    default: m.StockEvolution,
+  }))
+);
 import { StockDistribution } from './ItemCharts/StockDistribution';
 import {
   getLeftPanel,
@@ -363,12 +374,14 @@ export const RequestLineEdit = ({
                   alignItems: 'center',
                 }}
               >
-                {isInfoVisible(CONSUMPTION_HISTORY_INFO) && (
-                  <ConsumptionHistory id={line.id} />
-                )}
-                {isInfoVisible(STOCK_EVOLUTION_INFO) && (
-                  <StockEvolution id={line.id} />
-                )}
+                <Suspense fallback={null}>
+                  {isInfoVisible(CONSUMPTION_HISTORY_INFO) && (
+                    <ConsumptionHistory id={line.id} />
+                  )}
+                  {isInfoVisible(STOCK_EVOLUTION_INFO) && (
+                    <StockEvolution id={line.id} />
+                  )}
+                </Suspense>
               </Box>
             </>
           )}

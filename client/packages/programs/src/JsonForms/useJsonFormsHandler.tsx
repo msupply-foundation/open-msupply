@@ -1,4 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
+import type { ComponentType } from 'react';
+import { rankWith, uiTypeIs, ControlProps } from '@jsonforms/core';
+
+// The tester is a tiny pure function — inlined here so we don't have to
+// sync-import EncounterLineChart.tsx (which pulls in `recharts` ~300KB).
+const encounterLineChartTester = rankWith(4, uiTypeIs('EncounterLineChart'));
+
+// The actual chart is lazy-loaded; recharts is only fetched if a form
+// actually contains an encounter line chart.
+const LazyEncounterLineChart = lazy(() =>
+  import('./components/EncounterLineChart').then(m => ({
+    default: m.EncounterLineChart,
+  }))
+);
+const EncounterLineChart: ComponentType<ControlProps> = props => (
+  <Suspense fallback={null}>
+    <LazyEncounterLineChart {...props} />
+  </Suspense>
+);
 import {
   useTranslation,
   useNotification,
@@ -11,8 +30,6 @@ import {
   UISchemaElement,
 } from '@jsonforms/core';
 import {
-  EncounterLineChart,
-  encounterLineChartTester,
   BMI,
   bmiTester,
   DateOfBirth,

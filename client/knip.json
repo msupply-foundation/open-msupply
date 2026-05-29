@@ -1,0 +1,63 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "workspaces": {
+    "packages/host": {
+      "entry": ["src/index.ts", "src/bootstrap.tsx"]
+    },
+    "packages/common": {
+      "entry": ["src/index.ts"]
+    },
+    "packages/config": {
+      "entry": ["src/index.ts"]
+    },
+    "packages/dashboard": {
+      "entry": ["src/index.ts"]
+    },
+    "packages/coldchain": {
+      "entry": ["src/ColdchainService.tsx"]
+    },
+    "packages/invoices": {
+      "entry": ["src/InvoiceService.tsx"]
+    },
+    "packages/inventory": {
+      "entry": ["src/InventoryService.tsx"]
+    },
+    "packages/programs": {
+      "entry": ["src/Service/Service.tsx"]
+    },
+    "packages/purchasing": {
+      "entry": ["src/PurchasingService.tsx"]
+    },
+    "packages/reports": {
+      "entry": ["src/ReportsService.tsx"]
+    },
+    "packages/requisitions": {
+      "entry": ["src/RequisitionService.tsx"]
+    },
+    "packages/system": {
+      "entry": ["src/**/Service/Service.tsx", "src/**/Service/index.ts"]
+    }
+  },
+  "ignore": [
+    "packages/android/**",
+    "packages/electron/**",
+    "packages/host/dist/**",
+    "packages/host/public/**",
+    "packages/host/webpack.config.js",
+    "**/*.generated.ts",
+    "**/locales/**"
+  ],
+  "ignoreDependencies": [
+    "@types/.*",
+    "babel-.*",
+    "eslint-.*",
+    "jetifier",
+    "@chromatic-com/storybook",
+    "@storybook/.*",
+    "storybook-addon-swc",
+    "@welldone-software/why-did-you-render",
+    "find-up"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "webpack": false
+}

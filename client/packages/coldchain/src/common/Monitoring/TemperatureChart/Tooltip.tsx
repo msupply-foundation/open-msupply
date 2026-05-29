@@ -1,11 +1,11 @@
 import { useTheme } from '@common/styles';
 import {
   Box,
-  TooltipProps,
   Typography,
   UNDEFINED_STRING_VALUE,
   useFormatDateTime,
 } from '@openmsupply-client/common';
+import type { TooltipProps } from 'recharts';
 import { useFormatTemperature } from '../..';
 
 import React from 'react';

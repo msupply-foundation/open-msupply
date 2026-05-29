@@ -21,7 +21,7 @@ import {
   getAllocatedQuantity,
   DraftStockOutLineFragment,
 } from '../../../StockOut';
-import { min } from 'lodash';
+import min from 'lodash/min';
 
 export interface OutboundLineEditTableProps {
   currency?: CurrencyRowFragment | null;

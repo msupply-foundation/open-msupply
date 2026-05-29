@@ -2,7 +2,9 @@ export * from './AdherenceScore';
 export * from './BMI';
 export * from './DateOfBirth';
 export * from './DecisionTree/DecisionTree';
-export * from './EncounterLineChart';
+// Note: EncounterLineChart is intentionally NOT re-exported here — it pulls
+// in `recharts` (~300KB). useJsonFormsHandler imports it lazily so it lands
+// in its own async chunk.
 export * from './IdGenerator';
 export * from './QuantityDispensed';
 export * from './Search/Search';

@@ -9,7 +9,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { PurchaseOrderLineFragment, usePurchaseOrderLine } from '../../api';
-import { DateCalendar } from '@mui/x-date-pickers';
+import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 
 type DateType = 'expected' | 'requested';
 

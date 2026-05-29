@@ -2,20 +2,22 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
   Area,
-  BasicSpinner,
-  Box,
   CartesianGrid,
-  ChartTooltip,
+  Tooltip as ChartTooltip,
   ComposedChart,
   Dot,
   Legend,
   Line,
-  NothingHere,
   ResponsiveContainer,
-  Typography,
-  UNDEFINED_STRING_VALUE,
   XAxis,
   YAxis,
+} from 'recharts';
+import {
+  BasicSpinner,
+  Box,
+  NothingHere,
+  Typography,
+  UNDEFINED_STRING_VALUE,
   useAppTheme,
   useUrlQuery,
   useIsExtraSmallScreen,

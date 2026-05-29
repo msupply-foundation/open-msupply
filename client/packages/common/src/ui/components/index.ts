@@ -23,12 +23,12 @@ import StepLabel from '@mui/material/StepLabel';
 import Step from '@mui/material/Step';
 import Stepper from '@mui/material/Stepper';
 import Card from '@mui/material/Card';
-import {
-  DatePicker,
-  DatePickerProps,
-  DateTimePicker,
-  DateTimePickerProps,
-} from '@mui/x-date-pickers';
+// `DatePicker` and `DateTimePicker` are lazy wrappers so the
+// @mui/x-date-pickers library (~400KB) stays out of the eager
+// federation-shared bundle. Types are erased and don't add weight.
+import { DatePicker, DateTimePicker } from './inputs/DateTimePickers/lazy';
+import type { DatePickerProps } from '@mui/x-date-pickers/DatePicker';
+import type { DateTimePickerProps } from '@mui/x-date-pickers/DateTimePicker';
 import FormLabel from '@mui/material/FormLabel';
 import Button from '@mui/material/Button';
 import Hidden from '@mui/material/Hidden';

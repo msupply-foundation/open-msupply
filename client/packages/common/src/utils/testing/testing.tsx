@@ -9,7 +9,6 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { GqlProvider, KBarProvider } from '../..';
 import { Environment } from '@openmsupply-client/config';
 import { ConfirmationModalProvider } from '../../ui/components/modals';
-import { renderHook } from '@testing-library/react';
 import i18next from 'i18next';
 import { initReactI18next, I18nextProvider } from 'react-i18next';
 import common from '@common/intl/locales/en/common.json';
@@ -137,14 +136,9 @@ export const setScreenSize_ONLY_FOR_TESTING = (screenSize: number): void => {
   window.matchMedia = createMatchMedia(screenSize);
 };
 
-export const renderHookWithProvider = <Props, Result>(
-  hook: (props: Props) => Result,
-  options?: {
-    providerProps?: { locale: SupportedLocales };
-  }
-) =>
-  renderHook(hook, {
-    wrapper: ({ children }: { children?: React.ReactNode }) => (
-      <TestingProvider {...options?.providerProps}>{children}</TestingProvider>
-    ),
-  });
+// `renderHookWithProvider` previously lived here, importing @testing-library/react
+// statically. Because @openmsupply-client/common is the shared module-federation
+// surface, that static import pulled @testing-library/react (+ aria-query) into
+// the production bundle. The helper now lives at:
+//   packages/common/src/utils/testing/renderHookWithProvider.tsx
+// (deliberately not re-exported via the common index).

@@ -1,6 +1,9 @@
-import React from 'react';
-import { TemperatureChart } from '../../common/Monitoring';
+import React, { lazy, Suspense } from 'react';
 import { Card } from '@common/components';
+
+const TemperatureChart = lazy(() =>
+  import('../../common/Monitoring').then(m => ({ default: m.TemperatureChart }))
+);
 
 export const MobileTemperatureChart = () => {
   return (
@@ -13,7 +16,9 @@ export const MobileTemperatureChart = () => {
         borderRadius: 4,
       }}
     >
-      <TemperatureChart />
+      <Suspense fallback={null}>
+        <TemperatureChart />
+      </Suspense>
     </Card>
   );
 };
