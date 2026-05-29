@@ -770,16 +770,14 @@ async fn test_changelog_outgoing_sync_records() {
 
     // A requisition at store_a addressed to the name backing store_b should
     // reach site 1 via store_id (RemoteOwned, during initialisation only) and
-    // site 2 via transfer_store_id (Transfer).
-    // `RequisitionRow::generate_changelog` reads `transfer_store_id` directly
-    // from `name_store_id`, so set it explicitly here.
+    // site 2 via transfer_store_id (Transfer). `RequisitionRow::generate_changelog`
+    // derives `transfer_store_id` from `name_id` via the store lookup.
     let req_id = "req_transfer".to_string();
     RequisitionRowRepository::new(&connection)
         .upsert_one(&RequisitionRow {
             id: req_id.clone(),
             store_id: site1_store_id.clone(),
             name_id: mock_name_store_b().id,
-            name_store_id: Some(mock_store_b().id),
             ..Default::default()
         })
         .unwrap();
