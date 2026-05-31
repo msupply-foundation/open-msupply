@@ -359,7 +359,7 @@ export default defineConfig(({ mode, isSsrBuild }) => {
 
     server: {
       port: 3003,
-      open: true,
+      open: false,
       cors: true,
       headers: {
         'Access-Control-Allow-Origin': '*',
