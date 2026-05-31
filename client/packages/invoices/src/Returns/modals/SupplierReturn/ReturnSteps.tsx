@@ -8,6 +8,7 @@ import {
   Alert,
   AlertColor,
   Box,
+  Divider,
   BasicTextInput,
   InputWithLabelRow,
   Typography,
@@ -69,58 +70,102 @@ export const ReturnSteps = ({
   const inputsDisabled = !!returnId && isDisabled;
 
   return (
-    <TabContext value={currentTab}>
-      <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
-      <Box
-        sx={{
-          display: 'flex',
-          gap: 8,
-          py: 2,
-          px: 2,
-        }}
-      >
-        <InputWithLabelRow
-          label={t('label.return-to')}
-          Input={
-            <Typography>
-              {returnToName ?? data?.otherPartyName ?? ''}
-            </Typography>
-          }
-        />
-        <InputWithLabelRow
-          label={t('label.supplier-ref')}
-          labelWidth={null}
-          labelProps={{ sx: { whiteSpace: 'nowrap' } }}
-          Input={
-            <BasicTextInput
-              disabled={isDisabled}
-              value={theirReference}
-              onChange={e => onTheirReferenceChange(e.target.value)}
-            />
-          }
-        />
-      </Box>
-      <TabPanel value={Tabs.Quantity}>
-        {zeroQuantityAlert && (
-          <Alert severity={zeroQuantityAlert}>{alertMessage}</Alert>
-        )}
-        <QuantityToReturnTable
-          isDisabled={inputsDisabled}
-          lines={lines}
-          updateLine={line => {
-            if (zeroQuantityAlert) setZeroQuantityAlert(undefined);
-            update(line);
+    <Box
+      sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        overflow: 'hidden',
+      }}
+    >
+      <TabContext value={currentTab}>
+        <Box sx={{ flexShrink: 0 }}>
+          <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 4,
+            py: 0.5,
+            px: 2,
           }}
-        />
-      </TabPanel>
-      <TabPanel value={Tabs.Reason}>
-        <ReturnReasonsTable
-          isDisabled={inputsDisabled}
-          lines={lines.filter(l => l.numberOfPacksToReturn > 0)}
-          updateLine={line => update(line)}
-          disabledLinked={false}
-        />
-      </TabPanel>
-    </TabContext>
+        >
+          <InputWithLabelRow
+            label={t('label.return-to')}
+            Input={
+              <Typography>
+                {returnToName ?? data?.otherPartyName ?? ''}
+              </Typography>
+            }
+          />
+          <InputWithLabelRow
+            label={t('label.supplier-ref')}
+            labelWidth={null}
+            labelProps={{ sx: { whiteSpace: 'nowrap' } }}
+            Input={
+              <BasicTextInput
+                disabled={isDisabled}
+                value={theirReference}
+                onChange={e => onTheirReferenceChange(e.target.value)}
+              />
+            }
+          />
+        </Box>
+        <Divider sx={{ mx: 2, mb: 0.5 }} />
+        <TabPanel
+          value={Tabs.Quantity}
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            padding: 0,
+            minHeight: 0,
+            overflow: 'hidden',
+            '&[hidden]': { display: 'none' },
+          }}
+        >
+          {zeroQuantityAlert && (
+            <Alert severity={zeroQuantityAlert}>{alertMessage}</Alert>
+          )}
+          <Box
+            sx={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: 0,
+            }}
+          >
+            <QuantityToReturnTable
+              isDisabled={inputsDisabled}
+              lines={lines}
+              updateLine={line => {
+                if (zeroQuantityAlert) setZeroQuantityAlert(undefined);
+                update(line);
+              }}
+            />
+          </Box>
+        </TabPanel>
+        <TabPanel
+          value={Tabs.Reason}
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            padding: 0,
+            minHeight: 0,
+            overflow: 'hidden',
+            '&[hidden]': { display: 'none' },
+          }}
+        >
+          <ReturnReasonsTable
+            isDisabled={inputsDisabled}
+            lines={lines.filter(l => l.numberOfPacksToReturn > 0)}
+            updateLine={line => update(line)}
+            disabledLinked={false}
+          />
+        </TabPanel>
+      </TabContext>
+    </Box>
   );
 };

@@ -47,6 +47,27 @@ interface StocktakeLineEditTableProps {
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
 }
 
+const compactTableContainerSx = {
+  flex: 1,
+  minHeight: 0,
+  overflowX: 'auto',
+  overflowY: 'auto',
+  maxHeight: 'unset',
+  '& .MuiTableBody-root .MuiTableRow-root': {
+    minHeight: '30px',
+  },
+  '& .MuiTableBody-root .MuiTableCell-root': {
+    paddingTop: '0.1rem',
+    paddingBottom: '0.1rem',
+  },
+  '& .MuiInputBase-root.MuiInput-root': {
+    minHeight: '32px',
+  },
+  '& .MuiPickersOutlinedInput-root': {
+    height: '32px',
+  },
+} as const;
+
 export const BatchTable = ({
   batches,
   update,
@@ -252,6 +273,18 @@ export const BatchTable = ({
         {t('label.add-new-line')}
       </Typography>
     ),
+    muiTablePaperProps: {
+      sx: {
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: 'none',
+      },
+    },
+    muiTableContainerProps: {
+      sx: compactTableContainerSx,
+    },
   });
 
   return <MaterialTable table={table} />;
@@ -333,6 +366,18 @@ export const PricingTable = ({
         {t('label.add-new-line')}
       </Typography>
     ),
+    muiTablePaperProps: {
+      sx: {
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: 'none',
+      },
+    },
+    muiTableContainerProps: {
+      sx: compactTableContainerSx,
+    },
   });
 
   return <MaterialTable table={table} />;
@@ -476,6 +521,18 @@ export const LocationTable = ({
         {t('label.add-new-line')}
       </Typography>
     ),
+    muiTablePaperProps: {
+      sx: {
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: 'none',
+      },
+    },
+    muiTableContainerProps: {
+      sx: compactTableContainerSx,
+    },
   });
 
   return <MaterialTable table={table} />;
@@ -488,7 +545,7 @@ const getPackSizeChangePatch = (
   const shouldClearSellPrice =
     row.item.defaultPackSize !== newPackSize &&
     row.item.itemStoreProperties?.defaultSellPricePerPack ===
-    row.sellPricePerPack;
+      row.sellPricePerPack;
 
   return {
     id: row.id,
@@ -510,7 +567,7 @@ const getCountedPacksChangePatch = (
   const keepReason =
     typeof row.countedNumberOfPacks === 'number' &&
     countedPacks > row.snapshotNumberOfPacks ===
-    row.countedNumberOfPacks > row.snapshotNumberOfPacks;
+      row.countedNumberOfPacks > row.snapshotNumberOfPacks;
 
   return {
     id: row.id,
