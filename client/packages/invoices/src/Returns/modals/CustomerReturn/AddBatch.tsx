@@ -18,7 +18,7 @@ export const AddBatchButton = ({
   const returnIsDisabled = useReturns.utils.customerIsDisabled();
 
   return (
-    <Box flex={1} justifyContent="flex-end" display="flex">
+    <Box flex={1} justifyContent="flex-end" display="flex" pb={0.5}>
       <ButtonWithIcon
         disabled={disabled || returnIsDisabled}
         color="primary"
