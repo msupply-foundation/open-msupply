@@ -2,11 +2,17 @@ import {
   loadRemotePlugin,
   usePluginProvider,
   usePlugins,
+  type Plugins,
 } from '@openmsupply-client/common';
 import { useEffect } from 'react';
 
 // Used for local plugins in dev mode
 declare const LOCAL_PLUGINS: { pluginPath: string; pluginCode: string }[];
+
+// Vite resolves this glob at build/serve time; values are lazy importers
+const localPluginModules = import.meta.glob(
+  '../../plugins/**/src/plugin.tsx'
+);
 
 export const useInitPlugins = () => {
   const { addPluginBundle } = usePluginProvider();
@@ -24,13 +30,11 @@ export const useInitPlugins = () => {
   // For hot reloading in dev mode plugins will be loaded from ./plugin folder
   const initLocalPlugins = async () => {
     for (const plugin of LOCAL_PLUGINS) {
-      // This command must be located in 'host', tried in common and webpack throws an error
-      // "Critical dependency: the request of a dependency is an expression"
-      const pluginBundle = await import(
-        /* @vite-ignore */
-        `../../plugins/${plugin.pluginPath}/src/plugin.tsx`
-      );
-      addPluginBundle(pluginBundle.default, plugin.pluginCode);
+      const key = `../../plugins/${plugin.pluginPath}/src/plugin.tsx`;
+      const importer = localPluginModules[key];
+      if (!importer) continue;
+      const bundle = (await importer()) as { default: Plugins };
+      addPluginBundle(bundle.default, plugin.pluginCode);
     }
   };
   useEffect(() => {
