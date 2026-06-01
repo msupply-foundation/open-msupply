@@ -6,9 +6,7 @@ use graphql_core::simple_generic_errors::{
 };
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
-use graphql_types::types::{
-    InvoiceLineNode, InvoiceLineStatusType, ShipmentVarianceReasonNotProvided,
-};
+use graphql_types::types::{InvoiceLineNode, InvoiceLineStatusType};
 
 use graphql_core::generic_inputs::InboundShipmentType;
 use repository::{InvoiceLine, InvoiceLineStatus};

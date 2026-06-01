@@ -23,6 +23,7 @@ pub struct DraftStockOutLine {
     pub id: String,
     pub item_id: String,
     pub stock_line_id: String,
+    pub linked_invoice_line_id: Option<String>,
     pub number_of_packs: f64,
     pub pack_size: f64,
     pub batch: Option<String>,
@@ -54,12 +55,12 @@ pub fn get_draft_stock_out_lines(
     item_id: &str,
     invoice_id: &str,
 ) -> Result<(Vec<DraftStockOutLine>, DraftStockOutItemData), ListError> {
-    let invoice = get_invoice(ctx, Some(store_id), invoice_id, None)?.ok_or(ListError::DatabaseError(
-        RepositoryError::DBError {
+    let invoice = get_invoice(ctx, Some(store_id), invoice_id, None)?.ok_or(
+        ListError::DatabaseError(RepositoryError::DBError {
             msg: "Invoice not found".to_string(),
             extra: invoice_id.to_string(),
-        },
-    ))?;
+        }),
+    )?;
 
     let historical_stock_lines = get_historical_available_stock_lines(
         ctx,
@@ -285,6 +286,7 @@ impl DraftStockOutLine {
             id: uuid(),
             item_id: line.item_row.id,
             stock_line_id: id,
+            linked_invoice_line_id: None,
             item_variant_id,
             donor_id: donor_link_id,
             batch,
@@ -320,6 +322,7 @@ impl DraftStockOutLine {
             donor_id: donor_link_id,
             campaign_id,
             program_id,
+            linked_invoice_line_id,
             ..
         } = line.invoice_line_row;
 
@@ -343,6 +346,7 @@ impl DraftStockOutLine {
             item_id: line.item_row.id,
             item_variant_id,
             donor_id: donor_link_id,
+            linked_invoice_line_id,
             number_of_packs,
             stock_line_id,
             pack_size,

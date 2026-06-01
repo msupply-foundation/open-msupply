@@ -66,6 +66,10 @@ impl DraftStockOutLineNode {
         &self.shipment_line.stock_line_id
     }
 
+    pub async fn linked_invoice_line_id(&self) -> &Option<String> {
+        &self.shipment_line.linked_invoice_line_id
+    }
+
     pub async fn batch(&self) -> &Option<String> {
         &self.shipment_line.batch
     }
