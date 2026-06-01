@@ -121,6 +121,7 @@ pub fn generate_invoice_lines(
             expiry_date: None,
             manufacture_date: None,
             purchase_order_line_id: None,
+            linked_invoice_line_id: None,
             sell_price_per_pack: 0.0,
             cost_price_per_pack: 0.0,
             stock_line_id: None,

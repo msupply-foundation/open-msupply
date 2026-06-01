@@ -67,6 +67,7 @@ pub fn add_from_purchase_order(
             expiry_date: None,
             manufacture_date: None,
             purchase_order_line_id: Some(purchase_order_line.id.clone()),
+            linked_invoice_line_id: None,
             pack_size: pack_size,
             cost_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,
             sell_price_per_pack: purchase_order_line.price_per_pack_after_discount * exchange_rate,

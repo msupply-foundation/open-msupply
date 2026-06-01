@@ -187,6 +187,7 @@ fn generate_line(
         expiry_date,
         manufacture_date,
         purchase_order_line_id,
+        linked_invoice_line_id: None,
         sell_price_per_pack,
         cost_price_per_pack,
         r#type: InvoiceLineType::StockIn,

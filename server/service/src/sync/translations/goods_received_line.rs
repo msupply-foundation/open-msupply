@@ -207,6 +207,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             foreign_currency_price_before_tax: None,
             item_variant_id: None,
             linked_invoice_id: None,
+            linked_invoice_line_id: None,
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,

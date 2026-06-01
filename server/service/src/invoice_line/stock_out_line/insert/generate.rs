@@ -234,6 +234,7 @@ fn generate_line(
         expiry_date,
         manufacture_date: None,
         purchase_order_line_id: None,
+        linked_invoice_line_id: None,
         sell_price_per_pack,
         cost_price_per_pack,
         r#type: InvoiceLineType::StockOut,

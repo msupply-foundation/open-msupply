@@ -138,6 +138,7 @@ pub fn generate(
                 total_before_tax: None,
                 tax: None,
                 note: None,
+                reason_option_id: None,
             },
         )
         .collect();
