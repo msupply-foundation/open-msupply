@@ -775,6 +775,7 @@
   "label.acknowledged": "Acknowledged",
   "label.actions": "Actions",
   "label.active": "Active",
+  "label.active-only": "Active only",
   "label.add-ancillary-item": "Add ancillary item",
   "label.add-another": "Add another",
   "label.add-batch": "Add batch",
