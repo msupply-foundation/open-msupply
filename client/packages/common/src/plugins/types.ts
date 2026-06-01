@@ -7,7 +7,11 @@ import {
   RequestLineFragment,
   StockLineRowFragment,
 } from '@openmsupply-client/system';
-import { InboundFragment } from '@openmsupply-client/invoices';
+import {
+  InboundFragment,
+  InboundLineFragment,
+  StockOutLineFragment,
+} from '@openmsupply-client/invoices';
 import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
 import { DraftRequestLine } from 'packages/requisitions/src/RequestRequisition/DetailView/RequestLineEdit';
 import { StocktakeLineFragment } from 'packages/inventory/src/Stocktake/api';
@@ -103,6 +107,15 @@ export type Plugins = {
   };
   stocktakeLine?: {
     tableColumn: ColumnDef<StocktakeLineFragment>[];
+  };
+  inboundShipmentLine?: {
+    tableColumn?: ColumnDef<InboundLineFragment>[];
+  };
+  outboundShipmentLine?: {
+    // Loads plugin-owned data (e.g. received pack quantities) for the visible
+    // lines into a store that the columns below read from via `getById`.
+    tableStateLoader?: React.ComponentType<{ lines: StockOutLineFragment[] }>[];
+    tableColumn?: ColumnDef<StockOutLineFragment>[];
   };
   pages?: PluginPage[];
 };
