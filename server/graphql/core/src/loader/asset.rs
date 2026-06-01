@@ -29,9 +29,12 @@ impl Loader<String> for AssetByLocationLoader {
                 EqualFilter::equal_any(ids.iter().map(String::clone).collect()),
             ))?;
 
-        let mut location_ids_by_asset: HashMap<String, String> = HashMap::new();
+        let mut location_ids_by_asset: HashMap<String, Vec<String>> = HashMap::new();
         for location in locations {
-            location_ids_by_asset.insert(location.asset_id, location.location_id);
+            location_ids_by_asset
+                .entry(location.asset_id)
+                .or_default()
+                .push(location.location_id);
         }
 
         let assets = asset_repo.query_by_filter(AssetFilter::new().id(EqualFilter::equal_any(
@@ -40,13 +43,12 @@ impl Loader<String> for AssetByLocationLoader {
 
         let mut map: HashMap<String, Vec<Asset>> = HashMap::new();
         for asset in assets {
-            let location_id = location_ids_by_asset
-                .get(&asset.id)
-                .unwrap_or(&"".to_string())
-                .to_owned();
-
-            let list = map.entry(location_id).or_default();
-            list.push(asset);
+            if let Some(loc_ids) = location_ids_by_asset.get(&asset.id) {
+                for location_id in loc_ids {
+                    let list = map.entry(location_id.clone()).or_default();
+                    list.push(asset.clone());
+                }
+            }
         }
 
         Ok(map)
