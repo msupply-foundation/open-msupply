@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { LocationSearchInput } from '@openmsupply-client/system/src';
 import { useTranslation } from '@common/intl';
-import { BasicTextInput, InputWithLabelRow } from '@common/components';
+import { BasicTextInput, InputWithLabelRow, Switch } from '@common/components';
 import {
   Box,
   Formatter,
@@ -100,6 +100,17 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
           draft.type === SensorNodeType.BlueMaestro
             ? t('label.rtmd')
             : Formatter.enumCase(draft?.type)
+        }
+      />
+      <InputWithLabelRow
+        label={t('label.active')}
+        labelProps={inputTextAlign}
+        Input={
+          <Switch
+            checked={draft.isActive}
+            onChange={(_, checked) => onUpdate({ isActive: checked })}
+            labelPlacement="end"
+          />
         }
       />
     </Box>
