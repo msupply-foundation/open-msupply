@@ -128,6 +128,7 @@ export type Plugins = {
           id: string;
           numberOfPacks: number;
           linkedInvoiceLineId?: string | null;
+          reasonOption?: StockOutLineFragment['reasonOption'];
         };
       }>;
     }[];

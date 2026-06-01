@@ -24,6 +24,7 @@ pub struct DraftStockOutLine {
     pub item_id: String,
     pub stock_line_id: String,
     pub linked_invoice_line_id: Option<String>,
+    pub reason_option_id: Option<String>,
     pub number_of_packs: f64,
     pub pack_size: f64,
     pub batch: Option<String>,
@@ -287,6 +288,7 @@ impl DraftStockOutLine {
             item_id: line.item_row.id,
             stock_line_id: id,
             linked_invoice_line_id: None,
+            reason_option_id: None,
             item_variant_id,
             donor_id: donor_link_id,
             batch,
@@ -323,6 +325,7 @@ impl DraftStockOutLine {
             campaign_id,
             program_id,
             linked_invoice_line_id,
+            reason_option_id,
             ..
         } = line.invoice_line_row;
 
@@ -347,6 +350,7 @@ impl DraftStockOutLine {
             item_variant_id,
             donor_id: donor_link_id,
             linked_invoice_line_id,
+            reason_option_id,
             number_of_packs,
             stock_line_id,
             pack_size,

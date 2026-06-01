@@ -3,7 +3,7 @@ use chrono::NaiveDate;
 use graphql_core::{
     loader::{
         CampaignByIdLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader, NameByIdLoader,
-        NameByIdLoaderInput, ProgramByIdLoader, VVMStatusByIdLoader,
+        NameByIdLoaderInput, ProgramByIdLoader, ReasonOptionLoader, VVMStatusByIdLoader,
     },
     ContextExt,
 };
@@ -11,7 +11,9 @@ use service::invoice_line::get_draft_outbound_lines::DraftStockOutLine;
 
 use crate::types::program_node::ProgramNode;
 
-use super::{CampaignNode, ItemVariantNode, LocationNode, NameNode, VVMStatusNode};
+use super::{
+    CampaignNode, ItemVariantNode, LocationNode, NameNode, ReasonOptionNode, VVMStatusNode,
+};
 
 pub struct DraftStockOutItemData {
     pub lines: Vec<DraftStockOutLine>,
@@ -68,6 +70,17 @@ impl DraftStockOutLineNode {
 
     pub async fn linked_invoice_line_id(&self) -> &Option<String> {
         &self.shipment_line.linked_invoice_line_id
+    }
+
+    pub async fn reason_option(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {
+        let reason_option_id = match &self.shipment_line.reason_option_id {
+            None => return Ok(None),
+            Some(reason_option_id) => reason_option_id,
+        };
+
+        let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
+        let result = loader.load_one(reason_option_id.clone()).await?;
+        Ok(result.map(ReasonOptionNode::from_domain))
     }
 
     pub async fn batch(&self) -> &Option<String> {
