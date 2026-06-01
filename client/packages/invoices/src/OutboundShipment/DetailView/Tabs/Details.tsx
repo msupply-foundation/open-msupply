@@ -7,6 +7,7 @@ import {
   useEditModal,
   useNonPaginatedMaterialTable,
   useNotification,
+  usePluginProvider,
   useTranslation,
 } from '@openmsupply-client/common';
 import { toItemRow, ItemRowFragment } from '@openmsupply-client/system';
@@ -45,6 +46,7 @@ export const DetailsTab = ({ lineEdit }: DetailsTabProps) => {
 
   const { data } = useOutbound.document.get();
   const { data: rows, isError } = useOutboundLines();
+  const { plugins } = usePluginProvider();
 
   const {
     onOpen: onOpenReturns,
@@ -128,6 +130,9 @@ export const DetailsTab = ({ lineEdit }: DetailsTabProps) => {
 
   return (
     <>
+      {plugins.outboundShipmentLine?.tableStateLoader?.map((StateLoader, i) => (
+        <StateLoader key={i} lines={rows ?? []} />
+      ))}
       <MaterialTable table={table} />
       <Footer
         onReturnLines={onReturn}

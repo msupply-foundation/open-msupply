@@ -23,6 +23,14 @@ export type StockOutLineFragment = {
   itemName: string;
   itemVariantId?: string | null;
   vvmStatusId?: string | null;
+  linkedInvoiceLineId?: string | null;
+  reasonOption?: {
+    __typename: 'ReasonOptionNode';
+    id: string;
+    reason: string;
+    type: Types.ReasonOptionNodeType;
+    isActive: boolean;
+  } | null;
   vvmStatus?: {
     __typename: 'VvmstatusNode';
     id: string;
@@ -71,6 +79,7 @@ export type DraftStockOutLineFragment = {
   __typename: 'DraftStockOutLineNode';
   id: string;
   stockLineId: string;
+  linkedInvoiceLineId?: string | null;
   numberOfPacks: number;
   packSize: number;
   batch?: string | null;
@@ -83,6 +92,13 @@ export type DraftStockOutLineFragment = {
   itemVariantId?: string | null;
   vvmStatusId?: string | null;
   volumePerPack?: number | null;
+  reasonOption?: {
+    __typename: 'ReasonOptionNode';
+    id: string;
+    reason: string;
+    type: Types.ReasonOptionNodeType;
+    isActive: boolean;
+  } | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -137,6 +153,7 @@ export type GetOutboundEditLinesQuery = {
       __typename: 'DraftStockOutLineNode';
       id: string;
       stockLineId: string;
+      linkedInvoiceLineId?: string | null;
       numberOfPacks: number;
       packSize: number;
       batch?: string | null;
@@ -149,6 +166,13 @@ export type GetOutboundEditLinesQuery = {
       itemVariantId?: string | null;
       vvmStatusId?: string | null;
       volumePerPack?: number | null;
+      reasonOption?: {
+        __typename: 'ReasonOptionNode';
+        id: string;
+        reason: string;
+        type: Types.ReasonOptionNodeType;
+        isActive: boolean;
+      } | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -195,6 +219,14 @@ export const StockOutLineFragmentDoc = gql`
     itemName
     itemVariantId
     vvmStatusId
+    linkedInvoiceLineId
+    reasonOption {
+      __typename
+      id
+      reason
+      type
+      isActive
+    }
     vvmStatus {
       id
       description
@@ -242,6 +274,14 @@ export const DraftStockOutLineFragmentDoc = gql`
     __typename
     id
     stockLineId
+    linkedInvoiceLineId
+    reasonOption {
+      __typename
+      id
+      reason
+      type
+      isActive
+    }
     numberOfPacks
     packSize
     batch

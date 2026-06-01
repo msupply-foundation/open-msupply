@@ -18,6 +18,15 @@ fragment StockOutLine on InvoiceLineNode {
   itemName
   itemVariantId
   vvmStatusId
+  linkedInvoiceLineId
+
+  reasonOption {
+    __typename
+    id
+    reason
+    type
+    isActive
+  }
 
   vvmStatus {
     id
@@ -68,6 +77,14 @@ fragment DraftStockOutLine on DraftStockOutLineNode {
   __typename
   id
   stockLineId
+  linkedInvoiceLineId
+  reasonOption {
+    __typename
+    id
+    reason
+    type
+    isActive
+  }
   numberOfPacks
   packSize
   batch

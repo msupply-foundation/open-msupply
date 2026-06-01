@@ -12,6 +12,9 @@ import {
   useSimpleMaterialTable,
   DateUtils,
   useShallow,
+  usePluginProvider,
+  ColumnDef,
+  UsePluginEvents,
 } from '@openmsupply-client/common';
 import { useOutboundLineEditColumns } from './columns';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
@@ -26,15 +29,18 @@ import { min } from 'lodash';
 export interface OutboundLineEditTableProps {
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
+  pluginEvents: UsePluginEvents<{ isDirty: boolean }>;
 }
 
 export const OutboundLineEditTable = ({
   currency,
   isExternalSupplier,
+  pluginEvents,
 }: OutboundLineEditTableProps) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
   const prefs = usePreferences();
+  const { plugins } = usePluginProvider();
 
   const {
     draftLines,
@@ -121,6 +127,32 @@ export const OutboundLineEditTable = ({
     getIsDisabled,
   });
 
+  const columnsWithPlugins = useMemo<ColumnDef<DraftStockOutLineFragment>[]>(
+    () => [
+      ...columns,
+      ...(plugins.outboundShipmentLine?.editViewField ?? []).map(
+        (field, i): ColumnDef<DraftStockOutLineFragment> => ({
+          id: `plugin-edit-${i}`,
+          header: field.header,
+          size: 140,
+          Cell: ({ row }) => (
+            <field.Component
+              line={row.original}
+              events={pluginEvents}
+              isExternal={isExternalSupplier}
+            />
+          ),
+        })
+      ),
+    ],
+    [
+      columns,
+      plugins.outboundShipmentLine?.editViewField,
+      pluginEvents,
+      isExternalSupplier,
+    ]
+  );
+
   // Display all stock lines to user, including non-allocatable ones at the bottom
   const lines = useMemo(
     () => [...draftLines, ...nonAllocatableLines],
@@ -129,7 +161,7 @@ export const OutboundLineEditTable = ({
 
   const table = useSimpleMaterialTable<DraftStockOutLineFragment>({
     tableId: 'outbound-line-edit',
-    columns,
+    columns: columnsWithPlugins,
     data: lines,
     // Modal table state should not be synced to URL (would otherwise clobber
     // the parent detail view's sort/filter URL params on open/close).

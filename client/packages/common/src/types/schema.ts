@@ -2633,6 +2633,7 @@ export type DraftStockOutLineNode = {
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
   program?: Maybe<ProgramNode>;
+  reasonOption?: Maybe<ReasonOptionNode>;
   sellPricePerPack: Scalars['Float']['output'];
   stockLineId: Scalars['String']['output'];
   stockLineOnHold: Scalars['Boolean']['output'];

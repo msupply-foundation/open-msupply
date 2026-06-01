@@ -8,6 +8,7 @@ import {
   useNotification,
   InvoiceNodeStatus,
   useShallow,
+  usePluginEvents,
 } from '@openmsupply-client/common';
 import { ScannedBarcode } from '../../../types';
 import { SelectItem } from './SelectItem';
@@ -40,7 +41,7 @@ export const OutboundLineEdit = ({
   getSortedItems,
 }: OutboundLineEditProps) => {
   const t = useTranslation();
-  const { info, warning } = useNotification();
+  const { info, warning, error } = useNotification();
   const [itemId, setItemId] = useState(openedWith?.itemId);
 
   // Used to determine if the item selector should be disabled. We want to allow
@@ -60,6 +61,8 @@ export const OutboundLineEdit = ({
 
   const { mutateAsync } = useSaveOutboundLines(invoiceId);
   const { saveBarcode } = useOpenedWithBarcode(asBarcodeOrNull(openedWith));
+
+  const pluginEvents = usePluginEvents({ isDirty: false });
 
   const {
     draftLines,
@@ -101,6 +104,13 @@ export const OutboundLineEdit = ({
   const okNextDisabled = (mode === ModalMode.Update && nextDisabled) || !itemId;
 
   const handleSave = async (onSaved: () => boolean | void) => {
+    try {
+      await pluginEvents.dispatchEvent({ id: invoiceId });
+    } catch (e) {
+      error((e as Error).message)();
+      return;
+    }
+
     const confirmZeroQuantityMessage = t('messages.confirm-zero-quantity');
     const unsavedVvmStatusChange = t('messages.unsaved-outbound-vvm-status');
     const vvmStatusChanged = draftLines.some(line => {
@@ -127,6 +137,7 @@ export const OutboundLineEdit = ({
 
     try {
       await onSave();
+      pluginEvents.setState({ isDirty: false });
       if (!!placeholderUnits) {
         const infoSnack = info(t('message.placeholder-line'));
         infoSnack();
@@ -170,7 +181,7 @@ export const OutboundLineEdit = ({
       }
       okButton={
         <DialogButton
-          disabled={!itemId || !isDirty}
+          disabled={!itemId || (!isDirty && !pluginEvents.state.isDirty)}
           variant="ok"
           onClick={() => handleSave(onClose)}
         />
@@ -193,6 +204,7 @@ export const OutboundLineEdit = ({
             invoiceId={invoiceId}
             allowPlaceholder={status === InvoiceNodeStatus.New}
             scannedBatch={asBarcodeOrNull(openedWith)?.batch}
+            pluginEvents={pluginEvents}
           />
         )}
       </Grid>

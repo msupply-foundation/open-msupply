@@ -130,6 +130,8 @@ export type Plugins = {
           linkedInvoiceLineId?: string | null;
           reasonOption?: StockOutLineFragment['reasonOption'];
         };
+        events: UsePluginEvents<{ isDirty: boolean }>;
+        isExternal: boolean;
       }>;
     }[];
   };

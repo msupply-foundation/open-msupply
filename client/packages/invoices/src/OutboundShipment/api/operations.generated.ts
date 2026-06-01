@@ -62,6 +62,14 @@ export type OutboundFragment = {
       itemName: string;
       itemVariantId?: string | null;
       vvmStatusId?: string | null;
+      linkedInvoiceLineId?: string | null;
+      reasonOption?: {
+        __typename: 'ReasonOptionNode';
+        id: string;
+        reason: string;
+        type: Types.ReasonOptionNodeType;
+        isActive: boolean;
+      } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
@@ -313,6 +321,14 @@ export type InvoiceQuery = {
             itemName: string;
             itemVariantId?: string | null;
             vvmStatusId?: string | null;
+            linkedInvoiceLineId?: string | null;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
+              id: string;
+              reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+            } | null;
             vvmStatus?: {
               __typename: 'VvmstatusNode';
               id: string;
@@ -469,6 +485,14 @@ export type OutboundByNumberQuery = {
             itemName: string;
             itemVariantId?: string | null;
             vvmStatusId?: string | null;
+            linkedInvoiceLineId?: string | null;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
+              id: string;
+              reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+            } | null;
             vvmStatus?: {
               __typename: 'VvmstatusNode';
               id: string;
