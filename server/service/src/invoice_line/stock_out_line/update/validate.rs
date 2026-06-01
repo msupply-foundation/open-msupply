@@ -11,8 +11,12 @@ use crate::{
     },
     service_provider::ServiceContext,
     stock_line::historical_stock::get_historical_stock_line_available_quantity,
+    NullableUpdate,
 };
-use repository::{InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, StorageConnection};
+use repository::{
+    InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, ReasonOptionRowRepository,
+    ReasonOptionType, StorageConnection,
+};
 
 pub fn validate(
     ctx: &ServiceContext,
@@ -83,6 +87,21 @@ pub fn validate(
     if let Some(vvm_status_id) = &input.vvm_status_id {
         if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
             return Err(VVMStatusDoesNotExist);
+        }
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(reason_option_id),
+    }) = &input.reason_option_id
+    {
+        let reason = ReasonOptionRowRepository::new(connection)
+            .find_one_by_id(reason_option_id)?
+            .ok_or(ReasonOptionDoesNotExist)?;
+        if !reason.is_active {
+            return Err(ReasonOptionIsNotActive);
+        }
+        if reason.r#type != ReasonOptionType::ShipmentVariance {
+            return Err(ReasonOptionTypeInvalid);
         }
     }
 

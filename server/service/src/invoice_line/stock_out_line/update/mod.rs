@@ -3,6 +3,7 @@ use crate::{
     invoice::update_picked_date::{update_picked_date, UpdatePickedDateError},
     invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
     service_provider::ServiceContext,
+    NullableUpdate,
 };
 use repository::{
     vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLine, InvoiceLineRow,
@@ -28,6 +29,7 @@ pub struct UpdateStockOutLine {
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
     pub vvm_status_id: Option<String>,
+    pub reason_option_id: Option<NullableUpdate<String>>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -56,6 +58,9 @@ pub enum UpdateStockOutLineError {
         line_id: String,
     },
     VVMStatusDoesNotExist,
+    ReasonOptionDoesNotExist,
+    ReasonOptionIsNotActive,
+    ReasonOptionTypeInvalid,
 }
 
 type OutError = UpdateStockOutLineError;

@@ -1,6 +1,6 @@
 use async_graphql::*;
 
-use graphql_core::generic_inputs::TaxInput;
+use graphql_core::generic_inputs::{NullableUpdateInput, TaxInput};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
@@ -14,6 +14,7 @@ use service::invoice_line::stock_out_line::{
     StockOutType, UpdateStockOutLine as ServiceInput, UpdateStockOutLineError as ServiceError,
 };
 use service::invoice_line::ShipmentTaxUpdate;
+use service::NullableUpdate;
 
 use super::{
     LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
@@ -29,6 +30,7 @@ pub struct UpdateInput {
     prescribed_quantity: Option<f64>,
     tax: Option<TaxInput>,
     pub vvm_status_id: Option<String>,
+    pub reason_option_id: Option<NullableUpdateInput<String>>,
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
@@ -97,6 +99,7 @@ impl UpdateInput {
             prescribed_quantity,
             tax,
             vvm_status_id,
+            reason_option_id,
         } = self;
         ServiceInput {
             id,
@@ -112,6 +115,9 @@ impl UpdateInput {
             note: None,
             campaign_id: None,
             program_id: None,
+            reason_option_id: reason_option_id.map(|reason_option_id| NullableUpdate {
+                value: reason_option_id.value,
+            }),
         }
     }
 }
@@ -179,6 +185,9 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ItemDoesNotMatchStockLine
         | VVMStatusDoesNotExist
         | NotThisInvoiceLine(_)
+        | ReasonOptionDoesNotExist
+        | ReasonOptionIsNotActive
+        | ReasonOptionTypeInvalid
         | LineDoesNotReferenceStockLine => StandardGraphqlError::BadUserInput(formatted_error),
         AutoPickFailed(_) | DatabaseError(_) | UpdatedLineDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)

@@ -15,7 +15,11 @@ use crate::{
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate,
 };
-use repository::{InvoiceLine, InvoiceRow, ItemRow, StorageConnection};
+use crate::invoice_line::stock_in_line::StockInType;
+use repository::{
+    InvoiceLine, InvoiceRow, ItemRow, ReasonOptionFilter, ReasonOptionRepository,
+    ReasonOptionRowRepository, ReasonOptionType, StorageConnection,
+};
 use util::f64_approx_eq;
 
 use super::{UpdateStockInLine, UpdateStockInLineError};
@@ -146,6 +150,43 @@ pub fn validate(
             && !f64_approx_eq(new_cost_price, line_row.cost_price_per_pack)
         {
             return Err(CannotEditCostPrice);
+        }
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(reason_option_id),
+    }) = &input.reason_option_id
+    {
+        let reason = ReasonOptionRowRepository::new(connection)
+            .find_one_by_id(reason_option_id)?
+            .ok_or(UpdateStockInLineError::ReasonOptionDoesNotExist)?;
+        if reason.r#type != ReasonOptionType::ShipmentVariance {
+            return Err(UpdateStockInLineError::ReasonOptionTypeInvalid);
+        }
+    }
+
+    if matches!(input.r#type, StockInType::InboundShipment) {
+        let num_packs = input.number_of_packs.unwrap_or(line_row.number_of_packs);
+        let shipped_num_packs = input
+            .shipped_number_of_packs
+            .or(line_row.shipped_number_of_packs);
+        let option_id = match &input.reason_option_id {
+            Some(NullableUpdate { value }) => value.clone(),
+            None => line_row.reason_option_id.clone(),
+        };
+
+        let has_variance =
+            shipped_num_packs.is_some_and(|shipped| !f64_approx_eq(shipped, num_packs));
+
+        if has_variance && option_id.is_none() {
+            let active_reasons = ReasonOptionRepository::new(connection).query_by_filter(
+                ReasonOptionFilter::new()
+                    .r#type(ReasonOptionType::ShipmentVariance.equal_to())
+                    .is_active(true),
+            )?;
+            if !active_reasons.is_empty() {
+                return Err(UpdateStockInLineError::ShipmentVarianceReasonNotProvided);
+            }
         }
     }
 

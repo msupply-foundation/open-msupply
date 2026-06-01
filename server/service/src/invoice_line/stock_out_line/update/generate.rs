@@ -140,6 +140,7 @@ fn generate_line(
         shipped_number_of_packs,
         shipped_pack_size,
         manufacturer_id,
+        reason_option_id: existing_reason_option_id,
         ..
     }: InvoiceLineRow,
     ItemRow {
@@ -176,6 +177,7 @@ fn generate_line(
         expiry_date,
         manufacture_date: None,
         purchase_order_line_id: None,
+        linked_invoice_line_id: None,
         sell_price_per_pack,
         cost_price_per_pack,
         number_of_packs,
@@ -198,7 +200,11 @@ fn generate_line(
         shipped_number_of_packs,
         volume_per_pack,
         shipped_pack_size,
-        reason_option_id: None,
+        reason_option_id: input
+            .reason_option_id
+            .as_ref()
+            .map(|u| u.value.clone())
+            .unwrap_or(existing_reason_option_id),
         linked_invoice_id: None,
         status: None,
     };

@@ -6,7 +6,9 @@ use graphql_core::simple_generic_errors::{
 };
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
-use graphql_types::types::{InvoiceLineNode, InvoiceLineStatusType};
+use graphql_types::types::{
+    InvoiceLineNode, InvoiceLineStatusType, ShipmentVarianceReasonNotProvided,
+};
 
 use graphql_core::generic_inputs::InboundShipmentType;
 use repository::{InvoiceLine, InvoiceLineStatus};
@@ -45,6 +47,7 @@ pub struct UpdateInput {
     pub volume_per_pack: Option<f64>,
     pub shipped_pack_size: Option<f64>,
     pub status: Option<Option<InvoiceLineStatusType>>,
+    pub reason_option_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(SimpleObject)]
@@ -82,7 +85,7 @@ pub fn update(
         store_id,
         &r#type,
         &service_context.connection,
-        &[(input.id.clone(), input.status.clone())],
+        &[(input.id.clone(), input.status)],
     )?;
 
     let response = match service_provider.invoice_line_service.update_stock_in_line(
@@ -136,6 +139,7 @@ impl UpdateInput {
             volume_per_pack,
             shipped_pack_size,
             status,
+            reason_option_id,
         } = self;
 
         ServiceInput {
@@ -183,7 +187,10 @@ impl UpdateInput {
             volume_per_pack,
             shipped_pack_size,
             status: status.map(|status| NullableUpdate {
-                value: status.map(|s| InvoiceLineStatus::from(s)),
+                value: status.map(InvoiceLineStatus::from),
+            }),
+            reason_option_id: reason_option_id.map(|reason_option_id| NullableUpdate {
+                value: reason_option_id.value,
             }),
         }
     }
@@ -242,6 +249,9 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::ProgramDoesNotExist
         | ServiceError::CampaignDoesNotExist
         | ServiceError::CannotEditCostPrice
+        | ServiceError::ShipmentVarianceReasonNotProvided
+        | ServiceError::ReasonOptionDoesNotExist
+        | ServiceError::ReasonOptionTypeInvalid
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
