@@ -2,8 +2,10 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_in_progress_and_error_statuses_sync_message;
+mod add_linked_invoice_line_id_to_invoice_line;
 mod add_plugin_data_datetime_field;
 mod add_plugin_data_indexes;
+mod add_shipment_variance_reason_option_type;
 mod add_stocktake_edited_activity_log_type;
 mod add_support_upload_files_processor_cursor_key_value_store;
 mod add_variant_and_bundle_activity_log_types;
@@ -26,6 +28,8 @@ impl Migration for V2_20_00 {
             Box::new(add_in_progress_and_error_statuses_sync_message::Migrate),
             Box::new(add_variant_and_bundle_activity_log_types::Migrate),
             Box::new(add_stocktake_edited_activity_log_type::Migrate),
+            Box::new(add_linked_invoice_line_id_to_invoice_line::Migrate),
+            Box::new(add_shipment_variance_reason_option_type::Migrate),
         ]
     }
 }
