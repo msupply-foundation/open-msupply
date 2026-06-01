@@ -110,12 +110,27 @@ export type Plugins = {
   };
   inboundShipmentLine?: {
     tableColumn?: ColumnDef<InboundLineFragment>[];
+    editViewField?: {
+      header: string;
+      Component: React.ComponentType<{
+        line: InboundLineFragment;
+        update: (patch: Partial<InboundLineFragment>) => void;
+      }>;
+    }[];
   };
   outboundShipmentLine?: {
-    // Loads plugin-owned data (e.g. received pack quantities) for the visible
-    // lines into a store that the columns below read from via `getById`.
     tableStateLoader?: React.ComponentType<{ lines: StockOutLineFragment[] }>[];
     tableColumn?: ColumnDef<StockOutLineFragment>[];
+    editViewField?: {
+      header: string;
+      Component: React.ComponentType<{
+        line: {
+          id: string;
+          numberOfPacks: number;
+          linkedInvoiceLineId?: string | null;
+        };
+      }>;
+    }[];
   };
   pages?: PluginPage[];
 };
