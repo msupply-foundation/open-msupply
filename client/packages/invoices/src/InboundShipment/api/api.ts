@@ -186,6 +186,7 @@ export const inboundParsers = {
       programId: line.program?.id ?? null,
     }),
     note: setNullableInput('note', { note: line.note ?? null }),
+    reasonOptionId: setNullableInput('id', line.reasonOption),
     shippedNumberOfPacks: line.shippedNumberOfPacks ?? null,
     volumePerPack: line.volumePerPack ?? null,
     shippedPackSize: line.shippedPackSize ?? null,

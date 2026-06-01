@@ -28,6 +28,7 @@ import {
   InvoiceNodeStatus,
   InfoIcon,
   useSimplifiedTabletUI,
+  usePluginProvider,
 } from '@openmsupply-client/common';
 import { Select, MenuItem } from '@mui/material';
 import { DraftInboundLine } from '../../../../types';
@@ -89,6 +90,7 @@ export const InboundLineEditCards = ({
   scrollToLineId,
 }: InboundLineEditCardsProps) => {
   const t = useTranslation();
+  const { plugins } = usePluginProvider();
   const simplified = useSimplifiedTabletUI();
   const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
@@ -193,8 +195,8 @@ export const InboundLineEditCards = ({
                 helperText={
                   isPlaceholder
                     ? t('error.field-must-be-specified', {
-                        field: t('label.packs-received'),
-                      })
+                      field: t('label.packs-received'),
+                    })
                     : undefined
                 }
               />
@@ -233,7 +235,7 @@ export const InboundLineEditCards = ({
                   const shouldClearSellPrice =
                     item?.defaultPackSize !== line.packSize &&
                     item?.itemStoreProperties?.defaultSellPricePerPack ===
-                      line.sellPricePerPack;
+                    line.sellPricePerPack;
 
                   updateDraftLine({
                     volumePerPack:
@@ -742,9 +744,26 @@ export const InboundLineEditCards = ({
         ),
       },
     ];
+    (plugins.inboundShipmentLine?.editViewField ?? []).forEach((field, i) => {
+      const { header, Component } = field;
+      cols.push({
+        id: `plugin-edit-${i}`,
+        header,
+        columnGroup: 'stockLineDetails',
+        size: 220,
+        Cell: ({ row }) => (
+          <Component
+            line={row.original}
+            update={patch => updateDraftLine({ id: row.original.id, ...patch })}
+          />
+        ),
+      });
+    });
+
     return cols;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    plugins.inboundShipmentLine?.editViewField,
     allowTrackingOfStockByDonor,
     foreignCurrency,
     displayInDoses,
@@ -780,9 +799,9 @@ export const InboundLineEditCards = ({
   const groupIcons = simplified
     ? undefined
     : {
-        stockLineDetails: <StockIcon />,
-        moreInfo: <InfoIcon />,
-      };
+      stockLineDetails: <StockIcon />,
+      moreInfo: <InfoIcon />,
+    };
 
   return (
     <>

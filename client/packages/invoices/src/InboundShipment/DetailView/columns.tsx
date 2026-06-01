@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import {
   getLinesFromRow,
   usePreferences,
+  usePluginProvider,
   useTranslation,
   ColumnDef,
   ColumnType,
@@ -26,6 +27,7 @@ export const useInboundShipmentColumns = (
   } = usePreferences();
   const { getError } = useInboundShipmentLineErrorContext();
   const statusMap = useInvoiceLineStatusMap();
+  const { plugins } = usePluginProvider();
 
   return useMemo((): ColumnDef<InboundLineFragment>[] => {
     return [
@@ -224,6 +226,7 @@ export const useInboundShipmentColumns = (
         accessorFn: row => row.campaign?.name ?? row.program?.name ?? '',
         includeColumn: !external,
       },
+      ...(plugins.inboundShipmentLine?.tableColumn ?? []),
     ];
   }, [
     external,
@@ -234,5 +237,6 @@ export const useInboundShipmentColumns = (
     allowTrackingOfStockByDonor,
     getError,
     statusMap,
+    plugins.inboundShipmentLine?.tableColumn,
   ]);
 };
