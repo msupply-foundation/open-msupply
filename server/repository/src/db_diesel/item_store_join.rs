@@ -79,6 +79,18 @@ impl<'a> ItemStoreJoinRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         ItemStoreJoinRowRepository { connection }
     }
+
+    pub fn find_many_by_item_and_store_ids(
+        &self,
+        item_link_ids: &[String],
+        store_ids: &[String],
+    ) -> Result<Vec<ItemStoreJoinRow>, RepositoryError> {
+        let result = item_store_join::table
+            .filter(item_store_join::item_link_id.eq_any(item_link_ids))
+            .filter(item_store_join::store_id.eq_any(store_ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
 }
 
 impl Upsert for ItemStoreJoinRow {
