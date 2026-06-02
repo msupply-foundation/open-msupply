@@ -2727,7 +2727,7 @@
   "report.quantity-to-order": "Quantity to order (packs)",
   "report.received-date": "Received date",
   "report.received-from": "Received from",
-  "report.received-number-of-packs": "Received packs",
+  "report.received-number-of-packs": "Packs received",
   "report.requested-from": "Requested from",
   "report.requested-qty": "Requested qty",
   "report.requisition-category-message": "Requisition Category: Category Value",
