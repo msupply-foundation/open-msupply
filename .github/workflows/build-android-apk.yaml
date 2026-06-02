@@ -84,12 +84,22 @@ jobs:
           B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
         run: bash .github/scripts/mac_backblaze_upload.sh
 
+  # Reports non-success outcomes (failure, cancellation, and the queue-timeout
+  # that happens when no self-hosted runner is available) to Slack. Runs on a
+  # GitHub-hosted runner so it still fires when the self-hosted runner is down -
+  # the build job's own steps never execute in that case, so they cannot notify.
+  notify-build-result:
+    needs: create-android-build
+    if: ${{ always() && needs.create-android-build.result != 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - name: Send build completion notification
-        if: ${{ failure() }}
         env:
           SLACK_DEV_RELEASE_WEBHOOK_URL: ${{ secrets.SLACK_DEV_RELEASE_WEBHOOK_URL }}
           SLACK_RC_RELEASE_WEBHOOK_URL: ${{ secrets.SLACK_RC_RELEASE_WEBHOOK_URL }}
           NOTIFICATION_TYPE: 'android_build'
-          BUILD_STATUS: ${{ job.status }}
+          BUILD_STATUS: ${{ needs.create-android-build.result }}
           TAG_NAME: ${{ github.ref_name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: bash .github/scripts/send-slack-notification.sh
