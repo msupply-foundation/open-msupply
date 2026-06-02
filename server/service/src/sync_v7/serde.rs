@@ -5,15 +5,39 @@ use repository::{
 use serde::de::DeserializeOwned;
 
 use crate::sync_v7::{
-    translations::store::translate_store, validate_translate_integrate::create_changelog,
+    sanitize::sanitize_invoice_line, translations::store::translate_store,
+    validate_translate_integrate::create_changelog,
 };
 
-fn from_value<T: DeserializeOwned + Upsert + 'static>(
+/// The set of bounds a row type must satisfy to be deserialised from a v7
+/// sync payload and boxed as `dyn Upsert`. 
+trait SyncRow: DeserializeOwned + Upsert + 'static {}
+impl<T: DeserializeOwned + Upsert + 'static> SyncRow for T {}
+
+fn from_value<T: SyncRow>(
     data: &serde_json::Value,
 ) -> Result<Box<dyn Upsert>, SyncRecordSerializeError> {
     serde_json::from_value::<T>(data.clone())
         .map(|r| Box::new(r) as Box<dyn Upsert>)
         .map_err(|e| SyncRecordSerializeError::SerdeError(e.to_string()))
+}
+
+/// Deserialize, then run a per-row sanitizer (typically `clear_invalid_fk`s for
+/// fields that may reference records this site doesn't have, such as a
+/// foreign-site `stock_line_id` on a transferred invoice_line).
+fn from_value_with<T, F>(
+    connection: &StorageConnection,
+    data: &serde_json::Value,
+    sanitize: F,
+) -> Result<Box<dyn Upsert>, SyncRecordSerializeError>
+where
+    T: SyncRow,
+    F: FnOnce(&StorageConnection, &mut T) -> Result<(), RepositoryError>,
+{
+    let mut row = serde_json::from_value::<T>(data.clone())
+        .map_err(|e| SyncRecordSerializeError::SerdeError(e.to_string()))?;
+    sanitize(connection, &mut row)?;
+    Ok(Box::new(row) as Box<dyn Upsert>)
 }
 
 pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeError> {
@@ -146,7 +170,9 @@ pub fn deserialize(
         ChangelogTableName::Item => from_value::<ItemRow>(data),
         ChangelogTableName::StockLine => from_value::<StockLineRow>(data),
         ChangelogTableName::Invoice => from_value::<InvoiceRow>(data),
-        ChangelogTableName::InvoiceLine => from_value::<InvoiceLineRow>(data),
+        ChangelogTableName::InvoiceLine => {
+            from_value_with::<InvoiceLineRow, _>(connection, data, sanitize_invoice_line)
+        }
         ChangelogTableName::ActivityLog => from_value::<ActivityLogRow>(data),
         ChangelogTableName::Barcode => from_value::<BarcodeRow>(data),
         ChangelogTableName::Clinician => from_value::<ClinicianRow>(data),
