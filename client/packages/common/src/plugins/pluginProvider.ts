@@ -97,7 +97,6 @@ export const usePluginProvider = create<PluginProvider>(set => {
         // detection runs across the merged set, so the `seen` set is rebuilt
         // each time rather than carried in state.
         const seen = new Set<string>();
-        // TODO: Here can determine if version is suitable
         const plugins = Object.entries(cachedPluginBundles).reduce(
           (acc, [bundleCode, bundle]) => {
             // `configuration` is per-plugin (looked up by code from
