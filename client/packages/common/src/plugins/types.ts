@@ -10,7 +10,7 @@ import {
 import { InboundFragment } from '@openmsupply-client/invoices';
 import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
 import { DraftRequestLine } from 'packages/requisitions/src/RequestRequisition/DetailView/RequestLineEdit';
-import { StocktakeLineFragment } from 'packages/inventory/src/Stocktake/api';
+import { StocktakeLineFragment } from '@openmsupply-client/inventory';
 import { UserPermission } from '../types/schema';
 
 // Plugins import any icon they want from `@openmsupply-client/common` (e.g.
