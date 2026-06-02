@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   useTranslation,
   usePreferences,
@@ -140,7 +140,11 @@ export const useStocktakeColumns = () => {
           if (!row.item.isVaccine) return null;
           const counted = row.countedNumberOfPacks;
           if (counted === null || counted === undefined) return null;
-          return counted * (row.packSize ?? 1) * (row.item.doses ?? 1);
+          return (
+            counted *
+            (row.packSize || row.item.defaultPackSize || 1) *
+            (row.item.doses ?? 1)
+          );
         },
       },
       {
@@ -151,7 +155,17 @@ export const useStocktakeColumns = () => {
         header: t('label.difference'),
         columnType: ColumnType.Number,
         aggregationFn: 'sum',
-        Cell: UnitsAndDosesCell,
+        Cell: ({ cell, row }) => (
+          <UnitsAndDosesCell
+            cell={cell}
+            row={row}
+            packSize={
+              row.original.packSize ||
+              row.original.item.defaultPackSize ||
+              1
+            }
+          />
+        ),
       },
       {
         id: 'reason',
