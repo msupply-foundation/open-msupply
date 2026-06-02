@@ -235,6 +235,14 @@ export const StockListView = () => {
         enableSorting: !isGrouped,
       },
       {
+        header: t('label.pack-sell-price'),
+        accessorKey: 'sellPricePerPack',
+        columnType: ColumnType.Currency,
+        size: 125,
+        defaultHideOnMobile: true,
+        enableSorting: !isGrouped,
+      },
+      {
         id: 'totalCost',
         header: t('label.total'),
         description: t('description.total-cost'),
