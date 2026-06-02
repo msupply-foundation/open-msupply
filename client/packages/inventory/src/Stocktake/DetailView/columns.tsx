@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import {
   useTranslation,
   usePreferences,
+  usePluginProvider,
   ColumnDef,
   ColumnType,
   ExpiryDateCell,
@@ -14,6 +15,7 @@ export const useStocktakeColumns = () => {
   const t = useTranslation();
   const { manageVaccinesInDoses, allowTrackingOfStockByDonor } =
     usePreferences();
+  const { plugins } = usePluginProvider();
   const { errors } = useStocktakeLineErrorContext();
 
   const getIsError = useCallback(
@@ -176,6 +178,7 @@ export const useStocktakeColumns = () => {
         header: t('label.comment'),
         columnType: ColumnType.Comment,
       },
+      ...(plugins.stocktakeLine?.tableColumn || []),
     ];
     return cols;
   }, [
@@ -184,6 +187,7 @@ export const useStocktakeColumns = () => {
     allowTrackingOfStockByDonor,
     getIsError,
     getRowHasError,
+    plugins.stocktakeLine?.tableColumn,
   ]);
 
   return columns;
