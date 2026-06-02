@@ -1,4 +1,3 @@
-use super::sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress};
 use super::{
     sync_buffer::{write_sync_buffer_error, write_sync_buffer_ignored, write_sync_buffer_success},
     translations::{IntegrationOperation, PullTranslateResult, SyncTranslation, SyncTranslators},
@@ -6,10 +5,7 @@ use super::{
 use log::{debug, warn};
 use repository::*;
 use std::collections::HashMap;
-use std::time::Instant;
 use util::datetime_now;
-
-static PROGRESS_STEP_LEN: usize = 1000;
 
 pub(crate) struct TranslationAndIntegration<'a> {
     connection: &'a StorageConnection,
@@ -66,30 +62,8 @@ impl<'a> TranslationAndIntegration<'a> {
         &mut self,
         sync_records: &[SyncBufferRow],
         translators: &Vec<Box<dyn SyncTranslation>>,
-        mut logger: Option<&mut SyncLogger>,
-        total_pending: u64,
-        done_so_far: &mut u64,
     ) -> Result<(), RepositoryError> {
-        let mut error_count: u32 = 0;
-
-        let mut last_progress_time = Instant::now();
-
-        // Caller pre-seeds `integration_progress_total` via `count_pending` and threads
-        // `done_so_far` across batches, so the logger reports global progress rather than
-        // resetting `total` to the current batch's size.
-        let mut record_progress = |done: u64| -> Result<(), RepositoryError> {
-            match logger.as_mut() {
-                None => Ok(()),
-                Some(logger) => logger
-                    .progress(
-                        SyncStepProgress::Integrate,
-                        total_pending.saturating_sub(done),
-                    )
-                    .map_err(SyncLoggerError::to_repository_error),
-            }
-        };
-
-        for (number_of_records_integrated, sync_record) in sync_records.iter().enumerate() {
+        for sync_record in sync_records.iter() {
             let started = datetime_now();
             let cursor = sync_record.cursor;
 
@@ -104,7 +78,6 @@ impl<'a> TranslationAndIntegration<'a> {
                         &format!("{:?}", translation_error),
                     )?;
                     self.result.insert_error(&sync_record.table_name);
-                    error_count += 1; // We want to count these as errors as this is likely to be FK or other data issues, that might affect performance of integration and we want to track that.
                     warn!(
                         "{:?} {:?} {:?}",
                         translation_error, sync_record.record_id, sync_record.table_name
@@ -176,37 +149,13 @@ impl<'a> TranslationAndIntegration<'a> {
                     let error = format!("{database_error:?}");
                     write_sync_buffer_error(self.connection, cursor, started, &error)?;
                     self.result.insert_error(&sync_record.table_name);
-                    error_count += 1;
                     warn!(
                         "{:?} {:?} {:?}",
                         error, sync_record.record_id, sync_record.table_name
                     );
                 }
             }
-
-            if (number_of_records_integrated + 1) % PROGRESS_STEP_LEN == 0 {
-                let done = *done_so_far + number_of_records_integrated as u64 + 1;
-                record_progress(done)?;
-                let elapsed = last_progress_time.elapsed();
-                let rec_per_sec = if elapsed.as_secs_f64() > 0.0 {
-                    PROGRESS_STEP_LEN as f64 / elapsed.as_secs_f64()
-                } else {
-                    0.0
-                };
-                log::info!(
-                    "Integration progress: integrated: {}, total: {}, errored: {} ({:.1} rec/s, last table: {})",
-                    done,
-                    total_pending,
-                    error_count,
-                    rec_per_sec,
-                    sync_record.table_name
-                );
-                last_progress_time = Instant::now();
-            }
         }
-
-        *done_so_far += sync_records.len() as u64;
-        record_progress(*done_so_far)?;
 
         Ok(())
     }

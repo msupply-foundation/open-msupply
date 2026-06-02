@@ -474,73 +474,63 @@ pub fn integrate_and_translate_sync_buffer(
         let translators = all_translators();
         let table_order = pull_integration_order(&translators);
 
-        // Seed integration progress total with the global pending count so the logger
-        // reports a real total across all (action, table) batches, not just the first 10k slice.
+        // Seed the integration progress total with the global pending count, so the logger
+        // reports a real total up front. After each (action, table) chunk we re-query the
+        // pending count and report it as the new remaining. Progress therefore updates
+        // per chunk rather than per record, which is plenty for a status indicator.
         let total_pending = SyncBufferRepository::new(connection).count_pending(
             source_site_id,
             SyncVersion::V5V6,
             None,
         )? as u64;
-        let mut done_so_far: u64 = 0;
         if let Some(logger) = logger.as_mut() {
             logger
                 .progress(SyncStepProgress::Integrate, total_pending)
                 .map_err(SyncLoggerError::to_repository_error)?;
         }
 
-        let mut upserter = TranslationAndIntegration::new(connection);
-        for table in &table_order {
-            let records = get_sync_buffer_for_table(
-                connection,
-                SyncAction::Upsert,
-                table,
-                source_site_id,
-                10000,
-            )?;
-            upserter.translate_and_integrate_sync_records(
-                &records,
-                &translators,
-                logger.as_deref_mut(),
-                total_pending,
-                &mut done_so_far,
-            )?;
-        }
-        let mut deleter = TranslationAndIntegration::new(connection);
-        for table in &table_order {
-            let records = get_sync_buffer_for_table(
-                connection,
-                SyncAction::Delete,
-                table,
-                source_site_id,
-                10000,
-            )?;
-            deleter.translate_and_integrate_sync_records(
-                &records,
-                &translators,
-                logger.as_deref_mut(),
-                total_pending,
-                &mut done_so_far,
-            )?;
-        }
-        let mut merger = TranslationAndIntegration::new(connection);
-        for table in &table_order {
-            let records = get_sync_buffer_for_table(
-                connection,
-                SyncAction::Merge,
-                table,
-                source_site_id,
-                10000,
-            )?;
-            merger.translate_and_integrate_sync_records(
-                &records,
-                &translators,
-                logger.as_deref_mut(),
-                total_pending,
-                &mut done_so_far,
-            )?;
-        }
+        // Integrate one action across all tables (in dependency order), reporting the
+        // remaining pending count to the logger after each table chunk finishes.
+        let integrate_action = |action: SyncAction,
+                                logger: &mut Option<&mut SyncLogger>|
+         -> Result<TranslationAndIntegrationResults, RepositoryError> {
+            let mut integrator = TranslationAndIntegration::new(connection);
+            for table in &table_order {
+                let records = get_sync_buffer_for_table(
+                    connection,
+                    action.clone(),
+                    table,
+                    source_site_id,
+                    10000,
+                )?;
+                integrator.translate_and_integrate_sync_records(&records, &translators)?;
 
-        Ok((upserter.result, deleter.result, merger.result))
+                let remaining = SyncBufferRepository::new(connection).count_pending(
+                    source_site_id,
+                    SyncVersion::V5V6,
+                    None,
+                )? as u64;
+                if let Some(logger) = logger.as_mut() {
+                    logger
+                        .progress(SyncStepProgress::Integrate, remaining)
+                        .map_err(SyncLoggerError::to_repository_error)?;
+                }
+                log::info!(
+                    "Integration progress: {} of {} remaining (last chunk: {:?} {})",
+                    remaining,
+                    total_pending,
+                    action,
+                    table,
+                );
+            }
+            Ok(integrator.result)
+        };
+
+        let upserts = integrate_action(SyncAction::Upsert, &mut logger)?;
+        let deletes = integrate_action(SyncAction::Delete, &mut logger)?;
+        let merges = integrate_action(SyncAction::Merge, &mut logger)?;
+
+        Ok((upserts, deletes, merges))
     };
 
     let result = if use_transaction {
