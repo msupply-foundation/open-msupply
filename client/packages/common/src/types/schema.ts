@@ -9764,6 +9764,7 @@ export type StoreNode = {
   /**
    * Returns the associated store logo.
    * The logo is returned as a data URL schema, e.g. "data:image/png;base64,..."
+   * Lazy-loaded — the logo is not pulled with the default store row.
    */
   logo?: Maybe<Scalars['String']['output']>;
   name: NameNode;
