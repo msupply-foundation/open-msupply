@@ -98,7 +98,9 @@ export const OutboundLineEdit = ({
     }
   };
 
-  const okNextDisabled = (mode === ModalMode.Update && nextDisabled) || !itemId;
+  const okNextDisabled =
+    (mode === ModalMode.Update && nextDisabled) ||
+    !itemId;
 
   const handleSave = async (onSaved: () => boolean | void) => {
     const confirmZeroQuantityMessage = t('messages.confirm-zero-quantity');

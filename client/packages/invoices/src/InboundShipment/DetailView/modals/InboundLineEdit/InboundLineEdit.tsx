@@ -317,11 +317,12 @@ export const InboundLineEdit = ({
     ? (mode === ModalMode.Update && !nextPOLine) || !selectedPOLine
     : (mode === ModalMode.Update && nextDisabled) || !currentItem;
 
-  const okDisabled = hasPurchaseOrder
-    ? !selectedPOLine ||
-    draftLines.length === 0 ||
-    manualLinesWithZeroNumberOfPacks
-    : !currentItem || manualLinesWithZeroNumberOfPacks;
+  const okDisabled =
+    (hasPurchaseOrder
+      ? !selectedPOLine ||
+      draftLines.length === 0 ||
+      manualLinesWithZeroNumberOfPacks
+      : !currentItem || manualLinesWithZeroNumberOfPacks);
 
   const cards = (
     <InboundLineEditCards
@@ -388,7 +389,10 @@ export const InboundLineEdit = ({
       nextButton={
         <DialogButton
           variant="next-and-ok"
-          disabled={okNextDisabled || manualLinesWithZeroNumberOfPacks}
+          disabled={
+            okNextDisabled ||
+            manualLinesWithZeroNumberOfPacks
+          }
           onClick={async () => {
             if (saveNeedsAuthorise() && !hasAuthorisePermission) {
               permissionDeniedNotification();

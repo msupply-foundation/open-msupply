@@ -127,13 +127,6 @@ export const useOutboundColumns = () => {
         size: 100,
       },
       {
-        id: 'varianceReason',
-        accessorFn: row => row.reasonOption?.reason ?? '',
-        header: t('label.variance-reason'),
-        defaultHideOnMobile: true,
-        size: 160,
-      },
-      {
         id: 'unitQuantity',
         header: t('label.unit-quantity'),
         description: t('description.unit-quantity'),

@@ -27,7 +27,6 @@ import {
   InvoiceLineStatusType,
   InvoiceNodeStatus,
   InfoIcon,
-  ReasonOptionNodeType,
   useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
 import { Select, MenuItem } from '@mui/material';
@@ -41,7 +40,6 @@ import {
   LocationRowFragment,
   LocationSearchInput,
   ManufacturerSearchInput,
-  ReasonOptionsSearchInput,
   VVMStatusSearchInput,
 } from '@openmsupply-client/system';
 import { PatchDraftLineInput } from '../../../api';
@@ -182,15 +180,10 @@ export const InboundLineEditCards = ({
                   if (packSize !== undefined) {
                     const packToUnits = packSize * value;
                     setPackRoundingMessage?.('');
-                    const clearsReason =
-                      shippedPacks != null &&
-                      value === shippedPacks &&
-                      line.reasonOption != null;
                     updateDraftLine({
                       receivedNumberOfUnits: packToUnits,
                       id: row.original.id,
                       numberOfPacks: value,
-                      ...(clearsReason ? { reasonOption: null } : {}),
                     });
                   }
                 }}
@@ -353,32 +346,6 @@ export const InboundLineEditCards = ({
           row.shippedNumberOfPacks == null
             ? null
             : row.shippedNumberOfPacks - row.numberOfPacks,
-      },
-      {
-        accessorKey: 'reasonOption',
-        header: t('label.variance-reason'),
-        size: 180,
-        columnGroup: 'stockLineDetails',
-        Cell: ({ row }) => {
-          const line = row.original;
-          const hasVariance =
-            line.shippedNumberOfPacks != null &&
-            line.numberOfPacks !== line.shippedNumberOfPacks;
-
-          return (
-            <ReasonOptionsSearchInput
-              type={ReasonOptionNodeType.ShipmentVariance}
-              value={line.reasonOption}
-              onChange={reason =>
-                updateDraftLine({
-                  id: line.id,
-                  reasonOption: reason ?? null,
-                })
-              }
-              disabled={isDisabled || !hasVariance}
-            />
-          );
-        },
       },
       {
         accessorKey: 'shippedPackSize',

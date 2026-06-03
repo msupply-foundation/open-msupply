@@ -1,15 +1,10 @@
-import {
-  useMutation,
-  useQueryClient,
-  useTranslation,
-} from '@openmsupply-client/common';
+import { useMutation, useQueryClient } from '@openmsupply-client/common';
 import { useOutboundApi } from './utils/useOutboundApi';
 import { DraftStockOutLineFragment } from '../../../StockOut';
 
 export const useSaveOutboundLines = (outboundId: string) => {
   const { keys, sdk, storeId } = useOutboundApi();
   const queryClient = useQueryClient();
-  const t = useTranslation();
 
   return useMutation({
     mutationFn: async ({
@@ -21,7 +16,7 @@ export const useSaveOutboundLines = (outboundId: string) => {
       lines: DraftStockOutLineFragment[];
       placeholderQuantity: number | null;
     }) => {
-      const result = await sdk.saveOutboundShipmentItemLines({
+      return await sdk.saveOutboundShipmentItemLines({
         storeId,
         input: {
           invoiceId: outboundId,
@@ -37,20 +32,10 @@ export const useSaveOutboundLines = (outboundId: string) => {
             // edit creates a variance.
             receivedNumberOfPacks:
               line.receivedNumberOfPacks ?? line.numberOfPacks,
-            reasonOptionId: line.reasonOption?.id ?? null,
           })),
           placeholderQuantity,
         },
       });
-
-      const response = result.saveOutboundShipmentItemLines;
-      if (response.__typename === 'SaveOutboundShipmentLinesError') {
-        switch (response.error.__typename) {
-          case 'ShipmentVarianceReasonNotProvided':
-            throw new Error(t('error.shipment-variance-reason-required'));
-        }
-      }
-      return result;
     },
 
     onSuccess: () => {
