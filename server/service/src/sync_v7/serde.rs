@@ -9,12 +9,7 @@ use crate::sync_v7::{
     validate_translate_integrate::{create_changelog, SyncContext},
 };
 
-/// The set of bounds a row type must satisfy to be deserialised from a v7
-/// sync payload and boxed as `dyn Upsert`.
-trait SyncRow: DeserializeOwned + Upsert + 'static {}
-impl<T: DeserializeOwned + Upsert + 'static> SyncRow for T {}
-
-fn from_value<T: SyncRow>(
+fn from_value<T: DeserializeOwned + Upsert + 'static>(
     data: &serde_json::Value,
 ) -> Result<Box<dyn Upsert>, SyncRecordSerializeError> {
     serde_json::from_value::<T>(data.clone())

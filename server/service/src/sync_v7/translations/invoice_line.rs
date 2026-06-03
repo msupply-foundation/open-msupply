@@ -2,9 +2,10 @@ use repository::{syncv7::SyncRecordSerializeError, ChangeLogInsertRow, InvoiceLi
 
 use crate::sync_v7::{serde::DeserializeResult, validate_translate_integrate::SyncContext};
 
-/// Deserialise an invoice_line and, when we are the transfer recipient
-/// ([`is_transfer_recipient`]), null `stock_line_id` and `location_id` —
-/// those FKs reference records on the sending site that won't exist here.
+/// Deserialise an invoice_line and, when this site is a transfer recipient
+/// (a remote site receiving the row for a store it doesn't own), null
+/// `stock_line_id` and `location_id` — those FKs reference records on the
+/// sending site that won't exist here.
 pub(crate) fn translate_invoice_line(
     changelog_insert: ChangeLogInsertRow,
     owning_store_id: Option<&str>,
@@ -14,26 +15,16 @@ pub(crate) fn translate_invoice_line(
     let mut row: InvoiceLineRow = serde_json::from_value(data.clone())
         .map_err(|e| SyncRecordSerializeError::SerdeError(e.to_string()))?;
 
-    if is_transfer_recipient(owning_store_id, sync_context) {
-        row.stock_line_id = None;
-        row.location_id = None;
+    if let (SyncContext::Remote { active_stores, .. }, Some(store_id)) =
+        (sync_context, owning_store_id)
+    {
+        if !active_stores.store_ids().iter().any(|s| s == store_id) {
+            row.stock_line_id = None;
+            row.location_id = None;
+        }
     }
 
     Ok(vec![(Box::new(row) as Box<dyn Upsert>, changelog_insert)])
-}
-
-/// True iff this site is receiving the row for a store it doesn't own —
-/// i.e. the invoice_line arrived via Transfer routing rather than as our own
-/// data. In that case stock_line/location FKs point at the sending site's
-/// records and won't resolve locally.
-fn is_transfer_recipient(owning_store_id: Option<&str>, sync_context: &SyncContext) -> bool {
-    let SyncContext::Remote { active_stores, .. } = sync_context else {
-        return false;
-    };
-    let Some(store_id) = owning_store_id else {
-        return false;
-    };
-    !active_stores.store_ids().iter().any(|s| s == store_id)
 }
 
 #[cfg(test)]
