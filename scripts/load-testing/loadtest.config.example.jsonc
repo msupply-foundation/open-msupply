@@ -1,0 +1,52 @@
+{
+  // Copy this file to loadtest.config.jsonc (untracked) and edit. Any value here can be
+  // overridden at run time with an env var, e.g. -e VU_MULTIPLIER=2.
+  // // line and /* */ block comments are supported; JSON still forbids trailing commas.
+
+  // Target server. GraphQL endpoint is {baseUrl}/graphql. (env: BASE_URL)
+  "baseUrl": "http://localhost:8000",
+
+  // Login. Either a single user...  (env: USERNAME / PASSWORD)
+  "username": "admin",
+  "password": "pass",
+  // ...or a pool of users (overrides username/password). (env: USERS as JSON)
+  // "users": [{ "username": "a", "password": "x" }, { "username": "b", "password": "y" }],
+
+  // Store to drive. null = the user's default store. (env: STORE_ID)
+  "storeId": null,
+
+  // Scale the worker mix (8/6/5/4/4/2/1). null = 1×. (env: VU_MULTIPLIER)
+  "vuMultiplier": null,
+
+  // Ramp to steady state, then hold there. (env: RAMP_DURATION / HOLD_DURATION)
+  "rampDuration": "5m",
+  "holdDuration": "15m",
+
+  // Sync driver (manualSync — the changelog lock path). (env: SYNC_ENABLED / SYNC_INTERVAL)
+  "syncEnabled": true,
+  "syncInterval": null, // seconds between manualSync triggers; null = 60
+  "syncFetchPatientId": null, // optional arg to manualSync (env: SYNC_FETCH_PATIENT_ID)
+
+  // Think-time jitter between read actions (browse/poll), ms. (env: THINK_MIN_MS / THINK_MAX_MS)
+  "thinkMinMs": 1000,
+  "thinkMaxMs": 5000,
+
+  // Longer think-time for workflow steps (human filling/editing a form), ms. Keeps the read/write
+  // mix realistic (~95/5). (env: WORKFLOW_THINK_MIN_MS / WORKFLOW_THINK_MAX_MS)
+  "workflowThinkMinMs": 5000,
+  "workflowThinkMaxMs": 15000,
+
+  // How many ids to discover per pool in setup(). (env: POOL_SIZE)
+  "poolSize": 200,
+
+  // Where summaries are written. (env: OUTPUT_DIR)
+  "outputDir": "./output",
+
+  // Apply strict per-op latency thresholds that gate pass/fail. null = false. (env: STRICT_THRESHOLDS)
+  "strictThresholds": null,
+
+  // Marker stamped on the reference/comment/note of every created record, so the data this script
+  // makes can be found and cleaned up later (e.g. delete requisitions/shipments/stocktakes whose
+  // theirReference/comment == this). (env: TAG)
+  "tag": "k6-loadtest"
+}
