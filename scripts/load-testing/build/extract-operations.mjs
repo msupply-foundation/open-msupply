@@ -42,7 +42,10 @@ const OPERATIONS = [
   'isCentralServer',
   'preferences',
   'initialisationStatus',
-  'syncStatus',
+  // syncInfo (not the bare syncStatus) is what the always-on sync indicator sends: it adds
+  // `numberOfRecordsInPushQueue`, which runs a COUNT over the changelog_deduped view. On a central
+  // server that count is a full changelog scan and was the dominant DB cost in the v2.16.4 load test.
+  'syncInfo',
   'itemCounts',
   'requisitionCounts',
   'stockCounts',
