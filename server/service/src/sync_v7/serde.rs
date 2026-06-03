@@ -129,7 +129,7 @@ pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeErro
 pub(crate) type DeserializeResult =
     Result<Vec<(Box<dyn Upsert>, ChangeLogInsertRow)>, SyncRecordSerializeError>;
 
-pub fn deserialize(
+pub(crate) fn deserialize(
     connection: &StorageConnection,
     table_name: &ChangelogTableName,
     row: &SyncBufferRow,
