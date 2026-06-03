@@ -121,6 +121,9 @@ export enum ActivityLogNodeType {
   AssetLogReasonDeleted = 'ASSET_LOG_REASON_DELETED',
   AssetPropertyCreated = 'ASSET_PROPERTY_CREATED',
   AssetUpdated = 'ASSET_UPDATED',
+  BundledItemCreated = 'BUNDLED_ITEM_CREATED',
+  BundledItemDeleted = 'BUNDLED_ITEM_DELETED',
+  BundledItemUpdated = 'BUNDLED_ITEM_UPDATED',
   DemographicIndicatorCreated = 'DEMOGRAPHIC_INDICATOR_CREATED',
   DemographicIndicatorUpdated = 'DEMOGRAPHIC_INDICATOR_UPDATED',
   DemographicProjectionCreated = 'DEMOGRAPHIC_PROJECTION_CREATED',
@@ -130,6 +133,7 @@ export enum ActivityLogNodeType {
   InvoiceDateBackdated = 'INVOICE_DATE_BACKDATED',
   InvoiceDeleted = 'INVOICE_DELETED',
   InvoiceNumberAllocated = 'INVOICE_NUMBER_ALLOCATED',
+  InvoiceReceivedQtyUpdated = 'INVOICE_RECEIVED_QTY_UPDATED',
   InvoiceStatusAllocated = 'INVOICE_STATUS_ALLOCATED',
   InvoiceStatusCancelled = 'INVOICE_STATUS_CANCELLED',
   InvoiceStatusDelivered = 'INVOICE_STATUS_DELIVERED',
@@ -139,11 +143,15 @@ export enum ActivityLogNodeType {
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
   ItemVariantCreated = 'ITEM_VARIANT_CREATED',
   ItemVariantDeleted = 'ITEM_VARIANT_DELETED',
+  ItemVariantUpdated = 'ITEM_VARIANT_UPDATED',
   ItemVariantUpdatedName = 'ITEM_VARIANT_UPDATED_NAME',
   ItemVariantUpdateDosePerUnit = 'ITEM_VARIANT_UPDATE_DOSE_PER_UNIT',
   ItemVariantUpdateLocationType = 'ITEM_VARIANT_UPDATE_LOCATION_TYPE',
   ItemVariantUpdateManufacturer = 'ITEM_VARIANT_UPDATE_MANUFACTURER',
   ItemVariantUpdateVvmType = 'ITEM_VARIANT_UPDATE_VVM_TYPE',
+  PackagingVariantCreated = 'PACKAGING_VARIANT_CREATED',
+  PackagingVariantDeleted = 'PACKAGING_VARIANT_DELETED',
+  PackagingVariantUpdated = 'PACKAGING_VARIANT_UPDATED',
   PatientCreated = 'PATIENT_CREATED',
   PatientUpdated = 'PATIENT_UPDATED',
   PrescriptionCreated = 'PRESCRIPTION_CREATED',
@@ -5590,7 +5598,7 @@ export type Mutations = {
   manualSync: Scalars['String']['output'];
   refreshAncillaryItems: RefreshAncillaryItemsResponse;
   responseAddFromMasterList: ResponseAddFromMasterListResponse;
-  saveOutboundShipmentItemLines: SaveOutboundShipmentLinesResponse;
+  saveOutboundShipmentItemLines: InvoiceNode;
   savePrescriptionItemLines: InvoiceNode;
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
@@ -9332,25 +9340,12 @@ export type RnRFormSortInput = {
 
 export type RnRFormsResponse = RnRFormConnector;
 
-export type SaveOutboundShipmentLinesError = {
-  __typename: 'SaveOutboundShipmentLinesError';
-  error: SaveOutboundShipmentLinesErrorInterface;
-};
-
-export type SaveOutboundShipmentLinesErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
 export type SaveOutboundShipmentLinesInput = {
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   lines: Array<OutboundShipmentLineInput>;
   placeholderQuantity?: InputMaybe<Scalars['Float']['input']>;
 };
-
-export type SaveOutboundShipmentLinesResponse =
-  | InvoiceNode
-  | SaveOutboundShipmentLinesError;
 
 export type SavePrescriptionLinesInput = {
   invoiceId: Scalars['String']['input'];
@@ -9453,14 +9448,6 @@ export type SetPrescribedQuantityWithId = {
   id: Scalars['String']['output'];
   response: SetPrescribedQuantityResponse;
 };
-
-export type ShipmentVarianceReasonNotProvided =
-  SaveOutboundShipmentLinesErrorInterface &
-    UpdateInboundShipmentLineErrorInterface &
-    UpdateOutboundShipmentLineErrorInterface & {
-      __typename: 'ShipmentVarianceReasonNotProvided';
-      description: Scalars['String']['output'];
-    };
 
 export type ShippingMethodConnector = {
   __typename: 'ShippingMethodConnector';
@@ -10766,6 +10753,7 @@ export type UpdateOutboundShipmentLineInput = {
   id: Scalars['String']['input'];
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
+  reasonOptionId?: InputMaybe<NullableStringUpdate>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   tax?: InputMaybe<TaxInput>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;

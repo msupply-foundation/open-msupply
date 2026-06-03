@@ -1,5 +1,4 @@
 use super::{UpdateStockOutLine, UpdateStockOutLineError};
-use crate::invoice_line::stock_out_line::StockOutType;
 use crate::NullableUpdate;
 use crate::{
     check_vvm_status_exists,
@@ -15,8 +14,8 @@ use crate::{
     stock_line::historical_stock::get_historical_stock_line_available_quantity,
 };
 use repository::{
-    InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, ReasonOptionFilter, ReasonOptionRepository,
-    ReasonOptionRowRepository, ReasonOptionType, StorageConnection,
+    InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, ReasonOptionRowRepository,
+    ReasonOptionType, StorageConnection,
 };
 
 pub fn validate(
@@ -136,33 +135,6 @@ pub fn validate(
                 stock_line_id: batch_pair.main_batch.stock_line_row.id,
                 line_id: line_row.id.clone(),
             });
-        }
-    }
-
-    if matches!(stock_out_type, StockOutType::OutboundShipment) {
-        let num_packs = adjusted_input
-            .number_of_packs
-            .unwrap_or(line.invoice_line_row.number_of_packs);
-        let received_num_packs = match &adjusted_input.received_number_of_packs {
-            Some(NullableUpdate { value }) => *value,
-            None => line.invoice_line_row.received_number_of_packs,
-        };
-        let option_id = match &adjusted_input.reason_option_id {
-            Some(NullableUpdate { value }) => value.clone(),
-            None => line.invoice_line_row.reason_option_id.clone(),
-        };
-
-        let has_variance = received_num_packs.is_some_and(|received| received != num_packs);
-
-        if has_variance && option_id.is_none() {
-            let active_reasons = ReasonOptionRepository::new(connection).query_by_filter(
-                ReasonOptionFilter::new()
-                    .r#type(ReasonOptionType::ShipmentVariance.equal_to())
-                    .is_active(true),
-            )?;
-            if !active_reasons.is_empty() {
-                return Err(ShipmentVarianceReasonNotProvided);
-            }
         }
     }
 
