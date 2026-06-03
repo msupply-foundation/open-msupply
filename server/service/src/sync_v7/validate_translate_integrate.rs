@@ -326,6 +326,7 @@ fn validate_translate_integrate_inner<'a>(
             table_name: table.as_ref(),
             action: action.clone(),
             direction,
+            limit: i64::MAX,
         })?;
 
         log::info!("Number of records to integrate  {}", rows.len());
