@@ -595,12 +595,12 @@ fn translate_row_or_delete(
 }
 
 #[derive(Debug)]
-pub(crate) enum ActiveRecordCheck {
+enum ActiveRecordCheck {
     InvoiceLine { invoice_id: String },
 }
 
 #[derive(Error, Debug)]
-pub(crate) enum ActiveRecordCheckError {
+enum ActiveRecordCheckError {
     #[error("Database error while checking record is active on site {0:?}")]
     DatabaseError(RepositoryError),
     #[error("Problem checking record is active on site, site id is not set in database")]
@@ -609,7 +609,7 @@ pub(crate) enum ActiveRecordCheckError {
     ParentRecordNotFound(ActiveRecordCheck),
 }
 
-pub(crate) fn is_active_record_on_site(
+fn is_active_record_on_site(
     connection: &StorageConnection,
     record: ActiveRecordCheck,
 ) -> Result<bool, ActiveRecordCheckError> {
