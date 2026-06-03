@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { Suspense, lazy, useMemo } from 'react';
 import {
   PrintFormat,
   PrintReportSortInput,
@@ -10,11 +10,21 @@ import {
 } from '@openmsupply-client/common';
 import { PrinterIcon } from '@common/icons';
 import { LoadingButton } from '@common/components';
-import { ReportArgumentsModal } from './ReportArgumentsModal';
 import { ReportListParams, usePrintReport, useReportList } from '../api/hooks';
 import { ReportRowFragment } from '../api';
 import { ReportOption, SelectReportModal } from './SelectReportModal';
 import { JsonData } from '@openmsupply-client/programs';
+
+// Lazy: ReportArgumentsModal pulls in @jsonforms + ajv + zod (~480KB)
+// via the report's JSON-schema form. ReportSelector is used in the
+// AppBarButtons of every list/detail page; without this boundary the
+// JsonForms vendor chunk loads eagerly on Outbound, Inbound, Patient,
+// Stocktake, etc. — even though no one has clicked Print yet.
+const ReportArgumentsModal = lazy(() =>
+  import('./ReportArgumentsModal').then(m => ({
+    default: m.ReportArgumentsModal,
+  }))
+);
 
 interface ReportSelectorProps {
   context?: ReportContext;
@@ -120,13 +130,19 @@ export const ReportSelector = ({
           onClose={modalOpen.toggleOff}
         />
       )}
-      <ReportArgumentsModal
-        report={reportWithArgs?.report}
-        printFormat={reportWithArgs?.format}
-        onReset={onClose}
-        onArgumentsSelected={print}
-        extraArguments={extraArguments}
-      />
+      {/* Only mount (and therefore fetch) the heavy JsonForms-backed
+          modal once the user has picked a report. */}
+      {reportWithArgs ? (
+        <Suspense fallback={null}>
+          <ReportArgumentsModal
+            report={reportWithArgs.report}
+            printFormat={reportWithArgs.format}
+            onReset={onClose}
+            onArgumentsSelected={print}
+            extraArguments={extraArguments}
+          />
+        </Suspense>
+      ) : null}
     </>
   );
 };
