@@ -1,14 +1,18 @@
 use crate::{
     processors::ProcessorType,
     service_provider::{ServiceContext, ServiceProvider},
-    sync::{sync_status::logger::SyncStep, CentralServerConfig},
+    sync::{
+        sync_buffer::get_sync_buffer_for_table, sync_status::logger::SyncStep, CentralServerConfig,
+    },
 };
 use log::warn;
 use repository::{
     KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, SyncAction,
+    SyncBufferRepository, SyncVersion,
 };
 
 use std::sync::Arc;
+use std::time::Instant;
 use thiserror::Error;
 use util::format_error;
 
@@ -24,15 +28,16 @@ use super::{
         WaitForSyncOperationError,
     },
     settings::{SyncSettings, SYNC_V5_VERSION, SYNC_V6_VERSION},
-    sync_buffer::get_ordered_sync_buffer_records,
     sync_on_central::adjust_v6_cursor,
-    sync_status::logger::{SyncLogger, SyncLoggerError},
+    sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
-    translations::{all_translators, pull_integration_order},
+    translations::{all_translators, pull_integration_order, SyncTranslators},
 };
 
+const INTEGRATION_BATCH_SIZE: i64 = 10_000;
 const INTEGRATION_POLL_PERIOD_SECONDS: u64 = 1;
 const INTEGRATION_TIMEOUT_SECONDS: u64 = 30;
+
 pub struct SynchroniserV5V6 {
     settings: SyncSettings,
     service_provider: Arc<ServiceProvider>,
@@ -441,7 +446,7 @@ async fn integrate_and_translate_sync_outer(
 /// Translation And Integration of sync buffer, pub since used in CLI
 pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
-    logger: Option<&mut SyncLogger<'_>>,
+    mut logger: Option<&mut SyncLogger<'_>>,
     source_site_id: i32,
     use_transaction: bool,
 ) -> Result<
@@ -461,7 +466,7 @@ pub fn integrate_and_translate_sync_buffer(
     // - not initialised: no transactions at all
 
     // Closure, to be run in a transaction or without a transaction
-    let integrate_and_translate = |connection: &StorageConnection| -> Result<
+    let mut integrate_and_translate = |connection: &StorageConnection| -> Result<
         (
             TranslationAndIntegrationResults,
             TranslationAndIntegrationResults,
@@ -472,58 +477,32 @@ pub fn integrate_and_translate_sync_buffer(
         let translators = all_translators();
         let table_order = pull_integration_order(&translators);
 
-        let translation_and_integration = TranslationAndIntegration::new(connection);
-
-        // Translate and integrate upserts (ordered by referential database constraints)
-        let upsert_sync_buffer_records = get_ordered_sync_buffer_records(
-            connection,
-            SyncAction::Upsert,
-            &table_order,
+        // Seed integration progress total with the global pending count so the logger
+        // reports a real total across all (action, table) batches, not just the first 10k slice.
+        let total_pending = SyncBufferRepository::new(connection).count_pending(
             source_site_id,
-        )?;
+            SyncVersion::V5V6,
+            None,
+        )? as u64;
+        if let Some(logger) = logger.as_mut() {
+            logger
+                .progress(SyncStepProgress::Integrate, total_pending)
+                .map_err(SyncLoggerError::to_repository_error)?;
+        }
 
-        // Translate and integrate delete (ordered by referential database constraints, in reverse)
-        let delete_sync_buffer_records = get_ordered_sync_buffer_records(
+        let mut integrator = SyncBufferIntegrator::new(
             connection,
-            SyncAction::Delete,
             &table_order,
+            &translators,
             source_site_id,
-        )?;
+            total_pending,
+        );
 
-        let upsert_integration_result = translation_and_integration
-            .translate_and_integrate_sync_records(
-                &upsert_sync_buffer_records,
-                &translators,
-                logger,
-            )?;
+        let upserts = integrator.process_action(SyncAction::Upsert, logger.as_deref_mut())?;
+        let deletes = integrator.process_action(SyncAction::Delete, logger.as_deref_mut())?;
+        let merges = integrator.process_action(SyncAction::Merge, logger.as_deref_mut())?;
 
-        // pass the logger here
-        let delete_integration_result = translation_and_integration
-            .translate_and_integrate_sync_records(
-                &delete_sync_buffer_records,
-                &translators,
-                None,
-            )?;
-
-        let merge_sync_buffer_records = get_ordered_sync_buffer_records(
-            connection,
-            SyncAction::Merge,
-            &table_order,
-            source_site_id,
-        )?;
-
-        let merge_integration_result: TranslationAndIntegrationResults =
-            translation_and_integration.translate_and_integrate_sync_records(
-                &merge_sync_buffer_records,
-                &translators,
-                None,
-            )?;
-
-        Ok((
-            upsert_integration_result,
-            delete_integration_result,
-            merge_integration_result,
-        ))
+        Ok((upserts, deletes, merges))
     };
 
     let result = if use_transaction {
@@ -535,6 +514,100 @@ pub fn integrate_and_translate_sync_buffer(
     };
 
     Ok(result)
+}
+
+/// Drives integration of every pending sync buffer row for each `SyncAction`
+/// (Upsert/Delete/Merge), one `INTEGRATION_BATCH_SIZE`-sized chunk per table at a time.
+///
+/// `done_so_far`, `total_errored`, and `last_progress_time` accumulate across every
+/// `process_action` call, so the progress log reports cumulative totals and a rec/s window that
+/// spans both integration and the next batch's fetch, rather than resetting between actions.
+struct SyncBufferIntegrator<'a> {
+    connection: &'a StorageConnection,
+    table_order: &'a [&'a str],
+    translators: &'a SyncTranslators,
+    source_site_id: i32,
+    total_pending: u64,
+    done_so_far: u64,
+    total_errored: u32,
+    last_progress_time: Instant,
+}
+
+impl<'a> SyncBufferIntegrator<'a> {
+    fn new(
+        connection: &'a StorageConnection,
+        table_order: &'a [&'a str],
+        translators: &'a SyncTranslators,
+        source_site_id: i32,
+        total_pending: u64,
+    ) -> Self {
+        Self {
+            connection,
+            table_order,
+            translators,
+            source_site_id,
+            total_pending,
+            done_so_far: 0,
+            total_errored: 0,
+            // Reset *after* each log, so the next batch's rec/s window covers both the fetch of
+            // the next 10k records and their integration.
+            last_progress_time: Instant::now(),
+        }
+    }
+
+    /// Process every pending row for a single `SyncAction`, one `INTEGRATION_BATCH_SIZE`-sized
+    /// chunk per table at a time, accumulating progress into `self`.
+    fn process_action(
+        &mut self,
+        action: SyncAction,
+        mut logger: Option<&mut SyncLogger>,
+    ) -> Result<TranslationAndIntegrationResults, RepositoryError> {
+        let mut integrator = TranslationAndIntegration::new(self.connection);
+        for table in self.table_order {
+            loop {
+                let records = get_sync_buffer_for_table(
+                    self.connection,
+                    action.clone(),
+                    table,
+                    self.source_site_id,
+                    INTEGRATION_BATCH_SIZE,
+                )?;
+                if records.is_empty() {
+                    break;
+                }
+                let batch_size = records.len() as u64;
+                let batch_errors =
+                    integrator.translate_and_integrate_sync_records(&records, self.translators)?;
+                self.done_so_far += batch_size;
+                self.total_errored += batch_errors;
+
+                let elapsed = self.last_progress_time.elapsed();
+                let rec_per_sec = if elapsed.as_secs_f64() > 0.0 {
+                    batch_size as f64 / elapsed.as_secs_f64()
+                } else {
+                    0.0
+                };
+                log::info!(
+                    "Integration progress - table: {table}, integrated: {}, total: {}, errored: {} ({:.1} rec/s)",
+                    self.done_so_far,
+                    self.total_pending,
+                    self.total_errored,
+                    rec_per_sec,
+                );
+                self.last_progress_time = Instant::now();
+
+                if let Some(logger) = logger.as_deref_mut() {
+                    logger
+                        .progress(
+                            SyncStepProgress::Integrate,
+                            self.total_pending.saturating_sub(self.done_so_far),
+                        )
+                        .map_err(SyncLoggerError::to_repository_error)?;
+                }
+            }
+        }
+        Ok(integrator.result)
+    }
 }
 
 #[cfg(test)]
