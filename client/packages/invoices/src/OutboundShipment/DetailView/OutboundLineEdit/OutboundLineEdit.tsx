@@ -8,6 +8,8 @@ import {
   useNotification,
   InvoiceNodeStatus,
   useShallow,
+  usePluginEvents,
+  ShipmentLinePluginState,
 } from '@openmsupply-client/common';
 import { ScannedBarcode } from '../../../types';
 import { SelectItem } from './SelectItem';
@@ -42,6 +44,10 @@ export const OutboundLineEdit = ({
   const t = useTranslation();
   const { info, warning, error } = useNotification();
   const [itemId, setItemId] = useState(openedWith?.itemId);
+  const pluginEvents = usePluginEvents<ShipmentLinePluginState>({});
+  const hasInvalidPluginLines = Object.values(
+    pluginEvents.state.invalidLines ?? {}
+  ).some(Boolean);
 
   // Used to determine if the item selector should be disabled. We want to allow
   // changing the item if we opened with a barcode and haven't selected an item
@@ -100,7 +106,8 @@ export const OutboundLineEdit = ({
 
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) ||
-    !itemId;
+    !itemId ||
+    hasInvalidPluginLines;
 
   const handleSave = async (onSaved: () => boolean | void) => {
     const confirmZeroQuantityMessage = t('messages.confirm-zero-quantity');
@@ -172,7 +179,7 @@ export const OutboundLineEdit = ({
       }
       okButton={
         <DialogButton
-          disabled={!itemId || !isDirty}
+          disabled={!itemId || !isDirty || hasInvalidPluginLines}
           variant="ok"
           onClick={() => handleSave(onClose)}
         />
@@ -195,6 +202,7 @@ export const OutboundLineEdit = ({
             invoiceId={invoiceId}
             allowPlaceholder={status === InvoiceNodeStatus.New}
             scannedBatch={asBarcodeOrNull(openedWith)?.batch}
+            pluginEvents={pluginEvents}
           />
         )}
       </Grid>

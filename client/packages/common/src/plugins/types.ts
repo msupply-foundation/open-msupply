@@ -7,7 +7,11 @@ import {
   RequestLineFragment,
   StockLineRowFragment,
 } from '@openmsupply-client/system';
-import { InboundFragment } from '@openmsupply-client/invoices';
+import {
+  InboundFragment,
+  InboundLineFragment,
+  StockOutLineFragment,
+} from '@openmsupply-client/invoices';
 import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
 import { DraftRequestLine } from 'packages/requisitions/src/RequestRequisition/DetailView/RequestLineEdit';
 import { StocktakeLineFragment } from '@openmsupply-client/inventory';
@@ -44,9 +48,36 @@ export type PluginPage = {
   pluginCode?: string;
 };
 
+export type ShipmentLinePluginState = {
+  isDirty?: boolean;
+  invalidLines?: Record<string, boolean>;
+};
+
 export type Plugins = {
   prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
+  inboundShipmentLine?: {
+    editViewField: {
+      header: string;
+      Component: React.ComponentType<{
+        line: InboundLineFragment;
+        update: (patch: Partial<InboundLineFragment>) => void;
+        events: UsePluginEvents<ShipmentLinePluginState>;
+      }>;
+    }[];
+    tableColumn?: ColumnDef<InboundLineFragment>[];
+  };
+  outboundShipmentLine?: {
+    editViewField: {
+      header: string;
+      Component: React.ComponentType<{
+        line: StockOutLineFragment;
+        events: UsePluginEvents<ShipmentLinePluginState>;
+        isExternal: boolean;
+      }>;
+    }[];
+    tableColumn?: ColumnDef<StockOutLineFragment>[];
+  };
   item?: {
     detailViewField: React.ComponentType<{ item: ItemFragment }>[];
   };

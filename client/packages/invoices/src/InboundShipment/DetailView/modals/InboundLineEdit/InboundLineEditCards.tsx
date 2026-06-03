@@ -28,6 +28,9 @@ import {
   InvoiceNodeStatus,
   InfoIcon,
   useSimplifiedTabletUI,
+  usePluginProvider,
+  UsePluginEvents,
+  ShipmentLinePluginState,
 } from '@openmsupply-client/common';
 import { Select, MenuItem } from '@mui/material';
 import { DraftInboundLine } from '../../../../types';
@@ -68,6 +71,7 @@ interface InboundLineEditCardsProps extends CardProps {
   actions?: React.ReactNode;
   /** The specific line ID to scroll into view when the modal opens */
   scrollToLineId?: string | null;
+  pluginEvents: UsePluginEvents<ShipmentLinePluginState>;
 }
 
 export const InboundLineEditCards = ({
@@ -87,9 +91,11 @@ export const InboundLineEditCards = ({
   lastCardRef,
   actions,
   scrollToLineId,
+  pluginEvents,
 }: InboundLineEditCardsProps) => {
   const t = useTranslation();
   const simplified = useSimplifiedTabletUI();
+  const { plugins } = usePluginProvider();
   const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
   // Ref avoids format in useMemo deps (unstable reference)
@@ -347,6 +353,23 @@ export const InboundLineEditCards = ({
             ? null
             : row.shippedNumberOfPacks - row.numberOfPacks,
       },
+      ...(plugins.inboundShipmentLine?.editViewField ?? []).map(
+        ({ header, Component }, index): ColumnDef<DraftInboundLine> => ({
+          id: `plugin-field-${index}`,
+          header,
+          size: 180,
+          columnGroup: 'stockLineDetails',
+          Cell: ({ row }) => (
+            <Component
+              line={row.original}
+              update={patch =>
+                updateDraftLine({ id: row.original.id, ...patch })
+              }
+              events={pluginEvents}
+            />
+          ),
+        })
+      ),
       {
         accessorKey: 'shippedPackSize',
         header: t('label.shipped-pack-size'),
@@ -776,6 +799,7 @@ export const InboundLineEditCards = ({
     store?.preferences.issueInForeignCurrency,
     unitName,
     updateDraftLine,
+    plugins.inboundShipmentLine?.editViewField,
   ]);
 
   const table = useSimpleMaterialTable<DraftInboundLine>({

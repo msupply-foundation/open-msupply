@@ -8,6 +8,7 @@ import {
   ExpiryDateCell,
   Box,
   weightedAverageByUnits,
+  usePluginProvider,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 
@@ -17,6 +18,7 @@ const isDefaultPlaceholderRow = (row: StockOutLineFragment) =>
 export const useOutboundColumns = () => {
   const t = useTranslation();
   const { manageVaccinesInDoses, manageVvmStatusForStock } = usePreferences();
+  const { plugins } = usePluginProvider();
 
   const columns = useMemo(() => {
     const cols: ColumnDef<StockOutLineFragment>[] = [
@@ -199,10 +201,16 @@ export const useOutboundColumns = () => {
           );
         },
       },
+      ...(plugins.outboundShipmentLine?.tableColumn ?? []),
     ];
 
     return cols;
-  }, [t, manageVvmStatusForStock, manageVaccinesInDoses]);
+  }, [
+    t,
+    manageVvmStatusForStock,
+    manageVaccinesInDoses,
+    plugins.outboundShipmentLine?.tableColumn,
+  ]);
 
   return columns;
 };
