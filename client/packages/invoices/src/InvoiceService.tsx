@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, Suspense } from 'react';
 import {
   RouteBuilder,
   Routes,
@@ -6,19 +6,47 @@ import {
   Navigate,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { DetailView, OutboundShipmentListView } from './OutboundShipment';
-import {
-  SupplierReturnsDetailView,
-  SupplierReturnListView,
-  CustomerReturnListView,
-} from './Returns';
-import {
-  InboundListView,
-  DetailView as InboundShipmentDetailView,
-} from './InboundShipment';
-import { PrescriptionListView, PrescriptionDetailView } from './Prescriptions';
-import { CustomerReturnDetailView } from './Returns/CustomerDetailView';
-import { PrescriptionLineEditView } from './Prescriptions/LineEditView';
+
+// All sub-areas are lazy so navigating to (e.g.) Inbound doesn't pull in
+// Outbound + Prescriptions (JsonForms, Patient, Encounter, ~700KB combined)
+// + Returns. Each route is its own async chunk.
+const OutboundShipmentListView = React.lazy(() =>
+  import('./OutboundShipment').then(m => ({ default: m.OutboundShipmentListView }))
+);
+const OutboundShipmentDetailView = React.lazy(() =>
+  import('./OutboundShipment').then(m => ({ default: m.DetailView }))
+);
+const InboundListView = React.lazy(() =>
+  import('./InboundShipment').then(m => ({ default: m.InboundListView }))
+);
+const InboundShipmentDetailView = React.lazy(() =>
+  import('./InboundShipment').then(m => ({ default: m.DetailView }))
+);
+const PrescriptionListView = React.lazy(() =>
+  import('./Prescriptions').then(m => ({ default: m.PrescriptionListView }))
+);
+const PrescriptionDetailView = React.lazy(() =>
+  import('./Prescriptions').then(m => ({ default: m.PrescriptionDetailView }))
+);
+const PrescriptionLineEditView = React.lazy(() =>
+  import('./Prescriptions/LineEditView').then(m => ({
+    default: m.PrescriptionLineEditView,
+  }))
+);
+const SupplierReturnListView = React.lazy(() =>
+  import('./Returns').then(m => ({ default: m.SupplierReturnListView }))
+);
+const SupplierReturnsDetailView = React.lazy(() =>
+  import('./Returns').then(m => ({ default: m.SupplierReturnsDetailView }))
+);
+const CustomerReturnListView = React.lazy(() =>
+  import('./Returns').then(m => ({ default: m.CustomerReturnListView }))
+);
+const CustomerReturnDetailView = React.lazy(() =>
+  import('./Returns/CustomerDetailView').then(m => ({
+    default: m.CustomerReturnDetailView,
+  }))
+);
 
 const InvoiceService: FC = () => {
   const outboundShipmentsRoute = RouteBuilder.create(
@@ -71,51 +99,62 @@ const InvoiceService: FC = () => {
     .build();
 
   return (
-    <Routes>
-      <Route
-        path={outboundShipmentsRoute}
-        element={<OutboundShipmentListView />}
-      />
-      <Route path={outboundShipmentRoute} element={<DetailView />} />
-      <Route path={inboundShipmentsRoute} element={<InboundListView />} />
-      <Route
-        path={inboundShipmentRoute}
-        element={<InboundShipmentDetailView />}
-      />
-      <Route
-        path={RouteBuilder.create(AppRoute.InboundShipmentExternal).build()}
-        element={
-          <Navigate
-            to={RouteBuilder.create(AppRoute.Replenishment)
-              .addPart(AppRoute.InboundShipment)
-              .build()}
-            replace
-          />
-        }
-      />
-      <Route
-        path={inboundShipmentExternalRoute}
-        element={<InboundShipmentDetailView />}
-      />
-      <Route path={prescriptionsRoute} element={<PrescriptionListView />} />
-      <Route path={prescriptionRoute} element={<PrescriptionDetailView />} />
-      <Route
-        path={prescriptionLineRoute}
-        element={<PrescriptionLineEditView />}
-      />
+    <Suspense fallback={null}>
+      <Routes>
+        <Route
+          path={outboundShipmentsRoute}
+          element={<OutboundShipmentListView />}
+        />
+        <Route
+          path={outboundShipmentRoute}
+          element={<OutboundShipmentDetailView />}
+        />
+        <Route path={inboundShipmentsRoute} element={<InboundListView />} />
+        <Route
+          path={inboundShipmentRoute}
+          element={<InboundShipmentDetailView />}
+        />
+        <Route
+          path={RouteBuilder.create(AppRoute.InboundShipmentExternal).build()}
+          element={
+            <Navigate
+              to={RouteBuilder.create(AppRoute.Replenishment)
+                .addPart(AppRoute.InboundShipment)
+                .build()}
+              replace
+            />
+          }
+        />
+        <Route
+          path={inboundShipmentExternalRoute}
+          element={<InboundShipmentDetailView />}
+        />
+        <Route path={prescriptionsRoute} element={<PrescriptionListView />} />
+        <Route path={prescriptionRoute} element={<PrescriptionDetailView />} />
+        <Route
+          path={prescriptionLineRoute}
+          element={<PrescriptionLineEditView />}
+        />
 
-      <Route path={supplierReturnsRoute} element={<SupplierReturnListView />} />
-      <Route
-        path={supplierReturnRoute}
-        element={<SupplierReturnsDetailView />}
-      />
+        <Route
+          path={supplierReturnsRoute}
+          element={<SupplierReturnListView />}
+        />
+        <Route
+          path={supplierReturnRoute}
+          element={<SupplierReturnsDetailView />}
+        />
 
-      <Route path={customerReturnsRoute} element={<CustomerReturnListView />} />
-      <Route
-        path={customerReturnRoute}
-        element={<CustomerReturnDetailView />}
-      />
-    </Routes>
+        <Route
+          path={customerReturnsRoute}
+          element={<CustomerReturnListView />}
+        />
+        <Route
+          path={customerReturnRoute}
+          element={<CustomerReturnDetailView />}
+        />
+      </Routes>
+    </Suspense>
   );
 };
 

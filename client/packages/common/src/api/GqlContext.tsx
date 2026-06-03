@@ -7,7 +7,7 @@ import {
 } from 'graphql-request';
 import { AuthError, getAuthCookie } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
-import { DocumentNode } from 'graphql';
+import type { DocumentNode } from 'graphql';
 import { RequestConfig } from 'graphql-request/build/esm/types';
 import { createRegisteredContext } from 'react-singleton-context';
 

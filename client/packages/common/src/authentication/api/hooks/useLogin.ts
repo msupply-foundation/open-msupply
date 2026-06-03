@@ -14,7 +14,11 @@ import {
   UserStoreNodeFragment,
   useIntlUtils,
 } from '@openmsupply-client/common';
-import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
+import type {
+  DefinitionNode,
+  DocumentNode,
+  OperationDefinitionNode,
+} from 'graphql';
 
 const authNameQueries = ['authToken', 'me'];
 const isAuthRequest = (definitionNode: DefinitionNode) => {

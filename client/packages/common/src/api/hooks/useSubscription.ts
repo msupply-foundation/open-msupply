@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { DocumentNode, print } from 'graphql';
+import type { DocumentNode } from 'graphql';
+// Sub-path import avoids pulling in the whole graphql library (~170KB);
+// `printer` is the only thing we need at runtime.
+import { print } from 'graphql/language/printer';
 import { useGql } from '../GqlContext';
 import { useAuthContext } from '../../authentication/AuthContext';
 import {

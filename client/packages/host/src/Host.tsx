@@ -34,7 +34,14 @@ import {
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
 import { MigrationInfoProvider } from './components/Migration';
-import { Site } from './Site';
+// Lazy: `Site` is the authenticated app shell — it sync-imports every
+// router (Distribution, Dispensary, Inventory, Manage, Programs, …),
+// AppDrawer, Footer, Help, MobileNavBar, SyncModalProvider, and so on.
+// Keeping that whole tree out of the initial bundle means the /login,
+// /initialise, /discovery, /android routes don't pay for it.
+const Site = React.lazy(() =>
+  import('./Site').then(m => ({ default: m.Site }))
+);
 import { ErrorAlert } from './components/ErrorAlert';
 import { Discovery } from './components/Discovery';
 import { Android } from './components/Android';
