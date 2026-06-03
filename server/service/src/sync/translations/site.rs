@@ -3,8 +3,8 @@ use super::{PullTranslateResult, SyncTranslation};
 use crate::sync::translations::PushTranslateResult;
 use crate::sync::CentralServerConfig;
 use repository::{
-    ChangelogRow, ChangelogTableName, Row, SiteRow, SiteRowDelete, StorageConnection,
-    SyncBufferRow, SyncVersion,
+    ChangelogRow, ChangelogTableName, Row, SiteRow, SiteRowDelete, SiteRowRepository,
+    StorageConnection, SyncBufferRow, SyncVersion,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::empty_str_as_option_string;
@@ -64,10 +64,15 @@ impl SyncTranslation for SiteTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        con: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_value::<LegacySitePullRow>(sync_record.data.0.clone())?;
+
+        // Token should persist and only set in OMS
+        let token = SiteRowRepository::new(con)
+            .find_one_by_id(data.site_id)?
+            .and_then(|row| row.token);
 
         let result = SiteRow {
             id: data.site_id,
@@ -76,8 +81,7 @@ impl SyncTranslation for SiteTranslation {
             hashed_password: data.hashed_password,
             hardware_id: data.hardware_id,
             code: data.code.unwrap_or_default(),
-            // token is OMS-managed and never comes from OG
-            token: None,
+            token,
             sync_version: data.sync_version,
         };
 

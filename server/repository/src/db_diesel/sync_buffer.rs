@@ -215,6 +215,7 @@ pub struct PendingQuery<'a> {
     pub table_name: &'a str,
     pub action: SyncAction,
     pub direction: CursorDirection,
+    pub limit: i64,
 }
 
 pub struct SyncBufferRepository<'a> {
@@ -250,6 +251,7 @@ impl<'a> SyncBufferRepository<'a> {
             table_name,
             action,
             direction,
+            limit,
         } = query;
 
         let mut q = sync_buffer::table
@@ -258,6 +260,7 @@ impl<'a> SyncBufferRepository<'a> {
             .filter(sync_buffer::table_name.eq(table_name.to_string()))
             .filter(sync_buffer::action.eq(action))
             .filter(sync_buffer::source_site_id.eq(source_site_id))
+            .limit(limit)
             .into_boxed();
 
         if let Some(reference_id) = reference_id {
@@ -405,6 +408,7 @@ mod test {
                 table_name: "store",
                 action: SyncAction::Upsert,
                 direction: CursorDirection::Asc,
+                limit: i64::MAX,
             })
             .unwrap();
         let ids: Vec<_> = rows.iter().map(|r| r.record_id.as_str()).collect();
@@ -419,6 +423,7 @@ mod test {
                 table_name: "store",
                 action: SyncAction::Upsert,
                 direction: CursorDirection::Asc,
+                limit: i64::MAX,
             })
             .unwrap();
         let ids: Vec<_> = rows.iter().map(|r| r.record_id.as_str()).collect();
@@ -433,6 +438,7 @@ mod test {
                 table_name: "store",
                 action: SyncAction::Upsert,
                 direction: CursorDirection::Desc,
+                limit: i64::MAX,
             })
             .unwrap();
         let ids: Vec<_> = rows.iter().map(|r| r.record_id.as_str()).collect();
@@ -447,6 +453,7 @@ mod test {
                 table_name: "store",
                 action: SyncAction::Upsert,
                 direction: CursorDirection::Asc,
+                limit: i64::MAX,
             })
             .unwrap();
         let ids: Vec<_> = rows.iter().map(|r| r.record_id.as_str()).collect();
@@ -487,6 +494,7 @@ mod test {
                 table_name: "store",
                 action: SyncAction::Upsert,
                 direction: CursorDirection::Asc,
+                limit: i64::MAX,
             })
             .unwrap();
         assert_eq!(rows.len(), 3);
@@ -518,6 +526,7 @@ mod test {
                 table_name: "store",
                 action: SyncAction::Upsert,
                 direction: CursorDirection::Asc,
+                limit: i64::MAX,
             })
             .unwrap();
         assert!(pending.is_empty());
@@ -558,6 +567,7 @@ mod test {
                 table_name: "store",
                 action: SyncAction::Upsert,
                 direction: CursorDirection::Asc,
+                limit: i64::MAX,
             })
             .unwrap();
         assert_eq!(pending.len(), 2);
