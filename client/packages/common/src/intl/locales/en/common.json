@@ -2919,7 +2919,6 @@
   "title.configure-plugin": "Configure plugin",
   "title.configure-plugin-code": "Configure plugin: {{code}}",
   "messages.plugin-config-saved": "Plugin configuration saved",
-  "messages.plugin-no-configuration-ui": "This plugin does not provide a configuration UI.",
   "error.unable-to-save-plugin-config": "Unable to save plugin configuration",
   "error.plugin-not-loaded": "Plugin not loaded: {{code}}"
 }
