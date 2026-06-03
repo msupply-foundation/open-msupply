@@ -6,12 +6,15 @@ use graphql_core::loader::AssetByLocationLoader;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_core::{generic_filters::EqualFilterStringInput, loader::LocationByIdLoader};
-use graphql_types::types::LocationNode;
+use graphql_types::types::{LocationFilterInput, LocationNode};
 use repository::{
     DatetimeFilter, PaginationOption, StringFilter, TemperatureBreachFilter, TemperatureLogFilter,
     TemperatureLogSort, TemperatureLogSortField,
 };
-use repository::{EqualFilter, Sensor, SensorFilter, SensorRow, SensorSort, SensorSortField};
+use repository::{
+    EqualFilter, Sensor, SensorFilter, SensorRow, SensorSort, SensorSortField,
+    sensor_row::SensorType,
+};
 use service::cold_chain::query_temperature_breach::temperature_breaches;
 use service::cold_chain::query_temperature_log::get_temperature_logs;
 use service::{usize_to_u32, ListResult};
@@ -37,20 +40,27 @@ pub struct SensorSortInput {
 
 #[derive(InputObject, Clone)]
 pub struct SensorFilterInput {
-    pub serial: Option<EqualFilterStringInput>,
+    pub serial: Option<StringFilterInput>,
     pub name: Option<StringFilterInput>,
     pub is_active: Option<bool>,
     pub id: Option<EqualFilterStringInput>,
+    pub r#type: Option<SensorNodeType>,
+    pub location_code: Option<StringFilterInput>,
 }
 
 impl From<SensorFilterInput> for SensorFilter {
     fn from(f: SensorFilterInput) -> Self {
         SensorFilter {
-            serial: f.serial.map(EqualFilter::from),
+            serial: f.serial.map(StringFilter::from),
             name: f.name.map(StringFilter::from),
             id: f.id.map(EqualFilter::from),
             store_id: None,
             is_active: f.is_active,
+            r#type: f.r#type.map(|t| EqualFilter::equal_to(SensorType::from(t))),
+            location: f.location_code.map(|code| {
+                use repository::location::LocationFilter;
+                LocationFilter::new().code(StringFilter::from(code))
+            }),
         }
     }
 }

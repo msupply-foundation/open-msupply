@@ -1,6 +1,5 @@
 import React, { FC, useEffect, useMemo, useState } from 'react';
 import {
-  AppBarContentPortal,
   useTranslation,
   NothingHere,
   useUrlQueryParams,
@@ -15,10 +14,10 @@ import {
   ColumnType,
   Typography,
 } from '@openmsupply-client/common';
-import { Switch } from '@common/components';
 import { SensorFragment, useSensorList } from '../api';
 import { SensorEditModal } from '../Components';
 import { BreachTypeCell, useFormatTemperature } from '../../common';
+import { Toolbar } from './Toolbar';
 
 export const SensorListView: FC = () => {
   const t = useTranslation();
@@ -28,19 +27,35 @@ export const SensorListView: FC = () => {
 
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'serial', dir: 'desc' },
-    filters: [{ key: 'serial' }, { key: 'name' }],
+    filters: [
+      { key: 'serial' },
+      { key: 'name' },
+      { key: 'locationCode' },
+    ],
   });
+
+  // Read sensor type directly from URL (bypasses getFilterEntry which wraps strings
+  // in { like: value } — incompatible with the plain SensorNodeType enum on the server)
+  const sensorType = urlQuery['type'] as string | undefined;
 
   const activeQueryParams = {
     ...queryParams,
-    filterBy: activeOnly
-      ? { ...queryParams.filterBy, isActive: true }
-      : queryParams.filterBy,
+    filterBy: {
+      ...queryParams.filterBy,
+      ...(activeOnly && { isActive: true }),
+      ...(sensorType && { type: sensorType }),
+    },
   };
 
   const { data, isError, isLoading } = useSensorList(activeQueryParams);
 
   const { isOpen, entity, onClose, onOpen } = useEditModal<SensorFragment>();
+
+  // Clear any stale isActive URL param left from a previous session that used initialFilter
+  useEffect(() => {
+    if (urlQuery['isActive'] !== undefined) updateQuery({ isActive: '' });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // this will open the edit modal, if the `edit` query parameter is set
   // to a valid sensor ID. On opening, the query param is removed to
@@ -156,22 +171,7 @@ export const SensorListView: FC = () => {
       {isOpen && entity && (
         <SensorEditModal isOpen={isOpen} onClose={onClose} sensor={entity} />
       )}
-      <AppBarContentPortal
-        sx={{
-          paddingBottom: '16px',
-          display: 'flex',
-          flex: 1,
-          justifyContent: 'flex-end',
-        }}
-      >
-        <Switch
-          checked={activeOnly}
-          onChange={(_, checked) => setActiveOnly(checked)}
-          label={t('label.active-only')}
-          labelPlacement="end"
-          size="small"
-        />
-      </AppBarContentPortal>
+      <Toolbar activeOnly={activeOnly} onToggleActiveOnly={setActiveOnly} />
       <MaterialTable table={table} />
     </>
   );
