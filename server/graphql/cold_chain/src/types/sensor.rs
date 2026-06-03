@@ -3,17 +3,18 @@ use chrono::{DateTime, Utc};
 use graphql_asset::types::AssetConnector;
 use graphql_core::generic_filters::StringFilterInput;
 use graphql_core::loader::AssetByLocationLoader;
+use graphql_core::map_filter;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_core::{generic_filters::EqualFilterStringInput, loader::LocationByIdLoader};
-use graphql_types::types::{LocationFilterInput, LocationNode};
+use graphql_types::types::LocationNode;
+use repository::{
+    sensor_row::SensorType, EqualFilter, Sensor, SensorFilter, SensorRow, SensorSort,
+    SensorSortField,
+};
 use repository::{
     DatetimeFilter, PaginationOption, StringFilter, TemperatureBreachFilter, TemperatureLogFilter,
     TemperatureLogSort, TemperatureLogSortField,
-};
-use repository::{
-    EqualFilter, Sensor, SensorFilter, SensorRow, SensorSort, SensorSortField,
-    sensor_row::SensorType,
 };
 use service::cold_chain::query_temperature_breach::temperature_breaches;
 use service::cold_chain::query_temperature_log::get_temperature_logs;
@@ -39,12 +40,20 @@ pub struct SensorSortInput {
 }
 
 #[derive(InputObject, Clone)]
+pub struct EqualFilterSensorTypeInput {
+    pub equal_to: Option<SensorNodeType>,
+    pub equal_any: Option<Vec<SensorNodeType>>,
+    pub not_equal_to: Option<SensorNodeType>,
+    pub not_equal_all: Option<Vec<SensorNodeType>>,
+}
+
+#[derive(InputObject, Clone)]
 pub struct SensorFilterInput {
     pub serial: Option<StringFilterInput>,
     pub name: Option<StringFilterInput>,
     pub is_active: Option<bool>,
     pub id: Option<EqualFilterStringInput>,
-    pub r#type: Option<SensorNodeType>,
+    pub r#type: Option<EqualFilterSensorTypeInput>,
     pub location_code: Option<StringFilterInput>,
 }
 
@@ -56,7 +65,7 @@ impl From<SensorFilterInput> for SensorFilter {
             id: f.id.map(EqualFilter::from),
             store_id: None,
             is_active: f.is_active,
-            r#type: f.r#type.map(|t| EqualFilter::equal_to(SensorType::from(t))),
+            r#type: f.r#type.map(|t| map_filter!(t, SensorType::from)),
             location: f.location_code.map(|code| {
                 use repository::location::LocationFilter;
                 LocationFilter::new().code(StringFilter::from(code))
