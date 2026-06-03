@@ -12,10 +12,9 @@ import {
 } from './types';
 
 // Custom React configuration UI. Shipped via the `Component` slot of the
-// plugin's `configuration` field. The equivalent JSON Forms version is kept
-// as commented-out reference in ../plugin.tsx for plugin authors to compare.
+// plugin's `configuration` field (see ../plugin.tsx).
 //
-// Demonstrates two things JSON Forms can't easily do:
+// Demonstrates the freedom a custom component gives you:
 //   - bespoke composition (the live-preview pane below the form)
 //   - direct access to the host's component library, fully styled with the
 //     project's design system

@@ -1,4 +1,8 @@
-import { Plugins, ReportsIcon } from '@openmsupply-client/common';
+import {
+  Plugins,
+  PluginConfiguration,
+  ReportsIcon,
+} from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import ShippingStatus from './ShippingStatus/ShippingStatus';
 import SyncStatus from './Dashboard/SyncStatus';
@@ -10,46 +14,19 @@ import { StockAgingPage } from './Pages/StockAgingPage';
 import { ReportingDailyPage } from './Pages/ReportingDailyPage';
 import {
   DEFAULT_EXAMPLE_PLUGIN_CONFIG,
+  ExamplePluginConfig,
   ExamplePluginConfigComponent,
 } from './Configuration';
 
 const ReplenishmentAndSyncStatus: Plugins = {
-  // Plugin configuration UI surfaced from Manage > Plugins. A plugin provides
-  // either:
-  //   - `Component`: a custom React component (used here — see
-  //     ./Configuration/ConfigComponent.tsx). Full freedom over the UI.
-  //   - `jsonForms`: a `{ schema, uiSchema }` pair that the host renders with
-  //     the shared JSON Forms renderer. Less code; constrained to the
-  //     controls JSON Forms ships.
-  // The commented-out block below shows the JSON Forms equivalent of this
-  // plugin's config for plugin-author reference.
+  // Plugin configuration UI surfaced from Manage > Plugins. The plugin provides
+  // a custom React `Component` (see ./Configuration/ConfigComponent.tsx) that
+  // edits its config via `value`/`onChange`, with full freedom over the UI.
+  // `defaultConfig` seeds the form when no config has been saved yet.
   configuration: {
     defaultConfig: DEFAULT_EXAMPLE_PLUGIN_CONFIG,
     Component: ExamplePluginConfigComponent,
-    // jsonForms: {
-    //   schema: {
-    //     type: 'object',
-    //     properties: {
-    //       enabled: { type: 'boolean', title: 'Show Sync Status widget' },
-    //       logPrefix: {
-    //         type: 'string',
-    //         title: 'Sync widget title',
-    //         description:
-    //           'Shown in the Sync Status dashboard widget and prefixed to ' +
-    //           'backend processor log lines.',
-    //       },
-    //     },
-    //     required: ['logPrefix'],
-    //   },
-    //   uiSchema: {
-    //     type: 'VerticalLayout',
-    //     elements: [
-    //       { type: 'Control', scope: '#/properties/enabled' },
-    //       { type: 'Control', scope: '#/properties/logPrefix' },
-    //     ],
-    //   },
-    // },
-  },
+  } satisfies PluginConfiguration<ExamplePluginConfig>,
   inboundShipmentAppBar: [ShippingStatus],
   dashboard: {
     widget: [{ Component: SyncStatus }],

@@ -102,6 +102,8 @@ const plugins: BackendPlugins = {
             .filter(({ item_id }) => item_id === line.item_link_id)
             .reduce((acc, row) => acc + row.average_monthly_consumption, 0)
         ),
+        // Optional plugin-controlled timestamp; not used for AMC data.
+        datetime: null,
       })),
     };
   },
