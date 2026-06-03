@@ -46,7 +46,6 @@ use mutations::{
     update_name_properties::{
         update_name_properties, UpdateNamePropertiesInput, UpdateNamePropertiesResponse,
     },
-    update_user,
 };
 use queries::{
     abbreviation::AbbreviationFilterInput,
@@ -391,13 +390,6 @@ impl GeneralQueries {
         log_level(ctx)
     }
 
-    pub async fn last_successful_user_sync(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<update_user::UpdateUserNode> {
-        last_successful_user_sync(ctx)
-    }
-
     pub async fn frontend_plugin_metadata(
         &self,
         ctx: &Context<'_>,
@@ -603,10 +595,6 @@ impl GeneralMutations {
         input: LogLevelInput,
     ) -> Result<UpsertLogLevelResponse> {
         update_log_level(ctx, store_id, input)
-    }
-
-    pub async fn update_user(&self, ctx: &Context<'_>) -> Result<update_user::UpdateResponse> {
-        update_user::update_user(ctx).await
     }
 
     pub async fn update_label_printer_settings(
