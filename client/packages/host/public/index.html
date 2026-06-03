@@ -2,6 +2,16 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Preload the primary Inter weight so it's in flight before
+         CSS parses (otherwise it's discovered late and stalls LCP
+         by ~850ms per lighthouse). -->
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/fonts/inter-latin-wght-normal.woff2"
+      crossorigin
+    />
   </head>
   <body>
     <div id="content-row">
@@ -11,6 +21,13 @@
         </div>
       </div>
     </div>
-    <script type="text/javascript" src="/BrowserPrint-3.1.250.min.js"></script>
+    <!-- `defer`: BrowserPrint installs a `window.BrowserPrint` global
+         that's only consumed by usePrinter hook calls. Loading it
+         non-render-blocking shaves it off the critical path. -->
+    <script
+      defer
+      type="text/javascript"
+      src="/BrowserPrint-3.1.250.min.js"
+    ></script>
   </body>
 </html>

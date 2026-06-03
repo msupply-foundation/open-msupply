@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import {
   DialogButton,
-  UploadFile,
   useTranslation,
   useDialog,
   useNotification,
   Box,
   CircularProgress,
 } from '@openmsupply-client/common';
+
+import { UploadFile } from '@common/upload';
 import { Environment } from '@openmsupply-client/config';
 
 interface UploadDocumentModalProps {

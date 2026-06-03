@@ -11,6 +11,7 @@
       "@common/tables": ["packages/common/src/ui/layout/tables"],
       "@common/testing": ["packages/common/src/utils/testing"],
       "@common/types": ["packages/common/src/types"],
+      "@common/upload": ["packages/common/src/ui/components/inputs/Upload"],
       "@common/utils": ["packages/common/src/utils"]
     },
     "resolveJsonModule": true,

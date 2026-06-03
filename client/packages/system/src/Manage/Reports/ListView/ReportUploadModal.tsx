@@ -9,8 +9,9 @@ import {
   useDialog,
   useNotification,
   DetailContainer,
-  UploadFile,
 } from '@openmsupply-client/common';
+
+import { UploadFile } from '@common/upload';
 interface ReportUploadModalProps {
   isOpen: boolean;
   onClose: () => void;

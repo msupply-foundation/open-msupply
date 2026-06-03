@@ -15,10 +15,11 @@ import {
   InlineProgress,
   Typography,
   useNotification,
-  UploadFile,
   useExportCSV,
   ImportPanel,
 } from '@openmsupply-client/common';
+
+import { UploadFile } from '@common/upload';
 import * as EquipmentImportModal from './EquipmentImportModal';
 import { ImportRow } from './EquipmentImportModal';
 import { importEquipmentToCsv, parseStatusFromString } from '../utils';

@@ -13,10 +13,11 @@ import {
   InlineProgress,
   Typography,
   useNotification,
-  UploadFile,
   useExportCSV,
   ImportPanel,
 } from '@openmsupply-client/common';
+
+import { UploadFile } from '@common/upload';
 import * as AssetItemImportModal from './CatalogueItemImportModal';
 import { ImportRow } from './CatalogueItemImportModal';
 import { importRowToCsv } from '../utils';

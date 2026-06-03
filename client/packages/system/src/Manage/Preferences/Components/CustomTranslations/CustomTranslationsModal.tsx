@@ -4,9 +4,10 @@ import {
   ButtonWithIcon,
   DialogButton,
   LoadingButton,
-  UploadFile,
   ConfirmationModal,
 } from '@common/components';
+
+import { UploadFile } from '@common/upload';
 import { Box, Select, Typography } from '@openmsupply-client/common';
 import {
   SaveIcon,

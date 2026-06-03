@@ -12,8 +12,9 @@ import {
   InputWithLabelRow,
   Typography,
   useIsExtraSmallScreen,
-  UploadFile,
 } from '@openmsupply-client/common';
+
+import { UploadFile } from '@common/upload';
 import { FileList } from '../Components';
 import { statusColourMap } from '../utils';
 import { useAssetLogReasonList } from '@openmsupply-client/system';

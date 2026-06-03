@@ -8,12 +8,13 @@ import {
   InlineProgress,
   Typography,
   useNotification,
-  UploadFile,
   useExportCSV,
   ImportPanel,
   PurchaseOrderNodeStatus,
   NumUtils,
 } from '@openmsupply-client/common';
+
+import { UploadFile } from '@common/upload';
 import { importPurchaseOrderLinesToCsv } from '../utils';
 import { getImportHelpers, ImportRow, ParsedLine } from './utils';
 import {

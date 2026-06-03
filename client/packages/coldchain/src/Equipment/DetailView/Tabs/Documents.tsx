@@ -6,8 +6,9 @@ import {
   useTranslation,
   Typography,
   useConfirmationModal,
-  UploadFile,
 } from '@openmsupply-client/common';
+
+import { UploadFile } from '@common/upload';
 import { Environment } from '@openmsupply-client/config';
 import { FileList } from '../../Components';
 import { DraftAsset } from '../../types';

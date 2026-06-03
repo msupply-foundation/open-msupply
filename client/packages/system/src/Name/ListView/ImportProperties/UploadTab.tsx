@@ -8,12 +8,13 @@ import {
   PropertyNode,
   useNotification,
   NamePropertyNode,
-  UploadFile,
   InlineProgress,
   Typography,
   useExportCSV,
   ImportPanel,
 } from '@openmsupply-client/common';
+
+import { UploadFile } from '@common/upload';
 import { ImportRow } from './PropertiesImportModal';
 import { exportFacilitiesPropertiesToCsv } from '../utils';
 import { processProperties } from '../../../utils';

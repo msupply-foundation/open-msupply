@@ -8,7 +8,9 @@ export * from './CurrencyInput';
 export * from './DateTimePickers';
 export * from './Switch';
 export * from './Filters';
-export * from './Upload';
+// Note: './Upload' is intentionally NOT re-exported here. UploadFile uses
+// react-dropzone (~58KB) which would otherwise land in the federation-shared
+// common bundle. Consumers should import via '@common/upload' instead.
 export * from './PropertyInput';
 export * from './GenderInput';
 export * from './ModalInputs';
