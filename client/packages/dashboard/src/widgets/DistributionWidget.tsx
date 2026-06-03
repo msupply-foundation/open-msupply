@@ -32,7 +32,8 @@ export const DistributionWidget = ({
   const modalControl = useToggle(false);
   const navigate = useNavigate();
   const { error: errorNotification } = useNotification();
-  const { userHasPermission } = useAuthContext();
+  const { store, userHasPermission } = useAuthContext();
+  const omProgramModule = !!store?.preferences.omProgramModule;
   const formatNumber = useFormatNumber();
   const outbound = useOutboundCounts();
   const requisition = useRequisitionCounts();
@@ -44,7 +45,7 @@ export const DistributionWidget = ({
   const onError = (e: unknown) => {
     const message = (e as Error).message ?? '';
     const errorSnack = errorNotification(
-      `Failed to create invoice! ${message}`
+      t('error.failed-to-create-outbound-shipment', { message })
     );
     errorSnack();
   };
@@ -60,7 +61,7 @@ export const DistributionWidget = ({
   const corePanels = [
     <StatsPanel
       key={outboundShipmentsPanelContext}
-      error={outbound.error as ApiException}
+      error={outbound.error as unknown as ApiException}
       isError={outbound.isError}
       isLoading={outbound.isLoading}
       title={t('heading.shipments')}
@@ -88,7 +89,7 @@ export const DistributionWidget = ({
     />,
     <StatsPanel
       key={customerRequisitionsPanelContext}
-      error={requisition.error as ApiException}
+      error={requisition.error as unknown as ApiException}
       isError={requisition.isError}
       isLoading={requisition.isLoading}
       title={t('customer-requisition')}
@@ -103,18 +104,23 @@ export const DistributionWidget = ({
             .build(),
           statContext: `${customerRequisitionsPanelContext}-new`,
         },
-        {
-          label: t('label.emergency'),
-          value: formatNumber.round(requisition?.stats?.emergency),
-          link: RouteBuilder.create(AppRoute.Distribution)
-            .addPart(AppRoute.CustomerRequisition)
-            .addQuery({ isEmergency: true })
-            .addQuery({ status: RequisitionNodeStatus.New })
-            .build(),
-          statContext: `${customerRequisitionsPanelContext}-emergency`,
-          alertFlag:
-            !!requisition.stats?.emergency && requisition.stats?.emergency > 0,
-        },
+        ...(omProgramModule
+          ? [
+            {
+              label: t('label.emergency'),
+              value: formatNumber.round(requisition?.stats?.emergency),
+              link: RouteBuilder.create(AppRoute.Distribution)
+                .addPart(AppRoute.CustomerRequisition)
+                .addQuery({ isEmergency: true })
+                .addQuery({ status: RequisitionNodeStatus.New })
+                .build(),
+              statContext: `${customerRequisitionsPanelContext}-emergency`,
+              alertFlag:
+                !!requisition.stats?.emergency &&
+                requisition.stats?.emergency > 0,
+            },
+          ]
+          : []),
       ]}
       link={RouteBuilder.create(AppRoute.Distribution)
         .addPart(AppRoute.CustomerRequisition)

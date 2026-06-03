@@ -23,6 +23,7 @@ mod general_processor;
 mod load_plugin;
 mod plugin_processor;
 mod requisition_auto_finalise;
+mod support_upload_files;
 pub use general_processor::ProcessorType;
 #[cfg(test)]
 mod test_helpers;
@@ -152,7 +153,7 @@ impl ProcessorsTrigger {
     /// However, new events might have been added while this method was running.
     pub async fn await_events_processed(&self) {
         let (sender, receiver) = oneshot::channel();
-        if let Err(error) = self.await_process_queue.try_send(sender) {
+        if let Err(error) = self.await_process_queue.send(sender).await {
             log::error!("Problem sending the await_events_processed queue {error:#?}");
         }
 

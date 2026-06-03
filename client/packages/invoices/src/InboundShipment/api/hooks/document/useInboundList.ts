@@ -1,10 +1,11 @@
 import {
   FilterBy,
-  InvoiceNodeType,
   InvoiceSortFieldInput,
+  InvoiceTypeInput,
   SortBy,
   useQuery,
   useMutation,
+  keepPreviousData,
 } from '@openmsupply-client/common';
 import { useInboundGraphQL } from '../../useInboundGraphQL';
 import { LIST, INBOUND } from './keys';
@@ -15,6 +16,7 @@ export type ListParams = {
   offset?: number;
   sortBy?: SortBy<InboundRowFragment>;
   filterBy: FilterBy | null;
+  type?: InvoiceTypeInput[];
 };
 
 const sortFieldMap: Record<string, InvoiceSortFieldInput> = {
@@ -38,9 +40,19 @@ export const useInboundList = (queryParams?: ListParams) => {
     first,
     offset,
     filterBy,
+    type,
   } = queryParams ?? {};
 
-  const queryKey = [LIST, INBOUND, storeId, sortBy, first, offset, filterBy];
+  const queryKey = [
+    LIST,
+    INBOUND,
+    storeId,
+    sortBy,
+    first,
+    offset,
+    filterBy,
+    type,
+  ];
 
   const queryFn = async (): Promise<{
     nodes: InboundRowFragment[];
@@ -48,11 +60,10 @@ export const useInboundList = (queryParams?: ListParams) => {
   }> => {
     const filter = {
       ...filterBy,
-      type: { equalTo: InvoiceNodeType.InboundShipment },
     };
 
-    const sortKey = (sortFieldMap[sortBy.key as string] ||
-      InvoiceSortFieldInput.InvoiceNumber) as InvoiceSortFieldInput;
+    const sortKey =
+      sortFieldMap[String(sortBy.key)] || InvoiceSortFieldInput.InvoiceNumber;
 
     const query = await inboundApi.invoices({
       storeId,
@@ -61,20 +72,22 @@ export const useInboundList = (queryParams?: ListParams) => {
       key: sortKey,
       desc: sortBy.direction === 'desc',
       filter,
+      type,
     });
-    const { nodes, totalCount } = query?.invoices;
-    return { nodes, totalCount };
+    if (!query?.invoices) throw new Error('No data returned from query');
+    return query?.invoices;
   };
 
   const { data, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey,
     queryFn,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
+    enabled: !!queryParams,
   });
 
   const {
     mutateAsync: deleteMutation,
-    isLoading: isDeleting,
+    isPending: isDeleting,
     error: deleteError,
   } = useDelete();
 
@@ -94,24 +107,47 @@ const useDelete = () => {
   const mutationFn = async (
     invoices: InboundRowFragment[]
   ): Promise<string[]> => {
-    const result =
-      (await inboundApi.deleteInboundShipments({
-        storeId,
-        deleteInboundShipments: invoices.map(invoice => ({ id: invoice.id })),
-      })) || {};
+    const internal = invoices.filter(inv => !inv.purchaseOrder);
+    const external = invoices.filter(inv => !!inv.purchaseOrder);
+    const deletedIds: string[] = [];
 
-    const { batchInboundShipment } = result;
-    if (batchInboundShipment?.deleteInboundShipments) {
-      return batchInboundShipment.deleteInboundShipments.map(
-        ({ id }: { id: string }) => id
-      );
+    const extractIds = (
+      result: { deleteInboundShipments?: { id: string }[] | null } | undefined
+    ) =>
+      result?.deleteInboundShipments?.map(({ id }: { id: string }) => id) ?? [];
+
+    if (internal.length > 0) {
+      const variables = {
+        storeId,
+        deleteInboundShipments: internal.map(inv => ({ id: inv.id })),
+      };
+      const result = (await inboundApi.deleteInboundShipments(variables))
+        ?.batchInboundShipment;
+      deletedIds.push(...extractIds(result));
     }
 
-    throw new Error('Could not delete invoices');
+    if (external.length > 0) {
+      const variables = {
+        storeId,
+        deleteInboundShipments: external.map(inv => ({ id: inv.id })),
+      };
+      const result = (
+        await inboundApi.deleteInboundShipmentsExternal(variables)
+      )?.batchInboundShipmentExternal;
+      deletedIds.push(...extractIds(result));
+    }
+
+    if (deletedIds.length === 0) {
+      throw new Error('Could not delete invoices');
+    }
+
+    return deletedIds;
   };
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([LIST]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [LIST]
+    }),
   });
 };

@@ -247,7 +247,7 @@ mod insert {
                 // make supplier store C visible in store B
                 name_store_joins: vec![NameStoreJoinRow {
                     id: String::from("name_store_b_join_c"),
-                    name_link_id: String::from("name_store_c"),
+                    name_id: String::from("name_store_c"),
                     store_id: String::from("store_b"),
                     name_is_customer: false,
                     name_is_supplier: true,
@@ -298,7 +298,7 @@ mod insert {
 
         // one line created, from master list
         assert_eq!(form_lines.len(), 1);
-        assert_eq!(form_lines[0].item_link_id, "item_query_test1");
+        assert_eq!(form_lines[0].item_id, "item_query_test1");
         // Uses final balance from prev R&R for initial balance of new one
         assert_eq!(
             form_lines[0].initial_balance,
@@ -344,7 +344,7 @@ mod insert {
                 // make supplier store C visible in store A
                 name_store_joins: vec![NameStoreJoinRow {
                     id: String::from("name_store_a_join_c"),
-                    name_link_id: String::from("name_store_c"),
+                    name_id: String::from("name_store_c"),
                     store_id: String::from("store_a"),
                     name_is_customer: false,
                     name_is_supplier: true,
@@ -388,7 +388,7 @@ mod insert {
         let blank_line = RnRFormLineRow {
             id: created_line.id.to_string(),
             rnr_form_id: created_line.rnr_form_id.to_string(),
-            item_link_id: created_line.item_link_id.to_string(),
+            item_id: created_line.item_id.to_string(),
             ..Default::default()
         };
 
@@ -419,14 +419,14 @@ mod insert {
 
             let master_list_line = MasterListLineRow {
                 id: format!("perf_master_list_line_{i}"),
-                item_link_id: item.id.clone(),
+                item_id: item.id.clone(),
                 master_list_id: "perf_master_list".to_string(),
                 ..Default::default()
             };
 
             let stock_line = StockLineRow {
                 id: format!("perf_stock_line_{i}"),
-                item_link_id: item.id.clone(),
+                item_id: item.id.clone(),
                 store_id: mock_store_a().id.clone(),
                 available_number_of_packs: 50.0 + (i as f64 % 100.0) * 5.0,
                 total_number_of_packs: 60.0 + (i as f64 % 100.0) * 6.0,
@@ -466,7 +466,7 @@ mod insert {
             let rnr_form = RnRFormRow {
                 id: form_id.clone(),
                 store_id: mock_store_a().id.clone(),
-                name_link_id: "name_store_c".to_string(),
+                name_id: "name_store_c".to_string(),
                 period_id: period_id.clone(),
                 program_id: mock_program_b().id.clone(),
                 status: RnRFormStatus::Finalised,
@@ -479,7 +479,7 @@ mod insert {
             let invoice_id = format!("{period_idx}");
             let invoice = InvoiceRow {
                 id: invoice_id.clone(),
-                name_link_id: "name_store_c".to_string(),
+                name_id: "name_store_c".to_string(),
                 store_id: mock_store_a().id.clone(),
                 r#type: InvoiceType::OutboundShipment,
                 status: InvoiceStatus::Verified,
@@ -521,7 +521,7 @@ mod insert {
                 let form_line = RnRFormLineRow {
                     id: format!("{period_idx}_{item_idx}"),
                     rnr_form_id: form_id.clone(),
-                    item_link_id: item.id.clone(),
+                    item_id: item.id.clone(),
                     initial_balance,
                     snapshot_quantity_received: received,
                     snapshot_quantity_consumed: consumption,
@@ -536,7 +536,7 @@ mod insert {
                     let invoice_line = InvoiceLineRow {
                         id: format!("{period_idx}_{item_idx}"),
                         invoice_id: invoice_id.clone(),
-                        item_link_id: item.id.clone(),
+                        item_id: item.id.clone(),
                         number_of_packs: consumption,
                         ..Default::default()
                     };
@@ -552,7 +552,7 @@ mod insert {
         let test_invoice_id = "consumption_invoice".to_string();
         let test_invoice = InvoiceRow {
             id: test_invoice_id.clone(),
-            name_link_id: "name_store_c".to_string(),
+            name_id: "name_store_c".to_string(),
             store_id: mock_store_a().id.clone(),
             r#type: InvoiceType::OutboundShipment,
             status: InvoiceStatus::Picked,
@@ -567,7 +567,7 @@ mod insert {
             let invoice_line = InvoiceLineRow {
                 id: format!("consumption_line_{i}"),
                 invoice_id: test_invoice_id.clone(),
-                item_link_id: format!("perf_item_{i}"),
+                item_id: format!("perf_item_{i}"),
                 r#type: repository::InvoiceLineType::StockOut,
                 number_of_packs: consumption,
                 pack_size: 1.0,
@@ -588,12 +588,12 @@ mod insert {
                 MasterListNameJoinRow {
                     id: "perf_master_list_join_store_a".to_string(),
                     master_list_id: "perf_master_list".to_string(),
-                    name_link_id: "name_store_a".to_string(),
+                    name_id: "name_store_a".to_string(),
                 },
                 MasterListNameJoinRow {
                     id: "perf_master_list_join_store_c".to_string(),
                     master_list_id: "perf_master_list".to_string(),
-                    name_link_id: "name_store_c".to_string(),
+                    name_id: "name_store_c".to_string(),
                 },
             ],
             lines: master_list_lines.clone(),

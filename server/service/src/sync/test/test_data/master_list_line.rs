@@ -32,7 +32,7 @@ fn master_list_line_a() -> TestSyncIncomingRecord {
         MASTER_LIST_LINE_1,
         MasterListLineRow {
             id: "9B02D0770B544BD1AC7DB99BB85FCDD5".to_string(),
-            item_link_id: "item_a".to_string(),
+            item_id: "item_a".to_string(),
             master_list_id: "item_query_test1".to_string(),
             price_per_unit: Some(3.15),
         },

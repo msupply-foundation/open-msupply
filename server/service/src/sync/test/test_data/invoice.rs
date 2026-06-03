@@ -1,7 +1,8 @@
 use crate::sync::{
     test::TestSyncIncomingRecord,
     translations::invoice::{
-        LegacyOmStatus, LegacyTransactRow, LegacyTransactStatus, LegacyTransactType, TransactMode,
+        LegacyOmStatus, LegacyTransactRow, LegacyTransactStatus, LegacyTransactType,
+        TransactMode, TransactRowOmsFields,
     },
 };
 use chrono::{Duration, NaiveDate, NaiveTime};
@@ -97,7 +98,8 @@ const TRANSACT_1: (&str, &str) = (
       "om_verified_datetime": "",
       "om_created_datetime": "",
       "om_transport_reference": "",
-      "om_expected_delivery_date": ""
+      "om_expected_delivery_date": "",
+      "oms_fields": {"charges_local_currency": 15.5, "charges_foreign_currency": 20.0}
   }"#,
 );
 
@@ -106,7 +108,7 @@ fn transact_1_pull_row() -> InvoiceRow {
         id: TRANSACT_1.0.to_string(),
         user_id: Some("MISSING_USER_ID".to_string()),
         store_id: "store_b".to_string(),
-        name_link_id: "name_store_a".to_string(),
+        name_id: "name_store_a".to_string(),
         name_store_id: Some("store_a".to_string()),
         invoice_number: 1,
         r#type: InvoiceType::InboundShipment,
@@ -155,9 +157,11 @@ fn transact_1_pull_row() -> InvoiceRow {
         insurance_discount_percentage: Some(2.5),
         is_cancellation: false,
         expected_delivery_date: None,
-        default_donor_link_id: Some("donor_a".to_string()),
+        default_donor_id: Some("donor_a".to_string()),
         purchase_order_id: Some("test_purchase_order_a".to_string()),
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
+        charges_local_currency: 15.5,
+        charges_foreign_currency: 20.0,
     }
 }
 
@@ -232,6 +236,10 @@ fn transact_1_push_legacy_row() -> LegacyTransactRow {
         goods_received_ID: None,
         purchase_order_id: Some("test_purchase_order_a".to_string()),
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
+        oms_fields: Some(TransactRowOmsFields {
+            charges_local_currency: 15.5,
+            charges_foreign_currency: 20.0,
+        }),
     }
 }
 
@@ -333,7 +341,7 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             id: TRANSACT_2.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             store_id: "store_b".to_string(),
-            name_link_id: "name_store_b".to_string(),
+            name_id: "name_store_b".to_string(),
             name_store_id: Some("store_b".to_string()),
             invoice_number: 4,
             r#type: InvoiceType::OutboundShipment,
@@ -370,9 +378,11 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: None,
-            default_donor_link_id: None,
+            default_donor_id: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            charges_local_currency: 0.0,
+            charges_foreign_currency: 0.0,
         },
     )
 }
@@ -435,6 +445,10 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            oms_fields: Some(TransactRowOmsFields {
+                charges_local_currency: 0.0,
+                charges_foreign_currency: 0.0,
+            }),
         }),
     }
 }
@@ -539,7 +553,7 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             id: TRANSACT_OM_FIELDS.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             store_id: "store_b".to_string(),
-            name_link_id: "name_store_b".to_string(),
+            name_id: "name_store_b".to_string(),
             name_store_id: Some("store_b".to_string()),
             invoice_number: 4,
             r#type: InvoiceType::InventoryAddition,
@@ -605,9 +619,11 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: None,
-            default_donor_link_id: None,
+            default_donor_id: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            charges_local_currency: 0.0,
+            charges_foreign_currency: 0.0,
         },
     )
 }
@@ -699,6 +715,10 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            oms_fields: Some(TransactRowOmsFields {
+                charges_local_currency: 0.0,
+                charges_foreign_currency: 0.0,
+            }),
         }),
     }
 }
@@ -802,7 +822,7 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             id: INVENTORY_ADDITION.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             store_id: "store_b".to_string(),
-            name_link_id: INVENTORY_ADJUSTMENT_NAME_CODE.to_string(),
+            name_id: INVENTORY_ADJUSTMENT_NAME_CODE.to_string(),
             invoice_number: 1,
             r#type: InvoiceType::InventoryAddition,
             status: InvoiceStatus::Verified,
@@ -844,9 +864,11 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: None,
-            default_donor_link_id: None,
+            default_donor_id: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            charges_local_currency: 0.0,
+            charges_foreign_currency: 0.0,
         },
     )
 }
@@ -915,6 +937,10 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            oms_fields: Some(TransactRowOmsFields {
+                charges_local_currency: 0.0,
+                charges_foreign_currency: 0.0,
+            }),
         }),
     }
 }
@@ -1018,7 +1044,7 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             id: INVENTORY_REDUCTION.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             store_id: "store_b".to_string(),
-            name_link_id: INVENTORY_ADJUSTMENT_NAME_CODE.to_string(),
+            name_id: INVENTORY_ADJUSTMENT_NAME_CODE.to_string(),
             invoice_number: 2,
             r#type: InvoiceType::InventoryReduction,
             status: InvoiceStatus::Verified,
@@ -1060,9 +1086,11 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: None,
-            default_donor_link_id: None,
+            default_donor_id: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            charges_local_currency: 0.0,
+            charges_foreign_currency: 0.0,
         },
     )
 }
@@ -1130,6 +1158,10 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            oms_fields: Some(TransactRowOmsFields {
+                charges_local_currency: 0.0,
+                charges_foreign_currency: 0.0,
+            }),
         }),
     }
 }
@@ -1229,7 +1261,7 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             id: PRESCRIPTION_1.0.to_string(),
             user_id: None,
             store_id: "store_b".to_string(),
-            name_link_id: "name_store_a".to_string(),
+            name_id: "name_store_a".to_string(),
             name_store_id: Some("store_a".to_string()),
             invoice_number: 1,
             r#type: InvoiceType::Prescription,
@@ -1272,9 +1304,11 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: None,
-            default_donor_link_id: None,
+            default_donor_id: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            charges_local_currency: 0.0,
+            charges_foreign_currency: 0.0,
         },
     )
 }
@@ -1342,6 +1376,10 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            oms_fields: Some(TransactRowOmsFields {
+                charges_local_currency: 0.0,
+                charges_foreign_currency: 0.0,
+            }),
         }),
     }
 }
@@ -1442,7 +1480,7 @@ fn cancelled_prescription_pull_record() -> TestSyncIncomingRecord {
             id: CANCELLED_PRESCRIPTION.0.to_string(),
             user_id: None,
             store_id: "store_b".to_string(),
-            name_link_id: "name_store_a".to_string(),
+            name_id: "name_store_a".to_string(),
             name_store_id: Some("store_a".to_string()),
             invoice_number: 1,
             r#type: InvoiceType::Prescription,
@@ -1490,9 +1528,11 @@ fn cancelled_prescription_pull_record() -> TestSyncIncomingRecord {
             insurance_discount_percentage: None,
             is_cancellation: false,
             expected_delivery_date: NaiveDate::from_ymd_opt(2021, 7, 30),
-            default_donor_link_id: None,
+            default_donor_id: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            charges_local_currency: 0.0,
+            charges_foreign_currency: 0.0,
         },
     )
 }
@@ -1565,6 +1605,10 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
             goods_received_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
+            oms_fields: Some(TransactRowOmsFields {
+                charges_local_currency: 0.0,
+                charges_foreign_currency: 0.0,
+            }),
         }),
     }
 }

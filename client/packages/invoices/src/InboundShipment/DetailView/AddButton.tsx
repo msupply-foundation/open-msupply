@@ -19,6 +19,7 @@ interface AddButtonProps {
   disable: boolean;
   disableAddFromMasterListButton: boolean;
   disableAddFromInternalOrderButton: boolean;
+  allPurchaseOrderItemsAdded: boolean;
 }
 
 export const AddButton = ({
@@ -29,6 +30,7 @@ export const AddButton = ({
   disable,
   disableAddFromMasterListButton,
   disableAddFromInternalOrderButton,
+  allPurchaseOrderItemsAdded,
 }: AddButtonProps) => {
   const t = useTranslation();
   const { info } = useNotification();
@@ -85,6 +87,10 @@ export const AddButton = ({
   const handleOptionSelection = (option: SplitButtonOption<string>) => {
     switch (option.value) {
       case 'add-item':
+        if (allPurchaseOrderItemsAdded) {
+          info(t('error.all-purchase-order-lines-added'))();
+          return;
+        }
         onAddItem();
         break;
       case 'add-from-master-list':

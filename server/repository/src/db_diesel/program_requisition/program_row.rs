@@ -2,10 +2,7 @@ use chrono::NaiveDateTime;
 use program::deleted_datetime;
 
 use crate::{
-    db_diesel::{
-        context_row::context, document::document, item_link_row::item_link,
-        master_list_row::master_list, name_link_row::name_link,
-    },
+    db_diesel::{context_row::context, document::document, master_list_row::master_list},
     repository_error::RepositoryError,
     StorageConnection, Upsert,
 };
@@ -27,8 +24,6 @@ table! {
 joinable!(program -> master_list (master_list_id));
 joinable!(program -> context (context_id));
 allow_tables_to_appear_in_same_query!(program, document);
-allow_tables_to_appear_in_same_query!(program, name_link);
-allow_tables_to_appear_in_same_query!(program, item_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default)]
 #[diesel(table_name = program)]
@@ -69,6 +64,15 @@ impl<'a> ProgramRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = program::table
+            .filter(program::id.eq(lookup_id))
+            .select(program::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {

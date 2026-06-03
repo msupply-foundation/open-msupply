@@ -83,20 +83,6 @@ export const ListView = () => {
         ),
       },
       {
-        accessorKey: 'requisitionNumber',
-        header: t('label.number'),
-        size: 100,
-        enableSorting: true,
-        columnType: ColumnType.Number,
-      },
-      {
-        accessorKey: 'createdDatetime',
-        header: t('label.created'),
-        size: 115,
-        enableSorting: true,
-        columnType: ColumnType.Date,
-      },
-      {
         id: 'status',
         header: t('label.status'),
         size: 115,
@@ -113,6 +99,21 @@ export const ListView = () => {
           },
         ],
       },
+      {
+        accessorKey: 'requisitionNumber',
+        header: t('label.number'),
+        size: 100,
+        enableSorting: true,
+        columnType: ColumnType.Number,
+      },
+      {
+        accessorKey: 'createdDatetime',
+        header: t('label.created'),
+        size: 115,
+        enableSorting: true,
+        columnType: ColumnType.Date,
+      },
+
       {
         id: 'numberOfShipments',
         header: t('label.shipments'),

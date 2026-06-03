@@ -4,10 +4,9 @@ use super::{
 };
 
 use crate::{
-    db_diesel::item_row::item, diesel_macros::apply_equal_filter, item_link,
-    repository_error::RepositoryError, DBType, EqualFilter, ItemLinkRow,
+    db_diesel::item_row::item, diesel_macros::apply_equal_filter,
+    repository_error::RepositoryError, DBType, EqualFilter,
 };
-use diesel::dsl::InnerJoin;
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Clone, Default, PartialEq, Debug)]
@@ -17,7 +16,7 @@ pub struct ItemWarning {
     pub item_warning_join_row: ItemWarningJoinRow,
 }
 
-type ItemWarningQueryJoin = (ItemWarningJoinRow, (ItemLinkRow, ItemRow), WarningRow);
+type ItemWarningQueryJoin = (ItemWarningJoinRow, ItemRow, WarningRow);
 
 #[derive(Clone, Default)]
 pub struct ItemWarningJoinFilter {
@@ -84,7 +83,7 @@ impl<'a> ItemWarningJoinRepository<'a> {
     }
 }
 fn to_domain(
-    (item_warning_join_row, (_item_link_row, item_row), warning_row): ItemWarningQueryJoin,
+    (item_warning_join_row, item_row, warning_row): ItemWarningQueryJoin,
 ) -> ItemWarning {
     ItemWarning {
         warning_row,
@@ -93,20 +92,17 @@ fn to_domain(
     }
 }
 
-type BoxedItemWarningJoinQuery = IntoBoxed<
-    'static,
-    InnerJoin<
-        InnerJoin<item_warning_join::table, InnerJoin<item_link::table, item::table>>,
-        warning::table,
-    >,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    item_warning_join::table
+        .inner_join(item::table)
+        .inner_join(warning::table)
+}
+
+type BoxedItemWarningJoinQuery = IntoBoxed<'static, query, DBType>;
 
 fn create_filtered_query(filter: Option<ItemWarningJoinFilter>) -> BoxedItemWarningJoinQuery {
-    let mut query = item_warning_join::table
-        .inner_join(item_link::table.inner_join(item::table))
-        .inner_join(warning::table)
-        .into_boxed();
+    let mut query = query().into_boxed();
 
     if let Some(f) = filter {
         let ItemWarningJoinFilter {

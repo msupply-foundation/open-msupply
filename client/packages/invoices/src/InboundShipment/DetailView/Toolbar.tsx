@@ -11,13 +11,11 @@ import {
   BufferedTextArea,
   Link,
   RouteBuilder,
-  DateTimePickerInput,
-  DateUtils,
-  Formatter,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { InboundRowFragment, useInboundShipment } from '../api';
+import { ReceivedDateInput } from './ReceivedDateInput';
 
 const InboundInfoPanel = ({
   shipment,
@@ -46,11 +44,11 @@ export const Toolbar = () => {
   const {
     query: { data: shipment },
     isDisabled,
+    isExternal,
     update: { update },
   } = useInboundShipment();
 
-  const { deliveredDatetime, otherParty, theirReference, purchaseOrder } =
-    shipment || {};
+  const { otherParty, theirReference, purchaseOrder } = shipment || {};
 
   const isTransfer = !!shipment?.linkedShipment?.id;
 
@@ -64,7 +62,7 @@ export const Toolbar = () => {
                 label={t('label.supplier-name')}
                 Input={
                   <SupplierSearchInput
-                    disabled={isDisabled || isTransfer}
+                    disabled={isDisabled || isTransfer || isExternal}
                     value={otherParty}
                     onChange={name => {
                       update({ otherParty: name ?? undefined });
@@ -104,59 +102,37 @@ export const Toolbar = () => {
           </Box>
         </Grid>
         {purchaseOrder && (
-          <>
-            <Grid>
-              <Box display="flex" flex={1} flexDirection="column" gap={1}>
-                <InputWithLabelRow
-                  label={t('label.purchase-order-number')}
-                  Input={
-                    <Link
-                      to={RouteBuilder.create(AppRoute.Replenishment)
-                        .addPart(AppRoute.PurchaseOrder)
-                        .addPart(purchaseOrder?.id ?? '')
-                        .build()}
-                    >{`#${purchaseOrder?.number}`}</Link>
-                  }
-                  sx={{
-                    width: 200,
-                    height: 35,
-                  }}
-                />
-                <InputWithLabelRow
-                  label={t('label.purchase-order-reference')}
-                  Input={`${purchaseOrder?.reference ?? ''}`}
-                  sx={{
-                    width: 200,
-                    height: 35,
-                  }}
-                />
-              </Box>
-            </Grid>
-            <Grid>
+          <Grid>
+            <Box display="flex" flex={1} flexDirection="column" gap={1}>
               <InputWithLabelRow
-                label={t('label.delivered-date')}
+                label={t('label.purchase-order-number')}
                 Input={
-                  <DateTimePickerInput
-                    value={DateUtils.getDateOrNull(deliveredDatetime)}
-                    onChange={date =>
-                      update({
-                        deliveredDatetime:
-                          Formatter.naiveDate(date) ?? undefined,
-                      })
-                    }
-                    // Max now or received date, whichever is earlier
-                    maxDate={
-                      shipment?.receivedDatetime
-                        ? (DateUtils.getDateOrNull(shipment.receivedDatetime) ??
-                          new Date())
-                        : new Date()
-                    }
-                  />
+                  <Link
+                    to={RouteBuilder.create(AppRoute.Replenishment)
+                      .addPart(AppRoute.PurchaseOrder)
+                      .addPart(purchaseOrder?.id ?? '')
+                      .build()}
+                  >{`#${purchaseOrder?.number}`}</Link>
                 }
+                sx={{
+                  width: 200,
+                  height: 35,
+                }}
               />
-            </Grid>
-          </>
+              <InputWithLabelRow
+                label={t('label.purchase-order-reference')}
+                Input={`${purchaseOrder?.reference ?? ''}`}
+                sx={{
+                  width: 200,
+                  height: 35,
+                }}
+              />
+            </Box>
+          </Grid>
         )}
+        <Grid>
+          <ReceivedDateInput />
+        </Grid>
         <Grid size={12}>
           <InboundInfoPanel shipment={shipment} />
         </Grid>

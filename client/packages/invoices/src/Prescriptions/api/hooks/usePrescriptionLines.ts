@@ -12,8 +12,8 @@ import { usePrescription } from './usePrescription';
 import { DraftPrescriptionLine } from '@openmsupply-client/invoices/src/types';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import {
+  PrescriptionFragment,
   PrescriptionLineFragment,
-  PrescriptionRowFragment,
 } from '../operations.generated';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
 import { createInputObject, mapStatus } from './utils';
@@ -34,7 +34,7 @@ export const usePrescriptionLines = (id?: string) => {
   // SAVE LINES
   const {
     mutateAsync: updateMutation,
-    isLoading: isSavingLines,
+    isPending: isSavingLines,
     error: saveLineError,
   } = useSaveLines(data?.id ?? '', data?.id ?? '');
 
@@ -43,7 +43,7 @@ export const usePrescriptionLines = (id?: string) => {
     patch,
   }: {
     draftPrescriptionLines: DraftPrescriptionLine[];
-    patch?: RecordPatch<PrescriptionRowFragment>;
+    patch?: RecordPatch<PrescriptionFragment>;
   }) => {
     return await updateMutation({
       draftPrescriptionLines,
@@ -54,7 +54,7 @@ export const usePrescriptionLines = (id?: string) => {
   // DELETE LINES
   const {
     mutateAsync: deleteMutation,
-    isLoading: isDeletingLines,
+    isPending: isDeletingLines,
     error: deleteLinesError,
   } = useDeleteLines(data?.id ?? '');
 
@@ -77,7 +77,7 @@ const useSaveLines = (id: string, invoiceId: string) => {
     patch,
   }: {
     draftPrescriptionLines: DraftPrescriptionLine[];
-    patch?: RecordPatch<PrescriptionRowFragment>;
+    patch?: RecordPatch<PrescriptionFragment>;
   }) => {
     if (patch && id !== '') patch.id = id;
     const input = {
@@ -154,12 +154,16 @@ const useSaveLines = (id: string, invoiceId: string) => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([
-        PRESCRIPTION,
-        PRESCRIPTION_LINE,
-        invoiceId,
-      ]);
-      queryClient.invalidateQueries([HISTORICAL_STOCK_LINES]);
+      queryClient.invalidateQueries({
+        queryKey: [
+          PRESCRIPTION,
+          PRESCRIPTION_LINE,
+          invoiceId,
+        ]
+      });
+      queryClient.invalidateQueries({
+        queryKey: [HISTORICAL_STOCK_LINES]
+      });
     },
   });
 };
@@ -181,12 +185,16 @@ const useDeleteLines = (invocieId: string) => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([
-        PRESCRIPTION,
-        PRESCRIPTION_LINE,
-        invocieId,
-      ]);
-      queryClient.invalidateQueries([HISTORICAL_STOCK_LINES]);
+      queryClient.invalidateQueries({
+        queryKey: [
+          PRESCRIPTION,
+          PRESCRIPTION_LINE,
+          invocieId,
+        ]
+      });
+      queryClient.invalidateQueries({
+        queryKey: [HISTORICAL_STOCK_LINES]
+      });
     },
   });
 };

@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, ReactElement } from 'react';
 import {
   Box,
   ButtonWithIcon,
@@ -7,52 +7,71 @@ import {
   useTranslation,
   AppFooterPortal,
   useBreadcrumbs,
-  InvoiceNodeStatus,
   Action,
   DeleteIcon,
   ActionsFooter,
   usePreferences,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
+import { getStatusTranslator } from '../../../utils';
+import { createStatusLog, getStatusSequence } from '../../../statuses';
 import {
-  getStatusTranslator,
-  manualCustomerReturnStatuses,
-  inboundStatuses,
-  customerReturnStatuses,
-} from '../../../utils';
-import { CustomerReturnFragment, CustomerReturnLineFragment, useReturns } from '../../api';
+  CustomerReturnLineFragment,
+  useReturns,
+} from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
 
-const createStatusLog = (invoice: CustomerReturnFragment) => {
-  const statusIdx = inboundStatuses.findIndex(s => invoice.status === s);
-  const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
-    [InvoiceNodeStatus.New]: null,
-    [InvoiceNodeStatus.Picked]: null,
-    [InvoiceNodeStatus.Shipped]: null,
-    [InvoiceNodeStatus.Received]: null,
-    [InvoiceNodeStatus.Verified]: null,
-    // Not used for returns
-    [InvoiceNodeStatus.Delivered]: null,
-    [InvoiceNodeStatus.Allocated]: null,
-    [InvoiceNodeStatus.Cancelled]: null,
-  };
-  if (statusIdx >= 0) {
-    statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
-  }
-  if (statusIdx >= 1) {
-    statusLog[InvoiceNodeStatus.Picked] = invoice.pickedDatetime;
-  }
-  if (statusIdx >= 2) {
-    statusLog[InvoiceNodeStatus.Shipped] = invoice.shippedDatetime;
-  }
-  // Skipping delivered
-  if (statusIdx >= 4) {
-    statusLog[InvoiceNodeStatus.Received] = invoice.receivedDatetime;
-  }
-  if (statusIdx >= 5) {
-    statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
-  }
-  return statusLog;
+/**
+ * Status crumbs + on-hold/close/status-change buttons. Extracted so the parent
+ * `DetailView` can render it through `AppFooterStatusPortal` on every tab —
+ * the Details tab's own `Footer` only takes over to show row-selection
+ * actions.
+ */
+export const StatusFooter = (): ReactElement | null => {
+  const t = useTranslation();
+  const { navigateUpOne } = useBreadcrumbs();
+  const { invoiceStatusOptions } = usePreferences();
+  const { data } = useReturns.document.customerReturn();
+
+  if (!data) return null;
+
+  const isManuallyCreated = !data.linkedShipment?.id;
+
+  const statuses = getStatusSequence(InvoiceNodeType.CustomerReturn, {
+    isManuallyCreated,
+  }).filter(status =>
+    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
+  );
+
+  return (
+    <Box
+      gap={2}
+      display="flex"
+      flexDirection="row"
+      alignItems="center"
+      height={64}
+    >
+      <OnHoldButton />
+      <StatusCrumbs
+        statuses={statuses}
+        statusLog={createStatusLog(data, statuses)}
+        statusFormatter={getStatusTranslator(t)}
+      />
+      <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+        <ButtonWithIcon
+          shrinkThreshold="lg"
+          Icon={<XCircleIcon />}
+          label={t('button.close')}
+          color="secondary"
+          sx={{ fontSize: '12px' }}
+          onClick={() => navigateUpOne()}
+        />
+
+        <StatusChangeButton />
+      </Box>
+    </Box>
+  );
 };
 
 export const FooterComponent = ({
@@ -63,8 +82,6 @@ export const FooterComponent = ({
   resetRowSelection: () => void;
 }) => {
   const t = useTranslation();
-  const { invoiceStatusOptions } = usePreferences();
-  const { navigateUpOne } = useBreadcrumbs();
   const { data } = useReturns.document.customerReturn();
   const { id } = data ?? { id: '' };
 
@@ -74,8 +91,6 @@ export const FooterComponent = ({
     resetRowSelection,
   });
 
-  const isManuallyCreated = !data?.linkedShipment?.id;
-
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
@@ -84,54 +99,19 @@ export const FooterComponent = ({
     },
   ];
 
-  const statuses = isManuallyCreated
-    ? manualCustomerReturnStatuses.filter(status =>
-        invoiceStatusOptions?.includes(status)
-      )
-    : customerReturnStatuses.filter(status =>
-        invoiceStatusOptions?.includes(status)
-      );
+  // Only mount the footer portal when there's a selection. Otherwise leave the
+  // slot free so the parent `AppFooterStatusPortal` (status crumbs) shows
+  // through.
+  if (selectedRows.length === 0) return null;
 
   return (
     <AppFooterPortal
       Content={
-        <>
-          {selectedRows.length !== 0 && (
-            <ActionsFooter
-              actions={actions}
-              selectedRowCount={selectedRows.length}
-              resetRowSelection={resetRowSelection}
-            />
-          )}
-          {data && selectedRows.length === 0 && (
-            <Box
-              gap={2}
-              display="flex"
-              flexDirection="row"
-              alignItems="center"
-              height={64}
-            >
-              <OnHoldButton />
-              <StatusCrumbs
-                statuses={statuses}
-                statusLog={createStatusLog(data)}
-                statusFormatter={getStatusTranslator(t)}
-              />
-              <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-                <ButtonWithIcon
-                  shrinkThreshold="lg"
-                  Icon={<XCircleIcon />}
-                  label={t('button.close')}
-                  color="secondary"
-                  sx={{ fontSize: '12px' }}
-                  onClick={() => navigateUpOne()}
-                />
-
-                <StatusChangeButton />
-              </Box>
-            </Box>
-          )}
-        </>
+        <ActionsFooter
+          actions={actions}
+          selectedRowCount={selectedRows.length}
+          resetRowSelection={resetRowSelection}
+        />
       }
     />
   );

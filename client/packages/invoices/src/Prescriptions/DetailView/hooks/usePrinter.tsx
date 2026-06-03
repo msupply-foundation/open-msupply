@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLabelPrinterSettings } from '../../api/hooks/useLabelPrinterSettings';
 import { Environment } from '@openmsupply-client/config/src';
 import { useAuthContext, usePrinter } from '@openmsupply-client/common';
-import { PrescriptionLineFragment, PrescriptionRowFragment } from '../../api';
+import { PrescriptionLineFragment, PrescriptionFragment } from '../../api';
 import { groupItems, generateLabel } from './utils';
 
 export const usePrintLabels = () => {
@@ -13,18 +13,17 @@ export const usePrintLabels = () => {
   const {
     isPrinting: isPrintingLabels,
     print,
-    show,
-    DisabledNotification,
+    showDisabledNotification,
     isUsbPrinting,
   } = usePrinter(settings);
 
   const printLabels = (
-    prescription: PrescriptionRowFragment,
+    prescription: PrescriptionFragment,
     lines: PrescriptionLineFragment[],
     e?: React.MouseEvent<HTMLButtonElement>
   ) => {
     if (settings === null && !isUsbPrinting) {
-      e ? show(e) : setPrinterExists(true);
+      e ? showDisabledNotification() : setPrinterExists(true);
       return;
     }
 
@@ -32,19 +31,15 @@ export const usePrintLabels = () => {
     const items = groupItems(lines);
     const labels = generateLabel(items, prescription, storeName);
 
-    print(
-      {
-        endpoint: Environment.PRINT_LABEL_PRESCRIPTION,
-        payload: labels,
-      },
-      e
-    );
+    print({
+      endpoint: Environment.PRINT_LABEL_PRESCRIPTION,
+      payload: labels,
+    });
   };
 
   return {
     isPrintingLabels,
     printLabels,
-    DisabledNotification,
     printerExists,
     setPrinterExists,
   };

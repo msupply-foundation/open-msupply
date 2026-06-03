@@ -1,4 +1,4 @@
-use crate::invoice::common::check_master_list_for_name_link_id;
+use crate::invoice::common::check_master_list_for_name_id;
 use crate::invoice::common::get_lines_for_invoice;
 use crate::invoice::common::AddToShipmentFromMasterListInput as ServiceInput;
 use crate::{invoice::check_invoice_exists, service_provider::ServiceContext};
@@ -81,9 +81,9 @@ fn validate(
         return Err(OutError::NotAnOutboundShipment);
     }
 
-    check_master_list_for_name_link_id(
+    check_master_list_for_name_id(
         connection,
-        &invoice_row.name_link_id,
+        &invoice_row.name_id,
         &input.master_list_id,
     )?
     .ok_or(OutError::MasterListNotFoundForThisName)?;
@@ -235,30 +235,30 @@ mod test {
                 joins: vec![MasterListNameJoinRow {
                     id: join1,
                     master_list_id: id.clone(),
-                    name_link_id: mock_new_outbound_shipment_no_lines().name_link_id,
+                    name_id: mock_new_outbound_shipment_no_lines().name_id,
                 }],
                 lines: vec![
                     MasterListLineRow {
                         id: line1.clone(),
-                        item_link_id: mock_item_a().id,
+                        item_id: mock_item_a().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
                     MasterListLineRow {
                         id: line2.clone(),
-                        item_link_id: mock_item_b().id,
+                        item_id: mock_item_b().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
                     MasterListLineRow {
                         id: line3.clone(),
-                        item_link_id: mock_item_c().id,
+                        item_id: mock_item_c().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
                     MasterListLineRow {
                         id: line4.clone(),
-                        item_link_id: mock_item_d().id,
+                        item_id: mock_item_d().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
@@ -298,7 +298,7 @@ mod test {
         let mut item_ids: Vec<String> = result
             .clone()
             .into_iter()
-            .map(|invoice_line| invoice_line.item_link_id)
+            .map(|invoice_line| invoice_line.item_id)
             .collect();
         item_ids.sort();
 
@@ -313,7 +313,7 @@ mod test {
         assert_eq!(item_ids, test_item_ids);
         let line = result
             .iter()
-            .find(|line| line.item_link_id == mock_item_a().id)
+            .find(|line| line.item_id == mock_item_a().id)
             .unwrap();
 
         assert_eq!(line.number_of_packs, 0.0);
@@ -322,7 +322,7 @@ mod test {
 
         let line = result
             .iter()
-            .find(|line| line.item_link_id == mock_item_b().id)
+            .find(|line| line.item_id == mock_item_b().id)
             .unwrap();
 
         assert_eq!(line.number_of_packs, 0.0);

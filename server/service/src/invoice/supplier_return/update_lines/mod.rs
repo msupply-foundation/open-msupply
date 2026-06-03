@@ -105,7 +105,7 @@ pub fn update_supplier_return_lines(
                 })?;
             }
 
-            get_invoice(ctx, None, &input.supplier_return_id)
+            get_invoice(ctx, None, &input.supplier_return_id, None)
                 .map_err(UpdateSupplierReturnLinesError::DatabaseError)?
                 .ok_or(UpdateSupplierReturnLinesError::UpdatedReturnDoesNotExist)
         })
@@ -154,7 +154,7 @@ mod test {
         fn base_test_return() -> InvoiceRow {
             InvoiceRow {
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_store_a().id,
+                name_id: mock_name_store_a().id,
                 r#type: InvoiceType::SupplierReturn,
                 status: InvoiceStatus::New,
                 ..Default::default()
@@ -179,7 +179,7 @@ mod test {
             InvoiceLineRow {
                 id: "wrong_store_return_line".to_string(),
                 invoice_id: wrong_store().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 ..Default::default()
             }
         }

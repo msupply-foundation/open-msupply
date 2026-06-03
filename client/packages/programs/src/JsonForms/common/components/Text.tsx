@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { useDebouncedTextInput } from '../hooks/useDebouncedTextInput';
 import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
+import { formatErrors } from '../formatErrors';
 import { usePrevious } from '../hooks/usePrevious';
 import { PreviousValueDisplay } from '../utilityComponents';
 
@@ -79,7 +80,7 @@ const UIComponent = (props: ControlProps) => {
       ? t('error.json-bad-format-with-examples', {
           examples: examples.join('", "'),
         })
-      : zErrors || errors;
+      : formatErrors(zErrors || errors);
 
   if (!props.visible) {
     return null;

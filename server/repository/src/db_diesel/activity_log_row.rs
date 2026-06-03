@@ -46,19 +46,20 @@ pub enum ActivityLogType {
     StocktakeCreated,
     StocktakeDeleted,
     StocktakeStatusFinalised,
+    StocktakeEdited,
     RequisitionCreated,
     RequisitionDeleted,
     RequisitionNumberAllocated,
     RequisitionStatusSent,
     RequisitionApproved,
     RequisitionStatusFinalised,
-    StockLocationChange,
-    StockCostPriceChange,
-    StockSellPriceChange,
-    StockExpiryDateChange,
-    StockBatchChange,
-    StockOnHold,
-    StockOffHold,
+    StockLocationChange,   // Depreciated
+    StockCostPriceChange,  // Depreciated
+    StockSellPriceChange,  // Depreciated
+    StockExpiryDateChange, // Depreciated
+    StockBatchChange,      // Depreciated
+    StockOnHold,           // Depreciated
+    StockOffHold,          // Depreciated
     Repack,
     PrescriptionCreated,
     PrescriptionDeleted,
@@ -93,6 +94,7 @@ pub enum ActivityLogType {
     DemographicProjectionCreated,
     DemographicProjectionUpdated,
     ItemVariantCreated,
+    ItemVariantUpdated,
     ItemVariantDeleted,
     ItemVariantUpdatedName,
     // Renamed in 2.10.0 - keeping name in DB/sync for backwards compatibility
@@ -102,6 +104,7 @@ pub enum ActivityLogType {
     ItemVariantUpdateDosePerUnit,
     ItemVariantUpdateVVMType,
     VolumePerPackChanged,
+    StockLineEdit,
     // Purchase Orders
     PurchaseOrderCreated,
     PurchaseOrderRequestApproval,
@@ -118,6 +121,13 @@ pub enum ActivityLogType {
     PurchaseOrderLineStatusChangedFromSentToNew,
     PatientUpdated,
     PatientCreated,
+    InvoiceDateBackdated,
+    PackagingVariantCreated,
+    PackagingVariantUpdated,
+    PackagingVariantDeleted,
+    BundledItemCreated,
+    BundledItemUpdated,
+    BundledItemDeleted,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
@@ -161,7 +171,7 @@ impl<'a> ActivityLogRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: row.store_id.clone(),
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)

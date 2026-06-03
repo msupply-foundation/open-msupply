@@ -1,7 +1,7 @@
 use super::period_row::period::dsl::*;
 
 use crate::{
-    db_diesel::name_link_row::name_link, period_schedule_row::period_schedule,
+    period_schedule_row::period_schedule,
     repository_error::RepositoryError, StorageConnection, Upsert,
 };
 
@@ -30,7 +30,6 @@ pub struct PeriodRow {
 
 joinable!(period -> period_schedule (period_schedule_id));
 
-allow_tables_to_appear_in_same_query!(period, name_link);
 allow_tables_to_appear_in_same_query!(period, period_schedule);
 
 pub struct PeriodRowRepository<'a> {

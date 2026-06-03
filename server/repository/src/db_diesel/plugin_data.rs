@@ -1,8 +1,8 @@
 use super::{plugin_data_row::plugin_data, StorageConnection};
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
-    DBType, EqualFilter, Pagination, PluginDataRow, RepositoryError, Sort,
+    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
+    DBType, DatetimeFilter, EqualFilter, Pagination, PluginDataRow, RepositoryError, Sort,
 };
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -25,12 +25,15 @@ pub struct PluginDataFilter {
     pub data_identifier: Option<EqualFilter<String>>,
     #[ts(optional)]
     pub store_id: Option<EqualFilter<String>>,
+    #[ts(optional)]
+    pub datetime: Option<DatetimeFilter>,
 }
 
 #[derive(PartialEq, Debug)]
 pub enum PluginDataSortField {
     Id,
     PluginCode,
+    Datetime,
 }
 
 pub type PluginDataSort = Sort<PluginDataSortField>;
@@ -74,6 +77,9 @@ impl<'a> PluginDataRepository<'a> {
                 PluginDataSortField::PluginCode => {
                     apply_sort_no_case!(query, sort, plugin_data::plugin_code);
                 }
+                PluginDataSortField::Datetime => {
+                    apply_sort!(query, sort, plugin_data::datetime);
+                }
             }
         } else {
             query = query.order(plugin_data::plugin_code.asc());
@@ -103,6 +109,7 @@ fn create_filtered_query(filter: Option<PluginDataFilter>) -> BoxedPluginQuery {
         );
         apply_equal_filter!(query, filter.data_identifier, plugin_data::data_identifier);
         apply_equal_filter!(query, filter.store_id, plugin_data::store_id);
+        apply_date_time_filter!(query, filter.datetime, plugin_data::datetime);
     }
 
     query

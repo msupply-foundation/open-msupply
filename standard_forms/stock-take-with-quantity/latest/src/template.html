@@ -27,7 +27,7 @@
             {% endif %}
         </td>
         <td>{{ line.packSize }}</td>
-        <td>{{ line.countedNumberOfPacks }}</td>
+        <td>{{ line.snapshotNumberOfPacks | round(precision=2) }}</td>
         <td>.....................</td>
     </tr>
     {%- endfor %}

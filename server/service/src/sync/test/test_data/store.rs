@@ -1,6 +1,9 @@
-use crate::sync::{test::TestSyncIncomingRecord, translations::PullTranslateResult};
+use crate::sync::{
+    test::TestSyncIncomingRecord,
+    translations::{IntegrationOperation, PullTranslateResult},
+};
 use chrono::NaiveDate;
-use repository::{StoreRow, StoreRowDelete, SyncBufferRow};
+use repository::{StoreLogoRow, StoreRow, StoreRowDelete, SyncAction, SyncBufferRow};
 
 const TABLE_NAME: &str = "store";
 
@@ -50,19 +53,32 @@ const STORE_1: (&str, &str) = (
 );
 
 fn store_1() -> TestSyncIncomingRecord {
-    TestSyncIncomingRecord::new_pull_upsert(
-        TABLE_NAME,
-        STORE_1,
-        StoreRow {
-            id: STORE_1.0.to_string(),
-            name_link_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
-            code: "GEN".to_string(),
-            site_id: 1,
-            logo: Some("No logo".to_string()),
-            created_date: NaiveDate::from_ymd_opt(2021, 9, 3),
+    let store_row = StoreRow {
+        id: STORE_1.0.to_string(),
+        name_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+        code: "GEN".to_string(),
+        site_id: 1,
+        created_date: NaiveDate::from_ymd_opt(2021, 9, 3),
+        ..Default::default()
+    };
+    let logo_row = StoreLogoRow {
+        id: STORE_1.0.to_string(),
+        logo: Some("No logo".to_string()),
+    };
+    TestSyncIncomingRecord {
+        translated_record: PullTranslateResult::IntegrationOperations(vec![
+            IntegrationOperation::upsert(store_row),
+            IntegrationOperation::upsert(logo_row),
+        ]),
+        sync_buffer_row: SyncBufferRow {
+            table_name: TABLE_NAME.to_string(),
+            record_id: STORE_1.0.to_string(),
+            data: STORE_1.1.to_string(),
+            action: SyncAction::Upsert,
             ..Default::default()
         },
-    )
+        extra_data: None,
+    }
 }
 
 // Note, has wrong mode: should be "drug_registry" (to fix tests)
@@ -113,7 +129,9 @@ const STORE_2: (&str, &str) = (
 
 fn store_2() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord {
-        translated_record: PullTranslateResult::Ignored("System names not implemented".to_string()),
+        translated_record: PullTranslateResult::Ignored(
+            "System names not implemented for store translation".to_string(),
+        ),
         sync_buffer_row: SyncBufferRow {
             table_name: TABLE_NAME.to_string(),
             record_id: STORE_2.0.to_string(),
@@ -172,7 +190,9 @@ const STORE_3: (&str, &str) = (
 
 fn store_3() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord {
-        translated_record: PullTranslateResult::Ignored("System names not implemented".to_string()),
+        translated_record: PullTranslateResult::Ignored(
+            "System names not implemented for store translation".to_string(),
+        ),
         sync_buffer_row: SyncBufferRow {
             table_name: TABLE_NAME.to_string(),
             record_id: STORE_3.0.to_string(),
@@ -231,7 +251,9 @@ const STORE_4: (&str, &str) = (
 
 fn store_4() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord {
-        translated_record: PullTranslateResult::Ignored("System names not implemented".to_string()),
+        translated_record: PullTranslateResult::Ignored(
+            "System names not implemented for store translation".to_string(),
+        ),
         sync_buffer_row: SyncBufferRow {
             table_name: TABLE_NAME.to_string(),
             record_id: STORE_4.0.to_string(),

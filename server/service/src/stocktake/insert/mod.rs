@@ -226,7 +226,7 @@ mod test {
             &StockLineRow {
                 id: "stock_line_row_1".to_string(),
                 store_id: mock_store_b().id,
-                item_link_id: item_query_test1().id,
+                item_id: item_query_test1().id,
                 ..Default::default()
             }
         });
@@ -275,7 +275,7 @@ mod test {
         let _ = MasterListLineRowRepository::new(&connection).upsert_one(&MasterListLineRow {
             id: "master_list_line_b".to_string(),
             master_list_id: master_list_id.clone(),
-            item_link_id: "item_d".to_string(),
+            item_id: "item_d".to_string(),
             ..Default::default()
         });
 
@@ -345,7 +345,7 @@ mod test {
             &StockLineRow {
                 id: "stock_line_row_1".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 location_id: Some(location_id.clone()),
                 total_number_of_packs: 100.0,
                 ..Default::default()
@@ -426,7 +426,7 @@ mod test {
             &StockLineRow {
                 id: "vvm_stock_line_row".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 total_number_of_packs: 100.0,
                 vvm_status_id: Some(vvm_status_id.clone()),
                 ..Default::default()
@@ -469,7 +469,7 @@ mod test {
             StockLineRow {
                 id: "stock_line_row_1".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 total_number_of_packs: 100.0,
                 ..Default::default()
             }
@@ -479,7 +479,7 @@ mod test {
             StockLineRow {
                 id: "stock_line_row_3".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_b().id,
+                item_id: mock_item_b().id,
                 total_number_of_packs: 10.0,
                 ..Default::default()
             }
@@ -489,7 +489,7 @@ mod test {
             StockLineRow {
                 id: "stock_line_row_2".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: mock_item_b().id,
+                item_id: mock_item_b().id,
                 total_number_of_packs: 0.0,
                 ..Default::default()
             }
@@ -650,13 +650,13 @@ mod test {
         // Join same item as first masterlist -> check that one item will not be added to the stocktake twice
         let master_list_name_join = MasterListNameJoinRow {
             id: "A_program_b_Join".to_string(),
-            name_link_id: mock_program_master_list_test().id.clone(),
+            name_id: mock_program_master_list_test().id.clone(),
             master_list_id: mock_master_list_program_b().master_list.id.clone(),
         };
         // Join master list with two new items -> check the stocktake contains items from multiple master lists
         let filter_master_list_name_join = MasterListNameJoinRow {
             id: "Filter_program_b_Join".to_string(),
-            name_link_id: mock_program_master_list_test().id.clone(),
+            name_id: mock_program_master_list_test().id.clone(),
             master_list_id: mock_master_list_master_list_line_filter_test()
                 .master_list
                 .id

@@ -1,7 +1,6 @@
-import { MouseEvent, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from '@common/intl';
 import { LabelPrinterSettingNode } from '@common/types';
-import { useDisabledNotificationPopover } from '@common/components';
 import { useNotification } from '../useNotification';
 import { useLocalStorage } from '../../localStorage';
 
@@ -38,14 +37,13 @@ export const usePrinter = (
   printerSettings?: LabelPrinterSettingNode | null
 ) => {
   const t = useTranslation();
-  const { error, success } = useNotification();
+  const { error, success, errorWithDetail } = useNotification();
   const [isPrinting, setIsPrinting] = useState(false);
   const [isUsb] = useLocalStorage('/printlabel/isusb', false);
 
-  const { show, DisabledNotification } = useDisabledNotificationPopover({
-    title: t('heading.unable-to-print'),
-    message: t('error.label-printer-not-configured'),
-  });
+  const showDisabledNotification = errorWithDetail(
+    `${t('heading.unable-to-print')}: ${t('error.label-printer-not-configured')}`
+  );
 
   const printViaNetwork = async ({
     endpoint,
@@ -125,17 +123,14 @@ export const usePrinter = (
     }
   };
 
-  const print = async (
-    options: PrintOptions,
-    e?: MouseEvent<HTMLButtonElement>
-  ) => {
+  const print = async (options: PrintOptions) => {
     if (isUsb) {
       await printViaUsb(options);
       return;
     }
 
     if (printerSettings === null) {
-      if (e) show(e);
+      showDisabledNotification();
       return;
     }
 
@@ -145,8 +140,7 @@ export const usePrinter = (
   return {
     isPrinting,
     print,
-    show,
-    DisabledNotification,
+    showDisabledNotification,
     isUsbPrinting: isUsb,
   };
 };

@@ -1,15 +1,17 @@
+use crate::common::check_program_exists;
+use crate::invoice::inbound_shipment::InboundShipmentType;
 use crate::{
     check_item_variant_exists, check_location_exists, check_location_type_is_valid,
     check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        stock_in_line::{check_pack_size, check_program_visible_to_store},
+        stock_in_line::check_pack_size,
         validate::{check_item_exists, check_line_exists, check_number_of_packs},
     },
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate,
 };
-use repository::{InvoiceRow, ItemRow, StorageConnection};
+use repository::{InvoiceRow, ItemRow, PurchaseOrderLineRowRepository, StorageConnection};
 
 use super::{InsertStockInLine, InsertStockInLineError};
 
@@ -17,6 +19,7 @@ pub fn validate(
     input: &InsertStockInLine,
     store_id: &str,
     connection: &StorageConnection,
+    inbound_shipment_type: Option<InboundShipmentType>,
 ) -> Result<(ItemRow, InvoiceRow), InsertStockInLineError> {
     use InsertStockInLineError::*;
     if (check_line_exists(connection, &input.id)?).is_some() {
@@ -67,6 +70,11 @@ pub fn validate(
     if !check_invoice_type(&invoice, input.r#type.to_domain()) {
         return Err(NotAStockIn);
     }
+    if let Some(inbound_type) = inbound_shipment_type {
+        if !inbound_type.matches_input(invoice.purchase_order_id.is_some()) {
+            return Err(WrongInboundShipmentType);
+        }
+    }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
@@ -85,8 +93,43 @@ pub fn validate(
         };
     };
 
-    if !check_program_visible_to_store(connection, store_id, &input.program_id)? {
-        return Err(ProgramNotVisible);
+    if let Some(manufacturer_id) = &input.manufacturer_id {
+        match check_other_party(
+            connection,
+            store_id,
+            manufacturer_id,
+            CheckOtherPartyType::Manufacturer,
+        ) {
+            Ok(_) => {}
+            Err(e) => match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => return Err(ManufacturerDoesNotExist),
+                OtherPartyErrors::OtherPartyNotVisible => return Err(ManufacturerNotVisible),
+                OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    return Err(DatabaseError(repository_error))
+                }
+            },
+        };
+    };
+
+    if let Some(program_id) = &input.program_id {
+        if check_program_exists(connection, program_id)?.is_none() {
+            return Err(ProgramDoesNotExist);
+        }
+    }
+
+    // External inbound shipments (with purchase_order_id) require a purchase_order_line_id
+    if invoice.purchase_order_id.is_some() {
+        match &input.purchase_order_line_id {
+            None => return Err(PurchaseOrderLineIdRequired),
+            Some(pol_id) => {
+                // REVIEW: is it ok to do a repository call in the validation step?
+                let pol = PurchaseOrderLineRowRepository::new(connection).find_one_by_id(pol_id)?;
+                if pol.is_none() {
+                    return Err(PurchaseOrderLineDoesNotExist);
+                }
+            }
+        }
     }
 
     // TODO: LocationDoesNotBelongToCurrentStore

@@ -63,6 +63,21 @@ pub fn finalise_rnr_form(
 
             activity_log_entry(
                 ctx,
+                ActivityLogType::RequisitionCreated,
+                Some(requisition_row.id.clone()),
+                None,
+                None,
+            )?;
+            activity_log_entry(
+                ctx,
+                ActivityLogType::RequisitionStatusSent,
+                Some(requisition_row.id.clone()),
+                None,
+                None,
+            )?;
+
+            activity_log_entry(
+                ctx,
                 ActivityLogType::RnrFormFinalised,
                 Some(input.id.clone()),
                 None,
@@ -137,7 +152,7 @@ fn generate(
             &NumberRowType::RequestRequisition,
             &ctx.store_id,
         )?,
-        name_link_id: rnr_form_row.name_link_id.clone(),
+        name_id: rnr_form_row.name_id.clone(),
         store_id: rnr_form_row.store_id.clone(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Sent,
@@ -157,7 +172,7 @@ fn generate(
         order_type: None, // Should we capture this in the RnR form?
         is_emergency: false,
         created_from_requisition_id: None,
-        original_customer_id: None,
+        destination_customer_id: None,
     };
 
     let rnr_form_id = rnr_form_row.id.clone();
@@ -191,7 +206,7 @@ fn generate(
                 let requisition_line = RequisitionLineRow {
                     id: uuid(),
                     requisition_id: requisition_row.id.clone(),
-                    item_link_id: rnr_form_line_row.item_link_id.clone(),
+                    item_id: rnr_form_line_row.item_id.clone(),
                     item_name: item_row.name,
                     requested_quantity: rnr_form_line_row
                         .entered_requested_quantity
@@ -221,6 +236,9 @@ fn generate(
                     price_per_unit: None,
                     available_volume: None,
                     location_type_id: None,
+                    forecast_total_units: None,
+                    forecast_total_doses: None,
+                    vaccine_courses: None,
                 };
 
                 // Also return rnr_form_line_id, so we can update the rnr form line with the requisition line id

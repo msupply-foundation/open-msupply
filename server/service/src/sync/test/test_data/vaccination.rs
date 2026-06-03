@@ -29,7 +29,7 @@ fn vaccination1() -> VaccinationRow {
         id: VACCINATION1.0.to_string(),
         encounter_id: "encounter_a".to_string(),
         program_enrolment_id: "program_test_enrolment".to_string(),
-        patient_link_id: "C3FB3B30A8D04DDF9AF59A15BB48668A".to_string(),
+        patient_id: "C3FB3B30A8D04DDF9AF59A15BB48668A".to_string(),
         vaccine_course_dose_id: "test_vaccine_course_dose".to_string(),
         store_id: "store_a".to_string(),
         created_datetime: NaiveDate::from_ymd_opt(2024, 12, 17)
@@ -39,14 +39,14 @@ fn vaccination1() -> VaccinationRow {
         user_id: String::from("user1"),
         invoice_id: None,
         stock_line_id: None,
-        item_link_id: None,
+        item_id: None,
         clinician_link_id: None,
         vaccination_date: NaiveDate::from_ymd_opt(2024, 12, 17).unwrap(),
         given: false,
         given_store_id: None,
         not_given_reason: None,
         comment: None,
-        facility_name_link_id: None,
+        facility_name_id: None,
         facility_free_text: Some("Other facility".to_string()),
     }
 }

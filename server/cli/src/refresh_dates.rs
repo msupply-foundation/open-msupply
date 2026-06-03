@@ -63,6 +63,7 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("purchase_order", "sent_datetime"),
         ("purchase_order", "request_approval_datetime"),
         ("purchase_order", "finalised_datetime"),
+        ("plugin_data", "datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -97,6 +98,7 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
         ("user_account", "last_successful_sync"),
         ("activity_log", "datetime"),
         ("asset_log", "log_datetime"),
+        ("asset_log", "created_datetime"),
         ("sync_file_reference", "retry_at"),
         ("migration_fragment_log", "datetime"),
         ("system_log", "datetime"),
@@ -118,10 +120,13 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("name", "date_of_birth"),
         ("name", "date_of_death"),
         ("stock_line", "expiry_date"),
+        ("stock_line", "manufacture_date"),
         ("requisition", "expected_delivery_date"),
         ("invoice_line", "expiry_date"),
+        ("invoice_line", "manufacture_date"),
         ("stocktake", "stocktake_date"),
         ("stocktake_line", "expiry_date"),
+        ("stocktake_line", "manufacture_date"),
         ("period", "start_date"),
         ("period", "end_date"),
         ("store", "created_date"),
@@ -404,7 +409,7 @@ mod tests {
         fn invoice1() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice1".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 created_datetime: NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()
@@ -417,7 +422,7 @@ mod tests {
         fn invoice2() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice2".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_a().id,
                 created_datetime: NaiveDate::from_ymd_opt(2021, 2, 1)
                     .unwrap()
@@ -436,7 +441,7 @@ mod tests {
         fn stock_line1() -> StockLineRow {
             StockLineRow {
                 id: "stock_line1".to_string(),
-                item_link_id: mock_item_link_from_item(&mock_item_a()).id,
+                item_id: mock_item_link_from_item(&mock_item_a()).id,
                 store_id: mock_store_a().id,
                 expiry_date: Some(NaiveDate::from_ymd_opt(2023, 2, 1).unwrap()),
                 ..Default::default()

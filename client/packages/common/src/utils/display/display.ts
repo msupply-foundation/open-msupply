@@ -12,11 +12,17 @@ export const DisplayUtils = {
     endAdornmentOverride?: string
   ) =>
     useMemo(
-      () =>
-        endAdornmentOverride ??
-        (representation === Representation.PACKS
-          ? getPlural(t('label.pack').toLowerCase(), valueInUnitsOrPacks)
-          : getPlural(unitName.toLowerCase(), valueInUnitsOrPacks)),
+      () => {
+        if (endAdornmentOverride) return endAdornmentOverride;
+        switch (representation) {
+          case Representation.PACKS:
+            return getPlural(t('label.pack').toLowerCase(), valueInUnitsOrPacks);
+          case Representation.DOSES:
+            return getPlural(t('label.dose').toLowerCase(), valueInUnitsOrPacks);
+          default:
+            return getPlural(unitName.toLowerCase(), valueInUnitsOrPacks);
+        }
+      },
       [
         t,
         getPlural,

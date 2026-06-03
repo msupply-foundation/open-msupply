@@ -34,7 +34,7 @@ async fn requisition_transfer() {
 
     let request_store = StoreRow {
         id: uuid(),
-        name_link_id: request_store_name.id.clone(),
+        name_id: request_store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -47,7 +47,7 @@ async fn requisition_transfer() {
 
     let response_store = StoreRow {
         id: uuid(),
-        name_link_id: response_store_name.id.clone(),
+        name_id: response_store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -177,7 +177,7 @@ async fn stock_on_deleted_requisitions() {
 
     let store = StoreRow {
         id: uuid(),
-        name_link_id: store_name.id.clone(),
+        name_id: store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -185,7 +185,7 @@ async fn stock_on_deleted_requisitions() {
     let requisition = RequisitionRow {
         id: uuid(),
         requisition_number: 3,
-        name_link_id: store.name_link_id.clone(),
+        name_id: store.name_id.clone(),
         store_id: store.id.clone(),
         r#type: RequisitionType::Request,
         ..RequisitionRow::default()
@@ -251,7 +251,7 @@ impl RequisitionTransferTester {
         let request_requisition = RequisitionRow {
             id: format!("{}_request_requisition_{}", thread_number, uuid()),
             requisition_number: 3,
-            name_link_id: response_store.name_link_id.clone(),
+            name_id: response_store.name_id.clone(),
             store_id: request_store.id.clone(),
             r#type: RequisitionType::Request,
             status: RequisitionStatus::Draft,
@@ -270,7 +270,7 @@ impl RequisitionTransferTester {
         let request_requisition_line1 = RequisitionLineRow {
             id: format!("{}_request_requisition_line_1_{}", thread_number, uuid()),
             requisition_id: request_requisition.id.clone(),
-            item_link_id: item1.id.clone(),
+            item_id: item1.id.clone(),
             requested_quantity: 2.0,
             suggested_quantity: 3.0,
             comment: Some("line comment".to_string()),
@@ -288,7 +288,7 @@ impl RequisitionTransferTester {
         let request_requisition_line2 = RequisitionLineRow {
             id: format!("{}_request_requisition_line_2_{}", thread_number, uuid()),
             requisition_id: request_requisition.id.clone(),
-            item_link_id: item2.id.clone(),
+            item_id: item2.id.clone(),
             requested_quantity: 10.0,
             suggested_quantity: 20.0,
             available_stock_on_hand: 30.0,
@@ -372,8 +372,8 @@ impl RequisitionTransferTester {
         assert_eq!(response_requisition.status, RequisitionStatus::New);
         assert_eq!(response_requisition.store_id, self.response_store.id);
         assert_eq!(
-            response_requisition.name_link_id,
-            self.request_store.name_link_id
+            response_requisition.name_id,
+            self.request_store.name_id
         );
         assert_eq!(
             response_requisition.their_reference,
@@ -583,7 +583,7 @@ fn check_line(
         .query_one(
             RequisitionLineFilter::new()
                 .requisition_id(EqualFilter::equal_to(response_requisition_id.to_string()))
-                .item_id(EqualFilter::equal_to(request_line.item_link_id.to_string())),
+                .item_id(EqualFilter::equal_to(request_line.item_id.to_string())),
         )
         .unwrap();
 
