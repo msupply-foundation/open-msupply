@@ -51,8 +51,11 @@ module.exports = env => {
     resolve: {
       extensions: ['.js', '.css', '.ts', '.tsx'],
       plugins: [new TsconfigPathsPlugin()],
-      // Require condition needed for mui date pickers v8, until mui upgraded to v7
-      conditionNames: ['require', '...'],
+      // Default conditions (import-first) so date-fns, graphql, i18next,
+      // @mui/x-date-pickers etc. resolve to their ESM builds and can be
+      // tree-shaken. @mui/x-date-pickers v8 ESM uses unspecified
+      // directory imports (e.g. `@mui/material/Typography`); the
+      // `fullySpecified: false` module rule below makes those resolve.
     },
     output: {
       publicPath: '/',
@@ -120,6 +123,14 @@ module.exports = env => {
                   target: 'es2015',
                 },
               },
+        },
+        {
+          // @mui/material has no `exports` field, so strict-ESM resolution
+          // fails to extend `@mui/material/Typography` (a directory) to
+          // `Typography/index.js`. Disable strict-ESM for the affected
+          // packages so directory imports keep working.
+          test: /node_modules[\\/](@mui|@jsonforms|material-react-table)[\\/].*\.m?js$/,
+          resolve: { fullySpecified: false },
         },
         {
           test: /\.css$/,

@@ -1,4 +1,9 @@
+// bootstrap.tsx is the only entry-side file that *intentionally* has
+// top-level side effects (it renders the app). Everything else in the
+// module graph stays side-effect-free for tree-shaking.
 import React from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App';
 
 if (process.env.NODE_ENV === 'development') {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -8,9 +13,6 @@ if (process.env.NODE_ENV === 'development') {
     collapseGroups: true,
   });
 }
-
-import { createRoot } from 'react-dom/client';
-import App from './App';
 
 const container = document.getElementById('root');
 const root = createRoot(container!);

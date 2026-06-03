@@ -60,11 +60,36 @@ const queryClient = new QueryClient({
   },
 });
 
-Bugsnag.start({
-  apiKey: 'a09ce9e95c27ac1b70ecf3c311e684ab',
-  appVersion: appVersion,
-  enabledBreadcrumbTypes: ['error'],
-});
+// Top-level side effects (Bugsnag.start, ScreenOrientation.lock,
+// initialiseI18n) are pulled out into this helper so the module itself
+// stays side-effect-free from webpack's perspective. That keeps the
+// `sideEffects: false` contract intact and lets tree-shaking drop
+// anything unreachable from the entry point. The helper runs exactly
+// once when <Host /> mounts.
+let _bootstrapped = false;
+const runOneTimeStartup = () => {
+  if (_bootstrapped) return;
+  _bootstrapped = true;
+
+  Bugsnag.start({
+    apiKey: 'a09ce9e95c27ac1b70ecf3c311e684ab',
+    appVersion: appVersion,
+    enabledBreadcrumbTypes: ['error'],
+  });
+
+  initialiseI18n();
+
+  // Lock portrait orientation on small Android devices. See the original
+  // comment below this function for context.
+  EnvUtils.deviceInfo.then(info => {
+    if (
+      info.platform === 'android' &&
+      (info.screen.width < 600 || info.screen.height < 600)
+    ) {
+      ScreenOrientation.lock({ orientation: 'portrait' });
+    }
+  });
+};
 
 const skipRequest = () =>
   LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned;
@@ -95,36 +120,6 @@ const Init = () => {
   useIsCentralServerApi();
   return <></>;
 };
-
-/**
- * If app is being used on an Android phone, we lock the screen to "Portrait"
- * mode, as the UI will be restricted to GAPS functionality only, which is
- * optimised for mobile portrait mode.
- *
- * We can't use the existing screen size hooks, as they only consider screen
- * width, but we need to check both width and height (as we don't know what
- * orientation the device is in on launch)
- *
- * The 600px here corresponds to the "sm" breakpoint in the theme, which is used
- * to determine if the device is a phone or not.
- *
- * Including here, outside the component functions, as this is a one-time check
- * at startup.
- *
- * TO-DO: Once we have a proper "is Gaps Store" check, we can consolidate this
- * functionality and decide exactly what should be visible where, and under what
- * conditions.
- */
-EnvUtils.deviceInfo.then(info => {
-  if (
-    info.platform === 'android' &&
-    (info.screen.width < 600 || info.screen.height < 600)
-  ) {
-    ScreenOrientation.lock({
-      orientation: 'portrait',
-    });
-  }
-});
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -164,9 +159,9 @@ const router = createBrowserRouter(
   )
 );
 
-initialiseI18n();
-
-const Host = () => (
+const Host = () => {
+  runOneTimeStartup();
+  return (
   <React.Suspense fallback={<div />}>
     <KBarProvider actions={[]}>
       <IntlProvider>
@@ -199,6 +194,7 @@ const Host = () => (
       </IntlProvider>
     </KBarProvider>
   </React.Suspense>
-);
+  );
+};
 
 export default Host;
