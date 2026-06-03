@@ -1,14 +1,12 @@
 use async_graphql::*;
 
-use graphql_core::generic_inputs::TaxInput;
+use graphql_core::generic_inputs::{NullableUpdateInput, TaxInput};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
     ContextExt,
 };
-use graphql_types::types::{
-    InvoiceLineNode, ShipmentVarianceReasonNotProvided as ShipmentVarianceReasonNotProvidedNode,
-};
+use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
@@ -16,6 +14,7 @@ use service::invoice_line::stock_out_line::{
     StockOutType, UpdateStockOutLine as ServiceInput, UpdateStockOutLineError as ServiceError,
 };
 use service::invoice_line::ShipmentTaxUpdate;
+use service::NullableUpdate;
 
 use super::{
     LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
@@ -31,6 +30,7 @@ pub struct UpdateInput {
     prescribed_quantity: Option<f64>,
     tax: Option<TaxInput>,
     pub vvm_status_id: Option<String>,
+    pub reason_option_id: Option<NullableUpdateInput<String>>,
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
@@ -88,7 +88,6 @@ pub enum UpdateErrorInterface {
     LocationNotFound(LocationNotFound),
     StockLineIsOnHold(StockLineIsOnHold),
     NotEnoughStockForReduction(NotEnoughStockForReduction),
-    ShipmentVarianceReasonNotProvided(ShipmentVarianceReasonNotProvidedNode),
 }
 
 impl UpdateInput {
@@ -100,6 +99,7 @@ impl UpdateInput {
             prescribed_quantity,
             tax,
             vvm_status_id,
+            reason_option_id,
         } = self;
         ServiceInput {
             id,
@@ -116,7 +116,9 @@ impl UpdateInput {
             campaign_id: None,
             program_id: None,
             received_number_of_packs: None,
-            reason_option_id: None,
+            reason_option_id: reason_option_id.map(|reason_option_id| NullableUpdate {
+                value: reason_option_id.value,
+            }),
         }
     }
 }
@@ -173,11 +175,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                     stock_line_id,
                     line_id: Some(line_id),
                 },
-            ))
-        }
-        ShipmentVarianceReasonNotProvided => {
-            return Ok(UpdateErrorInterface::ShipmentVarianceReasonNotProvided(
-                ShipmentVarianceReasonNotProvidedNode,
             ))
         }
         // Standard Graphql Errors

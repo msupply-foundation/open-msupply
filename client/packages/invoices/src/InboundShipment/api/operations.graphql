@@ -831,10 +831,6 @@ mutation upsertInboundShipment(
               __typename
               description
             }
-            ... on ShipmentVarianceReasonNotProvided {
-              __typename
-              description
-            }
           }
         }
         ... on InvoiceLineNode {
@@ -1100,10 +1096,6 @@ mutation upsertInboundShipmentExternal(
               key
             }
             ... on NotAnInboundShipment {
-              __typename
-              description
-            }
-            ... on ShipmentVarianceReasonNotProvided {
               __typename
               description
             }

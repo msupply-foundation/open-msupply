@@ -830,13 +830,6 @@ mutation saveOutboundShipmentItemLines(
       __typename
       id
     }
-    ... on SaveOutboundShipmentLinesError {
-      __typename
-      error {
-        __typename
-        description
-      }
-    }
   }
 }
 

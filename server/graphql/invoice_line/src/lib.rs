@@ -139,7 +139,7 @@ impl InvoiceLineMutations {
         ctx: &Context<'_>,
         store_id: String,
         input: outbound_shipment_line::save_item_lines::SaveOutboundShipmentLinesInput,
-    ) -> Result<outbound_shipment_line::save_item_lines::SaveResponse> {
+    ) -> Result<InvoiceNode> {
         outbound_shipment_line::save_item_lines::save_outbound_shipment_item_lines(
             ctx, &store_id, input,
         )

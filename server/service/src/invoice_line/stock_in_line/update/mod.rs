@@ -136,7 +136,6 @@ pub enum UpdateStockInLineError {
     CannotEditCostPrice,
     ReasonOptionDoesNotExist,
     ReasonOptionTypeInvalid,
-    ShipmentVarianceReasonNotProvided,
 }
 
 impl From<RepositoryError> for UpdateStockInLineError {
