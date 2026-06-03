@@ -125,6 +125,7 @@ pub enum ChangelogTableName {
     SyncMessage,
     PurchaseOrder,
     PurchaseOrderLine,
+    StockRelocation,
     MasterList,
 }
 
@@ -210,6 +211,7 @@ impl ChangelogTableName {
             ChangelogTableName::SyncMessage => ChangeLogSyncStyle::Remote,
             ChangelogTableName::PurchaseOrder => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::PurchaseOrderLine => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::StockRelocation => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::MasterList => ChangeLogSyncStyle::ProcessorOnly,
         }
     }
