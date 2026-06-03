@@ -175,13 +175,18 @@ module.exports = env => {
         name: 'host',
         shared: [
           {
+            // Not eager: lets webpack split common into its own chunk
+            // and tree-shake unused exports. Login screens then don't
+            // ship MRT/x-date-pickers/etc. that they never call.
+            // The async-bootstrap shim (src/index.ts -> import('./bootstrap'))
+            // is what makes this safe.
             '@openmsupply-client/common': {
               singleton: true,
-              eager: true,
-              // Version here needs to be specified to avoid webpack warnings, since this is the host it would
-              // share the current state of @openmsupply-client/common
               requiredVersion: require('../common/package.json').version,
             },
+            // React + react-dom stay eager: they're small singletons
+            // that the runtime negotiates on first paint; keeping them
+            // in the main bundle avoids an extra round-trip.
             react: {
               singleton: true,
               eager: true,
