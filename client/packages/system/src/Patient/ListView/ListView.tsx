@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { Suspense, lazy, useState, useMemo } from 'react';
 import {
   NothingHere,
   useUrlQueryParams,
@@ -19,9 +19,17 @@ import {
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { usePatientStore } from '@openmsupply-client/programs';
-import { CreatePatientModal } from '../CreatePatientModal';
-import { PatientColumnData } from '../CreatePatientModal/PatientResultsTab';
+import type { PatientColumnData } from '../CreatePatientModal/PatientResultsTab';
 import { Toolbar } from './Toolbar';
+
+// Lazy: CreatePatientModal pulls in JsonForms (~480KB) for the
+// dynamic-schema "create patient" form. Only fetch when the user
+// clicks "New patient".
+const CreatePatientModal = lazy(() =>
+  import('../CreatePatientModal').then(m => ({
+    default: m.CreatePatientModal,
+  }))
+);
 
 export const PatientListView = () => {
   const t = useTranslation();
@@ -194,14 +202,16 @@ export const PatientListView = () => {
       />
       <MaterialTable table={table} />
       {createModalOpen ? (
-        <CreatePatientModal
-          open={createModalOpen}
-          onClose={() => setCreateModalOpen(false)}
-          onCreate={onCreatePatient}
-          onSelectPatient={selectedPatient => {
-            onSelectPatient(selectedPatient);
-          }}
-        />
+        <Suspense fallback={null}>
+          <CreatePatientModal
+            open={createModalOpen}
+            onClose={() => setCreateModalOpen(false)}
+            onCreate={onCreatePatient}
+            onSelectPatient={selectedPatient => {
+              onSelectPatient(selectedPatient);
+            }}
+          />
+        </Suspense>
       ) : null}
     </>
   );
