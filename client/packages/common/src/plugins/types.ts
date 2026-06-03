@@ -101,20 +101,22 @@ export type Plugins = {
     tableColumn: ColumnDef<MasterListRowFragment>[];
   };
   pages?: PluginPage[];
-  // Configuration UI for this plugin. Surfaced from Manage > Plugins. A plugin
-  // provides ONE of `Component` (free-form React) or `jsonForms` (schema-driven,
-  // rendered by the host using the shared JSON Forms renderer). `defaultConfig`
-  // seeds the form when no plugin_data row exists yet for this plugin.
-  configuration?: PluginConfiguration;
+  // Configuration UI for this plugin. Surfaced from Manage > Plugins. The plugin
+  // provides a free-form React `Component` that edits its config via
+  // `value`/`onChange`. `defaultConfig` seeds the form when no plugin_data row
+  // exists yet for this plugin. Typed as `any` so a plugin can supply a
+  // strongly-typed `PluginConfiguration<ItsOwnConfig>` here without casting; the
+  // host treats the config as opaque JSON regardless.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  configuration?: PluginConfiguration<any>;
 };
 
 export type PluginConfiguration<TConfig = unknown> = {
   defaultConfig: TConfig;
-  Component?: React.ComponentType<{
+  Component: React.ComponentType<{
     value: TConfig;
     onChange: (next: TConfig) => void;
   }>;
-  jsonForms?: { schema: object; uiSchema: object };
 };
 
 // Shared React-Query key for a plugin's configuration row. Both the host's
