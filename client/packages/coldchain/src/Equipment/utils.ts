@@ -1,4 +1,5 @@
 import { AssetRowFragment, useAssets } from './api';
+import { toCsv } from '@common/csv';
 import {
   LocaleKey,
   TypedTFunction,
@@ -130,7 +131,7 @@ export const assetsToCsv = (
     ];
   });
 
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 
 export const importEquipmentToCsvWithErrors = (
@@ -165,7 +166,7 @@ export const importEquipmentToCsvWithErrors = (
     ...dedupedAssetProperties.map(key => node.properties?.[key] ?? ''),
     node.errorMessage ?? '',
   ]);
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 
 export const importEquipmentToCsv = (
@@ -203,7 +204,7 @@ export const importEquipmentToCsv = (
     ];
   });
 
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 
 export const parseStatusFromString = (

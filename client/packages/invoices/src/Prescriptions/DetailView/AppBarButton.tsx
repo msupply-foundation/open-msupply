@@ -11,9 +11,10 @@ import {
   SplitButton,
   PrinterIcon,
   SplitButtonOption,
-  useRegisterActions,
   ALT_KEY,
 } from '@openmsupply-client/common';
+
+import { useRegisterActions } from 'kbar';
 import { usePrescription } from '../api';
 import { Draft } from '../../StockOut';
 import { ReportSelector } from '../../../../system/src/Report';

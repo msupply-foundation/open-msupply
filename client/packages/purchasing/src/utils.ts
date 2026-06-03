@@ -6,6 +6,7 @@ import {
   PurchaseOrderLineStatusNode,
   Formatter,
 } from '@openmsupply-client/common';
+import { toCsv } from '@common/csv';
 import {
   PurchaseOrderFragment,
   PurchaseOrderLineFragment,
@@ -164,7 +165,7 @@ export const purchaseOrderToCsv = (
     node.comment,
   ]);
 
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 
 export const outstandingLinesToCsv = (
@@ -199,5 +200,5 @@ export const outstandingLinesToCsv = (
     (node.adjustedNumberOfUnits ?? 0) - (node.shippedNumberOfUnits ?? 0),
   ]);
 
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };

@@ -7,8 +7,9 @@ import {
   useConfirmationModal,
   Box,
   ALT_KEY,
-  useRegisterActions,
 } from '@openmsupply-client/common';
+
+import { useRegisterActions } from 'kbar';
 import { ItemRowFragment } from '../../api';
 
 interface ListItemProps {

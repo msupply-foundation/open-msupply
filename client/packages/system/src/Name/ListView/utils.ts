@@ -1,5 +1,5 @@
 import { TypedTFunction, LocaleKey } from '@common/intl';
-import { Formatter } from '@common/utils';
+import { toCsv } from '@common/csv';
 import {
   ImportRow,
   LineNumber,
@@ -20,5 +20,5 @@ export const exportFacilitiesPropertiesToCsv = (
     ].concat(props.map(key => node.properties?.[key] ?? ''));
     return mapped;
   });
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };

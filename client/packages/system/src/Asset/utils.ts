@@ -3,8 +3,8 @@ import {
   LocaleKey,
   TypedTFunction,
   ArrayUtils,
-  Formatter,
 } from '@openmsupply-client/common';
+import { toCsv } from '@common/csv';
 import { AssetCatalogueItemFragment } from './api';
 import { ImportRow, LineNumber } from './ImportCatalogueItem';
 
@@ -35,7 +35,7 @@ export const assetCatalogueItemsListToCsv = (
     node.assetClass?.name,
     node.assetCategory?.name,
   ]);
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 export const parseStatus = (
   status: AssetLogStatusNodeType,
@@ -95,7 +95,7 @@ export const importRowToCsv = (
     return row;
   });
 
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 
 export const getStatusOptions = (t: TypedTFunction<LocaleKey>) => {

@@ -2,6 +2,7 @@ import {
   InboundFragment,
   InboundRowFragment,
 } from './InboundShipment/api/operations.generated';
+import { toCsv } from '@common/csv';
 import {
   InvoiceLineNodeType,
   LocaleKey,
@@ -302,7 +303,7 @@ export const outboundsToCsv = (
     node.pricing.totalAfterTax,
     node.comment,
   ]);
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 
 export const supplierReturnsToCsv = (
@@ -324,7 +325,7 @@ export const supplierReturnsToCsv = (
     Formatter.csvDateTimeString(node.createdDatetime),
     node.theirReference,
   ]);
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 
 export const customerReturnsToCsv = (
@@ -348,7 +349,7 @@ export const customerReturnsToCsv = (
     node.theirReference,
     node.comment,
   ]);
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 
 export const inboundsToCsv = (
@@ -376,7 +377,7 @@ export const inboundsToCsv = (
     node.pricing.totalAfterTax,
     node.comment,
   ]);
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 
 export const prescriptionToCsv = (
@@ -400,7 +401,7 @@ export const prescriptionToCsv = (
     node.theirReference,
     node.comment,
   ]);
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 
 export const getStockOutQuantityCellId = (batch?: string | null) =>

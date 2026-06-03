@@ -1,16 +1,10 @@
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 
-export {
-  KBarProvider,
-  KBarPortal,
-  KBarPositioner,
-  KBarAnimator,
-  KBarSearch,
-  KBarResults,
-  useRegisterActions,
-  useMatches,
-} from 'kbar';
+// Note: kbar is NOT re-exported from common — it would otherwise land
+// in the federation-shared bundle and ship its ~36KB (+ fuse.js 15KB)
+// to every page including /login, which doesn't use the command palette.
+// Consumers import from 'kbar' directly.
 
 export {
   useInfiniteQuery,

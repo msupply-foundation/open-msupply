@@ -23,13 +23,14 @@ import {
   createRoutesFromElements,
   RouterProvider,
   initialiseI18n,
-  KBarProvider,
   usePreferences,
   useIsCentralServerApi,
   useInitialisationStatus,
   InitialisationStatusType,
   useAuthContext,
 } from '@openmsupply-client/common';
+
+import { KBarProvider } from 'kbar';
 // import { ReactQueryDevtools } from 'react-query/devtools';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';

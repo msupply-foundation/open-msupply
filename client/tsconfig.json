@@ -3,6 +3,7 @@
     "baseUrl": ".",
     "paths": {
       "@common/components": ["packages/common/src/ui/components"],
+      "@common/csv": ["packages/common/src/utils/csv"],
       "@common/hooks": ["packages/common/src/hooks"],
       "@common/icons": ["packages/common/src/ui/icons"],
       "@common/intl": ["packages/common/src/intl"],

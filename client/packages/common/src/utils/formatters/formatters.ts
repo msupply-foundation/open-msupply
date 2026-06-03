@@ -1,7 +1,10 @@
 import { LocaleKey } from '@common/intl';
 import { format } from 'date-fns/format';
 import { isValid } from 'date-fns/isValid';
-import Papa, { UnparseConfig, UnparseObject } from 'papaparse';
+
+// Note: `csv` (was Formatter.csv) lives in `@common/csv` now. Keeping
+// papaparse out of common's federation-shared tree means /login etc.
+// no longer ship a CSV serializer they never use.
 
 export const Formatter = {
   // tax as a number like 12 for 12%
@@ -24,10 +27,6 @@ export const Formatter = {
     date && isValid(date)
       ? format(date, "dd/MM/yyyy' 'HH:mm:ss")
       : '--/--/---- --:--:--',
-  csv: (
-    data: unknown[] | UnparseObject<unknown>,
-    config?: UnparseConfig
-  ): string => Papa.unparse(data, config),
   csvDateTimeString: (dateString?: string | null | undefined): string => {
     const date = dateString ? new Date(dateString) : null;
     return date && isValid(date) ? format(date, "dd/MM/yyyy' 'HH:mm:ss") : '';

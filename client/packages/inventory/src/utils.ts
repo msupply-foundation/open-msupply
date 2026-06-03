@@ -4,6 +4,7 @@ import {
   StocktakeNodeStatus,
   TypedTFunction,
 } from '@openmsupply-client/common';
+import { toCsv } from '@common/csv';
 import { StocktakeRowFragment } from './Stocktake/api';
 
 export const stocktakeStatuses = [
@@ -53,5 +54,5 @@ export const stocktakesToCsv = (
     Formatter.csvDateTimeString(node.createdDatetime),
     node.comment,
   ]);
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };

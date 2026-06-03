@@ -1,4 +1,5 @@
 import { RequestRowFragment } from './RequestRequisition/api/operations.generated';
+import { toCsv } from '@common/csv';
 import {
   RequisitionNodeStatus,
   LocaleKey,
@@ -81,7 +82,7 @@ export const requestsToCsv = (
     node.status,
     node.comment,
   ]);
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 
 export const responsesToCsv = (
@@ -103,7 +104,7 @@ export const responsesToCsv = (
     node.status,
     node.comment,
   ]);
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 
 export const isRequestLinePlaceholderRow = (

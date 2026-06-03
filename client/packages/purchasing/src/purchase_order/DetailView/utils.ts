@@ -1,8 +1,8 @@
 import { PurchaseOrderLineFragment } from '../api';
+import { toCsv } from '@common/csv';
 import {
   LocaleKey,
   TypedTFunction,
-  Formatter,
 } from '@openmsupply-client/common';
 import { ImportRow, LineNumber } from './ImportLines/utils';
 
@@ -55,7 +55,7 @@ export const purchaseOrderLinesToCsv = (
     return [node.id, node.purchaseOrderId, node.item.id];
   });
 
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 
 export const importPurchaseOrderLinesToCSVWithErrors = (
@@ -73,7 +73,7 @@ export const importPurchaseOrderLinesToCSVWithErrors = (
     node.errorMessage,
   ]);
 
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 
 export const importPurchaseOrderLinesToCsv = (
@@ -82,7 +82,7 @@ export const importPurchaseOrderLinesToCsv = (
 ) => {
   const fields = basePurchaseOrderLineFields(t);
   const data = purchaseOrderLines.map(mapImportRowToArray);
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 
 export const base64ToBlob = (base64: string, contentType: string) => {

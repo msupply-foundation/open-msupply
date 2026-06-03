@@ -1,4 +1,5 @@
 import { DateUtils, LocaleKey, TypedTFunction } from '@common/intl';
+import { toCsv } from '@common/csv';
 import { Formatter } from '@common/utils';
 import { AssetPropertyFragment, MasterListRowFragment } from '.';
 import { LocationRowFragment } from './Location/api';
@@ -26,7 +27,7 @@ export const locationsToCsv = (
     node.volumeUsed,
     node.onHold,
   ]);
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 
 export const masterListsToCsv = (
@@ -46,7 +47,7 @@ export const masterListsToCsv = (
     node.name,
     node.description,
   ]);
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 
 export const stockLinesToCsv = (
@@ -83,7 +84,7 @@ export const stockLinesToCsv = (
     node.costPricePerPack,
     node.supplierName,
   ]);
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };
 
 interface ParsedRow {

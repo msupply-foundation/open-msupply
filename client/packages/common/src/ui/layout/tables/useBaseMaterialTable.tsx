@@ -7,6 +7,7 @@ import {
 } from 'material-react-table';
 import { Row } from '@tanstack/table-core';
 import { useIntlUtils, useTranslation } from '@common/intl';
+import { getTableLocalisations } from './mrtLocalisations';
 import { ColumnDef } from './types';
 import { useMaterialTableColumns } from './useMaterialTableColumns';
 import { useTableFiltering } from './useTableFiltering';
@@ -79,8 +80,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   ...tableOptions
 }: BaseTableConfig<T>) => {
   const t = useTranslation();
-  const { getTableLocalisations } = useIntlUtils();
-  const localization = getTableLocalisations();
+  const { currentLanguage } = useIntlUtils();
+  const localization = getTableLocalisations(currentLanguage);
   const isCentralServer = useIsCentralServerApi();
   const { userHasPermission } = useAuthContext();
   const canEditGlobalDefaults =

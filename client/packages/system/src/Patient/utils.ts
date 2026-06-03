@@ -8,6 +8,7 @@ import {
   SxProps,
   TypedTFunction,
 } from '@openmsupply-client/common';
+import { toCsv } from '@common/csv';
 import { PatientRowFragment } from './api';
 
 export interface NameSearchProps {
@@ -77,5 +78,5 @@ export const patientsToCsv = (
     Formatter.csvDateString(node.dateOfBirth),
     node.isDeceased,
   ]);
-  return Formatter.csv({ fields, data });
+  return toCsv({ fields, data });
 };

@@ -17,14 +17,9 @@ import {
   faIR,
 } from '@mui/x-date-pickers/locales';
 
-// Material React Table translations
-import { MRT_Localization_AR } from 'material-react-table/locales/ar';
-import { MRT_Localization_ES } from 'material-react-table/locales/es';
-import { MRT_Localization_FR } from 'material-react-table/locales/fr';
-import { MRT_Localization_PT } from 'material-react-table/locales/pt';
-import { MRT_Localization_RU } from 'material-react-table/locales/ru';
-// Persian/Farsi locale, used as an approximation for the unsupported Dari and Pashto
-import { MRT_Localization_FA } from 'material-react-table/locales/fa';
+// Note: MRT locale imports (~17KB) moved to @common/tables so they
+// don't ship in the federation-shared common bundle. See
+// packages/common/src/ui/layout/tables/mrtLocalisations.ts.
 
 // importing individually to reduce bundle size
 // the date-fns methods are tree shaking correctly
@@ -91,39 +86,6 @@ const getDateLocalisations = (language: SupportedLocales) => {
     case 'prs':
     case 'ps':
       return getLocalisations(faIR);
-    default:
-      noOtherVariants(language);
-  }
-};
-
-const getTableLocalisations = (language: SupportedLocales) => {
-  switch (language) {
-    case 'fr':
-    case 'fr-DJ':
-      return MRT_Localization_FR;
-
-    case 'es':
-      return MRT_Localization_ES;
-
-    case 'ru':
-      return MRT_Localization_RU;
-
-    case 'pt':
-      return MRT_Localization_PT;
-    case 'ar':
-      return MRT_Localization_AR;
-    case 'prs':
-    case 'ps':
-      return MRT_Localization_FA;
-
-    // Default is English
-    // Not every language is supported, and some dialects may want
-    // overrides. If/when needed - pass in t() here and overwrite needed fields,
-    // or define the full localisations object for the required language
-    // https://www.material-react-table.com/docs/guides/localization#localization-(i18n)-guide
-    case 'en':
-    case 'tet':
-      return undefined;
     default:
       noOtherVariants(language);
   }
@@ -264,7 +226,7 @@ export const useIntlUtils = () => {
     getLocaleCode,
     getLocale: () => getLocale(currentLanguage),
     getDateLocalisations: () => getDateLocalisations(currentLanguage),
-    getTableLocalisations: () => getTableLocalisations(currentLanguage),
+    // getTableLocalisations removed — see @common/tables → mrtLocalisations.
     getUserLocale,
     setUserLocale,
     getLocalisedFullName,
