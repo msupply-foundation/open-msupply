@@ -50,8 +50,7 @@ Each config-file key has a matching env-var override (env wins).
 | Config key | Env var | Default | Purpose |
 |---|---|---|---|
 | `baseUrl` | `BASE_URL` | `http://localhost:8000` | target server; GraphQL is `${baseUrl}/graphql` |
-| `username` / `password` | `USERNAME` / `PASSWORD` | — | single-user login |
-| `users` | `USERS` (JSON) | — | user pool (overrides username/password) |
+| `users` | `USERS` (JSON) | — | login pool (list of `{username,password}`); each VU logs in as a random one |
 | `storeId` | `STORE_ID` | discovered | override the store (else `me.defaultStore`) |
 | `vuMultiplier` | `VU_MULTIPLIER` | `1` | scales the 8/6/5/4/4/2/1 worker mix |
 | `rampDuration` | `RAMP_DURATION` | `5m` | ramp to steady state |
@@ -62,6 +61,7 @@ Each config-file key has a matching env-var override (env wins).
 | `thinkMinMs` / `thinkMaxMs` | `THINK_MIN_MS` / `THINK_MAX_MS` | `1000` / `5000` | read-action think-time jitter |
 | `workflowThinkMinMs` / `workflowThinkMaxMs` | `WORKFLOW_THINK_MIN_MS` / `WORKFLOW_THINK_MAX_MS` | `5000` / `15000` | workflow-step think-time (keeps read/write mix ~95/5) |
 | `poolSize` | `POOL_SIZE` | `200` | ids discovered per pool in setup |
+| `reloginEveryOps` | `RELOGIN_EVERY_OPS` | `70` | ops a VU serves per login before re-authing as another random user (±50% jitter; `0` = never re-login) |
 | `outputDir` | `OUTPUT_DIR` | `./output` | where summaries are written |
 | `strictThresholds` | `STRICT_THRESHOLDS` | `false` | apply strict per-op latency gates |
 
