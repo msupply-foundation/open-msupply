@@ -18,6 +18,7 @@ export type BackendPlugins = {
   processor?: (
     _: PluginTypes['processor']['input']
   ) => PluginTypes['processor']['output'];
+  schedule?: () => PluginTypes['schedule']['output'];
 };
 
 declare global {

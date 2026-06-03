@@ -105,7 +105,7 @@ fn generate(
         invoice_id,
         pack_size: 1.0,
         number_of_packs: quantity as f64,
-        item_link_id: item_id,
+        item_id,
         item_code: item.code,
         item_name: item.name,
         r#type: InvoiceLineType::UnallocatedStock,
@@ -118,6 +118,8 @@ fn generate(
         location_id: None,
         batch: None,
         expiry_date: None,
+        manufacture_date: None,
+        purchase_order_line_id: None,
         sell_price_per_pack: 0.0,
         cost_price_per_pack: 0.0,
         stock_line_id: None,
@@ -125,7 +127,8 @@ fn generate(
         item_variant_id: None,
         prescribed_quantity: None,
         linked_invoice_id: None,
-        donor_link_id: None,
+        donor_id: None,
+        manufacturer_id: None,
         vvm_status_id: None,
         reason_option_id: None,
         campaign_id: None,
@@ -285,7 +288,7 @@ mod test_insert {
                 InsertOutboundShipmentUnallocatedLine {
                     id: "new unallocated line id".to_string(),
                     invoice_id: mock_new_invoice_with_unallocated_line().id.clone(),
-                    item_id: existing_invoice_line.item_link_id.clone(),
+                    item_id: existing_invoice_line.item_id.clone(),
                     quantity: 0
                 },
             ),
@@ -299,7 +302,7 @@ mod test_insert {
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: new_outbound_shipment.id.clone(),
-                    item_id: existing_invoice_line.item_link_id.clone(),
+                    item_id: existing_invoice_line.item_id.clone(),
                     quantity: 0
                 },
             ),
@@ -322,7 +325,7 @@ mod test_insert {
         // Successful insert
         let invoice_id = mock_new_invoice_with_unallocated_line().id.clone();
         let item = ItemRowRepository::new(&connection)
-            .find_active_by_id(&mock_unallocated_line2().item_link_id)
+            .find_active_by_id(&mock_unallocated_line2().item_id)
             .unwrap()
             .unwrap();
 
@@ -350,7 +353,7 @@ mod test_insert {
                 pack_size: 1.0,
                 r#type: InvoiceLineType::UnallocatedStock,
                 number_of_packs: 4.0,
-                item_link_id: item.id.clone(),
+                item_id: item.id.clone(),
                 item_name: item.name.clone(),
                 item_code: item.code.clone(),
                 ..Default::default()

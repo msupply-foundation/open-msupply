@@ -8,6 +8,7 @@ import {
   useTranslation,
   ColumnType,
   UnitsAndDosesCell,
+  NumericTextDisplay,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment, useResponse } from '../api';
 import { useResponseRequisitionLineErrorContext } from '../context';
@@ -168,7 +169,7 @@ export const useResponseColumns = () => {
         header: t('label.amc'),
         size: 100,
         columnType: ColumnType.Number,
-        Cell: UnitsAndDosesCell,
+        Cell: props => <UnitsAndDosesCell {...props} roundUp />,
         includeColumn: showExtraProgramColumns,
       },
       {
@@ -189,7 +190,16 @@ export const useResponseColumns = () => {
         header: t('label.months-of-stock'),
         size: 100,
         columnType: ColumnType.Number,
-        Cell: UnitsAndDosesCell,
+        Cell: ({ cell }) => {
+          const value = cell.getValue<number | undefined>();
+          return (
+            <NumericTextDisplay
+              value={typeof value === 'number' ? value : undefined}
+              defaultValue={UNDEFINED_STRING_VALUE}
+              decimalLimit={1}
+            />
+          );
+        },
         includeColumn: showExtraProgramColumns,
       },
       {

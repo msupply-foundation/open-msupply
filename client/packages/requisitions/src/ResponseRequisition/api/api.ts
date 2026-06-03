@@ -235,10 +235,10 @@ export const getResponseQueries = (sdk: Sdk, storeId: string) => ({
       },
     });
 
-    const { insertFromResponseRequisition } = result || {};
+    const { insertRequestFromResponseRequisition } = result || {};
 
-    if (insertFromResponseRequisition?.__typename === 'RequisitionNode') {
-      return insertFromResponseRequisition.id;
+    if (insertRequestFromResponseRequisition?.__typename === 'RequisitionNode') {
+      return insertRequestFromResponseRequisition.id;
     }
 
     throw new Error('Unable to create request from response requisition');

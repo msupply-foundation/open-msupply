@@ -11,12 +11,10 @@ import {
   ColumnDef,
   ColumnType,
   NameAndColorSetterCell,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
-import {
-  getStatusTranslator,
-  isPrescriptionDisabled,
-  prescriptionStatuses,
-} from '../../utils';
+import { getStatusTranslator, isPrescriptionDisabled } from '../../utils';
+import { getStatusSequence } from '../../statuses';
 import { usePrescriptionList, usePrescription } from '../api';
 import { PrescriptionRowFragment } from '../api/operations.generated';
 import { AppBarButtons } from './AppBarButtons';
@@ -80,7 +78,9 @@ export const PrescriptionListView = () => {
         enableSorting: true,
         enableColumnFilter: true,
         filterVariant: 'select',
-        filterSelectOptions: prescriptionStatuses.map(status => ({
+        filterSelectOptions: getStatusSequence(
+          InvoiceNodeType.Prescription
+        ).map(status => ({
           value: status,
           label: getStatusTranslator(t)(status),
         })),
@@ -90,7 +90,8 @@ export const PrescriptionListView = () => {
       },
       {
         accessorKey: 'invoiceNumber',
-        header: t('label.invoice-number'),
+        header: t('label.number'),
+        description: t('description.invoice-number'),
         enableSorting: true,
         enableColumnFilter: true,
         size: 110,

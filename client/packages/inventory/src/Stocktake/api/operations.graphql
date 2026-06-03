@@ -19,6 +19,7 @@ fragment StocktakeLine on StocktakeLineNode {
   itemName
   id
   expiryDate
+  manufactureDate
   packSize
   snapshotNumberOfPacks
   countedNumberOfPacks
@@ -29,6 +30,10 @@ fragment StocktakeLine on StocktakeLineNode {
 
   donorId
   donorName
+
+  manufacturer(storeId: $storeId) {
+    ...NameRow
+  }
 
   location {
     __typename
@@ -190,6 +195,12 @@ fragment StockLineReducedBelowZeroError on StockLineReducedBelowZero {
   __typename
   stockLine {
     id
+    itemId
+    itemName
+    batch
+    item {
+      code
+    }
     totalNumberOfPacks
     availableNumberOfPacks
   }
@@ -210,6 +221,15 @@ fragment SnapshotCountCurrentCountMismatchLineError on SnapshotCountCurrentCount
   __typename
   stocktakeLine {
     id
+    itemId
+    itemName
+    batch
+    item {
+      code
+    }
+    stockLine {
+      id
+    }
   }
   description
 }

@@ -5,7 +5,10 @@ use repository::{
 use rust_embed::RustEmbed;
 use thiserror::Error;
 
-use crate::report::definition::ReportDefinition;
+use crate::{
+    preference::{CustomTranslations, Preference},
+    report::definition::ReportDefinition,
+};
 use log::info;
 use serde::{Deserialize, Serialize};
 
@@ -73,10 +76,22 @@ impl StandardReports {
             };
 
             if existing_report.is_none() || overwrite {
+                // create a custom translation for the description
+                if let Some(description) = report.description {
+                    let translation_key = format!("messages.how-to-read-{}", report.code);
+                    let mut custom_translations = CustomTranslations.load(con, None)?;
+                    // overwrite existing translation if it exists, otherwise insert new one
+                    custom_translations.insert(translation_key, description);
+                    CustomTranslations.upsert(con, custom_translations, None)?;
+                }
+
+                // upsert form schema
                 if let Some(form_schema_json) = &report.form_schema {
                     // TODO: Look up existing json schema and use it's ID to be safe...
                     FormSchemaRowRepository::new(con).upsert_one(form_schema_json)?;
                 }
+
+                // upsert report
                 ReportRowRepository::new(con).upsert_one(&ReportRow {
                     id: report.id.clone(),
                     name: report.name,
@@ -115,6 +130,7 @@ pub struct ReportsData {
 pub struct ReportData {
     pub id: String,
     pub name: String,
+    pub description: Option<String>,
     pub template: ReportDefinition,
     pub context: ContextType,
     pub sub_context: Option<String>,

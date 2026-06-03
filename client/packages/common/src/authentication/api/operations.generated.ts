@@ -29,6 +29,7 @@ export type UserStoreNodeFragment = {
     monthsItemsExpire: number;
     stocktakeFrequency: number;
     extraFieldsInRequisition: boolean;
+    keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
     manuallyLinkInternalOrderToInboundShipment: boolean;
     useConsumptionAndStockFromCustomersForInternalOrders: boolean;
     editPrescribedQuantityOnPrescription: boolean;
@@ -98,6 +99,7 @@ export type MeQuery = {
         monthsItemsExpire: number;
         stocktakeFrequency: number;
         extraFieldsInRequisition: boolean;
+        keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
         manuallyLinkInternalOrderToInboundShipment: boolean;
         useConsumptionAndStockFromCustomersForInternalOrders: boolean;
         editPrescribedQuantityOnPrescription: boolean;
@@ -132,6 +134,7 @@ export type MeQuery = {
           monthsItemsExpire: number;
           stocktakeFrequency: number;
           extraFieldsInRequisition: boolean;
+          keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
           manuallyLinkInternalOrderToInboundShipment: boolean;
           useConsumptionAndStockFromCustomersForInternalOrders: boolean;
           editPrescribedQuantityOnPrescription: boolean;
@@ -264,7 +267,9 @@ export type PreferencesQuery = {
     useSimplifiedMobileUi: boolean;
     expiredStockPreventIssue: boolean;
     expiredStockIssueThreshold: number;
+    displayPopulationBasedForecasting: boolean;
     warningForExcessRequest: boolean;
+    externalInboundShipmentLinesMustBeAuthorised: boolean;
     invoiceStatusOptions: Array<Types.InvoiceNodeStatus>;
     itemMarginOverridesSupplierMargin: boolean;
     showIndicativePriceInRequisitions: boolean;
@@ -275,6 +280,12 @@ export type PreferencesQuery = {
       enabled: boolean;
       maxAge: number;
       minItems: number;
+    };
+    backdating: {
+      __typename: 'BackdatingNode';
+      shipmentsEnabled: boolean;
+      inventoryAdjustmentsEnabled: boolean;
+      maxDays: number;
     };
   };
 };
@@ -317,6 +328,7 @@ export const UserStoreNodeFragmentDoc = gql`
       monthsItemsExpire
       stocktakeFrequency
       extraFieldsInRequisition
+      keepRequisitionLinesWithZeroRequestedQuantityOnFinalised
       manuallyLinkInternalOrderToInboundShipment
       useConsumptionAndStockFromCustomersForInternalOrders
       editPrescribedQuantityOnPrescription
@@ -523,17 +535,24 @@ export const PreferencesDocument = gql`
       useSimplifiedMobileUi
       expiredStockPreventIssue
       expiredStockIssueThreshold
+      displayPopulationBasedForecasting
       warnWhenMissingRecentStocktake {
         enabled
         maxAge
         minItems
       }
       warningForExcessRequest
+      externalInboundShipmentLinesMustBeAuthorised
       invoiceStatusOptions
       itemMarginOverridesSupplierMargin
       showIndicativePriceInRequisitions
       isGaps
       globalTableConfigs
+      backdating {
+        shipmentsEnabled
+        inventoryAdjustmentsEnabled
+        maxDays
+      }
     }
   }
 `;

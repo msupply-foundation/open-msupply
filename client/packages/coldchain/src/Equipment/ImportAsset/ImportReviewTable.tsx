@@ -91,7 +91,7 @@ export const ImportReviewTable: FC<ImportReviewTableProps> = ({
       {
         id: 'status',
         accessorFn: row => row.status,
-        header: t('label.status'),
+        header: t('label.functional-status'),
         size: 100,
         Cell: ({ cell }) => (
           <StatusCell cell={cell} statusMap={fullStatusColourMap(t)} />
@@ -137,7 +137,7 @@ export const ImportReviewTable: FC<ImportReviewTableProps> = ({
     data: importRows,
     columns,
     enableRowSelection: false,
-    noUrlFiltering: true,
+    localStateOnly: true,
   });
 
   return (

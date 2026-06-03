@@ -6,8 +6,11 @@ export const useCustomerReturns = (queryParams: CustomerListParams) => {
   const api = useReturnsApi();
 
   return {
-    ...useQuery(api.keys.customerParamList(queryParams), () =>
-      api.get.listCustomer(queryParams)
-    ),
+    ...useQuery({
+      queryKey: api.keys.customerParamList(queryParams),
+
+      queryFn: () =>
+        api.get.listCustomer(queryParams)
+    }),
   };
 };

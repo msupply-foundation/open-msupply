@@ -5,8 +5,9 @@ use crate::{repository_error::RepositoryError, Delete};
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use chrono::{NaiveDate, NaiveDateTime};
-use diesel::{dsl::max, prelude::*};
+use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
 
 table! {
     stocktake (id) {
@@ -32,7 +33,7 @@ table! {
 
 joinable!(stocktake -> user_account (user_id));
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum StocktakeStatus {
     #[default]
@@ -40,7 +41,9 @@ pub enum StocktakeStatus {
     Finalised,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default)]
+#[derive(
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default, Serialize, Deserialize,
+)]
 #[diesel(table_name = stocktake)]
 pub struct StocktakeRow {
     pub id: String,
@@ -92,7 +95,7 @@ impl<'a> StocktakeRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
@@ -132,7 +135,7 @@ impl<'a> StocktakeRowRepository<'a> {
     ) -> Result<Option<i64>, RepositoryError> {
         let result = stocktake::table
             .filter(stocktake::store_id.eq(store_id))
-            .select(max(stocktake::stocktake_number))
+            .select(diesel::dsl::max(stocktake::stocktake_number))
             .first(self.connection.lock().connection())?;
         Ok(result)
     }

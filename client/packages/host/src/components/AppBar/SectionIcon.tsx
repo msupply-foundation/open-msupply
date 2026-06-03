@@ -15,16 +15,18 @@ import {
 import {
   LocaleKey,
   matchPath,
+  resolvePluginIcon,
   RouteBuilder,
   Tooltip,
   useLocation,
   useTranslation,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
+import { usePluginNewCategories } from '../Navigation/usePluginNavLinks';
 
 type Section = {
-  icon?: JSX.Element;
-  titleKey: LocaleKey;
+  icon: JSX.Element;
+  title: string;
 };
 
 const getIcon = (section?: AppRoute) => {
@@ -57,6 +59,7 @@ const getIcon = (section?: AppRoute) => {
 };
 
 const useSection = (): Section | undefined => {
+  const t = useTranslation();
   const routes = [
     AppRoute.Settings,
     AppRoute.Help,
@@ -71,6 +74,7 @@ const useSection = (): Section | undefined => {
     AppRoute.Programs,
   ];
   const location = useLocation();
+  const pluginCategories = usePluginNewCategories();
 
   for (let i = 0; i < routes.length; i++) {
     const route = routes[i];
@@ -80,22 +84,35 @@ const useSection = (): Section | undefined => {
         .build(),
       location.pathname
     );
-    if (!!match)
-      return {
-        icon: getIcon(route),
-        titleKey: route as LocaleKey,
-      };
+    if (!match) continue;
+    const icon = getIcon(route);
+    if (!icon) continue;
+    return { icon, title: t(route as LocaleKey) };
   }
+
+  for (const category of pluginCategories) {
+    const match = matchPath(
+      RouteBuilder.create(category.key).addWildCard().build(),
+      location.pathname
+    );
+    if (!match) continue;
+    return {
+      icon: resolvePluginIcon(category.icon),
+      title: category.label,
+    };
+  }
+
   return undefined;
 };
 
 export const SectionIcon: React.FC = () => {
-  const t = useTranslation();
   const section = useSection();
 
-  return section?.icon ? (
-    <Tooltip title={t(section?.titleKey)}>
+  if (!section) return null;
+
+  return (
+    <Tooltip title={section.title}>
       <div>{section.icon}</div>
     </Tooltip>
-  ) : null;
+  );
 };

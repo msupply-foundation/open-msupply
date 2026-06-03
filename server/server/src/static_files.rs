@@ -14,7 +14,10 @@ use actix_web::{delete, get, guard, post, web, Error, HttpRequest, HttpResponse}
 use fs::NamedFile;
 use repository::sync_file_reference_row::SyncFileReferenceRowRepository;
 use repository::sync_file_reference_row::SyncFileStatus;
-use repository::RepositoryError;
+use repository::{
+    EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderStatus,
+    RepositoryError,
+};
 use repository::SyncFileDirection;
 use serde::Deserialize;
 
@@ -52,6 +55,44 @@ pub fn config_static_files(cfg: &mut web::ServiceConfig) {
             .service(upload_sync_file)
             .wrap(limit_content_length()),
     );
+}
+
+/// Returns an error response if the record is a purchase order in Sent or Finalised status,
+/// meaning documents cannot be uploaded or deleted.
+fn check_purchase_order_document_editable(
+    service_provider: &ServiceProvider,
+    table_name: &str,
+    record_id: &str,
+) -> Result<(), actix_web::Error> {
+    if table_name != "purchase_order" {
+        return Ok(());
+    }
+
+    let connection = service_provider.connection().map_err(|err| {
+        InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR)
+    })?;
+
+    let purchase_order = PurchaseOrderRepository::new(&connection)
+        .query_by_filter(
+            PurchaseOrderFilter::new().id(EqualFilter::equal_to(record_id.to_string())),
+        )
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
+        .pop();
+
+    if let Some(po) = purchase_order {
+        if matches!(
+            po.purchase_order_row.status,
+            PurchaseOrderStatus::Sent | PurchaseOrderStatus::Finalised
+        ) {
+            return Err(InternalError::new(
+                "Cannot upload or delete documents for a sent or finalised purchase order",
+                StatusCode::BAD_REQUEST,
+            )
+            .into());
+        }
+    }
+
+    Ok(())
 }
 
 #[derive(Debug, Deserialize)]
@@ -99,6 +140,9 @@ async fn delete_sync_file(
     })?;
 
     let (table_name, record_id, file_id) = path.into_inner();
+
+    check_purchase_order_document_editable(&service_provider, &table_name, &record_id)?;
+
     let static_file_category = StaticFileCategory::SyncFile(table_name, record_id);
 
     // delete local file, if it exists
@@ -149,6 +193,8 @@ async fn upload_sync_file(
     })?;
 
     let path_inner = path.into_inner();
+
+    check_purchase_order_document_editable(&service_provider, &path_inner.0, &path_inner.1)?;
 
     let mut static_file_ids: Vec<String> = vec![];
 

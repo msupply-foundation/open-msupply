@@ -7,6 +7,7 @@ import {
   TextWithLabelRow,
   CurrencyInput,
   ExpiryDateInput,
+  DateTimePickerInput,
   useTranslation,
   Box,
   IconButton,
@@ -32,15 +33,11 @@ import { LocationSearchInput } from '../../Location/Components/LocationSearchInp
 import {
   checkInvalidLocationLines,
   DonorSearchInput,
+  ManufacturerSearchInput,
   ReasonOptionsSearchInput,
   VVMStatusSearchInput,
 } from '../..';
 import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
-import {
-  getVolumePerPackFromVariant,
-  ItemVariantInput,
-  useIsItemVariantsEnabled,
-} from '../../Item';
 import { CampaignOrProgramSelector } from './Campaign';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -69,7 +66,6 @@ export const StockLineForm = ({
 
   const { isConnected, isEnabled, isListening, scan } =
     useBarcodeScannerContext();
-  const showItemVariantsInput = useIsItemVariantsEnabled();
   const { plugins } = usePluginProvider();
 
   const showVVMStatus =
@@ -157,46 +153,48 @@ export const StockLineForm = ({
           flexWrap="nowrap"
           maxWidth={900}
         >
-          {!isNewModal && (
-            <Box paddingBottom={1}>
-              <TextWithLabelRow
-                label={`${t('label.item')}`}
-                text={''}
-                labelProps={{ sx: { fontWeight: 'bold', width: '100px' } }}
-                textProps={{ sx: { pl: 1 } }}
-              />
-              <Box
-                sx={{
-                  paddingLeft: '110px',
-                  marginTop: '-24px',
-                  marginBottom: '8px',
-                }}
-              >
-                <Link
-                  to={RouteBuilder.create(AppRoute.Catalogue)
-                    .addPart(AppRoute.Items)
-                    .addPart(draft.itemId)
-                    .build()}
+          <Box paddingBottom={1}>
+            {!isNewModal && (
+              <>
+                <TextWithLabelRow
+                  label={`${t('label.item')}`}
+                  text={''}
+                  labelProps={{ sx: { fontWeight: 'bold', width: '100px' } }}
+                  textProps={{ sx: { pl: 1 } }}
+                />
+                <Box
+                  sx={{
+                    paddingLeft: '110px',
+                    marginTop: '-24px',
+                    marginBottom: '8px',
+                  }}
                 >
-                  {draft.item.name}
-                </Link>
-              </Box>
-              <TextWithLabelRow
-                label={`${t('label.code')}`}
-                text={draft.item.code}
-                labelProps={{ sx: { fontWeight: 'bold', width: '100px' } }}
-                textProps={{ sx: { pl: 1 } }}
-              />
-              <TextWithLabelRow
-                label={`${t('label.unit')}`}
-                text={draft.item.unitName ?? ''}
-                labelProps={{ sx: { fontWeight: 'bold', width: '100px' } }}
-                textProps={{ sx: { pl: 1 } }}
-              />
-            </Box>
-          )}
+                  <Link
+                    to={RouteBuilder.create(AppRoute.Catalogue)
+                      .addPart(AppRoute.Items)
+                      .addPart(draft.itemId)
+                      .build()}
+                  >
+                    {draft.item.name}
+                  </Link>
+                </Box>
+                <TextWithLabelRow
+                  label={`${t('label.code')}`}
+                  text={draft.item.code}
+                  labelProps={{ sx: { fontWeight: 'bold', width: '100px' } }}
+                  textProps={{ sx: { pl: 1 } }}
+                />
+              </>
+            )}
+            <TextWithLabelRow
+              label={`${t('label.unit')}`}
+              text={draft.item.unitName ?? ''}
+              labelProps={{ sx: { fontWeight: 'bold', width: '100px' } }}
+              textProps={{ sx: { pl: 1 } }}
+            />
+          </Box>
           <Box>
-            <Grid container gap={isNewModal ? undefined : 10}>
+            <Grid container gap={isNewModal ? 2 : 10}>
               <Grid container flex={1} flexDirection="column" gap={1}>
                 <StyledInputRow
                   label={t('label.pack-quantity')}
@@ -251,9 +249,7 @@ export const StockLineForm = ({
                             ).toFixed(2)
                           )}
                           onChange={() => {}}
-                          {...getDosesProps(
-                            draft.availableNumberOfPacks * draft.packSize
-                          )}
+                          {...getDosesProps(draft.availableNumberOfPacks)}
                         />
                       }
                     />
@@ -270,9 +266,7 @@ export const StockLineForm = ({
                             )
                           )}
                           onChange={() => {}}
-                          {...getDosesProps(
-                            draft.totalNumberOfPacks * draft.packSize
-                          )}
+                          {...getDosesProps(draft.totalNumberOfPacks)}
                         />
                       }
                     />
@@ -361,6 +355,22 @@ export const StockLineForm = ({
                     }
                   />
                 )}
+                <StyledInputRow
+                  label={t('label.manufacture-date')}
+                  Input={
+                    <DateTimePickerInput
+                      value={DateUtils.getNaiveDate(draft.manufactureDate)}
+                      onChange={date =>
+                        onUpdate({
+                          manufactureDate: date
+                            ? Formatter.naiveDate(date)
+                            : null,
+                        })
+                      }
+                      width={160}
+                    />
+                  }
+                />
                 {plugins.stockLine?.editViewField.map((Plugin, index) => (
                   <Plugin key={index} stockLine={draft} events={pluginEvents} />
                 ))}
@@ -408,6 +418,7 @@ export const StockLineForm = ({
                     <Checkbox
                       checked={draft.onHold}
                       onChange={(_, onHold) => onUpdate({ onHold })}
+                      sx={{ pr: 0 }}
                     />
                   }
                 />
@@ -432,29 +443,6 @@ export const StockLineForm = ({
                     />
                   }
                 />
-                {showItemVariantsInput && (
-                  <StyledInputRow
-                    label={t('label.item-variant')}
-                    Input={
-                      <ItemVariantInput
-                        itemId={draft.itemId}
-                        selectedId={draft?.itemVariant?.id}
-                        width={160}
-                        onChange={variant => {
-                          const newVolume = getVolumePerPackFromVariant({
-                            itemVariant: variant,
-                            packSize: draft.packSize,
-                          });
-
-                          onUpdate({
-                            itemVariant: variant,
-                            volumePerPack: newVolume ?? 0,
-                          });
-                        }}
-                      />
-                    }
-                  />
-                )}
                 <StyledInputRow
                   label={t('label.volume-per-pack')}
                   Input={
@@ -482,6 +470,22 @@ export const StockLineForm = ({
                     }
                   />
                 )}
+                <StyledInputRow
+                  label={t('label.manufacturer')}
+                  Input={
+                    <ManufacturerSearchInput
+                      value={draft.manufacturer ?? null}
+                      width={160}
+                      onChange={manufacturer => {
+                        const patch: Partial<DraftStockLine> = { manufacturer };
+                        if (draft.itemVariant) {
+                          patch.itemVariant = null;
+                        }
+                        onUpdate(patch);
+                      }}
+                    />
+                  }
+                />
                 <TextWithLabelRow
                   label={t('label.supplier')}
                   text={String(supplierName)}
@@ -490,13 +494,12 @@ export const StockLineForm = ({
                 {showVVMStatus && (
                   <StyledInputRow
                     label={t('label.vvm-status')}
-                    labelWidth={isNewModal ? '212px' : null}
                     Input={
                       <VVMStatusSearchInput
                         selected={draft?.vvmStatus ?? null}
                         onChange={vvmStatus => onUpdate({ vvmStatus })}
                         disabled={!isNewModal}
-                        width={!isNewModal ? 160 : undefined}
+                        width={160}
                         useDefault={isNewModal}
                       />
                     }

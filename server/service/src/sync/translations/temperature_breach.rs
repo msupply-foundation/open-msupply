@@ -8,12 +8,15 @@ use util::sync_serde::{
 };
 
 use repository::{
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, TemperatureBreachRow,
-    TemperatureBreachRowRepository, TemperatureBreachType,
+    ChangelogRow, ChangelogTableName, LocationRowRepository, StorageConnection, SyncBufferRow,
+    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureBreachType,
 };
 use serde::{Deserialize, Serialize};
 
-use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{
+    to_legacy_time, utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult,
+    SyncTranslation,
+};
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -95,7 +98,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyTemperatureBreachRow>(&sync_record.data)?;
@@ -118,6 +121,16 @@ impl SyncTranslation for TemperatureBreachTranslation {
             start_datetime,
             comment,
         } = data;
+
+        let location_id = clear_invalid_fk(
+            connection,
+            "temperature_breach",
+            &id,
+            "location_id",
+            location_id,
+            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
+            true,
+        )?;
 
         let r#type = from_legacy_breach_type(&r#type);
         let result = TemperatureBreachRow {

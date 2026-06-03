@@ -65,7 +65,7 @@ impl<'a> TemperatureLogRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
@@ -80,6 +80,33 @@ impl<'a> TemperatureLogRowRepository<'a> {
             .filter(temperature_log::id.eq_any(temperature_log_ids))
             .set(temperature_log::temperature_breach_id.eq(breach_id))
             .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    pub fn update_location_id_by_sensor_id(
+        &self,
+        sensor_id: &str,
+        location_id: &str,
+    ) -> Result<(), RepositoryError> {
+        let rows_updated = diesel::update(temperature_log::table)
+            .filter(temperature_log::sensor_id.eq(sensor_id))
+            .filter(temperature_log::location_id.is_null())
+            .set(temperature_log::location_id.eq(Some(location_id)))
+            .execute(self.connection.lock().connection())?;
+
+        if rows_updated == 0 {
+            return Ok(());
+        }
+
+        let logs = temperature_log::table
+            .filter(temperature_log::sensor_id.eq(sensor_id))
+            .filter(temperature_log::location_id.eq(location_id))
+            .load::<TemperatureLogRow>(self.connection.lock().connection())?;
+
+        for log in &logs {
+            self.insert_changelog(log, RowActionType::Upsert)?;
+        }
+
         Ok(())
     }
 

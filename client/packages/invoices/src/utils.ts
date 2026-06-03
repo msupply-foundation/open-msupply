@@ -18,6 +18,7 @@ import { OutboundFragment, OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
 import { InboundItem } from './types';
 import {
+  PrescriptionFragment,
   PrescriptionLineFragment,
   PrescriptionRowFragment,
 } from './Prescriptions/api';
@@ -27,59 +28,21 @@ import {
   SupplierReturnRowFragment,
 } from './Returns';
 
-export const outboundStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Allocated,
-  InvoiceNodeStatus.Picked,
-  InvoiceNodeStatus.Shipped,
-  InvoiceNodeStatus.Delivered,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
+export enum InboundShipmentType {
+  Manual = 'Manual',
+  Internal = 'Internal',
+  External = 'External',
+}
 
-export const inboundStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Picked,
-  InvoiceNodeStatus.Shipped,
-  InvoiceNodeStatus.Delivered,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
+export const getInboundShipmentType = (inbound: {
+  linkedShipment?: { id: string } | null;
+  purchaseOrder?: { id: string } | null;
+}): InboundShipmentType => {
+  if (inbound.purchaseOrder?.id) return InboundShipmentType.External;
+  if (inbound.linkedShipment?.id) return InboundShipmentType.Internal;
+  return InboundShipmentType.Manual;
+};
 
-export const manualInboundStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Delivered,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
-
-export const prescriptionStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Picked,
-  InvoiceNodeStatus.Verified,
-  InvoiceNodeStatus.Cancelled,
-];
-
-export const supplierReturnStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Picked,
-  InvoiceNodeStatus.Shipped,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
-
-export const customerReturnStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Picked,
-  InvoiceNodeStatus.Shipped,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
-export const manualCustomerReturnStatuses: InvoiceNodeStatus[] = [
-  InvoiceNodeStatus.New,
-  InvoiceNodeStatus.Received,
-  InvoiceNodeStatus.Verified,
-];
 
 const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   ALLOCATED: 'status.allocated',
@@ -277,7 +240,7 @@ export const canDeleteInvoice = (
   invoice.status === InvoiceNodeStatus.Allocated ||
   invoice.status === InvoiceNodeStatus.Picked;
 
-export const canCancelInvoice = (invoice: PrescriptionRowFragment) =>
+export const canCancelInvoice = (invoice: PrescriptionFragment) =>
   invoice.type === InvoiceNodeType.Prescription &&
   invoice.status === InvoiceNodeStatus.Verified &&
   !invoice.isCancellation;

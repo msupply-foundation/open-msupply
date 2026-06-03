@@ -2,7 +2,6 @@ use super::{
     clinician_link_row::clinician_link,
     clinician_row::clinician,
     encounter_row::encounter::{self},
-    name_link_row::name_link,
     name_row::name,
     program_row::program,
     StorageConnection,
@@ -12,16 +11,12 @@ use crate::{
     db_diesel::program_enrolment_row::program_enrolment,
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
     latest_document, ClinicianLinkRow, ClinicianRow, DBType, DatetimeFilter, EncounterRow,
-    EncounterStatus, EqualFilter, NameLinkRow, NameRow, Pagination, PatientFilter,
-    PatientRepository, ProgramEnrolmentFilter, ProgramEnrolmentRepository, ProgramRow,
-    RepositoryError, Sort, StringFilter,
+    EncounterStatus, EqualFilter, NameRow, Pagination, PatientFilter, PatientRepository,
+    ProgramEnrolmentFilter, ProgramEnrolmentRepository, ProgramRow, RepositoryError, Sort,
+    StringFilter,
 };
 
-use diesel::{
-    dsl::IntoBoxed,
-    helper_types::{InnerJoin, LeftJoin},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Clone, Default)]
 pub struct EncounterFilter {
@@ -131,7 +126,7 @@ pub enum EncounterSortField {
 type EncounterJoin = (
     EncounterRow,
     ProgramRow,
-    (NameLinkRow, NameRow),
+    NameRow,
     Option<(ClinicianLinkRow, ClinicianRow)>,
 );
 
@@ -143,7 +138,7 @@ pub struct Encounter {
     pub clinician_row: Option<ClinicianRow>,
 }
 
-fn to_domain((encounter_row, program_row, (_, name_row), clinician): EncounterJoin) -> Encounter {
+fn to_domain((encounter_row, program_row, name_row, clinician): EncounterJoin) -> Encounter {
     Encounter {
         row: encounter_row,
         program_row,
@@ -154,24 +149,18 @@ fn to_domain((encounter_row, program_row, (_, name_row), clinician): EncounterJo
 
 pub type EncounterSort = Sort<EncounterSortField>;
 
-type BoxedEncounterQuery = IntoBoxed<
-    'static,
-    LeftJoin<
-        InnerJoin<
-            InnerJoin<encounter::table, program::table>,
-            InnerJoin<name_link::table, name::table>,
-        >,
-        InnerJoin<clinician_link::table, clinician::table>,
-    >,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    encounter::table
+        .inner_join(program::table)
+        .inner_join(name::table.on(encounter::patient_id.eq(name::id)))
+        .left_join(clinician_link::table.inner_join(clinician::table))
+}
+
+type BoxedEncounterQuery = IntoBoxed<'static, query, DBType>;
 
 fn create_filtered_query(filter: Option<EncounterFilter>) -> BoxedEncounterQuery {
-    let mut query = encounter::table
-        .inner_join(program::table)
-        .inner_join(name_link::table.inner_join(name::table))
-        .left_join(clinician_link::table.inner_join(clinician::table))
-        .into_boxed();
+    let mut query = query().into_boxed();
 
     if let Some(f) = filter {
         let EncounterFilter {

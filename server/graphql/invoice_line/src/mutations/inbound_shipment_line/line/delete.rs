@@ -7,7 +7,8 @@ use graphql_core::{
 };
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 
-use service::auth::{Resource, ResourceAccessRequest};
+use graphql_core::generic_inputs::InboundShipmentType;
+use service::auth::ResourceAccessRequest;
 use service::invoice_line::stock_in_line::{
     DeleteStockInLine as ServiceInput, DeleteStockInLineError as ServiceError, StockInType,
 };
@@ -31,11 +32,16 @@ pub enum DeleteResponse {
     Response(GenericDeleteResponse),
 }
 
-pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<DeleteResponse> {
+pub fn delete(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: DeleteInput,
+    r#type: InboundShipmentType,
+) -> Result<DeleteResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateInboundShipment,
+            resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -46,7 +52,7 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
     map_response(
         service_provider
             .invoice_line_service
-            .delete_stock_in_line(&service_context, input.to_domain()),
+            .delete_stock_in_line(&service_context, input.to_domain(), Some(r#type.to_domain())),
     )
 }
 
@@ -113,6 +119,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         ServiceError::NotThisInvoiceLine(_)
         | ServiceError::NotAStockIn
         | ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
+        ServiceError::WrongInboundShipmentType => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::LineUsedInStocktake => InternalError(formatted_error),
     };
@@ -151,6 +158,7 @@ mod test {
             &self,
             _: &ServiceContext,
             input: ServiceInput,
+            _: Option<service::invoice::inbound_shipment::InboundShipmentType>,
         ) -> Result<String, ServiceError> {
             self.0(input)
         }

@@ -24,6 +24,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { StocktakeLineFragment, useStocktakeOld } from '../api';
 import { StocktakeLineErrorProvider } from '../context';
 import { useStocktakeColumns } from './columns';
+import { StocktakeErrorModal } from './StocktakeErrorModal';
 
 export const DetailView = () => (
   <StocktakeLineErrorProvider>
@@ -139,6 +140,7 @@ const DetailViewInner = () => {
           isInitialStocktake={stocktake.isInitialStocktake}
         />
       )}
+      <StocktakeErrorModal />
     </>
   );
 };

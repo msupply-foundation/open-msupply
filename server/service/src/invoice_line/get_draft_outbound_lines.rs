@@ -35,7 +35,7 @@ pub struct DraftStockOutLine {
     pub vvm_status_id: Option<String>,
     pub doses_per_unit: i32,
     pub item_variant_id: Option<String>,
-    pub donor_link_id: Option<String>,
+    pub donor_id: Option<String>,
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
     pub volume_per_pack: f64,
@@ -54,7 +54,7 @@ pub fn get_draft_stock_out_lines(
     item_id: &str,
     invoice_id: &str,
 ) -> Result<(Vec<DraftStockOutLine>, DraftStockOutItemData), ListError> {
-    let invoice = get_invoice(ctx, Some(store_id), invoice_id)?.ok_or(ListError::DatabaseError(
+    let invoice = get_invoice(ctx, Some(store_id), invoice_id, None)?.ok_or(ListError::DatabaseError(
         RepositoryError::DBError {
             msg: "Invoice not found".to_string(),
             extra: invoice_id.to_string(),
@@ -134,7 +134,7 @@ fn get_historical_available_stock_lines(
     datetime: Option<NaiveDateTime>,
 ) -> Result<Vec<StockLine>, ListError> {
     let historical_stock_lines = match datetime {
-        Some(datetime) => get_historical_stock_lines(ctx, store_id, item_id, &datetime)?,
+        Some(datetime) => get_historical_stock_lines(ctx, store_id, item_id, &datetime, false)?,
         None => get_stock_lines(
             ctx,
             None,
@@ -149,7 +149,19 @@ fn get_historical_available_stock_lines(
         )?,
     };
 
-    Ok(historical_stock_lines.rows)
+    // For backdated outbounds, drop stock lines that had no availability at the historical date —
+    // they can't be picked.
+    let rows = if datetime.is_some() {
+        historical_stock_lines
+            .rows
+            .into_iter()
+            .filter(|line| line.stock_line_row.available_number_of_packs > 0.0)
+            .collect()
+    } else {
+        historical_stock_lines.rows
+    };
+
+    Ok(rows)
 }
 
 fn get_outgoing_invoice_lines(
@@ -186,7 +198,7 @@ fn get_outgoing_invoice_lines(
 
         for stock_line in invoice_stock_lines.iter_mut() {
             if let Some(historic_quantity) = historic_quantities.get(&stock_line.id) {
-                stock_line.available_number_of_packs = *historic_quantity;
+                stock_line.available_number_of_packs = historic_quantity.min_available;
             }
         }
     }
@@ -264,7 +276,7 @@ impl DraftStockOutLine {
             total_number_of_packs,
             on_hold,
             item_variant_id,
-            donor_link_id,
+            donor_id: donor_link_id,
             volume_per_pack,
             ..
         } = line.stock_line_row;
@@ -274,7 +286,7 @@ impl DraftStockOutLine {
             item_id: line.item_row.id,
             stock_line_id: id,
             item_variant_id,
-            donor_link_id,
+            donor_id: donor_link_id,
             batch,
             pack_size,
             expiry_date,
@@ -305,7 +317,7 @@ impl DraftStockOutLine {
             expiry_date,
             location_id,
             sell_price_per_pack,
-            donor_link_id,
+            donor_id: donor_link_id,
             campaign_id,
             program_id,
             ..
@@ -330,7 +342,7 @@ impl DraftStockOutLine {
             id,
             item_id: line.item_row.id,
             item_variant_id,
-            donor_link_id,
+            donor_id: donor_link_id,
             number_of_packs,
             stock_line_id,
             pack_size,
@@ -427,7 +439,7 @@ mod test {
             MockData {
                 invoice_lines: vec![InvoiceLineRow {
                     id: "placeholder".to_string(),
-                    item_link_id: mock_item_b().id,
+                    item_id: mock_item_b().id,
                     invoice_id: mock_outbound_shipment_a().id,
                     number_of_packs: 7.0,
                     pack_size: 1.0,
@@ -478,7 +490,7 @@ mod test {
     //         MockData {
     //             stock_lines: vec![StockLineRow {
     //                 id: "stock_line_1".to_string(),
-    //                 item_link_id: mock_item_b().id,
+    //                 item_id: mock_item_b().id,
     //                 store_id: mock_store_b().id,
     //                 available_number_of_packs: 10.0,
     //                 total_number_of_packs: 10.0,

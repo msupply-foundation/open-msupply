@@ -10,6 +10,9 @@ on:
   pull_request:
     paths:
       - "server/repository/src/migrations/**"
+  merge_group:
+    branches:
+      - develop
   workflow_dispatch:
 
 concurrency:
@@ -28,10 +31,31 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Check out base branch
+      # Resolve the commit to stamp the database from. The base ref tip can move
+      # under us — either because the PR is retargeted after trigger, or because
+      # a queued run spans a version bump on the base — and an advanced base
+      # leaves the DB stamped at a higher version than the PR's migrate step
+      # expects. We pick a deterministic commit from the local checkout instead:
+      #
+      #   pull_request: actions/checkout pulls refs/pull/N/merge, a synthetic
+      #     merge of (base tip, PR head). HEAD^1 is the base tip at sync time
+      #     and HEAD^2 is the PR head; merge-base of those is the actual fork
+      #     point — the right "what did this PR branch from" check.
+      #   merge_group: HEAD is a queue merge commit whose HEAD^1 is the develop
+      #     tip at queue time — the right "does this integrate?" check.
+      - name: Resolve base commit
+        id: base
         run: |
-          git checkout ${{ github.base_ref }}
-          echo "Checked out base branch: ${{ github.base_ref }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            sha=$(git merge-base HEAD^1 HEAD^2)
+          else
+            sha=$(git rev-parse HEAD^1)
+          fi
+          echo "sha=$sha" >> $GITHUB_OUTPUT
+      - name: Check out base commit
+        run: |
+          git checkout ${{ steps.base.outputs.sha }}
+          echo "Checked out base commit: ${{ steps.base.outputs.sha }}"
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -57,10 +81,19 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Check out base branch
+      - name: Resolve base commit
+        id: base
         run: |
-          git checkout ${{ github.base_ref }}
-          echo "Checked out base branch: ${{ github.base_ref }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            sha=$(git merge-base HEAD^1 HEAD^2)
+          else
+            sha=$(git rev-parse HEAD^1)
+          fi
+          echo "sha=$sha" >> $GITHUB_OUTPUT
+      - name: Check out base commit
+        run: |
+          git checkout ${{ steps.base.outputs.sha }}
+          echo "Checked out base commit: ${{ steps.base.outputs.sha }}"
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable

@@ -2,7 +2,7 @@ use super::NameNode;
 use async_graphql::{dataloader::DataLoader, Context, ErrorExtensions, Object, Result};
 use chrono::NaiveDate;
 use graphql_core::{
-    loader::{NameByIdLoader, NameByIdLoaderInput},
+    loader::{NameByIdLoader, NameByIdLoaderInput, StoreLogoLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
@@ -49,8 +49,11 @@ impl StoreNode {
     }
     /// Returns the associated store logo.
     /// The logo is returned as a data URL schema, e.g. "data:image/png;base64,..."
-    pub async fn logo(&self) -> &Option<String> {
-        &self.row().logo
+    /// Lazy-loaded — the logo is not pulled with the default store row.
+    pub async fn logo(&self, ctx: &Context<'_>) -> Result<Option<String>> {
+        let loader = ctx.get_loader::<DataLoader<StoreLogoLoader>>();
+        let row = loader.load_one(self.row().id.clone()).await?;
+        Ok(row.and_then(|r| r.logo))
     }
 
     pub async fn created_date(&self) -> Option<NaiveDate> {
@@ -100,7 +103,7 @@ mod test {
         fn store() -> StoreRow {
             StoreRow {
                 id: "store".to_string(),
-                name_link_id: name().id,
+                name_id: name().id,
                 ..Default::default()
             }
         }

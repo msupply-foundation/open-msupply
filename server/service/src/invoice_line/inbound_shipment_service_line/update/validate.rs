@@ -1,7 +1,10 @@
 use repository::{InvoiceLine, InvoiceRow, InvoiceType, ItemRow, ItemType, StorageConnection};
 
 use crate::{
-    invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
+    invoice::{
+        check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
+        inbound_shipment::InboundShipmentType,
+    },
     invoice_line::validate::{check_item_exists, check_line_belongs_to_invoice, check_line_exists},
 };
 
@@ -11,6 +14,7 @@ pub fn validate(
     input: &UpdateInboundShipmentServiceLine,
     store_id: &str,
     connection: &StorageConnection,
+    inbound_shipment_type: Option<InboundShipmentType>,
 ) -> Result<(InvoiceLine, InvoiceRow, ItemRow), UpdateInboundShipmentServiceLineError> {
     use UpdateInboundShipmentServiceLineError::*;
 
@@ -32,6 +36,11 @@ pub fn validate(
     }
     if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
         return Err(NotAnInboundShipment);
+    }
+    if let Some(inbound_type) = inbound_shipment_type {
+        if !inbound_type.matches_input(invoice.purchase_order_id.is_some()) {
+            return Err(WrongInboundShipmentType);
+        }
     }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditInvoice);

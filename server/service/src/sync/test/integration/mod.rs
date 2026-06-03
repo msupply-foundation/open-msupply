@@ -1,6 +1,9 @@
+mod bandwidth_harness;
 mod central;
 mod central_server_configurations;
+mod driver_harness;
 mod errors;
+mod file_sync_pause;
 mod omsupply_central;
 mod remote;
 mod site_info;
@@ -17,7 +20,6 @@ use crate::{
 use central_server_configurations::{ConfigureCentralServer, SiteConfiguration};
 use repository::{mock::MockDataInserts, ChangelogRepository, StorageConnection};
 use serde::Serialize;
-use serde_json::json;
 use std::{error::Error, future::Future};
 
 pub(super) struct FullSiteConfig {
@@ -128,11 +130,11 @@ where
 }
 
 async fn random_delay(min_millisecond: u64, max_millisecond: u64) {
-    use rand::prelude::*;
+    use rand::RngExt;
     let diff = max_millisecond - min_millisecond;
-    // .gen::<f64>() generates a float between 0 and 1
+    // .random::<f64>() generates a float between 0 and 1
     let delay_millisecond =
-        (rand::thread_rng().gen::<f64>() * diff as f64) as u64 + min_millisecond;
+        (rand::rng().random::<f64>() * diff as f64) as u64 + min_millisecond;
     tokio::time::sleep(std::time::Duration::from_millis(delay_millisecond)).await;
 }
 

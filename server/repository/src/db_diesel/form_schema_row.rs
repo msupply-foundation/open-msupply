@@ -99,7 +99,7 @@ impl<'a> FormSchemaRowRepository<'a> {
             record_id: uid.to_string(),
             row_action: action,
             store_id: None,
-            name_link_id: None,
+            name_id: None,
         };
         ChangelogRepository::new(self.connection).insert(&row)
     }
@@ -116,6 +116,15 @@ impl<'a> FormSchemaRowRepository<'a> {
             Some(row) => Ok(Some(schema_from_row(row)?)),
             None => Ok(None),
         }
+    }
+
+    pub fn check_exists_by_id(&self, schema_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = form_schema::dsl::form_schema
+            .filter(form_schema::dsl::id.eq(schema_id))
+            .select(form_schema::dsl::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
     }
 
     pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<FormSchemaJson>, RepositoryError> {

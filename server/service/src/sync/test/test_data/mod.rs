@@ -24,6 +24,8 @@ pub(crate) mod currency;
 pub(crate) mod demographic;
 pub(crate) mod diagnosis;
 pub(crate) mod frontend_plugin;
+pub(crate) mod goods_received;
+pub(crate) mod goods_received_line;
 pub(crate) mod indicator_attribute;
 pub(crate) mod indicator_value;
 pub(crate) mod insurance_provider;
@@ -75,6 +77,7 @@ pub(crate) mod store;
 pub(crate) mod store_preference;
 pub(crate) mod sync_file_reference;
 pub(crate) mod sync_message;
+pub(crate) mod sync_message_om;
 pub(crate) mod system_log;
 pub(crate) mod temperature_breach;
 pub(crate) mod temperature_log;
@@ -84,6 +87,7 @@ pub(crate) mod user_permission;
 pub(crate) mod vaccination;
 pub(crate) mod vaccine_course;
 pub(crate) mod vaccine_course_dose;
+pub(crate) mod vaccine_course_store_config;
 pub(crate) mod vaccine_course_item;
 pub(crate) mod vvm_status;
 pub(crate) mod vvm_status_log;
@@ -138,6 +142,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut demographic::test_pull_upsert_records());
     test_records.append(&mut vaccine_course::test_pull_upsert_records());
     test_records.append(&mut vaccine_course_dose::test_pull_upsert_records());
+    test_records.append(&mut vaccine_course_store_config::test_pull_upsert_records());
     test_records.append(&mut vaccine_course_item::test_pull_upsert_records());
     test_records.append(&mut vvm_status::test_pull_upsert_records());
     test_records.append(&mut program_indicator::test_pull_upsert_records());
@@ -180,8 +185,12 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncIncomingR
     test_records.append(&mut name_insurance_join::test_pull_upsert_records());
     test_records.append(&mut vvm_status_log::test_pull_upsert_records());
     test_records.append(&mut sync_message::test_pull_upsert_records());
+    test_records.append(&mut sync_message_om::test_pull_upsert_records());
     test_records.append(&mut purchase_order::test_pull_upsert_records());
     test_records.append(&mut purchase_order_line::test_pull_upsert_records());
+    // goods_received and goods_received_line are pull-only translators tested
+    // in their own module tests, not in the integration test (they create invoice/invoice_line
+    // changelogs that would need matching push test data).
 
     // Open mSupply central
     test_records.append(&mut rnr_form::test_pull_upsert_records());
@@ -248,6 +257,7 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut name_insurance_join::test_push_records());
     test_records.append(&mut vvm_status_log::test_push_records());
     test_records.append(&mut sync_message::test_push_records());
+    test_records.append(&mut sync_message_om::test_push_records());
     test_records.append(&mut clinician::test_push_records());
     test_records.append(&mut clinician_store_join::test_push_records());
     test_records.append(&mut purchase_order::test_push_records());
@@ -265,6 +275,7 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut asset_type::test_v6_central_push_records());
     test_records.append(&mut asset_catalogue_item::test_v6_central_push_records());
     test_records.append(&mut vaccine_course::test_v6_records());
+    test_records.append(&mut vaccine_course_store_config::test_v6_records());
     test_records.append(&mut vaccine_course_item::test_v6_records());
     test_records.append(&mut name_oms_fields::test_v6_central_push_records());
     test_records.append(&mut item_variant::test_v6_central_push_records());

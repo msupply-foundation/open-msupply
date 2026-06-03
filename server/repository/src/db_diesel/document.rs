@@ -2,23 +2,23 @@ use super::StorageConnection;
 
 use crate::diesel_macros::{
     apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
-};
-use crate::{
-    db_diesel::{name_link_row::name_link, name_row::name},
-    NameLinkRow, NameRow,
+    define_linked_tables,
 };
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, StringFilter};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
-use diesel::helper_types::{InnerJoin, IntoBoxed, LeftJoin};
+use diesel::helper_types::IntoBoxed;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-table! {
-    document (id) {
-        id -> Text,
+define_linked_tables! {
+    view: document = "document_view",
+    core: document_with_links = "document",
+    struct: DocumentRow,
+    repo: DocumentRepository,
+    shared: {
         name -> Text,
         parent_ids -> Text,
         user_id -> Text,
@@ -27,8 +27,11 @@ table! {
         data -> Text,
         form_schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
-        owner_name_link_id -> Nullable<Text>,
         context_id -> Text,
+    },
+    links: {},
+    optional_links: {
+        owner_name_link_id -> owner_name_id,
     }
 }
 
@@ -45,18 +48,10 @@ table! {
         data -> Text,
         form_schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
-        owner_name_link_id -> Nullable<Text>,
         context_id -> Text,
+        owner_name_id -> Nullable<Text>,
     }
 }
-
-joinable!(document -> name_link (owner_name_link_id));
-allow_tables_to_appear_in_same_query!(document, name);
-allow_tables_to_appear_in_same_query!(document, name_link);
-
-joinable!(latest_document -> name_link (owner_name_link_id));
-allow_tables_to_appear_in_same_query!(latest_document, name);
-allow_tables_to_appear_in_same_query!(latest_document, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -89,10 +84,11 @@ pub struct DocumentRow {
     pub form_schema_id: Option<String>,
     /// Soft deletion status
     pub status: DocumentStatus,
-    /// For example, the patient who owns the document
-    pub owner_name_link_id: Option<String>,
     /// For example, program this document belongs to
     pub context_id: String,
+    // Resolved from name_link - must be last to match view column order
+    /// For example, the patient who owns the document
+    pub owner_name_id: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -179,18 +175,12 @@ pub enum DocumentSortField {
 
 pub type DocumentSort = Sort<DocumentSortField>;
 
-pub type DocumentJoin = (DocumentRow, Option<(NameLinkRow, NameRow)>);
+pub type DocumentJoin = DocumentRow;
 
-type BoxedDocumentQuery = IntoBoxed<
-    'static,
-    LeftJoin<latest_document::table, InnerJoin<name_link::table, name::table>>,
-    DBType,
->;
+type BoxedDocumentQuery = IntoBoxed<'static, latest_document::table, DBType>;
 
 fn create_latest_filtered_query(filter: Option<DocumentFilter>) -> BoxedDocumentQuery {
-    let mut query = latest_document::dsl::latest_document
-        .left_join(name_link::table.inner_join(name::table))
-        .into_boxed();
+    let mut query = latest_document::dsl::latest_document.into_boxed();
 
     if let Some(f) = filter {
         let DocumentFilter {
@@ -207,7 +197,7 @@ fn create_latest_filtered_query(filter: Option<DocumentFilter>) -> BoxedDocument
         apply_string_filter!(query, name, latest_document::dsl::name);
         apply_equal_filter!(query, r#type, latest_document::dsl::type_);
         apply_date_time_filter!(query, datetime, latest_document::dsl::datetime);
-        apply_equal_filter!(query, owner, name::id);
+        apply_equal_filter!(query, owner, latest_document::dsl::owner_name_id);
         apply_equal_filter!(query, context, latest_document::dsl::context_id);
         apply_string_filter!(query, data, latest_document::dsl::data);
     }
@@ -225,9 +215,7 @@ impl<'a> DocumentRepository<'a> {
 
     /// Inserts a document
     pub fn insert(&self, doc: &Document) -> Result<i64, RepositoryError> {
-        diesel::insert_into(document::dsl::document)
-            .values(doc.to_row()?)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(&doc.to_row()?)?;
         self.insert_changelog(doc, RowActionType::Upsert)
     }
 
@@ -241,7 +229,7 @@ impl<'a> DocumentRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: None,
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
@@ -249,8 +237,7 @@ impl<'a> DocumentRepository<'a> {
 
     /// Get a specific document version
     pub fn find_one_by_id(&self, document_id: &str) -> Result<Option<Document>, RepositoryError> {
-        let row: Option<DocumentJoin> = document::dsl::document
-            .left_join(name_link::table.inner_join(name::table))
+        let row: Option<DocumentRow> = document::dsl::document
             .filter(document::dsl::id.eq(document_id))
             .first(self.connection.lock().connection())
             .optional()?;
@@ -287,7 +274,7 @@ impl<'a> DocumentRepository<'a> {
                     apply_sort!(query, sort, latest_document::dsl::type_)
                 }
                 DocumentSortField::Owner => {
-                    apply_sort!(query, sort, name::id)
+                    apply_sort!(query, sort, latest_document::dsl::owner_name_id)
                 }
                 DocumentSortField::Context => {
                     apply_sort!(query, sort, latest_document::dsl::context_id)
@@ -327,9 +314,7 @@ impl<'a> DocumentRepository<'a> {
         &self,
         filter: Option<DocumentFilter>,
     ) -> Result<Vec<Document>, RepositoryError> {
-        let mut query = document::dsl::document
-            .left_join(name_link::table.inner_join(name::table))
-            .into_boxed();
+        let mut query = document::dsl::document.into_boxed();
         if let Some(f) = filter {
             let DocumentFilter {
                 id,
@@ -345,11 +330,11 @@ impl<'a> DocumentRepository<'a> {
             apply_string_filter!(query, name, document::dsl::name);
             apply_equal_filter!(query, r#type, document::dsl::type_);
             apply_date_time_filter!(query, datetime, document::dsl::datetime);
-            apply_equal_filter!(query, owner, name::id);
+            apply_equal_filter!(query, owner, document::dsl::owner_name_id);
             apply_equal_filter!(query, context, document::dsl::context_id);
             apply_string_filter!(query, data, document::dsl::data);
         }
-        let rows: Vec<DocumentJoin> = query
+        let rows: Vec<DocumentRow> = query
             .order(document::dsl::datetime.desc())
             .load(self.connection.lock().connection())?;
 
@@ -361,23 +346,20 @@ impl<'a> DocumentRepository<'a> {
     }
 }
 
-fn to_document(join: DocumentJoin) -> Result<Document, RepositoryError> {
-    let (
-        DocumentRow {
-            id,
-            name,
-            parent_ids,
-            user_id,
-            datetime,
-            r#type,
-            data,
-            form_schema_id,
-            status,
-            owner_name_link_id: _,
-            context_id,
-        },
-        owner_name_join,
-    ) = join;
+fn to_document(row: DocumentRow) -> Result<Document, RepositoryError> {
+    let DocumentRow {
+        id,
+        name,
+        parent_ids,
+        user_id,
+        datetime,
+        r#type,
+        data,
+        form_schema_id,
+        status,
+        context_id,
+        owner_name_id,
+    } = row;
 
     let parents: Vec<String> =
         serde_json::from_str(&parent_ids).map_err(|err| RepositoryError::DBError {
@@ -400,7 +382,7 @@ fn to_document(join: DocumentJoin) -> Result<Document, RepositoryError> {
         data,
         form_schema_id,
         status,
-        owner_name_id: owner_name_join.map(|(_, name_row)| name_row.id),
+        owner_name_id,
         context_id,
     };
 
@@ -428,8 +410,8 @@ impl Document {
             data,
             form_schema_id: self.form_schema_id.clone(),
             status: self.status.to_owned(),
-            owner_name_link_id: self.owner_name_id.to_owned(),
             context_id: self.context_id.to_string(),
+            owner_name_id: self.owner_name_id.to_owned(),
         })
     }
 }

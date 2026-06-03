@@ -28,6 +28,13 @@ pub fn validate(
         .find_one_by_id(&line.purchase_order_id)?
         .ok_or(UpdatePurchaseOrderLineInputError::PurchaseOrderDoesNotExist)?;
 
+    // Check if the user is trying to update the expected delivery date on a finalised PO
+    if input.expected_delivery_date.is_some()
+        && purchase_order.status == PurchaseOrderStatus::Finalised
+    {
+        return Err(UpdatePurchaseOrderLineInputError::CannotEditExpectedDeliveryDate);
+    }
+
     // Allow editing of the requested quantity
     // Check if the user is allowed to update the requested_number_of_units
     if let Some(requested_units) = input.requested_number_of_units {
@@ -98,7 +105,7 @@ pub fn validate(
                     input
                         .item_id
                         .clone()
-                        .unwrap_or(line.item_link_id.clone())
+                        .unwrap_or(line.item_id.clone())
                         .to_owned(),
                 )),
         ),
@@ -106,7 +113,7 @@ pub fn validate(
     )?;
 
     let item = ItemRowRepository::new(connection)
-        .find_one_by_id(&input.item_id.clone().unwrap_or(line.item_link_id.clone()))?
+        .find_one_by_id(&input.item_id.clone().unwrap_or(line.item_id.clone()))?
         .ok_or(UpdatePurchaseOrderLineInputError::ItemDoesNotExist)?;
 
     let item_store = ItemStoreJoinRowRepository::new(connection)
