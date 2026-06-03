@@ -72,9 +72,9 @@ export const Allocation = ({
       const allocateInPacksize: AllocateInOption | undefined =
         packsizes.length === 1 && packsizes[0]
           ? {
-              type: AllocateInType.Packs,
-              packSize: packsizes[0],
-            }
+            type: AllocateInType.Packs,
+            packSize: packsizes[0],
+          }
           : undefined;
 
       initialise(
@@ -130,14 +130,14 @@ const AllocationInner = () => {
 
     return allocateIn.type === AllocateInType.Doses
       ? t('label.available-quantity-doses', {
-          doseCount: sumAvailableDoses(draftLines).toFixed(0),
-          unitCount: unitCount,
-          unitName: pluralisedUnitName,
-        })
+        doseCount: sumAvailableDoses(draftLines).toFixed(0),
+        unitCount: unitCount,
+        unitName: pluralisedUnitName,
+      })
       : t('label.available-quantity', {
-          number: unitCount,
-          unitName: pluralisedUnitName,
-        });
+        number: unitCount,
+        unitName: pluralisedUnitName,
+      });
   };
 
   return (

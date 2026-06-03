@@ -32,8 +32,6 @@ export const useSaveInboundLines = (isExternal: boolean) => {
           []),
       ];
 
-      let errorMessage: string | undefined;
-
       for (const { response } of allResults) {
         // Success responses
         if (response.__typename === 'InvoiceLineNode') continue;
@@ -46,10 +44,6 @@ export const useSaveInboundLines = (isExternal: boolean) => {
           case 'CannotEditInvoice':
             throw Error(t('error.inbound-shipment-not-editable'));
 
-          case 'ShipmentVarianceReasonNotProvided':
-            errorMessage = t('error.shipment-variance-reason-required');
-            break;
-
           case 'NotAnInboundShipment':
           case 'RecordNotFound':
           case 'ForeignKeyError':
@@ -59,7 +53,7 @@ export const useSaveInboundLines = (isExternal: boolean) => {
             noOtherVariants(response.error);
         }
       }
-      return { errorMessage };
+      return { errorMessage: undefined };
     },
 
     onSettled: () =>

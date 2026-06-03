@@ -18,12 +18,10 @@ import {
   CurrencyValueCell,
   ExpiryDateCell,
   NumberInputCell,
-  ReasonOptionNodeType,
 } from '@openmsupply-client/common';
 import {
   CurrencyRowFragment,
   ItemVariantInfoIcon,
-  ReasonOptionsSearchInput,
   VVMStatusSearchInput,
   VvmStatusFragment,
 } from '@openmsupply-client/system';
@@ -54,7 +52,6 @@ export const useOutboundLineEditColumns = ({
   allocateIn,
   setVvmStatus,
   setReceivedNumberOfPacks,
-  setReasonOption,
   getIsDisabled,
 }: {
   getIsDisabled: (row: DraftStockOutLineFragment) => boolean;
@@ -65,10 +62,6 @@ export const useOutboundLineEditColumns = ({
   allocateIn: AllocateInOption;
   setVvmStatus: (id: string, vvmStatus?: VvmStatusFragment | null) => void;
   setReceivedNumberOfPacks: (id: string, value: number | null) => void;
-  setReasonOption: (
-    id: string,
-    reasonOption: DraftStockOutLineFragment['reasonOption'] | null
-  ) => void;
 }) => {
   const { store } = useAuthContext();
   const t = useTranslation();
@@ -293,13 +286,6 @@ export const useOutboundLineEditColumns = ({
             updateFn={value => {
               const newValue = Number.isNaN(value) ? null : value;
               setReceivedNumberOfPacks(row.original.id, newValue);
-              if (
-                newValue !== null &&
-                newValue === row.original.numberOfPacks &&
-                row.original.reasonOption
-              ) {
-                setReasonOption(row.original.id, null);
-              }
             }}
             disabled={getIsDisabled(row.original)}
             min={0}
@@ -318,28 +304,6 @@ export const useOutboundLineEditColumns = ({
         defaultHideOnMobile: true,
         size: 100,
         includeColumn: isExternalSupplier,
-      },
-      {
-        id: 'varianceReason',
-        accessorFn: row => row.reasonOption?.reason ?? '',
-        header: t('label.variance-reason'),
-        size: 180,
-        defaultHideOnMobile: true,
-        includeColumn: isExternalSupplier,
-        Cell: ({ row }) => {
-          const line = row.original;
-          const hasVariance =
-            line.receivedNumberOfPacks != null &&
-            line.receivedNumberOfPacks !== line.numberOfPacks;
-          return (
-            <ReasonOptionsSearchInput
-              type={ReasonOptionNodeType.ShipmentVariance}
-              value={line.reasonOption}
-              onChange={reason => setReasonOption(line.id, reason ?? null)}
-              disabled={getIsDisabled(line) || !hasVariance}
-            />
-          );
-        },
       },
       {
         id: 'volume',
