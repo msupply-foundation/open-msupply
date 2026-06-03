@@ -7,11 +7,14 @@ import { NothingHere } from '@common/components';
 import {
   useTranslation,
   useAuthContext,
+} from '@openmsupply-client/common';
+
+import {
   TextWithTooltipCell,
   ColumnDef,
   useNonPaginatedMaterialTable,
   MaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 
 export const MasterListsTab = ({ itemId }: { itemId?: string }) => {
   const t = useTranslation();

@@ -2,11 +2,14 @@ import { useCallback, useMemo } from 'react';
 import {
   useTranslation,
   usePreferences,
+} from '@openmsupply-client/common';
+
+import {
   ColumnDef,
   ColumnType,
   ExpiryDateCell,
   UnitsAndDosesCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { StocktakeLineFragment } from '../api';
 import { StocktakeLineError, useStocktakeLineErrorContext } from '../context';
 

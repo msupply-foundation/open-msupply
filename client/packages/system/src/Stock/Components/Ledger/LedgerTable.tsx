@@ -1,10 +1,13 @@
 import React from 'react';
 import {
   useTranslation,
-  useNonPaginatedMaterialTable,
-  MaterialTable,
   NothingHere,
 } from '@openmsupply-client/common';
+
+import {
+  useNonPaginatedMaterialTable,
+  MaterialTable,
+} from '@common/tables';
 import { LedgerRowFragment, StockLineRowFragment } from '../../api';
 import { useStockLedger } from '../../api/hooks/useStockLedger';
 import { useLedgerColumns } from './useLedgerColumns';

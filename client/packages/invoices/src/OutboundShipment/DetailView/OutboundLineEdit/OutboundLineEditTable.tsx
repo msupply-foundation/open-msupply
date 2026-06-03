@@ -8,11 +8,14 @@ import {
   NumUtils,
   Typography,
   usePreferences,
-  MaterialTable,
-  useSimpleMaterialTable,
   DateUtils,
   useShallow,
 } from '@openmsupply-client/common';
+
+import {
+  MaterialTable,
+  useSimpleMaterialTable,
+} from '@common/tables';
 import { useOutboundLineEditColumns } from './columns';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 import {

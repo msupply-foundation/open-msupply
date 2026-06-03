@@ -5,11 +5,14 @@ import {
   NothingHere,
   useTranslation,
   useEditModal,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   ColumnDef,
   ColumnType,
   usePaginatedMaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { AppBarButtons } from './AppBarButtons';
 import { useRnRFormList } from '../api';
 import { RnRFormFragment } from '../api/operations.generated';

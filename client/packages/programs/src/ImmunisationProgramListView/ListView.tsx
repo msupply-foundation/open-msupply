@@ -5,10 +5,13 @@ import {
   NothingHere,
   useTranslation,
   UNDEFINED_STRING_VALUE,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   usePaginatedMaterialTable,
   ColumnDef,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { useImmunisationProgramList } from '../api/hooks/useImmunisationProgramList';
 import { ImmunisationProgramFragment } from '../api';
 

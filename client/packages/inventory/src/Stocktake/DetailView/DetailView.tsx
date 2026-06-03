@@ -10,10 +10,13 @@ import {
   useBreadcrumbs,
   useSimplifiedTabletUI,
   Box,
-  useNonPaginatedMaterialTable,
   NothingHere,
-  MaterialTable,
 } from '@openmsupply-client/common';
+
+import {
+  useNonPaginatedMaterialTable,
+  MaterialTable,
+} from '@common/tables';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';

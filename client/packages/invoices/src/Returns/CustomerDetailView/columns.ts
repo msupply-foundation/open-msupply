@@ -1,11 +1,14 @@
 import { useMemo } from 'react';
 import {
-  ColumnDef,
   useTranslation,
+} from '@openmsupply-client/common';
+
+import {
+  ColumnDef,
   ColumnType,
   ExpiryDateCell,
   weightedAverageByPacks,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { CustomerReturnLineFragment } from '../api';
 
 export const useCustomerReturnColumns = () => {

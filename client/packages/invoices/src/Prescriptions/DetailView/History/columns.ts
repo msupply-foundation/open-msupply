@@ -1,4 +1,10 @@
-import { ColumnDef, ColumnType, useTranslation } from '@openmsupply-client/common';
+import {
+  useTranslation,
+} from '@openmsupply-client/common';
+import {
+  ColumnDef,
+  ColumnType,
+} from '@common/tables';
 import { HistoryItem } from './HistoryModal';
 import { useMemo } from 'react';
 

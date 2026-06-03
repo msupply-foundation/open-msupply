@@ -9,10 +9,13 @@ import {
   useBreadcrumbs,
   useEditModal,
   useAuthContext,
-  useNonPaginatedMaterialTable,
-  MaterialTable,
   NothingHere,
 } from '@openmsupply-client/common';
+
+import {
+  useNonPaginatedMaterialTable,
+  MaterialTable,
+} from '@common/tables';
 import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar/Toolbar';

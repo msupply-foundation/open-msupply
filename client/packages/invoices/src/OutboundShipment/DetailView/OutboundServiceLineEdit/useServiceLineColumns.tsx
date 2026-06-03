@@ -4,12 +4,15 @@ import {
   RecordPatch,
   IconButton,
   XCircleIcon,
+} from '@openmsupply-client/common';
+
+import {
   ColumnDef,
   ColumnType,
   TextInputCell,
   NumberInputCell,
   CurrencyInputCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { ServiceItemSearchInput, toItemWithPackSize } from '@openmsupply-client/system';
 import { DraftInboundLine, DraftStockOutLine } from './../../../types';
 

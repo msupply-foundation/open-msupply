@@ -4,9 +4,12 @@ import {
   useTranslation,
   NothingHere,
   PaperPopover,
+} from '@openmsupply-client/common';
+
+import {
   useSimpleMaterialTable,
   MaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { useItemVariantSelectorColumns } from './columns';
 import { ItemVariantFragment } from '../../api';
 

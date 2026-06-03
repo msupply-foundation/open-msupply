@@ -3,13 +3,16 @@ import {
   useTranslation,
   Formatter,
   NothingHere,
+  Box,
+  Typography,
+} from '@openmsupply-client/common';
+
+import {
   useNonPaginatedMaterialTable,
   MaterialTable,
   ColumnDef,
   ColumnType,
-  Box,
-  Typography,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { LocaleKey, useFormatDateTime } from '@common/intl';
 
 import { useActivityLog, ActivityLogRowFragment } from '../api';

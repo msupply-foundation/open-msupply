@@ -1,10 +1,13 @@
 import React, { ReactElement, useMemo } from 'react';
 import {
+  useTranslation,
+} from '@openmsupply-client/common';
+
+import {
   ColumnDef,
   MaterialTable,
   useNonPaginatedMaterialTable,
-  useTranslation,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { useContacts } from '../apiModern/hooks';
 import { ContactFragment } from '../apiModern/operations.generated';
 

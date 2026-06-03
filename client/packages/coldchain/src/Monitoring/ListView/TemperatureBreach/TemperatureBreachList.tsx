@@ -2,12 +2,15 @@ import React, { FC, useMemo } from 'react';
 import { useUrlQueryParams } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import {
+  NothingHere,
+} from '@openmsupply-client/common';
+
+import {
   ColumnDef,
   ColumnType,
   MaterialTable,
-  NothingHere,
   usePaginatedMaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import {
   TemperatureBreachFragment,
   useTemperatureBreach,

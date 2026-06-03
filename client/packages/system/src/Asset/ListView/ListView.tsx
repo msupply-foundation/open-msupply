@@ -2,15 +2,18 @@ import React, { FC, useMemo } from 'react';
 import {
   useTranslation,
   useUrlQueryParams,
-  TextWithTooltipCell,
   useToggle,
   useIsCentralServerApi,
-  ColumnDef,
-  usePaginatedMaterialTable,
-  MaterialTable,
   NothingHere,
   useUrlQuery,
 } from '@openmsupply-client/common';
+
+import {
+  TextWithTooltipCell,
+  ColumnDef,
+  usePaginatedMaterialTable,
+  MaterialTable,
+} from '@common/tables';
 import { AssetCatalogueItemFragment, useAssetList } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { AssetCatalogueItemImportModal } from '../ImportCatalogueItem';

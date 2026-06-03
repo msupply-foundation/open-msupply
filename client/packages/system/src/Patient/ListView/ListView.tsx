@@ -8,14 +8,17 @@ import {
   UserPermission,
   useTranslation,
   getGenderTranslationKey,
+  usePreferences,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,
   ChipTableCell,
-  usePreferences,
   NaiveDateCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { usePatientStore } from '@openmsupply-client/programs';

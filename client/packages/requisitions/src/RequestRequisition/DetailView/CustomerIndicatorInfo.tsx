@@ -1,12 +1,15 @@
 import React, { useMemo } from 'react';
 import {
   Box,
+  useTranslation,
+} from '@openmsupply-client/common';
+
+import {
   ColumnDef,
   ColumnType,
   MaterialTable,
   useSimpleMaterialTable,
-  useTranslation,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import {
   CustomerIndicatorInfoFragment,
   IndicatorColumnFragment,

@@ -6,18 +6,18 @@
 import React from 'react';
 import { MRT_Cell, MRT_RowData } from 'material-react-table';
 import {
-  CurrencyValueCell,
   DateUtils,
   NumericTextDisplay,
   UNDEFINED_STRING_VALUE,
   useFormatDateTime,
-  PopoverCell,
   useTranslation,
   Box,
   CircleIcon,
   MessageSquareIcon,
   Tooltip,
 } from '@openmsupply-client/common';
+import { CurrencyValueCell } from './components/CurrencyValueCell';
+import { PopoverCell } from './components/PopoverCell';
 
 import { ColumnDef } from './types';
 

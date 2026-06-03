@@ -4,13 +4,16 @@ import {
   NothingHere,
   useTranslation,
   useUrlQueryParams,
-  TextWithTooltipCell,
   useAuthContext,
   usePluginProvider,
+} from '@openmsupply-client/common';
+
+import {
+  TextWithTooltipCell,
   ColumnDef,
   usePaginatedMaterialTable,
   MaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { AppBarButtons } from './AppBarButtons';
 import { MasterListRowFragment, useMasterLists } from '../api';
 

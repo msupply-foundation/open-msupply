@@ -1,15 +1,18 @@
 import React, { useMemo } from 'react';
 import {
-  ColumnDef,
-  ColumnType,
   useTranslation,
   Formatter,
   usePreferences,
   useIntlUtils,
+} from '@openmsupply-client/common';
+
+import {
+  ColumnDef,
+  ColumnType,
   CheckCell,
   ExpiryDateCell,
   NumberInputCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import {
   DraftItem,
   DraftStockOutLineFragment,

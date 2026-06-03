@@ -6,12 +6,15 @@ import {
   useUrlQueryParams,
   UNDEFINED_STRING_VALUE,
   InlineProgress,
+} from '@openmsupply-client/common';
+
+import {
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,
   MaterialTable,
   CheckCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { LocationRowFragment, useLocationList } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { LocationEditModal } from './LocationEditModal';

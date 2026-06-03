@@ -1,12 +1,15 @@
 import { useCallback, useMemo } from 'react';
 import {
-  ColumnDef,
   EncounterNodeStatus,
   DocumentRegistryCategoryNode,
-  ChipTableCell,
-  ColumnType,
   useTranslation,
 } from '@openmsupply-client/common';
+
+import {
+  ColumnDef,
+  ChipTableCell,
+  ColumnType,
+} from '@common/tables';
 import {
   EncounterRowFragment,
   getStatusEventData,

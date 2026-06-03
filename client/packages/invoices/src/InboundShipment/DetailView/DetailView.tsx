@@ -13,16 +13,19 @@ import {
   useSimplifiedTabletUI,
   useUrlQuery,
   useToggle,
-  useNonPaginatedMaterialTable,
   NothingHere,
-  MaterialTable,
   InvoiceLineStatusType,
   useAppTheme,
   useIsExtraSmallScreen,
-  CardList,
   InboundNodeType,
   Box,
 } from '@openmsupply-client/common';
+
+import {
+  useNonPaginatedMaterialTable,
+  MaterialTable,
+  CardList,
+} from '@common/tables';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   ActivityLogList,

@@ -1,12 +1,15 @@
 import React from 'react';
 import { useInsuranceColumns } from './columns';
 import {
-  MaterialTable,
   NothingHere,
-  useNonPaginatedMaterialTable,
   useTranslation,
   useUrlQuery,
 } from '@openmsupply-client/common';
+
+import {
+  MaterialTable,
+  useNonPaginatedMaterialTable,
+} from '@common/tables';
 
 import {
   PatientModal,

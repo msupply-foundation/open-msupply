@@ -7,13 +7,16 @@ import {
   useEditModal,
   IconButton,
   DeleteIcon,
+  useIsCentralServerApi,
+  NothingHere,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   useNonPaginatedMaterialTable,
   ColumnDef,
   TextWithTooltipCell,
-  useIsCentralServerApi,
-  NothingHere,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import {
   AncillaryItemFragment,
   ItemFragment,

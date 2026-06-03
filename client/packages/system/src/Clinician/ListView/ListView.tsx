@@ -3,9 +3,12 @@ import {
   NothingHere,
   useTranslation,
   useUrlQueryParams,
+} from '@openmsupply-client/common';
+
+import {
   usePaginatedMaterialTable,
   MaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { useClinicianListColumns } from './columns';
 import { useClinicians } from '@openmsupply-client/programs';
 

@@ -4,12 +4,17 @@ import {
   NothingHere,
   useTheme,
   VaccinationCardItemNodeStatus,
+} from '@openmsupply-client/common';
+
+import {
   useNonPaginatedMaterialTable,
   MaterialTable,
   ColumnDef,
   ColumnType,
-} from '@openmsupply-client/common';
-import { StatusCell } from '@openmsupply-client/common';
+} from '@common/tables';
+import {
+  StatusCell,
+} from '@common/tables';
 import {
   VaccinationCardFragment,
   VaccinationCardItemFragment,

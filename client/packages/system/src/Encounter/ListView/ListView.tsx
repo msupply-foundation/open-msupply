@@ -5,10 +5,13 @@ import {
   useNavigate,
   EncounterSortFieldInput,
   useTranslation,
-  usePaginatedMaterialTable,
   RouteBuilder,
-  MaterialTable,
 } from '@openmsupply-client/common';
+
+import {
+  usePaginatedMaterialTable,
+  MaterialTable,
+} from '@common/tables';
 import { AppRoute } from '@openmsupply-client/config';
 import { useEncounterListColumns } from './columns';
 import {

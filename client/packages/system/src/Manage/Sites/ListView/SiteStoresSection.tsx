@@ -1,14 +1,17 @@
 import React, { useMemo /* , useState */ } from 'react';
 import {
   Box,
-  ColumnDef,
   // DeleteIcon,
   // IconButton,
-  MaterialTable,
   Typography,
-  useNonPaginatedMaterialTable,
   useTranslation,
 } from '@openmsupply-client/common';
+
+import {
+  ColumnDef,
+  MaterialTable,
+  useNonPaginatedMaterialTable,
+} from '@common/tables';
 // import { StoreRowFragment } from '../../../Store/api';
 // import { StoreSearchInput } from '../../../Store/components';
 import { SiteStoreDraftRow } from '../api';

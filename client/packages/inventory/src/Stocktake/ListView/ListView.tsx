@@ -6,12 +6,15 @@ import {
   useUrlQueryParams,
   useFormatDateTime,
   useAuthContext,
+  StocktakeNodeStatus,
+} from '@openmsupply-client/common';
+
+import {
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,
-  StocktakeNodeStatus,
   MaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { AppBarButtons } from './AppBarButtons';
 import { getStatusTranslation, isStocktakeDisabled } from '../../utils';
 import { StocktakeRowFragment } from '../api/operations.generated';

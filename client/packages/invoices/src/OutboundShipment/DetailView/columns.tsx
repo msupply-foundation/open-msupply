@@ -3,12 +3,15 @@ import {
   InvoiceLineNodeType,
   useTranslation,
   usePreferences,
+  Box,
+} from '@openmsupply-client/common';
+
+import {
   ColumnDef,
   ColumnType,
   ExpiryDateCell,
-  Box,
   weightedAverageByUnits,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { StockOutLineFragment } from '../../StockOut';
 
 const isDefaultPlaceholderRow = (row: StockOutLineFragment) =>

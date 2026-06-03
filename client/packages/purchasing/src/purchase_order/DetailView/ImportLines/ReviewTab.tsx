@@ -5,12 +5,15 @@ import {
   useTranslation,
   useWindowDimensions,
   ImportPanel,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   ColumnDef,
   ColumnType,
   TextWithTooltipCell,
   useNonPaginatedMaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { ImportRow } from './utils';
 
 interface ReviewTabProps {

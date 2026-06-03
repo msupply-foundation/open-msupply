@@ -5,12 +5,15 @@ import {
   useDialog,
   DialogButton,
   RequisitionNodeStatus,
+  NothingHere,
+} from '@openmsupply-client/common';
+
+import {
   ColumnDef,
   ColumnType,
   useNonPaginatedMaterialTable,
-  NothingHere,
   MaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { useResponse } from '../api';
 import { ResponseRowFragment } from '../api/operations.generated';
 import {

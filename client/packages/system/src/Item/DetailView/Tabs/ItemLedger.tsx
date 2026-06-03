@@ -6,11 +6,6 @@ import {
   useItemLedger,
 } from '@openmsupply-client/system';
 import {
-  MaterialTable,
-  ColumnDef,
-  ColumnType,
-  ExpiryDateCell,
-  usePaginatedMaterialTable,
   useTranslation,
   useUrlQueryParams,
   useFormatDateTime,
@@ -22,6 +17,14 @@ import {
   FilterMenu,
   GroupFilterDefinition,
 } from '@openmsupply-client/common';
+
+import {
+  MaterialTable,
+  ColumnDef,
+  ColumnType,
+  ExpiryDateCell,
+  usePaginatedMaterialTable,
+} from '@common/tables';
 import { getInvoiceStatusTranslator } from '@openmsupply-client/invoices/';
 
 interface ItemLedgerTableProps {

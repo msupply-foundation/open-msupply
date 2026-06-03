@@ -7,11 +7,14 @@ import {
   CampaignNode,
   useDeleteConfirmation,
   useNotification,
+} from '@openmsupply-client/common';
+
+import {
   usePaginatedMaterialTable,
   MaterialTable,
   ColumnType,
   ColumnDef,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { Footer } from './Footer';
 import { CampaignEditModal } from './CampaignEditModal';
 import { AppBarButtons } from './AppBarButtons';

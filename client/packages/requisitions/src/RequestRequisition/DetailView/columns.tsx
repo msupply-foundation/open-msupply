@@ -5,16 +5,19 @@ import {
   usePluginProvider,
   UNDEFINED_STRING_VALUE,
   usePreferences,
-  ColumnDef,
   useTranslation,
-  ColumnType,
-  UnitsAndDosesCell,
   NumericTextDisplay,
   Box,
   LinkIcon,
   PaperPopover,
   Typography,
 } from '@openmsupply-client/common';
+
+import {
+  ColumnDef,
+  ColumnType,
+  UnitsAndDosesCell,
+} from '@common/tables';
 import { useRequest } from '../api';
 import { useRequestRequisitionLineErrorContext } from '../context';
 

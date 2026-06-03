@@ -5,12 +5,15 @@ import {
   useTranslation,
   useDialog,
   DialogButton,
+  PurchaseOrderNodeStatus,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   ColumnDef,
   ColumnType,
-  PurchaseOrderNodeStatus,
   useNonPaginatedMaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { useListSentPurchaseOrders } from '../api/hooks/document/useListSentPurchaseOrders';
 
 interface LinkInternalOrderModalProps {

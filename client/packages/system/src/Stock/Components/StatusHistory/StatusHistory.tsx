@@ -5,10 +5,13 @@ import {
   Box,
   ButtonWithIcon,
   PlusCircleIcon,
-  MaterialTable,
   NothingHere,
-  useNonPaginatedMaterialTable,
 } from '@openmsupply-client/common';
+
+import {
+  MaterialTable,
+  useNonPaginatedMaterialTable,
+} from '@common/tables';
 
 import { DraftStockLine, VvmStatusLogRowFragment } from '../../api';
 import { useStatusHistoryColumns } from './useStatusHistoryColumns';

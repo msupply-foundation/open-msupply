@@ -1,14 +1,17 @@
 import React, { useMemo } from 'react';
 import {
+  ReasonOptionNodeType,
+  useTranslation,
+} from '@openmsupply-client/common';
+
+import {
   ColumnDef,
   ColumnType,
   ExpiryDateCell,
   MaterialTable,
-  ReasonOptionNodeType,
   useSimpleMaterialTable,
-  useTranslation,
   TextInputCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import {
   ReasonOptionRowFragment,
   ReasonOptionsSearchInput,

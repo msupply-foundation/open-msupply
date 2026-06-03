@@ -10,13 +10,13 @@ import {
   MRT_Updater,
 } from 'material-react-table';
 import {
-  ColumnDef,
   DateUtils,
   isEqual,
   UrlQueryValue,
   useFormatDateTime,
   useUrlQuery,
 } from '@openmsupply-client/common';
+import { ColumnDef } from './types';
 
 interface FilteringState {
   columnFilters: MRT_ColumnFiltersState;

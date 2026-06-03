@@ -6,14 +6,17 @@ import {
   useUrlQueryParams,
   useSimplifiedTabletUI,
   RouteBuilder,
+  useNavigate,
+} from '@openmsupply-client/common';
+
+import {
   usePaginatedMaterialTable,
   MaterialTable,
   ColumnDef,
   NameAndColorSetterCell,
   ColumnType,
   TextWithTooltipCell,
-  useNavigate,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { AppBarButtons } from './AppBarButtons';
 import { RequestRowFragment, useRequest } from '../api';
 import {

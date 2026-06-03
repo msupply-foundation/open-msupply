@@ -4,13 +4,16 @@ import {
   useIsCentralServerApi,
   useTranslation,
   useWindowDimensions,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   ColumnDef,
   ColumnType,
   TextWithTooltipCell,
   useNonPaginatedMaterialTable,
   StatusCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { ImportRow } from './EquipmentImportModal';
 import { fullStatusColourMap } from '../utils';
 

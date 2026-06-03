@@ -8,6 +8,7 @@
       "@common/intl": ["packages/common/src/intl"],
       "@common/intl/*": ["packages/common/src/intl/*"],
       "@common/styles": ["packages/common/src/styles"],
+      "@common/tables": ["packages/common/src/ui/layout/tables"],
       "@common/testing": ["packages/common/src/utils/testing"],
       "@common/types": ["packages/common/src/types"],
       "@common/utils": ["packages/common/src/utils"]

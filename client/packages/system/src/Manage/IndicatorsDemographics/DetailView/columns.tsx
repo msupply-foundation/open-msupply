@@ -1,14 +1,17 @@
 import React, { useMemo } from 'react';
 import {
   Box,
-  ColumnDef,
-  ColumnType,
   NumericTextInput,
   RecordPatch,
   useTranslation,
+} from '@openmsupply-client/common';
+
+import {
+  ColumnDef,
+  ColumnType,
   NumberInputCell,
   TextInputCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { GENERAL_POPULATION_ID } from '../api';
 import { HeaderData, Row } from '../types';
 

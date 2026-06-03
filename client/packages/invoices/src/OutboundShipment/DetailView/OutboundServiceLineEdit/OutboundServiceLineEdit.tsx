@@ -10,9 +10,12 @@ import {
   DialogButton,
   QueryParamsProvider,
   createQueryParamsStore,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   useSimpleMaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { useOutbound } from '../../api';
 import { useDraftServiceLines } from './useDraftServiceLines';
 import { useServiceLineColumns } from './useServiceLineColumns';

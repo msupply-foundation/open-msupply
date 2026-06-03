@@ -5,10 +5,13 @@ import {
   Fade,
   useTranslation,
   useNavigate,
+} from '@openmsupply-client/common';
+
+import {
   usePaginatedMaterialTable,
   MaterialTable,
   ColumnDef,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { TransitionProps } from '@mui/material/transitions';
 import { Details } from '../Details';
 import { useName, NameRowFragment } from '../api';

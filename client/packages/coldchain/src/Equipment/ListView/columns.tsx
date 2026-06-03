@@ -2,14 +2,17 @@ import React, { useMemo } from 'react';
 import {
   useIsCentralServerApi,
   usePathnameIncludes,
-  ColumnDef,
   useTranslation,
-  ColumnType,
-  TextWithTooltipCell,
   AssetLogStatusNodeType,
   useUrlQuery,
-  StatusCell,
 } from '@openmsupply-client/common';
+
+import {
+  ColumnDef,
+  ColumnType,
+  TextWithTooltipCell,
+  StatusCell,
+} from '@common/tables';
 import {
   mapIdNameToOptions,
   useAssetCategories,

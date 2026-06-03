@@ -2,13 +2,16 @@ import React, { FC, useMemo } from 'react';
 import {
   Grid,
   NothingHere,
-  TextWithTooltipCell,
   useTranslation,
   useWindowDimensions,
+} from '@openmsupply-client/common';
+
+import {
+  TextWithTooltipCell,
   MaterialTable,
   useNonPaginatedMaterialTable,
   ColumnDef,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { ImportRow } from './CatalogueItemImportModal';
 
 interface ImportReviewTableProps {

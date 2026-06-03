@@ -1,18 +1,21 @@
 import React, { useCallback, useMemo } from 'react';
 import {
   Box,
-  ColumnDef,
-  ColumnType,
-  CurrencyValueCell,
   Currencies,
   NumUtils,
   PurchaseOrderLineStatusNode,
   getLinesFromRow,
-  TextWithTooltipCell,
   useCurrency,
   useFormatCurrency,
   useTranslation,
 } from '@openmsupply-client/common';
+
+import {
+  ColumnDef,
+  ColumnType,
+  CurrencyValueCell,
+  TextWithTooltipCell,
+} from '@common/tables';
 import { PurchaseOrderLineFragment } from '../api';
 import { usePurchaseOrderLineErrorContext } from '../context';
 import { getPurchaseOrderLineStatusTranslator } from '../../utils';

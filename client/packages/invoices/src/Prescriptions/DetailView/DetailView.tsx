@@ -9,10 +9,13 @@ import {
   ModalMode,
   useEditModal,
   useBreadcrumbs,
-  useNonPaginatedMaterialTable,
   NothingHere,
-  MaterialTable,
 } from '@openmsupply-client/common';
+
+import {
+  useNonPaginatedMaterialTable,
+  MaterialTable,
+} from '@common/tables';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { PrescriptionLineFragment, usePrescription } from '../api';

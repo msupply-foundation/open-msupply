@@ -8,10 +8,13 @@ import {
   DetailTabs,
   useEditModal,
   useBreadcrumbs,
-  useNonPaginatedMaterialTable,
   NothingHere,
-  MaterialTable,
 } from '@openmsupply-client/common';
+
+import {
+  useNonPaginatedMaterialTable,
+  MaterialTable,
+} from '@common/tables';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { CustomerReturnLineFragment, useReturns } from '../api';

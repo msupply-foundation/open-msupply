@@ -2,13 +2,16 @@ import React, { useEffect, useMemo } from 'react';
 import {
   BasicSpinner,
   Checkbox,
+  useTranslation,
+} from '@openmsupply-client/common';
+
+import {
   ColumnDef,
   ColumnType,
   ExpiryDateCell,
   MaterialTable,
   useSimpleMaterialTable,
-  useTranslation,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { StockLineFragment, useItem } from '../../Item';
 import { VaccinationStockLine } from '../api';
 

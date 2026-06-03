@@ -1,8 +1,10 @@
 import {
   useTranslation,
   getGenderTranslationKey,
-  ColumnDef,
 } from '@openmsupply-client/common';
+import {
+  ColumnDef,
+} from '@common/tables';
 import { ClinicianFragment } from 'packages/programs/src';
 import { useMemo } from 'react';
 

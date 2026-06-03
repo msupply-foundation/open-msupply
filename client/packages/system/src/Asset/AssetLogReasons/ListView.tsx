@@ -5,11 +5,14 @@ import {
   useUrlQueryParams,
   useEditModal,
   InsertAssetLogReasonInput,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   ColumnDef,
   useNonPaginatedMaterialTable,
   CheckCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { AssetLogReasonFragment, useAssetLogReasonList } from '../api';
 import { getStatusOptions, parseStatus } from '../utils';
 import { AppBarButtons } from './AppBarButtons';

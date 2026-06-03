@@ -11,12 +11,15 @@ import {
   useTranslation,
   getGenderTranslationKey,
   Alert,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   useSimpleMaterialTable,
   ColumnDef,
   ColumnType,
   NaiveDateCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { PatientPanel } from './PatientPanel';
 import { FetchPatientModal } from './FetchPatientModal';
 import { usePatient } from '../api';

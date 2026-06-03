@@ -5,12 +5,15 @@ import {
   NamePropertyNode,
   PropertyNode,
   useTranslation,
+  useTranslationAdvanced,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   useNonPaginatedMaterialTable,
   ColumnDef,
   TextWithTooltipCell,
-  useTranslationAdvanced,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { ImportRow } from './PropertiesImportModal';
 
 interface ImportReviewTableProps {

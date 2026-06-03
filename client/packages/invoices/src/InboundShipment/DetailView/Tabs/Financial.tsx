@@ -1,16 +1,19 @@
 import React, { useMemo } from 'react';
 import {
   Box,
-  ColumnDef,
-  ColumnType,
   Currencies,
-  CurrencyValueCell,
-  MaterialTable,
   useAuthContext,
   useFormatCurrency,
-  useNonPaginatedMaterialTable,
   useTranslation,
 } from '@openmsupply-client/common';
+
+import {
+  ColumnDef,
+  ColumnType,
+  CurrencyValueCell,
+  MaterialTable,
+  useNonPaginatedMaterialTable,
+} from '@common/tables';
 import { InboundLineFragment, useInboundShipment } from '../../api';
 
 export const FinancialTab = () => {

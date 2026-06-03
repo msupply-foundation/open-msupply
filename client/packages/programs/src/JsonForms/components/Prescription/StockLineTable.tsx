@@ -1,13 +1,16 @@
 import React, { useMemo } from 'react';
 import {
+  useTranslation,
+} from '@openmsupply-client/common';
+
+import {
   ColumnDef,
   ColumnType,
   ExpiryDateCell,
   MaterialTable,
   useSimpleMaterialTable,
-  useTranslation,
   NumberInputCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { DraftPrescriptionLine } from '@openmsupply-client/invoices/src/types';
 
 interface StockLineTableProps {

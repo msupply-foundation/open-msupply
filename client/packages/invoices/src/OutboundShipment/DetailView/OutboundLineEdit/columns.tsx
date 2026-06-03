@@ -8,17 +8,20 @@ import {
   Formatter,
   UNDEFINED_STRING_VALUE,
   QuantityUtils,
+  Box,
+  Tooltip,
+  Currencies,
+} from '@openmsupply-client/common';
+
+import {
   ColumnDef,
   ColumnType,
   CheckCell,
-  Box,
-  Tooltip,
   TextWithTooltipCell,
-  Currencies,
   CurrencyValueCell,
   ExpiryDateCell,
   NumberInputCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import {
   CurrencyRowFragment,
   ItemVariantInfoIcon,

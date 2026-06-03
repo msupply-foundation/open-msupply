@@ -6,13 +6,16 @@ import {
   NothingHere,
   useToggle,
   useUrlQueryParams,
+  InvoiceNodeType,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,
   NameAndColorSetterCell,
-  InvoiceNodeType,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { getStatusTranslator, isPrescriptionDisabled } from '../../utils';
 import { getStatusSequence } from '../../statuses';
 import { usePrescriptionList, usePrescription } from '../api';

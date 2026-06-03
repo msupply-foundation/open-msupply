@@ -5,14 +5,17 @@ import {
   useParams,
   useTranslation,
   RouteBuilder,
-  ColumnDef,
-  ColumnType,
-  useNonPaginatedMaterialTable,
-  MaterialTable,
   InvoiceNodeStatus,
   InvoiceTypeInput,
   NumUtils,
 } from '@openmsupply-client/common';
+
+import {
+  ColumnDef,
+  ColumnType,
+  useNonPaginatedMaterialTable,
+  MaterialTable,
+} from '@common/tables';
 import { AppRoute } from '@openmsupply-client/config';
 import { getInvoiceStatusTranslator } from '@openmsupply-client/invoices/src';
 import {

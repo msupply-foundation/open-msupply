@@ -9,9 +9,12 @@ import {
   DetailTabs,
   useBreadcrumbs,
   NothingHere,
+} from '@openmsupply-client/common';
+
+import {
   useNonPaginatedMaterialTable,
   MaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';

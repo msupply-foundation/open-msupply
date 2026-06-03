@@ -1,13 +1,16 @@
 import React, { useMemo } from 'react';
 import {
-  ColumnDef,
-  ColumnType,
   InvoiceLineStatusType,
   InvoiceNodeStatus,
-  MaterialTable,
-  useNonPaginatedMaterialTable,
   useTranslation,
 } from '@openmsupply-client/common';
+
+import {
+  ColumnDef,
+  ColumnType,
+  MaterialTable,
+  useNonPaginatedMaterialTable,
+} from '@common/tables';
 import { useInboundShipment } from '../../api';
 
 interface DeliveryStatusRow {

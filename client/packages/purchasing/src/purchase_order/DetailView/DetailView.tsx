@@ -3,17 +3,20 @@ import {
   AlertModal,
   DetailTabs,
   DetailViewSkeleton,
-  MaterialTable,
   NothingHere,
   PurchaseOrderLineStatusNode,
   RouteBuilder,
   useBreadcrumbs,
   useEditModal,
   useNavigate,
-  useNonPaginatedMaterialTable,
   useTranslation,
   useUrlQuery,
 } from '@openmsupply-client/common';
+
+import {
+  MaterialTable,
+  useNonPaginatedMaterialTable,
+} from '@common/tables';
 import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { canAddNewLines, isPurchaseOrderDisabled } from '../../utils';

@@ -2,14 +2,17 @@ import React, { useCallback } from 'react';
 import {
   Divider,
   Box,
-  MaterialTable,
   useTranslation,
   useFormatNumber,
-  useSimpleMaterialTable,
   usePreferences,
   DateUtils,
   useShallow,
 } from '@openmsupply-client/common';
+
+import {
+  MaterialTable,
+  useSimpleMaterialTable,
+} from '@common/tables';
 
 import { usePrescriptionLineEditColumns } from './columns';
 import {

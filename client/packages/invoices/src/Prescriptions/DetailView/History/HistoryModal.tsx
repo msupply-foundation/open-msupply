@@ -7,10 +7,13 @@ import {
   useIntlUtils,
   InvoiceLineNode,
   DialogButton,
-  MaterialTable,
-  useSimpleMaterialTable,
   NothingHere,
 } from '@openmsupply-client/common';
+
+import {
+  MaterialTable,
+  useSimpleMaterialTable,
+} from '@common/tables';
 import { Draft } from 'packages/invoices/src/StockOut';
 
 import { useHistoryColumns } from './columns';

@@ -6,24 +6,27 @@ import {
   usePreferences,
   useAuthContext,
   StoreModeNodeType,
-  MaterialTable,
-  useSimpleMaterialTable,
-  ColumnDef,
   Typography,
-  CheckBoxCell,
-  ColumnType,
-  DefaultCellProps,
   ExpiryDateInput,
   DateTimePickerInput,
   DateUtils,
   Formatter,
-  RequiredNumberInputCell,
   RecordWithId,
   ReasonOptionNodeType,
+} from '@openmsupply-client/common';
+
+import {
+  MaterialTable,
+  useSimpleMaterialTable,
+  ColumnDef,
+  CheckBoxCell,
+  ColumnType,
+  DefaultCellProps,
+  RequiredNumberInputCell,
   TextInputCell,
   NumberInputCell,
   CurrencyInputCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { DraftStocktakeLine } from './utils';
 import {
   CampaignOrProgramCell,

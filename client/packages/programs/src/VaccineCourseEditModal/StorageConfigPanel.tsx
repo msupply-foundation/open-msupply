@@ -9,10 +9,13 @@ import {
   NumericTextInput,
   SlidePanel,
   Typography,
-  ViewportList,
   useDebouncedValue,
   useTranslation,
 } from '@openmsupply-client/common';
+
+import {
+  ViewportList,
+} from '@common/tables';
 import {
   StoreRowFragment,
   usePaginatedStores,

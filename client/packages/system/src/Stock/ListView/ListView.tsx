@@ -3,11 +3,14 @@ import {
   useTranslation,
   NothingHere,
   useUrlQueryParams,
-  TextWithTooltipCell,
   useNavigate,
   usePluginProvider,
   useEditModal,
   usePreferences,
+} from '@openmsupply-client/common';
+
+import {
+  TextWithTooltipCell,
   MaterialTable,
   usePaginatedMaterialTable,
   ColumnDef,
@@ -15,7 +18,7 @@ import {
   ChipTableCell,
   ExpiryDateCell,
   UnitsAndDosesCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { useStockList } from '../api/hooks/useStockList';

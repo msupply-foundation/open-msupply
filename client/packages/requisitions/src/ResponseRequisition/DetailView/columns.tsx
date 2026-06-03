@@ -4,12 +4,15 @@ import {
   getLinesFromRow,
   UNDEFINED_STRING_VALUE,
   usePreferences,
-  ColumnDef,
   useTranslation,
-  ColumnType,
-  UnitsAndDosesCell,
   NumericTextDisplay,
 } from '@openmsupply-client/common';
+
+import {
+  ColumnDef,
+  ColumnType,
+  UnitsAndDosesCell,
+} from '@common/tables';
 import { ResponseLineFragment, useResponse } from '../api';
 import { useResponseRequisitionLineErrorContext } from '../context';
 import { useMemo } from 'react';

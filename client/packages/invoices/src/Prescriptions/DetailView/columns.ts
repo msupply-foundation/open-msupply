@@ -2,11 +2,13 @@ import {
   useTranslation,
   useAuthContext,
   usePreferences,
+} from '@openmsupply-client/common';
+import {
   ColumnDef,
   ColumnType,
   ExpiryDateCell,
   weightedAverageByUnits,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { PrescriptionLineFragment } from '../api/operations.generated';
 import { useMemo } from 'react';
 import { isPrescriptionPlaceholderRow } from '../../utils';

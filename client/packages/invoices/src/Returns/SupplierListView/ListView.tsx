@@ -6,18 +6,21 @@ import {
   NothingHere,
   useToggle,
   useUrlQueryParams,
-  ColumnDataSetter,
   useCallbackWithPermission,
   UserPermission,
   usePreferences,
   useNotification,
+} from '@openmsupply-client/common';
+
+import {
+  ColumnDataSetter,
   ColumnDef,
   NameAndColorSetterCell,
   ColumnType,
   TextWithTooltipCell,
   usePaginatedMaterialTable,
   MaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { AppBarButtons } from './AppBarButtons';
 import { SupplierReturnRowFragment, useReturns } from '../api';

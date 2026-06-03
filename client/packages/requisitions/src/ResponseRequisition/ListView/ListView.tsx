@@ -6,12 +6,15 @@ import {
   NothingHere,
   useUrlQueryParams,
   useToggle,
+} from '@openmsupply-client/common';
+
+import {
   ColumnDef,
   NameAndColorSetterCell,
   usePaginatedMaterialTable,
   MaterialTable,
   ColumnType,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import {

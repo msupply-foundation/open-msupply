@@ -11,12 +11,15 @@ import {
   useBreadcrumbs,
   useEditModal,
   useToggle,
-  useNonPaginatedMaterialTable,
   usePluginProvider,
   NothingHere,
-  MaterialTable,
   useUrlQuery,
 } from '@openmsupply-client/common';
+
+import {
+  useNonPaginatedMaterialTable,
+  MaterialTable,
+} from '@common/tables';
 import {
   ActivityLogList,
   DocumentsTable,

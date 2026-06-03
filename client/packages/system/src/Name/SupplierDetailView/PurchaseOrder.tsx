@@ -1,15 +1,18 @@
 import React, { ReactElement, useMemo } from 'react';
 import {
-  ColumnDef,
-  ColumnType,
-  MaterialTable,
   NothingHere,
   PurchaseOrderNodeStatus,
   RouteBuilder,
   useNavigate,
-  useNonPaginatedMaterialTable,
   useTranslation,
 } from '@openmsupply-client/common';
+
+import {
+  ColumnDef,
+  ColumnType,
+  MaterialTable,
+  useNonPaginatedMaterialTable,
+} from '@common/tables';
 import { PurchaseOrdersFragment } from '../apiModern/operations.generated';
 import { usePurchaseOrders } from '../apiModern';
 import { getStatusTranslator } from '../utils';

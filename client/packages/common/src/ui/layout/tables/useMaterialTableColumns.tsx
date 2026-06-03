@@ -11,14 +11,10 @@ import {
   MRT_Row,
   MRT_TableInstance,
 } from 'material-react-table';
-import {
-  defaultAggregationFn,
-  mergeCellProps,
-  multipleKeys,
-  Tooltip,
-  useGetColumnTypeDefaults,
-  useTranslation,
-} from '@openmsupply-client/common';
+import { Tooltip, useTranslation } from '@openmsupply-client/common';
+import { defaultAggregationFn, multipleKeys } from './aggregationFns';
+import { mergeCellProps } from './utils';
+import { useGetColumnTypeDefaults } from './useGetColumnDefDefaults';
 
 import { ColumnDef } from './types';
 

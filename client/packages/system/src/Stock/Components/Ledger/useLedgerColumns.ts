@@ -1,10 +1,13 @@
 import { useMemo } from 'react';
 import {
-  ColumnDef,
-  ColumnType,
   useTranslation,
   useFormatDateTime,
 } from '@openmsupply-client/common';
+
+import {
+  ColumnDef,
+  ColumnType,
+} from '@common/tables';
 import {
   getInvoiceLocalisationKey,
   getNameValue,

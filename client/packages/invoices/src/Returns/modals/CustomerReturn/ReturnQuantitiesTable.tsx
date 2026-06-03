@@ -1,14 +1,16 @@
 import {
-  ColumnDef,
   DateUtils,
   ExpiryDateInput,
   Formatter,
+  useTranslation,
+} from '@openmsupply-client/common';
+import {
+  ColumnDef,
   MaterialTable,
   useSimpleMaterialTable,
-  useTranslation,
   NumberInputCell,
   TextInputCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import {
   getVolumePerPackFromVariant,
   ItemVariantInput,

@@ -1,13 +1,16 @@
 import React, { useMemo } from 'react';
 import {
+  useTranslation,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   useSimpleMaterialTable,
   ColumnDef,
-  useTranslation,
   RequiredNumberInputCell,
   ColumnType,
   CheckCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { GenerateSupplierReturnLineFragment } from '../../api';
 
 export const QuantityToReturnTableComponent = ({

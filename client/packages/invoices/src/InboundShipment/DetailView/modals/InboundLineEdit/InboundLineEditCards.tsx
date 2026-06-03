@@ -9,17 +9,10 @@ import {
   NumUtils,
   IconButton,
   DeleteIcon,
-  ColumnDef,
-  useSimpleMaterialTable,
-  ColumnType,
   DateUtils,
   ExpiryDateInput,
   DateTimePickerInput,
-  TextInputCell,
-  NumberInputCell,
   Currencies,
-  CurrencyInputCell,
-  CardList,
   Box,
   Typography,
   CopyIcon,
@@ -29,6 +22,16 @@ import {
   InfoIcon,
   useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
+
+import {
+  ColumnDef,
+  useSimpleMaterialTable,
+  ColumnType,
+  TextInputCell,
+  NumberInputCell,
+  CurrencyInputCell,
+  CardList,
+} from '@common/tables';
 import { Select, MenuItem } from '@mui/material';
 import { DraftInboundLine } from '../../../../types';
 import {

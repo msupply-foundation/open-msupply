@@ -1,13 +1,16 @@
 import React, { useMemo } from 'react';
 import {
-  MaterialTable,
   NothingHere,
   useTranslation,
+} from '@openmsupply-client/common';
+
+import {
+  MaterialTable,
   useNonPaginatedMaterialTable,
   ColumnDef,
   ChipTableCell,
   ColumnType,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import {
   PatientModal,
   ProgramEnrolmentRowFragment,

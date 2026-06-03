@@ -3,12 +3,15 @@ import {
   getLinesFromRow,
   usePreferences,
   useTranslation,
+} from '@openmsupply-client/common';
+
+import {
   ColumnDef,
   ColumnType,
   ExpiryDateCell,
   StatusCell,
   weightedAverageByUnits,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { useInboundShipmentLineErrorContext } from '../context/inboundShipmentLineError';
 import { isInboundPlaceholderRow } from '../../utils';
 import { InboundLineFragment } from '../api';

@@ -2,12 +2,15 @@ import React, { useMemo } from 'react';
 import {
   useTranslation,
   useUrlQueryParams,
+  NothingHere,
+} from '@openmsupply-client/common';
+
+import {
   usePaginatedMaterialTable,
   MaterialTable,
   ColumnDef,
   TextWithTooltipCell,
-  NothingHere,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { MasterListLineFragment } from '../api/operations.generated';
 import { useMasterListLines } from '../api/hooks/useMasterListLines';
 

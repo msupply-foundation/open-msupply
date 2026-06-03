@@ -1,4 +1,9 @@
-import { ColumnDef, UsePluginEvents } from '@openmsupply-client/common';
+import {
+  UsePluginEvents,
+} from '@openmsupply-client/common';
+import {
+  ColumnDef,
+} from '@common/tables';
 import {
   ItemFragment,
   MasterListRowFragment,

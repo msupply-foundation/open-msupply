@@ -4,11 +4,14 @@ import {
   useEditModal,
   useToggle,
   useTranslation,
+} from '@openmsupply-client/common';
+
+import {
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,
   MaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { useName } from '../../api';
 import { StoreEditModal } from './StoreEditModal';
 import { AppBarButtons } from './AppBarButtons';

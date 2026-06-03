@@ -4,13 +4,16 @@ import {
   NothingHere,
   useTranslation,
   useUrlQueryParams,
+} from '@openmsupply-client/common';
+
+import {
   TextWithTooltipCell,
   ColumnType,
   ColumnDef,
   usePaginatedMaterialTable,
   MaterialTable,
   UnitsAndDosesCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { useVisibleOrOnHandItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
 

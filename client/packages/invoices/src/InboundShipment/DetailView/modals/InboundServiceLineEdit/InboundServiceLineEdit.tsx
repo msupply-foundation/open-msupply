@@ -8,9 +8,12 @@ import {
   useDialog,
   useTranslation,
   DialogButton,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   useSimpleMaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { useInboundShipment } from '../../../api';
 import { useDraftServiceLines } from './useDraftServiceLines';
 import { useItem } from '@openmsupply-client/system';

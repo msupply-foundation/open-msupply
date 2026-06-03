@@ -1,12 +1,15 @@
 import React, { ReactElement, useMemo } from 'react';
 import {
+  NothingHere,
+  useTranslation,
+} from '@openmsupply-client/common';
+
+import {
   ColumnDef,
   ColumnType,
   MaterialTable,
-  NothingHere,
   useNonPaginatedMaterialTable,
-  useTranslation,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { SyncFileReferenceFragment } from '@openmsupply-client/system';
 import { Footer } from './Footer';
 

@@ -1,14 +1,17 @@
 import React, { useMemo } from 'react';
 import {
-  MaterialTable,
   NothingHere,
   useNavigate,
   RouteBuilder,
   useTranslation,
+} from '@openmsupply-client/common';
+
+import {
+  MaterialTable,
   useNonPaginatedMaterialTable,
   ColumnDef,
   ColumnType,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   PatientModal,

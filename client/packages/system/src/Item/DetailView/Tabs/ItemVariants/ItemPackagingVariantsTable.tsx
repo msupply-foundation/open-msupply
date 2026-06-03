@@ -1,13 +1,16 @@
 import React, { useMemo } from 'react';
 import {
+  useTranslation,
+} from '@openmsupply-client/common';
+
+import {
   TextWithTooltipCell,
   MaterialTable,
   useSimpleMaterialTable,
   ColumnDef,
-  useTranslation,
   NumberInputCell,
   TextInputCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { PackagingVariantFragment } from '../../../api';
 
 export const ItemPackagingVariantsTable = ({

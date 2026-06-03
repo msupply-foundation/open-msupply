@@ -5,12 +5,15 @@ import {
   useUrlQueryParams,
   PurchaseOrderNodeStatus,
   useToggle,
+  NothingHere,
+} from '@openmsupply-client/common';
+
+import {
   ColumnType,
   ColumnDef,
   usePaginatedMaterialTable,
   MaterialTable,
-  NothingHere,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { usePurchaseOrderList } from '../api';
 import { PurchaseOrderRowFragment } from '../api/operations.generated';
 import { AppBarButtons } from './AppBarButtons';

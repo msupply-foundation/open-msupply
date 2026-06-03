@@ -6,10 +6,13 @@ import {
   useToggle,
   RouteBuilder,
   usePathnameIncludes,
-  MaterialTable,
-  usePaginatedMaterialTable,
   useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
+
+import {
+  MaterialTable,
+  usePaginatedMaterialTable,
+} from '@common/tables';
 import { useAssets } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { CreateAssetModal } from './CreateAssetModal';

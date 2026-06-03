@@ -2,15 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { AppBarButtons } from './AppBarButtons';
 import {
   Box,
-  MaterialTable,
   RecordPatch,
   useConfirmOnLeaving,
   useIntlUtils,
   useNotification,
-  useSimpleMaterialTable,
   useTranslation,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
+
+import {
+  MaterialTable,
+  useSimpleMaterialTable,
+} from '@common/tables';
 import { useIndicatorsDemographicsColumns } from './columns';
 import { Footer } from './Footer';
 import { GENERAL_POPULATION_ID, useDemographicData } from '../api';

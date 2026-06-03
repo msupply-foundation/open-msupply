@@ -5,9 +5,6 @@ import {
   Box,
   ButtonWithIcon,
   Checkbox,
-  ColumnDef,
-  ColumnDataSetter,
-  ColumnType,
   Container,
   DeleteIcon,
   DemographicNode,
@@ -19,7 +16,6 @@ import {
   useFormField,
   IconButton,
   InputWithLabelRow,
-  MaterialTable,
   ModalMode,
   NothingHere,
   NumericTextInput,
@@ -28,12 +24,18 @@ import {
   useForm,
   useFormErrorList,
   useNotification,
-  useSimpleMaterialTable,
   useTranslation,
+} from '@openmsupply-client/common';
+import {
+  ColumnDef,
+  ColumnDataSetter,
+  ColumnType,
+  MaterialTable,
+  useSimpleMaterialTable,
   AgeInputCell,
   NumberInputCell,
   TextInputCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import React, { useMemo, FC } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { useDemographicData } from '@openmsupply-client/system';

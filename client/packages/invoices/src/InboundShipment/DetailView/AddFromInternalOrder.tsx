@@ -7,12 +7,15 @@ import {
   useListInternalOrderLines,
 } from '../api/hooks/utils';
 import {
+  DialogButton,
+} from '@openmsupply-client/common';
+
+import {
   ColumnDef,
   ColumnType,
-  DialogButton,
   MaterialTable,
   useNonPaginatedMaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 
 interface AddFromInternalOrderProps {
   isOpen: boolean;

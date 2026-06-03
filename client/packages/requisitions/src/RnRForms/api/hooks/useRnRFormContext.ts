@@ -3,8 +3,11 @@ import { RnRFormLineFragment } from '../operations.generated';
 import {
   create,
   RecordWithId,
-  ViewportListRef,
 } from '@openmsupply-client/common';
+
+import {
+  ViewportListRef,
+} from '@common/tables';
 import keyBy from 'lodash/keyBy';
 import mapValues from 'lodash/mapValues';
 import { itemMatchesSearch } from '../../utils';

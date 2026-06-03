@@ -6,12 +6,15 @@ import {
   useTemperatureLog,
 } from '../../api/TemperatureLog';
 import {
+  NothingHere,
+} from '@openmsupply-client/common';
+
+import {
   ColumnDef,
   ColumnType,
   MaterialTable,
-  NothingHere,
   usePaginatedMaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { BreachTypeCell, useFormatTemperature } from '../../../common';
 import { breachTypeOptions, Toolbar } from '../Toolbar';
 

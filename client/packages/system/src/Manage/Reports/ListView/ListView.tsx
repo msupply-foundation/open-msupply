@@ -4,11 +4,14 @@ import {
   useUrlQueryParams,
   useTranslation,
   useEditModal,
+} from '@openmsupply-client/common';
+
+import {
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,
   MaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { AppBarButtons } from './AppBarButtons';
 import { useCentralReports } from '../api/hooks/useAllReportVersionsList';
 import { ReportUploadModal } from './ReportUploadModal';

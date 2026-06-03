@@ -1,12 +1,15 @@
 import React from 'react';
 import {
-  MaterialTable,
   NothingHere,
   useNavigate,
   RouteBuilder,
   useTranslation,
-  useNonPaginatedMaterialTable,
 } from '@openmsupply-client/common';
+
+import {
+  MaterialTable,
+  useNonPaginatedMaterialTable,
+} from '@common/tables';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   EncounterFragmentWithStatus,

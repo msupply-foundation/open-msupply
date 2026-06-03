@@ -17,13 +17,16 @@ import {
   useCallbackWithPermission,
   UserPermission,
   PlusCircleIcon,
-  MaterialTable,
-  useSimpleMaterialTable,
   NothingHere,
   ActivityLogNodeType,
   Link,
   useAuthContext,
 } from '@openmsupply-client/common';
+
+import {
+  MaterialTable,
+  useSimpleMaterialTable,
+} from '@common/tables';
 import { AppRoute } from '@openmsupply-client/config';
 import { RepackEditForm } from './RepackEditForm';
 import { ReportSelector, useActivityLog } from '@openmsupply-client/system';

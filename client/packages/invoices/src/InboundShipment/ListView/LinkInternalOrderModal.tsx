@@ -7,11 +7,14 @@ import {
   useDialog,
   DialogButton,
   Typography,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   useSimpleMaterialTable,
   ColumnDef,
   ColumnType,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { NameRowFragment } from '@openmsupply-client/system';
 
 interface LinkInternalOrderModalProps {

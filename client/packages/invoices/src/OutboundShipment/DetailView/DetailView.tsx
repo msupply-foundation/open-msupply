@@ -10,11 +10,14 @@ import {
   ModalMode,
   useNotification,
   useBreadcrumbs,
-  useNonPaginatedMaterialTable,
   InvoiceLineNodeType,
-  MaterialTable,
   NothingHere,
 } from '@openmsupply-client/common';
+
+import {
+  useNonPaginatedMaterialTable,
+  MaterialTable,
+} from '@common/tables';
 import {
   toItemRow,
   ActivityLogList,

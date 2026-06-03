@@ -12,11 +12,14 @@ import {
   Link,
   Tooltip,
   Box,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   useSimpleMaterialTable,
   ColumnDef,
   TextWithTooltipCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   BundledItemFragment,

@@ -6,11 +6,14 @@ import {
   useUrlQueryParams,
   PurchaseOrderLineStatusNode,
   RouteBuilder,
+} from '@openmsupply-client/common';
+
+import {
   ColumnDef,
   ColumnType,
   usePaginatedMaterialTable,
   MaterialTable,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { AppRoute } from '@openmsupply-client/config';
 import { PurchaseOrderLineFragment } from '../../api/operations.generated';
 import { usePurchaseOrderLineList } from '../../api/hooks/usePurchaseOrderLineList';

@@ -12,12 +12,15 @@ import {
   ButtonWithIcon,
   RewindIcon,
   ModalProps,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   useSimpleMaterialTable,
   ColumnDef,
   ColumnType,
   NaiveDateCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import {
   PatientRowFragment,
   usePatient,

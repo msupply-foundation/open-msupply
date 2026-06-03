@@ -1,10 +1,13 @@
 import React, { useMemo } from 'react';
 import {
+  useTranslation,
+} from '@openmsupply-client/common';
+
+import {
   ColumnDef,
   TextWithTooltipCell,
-  useTranslation,
   MRTRadioCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { ItemVariantFragment } from '../../api';
 
 interface ItemVariantSelectorColumnProps {

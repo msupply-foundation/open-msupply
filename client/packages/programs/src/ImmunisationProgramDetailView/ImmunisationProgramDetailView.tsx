@@ -14,10 +14,13 @@ import {
   ActionsFooter,
   Action,
   DeleteIcon,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   usePaginatedMaterialTable,
   ColumnDef,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { AppBarButtons } from './AppBarButtons';
 import {
   VaccineCourseRowFragment,

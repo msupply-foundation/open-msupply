@@ -5,11 +5,14 @@ import {
   useNavigate,
   RouteBuilder,
   useTranslation,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import {
   useContactTraces,
   usePatientModalStore,

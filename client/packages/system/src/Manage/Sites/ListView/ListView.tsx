@@ -6,10 +6,13 @@ import {
   useTranslation,
   // useNotification,
   // useConfirmationModal,
+} from '@openmsupply-client/common';
+
+import {
   usePaginatedMaterialTable,
   MaterialTable,
   ColumnDef,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 // import { AppBarButtons } from './AppBarButtons';
 // import { Footer } from './Footer';
 import { Toolbar } from './Toolbar';

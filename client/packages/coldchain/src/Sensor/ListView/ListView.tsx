@@ -8,11 +8,14 @@ import {
   useUrlQuery,
   SensorNodeType,
   UNDEFINED_STRING_VALUE,
+} from '@openmsupply-client/common';
+
+import {
   MaterialTable,
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { SensorFragment, useSensorList } from '../api';
 import { SensorEditModal } from '../Components';
 import { BreachTypeCell, useFormatTemperature } from '../../common';

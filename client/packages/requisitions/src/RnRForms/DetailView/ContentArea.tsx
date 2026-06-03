@@ -9,9 +9,12 @@ import {
   Table,
   Tooltip,
   useTranslation,
+} from '@openmsupply-client/common';
+
+import {
   ViewportList,
   ViewportListRef,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { RnRFormLineFragment } from '../api/operations.generated';
 import { RnRFormLine } from './RnRFormLine';
 import { Search } from './Search';

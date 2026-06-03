@@ -1,9 +1,11 @@
 import {
-  ColumnDef,
-  ColumnType,
   useFormatDateTime,
   useTranslation,
 } from '@openmsupply-client/common';
+import {
+  ColumnDef,
+  ColumnType,
+} from '@common/tables';
 import { VvmStatusLogRowFragment } from '../../api';
 import { useMemo } from 'react';
 

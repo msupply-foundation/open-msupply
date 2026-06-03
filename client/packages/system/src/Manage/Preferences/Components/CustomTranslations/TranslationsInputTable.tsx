@@ -3,14 +3,17 @@ import { DeleteIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 import {
   Box,
-  ColumnDef,
   IconButton,
-  MaterialTable,
   NothingHere,
+} from '@openmsupply-client/common';
+
+import {
+  ColumnDef,
+  MaterialTable,
   TextWithTooltipCell,
   useSimpleMaterialTable,
   TextInputCell,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { useDebounceCallback } from '@common/hooks';
 import { checkInvalidVariables, Translation } from './helpers';
 import {

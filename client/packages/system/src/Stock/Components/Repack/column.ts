@@ -1,10 +1,13 @@
 import { useMemo } from 'react';
 import {
-  ColumnDef,
-  ColumnType,
   useFormatDateTime,
   useTranslation,
 } from '@openmsupply-client/common';
+
+import {
+  ColumnDef,
+  ColumnType,
+} from '@common/tables';
 import { RepackFragment } from '../../api/operations.generated';
 
 export const useRepackColumns = () => {

@@ -1,9 +1,11 @@
 import {
+  useTranslation,
+} from '@openmsupply-client/common';
+import {
   ColumnDef,
   ColumnType,
   ExpiryDateCell,
-  useTranslation,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { InsuranceFragment } from '../apiModern/operations.generated';
 import { useMemo } from 'react';
 

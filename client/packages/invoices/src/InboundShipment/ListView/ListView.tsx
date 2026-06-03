@@ -8,16 +8,19 @@ import {
   NothingHere,
   useToggle,
   useUrlQueryParams,
+  usePreferences,
+  useIsExtraSmallScreen,
+  InvoiceNodeType,
+  RouteBuilder,
+} from '@openmsupply-client/common';
+
+import {
   ColumnType,
   ColumnDef,
   usePaginatedMaterialTable,
   MaterialTable,
-  usePreferences,
-  useIsExtraSmallScreen,
   CardList,
-  InvoiceNodeType,
-  RouteBuilder,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { AppRoute } from '@openmsupply-client/config';
 import { AppBarButtons } from './AppBarButtons';
 import { getStatusTranslator, isInboundListItemDisabled } from '../../utils';

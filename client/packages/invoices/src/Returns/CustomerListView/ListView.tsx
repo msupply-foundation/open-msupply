@@ -5,19 +5,22 @@ import {
   NothingHere,
   useToggle,
   useUrlQueryParams,
-  ColumnDataSetter,
   useNotification,
   usePreferences,
   useCallbackWithPermission,
   UserPermission,
+  InvoiceNodeType,
+} from '@openmsupply-client/common';
+
+import {
+  ColumnDataSetter,
   usePaginatedMaterialTable,
   MaterialTable,
   ColumnDef,
   NameAndColorSetterCell,
   ColumnType,
   TextWithTooltipCell,
-  InvoiceNodeType,
-} from '@openmsupply-client/common';
+} from '@common/tables';
 import { getStatusTranslator, isInboundListItemDisabled } from '../../utils';
 import { AppBarButtons } from './AppBarButtons';
 import { CustomerReturnRowFragment, useReturns } from '../api';
