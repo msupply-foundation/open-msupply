@@ -9,7 +9,10 @@ export const me = ctx => gqlRequest(ctx, operations.me, C, {});
 export const lastSuccessfulUserSync = ctx => gqlRequest(ctx, operations.lastSuccessfulUserSync, C, {});
 export const isCentralServer = ctx => gqlRequest(ctx, operations.isCentralServer, C, {});
 export const initialisationStatus = ctx => gqlRequest(ctx, operations.initialisationStatus, C, {});
-export const syncStatus = ctx => gqlRequest(ctx, operations.syncStatus, C, {});
+// syncInfo carries `numberOfRecordsInPushQueue` → a COUNT over changelog_deduped. The real client
+// gets this via the syncInfoUpdated subscription (server recomputes + pushes per client); k6 can't
+// drive graphql-ws, so we poll the equivalent query to reproduce that per-client changelog scan.
+export const syncInfo = ctx => gqlRequest(ctx, operations.syncInfo, C, {});
 
 export const preferences = ctx => gqlRequest(ctx, operations.preferences, C, { storeId: ctx.storeId });
 

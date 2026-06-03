@@ -7,7 +7,7 @@ export function dashboardPoller(data) {
   const ctx = makeCtx(data);
   polling.me(ctx);
   polling.lastSuccessfulUserSync(ctx);
-  polling.syncStatus(ctx);
+  polling.syncInfo(ctx);
   polling.initialisationStatus(ctx);
   polling.isCentralServer(ctx);
   polling.preferences(ctx);
