@@ -72,7 +72,7 @@ export const Toolbar: FC = () => {
               />
             )}
             <InputWithLabelRow
-              label={t('label.supplier-ref')}
+              label={t('label.supplier-reference')}
               Input={
                 <BasicTextInput
                   disabled={isDisabled}
