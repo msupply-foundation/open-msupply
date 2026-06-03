@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use async_graphql::dataloader::Loader;
 use repository::{
@@ -33,13 +33,20 @@ impl Loader<ItemStoreJoinLoaderInput> for ItemStoreJoinLoader {
     ) -> Result<HashMap<ItemStoreJoinLoaderInput, Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
 
+        // De-dupe before building the query - the dropdown passes the same
+        // store_id for every item, so this collapses the store_id IN (...) list
+        // (and any repeated item_ids) down to the distinct values.
         let item_ids: Vec<String> = loader_inputs
             .iter()
             .map(|input| input.item_id.clone())
+            .collect::<HashSet<_>>()
+            .into_iter()
             .collect();
         let store_ids: Vec<String> = loader_inputs
             .iter()
             .map(|input| input.store_id.clone())
+            .collect::<HashSet<_>>()
+            .into_iter()
             .collect();
 
         // Single batched query rather than one lookup per item - the item
