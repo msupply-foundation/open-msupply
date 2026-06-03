@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo, useState } from 'react';
+import React, { FC, useEffect, useMemo } from 'react';
 import {
   useTranslation,
   NothingHere,
@@ -23,7 +23,6 @@ export const SensorListView: FC = () => {
   const t = useTranslation();
   const { urlQuery, updateQuery } = useUrlQuery();
   const formatTemperature = useFormatTemperature();
-  const [activeOnly, setActiveOnly] = useState(true);
 
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'serial', dir: 'desc' },
@@ -31,31 +30,24 @@ export const SensorListView: FC = () => {
       { key: 'serial' },
       { key: 'name' },
       { key: 'locationCode' },
+      { key: 'type', condition: 'equalTo' },
     ],
   });
 
-  // Read sensor type directly from URL (bypasses getFilterEntry which wraps strings
-  // in { like: value } — incompatible with the plain SensorNodeType enum on the server)
-  const sensorType = urlQuery['type'] as string | undefined;
+  // Show only active sensors by default; turning the toggle off adds
+  // activeOnly=false to the URL to reveal inactive sensors too. Note useUrlQuery
+  // coerces the param to a boolean, so this compares against `false`, not 'false'.
+  const activeOnly = urlQuery['activeOnly'] !== false;
 
-  const activeQueryParams = {
+  const { data, isError, isLoading } = useSensorList({
     ...queryParams,
     filterBy: {
       ...queryParams.filterBy,
       ...(activeOnly && { isActive: true }),
-      ...(sensorType && { type: sensorType }),
     },
-  };
-
-  const { data, isError, isLoading } = useSensorList(activeQueryParams);
+  });
 
   const { isOpen, entity, onClose, onOpen } = useEditModal<SensorFragment>();
-
-  // Clear any stale isActive URL param left from a previous session that used initialFilter
-  useEffect(() => {
-    if (urlQuery['isActive'] !== undefined) updateQuery({ isActive: '' });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // this will open the edit modal, if the `edit` query parameter is set
   // to a valid sensor ID. On opening, the query param is removed to
@@ -171,7 +163,12 @@ export const SensorListView: FC = () => {
       {isOpen && entity && (
         <SensorEditModal isOpen={isOpen} onClose={onClose} sensor={entity} />
       )}
-      <Toolbar activeOnly={activeOnly} onToggleActiveOnly={setActiveOnly} />
+      <Toolbar
+        activeOnly={activeOnly}
+        onToggleActiveOnly={checked =>
+          updateQuery({ activeOnly: checked ? '' : 'false' })
+        }
+      />
       <MaterialTable table={table} />
     </>
   );
