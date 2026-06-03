@@ -22,15 +22,21 @@ import {
   DraftStockOutLineFragment,
 } from '../../../StockOut';
 import { min } from 'lodash';
+import {
+  UsePluginEvents,
+  ShipmentLinePluginState,
+} from '@openmsupply-client/common';
 
 export interface OutboundLineEditTableProps {
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
+  pluginEvents: UsePluginEvents<ShipmentLinePluginState>;
 }
 
 export const OutboundLineEditTable = ({
   currency,
   isExternalSupplier,
+  pluginEvents,
 }: OutboundLineEditTableProps) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
@@ -121,6 +127,7 @@ export const OutboundLineEditTable = ({
     allocateIn: allocateIn,
     setVvmStatus,
     setReceivedNumberOfPacks,
+    pluginEvents,
     getIsDisabled,
   });
 

@@ -18,6 +18,9 @@ import {
   CurrencyValueCell,
   ExpiryDateCell,
   NumberInputCell,
+  usePluginProvider,
+  UsePluginEvents,
+  ShipmentLinePluginState,
 } from '@openmsupply-client/common';
 import {
   CurrencyRowFragment,
@@ -29,6 +32,7 @@ import {
   canAutoAllocate,
   getDoseQuantity,
   DraftStockOutLineFragment,
+  StockOutLineFragment,
   DraftItem,
   AllocateInOption,
   AllocateInType,
@@ -52,6 +56,7 @@ export const useOutboundLineEditColumns = ({
   allocateIn,
   setVvmStatus,
   setReceivedNumberOfPacks,
+  pluginEvents,
   getIsDisabled,
 }: {
   getIsDisabled: (row: DraftStockOutLineFragment) => boolean;
@@ -62,10 +67,12 @@ export const useOutboundLineEditColumns = ({
   allocateIn: AllocateInOption;
   setVvmStatus: (id: string, vvmStatus?: VvmStatusFragment | null) => void;
   setReceivedNumberOfPacks: (id: string, value: number | null) => void;
+  pluginEvents: UsePluginEvents<ShipmentLinePluginState>;
 }) => {
   const { store } = useAuthContext();
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
+  const { plugins } = usePluginProvider();
 
   const unit = Formatter.sentenceCase(item?.unitName ?? t('label.unit'));
   const pluralisedUnitName = getPlural(unit, 2);
@@ -305,6 +312,22 @@ export const useOutboundLineEditColumns = ({
         size: 100,
         includeColumn: isExternalSupplier,
       },
+      ...(plugins.outboundShipmentLine?.editViewField ?? []).map(
+        ({ header, Component }, index): ColumnDef<DraftStockOutLineFragment> => ({
+          id: `plugin-field-${index}`,
+          header,
+          size: 180,
+          defaultHideOnMobile: true,
+          includeColumn: isExternalSupplier,
+          Cell: ({ row }) => (
+            <Component
+              line={row.original as unknown as StockOutLineFragment}
+              events={pluginEvents}
+              isExternal={isExternalSupplier}
+            />
+          ),
+        })
+      ),
       {
         id: 'volume',
         header: t('label.volume'),
@@ -322,7 +345,8 @@ export const useOutboundLineEditColumns = ({
       },
     ];
     return cols;
-  }, [allocateIn.type]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allocateIn.type, plugins.outboundShipmentLine?.editViewField]);
 
   return columns;
 };
