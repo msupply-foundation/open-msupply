@@ -229,6 +229,22 @@ async fn load_or_request_auth<'a>(
     })
 }
 
+// True when central has cleared this site's token
+pub async fn is_central_token_cleared(
+    service_provider: &ServiceProvider,
+    settings: &SyncSettings,
+) -> bool {
+    let api = match SyncApiV7::new(service_provider, &settings.url) {
+        Ok(api) => api,
+        Err(_) => return false,
+    };
+
+    match api.site_status(()).await {
+        Err(SyncError::TokenNotFound) => true,
+        _ => false,
+    }
+}
+
 /// Probe the central server's site_status and persist its site id so other
 /// code paths (notably v5/v6 fallbacks) can read it from KV without an
 /// extra round-trip.

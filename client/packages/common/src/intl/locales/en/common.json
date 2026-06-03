@@ -2020,7 +2020,7 @@
   "messages.confirm-change-location": "This will change the location of all selected lines",
   "messages.confirm-changing-from-new": "Note: changing from 'New' will remove any lines with zero quantity.",
   "messages.confirm-clear-hardware-id": "Clearing the hardware id will allow a new device to register itself as this site. Only proceed if you intend to move the site to another device",
-  "messages.confirm-clear-sync-token": "Clearing the token will block sync for this site until the device has the user name and password reentered.",
+  "messages.confirm-clear-sync-token": "Clearing the token will block sync for this site until the device has the site password re-entered.",
   "messages.confirm-close-purchase-order-lines_few": "This will permanently close {{count}} lines from this purchase order. Once closed you cannot receive any more stock against these lines.",
   "messages.confirm-close-purchase-order-lines_many": "This will permanently close {{count}} lines from this purchase order. Once closed you cannot receive any more stock against these lines.",
   "messages.confirm-close-purchase-order-lines_one": "This will permanently close 1 line from this purchase order. Once closed you cannot receive any more stock against this line.",

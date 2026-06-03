@@ -4,7 +4,10 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use service::auth::{Resource, ResourceAccessRequest};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    sync_v7::sync::is_central_token_cleared,
+};
 
 use crate::{
     queries::sync_settings::SyncSettingsNode,
@@ -44,7 +47,9 @@ pub async fn update_sync_settings(
 
     let sync_settings = input.to_domain();
 
-    if sync_settings.core_site_details_changed(&database_sync_settings) {
+    if sync_settings.core_site_details_changed(&database_sync_settings)
+        || is_central_token_cleared(service_provider, &sync_settings).await
+    {
         if let Err(error) = service_provider
             .site_auth_service
             .request_and_set_site_auth(service_provider, &sync_settings)
