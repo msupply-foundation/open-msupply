@@ -9,6 +9,7 @@ import {
   useNotification,
   usePluginProvider,
   useTranslation,
+  useWindowDimensions,
 } from '@openmsupply-client/common';
 // JsonForm lives in `programs` because that package owns the JSON Forms
 // renderer registry (clinical widgets etc.). Plugin config doesn't need any of
@@ -40,6 +41,10 @@ export const PluginConfigModal = ({
   const { configuration, isLoading, isError, save, isSaving } =
     usePluginConfiguration(pluginCode);
 
+  const { width: viewportWidth, height: viewportHeight } =
+    useWindowDimensions();
+  const modalWidth = Math.round(viewportWidth * 0.8);
+  const modalHeight = Math.round(viewportHeight * 0.9);
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   // Seed the local form value once the loaded row resolves; from then on the
@@ -65,7 +70,7 @@ export const PluginConfigModal = ({
   // view gates the click on that. If it's missing here, something went wrong.
   if (!slot) {
     return (
-      <Modal title={t('title.configure-plugin')}>
+      <Modal title={t('title.configure-plugin-code', { code: pluginCode })}>
         <Typography color="error">
           {t('error.plugin-not-loaded', { code: pluginCode })}
         </Typography>
@@ -98,14 +103,15 @@ export const PluginConfigModal = ({
       );
     }
 
-    return (
-      <Typography>{t('messages.plugin-no-configuration-ui')}</Typography>
-    );
+    return <Typography>{t('messages.plugin-no-configuration-ui')}</Typography>;
   };
 
   return (
     <Modal
-      title={t('title.configure-plugin')}
+      title={t('title.configure-plugin-code', { code: pluginCode })}
+      width={modalWidth}
+      height={modalHeight}
+      contentProps={{ sx: { overflowY: 'hidden' } }}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
         <DialogButton
@@ -115,7 +121,7 @@ export const PluginConfigModal = ({
         />
       }
     >
-      <Box minWidth={500} padding={2}>
+      <Box width="100%" padding={2}>
         {renderBody()}
       </Box>
     </Modal>
