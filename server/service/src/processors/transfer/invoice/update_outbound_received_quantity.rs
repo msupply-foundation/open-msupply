@@ -119,8 +119,16 @@ fn set_received_qty_on_outbound_lines(
             continue;
         };
 
+        let received_units =
+            inbound_line.invoice_line_row.number_of_packs * inbound_line.invoice_line_row.pack_size;
+        let received_number_of_packs = if outbound_line.pack_size != 0.0 {
+            received_units / outbound_line.pack_size
+        } else {
+            inbound_line.invoice_line_row.number_of_packs
+        };
+
         let mut row = outbound_line.clone();
-        row.received_number_of_packs = Some(inbound_line.invoice_line_row.number_of_packs);
+        row.received_number_of_packs = Some(received_number_of_packs);
         row.reason_option_id = inbound_line.invoice_line_row.reason_option_id.clone();
         line_row_repo.upsert_one(&row)?;
         updated += 1;
