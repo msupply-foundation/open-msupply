@@ -3,6 +3,7 @@ import http from 'k6/http';
 import { check } from 'k6';
 import { gqlOpDuration, gqlErrors, gqlErrorCount } from './metrics.js';
 import { classify } from './errors.js';
+import { recordOp } from './session.js';
 
 // Per-VU dedupe so each distinct (op, reason) failure is logged to the terminal exactly once —
 // enough to diagnose what's failing without flooding the output or needing a separate probe.
@@ -29,6 +30,7 @@ export function gqlRequest(ctx, op, category, variables) {
   });
 
   gqlOpDuration.add(res.timings.duration, { op: op.name, category });
+  recordOp(); // tells the VU's login session when to re-authenticate (session.js)
 
   const { ok, kind, detail, body } = classify(res);
   gqlErrors.add(!ok, { op: op.name, category });

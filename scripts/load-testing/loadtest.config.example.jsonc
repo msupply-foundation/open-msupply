@@ -6,11 +6,11 @@
   // Target server. GraphQL endpoint is {baseUrl}/graphql. (env: BASE_URL)
   "baseUrl": "http://localhost:8000",
 
-  // Login. Either a single user...  (env: USERNAME / PASSWORD)
-  "username": "admin",
-  "password": "pass",
-  // ...or a pool of users (overrides username/password). (env: USERS as JSON)
-  // "users": [{ "username": "a", "password": "x" }, { "username": "b", "password": "y" }],
+  // Login pool. Each VU logs in as a random user from this list (see reloginEveryOps). (env: USERS as JSON)
+  "users": [
+    { "username": "admin", "password": "pass" }
+    // { "username": "user2", "password": "pass2" },
+  ],
 
   // Store to drive. null = the user's default store. (env: STORE_ID)
   "storeId": null,
@@ -38,6 +38,11 @@
 
   // How many ids to discover per pool in setup(). (env: POOL_SIZE)
   "poolSize": 200,
+
+  // Each VU logs in as a random user, then re-authenticates as another random user after about this
+  // many ops (jittered ±50%). null = 70, which matches the ~1 login / 70 queries the manual load test
+  // saw. Set 0 to log in once per VU and never re-login. (env: RELOGIN_EVERY_OPS)
+  "reloginEveryOps": null,
 
   // Where summaries are written. (env: OUTPUT_DIR)
   "outputDir": "./output",

@@ -1,7 +1,7 @@
 // omSupply GraphQL load test — entrypoint.
 //
 // Run (against any URL you point it at):
-//   k6 run -e BASE_URL=http://localhost:8000 -e USERNAME=user -e PASSWORD=pass main.js
+//   k6 run -e BASE_URL=http://localhost:8000 -e USERS='[{"username":"a","password":"x"}]' main.js
 //   k6 run -e BASE_URL=... -e USERS='[{"username":"a","password":"x"}]' -e VU_MULTIPLIER=2 -e SYNC_INTERVAL=60 main.js
 //
 // See README.md for the full env-knob list. Operation documents come from
@@ -27,16 +27,26 @@ export const options = buildOptions();
 export function setup() {
   const users = parseUsers();
   if (users.length === 0) {
-    throw new Error('No users configured. Set USERS=\'[{"username":..,"password":..}]\' or USERNAME/PASSWORD.');
+    throw new Error('No users configured. Set a "users" list in the config file or USERS=\'[{"username":..,"password":..}]\'.');
   }
 
+  // Validate every credential up front (fail fast). `workingUsers` are the ones that actually logged in
+  // (e.g. NoSiteAccess users are dropped) — VUs only ever re-authenticate as these. `tokens` is the
+  // per-VU fallback. During the run each VU logs in as a random working user itself and re-authenticates
+  // periodically — see lib/session.js.
   const tokens = [];
+  const workingUsers = [];
   for (const u of users) {
-    const token = authenticate(config.graphqlUrl, u.username, u.password);
-    if (token) tokens.push(token);
-    else console.warn(`[setup] login failed for "${u.username}"`);
+    const token = authenticate(config.graphqlUrl, u.username, u.password); // logs the reason on failure
+    if (token) {
+      tokens.push(token);
+      workingUsers.push(u);
+    }
   }
-  if (tokens.length === 0) throw new Error('All logins failed — cannot run.');
+  if (tokens.length === 0) throw new Error('All logins failed — cannot run (see [auth] warnings above).');
+  if (tokens.length < users.length) {
+    console.warn(`[setup] ${users.length - tokens.length}/${users.length} logins failed — those users are excluded from the run.`);
+  }
 
   const ctx0 = { graphqlUrl: config.graphqlUrl, token: tokens[0], storeId: null };
   const storeId = resolveStoreId(ctx0, config.storeId);
@@ -46,6 +56,12 @@ export function setup() {
   const pools = discoverDataset(ctx0, config.poolSize);
 
   console.log(`[setup] url=${config.graphqlUrl} store=${storeId} tokens=${tokens.length} vuMultiplier=${config.vuMultiplier}`);
+  console.log(
+    `[setup] login: each VU logs in as a random user; ` +
+      (config.reloginEveryOps > 0
+        ? `re-auth ~every ${config.reloginEveryOps} ops (±50%) → ~1 login / ${config.reloginEveryOps} queries`
+        : 're-login disabled (one login per VU)')
+  );
   console.log(
     `[setup] sync: enabled=${config.syncEnabled}` +
       (config.syncEnabled ? ` interval=${config.syncInterval}s (manualSync — changelog lock path)` : ' (changelog lock path NOT exercised)')
@@ -61,7 +77,7 @@ export function setup() {
   if (pools.itemIds.length === 0) console.warn('[setup] no items — requisition/stocktake workflows will skip.');
   console.log(`[setup] RUN START ${new Date().toISOString()} (use this to window pg_stat_statements / lock logs)`);
 
-  return { tokens, storeId, ...pools };
+  return { tokens, users: workingUsers, storeId, ...pools };
 }
 
 function num(metric, key) {
