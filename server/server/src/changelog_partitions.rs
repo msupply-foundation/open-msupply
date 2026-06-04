@@ -12,9 +12,10 @@ pub fn spawn(
         loop {
             interval.tick().await;
             let Ok(ctx) = service_provider.basic_context() else {
-                log::error!("changelog partition task: failed to get context: {e:?}");
+                log::error!("changelog partition task: failed to get context");
                 continue;
             };
+
             // `ensure_partition_lookahead` is a no-op under SQLite (no partitions
             // to top up); under Postgres it adds partitions when headroom is low.
             // Diesel calls are blocking, so run on a blocking worker to avoid
