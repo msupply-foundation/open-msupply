@@ -88,16 +88,13 @@ export type DeleteSiteMutation = {
     site: {
       __typename: 'CentralSiteMutations';
       deleteSite:
-        | { __typename: 'DeleteSiteNode'; id: number }
         | {
             __typename: 'DeleteSiteError';
             error:
-              | { __typename: 'SiteHasStores'; description: string }
-              | {
-                  __typename: 'CannotDeleteCentralSite';
-                  description: string;
-                };
-          };
+              | { __typename: 'CannotDeleteCentralSite'; description: string }
+              | { __typename: 'SiteHasStores'; description: string };
+          }
+        | { __typename: 'DeleteSiteNode'; id: number };
     };
   };
 };
