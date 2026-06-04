@@ -34,13 +34,9 @@ use crate::{
     },
 };
 
-fn other_error(e: impl std::fmt::Display) -> SyncError {
-    SyncError::Other(e.to_string())
-}
-
 /// Map a `spawn_blocking` join failure (panic or cancellation) into `SyncError`.
 fn join_error(e: tokio::task::JoinError) -> SyncError {
-    SyncError::Other(format!("blocking join error: {e:?}"))
+    SyncError::Other(format!("blocking join error: {0}", format_error(&e)))
 }
 
 /// TODO: revisit token format
@@ -62,7 +58,7 @@ pub async fn get_token(
 
     let sp = service_provider.clone();
     let (site, input) = tokio::task::spawn_blocking(move || {
-        let ctx = sp.basic_context().map_err(other_error)?;
+        let ctx = sp.basic_context()?;
 
         let site = get_site_by_name(&ctx.connection, &input.name)?
             .ok_or(SyncError::InvalidSiteNameOrPassword)?;
@@ -82,7 +78,7 @@ pub async fn get_token(
         }
 
         let valid = bcrypt::verify(&input.password_sha256, &site.hashed_password)
-            .map_err(other_error)?;
+            .map_err(SyncError::other)?;
         if !valid {
             return Err(SyncError::InvalidSiteNameOrPassword);
         }
@@ -95,7 +91,7 @@ pub async fn get_token(
     let site = ensure_site_is_v7(&service_provider, site, &input).await?;
 
     tokio::task::spawn_blocking(move || {
-        let ctx = service_provider.basic_context().map_err(other_error)?;
+        let ctx = service_provider.basic_context()?;
 
         ctx.connection
             .transaction_sync(|connection| {
@@ -151,10 +147,8 @@ async fn ensure_site_is_v7(
         return Ok(site);
     }
 
-    let api_v5 = {
-        let ctx = service_provider.basic_context().map_err(other_error)?;
-        build_v5_api_for_request(&ctx.connection, input)?
-    };
+    let ctx = service_provider.basic_context()?;
+    let api_v5 = build_v5_api_for_request(&ctx.connection, input)?;
 
     let info = api_v5.get_site_info().await.map_err(|error| {
         if error.is_connection() {
@@ -163,7 +157,7 @@ async fn ensure_site_is_v7(
                 e: format_error(&error),
             }
         } else {
-            SyncError::Other(format_error(&error))
+            SyncError::other(error)
         }
     })?;
 
@@ -174,14 +168,13 @@ async fn ensure_site_is_v7(
         api_v5
             .v7_url_and_upgrade()
             .await
-            .map_err(|error| SyncError::Other(format_error(&error)))?;
+            .map_err(SyncError::other)?;
     };
 
     let updated = SiteRow {
         sync_version: SyncVersion::V7,
         ..site
     };
-    let ctx = service_provider.basic_context().map_err(other_error)?;
     SiteRowRepository::new(&ctx.connection).upsert(&updated)?;
     Ok(updated)
 }
@@ -245,7 +238,7 @@ fn validate(
         });
     }
 
-    let ctx = service_provider.basic_context().map_err(other_error)?;
+    let ctx = service_provider.basic_context().map_err(SyncError::other)?;
 
     let site =
         get_site_by_token(&ctx.connection, &common.token)?.ok_or(SyncError::TokenNotFound)?;
