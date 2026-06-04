@@ -101,10 +101,9 @@ export const config = {
   syncFetchPatientId: pick('SYNC_FETCH_PATIENT_ID', 'syncFetchPatientId', null),
   // Open-model syncInfo storm — fires the changelog_deduped COUNT at a fixed arrival rate (no
   // backpressure) to reproduce the subscription fan-out that collapsed the real test. Off by default.
-  // Rates are syncInfo requests/second; ramps startRate -> peakRate over rampDuration then holds.
+  // syncStormRate is the target syncInfo requests/second; ramps 0 -> rate over rampDuration then holds.
   syncStormEnabled: envBool('SYNC_STORM_ENABLED', file.syncStormEnabled != null ? file.syncStormEnabled : false),
-  syncStormStartRate: envInt('SYNC_STORM_START_RATE', file.syncStormStartRate != null ? file.syncStormStartRate : 2),
-  syncStormPeakRate: envInt('SYNC_STORM_PEAK_RATE', file.syncStormPeakRate != null ? file.syncStormPeakRate : 40),
+  syncStormRate: envInt('SYNC_STORM_RATE', file.syncStormRate != null ? file.syncStormRate : 40),
   // Cap on concurrent VUs the storm may allocate. With ~10s counts, in-flight ≈ rate × 10s, so this
   // must be high to let the pileup form (else k6 just drops iterations — itself a collapse signal).
   syncStormMaxVus: envInt('SYNC_STORM_MAX_VUS', file.syncStormMaxVus != null ? file.syncStormMaxVus : 300),
@@ -200,18 +199,19 @@ function buildScenarios() {
   if (config.syncStormEnabled) {
     // Open model: fixed arrival rate, NO backpressure. k6 keeps starting iterations at `target`
     // req/s and allocates VUs (up to maxVUs) when prior ones are still blocked on a ~10s count, so
-    // concurrent counts pile up and exhaust the DB pool. Ramp the rate to find the tipping point.
+    // concurrent counts pile up and exhaust the DB pool. Ramps 0 -> rate over rampDuration then holds,
+    // matching how every other worker class ramps up. Raise syncStormRate to find the tipping point.
     scenarios.syncInfoStorm = {
       executor: 'ramping-arrival-rate',
       exec: 'syncInfoStorm',
       startTime: '0s',
-      startRate: config.syncStormStartRate,
+      startRate: 0,
       timeUnit: '1s',
       preAllocatedVUs: Math.min(50, config.syncStormMaxVus),
       maxVUs: config.syncStormMaxVus,
       stages: [
-        { duration: config.rampDuration, target: config.syncStormPeakRate },
-        { duration: config.holdDuration, target: config.syncStormPeakRate },
+        { duration: config.rampDuration, target: config.syncStormRate },
+        { duration: config.holdDuration, target: config.syncStormRate },
       ],
       gracefulStop: '30s',
       tags: { scenario: 'syncInfoStorm' },
