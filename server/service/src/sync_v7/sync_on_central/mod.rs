@@ -268,9 +268,7 @@ fn validate(
 
     Ok((site, ctx))
 }
-/// Report site status to a remote open-mSupply Server.
-/// Errors with `SiteLockError::IntegrationInProgress` while integration is running, so clients
-/// can poll until it clears.
+
 pub async fn site_status(
     service_provider: Arc<ServiceProvider>,
     common: Common,
@@ -402,9 +400,6 @@ pub async fn push(
     common: Common,
     input: push::Input,
 ) -> push::Response {
-    // Blocking phase: validate, then buffer the batch's records into the sync
-    // buffer in a single transaction. Returns the batch size, the remaining
-    // count, and the site id so we can decide whether to kick off integration.
     let sp = service_provider.clone();
     let (records_in_this_batch, remaining, site_id) = tokio::task::spawn_blocking(move || {
         let (site, ctx) = validate(&sp, &common)?;
@@ -458,8 +453,6 @@ fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) {
         return;
     }
 
-    // Integration is substantial blocking DB work, so run the whole thing on the
-    // blocking pool rather than bouncing through an async task just to await it.
     tokio::task::spawn_blocking(move || {
         set_site_lock(site_id, Some(SiteLockError::IntegrationInProgress));
         // Release the lock on every exit path, including a panic in integration —
