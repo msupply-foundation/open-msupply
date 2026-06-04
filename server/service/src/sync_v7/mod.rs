@@ -1,6 +1,4 @@
-use repository::{
-    syncv7::GetCurrentSiteIdError, KeyValueStoreRepository, StorageConnection,
-};
+use repository::{syncv7::GetCurrentSiteIdError, KeyValueStoreRepository, StorageConnection};
 
 pub mod api;
 pub mod patient_lookup;

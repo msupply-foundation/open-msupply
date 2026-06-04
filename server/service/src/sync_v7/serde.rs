@@ -5,7 +5,8 @@ use repository::{
 use serde::de::DeserializeOwned;
 
 use crate::sync_v7::{
-    translations::store::translate_store, validate_translate_integrate::create_changelog,
+    translations::{invoice_line::translate_invoice_line, store::translate_store},
+    validate_translate_integrate::{create_changelog, SyncContext},
 };
 
 fn from_value<T: DeserializeOwned + Upsert + 'static>(
@@ -128,16 +129,25 @@ pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeErro
 pub(crate) type DeserializeResult =
     Result<Vec<(Box<dyn Upsert>, ChangeLogInsertRow)>, SyncRecordSerializeError>;
 
-pub fn deserialize(
+pub(crate) fn deserialize(
     connection: &StorageConnection,
     table_name: &ChangelogTableName,
     row: &SyncBufferRow,
+    sync_context: &SyncContext,
 ) -> DeserializeResult {
     let changelog_insert = create_changelog(table_name.clone(), RowActionType::Upsert, row);
     let data = &row.data;
     let upsert = match table_name {
         // Special
         ChangelogTableName::Store => return translate_store(connection, changelog_insert, data),
+        ChangelogTableName::InvoiceLine => {
+            return translate_invoice_line(
+                changelog_insert,
+                row.store_id.as_deref(),
+                data,
+                sync_context,
+            )
+        }
         // Basic
         ChangelogTableName::Unit => from_value::<UnitRow>(data),
         ChangelogTableName::Currency => from_value::<CurrencyRow>(data),
@@ -146,7 +156,6 @@ pub fn deserialize(
         ChangelogTableName::Item => from_value::<ItemRow>(data),
         ChangelogTableName::StockLine => from_value::<StockLineRow>(data),
         ChangelogTableName::Invoice => from_value::<InvoiceRow>(data),
-        ChangelogTableName::InvoiceLine => from_value::<InvoiceLineRow>(data),
         ChangelogTableName::ActivityLog => from_value::<ActivityLogRow>(data),
         ChangelogTableName::Barcode => from_value::<BarcodeRow>(data),
         ChangelogTableName::Clinician => from_value::<ClinicianRow>(data),

@@ -237,7 +237,7 @@ fn validate_translate_integrate_one(
 
     match row.action {
         SyncAction::Upsert => {
-            let upserts = deserialize(connection, &table_name, &row)?;
+            let upserts = deserialize(connection, &table_name, &row, sync_context)?;
             integrate_upserts(connection, upserts)
         }
         SyncAction::Delete => {
