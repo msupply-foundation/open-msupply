@@ -121,6 +121,9 @@ export enum ActivityLogNodeType {
   AssetLogReasonDeleted = 'ASSET_LOG_REASON_DELETED',
   AssetPropertyCreated = 'ASSET_PROPERTY_CREATED',
   AssetUpdated = 'ASSET_UPDATED',
+  BundledItemCreated = 'BUNDLED_ITEM_CREATED',
+  BundledItemDeleted = 'BUNDLED_ITEM_DELETED',
+  BundledItemUpdated = 'BUNDLED_ITEM_UPDATED',
   DemographicIndicatorCreated = 'DEMOGRAPHIC_INDICATOR_CREATED',
   DemographicIndicatorUpdated = 'DEMOGRAPHIC_INDICATOR_UPDATED',
   DemographicProjectionCreated = 'DEMOGRAPHIC_PROJECTION_CREATED',
@@ -139,11 +142,15 @@ export enum ActivityLogNodeType {
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
   ItemVariantCreated = 'ITEM_VARIANT_CREATED',
   ItemVariantDeleted = 'ITEM_VARIANT_DELETED',
+  ItemVariantUpdated = 'ITEM_VARIANT_UPDATED',
   ItemVariantUpdatedName = 'ITEM_VARIANT_UPDATED_NAME',
   ItemVariantUpdateDosePerUnit = 'ITEM_VARIANT_UPDATE_DOSE_PER_UNIT',
   ItemVariantUpdateLocationType = 'ITEM_VARIANT_UPDATE_LOCATION_TYPE',
   ItemVariantUpdateManufacturer = 'ITEM_VARIANT_UPDATE_MANUFACTURER',
   ItemVariantUpdateVvmType = 'ITEM_VARIANT_UPDATE_VVM_TYPE',
+  PackagingVariantCreated = 'PACKAGING_VARIANT_CREATED',
+  PackagingVariantDeleted = 'PACKAGING_VARIANT_DELETED',
+  PackagingVariantUpdated = 'PACKAGING_VARIANT_UPDATED',
   PatientCreated = 'PATIENT_CREATED',
   PatientUpdated = 'PATIENT_UPDATED',
   PrescriptionCreated = 'PRESCRIPTION_CREATED',
@@ -181,6 +188,7 @@ export enum ActivityLogNodeType {
   SensorLocationChanged = 'SENSOR_LOCATION_CHANGED',
   StocktakeCreated = 'STOCKTAKE_CREATED',
   StocktakeDeleted = 'STOCKTAKE_DELETED',
+  StocktakeEdited = 'STOCKTAKE_EDITED',
   StocktakeStatusFinalised = 'STOCKTAKE_STATUS_FINALISED',
   StockBatchChange = 'STOCK_BATCH_CHANGE',
   StockCostPriceChange = 'STOCK_COST_PRICE_CHANGE',
@@ -2903,6 +2911,13 @@ export type EqualFilterRequisitionTypeInput = {
   equalTo?: InputMaybe<RequisitionNodeType>;
   notEqualAll?: InputMaybe<Array<RequisitionNodeType>>;
   notEqualTo?: InputMaybe<RequisitionNodeType>;
+};
+
+export type EqualFilterSensorTypeInput = {
+  equalAny?: InputMaybe<Array<SensorNodeType>>;
+  equalTo?: InputMaybe<SensorNodeType>;
+  notEqualAll?: InputMaybe<Array<SensorNodeType>>;
+  notEqualTo?: InputMaybe<SensorNodeType>;
 };
 
 export type EqualFilterStatusInput = {
@@ -8253,6 +8268,7 @@ export type QueriesPeriodsArgs = {
 
 export type QueriesPluginDataArgs = {
   filter?: InputMaybe<PluginDataFilterInput>;
+  page?: InputMaybe<PaginationInput>;
   pluginCode: Scalars['String']['input'];
   sort?: InputMaybe<Array<PluginDataSortInput>>;
   storeId: Scalars['String']['input'];
@@ -9364,8 +9380,10 @@ export type SensorConnector = {
 export type SensorFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  locationCode?: InputMaybe<StringFilterInput>;
   name?: InputMaybe<StringFilterInput>;
-  serial?: InputMaybe<EqualFilterStringInput>;
+  serial?: InputMaybe<StringFilterInput>;
+  type?: InputMaybe<EqualFilterSensorTypeInput>;
 };
 
 export type SensorNode = {
