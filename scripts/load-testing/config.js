@@ -108,6 +108,13 @@ export const config = {
   // Cap on concurrent VUs the storm may allocate. With ~10s counts, in-flight ≈ rate × 10s, so this
   // must be high to let the pileup form (else k6 just drops iterations — itself a collapse signal).
   syncStormMaxVus: envInt('SYNC_STORM_MAX_VUS', file.syncStormMaxVus != null ? file.syncStormMaxVus : 300),
+  // Persistent graphql-ws subscribers (the path real clients prefer). Each VU holds one websocket
+  // subscribed to syncInfoUpdated — exercises the shared/debounced subscription worker, the broadcast
+  // fan-out and the subscription trigger channel. count = number of concurrent connected clients.
+  syncSubscriberEnabled: envBool('SYNC_SUBSCRIBER_ENABLED', file.syncSubscriberEnabled != null ? file.syncSubscriberEnabled : false),
+  syncSubscriberCount: envInt('SYNC_SUBSCRIBER_COUNT', file.syncSubscriberCount != null ? file.syncSubscriberCount : 50),
+  // How long each VU holds its subscription before reconnecting (reproduces real reconnect churn).
+  syncSubscriberHoldSeconds: envInt('SYNC_SUBSCRIBER_HOLD_SECONDS', file.syncSubscriberHoldSeconds != null ? file.syncSubscriberHoldSeconds : 300),
   thinkMinMs: envInt('THINK_MIN_MS', file.thinkMinMs != null ? file.thinkMinMs : 1000),
   thinkMaxMs: envInt('THINK_MAX_MS', file.thinkMaxMs != null ? file.thinkMaxMs : 5000),
   // Workflow scenarios pause longer between steps (a human filling/editing a form), which keeps the
@@ -210,6 +217,11 @@ function buildScenarios() {
       tags: { scenario: 'syncInfoStorm' },
     };
   }
+  if (config.syncSubscriberEnabled) {
+    // Persistent connected clients, ramped like every other worker class (0→count over rampDuration,
+    // then hold). Each VU holds a graphql-ws subscription for syncSubscriberHoldSeconds, then reconnects.
+    scenarios.syncSubscriber = rampingScenario('syncSubscriber', vus(config.syncSubscriberCount), '0s');
+  }
   return scenarios;
 }
 
@@ -241,6 +253,8 @@ export function buildOptions() {
   return {
     scenarios: buildScenarios(),
     thresholds: buildThresholds(), // NB: no abortOnFail anywhere — runs always complete.
+    // Load-test servers often use a self-signed/internal cert; needed for wss subscriptions too.
+    insecureSkipTLSVerify: true,
     noConnectionReuse: false, // keep-alive on, matching the real client
     discardResponseBodies: false, // we parse bodies for error detection
     // Tail latency is the point of this test — k6's default stats stop at p95.

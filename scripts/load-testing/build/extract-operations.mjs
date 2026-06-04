@@ -46,6 +46,10 @@ const OPERATIONS = [
   // `numberOfRecordsInPushQueue`, which runs a COUNT over the changelog_deduped view. On a central
   // server that count is a full changelog scan and was the dominant DB cost in the v2.16.4 load test.
   'syncInfo',
+  // The graphql-transport-ws subscription the real client prefers (useSyncInfo). Driven over a
+  // websocket by the syncSubscriber scenario — exercises the SHARED/debounced subscription path
+  // (one server-side count per 30s for all subscribers) rather than the per-client poll.
+  'syncInfoUpdated',
   'itemCounts',
   'requisitionCounts',
   'stockCounts',
