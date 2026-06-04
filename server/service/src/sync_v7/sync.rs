@@ -18,7 +18,7 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
         settings::{BatchSize, SyncSettings},
-        site_auth::{SiteAuthService, SiteAuthTrait},
+        site_auth::{RequestAndSetSiteAuthError, SiteAuthService, SiteAuthTrait},
         synchroniser::run_post_sync_triggers,
         ActiveStoresOnSite,
     },
@@ -27,6 +27,7 @@ use crate::{
         get_current_site_id,
         prepare::prepare,
         sync_logger::{SyncLogger, SyncLoggerHandle, SyncStep},
+        sync_request::{SyncRequest, SyncRequestStep},
         validate_translate_integrate::{validate_translate_integrate, SyncContext},
     },
 };
@@ -101,6 +102,7 @@ pub(crate) fn sync_record_to_buffer_row(
     record: SyncRecordV7,
     source_site_id: i32,
     app_version: Option<Version>,
+    reference_id: Option<String>,
 ) -> SyncBufferRowInsert {
     SyncBufferRowInsert {
         record_id: record.record_id,
@@ -117,7 +119,7 @@ pub(crate) fn sync_record_to_buffer_row(
         store_id: record.store_id,
         transfer_store_id: record.transfer_store_id,
         patient_id: record.patient_id,
-        reference: None,
+        reference_id,
     }
 }
 
@@ -125,19 +127,12 @@ pub(crate) async fn sync_v7(
     service_provider: &ServiceProvider,
     ctx: &ServiceContext,
     settings: SyncSettings,
-    is_initialising: bool,
+    request: SyncRequest,
 ) -> Result<(), SyncError> {
-    let mut logger = SyncLogger::start(&ctx.connection)?
+    let mut logger = SyncLogger::start(&ctx.connection, request.reference_id.clone())?
         .with_subscription_trigger(service_provider.subscription_trigger.clone());
 
-    let sync_result = sync_inner(
-        &mut logger,
-        service_provider,
-        ctx,
-        settings,
-        is_initialising,
-    )
-    .await;
+    let sync_result = sync_inner(&mut logger, service_provider, ctx, settings, &request).await;
 
     if let Err(error) = &sync_result {
         logger.error(error)?;
@@ -154,35 +149,48 @@ async fn sync_inner<'a>(
     service_provider: &ServiceProvider,
     ctx: &ServiceContext,
     settings: SyncSettings,
-    is_initialising: bool,
+    request: &SyncRequest,
 ) -> Result<(), SyncError> {
     let session = load_or_request_auth(service_provider, ctx, &settings).await?;
     check_site_status(&session).await?;
 
-    // During initialisation we have no local data to push and no integration to
-    // wait for — the central server hasn't seen this site yet. Skip both steps
-    // entirely so the sync_log_v7 row leaves their timestamps null and the UI
-    // hides them naturally.
-    if !is_initialising {
+    if let Some(push) = &request.push {
         logger.start_step(SyncStep::Push)?;
-        session.push(logger).await?;
+        session.push(logger, push).await?;
 
+        // Wait for integration whenever we pushed — central is integrating
+        // what we just sent, and any subsequent pull must observe that state.
         logger.start_step(SyncStep::WaitForIntegration)?;
         session
             .wait_for_integration(INTEGRATION_POLL_PERIOD_SECONDS, INTEGRATION_TIMEOUT_SECONDS)
             .await?;
     }
 
-    logger.start_step(SyncStep::Pull)?;
-    session.pull(logger, is_initialising).await?;
+    if let Some(pull) = &request.pull {
+        logger.start_step(SyncStep::Pull)?;
+        session
+            .pull(
+                logger,
+                pull,
+                request.reference_id.clone(),
+                request.is_initialising,
+            )
+            .await?;
 
-    logger.start_step(SyncStep::Integrate)?;
-    session
-        .integrate(logger, service_provider, is_initialising)
-        .await?;
+        logger.start_step(SyncStep::Integrate)?;
+        session
+            .integrate(
+                logger,
+                service_provider,
+                request.reference_id.clone(),
+                request.is_initialising,
+            )
+            .await?;
+    }
 
     logger.finish()?;
-    run_post_sync_triggers(ctx, service_provider, !is_initialising);
+
+    run_post_sync_triggers(&ctx, service_provider, !request.is_initialising);
 
     Ok(())
 }
@@ -202,8 +210,10 @@ async fn load_or_request_auth<'a>(
             SiteAuthService
                 .request_and_set_site_auth(service_provider, settings)
                 .await
-                // TODO can it be more concrete error for SyncError ?
-                .map_err(|e| SyncError::RequestSiteAuthError(format_error(&e)))?;
+                .map_err(|e| match e {
+                    RequestAndSetSiteAuthError::SyncV7Error(sync_error) => sync_error,
+                    other => SyncError::RequestSiteAuthError(format_error(&other)),
+                })?;
             Common::load(service_provider)?
         }
         Err(e) => return Err(e),
@@ -217,6 +227,22 @@ async fn load_or_request_auth<'a>(
         },
         batch_size: settings.batch_size.clone(),
     })
+}
+
+// True when central has cleared this site's token
+pub async fn is_central_token_cleared(
+    service_provider: &ServiceProvider,
+    settings: &SyncSettings,
+) -> bool {
+    let api = match SyncApiV7::new(service_provider, &settings.url) {
+        Ok(api) => api,
+        Err(_) => return false,
+    };
+
+    match api.site_status(()).await {
+        Err(SyncError::TokenNotFound) => true,
+        _ => false,
+    }
 }
 
 /// Probe the central server's site_status and persist its site id so other
@@ -238,13 +264,24 @@ pub(crate) struct SyncV7<'a> {
 }
 
 impl<'a> SyncV7<'a> {
-    pub(crate) async fn push<'b>(&self, logger: &mut SyncLogger<'b>) -> Result<(), SyncError> {
-        let cursor_controller = CursorController::new(KeyType::SyncPushCursorV7);
+    pub(crate) async fn push<'b>(
+        &self,
+        logger: &mut SyncLogger<'b>,
+        step: &SyncRequestStep,
+    ) -> Result<(), SyncError> {
+        let cursor_controller = CursorController::from_cursor_type(step.cursor_type.clone());
         // TODO use SourceSiteId, and remove from other uses
         let site_id = get_current_site_id(self.connection)?;
 
-        // TODO think about just the filter for source site id = current site on changelog
-        let filter = ChangelogFilter::all_data_edited_on_site(site_id);
+        let filter = ChangelogCondition::And(vec![
+            ChangelogFilter::all_data_edited_on_site(site_id),
+            step.filter.clone(),
+        ]);
+
+        info!(
+            "Pushing v7 data with batch size {}",
+            self.batch_size.remote_push
+        );
 
         loop {
             let cursor = cursor_controller.get(self.connection)? as i64;
@@ -307,9 +344,16 @@ impl<'a> SyncV7<'a> {
     pub(crate) async fn pull<'b>(
         &self,
         logger: &mut SyncLogger<'b>,
+        step: &SyncRequestStep,
+        reference_id: Option<String>,
         is_initialising: bool,
     ) -> Result<(), SyncError> {
-        let cursor_controller = CursorController::new(KeyType::SyncPullCursorV7);
+        let cursor_controller = CursorController::from_cursor_type(step.cursor_type.clone());
+
+        info!(
+            "Pulling v7 data with batch size {}",
+            self.batch_size.remote_pull
+        );
 
         loop {
             let cursor = cursor_controller.get(self.connection)? as i64;
@@ -320,32 +364,31 @@ impl<'a> SyncV7<'a> {
                     cursor,
                     batch_size: self.batch_size.remote_pull,
                     is_initialising,
+                    filter: Some(step.filter.clone()),
                 })
                 .await?;
 
             let record_count = batch.records.len();
             let max_cursor = batch.max_cursor;
-
             let site_id = batch.site_id;
-            let Some(batch_max_cursor) = batch.records.last().map(|r| r.cursor) else {
-                break;
-            };
-            logger.progress(max_cursor as i64 - batch_max_cursor)?;
+            let batch_last_cursor = batch.last_cursor_in_batch;
+            logger.progress((max_cursor - batch_last_cursor) as i64)?;
 
-            info!("Pulled {record_count} max batch cursor {batch_max_cursor} cursor {cursor} max cursor {}", batch.max_cursor);
+            info!("Pulled {record_count} batch last cursor {batch_last_cursor} cursor {cursor} max cursor {}", batch.max_cursor);
 
             // V7 pull: records arrive without an originating app_version (it isn't
             // carried through the central server), so app_version is None here.
             let sync_buffer_rows: Vec<SyncBufferRowInsert> = batch
                 .records
                 .into_iter()
-                .map(|r| sync_record_to_buffer_row(r, site_id, None))
+                .map(|r| sync_record_to_buffer_row(r, site_id, None, reference_id.clone()))
                 .collect();
 
             self.connection
                 .transaction_sync(|t_con| {
                     SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows)?;
-                    cursor_controller.update(self.connection, batch_max_cursor as u64)
+
+                    cursor_controller.update(self.connection, batch_last_cursor)
                 })
                 .map_err(|e| e.to_inner_error())?;
 
@@ -363,6 +406,7 @@ impl<'a> SyncV7<'a> {
         &self,
         logger: &mut SyncLogger<'b>,
         service_provider: &ServiceProvider,
+        reference_id: Option<String>,
         is_initialising: bool,
     ) -> Result<(), SyncError> {
         let active_stores = ActiveStoresOnSite::get(self.connection)
@@ -386,7 +430,7 @@ impl<'a> SyncV7<'a> {
                     &ctx.connection,
                     Some(&mut logger),
                     central_site_id,
-                    None,
+                    reference_id.as_deref(),
                     SyncContext::Remote {
                         active_stores,
                         is_initialising,

@@ -33,7 +33,7 @@ import {
 } from '@common/components';
 import { AppRoute } from '@openmsupply-client/config';
 
-const STATUS_POLLING_INTERVAL = 1000;
+const STATUS_POLLING_INTERVAL = 2000;
 
 interface SyncModalProps {
   open: boolean;
@@ -122,17 +122,16 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
     isLoading,
     onManualSync,
   } = useHostSync(open);
-  const { updateUserIsLoading, updateUser, setStore, store } = useAuthContext();
+  const { refreshUserCookie } = useAuthContext();
   const error =
     syncStatus?.error &&
     mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
 
   const sync = async () => {
-    await updateUser();
     await onManualSync();
-    if (!!store) {
-      await setStore(store);
-    }
+    // Pick up permission/user-detail changes that sync just brought in,
+    // so the UI reflects them without forcing a re-login.
+    await refreshUserCookie();
   };
 
   const durationAsDate = DateUtils.secondsAsDate(
@@ -265,7 +264,7 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
           <LoadingButton
             shouldShrink={false}
             autoFocus
-            isLoading={isLoading || updateUserIsLoading}
+            isLoading={isLoading}
             startIcon={<RadioIcon />}
             variant="contained"
             disabled={false}

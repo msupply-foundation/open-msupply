@@ -1,14 +1,18 @@
 use crate::{
     processors::ProcessorType,
     service_provider::{ServiceContext, ServiceProvider},
-    sync::{sync_status::logger::SyncStep, CentralServerConfig},
+    sync::{
+        sync_buffer::get_sync_buffer_for_table, sync_status::logger::SyncStep, CentralServerConfig,
+    },
 };
 use log::warn;
 use repository::{
     KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, SyncAction,
+    SyncBufferRepository, SyncVersion,
 };
 
 use std::sync::Arc;
+use std::time::Instant;
 use thiserror::Error;
 use util::format_error;
 
@@ -24,14 +28,16 @@ use super::{
         WaitForSyncOperationError,
     },
     settings::{SyncSettings, SYNC_V5_VERSION, SYNC_V6_VERSION},
-    sync_buffer::get_ordered_sync_buffer_records,
-    sync_status::logger::{SyncLogger, SyncLoggerError},
+    sync_on_central::adjust_v6_cursor,
+    sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
-    translations::{all_translators, pull_integration_order},
+    translations::{all_translators, pull_integration_order, SyncTranslators},
 };
 
+const INTEGRATION_BATCH_SIZE: i64 = 10_000;
 const INTEGRATION_POLL_PERIOD_SECONDS: u64 = 1;
 const INTEGRATION_TIMEOUT_SECONDS: u64 = 30;
+
 pub struct SynchroniserV5V6 {
     settings: SyncSettings,
     service_provider: Arc<ServiceProvider>,
@@ -72,7 +78,9 @@ pub(crate) enum SyncError {
     #[error("Error while pulling remote records")]
     RemotePullError(#[from] RemotePullError),
     #[error("Error while integrating records")]
-    IntegrationError(RepositoryError),
+    IntegrationError(#[source] RepositoryError),
+    #[error("Other error: {0}")]
+    Other(String),
 }
 
 // For unwrap and expect debug implementation is used
@@ -281,16 +289,13 @@ impl SynchroniserV5V6 {
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
-        let (upserts, deletes, merges) = integrate_and_translate_sync_buffer(
-            &ctx.connection,
-            // Only pass in logger during initialisation
-            match is_initialised {
-                false => Some(logger),
-                true => None,
-            },
+        let (upserts, deletes, merges) = integrate_and_translate_sync_outer(
+            &self.service_provider,
+            logger,
             central_sync_server_id,
+            !self.settings.disable_integration_transaction,
         )
-        .map_err(SyncError::IntegrationError)?;
+        .await?;
 
         upserts.log("Upsert");
         deletes.log("Delete");
@@ -334,12 +339,15 @@ impl SynchroniserV5V6 {
         kv.set_string(KeyType::SettingsSyncUrl, Some(response.v7_url))?;
         SyncVersion::set(&ctx.connection, SyncVersion::V7)?;
 
-        // Carry v6 cursors over to v7. Both index the same `changelog` table
-        // so copying the values preserves position.
+        // Carry v6 cursors over to v7. See `adjust_v6_pull_cursor` for why we subtract 1.
         let v6_push = CursorController::new(KeyType::SyncPushCursorV6).get(&ctx.connection)?;
-        CursorController::new(KeyType::SyncPushCursorV7).update(&ctx.connection, v6_push)?;
+        let v7_push = adjust_v6_cursor(v6_push) as u64;
+        log::info!("V6->V7 cursor copy: push {} -> {}", v6_push, v7_push);
+        CursorController::new(KeyType::SyncPushCursorV7).update(&ctx.connection, v7_push)?;
         let v6_pull = CursorController::new(KeyType::SyncPullCursorV6).get(&ctx.connection)?;
-        CursorController::new(KeyType::SyncPullCursorV7).update(&ctx.connection, v6_pull)?;
+        let v7_pull = adjust_v6_cursor(v6_pull) as u64;
+        log::info!("V6->V7 cursor copy: pull {} -> {}", v6_pull, v7_pull);
+        CursorController::new(KeyType::SyncPullCursorV7).update(&ctx.connection, v7_pull)?;
 
         // The v7 token is acquired lazily at the start of the next sync cycle
         // (see `SynchroniserV7::sync`), so any get_token failure surfaces
@@ -380,13 +388,67 @@ pub(crate) fn run_post_sync_triggers(
 
     ctx.processors_trigger
         .trigger_processor(ProcessorType::RequisitionAutoFinalise);
+
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::MergeSyncMessage);
+}
+
+/// Async wrapper around the synchronous `integrate_and_translate_sync_buffer`.
+///
+/// Integration does substantial blocking DB work. Running it directly on a tokio worker
+/// thread starves other tasks scheduled on the same thread — notably the GraphQL
+/// subscription tasks (`sync_info`, `initialisation_status`) that need to fire updates
+/// to clients while a sync is in progress. We hand the work to `spawn_blocking` so the
+/// runtime can keep driving those tasks on its worker threads.
+///
+/// The logger is passed across the blocking boundary via `SyncLoggerHandle` because it
+/// borrows the `StorageConnection`, which only exists inside the blocking closure.
+async fn integrate_and_translate_sync_outer(
+    service_provider: &ServiceProvider,
+    logger: &mut SyncLogger<'_>,
+    source_site_id: i32,
+    use_transaction: bool,
+) -> Result<
+    (
+        TranslationAndIntegrationResults,
+        TranslationAndIntegrationResults,
+        TranslationAndIntegrationResults,
+    ),
+    SyncError,
+> {
+    let ctx = service_provider.basic_context()?;
+
+    let logger_handle = logger.into_handle();
+
+    let (returned_logger_handle, result) =
+        // Spawn the blocking task on a separate thread to avoid starving the async runtime and blocking other tasks while integrating
+        tokio::task::spawn_blocking(move || -> Result<_, SyncError> {
+            let mut logger = logger_handle.with_connection(&ctx.connection);
+
+            let result = integrate_and_translate_sync_buffer(
+                &ctx.connection,
+                Some(&mut logger),
+                source_site_id,
+                use_transaction,
+            )
+            .map_err(SyncError::IntegrationError)?;
+
+            Ok((logger.into_handle(), result))
+        })
+        .await
+        .map_err(|e| SyncError::Other(format!("integrate join error: {e:?}")))??;
+
+    logger.restore(returned_logger_handle);
+
+    Ok(result)
 }
 
 /// Translation And Integration of sync buffer, pub since used in CLI
 pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
-    logger: Option<&mut SyncLogger<'_>>,
+    mut logger: Option<&mut SyncLogger<'_>>,
     source_site_id: i32,
+    use_transaction: bool,
 ) -> Result<
     (
         TranslationAndIntegrationResults,
@@ -404,7 +466,7 @@ pub fn integrate_and_translate_sync_buffer(
     // - not initialised: no transactions at all
 
     // Closure, to be run in a transaction or without a transaction
-    let integrate_and_translate = |connection: &StorageConnection| -> Result<
+    let mut integrate_and_translate = |connection: &StorageConnection| -> Result<
         (
             TranslationAndIntegrationResults,
             TranslationAndIntegrationResults,
@@ -415,65 +477,137 @@ pub fn integrate_and_translate_sync_buffer(
         let translators = all_translators();
         let table_order = pull_integration_order(&translators);
 
-        let translation_and_integration = TranslationAndIntegration::new(connection);
-
-        // Translate and integrate upserts (ordered by referential database constraints)
-        let upsert_sync_buffer_records = get_ordered_sync_buffer_records(
-            connection,
-            SyncAction::Upsert,
-            &table_order,
+        // Seed integration progress total with the global pending count so the logger
+        // reports a real total across all (action, table) batches, not just the first 10k slice.
+        let total_pending = SyncBufferRepository::new(connection).count_pending(
             source_site_id,
-        )?;
+            SyncVersion::V5V6,
+            None,
+        )? as u64;
+        if let Some(logger) = logger.as_mut() {
+            logger
+                .progress(SyncStepProgress::Integrate, total_pending)
+                .map_err(SyncLoggerError::to_repository_error)?;
+        }
 
-        // Translate and integrate delete (ordered by referential database constraints, in reverse)
-        let delete_sync_buffer_records = get_ordered_sync_buffer_records(
+        let mut integrator = SyncBufferIntegrator::new(
             connection,
-            SyncAction::Delete,
             &table_order,
+            &translators,
             source_site_id,
-        )?;
+            total_pending,
+        );
 
-        let upsert_integration_result = translation_and_integration
-            .translate_and_integrate_sync_records(
-                &upsert_sync_buffer_records,
-                &translators,
-                logger,
-            )?;
+        let upserts = integrator.process_action(SyncAction::Upsert, logger.as_deref_mut())?;
+        let deletes = integrator.process_action(SyncAction::Delete, logger.as_deref_mut())?;
+        let merges = integrator.process_action(SyncAction::Merge, logger.as_deref_mut())?;
 
-        // pass the logger here
-        let delete_integration_result = translation_and_integration
-            .translate_and_integrate_sync_records(
-                &delete_sync_buffer_records,
-                &translators,
-                None,
-            )?;
-
-        let merge_sync_buffer_records = get_ordered_sync_buffer_records(
-            connection,
-            SyncAction::Merge,
-            &table_order,
-            source_site_id,
-        )?;
-
-        let merge_integration_result: TranslationAndIntegrationResults =
-            translation_and_integration.translate_and_integrate_sync_records(
-                &merge_sync_buffer_records,
-                &translators,
-                None,
-            )?;
-
-        Ok((
-            upsert_integration_result,
-            delete_integration_result,
-            merge_integration_result,
-        ))
+        Ok((upserts, deletes, merges))
     };
 
-    let result = connection
-        .transaction_sync(integrate_and_translate)
-        .map_err::<RepositoryError, _>(|e| e.to_inner_error())?;
+    let result = if use_transaction {
+        connection
+            .transaction_sync(integrate_and_translate)
+            .map_err::<RepositoryError, _>(|e| e.to_inner_error())?
+    } else {
+        integrate_and_translate(connection)?
+    };
 
     Ok(result)
+}
+
+/// Drives integration of every pending sync buffer row for each `SyncAction`
+/// (Upsert/Delete/Merge), one `INTEGRATION_BATCH_SIZE`-sized chunk per table at a time.
+///
+/// `done_so_far`, `total_errored`, and `last_progress_time` accumulate across every
+/// `process_action` call, so the progress log reports cumulative totals and a rec/s window that
+/// spans both integration and the next batch's fetch, rather than resetting between actions.
+struct SyncBufferIntegrator<'a> {
+    connection: &'a StorageConnection,
+    table_order: &'a [&'a str],
+    translators: &'a SyncTranslators,
+    source_site_id: i32,
+    total_pending: u64,
+    done_so_far: u64,
+    total_errored: u32,
+    last_progress_time: Instant,
+}
+
+impl<'a> SyncBufferIntegrator<'a> {
+    fn new(
+        connection: &'a StorageConnection,
+        table_order: &'a [&'a str],
+        translators: &'a SyncTranslators,
+        source_site_id: i32,
+        total_pending: u64,
+    ) -> Self {
+        Self {
+            connection,
+            table_order,
+            translators,
+            source_site_id,
+            total_pending,
+            done_so_far: 0,
+            total_errored: 0,
+            // Reset *after* each log, so the next batch's rec/s window covers both the fetch of
+            // the next 10k records and their integration.
+            last_progress_time: Instant::now(),
+        }
+    }
+
+    /// Process every pending row for a single `SyncAction`, one `INTEGRATION_BATCH_SIZE`-sized
+    /// chunk per table at a time, accumulating progress into `self`.
+    fn process_action(
+        &mut self,
+        action: SyncAction,
+        mut logger: Option<&mut SyncLogger>,
+    ) -> Result<TranslationAndIntegrationResults, RepositoryError> {
+        let mut integrator = TranslationAndIntegration::new(self.connection);
+        for table in self.table_order {
+            loop {
+                let records = get_sync_buffer_for_table(
+                    self.connection,
+                    action.clone(),
+                    table,
+                    self.source_site_id,
+                    INTEGRATION_BATCH_SIZE,
+                )?;
+                if records.is_empty() {
+                    break;
+                }
+                let batch_size = records.len() as u64;
+                let batch_errors =
+                    integrator.translate_and_integrate_sync_records(&records, self.translators)?;
+                self.done_so_far += batch_size;
+                self.total_errored += batch_errors;
+
+                let elapsed = self.last_progress_time.elapsed();
+                let rec_per_sec = if elapsed.as_secs_f64() > 0.0 {
+                    batch_size as f64 / elapsed.as_secs_f64()
+                } else {
+                    0.0
+                };
+                log::info!(
+                    "Integration progress - table: {table}, integrated: {}, total: {}, errored: {} ({:.1} rec/s)",
+                    self.done_so_far,
+                    self.total_pending,
+                    self.total_errored,
+                    rec_per_sec,
+                );
+                self.last_progress_time = Instant::now();
+
+                if let Some(logger) = logger.as_deref_mut() {
+                    logger
+                        .progress(
+                            SyncStepProgress::Integrate,
+                            self.total_pending.saturating_sub(self.done_so_far),
+                        )
+                        .map_err(SyncLoggerError::to_repository_error)?;
+                }
+            }
+        }
+        Ok(integrator.result)
+    }
 }
 
 #[cfg(test)]

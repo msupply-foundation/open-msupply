@@ -1,6 +1,5 @@
 use super::{
-    store_row::store, ChangelogRepository, RowActionType,
-    StorageConnection,
+    store_row::store, ChangelogRepository, RowActionType, RowOrId, StorageConnection,
 };
 use crate::{ChangelogSyncType, RepositoryError, SourceSiteId, Upsert};
 use ts_rs::TS;
@@ -23,6 +22,7 @@ pub enum SyncMessageRowStatus {
 pub enum SyncMessageRowType {
     #[default]
     RequestFieldChange,
+    Merge,
     #[serde(untagged)]
     Other(String),
 }
@@ -96,7 +96,7 @@ impl<'a> SyncMessageRowRepository<'a> {
     pub fn upsert_one(&self, row: &SyncMessageRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = SyncMessageRow::generate_changelog(
-            row.id.clone(),
+            RowOrId::Row(row),
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -129,7 +129,7 @@ impl Upsert for SyncMessageRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
+                RowOrId::Row(self),
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),

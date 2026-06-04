@@ -4,6 +4,11 @@ use repository::{
 };
 use serde::de::DeserializeOwned;
 
+use crate::sync_v7::{
+    translations::{invoice_line::translate_invoice_line, store::translate_store},
+    validate_translate_integrate::{create_changelog, SyncContext},
+};
+
 fn from_value<T: DeserializeOwned + Upsert + 'static>(
     data: &serde_json::Value,
 ) -> Result<Box<dyn Upsert>, SyncRecordSerializeError> {
@@ -52,6 +57,7 @@ pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeErro
         Row::AssetLogReason(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::AssetProperty(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::BackendPlugin(r) => serde_json::to_value(r).map_err(map_serde_err),
+        Row::AncillaryItem(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::BundledItem(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Campaign(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Demographic(r) => serde_json::to_value(r).map_err(map_serde_err),
@@ -120,20 +126,36 @@ pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeErro
     }
 }
 
-pub fn deserialize(
+pub(crate) type DeserializeResult =
+    Result<Vec<(Box<dyn Upsert>, ChangeLogInsertRow)>, SyncRecordSerializeError>;
+
+pub(crate) fn deserialize(
+    connection: &StorageConnection,
     table_name: &ChangelogTableName,
-    data: &serde_json::Value,
-) -> Result<Box<dyn Upsert>, SyncRecordSerializeError> {
-    match table_name {
+    row: &SyncBufferRow,
+    sync_context: &SyncContext,
+) -> DeserializeResult {
+    let changelog_insert = create_changelog(table_name.clone(), RowActionType::Upsert, row);
+    let data = &row.data;
+    let upsert = match table_name {
+        // Special
+        ChangelogTableName::Store => return translate_store(connection, changelog_insert, data),
+        ChangelogTableName::InvoiceLine => {
+            return translate_invoice_line(
+                changelog_insert,
+                row.store_id.as_deref(),
+                data,
+                sync_context,
+            )
+        }
+        // Basic
         ChangelogTableName::Unit => from_value::<UnitRow>(data),
         ChangelogTableName::Currency => from_value::<CurrencyRow>(data),
         ChangelogTableName::Name => from_value::<NameRow>(data),
-        ChangelogTableName::Store => from_value::<StoreRow>(data),
         ChangelogTableName::LocationType => from_value::<LocationTypeRow>(data),
         ChangelogTableName::Item => from_value::<ItemRow>(data),
         ChangelogTableName::StockLine => from_value::<StockLineRow>(data),
         ChangelogTableName::Invoice => from_value::<InvoiceRow>(data),
-        ChangelogTableName::InvoiceLine => from_value::<InvoiceLineRow>(data),
         ChangelogTableName::ActivityLog => from_value::<ActivityLogRow>(data),
         ChangelogTableName::Barcode => from_value::<BarcodeRow>(data),
         ChangelogTableName::Clinician => from_value::<ClinicianRow>(data),
@@ -162,6 +184,7 @@ pub fn deserialize(
         ChangelogTableName::AssetLogReason => from_value::<AssetLogReasonRow>(data),
         ChangelogTableName::AssetProperty => from_value::<AssetPropertyRow>(data),
         ChangelogTableName::BackendPlugin => from_value::<BackendPluginRow>(data),
+        ChangelogTableName::AncillaryItem => from_value::<AncillaryItemRow>(data),
         ChangelogTableName::BundledItem => from_value::<BundledItemRow>(data),
         ChangelogTableName::Campaign => from_value::<CampaignRow>(data),
         ChangelogTableName::Demographic => from_value::<DemographicRow>(data),
@@ -232,5 +255,7 @@ pub fn deserialize(
         ChangelogTableName::Preference => from_value::<PreferenceRow>(data),
         ChangelogTableName::ContactForm => from_value::<ContactFormRow>(data),
         ChangelogTableName::SystemLog => from_value::<SystemLogRow>(data),
-    }
+    }?;
+
+    Ok(vec![(upsert, changelog_insert)])
 }

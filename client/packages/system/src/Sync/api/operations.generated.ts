@@ -45,6 +45,11 @@ export type InitialiseSiteMutation = {
         fullError: string;
       }
     | {
+        __typename: 'SyncErrorV7Node';
+        fullError: string;
+        variantV7: Types.SyncErrorVariantV7;
+      }
+    | {
         __typename: 'SyncSettingsNode';
         intervalSeconds: number;
         url: string;
@@ -65,6 +70,11 @@ export type UpdateSyncSettingsMutation = {
         __typename: 'SyncErrorNode';
         variant: Types.SyncErrorVariant;
         fullError: string;
+      }
+    | {
+        __typename: 'SyncErrorV7Node';
+        fullError: string;
+        variantV7: Types.SyncErrorVariantV7;
       }
     | {
         __typename: 'SyncSettingsNode';
@@ -225,6 +235,10 @@ export type FullSyncStatusV7Fragment = {
     finished?: string | null;
     started: string;
   } | null;
+  linkedDescriptions: Array<
+    | { __typename: 'AllStoreDataDescription'; storeName: string }
+    | { __typename: 'TableNameDescription'; tableName: string }
+  >;
 };
 
 export type SyncInfoQueryVariables = Types.Exact<{ [key: string]: never }>;
@@ -347,6 +361,10 @@ export type SyncInfoQuery = {
           finished?: string | null;
           started: string;
         } | null;
+        linkedDescriptions: Array<
+          | { __typename: 'AllStoreDataDescription'; storeName: string }
+          | { __typename: 'TableNameDescription'; tableName: string }
+        >;
       }
     | null;
 };
@@ -470,6 +488,10 @@ export type SyncStatusQuery = {
           finished?: string | null;
           started: string;
         } | null;
+        linkedDescriptions: Array<
+          | { __typename: 'AllStoreDataDescription'; storeName: string }
+          | { __typename: 'TableNameDescription'; tableName: string }
+        >;
       }
     | null;
 };
@@ -627,6 +649,10 @@ export type SyncInfoUpdatedSubscription = {
             finished?: string | null;
             started: string;
           } | null;
+          linkedDescriptions: Array<
+            | { __typename: 'AllStoreDataDescription'; storeName: string }
+            | { __typename: 'TableNameDescription'; tableName: string }
+          >;
         }
       | null;
   };
@@ -756,6 +782,15 @@ export const FullSyncStatusV7FragmentDoc = gql`
     }
     errorThreshold
     warningThreshold
+    linkedDescriptions {
+      __typename
+      ... on AllStoreDataDescription {
+        storeName
+      }
+      ... on TableNameDescription {
+        tableName
+      }
+    }
   }
   ${SyncErrorV7FragmentDoc}
   ${SyncStatusWithProgressV7FragmentDoc}
@@ -780,10 +815,14 @@ export const InitialiseSiteDocument = gql`
       ... on SyncErrorNode {
         ...SyncError
       }
+      ... on SyncErrorV7Node {
+        ...SyncErrorV7
+      }
     }
   }
   ${SyncSettingsFragmentDoc}
   ${SyncErrorFragmentDoc}
+  ${SyncErrorV7FragmentDoc}
 `;
 export const UpdateSyncSettingsDocument = gql`
   mutation updateSyncSettings($syncSettings: SyncSettingsInput!) {
@@ -795,10 +834,14 @@ export const UpdateSyncSettingsDocument = gql`
       ... on SyncErrorNode {
         ...SyncError
       }
+      ... on SyncErrorV7Node {
+        ...SyncErrorV7
+      }
     }
   }
   ${SyncSettingsFragmentDoc}
   ${SyncErrorFragmentDoc}
+  ${SyncErrorV7FragmentDoc}
 `;
 export const SyncInfoDocument = gql`
   query syncInfo {

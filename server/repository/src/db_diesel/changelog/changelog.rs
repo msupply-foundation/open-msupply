@@ -1,8 +1,10 @@
 use crate::{
-    db_diesel::store_row::store, diesel_macros::diesel_string_enum,
-    dynamic_query_filter::create_condition, name_store_join::name_store_join,
-    vaccination_row::vaccination, KeyType, KeyValueStoreRepository, RepositoryError,
-    StorageConnection, TransactionNotification,
+    db_diesel::{changelog::changelog_cursor_tracker::ChangelogCursorTracker, store_row::store},
+    diesel_macros::diesel_string_enum,
+    dynamic_query_filter::create_condition,
+    name_store_join::name_store_join,
+    vaccination_row::vaccination,
+    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, TransactionNotification,
 };
 use diesel::{dsl::LeftJoinQuerySource, prelude::*};
 use serde::{Deserialize, Serialize};
@@ -121,6 +123,7 @@ diesel_string_enum! {
     pub enum ChangelogTableName {
         Abbreviation,
         ActivityLog,
+        AncillaryItem,
         Asset,
         AssetCatalogueItem,
         AssetCatalogueType,
@@ -254,8 +257,8 @@ pub struct ChangeLogInsertRow {
     pub store_id: Option<String>,
     pub source_site_id: Option<i32>,
     pub transfer_store_id: Option<String>,
-    // At the time of inserts a patient_id is the patient_link_id. 
-    // If the patient info changes the changelog view will resolve to 
+    // At the time of inserts a patient_id is the patient_link_id.
+    // If the patient info changes the changelog view will resolve to
     // the correct patient_id via name_link join.
     #[diesel(column_name = "patient_link_id")]
     pub patient_id: Option<String>,
@@ -324,6 +327,12 @@ impl<'a> ChangelogRepository<'a> {
                 .limit(remaining)
                 .select(changelog::all_columns);
 
+            // Debug diesel query
+            // println!(
+            //     "{}",
+            //     diesel::debug_query::<crate::DBType, _>(&sub_query).to_string()
+            // );
+
             let sub_results: Vec<ChangelogRow> =
                 sub_query.load(self.connection.lock().connection())?;
 
@@ -343,10 +352,17 @@ impl<'a> ChangelogRepository<'a> {
         })
     }
 
-    /// Returns latest/max change log cursor. Queries the underlying table
-    /// (not the view) so it works during migrations, before `changelog_view`
-    /// gets rebuilt at the end of the migration run.
+    /// Returns latest/max change log cursor.
+    ///
+    /// If the `ChangelogCursorTracker` reports an in-flight cursor, the safe cursor
+    /// (`min(in_flight)`) is returned without a database query — it is
+    /// always at most the DB MAX visible to this connection (every committed
+    /// changelog row passed through `track`, registering a value <= its actual
+    /// cursor).
     pub fn max_cursor(&self) -> Result<u64, RepositoryError> {
+        if let Some(safe) = ChangelogCursorTracker::max_safe_cursor(self.connection) {
+            return Ok(safe);
+        }
         let result = changelog_with_links::table
             .select(diesel::dsl::max(changelog_with_links::cursor))
             .first::<Option<i64>>(self.connection.lock().connection())?;
@@ -354,6 +370,8 @@ impl<'a> ChangelogRepository<'a> {
     }
 
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<(), RepositoryError> {
+        ChangelogCursorTracker::track(self.connection)?;
+
         diesel::insert_into(changelog_with_links::table)
             .values(row)
             .execute(self.connection.lock().connection())?;
@@ -364,6 +382,8 @@ impl<'a> ChangelogRepository<'a> {
 
     pub fn batch_insert(&self, rows: Vec<ChangeLogInsertRow>) -> Result<(), RepositoryError> {
         //TODO: Need to handle batch insert size limit
+        ChangelogCursorTracker::track(self.connection)?;
+
         diesel::insert_into(changelog_with_links::table)
             .values(rows)
             .execute(self.connection.lock().connection())?;
@@ -437,6 +457,13 @@ impl ChangelogFilter {
                     continue;
                 }
                 Remote => C::site_id::equal(site_id),
+                RemoteOwned => {
+                    // Central never has edits to push back — relay only during initialisation.
+                    if !is_initialising {
+                        continue;
+                    }
+                    C::site_id::equal(site_id)
+                }
                 Transfer => C::transfer_site_id::equal(site_id),
                 Patient => C::patient_site_id::equal(site_id),
             };
@@ -471,16 +498,17 @@ impl ChangelogFilter {
         ])
     }
 
-    pub fn data_for_store(store_id: i32) -> ChangelogCondition::Inner {
+    pub fn data_for_store(store_id: &str) -> ChangelogCondition::Inner {
         use ChangeLogSyncStyle::*;
         use ChangelogCondition as C;
 
-        let remote_table_names = Remote.get_table_names_for_sync_style(None);
+        let mut store_scoped_table_names = Remote.get_table_names_for_sync_style(None);
+        store_scoped_table_names.extend(RemoteOwned.get_table_names_for_sync_style(None));
         let transfer_table_names = Transfer.get_table_names_for_sync_style(None);
 
         C::Or(vec![
             C::And(vec![
-                C::table_name::any(remote_table_names),
+                C::table_name::any(store_scoped_table_names),
                 C::store_id::equal(store_id.to_string()),
             ]),
             C::And(vec![
@@ -525,7 +553,7 @@ impl ChangelogFilter {
             }
 
             match sync_style {
-                ToLegacyCentralOnly | Remote | Transfer | Patient => {
+                ToLegacyCentralOnly | Remote | RemoteOwned | Transfer | Patient => {
                     inner_or_conditions.push(C::table_name::any(table_names))
                 }
                 Central | RemoteToCentral | File => continue,

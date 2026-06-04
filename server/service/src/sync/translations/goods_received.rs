@@ -2,12 +2,11 @@ use super::{
     currency::CurrencyTranslation, invoice::InvoiceTranslation, name::NameTranslation,
     purchase_order::PurchaseOrderTranslation, store::StoreTranslation, PullTranslateResult,
     SyncTranslation,
-
 };
 use chrono::NaiveDate;
 use repository::{
     InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, PurchaseOrderRowRepository,
-    StorageConnection, SyncBufferRow, SyncBufferRepository,
+    StorageConnection, SyncBufferRow,
 };
 use serde::Deserialize;
 use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
@@ -32,37 +31,6 @@ struct LegacyGoodsReceivedRow {
     entry_date: Option<NaiveDate>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     donor_id: Option<String>,
-}
-
-/// Helper to extract goods_received_ID from a transact sync buffer record
-#[allow(non_snake_case)]
-#[derive(Deserialize)]
-struct TransactGoodsReceivedId {
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    goods_received_ID: Option<String>,
-}
-
-/// Find the invoice ID of the supplier invoice that was created from a finalized GR,
-/// by searching transact sync_buffer records for one with goods_received_ID matching the GR's ID.
-fn find_linked_invoice_id(
-    connection: &StorageConnection,
-    goods_received_id: &str,
-) -> Result<Option<String>, anyhow::Error> {
-    let pattern = format!("%\"goods_received_ID\"%\"{goods_received_id}\"%");
-    let rows = SyncBufferRepository::new(connection)
-        .find_by_table_and_data_like("transact", &pattern)?;
-
-    // Verify the match by parsing JSON (LIKE can produce false positives)
-    for row in rows {
-        if let Ok(parsed) = row.deserialize::<TransactGoodsReceivedId>() {
-            if parsed.goods_received_ID.as_deref() == Some(goods_received_id) {
-                return Ok(Some(row.record_id));
-            }
-        }
-    }
-
-    Ok(None)
 }
 
 pub(super) fn is_finalised(status: &str) -> bool {
@@ -132,29 +100,12 @@ impl SyncTranslation for GoodsReceivedTranslation {
             }
         };
 
-        // Finalized GR: find the supplier invoice (transact with goods_received_ID = this GR)
-        // and update it with the PO link
+        // Temporary fix, see this issue: https://github.com/msupply-foundation/open-msupply/issues/11829
         if is_finalised(&data.status) {
-            let linked_invoice_id = find_linked_invoice_id(connection, &data.id)?;
-
-            return match linked_invoice_id {
-                Some(invoice_id) => {
-                    match InvoiceRowRepository::new(connection).find_one_by_id(&invoice_id)? {
-                        Some(mut invoice) => {
-                            invoice.purchase_order_id = data.purchase_order_ID;
-                            Ok(PullTranslateResult::upsert(invoice))
-                        }
-                        None => Ok(PullTranslateResult::Ignored(format!(
-                            "linked invoice {invoice_id} not found for goods_received {}",
-                            data.id
-                        ))),
-                    }
-                }
-                None => Ok(PullTranslateResult::Ignored(format!(
-                    "no transact with goods_received_ID found for goods_received {}",
-                    data.id
-                ))),
-            };
+            return Ok(PullTranslateResult::Ignored(format!(
+                "Skipped adding purchase order id to invoice when gr is finalised {}",
+                data.id
+            )));
         }
 
         // Non-finalized GR: create a new InboundShipment invoice

@@ -119,7 +119,7 @@ impl RequisitionRow {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
-            transfer_store_id: row.name_store_id.clone(),
+            transfer_store_id: transfer_store_id_for_name(con, &row.name_id)?,
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
@@ -651,6 +651,60 @@ impl AssetRow {
     }
 }
 
+impl ClinicianStoreJoinRow {
+    pub(crate) fn generate_changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::ClinicianStoreJoin,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: Some(self.store_id.clone()),
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
+impl IndicatorValueRow {
+    pub(crate) fn generate_changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::IndicatorValue,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: Some(self.store_id.clone()),
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
+impl ItemStoreJoinRow {
+    pub(crate) fn generate_changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::ItemStoreJoin,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: Some(self.store_id.clone()),
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
 // ==========================================================================
 // Built from &self — patient-scoped
 // --------------------------------------------------------------------------
@@ -690,6 +744,79 @@ impl EncounterRow {
             row_action: action,
             store_id: self.store_id.clone(),
             patient_id: Some(self.patient_id.clone()),
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
+impl ContactTraceRow {
+    pub(crate) fn generate_changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::ContactTrace,
+            record_id: self.id.clone(),
+            row_action: action,
+            store_id: self.store_id.clone(),
+            patient_id: Some(self.patient_id.clone()),
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
+impl NameInsuranceJoinRow {
+    pub(crate) fn generate_changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::NameInsuranceJoin,
+            record_id: self.id.clone(),
+            row_action: action,
+            patient_id: Some(self.name_id.clone()),
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
+impl ProgramEnrolmentRow {
+    pub(crate) fn generate_changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::ProgramEnrolment,
+            record_id: self.id.clone(),
+            row_action: action,
+            patient_id: Some(self.patient_id.clone()),
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
+impl ProgramEventRow {
+    pub(crate) fn generate_changelog(
+        &self,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::ProgramEvent,
+            record_id: self.id.clone(),
+            row_action: action,
+            patient_id: self.patient_id.clone(),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
@@ -824,23 +951,6 @@ impl NamePropertyRow {
     }
 }
 
-impl NameInsuranceJoinRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::NameInsuranceJoin,
-            record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 impl InsuranceProviderRow {
     pub(crate) fn generate_changelog(
         record_id: String,
@@ -867,23 +977,6 @@ impl ClinicianRow {
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Clinician,
-            record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
-impl ClinicianStoreJoinRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::ClinicianStoreJoin,
             record_id,
             row_action: action,
             source_site_id: source_site_id.get_id(con)?,
@@ -935,23 +1028,6 @@ impl MasterListRow {
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::MasterList,
-            record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
-impl IndicatorValueRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::IndicatorValue,
             record_id,
             row_action: action,
             source_site_id: source_site_id.get_id(con)?,
@@ -1096,6 +1172,23 @@ impl BundledItemRow {
     }
 }
 
+impl AncillaryItemRow {
+    pub(crate) fn generate_changelog(
+        record_id: String,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::AncillaryItem,
+            record_id,
+            row_action: action,
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
 impl BackendPluginRow {
     pub(crate) fn generate_changelog(
         record_id: String,
@@ -1201,15 +1294,25 @@ impl SystemLogRow {
 
 impl SyncMessageRow {
     pub(crate) fn generate_changelog(
-        record_id: String,
+        row_or_id: RowOrId<SyncMessageRow>,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = match row_or_id {
+            RowOrId::Row(row) => row,
+            RowOrId::Id(row_id) => &SyncMessageRowRepository::new(con)
+                .find_one_by_id(row_id)?
+                .ok_or(RepositoryError::NotFound)?,
+        };
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::SyncMessage,
-            record_id,
+            record_id: row.id.clone(),
             row_action: action,
+            // Hybrid Remote+Central routing: when `to_store_id` is set the
+            // row routes to the owning site only (Remote); when it's None it
+            // fans out to every site (Central).
+            store_id: row.to_store_id.clone(),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
@@ -1403,23 +1506,6 @@ impl ContactRow {
     }
 }
 
-impl ContactTraceRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::ContactTrace,
-            record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 impl ContextRow {
     pub(crate) fn generate_changelog(
         record_id: String,
@@ -1548,23 +1634,6 @@ impl ItemDirectionRow {
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::ItemDirection,
-            record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
-impl ItemStoreJoinRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::ItemStoreJoin,
             record_id,
             row_action: action,
             source_site_id: source_site_id.get_id(con)?,
@@ -1718,40 +1787,6 @@ impl ProgramRow {
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::Program,
-            record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
-impl ProgramEnrolmentRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::ProgramEnrolment,
-            record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
-impl ProgramEventRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::ProgramEvent,
             record_id,
             row_action: action,
             source_site_id: source_site_id.get_id(con)?,

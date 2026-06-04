@@ -1,4 +1,5 @@
 import { useCustomers } from './useCustomers';
+import { useCustomersInfinite } from './useCustomersInfinite';
 import { useSuppliers } from './useSuppliers';
 import { useManufacturers } from './useManufacturers';
 import { useInternalSuppliers } from './useInternalSuppliers';
@@ -12,6 +13,7 @@ import { useStoresAll } from './useStoresAll';
 
 export const Document = {
   useCustomers,
+  useCustomersInfinite,
   useStores,
   useSuppliers,
   useManufacturers,

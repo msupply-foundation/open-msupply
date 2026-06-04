@@ -119,6 +119,16 @@ mutation clearSiteToken($siteId: Int!) {
   }
 }
 
+mutation clearSiteHardwareId($siteId: Int!) {
+  centralServer {
+    site {
+      clearSiteHardwareId(siteId: $siteId) {
+        id
+      }
+    }
+  }
+}
+
 query storesBySite($siteId: Int!) {
   stores(filter: { siteId: { equalTo: $siteId } }, page: { first: 1000 }) {
     ... on StoreConnector {

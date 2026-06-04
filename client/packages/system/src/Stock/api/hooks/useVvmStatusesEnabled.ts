@@ -1,4 +1,4 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useStockGraphQL } from '../useStockGraphQL';
 import { usePreferences } from '@openmsupply-client/common';
 import { VVM_STATUSES_CONFIGURED } from './keys';
@@ -16,7 +16,7 @@ export function useVvmStatusesEnabled() {
   };
 
   const { data, isLoading } = useQuery({
-    queryKey: VVM_STATUSES_CONFIGURED,
+    queryKey: [VVM_STATUSES_CONFIGURED],
     queryFn,
     refetchOnMount: true,
   });
