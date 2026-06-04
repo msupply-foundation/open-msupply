@@ -30,12 +30,11 @@
   // Open-model syncInfo storm (stress mode, off by default). Fires the changelog_deduped COUNT at a
   // FIXED arrival rate with NO backpressure — unlike dashboardPoller (closed-loop), this lets ~10s
   // counts pile up and exhaust the DB connection pool, reproducing the subscription fan-out that
-  // collapsed the real test. Ramps startRate -> peakRate (syncInfo req/sec) over rampDuration, holds.
-  // Raise peakRate until throughput tips over. (env: SYNC_STORM_ENABLED / SYNC_STORM_START_RATE /
-  // SYNC_STORM_PEAK_RATE / SYNC_STORM_MAX_VUS)
+  // collapsed the real test. Ramps 0 -> syncStormRate (syncInfo req/sec) over rampDuration, then holds
+  // — the same rampup as every other worker class. Raise syncStormRate until throughput tips over.
+  // (env: SYNC_STORM_ENABLED / SYNC_STORM_RATE / SYNC_STORM_MAX_VUS)
   "syncStormEnabled": false,
-  "syncStormStartRate": 2,
-  "syncStormPeakRate": 40,
+  "syncStormRate": 40,
   "syncStormMaxVus": 300,
 
   // Persistent graphql-ws subscribers (the path real clients prefer; off by default). Each VU holds
