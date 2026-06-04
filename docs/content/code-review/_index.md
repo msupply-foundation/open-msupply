@@ -37,6 +37,18 @@ Before submitting the PR, do a self review:
   - Ensure naming is all up to date
   - Add review comments if more context is required for a certain change (or perhaps a code comment, if the context might not be apparent when someone comes back to this code in future!)
 
+If part of the change was written with an AI assistant, the self-review bar is higher, not lower — see [Reviewing AI-assisted code](#reviewing-ai-assisted-code) below for the things to double-check before pushing.
+
+## Reviewing AI-assisted code
+
+AI assistants now author a meaningful share of the code we ship. The general code-review principles on this page still apply, but a few things shift when a human is reviewing AI-authored work (or reviewing their own changes that were drafted by an AI):
+
+- **Plausible ≠ correct.** AI-generated code often reads naturally and uses real-looking APIs that don't actually exist, or uses them with the wrong arguments. Verify imports resolve, that functions called actually exist, and that the behaviour matches the issue — don't trust by reading.
+- **Tests can codify the wrong behaviour.** AI is good at writing tests that pass, which is not the same as writing tests that prove the spec. When tests were drafted by an AI, read them as a reviewer would: do they test the *requirement*, or do they test what the implementation happens to do?
+- **Scope creep.** AI tools often touch more than asked — renaming variables, "tidying" unrelated code, adding error handling for cases that can't happen. Treat any change outside the issue's scope the same way you would a human's unrelated fix: pull it into a separate PR, or remove it.
+- **Be explicit when AI was used.** Mentioning in the PR description that AI assisted with a change (and what kind of assistance — "drafted by Claude", "Copilot autocomplete", "AI-generated tests") lets reviewers calibrate. It also makes the rest of this list cheaper to apply because reviewers know where to look.
+- **Project conventions aren't free.** The Rust and Typescript pages below capture team preferences that AI assistants won't know unless told — `.to_string()` over `.to_owned()`, no `as` casts, no `packages/...` imports, etc. If you find yourself making the same correction to AI output repeatedly, capture it in `CLAUDE.md`/equivalent so the AI catches it next time.
+
 ## Prefer a simple solution over a complex one
 Experienced Developers often argue for a simple solution rather than a complex and re-usable approach.
 **Why?**

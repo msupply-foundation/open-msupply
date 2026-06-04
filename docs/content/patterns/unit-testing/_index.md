@@ -14,6 +14,11 @@ source = "docs"
 
 Unit test serve to validate that logic complies with specifications, they are also useful when a bug is found to quickly replicate it. Unit test are super important in managing regression, and increase confidence in doing refactor work.
 
+> [!NOTE]
+> The economics of writing tests have shifted. AI assistants can draft both unit and integration tests cheaply, so the old trade-off ("mock heavily because integration tests are expensive to write") no longer rules out integration coverage on cost grounds — pick the layer that actually proves the behaviour you care about.
+>
+> But AI-generated tests have their own failure mode: they tend to test what the implementation *happens to do* rather than what the *spec requires*. When reviewing AI-drafted tests, ask whether each assertion would still hold if you re-implemented the function from scratch — if the test would have to change, it's testing the implementation, not the contract.
+
 ## Examples
 
 ### Checking postgres enum vs rust enum

@@ -49,7 +49,7 @@ let translation = t("permissions", {count: permissionList.length});
 
 ## Avoid using type assertions ('as' keyword)
 
-Use of [type assertion](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#type-assertions) should be avoided, it can cause runtime errors in what looks like safe code. If type assertions have to be used, the resulting type should be consumed entirely in the same scope (with maximum amount of safety checks):
+Use of [type assertion](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#type-assertions) should be avoided, it can cause runtime errors in what looks like safe code. AI assistants reach for `as` readily — it's a quick way to silence a type error without solving the underlying mismatch — so this is worth watching for in AI-drafted code. If type assertions have to be used, the resulting type should be consumed entirely in the same scope (with maximum amount of safety checks):
 
 ```typescript
 const myCanvas = document.getElementById("main_canvas") as HTMLCanvasElement;
@@ -93,8 +93,7 @@ doCheck(getLooksLikeCheck() as Check) // runtime error
 
 ## Imports
 
-If using co-pilot ( and possibly other helpers 🤷 ), you may have an auto generated import appear which has the format 'packages/..'
-Do not use these! While it will work as a standard runtime import, it will cause jest tests to fail.
+AI assistants (Copilot, Claude, Cursor, etc.) frequently auto-generate imports in the form `'packages/..'`. These will run, but they break jest tests, so they need to be replaced with the package-aliased form.
 
 Prefer
 
@@ -105,6 +104,8 @@ Instead of
 `import { InternalSupplierSearchModal, InternalSupplierSearchModal, NameRowFragment, NameRowFragment } from 'packages/system/src';`
 
 You can generally find an aliased path to use instead, or a reference which is relative to the current file.
+
+If you're using an AI assistant that respects project rules (e.g. `CLAUDE.md`, `.cursorrules`, Copilot's workspace instructions), adding a one-liner about this convention there is more effective than catching it in review every time.
 
 When exporting from packages, if an item is to be used outside of the package, export it from the package itself. This may require exporting from the root `index.ts` of the package and back up the tree of index files.
 
@@ -120,7 +121,7 @@ This makes is clear exactly what is being exported, and therefore depended on, o
 
 ## Avoid nested ternary
 
-Nested ternary operators can make code difficult to read and understand, which can lead to maintenance issues and bugs.
+Nested ternary operators can make code difficult to read and understand, which can lead to maintenance issues and bugs. AI assistants tend to generate these by default when condensing logic — flag them in review and rewrite as below.
 
 Instead:
 

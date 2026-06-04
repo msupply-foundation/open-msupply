@@ -10,6 +10,9 @@ source = "docs"
 
 # Suggestion Snippets
 
+> [!NOTE]
+> For most of the transformations below ("add a new migration", "add a new sync table", etc.), asking an AI assistant — pointing it at the reference commit linked in each section — is now usually the lowest-friction path. The `sed` recipes here remain useful as a precise, reproducible reference: they're explicit about exactly which substitutions are being made, which is harder to verify when an AI does it.
+
 ## Summary
 
 In this page you can find common commits that can be changed and applied to help with common coding tasking.

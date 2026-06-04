@@ -18,6 +18,11 @@ It can also take time away from developing features, or making bug fixes.
 
 Refactors needs to be weighed up against these factors and planned in as part of the sprint planning work.
 
+> [!NOTE]
+> AI assistants make mechanical refactors — renames, signature changes, threading a new parameter through, applying a pattern across many call sites — substantially cheaper than they used to be. That tilts the cost/benefit calculus on smaller refactors, and some changes that would previously have been "raise an issue, prioritise later" are now reasonable to include in the current PR.
+>
+> The catch is review: AI-driven refactors can quietly change behaviour at edges the prompt didn't cover, so widen the review (and the tests) when accepting one. The bigger the blast radius, the more this matters.
+
 ## Refactor Process
 
 * Discuss with a teammate first to make sure that more than one person sees the value of the change
