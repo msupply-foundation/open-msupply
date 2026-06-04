@@ -34,17 +34,13 @@ use crate::{
     },
 };
 
-/// Run synchronous work (DB queries, transactions, JSON serialization, bcrypt)
-/// on tokio's blocking pool so it doesn't starve the actix worker's async
-/// runtime. Mirrors the pattern in `sync.rs::integrate` for the integration path.
-async fn run_blocking<T, F>(f: F) -> Result<T, SyncError>
-where
-    F: FnOnce() -> Result<T, SyncError> + Send + 'static,
-    T: Send + 'static,
-{
-    tokio::task::spawn_blocking(f)
-        .await
-        .map_err(|e| SyncError::Other(format!("blocking join error: {e:?}")))?
+fn other_error(e: impl std::fmt::Display) -> SyncError {
+    SyncError::Other(e.to_string())
+}
+
+/// Map a `spawn_blocking` join failure (panic or cancellation) into `SyncError`.
+fn join_error(e: tokio::task::JoinError) -> SyncError {
+    SyncError::Other(format!("blocking join error: {e:?}"))
 }
 
 /// TODO: revisit token format
@@ -64,102 +60,78 @@ pub async fn get_token(
         });
     }
 
-    // Authenticate on the blocking pool (site lookup + bcrypt verify). Done
-    // first so a wrong-password caller never triggers a legacy server roundtrip
-    // via ensure_site_is_v7.
     let sp = service_provider.clone();
-    let (site, input) = run_blocking(move || authenticate_for_token(&sp, input)).await?;
+    let (site, input) = tokio::task::spawn_blocking(move || {
+        let ctx = sp.basic_context().map_err(other_error)?;
 
-    // Now that the caller is authenticated, gate on sync_version. If still
-    // v5/v6 locally, ask the legacy server: if it reports v7 (or
-    // v7_url_and_upgrade succeeds for a fresh remote), bump the local record
-    // and continue. Otherwise refuse with SiteIsNotV7. This may hit the network
-    // so it stays on the async runtime.
+        let site = get_site_by_name(&ctx.connection, &input.name)?
+            .ok_or(SyncError::InvalidSiteNameOrPassword)?;
+
+        // Reject before password check — a remote must not authenticate as the central site itself.
+        let central_site_id = SourceSiteId::CurrentSiteId
+            .get_id(&ctx.connection)?
+            .ok_or(SyncError::SiteIdNotSet)?;
+        if site.id == central_site_id {
+            log::warn!(
+                "Device with hardware_id: {} attempted to authenticate as the central site (name: {}, id: {}). Rejecting.",
+                input.hardware_id,
+                input.name,
+                site.id
+            );
+            return Err(SyncError::InvalidSiteNameOrPassword);
+        }
+
+        let valid = bcrypt::verify(&input.password_sha256, &site.hashed_password)
+            .map_err(other_error)?;
+        if !valid {
+            return Err(SyncError::InvalidSiteNameOrPassword);
+        }
+
+        Ok((site, input))
+    })
+    .await
+    .map_err(join_error)??;
+
     let site = ensure_site_is_v7(&service_provider, site, &input).await?;
 
-    // Sync tx phase: hardware-id assignment + token allocation, on the blocking pool.
-    run_blocking(move || allocate_token(&service_provider, site, input)).await
-}
+    tokio::task::spawn_blocking(move || {
+        let ctx = service_provider.basic_context().map_err(other_error)?;
 
-/// Blocking phase of `get_token`: look up the site, guard against a remote
-/// authenticating as the central site itself, and verify the password (bcrypt
-/// is CPU-heavy). Returns the site and the (unconsumed) input.
-fn authenticate_for_token(
-    service_provider: &ServiceProvider,
-    input: GetTokenInput,
-) -> Result<(SiteRow, GetTokenInput), SyncError> {
-    let ctx = service_provider
-        .basic_context()
-        .map_err(|e| SyncError::Other(e.to_string()))?;
-
-    let site = get_site_by_name(&ctx.connection, &input.name)?
-        .ok_or(SyncError::InvalidSiteNameOrPassword)?;
-
-    // Reject before password check — a remote must not authenticate as the central site itself.
-    let central_site_id = SourceSiteId::CurrentSiteId
-        .get_id(&ctx.connection)?
-        .ok_or(SyncError::SiteIdNotSet)?;
-    if site.id == central_site_id {
-        log::warn!(
-            "Device with hardware_id: {} attempted to authenticate as the central site (name: {}, id: {}). Rejecting.",
-            input.hardware_id,
-            input.name,
-            site.id
-        );
-        return Err(SyncError::InvalidSiteNameOrPassword);
-    }
-
-    let valid = bcrypt::verify(&input.password_sha256, &site.hashed_password)
-        .map_err(|e| SyncError::Other(e.to_string()))?;
-    if !valid {
-        return Err(SyncError::InvalidSiteNameOrPassword);
-    }
-
-    Ok((site, input))
-}
-
-/// Blocking phase of `get_token`: allocate token + hardware id in a transaction.
-fn allocate_token(
-    service_provider: &ServiceProvider,
-    site: SiteRow,
-    input: GetTokenInput,
-) -> Result<GetTokenOutput, SyncError> {
-    let ctx = service_provider
-        .basic_context()
-        .map_err(|e| SyncError::Other(e.to_string()))?;
-
-    ctx.connection
-        .transaction_sync(|connection| {
-            if site.token.is_some() {
-                return Err(SyncError::TokenAlreadyAllocated);
-            }
-
-            let hardware_id = match &site.hardware_id {
-                Some(existing) if existing != &input.hardware_id => {
-                    return Err(SyncError::HardwareIdMismatch);
+        ctx.connection
+            .transaction_sync(|connection| {
+                if site.token.is_some() {
+                    return Err(SyncError::TokenAlreadyAllocated);
                 }
-                _ => input.hardware_id.clone(),
-            };
 
-            let token = util::uuid::uuid();
+                let hardware_id = match &site.hardware_id {
+                    Some(existing) if existing != &input.hardware_id => {
+                        return Err(SyncError::HardwareIdMismatch);
+                    }
+                    _ => input.hardware_id.clone(),
+                };
 
-            SiteRowRepository::new(connection).upsert(&SiteRow {
-                hardware_id: Some(hardware_id),
-                token: Some(token.clone()),
-                ..site.clone()
-            })?;
+                let token = util::uuid::uuid();
 
-            let central_site_id = SourceSiteId::CurrentSiteId
-                .get_id(connection)?
-                .ok_or(SyncError::SiteIdNotSet)?;
+                SiteRowRepository::new(connection).upsert(&SiteRow {
+                    hardware_id: Some(hardware_id),
+                    token: Some(token.clone()),
+                    ..site.clone()
+                })?;
 
-            Ok(GetTokenOutput {
-                token,
-                site_id: site.id,
-                central_site_id,
+                let central_site_id = SourceSiteId::CurrentSiteId
+                    .get_id(connection)?
+                    .ok_or(SyncError::SiteIdNotSet)?;
+
+                Ok(GetTokenOutput {
+                    token,
+                    site_id: site.id,
+                    central_site_id,
+                })
             })
-        })
-        .map_err(|e| e.to_inner_error())
+            .map_err(|e| e.to_inner_error())
+    })
+    .await
+    .map_err(join_error)?
 }
 
 /// If the site already shows v7 locally, returns it unchanged. Otherwise asks
@@ -180,9 +152,7 @@ async fn ensure_site_is_v7(
     }
 
     let api_v5 = {
-        let ctx = service_provider
-            .basic_context()
-            .map_err(|e| SyncError::Other(e.to_string()))?;
+        let ctx = service_provider.basic_context().map_err(other_error)?;
         build_v5_api_for_request(&ctx.connection, input)?
     };
 
@@ -211,9 +181,7 @@ async fn ensure_site_is_v7(
         sync_version: SyncVersion::V7,
         ..site
     };
-    let ctx = service_provider
-        .basic_context()
-        .map_err(|e| SyncError::Other(e.to_string()))?;
+    let ctx = service_provider.basic_context().map_err(other_error)?;
     SiteRowRepository::new(&ctx.connection).upsert(&updated)?;
     Ok(updated)
 }
@@ -277,9 +245,7 @@ fn validate(
         });
     }
 
-    let ctx = service_provider
-        .basic_context()
-        .map_err(|e| SyncError::Other(e.to_string()))?;
+    let ctx = service_provider.basic_context().map_err(other_error)?;
 
     let site =
         get_site_by_token(&ctx.connection, &common.token)?.ok_or(SyncError::TokenNotFound)?;
@@ -305,19 +271,22 @@ fn validate(
 /// Report site status to a remote open-mSupply Server.
 /// Errors with `SiteLockError::IntegrationInProgress` while integration is running, so clients
 /// can poll until it clears.
-pub async fn site_status(service_provider: Arc<ServiceProvider>, common: Common) -> status::Response {
-    run_blocking(move || site_status_inner(&service_provider, common)).await
-}
-
-fn site_status_inner(service_provider: &ServiceProvider, common: Common) -> status::Response {
-    let (site, ctx) = validate(service_provider, &common)?;
-    let central_site_id = SourceSiteId::CurrentSiteId
-        .get_id(&ctx.connection)?
-        .ok_or(SyncError::SiteIdNotSet)?;
-    Ok(status::Output {
-        site_id: site.id,
-        central_site_id,
+pub async fn site_status(
+    service_provider: Arc<ServiceProvider>,
+    common: Common,
+) -> status::Response {
+    tokio::task::spawn_blocking(move || {
+        let (site, ctx) = validate(&service_provider, &common)?;
+        let central_site_id = SourceSiteId::CurrentSiteId
+            .get_id(&ctx.connection)?
+            .ok_or(SyncError::SiteIdNotSet)?;
+        Ok(status::Output {
+            site_id: site.id,
+            central_site_id,
+        })
     })
+    .await
+    .map_err(join_error)?
 }
 
 /// Send Records to a remote open-mSupply Server
@@ -326,30 +295,26 @@ pub async fn pull(
     common: Common,
     input: pull::Input,
 ) -> pull::Response {
-    run_blocking(move || pull_inner(&service_provider, common, input)).await
-}
+    tokio::task::spawn_blocking(move || {
+        let (site, ctx) = validate(&service_provider, &common)?;
 
-fn pull_inner(
-    service_provider: &ServiceProvider,
-    common: Common,
-    input: pull::Input,
-) -> pull::Response {
-    let (site, ctx) = validate(service_provider, &common)?;
+        let base = ChangelogFilter::all_data_for_site(site.id, input.is_initialising, None);
+        let filter = match input.filter {
+            Some(extra) => ChangelogCondition::And(vec![base, extra]),
+            None => base,
+        };
 
-    let base = ChangelogFilter::all_data_for_site(site.id, input.is_initialising, None);
-    let filter = match input.filter {
-        Some(extra) => ChangelogCondition::And(vec![base, extra]),
-        None => base,
-    };
+        let batch = SyncBatchV7::generate(
+            &ctx.connection,
+            filter,
+            input.cursor,
+            Some(input.batch_size),
+        )?;
 
-    let batch = SyncBatchV7::generate(
-        &ctx.connection,
-        filter,
-        input.cursor,
-        Some(input.batch_size),
-    )?;
-
-    Ok(batch)
+        Ok(batch)
+    })
+    .await
+    .map_err(join_error)?
 }
 
 pub async fn patient_search(
@@ -357,26 +322,22 @@ pub async fn patient_search(
     common: Common,
     input: patient_search::Input,
 ) -> patient_search::Response {
-    run_blocking(move || patient_search_inner(&service_provider, common, input)).await
-}
+    tokio::task::spawn_blocking(move || {
+        let (_, ctx) = validate(&service_provider, &common)?;
 
-fn patient_search_inner(
-    service_provider: &ServiceProvider,
-    common: Common,
-    input: patient_search::Input,
-) -> patient_search::Response {
-    let (_, ctx) = validate(service_provider, &common)?;
+        let results =
+            service_provider
+                .patient_service
+                .get_patients(&ctx, None, Some(input), None, None)?;
 
-    let results =
-        service_provider
-            .patient_service
-            .get_patients(&ctx, None, Some(input), None, None)?;
-
-    Ok(results
-        .rows
-        .into_iter()
-        .map(name_row_to_patient_v4)
-        .collect())
+        Ok(results
+            .rows
+            .into_iter()
+            .map(name_row_to_patient_v4)
+            .collect())
+    })
+    .await
+    .map_err(join_error)?
 }
 
 fn name_row_to_patient_v4(name: repository::NameRow) -> PatientV4 {
@@ -398,40 +359,41 @@ pub async fn patient_data_for_site(
     common: Common,
     input: patient_data_for_site::Input,
 ) -> patient_data_for_site::Response {
-    run_blocking(move || patient_data_for_site_inner(&service_provider, common, input)).await
-}
+    tokio::task::spawn_blocking(move || {
+        let (site, ctx) = validate(&service_provider, &common)?;
 
-fn patient_data_for_site_inner(
-    service_provider: &ServiceProvider,
-    common: Common,
-    input: patient_data_for_site::Input,
-) -> patient_data_for_site::Response {
-    let (site, ctx) = validate(service_provider, &common)?;
+        let patient_data_for_site::Input {
+            patient_id,
+            store_id,
+            name_store_join_id,
+        } = input;
 
-    let patient_data_for_site::Input {
-        patient_id,
-        store_id,
-        name_store_join_id,
-    } = input;
+        let nsj_id = ctx
+            .connection
+            .transaction_sync(|con| {
+                create_patient_name_store_join(
+                    con,
+                    &store_id,
+                    &patient_id,
+                    Some(name_store_join_id),
+                )
+            })
+            .map_err(|e| e.to_inner_error())?;
 
-    let nsj_id = ctx
-        .connection
-        .transaction_sync(|con| {
-            create_patient_name_store_join(con, &store_id, &patient_id, Some(name_store_join_id))
+        let filter = ChangelogCondition::And(vec![
+            ChangelogFilter::patient_data_for_site(site.id, None),
+            ChangelogCondition::patient_id::equal(patient_id),
+        ]);
+
+        let batch = SyncBatchV7::generate(&ctx.connection, filter, 0, None)?;
+
+        Ok(patient_data_for_site::Output {
+            batch,
+            name_store_join_id: nsj_id,
         })
-        .map_err(|e| e.to_inner_error())?;
-
-    let filter = ChangelogCondition::And(vec![
-        ChangelogFilter::patient_data_for_site(site.id, None),
-        ChangelogCondition::patient_id::equal(patient_id),
-    ]);
-
-    let batch = SyncBatchV7::generate(&ctx.connection, filter, 0, None)?;
-
-    Ok(patient_data_for_site::Output {
-        batch,
-        name_store_join_id: nsj_id,
     })
+    .await
+    .map_err(join_error)?
 }
 
 /// Receive Records from a remote open-mSupply Server
@@ -440,58 +402,54 @@ pub async fn push(
     common: Common,
     input: push::Input,
 ) -> push::Response {
+    // Blocking phase: validate, then buffer the batch's records into the sync
+    // buffer in a single transaction. Returns the batch size, the remaining
+    // count, and the site id so we can decide whether to kick off integration.
     let sp = service_provider.clone();
-    let (records_in_this_batch, remaining, site_id) =
-        run_blocking(move || buffer_push_records(&sp, common, input)).await?;
+    let (records_in_this_batch, remaining, site_id) = tokio::task::spawn_blocking(move || {
+        let (site, ctx) = validate(&sp, &common)?;
+        let site_id = site.id;
+
+        let SyncBatchV7 {
+            site_id: from_site_id,
+            records,
+            remaining,
+            ..
+        } = input;
+
+        if from_site_id != site_id {
+            return Err(SyncError::SiteIdMismatch {
+                expected: site_id,
+                found: from_site_id,
+            });
+        }
+
+        let records_in_this_batch = records.len() as i64;
+
+        // The remote site's app_version arrives in the request header (Common::version).
+        let app_version = Some(common.version.clone());
+
+        let sync_buffer_rows = records
+            .into_iter()
+            .map(|record| sync_record_to_buffer_row(record, site_id, app_version.clone(), None))
+            .collect::<Vec<_>>();
+
+        ctx.connection
+            .transaction_sync(|t_con| {
+                SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows)
+            })
+            .map_err(|e| e.to_inner_error())?;
+
+        Ok((records_in_this_batch, remaining, site_id))
+    })
+    .await
+    .map_err(join_error)??;
 
     if remaining == 0 {
         spawn_integration(service_provider, site_id);
     }
 
     Ok(records_in_this_batch)
-}
-
-/// Blocking phase of `push`: validate, then buffer the batch's records into the
-/// sync buffer in a single transaction. Returns
-/// `(records_in_this_batch, remaining, site_id)` so the caller can decide
-/// whether to kick off integration.
-fn buffer_push_records(
-    service_provider: &ServiceProvider,
-    common: Common,
-    input: push::Input,
-) -> Result<(i64, u64, i32), SyncError> {
-    let (site, ctx) = validate(service_provider, &common)?;
-    let site_id = site.id;
-
-    let SyncBatchV7 {
-        site_id: from_site_id,
-        records,
-        remaining,
-        ..
-    } = input;
-
-    if from_site_id != site_id {
-        return Err(SyncError::SiteIdMismatch {
-            expected: site_id,
-            found: from_site_id,
-        });
-    }
-
-    let records_in_this_batch = records.len() as i64;
-
-    // The remote site's app_version arrives in the request header (Common::version).
-    let app_version = Some(common.version.clone());
-
-    let sync_buffer_rows = records
-        .into_iter()
-        .map(|record| sync_record_to_buffer_row(record, site_id, app_version.clone(), None))
-        .collect::<Vec<_>>();
-
-    ctx.connection
-        .transaction_sync(|t_con| SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows))
-        .map_err(|e| e.to_inner_error())?;
-
-    Ok((records_in_this_batch, remaining, site_id))
 }
 
 fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) {
