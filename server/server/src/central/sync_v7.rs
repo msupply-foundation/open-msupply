@@ -39,7 +39,7 @@ async fn get_token(
     service_provider: Data<ServiceProvider>,
 ) -> actix_web::Result<impl Responder> {
     let response: api::get_token::Response =
-        handlers::get_token(&service_provider, request.into_inner()).await;
+        handlers::get_token(service_provider.into_inner(), request.into_inner()).await;
 
     Ok(web::Json(response))
 }
@@ -50,7 +50,7 @@ async fn site_status(
     service_provider: Data<ServiceProvider>,
 ) -> actix_web::Result<impl Responder> {
     let response: api::status::Response = match extract_common(&http_req) {
-        Ok(common) => handlers::site_status(&service_provider, common).await,
+        Ok(common) => handlers::site_status(service_provider.into_inner(), common).await,
         Err(e) => Err(e),
     };
     Ok(web::Json(response))
@@ -63,7 +63,7 @@ async fn pull(
     service_provider: Data<ServiceProvider>,
 ) -> actix_web::Result<impl Responder> {
     let response: api::pull::Response = match extract_common(&http_req) {
-        Ok(common) => handlers::pull(&service_provider, common, body.into_inner()).await,
+        Ok(common) => handlers::pull(service_provider.into_inner(), common, body.into_inner()).await,
         Err(e) => Err(e),
     };
     Ok(web::Json(response))
@@ -92,7 +92,8 @@ async fn patient_data_for_site(
 ) -> actix_web::Result<impl Responder> {
     let response: api::patient_data_for_site::Response = match extract_common(&http_req) {
         Ok(common) => {
-            handlers::patient_data_for_site(&service_provider, common, body.into_inner()).await
+            handlers::patient_data_for_site(service_provider.into_inner(), common, body.into_inner())
+                .await
         }
         Err(e) => Err(e),
     };
@@ -106,7 +107,9 @@ async fn patient_search(
     service_provider: Data<ServiceProvider>,
 ) -> actix_web::Result<impl Responder> {
     let response: api::patient_search::Response = match extract_common(&http_req) {
-        Ok(common) => handlers::patient_search(&service_provider, common, body.into_inner()).await,
+        Ok(common) => {
+            handlers::patient_search(service_provider.into_inner(), common, body.into_inner()).await
+        }
         Err(e) => Err(e),
     };
     Ok(web::Json(response))

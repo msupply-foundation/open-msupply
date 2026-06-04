@@ -6,6 +6,7 @@ export * from './AutocompleteList';
 export * from './AutocompleteMulti';
 export * from './AutocompleteMultiList';
 export * from './AutocompleteWithPagination';
+export * from './InfiniteSearchPicker';
 export * from './types';
 export * from './utils';
 export { AutocompleteRenderInputParams, FilterOptionsState };

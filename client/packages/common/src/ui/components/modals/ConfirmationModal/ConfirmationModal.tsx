@@ -71,7 +71,10 @@ export const ConfirmationModal = ({
         </Grid>
         {info && (
           <Grid paddingY={1}>
-            <Alert style={{ whiteSpace: 'pre-line' }} severity="info">
+            <Alert
+              style={{ whiteSpace: 'pre-line' }}
+              severity={iconType === 'alert' ? 'warning' : 'info'}
+            >
               {info}
             </Alert>
           </Grid>

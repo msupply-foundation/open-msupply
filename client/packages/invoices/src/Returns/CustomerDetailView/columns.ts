@@ -3,6 +3,7 @@ import {
   ColumnDef,
   useTranslation,
   ColumnType,
+  ExpiryDateCell,
   weightedAverageByPacks,
 } from '@openmsupply-client/common';
 import { CustomerReturnLineFragment } from '../api';
@@ -35,6 +36,7 @@ export const useCustomerReturnColumns = () => {
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         header: t('label.expiry'),
         columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
         enableSorting: true,
         enableColumnFilter: true,
       },

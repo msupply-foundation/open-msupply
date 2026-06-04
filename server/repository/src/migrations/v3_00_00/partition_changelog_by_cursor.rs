@@ -24,7 +24,7 @@ impl MigrationFragment for Migrate {
 
         let max_cursor = max_sequence(connection)?;
         let partition_size = config.changelog_partition.partition_size;
-        let lookahead = config.changelog_partition.lookahead_partitions;
+        let lookahead = config.changelog_partition.lookahead;
 
         // 1. Rename the existing changelog out of the way so the new partitioned
         //    table can reuse the `changelog` name.
@@ -68,11 +68,11 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
-        // 5. Pre-create N partitions covering [1, N * partition_size + 1). N =
-        //    (max_cursor / partition_size) + 1 + lookahead, ensuring the partition
-        //    that contains max_cursor itself exists plus `lookahead` empty future
-        //    partitions on top.
-        let partition_count = max_cursor / partition_size + 1 + lookahead;
+        // 5. Pre-create N partitions covering [1, N * partition_size + 1) so
+        //    the topmost partition contains `max_cursor + lookahead`. N is the
+        //    index of the partition holding that target, plus one. Guarantees
+        //    `max_upper - max_cursor >= lookahead`.
+        let partition_count = (max_cursor + lookahead) / partition_size + 1;
         create_future_partitions(connection, 1, partition_size, partition_count)?;
 
         // 6. Copy every row, preserving cursors. PG routes each row to the
@@ -140,8 +140,8 @@ mod tests {
     /// Partition migration on a populated changelog: rows copied across with
     /// cursors preserved, old_changelog dropped, exactly the expected number of
     /// partitions created. Uses small partition_size + lookahead so the math is
-    /// easy to eyeball: cursors 1..=4, partition_size=2, lookahead=2 →
-    /// 4/2+1+2 = 5 partitions.
+    /// easy to eyeball: cursors 1..=4, partition_size=2, lookahead=4 →
+    /// (4+4)/2 + 1 = 5 partitions.
     #[actix_rt::test]
     async fn test_partition_changelog_with_existing_data() {
         let connection = setup_pre_partition("migration_partition_changelog_existing").await;
@@ -169,11 +169,11 @@ mod tests {
             .unwrap();
 
         let partition_size: i64 = 2;
-        let lookahead: i64 = 2;
+        let lookahead: i64 = 4;
         let config = MigrationConfig {
             changelog_partition: ChangelogPartitionConfig {
                 partition_size,
-                lookahead_partitions: lookahead,
+                lookahead,
             },
         };
 
@@ -191,17 +191,18 @@ mod tests {
         .value;
         assert_eq!(preserved_cursors, 4);
 
-        // Exact partition count: 4/2 + 1 + 2 = 5.
+        // Exact partition count: (4 + 4) / 2 + 1 = 5.
         let max_cursor: i64 = 4;
-        let expected_partitions = max_cursor / partition_size + 1 + lookahead;
+        let expected_partitions = (max_cursor + lookahead) / partition_size + 1;
         assert_eq!(count_partitions(&connection), expected_partitions);
 
         assert_insert_routes_to_partition(&connection, "u_new");
     }
 
     /// Partition migration on an empty changelog. The partition count formula
-    /// collapses to `1 + lookahead`. New inserts after migration must still
-    /// route to a partition without error and start at cursor 1.
+    /// collapses to `lookahead / partition_size + 1`. New inserts after
+    /// migration must still route to a partition without error and start at
+    /// cursor 1.
     #[actix_rt::test]
     async fn test_partition_changelog_empty() {
         let connection = setup_pre_partition("migration_partition_changelog_empty").await;
@@ -214,8 +215,10 @@ mod tests {
         // Still empty after migration — nothing to copy.
         assert_eq!(changelog_count(&connection), 0);
 
-        // Exact partition count: 0/partition_size + 1 + lookahead = 1 + lookahead.
-        let expected_partitions = 1 + config.changelog_partition.lookahead_partitions;
+        // Exact partition count: (0 + lookahead) / partition_size + 1.
+        let partition_size = config.changelog_partition.partition_size;
+        let lookahead = config.changelog_partition.lookahead;
+        let expected_partitions = lookahead / partition_size + 1;
         assert_eq!(count_partitions(&connection), expected_partitions);
 
         assert_insert_routes_to_partition(&connection, "first_row");

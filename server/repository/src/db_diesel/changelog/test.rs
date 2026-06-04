@@ -169,8 +169,7 @@ async fn test_changelog_iteration() {
 
 #[actix_rt::test]
 async fn test_changelog_filter() {
-    let (_, connection, _, _) =
-        setup_all("test_changelog_filter", MockDataInserts::none()).await;
+    let (_, connection, _, _) = setup_all("test_changelog_filter", MockDataInserts::none()).await;
 
     // Clear any changelog rows the migration sequence inserted, so the
     // hard-coded cursors below don't conflict.
@@ -770,20 +769,20 @@ async fn test_changelog_outgoing_sync_records() {
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
 
     // A requisition at store_a addressed to the name backing store_b should
-    // reach site 1 via store_id (Remote) and site 2 via transfer_store_id (Transfer).
-    // `RequisitionRow::generate_changelog` reads `transfer_store_id` directly
-    // from `name_store_id`, so set it explicitly here.
+    // reach site 1 via store_id (RemoteOwned, during initialisation only) and
+    // site 2 via transfer_store_id (Transfer). `RequisitionRow::generate_changelog`
+    // derives `transfer_store_id` from `name_id` via the store lookup.
     let req_id = "req_transfer".to_string();
     RequisitionRowRepository::new(&connection)
         .upsert_one(&RequisitionRow {
             id: req_id.clone(),
             store_id: site1_store_id.clone(),
             name_id: mock_name_store_b().id,
-            name_store_id: Some(mock_store_b().id),
             ..Default::default()
         })
         .unwrap();
 
+    // Site 1 post-initialisation: RemoteOwned arm skips, so only asset_class.
     let outgoing_results = ChangelogRepository::new(&connection)
         .query(
             ChangelogFilter::all_data_for_site(site1_id, false, None),
@@ -794,9 +793,24 @@ async fn test_changelog_outgoing_sync_records() {
         )
         .unwrap()
         .rows;
-    assert_eq!(outgoing_results.len(), 2);
-    assert_eq!(outgoing_results[1].record_id, req_id);
+    assert_eq!(outgoing_results.len(), 1);
+    assert_eq!(outgoing_results[0].record_id, asset_class_id);
 
+    // Site 1 during initialisation: RemoteOwned relays, requisition included.
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(site1_id, true, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert_eq!(outgoing_results.len(), 3);
+    assert_eq!(outgoing_results[2].record_id, req_id);
+
+    // Site 2 post-initialisation: reaches via Transfer routing.
     let outgoing_results = ChangelogRepository::new(&connection)
         .query(
             ChangelogFilter::all_data_for_site(site2_id, false, None),
@@ -809,6 +823,35 @@ async fn test_changelog_outgoing_sync_records() {
         .rows;
     assert_eq!(outgoing_results.len(), 2);
     assert_eq!(outgoing_results[1].record_id, req_id);
+
+    // A second asset for site 1's store, originated by central (Remote).
+    let central_asset_id = "central_asset_id".to_string();
+    AssetRow {
+        id: central_asset_id.clone(),
+        store_id: Some(site1_store_id.clone()),
+        ..Default::default()
+    }
+    .upsert_sync(
+        &connection,
+        ChangelogSyncType::SyncTypeV5V6 {
+            source_site_id: Some(central_site_id),
+        },
+    )
+    .unwrap();
+
+    // Site 1 post-initialisation: Remote arm relays the central-edited asset.
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(site1_id, false, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert_eq!(outgoing_results.len(), 2);
+    assert_eq!(outgoing_results[1].record_id, central_asset_id);
 }
 
 #[actix_rt::test]
@@ -888,4 +931,107 @@ async fn test_changelog_outgoing_patient_sync_records() {
         .unwrap()
         .rows;
     assert_eq!(outgoing_results.len(), 0);
+}
+
+/// Concurrent-tx race: while connection A is mid-transaction with a changelog
+/// row in flight, an observer on connection B (same manager) should see
+/// `max_cursor()` clamped below A's tracked boundary and `query()` must not
+/// return any rows beyond the clamp. After A commits, the clamp lifts and
+/// everything becomes visible.
+///
+/// Postgres-only: SQLite serialises writers under `BEGIN IMMEDIATE`, so the
+/// "concurrent in-flight tx on a separate connection" scenario can't be
+/// reproduced.
+#[cfg(feature = "postgres")]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn test_max_cursor_clamped_by_in_flight_tx() {
+    use crate::{
+        ChangelogCursorTracker, ClinicianRow, ClinicianRowRepository, ClinicianRowRepositoryTrait,
+        RepositoryError, TransactionError,
+    };
+
+    let (_, _, manager, _) = setup_all(
+        "test_max_cursor_clamped_by_in_flight_tx",
+        MockDataInserts::none(),
+    )
+    .await;
+
+    let observer = manager.connection().unwrap();
+    let cursor_before = ChangelogRepository::new(&observer).max_cursor().unwrap() as i64;
+
+    // Channels to drive the slow tx: signal it has registered, signal it to commit.
+    let (registered_tx, registered_rx) = std::sync::mpsc::channel::<()>();
+    let (release_tx, release_rx) = std::sync::mpsc::channel::<()>();
+
+    let manager_for_tx = manager.clone();
+    let slow_tx = tokio::task::spawn_blocking(move || {
+        let conn = manager_for_tx.connection().unwrap();
+        let _: Result<(), TransactionError<RepositoryError>> =
+            conn.transaction_sync(|con| -> Result<(), RepositoryError> {
+                ClinicianRowRepository::new(con).upsert_one(&ClinicianRow {
+                    id: "clinician_in_flight".to_string(),
+                    code: "C1".to_string(),
+                    last_name: "in_flight".to_string(),
+                    initials: "IF".to_string(),
+                    is_active: true,
+                    ..Default::default()
+                })?;
+                registered_tx.send(()).unwrap();
+                release_rx.recv().unwrap();
+                Ok(())
+            });
+    });
+
+    registered_rx.recv().unwrap();
+
+    // While the slow tx is open: the tracker has an entry for that connection
+    // pegged at `cursor_before + 1` (its lookup of MAX(cursor) before the
+    // insert), so observer's max_cursor must be `<= cursor_before`.
+    let max_during = ChangelogRepository::new(&observer).max_cursor().unwrap() as i64;
+    assert!(
+        max_during <= cursor_before,
+        "expected max_cursor <= {} while in-flight tx open, got {}",
+        cursor_before,
+        max_during
+    );
+    assert!(ChangelogCursorTracker::max_safe_cursor(&observer).is_some());
+
+    let rows_during = ChangelogRepository::new(&observer)
+        .query(
+            ChangelogCondition::True(),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 100,
+            },
+        )
+        .unwrap();
+    assert!(
+        rows_during.rows.is_empty(),
+        "expected no rows past clamp while in-flight tx open, got {} rows",
+        rows_during.rows.len()
+    );
+
+    // Release the slow tx; once it commits the tracker entry is removed.
+    release_tx.send(()).unwrap();
+    slow_tx.await.unwrap();
+
+    assert_eq!(ChangelogCursorTracker::max_safe_cursor(&observer), None);
+    let max_after = ChangelogRepository::new(&observer).max_cursor().unwrap() as i64;
+    assert!(
+        max_after > cursor_before,
+        "expected max_cursor to advance past {} after commit, got {}",
+        cursor_before,
+        max_after
+    );
+    let rows_after = ChangelogRepository::new(&observer)
+        .query(
+            ChangelogCondition::True(),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 100,
+            },
+        )
+        .unwrap();
+    assert_eq!(rows_after.rows.len(), 1);
+    assert_eq!(rows_after.rows[0].record_id, "clinician_in_flight");
 }

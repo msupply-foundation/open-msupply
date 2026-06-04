@@ -14,7 +14,6 @@ pub mod site_auth;
 pub mod sync_buffer;
 pub mod sync_on_central;
 pub mod sync_status;
-pub mod sync_user;
 pub mod synchroniser;
 pub mod synchroniser_driver;
 pub mod synchroniser_runner;

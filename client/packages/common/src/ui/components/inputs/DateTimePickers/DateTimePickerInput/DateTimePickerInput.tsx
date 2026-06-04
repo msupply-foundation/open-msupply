@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   DateTimePicker,
   DateTimePickerProps,
@@ -13,7 +13,8 @@ import {
   TypedTFunction,
   useTranslation,
 } from '@common/intl';
-import { useBufferState } from '@common/hooks';
+import { CustomErrorValue, useBufferState, useFormField } from '@common/hooks';
+import { FormErrorBinding } from '../../TextInput';
 import { getActionBarSx, getPaperSx, getTextFieldSx } from '../styles';
 
 export const getFormattedDateError = (
@@ -48,13 +49,18 @@ export const DateTimePickerInput = ({
   actions,
   dateAsEndOfDay,
   disableFuture,
-  error,
+  error: errorProp,
+  errorText,
   required,
   textFieldSx: inputSx,
   slotProps,
+  formError,
+  customError,
+  validate,
   ...props
 }: Omit<DateTimePickerProps<true>, 'onChange'> & {
-  error?: React.ReactNode;
+  error?: boolean;
+  errorText?: React.ReactNode;
   width?: number | string;
   label?: string;
   onChange: (value: Date | null) => void;
@@ -68,12 +74,38 @@ export const DateTimePickerInput = ({
   disableFuture?: boolean;
   required?: boolean;
   textFieldSx?: SxProps;
+  formError?: FormErrorBinding;
+  customError?: CustomErrorValue;
+  validate?: (value: Date | null | undefined) => string | null;
 }) => {
   const [internalError, setInternalError] = useState<string | null>(null);
   const [value, setValue] = useBufferState<Date | null>(props.value ?? null);
   const [isInitialEntry, setIsInitialEntry] = useState(true);
   const [currentView, setCurrentView] = useState<string | null>(null);
   const t = useTranslation();
+
+  // Form-error system integration. Combines the picker's internal validation
+  // state, the optional consumer-supplied `validate` callback, and any
+  // reactive customError into the global store.
+  const fieldValidator = useMemo(
+    () =>
+      formError
+        ? (val: Date | null | undefined) => {
+            if (internalError) return internalError;
+            return validate ? validate(val) : null;
+          }
+        : undefined,
+    [formError, internalError, validate]
+  );
+  const { error: storeError } = useFormField({
+    formId: formError?.formId ?? '',
+    fieldId: formError?.fieldId ?? '',
+    label: formError?.label ?? '',
+    value,
+    required,
+    customError,
+    validate: fieldValidator,
+  });
   const format =
     props.format === undefined ? (showTime ? 'P p' : 'P') : props.format;
 
@@ -158,8 +190,13 @@ export const DateTimePickerInput = ({
                 handleDateInput(value);
               }
             },
-            error: !!error || (!isInitialEntry && !!internalError),
-            helperText: error || (!isInitialEntry ? (internalError ?? '') : ''),
+            error:
+              !!errorProp ||
+              !!errorText ||
+              (!!formError && storeError) ||
+              (!isInitialEntry && !!internalError),
+            helperText:
+              errorText ?? (!isInitialEntry ? (internalError ?? '') : ''),
             sx: {
               ...getTextFieldSx(!!label, !showTime, inputSx, width),
               width,

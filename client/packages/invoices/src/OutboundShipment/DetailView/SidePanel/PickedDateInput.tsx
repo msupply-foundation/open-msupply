@@ -95,6 +95,12 @@ export const PickedDateInput = () => {
     if (dateValue && DateUtils.isSameDay(newDate, dateValue)) return;
 
     const formattedDate = newDate.toLocaleDateString();
+    // Outgoing stock: snap backdated days to 23:59 so the entry sorts after any
+    // other same-day transactions. For today, send the actual moment — endOfDay
+    // would be in the future for positive-UTC timezones and fail validation.
+    const backdatedDatetime = DateUtils.isToday(newDate)
+      ? newDate.toISOString()
+      : Formatter.toIsoString(DateUtils.endOfDayOrNull(newDate));
 
     const doUpdate = async () => {
       const hasStocktakeAfter = await checkStocktakeAfterDate(newDate);
@@ -104,18 +110,14 @@ export const PickedDateInput = () => {
             date: formattedDate,
           }),
           onConfirm: async () => {
-            await update({
-              backdatedDatetime: newDate.toISOString(),
-            });
+            await update({ backdatedDatetime });
           },
           onCancel: () => setDateValue(previousValue),
         });
         return;
       }
 
-      await update({
-        backdatedDatetime: newDate.toISOString(),
-      });
+      await update({ backdatedDatetime });
     };
 
     // If lines exist, warn they'll be deleted (backend handles deletion atomically)

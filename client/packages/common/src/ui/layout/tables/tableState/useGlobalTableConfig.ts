@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   PREFERENCES_QUERY_KEY,
   useAuthContext,
@@ -40,8 +40,8 @@ export const useSaveGlobalTableConfig = () => {
   const t = useTranslation();
   const { success, error } = useNotification();
 
-  const { mutateAsync } = useMutation(
-    async ({
+  const { mutateAsync } = useMutation({
+    mutationFn: async ({
       tableId,
       state,
     }: {
@@ -63,17 +63,15 @@ export const useSaveGlobalTableConfig = () => {
       });
       return result;
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(PREFERENCES_QUERY_KEY);
-        success(t('messages.global-table-config-saved'))();
-      },
-      onError: err => {
-        error(t('error.global-table-config-save-failed'))();
-        console.error('Error saving global table config:', err);
-      },
-    }
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [PREFERENCES_QUERY_KEY] });
+      success(t('messages.global-table-config-saved'))();
+    },
+    onError: err => {
+      error(t('error.global-table-config-save-failed'))();
+      console.error('Error saving global table config:', err);
+    },
+  });
 
   const saveGlobalTableConfig = useCallback(
     (tableId: string, state: ManagedTableState) =>
