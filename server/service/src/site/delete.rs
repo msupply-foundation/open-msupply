@@ -99,7 +99,6 @@ mod tests {
                 code: Some("test".to_string()),
                 name: "test".to_string(),
                 password: Some("password".to_string()),
-                clear_hardware_id: false,
             },
         )
         .unwrap();
@@ -124,7 +123,6 @@ mod tests {
                 code: Some("central".to_string()),
                 name: "Central".to_string(),
                 password: Some("password".to_string()),
-                clear_hardware_id: false,
             },
         )
         .unwrap();
