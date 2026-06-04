@@ -210,7 +210,9 @@ pub struct ServiceProvider {
     // Subscription trigger handle — used by SyncLogger and changelog callbacks
     // to send events to the shared subscription worker.
     pub subscription_trigger: SubscriptionTriggerHandle,
+    // Yaml only fields ----- Not stored in KV store
     pub(crate) batch_size: BatchSize,
+    pub(crate) disable_integration_transaction: bool,
 }
 
 pub struct ServiceContext {
@@ -220,6 +222,7 @@ pub struct ServiceContext {
     pub user_id: String,
     pub store_id: String,
     pub batch_size: BatchSize,
+    pub disable_integration_transaction: bool,
 }
 
 impl ServiceProvider {
@@ -238,6 +241,7 @@ impl ServiceProvider {
             None, // Mail not required for test/CLI setups
             SubscriptionTriggerHandle::new_void(),
             BatchSize::default(),
+            false,
         )
     }
 
@@ -250,6 +254,7 @@ impl ServiceProvider {
         mail_settings: Option<MailSettings>,
         subscription_trigger: SubscriptionTriggerHandle,
         batch_size: BatchSize,
+        disable_integration_transaction: bool,
     ) -> Self {
         ServiceProvider {
             connection_manager: connection_manager.clone(),
@@ -331,6 +336,7 @@ impl ServiceProvider {
             ledger_fix_trigger,
             shipping_method_service: Box::new(ShippingMethodService {}),
             subscription_trigger,
+            disable_integration_transaction,
         }
     }
 
@@ -343,6 +349,7 @@ impl ServiceProvider {
             store_id: "".to_string(),
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
             batch_size: self.batch_size.clone(),
+            disable_integration_transaction: self.disable_integration_transaction,
         })
     }
 
@@ -357,6 +364,7 @@ impl ServiceProvider {
             store_id: store_id.unwrap_or("".to_string()),
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
             batch_size: self.batch_size.clone(),
+            disable_integration_transaction: self.disable_integration_transaction,
         })
     }
 
@@ -372,6 +380,7 @@ impl ServiceProvider {
             store_id,
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
             batch_size: self.batch_size.clone(),
+            disable_integration_transaction: self.disable_integration_transaction,
         })
     }
 
@@ -391,6 +400,7 @@ impl ServiceContext {
             store_id: "".to_string(),
             frontend_plugins_cache: FrontendPluginCache::new(),
             batch_size: BatchSize::default(),
+            disable_integration_transaction: false,
         }
     }
 }

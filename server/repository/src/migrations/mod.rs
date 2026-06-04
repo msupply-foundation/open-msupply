@@ -65,10 +65,15 @@ use diesel::connection::SimpleConnection;
 use thiserror::Error;
 
 /// Default partition size used by both the migration and the yaml-bound
-/// `ChangelogPartitionSettings` in `service::settings`.
+/// `ChangelogPartitionSettings` in `service::settings`. Also acts as minimum size
 pub const DEFAULT_CHANGELOG_PARTITION_SIZE: i64 = 5_000_000;
-/// Default empty-future-partition headroom kept above max(cursor).
-pub const DEFAULT_CHANGELOG_LOOKAHEAD_PARTITIONS: i64 = 2;
+
+/// Default empty-cursor headroom kept above max(cursor), in cursor records.
+/// Also acts as the lower-bound clamp — yaml values below this are clamped up.
+/// The migration derives the partition count via
+/// `(max_cursor + lookahead) / partition_size + 1`; the runtime top-up tops up
+/// partitions iteratively until the same headroom is satisfied.
+pub const DEFAULT_CHANGELOG_LOOKAHEAD: i64 = 30_000_000;
 
 /// Migration-internal partition config — primitive values only, no serde. The
 /// yaml-bound counterpart (`ChangelogPartitionSettings`) lives in `service::settings`
@@ -77,14 +82,15 @@ pub const DEFAULT_CHANGELOG_LOOKAHEAD_PARTITIONS: i64 = 2;
 #[derive(Clone, Debug)]
 pub struct ChangelogPartitionConfig {
     pub partition_size: i64,
-    pub lookahead_partitions: i64,
+    /// Cursor records of empty headroom to keep above max(cursor).
+    pub lookahead: i64,
 }
 
 impl Default for ChangelogPartitionConfig {
     fn default() -> Self {
         Self {
             partition_size: DEFAULT_CHANGELOG_PARTITION_SIZE,
-            lookahead_partitions: DEFAULT_CHANGELOG_LOOKAHEAD_PARTITIONS,
+            lookahead: DEFAULT_CHANGELOG_LOOKAHEAD,
         }
     }
 }
@@ -319,7 +325,9 @@ pub fn migrate(
                 );
 
                 connection
-                    .transaction_sync(|connection| fragment.migrate_with_config(connection, &config))
+                    .transaction_sync(|connection| {
+                        fragment.migrate_with_config(connection, &config)
+                    })
                     .map_err(|source| MigrationError::FragmentMigrationError {
                         source: source.to_inner_error(),
                         version: migration_version.clone(),
