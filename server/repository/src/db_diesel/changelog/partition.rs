@@ -5,7 +5,7 @@ use crate::{
 use diesel::{prelude::*, sql_types::Text};
 
 /// Ensure enough future cursor-range partitions exist on `changelog` to keep
-/// `lookahead_partitions * partition_size` rows of headroom above `max(cursor)`.
+/// `config.lookahead` cursor records of empty headroom above `max(cursor)`.
 ///
 /// Postgres-only behaviour. Under SQLite the function returns immediately —
 /// SQLite has no partitions to top up.
@@ -29,8 +29,7 @@ pub fn ensure_partition_lookahead(
     let current_max = max_sequence(connection)?;
 
     let size = config.partition_size;
-    let lookahead = config.lookahead_partitions;
-    let target_headroom = lookahead * size;
+    let target_headroom = config.lookahead;
 
     let mut created = 0;
     let mut next_lower = max_upper;
@@ -152,7 +151,7 @@ mod tests {
     }
 
     /// 4 pre-seeded rows (cursors 1..=4) on a starting layout of two
-    /// partitions [1,3), [3,5). With size=2, lookahead=2:
+    /// partitions [1,3), [3,5). With size=2, lookahead=4:
     /// target_headroom = 4, actual = max_upper(5) - max_cursor(4) = 1, so
     /// ensure_partition_lookahead must create 2 new partitions (p_5, p_7) to
     /// restore headroom.
@@ -182,7 +181,7 @@ mod tests {
 
         let config = ChangelogPartitionConfig {
             partition_size: 2,
-            lookahead_partitions: 2,
+            lookahead: 4,
         };
         let created = ensure_partition_lookahead(&connection, &config).unwrap();
 
@@ -191,7 +190,7 @@ mod tests {
         assert_eq!(count_partitions(&connection), 4);
     }
 
-    /// Same tight starting layout but no rows. With size=2, lookahead=2:
+    /// Same tight starting layout but no rows. With size=2, lookahead=4:
     /// target_headroom = 4, actual = max_upper(5) - max_cursor(0) = 5, so
     /// ensure_partition_lookahead is a no-op and creates nothing.
     #[actix_rt::test]
@@ -206,7 +205,7 @@ mod tests {
 
         let config = ChangelogPartitionConfig {
             partition_size: 2,
-            lookahead_partitions: 2,
+            lookahead: 4,
         };
         let created = ensure_partition_lookahead(&connection, &config).unwrap();
 
@@ -215,9 +214,10 @@ mod tests {
     }
 
     /// Records exist but the partition layout already has enough headroom on
-    /// top. With cursors 1..=2 and partitions [1,3), [3,5), [5,7), [7,9):
-    /// target_headroom = 4, actual = max_upper(9) - max_cursor(2) = 7, so
-    /// ensure_partition_lookahead is a no-op even though the table is non-empty.
+    /// top. With cursors 1..=2 and partitions [1,3), [3,5), [5,7), [7,9), and
+    /// lookahead=4: target_headroom = 4, actual = max_upper(9) -
+    /// max_cursor(2) = 7, so ensure_partition_lookahead is a no-op even
+    /// though the table is non-empty.
     #[actix_rt::test]
     async fn test_ensure_partition_lookahead_noop_when_records_have_enough_headroom() {
         let (_, connection, _, _) = test_db::setup_all(
@@ -250,7 +250,7 @@ mod tests {
 
         let config = ChangelogPartitionConfig {
             partition_size: 2,
-            lookahead_partitions: 2,
+            lookahead: 4,
         };
         let created = ensure_partition_lookahead(&connection, &config).unwrap();
 

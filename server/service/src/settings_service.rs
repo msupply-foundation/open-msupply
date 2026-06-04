@@ -40,6 +40,7 @@ pub trait SettingsServiceTrait: Sync + Send {
         let interval_seconds = key_value_store.get_i64(KeyType::SettingsSyncIntervalSeconds)?;
 
         let batch_size = ctx.batch_size.clone();
+        let disable_integration_transaction = ctx.disable_integration_transaction;
 
         // `?` inside this closure would result in closure returning `None`
         let make_settings = || {
@@ -49,7 +50,7 @@ pub trait SettingsServiceTrait: Sync + Send {
                 password_sha256: password_sha256?,
                 interval_seconds: interval_seconds? as u64,
                 batch_size,
-                disable_integration_transaction: false,
+                disable_integration_transaction,
             })
         };
 

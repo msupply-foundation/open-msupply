@@ -11,17 +11,30 @@ pub fn spawn(
         let partition_config = settings.to_migration_config();
         loop {
             interval.tick().await;
-            match service_provider.basic_context() {
-                // `ensure_partition_lookahead` is a no-op under SQLite (no partitions
-                // to top up); under Postgres it adds partitions when headroom is low.
-                Ok(ctx) => {
-                    if let Err(e) =
-                        repository::ensure_partition_lookahead(&ctx.connection, &partition_config)
-                    {
-                        log::error!("changelog partition top-up: {e:?}");
+            let Ok(ctx) = service_provider.basic_context() else {
+                log::error!("changelog partition task: failed to get context");
+                continue;
+            };
+
+            // `ensure_partition_lookahead` is a no-op under SQLite (no partitions
+            // to top up); under Postgres it adds partitions when headroom is low.
+            // Diesel calls are blocking, so run on a blocking worker to avoid
+            // stalling the async runtime.
+
+            let partition_config = partition_config.clone();
+            let result = tokio::task::spawn_blocking(move || {
+                repository::ensure_partition_lookahead(&ctx.connection, &partition_config)
+            })
+            .await;
+
+            match result {
+                Ok(Ok(i)) => {
+                    if i > 0 {
+                        log::info!("changelog partition task created {i} new partition(s)")
                     }
                 }
-                Err(e) => log::error!("changelog partition top-up: failed to get context: {e:?}"),
+                Ok(Err(e)) => log::error!("changelog partition task: {e:?}"),
+                Err(e) => log::error!("changelog partition task: join error: {e:?}"),
             }
         }
     })

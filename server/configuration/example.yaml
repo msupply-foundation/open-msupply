@@ -68,7 +68,7 @@
 #   example_feature: true
 # changelog_partition: # postgres-only; controls partitioning of the changelog table
 #   partition_size: 5000000      # cursor values per partition
-#   lookahead_partitions: 2      # empty future partitions kept ahead of max(cursor)
+#   lookahead: 30000000          # number of insertable records headroom for changelog; also the lower bound — yaml values below this are clamped up
 #   interval:                    # poll period for the runtime top-up task
 #     hours: 0
 #     mins: 1
