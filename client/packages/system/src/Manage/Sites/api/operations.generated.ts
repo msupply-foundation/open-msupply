@@ -87,7 +87,14 @@ export type DeleteSiteMutation = {
     __typename: 'CentralServerMutationNode';
     site: {
       __typename: 'CentralSiteMutations';
-      deleteSite: { __typename: 'DeleteSiteNode'; id: number };
+      deleteSite:
+        | {
+            __typename: 'DeleteSiteError';
+            error:
+              | { __typename: 'CannotDeleteCentralSite'; description: string }
+              | { __typename: 'SiteHasStores'; description: string };
+          }
+        | { __typename: 'DeleteSiteNode'; id: number };
     };
   };
 };
@@ -247,7 +254,24 @@ export const DeleteSiteDocument = gql`
     centralServer {
       site {
         deleteSite(siteId: $siteId) {
-          id
+          __typename
+          ... on DeleteSiteNode {
+            id
+          }
+          ... on DeleteSiteError {
+            __typename
+            error {
+              ... on SiteHasStores {
+                __typename
+                description
+              }
+              ... on CannotDeleteCentralSite {
+                __typename
+                description
+              }
+              description
+            }
+          }
         }
       }
     }

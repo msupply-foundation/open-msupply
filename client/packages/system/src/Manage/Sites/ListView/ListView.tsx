@@ -1,25 +1,26 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   NothingHere,
   useUrlQueryParams,
   useEditModal,
   useTranslation,
-  // useNotification,
-  // useConfirmationModal,
+  useNotification,
+  useConfirmationModal,
   usePaginatedMaterialTable,
   MaterialTable,
   ColumnDef,
+  useIsCentralStandalone,
 } from '@openmsupply-client/common';
-// import { AppBarButtons } from './AppBarButtons';
-// import { Footer } from './Footer';
+import { AppBarButtons } from './AppBarButtons';
+import { Footer } from './Footer';
 import { Toolbar } from './Toolbar';
 import { SiteEditModal } from './SiteEditModal';
 import { SiteRowFragment, defaultDraftSite, DraftSite, useSites } from '../api';
 
-// TODO: Site create/edit/delete is disabled for now and will be revisited in
-// the future.
 export const SitesList = () => {
   const t = useTranslation();
+  const isCentralStandalone = useIsCentralStandalone();
+  const [failedDeleteIds, setFailedDeleteIds] = useState<number[]>([]);
   const {
     filter,
     queryParams: { sortBy, first, offset },
@@ -31,8 +32,8 @@ export const SitesList = () => {
   const queryParams = { ...filter, sortBy, first, offset };
   const {
     query: { data, isError, isFetching },
-    // upsert: { upsert },
-    // deleteSite: { deleteSite },
+    upsert: { upsert },
+    deleteSite: { deleteSite },
     clearSyncToken: { clearSyncToken, isClearingSyncToken },
     clearHardwareId: { clearHardwareId, isClearingHardwareId },
     draft,
@@ -40,43 +41,43 @@ export const SitesList = () => {
   } = useSites(queryParams);
 
   const { isOpen, onClose, onOpen } = useEditModal();
-  // const { error, success } = useNotification();
+  const { error, success } = useNotification();
 
   const handleClose = () => {
     onClose();
     updateDraft(defaultDraftSite);
   };
 
-  // const handleCreate = () => {
-  //   const nextId = Math.max(0, ...(data?.nodes?.map(s => s.id) ?? [])) + 1;
-  //   updateDraft({ ...defaultDraftSite, id: nextId });
-  //   onOpen();
-  // };
+  const handleCreate = () => {
+    const nextId = Math.max(0, ...(data?.nodes?.map(s => s.id) ?? [])) + 1;
+    updateDraft({ ...defaultDraftSite, id: nextId });
+    onOpen();
+  };
 
-  // const save = async (saveStoreAssignments: () => Promise<void>) => {
-  //   try {
-  //     await upsert();
-  //     await saveStoreAssignments();
-  //     success(t('messages.site-saved'))();
-  //     handleClose();
-  //   } catch (e) {
-  //     error(String(e))();
-  //   }
-  // };
+  const save = async (saveStoreAssignments: () => Promise<void>) => {
+    try {
+      await upsert();
+      await saveStoreAssignments();
+      success(t('messages.site-saved'))();
+      handleClose();
+    } catch (e) {
+      error(String(e))();
+    }
+  };
 
-  // const confirmDelete = useConfirmationModal({
-  //   title: t('heading.are-you-sure'),
-  //   message: t('messages.confirm-delete-sites', { count: 1 }),
-  //   onConfirm: async () => {
-  //     try {
-  //       await deleteSite(draft.id);
-  //       success(t('messages.deleted-sites', { count: 1 }))();
-  //       handleClose();
-  //     } catch (e) {
-  //       error(String(e))();
-  //     }
-  //   },
-  // });
+  const confirmDelete = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-delete-sites', { count: 1 }),
+    onConfirm: async () => {
+      try {
+        await deleteSite(draft.id);
+        success(t('messages.deleted-sites', { count: 1 }))();
+        handleClose();
+      } catch (e) {
+        error(String(e))();
+      }
+    },
+  });
 
   const columns = useMemo(
     (): ColumnDef<SiteRowFragment>[] => [
@@ -84,6 +85,7 @@ export const SitesList = () => {
         accessorKey: 'code',
         header: t('label.code'),
         enableSorting: true,
+        getIsError: row => failedDeleteIds.includes(row.id),
       },
       {
         accessorKey: 'name',
@@ -95,7 +97,7 @@ export const SitesList = () => {
         header: t('label.hardware-id'),
       },
     ],
-    []
+    [failedDeleteIds]
   );
 
   const onRowClick = (row: SiteRowFragment) => {
@@ -115,7 +117,7 @@ export const SitesList = () => {
     }
   };
 
-  const { table } = usePaginatedMaterialTable({
+  const { table, selectedRows } = usePaginatedMaterialTable({
     tableId: 'site-list',
     columns,
     data: data?.nodes,
@@ -124,13 +126,13 @@ export const SitesList = () => {
     isError,
     onRowClick,
     noDataElement: <NothingHere body={t('error.no-sites')} />,
-    enableRowSelection: false, // TODO: Remove if allowing deletes on OMS central
+    enableRowSelection: isCentralStandalone,
   });
 
   return (
     <>
       <Toolbar filter={filter} />
-      {/* <AppBarButtons onOpen={handleCreate} /> */}
+      {isCentralStandalone && <AppBarButtons onOpen={handleCreate} />}
       <MaterialTable table={table} />
       {isOpen && (
         <SiteEditModal
@@ -142,13 +144,19 @@ export const SitesList = () => {
           isClearingSyncToken={isClearingSyncToken}
           clearHardwareId={clearHardwareId}
           isClearingHardwareId={isClearingHardwareId}
+          upsert={save}
+          onDelete={() => confirmDelete()}
+          isEditable={isCentralStandalone}
         />
       )}
-      {/* <Footer
-        selectedRows={selectedRows}
-        resetRowSelection={table.resetRowSelection}
-        deleteSite={deleteSite}
-      /> */}
+      {isCentralStandalone && (
+        <Footer
+          selectedRows={selectedRows}
+          resetRowSelection={table.resetRowSelection}
+          deleteSite={deleteSite}
+          setFailedDeleteIds={setFailedDeleteIds}
+        />
+      )}
     </>
   );
 };

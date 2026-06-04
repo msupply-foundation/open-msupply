@@ -111,6 +111,10 @@ impl GeneralQueries {
         CentralServerConfig::is_central_server()
     }
 
+    pub async fn is_central_standalone(&self) -> bool {
+        CentralServerConfig::is_standalone_central()
+    }
+
     pub async fn feature_flags(&self, ctx: &Context<'_>) -> HashMap<String, bool> {
         ctx.get_settings().features.clone().unwrap_or_default()
     }

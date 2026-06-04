@@ -1239,6 +1239,11 @@ export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface &
     description: Scalars['String']['output'];
   };
 
+export type CannotDeleteCentralSite = DeleteSiteErrorInterface & {
+  __typename: 'CannotDeleteCentralSite';
+  description: Scalars['String']['output'];
+};
+
 export type CannotDeleteInvoiceWithLines = DeleteCustomerReturnErrorInterface &
   DeleteErrorInterface &
   DeleteInboundShipmentErrorInterface &
@@ -1474,7 +1479,7 @@ export type CentralSiteMutations = {
   assignStoresToSite: AssignStoresToSiteNode;
   clearSiteHardwareId: ClearSiteHardwareIdNode;
   clearSiteToken: ClearSiteTokenNode;
-  deleteSite: DeleteSiteNode;
+  deleteSite: DeleteSiteResponse;
   upsertSite: UpsertSiteResponse;
 };
 
@@ -2353,10 +2358,21 @@ export type DeleteRnRFormInput = {
 
 export type DeleteRnRFormResponse = DeleteResponse;
 
+export type DeleteSiteError = {
+  __typename: 'DeleteSiteError';
+  error: DeleteSiteErrorInterface;
+};
+
+export type DeleteSiteErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type DeleteSiteNode = {
   __typename: 'DeleteSiteNode';
   id: Scalars['Int']['output'];
 };
+
+export type DeleteSiteResponse = DeleteSiteError | DeleteSiteNode;
 
 export type DeleteStocktakeError = {
   __typename: 'DeleteStocktakeError';
@@ -7797,6 +7813,7 @@ export type Queries = {
   invoiceLines: InvoiceLinesResponse;
   invoices: InvoicesResponse;
   isCentralServer: Scalars['Boolean']['output'];
+  isCentralStandalone: Scalars['Boolean']['output'];
   itemCounts: ItemCounts;
   itemLedger: ItemLedgerResponse;
   itemPrice: ItemPriceResponse;
@@ -9571,6 +9588,11 @@ export type SiteFilterInput = {
   name?: InputMaybe<StringFilterInput>;
 };
 
+export type SiteHasStores = DeleteSiteErrorInterface & {
+  __typename: 'SiteHasStores';
+  description: Scalars['String']['output'];
+};
+
 export type SiteNode = {
   __typename: 'SiteNode';
   code: Scalars['String']['output'];
@@ -10225,8 +10247,7 @@ export type SyncSettingsInput = {
 
 export type SyncSettingsNode = {
   __typename: 'SyncSettingsNode';
-  /** Currently OG Central Server ID */
-  centralServerSiteId?: Maybe<Scalars['Int']['output']>;
+  centralServerSiteId: Scalars['Int']['output'];
   /** How frequently central data is synced */
   intervalSeconds: Scalars['Int']['output'];
   syncSiteId?: Maybe<Scalars['Int']['output']>;

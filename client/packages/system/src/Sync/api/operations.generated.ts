@@ -8,7 +8,7 @@ export type SyncSettingsFragment = {
   intervalSeconds: number;
   url: string;
   username: string;
-  centralServerSiteId?: number | null;
+  centralServerSiteId: number;
   syncSiteId?: number | null;
 };
 
@@ -21,7 +21,7 @@ export type SyncSettingsQuery = {
     intervalSeconds: number;
     url: string;
     username: string;
-    centralServerSiteId?: number | null;
+    centralServerSiteId: number;
     syncSiteId?: number | null;
   } | null;
 };
@@ -54,7 +54,7 @@ export type InitialiseSiteMutation = {
         intervalSeconds: number;
         url: string;
         username: string;
-        centralServerSiteId?: number | null;
+        centralServerSiteId: number;
         syncSiteId?: number | null;
       };
 };
@@ -81,7 +81,7 @@ export type UpdateSyncSettingsMutation = {
         intervalSeconds: number;
         url: string;
         username: string;
-        centralServerSiteId?: number | null;
+        centralServerSiteId: number;
         syncSiteId?: number | null;
       };
 };
