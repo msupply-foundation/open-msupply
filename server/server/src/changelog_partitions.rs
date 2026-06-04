@@ -14,14 +14,25 @@ pub fn spawn(
             match service_provider.basic_context() {
                 // `ensure_partition_lookahead` is a no-op under SQLite (no partitions
                 // to top up); under Postgres it adds partitions when headroom is low.
+                // Diesel calls are blocking, so run on a blocking worker to avoid
+                // stalling the async runtime.
                 Ok(ctx) => {
-                    if let Err(e) =
+                    let partition_config = partition_config.clone();
+                    
+                    let result = tokio::task::spawn_blocking(move || {
                         repository::ensure_partition_lookahead(&ctx.connection, &partition_config)
-                    {
-                        log::error!("changelog partition top-up: {e:?}");
+                    })
+                    .await;
+
+                    match result {
+                        Ok(Ok(i)) => {
+                            log::info!("changelog partition task created {i} new partition(s)")
+                        }
+                        Ok(Err(e)) => log::error!("changelog partition task: {e:?}"),
+                        Err(e) => log::error!("changelog partition task: join error: {e:?}"),
                     }
                 }
-                Err(e) => log::error!("changelog partition top-up: failed to get context: {e:?}"),
+                Err(e) => log::error!("changelog partition task: failed to get context: {e:?}"),
             }
         }
     })
