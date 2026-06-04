@@ -4,6 +4,7 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use ts_rs::TS;
+use util::format_error;
 
 diesel_json_type! {
     #[derive(Debug, Error, Clone, PartialEq, TS)]
@@ -58,6 +59,12 @@ diesel_json_type! {
         RequestSiteAuthError(String),
         #[error("Unmatched error {0}")]
         Other(String),
+    }
+}
+
+impl SyncError {
+    pub fn other(error: impl std::error::Error) -> Self {
+        SyncError::Other(format_error(&error))
     }
 }
 
