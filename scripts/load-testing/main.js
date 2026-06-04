@@ -19,8 +19,9 @@ import { invoiceWorkflow } from './scenarios/invoiceWorkflow.js';
 import { stocktakeWorkflow } from './scenarios/stocktakeWorkflow.js';
 import { reportsReader } from './scenarios/reportsReader.js';
 import { syncDriver } from './scenarios/syncDriver.js';
+import { syncInfoStorm } from './scenarios/syncInfoStorm.js';
 
-export { heavyReader, dashboardPoller, requisitionWorkflow, invoiceWorkflow, stocktakeWorkflow, reportsReader, syncDriver };
+export { heavyReader, dashboardPoller, requisitionWorkflow, invoiceWorkflow, stocktakeWorkflow, reportsReader, syncDriver, syncInfoStorm };
 
 export const options = buildOptions();
 

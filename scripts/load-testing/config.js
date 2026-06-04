@@ -99,6 +99,15 @@ export const config = {
   // Seconds between manualSync triggers — the changelog lock path (env: SYNC_INTERVAL).
   syncInterval: envInt('SYNC_INTERVAL', file.syncInterval != null ? file.syncInterval : 60),
   syncFetchPatientId: pick('SYNC_FETCH_PATIENT_ID', 'syncFetchPatientId', null),
+  // Open-model syncInfo storm — fires the changelog_deduped COUNT at a fixed arrival rate (no
+  // backpressure) to reproduce the subscription fan-out that collapsed the real test. Off by default.
+  // Rates are syncInfo requests/second; ramps startRate -> peakRate over rampDuration then holds.
+  syncStormEnabled: envBool('SYNC_STORM_ENABLED', file.syncStormEnabled != null ? file.syncStormEnabled : false),
+  syncStormStartRate: envInt('SYNC_STORM_START_RATE', file.syncStormStartRate != null ? file.syncStormStartRate : 2),
+  syncStormPeakRate: envInt('SYNC_STORM_PEAK_RATE', file.syncStormPeakRate != null ? file.syncStormPeakRate : 40),
+  // Cap on concurrent VUs the storm may allocate. With ~10s counts, in-flight ≈ rate × 10s, so this
+  // must be high to let the pileup form (else k6 just drops iterations — itself a collapse signal).
+  syncStormMaxVus: envInt('SYNC_STORM_MAX_VUS', file.syncStormMaxVus != null ? file.syncStormMaxVus : 300),
   thinkMinMs: envInt('THINK_MIN_MS', file.thinkMinMs != null ? file.thinkMinMs : 1000),
   thinkMaxMs: envInt('THINK_MAX_MS', file.thinkMaxMs != null ? file.thinkMaxMs : 5000),
   // Workflow scenarios pause longer between steps (a human filling/editing a form), which keeps the
@@ -180,6 +189,26 @@ function buildScenarios() {
   if (config.syncEnabled) {
     // A single periodic actor; it loops with sleep(syncInterval) internally.
     scenarios.syncDriver = rampingScenario('syncDriver', 1, '0s');
+  }
+  if (config.syncStormEnabled) {
+    // Open model: fixed arrival rate, NO backpressure. k6 keeps starting iterations at `target`
+    // req/s and allocates VUs (up to maxVUs) when prior ones are still blocked on a ~10s count, so
+    // concurrent counts pile up and exhaust the DB pool. Ramp the rate to find the tipping point.
+    scenarios.syncInfoStorm = {
+      executor: 'ramping-arrival-rate',
+      exec: 'syncInfoStorm',
+      startTime: '0s',
+      startRate: config.syncStormStartRate,
+      timeUnit: '1s',
+      preAllocatedVUs: Math.min(50, config.syncStormMaxVus),
+      maxVUs: config.syncStormMaxVus,
+      stages: [
+        { duration: config.rampDuration, target: config.syncStormPeakRate },
+        { duration: config.holdDuration, target: config.syncStormPeakRate },
+      ],
+      gracefulStop: '30s',
+      tags: { scenario: 'syncInfoStorm' },
+    };
   }
   return scenarios;
 }
