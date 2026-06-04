@@ -70,8 +70,9 @@ pub const DEFAULT_CHANGELOG_PARTITION_SIZE: i64 = 5_000_000;
 
 /// Default empty-cursor headroom kept above max(cursor), in cursor records.
 /// Also acts as the lower-bound clamp — yaml values below this are clamped up.
-/// Internally the migration / runtime top-up convert to a partition count via
-/// `ceil(lookahead / partition_size)`.
+/// The migration derives the partition count via
+/// `(max_cursor + lookahead) / partition_size + 1`; the runtime top-up tops up
+/// partitions iteratively until the same headroom is satisfied.
 pub const DEFAULT_CHANGELOG_LOOKAHEAD: i64 = 30_000_000;
 
 /// Migration-internal partition config — primitive values only, no serde. The
