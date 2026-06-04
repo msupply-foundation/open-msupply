@@ -102,6 +102,7 @@ pub fn get_names(
         &ResourceAccessRequest {
             resource: Resource::QueryName,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

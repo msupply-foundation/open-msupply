@@ -61,6 +61,7 @@ pub fn insert_request_from_response_requisition(
         &ResourceAccessRequest {
             resource: Resource::MutateRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

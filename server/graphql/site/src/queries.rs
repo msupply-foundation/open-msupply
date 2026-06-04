@@ -24,6 +24,7 @@ pub fn sites(
         &ResourceAccessRequest {
             resource: Resource::MutateSites,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

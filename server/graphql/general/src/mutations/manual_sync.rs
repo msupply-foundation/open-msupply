@@ -16,6 +16,7 @@ pub fn manual_sync(ctx: &Context<'_>, with_auth: bool) -> Result<String> {
             &ResourceAccessRequest {
                 resource: Resource::ManualSync,
                 store_id: None,
+                require_central_standalone: false,
             },
         )?;
     }

@@ -36,6 +36,7 @@ pub fn save_prescription_item_lines(
         &ResourceAccessRequest {
             resource: Resource::MutatePrescription,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

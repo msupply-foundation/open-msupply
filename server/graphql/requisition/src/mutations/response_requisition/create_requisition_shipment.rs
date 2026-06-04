@@ -50,6 +50,7 @@ pub fn create_requisition_shipment(
         &ResourceAccessRequest {
             resource: Resource::CreateOutboundShipmentFromRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
