@@ -84,6 +84,7 @@ pub async fn pull(
             is_v5: false,
         }),
     );
+
     let QueryWithData {
         rows,
         remaining,
@@ -92,7 +93,7 @@ pub async fn pull(
     } = ChangelogRepository::new(&ctx.connection).query_with_data(
         filter,
         CursorAndLimit {
-            cursor: cursor as i64,
+            cursor: adjust_v6_cursor(cursor),
             limit: batch_size as i64,
         },
     )?;
@@ -108,11 +109,12 @@ pub async fn pull(
     .collect();
 
     log::info!(
-        "Sending {} records to site {}",
+        "V6 pull site {} sending {} records, last_cursor_in_batch {} remaining {}",
+        response.site_id,
         records.len(),
-        response.site_id
+        last_cursor_in_batch,
+        remaining
     );
-    log::debug!("Sending records as central server: {records:#?}");
 
     let is_last_batch = remaining == 0;
 
@@ -163,7 +165,6 @@ pub async fn push(
         batch.total_records,
         response.site_id
     );
-    log::debug!("Receiving records as central server: {batch:#?}");
 
     let SyncBatchV6 {
         records,
@@ -227,7 +228,6 @@ pub async fn patient_pull(
     }
 
     let ctx = service_provider.basic_context()?;
-    let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
     // We don't need a filter here, as we are filtering in the repository layer
     let filter = ChangelogCondition::And(vec![
@@ -248,14 +248,10 @@ pub async fn patient_pull(
     } = ChangelogRepository::new(&ctx.connection).query_with_data(
         filter,
         CursorAndLimit {
-            cursor: cursor as i64,
+            cursor: adjust_v6_cursor(cursor),
             limit: batch_size as i64,
         },
     )?;
-    let max_cursor = changelog_repo.max_cursor()?;
-
-    // Total = remaining records to process based on max cursor
-    let total_records = max_cursor.saturating_sub(cursor);
 
     let records: Vec<SyncRecordV6> = translate_rows_to_sync_records(
         &ctx.connection,
@@ -272,12 +268,11 @@ pub async fn patient_pull(
         records.len(),
         response.site_id
     );
-    log::debug!("Patient Pull: Sending records as central server: {records:#?}");
 
-    let is_last_batch = total_records <= batch_size as u64;
+    let is_last_batch = remaining == 0;
 
     Ok(SyncBatchV6 {
-        total_records,
+        total_records: remaining,
         end_cursor: last_cursor_in_batch,
         records,
         is_last_batch,
@@ -327,7 +322,7 @@ fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) {
 
         set_integrating(site_id, true);
 
-        match integrate_and_translate_sync_buffer(&ctx.connection, None, site_id) {
+        match integrate_and_translate_sync_buffer(&ctx.connection, None, site_id, true) {
             Ok(_) => {
                 log::info!("Integration complete for site {site_id}");
             }
@@ -471,4 +466,25 @@ fn set_integrating(site_id: i32, is_integrating: bool) {
 
 fn is_sync_version_compatible(sync_v6_version: u32) -> bool {
     MIN_VERSION <= sync_v6_version && sync_v6_version <= MAX_VERSION
+}
+
+// V6 remotes store cursors as `last_seen + 1` (matching the old `>= cursor` query).
+// V7 queries use `> cursor`, so subtract 1 to keep the same window. Used both when
+// serving v6 sites from a v7 central server and when copying v6 cursors to v7 during
+// the upgrade.
+pub(crate) fn adjust_v6_cursor(v6_cursor: u64) -> i64 {
+    v6_cursor.saturating_sub(1) as i64
+}
+
+#[cfg(test)]
+mod tests {
+    use super::adjust_v6_cursor;
+
+    #[test]
+    /// This test is simply to capture the intent. During automation tests ensure v6 cursors
+    /// are correctly translated to v7 cursors and no records are skipped
+    fn adjusts_v6_pull_cursor_for_greater_than_queries() {
+        assert_eq!(adjust_v6_cursor(200), 199);
+        assert_eq!(adjust_v6_cursor(0), 0);
+    }
 }

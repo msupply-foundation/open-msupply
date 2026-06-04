@@ -1,10 +1,14 @@
 use log::{error, info};
 use repository::{
-    syncv7::SyncError, RepositoryError, StorageConnection, SyncLogV7Repository, SyncLogV7Row,
+    syncv7::SyncError, Description, RepositoryError, StorageConnection, SyncLogV7Repository,
+    SyncLogV7Row,
 };
 use util::format_error;
 
-use crate::subscription::{SubscriptionTrigger, SubscriptionTriggerHandle, SyncLogRow};
+use crate::{
+    subscription::{SubscriptionTrigger, SubscriptionTriggerHandle, SyncLogRow},
+    sync_v7::sync_status::status::FullSyncStatusV7,
+};
 
 #[derive(Debug, Clone)]
 pub(crate) enum SyncStep {
@@ -19,6 +23,8 @@ pub struct SyncLogger<'a> {
     row: SyncLogV7Row,
     step: Option<SyncStep>,
     subscription_trigger: Option<SubscriptionTriggerHandle>,
+    /// Cached at `start()` so progress updates don't re-query.
+    linked_descriptions: Vec<Description>,
 }
 
 /// Connection-free state that can cross thread boundaries (e.g. into
@@ -27,6 +33,7 @@ pub struct SyncLoggerHandle {
     row: SyncLogV7Row,
     step: Option<SyncStep>,
     subscription_trigger: Option<SubscriptionTriggerHandle>,
+    linked_descriptions: Vec<Description>,
 }
 
 impl SyncLoggerHandle {
@@ -37,16 +44,27 @@ impl SyncLoggerHandle {
             row: self.row,
             step: self.step,
             subscription_trigger: self.subscription_trigger,
+            linked_descriptions: self.linked_descriptions,
         }
     }
 }
 
 impl<'a> SyncLogger<'a> {
-    pub fn start(connection: &'a StorageConnection) -> Result<SyncLogger<'a>, RepositoryError> {
+    pub fn start(
+        connection: &'a StorageConnection,
+        reference_id: Option<String>,
+    ) -> Result<SyncLogger<'a>, RepositoryError> {
         info!("Sync started");
+        // Cache the linked sync_request descriptions up-front. The logger
+        // forwards them with every subscription trigger so the FE sees them
+        // on the very first progress update — not only on completion.
+        let linked_descriptions =
+            FullSyncStatusV7::lookup_descriptions(connection, reference_id.as_deref())?;
+
         let row = SyncLogV7Row {
             id: util::uuid::uuid(),
             started_datetime: chrono::Utc::now().naive_utc(),
+            reference_id,
             ..Default::default()
         };
 
@@ -55,6 +73,7 @@ impl<'a> SyncLogger<'a> {
             row,
             step: None,
             subscription_trigger: None,
+            linked_descriptions,
         };
         logger.update()?;
         Ok(logger)
@@ -74,6 +93,7 @@ impl<'a> SyncLogger<'a> {
             row: self.row.clone(),
             step: self.step.clone(),
             subscription_trigger: self.subscription_trigger.clone(),
+            linked_descriptions: self.linked_descriptions.clone(),
         }
     }
 
@@ -83,15 +103,17 @@ impl<'a> SyncLogger<'a> {
         self.row = handle.row;
         self.step = handle.step;
         self.subscription_trigger = handle.subscription_trigger;
+        self.linked_descriptions = handle.linked_descriptions;
     }
 
     /// Persist current row to DB and notify subscribers.
     fn update(&self) -> Result<(), RepositoryError> {
         self.sync_log_repo.upsert_one(&self.row)?;
         if let Some(handle) = &self.subscription_trigger {
-            handle.send(SubscriptionTrigger::SyncStatus(SyncLogRow::V7(
-                self.row.clone(),
-            )));
+            handle.send(SubscriptionTrigger::SyncStatus(SyncLogRow::V7 {
+                row: self.row.clone(),
+                linked_descriptions: self.linked_descriptions.clone(),
+            }));
         }
         Ok(())
     }

@@ -155,7 +155,7 @@ function mapSyncErrorV7(
     [SyncErrorVariantV7.DatabaseError]: 'error.internal-error',
     [SyncErrorVariantV7.SyncRecordSerializeError]: 'error.internal-error',
     [SyncErrorVariantV7.RecordNotFound]: 'error.internal-error',
-    [SyncErrorVariantV7.TokenAlreadyAllocated]: 'error.internal-error',
+    [SyncErrorVariantV7.TokenAlreadyAllocated]: 'error.token-already-allocated',
     [SyncErrorVariantV7.TokenNotFound]: 'error.internal-error',
     [SyncErrorVariantV7.FailedToGetHardwareId]: 'error.internal-error',
     [SyncErrorVariantV7.MissingAuthHeader]: 'error.internal-error',
@@ -168,12 +168,26 @@ function mapSyncErrorV7(
     [SyncErrorVariantV7.Other]: defaultKey || 'error.unknown-sync-error',
   };
 
+  const getHint = () => {
+    switch (error.variantV7) {
+      case SyncErrorVariantV7.SyncVersionMismatch:
+        return t('error.sync-api-incompatible-hint');
+      case SyncErrorVariantV7.NotACentralServer:
+        return t('error.v6-server-not-configured-hint');
+      case SyncErrorVariantV7.ConnectionError:
+        return t('error.connection-error-hint');
+      default:
+        return undefined;
+    }
+  };
+
   return {
     error:
       t(errorMapping[error.variantV7]) ||
       defaultKey ||
       'error.unknown-sync-error',
     details: error.fullError,
+    hint: getHint(),
   };
 }
 

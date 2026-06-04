@@ -7,6 +7,7 @@ import {
   useQuery,
   useMutation,
   useTranslation,
+  keepPreviousData,
   LIST_KEY,
   SiteFilterInput,
   SiteSortFieldInput,
@@ -24,7 +25,6 @@ export type DraftSite = {
   code: string;
   name: string;
   password: string;
-  clearHardwareId: boolean;
   hardwareId?: string | null;
   isNew: boolean;
 };
@@ -34,7 +34,6 @@ export const defaultDraftSite: DraftSite = {
   code: '',
   name: '',
   password: '',
-  clearHardwareId: false,
   hardwareId: undefined,
   isNew: true,
 };
@@ -50,21 +49,27 @@ export const useSites = (queryParams?: ListParams) => {
 
   const {
     mutateAsync: upsertMutation,
-    isLoading: isUpserting,
+    isPending: isUpserting,
     error: upsertError,
   } = useUpsertSite();
 
   const {
     mutateAsync: deleteMutation,
-    isLoading: isDeleting,
+    isPending: isDeleting,
     error: deleteError,
   } = useDeleteSite();
 
   const {
     mutateAsync: clearSyncTokenMutation,
-    isLoading: isClearingSyncToken,
+    isPending: isClearingSyncToken,
     error: clearSyncTokenError,
   } = useClearSiteToken();
+
+  const {
+    mutateAsync: clearHardwareIdMutation,
+    isPending: isClearingHardwareId,
+    error: clearHardwareIdError,
+  } = useClearHardwareId();
 
   const upsert = async () => {
     return await upsertMutation(draft);
@@ -78,6 +83,14 @@ export const useSites = (queryParams?: ListParams) => {
     return await clearSyncTokenMutation(siteId);
   };
 
+  // Wrap so the draft reflects the cleared state without waiting for the
+  // refetch — keeps the modal UI in sync with the mutation.
+  const clearHardwareId = async (siteId: number) => {
+    const result = await clearHardwareIdMutation(siteId);
+    updateDraft({ hardwareId: null });
+    return result;
+  };
+
   return {
     query: { data, isFetching, isError },
     upsert: { upsert, isUpserting, upsertError },
@@ -86,6 +99,11 @@ export const useSites = (queryParams?: ListParams) => {
       clearSyncToken,
       isClearingSyncToken,
       clearSyncTokenError,
+    },
+    clearHardwareId: {
+      clearHardwareId,
+      isClearingHardwareId,
+      clearHardwareIdError,
     },
     draft,
     updateDraft,
@@ -111,7 +129,7 @@ const useGetList = (queryParams?: ListParams) => {
     return { nodes, totalCount };
   };
 
-  return useQuery({ queryKey, queryFn, keepPreviousData: true });
+  return useQuery({ queryKey, queryFn, placeholderData: keepPreviousData });
 };
 
 const toSortInput = (sortBy?: SortBy<SiteRowFragment>) => ({
@@ -136,7 +154,7 @@ const useUpsertSite = () => {
         code: draft.code || undefined,
         name: draft.name,
         password: draft.password || undefined,
-        clearHardwareId: draft.clearHardwareId || undefined,
+
       },
     });
     const upsertResult = result?.centralServer?.site?.upsertSite;
@@ -176,7 +194,7 @@ const useUpsertSite = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([SITE]);
+      queryClient.invalidateQueries({ queryKey: [SITE] });
     },
     onError: (e: unknown) => {
       console.error(e);
@@ -218,7 +236,7 @@ const useDeleteSite = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([SITE]);
+      queryClient.invalidateQueries({ queryKey: [SITE] });
     },
     onError: (e: unknown) => {
       console.error(e);
@@ -237,7 +255,26 @@ const useClearSiteToken = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([SITE]);
+      queryClient.invalidateQueries({ queryKey: [SITE] });
+    },
+    onError: (e: unknown) => {
+      console.error(e);
+    },
+  });
+};
+
+const useClearHardwareId = () => {
+  const { siteApi, queryClient } = useSiteGraphQL();
+
+  const mutationFn = async (siteId: number) => {
+    const result = await siteApi.clearSiteHardwareId({ siteId });
+    return result?.centralServer?.site?.clearSiteHardwareId;
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [SITE] });
     },
     onError: (e: unknown) => {
       console.error(e);

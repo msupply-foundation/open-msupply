@@ -6,8 +6,7 @@ use std::{
 use repository::{
     database_settings::DatabaseSettings,
     migrations::{
-        ChangelogPartitionConfig, DEFAULT_CHANGELOG_LOOKAHEAD_PARTITIONS,
-        DEFAULT_CHANGELOG_PARTITION_SIZE,
+        ChangelogPartitionConfig, DEFAULT_CHANGELOG_LOOKAHEAD, DEFAULT_CHANGELOG_PARTITION_SIZE,
     },
 };
 use serde::{Deserialize, Serialize};
@@ -25,8 +24,6 @@ pub struct Settings {
     pub features: Option<HashMap<String, bool>>,
     pub changelog_partition: Option<ChangelogPartitionSettings>,
 }
-
-
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct ServerSettings {
@@ -203,10 +200,13 @@ pub struct MailSettings {
 /// before calling `migrate()`.
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ChangelogPartitionSettings {
+    // Privates — exposed via getter
     #[serde(default = "default_partition_size")]
-    pub partition_size: i64,
-    #[serde(default = "default_lookahead_partitions")]
-    pub lookahead_partitions: i64,
+    partition_size: i64,
+    #[serde(default = "default_lookahead")]
+    lookahead: i64,
+
+    // public fields
     #[serde(default)]
     pub interval: IntervalSettings,
 }
@@ -224,8 +224,8 @@ pub struct IntervalSettings {
 fn default_partition_size() -> i64 {
     DEFAULT_CHANGELOG_PARTITION_SIZE
 }
-fn default_lookahead_partitions() -> i64 {
-    DEFAULT_CHANGELOG_LOOKAHEAD_PARTITIONS
+fn default_lookahead() -> i64 {
+    DEFAULT_CHANGELOG_LOOKAHEAD
 }
 fn default_interval_mins() -> u64 {
     30
@@ -235,7 +235,7 @@ impl Default for ChangelogPartitionSettings {
     fn default() -> Self {
         Self {
             partition_size: default_partition_size(),
-            lookahead_partitions: default_lookahead_partitions(),
+            lookahead: default_lookahead(),
             interval: IntervalSettings::default(),
         }
     }
@@ -258,12 +258,25 @@ impl IntervalSettings {
 }
 
 impl ChangelogPartitionSettings {
+    /// Effective partition size — yaml value clamped to at least 1
+    /// 1 is purely defensive to prevent division by zero
+    pub fn partition_size(&self) -> i64 {
+        self.partition_size.max(1)
+    }
+
+    /// Effective lookahead in cursor records — yaml value clamped up to
+    /// `DEFAULT_CHANGELOG_LOOKAHEAD` (the default doubles as the lower bound,
+    /// so the runtime top-up always has at least the default headroom).
+    pub fn lookahead(&self) -> i64 {
+        self.lookahead.max(DEFAULT_CHANGELOG_LOOKAHEAD)
+    }
+
     /// Convert to the migration-internal primitive config that
     /// `migrate()` and `ensure_partition_lookahead` accept.
     pub fn to_migration_config(&self) -> ChangelogPartitionConfig {
         ChangelogPartitionConfig {
-            partition_size: self.partition_size,
-            lookahead_partitions: self.lookahead_partitions,
+            partition_size: self.partition_size(),
+            lookahead: self.lookahead(),
         }
     }
 }

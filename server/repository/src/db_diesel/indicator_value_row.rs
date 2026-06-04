@@ -54,8 +54,7 @@ impl<'a> IndicatorValueRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &IndicatorValueRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
-        let changelog = IndicatorValueRow::generate_changelog(
-            row.id.clone(),
+        let changelog = row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -64,8 +63,10 @@ impl<'a> IndicatorValueRowRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        let changelog = IndicatorValueRow::generate_changelog(
-            id.to_string(),
+        let row = self
+            .find_one_by_id(id)?
+            .ok_or(RepositoryError::NotFound)?;
+        let changelog = row.generate_changelog(
             self.connection,
             RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
@@ -106,12 +107,14 @@ impl Delete for IndicatorValueRowDelete {
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => IndicatorValueRow::generate_changelog(
-                self.0.clone(),
-                con,
-                RowActionType::Delete,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => IndicatorValueRowRepository::new(con)
+                .find_one_by_id(&self.0)?
+                .ok_or(RepositoryError::NotFound)?
+                .generate_changelog(
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?,
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
@@ -140,8 +143,7 @@ impl Upsert for IndicatorValueRow {
         IndicatorValueRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),

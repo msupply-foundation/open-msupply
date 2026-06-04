@@ -1,10 +1,19 @@
 #!/bin/bash
 set -e
 
-PG_DATA="/var/lib/postgresql/data"
+PG_DATA="/database/postgres/data"
 PG_USER="postgres"
 PG_DB="${APP_DATABASE__DATABASE_NAME:-omsupply-database}"
-IMPORT_DUMP="/database/import.dump"
+IMPORT_DUMP="/import.dump"
+
+# Ensure PG_DATA exists and is owned by the postgres user before initdb.
+# /database is root-owned (created in the Dockerfile / mounted as a volume),
+# so we create the postgres subdirectory and hand it to the postgres user.
+install -d -m 700 "$PG_DATA"
+chmod 700 "$PG_DATA"
+if [ "$(stat -c '%U:%G' "$PG_DATA")" != "$PG_USER:$PG_USER" ]; then
+    chown "$PG_USER:$PG_USER" "$PG_DATA"
+fi
 
 # Initialise the PostgreSQL data directory if it doesn't exist
 if [ ! -s "$PG_DATA/PG_VERSION" ]; then

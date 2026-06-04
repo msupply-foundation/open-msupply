@@ -137,6 +137,7 @@ export const RecordMappingModal = ({
               }
               format="P"
               maxDate={today}
+              width="100%"
               onChange={date =>
                 setDraft(prev => ({
                   ...prev,

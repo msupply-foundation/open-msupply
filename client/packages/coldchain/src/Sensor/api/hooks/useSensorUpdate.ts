@@ -23,12 +23,16 @@ export const useSensorUpdate = () => {
     return result?.updateSensor;
   };
 
-  const invalidateQueries = () => queryClient.invalidateQueries([SENSOR]);
+  const invalidateQueries = () => queryClient.invalidateQueries({
+    queryKey: [SENSOR]
+  });
 
   const mutation = useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([SENSOR]);
+      queryClient.invalidateQueries({
+        queryKey: [SENSOR]
+      });
     },
     onError: e => {
       console.error(e);

@@ -9,14 +9,13 @@ import {
   InputWithLabelRow,
   BasicTextInput,
   PasswordTextInput,
-  IconButton,
   XCircleIcon,
   LoadingButton,
-  Typography,
   useConfirmationModal,
 } from '@openmsupply-client/common';
 import { DraftSite, useSiteStoresDraft } from '../api';
 import { SiteStoresSection } from './SiteStoresSection';
+import { useSync } from '../../../Sync';
 
 interface SiteEditModalProps {
   site: DraftSite;
@@ -25,6 +24,8 @@ interface SiteEditModalProps {
   updateDraft: (patch: Partial<DraftSite>) => void;
   clearSyncToken: (siteId: number) => Promise<unknown>;
   isClearingSyncToken: boolean;
+  clearHardwareId: (siteId: number) => Promise<unknown>;
+  isClearingHardwareId: boolean;
   upsert: (afterUpsert: () => Promise<void>) => Promise<void>;
   onDelete: () => void;
   isEditable: boolean;
@@ -37,6 +38,8 @@ export const SiteEditModal = ({
   updateDraft,
   clearSyncToken,
   isClearingSyncToken,
+  clearHardwareId,
+  isClearingHardwareId,
   upsert,
   onDelete,
   isEditable,
@@ -44,8 +47,11 @@ export const SiteEditModal = ({
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const { id, code, name, password, clearHardwareId, hardwareId, isNew } = site;
+  const { id, code, name, password, hardwareId, isNew } = site;
   const isExisting = !isNew;
+  const { data: syncSettings } = useSync.settings.syncSettings();
+  const currentSiteId = syncSettings?.syncSiteId;
+  const showClearButtons = currentSiteId != null && currentSiteId !== id;
 
   const isValidCode = code.trim().length > 0 || (isExisting && code === '');
   const isValidName = name.trim().length > 0;
@@ -64,6 +70,12 @@ export const SiteEditModal = ({
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-clear-sync-token'),
     onConfirm: () => clearSyncToken(id),
+  });
+
+  const confirmClearHardwareId = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-clear-hardware-id'),
+    onConfirm: () => clearHardwareId(id),
   });
 
   const handleOk = async () => {
@@ -94,6 +106,7 @@ export const SiteEditModal = ({
           <InputWithLabelRow
             key="code"
             label={t('label.code')}
+            labelWidth="130px"
             Input={
               <BasicTextInput
                 fullWidth
@@ -107,6 +120,7 @@ export const SiteEditModal = ({
           <InputWithLabelRow
             key="name"
             label={t('label.name')}
+            labelWidth="130px"
             Input={
               <BasicTextInput
                 fullWidth
@@ -138,32 +152,35 @@ export const SiteEditModal = ({
             <InputWithLabelRow
               key="hardware-id"
               label={t('label.hardware-id')}
+              labelWidth="130px"
               Input={
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="flex-end"
-                  gap={0.5}
-                  flex={1}
-                >
-                  <Typography textAlign="right">
-                    {clearHardwareId ? '' : (hardwareId ?? '')}
-                  </Typography>
-                  {isEditable && !clearHardwareId && !!hardwareId && (
-                    <IconButton
-                      icon={<XCircleIcon fontSize="small" />}
+                <Box display="flex" alignItems="center" gap={1} width="100%">
+                  <BasicTextInput
+                    fullWidth
+                    sx={{ flex: 1, minWidth: 0 }}
+                    value={hardwareId ?? ''}
+                    disabled
+                  />
+                  {isEditable && showClearButtons && !!hardwareId && (
+                    <LoadingButton
+                      color="secondary"
+                      variant="contained"
+                      startIcon={<XCircleIcon />}
+                      isLoading={isClearingHardwareId}
                       label={t('label.clear-hardware-id')}
-                      onClick={() => updateDraft({ clearHardwareId: true })}
+                      onClick={() => confirmClearHardwareId()}
+                      sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}
                     />
                   )}
                 </Box>
               }
             />
           )}
-          {isEditable && isExisting && (
+          {isEditable && isExisting && showClearButtons && (
             <InputWithLabelRow
               key="sync-token"
               label={t('label.clear-sync-token')}
+              labelWidth="130px"
               Input={
                 <Box display="flex" justifyContent="flex-end" flex={1}>
                   <LoadingButton

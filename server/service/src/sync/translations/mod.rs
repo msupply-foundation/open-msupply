@@ -1,5 +1,6 @@
 pub(crate) mod abbreviation;
 pub(crate) mod activity_log;
+pub(crate) mod ancillary_item;
 pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
 pub(crate) mod asset_catalogue_type;
@@ -85,6 +86,7 @@ pub(crate) mod temperature_log;
 pub(crate) mod unit;
 pub(crate) mod user;
 pub(crate) mod user_permission;
+pub(crate) mod user_store_permissions;
 pub(crate) mod utils;
 pub(crate) mod vaccination;
 pub(crate) mod vaccination_legacy;
@@ -115,6 +117,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         diagnosis::boxed(),
         item_direction::boxed(),
         user::boxed(),
+        user_store_permissions::boxed(),
         name::boxed(),
         name_tag::boxed(),
         name_tag_join::boxed(),
@@ -208,6 +211,8 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Item Variant
         item_variant::boxed(),
         packaging_variant::boxed(),
+        // Ancillary Item
+        ancillary_item::boxed(),
         // System log
         system_log::boxed(),
         // Plugins
@@ -362,11 +367,28 @@ impl PushTranslateResult {
         table_name: &str,
         record_data: serde_json::Value,
     ) -> Self {
+        Self::upsert_with_record_id(
+            changelog,
+            table_name,
+            changelog.record_id.clone(),
+            record_data,
+        )
+    }
+
+    /// Like `upsert`, but lets the translator override the wire `recordId`.
+    /// Needed when the row's local primary key differs from the OG primary
+    /// key (e.g. `site.id` is an i32 while OG keys on the `og_id` UUID).
+    pub(crate) fn upsert_with_record_id(
+        changelog: &ChangelogRow,
+        table_name: &str,
+        record_id: String,
+        record_data: serde_json::Value,
+    ) -> Self {
         Self::PushRecord(vec![PushSyncRecord {
             cursor: changelog.cursor,
             record: CommonSyncRecord {
                 table_name: table_name.to_string(),
-                record_id: changelog.record_id.clone(),
+                record_id,
                 action: SyncAction::Update,
                 record_data,
             },

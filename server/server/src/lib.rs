@@ -152,6 +152,16 @@ pub async fn start_server(
     let (site_is_initialise_trigger, site_is_initialised_callback) =
         SiteIsInitialisedCallback::init();
 
+    let batch_size = settings
+        .sync
+        .as_ref()
+        .map(|s| s.batch_size.clone())
+        .unwrap_or_default();
+    let disable_integration_transaction = settings
+        .sync
+        .as_ref()
+        .map(|s| s.disable_integration_transaction)
+        .unwrap_or(false);
     let service_provider = Data::new(ServiceProvider::new_with_triggers(
         connection_manager.clone(),
         processors_trigger,
@@ -160,6 +170,8 @@ pub async fn start_server(
         site_is_initialise_trigger,
         settings.mail.clone(),
         subscription_trigger,
+        batch_size,
+        disable_integration_transaction,
     ));
     let loaders = get_loaders(&connection_manager, service_provider.clone()).await;
     let certificates = Certificates::try_load(&settings.server).unwrap();

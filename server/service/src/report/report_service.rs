@@ -2,12 +2,14 @@ use base64::prelude::*;
 use chrono::{DateTime, Utc};
 use log::error;
 use repository::{
-    get_storage_connection_manager, migrations::Version, EqualFilter, Pagination, PaginationOption,
-    Report, ReportFilter, ReportMetaData, ReportRepository, ReportRowRepository, ReportSort,
-    RepositoryError,
+    migrations::Version, EqualFilter, Pagination, PaginationOption, Report, ReportFilter,
+    ReportMetaData, ReportRepository, ReportRowRepository, ReportSort, RepositoryError,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, time::SystemTime};
+use std::{
+    collections::{BTreeMap, HashMap},
+    time::SystemTime,
+};
 use thiserror::Error;
 use util::{format_error, uuid::uuid};
 
@@ -203,6 +205,7 @@ pub trait ReportServiceTrait: Sync + Send {
 
     fn install_uploaded_reports(
         &self,
+        ctx: &ServiceContext,
         settings: &Settings,
         uploaded_file: UploadedFile,
     ) -> Result<Vec<String>, InstallReportError> {
@@ -210,15 +213,11 @@ pub trait ReportServiceTrait: Sync + Send {
         let report_json: ReportsData = uploaded_file
             .as_json_file(settings)
             .map_err(|_| InstallReportError::InvalidFile)?;
-        let connection_manager = get_storage_connection_manager(&settings.database);
-        let con = connection_manager
-            .connection()
-            .map_err(InstallReportError::RepositoryError)?;
 
         // default overwrite as true
         // TODO add user input to customise overwrite
         let reports =
-            StandardReports::upsert_reports(report_json, &con, true).map_err(|_error| {
+            StandardReports::upsert_reports(report_json, &ctx.connection, true).map_err(|_error| {
                 InstallReportError::RepositoryError(RepositoryError::DBError {
                     msg: String::from("Failed to upsert report"),
                     extra: String::new(),
@@ -795,7 +794,7 @@ fn load_template_references(
 ) -> Result<ReportDefinition, ReportError> {
     let mut out = ReportDefinition {
         index: report.index.clone(),
-        entries: HashMap::new(),
+        entries: BTreeMap::new(),
     };
     for (name, entry) in report.entries {
         match entry {
@@ -846,7 +845,7 @@ impl From<std::io::Error> for ReportError {
 
 #[cfg(test)]
 mod report_service_test {
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
 
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ContextType, ReportRow, ReportRowRepository,
@@ -872,7 +871,7 @@ mod report_service_test {
                 query: vec!["query".to_string()],
                 ..Default::default()
             },
-            entries: HashMap::from([
+            entries: BTreeMap::from([
                 (
                     "template.html".to_string(),
                     ReportDefinitionEntry::TeraTemplate(TeraTemplate {
@@ -902,7 +901,7 @@ mod report_service_test {
                 query: vec![],
                 ..Default::default()
             },
-            entries: HashMap::from([(
+            entries: BTreeMap::from([(
                 "footer.html".to_string(),
                 ReportDefinitionEntry::TeraTemplate(TeraTemplate {
                     output: ReportOutputType::Html,

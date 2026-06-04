@@ -5,6 +5,7 @@ import {
   usePreferences,
   ColumnDef,
   ColumnType,
+  ExpiryDateCell,
   Box,
   weightedAverageByUnits,
 } from '@openmsupply-client/common';
@@ -49,6 +50,7 @@ export const useOutboundColumns = () => {
         header: t('label.expiry-date'),
         size: 110,
         columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
         defaultHideOnMobile: true,
         enableColumnFilter: true,
         enableSorting: true,

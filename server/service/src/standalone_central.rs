@@ -10,7 +10,6 @@ use repository::{
     SiteRowRepository, StoreRow, StoreRowRepository, UserPermissionRow,
     UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
-use strum::IntoEnumIterator;
 use util::uuid::uuid;
 
 pub const STANDALONE_CENTRAL_SITE_ID: i32 = 1;
@@ -126,7 +125,7 @@ impl StandaloneCentralServiceTrait for StandaloneCentralService {
                 })?;
 
                 let perm_repo = UserPermissionRowRepository::new(con);
-                for permission in PermissionType::iter() {
+                for permission in PermissionType::known_iter() {
                     perm_repo.upsert_one(&UserPermissionRow {
                         id: uuid(),
                         user_id: admin.id.clone(),
@@ -330,7 +329,7 @@ mod test {
                 UserPermissionFilter::new().user_id(EqualFilter::equal_to(admin.id.clone())),
             )
             .unwrap();
-        let expected = PermissionType::iter().count();
+        let expected = PermissionType::known_iter().count();
         assert_eq!(permissions.len(), expected);
         assert!(permissions
             .iter()

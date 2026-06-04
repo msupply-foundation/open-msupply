@@ -1,6 +1,7 @@
 use crate::queries::SiteNode;
 use async_graphql::*;
 use graphql_core::{
+    simple_generic_errors::{UniqueValueKey, UniqueValueViolation},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -15,7 +16,6 @@ pub struct UpsertSiteInput {
     pub code: Option<String>,
     pub name: String,
     pub password: Option<String>,
-    pub clear_hardware_id: Option<bool>,
 }
 
 pub struct CodeRequired;
@@ -48,6 +48,7 @@ pub enum UpsertSiteErrorInterface {
     CodeRequired(CodeRequired),
     NameRequired(NameRequired),
     PasswordRequired(PasswordRequired),
+    DuplicateSiteName(UniqueValueViolation),
 }
 
 #[derive(SimpleObject)]
@@ -101,6 +102,11 @@ fn map_error(error: ServiceError) -> Result<UpsertSiteErrorInterface> {
         ServiceError::PasswordRequired => {
             return Ok(UpsertSiteErrorInterface::PasswordRequired(PasswordRequired))
         }
+        ServiceError::DuplicateSiteName => {
+            return Ok(UpsertSiteErrorInterface::DuplicateSiteName(
+                UniqueValueViolation(UniqueValueKey::Name),
+            ))
+        }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
@@ -114,7 +120,6 @@ impl UpsertSiteInput {
             code,
             name,
             password,
-            clear_hardware_id,
         } = self;
 
         UpsertSite {
@@ -122,7 +127,6 @@ impl UpsertSiteInput {
             code,
             name,
             password,
-            clear_hardware_id: clear_hardware_id.unwrap_or(false),
         }
     }
 }

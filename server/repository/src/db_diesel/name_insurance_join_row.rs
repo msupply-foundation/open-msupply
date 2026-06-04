@@ -96,6 +96,15 @@ impl<'a> NameInsuranceJoinRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = name_insurance_join::table
+            .filter(name_insurance_join::id.eq(lookup_id))
+            .select(name_insurance_join::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn find_many_by_ids(
         &self,
         ids: &[String],
@@ -134,8 +143,7 @@ impl<'a> NameInsuranceJoinRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &NameInsuranceJoinRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
-        let changelog = NameInsuranceJoinRow::generate_changelog(
-            row.id.clone(),
+        let changelog = row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -153,8 +161,7 @@ impl Upsert for NameInsuranceJoinRow {
         NameInsuranceJoinRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),

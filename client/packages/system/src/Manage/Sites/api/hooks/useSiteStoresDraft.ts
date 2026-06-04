@@ -10,7 +10,7 @@ export type SiteStoreDraftRow = Pick<
 
 export const useSiteStoresDraft = (siteId: number, isNew = false) => {
   const { data, isFetching } = useStoresForSite(siteId, !isNew);
-  const { mutateAsync: assign, isLoading: isAssigning } =
+  const { mutateAsync: assign, isPending: isAssigning } =
     useAssignStoresToSite();
   const { data: syncSettings } = useSyncSettings();
   const unassignedSiteId = syncSettings?.centralServerSiteId ?? 1; // Should never be null, but we currently know standalone is 1.
