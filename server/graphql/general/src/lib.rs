@@ -8,6 +8,7 @@ pub mod types;
 
 use std::collections::HashMap;
 
+pub use self::queries::item::{ItemSortFieldInput, ItemSortInput, ItemsResponse};
 pub use self::queries::sync_status::*;
 use self::queries::*;
 pub use self::subscriptions::{InitialisationSubscriptions, SyncStatusSubscriptions};
@@ -45,7 +46,6 @@ use mutations::{
     update_name_properties::{
         update_name_properties, UpdateNamePropertiesInput, UpdateNamePropertiesResponse,
     },
-    update_user,
 };
 use queries::{
     abbreviation::AbbreviationFilterInput,
@@ -390,13 +390,6 @@ impl GeneralQueries {
         log_level(ctx)
     }
 
-    pub async fn last_successful_user_sync(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<update_user::UpdateUserNode> {
-        last_successful_user_sync(ctx)
-    }
-
     pub async fn frontend_plugin_metadata(
         &self,
         ctx: &Context<'_>,
@@ -604,10 +597,6 @@ impl GeneralMutations {
         update_log_level(ctx, store_id, input)
     }
 
-    pub async fn update_user(&self, ctx: &Context<'_>) -> Result<update_user::UpdateResponse> {
-        update_user::update_user(ctx).await
-    }
-
     pub async fn update_label_printer_settings(
         &self,
         ctx: &Context<'_>,
@@ -671,6 +660,11 @@ impl InitialisationQueries {
     /// Available without authorisation in all states
     pub async fn migration_status(&self, ctx: &Context<'_>) -> Result<MigrationStatusNode> {
         migration_status(ctx).await
+    }
+
+    /// Available without authorisation/authentication
+    pub async fn is_central_server(&self) -> bool {
+        CentralServerConfig::is_central_server()
     }
 }
 /// Auth is not checked during initialisation stage

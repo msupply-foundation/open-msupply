@@ -11,7 +11,14 @@ import {
   useIsCentralServerApi,
   useIsExtraSmallScreen,
   ChevronsDownIcon,
+  ChevronDownIcon,
   DownloadIcon,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Typography,
+  ArrayElement,
+  noOtherVariants,
 } from '@openmsupply-client/common';
 import {
   FullSyncStatusV5V6Fragment,
@@ -52,11 +59,64 @@ export const SyncProgress: FC<SyncProgressProps> = ({
   const isExtraSmallScreen = useIsExtraSmallScreen();
 
   return (
-    <Box display="flex" flexDirection={'column'}>
+    <Box display="flex" flexDirection={'column'} alignItems="center">
       {!isExtraSmallScreen && (
         <HorizontalStepper steps={steps} colour={colour} />
       )}
+      {isSyncStatusV7(syncStatus) &&
+        syncStatus.linkedDescriptions.length > 0 && (
+          <LinkedSyncProcesses descriptions={syncStatus.linkedDescriptions} />
+        )}
     </Box>
+  );
+};
+
+type LinkedDescriptions = FullSyncStatusV7Fragment['linkedDescriptions'];
+
+// Exhaustive renderer
+const renderDescription = (
+  t: TypedTFunction<LocaleKey>,
+  description: ArrayElement<LinkedDescriptions>
+): string => {
+  switch (description.__typename) {
+    case 'AllStoreDataDescription':
+      return t('sync-status.description.all-store-data', {
+        storeName: description.storeName,
+      });
+    case 'TableNameDescription':
+      return t('sync-status.description.table-name', {
+        tableName: description.tableName,
+      });
+    default:
+      return noOtherVariants(description);
+  }
+};
+
+const LinkedSyncProcesses = ({
+  descriptions,
+}: {
+  descriptions: LinkedDescriptions;
+}) => {
+  const t = useTranslation();
+  return (
+    <Accordion sx={{ mt: 1 }}>
+      <AccordionSummary expandIcon={<ChevronDownIcon />}>
+        <Typography sx={{ fontWeight: 600 }}>
+          {t('sync-status.linked-sync-requests', {
+            count: descriptions.length,
+          })}
+        </Typography>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Box display="flex" flexDirection="column" gap={0.5}>
+          {descriptions.map((d, i) => (
+            <Typography key={i} variant="body2">
+              {renderDescription(t, d)}
+            </Typography>
+          ))}
+        </Box>
+      </AccordionDetails>
+    </Accordion>
   );
 };
 
@@ -73,6 +133,7 @@ const ProgressIndicator = ({
     fontSize={12}
     color={`${colour}.light`}
     whiteSpace="nowrap"
+    minWidth="8em"
   >
     {progress ? `${progress.done} / ${progress.total}` : null}
   </Box>

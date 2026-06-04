@@ -74,6 +74,7 @@ use crate::{
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
     sync::{
+        settings::BatchSize,
         site_auth::{SiteAuthService, SiteAuthTrait},
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
@@ -209,6 +210,9 @@ pub struct ServiceProvider {
     // Subscription trigger handle — used by SyncLogger and changelog callbacks
     // to send events to the shared subscription worker.
     pub subscription_trigger: SubscriptionTriggerHandle,
+    // Yaml only fields ----- Not stored in KV store
+    pub(crate) batch_size: BatchSize,
+    pub(crate) disable_integration_transaction: bool,
 }
 
 pub struct ServiceContext {
@@ -217,6 +221,8 @@ pub struct ServiceContext {
     pub(crate) frontend_plugins_cache: FrontendPluginCache,
     pub user_id: String,
     pub store_id: String,
+    pub batch_size: BatchSize,
+    pub disable_integration_transaction: bool,
 }
 
 impl ServiceProvider {
@@ -234,6 +240,8 @@ impl ServiceProvider {
             SiteIsInitialisedTrigger::new_void(),
             None, // Mail not required for test/CLI setups
             SubscriptionTriggerHandle::new_void(),
+            BatchSize::default(),
+            false,
         )
     }
 
@@ -245,6 +253,8 @@ impl ServiceProvider {
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
         mail_settings: Option<MailSettings>,
         subscription_trigger: SubscriptionTriggerHandle,
+        batch_size: BatchSize,
+        disable_integration_transaction: bool,
     ) -> Self {
         ServiceProvider {
             connection_manager: connection_manager.clone(),
@@ -269,6 +279,7 @@ impl ServiceProvider {
             general_service: Box::new(GeneralService {}),
             report_service: Box::new(ReportService {}),
             settings: Box::new(SettingsService),
+            batch_size,
             document_service: Box::new(DocumentService {}),
             document_registry_service: Box::new(DocumentRegistryService {}),
             form_schema_service: Box::new(FormSchemaService {}),
@@ -325,6 +336,7 @@ impl ServiceProvider {
             ledger_fix_trigger,
             shipping_method_service: Box::new(ShippingMethodService {}),
             subscription_trigger,
+            disable_integration_transaction,
         }
     }
 
@@ -336,6 +348,8 @@ impl ServiceProvider {
             user_id: "".to_string(),
             store_id: "".to_string(),
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
+            batch_size: self.batch_size.clone(),
+            disable_integration_transaction: self.disable_integration_transaction,
         })
     }
 
@@ -349,6 +363,8 @@ impl ServiceProvider {
             user_id: SYSTEM_USER_ID.to_string(),
             store_id: store_id.unwrap_or("".to_string()),
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
+            batch_size: self.batch_size.clone(),
+            disable_integration_transaction: self.disable_integration_transaction,
         })
     }
 
@@ -363,6 +379,8 @@ impl ServiceProvider {
             user_id,
             store_id,
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
+            batch_size: self.batch_size.clone(),
+            disable_integration_transaction: self.disable_integration_transaction,
         })
     }
 
@@ -381,6 +399,8 @@ impl ServiceContext {
             user_id: "".to_string(),
             store_id: "".to_string(),
             frontend_plugins_cache: FrontendPluginCache::new(),
+            batch_size: BatchSize::default(),
+            disable_integration_transaction: false,
         }
     }
 }

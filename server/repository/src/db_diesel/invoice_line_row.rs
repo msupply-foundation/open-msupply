@@ -8,14 +8,15 @@ use crate::diesel_macros::define_linked_tables;
 use crate::item_row::item;
 use crate::repository_error::RepositoryError;
 use crate::{
-    db_diesel::changelog::changelog::RowOrId, ChangelogRepository,
-    ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert,
+    db_diesel::changelog::changelog::RowOrId, ChangelogRepository, ChangelogSyncType, Delete,
+    RowActionType, SourceSiteId, Upsert,
 };
 
 use diesel::prelude::*;
 
 use chrono::NaiveDate;
 use diesel_derive_enum::DbEnum;
+use std::any::Any;
 
 define_linked_tables! {
     view: invoice_line = "invoice_line_view",
@@ -373,5 +374,9 @@ impl Upsert for InvoiceLineRow {
             InvoiceLineRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+
+    fn as_mut_any(&mut self) -> Option<&mut dyn Any> {
+        Some(self)
     }
 }

@@ -1,106 +1,112 @@
 use super::StorageConnection;
+use crate::diesel_macros::diesel_string_enum;
 use crate::repository_error::RepositoryError;
 use crate::{ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert};
 use diesel::prelude::*;
-use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use strum::EnumIter;
+use util::uuid::{deterministic_uuid, Uuid};
 
 table! {
   user_permission (id) {
       id -> Text,
       user_id -> Text,
       store_id -> Nullable<Text>,
-      permission -> crate::db_diesel::user_permission_row::PermissionTypeMapping,
+      permission -> Text,
       context_id -> Nullable<Text>,
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, EnumIter)]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum PermissionType {
-    ServerAdmin,
+diesel_string_enum! {
+    #[derive(Clone, Eq, Hash, Serialize, Deserialize, EnumIter)]
+    #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
+    pub enum PermissionType {
+        ServerAdmin,
 
-    /// User has access to the store this permission is associated with.
-    /// This acts like a master switch to enable/disable all user's permissions associated with a store.
-    #[default]
-    StoreAccess,
-    // location,
-    LocationMutate,
-    // sensor,
-    SensorMutate,
-    SensorQuery,
-    TemperatureBreachQuery,
-    TemperatureLogQuery,
-    // stock line
-    StockLineQuery,
-    StockLineMutate,
-    CreateRepack,
-    // stocktake
-    StocktakeQuery,
-    StocktakeMutate,
-    // inventory adjustment
-    InventoryAdjustmentMutate,
-    // requisition
-    RequisitionQuery,
-    RequisitionMutate,
-    RequisitionSend,
-    RequisitionCreateOutboundShipment,
-    // r&r form,
-    RnrFormQuery,
-    RnrFormMutate,
-    // outbound shipment
-    OutboundShipmentQuery,
-    OutboundShipmentMutate,
-    // inbound shipment
-    InboundShipmentQuery,
-    InboundShipmentMutate,
-    InboundShipmentVerify,
-    // supplier return
-    SupplierReturnQuery,
-    SupplierReturnMutate,
-    // customer return
-    CustomerReturnQuery,
-    CustomerReturnMutate,
-    // prescription
-    PrescriptionQuery,
-    PrescriptionMutate,
-    CancelFinalisedInvoices,
-    // purchase orders
-    PurchaseOrderQuery,
-    PurchaseOrderMutate,
-    PurchaseOrderAuthorise,
-    // inbound shipment external
-    InboundShipmentExternalQuery,
-    InboundShipmentExternalMutate,
-    InboundShipmentExternalVerify,
-    InboundShipmentExternalAuthorise,
-    // reporting
-    Report,
-    // log
-    LogQuery,
-    // items
-    ItemMutate,
-    ItemNamesCodesAndUnitsMutate,
-    PatientQuery,
-    PatientMutate,
-    // Document
-    DocumentQuery,
-    DocumentMutate,
-    // Cold chain
-    ColdChainApi,
-    AssetQuery,
-    AssetMutate,
-    AssetMutateViaDataMatrix,
-    AssetCatalogueItemMutate,
-    AssetStatusMutate,
-    // Names
-    NamePropertiesMutate,
-    // Central Server
-    EditCentralData,
-    ViewAndEditVvmStatus,
-    // clinician
-    MutateClinician,
+        /// User has access to the store this permission is associated with.
+        /// This acts like a master switch to enable/disable all user's permissions associated with a store.
+        #[default]
+        StoreAccess,
+        // location,
+        LocationMutate,
+        // sensor,
+        SensorMutate,
+        SensorQuery,
+        TemperatureBreachQuery,
+        TemperatureLogQuery,
+        // stock line
+        StockLineQuery,
+        StockLineMutate,
+        CreateRepack,
+        // stocktake
+        StocktakeQuery,
+        StocktakeMutate,
+        // inventory adjustment
+        InventoryAdjustmentMutate,
+        // requisition
+        RequisitionQuery,
+        RequisitionMutate,
+        RequisitionSend,
+        RequisitionCreateOutboundShipment,
+        // r&r form,
+        RnrFormQuery,
+        RnrFormMutate,
+        // outbound shipment
+        OutboundShipmentQuery,
+        OutboundShipmentMutate,
+        // inbound shipment
+        InboundShipmentQuery,
+        InboundShipmentMutate,
+        InboundShipmentVerify,
+        // supplier return
+        SupplierReturnQuery,
+        SupplierReturnMutate,
+        // customer return
+        CustomerReturnQuery,
+        CustomerReturnMutate,
+        // prescription
+        PrescriptionQuery,
+        PrescriptionMutate,
+        CancelFinalisedInvoices,
+        // purchase orders
+        PurchaseOrderQuery,
+        PurchaseOrderMutate,
+        PurchaseOrderAuthorise,
+        PurchaseOrderFinalise,
+        // inbound shipment external
+        InboundShipmentExternalQuery,
+        InboundShipmentExternalMutate,
+        InboundShipmentExternalVerify,
+        InboundShipmentExternalAuthorise,
+        // reporting
+        Report,
+        // log
+        LogQuery,
+        // items
+        ItemMutate,
+        ItemNamesCodesAndUnitsMutate,
+        PatientQuery,
+        PatientMutate,
+        // Document
+        DocumentQuery,
+        DocumentMutate,
+        // Cold chain
+        ColdChainApi,
+        AssetQuery,
+        AssetMutate,
+        AssetMutateViaDataMatrix,
+        AssetCatalogueItemMutate,
+        AssetStatusMutate,
+        // Names
+        NamePropertiesMutate,
+        // Central Server
+        EditCentralData,
+        ViewAndEditVvmStatus,
+        // clinician
+        MutateClinician,
+        #[strum(default, transparent)]
+        Unknown(String),
+    }
 }
 
 #[derive(
@@ -116,6 +122,45 @@ pub struct UserPermissionRow {
     /// An optional resource associated with this permission.
     /// The resource value is only used for certain Permission variants.
     pub context_id: Option<String>,
+}
+
+impl PermissionType {
+    pub fn known_iter() -> impl Iterator<Item = PermissionType> {
+        use strum::IntoEnumIterator;
+        PermissionType::iter().filter(|p| !matches!(p, PermissionType::Unknown(_)))
+    }
+}
+
+impl UserPermissionRow {
+    /// Stable id for a non-context-bound permission keyed by `(user_id, store_id,
+    /// permission)`. Context-bound permissions (synced from `om_user_permission`)
+    /// keep using the legacy OG id — see the `user_permission` translator.
+    pub fn deterministic_id(
+        user_id: &str,
+        store_id: Option<&str>,
+        permission: &PermissionType,
+    ) -> String {
+        Self::deterministic_id_from_db_form(user_id, store_id, permission.as_ref())
+    }
+
+    /// String-keyed variant used by migrations, which read `permission` as raw text
+    /// so they don't have to deserialize into the live `PermissionType` enum (which
+    /// may have evolved since the migration was written). Callers must pass the
+    /// `SCREAMING_SNAKE_CASE` form stored in the DB (e.g. `"STORE_ACCESS"`) so the
+    /// hash matches [`Self::deterministic_id`].
+    pub(crate) fn deterministic_id_from_db_form(
+        user_id: &str,
+        store_id: Option<&str>,
+        permission_db_form: &str,
+    ) -> String {
+        // Project-local namespace; do not change without a migration plan.
+        const NAMESPACE: Uuid = Uuid::from_u128(0x5d8e2b1a_4f3c_4a6e_9b7d_0c1e2f3a4b5c);
+        let store = store_id.unwrap_or("");
+        deterministic_uuid(
+            &NAMESPACE,
+            &format!("{user_id}:{store}:{permission_db_form}"),
+        )
+    }
 }
 
 pub struct UserPermissionRowRepository<'a> {
@@ -261,7 +306,6 @@ mod test {
         mock::MockDataInserts, test_db::setup_all, PermissionType, UserPermissionRow,
         UserPermissionRowRepository,
     };
-    use strum::IntoEnumIterator;
 
     #[actix_rt::test]
     async fn user_permission_row_type_enum() {
@@ -272,8 +316,7 @@ mod test {
         .await;
 
         let repo = UserPermissionRowRepository::new(&connection);
-        // Try upsert all variants of PermissionType, confirm that diesel enums match postgres
-        for permission in PermissionType::iter() {
+        for permission in PermissionType::known_iter() {
             let row_id = format!("{permission:?}");
 
             let result = repo.upsert_one(&UserPermissionRow {
@@ -282,10 +325,23 @@ mod test {
                 store_id: Some("store_a".to_string()),
                 ..Default::default()
             });
-            assert_eq!(result, Ok(()), "\n \n HINT: Failed to insert permission for type {row_id:?}. Have you created a migration to add this type to the postgres database enum? \n");
+            assert_eq!(result, Ok(()), "Failed to insert permission {row_id:?}");
 
             let found = repo.find_one_by_id(&row_id).unwrap().unwrap();
             assert_eq!(found.permission, permission);
         }
+
+        repo.upsert_one(&UserPermissionRow {
+            id: "unknown_perm".to_string(),
+            permission: PermissionType::Unknown("FUTURE_PERMISSION".to_string()),
+            store_id: Some("store_a".to_string()),
+            ..Default::default()
+        })
+        .unwrap();
+        let found = repo.find_one_by_id("unknown_perm").unwrap().unwrap();
+        assert_eq!(
+            found.permission,
+            PermissionType::Unknown("FUTURE_PERMISSION".to_string())
+        );
     }
 }

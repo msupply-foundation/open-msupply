@@ -14,15 +14,10 @@ import {
 // import { Footer } from './Footer';
 import { Toolbar } from './Toolbar';
 import { SiteEditModal } from './SiteEditModal';
-import {
-  SiteRowFragment,
-  defaultDraftSite,
-  DraftSite,
-  useSites,
-} from '../api';
+import { SiteRowFragment, defaultDraftSite, DraftSite, useSites } from '../api';
 
 // TODO: Site create/edit/delete is disabled for now and will be revisited in
-// the future. 
+// the future.
 export const SitesList = () => {
   const t = useTranslation();
   const {
@@ -39,6 +34,7 @@ export const SitesList = () => {
     // upsert: { upsert },
     // deleteSite: { deleteSite },
     clearSyncToken: { clearSyncToken, isClearingSyncToken },
+    clearHardwareId: { clearHardwareId, isClearingHardwareId },
     draft,
     updateDraft,
   } = useSites(queryParams);
@@ -103,14 +99,15 @@ export const SitesList = () => {
   );
 
   const onRowClick = (row: SiteRowFragment) => {
-    const selected = data?.nodes.find(site => site.id === row.id);
+    const selected = data?.nodes.find(
+      (site: SiteRowFragment) => site.id === row.id
+    );
     if (selected) {
       updateDraft({
         id: selected.id,
         code: selected.code ?? '',
         name: selected.name,
         password: '',
-        clearHardwareId: false,
         hardwareId: selected.hardwareId,
         isNew: false,
       } as DraftSite);
@@ -143,6 +140,8 @@ export const SitesList = () => {
           updateDraft={updateDraft}
           clearSyncToken={clearSyncToken}
           isClearingSyncToken={isClearingSyncToken}
+          clearHardwareId={clearHardwareId}
+          isClearingHardwareId={isClearingHardwareId}
         />
       )}
       {/* <Footer

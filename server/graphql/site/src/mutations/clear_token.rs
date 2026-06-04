@@ -46,6 +46,7 @@ fn map_error(error: ServiceError) -> async_graphql::Error {
 
     let graphql_error = match error {
         ServiceError::SiteDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::SameSite => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

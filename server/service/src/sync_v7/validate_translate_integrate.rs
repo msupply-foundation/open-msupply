@@ -10,13 +10,7 @@ use crate::{
 
 use super::validate::*;
 use repository::syncv7::{SyncRecordSerializeError, INTEGRATION_ORDER};
-use repository::{
-    ChangeLogInsertRow, ChangelogSyncType, ChangelogTableName, CurrencyRowDelete, CursorDirection,
-    Delete, InvoiceLineRowDelete, InvoiceRowDelete, ItemRowDelete, NameRowDelete, PendingQuery,
-    RepositoryError, RowActionType, StockLineRowDelete, StorageConnection, SyncAction,
-    SyncBufferRepository, SyncBufferRow, SyncVersion, UnitRowDelete, Upsert,
-};
-use serde::de::Error as _;
+use repository::*;
 use thiserror::Error;
 use util::{datetime_now, format_error};
 
@@ -41,6 +35,8 @@ enum Error {
     RepositoryError(#[from] RepositoryError),
     #[error("Error during record translation")]
     TranslationError(#[from] serde_json::Error),
+    #[error("Delete translator not found for table: {0}")]
+    DeleteTranslatorNotFound(ChangelogTableName),
     #[error("Error during record deserialization: {0}")]
     DeserializeError(#[from] SyncRecordSerializeError),
     #[error("Error during record validation")]
@@ -53,13 +49,7 @@ enum Error {
     UnsupportedAction(SyncAction),
 }
 
-fn parse_table_name(table_name: &str) -> Result<ChangelogTableName, Error> {
-    table_name
-        .parse::<ChangelogTableName>()
-        .map_err(|_| Error::UnknownTableName(table_name.to_string()))
-}
-
-fn changelog(
+pub(crate) fn create_changelog(
     table_name: ChangelogTableName,
     action: RowActionType,
     row: &SyncBufferRow,
@@ -75,43 +65,138 @@ fn changelog(
     }
 }
 
-fn integrate_upsert(
+fn parse_table_name(table_name: &str) -> Result<ChangelogTableName, Error> {
+    table_name
+        .parse::<ChangelogTableName>()
+        .map_err(|_| Error::UnknownTableName(table_name.to_string()))
+}
+
+fn integrate_upserts(
     connection: &StorageConnection,
-    upsert: Box<dyn Upsert>,
-    table_name: ChangelogTableName,
-    row: &SyncBufferRow,
+    upsert: Vec<(Box<dyn Upsert>, ChangeLogInsertRow)>,
 ) -> Result<(), Error> {
-    let changelog = changelog(table_name, RowActionType::Upsert, row);
-    upsert
-        .upsert_sync(
-            connection,
-            ChangelogSyncType::SyncTypeV7 {
-                changelog_row: changelog,
-            },
-        )
-        .map_err(Error::IntegrationError)?;
+    for (upsert, changelog_row) in upsert {
+        upsert
+            .upsert_sync(connection, ChangelogSyncType::SyncTypeV7 { changelog_row })
+            .map_err(Error::IntegrationError)?;
+    }
 
     Ok(())
 }
-
 fn translate_delete(
     table_name: &ChangelogTableName,
     record_id: &str,
 ) -> Result<Box<dyn Delete>, Error> {
     let id = record_id.to_string();
     let delete: Box<dyn Delete> = match table_name {
-        ChangelogTableName::Unit => Box::new(UnitRowDelete(id)),
-        ChangelogTableName::Currency => Box::new(CurrencyRowDelete(id)),
-        ChangelogTableName::Name => Box::new(NameRowDelete(id)),
-        ChangelogTableName::Item => Box::new(ItemRowDelete(id)),
-        ChangelogTableName::StockLine => Box::new(StockLineRowDelete(id)),
+        ChangelogTableName::Abbreviation => Box::new(AbbreviationRowDelete(id)),
+        ChangelogTableName::ActivityLog => Box::new(ActivityLogRowDelete(id)),
+        ChangelogTableName::AssetInternalLocation => Box::new(AssetInternalLocationRowDelete(id)),
+        ChangelogTableName::BackendPlugin => Box::new(BackendPluginRowDelete(id)),
+        ChangelogTableName::ClinicianStoreJoin => Box::new(ClinicianStoreJoinRowDelete(id)),
+        ChangelogTableName::Contact => Box::new(ContactRowDelete(id)),
+        ChangelogTableName::Diagnosis => Box::new(DiagnosisRowDelete(id)),
+        ChangelogTableName::FormSchema => Box::new(FormSchemaRowDelete(id)),
+        ChangelogTableName::FrontendPlugin => Box::new(FrontendPluginRowDelete(id)),
+        ChangelogTableName::IndicatorValue => Box::new(IndicatorValueRowDelete(id)),
         ChangelogTableName::Invoice => Box::new(InvoiceRowDelete(id)),
         ChangelogTableName::InvoiceLine => Box::new(InvoiceLineRowDelete(id)),
-        _ => {
-            return Err(Error::TranslationError(serde_json::Error::custom(format!(
-                "No delete translator for table {:?}",
-                table_name
-            ))))
+        ChangelogTableName::ItemDirection => Box::new(ItemDirectionRowDelete(id)),
+        ChangelogTableName::Location => Box::new(LocationRowDelete(id)),
+        ChangelogTableName::MasterListLine => Box::new(MasterListLineRowDelete(id)),
+        ChangelogTableName::MasterListNameJoin => Box::new(MasterListNameJoinRowDelete(id)),
+        ChangelogTableName::NameStoreJoin => Box::new(NameStoreJoinRowDelete(id)),
+        ChangelogTableName::NameTag => Box::new(NameTagRowDelete(id)),
+        ChangelogTableName::NameTagJoin => Box::new(NameTagJoinRowDelete(id)),
+        ChangelogTableName::Preference => Box::new(PreferenceRowDelete(id)),
+        ChangelogTableName::ProgramRequisitionOrderType => {
+            Box::new(ProgramRequisitionOrderTypeRowDelete(id))
+        }
+        ChangelogTableName::ProgramRequisitionSettings => {
+            Box::new(ProgramRequisitionSettingsRowDelete(id))
+        }
+        ChangelogTableName::PurchaseOrder => Box::new(PurchaseOrderDelete(id)),
+        ChangelogTableName::PurchaseOrderLine => Box::new(PurchaseOrderLineDelete(id)),
+        ChangelogTableName::Report => Box::new(ReportRowDelete(id)),
+        ChangelogTableName::Requisition => Box::new(RequisitionRowDelete(id)),
+        ChangelogTableName::RequisitionLine => Box::new(RequisitionLineRowDelete(id)),
+        ChangelogTableName::RnrForm => Box::new(RnRFormDelete(id)),
+        ChangelogTableName::RnrFormLine => Box::new(RnRFormLineDelete(id)),
+        ChangelogTableName::Site => Box::new(SiteRowDelete(id)),
+        ChangelogTableName::StockLine => Box::new(StockLineRowDelete(id)),
+        ChangelogTableName::Stocktake => Box::new(StocktakeRowDelete(id)),
+        ChangelogTableName::StocktakeLine => Box::new(StocktakeLineRowDelete(id)),
+        ChangelogTableName::UserAccount => Box::new(UserAccountRowDelete(id)),
+        ChangelogTableName::UserPermission => Box::new(UserPermissionRowDelete(id)),
+        ChangelogTableName::VVMStatus => Box::new(VVMStatusRowDelete(id)),
+        ChangelogTableName::VVMStatusLog => Box::new(VVMStatusLogRowDelete(id)),
+        ChangelogTableName::Unit => Box::new(UnitRowDelete(id)),
+        ChangelogTableName::Program => Box::new(ProgramRowDelete(id)),
+        ChangelogTableName::Asset => Box::new(AssetRowDelete(id)),
+        ChangelogTableName::Category => Box::new(CategoryRowDelete(id)),
+        ChangelogTableName::Currency => Box::new(CurrencyRowDelete(id)),
+        ChangelogTableName::Item => Box::new(ItemRowDelete(id)),
+        ChangelogTableName::Name => Box::new(NameRowDelete(id)),
+        ChangelogTableName::Sensor => Box::new(SensorRowDelete(id)),
+        // Tables without a delete translator / do not delete
+        ChangelogTableName::AncillaryItem
+        | ChangelogTableName::AssetCatalogueItem
+        | ChangelogTableName::AssetCatalogueType
+        | ChangelogTableName::AssetCategory
+        | ChangelogTableName::AssetClass
+        | ChangelogTableName::AssetLog
+        | ChangelogTableName::AssetLogReason
+        | ChangelogTableName::AssetProperty
+        | ChangelogTableName::Barcode
+        | ChangelogTableName::BundledItem
+        | ChangelogTableName::Campaign
+        | ChangelogTableName::Clinician
+        | ChangelogTableName::ContactForm
+        | ChangelogTableName::ContactTrace
+        | ChangelogTableName::Context
+        | ChangelogTableName::Demographic
+        | ChangelogTableName::DemographicIndicator
+        | ChangelogTableName::Document
+        | ChangelogTableName::DocumentRegistry
+        | ChangelogTableName::Encounter
+        | ChangelogTableName::IndicatorColumn
+        | ChangelogTableName::IndicatorLine
+        | ChangelogTableName::InsuranceProvider
+        | ChangelogTableName::ItemCategoryJoin
+        | ChangelogTableName::ItemStoreJoin
+        | ChangelogTableName::ItemVariant
+        | ChangelogTableName::ItemWarningJoin
+        | ChangelogTableName::LocationMovement
+        | ChangelogTableName::LocationType
+        | ChangelogTableName::MasterList
+        | ChangelogTableName::NameInsuranceJoin
+        | ChangelogTableName::NameOmsFields
+        | ChangelogTableName::NameProperty
+        | ChangelogTableName::PackagingVariant
+        | ChangelogTableName::Period
+        | ChangelogTableName::PeriodSchedule
+        | ChangelogTableName::PluginData
+        | ChangelogTableName::Printer
+        | ChangelogTableName::ProgramEnrolment
+        | ChangelogTableName::ProgramEvent
+        | ChangelogTableName::ProgramIndicator
+        | ChangelogTableName::Property
+        | ChangelogTableName::ReasonOption
+        | ChangelogTableName::ShippingMethod
+        | ChangelogTableName::Store
+        | ChangelogTableName::StorePreference
+        | ChangelogTableName::SyncFileReference
+        | ChangelogTableName::SyncMessage
+        | ChangelogTableName::SystemLog
+        | ChangelogTableName::TemperatureBreach
+        | ChangelogTableName::TemperatureLog
+        | ChangelogTableName::UserStoreJoin
+        | ChangelogTableName::Vaccination
+        | ChangelogTableName::VaccineCourse
+        | ChangelogTableName::VaccineCourseDose
+        | ChangelogTableName::VaccineCourseItem
+        | ChangelogTableName::VaccineCourseStoreConfig => {
+            return Err(Error::DeleteTranslatorNotFound(table_name.clone()));
         }
     };
 
@@ -124,14 +209,9 @@ fn integrate_delete(
     table_name: ChangelogTableName,
     row: &SyncBufferRow,
 ) -> Result<(), Error> {
-    let changelog = changelog(table_name, RowActionType::Delete, row);
+    let changelog_row = create_changelog(table_name, RowActionType::Delete, row);
     delete
-        .delete_sync(
-            connection,
-            ChangelogSyncType::SyncTypeV7 {
-                changelog_row: changelog,
-            },
-        )
+        .delete_sync(connection, ChangelogSyncType::SyncTypeV7 { changelog_row })
         .map_err(Error::IntegrationError)?;
 
     Ok(())
@@ -157,8 +237,8 @@ fn validate_translate_integrate_one(
 
     match row.action {
         SyncAction::Upsert => {
-            let upsert = deserialize(&table_name, &row.data)?;
-            integrate_upsert(connection, upsert, table_name, row)
+            let upserts = deserialize(connection, &table_name, &row, sync_context)?;
+            integrate_upserts(connection, upserts)
         }
         SyncAction::Delete => {
             let delete = translate_delete(&table_name, &row.record_id)?;
@@ -172,7 +252,7 @@ pub(crate) fn validate_translate_integrate<'a>(
     connection: &StorageConnection,
     logger: Option<&mut SyncLogger<'a>>,
     source_site_id: i32,
-    reference: Option<&str>,
+    reference_id: Option<&str>,
     sync_context: SyncContext,
     is_initialising: bool,
 ) -> Result<(), RepositoryError> {
@@ -194,7 +274,7 @@ pub(crate) fn validate_translate_integrate<'a>(
                     t_con,
                     logger,
                     source_site_id,
-                    reference,
+                    reference_id,
                     sync_context,
                     wrap_record_in_tx,
                 )
@@ -206,7 +286,7 @@ pub(crate) fn validate_translate_integrate<'a>(
         connection,
         logger,
         source_site_id,
-        reference,
+        reference_id,
         sync_context,
         wrap_record_in_tx,
     )
@@ -216,7 +296,7 @@ fn validate_translate_integrate_inner<'a>(
     connection: &StorageConnection,
     mut logger: Option<&mut SyncLogger<'a>>,
     source_site_id: i32,
-    reference: Option<&str>,
+    reference_id: Option<&str>,
     sync_context: SyncContext,
     wrap_record_in_tx: bool,
 ) -> Result<(), RepositoryError> {
@@ -225,7 +305,7 @@ fn validate_translate_integrate_inner<'a>(
 
     let repo = SyncBufferRepository::new(connection);
 
-    let mut total = repo.count_pending(source_site_id, SyncVersion::V7, reference)?;
+    let mut total = repo.count_pending(source_site_id, SyncVersion::V7, reference_id)?;
     let mut last_progress = total / PROGRESS_INTERVAL;
 
     if let Some(logger) = logger.as_mut() {
@@ -242,10 +322,11 @@ fn validate_translate_integrate_inner<'a>(
         let rows = repo.pending_ordered_by_cursor(PendingQuery {
             source_site_id,
             sync_version: SyncVersion::V7,
-            reference,
+            reference_id,
             table_name: table.as_ref(),
             action: action.clone(),
             direction,
+            limit: i64::MAX,
         })?;
 
         log::info!("Number of records to integrate  {}", rows.len());

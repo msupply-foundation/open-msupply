@@ -10,4 +10,3 @@ pub mod manual_sync;
 pub mod sync_settings;
 pub mod update_insurance;
 pub mod update_name_properties;
-pub mod update_user;

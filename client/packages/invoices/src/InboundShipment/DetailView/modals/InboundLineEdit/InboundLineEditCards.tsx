@@ -64,7 +64,7 @@ interface InboundLineEditCardsProps extends CardProps {
   duplicateDraftLine: (id: string) => void;
   removeDraftLine: (id: string) => void;
   isReceived?: boolean;
-  lastCardRef?: React.RefObject<HTMLDivElement>;
+  lastCardRef?: React.RefObject<HTMLDivElement | null>;
   actions?: React.ReactNode;
   /** The specific line ID to scroll into view when the modal opens */
   scrollToLineId?: string | null;
@@ -771,6 +771,9 @@ export const InboundLineEditCards = ({
     tableId: 'inbound-line-edit',
     columns,
     data: lines,
+    // Modal table state should not be synced to URL (would otherwise clobber
+    // the parent detail view's sort/filter URL params on open/close).
+    localStateOnly: true,
     getIsRestrictedRow: isDisabled ? () => true : undefined,
   });
 

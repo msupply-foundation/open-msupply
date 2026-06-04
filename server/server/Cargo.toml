@@ -63,9 +63,9 @@ astro-dnssd = { version = "0.3.6" }
 
 [features]
 default = ["sqlite", "dep:machine-uid"]
-sqlite = ["repository/sqlite"]
-postgres = ["repository/postgres"]
-android = ["repository/sqlite"]
+sqlite = ["repository/sqlite", "graphql/sqlite"]
+postgres = ["repository/postgres", "graphql/postgres"]
+android = ["repository/sqlite", "graphql/sqlite"]
 
 [lints]
 workspace = true

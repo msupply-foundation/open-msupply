@@ -4,12 +4,11 @@ use super::{
     item::ItemTranslation,
     purchase_order_line::PurchaseOrderLineTranslation,
     PullTranslateResult, SyncTranslation,
-
 };
 use chrono::NaiveDate;
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, ItemRowRepository,
-    StorageConnection, SyncBufferRow, SyncBufferRepository,
+    StorageConnection, SyncBufferRepository, SyncBufferRow,
 };
 use serde::Deserialize;
 use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
@@ -46,37 +45,6 @@ struct LegacyGoodsReceivedLineRow {
 struct GoodsReceivedStatus {
     #[serde(default)]
     status: String,
-}
-
-/// Helper to extract goods_received_lines_ID from a trans_line sync buffer record
-#[allow(non_snake_case)]
-#[derive(Deserialize)]
-struct TransLineGoodsReceivedLineId {
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    goods_received_lines_ID: Option<String>,
-}
-
-/// Find the invoice_line ID (trans_line record_id) that was created from a GR line,
-/// by searching trans_line sync_buffer records for goods_received_lines_ID matching the GR line's ID.
-fn find_linked_invoice_line_id(
-    connection: &StorageConnection,
-    goods_received_line_id: &str,
-) -> Result<Option<String>, anyhow::Error> {
-    let pattern = format!("%\"goods_received_lines_ID\"%\"{goods_received_line_id}\"%");
-    let rows = SyncBufferRepository::new(connection)
-        .find_by_table_and_data_like("trans_line", &pattern)?;
-
-    // Verify the match by parsing JSON (LIKE can produce false positives)
-    for row in rows {
-        if let Ok(parsed) = row.deserialize::<TransLineGoodsReceivedLineId>() {
-            if parsed.goods_received_lines_ID.as_deref() == Some(goods_received_line_id) {
-                return Ok(Some(row.record_id));
-            }
-        }
-    }
-
-    Ok(None)
 }
 
 #[deny(dead_code)]
@@ -143,38 +111,12 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
 
         let gr_status = gr_sync_row.deserialize::<GoodsReceivedStatus>()?;
 
-        // Finalized GR: update the existing invoice line with the PO line link
+        // Temporary fix, see this issue: https://github.com/msupply-foundation/open-msupply/issues/11829
         if is_finalised(&gr_status.status) {
-            let po_line_id = match &data.order_line_ID {
-                Some(id) => id.clone(),
-                None => {
-                    return Ok(PullTranslateResult::Ignored(format!(
-                        "goods_received_line {} has no order_line_ID, skipping PO line link",
-                        data.id
-                    )))
-                }
-            };
-
-            let invoice_line_id = match find_linked_invoice_line_id(connection, &data.id)? {
-                Some(id) => id,
-                None => return Ok(PullTranslateResult::Ignored(format!(
-                    "no trans_line with goods_received_lines_ID found for goods_received_line {}",
-                    data.id
-                ))),
-            };
-
-            return match InvoiceLineRowRepository::new(connection)
-                .find_one_by_id(&invoice_line_id)?
-            {
-                Some(mut line) => {
-                    line.purchase_order_line_id = Some(po_line_id);
-                    Ok(PullTranslateResult::upsert(line))
-                }
-                None => Ok(PullTranslateResult::Ignored(format!(
-                    "invoice_line {invoice_line_id} not found for goods_received_line {}",
-                    data.id
-                ))),
-            };
+            return Ok(PullTranslateResult::Ignored(format!(
+                "Skipped adding purchase order line id to invoice line when gr is finalised {}",
+                data.id
+            )));
         }
 
         // Non-finalized GR: create invoice line
