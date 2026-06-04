@@ -119,7 +119,7 @@ impl RemoteDataSynchroniser {
         &self,
         connection: &StorageConnection,
     ) -> Result<(), RepositoryError> {
-        let cursor = ChangelogRepository::new(connection).latest_cursor()?;
+        let cursor = ChangelogRepository::new(connection).safe_latest_cursor()?;
 
         CursorController::new(KeyType::RemoteSyncPushCursor).update(connection, cursor + 1)?;
         Ok(())
