@@ -98,6 +98,7 @@ export type DraftStockOutLineFragment = {
     description: string;
   } | null;
   donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+  manufacturer?: { __typename: 'NameNode'; id: string; name: string } | null;
   program?: { __typename: 'ProgramNode'; name: string; id: string } | null;
   campaign?: { __typename: 'CampaignNode'; name: string; id: string } | null;
 };
@@ -164,6 +165,11 @@ export type GetOutboundEditLinesQuery = {
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+      manufacturer?: {
+        __typename: 'NameNode';
+        id: string;
+        name: string;
+      } | null;
       program?: { __typename: 'ProgramNode'; name: string; id: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
@@ -268,6 +274,10 @@ export const DraftStockOutLineFragmentDoc = gql`
       description
     }
     donor(storeId: $storeId) {
+      id
+      name
+    }
+    manufacturer(storeId: $storeId) {
       id
       name
     }
