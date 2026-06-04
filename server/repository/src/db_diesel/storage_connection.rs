@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex, MutexGuard, RwLock};
 
 use super::{get_connection, DBBackendConnection, DBConnection};
 
+use crate::db_diesel::changelog::ChangelogCursorTracker;
 use crate::repository_error::RepositoryError;
 
 use diesel::{
@@ -10,6 +11,7 @@ use diesel::{
     r2d2::{ConnectionManager, Pool},
 };
 use log::error;
+use util::uuid::uuid;
 
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
@@ -67,6 +69,10 @@ pub struct StorageConnection {
     raw_connection: Mutex<DBConnection>,
     on_commit: Option<Arc<dyn Fn(&TransactionNotification) + Send + Sync>>,
     pending_notifications: RwLock<HashSet<TransactionNotification>>,
+    /// Identifies this connection in the `ChangelogCursorTracker`. Generated once at
+    /// construction; reused across transactions on the same connection.
+    uuid: String,
+    changelog_cursor_tracker: Arc<ChangelogCursorTracker>,
 }
 
 impl StorageConnection {
@@ -74,6 +80,14 @@ impl StorageConnection {
         LockedConnection {
             raw_connection: self.raw_connection.lock().unwrap(),
         }
+    }
+
+    pub fn uuid(&self) -> &str {
+        &self.uuid
+    }
+
+    pub fn changelog_cursor_tracker(&self) -> &ChangelogCursorTracker {
+        &self.changelog_cursor_tracker
     }
 
     /// Queue a notification to be fired after the transaction commits.
@@ -136,12 +150,25 @@ impl From<TransactionError<RepositoryError>> for RepositoryError {
     }
 }
 
+impl Drop for StorageConnection {
+    /// Safety net: ensure this connection is removed from the cursor tracker even if a
+    /// transaction path missed the explicit untrack (e.g. early return, panic).
+    fn drop(&mut self) {
+        ChangelogCursorTracker::untrack(self);
+    }
+}
+
 impl StorageConnection {
-    pub fn new(connection: DBConnection) -> StorageConnection {
+    pub fn new(
+        connection: DBConnection,
+        changelog_cursor_tracker: Arc<ChangelogCursorTracker>,
+    ) -> StorageConnection {
         StorageConnection {
             raw_connection: Mutex::new(connection),
             on_commit: None,
             pending_notifications: RwLock::new(HashSet::new()),
+            uuid: uuid(),
+            changelog_cursor_tracker,
         }
     }
 
@@ -173,17 +200,21 @@ impl StorageConnection {
     where
         F: FnOnce(&StorageConnection) -> Result<T, E>,
     {
-        let current_level = {
-            let mut guard = self.lock();
-            let current_level = guard.transaction_level()?;
-            if current_level > 0 && reuse_tx {
-                drop(guard);
-                return match f(self) {
-                    Ok(ok) => Ok(ok),
-                    Err(err) => Err(TransactionError::Inner(err)),
-                };
-            }
+        // Lock is dropped in this line
+        let current_level = self.lock().transaction_level()?;
 
+        // If we are re-using transaction just call the underlying function, error will propagate
+        // to the original closure for the transaction.
+        if current_level > 0 && reuse_tx {
+            return match f(self) {
+                Ok(ok) => Ok(ok),
+                Err(err) => Err(TransactionError::Inner(err)),
+            };
+        }
+
+        // Start a new outer or inner transaction, acquire lock that will be dropped when block exits
+        {
+            let mut guard = self.lock();
             let con: &mut DBBackendConnection = guard.connection();
             if current_level == 0 {
                 // sqlite can only have 1 writer, so to avoid concurrency issues,
@@ -193,41 +224,54 @@ impl StorageConnection {
                 AnsiTransactionManager::begin_transaction(con)
             }
             .map_err(|e| map_begin_transaction_error(e, current_level))?;
-            current_level
         };
 
-        let result = f(self);
+        let inner_result = f(self);
 
-        match result {
+        // Commit or rollback based on the inner result.
+        let result = match inner_result {
             Ok(value) => {
                 let mut guard = self.raw_connection.lock().unwrap();
                 let con: &mut DBBackendConnection = &mut guard;
-                AnsiTransactionManager::commit_transaction(con).map_err(|err| {
-                    error!("Failed to end tx: {:?}", err);
-                    TransactionError::Transaction {
-                        msg: format!("Failed to end tx: {}", err),
-                        level: current_level + 1,
+                match AnsiTransactionManager::commit_transaction(con) {
+                    Ok(_) => Ok(value),
+                    Err(err) => {
+                        error!("Failed to end tx: {:?}", err);
+                        Err(TransactionError::Transaction {
+                            msg: format!("Failed to end tx: {}", err),
+                            level: current_level + 1,
+                        })
                     }
-                })?;
-                // Fire pending notifications after outermost transaction commits
-                if current_level == 0 {
-                    self.flush_notifications();
                 }
-                Ok(value)
             }
             Err(e) => {
                 let mut guard = self.raw_connection.lock().unwrap();
                 let con: &mut DBBackendConnection = &mut guard;
-                AnsiTransactionManager::rollback_transaction(con).map_err(|err| {
-                    error!("Failed to rollback tx: {:?}", err);
-                    TransactionError::Transaction {
-                        msg: format!("Failed to rollback tx: {}", err),
-                        level: current_level + 1,
+                match AnsiTransactionManager::rollback_transaction(con) {
+                    Ok(_) => Err(TransactionError::Inner(e)),
+                    Err(err) => {
+                        error!("Failed to rollback tx: {:?}", err);
+                        Err(TransactionError::Transaction {
+                            msg: format!("Failed to rollback tx: {}", err),
+                            level: current_level + 1,
+                        })
                     }
-                })?;
-                Err(TransactionError::Inner(e))
+                }
+            }
+        };
+
+        // When closing off the outermost transaction, untrack this connection's in-flight
+        // changelog cursor and then fire pending notifications. Untrack runs first (on both
+        // commit and rollback) so a processor task woken by the on-commit hook sees the
+        // just-committed rows with an un-clamped tracker.
+        if current_level == 0 {
+            ChangelogCursorTracker::untrack(self);
+            if result.is_ok() {
+                self.flush_notifications();
             }
         }
+
+        result
     }
 }
 
@@ -246,6 +290,8 @@ fn map_begin_transaction_error<T>(
 pub struct StorageConnectionManager {
     pool: Pool<ConnectionManager<DBBackendConnection>>,
     on_commit: Option<Arc<dyn Fn(&TransactionNotification) + Send + Sync>>,
+    /// Shared with every `StorageConnection` produced by this manager.
+    changelog_cursor_tracker: Arc<ChangelogCursorTracker>,
 }
 
 impl StorageConnectionManager {
@@ -253,6 +299,7 @@ impl StorageConnectionManager {
         StorageConnectionManager {
             pool,
             on_commit: None,
+            changelog_cursor_tracker: ChangelogCursorTracker::new(),
         }
     }
 
@@ -261,7 +308,10 @@ impl StorageConnectionManager {
     }
 
     pub fn connection(&self) -> Result<StorageConnection, RepositoryError> {
-        let conn = StorageConnection::new(get_connection(&self.pool)?);
+        let conn = StorageConnection::new(
+            get_connection(&self.pool)?,
+            self.changelog_cursor_tracker.clone(),
+        );
         match &self.on_commit {
             Some(callback) => Ok(conn.with_on_commit(callback.clone())),
             None => Ok(conn),
