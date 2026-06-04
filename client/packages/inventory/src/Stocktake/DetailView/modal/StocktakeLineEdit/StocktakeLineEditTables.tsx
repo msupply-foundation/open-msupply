@@ -202,7 +202,11 @@ export const BatchTable = ({
         accessorFn: row => {
           const counted = row.countedNumberOfPacks;
           if (counted === null || counted === undefined) return null;
-          return counted * (row.packSize ?? 1) * (row.item.doses ?? 1);
+          return (
+            counted *
+            (row.packSize || row.item.defaultPackSize || 1) *
+            (row.item.doses ?? 1)
+          );
         },
       },
       {
