@@ -1,4 +1,4 @@
-use super::StorageConnection;
+use super::{item_row::item, stock_line_row::stock_line, StorageConnection};
 
 use crate::Upsert;
 use crate::{repository_error::RepositoryError, Delete};
@@ -24,6 +24,10 @@ table! {
         user_id -> Text,
     }
 }
+
+joinable!(stock_relocation -> stock_line (from_stock_line_id));
+allow_tables_to_appear_in_same_query!(stock_relocation, stock_line);
+allow_tables_to_appear_in_same_query!(stock_relocation, item);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
