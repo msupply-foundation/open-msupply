@@ -2098,6 +2098,8 @@ export type DeleteOutboundShipmentUnallocatedLineResponseWithId = {
   response: DeleteOutboundShipmentUnallocatedLineResponse;
 };
 
+export type DeletePluginDataResponse = DeleteResponse;
+
 export type DeletePrescriptionError = {
   __typename: 'DeletePrescriptionError';
   error: DeletePrescriptionErrorInterface;
@@ -2629,6 +2631,7 @@ export type DraftStockOutLineNode = {
   itemVariant?: Maybe<ItemVariantNode>;
   itemVariantId?: Maybe<Scalars['String']['output']>;
   location?: Maybe<LocationNode>;
+  manufacturer?: Maybe<NameNode>;
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
   program?: Maybe<ProgramNode>;
@@ -2641,6 +2644,10 @@ export type DraftStockOutLineNode = {
 };
 
 export type DraftStockOutLineNodeDonorArgs = {
+  storeId: Scalars['String']['input'];
+};
+
+export type DraftStockOutLineNodeManufacturerArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -5526,6 +5533,7 @@ export type Mutations = {
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
   deleteOutboundShipmentServiceLine: DeleteOutboundShipmentServiceLineResponse;
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
+  deletePluginData: DeletePluginDataResponse;
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
   deletePurchaseOrder: DeletePurchaseOrderResponse;
@@ -5801,6 +5809,11 @@ export type MutationsDeleteOutboundShipmentServiceLineArgs = {
 
 export type MutationsDeleteOutboundShipmentUnallocatedLineArgs = {
   input: DeleteOutboundShipmentUnallocatedLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeletePluginDataArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
