@@ -29,7 +29,7 @@ import {
   InfoIcon,
   useSimplifiedTabletUI,
 } from '@openmsupply-client/common';
-import { Select, MenuItem } from '@mui/material';
+import { Select, MenuItem, Tooltip } from '@mui/material';
 import { DraftInboundLine } from '../../../../types';
 import {
   CampaignOrProgramCell,
@@ -108,7 +108,9 @@ export const InboundLineEditCards = ({
     isExternal,
   } = useInboundShipment();
   const isManualShipment =
-    !inboundData?.purchaseOrder && !inboundData?.linkedShipment;
+    !inboundData?.purchaseOrder &&
+    !inboundData?.linkedShipment &&
+    !inboundData?.otherParty?.store;
 
   const showLineStatus =
     lines.some(line => line.status != null) ||
@@ -418,14 +420,21 @@ export const InboundLineEditCards = ({
         columnGroup: 'moreInfo',
         defaultHideOnMobile: true,
         Cell: ({ cell, row }) => (
-          <CurrencyInputCell
-            cell={cell}
-            disabled={isDisabled || !isManualShipment}
-            decimalsLimit={5}
-            updateFn={value =>
-              updateDraftLine({ id: row.original.id, costPricePerPack: value })
-            }
-          />
+          <Tooltip
+            title={!isManualShipment ? t('info.cost-price-not-editable') : ''}
+            placement="top"
+          >
+            <span style={{ display: 'inline-block', width: '100%' }}>
+              <CurrencyInputCell
+                cell={cell}
+                disabled={isDisabled || !isManualShipment}
+                decimalsLimit={5}
+                updateFn={value =>
+                  updateDraftLine({ id: row.original.id, costPricePerPack: value })
+                }
+              />
+            </span>
+          </Tooltip>
         ),
       },
       {
