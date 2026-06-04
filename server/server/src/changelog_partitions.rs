@@ -18,7 +18,6 @@ pub fn spawn(
                 // stalling the async runtime.
                 Ok(ctx) => {
                     let partition_config = partition_config.clone();
-                    
                     let result = tokio::task::spawn_blocking(move || {
                         repository::ensure_partition_lookahead(&ctx.connection, &partition_config)
                     })
@@ -26,7 +25,9 @@ pub fn spawn(
 
                     match result {
                         Ok(Ok(i)) => {
-                            log::info!("changelog partition task created {i} new partition(s)")
+                            if i > 0 {
+                                log::info!("changelog partition task created {i} new partition(s)")
+                            }
                         }
                         Ok(Err(e)) => log::error!("changelog partition task: {e:?}"),
                         Err(e) => log::error!("changelog partition task: join error: {e:?}"),
