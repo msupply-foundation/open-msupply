@@ -20,7 +20,7 @@ import {
   getNextStatusOption,
   getStatusTranslator,
 } from '../../../utils';
-import { PrescriptionRowFragment, usePrescription } from '../../api';
+import { PrescriptionFragment, usePrescription } from '../../api';
 import { PaymentsModal } from '../Payments';
 import { Draft } from '../../../StockOut';
 import { getStatusOptions } from '../../../statuses';
@@ -73,7 +73,7 @@ const useStatusChangeButton = () => {
       getNextStatusOption(status, options)
     );
 
-  const handleConfirm = async (data: Partial<PrescriptionRowFragment>) => {
+  const handleConfirm = async (data: Partial<PrescriptionFragment>) => {
     if (!selectedOption) return null;
     try {
       await update({ ...data, status: selectedOption.value });

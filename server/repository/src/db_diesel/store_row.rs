@@ -10,6 +10,16 @@ use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+// Just `(id, logo)` on the same underlying SQL `store` table. Two callers:
+// the GraphQL dataloader that resolves `StoreNode.logo` lazily, and sync
+// translation which writes the logo separately from the lean `StoreRow`.
+table! {
+    #[sql_name = "store"]
+    store_logo_row (id) {
+        id -> Text,
+        logo -> Nullable<Text>,
+    }
+}
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, TS)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -27,7 +37,6 @@ define_linked_tables! {
     shared: {
         code -> Text,
         site_id -> Integer,
-        logo -> Nullable<Text>,
         store_mode -> crate::db_diesel::store_row::StoreModeMapping,
         created_date -> Nullable<Date>,
         is_disabled -> Bool,
@@ -60,12 +69,23 @@ pub struct StoreRow {
     pub id: String,
     pub code: String,
     pub site_id: i32,
-    pub logo: Option<String>,
     pub store_mode: StoreMode,
     pub created_date: Option<NaiveDate>,
     pub is_disabled: bool,
     // Resolved from name_link - must be last to match view column order
     pub name_id: String,
+}
+
+/// `(id, logo)` projection. Used in two places:
+/// - the GraphQL `StoreLogoLoader` dataloader, so `StoreNode.logo` can be
+///   resolved on demand without dragging the column through every store join;
+/// - sync translation, which writes the logo for a store separately from the
+///   lean `StoreRow` upsert (after the lean row has been created/updated).
+#[derive(Clone, Queryable, Debug, PartialEq, Eq, Default)]
+#[diesel(table_name = store_logo_row)]
+pub struct StoreLogoRow {
+    pub id: String,
+    pub logo: Option<String>,
 }
 
 pub struct StoreRowRepository<'a> {
@@ -88,6 +108,8 @@ impl<'a> StoreRowRepository<'a> {
         StoreRowRepository { connection }
     }
 
+    /// Upsert a lean store row. Does NOT touch the `logo` column — existing
+    /// logo data in the DB is preserved across this call.
     pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
         Ok(())
@@ -106,6 +128,15 @@ impl<'a> StoreRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, store_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = store::table
+            .filter(store::id.eq(store_id))
+            .select(store::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<StoreRow>, RepositoryError> {
         let result = store::table
             .filter(store::id.eq_any(ids))
@@ -116,6 +147,44 @@ impl<'a> StoreRowRepository<'a> {
     pub fn all(&self) -> Result<Vec<StoreRow>, RepositoryError> {
         let result = store::table.load(self.connection.lock().connection())?;
         Ok(result)
+    }
+
+    pub fn find_logo_by_id(
+        &self,
+        store_id: &str,
+    ) -> Result<Option<StoreLogoRow>, RepositoryError> {
+        let result = store_logo_row::table
+            .filter(store_logo_row::id.eq(store_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn find_logos_by_ids(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<StoreLogoRow>, RepositoryError> {
+        let result = store_logo_row::table
+            .filter(store_logo_row::id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    /// Update the `logo` column for an existing store row. Plain UPDATE rather
+    /// than upsert: the lean `StoreRow` must already exist (sync emits the
+    /// lean upsert first, then the logo upsert second). A `None` logo value
+    /// is a no-op — matching the old AsChangeset semantics, where sync data
+    /// without a logo never cleared an existing one.
+    pub fn update_logo(
+        &self,
+        store_id: &str,
+        logo: Option<&str>,
+    ) -> Result<(), RepositoryError> {
+        let Some(logo) = logo else { return Ok(()) };
+        diesel::update(store_logo_row::table.filter(store_logo_row::id.eq(store_id)))
+            .set(store_logo_row::logo.eq(logo))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
@@ -152,6 +221,26 @@ impl Upsert for StoreRow {
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             StoreRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
+    }
+}
+
+impl Upsert for StoreLogoRow {
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        StoreRowRepository::new(con).update_logo(&self.id, self.logo.as_deref())?;
+        Ok(None) // Table not in Changelog
+    }
+
+    // Test only — verify the logo round-trip by reading the (id, logo)
+    // projection back. The lean `StoreRow` is asserted separately.
+    fn assert_upserted(&self, con: &StorageConnection) {
+        if self.logo.is_none() {
+            // No-op upserts leave whatever was in the DB alone; nothing to assert.
+            return;
+        }
+        assert_eq!(
+            StoreRowRepository::new(con).find_logo_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

@@ -4,10 +4,8 @@
   "version": "0.0.0",
   "sideEffects": false,
   "private": true,
-  "devDependencies": {},
   "scripts": {
     "tsc": "tsc",
     "eslint": "eslint ./src"
-  },
-  "dependencies": {}
+  }
 }

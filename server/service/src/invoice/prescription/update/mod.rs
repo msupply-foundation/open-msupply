@@ -242,7 +242,7 @@ mod test {
             InvoiceLineRow {
                 id: String::from("prescription_no_stock_line_a"),
                 invoice_id: String::from("prescription_no_stock"),
-                item_link_id: String::from("item_a"),
+                item_id: String::from("item_a"),
                 item_name: String::from("Item A"),
                 item_code: String::from("item_a_code"),
                 batch: None,
@@ -455,7 +455,7 @@ mod test {
         let invoice_line = InvoiceLineRow {
             id: "test_invoice_line".to_string(),
             invoice_id: prescription().id.clone(),
-            item_link_id: mock_stock_line_a().item_link_id.clone(),
+            item_id: mock_stock_line_a().item_id.clone(),
             item_name: "Test Item".to_string(),
             item_code: "test_item_code".to_string(),
             batch: mock_stock_line_a().batch.clone(),

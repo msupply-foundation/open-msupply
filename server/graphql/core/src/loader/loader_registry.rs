@@ -45,6 +45,13 @@ pub async fn get_loaders(
         tokio::spawn,
     );
 
+    let store_logo_loader = DataLoader::new(
+        StoreLogoLoader {
+            service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    );
+
     let invoice_by_id_loader = DataLoader::new(
         InvoiceByIdLoader {
             service_provider: service_provider.clone(),
@@ -265,6 +272,7 @@ pub async fn get_loaders(
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_by_id_loader);
+    loaders.insert(store_logo_loader);
     loaders.insert(invoice_by_id_loader);
     loaders.insert(invoice_by_requisition_id_loader);
     loaders.insert(invoice_line_by_invoice_id_loader);
@@ -456,6 +464,18 @@ pub async fn get_loaders(
     ));
     loaders.insert(DataLoader::new(
         BundledItemByPrincipalItemVariantIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        AncillaryItemsByItemIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        AncillaryItemsByAncillaryIdLoader {
             service_provider: service_provider.clone(),
         },
         tokio::spawn,

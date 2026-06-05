@@ -15,6 +15,7 @@ query InvoiceQuery(
       pickedDatetime
       shippedDatetime
       deliveredDatetime
+      receivedDatetime
       allocatedDatetime
       otherPartyName
       type
