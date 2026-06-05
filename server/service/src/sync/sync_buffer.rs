@@ -183,7 +183,7 @@ mod test {
         );
 
         let r1 = SyncBufferRepository::new(&connection)
-            .find_one_by_record_id("1")
+            .find_latest_by_record_id_slow_unindexed("1")
             .unwrap()
             .unwrap();
         assert_eq!(r1.integration_result, Some(IntegrationResult::Error));
