@@ -135,7 +135,7 @@ mod tests {
             setup_all("test_translate_encounter_to_legacy", MockDataInserts::all()).await;
 
         let cursor = ChangelogRepository::new(&connection)
-            .latest_cursor()
+            .absolute_latest_cursor()
             .unwrap_or(0);
 
         // Create a new EncounterRow (this will get a changelog entry created automatically)

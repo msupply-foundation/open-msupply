@@ -418,24 +418,24 @@ impl<'a> ChangelogRepository<'a> {
 
     /// Returns latest change log
     /// After initial sync we use this method to get the latest cursor to make sure we don't try to push any records that were synced to this site on initialisation
-    pub fn latest_cursor(&self) -> Result<u64, RepositoryError> {
+    pub fn absolute_latest_cursor(&self) -> Result<u64, RepositoryError> {
         let result = changelog::table
             .select(diesel::dsl::max(changelog::cursor))
             .first::<Option<i64>>(self.connection.lock().connection())?;
         Ok(result.unwrap_or(0) as u64)
     }
 
-    /// Like [`latest_cursor`], but clamped to the max safe cursor while another connection has an
+    /// Like [`absolute_latest_cursor`], but clamped to the max safe cursor while another connection has an
     /// in-flight changelog tx (see [`ChangelogCursorTracker`]). Use this for sync push cursor
     /// advancement so we never advance past an in-flight (uncommitted, lower) cursor.
     ///
-    /// Note: `latest_cursor` itself is deliberately left un-clamped — migration bookkeeping
+    /// Note: `absolute_latest_cursor` itself is deliberately left un-clamped — migration bookkeeping
     /// (`run_without_change_log_updates`) inserts changelog rows then reads the cursor on the same
     /// connection, where a clamp would return the pre-insert max.
-    pub fn safe_latest_cursor(&self) -> Result<u64, RepositoryError> {
+    pub fn latest_cursor(&self) -> Result<u64, RepositoryError> {
         match ChangelogCursorTracker::max_safe_cursor(self.connection) {
             Some(safe) => Ok(safe),
-            None => self.latest_cursor(),
+            None => self.absolute_latest_cursor(),
         }
     }
 
@@ -809,7 +809,7 @@ mod test {
         };
 
         let observer = connection_manager.connection().unwrap();
-        let cursor_before = ChangelogRepository::new(&observer).latest_cursor().unwrap();
+        let cursor_before = ChangelogRepository::new(&observer).absolute_latest_cursor().unwrap();
 
         // Channels to drive connection A: signal it has registered an in-flight cursor, then
         // signal it to commit.
@@ -846,9 +846,9 @@ mod test {
         // The clamp is active: safe cursor is pegged below the (now higher) raw max.
         assert!(ChangelogCursorTracker::max_safe_cursor(&observer).is_some());
         let safe_during = ChangelogRepository::new(&observer)
-            .safe_latest_cursor()
+            .latest_cursor()
             .unwrap();
-        let raw_during = ChangelogRepository::new(&observer).latest_cursor().unwrap();
+        let raw_during = ChangelogRepository::new(&observer).absolute_latest_cursor().unwrap();
         assert!(
             safe_during <= cursor_before && safe_during < raw_during,
             "expected safe cursor clamped (<= {cursor_before}, < raw {raw_during}), got {safe_during}"
@@ -884,7 +884,7 @@ mod test {
 
         assert_eq!(ChangelogCursorTracker::max_safe_cursor(&observer), None);
         let safe_after = ChangelogRepository::new(&observer)
-            .safe_latest_cursor()
+            .latest_cursor()
             .unwrap();
         assert!(
             safe_after > cursor_before,
