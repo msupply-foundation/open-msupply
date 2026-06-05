@@ -61,7 +61,7 @@ Each config-file key has a matching env-var override (env wins).
 | `thinkMinMs` / `thinkMaxMs` | `THINK_MIN_MS` / `THINK_MAX_MS` | `1000` / `5000` | read-action think-time jitter |
 | `workflowThinkMinMs` / `workflowThinkMaxMs` | `WORKFLOW_THINK_MIN_MS` / `WORKFLOW_THINK_MAX_MS` | `5000` / `15000` | workflow-step think-time (keeps read/write mix ~95/5) |
 | `poolSize` | `POOL_SIZE` | `200` | ids discovered per pool in setup |
-| `reloginEveryOps` | `RELOGIN_EVERY_OPS` | `70` | ops a VU serves per login before re-authing as another random user (±50% jitter; `0` = never re-login) |
+| `reloginEveryOps` | `RELOGIN_EVERY_OPS` | `200` | ops a VU serves per login before re-authing as another random user (±50% jitter; `0` = never re-login) |
 | `outputDir` | `OUTPUT_DIR` | `./output` | where summaries are written |
 | `strictThresholds` | `STRICT_THRESHOLDS` | `false` | apply strict per-op latency gates |
 

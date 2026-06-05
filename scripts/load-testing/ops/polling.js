@@ -28,3 +28,15 @@ export const stockCounts = ctx => gqlRequest(ctx, operations.stockCounts, C, { s
 export const internalOrderCounts = ctx => gqlRequest(ctx, operations.internalOrderCounts, C, { storeId: ctx.storeId });
 export const inboundCounts = ctx => gqlRequest(ctx, operations.inboundCounts, C, { storeId: ctx.storeId });
 export const outboundCounts = ctx => gqlRequest(ctx, operations.outboundCounts, C, { storeId: ctx.storeId });
+
+// App-boot / per-navigation bundle: the client fires these on login and when entering a store, on top
+// of the counts above. They were ~10% of the real capture and several touch resolvers nothing else
+// exercises (plugin metadata, program settings, vvm statuses, name properties, permissions).
+export const frontendPluginMetadata = ctx => gqlRequest(ctx, operations.frontendPluginMetadata, C, {});
+export const supplierProgramSettings = ctx => gqlRequest(ctx, operations.supplierProgramSettings, C, { storeId: ctx.storeId });
+export const permissions = ctx => gqlRequest(ctx, operations.permissions, C, { storeId: ctx.storeId });
+export const activeVvmStatuses = ctx => gqlRequest(ctx, operations.activeVvmStatuses, C, { storeId: ctx.storeId });
+export const nameProperties = ctx => gqlRequest(ctx, operations.nameProperties, C, {});
+// displaySettings takes hashes of the client's cached theme/logo; an empty hash (first load / nothing
+// cached) is what a fresh client sends and always returns the current settings.
+export const displaySettings = ctx => gqlRequest(ctx, operations.displaySettings, C, { input: { logo: '', theme: '' } });
