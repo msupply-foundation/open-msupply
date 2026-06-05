@@ -9,6 +9,8 @@ use service::stock_relocation::insert::{
     InsertStockRelocationLine as ServiceLine,
 };
 
+use super::{LocationOnHold, NotEnoughStock, StockLineOnHold};
+
 #[derive(InputObject)]
 pub struct InsertStockRelocationLineInput {
     pub id: String,
@@ -64,45 +66,6 @@ pub struct InsertError {
 pub enum InsertResponse {
     Response(InsertStockRelocationNode),
     Error(InsertError),
-}
-
-pub struct StockLineOnHold {
-    pub stock_line_id: String,
-}
-#[Object]
-impl StockLineOnHold {
-    pub async fn description(&self) -> &str {
-        "Stock line is on hold and cannot be moved."
-    }
-    pub async fn stock_line_id(&self) -> &str {
-        &self.stock_line_id
-    }
-}
-
-pub struct LocationOnHold {
-    pub location_id: String,
-}
-#[Object]
-impl LocationOnHold {
-    pub async fn description(&self) -> &str {
-        "Location is on hold."
-    }
-    pub async fn location_id(&self) -> &str {
-        &self.location_id
-    }
-}
-
-pub struct NotEnoughStock {
-    pub stock_line_id: String,
-}
-#[Object]
-impl NotEnoughStock {
-    pub async fn description(&self) -> &str {
-        "Not enough available stock to move."
-    }
-    pub async fn stock_line_id(&self) -> &str {
-        &self.stock_line_id
-    }
 }
 
 #[derive(Interface)]
@@ -172,11 +135,8 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::ToLocationDoesNotExist
         | ServiceError::NotThisStoreLocation
         | ServiceError::InvalidNumberOfPacks
-        | ServiceError::InvalidPackSize
-        | ServiceError::CannotHaveFractionalPack => BadUserInput(formatted_error),
-        ServiceError::NewlyCreatedStockLineDoesNotExist
-        | ServiceError::DatabaseError(_)
-        | ServiceError::InternalError(_) => InternalError(formatted_error),
+        | ServiceError::InvalidPackSize => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -331,8 +291,8 @@ mod test {
         );
 
         let test_service = TestService(Box::new(|_| {
-            Err(ServiceError::InternalError(
-                "something went wrong".to_string(),
+            Err(ServiceError::DatabaseError(
+                repository::RepositoryError::NotFound,
             ))
         }));
         let expected_message = "Internal error";

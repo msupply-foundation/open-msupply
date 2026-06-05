@@ -1,18 +1,12 @@
 use chrono::Utc;
 use repository::{
-    InvoiceLineRowRepository, InvoiceLineType, LocationRowRepository, RepositoryError, StockLine,
-    StockLineRow, StockRelocationRow, StockRelocationRowRepository, StockRelocationStatus,
-    StorageConnection, TransactionError,
+    RepositoryError, StockRelocationRow, StockRelocationRowRepository, StockRelocationStatus,
+    TransactionError,
 };
 
-use util::EPSILON;
-
-use crate::{
-    common::{check_stock_line_exists, CommonStockLineError},
-    repack::{insert_repack, InsertRepack, InsertRepackError},
-    service_provider::ServiceContext,
-    stock_line::update::{update_stock_line, UpdateStockLine, UpdateStockLineError},
-    NullableUpdate,
+use crate::service_provider::ServiceContext;
+use crate::stock_relocation::validate::{
+    validate_movement, RelocationMovement, ValidateMovementError,
 };
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -41,14 +35,7 @@ pub enum InsertStockRelocationError {
     NotEnoughStock(String),
     InvalidNumberOfPacks,
     InvalidPackSize,
-    CannotHaveFractionalPack,
-    NewlyCreatedStockLineDoesNotExist,
     DatabaseError(RepositoryError),
-    InternalError(String),
-}
-
-struct Validated {
-    stock_line: StockLineRow,
 }
 
 pub fn insert_stock_relocation(
@@ -63,44 +50,28 @@ pub fn insert_stock_relocation(
             let mut rows = Vec::with_capacity(input.lines.len());
 
             for line in input.lines {
-                let Validated { stock_line } = validate(connection, store_id, &line)?;
-                let from_location_id = stock_line.location_id.clone();
-
-                let to_stock_line_id = if is_relocation_only(&stock_line, &line) {
-                    update_stock_line(
-                        ctx,
-                        UpdateStockLine {
-                            id: line.from_stock_line_id.clone(),
-                            location: Some(NullableUpdate {
-                                value: line.to_location_id.clone(),
-                            }),
-                            ..Default::default()
-                        },
-                    )?;
-                    line.from_stock_line_id.clone()
-                } else {
-                    let invoice = insert_repack(
-                        ctx,
-                        InsertRepack {
-                            stock_line_id: line.from_stock_line_id.clone(),
-                            number_of_packs: line.from_number_of_packs,
-                            new_pack_size: line.to_pack_size,
-                            new_location_id: line.to_location_id.clone(),
-                        },
-                    )?;
-                    new_stock_line_id(connection, &invoice.invoice_row.id)?
-                };
+                let stock_line = validate_movement(
+                    connection,
+                    store_id,
+                    &RelocationMovement {
+                        from_stock_line_id: line.from_stock_line_id.clone(),
+                        from_number_of_packs: line.from_number_of_packs,
+                        to_location_id: line.to_location_id.clone(),
+                        to_pack_size: Some(line.to_pack_size),
+                    },
+                )?;
 
                 let row = StockRelocationRow {
                     id: line.id.clone(),
                     created_datetime: now,
-                    finalised_datetime: Some(now),
+                    finalised_datetime: None,
                     from_stock_line_id: line.from_stock_line_id,
-                    from_location_id,
+                    from_location_id: stock_line.location_id.clone(),
                     from_number_of_packs: line.from_number_of_packs,
-                    to_stock_line_id: Some(to_stock_line_id),
+                    to_stock_line_id: None,
                     to_location_id: line.to_location_id,
-                    status: StockRelocationStatus::Finalised,
+                    to_pack_size: Some(line.to_pack_size),
+                    status: StockRelocationStatus::New,
                     store_id: store_id.to_string(),
                     user_id: ctx.user_id.clone(),
                 };
@@ -115,113 +86,26 @@ pub fn insert_stock_relocation(
     Ok(results)
 }
 
-fn is_relocation_only(stock_line: &StockLineRow, line: &InsertStockRelocationLine) -> bool {
-    (line.to_pack_size - stock_line.pack_size).abs() < EPSILON
-        && (line.from_number_of_packs - stock_line.available_number_of_packs).abs() < EPSILON
-        && (stock_line.available_number_of_packs - stock_line.total_number_of_packs).abs() < EPSILON
-}
-
-fn validate(
-    connection: &StorageConnection,
-    store_id: &str,
-    line: &InsertStockRelocationLine,
-) -> Result<Validated, InsertStockRelocationError> {
-    use InsertStockRelocationError::*;
-
-    let StockLine {
-        stock_line_row,
-        location_row,
-        ..
-    } = check_stock_line_exists(connection, store_id, &line.from_stock_line_id).map_err(|err| {
-        match err {
-            CommonStockLineError::DatabaseError(RepositoryError::NotFound) => StockLineDoesNotExist,
-            CommonStockLineError::StockLineDoesNotBelongToStore => NotThisStoreStockLine,
-            CommonStockLineError::DatabaseError(error) => DatabaseError(error),
-        }
-    })?;
-
-    if stock_line_row.on_hold {
-        return Err(StockLineOnHold(stock_line_row.id.clone()));
-    }
-    if let Some(location_row) = &location_row {
-        if location_row.on_hold {
-            return Err(LocationOnHold(location_row.id.clone()));
-        }
-    }
-
-    if line.from_number_of_packs <= 0.0 {
-        return Err(InvalidNumberOfPacks);
-    }
-    if line.from_number_of_packs > stock_line_row.available_number_of_packs + EPSILON {
-        return Err(NotEnoughStock(stock_line_row.id.clone()));
-    }
-    if line.to_pack_size <= 0.0 {
-        return Err(InvalidPackSize);
-    }
-
-    if let Some(to_location_id) = &line.to_location_id {
-        let to_location = LocationRowRepository::new(connection)
-            .find_one_by_id(to_location_id)?
-            .ok_or(ToLocationDoesNotExist)?;
-        if to_location.store_id != store_id {
-            return Err(NotThisStoreLocation);
-        }
-        if to_location.on_hold {
-            return Err(LocationOnHold(to_location.id.clone()));
-        }
-    }
-
-    Ok(Validated {
-        stock_line: stock_line_row,
-    })
-}
-
-fn new_stock_line_id(
-    connection: &StorageConnection,
-    invoice_id: &str,
-) -> Result<String, InsertStockRelocationError> {
-    InvoiceLineRowRepository::new(connection)
-        .find_many_by_invoice_id(invoice_id)?
-        .into_iter()
-        .find(|line| line.r#type == InvoiceLineType::StockIn)
-        .and_then(|line| line.stock_line_id)
-        .ok_or(InsertStockRelocationError::NewlyCreatedStockLineDoesNotExist)
-}
-
 impl From<RepositoryError> for InsertStockRelocationError {
     fn from(error: RepositoryError) -> Self {
         InsertStockRelocationError::DatabaseError(error)
     }
 }
 
-impl From<InsertRepackError> for InsertStockRelocationError {
-    fn from(error: InsertRepackError) -> Self {
+impl From<ValidateMovementError> for InsertStockRelocationError {
+    fn from(error: ValidateMovementError) -> Self {
         use InsertStockRelocationError as E;
         match error {
-            InsertRepackError::StockLineDoesNotExist => E::StockLineDoesNotExist,
-            InsertRepackError::NotThisStoreStockLine => E::NotThisStoreStockLine,
-            InsertRepackError::CannotHaveFractionalPack => E::CannotHaveFractionalPack,
-            InsertRepackError::StockLineReducedBelowZero(stock_line) => {
-                E::NotEnoughStock(stock_line.stock_line_row.id)
-            }
-            InsertRepackError::DatabaseError(e) => E::DatabaseError(e),
-            InsertRepackError::NewlyCreatedInvoiceDoesNotExist => {
-                E::NewlyCreatedStockLineDoesNotExist
-            }
-            InsertRepackError::InternalError(s) => E::InternalError(s),
-        }
-    }
-}
-
-impl From<UpdateStockLineError> for InsertStockRelocationError {
-    fn from(error: UpdateStockLineError) -> Self {
-        use InsertStockRelocationError as E;
-        match error {
-            UpdateStockLineError::StockDoesNotExist => E::StockLineDoesNotExist,
-            UpdateStockLineError::StockDoesNotBelongToStore => E::NotThisStoreStockLine,
-            UpdateStockLineError::LocationDoesNotExist => E::ToLocationDoesNotExist,
-            UpdateStockLineError::DatabaseError(e) => E::DatabaseError(e),
-            other => E::InternalError(format!("{:?}", other)),
+            ValidateMovementError::StockLineDoesNotExist => E::StockLineDoesNotExist,
+            ValidateMovementError::NotThisStoreStockLine => E::NotThisStoreStockLine,
+            ValidateMovementError::StockLineOnHold(id) => E::StockLineOnHold(id),
+            ValidateMovementError::LocationOnHold(id) => E::LocationOnHold(id),
+            ValidateMovementError::ToLocationDoesNotExist => E::ToLocationDoesNotExist,
+            ValidateMovementError::NotThisStoreLocation => E::NotThisStoreLocation,
+            ValidateMovementError::NotEnoughStock(id) => E::NotEnoughStock(id),
+            ValidateMovementError::InvalidNumberOfPacks => E::InvalidNumberOfPacks,
+            ValidateMovementError::InvalidPackSize => E::InvalidPackSize,
+            ValidateMovementError::DatabaseError(e) => E::DatabaseError(e),
         }
     }
 }
@@ -316,12 +200,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn stock_relocation_success() {
-        let (service_provider, ctx) = setup("stock_relocation_success").await;
+    async fn stock_relocation_insert_does_not_move_stock() {
+        let (service_provider, ctx) = setup("stock_relocation_insert_does_not_move_stock").await;
         whole_line("relocate_sl", false)
-            .upsert(&ctx.connection)
-            .unwrap();
-        whole_line("repack_sl", false)
             .upsert(&ctx.connection)
             .unwrap();
 
@@ -332,53 +213,26 @@ mod test {
                 "store_a",
                 InsertStockRelocation {
                     from_location_id: None,
-                    lines: vec![
-                        line("relocate_sl"),
-                        InsertStockRelocationLine {
-                            to_pack_size: 2.0,
-                            ..line("repack_sl")
-                        },
-                    ],
+                    lines: vec![InsertStockRelocationLine {
+                        to_pack_size: 2.0,
+                        ..line("relocate_sl")
+                    }],
                 },
             )
             .unwrap();
 
-        assert_eq!(rows.len(), 2);
-        assert!(rows
-            .iter()
-            .all(|r| r.status == StockRelocationStatus::Finalised));
-        let stock_line_repo = StockLineRowRepository::new(&ctx.connection);
+        assert_eq!(rows.len(), 1);
+        let row = &rows[0];
+        assert_eq!(row.status, StockRelocationStatus::New);
+        assert_eq!(row.finalised_datetime, None);
+        assert_eq!(row.to_stock_line_id, None);
+        assert_eq!(row.to_pack_size, Some(2.0));
 
-        // Relocate
-        let relocate = rows
-            .iter()
-            .find(|r| r.from_stock_line_id == "relocate_sl")
-            .unwrap();
-        assert_eq!(relocate.to_stock_line_id.as_deref(), Some("relocate_sl"));
-        let relocated_line = stock_line_repo
+        let source = StockLineRowRepository::new(&ctx.connection)
             .find_one_by_id("relocate_sl")
             .unwrap()
             .unwrap();
-        assert_eq!(relocated_line.location_id, Some(mock_location_1().id));
-        assert_eq!(relocated_line.available_number_of_packs, 10.0);
-
-        // Repack
-        let repack = rows
-            .iter()
-            .find(|r| r.from_stock_line_id == "repack_sl")
-            .unwrap();
-        let new_id = repack.to_stock_line_id.clone().unwrap();
-        assert_ne!(new_id, "repack_sl");
-        let source = stock_line_repo
-            .find_one_by_id("repack_sl")
-            .unwrap()
-            .unwrap();
-        assert_eq!(source.available_number_of_packs, 0.0);
-
-        // 10 packs of size 1 → 5 packs of size 2, at the destination location
-        let new_line = stock_line_repo.find_one_by_id(&new_id).unwrap().unwrap();
-        assert_eq!(new_line.pack_size, 2.0);
-        assert_eq!(new_line.available_number_of_packs, 5.0);
-        assert_eq!(new_line.location_id, Some(mock_location_1().id));
+        assert_eq!(source.available_number_of_packs, 10.0);
+        assert_eq!(source.location_id, None);
     }
 }
