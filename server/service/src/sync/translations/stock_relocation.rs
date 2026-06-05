@@ -21,6 +21,8 @@ pub struct LegacyReplenishmentRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub finalised_datetime: Option<NaiveDateTime>,
+    #[serde(default)]
+    pub to_pack_size: Option<f64>,
 }
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
@@ -154,6 +156,7 @@ impl SyncTranslation for StockRelocationTranslation {
             from_number_of_packs,
             to_stock_line_id,
             to_location_id,
+            to_pack_size: oms_fields.to_pack_size,
             status: stock_relocation_status(&status),
             store_id,
             user_id,
@@ -186,6 +189,7 @@ impl SyncTranslation for StockRelocationTranslation {
             from_number_of_packs,
             to_stock_line_id,
             to_location_id,
+            to_pack_size,
             status,
             store_id,
             user_id,
@@ -208,6 +212,7 @@ impl SyncTranslation for StockRelocationTranslation {
             oms_fields: Some(LegacyReplenishmentRowOmsFields {
                 created_datetime: Some(created_datetime),
                 finalised_datetime,
+                to_pack_size,
             }),
         };
 
