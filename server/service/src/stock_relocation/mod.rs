@@ -8,6 +8,7 @@ use repository::{
 
 pub mod insert;
 pub mod query;
+pub mod validate;
 
 pub trait StockRelocationServiceTrait: Sync + Send {
     fn get_stock_relocations(
