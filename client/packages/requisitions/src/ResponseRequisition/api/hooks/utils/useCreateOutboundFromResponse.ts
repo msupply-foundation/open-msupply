@@ -15,7 +15,9 @@ export const useCreateOutboundFromResponse = () => {
   const t = useTranslation();
   const { id } = useResponseFields('id');
   const api = useResponseApi();
-  return useMutation(() => api.createOutboundFromResponse(id), {
+  return useMutation({
+    mutationFn: () => api.createOutboundFromResponse(id),
+
     onError: e => {
       const errorObj = e as Error;
       if (errorObj.message === 'NothingRemainingToSupply') {
@@ -24,8 +26,11 @@ export const useCreateOutboundFromResponse = () => {
         error(t('error.failed-to-create-outbound'))();
       }
     },
+
     onSettled: () => {
-      queryClient.invalidateQueries(api.keys.detail(responseId));
-    },
+      queryClient.invalidateQueries({
+        queryKey: api.keys.detail(responseId)
+      });
+    }
   });
 };

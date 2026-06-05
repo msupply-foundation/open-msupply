@@ -9,7 +9,7 @@ include ':capacitor-camera'
 project(':capacitor-camera').projectDir = new File('node_modules/@capacitor/camera/android')
 
 include ':capacitor-geolocation'
-project(':capacitor-geolocation').projectDir = new File('node_modules/@capacitor/geolocation/android')
+project(':capacitor-geolocation').projectDir = new File('../../node_modules/@capacitor/geolocation/android')
 
 include ':bcyesil-capacitor-plugin-printer'
 project(':bcyesil-capacitor-plugin-printer').projectDir = new File('../../node_modules/@bcyesil/capacitor-plugin-printer/android')

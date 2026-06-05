@@ -179,7 +179,7 @@ mod test {
         RequisitionLineRow {
             id: "test_line_a".to_string(),
             requisition_id: mock_new_response_requisition().id.clone(),
-            item_link_id: item_a().id.clone(),
+            item_id: item_a().id.clone(),
             supply_quantity: 3.0, // 3 units * 10 = 30
             location_type_id: Some(mock_location_type_a().id.clone()),
             available_volume: Some(1000.0),
@@ -191,7 +191,7 @@ mod test {
         RequisitionLineRow {
             id: "test_line_b".to_string(),
             requisition_id: mock_new_response_requisition().id.clone(),
-            item_link_id: item_b().id.clone(),
+            item_id: item_b().id.clone(),
             supply_quantity: 2.0, // 2 units * 40 = 80
             location_type_id: Some(mock_location_type_a().id.clone()),
             available_volume: Some(1000.0),
@@ -203,7 +203,7 @@ mod test {
         RequisitionLineRow {
             id: "test_line_c".to_string(),
             requisition_id: mock_new_response_requisition().id.clone(),
-            item_link_id: item_c().id.clone(),
+            item_id: item_c().id.clone(),
             location_type_id: Some(mock_location_type_b().id.clone()),
             available_volume: Some(500.0),
             ..Default::default()

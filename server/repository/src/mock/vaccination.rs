@@ -17,7 +17,7 @@ pub fn mock_vaccination_a() -> VaccinationRow {
         encounter_id: mock_immunisation_encounter_a().id,
         given: true,
         given_store_id: Some(mock_store_a().id),
-        item_link_id: Some(mock_vaccine_item_a().id),
+        item_id: Some(mock_vaccine_item_a().id),
         patient_id: mock_patient().id,
         created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
             .unwrap()

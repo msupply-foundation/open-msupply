@@ -33,6 +33,14 @@ const isTimedOut = () => {
   return params.get('timedout') === 'true';
 };
 
+// Set by the Electron main process when the app was launched with --standalone.
+// Enables auto-connect to a discovered local server when no server is configured.
+const isStandalone = () => {
+  const url = new URL(window.location.href);
+  const params = new URLSearchParams(url.search);
+  return params.get('standalone') === 'true';
+};
+
 export const ServerDiscovery = () => {
   const t = useTranslation();
 
@@ -47,6 +55,7 @@ export const ServerDiscovery = () => {
   } = useNativeClient({
     discovery: true,
     autoconnect: isAutoconnect(),
+    standalone: isStandalone(),
   });
 
   const discover = () => {

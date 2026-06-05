@@ -33,7 +33,7 @@ import {
 } from '@common/components';
 import { AppRoute } from '@openmsupply-client/config';
 
-const STATUS_POLLING_INTERVAL = 1000;
+const STATUS_POLLING_INTERVAL = 2000;
 
 interface SyncModalProps {
   open: boolean;
@@ -51,6 +51,7 @@ const useHostSync = (enabled: boolean) => {
   const [isInitialMount, setIsInitialMount] = useState(true);
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { allowSleep, keepAwake } = useNativeClient();
+  const { updateUser } = useAuthContext();
 
   // true by default to wait for first syncStatus api result
   const [isLoading, setIsLoading] = useState(true);
@@ -76,11 +77,15 @@ const useHostSync = (enabled: boolean) => {
       keepAwake();
     } else {
       allowSleep();
-      queryClient.invalidateQueries(); // refresh the page user is on after sync finishes
 
-      // Reload custom translations, in case we received new ones via sync
       // Shouldn't run on first mount, when translations might still be loading - see issue #9042
-      !isInitialMount && invalidateCustomTranslations();
+      if (!isInitialMount) {
+        // Mark all queries stale but don't refetch active ones immediately.
+        // This avoids surrounding UI components to jump around
+        queryClient.invalidateQueries({ refetchType: 'none' });
+        invalidateCustomTranslations();
+        updateUser();
+      }
     }
   }, [syncStatus?.isSyncing]);
 
@@ -122,18 +127,10 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
     isLoading,
     onManualSync,
   } = useHostSync(open);
-  const { updateUserIsLoading, updateUser, setStore, store } = useAuthContext();
+  const { updateUserIsLoading } = useAuthContext();
   const error =
     syncStatus?.error &&
     mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
-
-  const sync = async () => {
-    await updateUser();
-    await onManualSync();
-    if (!!store) {
-      await setStore(store);
-    }
-  };
 
   const durationAsDate = new Date(
     0,
@@ -246,7 +243,7 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
               marginTop:
                 (!!numberOfRecordsInPushQueue &&
                   numberOfRecordsInPushQueue >= 100) ||
-                error
+                  error
                   ? '5'
                   : '20',
             }}
@@ -269,7 +266,7 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
             startIcon={<RadioIcon />}
             variant="contained"
             disabled={false}
-            onClick={sync}
+            onClick={onManualSync}
             label={t('button.sync-now')}
             sx={theme => ({
               marginRight: 1,

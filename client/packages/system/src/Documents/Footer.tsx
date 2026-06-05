@@ -29,7 +29,7 @@ const FooterComponent = ({
   selectedRows = [],
   resetRowSelection = () => {},
   deletableDocumentIds,
-}: FooterProps): ReactElement => {
+}: FooterProps): ReactElement | null => {
   const t = useTranslation();
   const downloadFile = useDownloadFile();
   const { error } = useNotification();
@@ -115,18 +115,19 @@ const FooterComponent = ({
     },
   ];
 
+  // Only mount the footer portal when there's a selection. Otherwise leave the
+  // slot free so a parent `AppFooterStatusPortal` (e.g. the host DetailView's
+  // status crumbs) shows through on the Documents tab.
+  if (selectedRows.length === 0) return null;
+
   return (
     <AppFooterPortal
       Content={
-        <>
-          {selectedRows.length !== 0 && (
-            <ActionsFooter
-              actions={actions}
-              selectedRowCount={selectedRows.length}
-              resetRowSelection={resetRowSelection}
-            />
-          )}
-        </>
+        <ActionsFooter
+          actions={actions}
+          selectedRowCount={selectedRows.length}
+          resetRowSelection={resetRowSelection}
+        />
       }
     />
   );

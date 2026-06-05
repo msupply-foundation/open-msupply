@@ -119,7 +119,7 @@ pub enum InsertStockInLineError {
     ManufacturerNotVisible,
     ManufacturerIsNotAManufacturer,
     VVMStatusDoesNotExist,
-    ProgramNotVisible,
+    ProgramDoesNotExist,
     IncorrectLocationType,
     PurchaseOrderLineIdRequired,
     PurchaseOrderLineDoesNotExist,
@@ -479,7 +479,7 @@ mod test {
             Err(ServiceError::ManufacturerIsNotAManufacturer)
         );
 
-        // ProgramNotVisible
+        // ProgramDoesNotExist
         assert_eq!(
             insert_stock_in_line(
                 &context,
@@ -490,13 +490,32 @@ mod test {
                     item_id: mock_item_a().id,
                     invoice_id: mock_inbound_shipment_e().id,
                     r#type: StockInType::InboundShipment,
-                    program_id: Some(mock_immunisation_program_a().id), // Not master list visible to store_b
+                    program_id: Some("does-not-exist".to_string()),
                     ..Default::default()
                 },
                 None
             ),
-            Err(ServiceError::ProgramNotVisible)
+            Err(ServiceError::ProgramDoesNotExist)
         );
+
+        // Program exists but is not visible to this store — accepted (see #11600).
+        // This represents stock that flowed in via an upstream shipment carrying a
+        // program_id the customer store doesn't have visible.
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "stock_in_line_with_invisible_program".to_string(),
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                item_id: mock_item_a().id,
+                invoice_id: mock_inbound_shipment_e().id,
+                r#type: StockInType::InboundShipment,
+                program_id: Some(mock_immunisation_program_a().id),
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
     }
 
     #[actix_rt::test]
@@ -542,7 +561,7 @@ mod test {
         assert_eq!(inbound_line, {
             let mut expected = inbound_line.clone();
             expected.id = "new_invoice_line_id".to_string();
-            expected.item_link_id = mock_item_a().id;
+            expected.item_id = mock_item_a().id;
             expected.pack_size = 1.0;
             expected.number_of_packs = 1.0;
             expected
@@ -590,7 +609,7 @@ mod test {
         assert_eq!(inbound_line, {
             let mut expected = inbound_line.clone();
             expected.id = "new_invoice_line_pack_to_one".to_string();
-            expected.item_link_id = mock_item_a().id;
+            expected.item_id = mock_item_a().id;
             expected.pack_size = 1.0;
             expected.number_of_packs = 200.0;
             expected.sell_price_per_pack = 10.0;

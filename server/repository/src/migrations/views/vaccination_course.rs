@@ -33,7 +33,6 @@ impl ViewMigrationFragment for ViewMigration {
       custom_age_label,
       vci.id AS vaccine_course_item_id,
       item.id AS item_id,
-      il.id AS item_link_id,
       item.name AS item_name,
       item.code AS item_code,
       item.type AS item_type,

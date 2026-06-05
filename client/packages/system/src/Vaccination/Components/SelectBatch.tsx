@@ -4,6 +4,7 @@ import {
   Checkbox,
   ColumnDef,
   ColumnType,
+  ExpiryDateCell,
   MaterialTable,
   useSimpleMaterialTable,
   useTranslation,
@@ -69,6 +70,7 @@ export const SelectBatch = ({
         accessorKey: 'expiryDate',
         header: t('label.expiry-date'),
         columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
         size: 100,
       },
       {

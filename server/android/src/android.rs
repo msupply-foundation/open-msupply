@@ -44,6 +44,9 @@ pub mod android {
         let files_dir = PathBuf::from(&files_dir);
         let db_path = files_dir.join("omsupply-database");
 
+        let log_path = files_dir.join("logs");
+        std::fs::create_dir_all(&log_path).unwrap();
+
         let settings = Settings {
             server: ServerSettings {
                 port,
@@ -54,6 +57,7 @@ pub mod android {
                 base_dir: files_dir.to_str().unwrap().to_string(),
                 machine_uid: Some(android_id),
                 override_is_central_server: false,
+                workers: None,
             },
             database: DatabaseSettings {
                 username: "n/a".to_string(),
@@ -63,6 +67,7 @@ pub mod android {
                 database_name: db_path.to_string_lossy().to_string(),
                 database_path: None,
                 connection_pool_max_connections: None,
+                connection_pool_min_idle: None,
                 connection_pool_timeout_seconds: None,
                 // See https://github.com/openmsupply/remote-server/issues/1076
                 init_sql: Some(format!("PRAGMA temp_store_directory = '{cache_dir}';")),
@@ -71,7 +76,7 @@ pub mod android {
             sync: None,
             logging: Some(
                 LoggingSettings::new(LogMode::File, service::settings::Level::Info)
-                    .with_directory(files_dir.to_string_lossy().to_string()),
+                    .with_directory(log_path.to_string_lossy().to_string()),
             ),
             backup: None,
             // Not supporting mail sending on Android - so cannot be Central Server (does it need to be?)

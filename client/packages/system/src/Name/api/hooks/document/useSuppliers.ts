@@ -6,10 +6,13 @@ export const useSuppliers = (external?: boolean) => {
   const queryParams = useQueryParamsStore();
 
   const params = queryParams?.paramList ? queryParams.paramList() : {};
-  return useQuery([...api.keys.paramList(params), 'suppliers'], () =>
-    api.get.suppliers({
-      ...params,
-      external,
-    })
-  );
+  return useQuery({
+    queryKey: [...api.keys.paramList(params), 'suppliers'],
+    queryFn: () =>
+      api.get.suppliers({
+        ...params,
+        first: 1000,
+        external,
+      }),
+  });
 };
