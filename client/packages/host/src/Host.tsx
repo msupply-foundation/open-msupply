@@ -30,7 +30,11 @@ import {
   useAuthContext,
 } from '@openmsupply-client/common';
 
-import { KBarProvider } from 'kbar';
+// `KBarProvider` was here but it's only needed in the authenticated
+// `Site` shell (Breadcrumbs, AppBar buttons, feature pages use kbar's
+// useRegisterActions). Login / Initialise / Discovery / Android don't.
+// Moved into Site.tsx so the kbar+fuse.js bundles (~51KB) only load
+// once the user is past the login screen.
 // import { ReactQueryDevtools } from 'react-query/devtools';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
@@ -164,7 +168,6 @@ const Host = () => {
   runOneTimeStartup();
   return (
   <React.Suspense fallback={<div />}>
-    <KBarProvider actions={[]}>
       <IntlProvider>
         <AppThemeProvider>
           <React.Suspense fallback={<RandomLoader />}>
@@ -193,7 +196,6 @@ const Host = () => {
           </React.Suspense>
         </AppThemeProvider>
       </IntlProvider>
-    </KBarProvider>
   </React.Suspense>
   );
 };

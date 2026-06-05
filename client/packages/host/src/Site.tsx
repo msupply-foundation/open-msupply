@@ -26,6 +26,7 @@ import {
   useRootNavigationPath,
   useIntlUtils,
 } from '@openmsupply-client/common';
+import { KBarProvider } from 'kbar';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
 import { AppRoute } from '@openmsupply-client/config';
@@ -115,6 +116,7 @@ export const Site: FC = () => {
   return (
     <RequireAuthentication>
       <Blocker />
+      <KBarProvider actions={[]}>
       <EasterEggModalProvider>
         <SyncModalProvider>
           <CommandK>
@@ -274,6 +276,7 @@ export const Site: FC = () => {
           </CommandK>
         </SyncModalProvider>
       </EasterEggModalProvider>
+      </KBarProvider>
     </RequireAuthentication>
   );
 };
