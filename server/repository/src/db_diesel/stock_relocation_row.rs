@@ -34,7 +34,7 @@ allow_tables_to_appear_in_same_query!(stock_relocation, item);
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum StockRelocationStatus {
     #[default]
-    Suggested,
+    New,
     Finalised,
 }
 

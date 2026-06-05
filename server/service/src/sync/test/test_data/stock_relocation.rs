@@ -58,7 +58,7 @@ fn stock_relocation_1_pull_record() -> TestSyncIncomingRecord {
             from_number_of_packs: 5.0,
             to_stock_line_id: Some("stock_line_b".to_string()),
             to_location_id: Some("location_2".to_string()),
-            status: StockRelocationStatus::Suggested,
+            status: StockRelocationStatus::New,
             store_id: "store_a".to_string(),
             user_id: "user_account_a".to_string(),
         },

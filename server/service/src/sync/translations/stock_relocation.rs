@@ -37,15 +37,15 @@ pub enum LegacyReplenishmentStatus {
 
 fn stock_relocation_status(status: &LegacyReplenishmentStatus) -> StockRelocationStatus {
     match status {
-        LegacyReplenishmentStatus::Sg => StockRelocationStatus::Suggested,
+        LegacyReplenishmentStatus::Sg => StockRelocationStatus::New,
         LegacyReplenishmentStatus::Fn => StockRelocationStatus::Finalised,
-        LegacyReplenishmentStatus::Others => StockRelocationStatus::Suggested,
+        LegacyReplenishmentStatus::Others => StockRelocationStatus::New,
     }
 }
 
 fn legacy_stock_relocation_status(status: &StockRelocationStatus) -> LegacyReplenishmentStatus {
     match status {
-        StockRelocationStatus::Suggested => LegacyReplenishmentStatus::Sg,
+        StockRelocationStatus::New => LegacyReplenishmentStatus::Sg,
         StockRelocationStatus::Finalised => LegacyReplenishmentStatus::Fn,
     }
 }
