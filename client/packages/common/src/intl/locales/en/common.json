@@ -2930,5 +2930,10 @@
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an internal order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
+  "title.configure-plugin": "Configure plugin",
+  "title.configure-plugin-code": "Configure plugin: {{code}}",
+  "messages.plugin-config-saved": "Plugin configuration saved",
+  "error.unable-to-save-plugin-config": "Unable to save plugin configuration",
+  "error.plugin-not-loaded": "Plugin not loaded: {{code}}"
 }
