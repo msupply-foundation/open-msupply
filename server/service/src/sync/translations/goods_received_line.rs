@@ -1,5 +1,5 @@
 use super::{
-    goods_received::{is_finalised, GoodsReceivedTranslation},
+    goods_received::GoodsReceivedTranslation,
     invoice_line::InvoiceLineTranslation,
     item::ItemTranslation,
     purchase_order_line::PurchaseOrderLineTranslation,
@@ -7,8 +7,8 @@ use super::{
 };
 use chrono::NaiveDate;
 use repository::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, ItemRowRepository,
-    StorageConnection, SyncBufferRepository, SyncBufferRow,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRowRepository,
+    ItemRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::Deserialize;
 use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
@@ -37,14 +37,6 @@ struct LegacyGoodsReceivedLineRow {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     order_line_ID: Option<String>,
-}
-
-/// Helper to extract the status from a Goods_received sync buffer record
-#[allow(non_snake_case)]
-#[derive(Deserialize)]
-struct GoodsReceivedStatus {
-    #[serde(default)]
-    status: String,
 }
 
 #[deny(dead_code)]
@@ -90,31 +82,17 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             )));
         }
 
-        // Look up parent GR to check if finalized
-        let gr_sync_row = match SyncBufferRepository::new(connection)
-            .find_one_by_record_id(&data.goods_received_ID)?
-        {
-            Some(row) if row.table_name == GoodsReceivedTranslation.table_name() => row,
-            Some(_) => {
-                return Ok(PullTranslateResult::Ignored(format!(
-                    "sync_buffer record {} is not a Goods_received record",
-                    data.goods_received_ID
-                )))
-            }
-            None => {
-                return Ok(PullTranslateResult::Ignored(format!(
-                    "parent goods_received {} not found in sync_buffer",
-                    data.goods_received_ID
-                )))
-            }
-        };
-
-        let gr_status = gr_sync_row.deserialize::<GoodsReceivedStatus>()?;
+        // Decide finalised vs non-finalised by looking up the parent invoice.
+        // Non-finalised GR -> the GR translator created an invoice with id == goods_received_ID.
+        // Finalised GR     -> no such invoice; the real invoice lives under the transact id,
+        //                     linked via legacy_goods_received_id.
+        let parent_invoice = InvoiceRowRepository::new(connection)
+            .find_one_by_id(&data.goods_received_ID)?;
 
         // Finalised GR line: find the invoice_line that was spawned from this GR line
         // via the `legacy_goods_received_line_id` column the invoice_line translator
         // populated from `trans_line.goods_received_lines_ID`, and stamp the PO line link.
-        if is_finalised(&gr_status.status) {
+        if parent_invoice.is_none() {
             let po_line_id = match &data.order_line_ID {
                 Some(id) => id.clone(),
                 None => {

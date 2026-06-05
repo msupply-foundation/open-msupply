@@ -49,13 +49,21 @@ fn gr_line_non_finalised_pull_record() -> TestSyncIncomingRecord {
             ..Default::default()
         },
     );
-    // Need parent GR in sync_buffer (non-finalized, status "nw")
+    // Parent invoice must exist (id == goods_received_ID) so the translator routes
+    // through the non-finalised branch — this is the invoice the GR translator creates
+    // for a non-finalised GR.
     record.extra_data = Some(MockData {
-        sync_buffer_rows: vec![SyncBufferRow {
-            record_id: "gr_non_finalised_test".to_string(),
-            table_name: "Goods_received".to_string(),
-            data: SyncRecordData(serde_json::json!({"status": "nw"})),
-            action: SyncAction::Upsert,
+        invoices: vec![InvoiceRow {
+            id: "gr_non_finalised_test".to_string(),
+            name_id: "name_a".to_string(),
+            store_id: "store_a".to_string(),
+            invoice_number: 100,
+            r#type: InvoiceType::InboundShipment,
+            status: InvoiceStatus::New,
+            created_datetime: chrono::NaiveDate::from_ymd_opt(2024, 3, 10)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
             ..Default::default()
         }],
         ..Default::default()
@@ -121,18 +129,12 @@ fn gr_line_finalised_pull_record() -> TestSyncIncomingRecord {
 
     let mut record =
         TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, GR_LINE_FINALISED, expected_line);
+    // No invoice exists with id == goods_received_ID ("gr_finalised_test"); existing_invoice
+    // uses a different id ("gr_existing_si"). The absence of that invoice routes the translator
+    // through the finalised branch, which finds the spawned line via legacy_goods_received_line_id.
     record.extra_data = Some(MockData {
         invoices: vec![existing_invoice],
         invoice_lines: vec![existing_line],
-        // Parent GR must be in sync_buffer with status "fn" so the translator
-        // routes through the finalised branch.
-        sync_buffer_rows: vec![SyncBufferRow {
-            record_id: "gr_finalised_test".to_string(),
-            table_name: "Goods_received".to_string(),
-            data: SyncRecordData(serde_json::json!({"status": "fn"})),
-            action: SyncAction::Upsert,
-            ..Default::default()
-        }],
         ..Default::default()
     });
     record
