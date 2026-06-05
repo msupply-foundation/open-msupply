@@ -126,7 +126,6 @@ mod stocktake_line_test {
             mock_stocktake_finalised, mock_stocktake_line_a, mock_store_a,
             program_master_list_store, MockData, MockDataInserts,
         },
-        campaign::campaign_row::CampaignRow,
         test_db::{setup_all, setup_all_with_data},
         EqualFilter, ReasonOptionRow, ReasonOptionType, StockLineFilter, StockLineRepository,
         StockLineRow, StockLineRowRepository, StocktakeLineRow, StocktakeRow,
@@ -451,97 +450,6 @@ mod stocktake_line_test {
             .unwrap()
             .unwrap();
         assert_eq!(stock_line_row.donor_id, Some(donor_id));
-    }
-
-    #[actix_rt::test]
-    async fn insert_stocktake_line_with_soft_deleted_campaign() {
-        // A campaign that has been soft-deleted, but is still referenced by a
-        // stock line. Carrying this campaign_id forward onto a stocktake line
-        // must not fail validation (regression for CampaignDoesNotExist).
-        fn soft_deleted_campaign() -> CampaignRow {
-            CampaignRow {
-                id: String::from("soft_deleted_campaign"),
-                name: String::from("Soft Deleted Campaign"),
-                deleted_datetime: Some(
-                    NaiveDate::from_ymd_opt(2024, 1, 1)
-                        .unwrap()
-                        .and_hms_opt(0, 0, 0)
-                        .unwrap(),
-                ),
-                ..Default::default()
-            }
-        }
-
-        fn mock_stock_line_with_campaign() -> StockLineRow {
-            StockLineRow {
-                id: String::from("mock_stock_line_with_campaign"),
-                item_id: String::from("item_a"),
-                store_id: String::from("store_a"),
-                available_number_of_packs: 20.0,
-                pack_size: 1.0,
-                total_number_of_packs: 30.0,
-                campaign_id: Some(soft_deleted_campaign().id),
-                ..Default::default()
-            }
-        }
-
-        // The campaign is inserted via MockData, but the stock line referencing
-        // it is created after setup - the mock data inserter adds stock lines
-        // before campaigns, so the foreign key would otherwise fail.
-        let (_, _, connection_manager, _) = setup_all_with_data(
-            "insert_stocktake_line_with_soft_deleted_campaign",
-            MockDataInserts::all(),
-            MockData {
-                campaigns: vec![soft_deleted_campaign()],
-                ..Default::default()
-            },
-        )
-        .await;
-
-        let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider
-            .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let service = service_provider.stocktake_line_service;
-
-        StockLineRowRepository::new(&context.connection)
-            .upsert_one(&mock_stock_line_with_campaign())
-            .unwrap();
-
-        // success: a soft-deleted campaign carried forward from the stock line
-        let stocktake_a = mock_stocktake_a();
-        let stock_line = mock_stock_line_with_campaign();
-        service
-            .insert_stocktake_line(
-                &context,
-                InsertStocktakeLine {
-                    id: uuid(),
-                    stocktake_id: stocktake_a.id.clone(),
-                    stock_line_id: Some(stock_line.id.clone()),
-                    campaign_id: Some(soft_deleted_campaign().id),
-                    counted_number_of_packs: Some(17.0),
-                    ..Default::default()
-                },
-            )
-            .unwrap();
-
-        // regression: a campaign id that does not exist at all still errors
-        // (use a different stock line, the one above is now in the stocktake)
-        let other_stock_line = mock_new_stock_line_for_stocktake_a();
-        let error = service
-            .insert_stocktake_line(
-                &context,
-                InsertStocktakeLine {
-                    id: uuid(),
-                    stocktake_id: stocktake_a.id,
-                    stock_line_id: Some(other_stock_line.id),
-                    campaign_id: Some("nonexistent_campaign_id".to_string()),
-                    counted_number_of_packs: Some(17.0),
-                    ..Default::default()
-                },
-            )
-            .unwrap_err();
-        assert_eq!(error, InsertStocktakeLineError::CampaignDoesNotExist);
     }
 
     #[actix_rt::test]

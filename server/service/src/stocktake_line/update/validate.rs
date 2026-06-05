@@ -1,5 +1,5 @@
 use crate::{
-    campaign::check_campaign_exists_including_deleted,
+    campaign::check_campaign_exists,
     check_location_exists, check_location_type_is_valid, check_vvm_status_exists,
     common::{check_program_exists, check_stock_line_exists, CommonStockLineError},
     stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
@@ -156,7 +156,7 @@ pub fn validate(
         value: Some(ref campaign_id),
     }) = &input.campaign_id
     {
-        if !check_campaign_exists_including_deleted(connection, campaign_id)? {
+        if !check_campaign_exists(connection, campaign_id)? {
             return Err(CampaignDoesNotExist);
         }
     }
