@@ -37,8 +37,14 @@ import {
 // once the user is past the login screen.
 // import { ReactQueryDevtools } from 'react-query/devtools';
 import { AppRoute, Environment } from '@openmsupply-client/config';
-import { Initialise, Login, Viewport } from './components';
+import { Login, Viewport } from './components';
 import { MigrationInfoProvider } from './components/Migration';
+// Lazy: /initialise, /discovery, /android are rarely-visited alternate
+// entry routes that pull in system/Sync API + Initialise wizard code.
+// Defer until those specific routes are visited.
+const Initialise = React.lazy(() =>
+  import('./components').then(m => ({ default: m.Initialise }))
+);
 // Lazy: `Site` is the authenticated app shell — it sync-imports every
 // router (Distribution, Dispensary, Inventory, Manage, Programs, …),
 // AppDrawer, Footer, Help, MobileNavBar, SyncModalProvider, and so on.
@@ -48,8 +54,12 @@ const Site = React.lazy(() =>
   import('./Site').then(m => ({ default: m.Site }))
 );
 import { ErrorAlert } from './components/ErrorAlert';
-import { Discovery } from './components/Discovery';
-import { Android } from './components/Android';
+const Discovery = React.lazy(() =>
+  import('./components/Discovery').then(m => ({ default: m.Discovery }))
+);
+const Android = React.lazy(() =>
+  import('./components/Android').then(m => ({ default: m.Android }))
+);
 import { BackButtonHandler } from './BackButtonHandler';
 import { useInitPlugins } from './useInitPlugins';
 import { ScreenOrientation } from '@capacitor/screen-orientation';
