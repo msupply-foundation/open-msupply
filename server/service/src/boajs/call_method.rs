@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use std::{path::Path, rc::Rc};
 
 use boa_engine::{
@@ -12,16 +13,27 @@ use crate::boajs::utils::NullError;
 
 use super::methods;
 
+// NB: BoaJsError must stay `Send + Sync` so it can cross the `spawn_blocking` boundary in
+// `call_method_async` (and so callers like `PluginError` are `Send`). boa's `JsError` is `!Send`
+// (it holds `Gc`/`Rc`), so we capture it as a formatted string rather than storing it directly.
 #[derive(Error, Debug)]
 pub enum BoaJsError {
-    #[error(transparent)]
-    JsError(#[from] JsError),
+    #[error("Javascript error: {0}")]
+    JsError(String),
     #[error("Failed to load JS module")]
     LoadingModule,
     #[error("Failed to locate export {0}")]
     ExportMissing(String),
     #[error(transparent)]
     SerdeError(#[from] serde_json::Error),
+    #[error("Plugin task failed to join: {0}")]
+    TaskJoin(String),
+}
+
+impl From<JsError> for BoaJsError {
+    fn from(error: JsError) -> Self {
+        BoaJsError::JsError(error.to_string())
+    }
 }
 
 impl PartialEq for BoaJsError {
@@ -67,6 +79,7 @@ where
     methods::use_repository::bind_method(context)?;
     methods::use_graphql::bind_method(context)?;
     methods::get_active_stores_on_site::bind_method(context)?;
+    methods::fetch::bind_method(context)?;
 
     let callable = find_callable_in_exports(context, module, export_location)?;
 
@@ -78,6 +91,29 @@ where
     let output = option_output.ok_or(JsError::from(NullError))?;
 
     Ok(serde_json::from_value(output)?)
+}
+
+/// Async wrapper around [`call_method`]. boajs is fully synchronous (and a plugin may make
+/// blocking http calls via `fetch`/`use_graphql`), so the interpreter is run on the blocking
+/// pool to keep it off the async runtime. See issue #11949.
+///
+/// Takes owned arguments (rather than borrows) so they can move onto the blocking thread. The
+/// bundle is an `Arc` so it can be shared in cheaply without copying the plugin bytes.
+pub(crate) async fn call_method_async<I, O>(
+    input: I,
+    export_location: Vec<String>,
+    bundle: Arc<Vec<u8>>,
+) -> Result<O, BoaJsError>
+where
+    I: Serialize + Send + 'static,
+    O: DeserializeOwned + Send + 'static,
+{
+    tokio::task::spawn_blocking(move || {
+        let export_location: Vec<&str> = export_location.iter().map(String::as_str).collect();
+        call_method(input, export_location, &bundle)
+    })
+    .await
+    .map_err(|join_error| BoaJsError::TaskJoin(join_error.to_string()))?
 }
 
 fn find_callable_in_exports(

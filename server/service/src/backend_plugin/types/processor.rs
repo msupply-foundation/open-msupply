@@ -1,5 +1,7 @@
+use std::sync::Arc;
+
 use crate::backend_plugin::{plugin_provider::PluginInstance, *};
-use plugin_provider::{call_plugin, PluginResult};
+use plugin_provider::{call_plugin, call_plugin_async, PluginResult};
 use repository::{ChangelogFilter, ChangelogRow, PluginType};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -34,4 +36,9 @@ impl self::Trait for PluginInstance {
     fn call(&self, input: Input) -> PluginResult<Output> {
         call_plugin(input, plugin_type(), self)
     }
+}
+
+/// Async variant of [`Trait::call`], runs the plugin on the blocking pool. See issue #11949.
+pub async fn call_async(plugin: Arc<PluginInstance>, input: Input) -> PluginResult<Output> {
+    call_plugin_async(input, plugin_type(), plugin).await
 }

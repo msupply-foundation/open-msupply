@@ -38,4 +38,7 @@ declare global {
     _: PluginTypes['use_graphql']['input']
   ) => PluginTypes['use_graphql']['output'];
   var get_active_stores_on_site: () => PluginTypes['get_active_stores_on_site']['output'];
+  // Synchronous http request, similar to browser `fetch` but blocking (boajs has no event loop).
+  // Body is returned as text, use `JSON.parse(response.body)` for json responses.
+  var fetch: (_: PluginTypes['fetch']['input']) => PluginTypes['fetch']['output'];
 }

@@ -3,7 +3,6 @@
 export type RequisitionLineRow = {
   id: string;
   requisition_id: string;
-  item_link_id: string;
   item_name: string;
   requested_quantity: number;
   suggested_quantity: number;
@@ -25,4 +24,8 @@ export type RequisitionLineRow = {
   expiring_units: number;
   days_out_of_stock: number;
   option_id: string | null;
+  forecast_total_units: number | null;
+  forecast_total_doses: number | null;
+  vaccine_courses: string | null;
+  item_id: string;
 };
