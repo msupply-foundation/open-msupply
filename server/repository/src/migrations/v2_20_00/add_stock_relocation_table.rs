@@ -32,6 +32,7 @@ impl MigrationFragment for Migrate {
                     from_number_of_packs {DOUBLE} NOT NULL DEFAULT 0,
                     to_stock_line_id TEXT REFERENCES stock_line(id),
                     to_location_id TEXT REFERENCES location(id),
+                    to_pack_size {DOUBLE},
                     status {status_type} NOT NULL,
                     store_id TEXT NOT NULL REFERENCES store(id),
                     user_id TEXT NOT NULL
