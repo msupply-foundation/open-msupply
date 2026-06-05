@@ -12,7 +12,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                CREATE TYPE stock_relocation_status AS ENUM ('SUGGESTED', 'FINALISED');
+                CREATE TYPE stock_relocation_status AS ENUM ('NEW', 'FINALISED');
                 "#
             )?;
             "stock_relocation_status"
