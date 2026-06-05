@@ -20,7 +20,7 @@ pub struct StockRelocationConnector {
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "repository::db_diesel::stock_relocation_row::StockRelocationStatus")]
 pub enum StockRelocationNodeStatus {
-    Suggested,
+    New,
     Finalised,
 }
 
