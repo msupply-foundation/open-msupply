@@ -1,9 +1,8 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use async_graphql::dataloader::Loader;
 use repository::{
-    ItemStoreJoinRow, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait, RepositoryError,
-    StorageConnectionManager,
+    ItemStoreJoinRow, ItemStoreJoinRowRepository, RepositoryError, StorageConnectionManager,
 };
 
 pub struct ItemStoreJoinLoader {
@@ -34,16 +33,33 @@ impl Loader<ItemStoreJoinLoaderInput> for ItemStoreJoinLoader {
     ) -> Result<HashMap<ItemStoreJoinLoaderInput, Self::Value>, Self::Error> {
         let connection = self.connection_manager.connection()?;
 
-        let mut result_map = HashMap::new();
+        // De-dupe before building the query - the dropdown passes the same
+        // store_id for every item, so this collapses the store_id IN (...) list
+        // (and any repeated item_ids) down to the distinct values.
+        let item_ids: Vec<String> = loader_inputs
+            .iter()
+            .map(|input| input.item_id.clone())
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .collect();
+        let store_ids: Vec<String> = loader_inputs
+            .iter()
+            .map(|input| input.store_id.clone())
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .collect();
 
-        for loader_input in loader_inputs {
-            let store_id = &loader_input.store_id;
-            let item_id = &loader_input.item_id;
+        // Single batched query rather than one lookup per item - the item
+        // search/dropdown requests this field for up to 100 items at once.
+        let rows = ItemStoreJoinRowRepository::new(&connection)
+            .find_many_by_item_and_store_ids(&item_ids, &store_ids)?;
 
-            let result = ItemStoreJoinRowRepository::new(&connection)
-                .find_one_by_item_and_store_id(item_id, store_id)?;
-
-            result_map.insert(loader_input.clone(), result.into_iter().collect());
+        let mut result_map: HashMap<ItemStoreJoinLoaderInput, Self::Value> = HashMap::new();
+        for row in rows {
+            result_map
+                .entry(ItemStoreJoinLoaderInput::new(&row.store_id, &row.item_link_id))
+                .or_default()
+                .push(row);
         }
 
         Ok(result_map)
