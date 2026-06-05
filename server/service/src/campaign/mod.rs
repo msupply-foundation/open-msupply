@@ -11,7 +11,7 @@ use repository::{
     PaginationOption,
 };
 pub use upsert::{upsert_campaign, UpsertCampaign, UpsertCampaignError};
-pub use validate::{check_campaign_exists, check_campaign_exists_including_deleted};
+pub use validate::check_campaign_exists;
 
 pub trait CampaignServiceTrait: Send + Sync {
     fn get_campaigns(
