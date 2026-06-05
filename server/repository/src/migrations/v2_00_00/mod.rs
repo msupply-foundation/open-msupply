@@ -81,12 +81,12 @@ async fn migration_2_00_00() {
 
     insert_merge_test_data(&connection);
     let changelog_repo = ChangelogRepository::new(&connection);
-    let cursor_before = changelog_repo.latest_cursor().unwrap();
+    let cursor_before = changelog_repo.absolute_latest_cursor().unwrap();
 
     migrate(&connection, Some(version.clone())).unwrap();
     assert_eq!(get_database_version(&connection), version);
 
-    let cursor_after = changelog_repo.latest_cursor().unwrap();
+    let cursor_after = changelog_repo.absolute_latest_cursor().unwrap();
 
     assert_eq!(cursor_before, cursor_after);
 }
