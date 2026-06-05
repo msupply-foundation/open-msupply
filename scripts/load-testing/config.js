@@ -121,10 +121,11 @@ export const config = {
   workflowThinkMinMs: envInt('WORKFLOW_THINK_MIN_MS', file.workflowThinkMinMs != null ? file.workflowThinkMinMs : 5000),
   workflowThinkMaxMs: envInt('WORKFLOW_THINK_MAX_MS', file.workflowThinkMaxMs != null ? file.workflowThinkMaxMs : 15000),
   poolSize: envInt('POOL_SIZE', file.poolSize != null ? file.poolSize : 200),
-  // Ops a VU serves on one login before re-authenticating as another random user. The manual load
-  // test ran ~1 login per 70 queries (~1.4% of traffic); the per-session point is jittered ±50%
-  // around this. 0 disables re-login (one random login per VU for its whole life). (env: RELOGIN_EVERY_OPS)
-  reloginEveryOps: envInt('RELOGIN_EVERY_OPS', file.reloginEveryOps != null ? file.reloginEveryOps : 70),
+  // Ops a VU serves on one login before re-authenticating as another random user. The real 20-user
+  // capture ran ~1 login per ~175 queries (authToken was 0.57% of traffic); the per-session point is
+  // jittered ±50% around this. 0 disables re-login (one random login per VU for its whole life).
+  // (env: RELOGIN_EVERY_OPS)
+  reloginEveryOps: envInt('RELOGIN_EVERY_OPS', file.reloginEveryOps != null ? file.reloginEveryOps : 200),
   outputDir: pick('OUTPUT_DIR', 'outputDir', './output'),
   // Apply strict per-op latency thresholds that gate pass/fail (env: STRICT_THRESHOLDS).
   strictThresholds: envBool('STRICT_THRESHOLDS', file.strictThresholds != null ? file.strictThresholds : false),

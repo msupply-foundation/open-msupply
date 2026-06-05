@@ -56,6 +56,14 @@ const OPERATIONS = [
   'internalOrderCounts',
   'inboundCounts',
   'outboundCounts',
+  // --- app-boot / per-navigation bundle (real clients emit these on login + store init; ~10% of the
+  //     real 20-user capture, and entirely absent before). Several hit resolvers no other op touches. ---
+  'frontendPluginMetadata',
+  'supplierProgramSettings',
+  'displaySettings',
+  'permissions',
+  'activeVvmStatuses',
+  'nameProperties',
   // --- auth ---
   'authToken',
   // --- browse ---
