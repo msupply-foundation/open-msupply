@@ -1,4 +1,4 @@
-import { Grid, html } from 'gridjs';
+import { Grid, html, Config } from 'gridjs';
 import 'gridjs/dist/theme/mermaid.css';
 import { el } from './dom';
 import './styles/table.css';
@@ -44,9 +44,7 @@ export class VanillaTable<T> {
     this.options = options;
     this.columns = options.columns;
     this.rows = options.rows;
-    this.grid = new Grid(
-      this.buildConfig() as unknown as ConstructorParameters<typeof Grid>[0]
-    );
+    this.grid = new Grid(this.buildConfig() as unknown as Partial<Config>);
     this.grid.on('ready', () => this.wireHeaders());
     this.grid.on(
       'rowClick',
@@ -65,9 +63,7 @@ export class VanillaTable<T> {
     this.captureWidths();
     this.rows = rows;
     this.grid
-      .updateConfig(
-        this.buildConfig() as unknown as ConstructorParameters<typeof Grid>[0]
-      )
+      .updateConfig(this.buildConfig() as unknown as Partial<Config>)
       .forceRender();
   }
 
