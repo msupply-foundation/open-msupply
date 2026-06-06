@@ -16,6 +16,7 @@
     "@openmsupply-client/common": "^0.0.1",
     "@openmsupply-client/config": "^0.0.0",
     "@openmsupply-client/system": "^0.0.0",
+    "gridjs": "^6.2.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   }

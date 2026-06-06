@@ -1,0 +1,81 @@
+.oms-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1300;
+}
+
+.oms-modal-dialog {
+  background: #fff;
+  border-radius: 12px;
+  width: 480px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 64px);
+  overflow: auto;
+  padding: 20px 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  font-family: inherit;
+  color: #28293d;
+}
+
+.oms-modal-title {
+  margin: 0 0 16px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.oms-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.oms-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.oms-field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #555770;
+}
+
+.oms-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.oms-modal-error {
+  color: #e63535;
+  font-size: 0.85rem;
+  min-height: 1em;
+}
+
+.oms-suppliers {
+  max-height: 240px;
+  overflow: auto;
+  border: 1px solid #e4e4eb;
+  border-radius: 8px;
+}
+
+.oms-supplier-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.oms-supplier-option:hover,
+.oms-supplier-option.is-selected {
+  background: #E8F1FE;
+}
+
+.oms-supplier-option:last-child {
+  border-bottom: none;
+}

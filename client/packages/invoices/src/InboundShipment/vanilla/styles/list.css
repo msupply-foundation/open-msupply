@@ -1,0 +1,135 @@
+/* Layout + toolbar for the vanilla inbound list view. */
+
+.oms-inbound-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: inherit;
+  color: var(--oms-text);
+}
+
+.oms-inbound-list[dir='rtl'] {
+  text-align: start;
+}
+
+.oms-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+}
+
+.oms-toolbar .oms-spacer {
+  flex: 1 1 auto;
+}
+
+.oms-input,
+.oms-select {
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--oms-border);
+  border-radius: var(--oms-radius);
+  background: #fff;
+  font: inherit;
+  color: var(--oms-text);
+}
+
+.oms-input:focus,
+.oms-select:focus {
+  outline: 2px solid var(--oms-secondary);
+  outline-offset: -1px;
+}
+
+.oms-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--oms-border);
+  border-radius: var(--oms-radius);
+  background: #fff;
+  font: inherit;
+  font-weight: 600;
+  color: var(--oms-text);
+  cursor: pointer;
+}
+
+.oms-btn:hover {
+  background: var(--oms-row-hover);
+}
+
+.oms-btn--primary {
+  background: var(--oms-primary);
+  border-color: var(--oms-primary);
+  color: #fff;
+}
+
+.oms-btn--primary:hover {
+  filter: brightness(0.95);
+  background: var(--oms-primary);
+}
+
+.oms-btn--danger {
+  background: #e63535;
+  border-color: #e63535;
+  color: #fff;
+}
+
+.oms-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.oms-table-area {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 0 16px;
+  position: relative;
+}
+
+.oms-table-area.is-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.oms-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--oms-divider);
+  color: var(--oms-text-muted);
+}
+
+.oms-empty,
+.oms-error {
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--oms-text-muted);
+}
+
+.oms-error {
+  color: #e63535;
+}
+
+.oms-checkbox-cell {
+  display: inline-flex;
+  align-items: center;
+}
+
+.oms-supplier {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.oms-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}

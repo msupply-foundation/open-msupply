@@ -12,10 +12,8 @@ import {
   SupplierReturnListView,
   CustomerReturnListView,
 } from './Returns';
-import {
-  InboundListView,
-  DetailView as InboundShipmentDetailView,
-} from './InboundShipment';
+import { InboundListViewIsland } from './InboundShipment/ListView/InboundListViewIsland';
+import { InboundDetailViewIsland } from './InboundShipment/DetailView/InboundDetailViewIsland';
 import { PrescriptionListView, PrescriptionDetailView } from './Prescriptions';
 import { CustomerReturnDetailView } from './Returns/CustomerDetailView';
 import { PrescriptionLineEditView } from './Prescriptions/LineEditView';
@@ -77,10 +75,10 @@ const InvoiceService: FC = () => {
         element={<OutboundShipmentListView />}
       />
       <Route path={outboundShipmentRoute} element={<DetailView />} />
-      <Route path={inboundShipmentsRoute} element={<InboundListView />} />
+      <Route path={inboundShipmentsRoute} element={<InboundListViewIsland />} />
       <Route
         path={inboundShipmentRoute}
-        element={<InboundShipmentDetailView />}
+        element={<InboundDetailViewIsland />}
       />
       <Route
         path={RouteBuilder.create(AppRoute.InboundShipmentExternal).build()}
@@ -95,7 +93,7 @@ const InvoiceService: FC = () => {
       />
       <Route
         path={inboundShipmentExternalRoute}
-        element={<InboundShipmentDetailView />}
+        element={<InboundDetailViewIsland />}
       />
       <Route path={prescriptionsRoute} element={<PrescriptionListView />} />
       <Route path={prescriptionRoute} element={<PrescriptionDetailView />} />

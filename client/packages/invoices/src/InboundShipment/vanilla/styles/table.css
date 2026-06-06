@@ -1,0 +1,132 @@
+/* Grid.js theme overrides + responsive card transform for the inbound island.
+   Scoped under the island roots so nothing leaks into the React shell. */
+
+.oms-inbound-list,
+.oms-inbound-detail {
+  --oms-primary: #e95c30;
+  --oms-secondary: #3e7bfa;
+  --oms-border: #e4e4eb;
+  --oms-divider: #eaeaea;
+  --oms-row-hover: #fafafc;
+  --oms-text: #28293d;
+  --oms-text-muted: #8f90a6;
+  --oms-radius: 8px;
+  --oms-header-bg: #fafafc;
+}
+
+.oms-inbound-list .gridjs-wrapper,
+.oms-inbound-detail .gridjs-wrapper {
+  box-shadow: none;
+  border: 1px solid var(--oms-border);
+  border-radius: var(--oms-radius);
+}
+
+.oms-inbound-list table.gridjs-table,
+.oms-inbound-detail table.gridjs-table {
+  font-family: inherit;
+}
+
+.oms-inbound-list th.gridjs-th,
+.oms-inbound-detail th.gridjs-th {
+  background-color: var(--oms-header-bg);
+  color: var(--oms-text-muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--oms-border);
+  padding: 10px 14px;
+  user-select: none;
+}
+
+.oms-inbound-list th.oms-sortable,
+.oms-inbound-detail th.oms-sortable {
+  cursor: pointer;
+}
+
+.oms-inbound-list th.oms-sortable:hover,
+.oms-inbound-detail th.oms-sortable:hover {
+  color: var(--oms-text);
+}
+
+.oms-sort-caret {
+  color: var(--oms-primary);
+  font-size: 0.7em;
+}
+
+.oms-inbound-list td.gridjs-td,
+.oms-inbound-detail td.gridjs-td {
+  padding: 10px 14px;
+  color: var(--oms-text);
+  border-bottom: 1px solid var(--oms-divider);
+}
+
+.oms-inbound-list td.oms-align-right,
+.oms-inbound-detail td.oms-align-right {
+  text-align: end;
+}
+
+.oms-inbound-list .gridjs-tr:hover td,
+.oms-inbound-detail .gridjs-tr:hover td {
+  background-color: var(--oms-row-hover);
+  cursor: pointer;
+}
+
+/* Desktop: nothing else needed. Mobile: rows become cards. */
+@media (max-width: 600px) {
+  .oms-inbound-list .gridjs-wrapper,
+  .oms-inbound-detail .gridjs-wrapper {
+    border: none;
+  }
+
+  .oms-inbound-list table.gridjs-table,
+  .oms-inbound-detail table.gridjs-table,
+  .oms-inbound-list .gridjs-tbody,
+  .oms-inbound-detail .gridjs-tbody,
+  .oms-inbound-list .gridjs-tr,
+  .oms-inbound-detail .gridjs-tr,
+  .oms-inbound-list td.gridjs-td,
+  .oms-inbound-detail td.gridjs-td {
+    display: block;
+    width: auto !important;
+  }
+
+  .oms-inbound-list .gridjs-thead,
+  .oms-inbound-detail .gridjs-thead {
+    display: none;
+  }
+
+  .oms-inbound-list .gridjs-tr,
+  .oms-inbound-detail .gridjs-tr {
+    border: 1px solid var(--oms-border);
+    border-radius: var(--oms-radius);
+    margin: 8px;
+    padding: 6px 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  .oms-inbound-list td.gridjs-td,
+  .oms-inbound-detail td.gridjs-td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--oms-divider);
+    text-align: end;
+  }
+
+  .oms-inbound-list .gridjs-tr td.gridjs-td:last-child,
+  .oms-inbound-detail .gridjs-tr td.gridjs-td:last-child {
+    border-bottom: none;
+  }
+
+  .oms-inbound-list td.gridjs-td::before,
+  .oms-inbound-detail td.gridjs-td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--oms-text-muted);
+    text-align: start;
+  }
+
+  /* Columns flagged hide-on-mobile are dropped from the cards entirely. */
+  .oms-inbound-list td.oms-hide-xs,
+  .oms-inbound-detail td.oms-hide-xs {
+    display: none;
+  }
+}
