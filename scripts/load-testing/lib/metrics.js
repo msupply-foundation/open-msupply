@@ -13,3 +13,8 @@ export const gqlErrors = new Rate('gql_errors');
 
 // Raw count of GraphQL failures, tagged with the failure `kind` for breakdown.
 export const gqlErrorCount = new Counter('gql_error_count');
+
+// Login (authToken) response time. Logins go through auth.js's raw http.post (NOT gqlRequest), so
+// they never land in gql_op_duration — this surfaces the login latency tail on its own (the startup
+// login storm shows up here, not in the gql op stats). Recorded on every attempt, success or fail.
+export const authDuration = new Trend('auth_duration', true);

@@ -1,6 +1,7 @@
 // Real JWT login via the client's authToken operation. Run once per user in setup().
 import http from 'k6/http';
 import { operations } from '../operations.generated.js';
+import { authDuration } from '../lib/metrics.js';
 
 // Returns the JWT token string, or null on any failure (bad credentials, no site access, etc.).
 export function authenticate(graphqlUrl, username, password) {
@@ -15,6 +16,7 @@ export function authenticate(graphqlUrl, username, password) {
     headers: { 'Content-Type': 'application/json' },
     tags: { op: 'authToken', category: 'auth', name: 'authToken' },
   });
+  authDuration.add(res.timings.duration); // login latency tail (separate from gql_op_duration)
 
   if (res.status !== 200) {
     // Non-200 is transport/gateway level (not a GraphQL AuthTokenError). 502/504 typically means the

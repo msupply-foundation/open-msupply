@@ -1,6 +1,7 @@
 // Central configuration. Options come from a config file (loadtest.config.json by default) so they're
 // discoverable in one place; any value can still be overridden by an env var (handy for CI / quick runs).
 // Read in init context, so __ENV and k6's open() are available.
+import { operations } from './operations.generated.js'; // to emit a per-op latency slice for each op
 
 function env(name, def) {
   return __ENV[name] !== undefined && __ENV[name] !== '' ? __ENV[name] : def;
@@ -239,6 +240,23 @@ function buildThresholds() {
     'gql_errors{category:sync}': ['rate<=1'],
     'gql_op_duration{category:sync}': ['p(99)>=0'],
   };
+
+  // Force per-category and per-op latency slices into the summary on EVERY run. handleSummary only
+  // receives tagged submetrics that carry a threshold (see the sync note above); without these, the
+  // browse/polling/workflow tails and every per-op p99 stay folded into the base gql_op_duration and
+  // you can't see which op owns a tail. `p(99)>=0` is always true → emit-only, never gates. (sync's
+  // category slice is already declared above.) The strict block below may overwrite some of these with
+  // real gates — that's fine, a gating threshold emits the slice too.
+  for (const cat of ['browse', 'polling', 'workflow']) {
+    t[`gql_op_duration{category:${cat}}`] = ['p(99)>=0'];
+  }
+  // Per-op slices. Skip authToken (recorded separately as auth_duration — it doesn't go through
+  // gqlRequest) and the syncInfoUpdated subscription (websocket, also not a gql_op_duration op).
+  for (const name of Object.keys(operations)) {
+    if (name === 'authToken' || name === 'syncInfoUpdated') continue;
+    t[`gql_op_duration{op:${name}}`] = ['p(99)>=0'];
+  }
+
   if (config.strictThresholds) {
     t['gql_op_duration{category:polling}'] = ['p(95)<500'];
     t['gql_op_duration{category:browse}'] = ['p(99)<2000'];

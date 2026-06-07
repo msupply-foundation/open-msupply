@@ -12,28 +12,29 @@ const think = () => sleepThink(config.thinkMinMs, config.thinkMaxMs);
 
 // Open a list, pause as a user scans it, then open one record's detail. Falls back to the next domain
 // when a pool is empty so the scenario still does useful work on a sparse dataset.
-function drillIntoDetail(ctx, data) {
+function drillIntoDetail(ctx) {
+  const pools = ctx.pools;
   // Rotate the domain per iteration (offset by VU so different VUs hit different details concurrently).
   const order = [0, 1, 2];
   const start = (__VU + __ITER) % 3;
   for (let i = 0; i < order.length; i++) {
     const kind = order[(start + i) % 3];
-    if (kind === 0 && data.invoiceIds.length) {
+    if (kind === 0 && pools.invoiceIds.length) {
       browse.invoices(ctx);
       think();
-      browse.invoice(ctx, pick(data.invoiceIds, __VU, __ITER));
+      browse.invoice(ctx, pick(pools.invoiceIds, __VU, __ITER));
       return;
     }
-    if (kind === 1 && data.requestIds.length) {
+    if (kind === 1 && pools.requestIds.length) {
       browse.requests(ctx);
       think();
-      browse.requestById(ctx, pick(data.requestIds, __VU, __ITER));
+      browse.requestById(ctx, pick(pools.requestIds, __VU, __ITER));
       return;
     }
-    if (kind === 2 && data.stocktakeIds.length) {
+    if (kind === 2 && pools.stocktakeIds.length) {
       browse.stocktakes(ctx);
       think();
-      browse.stocktake(ctx, pick(data.stocktakeIds, __VU, __ITER));
+      browse.stocktake(ctx, pick(pools.stocktakeIds, __VU, __ITER));
       return;
     }
   }
@@ -47,6 +48,6 @@ export function heavyReader(data) {
   think();
   browse.stockLines(ctx);
   think();
-  drillIntoDetail(ctx, data);
+  drillIntoDetail(ctx);
   think();
 }

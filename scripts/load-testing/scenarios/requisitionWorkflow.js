@@ -13,10 +13,10 @@ const think = () => sleepThink(config.workflowThinkMinMs, config.workflowThinkMa
 export function requisitionWorkflow(data) {
   const ctx = makeCtx(data);
   // Request requisitions order from another store (not just any supplier).
-  const otherPartyId = pick(data.requisitionPartyIds, __VU, __ITER);
+  const otherPartyId = pick(ctx.pools.requisitionPartyIds, __VU, __ITER);
 
   // Graceful skip when the dataset lacks prerequisites.
-  if (!otherPartyId || data.itemIds.length === 0) {
+  if (!otherPartyId || ctx.pools.itemIds.length === 0) {
     think();
     return;
   }
@@ -31,7 +31,7 @@ export function requisitionWorkflow(data) {
   think();
 
   // Distinct items (avoids RequisitionLineWithItemIdExists).
-  const items = take(data.itemIds, randInt(3, 10), __VU, __ITER);
+  const items = take(ctx.pools.itemIds, randInt(3, 10), __VU, __ITER);
   const lineIds = [];
   for (const itemId of items) {
     const r = req.insertRequestLine(ctx, { id: uuidv4(), itemId, requisitionId });
