@@ -330,9 +330,13 @@ impl<'a> SyncBufferRepository<'a> {
         Ok(())
     }
 
-    /// Escape hatch: returns the most recent (highest cursor) row matching the record_id,
-    /// across both pending and integrated rows. Used by translators that look up parent records.
-    pub fn find_one_by_record_id(
+    /// Returns the most recent (highest cursor) row matching the record_id, across both
+    /// pending and integrated rows.
+    ///
+    /// SLOW — there is no index on `sync_buffer.record_id`, so this is a full-table scan
+    /// ordered by cursor. Test/diagnostic use only; do not call from translators or any other
+    /// hot path (it was a measurable slow-down on integration).
+    pub fn find_latest_by_record_id_slow_unindexed(
         &self,
         record_id: &str,
     ) -> Result<Option<SyncBufferRow>, RepositoryError> {
@@ -531,25 +535,34 @@ mod test {
             .unwrap();
         assert!(pending.is_empty());
 
-        let r1 = repo.find_one_by_record_id("r1").unwrap().unwrap();
+        let r1 = repo
+            .find_latest_by_record_id_slow_unindexed("r1")
+            .unwrap()
+            .unwrap();
         assert_eq!(r1.integration_result, Some(IntegrationResult::Success));
         assert_eq!(r1.integration_error, None);
         assert!(r1.integration_started_datetime.is_some());
         assert!(r1.integration_datetime.is_some());
 
-        let r2 = repo.find_one_by_record_id("r2").unwrap().unwrap();
+        let r2 = repo
+            .find_latest_by_record_id_slow_unindexed("r2")
+            .unwrap()
+            .unwrap();
         assert_eq!(r2.integration_result, Some(IntegrationResult::Error));
         assert_eq!(r2.integration_error.as_deref(), Some("oh no"));
 
-        let r3 = repo.find_one_by_record_id("r3").unwrap().unwrap();
+        let r3 = repo
+            .find_latest_by_record_id_slow_unindexed("r3")
+            .unwrap()
+            .unwrap();
         assert_eq!(r3.integration_result, Some(IntegrationResult::Ignored));
         assert_eq!(r3.integration_error.as_deref(), Some("not for us"));
     }
 
     #[actix_rt::test]
-    async fn test_sync_buffer_find_one_by_record_id_returns_most_recent() {
+    async fn test_sync_buffer_find_latest_by_record_id_unindexed_returns_most_recent() {
         let (_, connection, _, _) = test_db::setup_all(
-            "test_sync_buffer_find_one_by_record_id_returns_most_recent",
+            "test_sync_buffer_find_latest_by_record_id_unindexed_returns_most_recent",
             MockDataInserts::none(),
         )
         .await;
@@ -572,7 +585,10 @@ mod test {
             .unwrap();
         assert_eq!(pending.len(), 2);
 
-        let latest = repo.find_one_by_record_id("dup").unwrap().unwrap();
+        let latest = repo
+            .find_latest_by_record_id_slow_unindexed("dup")
+            .unwrap()
+            .unwrap();
         assert_eq!(latest.cursor, pending[1].cursor);
     }
 }

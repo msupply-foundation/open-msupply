@@ -59,6 +59,7 @@ define_linked_tables! {
         shipping_method_id -> Nullable<Text>,
         charges_local_currency -> Double,
         charges_foreign_currency -> Double,
+        legacy_goods_received_id -> Nullable<Text>,
     },
     links:{
          name_link_id -> name_id,
@@ -160,6 +161,10 @@ pub struct InvoiceRow {
     pub shipping_method_id: Option<String>,
     pub charges_local_currency: f64,
     pub charges_foreign_currency: f64,
+    /// Legacy `transact.goods_received_ID` carried over from OG so the goods_received
+    /// translator can find the invoice spawned by a finalised GR without scanning
+    /// sync_buffer. Internal only — never synced.
+    pub legacy_goods_received_id: Option<String>,
     // Resolved from name_link - must be last to match view column order
     pub name_id: String,
     pub default_donor_id: Option<String>,
@@ -223,6 +228,17 @@ impl<'a> InvoiceRowRepository<'a> {
         let result = invoice::table
             .filter(invoice::id.eq_any(ids))
             .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    pub fn find_one_by_legacy_goods_received_id(
+        &self,
+        goods_received_id: &str,
+    ) -> Result<Option<InvoiceRow>, RepositoryError> {
+        let result = invoice::table
+            .filter(invoice::legacy_goods_received_id.eq(goods_received_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
         Ok(result)
     }
 
