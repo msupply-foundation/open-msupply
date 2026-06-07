@@ -223,7 +223,7 @@ mod tests {
         sync_buffer_repository.insert_many(&batch).unwrap();
 
         let row = sync_buffer_repository
-            .find_one_by_record_id("itemB")
+            .find_latest_by_record_id_slow_unindexed("itemB")
             .unwrap()
             .unwrap();
         assert_eq!(row.action, SyncActionRepo::Upsert);

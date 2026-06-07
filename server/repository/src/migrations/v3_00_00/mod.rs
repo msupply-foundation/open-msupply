@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_is_standalone_central_pg_enum;
+mod add_legacy_goods_received_link_fields;
 mod add_merge_sync_message_processor_cursor_pg_enum;
 mod add_site_sync_version;
 mod add_sync_log_v7;
@@ -62,6 +63,7 @@ impl Migration for V3_00_00 {
             Box::new(add_merge_sync_message_processor_cursor_pg_enum::Migrate),
             Box::new(create_changelog_indexes::Migrate),
             Box::new(seed_sync_request_user_tables::Migrate),
+            Box::new(add_legacy_goods_received_link_fields::Migrate),
         ]
     }
 }
