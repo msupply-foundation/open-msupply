@@ -1,6 +1,6 @@
 Load the context required to work on Open-mSupply's synchronisation system.
 
-Arguments: $ARGUMENTS (optional — a sub-area to focus on: `v7`, `changelog`, `sync_buffer`, `translations`, `transition`, `styles`. If omitted, load the general overview set.)
+Arguments: $ARGUMENTS (optional — a sub-area to focus on: `v7`, `changelog`, `sync_buffer`, `translations`, `styles`. If omitted, load the general overview set.)
 
 ## What this skill does
 
@@ -89,11 +89,10 @@ The docs reference these by purpose; here is where to find each. Read the file w
 
 If `$ARGUMENTS` specifies a sub-area, prioritise these on top of the general doc set:
 
-- **`v7`** — `syncdoc/content/v7.md` (full); v7 transport code under `server/service/src/sync_v7/`; v7 repository under `server/repository/src/syncv7/`; `batch_query.rs`.
+- **`v7`** — `syncdoc/content/v7.md` (full); `syncdoc/content/transition.md` (how v5/v6/v7 coexist and the v6→v7 migration); v7 transport code under `server/service/src/sync_v7/`; v7 repository under `server/repository/src/syncv7/`; `batch_query.rs`. Also skim the v5/v6 transport entry points listed above so you can see how the three coexist.
 - **`changelog`** — `syncdoc/content/v7.md` (changelog sections), `server/repository/src/db_diesel/changelog/sync_styles.md`; the entire `server/repository/src/db_diesel/changelog/` module; `changelog_partitions.rs`; bench/locking/query-speed docs if perf-related.
 - **`sync_buffer`** — `syncdoc/content/sync_buffer/sync_buffer.md`; `server/repository/src/db_diesel/sync_buffer.rs`; `server/service/src/sync/sync_buffer.rs`; `translation_and_integration.rs`; bench docs if perf-related.
 - **`translations`** — `server/service/src/sync/translations/mod.rs` (trait + defaults); `legacy_row_types.md`; relevant per-table translator files; `server/service/src/sync_v7/translations/`.
-- **`transition`** — `syncdoc/content/transition.md`; the v5/v6/v7 transport entry points listed above so you can see how the three coexist.
 - **`styles`** — `server/repository/src/db_diesel/changelog/sync_styles.md`; `sync_style.rs`; `generate_changelog.rs`; the filter call sites for each transport.
 
 ## Conventions reminder
