@@ -20,6 +20,7 @@ import {
 } from '@openmsupply-client/common';
 import { MultiChoice, getMultiChoiceOptions } from '../Components/MultiChoice';
 import { EditCustomTranslations } from '../Components/CustomTranslations/CustomTranslationsModal';
+import { EditCustomTranslationsV2 } from '../Components/CustomTranslations/CustomTranslationsV2Modal';
 import { EditBackdating } from '../Components/EditBackdating';
 import { EditWarningWhenMissingRecentStocktakeData } from '../Components/EditWarningWhenMissingRecentStocktakeData';
 import { PreferenceLabelRow } from './PreferenceLabelRow';
@@ -201,6 +202,22 @@ export const EditPreference = ({
             <EditCustomTranslations
               value={preference.value}
               update={update}
+              disabled={disabled}
+            />
+          }
+          isLast={isLast}
+        />
+      );
+
+    case PreferenceValueNodeType.CustomTranslationsV2:
+      return (
+        <PreferenceLabelRow
+          label={preferenceLabel}
+          Input={
+            // v2 saves via its own mutation (needs the editing language), so
+            // the generic `update` isn't passed down.
+            <EditCustomTranslationsV2
+              value={preference.value}
               disabled={disabled}
             />
           }
