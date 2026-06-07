@@ -55,6 +55,23 @@ export const mapTranslationsToObject = (
   return asObject;
 };
 
+/**
+ * Flat `key -> value` map of all non-empty custom values. Unlike
+ * {@link mapTranslationsToObject} this keeps entries even when they equal the
+ * current-language default - used for the legacy v1 map, which is global and
+ * shouldn't be pruned against one language's defaults.
+ */
+export const translationsToFlatMap = (
+  translations: Translation[]
+): Record<string, string> =>
+  translations
+    .slice()
+    .sort((a, b) => a.key.localeCompare(b.key))
+    .reduce<Record<string, string>>((acc, tr) => {
+      if (tr.custom !== '') acc[tr.key] = tr.custom;
+      return acc;
+    }, {});
+
 export const findMatchingPluralisationKeys = (
   option: TranslationOption,
   allOptions: TranslationOption[]
@@ -131,8 +148,94 @@ export type CustomTranslationsV2 = Record<
 
 export const DEFAULT_CUSTOM_TRANSLATION_NAMESPACE = 'common';
 
-/** Namespaces available in the editor (e.g. core app vs reports/plugins). */
-export const CUSTOM_TRANSLATION_NAMESPACES = ['common', 'report'] as const;
+/**
+ * Namespaces that always appear in the editor. Plugin namespaces (by
+ * plugin_code) and any namespaces already present in the data are added on top.
+ * Arbitrary namespaces are also supported via JSON upload.
+ */
+export const BASE_CUSTOM_TRANSLATION_NAMESPACES = ['common', 'desktop'] as const;
+
+/**
+ * Reserved pseudo-namespace used in the editor to view/edit the legacy v1 flat
+ * custom translations (which apply to all languages / older sync clients).
+ */
+export const LEGACY_NAMESPACE = 'legacy';
+
+/**
+ * Reserved key under which the legacy v1 flat map is included in JSON
+ * export/import. Language codes never start with `_`, so it can't collide.
+ */
+export const LEGACY_V1_EXPORT_KEY = '_v1';
+
+/** All namespaces present in a v2 structure (across every language). */
+export const collectNamespaces = (nested: CustomTranslationsV2): string[] => {
+  const set = new Set<string>();
+  Object.values(nested).forEach(nsMap =>
+    Object.keys(nsMap).forEach(ns => set.add(ns))
+  );
+  return [...set];
+};
+
+/** Merge two flat key->value maps honouring the import mode. */
+export const mergeFlatMaps = (
+  existing: Record<string, string>,
+  imported: Record<string, string>,
+  mode: ImportMode
+): Record<string, string> => {
+  if (mode === 'replace') return { ...imported };
+  const result = { ...existing };
+  for (const [key, value] of Object.entries(imported)) {
+    if (mode === 'keep-existing' && result[key] !== undefined) continue;
+    result[key] = value;
+  }
+  return result;
+};
+
+/** Build the JSON export object: the v2 structure plus the legacy v1 map. */
+export const buildExportObject = (
+  nested: CustomTranslationsV2,
+  legacyV1: Record<string, string>
+): Record<string, unknown> => {
+  const out: Record<string, unknown> = structuredClone(nested);
+  if (Object.keys(legacyV1).length > 0) {
+    out[LEGACY_V1_EXPORT_KEY] = legacyV1;
+  }
+  return out;
+};
+
+export interface ParsedImport {
+  /** true if the file is the structured (nested v2 and/or `_v1`) format */
+  isStructured: boolean;
+  /** v2 structure (without the reserved `_v1` key) */
+  v2?: CustomTranslationsV2;
+  /** legacy v1 flat map from the reserved `_v1` key */
+  legacyV1?: Record<string, string>;
+}
+
+/**
+ * Split a parsed JSON upload into its v2 (language -> namespace -> key -> value)
+ * part and the reserved legacy `_v1` flat map. Returns `isStructured: false`
+ * for a plain flat (`key -> value`) file so the caller can import it into the
+ * current view.
+ */
+export const splitImportObject = (
+  parsed: Record<string, unknown>
+): ParsedImport => {
+  const { [LEGACY_V1_EXPORT_KEY]: legacyRaw, ...rest } = parsed;
+  const legacyV1 =
+    !!legacyRaw &&
+    typeof legacyRaw === 'object' &&
+    Object.values(legacyRaw as Record<string, unknown>).every(
+      v => typeof v === 'string'
+    )
+      ? (legacyRaw as Record<string, string>)
+      : undefined;
+  const v2 =
+    Object.keys(rest).length > 0 && isNestedTranslations(rest)
+      ? (rest as CustomTranslationsV2)
+      : undefined;
+  return { isStructured: !!legacyV1 || !!v2, v2, legacyV1 };
+};
 
 /**
  * Detect whether parsed JSON is the nested v2 structure

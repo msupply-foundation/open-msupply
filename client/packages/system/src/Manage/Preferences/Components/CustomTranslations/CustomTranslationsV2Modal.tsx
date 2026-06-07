@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   ButtonWithIcon,
@@ -7,31 +7,44 @@ import {
   UploadFile,
   ConfirmationModal,
 } from '@common/components';
-import { Box, InputLabel, Select, Typography } from '@openmsupply-client/common';
+import {
+  Box,
+  InputLabel,
+  Select,
+  Typography,
+  usePreferences,
+} from '@openmsupply-client/common';
 import {
   SaveIcon,
   DownloadIcon,
   DeleteIcon,
   EditIcon,
   UploadIcon,
+  CopyIcon,
 } from '@common/icons';
 import { useIntlUtils, useTranslation } from '@common/intl';
 import { useDialog, useNotification, useToggle } from '@common/hooks';
 import {
   mapTranslationsToArray,
   mapTranslationsToObject,
+  translationsToFlatMap,
   mergeTranslations,
   mergeNestedTranslations,
+  mergeFlatMaps,
   setNamespaceTranslations,
-  isNestedTranslations,
+  collectNamespaces,
+  buildExportObject,
+  splitImportObject,
   ImportMode,
   CustomTranslationsV2,
-  CUSTOM_TRANSLATION_NAMESPACES,
+  BASE_CUSTOM_TRANSLATION_NAMESPACES,
+  LEGACY_NAMESPACE,
   DEFAULT_CUSTOM_TRANSLATION_NAMESPACE,
   Translation,
 } from './helpers';
 import { TranslationsTable } from './TranslationsInputTable';
 import { useUpsertCustomTranslationsV2 } from '../../api';
+import { useInstalledPlugins } from '../../../Plugins/api';
 
 export const EditCustomTranslationsV2 = ({
   value,
@@ -66,10 +79,25 @@ export const CustomTranslationsV2Modal = ({
   onClose: () => void;
 }) => {
   const t = useTranslation();
-  const { currentLanguage, currentLanguageName, invalidateCustomTranslations, isRtl } =
-    useIntlUtils();
+  const {
+    currentLanguage,
+    currentLanguageName,
+    invalidateCustomTranslations,
+    isRtl,
+  } = useIntlUtils();
   const { success, error } = useNotification();
   const { mutateAsync } = useUpsertCustomTranslationsV2();
+
+  // Legacy v1 flat map (applies to all languages / older clients). Surfaced as
+  // the reserved "legacy" namespace, and only when it already has data.
+  const v1FromServer = usePreferences().customTranslations as
+    | Record<string, string>
+    | undefined;
+
+  // Plugin namespaces (one per installed plugin, by plugin_code).
+  const {
+    query: { data: installedPlugins },
+  } = useInstalledPlugins();
 
   const { Modal } = useDialog({ isOpen: true, onClose, disableBackdrop: true });
 
@@ -78,58 +106,98 @@ export const CustomTranslationsV2Modal = ({
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
 
-  // The full nested structure (all languages and namespaces). The footer
-  // language selector controls which language is edited; the namespace
-  // selector below controls which namespace within that language.
+  // The full v2 structure (all languages and namespaces). The footer language
+  // selector controls which language is edited; the namespace selector below
+  // controls which namespace within that language.
   const [nested, setNested] = useState<CustomTranslationsV2>(value);
   const [namespace, setNamespace] = useState<string>(
     DEFAULT_CUSTOM_TRANSLATION_NAMESPACE
   );
+  // Legacy v1 map and whether it's been touched this session (so we only write
+  // v1 when the admin actually edited the legacy namespace).
+  const [legacyV1, setLegacyV1] = useState<Record<string, string> | undefined>(
+    undefined
+  );
+  const [legacyDirty, setLegacyDirty] = useState(false);
 
-  const loadView = (
-    source: CustomTranslationsV2,
-    ns: string
+  useEffect(() => {
+    if (legacyV1 === undefined && v1FromServer !== undefined) {
+      setLegacyV1(v1FromServer);
+    }
+  }, [v1FromServer, legacyV1]);
+
+  const isLegacy = namespace === LEGACY_NAMESPACE;
+  const legacyHasData = !!legacyV1 && Object.keys(legacyV1).length > 0;
+
+  const viewFor = (
+    ns: string,
+    nestedSrc: CustomTranslationsV2,
+    legacySrc: Record<string, string>
   ): Translation[] =>
-    mapTranslationsToArray(source[currentLanguage]?.[ns] ?? {}, t, {
-      includeUnknownKeys: true,
-    });
+    ns === LEGACY_NAMESPACE
+      ? mapTranslationsToArray(legacySrc, t, { includeUnknownKeys: true })
+      : mapTranslationsToArray(nestedSrc[currentLanguage]?.[ns] ?? {}, t, {
+          includeUnknownKeys: true,
+        });
 
   const [translations, setTranslations] = useState<Translation[]>(
-    loadView(value, DEFAULT_CUSTOM_TRANSLATION_NAMESPACE)
+    viewFor(DEFAULT_CUSTOM_TRANSLATION_NAMESPACE, value, {})
   );
 
-  // Commit the current table edits back into the nested structure for the
-  // current language + namespace.
-  const commitCurrentView = (source: CustomTranslationsV2): CustomTranslationsV2 =>
-    setNamespaceTranslations(
-      source,
-      currentLanguage,
-      namespace,
-      mapTranslationsToObject(translations)
-    );
+  // Commit the current table edits back into either the v2 structure or the
+  // legacy v1 map, depending on the selected namespace.
+  const commitCurrentView = (): {
+    nested: CustomTranslationsV2;
+    legacyV1: Record<string, string>;
+  } => {
+    if (isLegacy) {
+      // Keep all entries (the legacy map is global, not pruned per-language)
+      return { nested, legacyV1: translationsToFlatMap(translations) };
+    }
+    return {
+      nested: setNamespaceTranslations(
+        nested,
+        currentLanguage,
+        namespace,
+        mapTranslationsToObject(translations)
+      ),
+      legacyV1: legacyV1 ?? {},
+    };
+  };
 
-  const namespaceOptions = useMemo(
-    () =>
-      CUSTOM_TRANSLATION_NAMESPACES.map(ns => ({
-        label: ns,
-        value: ns,
-      })),
-    []
-  );
+  const namespaceOptions = useMemo(() => {
+    const set = new Set<string>([
+      ...BASE_CUSTOM_TRANSLATION_NAMESPACES,
+      ...(installedPlugins?.nodes ?? []).map(p => p.code),
+      ...collectNamespaces(nested),
+    ]);
+    const options = [...set].map(ns => ({ label: ns, value: ns }));
+    if (legacyHasData) {
+      options.push({
+        label: t('label.namespace-legacy'),
+        value: LEGACY_NAMESPACE,
+      });
+    }
+    return options;
+  }, [installedPlugins, nested, legacyHasData, t]);
 
   const handleNamespaceChange = (newNamespace: string) => {
     if (newNamespace === namespace) return;
     // Save the current edits before switching namespace
-    const updated = commitCurrentView(nested);
-    setNested(updated);
+    const committed = commitCurrentView();
+    if (isLegacy) setLegacyDirty(true);
+    setNested(committed.nested);
+    setLegacyV1(committed.legacyV1);
     setNamespace(newNamespace);
-    setTranslations(loadView(updated, newNamespace));
+    setTranslations(
+      viewFor(newNamespace, committed.nested, committed.legacyV1)
+    );
   };
 
   const downloadTranslations = () => {
-    // Export the whole nested structure (all languages and namespaces)
-    const updated = commitCurrentView(nested);
-    const dataStr = JSON.stringify(updated, null, 2);
+    const committed = commitCurrentView();
+    const exportObj = buildExportObject(committed.nested, committed.legacyV1);
+    const dataStr = JSON.stringify(exportObj, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
@@ -162,15 +230,33 @@ export const CustomTranslationsV2Modal = ({
         }
 
         // Commit current edits first so the import merges against latest state
-        const current = commitCurrentView(nested);
+        const committed = commitCurrentView();
+        const split = splitImportObject(parsed as Record<string, unknown>);
 
-        if (isNestedTranslations(parsed)) {
-          // Multi-language nested file
-          const merged = mergeNestedTranslations(current, parsed, importMode);
-          setNested(merged);
-          setTranslations(loadView(merged, namespace));
+        if (split.isStructured) {
+          // Multi-language / multi-namespace file (optionally with `_v1`)
+          let nextNested = committed.nested;
+          let nextLegacy = committed.legacyV1;
+          if (split.v2) {
+            nextNested = mergeNestedTranslations(
+              committed.nested,
+              split.v2,
+              importMode
+            );
+          }
+          if (split.legacyV1) {
+            nextLegacy = mergeFlatMaps(
+              committed.legacyV1,
+              split.legacyV1,
+              importMode
+            );
+            setLegacyDirty(true);
+          }
+          setNested(nextNested);
+          setLegacyV1(nextLegacy);
+          setTranslations(viewFor(namespace, nextNested, nextLegacy));
         } else {
-          // Legacy flat file - import into the current language + namespace
+          // Plain flat file - import into the current view
           const isValid = Object.values(parsed).every(
             val => typeof val === 'string'
           );
@@ -183,6 +269,7 @@ export const CustomTranslationsV2Modal = ({
             t,
             { includeUnknownKeys: true }
           );
+          if (isLegacy) setLegacyDirty(true);
           setTranslations(prev =>
             mergeTranslations(prev, importedArray, importMode)
           );
@@ -196,9 +283,23 @@ export const CustomTranslationsV2Modal = ({
     reader.readAsText(file);
   };
 
+  // Stage the legacy v1 entries into the current language + namespace so they
+  // can be saved as proper per-language v2 translations.
+  const copyLegacyIntoCurrentLanguage = () => {
+    if (!legacyV1) return;
+    const importedArray = mapTranslationsToArray(legacyV1, t, {
+      includeUnknownKeys: true,
+    });
+    setTranslations(prev =>
+      mergeTranslations(prev, importedArray, 'keep-existing')
+    );
+    success(t('messages.translations-loaded'))();
+  };
+
   const handleDeleteAll = () => {
     setShowDeleteAllConfirm(false);
-    // Clears the current language + namespace only
+    if (isLegacy) setLegacyDirty(true);
+    // Clears the current view only (current language + namespace, or legacy)
     setTranslations([]);
   };
 
@@ -211,11 +312,29 @@ export const CustomTranslationsV2Modal = ({
     }
 
     setLoading(true);
-    const updated = commitCurrentView(nested);
+    const committed = commitCurrentView();
+    const legacyTouched = legacyDirty || isLegacy;
 
     try {
-      await mutateAsync({ translations: updated, language: currentLanguage });
-      setNested(updated);
+      await mutateAsync({
+        customTranslationsV2: committed.nested,
+        ...(legacyTouched ? { customTranslations: committed.legacyV1 } : {}),
+      });
+      setNested(committed.nested);
+      setLegacyV1(committed.legacyV1);
+      setLegacyDirty(false);
+      // If the legacy namespace was just cleared, fall back to common so the
+      // (now hidden) legacy option isn't left selected.
+      if (isLegacy && Object.keys(committed.legacyV1).length === 0) {
+        setNamespace(DEFAULT_CUSTOM_TRANSLATION_NAMESPACE);
+        setTranslations(
+          viewFor(
+            DEFAULT_CUSTOM_TRANSLATION_NAMESPACE,
+            committed.nested,
+            committed.legacyV1
+          )
+        );
+      }
       invalidateCustomTranslations();
       success(t('messages.saved'))();
       if (shouldClose) onClose();
@@ -261,10 +380,12 @@ export const CustomTranslationsV2Modal = ({
           height="100%"
           dir={isRtl ? 'rtl' : 'ltr'}
         >
-          <Alert severity="info">
-            {t('messages.custom-translations-editing-language', {
-              language: currentLanguageName ?? currentLanguage,
-            })}
+          <Alert severity={isLegacy ? 'warning' : 'info'}>
+            {isLegacy
+              ? t('messages.custom-translations-legacy-banner')
+              : t('messages.custom-translations-editing-language', {
+                  language: currentLanguageName ?? currentLanguage,
+                })}
           </Alert>
           <Box display="flex" gap={1} alignItems="center">
             <Box display="flex" gap={1} alignItems="center">
@@ -277,6 +398,16 @@ export const CustomTranslationsV2Modal = ({
               />
             </Box>
             <Box flex={1} />
+            {legacyHasData && !isLegacy && (
+              <ButtonWithIcon
+                label={t('button.copy-legacy-into-language', {
+                  language: currentLanguageName ?? currentLanguage,
+                })}
+                onClick={copyLegacyIntoCurrentLanguage}
+                Icon={<CopyIcon />}
+                disabled={loading}
+              />
+            )}
             <ButtonWithIcon
               label={t('button.import')}
               onClick={() => setShowUploadModal(true)}

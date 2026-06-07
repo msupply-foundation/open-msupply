@@ -71,9 +71,6 @@ pub struct UpsertPreferencesInput {
     /// v2 custom translations, shape: `language -> namespace -> key -> value`.
     /// Passed as a JSON value to avoid nested-map InputObject friction.
     pub custom_translations_v2: Option<serde_json::Value>,
-    /// The language currently being edited - its translations are flattened
-    /// into the legacy v1 preference for older sync clients.
-    pub custom_translations_v2_language: Option<String>,
     pub gender_options: Option<Vec<GenderTypeNode>>,
     pub prevent_transfers_months_before_initialisation: Option<i32>,
     pub show_contact_tracing: Option<bool>,
@@ -146,7 +143,6 @@ impl UpsertPreferencesInput {
             authorise_purchase_order,
             custom_translations,
             custom_translations_v2,
-            custom_translations_v2_language,
             prevent_transfers_months_before_initialisation,
             gender_options,
             show_contact_tracing,
@@ -193,7 +189,6 @@ impl UpsertPreferencesInput {
             custom_translations_v2: custom_translations_v2
                 .clone()
                 .and_then(|v| serde_json::from_value(v).ok()),
-            custom_translations_v2_language: custom_translations_v2_language.clone(),
             gender_options: gender_options
                 .as_ref()
                 .map(|i| i.iter().map(|i| GenderType::from(*i)).collect()),
