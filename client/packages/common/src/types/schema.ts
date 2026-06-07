@@ -11590,7 +11590,6 @@ export type UpsertPreferencesInput = {
   >;
   customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
   customTranslationsV2?: InputMaybe<Scalars['JSON']['input']>;
-  customTranslationsV2Language?: InputMaybe<Scalars['String']['input']>;
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
