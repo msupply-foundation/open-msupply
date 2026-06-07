@@ -53,31 +53,20 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
     ) -> Result<HashMap<ItemStatsLoaderInput, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
 
-        // Validate all same store
-        let store_id = match loader_inputs.first() {
-            Some(input) => &input.store_id,
-            None => return Ok(HashMap::new()),
-        };
-        if loader_inputs.iter().any(|i| &i.store_id != store_id) {
-            return Err(StandardGraphqlError::BadUserInput(
-                "Cannot batch item stats across multiple stores".to_string(),
-            )
-            .into());
-        }
-        let store_id = store_id.clone();
+        // The loader registry is shared across all requests, so a single batch can mix
+        // inputs from different stores. Group by (store_id, payload) and query each group
+        // separately rather than assuming a single store/payload for the whole batch.
+        let mut map = HashMap::<(String, ItemStatsLoaderInputPayload), Vec<String>>::new();
 
-        let mut map = HashMap::<ItemStatsLoaderInputPayload, Vec<String>>::new();
-
-        // Group by payload -> Vec<item_id>
         for input in loader_inputs {
-            map.entry(input.payload.clone())
+            map.entry((input.store_id.clone(), input.payload.clone()))
                 .or_default()
                 .push(input.item_id.clone());
         }
 
         let mut out = HashMap::<ItemStatsLoaderInput, Self::Value>::new();
 
-        for (payload, item_ids) in map {
+        for ((store_id, payload), item_ids) in map {
             let item_stats = self
                 .service_provider
                 .item_stats_service
@@ -103,5 +92,52 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
             }
         }
         Ok(out)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{
+        mock::{mock_store_a, mock_store_b, test_item_stats, MockDataInserts},
+        test_db,
+    };
+
+    // The loader registry is shared across requests, so a single batch can contain inputs
+    // for multiple stores. Verify each (store, item) input resolves to its OWN store's
+    // stats rather than erroring or cross-contaminating.
+    #[tokio::test]
+    async fn item_stats_loader_batches_across_stores() {
+        let (_, _, connection_manager, _) = test_db::setup_all_with_data(
+            "item_stats_loader_batches_across_stores",
+            MockDataInserts::all(),
+            test_item_stats::mock_item_stats(),
+        )
+        .await;
+
+        let loader = ItemsStatsForItemLoader {
+            service_provider: Data::new(ServiceProvider::new(connection_manager)),
+        };
+
+        let item_id = test_item_stats::item().id;
+        // Same item, two different stores, in a single batch.
+        let store_a_input = ItemStatsLoaderInput::new(&mock_store_a().id, &item_id, None, None);
+        let store_b_input = ItemStatsLoaderInput::new(&mock_store_b().id, &item_id, None, None);
+
+        let result = loader
+            .load(&[store_a_input.clone(), store_b_input.clone()])
+            .await
+            .unwrap();
+
+        // Both stores resolved (previously this errored with BadUserInput).
+        assert_eq!(result.len(), 2);
+        assert_eq!(
+            result.get(&store_a_input).unwrap().available_stock_on_hand,
+            test_item_stats::item_1_soh()
+        );
+        assert_eq!(
+            result.get(&store_b_input).unwrap().available_stock_on_hand,
+            test_item_stats::item_1_store_b_soh()
+        );
     }
 }
