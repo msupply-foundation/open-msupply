@@ -313,6 +313,70 @@ async fn test_changelog_filter() {
     );
 }
 
+/// `count` dedupes only the head of the changelog (cursor >= earliest) instead of the whole
+/// view, but must stay exactly equal to the deduped result. We pin that against `changelogs`
+/// (which reads the `changelog_deduped` view) for the same earliest/filter — this is the same
+/// consistency the sync push loop relies on (count vs the batch fetch).
+#[actix_rt::test]
+async fn test_changelog_count_head_dedupe() {
+    let (_, connection, _, _) =
+        setup_all("test_changelog_count_head_dedupe", MockDataInserts::none().names()).await;
+
+    let repo = ChangelogRepository::new(&connection);
+    repo.delete(0).unwrap();
+
+    let row = |cursor: i64, record_id: &str, is_sync_update: bool| ChangelogRow {
+        cursor,
+        table_name: ChangelogTableName::Invoice,
+        record_id: record_id.to_string(),
+        row_action: RowActionType::Upsert,
+        name_id: None,
+        store_id: Some("store1".to_string()),
+        is_sync_update,
+        source_site_id: None,
+    };
+
+    let logs = vec![
+        // record "A": changed three times -> dedupes to one (latest cursor 3)
+        row(1, "A", false),
+        row(2, "A", false),
+        row(3, "A", false),
+        // record "B": changed once
+        row(4, "B", false),
+        // record "C": changed twice, latest change (cursor 6) is a sync update.
+        // A naive pre-grouping filter on is_sync_update would wrongly count C via cursor 5.
+        row(5, "C", false),
+        row(6, "C", true),
+    ];
+    for log in &logs {
+        diesel::insert_into(changelog::table)
+            .values(log)
+            .execute(connection.lock().connection())
+            .unwrap();
+    }
+
+    // Assert count matches the deduped fetch for the same earliest/filter, and return the value.
+    let count_matching_fetch = |earliest: u64, filter: Option<ChangelogFilter>| -> u64 {
+        let fetched = repo.changelogs(earliest, 1000, filter.clone()).unwrap().len() as u64;
+        let counted = repo.count(earliest, filter).unwrap();
+        assert_eq!(counted, fetched, "count must equal deduped fetch (earliest={earliest})");
+        counted
+    };
+
+    // From the start, no filter: A, B, C each dedupe to one -> 3 (not 6 raw rows).
+    assert_eq!(count_matching_fetch(0, None), 3);
+
+    // is_sync_update = false: latest row of C (cursor 6) is a sync update, so C is excluded -> 2.
+    let local_only = ChangelogFilter::new().is_sync_update(EqualFilter::equal_any_or_null(vec![false]));
+    assert_eq!(count_matching_fetch(0, Some(local_only)), 2);
+
+    // From cursor 5, only C has rows in the head; it still dedupes to one.
+    assert_eq!(count_matching_fetch(5, None), 1);
+
+    // From beyond the last cursor, nothing remains.
+    assert_eq!(count_matching_fetch(7, None), 0);
+}
+
 struct TestRecord<T> {
     record: T,
     record_id: String,
