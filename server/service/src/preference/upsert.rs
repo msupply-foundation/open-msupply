@@ -2,7 +2,10 @@ use std::collections::BTreeMap;
 
 use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPreferenceError};
 use crate::{
-    preference::{BackdatingData, WarnWhenMissingRecentStocktakeData},
+    preference::{
+        flatten_language_namespaces, BackdatingData, CustomTranslationsV2Value,
+        WarnWhenMissingRecentStocktakeData,
+    },
     service_provider::ServiceContext,
 };
 use repository::{GenderType, InvoiceStatus, StorageConnection, TransactionError};
@@ -13,12 +16,18 @@ pub struct StorePrefUpdate<T> {
     pub value: T,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct UpsertPreferences {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub authorise_purchase_order: Option<bool>,
     pub custom_translations: Option<BTreeMap<String, String>>,
+    pub custom_translations_v2: Option<CustomTranslationsV2Value>,
+    /// The language currently being edited. When provided alongside
+    /// `custom_translations_v2`, that language's translations are flattened
+    /// into the legacy v1 `custom_translations` preference so older sync
+    /// clients keep working.
+    pub custom_translations_v2_language: Option<String>,
     pub gender_options: Option<Vec<GenderType>>,
     pub prevent_transfers_months_before_initialisation: Option<i32>,
     pub show_contact_tracing: Option<bool>,
@@ -69,6 +78,8 @@ pub fn upsert_preferences(
         allow_tracking_of_stock_by_donor: allow_tracking_of_stock_by_donor_input,
         authorise_purchase_order: authorise_purchase_order_input,
         custom_translations: custom_translations_input,
+        custom_translations_v2: custom_translations_v2_input,
+        custom_translations_v2_language: custom_translations_v2_language_input,
         gender_options: gender_options_input,
         prevent_transfers_months_before_initialisation:
             prevent_transfers_months_before_initialisation_input,
@@ -119,6 +130,7 @@ pub fn upsert_preferences(
         allow_tracking_of_stock_by_donor,
         authorise_purchase_order,
         custom_translations,
+        custom_translations_v2,
         gender_options,
         prevent_transfers_months_before_initialisation,
         show_contact_tracing,
@@ -175,6 +187,21 @@ pub fn upsert_preferences(
 
             if let Some(input) = custom_translations_input {
                 custom_translations.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = custom_translations_v2_input {
+                // Keep the legacy v1 preference in sync for older clients:
+                // flatten the language currently being edited into the flat
+                // v1 map. v1 is namespace-agnostic, so we merge all namespaces
+                // (common wins on collision).
+                if let Some(language) = &custom_translations_v2_language_input {
+                    if let Some(namespaces) = input.get(language) {
+                        let flat = flatten_language_namespaces(namespaces);
+                        custom_translations.upsert(connection, flat, None)?;
+                    }
+                }
+
+                custom_translations_v2.upsert(connection, input, None)?;
             }
 
             if let Some(input) = prevent_transfers_months_before_initialisation_input {
@@ -361,4 +388,69 @@ fn upsert_store_input<P: Preference>(
         preference.upsert(connection, update.value, Some(update.store_id))?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::preference::{CustomTranslations, CustomTranslationsV2};
+    use crate::service_provider::ServiceProvider;
+    use crate::sync::test_util_set_is_central_server;
+    use repository::mock::MockDataInserts;
+    use repository::test_db::setup_all;
+
+    #[actix_rt::test]
+    async fn upsert_v2_custom_translations_writes_v1() {
+        let (_, _, connection_manager, _) = setup_all(
+            "upsert_v2_custom_translations_writes_v1",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+        test_util_set_is_central_server(true);
+
+        // fr has both a common and a report namespace; the report key only exists
+        // in the report namespace, the colliding key resolves to common.
+        let v2: CustomTranslationsV2Value = serde_json::from_value(serde_json::json!({
+            "fr": {
+                "common": { "button.close": "Fermer (custom)", "shared.key": "Common wins" },
+                "report": { "messages.report-only": "Rapport", "shared.key": "Report loses" }
+            },
+            "en": {
+                "common": { "button.close": "Close (custom)" }
+            }
+        }))
+        .unwrap();
+
+        upsert_preferences(
+            &ctx,
+            UpsertPreferences {
+                custom_translations_v2: Some(v2.clone()),
+                custom_translations_v2_language: Some("fr".to_string()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        // v2 is stored in full
+        let stored_v2 = CustomTranslationsV2.load(&ctx.connection, None).unwrap();
+        assert_eq!(stored_v2, v2);
+
+        // v1 is the flattened CURRENT editing language (fr), common winning on collision
+        let stored_v1 = CustomTranslations.load(&ctx.connection, None).unwrap();
+        assert_eq!(
+            stored_v1.get("button.close"),
+            Some(&"Fermer (custom)".to_string())
+        );
+        assert_eq!(
+            stored_v1.get("messages.report-only"),
+            Some(&"Rapport".to_string())
+        );
+        // common namespace wins over report on key collision
+        assert_eq!(stored_v1.get("shared.key"), Some(&"Common wins".to_string()));
+        // English (not the editing language) is not flattened into v1
+        assert!(!stored_v1.values().any(|v| v == "Close (custom)"));
+    }
 }
