@@ -12,7 +12,7 @@ const think = () => sleepThink(config.workflowThinkMinMs, config.workflowThinkMa
 
 export function stocktakeWorkflow(data) {
   const ctx = makeCtx(data);
-  if (data.itemIds.length === 0) {
+  if (ctx.pools.itemIds.length === 0) {
     think();
     return;
   }
@@ -27,8 +27,8 @@ export function stocktakeWorkflow(data) {
   think();
 
   // 50-200 lines, capped by available distinct items.
-  const count = Math.min(data.itemIds.length, randInt(50, 200));
-  const items = take(data.itemIds, count, __VU, __ITER);
+  const count = Math.min(ctx.pools.itemIds.length, randInt(50, 200));
+  const items = take(ctx.pools.itemIds, count, __VU, __ITER);
   // Snapshot-only lines (no countedNumberOfPacks): setting a count triggers an inventory adjustment,
   // which stores requiring adjustment reasons reject with "No adjustment reason provided". Omitting the
   // count still exercises the heavy batch insert (one changelog row per line) without needing reason

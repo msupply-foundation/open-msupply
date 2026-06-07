@@ -12,7 +12,7 @@ const think = () => sleepThink(config.workflowThinkMinMs, config.workflowThinkMa
 
 export function invoiceWorkflow(data) {
   const ctx = makeCtx(data);
-  const supplierId = pick(data.supplierNameIds, __VU, __ITER);
+  const supplierId = pick(ctx.pools.supplierNameIds, __VU, __ITER);
   if (!supplierId) {
     think();
     return;
@@ -28,7 +28,7 @@ export function invoiceWorkflow(data) {
   think();
 
   // Add lines if we discovered stock items to reference.
-  const stock = take(data.stockLines, randInt(3, 5), __VU, __ITER);
+  const stock = take(ctx.pools.stockLines, randInt(3, 5), __VU, __ITER);
   if (stock.length) {
     const lines = stock.map(sl => ({
       id: uuidv4(),

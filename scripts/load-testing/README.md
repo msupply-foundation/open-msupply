@@ -2,7 +2,7 @@
 
 A repeatable, target-agnostic load test that drives the omSupply GraphQL API with a realistic
 concurrent-user workload, to track production performance under load over time. Derived from the
-real workload profile in [`../../load-test-results/load_test_plan.md`](../../load-test-results/load_test_plan.md).
+real workload profile from load testing with 20-30 users in the NZ office.
 
 ## Requirements
 
@@ -50,8 +50,8 @@ Each config-file key has a matching env-var override (env wins).
 | Config key | Env var | Default | Purpose |
 |---|---|---|---|
 | `baseUrl` | `BASE_URL` | `http://localhost:8000` | target server; GraphQL is `${baseUrl}/graphql` |
-| `users` | `USERS` (JSON) | — | login pool (list of `{username,password}`); each VU logs in as a random one |
-| `storeId` | `STORE_ID` | discovered | override the store (else `me.defaultStore`) |
+| `users` | `USERS` (JSON) | — | login pool (list of `{username,password}`); each VU logs in as a random one and drives **that user's own store** |
+| `storeId` | `STORE_ID` | per-user | pin every user to one store; unset = each user uses its own `me.defaultStore` (and read-pools are discovered per store) |
 | `vuMultiplier` | `VU_MULTIPLIER` | `1` | scales the 8/6/5/4/4/2/1 worker mix |
 | `rampDuration` | `RAMP_DURATION` | `5m` | ramp to steady state |
 | `holdDuration` | `HOLD_DURATION` | `15m` | steady-state hold |
@@ -73,7 +73,7 @@ model — fixed VUs looping with think-time, i.e. real concurrent users). Workfl
 when the dataset lacks prerequisites (e.g. no suppliers).
 
 The mix is read-heavy and workflows use a longer think-time (`workflowThink*`) so the emitted
-op mix is ~95% read / 5% write, matching the manual load test. Reads dominate because most users
+op mix is ~90% read / 10% write, matching the manual load test. Reads dominate because most users
 are browsing/polling at any moment while only a few are mid-workflow — and workflow users pause
 between form steps. Tune `vuMultiplier` to scale load (the read/write ratio is preserved).
 
@@ -94,7 +94,7 @@ Workflow scenarios create real records (requisitions, inbound shipments, stockta
 Every created record is stamped with the `tag` value (default `k6-loadtest`) on its
 `theirReference` / `comment` / line `note` field, so the data this script produces is identifiable.
 
-This repo does **not** implement the deletion itself — but the marker makes it possible. A cleanup
+This script doesn't implement the clean up itself — but the marker makes it possible. A cleanup
 would find records where the reference/comment/note equals the tag and delete the parents (lines
 cascade). Use a distinct `tag` per run (e.g. `-e TAG=run-2026-06-02`) if you want to scope cleanup to
 a single run. Prefer running against a snapshot/restorable DB where you can simply restore instead.
