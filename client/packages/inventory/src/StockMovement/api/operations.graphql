@@ -47,3 +47,32 @@ query stockRelocations(
     }
   }
 }
+
+mutation insertStockRelocation(
+  $input: InsertStockRelocationInput!
+  $storeId: String!
+) {
+  insertStockRelocation(input: $input, storeId: $storeId) {
+    __typename
+    ... on InsertStockRelocationNode {
+      __typename
+      ids
+    }
+    ... on InsertStockRelocationError {
+      __typename
+      error {
+        __typename
+        description
+        ... on StockLineOnHold {
+          stockLineId
+        }
+        ... on LocationOnHold {
+          locationId
+        }
+        ... on NotEnoughStock {
+          stockLineId
+        }
+      }
+    }
+  }
+}
