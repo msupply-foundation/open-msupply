@@ -211,6 +211,13 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
       }
       shouldShrink={shouldShrink}
       ref={ref}
+      data-shortcut={
+        variant === 'save'
+          ? 'Alt+S'
+          : variant === 'cancel'
+            ? 'Escape'
+            : undefined
+      }
     />
   );
 };
