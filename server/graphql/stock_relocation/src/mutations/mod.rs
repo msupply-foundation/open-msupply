@@ -1,10 +1,8 @@
 use async_graphql::*;
 
 pub mod insert;
-pub mod update;
 
 pub use insert::{insert_stock_relocation, InsertInput, InsertResponse};
-pub use update::{update_stock_relocation, UpdateInput, UpdateResponse};
 
 pub struct StockLineOnHold {
     pub stock_line_id: String,
