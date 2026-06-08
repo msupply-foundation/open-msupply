@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import {
+  Alert,
   Box,
   Typography,
   useTranslation,
   useNotification,
   Autocomplete,
   RadioGroup,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { DialogButton } from '@common/components';
 import { useDialog } from '@common/hooks';
@@ -168,10 +170,27 @@ export const CreateStockMovementModal = ({
   const onRemove = (id: string) =>
     setRemovedLineIds(prev => [...prev, id]);
 
-  const isValid = (line: DraftStockMovementLineState) =>
-    (line.fromNumberOfPacks ?? 0) > 0 && (line.toPackSize ?? 0) > 0;
+  const resultingToPacks = (line: DraftStockMovementLineState) => {
+    const toPackSize = line.toPackSize ?? line.fromPackSize;
+    if (!toPackSize) return undefined;
+    return ((line.fromNumberOfPacks ?? 0) * line.fromPackSize) / toPackSize;
+  };
+
+  const isValid = (line: DraftStockMovementLineState) => {
+    const toPacks = resultingToPacks(line);
+    return (
+      (line.fromNumberOfPacks ?? 0) > 0 &&
+      (line.toPackSize ?? 0) > 0 &&
+      toPacks !== undefined &&
+      NumUtils.isWholeNumber(toPacks)
+    );
+  };
 
   const linesToMove = lines.filter(line => !line.onHold && !!edits[line.id]);
+  const hasFractionalPacks = linesToMove.some(line => {
+    const toPacks = resultingToPacks(line);
+    return toPacks !== undefined && toPacks > 0 && !NumUtils.isWholeNumber(toPacks);
+  });
   const canSave =
     !isSaving && linesToMove.length > 0 && linesToMove.every(isValid);
 
@@ -281,6 +300,12 @@ export const CreateStockMovementModal = ({
               }}
             />
           </Box>
+        )}
+
+        {hasFractionalPacks && (
+          <Alert severity="warning">
+            {t('messages.stock-movement-fractional-packs')}
+          </Alert>
         )}
 
         {lines.length > 0 ? (
