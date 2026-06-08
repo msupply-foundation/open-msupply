@@ -16,16 +16,10 @@
   "auth.no-store-assigned": "Votre utilisateur n'est assigné à aucun dépôt. Veuillez vous connecter avec un autre compte utilisateur ou contacter votre administrateur.",
   "auth.not-a-central-server": "Cette opération n'est permise que sur le serveur central",
   "auth.permission-denied": "Permission refusée",
-<<<<<<< HEAD
-  "auth.timeout-message": "Vous avez été déconnecté(e) de votre session pour cause d'inactivité. Cliquez sur OK pour revenir à la page d'accueil.",
-  "auth.timeout-title": "La session a expirée",
-  "auth.unauthenticated-message": "Vous n'êtes pas connecté(e). Cliquez sur OK pour retourner à la page d'accueil.",
-=======
   "auth.server-error": "Le serveur a renvoyé une erreur lors de la récupération des détails utilisateurs\r\nImpossible de continuer, veuillez contacter support@msupply.foundation.",
   "auth.timeout-message": "Vous avez été déconnecté(e) de votre session pour cause d'inactivité. Merci de vous connecter pour continuer.",
   "auth.timeout-title": "La session a expiré",
   "auth.unauthenticated-message": "Vous n'êtes pas connecté(e). Merci de vous connecter pour continuer.",
->>>>>>> origin/develop
   "breadcrumb.item": "#{{id}}",
   "button-save-as-visited": "Enregistrer comme ayant visité",
   "button.acknowledge": "Appuyez pour accepter cette anomalie",
@@ -734,11 +728,8 @@
   "heading.scanner-status": "Statut du scanner",
   "heading.schedule": "Calendrier",
   "heading.select-items": "Choisir articles",
-<<<<<<< HEAD
-=======
   "heading.select-store": "Sélectionner un dépôt",
   "heading.server-error": "Erreur serveur",
->>>>>>> origin/develop
   "heading.server-log": "Journal du serveur",
   "heading.service-charges": "Frais additionnels",
   "heading.settings": "Réglages",

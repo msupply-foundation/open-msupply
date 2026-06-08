@@ -15,12 +15,8 @@
   "auth.no-store-assigned": "Você não está atribuído a nenhuma unidade de saúde. Por favor, inicie a sessão como um usuário diferente ou contacte o seu administrador.",
   "auth.not-a-central-server": "A operação não é permitida no servidor central",
   "auth.permission-denied": "Permissão negada",
-<<<<<<< HEAD
-  "auth.timeout-message": "Você foi desconectado da sua sessão por inactividade. Clique em OK para retornar para a tela de início.",
-=======
   "auth.server-error": "O servidor retornou um erro ao buscar os detalhes do usuário!\nNão é possível prosseguir, por favor contacte support@msupply.foundation.",
   "auth.timeout-message": "Você foi desconectado da sua sessão por inatividade. Clique em OK para retornar para a tela de início.",
->>>>>>> origin/develop
   "auth.timeout-title": "Sua sessão expirou",
   "auth.unauthenticated-message": "Você não iniciou a sessão. Por favor faça login para continuar.",
   "breadcrumb.item": "#{{id}}",
@@ -726,15 +722,10 @@
   "heading.scanner-controls": "Escanear controles",
   "heading.scanner-status": "Escanear o estado",
   "heading.schedule": "Calendário",
-<<<<<<< HEAD
-  "heading.select-items": "Selecionar Itens",
-  "heading.server-log": "Registro do Servidor",
-=======
   "heading.select-items": "Selecionar itens",
   "heading.select-store": "Selecionar uma unidade de saúde",
   "heading.server-error": "Erro no servidor",
   "heading.server-log": "Registro do servidor",
->>>>>>> origin/develop
   "heading.service-charges": "Custo de serviço",
   "heading.settings-android": "Configurações do android",
   "heading.settings-display": "Configurações do Visor",

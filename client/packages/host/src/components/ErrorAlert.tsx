@@ -4,11 +4,8 @@ import React, { useEffect } from 'react';
 import {
   AlertIcon,
   AuthError,
-<<<<<<< HEAD
-=======
   Grid,
   LocalStorage,
->>>>>>> origin/develop
   Location,
   RouteBuilder,
   matchPath,
@@ -16,11 +13,7 @@ import {
   useLocation,
   useNavigate,
 } from '@openmsupply-client/common';
-<<<<<<< HEAD
-import { AlertModal } from '@common/components';
-=======
 import { AlertModal, BasicModal, Typography } from '@common/components';
->>>>>>> origin/develop
 import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
 import { Login } from './Login';
 

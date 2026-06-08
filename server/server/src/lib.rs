@@ -125,38 +125,7 @@ pub async fn start_server(
 
     // INITIALISE DATABASE CONNECTION
     let mut connection_manager = get_storage_connection_manager(&settings.database);
-<<<<<<< HEAD
-
-    if let Some(init_sql) = &settings.database.startup_sql() {
-        connection_manager.execute(init_sql).unwrap();
-    }
-
-    info!("Run DB migrations...");
-    let migrations_start = Instant::now();
     let connection = connection_manager.connection().unwrap();
-    let (version, messages) = match migrate(&connection, None) {
-        Ok(result) => result,
-        Err(e) => {
-            log::error!("Failed to run DB migrations: {}", format_error(&e));
-            std::process::exit(1);
-        }
-    };
-    info!(
-        "DB migrations completed in {} ms",
-        migrations_start.elapsed().as_millis()
-    );
-    // Log the server starting message with the startup timestamp
-    let status_log = StatusLog(&connection);
-    status_log.no_console_with_timestamp(&server_start_message, server_start_timestamp);
-
-    add_migration_results_to_system_log(&connection, messages).unwrap();
-    info!("Run DB migrations...done");
-
-    // Upsert standard reports
-    StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
-=======
-    let connection = connection_manager.connection().unwrap();
->>>>>>> origin/develop
 
     // INITIALISE CONTEXT
     info!("Initialising server context..");
@@ -472,66 +441,7 @@ pub async fn start_server(
     if service_provider
         .sync_status_service
         .is_initialised(&service_context)
-<<<<<<< HEAD
-        .unwrap();
-    let initial_status = if is_operational {
-        OperationalStatus::Operational
-    } else {
-        OperationalStatus::Initialising
-    };
-    info!("Creating graphql schema in {:?} mode..", initial_status);
-
-    let validated_plugins = ValidatedPluginBucket::new(&settings.server.base_dir).unwrap();
-    let validated_plugins = Data::new(Mutex::new(validated_plugins));
-
-    let (subscription_task_handle, subscription_broadcast) =
-        subscription_worker.spawn(service_provider.clone().into_inner());
-
-    let graphql_schema = Data::new(GraphqlSchema::new(
-        GraphSchemaData {
-            connection_manager: Data::new(connection_manager),
-            loader_registry: Data::new(LoaderRegistry { loaders }),
-            service_provider: service_provider.clone(),
-            settings: Data::new(settings.clone()),
-            auth: auth.clone(),
-            validated_plugins: validated_plugins.clone(),
-            subscription_broadcast,
-        },
-        initial_status,
-    ));
-    // Bind trigger to change schema when site is initialised
-    if !is_operational {
-        let graphql_schema = graphql_schema.clone();
-        site_is_initialised_callback.on_trigger(async move {
-            info!("Changing graphql schema to operational mode");
-            graphql_schema
-                .clone()
-                .set_operational_status(OperationalStatus::Operational)
-                .await;
-        });
-    }
-    info!("Creating graphql schema..done");
-
-    // PLUGIN CONTEXT
-    info!("Creating plugin context and reloading plugins..");
-    BoaJsContext::new(
-        &service_provider,
-        PluginExecuteGraphql(graphql_schema.clone()),
-    )
-    .bind();
-
-    service_provider
-        .plugin_service
-        .reload_all_plugins(&service_context)
-        .unwrap();
-    info!("Creating plugin context and reloading plugins..done");
-
-    // START DISCOVERY
-    // Only run discovery on Mac or Windows
-    #[cfg(any(target_os = "macos", target_os = "windows"))]
-=======
         .unwrap()
->>>>>>> origin/develop
     {
         graphql_schema
             .set_operational_status(OperationalStatus::Operational)
@@ -556,77 +466,7 @@ pub async fn start_server(
         settings.mail.clone().map(|m| m.interval).unwrap_or(60),
     );
 
-<<<<<<< HEAD
-    let closure_settings = settings.clone();
-    let mut http_server = HttpServer::new(move || {
-        App::new()
-            .app_data(Data::new(closure_settings.clone()))
-            .wrap(logger_middleware())
-            .wrap(cors_policy(&closure_settings))
-            .wrap(compress_middleware())
-            // needed for static files service
-            .app_data(Data::new(closure_settings.clone()))
-            // Configure JSON payload limit (default is 2MB, setting to 10MB)
-            .app_data(web::JsonConfig::default().limit(10 * 1024 * 1024))
-            // needed for cold chain service
-            .app_data(service_provider.clone())
-            .app_data(auth.clone())
-            .app_data(validated_plugins.clone())
-            .app_data(get_default_directory(&closure_settings))
-            .configure(attach_graphql_schema(graphql_schema.clone()))
-            .configure(config_static_files)
-            .configure(config_cold_chain)
-            .configure(config_upload_fridge_tag)
-            .configure(config_server_frontend_plugins)
-            .configure(config_central)
-            .configure(config_support)
-            .configure(config_print)
-            .configure(config_custom_translations)
-            .configure(config_upload)
-            // Needs to be last to capture all unmatches routes
-            .configure(config_serve_frontend)
-    })
-    .disable_signals();
 
-    if let Some(workers) = settings.server.workers {
-        http_server = http_server.workers(workers);
-    }
-
-    let bind_start = Instant::now();
-    info!(
-        "Binding listener on {} (tls={})",
-        settings.server.address(),
-        certificates.config().is_some()
-    );
-    http_server = match certificates.config() {
-        Some(config) => http_server
-            .bind_rustls_0_23(settings.server.address(), config)
-            .unwrap(),
-        None => http_server.bind(settings.server.address()).unwrap(),
-    };
-    let bind_elapsed_ms = bind_start.elapsed().as_millis();
-    info!(
-        "Listener bound in {} ms (tls={})",
-        bind_elapsed_ms,
-        certificates.is_https()
-    );
-    info!("Initialising http server..done",);
-
-    let running_server = http_server.run();
-    let server_handle = running_server.handle();
-    info!(
-        "Server started, running on port: {}, version: {}",
-        settings.server.port, version
-    );
-    // run server in another task so that we can handle restart/off events here
-    info!(
-        "Spawning accept loop ({} ms after bind)",
-        bind_start.elapsed().as_millis()
-    );
-    tokio::spawn(running_server);
-
-=======
->>>>>>> origin/develop
     tokio::select! {
         // TODO log error in ctrl_c and None in off_switch
         _ = tokio::signal::ctrl_c() => {
