@@ -274,7 +274,6 @@ mod test {
                 ctx,
                 "store_a",
                 InsertStockRelocation {
-                    from_location_id: None,
                     lines: vec![line],
                 },
             )

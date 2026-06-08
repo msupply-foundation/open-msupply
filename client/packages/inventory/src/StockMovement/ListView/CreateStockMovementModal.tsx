@@ -188,7 +188,6 @@ export const CreateStockMovementModal = ({
 
     try {
       const result = await insert({
-        fromLocationId: mode === 'byLocation' ? fromLocation?.id : undefined,
         lines: draftLines,
       });
       if (result.__typename === 'InsertStockRelocationError') {

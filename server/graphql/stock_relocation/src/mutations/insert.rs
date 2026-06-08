@@ -23,18 +23,13 @@ pub struct InsertStockRelocationLineInput {
 #[derive(InputObject)]
 #[graphql(name = "InsertStockRelocationInput")]
 pub struct InsertInput {
-    pub from_location_id: Option<String>,
     pub lines: Vec<InsertStockRelocationLineInput>,
 }
 
 impl InsertInput {
     pub fn to_domain(self) -> ServiceInput {
-        let InsertInput {
-            from_location_id,
-            lines,
-        } = self;
+        let InsertInput { lines } = self;
         ServiceInput {
-            from_location_id,
             lines: lines
                 .into_iter()
                 .map(|line| ServiceLine {
@@ -330,7 +325,6 @@ mod test {
             assert_eq!(
                 input,
                 ServiceInput {
-                    from_location_id: Some("from_location".to_string()),
                     lines: vec![ServiceLine {
                         id: "relocation_1".to_string(),
                         from_stock_line_id: "stock_line_a".to_string(),
@@ -349,7 +343,6 @@ mod test {
         let variables = json!({
           "storeId": "n/a",
           "input": {
-            "fromLocationId": "from_location",
             "lines": [{
               "id": "relocation_1",
               "fromStockLineId": "stock_line_a",
