@@ -26,5 +26,7 @@ The intention is that this package is the shell for the open msupply client, whi
 ### Tips & Things to keep in mind
 
 - To add components into the shell, use the `AppDrawer`/`AppFooter` etc portals.
+- To add a keyboard shortcut indication simply add `data-shortcut` e.g. `data-shortcut="Alt+N"`. When the `Control` or the `Alt` key is pressed the text of this property is shown to the user
+- To register a keyboard shortcut, you can use `useRegisterActions` to hook into the global CMD+K structure
 
 ### Future considerations
