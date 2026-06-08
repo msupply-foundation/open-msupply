@@ -31,6 +31,7 @@ pub enum InsertStockRelocationError {
     LocationOnHold(String),
     ToLocationDoesNotExist,
     NotThisStoreLocation,
+    IncorrectLocationType,
     NotEnoughStock(String),
     InvalidNumberOfPacks,
     InvalidPackSize,
@@ -101,6 +102,7 @@ impl From<ValidateMovementError> for InsertStockRelocationError {
             ValidateMovementError::LocationOnHold(id) => E::LocationOnHold(id),
             ValidateMovementError::ToLocationDoesNotExist => E::ToLocationDoesNotExist,
             ValidateMovementError::NotThisStoreLocation => E::NotThisStoreLocation,
+            ValidateMovementError::IncorrectLocationType => E::IncorrectLocationType,
             ValidateMovementError::NotEnoughStock(id) => E::NotEnoughStock(id),
             ValidateMovementError::InvalidNumberOfPacks => E::InvalidNumberOfPacks,
             ValidateMovementError::InvalidPackSize => E::InvalidPackSize,
@@ -112,7 +114,10 @@ impl From<ValidateMovementError> for InsertStockRelocationError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_location_1, mock_location_on_hold, MockDataInserts},
+        mock::{
+            mock_location_1, mock_location_on_hold, mock_location_with_restricted_location_type_a,
+            MockDataInserts,
+        },
         test_db::setup_all,
         StockLineRow, StockLineRowRepository, StockRelocationStatus, Upsert,
     };
@@ -159,15 +164,20 @@ mod test {
         let (service_provider, ctx) = setup("stock_relocation_validation_errors").await;
         whole_line("ok_sl", false).upsert(&ctx.connection).unwrap();
         whole_line("held_sl", true).upsert(&ctx.connection).unwrap();
+        // Stock of an item restricted to location_type_b.
+        StockLineRow {
+            item_id: "restricted_location_type_item".to_string(),
+            ..whole_line("restricted_sl", false)
+        }
+        .upsert(&ctx.connection)
+        .unwrap();
         let service = &service_provider.stock_relocation_service;
 
         let insert = |line: InsertStockRelocationLine| {
             service.insert_stock_relocation(
                 &ctx,
                 "store_a",
-                InsertStockRelocation {
-                    lines: vec![line],
-                },
+                InsertStockRelocation { lines: vec![line] },
             )
         };
 
@@ -194,6 +204,13 @@ mod test {
             Err(InsertStockRelocationError::LocationOnHold(
                 mock_location_on_hold().id
             ))
+        );
+        assert_eq!(
+            insert(InsertStockRelocationLine {
+                to_location_id: Some(mock_location_with_restricted_location_type_a().id),
+                ..line("restricted_sl")
+            }),
+            Err(InsertStockRelocationError::IncorrectLocationType)
         );
     }
 
