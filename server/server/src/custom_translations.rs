@@ -73,6 +73,14 @@ async fn custom_translations(
 /// v1 map and overlaying the v2 translations for the base language then the
 /// full dialect (so the most specific language wins), with the `common`
 /// namespace winning over others within each tier.
+///
+/// The v1 base is intentional and load-bearing: as well as any not-yet-migrated
+/// legacy overrides, it carries report descriptions, which `standard_reports`
+/// writes into v1 as `messages.how-to-read-<code>` and the frontend Reports
+/// toolbar reads via i18next. These are global, runtime, single strings that
+/// don't fit the per-language v2 structure, so don't drop the v1 base without a
+/// new home for them. v2 always overlays/wins, and an admin can clear the
+/// legacy (v1) namespace once migrated to remove any v1 bleed.
 fn merge_for_language(
     v1: &BTreeMap<String, String>,
     v2: &CustomTranslationsV2Value,
