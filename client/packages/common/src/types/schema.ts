@@ -4130,7 +4130,6 @@ export type InsertStockRelocationErrorInterface = {
 };
 
 export type InsertStockRelocationInput = {
-  fromLocationId?: InputMaybe<Scalars['String']['input']>;
   lines: Array<InsertStockRelocationLineInput>;
 };
 

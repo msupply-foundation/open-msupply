@@ -14,7 +14,6 @@ export type DraftStockMovementLine = {
 };
 
 export type DraftStockMovement = {
-  fromLocationId?: string | null;
   lines: DraftStockMovementLine[];
 };
 
@@ -23,7 +22,6 @@ export const useInsertStockMovement = () => {
 
   const mutationFn = async (draft: DraftStockMovement) => {
     const input: InsertStockRelocationInput = {
-      fromLocationId: draft.fromLocationId,
       lines: draft.lines.map(line => ({
         id: FnUtils.generateUUID(),
         fromStockLineId: line.fromStockLineId,

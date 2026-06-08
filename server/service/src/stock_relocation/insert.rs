@@ -11,7 +11,6 @@ use crate::stock_relocation::validate::{
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct InsertStockRelocation {
-    pub from_location_id: Option<String>,
     pub lines: Vec<InsertStockRelocationLine>,
 }
 
@@ -167,7 +166,6 @@ mod test {
                 &ctx,
                 "store_a",
                 InsertStockRelocation {
-                    from_location_id: None,
                     lines: vec![line],
                 },
             )
@@ -212,7 +210,6 @@ mod test {
                 &ctx,
                 "store_a",
                 InsertStockRelocation {
-                    from_location_id: None,
                     lines: vec![InsertStockRelocationLine {
                         to_pack_size: 2.0,
                         ..line("relocate_sl")
