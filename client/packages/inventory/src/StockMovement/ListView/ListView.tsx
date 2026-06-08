@@ -12,6 +12,7 @@ import { getStatusTranslation } from '../utils';
 import { StockMovementRowFragment } from '../api/operations.generated';
 import { useStockMovementList } from '../api';
 import { Toolbar } from './Toolbar';
+import { AppBarButtons } from './AppBarButtons';
 
 export const ListView = () => {
   const t = useTranslation();
@@ -115,6 +116,7 @@ export const ListView = () => {
   return (
     <>
       <Toolbar />
+      <AppBarButtons />
       <MaterialTable table={table} />
     </>
   );
