@@ -76,3 +76,23 @@ mutation insertStockRelocation(
     }
   }
 }
+
+mutation updateStockRelocation(
+  $input: UpdateStockRelocationInput!
+  $storeId: String!
+) {
+  updateStockRelocation(input: $input, storeId: $storeId) {
+    __typename
+    ... on UpdateStockRelocationNode {
+      __typename
+      id
+    }
+    ... on UpdateStockRelocationError {
+      __typename
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
