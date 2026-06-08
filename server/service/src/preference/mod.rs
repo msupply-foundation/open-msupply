@@ -27,9 +27,8 @@ pub trait PreferenceServiceTrait: Sync + Send {
             // Global preferences
             allow_tracking_of_stock_by_donor,
             authorise_purchase_order,
-            // v1 custom translations are hidden from the edit UI - they're now
-            // auto-maintained from the v2 preference (and report descriptions)
-            // and only kept for backwards compatibility with older sync clients.
+            // v1 custom translations are hidden from the preferences edit list; they can still
+            // be edited via the v2 custom translations editor (legacy namespace) when needed.
             custom_translations: _,
             custom_translations_v2,
             gender_options,
