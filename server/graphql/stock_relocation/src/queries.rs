@@ -52,10 +52,8 @@ pub struct StockRelocationFilterInput {
     pub store_id: Option<EqualFilterStringInput>,
     pub status: Option<EqualFilterStockRelocationStatusInput>,
     pub item_code_or_name: Option<StringFilterInput>,
-    pub from_location_id: Option<EqualFilterStringInput>,
-    pub to_location_id: Option<EqualFilterStringInput>,
-    pub created_datetime: Option<DatetimeFilterInput>,
-    pub finalised_datetime: Option<DatetimeFilterInput>,
+    pub from_location_code: Option<StringFilterInput>,
+    pub to_location_code: Option<StringFilterInput>,
 }
 
 #[derive(Union)]
@@ -142,10 +140,8 @@ impl StockRelocationFilterInput {
                 .status
                 .map(|t| map_filter!(t, StockRelocationStatus::from)),
             item_code_or_name: self.item_code_or_name.map(StringFilter::from),
-            from_location_id: self.from_location_id.map(EqualFilter::from),
-            to_location_id: self.to_location_id.map(EqualFilter::from),
-            created_datetime: self.created_datetime.map(DatetimeFilter::from),
-            finalised_datetime: self.finalised_datetime.map(DatetimeFilter::from),
+            from_location_code: self.from_location_code.map(StringFilter::from),
+            to_location_code: self.to_location_code.map(StringFilter::from),
         }
     }
 }

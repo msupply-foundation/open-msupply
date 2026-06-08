@@ -9744,14 +9744,12 @@ export type StockRelocationConnector = {
 };
 
 export type StockRelocationFilterInput = {
-  createdDatetime?: InputMaybe<DatetimeFilterInput>;
-  finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
-  fromLocationId?: InputMaybe<EqualFilterStringInput>;
+  fromLocationCode?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   status?: InputMaybe<EqualFilterStockRelocationStatusInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
-  toLocationId?: InputMaybe<EqualFilterStringInput>;
+  toLocationCode?: InputMaybe<StringFilterInput>;
 };
 
 export type StockRelocationNode = {
