@@ -25,6 +25,7 @@ import {
   useIsCentralServerApi,
   useRootNavigationPath,
   useIntlUtils,
+  GlobalStyles,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
@@ -74,6 +75,10 @@ const Blocker = () => {
   return null;
 };
 
+const isModifierKey = (e: KeyboardEvent) => {
+  return e.key === 'Control' || e.key === 'Alt';
+};
+
 export const Site: FC = () => {
   const location = useLocation();
   const getPageTitle = useGetPageTitle();
@@ -89,6 +94,12 @@ export const Site: FC = () => {
 
   useEffect(() => {
     setPageTitle(pageTitle);
+    document.addEventListener('keydown', e => {
+      if (isModifierKey(e)) document.body.classList.add('show-hints');
+    });
+    document.addEventListener('keyup', e => {
+      if (isModifierKey(e)) document.body.classList.remove('show-hints');
+    });
   }, [location, pageTitle, setPageTitle]);
 
   // Colours for the Footer bar, if specified in Store prefs
@@ -117,6 +128,24 @@ export const Site: FC = () => {
   return (
     <RequireAuthentication>
       <Blocker />
+      <GlobalStyles
+        styles={{
+          '& body.show-hints [data-shortcut]::after': {
+            content: 'attr(data-shortcut)',
+            position: 'absolute',
+            background: theme.mixins.dialog.button.primary.backgroundColor,
+            color: theme.mixins.dialog.button.primary.color,
+            paddingTop: '0.125rem',
+            paddingBottom: '0.125rem',
+            paddingLeft: '0.375rem',
+            paddingRight: '0.375rem',
+            borderRadius: '0.25rem',
+            fontSize: '0.75rem',
+            marginTop: '-0.5rem',
+            opacity: 0.8,
+          },
+        }}
+      />
       <EasterEggModalProvider>
         <SyncModalProvider>
           <CommandK>
@@ -254,9 +283,7 @@ export const Site: FC = () => {
                       {pluginRoutes}
                       <Route
                         path="/"
-                        element={
-                          <Navigate replace to={rootNavigationPath} />
-                        }
+                        element={<Navigate replace to={rootNavigationPath} />}
                       />
                       <Route path="*" element={<NotFound />} />
                     </Routes>

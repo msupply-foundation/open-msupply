@@ -67,6 +67,7 @@ export const ListOptions = ({
             sx={{ padding: '5px 0px', cursor: 'pointer' }}
             onClick={() => onClick(option.id)}
             ref={option.id === currentId ? scrollRef : null}
+            data-shortcut={option.id === 'new' ? 'Alt+N' : undefined}
           >
             <ListItemIcon sx={{ padding: 0, minWidth: 25 }}>
               <Box
