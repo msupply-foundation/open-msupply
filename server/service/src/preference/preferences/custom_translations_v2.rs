@@ -7,8 +7,8 @@ use crate::preference::{PrefKey, Preference, PreferenceType, PreferenceValueType
 /// Shape: `language -> namespace -> key -> value`
 ///
 /// This is the v2 of [`super::CustomTranslations`]. The v1 flat preference is
-/// kept up to date automatically (see `upsert_preferences`) so older sync
-/// clients, which don't understand this preference key, keep working.
+/// kept for backwards compatibility with older sync clients, and is edited
+/// independently (not auto-derived from v2).
 pub struct CustomTranslationsV2;
 
 /// `language -> namespace -> key -> value`
