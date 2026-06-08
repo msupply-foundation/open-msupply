@@ -2098,6 +2098,8 @@ export type DeleteOutboundShipmentUnallocatedLineResponseWithId = {
   response: DeleteOutboundShipmentUnallocatedLineResponse;
 };
 
+export type DeletePluginDataResponse = DeleteResponse;
+
 export type DeletePrescriptionError = {
   __typename: 'DeletePrescriptionError';
   error: DeletePrescriptionErrorInterface;
@@ -5526,6 +5528,7 @@ export type Mutations = {
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
   deleteOutboundShipmentServiceLine: DeleteOutboundShipmentServiceLineResponse;
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
+  deletePluginData: DeletePluginDataResponse;
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
   deletePurchaseOrder: DeletePurchaseOrderResponse;
@@ -5801,6 +5804,11 @@ export type MutationsDeleteOutboundShipmentServiceLineArgs = {
 
 export type MutationsDeleteOutboundShipmentUnallocatedLineArgs = {
   input: DeleteOutboundShipmentUnallocatedLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeletePluginDataArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -11589,6 +11597,10 @@ export type UpsertPreferencesInput = {
     Array<BoolStorePrefInput>
   >;
   customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
+  /**
+   * v2 custom translations, shape: `language -> namespace -> key -> value`.
+   * Passed as a JSON value to avoid nested-map InputObject friction.
+   */
   customTranslationsV2?: InputMaybe<Scalars['JSON']['input']>;
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
