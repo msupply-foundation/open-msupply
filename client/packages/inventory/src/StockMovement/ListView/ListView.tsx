@@ -108,6 +108,7 @@ export const ListView = () => {
     columns,
     data: data?.nodes,
     totalCount: data?.totalCount ?? 0,
+    enableRowSelection: false,
     noDataElement: <NothingHere body={t('messages.no-stock-movements')} />,
   });
 
