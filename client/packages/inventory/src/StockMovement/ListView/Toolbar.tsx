@@ -24,9 +24,9 @@ export const Toolbar = () => {
           filters={[
             {
               type: 'text',
-              name: t('label.item'),
+              name: t('label.code-or-name'),
               urlParameter: 'itemCodeOrName',
-              placeholder: t('placeholder.search-by-name'),
+              placeholder: t('placeholder.enter-an-item-code-or-name'),
               isDefault: true,
             },
             {
