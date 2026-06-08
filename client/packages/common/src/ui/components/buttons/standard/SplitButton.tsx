@@ -92,6 +92,7 @@ export const SplitButton = <T,>({
       <Tooltip title={label}>
         <ButtonGroup
           data-shortcut={dataShortcut}
+          aria-keyshortcuts={dataShortcut}
           color={color}
           variant="outlined"
           aria-label={ariaLabel}

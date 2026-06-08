@@ -55,16 +55,19 @@ export const StocktakeLineEditTabs: FC<
         >
           <Tab
             data-shortcut="Ctrl+1"
+            aria-keyshortcuts="Control+1"
             value={Tabs.Batch}
             label={t('label.batch')}
           />
           <Tab
             data-shortcut="Ctrl+2"
+            aria-keyshortcuts="Control+2"
             value={Tabs.Pricing}
             label={t('label.pricing')}
           />
           <Tab
             data-shortcut="Ctrl+3"
+            aria-keyshortcuts="Control+3"
             value={Tabs.Other}
             label={t('heading.other')}
           />
