@@ -94,13 +94,22 @@ export const Site: FC = () => {
 
   useEffect(() => {
     setPageTitle(pageTitle);
-    document.addEventListener('keydown', e => {
-      if (isModifierKey(e)) document.body.classList.add('show-hints');
-    });
-    document.addEventListener('keyup', e => {
-      if (isModifierKey(e)) document.body.classList.remove('show-hints');
-    });
   }, [location, pageTitle, setPageTitle]);
+
+  useEffect(() => {
+    const onDown = (e: KeyboardEvent) => {
+      if (isModifierKey(e)) document.body.classList.add('show-hints');
+    };
+    const onUp = (e: KeyboardEvent) => {
+      if (isModifierKey(e)) document.body.classList.remove('show-hints');
+    };
+    document.addEventListener('keydown', onDown);
+    document.addEventListener('keyup', onUp);
+    return () => {
+      document.removeEventListener('keydown', onDown);
+      document.removeEventListener('keyup', onUp);
+    };
+  }, []);
 
   // Colours for the Footer bar, if specified in Store prefs
   let customColour: string | undefined;
