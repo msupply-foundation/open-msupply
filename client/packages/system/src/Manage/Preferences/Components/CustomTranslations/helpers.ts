@@ -149,6 +149,14 @@ export type CustomTranslationsV2 = Record<
 export const DEFAULT_CUSTOM_TRANSLATION_NAMESPACE = 'common';
 
 /**
+ * Deep clone of a JSON-serialisable value. Used instead of `structuredClone`,
+ * which isn't available in all runtimes (e.g. the jsdom test environment). The
+ * custom translation structures are plain nested string maps, so JSON round-
+ * tripping is safe.
+ */
+const deepClone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+
+/**
  * Namespaces that always appear in the editor. Plugin namespaces (by
  * plugin_code) and any namespaces already present in the data are added on top.
  * Arbitrary namespaces are also supported via JSON upload.
@@ -196,7 +204,7 @@ export const buildExportObject = (
   nested: CustomTranslationsV2,
   legacyV1: Record<string, string>
 ): Record<string, unknown> => {
-  const out: Record<string, unknown> = structuredClone(nested);
+  const out: Record<string, unknown> = deepClone(nested);
   if (Object.keys(legacyV1).length > 0) {
     out[LEGACY_V1_EXPORT_KEY] = legacyV1;
   }
@@ -271,7 +279,7 @@ export const mergeNestedTranslations = (
 ): CustomTranslationsV2 => {
   if (mode === 'replace') return imported;
 
-  const result: CustomTranslationsV2 = structuredClone(existing);
+  const result: CustomTranslationsV2 = deepClone(existing);
   for (const [lang, namespaces] of Object.entries(imported)) {
     const langResult = (result[lang] ??= {});
     for (const [ns, translations] of Object.entries(namespaces)) {
@@ -293,7 +301,7 @@ export const setNamespaceTranslations = (
   namespace: string,
   translations: Record<string, string>
 ): CustomTranslationsV2 => {
-  const result = structuredClone(nested);
+  const result = deepClone(nested);
   const langResult = (result[language] ??= {});
   if (Object.keys(translations).length === 0) {
     delete langResult[namespace];

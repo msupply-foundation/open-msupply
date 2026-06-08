@@ -91,3 +91,57 @@ fn merge_for_language(
 
     merged
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn v1() -> BTreeMap<String, String> {
+        BTreeMap::from([
+            ("button.close".to_string(), "Legacy Close".to_string()),
+            ("legacy.only".to_string(), "Legacy Only".to_string()),
+        ])
+    }
+
+    fn v2() -> CustomTranslationsV2Value {
+        serde_json::from_value(serde_json::json!({
+            "fr": {
+                "common": { "button.close": "Fermer", "shared": "Common" },
+                "report": { "report.title": "Rapport", "shared": "Report" }
+            },
+            "fr-DJ": {
+                "common": { "button.close": "Fermer (DJ)" }
+            }
+        }))
+        .unwrap()
+    }
+
+    #[test]
+    fn merge_overlays_v2_on_v1_keeping_v1_only_keys() {
+        let merged = merge_for_language(&v1(), &v2(), "fr");
+
+        // v2 wins over v1
+        assert_eq!(merged.get("button.close"), Some(&"Fermer".to_string()));
+        // v1-only keys are preserved
+        assert_eq!(merged.get("legacy.only"), Some(&"Legacy Only".to_string()));
+        // other namespaces are flattened in too
+        assert_eq!(merged.get("report.title"), Some(&"Rapport".to_string()));
+        // common wins over other namespaces on collision
+        assert_eq!(merged.get("shared"), Some(&"Common".to_string()));
+    }
+
+    #[test]
+    fn merge_applies_base_then_dialect() {
+        // fr-DJ has no "shared"/"report" of its own, but inherits the fr base,
+        // and its own button.close overrides the base.
+        let merged = merge_for_language(&v1(), &v2(), "fr-DJ");
+        assert_eq!(merged.get("button.close"), Some(&"Fermer (DJ)".to_string()));
+        assert_eq!(merged.get("report.title"), Some(&"Rapport".to_string()));
+    }
+
+    #[test]
+    fn merge_returns_v1_when_language_absent_from_v2() {
+        let merged = merge_for_language(&v1(), &v2(), "es");
+        assert_eq!(merged, v1());
+    }
+}
