@@ -22,7 +22,7 @@ import {
   UploadIcon,
   CopyIcon,
 } from '@common/icons';
-import { useIntlUtils, useTranslation } from '@common/intl';
+import { useIntl, useIntlUtils, useTranslation } from '@common/intl';
 import { useDialog, useNotification, useToggle } from '@common/hooks';
 import {
   mapTranslationsToArray,
@@ -79,6 +79,7 @@ export const CustomTranslationsV2Modal = ({
   onClose: () => void;
 }) => {
   const t = useTranslation();
+  const { i18n } = useIntl();
   const {
     currentLanguage,
     currentLanguageName,
@@ -87,6 +88,19 @@ export const CustomTranslationsV2Modal = ({
   } = useIntlUtils();
   const { success, error } = useNotification();
   const { mutateAsync } = useUpsertCustomTranslationsV2();
+
+  // Snapshot the language being edited when the modal opens. All view/commit/
+  // save operations use this, never the live language, so the modal always
+  // edits the language it was opened with even if something changes the app
+  // language underneath it.
+  const [editingLanguage] = useState(currentLanguage);
+  const [editingLanguageName] = useState(currentLanguageName);
+  const [openedI18nLanguage] = useState(i18n.language);
+  // The footer language selector normally reloads the page (closing this
+  // modal), but guard against the app language changing while we're open so we
+  // never save the edited rows under the wrong language.
+  const languageChanged = i18n.language !== openedI18nLanguage;
+  const editingLanguageLabel = editingLanguageName ?? editingLanguage;
 
   // Legacy v1 flat map (applies to all languages / older clients). Surfaced as
   // the reserved "legacy" namespace, and only when it already has data.
@@ -136,7 +150,7 @@ export const CustomTranslationsV2Modal = ({
   ): Translation[] =>
     ns === LEGACY_NAMESPACE
       ? mapTranslationsToArray(legacySrc, t, { includeUnknownKeys: true })
-      : mapTranslationsToArray(nestedSrc[currentLanguage]?.[ns] ?? {}, t, {
+      : mapTranslationsToArray(nestedSrc[editingLanguage]?.[ns] ?? {}, t, {
           includeUnknownKeys: true,
         });
 
@@ -157,7 +171,7 @@ export const CustomTranslationsV2Modal = ({
     return {
       nested: setNamespaceTranslations(
         nested,
-        currentLanguage,
+        editingLanguage,
         namespace,
         mapTranslationsToObject(translations)
       ),
@@ -304,6 +318,13 @@ export const CustomTranslationsV2Modal = ({
   };
 
   const save = async (shouldClose = false) => {
+    // Never save once the app language has changed - the rows belong to the
+    // language the modal was opened with.
+    if (languageChanged) {
+      error(t('messages.custom-translations-language-changed'))();
+      return;
+    }
+
     const hasInvalidTranslations = translations.some(tr => tr.isInvalid);
     if (hasInvalidTranslations) {
       setShowValidationErrors(true);
@@ -355,6 +376,7 @@ export const CustomTranslationsV2Modal = ({
         saveButton={
           <LoadingButton
             isLoading={loading}
+            disabled={languageChanged}
             onClick={() => save(false)}
             label={t('button.save')}
             startIcon={<SaveIcon />}
@@ -365,6 +387,7 @@ export const CustomTranslationsV2Modal = ({
         okButton={
           <LoadingButton
             isLoading={loading}
+            disabled={languageChanged}
             onClick={() => save(true)}
             label={t('button.save-and-close')}
             startIcon={<SaveIcon />}
@@ -380,11 +403,18 @@ export const CustomTranslationsV2Modal = ({
           height="100%"
           dir={isRtl ? 'rtl' : 'ltr'}
         >
+          {languageChanged && (
+            <Alert severity="error">
+              {t('messages.custom-translations-language-changed', {
+                language: editingLanguageLabel,
+              })}
+            </Alert>
+          )}
           <Alert severity={isLegacy ? 'warning' : 'info'}>
             {isLegacy
               ? t('messages.custom-translations-legacy-banner')
               : t('messages.custom-translations-editing-language', {
-                  language: currentLanguageName ?? currentLanguage,
+                  language: editingLanguageLabel,
                 })}
           </Alert>
           <Box display="flex" gap={1} alignItems="center">
@@ -401,7 +431,7 @@ export const CustomTranslationsV2Modal = ({
             {legacyHasData && !isLegacy && (
               <ButtonWithIcon
                 label={t('button.copy-legacy-into-language', {
-                  language: currentLanguageName ?? currentLanguage,
+                  language: editingLanguageLabel,
                 })}
                 onClick={copyLegacyIntoCurrentLanguage}
                 Icon={<CopyIcon />}

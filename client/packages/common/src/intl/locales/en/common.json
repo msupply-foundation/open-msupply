@@ -2176,6 +2176,7 @@
   "messages.currency-rate-info": "The number of foreign (PO) currency units per one local currency unit. For example, if local is NZD and PO is USD, a rate of 0.6 means 1 NZD = 0.6 USD.",
   "messages.custom-translations-editing-language": "Editing custom translations for: {{language}}. Switch language using the selector at the bottom of the screen to edit another language.",
   "messages.custom-translations-import-multi-language": "You can upload a single JSON file containing translations for multiple languages and namespaces (language → namespace → key → value). A flat file of key → value pairs will be imported into the currently selected language and namespace.",
+  "messages.custom-translations-language-changed": "The display language has changed, but this editor is still editing translations for {{language}}. Close and reopen the editor to edit the new language. Saving is disabled to avoid overwriting the wrong language.",
   "messages.custom-translations-legacy-banner": "These legacy translations apply to all languages and are sent to older sync clients. The language selector does not affect them. Clearing them will also remove report descriptions sent to older clients.",
   "messages.customer-requisition-created-on": "Customer requisition created on {{date}}",
   "messages.customer-return-created-verified": "Customer return successfully created as Verified",
