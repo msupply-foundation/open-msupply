@@ -34,8 +34,7 @@ interface CreateStockMovementModalProps {
 }
 
 const lineFromStockLine = (
-  stockLine: StockLineRowFragment,
-  restrictedLocationTypeId?: string | null
+  stockLine: StockLineRowFragment
 ): DraftStockMovementLineState => {
   const onHold = stockLine.onHold || (stockLine.location?.onHold ?? false);
   return {
@@ -43,7 +42,7 @@ const lineFromStockLine = (
     itemId: stockLine.itemId,
     itemCode: stockLine.item.code,
     itemName: stockLine.item.name,
-    restrictedLocationTypeId,
+    restrictedLocationTypeId: stockLine.item.restrictedLocationTypeId,
     fromStockLineId: stockLine.id,
     fromLocationCode: stockLine.location?.code ?? null,
     batch: stockLine.batch,
@@ -134,13 +133,11 @@ export const CreateStockMovementModal = ({
     mode === 'byLocation'
       ? fromStockNodes.filter(node => addedItemIds.includes(node.itemId))
       : itemStockNodes;
-  const restrictedLocationTypeId =
-    mode === 'byItem' ? byItem?.restrictedLocationTypeId : undefined;
 
   const lines: DraftStockMovementLineState[] = sourceStockLines
     .filter(stockLine => !removedLineIds.includes(stockLine.id))
     .map(stockLine => ({
-      ...lineFromStockLine(stockLine, restrictedLocationTypeId),
+      ...lineFromStockLine(stockLine),
       ...edits[stockLine.id],
     }));
 

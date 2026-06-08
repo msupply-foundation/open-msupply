@@ -20,6 +20,7 @@ pub enum ValidateMovementError {
     LocationOnHold(String),
     ToLocationDoesNotExist,
     NotThisStoreLocation,
+    IncorrectLocationType,
     NotEnoughStock(String),
     InvalidNumberOfPacks,
     InvalidPackSize,
@@ -35,6 +36,7 @@ pub fn validate_movement(
 
     let StockLine {
         stock_line_row,
+        item_row,
         location_row,
         ..
     } = check_stock_line_exists(connection, store_id, &movement.from_stock_line_id).map_err(
@@ -75,6 +77,11 @@ pub fn validate_movement(
         }
         if to_location.on_hold {
             return Err(LocationOnHold(to_location.id.clone()));
+        }
+        if let Some(restricted_type) = &item_row.restricted_location_type_id {
+            if to_location.location_type_id.as_ref() != Some(restricted_type) {
+                return Err(IncorrectLocationType);
+            }
         }
     }
 

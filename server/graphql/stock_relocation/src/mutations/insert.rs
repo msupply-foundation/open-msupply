@@ -129,6 +129,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::NotThisStoreStockLine
         | ServiceError::ToLocationDoesNotExist
         | ServiceError::NotThisStoreLocation
+        | ServiceError::IncorrectLocationType
         | ServiceError::InvalidNumberOfPacks
         | ServiceError::InvalidPackSize => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
