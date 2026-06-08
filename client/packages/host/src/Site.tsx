@@ -130,7 +130,7 @@ export const Site: FC = () => {
       <Blocker />
       <GlobalStyles
         styles={{
-          '& body.show-hints [data-shortcut]::after': {
+          'body.show-hints [data-shortcut]::after': {
             content: 'attr(data-shortcut)',
             position: 'absolute',
             background: theme.mixins.dialog.button.primary.backgroundColor,
