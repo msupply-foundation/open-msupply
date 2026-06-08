@@ -139,20 +139,21 @@ export const Site: FC = () => {
       <Blocker />
       <GlobalStyles
         styles={{
-          'body.show-hints [data-shortcut]::after': {
-            content: 'attr(data-shortcut)',
-            position: 'absolute',
-            background: theme.mixins.dialog.button.primary.backgroundColor,
-            color: theme.mixins.dialog.button.primary.color,
-            paddingTop: '0.125rem',
-            paddingBottom: '0.125rem',
-            paddingLeft: '0.375rem',
-            paddingRight: '0.375rem',
-            borderRadius: '0.25rem',
-            fontSize: '0.75rem',
-            marginTop: '-0.5rem',
-            opacity: 0.8,
-          },
+          'body.show-hints [data-shortcut]:not(:disabled):not([aria-disabled="true"])::after':
+            {
+              content: 'attr(data-shortcut)',
+              position: 'absolute',
+              background: theme.mixins.dialog.button.primary.backgroundColor,
+              color: theme.mixins.dialog.button.primary.color,
+              paddingTop: '0.125rem',
+              paddingBottom: '0.125rem',
+              paddingLeft: '0.375rem',
+              paddingRight: '0.375rem',
+              borderRadius: '0.25rem',
+              fontSize: '0.75rem',
+              marginTop: '-0.5rem',
+              opacity: 0.8,
+            },
         }}
       />
       <EasterEggModalProvider>

@@ -30,14 +30,19 @@ export const AddButton = React.forwardRef<HTMLButtonElement, AddButtonProps>(
     },
     ref
   ) => {
-    useRegisterActions([
-      {
-        id: 'add',
-        name: `${label} (${ALT_KEY}+N)`,
-        shortcut: ['Alt+KeyN'],
-        perform: onClick,
-      },
-    ]);
+    useRegisterActions(
+      disabled
+        ? []
+        : [
+            {
+              id: 'add',
+              name: `${label} (${ALT_KEY}+N)`,
+              shortcut: ['Alt+KeyN'],
+              perform: onClick,
+            },
+          ],
+      [disabled, onClick, label]
+    );
 
     return (
       <ButtonWithIcon

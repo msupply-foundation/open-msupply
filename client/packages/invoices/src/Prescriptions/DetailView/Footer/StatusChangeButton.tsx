@@ -141,14 +141,20 @@ export const StatusChangeButton = () => {
     return getConfirmation();
   };
 
-  useRegisterActions([
-    {
-      id: 'updateStatus',
-      name: `${t('button.update-status')} (${ALT_KEY}+V)`,
-      shortcut: ['Alt+KeyV'],
-      perform: onStatusClick,
-    },
-  ]);
+  const isShortcutDisabled = isDisabled || !selectedOption;
+  useRegisterActions(
+    isShortcutDisabled
+      ? []
+      : [
+          {
+            id: 'updateStatus',
+            name: `${t('button.update-status')} (${ALT_KEY}+V)`,
+            shortcut: ['Alt+KeyV'],
+            perform: onStatusClick,
+          },
+        ],
+    [isShortcutDisabled, onStatusClick]
+  );
 
   if (!selectedOption) return null;
   if (isDisabled) return null;

@@ -93,17 +93,20 @@ export const AddFromScannerButton = ({
   const label = isListening
     ? `${t('button.listening-for-scans')}  🟢`
     : `${t('button.scan')}`;
+  const isShortcutDisabled = disabled || !isEnabled || !isConnected;
   useRegisterActions(
-    [
-      {
-        id: 'action:scan-barcode',
-        name: `${label} (Ctrl+s)`,
-        shortcut: ['Control+s'],
-        keywords: 'drawer, close',
-        perform: handleClick,
-      },
-    ],
-    [isListening]
+    isShortcutDisabled
+      ? []
+      : [
+          {
+            id: 'action:scan-barcode',
+            name: `${label} (Ctrl+s)`,
+            shortcut: ['Control+s'],
+            keywords: 'drawer, close',
+            perform: handleClick,
+          },
+        ],
+    [isListening, isShortcutDisabled]
   );
 
   if (!isEnabled) return null;
