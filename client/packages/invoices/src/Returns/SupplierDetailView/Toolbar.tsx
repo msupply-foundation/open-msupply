@@ -72,13 +72,13 @@ export const Toolbar: FC = () => {
               />
             )}
             <InputWithLabelRow
-              label={t('label.supplier-ref')}
+              label={t('label.supplier-reference')}
               Input={
                 <BasicTextInput
                   disabled={isDisabled}
                   size="small"
                   sx={{ width: 250 }}
-                  value={theirReference}
+                  value={theirReference ?? ''}
                   onChange={event => {
                     update({ theirReference: event.target.value });
                   }}

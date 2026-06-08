@@ -21,7 +21,12 @@ interface SupplierReturnEditModalProps {
   onCreate?: () => void;
   supplierId: string;
   returnId?: string;
-  inboundShipmentId?: string;
+  inboundShipment?: {
+    id: string;
+    otherPartyName: string;
+    theirReference?: string | null;
+    linkedShipment?: { invoiceNumber: number } | null;
+  };
   initialItemId?: string | null;
   loadNextItem?: () => void;
   hasNextItem?: boolean;
@@ -38,14 +43,14 @@ export const SupplierReturnEditModal = ({
   returnId,
   initialItemId,
   modalMode,
-  inboundShipmentId,
+  inboundShipment,
   loadNextItem,
   hasNextItem = false,
   isNewReturn = false,
 }: SupplierReturnEditModalProps) => {
   const t = useTranslation();
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
-  const { success } = useNotification();
+  const { success, error } = useNotification();
   const [itemId, setItemId] = useState<string | undefined>(
     initialItemId ?? undefined
   );
@@ -54,6 +59,27 @@ export const SupplierReturnEditModal = ({
   const [zeroQuantityAlert, setZeroQuantityAlert] = useState<
     AlertColor | undefined
   >();
+
+  const sourceInvoiceNumber =
+    inboundShipment?.linkedShipment?.invoiceNumber ??
+    inboundShipment?.theirReference ??
+    null;
+  const defaultReference =
+    isNewReturn && sourceInvoiceNumber !== null
+      ? t('messages.default-supplier-return-reference', {
+          invoiceNumber: sourceInvoiceNumber,
+        })
+      : '';
+  const [theirReference, setTheirReference] = useState(defaultReference);
+
+  // For existing returns, initialise theirReference from the return data once
+  // loaded
+  const { data: returnData } = useReturns.document.supplierReturn();
+  useEffect(() => {
+    if (!isNewReturn && returnData?.theirReference !== undefined) {
+      setTheirReference(returnData.theirReference ?? '');
+    }
+  }, [returnData?.theirReference, isNewReturn]);
 
   // The inboundIsDisabled hook returns true when there is no data, so in the
   // case of a new return, we want to make sure it is *not* disabled
@@ -66,7 +92,7 @@ export const SupplierReturnEditModal = ({
     stockLineIds,
     returnId,
     itemId,
-    inboundShipmentId,
+    inboundShipmentId: inboundShipment?.id,
   });
 
   useEffect(() => {
@@ -76,25 +102,29 @@ export const SupplierReturnEditModal = ({
 
   const onOk = async () => {
     try {
-      const supplierReturn = !isDisabled && (await save());
+      const supplierReturn = !isDisabled && (await save(theirReference));
       onCreate?.();
       !!supplierReturn &&
         supplierReturn?.originalShipment?.id &&
         isNewReturn &&
         success(t('messages.supplier-return-created-shipped'))();
       onClose();
-    } catch {
-      // TODO: handle error display...
+    } catch (e) {
+      const errorMessage =
+        (e as Error)?.message ?? t('error.failed-to-save-return');
+      error(errorMessage)();
     }
   };
 
   const handleNextItem = async () => {
     try {
-      !isDisabled && (await save());
+      !isDisabled && (await save(theirReference));
       loadNextItem && loadNextItem();
       onChangeTab(Tabs.Quantity);
-    } catch {
-      // TODO: handle error display...
+    } catch (e) {
+      const errorMessage =
+        (e as Error)?.message ?? t('error.failed-to-save-return');
+      error(errorMessage)();
     }
   };
 
@@ -141,38 +171,44 @@ export const SupplierReturnEditModal = ({
     />
   );
 
-  return <Modal
-    title={t('heading.return-items')}
-    cancelButton={currentTab === Tabs.Quantity ? CancelButton : BackButton}
-    // zeroQuantityAlert === warning implies all lines are 0 and user has
-    // been already warned, so we act immediately to update them
-    okButton={
-      currentTab === Tabs.Quantity && zeroQuantityAlert !== 'warning'
-        ? NextStepButton
-        : OkButton
-    }
-    nextButton={!isNewReturn ? OkAndNextButton : undefined}
-    height={600}
-    width={1200}
-  >
-    <Box ref={alertRef}>
-      {returnId && (
-        <ItemSelector
-          disabled={!!itemId}
-          itemId={itemId}
-          onChangeItemId={setItemId}
-        />
-      )}
-      {lines.length > 0 && (
-        <ReturnSteps
-          currentTab={currentTab}
-          lines={lines}
-          update={update}
-          returnId={returnId}
-          zeroQuantityAlert={zeroQuantityAlert}
-          setZeroQuantityAlert={setZeroQuantityAlert}
-        />
-      )}
-    </Box>
-  </Modal>;
+  return (
+    <Modal
+      title={t('heading.return-items')}
+      cancelButton={currentTab === Tabs.Quantity ? CancelButton : BackButton}
+      // zeroQuantityAlert === warning implies all lines are 0 and user has
+      // been already warned, so we act immediately to update them
+      okButton={
+        currentTab === Tabs.Quantity && zeroQuantityAlert !== 'warning'
+          ? NextStepButton
+          : OkButton
+      }
+      nextButton={!isNewReturn ? OkAndNextButton : undefined}
+      height={600}
+      width={1200}
+    >
+      <Box ref={alertRef}>
+        {returnId && (
+          <ItemSelector
+            disabled={!!itemId}
+            itemId={itemId}
+            onChangeItemId={setItemId}
+          />
+        )}
+        {lines.length > 0 && (
+          <ReturnSteps
+            currentTab={currentTab}
+            lines={lines}
+            update={update}
+            returnId={returnId}
+            zeroQuantityAlert={zeroQuantityAlert}
+            setZeroQuantityAlert={setZeroQuantityAlert}
+            theirReference={theirReference}
+            onTheirReferenceChange={setTheirReference}
+            isDisabled={isDisabled}
+            returnToName={inboundShipment?.otherPartyName}
+          />
+        )}
+      </Box>
+    </Modal>
+  );
 };

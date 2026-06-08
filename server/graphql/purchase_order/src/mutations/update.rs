@@ -121,6 +121,14 @@ impl UpdateInput {
     }
 }
 
+pub struct InboundShipmentsNotVerified;
+#[Object]
+impl InboundShipmentsNotVerified {
+    pub async fn description(&self) -> &str {
+        "Cannot finalise this purchase order because there are open inbound shipments that have not been delivered."
+    }
+}
+
 pub struct ItemsCannotBeOrdered(pub Vec<PurchaseOrderLine>);
 #[Object]
 impl ItemsCannotBeOrdered {
@@ -142,6 +150,7 @@ impl ItemsCannotBeOrdered {
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateErrorInterface {
     ItemsCannotBeOrdered(ItemsCannotBeOrdered),
+    InboundShipmentsNotVerified(InboundShipmentsNotVerified),
 }
 
 #[derive(SimpleObject)]
@@ -172,25 +181,19 @@ pub fn update_purchase_order(
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
-    let user_has_auth_permission = input.status == Some(PurchaseOrderNodeStatus::Confirmed)
-        && validate_auth(
-            ctx,
-            &ResourceAccessRequest {
-                resource: Resource::AuthorisePurchaseOrder,
-                store_id: Some(store_id.to_string()),
-            },
-        )
-        .is_ok();
+
+    super::validate_purchase_order_update_authorisation(
+        ctx,
+        store_id,
+        &service_context.connection,
+        &input.id,
+        &input.status,
+    )?;
 
     map_response(
         service_provider
             .purchase_order_service
-            .update_purchase_order(
-                &service_context,
-                store_id,
-                input.to_domain(),
-                Some(user_has_auth_permission),
-            ),
+            .update_purchase_order(&service_context, store_id, input.to_domain()),
     )
 }
 
@@ -206,7 +209,7 @@ fn map_response(from: Result<PurchaseOrderRow, ServiceError>) -> Result<UpdateRe
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::ItemsCannotBeOrdered(lines) => {
@@ -214,12 +217,17 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 ItemsCannotBeOrdered(lines),
             ))
         }
+        ServiceError::InboundShipmentsNotVerified => {
+            return Ok(UpdateErrorInterface::InboundShipmentsNotVerified(
+                InboundShipmentsNotVerified,
+            ))
+        }
 
         ServiceError::SupplierDoesNotExist
         | ServiceError::PurchaseOrderDoesNotExist
         | ServiceError::NotASupplier
         | ServiceError::DonorDoesNotExist
-        | ServiceError::UserUnableToAuthorisePurchaseOrder => BadUserInput(formatted_error),
+        | ServiceError::CannotEditSentPurchaseOrder => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::UpdatedRecordNotFound => {
             InternalError(formatted_error)
         }

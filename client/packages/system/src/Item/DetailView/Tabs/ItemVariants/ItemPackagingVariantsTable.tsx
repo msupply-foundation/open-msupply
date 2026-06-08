@@ -38,33 +38,49 @@ export const ItemPackagingVariantsTable = ({
       {
         accessorKey: 'name',
         header: t('label.name'),
-        Cell: update ? ({ cell, row: { original: row } }) => <TextInputCell
-          cell={cell}
-          updateFn={value => updatePackaging({ id: row.id, name: value })}
-        /> : TextWithTooltipCell,
+        Cell: update
+          ? ({ cell, row: { original: row } }) => (
+              <TextInputCell
+                cell={cell}
+                updateFn={value => updatePackaging({ id: row.id, name: value })}
+              />
+            )
+          : TextWithTooltipCell,
         size: 150,
       },
       {
         accessorKey: 'packSize',
         header: t('label.pack-size'),
-        Cell: update ? ({ cell, row: { original: row } }) => <NumberInputCell
-          cell={cell}
-          updateFn={value => updatePackaging({ id: row.id, packSize: value })}
-          min={1}
-          decimalLimit={0}
-          error={cell.getValue() === 0}
-        /> : TextWithTooltipCell,
+        Cell: update
+          ? ({ cell, row: { original: row } }) => (
+              <NumberInputCell
+                cell={cell}
+                updateFn={value =>
+                  updatePackaging({ id: row.id, packSize: value })
+                }
+                min={1}
+                decimalLimit={0}
+                error={cell.getValue() === 0}
+              />
+            )
+          : TextWithTooltipCell,
         size: 100,
       },
       {
         accessorKey: 'volumePerUnit',
         header: t('label.volume-per-unit'),
-        Cell: update ? ({ cell, row: { original: row } }) => <NumberInputCell
-          cell={cell}
-          updateFn={value => updatePackaging({ id: row.id, volumePerUnit: value })}
-          min={1}
-          error={cell.getValue() === 0}
-        /> : TextWithTooltipCell,
+        Cell: update
+          ? ({ cell, row: { original: row } }) => (
+              <NumberInputCell
+                cell={cell}
+                updateFn={value =>
+                  updatePackaging({ id: row.id, volumePerUnit: value })
+                }
+                error={cell.getValue() === 0}
+                decimalLimit={4}
+              />
+            )
+          : TextWithTooltipCell,
         size: 100,
       },
     ],

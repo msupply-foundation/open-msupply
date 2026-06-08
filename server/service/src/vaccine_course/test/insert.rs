@@ -39,6 +39,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
+            store_configs: vec![],
         };
 
         let _result = service
@@ -58,6 +59,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
+            store_configs: vec![],
         };
 
         assert_eq!(
@@ -78,6 +80,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
+            store_configs: vec![],
         };
 
         let result = service
@@ -146,6 +149,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: true,
+            store_configs: vec![],
         };
 
         let result = service
@@ -153,12 +157,13 @@ mod query {
             .unwrap();
 
         assert_eq!(result.demographic_id, Some(mock_demographic_a().id));
-        assert_eq!(result.can_skip_dose, true);
+        assert!(result.can_skip_dose);
 
         // Check there are two items for the vaccine_course
         let item_repo = VaccineCourseItemRepository::new(&context.connection);
-        let item_filter = VaccineCourseItemFilter::new()
-            .vaccine_course_id(EqualFilter::equal_to(vaccine_course_insert_d.id.to_string()));
+        let item_filter = VaccineCourseItemFilter::new().vaccine_course_id(EqualFilter::equal_to(
+            vaccine_course_insert_d.id.to_string(),
+        ));
 
         let count = item_repo.count(Some(item_filter.clone())).unwrap();
         assert_eq!(count, 2);
@@ -166,8 +171,9 @@ mod query {
         // Check there are two doses for the vaccine_course
 
         let dose_repo = VaccineCourseDoseRepository::new(&context.connection);
-        let dose_filter = VaccineCourseDoseFilter::new()
-            .vaccine_course_id(EqualFilter::equal_to(vaccine_course_insert_d.id.to_string()));
+        let dose_filter = VaccineCourseDoseFilter::new().vaccine_course_id(EqualFilter::equal_to(
+            vaccine_course_insert_d.id.to_string(),
+        ));
         let count = dose_repo.count(Some(dose_filter.clone())).unwrap();
         assert_eq!(count, 2);
     }

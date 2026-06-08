@@ -24,6 +24,7 @@ import {
   usePreferences,
   useIsCentralServerApi,
   useRootNavigationPath,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
@@ -47,6 +48,7 @@ import { EasterEggModalProvider } from './components';
 import { Help } from './Help/Help';
 import { SyncModalProvider } from './components/Sync';
 import { MobileNavBar } from './components/MobileNavBar';
+import { usePluginRoutes } from './PluginRoutes';
 
 const NotifyOnLogin = () => {
   const { success } = useNotification();
@@ -80,8 +82,10 @@ export const Site: FC = () => {
   const isExtraSmallScreen = useIsExtraSmallScreen();
   const rootNavigationPath = useRootNavigationPath();
   const isCentralServer = useIsCentralServerApi();
+  const { isRtl } = useIntlUtils();
   const { storeCustomColour } = usePreferences();
   const theme = useTheme();
+  const pluginRoutes = usePluginRoutes();
 
   useEffect(() => {
     setPageTitle(pageTitle);
@@ -116,7 +120,13 @@ export const Site: FC = () => {
       <EasterEggModalProvider>
         <SyncModalProvider>
           <CommandK>
-            <SnackbarProvider maxSnack={3}>
+            <SnackbarProvider
+              maxSnack={3}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: isRtl ? 'right' : 'left',
+              }}
+            >
               <BarcodeScannerProvider>
                 {!isExtraSmallScreen && <AppDrawer />}
                 <Box
@@ -241,6 +251,7 @@ export const Site: FC = () => {
                           </React.Suspense>
                         }
                       />
+                      {pluginRoutes}
                       <Route
                         path="/"
                         element={

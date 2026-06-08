@@ -3,7 +3,7 @@ import {
   TypedTFunction,
   useTranslation,
   PurchaseOrderNodeStatus,
-  GoodsReceivedNodeStatus,
+  PurchaseOrderLineStatusNode,
   Formatter,
 } from '@openmsupply-client/common';
 import {
@@ -23,6 +23,24 @@ const purchaseOrderStatusTranslation: Record<
   FINALISED: 'label.finalised',
 };
 
+const purchaseOrderLineStatusTranslation: Record<
+  PurchaseOrderLineStatusNode,
+  LocaleKey
+> = {
+  NEW: 'label.new',
+  SENT: 'label.sent',
+  CLOSED: 'label.closed',
+};
+
+export const getPurchaseOrderLineStatusTranslator =
+  (t: ReturnType<typeof useTranslation>) =>
+  (currentStatus: PurchaseOrderLineStatusNode): string => {
+    return t(
+      purchaseOrderLineStatusTranslation[currentStatus] ??
+        purchaseOrderLineStatusTranslation[PurchaseOrderLineStatusNode.New]
+    );
+  };
+
 export enum DeliveryStatus {
   NotDelivered = 'NOT_DELIVERED',
   PartiallyDelivered = 'PARTIALLY_DELIVERED',
@@ -33,14 +51,6 @@ const deliveryStatusTranslation: Record<DeliveryStatus, LocaleKey> = {
   NOT_DELIVERED: 'label.not-delivered',
   PARTIALLY_DELIVERED: 'label.partially-delivered',
   FULLY_DELIVERED: 'label.fully-delivered',
-};
-
-const goodsReceivedStatusTranslation: Record<
-  GoodsReceivedNodeStatus,
-  LocaleKey
-> = {
-  NEW: 'label.new',
-  FINALISED: 'label.finalised',
 };
 
 export const getPurchaseOrderStatusTranslator =
@@ -61,20 +71,13 @@ export const getDeliveryStatusTranslator =
     );
   };
 
-export const getGoodsReceivedStatusTranslator =
-  (t: ReturnType<typeof useTranslation>) =>
-  (currentStatus: unknown): string => {
-    const status = currentStatus as GoodsReceivedNodeStatus;
-    return t(
-      goodsReceivedStatusTranslation[status] ??
-        goodsReceivedStatusTranslation[GoodsReceivedNodeStatus.New]
-    );
-  };
-
 export const isPurchaseOrderDisabled = (
   purchaseOrder: PurchaseOrderFragment | PurchaseOrderRowFragment
 ): boolean => {
-  return purchaseOrder.status === PurchaseOrderNodeStatus.Finalised;
+  return (
+    purchaseOrder.status === PurchaseOrderNodeStatus.Sent ||
+    purchaseOrder.status === PurchaseOrderNodeStatus.Finalised
+  );
 };
 
 export const canAddNewLines = (
@@ -131,12 +134,6 @@ export const isFieldDisabled = (
   return groupForField.includes(status);
 };
 
-export const isGoodsReceivedEditable = (
-  status: GoodsReceivedNodeStatus
-): boolean => {
-  return status !== GoodsReceivedNodeStatus.Finalised;
-};
-
 export const purchaseOrderToCsv = (
   t: TypedTFunction<LocaleKey>,
   purchaseOrder: PurchaseOrderRowFragment[]
@@ -184,7 +181,7 @@ export const outstandingLinesToCsv = (
     t('label.purchase-order-confirmed'),
     t('label.expected-delivery-date'),
     t('label.adjusted-units-expected'),
-    t('label.received-units'),
+    t('label.shipped-units'),
     t('label.outstanding-units'),
   ];
 
@@ -198,8 +195,8 @@ export const outstandingLinesToCsv = (
     Formatter.csvDateString(node.purchaseOrder?.confirmedDatetime),
     Formatter.csvDateString(node.expectedDeliveryDate),
     node.adjustedNumberOfUnits,
-    node.receivedNumberOfUnits,
-    (node.adjustedNumberOfUnits ?? 0) - (node.receivedNumberOfUnits ?? 0),
+    node.shippedNumberOfUnits,
+    (node.adjustedNumberOfUnits ?? 0) - (node.shippedNumberOfUnits ?? 0),
   ]);
 
   return Formatter.csv({ fields, data });

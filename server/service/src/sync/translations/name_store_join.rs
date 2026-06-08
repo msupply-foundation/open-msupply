@@ -126,7 +126,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
 
         let result = NameStoreJoinRow {
             id: data.id,
-            name_link_id: data.name_id,
+            name_id: data.name_id,
             store_id: data.store_id,
             // name_is_customer: data.name_is_customer.unwrap_or(name.is_customer),
             // name_is_supplier: data.name_is_supplier.unwrap_or(name.is_supplier),
@@ -149,7 +149,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
             name_store_join:
                 NameStoreJoinRow {
                     id,
-                    name_link_id: _,
+                    name_id: _,
                     store_id,
                     name_is_customer,
                     name_is_supplier,

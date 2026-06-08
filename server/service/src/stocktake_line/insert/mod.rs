@@ -22,12 +22,14 @@ pub struct InsertStocktakeLine {
     pub item_id: Option<String>,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
+    pub manufacture_date: Option<NaiveDate>,
     pub pack_size: Option<f64>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
     pub item_variant_id: Option<String>,
     pub donor_id: Option<String>,
+    pub manufacturer_id: Option<String>,
     pub reason_option_id: Option<String>,
     pub vvm_status_id: Option<String>,
     pub volume_per_pack: Option<f64>,
@@ -52,6 +54,9 @@ pub enum InsertStocktakeLineError {
     StocktakeIsLocked,
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
+    ManufacturerDoesNotExist,
+    ManufacturerNotVisible,
+    ManufacturerIsNotAManufacturer,
     VvmStatusDoesNotExist,
     CampaignDoesNotExist,
     ProgramDoesNotExist,
@@ -75,11 +80,23 @@ pub fn insert_stocktake_line(
                 generate(stock_line.clone(), item_id, item_name, input.clone());
             StocktakeLineRowRepository::new(connection).upsert_one(&new_stocktake_line)?;
 
-            // Update stock line donor if provided and stock line exists
-            if let (Some(donor_id), Some(existing_stock_line)) = (&input.donor_id, &stock_line) {
+            // Update stock line donor/manufacturer if provided and stock line exists
+            if let Some(existing_stock_line) = &stock_line {
                 let mut stock_line_row = existing_stock_line.stock_line_row.clone();
-                stock_line_row.donor_link_id = Some(donor_id.clone());
-                StockLineRowRepository::new(connection).upsert_one(&stock_line_row)?;
+                let mut updated = false;
+
+                if let Some(donor_id) = &input.donor_id {
+                    stock_line_row.donor_id = Some(donor_id.clone());
+                    updated = true;
+                }
+                if let Some(manufacturer_id) = &input.manufacturer_id {
+                    stock_line_row.manufacturer_id = Some(manufacturer_id.clone());
+                    updated = true;
+                }
+
+                if updated {
+                    StockLineRowRepository::new(connection).upsert_one(&stock_line_row)?;
+                }
             }
 
             let line = get_stocktake_line(ctx, new_stocktake_line.id, &ctx.store_id)?;
@@ -109,6 +126,7 @@ mod stocktake_line_test {
             mock_stocktake_finalised, mock_stocktake_line_a, mock_store_a,
             program_master_list_store, MockData, MockDataInserts,
         },
+        campaign::campaign_row::CampaignRow,
         test_db::{setup_all, setup_all_with_data},
         EqualFilter, ReasonOptionRow, ReasonOptionType, StockLineFilter, StockLineRepository,
         StockLineRow, StockLineRowRepository, StocktakeLineRow, StocktakeRow,
@@ -223,6 +241,24 @@ mod stocktake_line_test {
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeLineError::VvmStatusDoesNotExist);
+
+        // error ManufacturerDoesNotExist
+        let stocktake_a = mock_stocktake_a();
+        let stock_line = mock_new_stock_line_for_stocktake_a();
+        let error = service
+            .insert_stocktake_line(
+                &context,
+                InsertStocktakeLine {
+                    id: uuid(),
+                    stocktake_id: stocktake_a.id,
+                    stock_line_id: Some(stock_line.id),
+                    manufacturer_id: Some("invalid".to_string()),
+                    counted_number_of_packs: Some(17.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap_err();
+        assert_eq!(error, InsertStocktakeLineError::ManufacturerDoesNotExist);
 
         // error IncorrectLocationType
         let stocktake_a = mock_stocktake_a();
@@ -358,7 +394,7 @@ mod stocktake_line_test {
         fn mock_stock_line_for_donor_test() -> StockLineRow {
             StockLineRow {
                 id: String::from("mock_stock_line_for_donor_test"),
-                item_link_id: String::from("item_a"),
+                item_id: String::from("item_a"),
                 location_id: None,
                 store_id: String::from("store_a"),
                 batch: Some(String::from("item_a_batch_b")),
@@ -370,7 +406,7 @@ mod stocktake_line_test {
                 expiry_date: None,
                 on_hold: false,
                 note: None,
-                supplier_link_id: Some(String::from("name_store_b")),
+                supplier_id: Some(String::from("name_store_b")),
                 ..Default::default()
             }
         }
@@ -414,7 +450,98 @@ mod stocktake_line_test {
             .find_one_by_id(&stock_line.id)
             .unwrap()
             .unwrap();
-        assert_eq!(stock_line_row.donor_link_id, Some(donor_id));
+        assert_eq!(stock_line_row.donor_id, Some(donor_id));
+    }
+
+    #[actix_rt::test]
+    async fn insert_stocktake_line_with_soft_deleted_campaign() {
+        // A campaign that has been soft-deleted, but is still referenced by a
+        // stock line. Carrying this campaign_id forward onto a stocktake line
+        // must not fail validation (regression for CampaignDoesNotExist).
+        fn soft_deleted_campaign() -> CampaignRow {
+            CampaignRow {
+                id: String::from("soft_deleted_campaign"),
+                name: String::from("Soft Deleted Campaign"),
+                deleted_datetime: Some(
+                    NaiveDate::from_ymd_opt(2024, 1, 1)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                ),
+                ..Default::default()
+            }
+        }
+
+        fn mock_stock_line_with_campaign() -> StockLineRow {
+            StockLineRow {
+                id: String::from("mock_stock_line_with_campaign"),
+                item_id: String::from("item_a"),
+                store_id: String::from("store_a"),
+                available_number_of_packs: 20.0,
+                pack_size: 1.0,
+                total_number_of_packs: 30.0,
+                campaign_id: Some(soft_deleted_campaign().id),
+                ..Default::default()
+            }
+        }
+
+        // The campaign is inserted via MockData, but the stock line referencing
+        // it is created after setup - the mock data inserter adds stock lines
+        // before campaigns, so the foreign key would otherwise fail.
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "insert_stocktake_line_with_soft_deleted_campaign",
+            MockDataInserts::all(),
+            MockData {
+                campaigns: vec![soft_deleted_campaign()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.stocktake_line_service;
+
+        StockLineRowRepository::new(&context.connection)
+            .upsert_one(&mock_stock_line_with_campaign())
+            .unwrap();
+
+        // success: a soft-deleted campaign carried forward from the stock line
+        let stocktake_a = mock_stocktake_a();
+        let stock_line = mock_stock_line_with_campaign();
+        service
+            .insert_stocktake_line(
+                &context,
+                InsertStocktakeLine {
+                    id: uuid(),
+                    stocktake_id: stocktake_a.id.clone(),
+                    stock_line_id: Some(stock_line.id.clone()),
+                    campaign_id: Some(soft_deleted_campaign().id),
+                    counted_number_of_packs: Some(17.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // regression: a campaign id that does not exist at all still errors
+        // (use a different stock line, the one above is now in the stocktake)
+        let other_stock_line = mock_new_stock_line_for_stocktake_a();
+        let error = service
+            .insert_stocktake_line(
+                &context,
+                InsertStocktakeLine {
+                    id: uuid(),
+                    stocktake_id: stocktake_a.id,
+                    stock_line_id: Some(other_stock_line.id),
+                    campaign_id: Some("nonexistent_campaign_id".to_string()),
+                    counted_number_of_packs: Some(17.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap_err();
+        assert_eq!(error, InsertStocktakeLineError::CampaignDoesNotExist);
     }
 
     #[actix_rt::test]
@@ -442,7 +569,7 @@ mod stocktake_line_test {
         fn mock_stock_line_c() -> StockLineRow {
             StockLineRow {
                 id: "mock_stock_line_c".to_string(),
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 store_id: "store_a".to_string(),
                 available_number_of_packs: 50.0,
                 pack_size: 1.0,
@@ -457,7 +584,7 @@ mod stocktake_line_test {
         fn mock_stock_line_d() -> StockLineRow {
             StockLineRow {
                 id: "mock_stock_line_d".to_string(),
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 store_id: "store_a".to_string(),
                 available_number_of_packs: 20.0,
                 pack_size: 1.0,
@@ -560,7 +687,7 @@ mod stocktake_line_test {
                 counted_number_of_packs: Some(50.0),
                 stock_line_id: Some(stock_line.id),
                 snapshot_number_of_packs: 30.0,
-                item_link_id: stock_line.item_link_id,
+                item_id: stock_line.item_id,
                 item_name: "Item A".to_string(),
                 reason_option_id: Some(positive_reason().id),
                 ..Default::default()
@@ -625,7 +752,7 @@ mod stocktake_line_test {
                 stocktake_id: stocktake_a.id,
                 stock_line_id: Some(stock_line.id),
                 snapshot_number_of_packs: 30.0,
-                item_link_id: stock_line.item_link_id,
+                item_id: stock_line.item_id,
                 item_name: "Item A".to_string(),
                 comment: Some("Some comment".to_string()),
                 ..Default::default()

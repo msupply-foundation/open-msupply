@@ -5,15 +5,17 @@ import {
   MRT_TableOptions,
 } from 'material-react-table';
 import { getSavedState, updateSavedState, differentOrUndefined } from './utils';
+import { useGlobalTableDefaults } from './useGlobalTableConfig';
 
 export const useColumnDensity = (tableId: string) => {
+  const globalDefaults = useGlobalTableDefaults(tableId);
   const initial: MRT_DensityState = 'comfortable';
 
   const [state, setState] = useState<MRT_DensityState>(
-    getSavedState(tableId).density ?? initial
+    getSavedState(tableId)?.density ?? globalDefaults?.density ?? initial
   );
   const [hasSavedState, setHasSavedState] = useState(
-    !!getSavedState(tableId).density
+    !!getSavedState(tableId)?.density
   );
 
   const update = useCallback<

@@ -4,6 +4,7 @@ import { LOCATION } from './keys';
 import {
   SortBy,
   useQuery,
+  keepPreviousData,
   LIST_KEY,
   LocationFilterInput,
   LocationSortFieldInput,
@@ -64,7 +65,7 @@ const useGetList = (enabled?: boolean, queryParams?: ListParams) => {
     queryKey: [...queryKey, enabled],
     queryFn,
     enabled,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
   return query;
 };

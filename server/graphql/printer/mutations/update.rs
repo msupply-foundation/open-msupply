@@ -70,7 +70,7 @@ pub fn update_printer(
 
 fn map_error(error: UpdatePrinterError) -> Result<UpdatePrinterResponse> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         UpdatePrinterError::PrinterDoesNotExist

@@ -36,6 +36,25 @@ impl StockLineReducedBelowZero {
     }
 }
 
+pub struct LedgerWouldGoBelowZero(pub StockLineNode);
+
+impl LedgerWouldGoBelowZero {
+    pub fn from_domain(line: StockLine) -> Self {
+        LedgerWouldGoBelowZero(StockLineNode::from_domain(line))
+    }
+}
+
+#[Object]
+impl LedgerWouldGoBelowZero {
+    pub async fn description(&self) -> &str {
+        "Backdated reduction would cause the stock ledger to go below zero at some point."
+    }
+
+    pub async fn stock_line(&self) -> &StockLineNode {
+        &self.0
+    }
+}
+
 pub struct RequisitionReasonNotProvided(pub RequisitionLineNode);
 
 impl RequisitionReasonNotProvided {

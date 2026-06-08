@@ -57,13 +57,13 @@
           >
           {% else %} {% endif %}
         </td>
-        <td>
+        <td style="text-align: right">
           {{item.stats.totalConsumption | default(value=0) | round(
           precision=1)}}
         </td>
-        <td>{{SOH}}</td>
-        <td>{{AMC}}</td>
-        <td>
+        <td style="text-align: right">{{SOH}}</td>
+        <td style="text-align: right">{{AMC}}</td>
+        <td style="text-align: right">
           {{item.stats.availableMonthsOfStockOnHand | default(value=0) | round(
           precision=1)}}
         </td>

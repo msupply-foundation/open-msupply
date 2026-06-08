@@ -9,7 +9,7 @@ import { PrescriptionRowFragment } from '../operations.generated';
 export const usePrescriptionDelete = () => {
   const {
     mutateAsync: deleteMutation,
-    isLoading: isDeleting,
+    isPending: isDeleting,
     error: deleteError,
   } = useDelete();
 
@@ -42,6 +42,8 @@ export const useDelete = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([LIST]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [LIST]
+    }),
   });
 };

@@ -5,6 +5,7 @@ use super::{
 
 use crate::{repository_error::RepositoryError, Upsert};
 
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
 use serde::{Deserialize, Serialize};
@@ -18,6 +19,7 @@ table! {
         related_record_id -> Nullable<Text>,
         data_identifier -> Text,
         data -> Text,
+        datetime -> Nullable<Timestamp>,
     }
 }
 
@@ -35,6 +37,10 @@ pub struct PluginDataRow {
     pub related_record_id: Option<String>,
     pub data_identifier: String, // Used by the plugin to identify the data, often would be a table name
     pub data: String,
+    /// Optional, plugin-controlled timestamp (e.g. "update time"). Kept as a
+    /// distinct column to allow efficient filtering by date range.
+    #[serde(default)]
+    pub datetime: Option<NaiveDateTime>,
 }
 
 pub struct PluginDataRowRepository<'a> {
@@ -65,6 +71,12 @@ impl<'a> PluginDataRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn delete(&self, id: &str, store_id: Option<String>) -> Result<i64, RepositoryError> {
+        diesel::delete(plugin_data::table.filter(plugin_data::id.eq(id)))
+            .execute(self.connection.lock().connection())?;
+        self.insert_changelog(id, store_id, RowActionType::Delete)
+    }
+
     fn insert_changelog(
         &self,
         uid: &str,
@@ -76,7 +88,7 @@ impl<'a> PluginDataRowRepository<'a> {
             record_id: uid.to_string(),
             row_action: action,
             store_id,
-            name_link_id: None,
+            name_id: None,
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
@@ -85,7 +97,7 @@ impl<'a> PluginDataRowRepository<'a> {
 
 impl Upsert for PluginDataRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log = PluginDataRowRepository::new(con).upsert_one(&self)?;
+        let change_log = PluginDataRowRepository::new(con).upsert_one(self)?;
         Ok(Some(change_log))
     }
 

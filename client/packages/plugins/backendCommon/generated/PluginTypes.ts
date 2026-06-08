@@ -10,6 +10,8 @@ import type { PluginDataFilter } from './PluginDataFilter';
 import type { PluginDataRow } from './PluginDataRow';
 import type { ProcessorInput } from './ProcessorInput';
 import type { ProcessorOutput } from './ProcessorOutput';
+import type { ScheduleInput } from './ScheduleInput';
+import type { ScheduleOutput } from './ScheduleOutput';
 import type { StorePreferenceRow } from './StorePreferenceRow';
 import type { TransformRequestRequisitionLineInput } from './TransformRequestRequisitionLineInput';
 import type { TransformRequestRequisitionLineOutput } from './TransformRequestRequisitionLineOutput';
@@ -29,6 +31,7 @@ export type PluginTypes = {
   get_consumption: Function<GetConsumptionInput, { [key in string]?: number }>;
   graphql_query: Function<GraphqlQueryInput, JsonValue>;
   processor: Function<ProcessorInput, ProcessorOutput>;
+  schedule: Function<ScheduleInput, ScheduleOutput>;
   get_store_preferences: StorePreferenceRow;
   get_plugin_data: Function<PluginDataFilter, Array<PluginDataRow>>;
   use_repository: Function<UseRepositoryInput, UseRepositoryOutput>;

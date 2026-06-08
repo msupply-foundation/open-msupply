@@ -37,6 +37,7 @@ pub enum ActivityLogNodeType {
     StocktakeCreated,
     StocktakeDeleted,
     StocktakeStatusFinalised,
+    StocktakeEdited,
     RequisitionCreated,
     RequisitionDeleted,
     RequisitionNumberAllocated,
@@ -84,6 +85,7 @@ pub enum ActivityLogNodeType {
     DemographicProjectionUpdated,
     InvoiceStatusCancelled,
     ItemVariantCreated,
+    ItemVariantUpdated,
     ItemVariantDeleted,
     ItemVariantUpdatedName,
     ItemVariantUpdateLocationType,
@@ -92,9 +94,7 @@ pub enum ActivityLogNodeType {
     ItemVariantUpdateVVMType,
     VVMStatusLogUpdated,
     VolumePerPackChanged,
-    GoodsReceivedCreated,
-    GoodsReceivedDeleted,
-    GoodsReceivedStatusFinalised,
+    StockLineEdit,
     // Purchase Orders
     PurchaseOrderCreated,
     PurchaseOrderRequestApproval,
@@ -113,6 +113,13 @@ pub enum ActivityLogNodeType {
     // Patients
     PatientCreated,
     PatientUpdated,
+    InvoiceDateBackdated,
+    PackagingVariantCreated,
+    PackagingVariantUpdated,
+    PackagingVariantDeleted,
+    BundledItemCreated,
+    BundledItemUpdated,
+    BundledItemDeleted,
 }
 
 #[Object]

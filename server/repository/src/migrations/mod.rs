@@ -39,7 +39,16 @@ mod v2_14_00;
 mod v2_15_00;
 mod v2_16_00;
 mod v2_16_01;
+<<<<<<< HEAD
 mod v2_16_05;
+=======
+mod v2_17_00;
+mod v2_17_03;
+mod v2_17_05;
+mod v2_18_00;
+mod v2_19_00;
+mod v2_20_00;
+>>>>>>> origin/develop
 mod version;
 mod views;
 
@@ -147,7 +156,16 @@ pub fn migrate(
         Box::new(v2_15_00::V2_15_00),
         Box::new(v2_16_00::V2_16_00),
         Box::new(v2_16_01::V2_16_01),
+<<<<<<< HEAD
         Box::new(v2_16_05::V2_16_05),
+=======
+        Box::new(v2_17_00::V2_17_00),
+        Box::new(v2_17_03::V2_17_03),
+        Box::new(v2_17_05::V2_17_05),
+        Box::new(v2_18_00::V2_18_00),
+        Box::new(v2_19_00::V2_19_00),
+        Box::new(v2_20_00::V2_20_00),
+>>>>>>> origin/develop
     ];
 
     // Check if the database has been initialised, if not run the base sql to kick start the process
@@ -236,10 +254,7 @@ pub fn migrate(
                 })?;
 
             migration_result.push((
-                format!(
-                    "Running one time database migration {}",
-                    migration_version.to_string()
-                ),
+                format!("Running one time database migration {}", migration_version),
                 Utc::now().naive_utc(),
             ));
 
@@ -272,7 +287,7 @@ pub fn migrate(
     }
 
     migration_result.push((
-        format!("Migrations finished to version {}", to_version.to_string()),
+        format!("Migrations finished to version {}", to_version),
         Utc::now().naive_utc(),
     ));
 
@@ -295,7 +310,7 @@ pub fn migrate(
     set_database_version(connection, &to_version)?;
 
     migration_result.push((
-        format!("Views recreated for {}", to_version.to_string()),
+        format!("Views recreated for {}", to_version),
         Utc::now().naive_utc(),
     ));
 

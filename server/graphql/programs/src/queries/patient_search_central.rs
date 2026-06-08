@@ -76,7 +76,7 @@ pub fn map_central_patient_search_result(
     let result = match result {
         Ok(result) => Ok(result),
         Err(err) => {
-            let formatted_error = format!("{:#?}", err);
+            let formatted_error = format!("{err:#?}");
             let graphql_error = match err {
                 CentralPatientRequestError::DatabaseError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)

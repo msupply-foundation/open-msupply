@@ -17,6 +17,10 @@ Built to be fast and reliable using [Rust](https://www.rust-lang.org/) and suppo
 
 For more information, [read the server developer docs](server/README.md)
 
+### Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contributor workflow and local dev quickstart.
+
 ### Architecture
 
 The client application is a web app, which is compiled and then hosted by the server. This can also be hosted externally by any web server, though this is no longer the recommended approach. The server connects to the database and provides a graphQL API which is consumed by the client app.

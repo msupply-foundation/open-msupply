@@ -10,11 +10,7 @@ use umya_spreadsheet::{
     Cell, FontSize, Spreadsheet, Worksheet,
 };
 
-pub fn csv_to_excel(
-    base_dir: &Option<String>,
-    csv_data: &str,
-    filename: &str,
-) -> Result<String, ReportError> {
+pub fn csv_to_excel(base_dir: &str, csv_data: &str, filename: &str) -> Result<String, ReportError> {
     // Parse CSV data
     let mut reader = Reader::from_reader(csv_data.as_bytes());
     let headers = reader
@@ -58,7 +54,7 @@ pub fn csv_to_excel(
 
 /// Converts the report to an Excel file and returns the file id
 pub fn export_html_report_to_excel(
-    base_dir: &Option<String>,
+    base_dir: &str,
     report: GeneratedReport,
     report_name: String,
     template_as_buffer: &Option<Vec<u8>>,
@@ -84,7 +80,7 @@ pub fn export_html_report_to_excel(
 }
 
 /// Hold a file in the temporary directory
-fn reserve_file(base_dir: &Option<String>, report_name: &str) -> Result<StaticFile, ReportError> {
+fn reserve_file(base_dir: &str, report_name: &str) -> Result<StaticFile, ReportError> {
     let now: DateTime<Utc> = SystemTime::now().into();
     let file_service = StaticFileService::new(base_dir)
         .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
@@ -636,7 +632,7 @@ mod report_to_excel_test {
         assert_eq!(
             res.first()
                 .unwrap()
-                .into_iter()
+                .iter()
                 .map(|e| inner_text(*e))
                 .collect::<Vec<&str>>(),
             vec!["Row One Cell One", "Row One Cell Two"],
@@ -718,13 +714,13 @@ mod report_to_excel_test {
     fn test_csv_to_excel() {
         let csv_data = "Name,Status,Invoice Number\nHarry Potter,Picked,2\nHermione Granger,New,3\nRon Weasley,New,4\n";
 
-        let result = csv_to_excel(&None, csv_data, "test_csv_export");
+        let result = csv_to_excel(".", csv_data, "test_csv_export");
         assert!(result.is_ok(), "CSV to Excel conversion should succeed");
 
         let file_id = result.unwrap();
         assert!(!file_id.is_empty(), "File ID should not be empty");
 
-        let file_service = StaticFileService::new(&None).unwrap();
+        let file_service = StaticFileService::new(".").unwrap();
         let generated_file = file_service
             .find_file(&file_id, StaticFileCategory::Temporary)
             .unwrap()
@@ -835,7 +831,7 @@ mod report_to_excel_test {
 
         // Test the full export function with template
         let result = export_html_report_to_excel(
-            &None, // base_dir
+            ".", // base_dir
             report,
             "test_with_template".to_string(),
             &Some(template_bytes),
@@ -845,7 +841,7 @@ mod report_to_excel_test {
         let file_id = result.unwrap();
 
         // Read back the generated file to verify content
-        let file_service = StaticFileService::new(&None).unwrap();
+        let file_service = StaticFileService::new(".").unwrap();
         let generated_file = file_service
             .find_file(&file_id, StaticFileCategory::Temporary)
             .unwrap()
@@ -973,7 +969,7 @@ mod report_to_excel_test {
         book.set_sheet_name(0, "test").unwrap();
         let sheet = book.get_sheet_by_name_mut("test").unwrap();
 
-        let coords = vec![(1_u32, 1_u32), (2_u32, 1_u32), (3_u32, 1_u32)];
+        let coords = [(1_u32, 1_u32), (2_u32, 1_u32), (3_u32, 1_u32)];
         for (coord, td) in coords.iter().zip(tds.by_ref()) {
             let cell = sheet.get_cell_mut(*coord);
             cell.set_value(inner_text(td));

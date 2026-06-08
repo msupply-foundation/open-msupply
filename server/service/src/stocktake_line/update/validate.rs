@@ -1,5 +1,5 @@
 use crate::{
-    campaign::check_campaign_exists,
+    campaign::check_campaign_exists_including_deleted,
     check_location_exists, check_location_type_is_valid, check_vvm_status_exists,
     common::{check_program_exists, check_stock_line_exists, CommonStockLineError},
     stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
@@ -8,7 +8,7 @@ use crate::{
         check_snapshot_matches_current_count, check_stock_line_reduced_below_zero,
         check_stocktake_line_exist, stocktake_reduction_amount,
     },
-    validate::check_store_id_matches,
+    validate::{check_other_party, check_store_id_matches, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate,
 };
 use repository::{RepositoryError, StocktakeLine, StorageConnection};
@@ -85,7 +85,10 @@ pub fn validate(
         }
     }
 
-    if let Some(vvm_status_id) = &input.vvm_status_id {
+    if let Some(NullableUpdate {
+        value: Some(vvm_status_id),
+    }) = &input.vvm_status_id
+    {
         if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
             return Err(VvmStatusDoesNotExist);
         }
@@ -128,10 +131,32 @@ pub fn validate(
     }
 
     if let Some(NullableUpdate {
+        value: Some(ref manufacturer_id),
+    }) = &input.manufacturer_id
+    {
+        match check_other_party(
+            connection,
+            store_id,
+            manufacturer_id,
+            CheckOtherPartyType::Manufacturer,
+        ) {
+            Ok(_) => {}
+            Err(e) => match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => return Err(ManufacturerDoesNotExist),
+                OtherPartyErrors::OtherPartyNotVisible => return Err(ManufacturerNotVisible),
+                OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    return Err(DatabaseError(repository_error))
+                }
+            },
+        };
+    };
+
+    if let Some(NullableUpdate {
         value: Some(ref campaign_id),
     }) = &input.campaign_id
     {
-        if !check_campaign_exists(connection, campaign_id)? {
+        if !check_campaign_exists_including_deleted(connection, campaign_id)? {
             return Err(CampaignDoesNotExist);
         }
     }

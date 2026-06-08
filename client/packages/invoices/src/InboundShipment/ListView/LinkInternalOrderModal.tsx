@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { LinkedRequestRowFragment, useInbound } from '../api';
+import { LinkedRequestRowFragment } from '../api';
+import { useListInternalOrders } from '../api/hooks/utils';
 import {
   useWindowDimensions,
   useTranslation,
@@ -31,7 +32,7 @@ export const LinkInternalOrderModal = ({
   const t = useTranslation();
   const { width, height } = useWindowDimensions();
   const { Modal } = useDialog({ isOpen, onClose });
-  const { data, isLoading } = useInbound.document.listInternalOrders(
+  const { data, isLoading } = useListInternalOrders(
     name?.id ?? ''
   );
 

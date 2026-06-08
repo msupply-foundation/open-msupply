@@ -1,0 +1,43 @@
+<style>
+  {% include "style.css" %}
+</style>
+
+<div class="container">
+  <table>
+    <thead>
+      <tr class="heading">
+        <td>{{t(k="label.supplier", f="Supplier")}}</td>
+        <td>{{t(k="label.code", f="Code")}}</td>
+        <td>{{t(k="label.name", f="Name")}}</td>
+        <td>{{t(k="label.batch", f="Batch")}}</td>
+        <td>{{t(k="label.expiry", f="Expiry")}}</td>
+        <td>{{t(k="label.pack-size", f="Pack size")}}</td>
+        <td>{{t(k="label.num-packs", f="Number of packs")}}</td>
+        <td>{{t(k="label.number-of-units", f="Number of units")}}</td>
+        <td>{{t(k="description.pack-cost", f="Cost price per pack")}}</td>
+        <td>{{t(k="label.total-cost", f="Total cost")}}</td>
+      </tr>
+    </thead>
+    <tbody>
+      {% for line in data.lines %}
+      <tr>
+        <td>{{line.otherPartyName}}</td>
+        <td>{{line.itemCode}}</td>
+        <td>{{line.itemName}}</td>
+        <td>{{line.batch | default(value='')}}</td>
+        <td>
+          {%if line.expiryDate %}
+          {{line.expiryDate | date(format="%d/%m/%Y")}}
+          {% else %}
+          {% endif %}
+        </td>
+        <td style="text-align: right">{{line.packSize}}</td>
+        <td style="text-align: right">{{line.numberOfPacks}}</td>
+        <td style="text-align: right">{{line.numberOfUnits}}</td>
+        <td style="text-align: right">{{line.costPricePerPack}}</td>
+        <td style="text-align: right">{{line.totalCost}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

@@ -5,11 +5,14 @@ import {
   FilterController,
   Box,
   FilterMenu,
-  InvoiceNodeStatus,
   SearchBar,
   FilterRule,
   useSimplifiedTabletUI,
+  usePreferences,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
+import { getStatusSequence } from '../../statuses';
+import { getStatusTranslator } from '../../utils';
 
 interface ToolbarProps {
   filter: FilterController;
@@ -18,6 +21,10 @@ interface ToolbarProps {
 export const Toolbar = ({ filter }: ToolbarProps) => {
   const t = useTranslation();
   const simplifiedTabletView = useSimplifiedTabletUI();
+  const { invoiceStatusOptions } = usePreferences();
+  const statuses = getStatusSequence(InvoiceNodeType.OutboundShipment).filter(
+    status => invoiceStatusOptions?.includes(status)
+  );
 
   const key = 'invoiceNumber';
   const filterString =
@@ -52,30 +59,10 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                 type: 'enum',
                 name: t('label.status'),
                 urlParameter: 'status',
-                options: [
-                  { label: t('label.new'), value: InvoiceNodeStatus.New },
-                  {
-                    label: t('label.allocated'),
-                    value: InvoiceNodeStatus.Allocated,
-                  },
-                  { label: t('label.picked'), value: InvoiceNodeStatus.Picked },
-                  {
-                    label: t('label.shipped'),
-                    value: InvoiceNodeStatus.Shipped,
-                  },
-                  {
-                    label: t('label.delivered'),
-                    value: InvoiceNodeStatus.Delivered,
-                  },
-                  {
-                    label: t('label.received'),
-                    value: InvoiceNodeStatus.Received,
-                  },
-                  {
-                    label: t('label.verified'),
-                    value: InvoiceNodeStatus.Verified,
-                  },
-                ],
+                options: statuses.map(status => ({
+                  value: status,
+                  label: getStatusTranslator(t)(status),
+                })),
               },
               {
                 type: 'text',

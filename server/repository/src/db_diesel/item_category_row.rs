@@ -1,28 +1,39 @@
-use super::{category_row::category, StorageConnection};
+use super::{category_row::category, item_row::item, StorageConnection};
+use crate::diesel_macros::define_linked_tables;
 use crate::{repository_error::RepositoryError, Upsert};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
-table! {
-    item_category_join (id) {
-        id -> Text,
-        item_id -> Text,
+define_linked_tables! {
+    view: item_category_join = "item_category_join_view",
+    core: item_category_join_with_links = "item_category_join",
+    struct: ItemCategoryJoinRow,
+    repo: ItemCategoryJoinRowRepository,
+    shared: {
         category_id -> Text,
         deleted_datetime -> Nullable<Timestamp>,
+    },
+    links: {
+        item_link_id -> item_id,
+    },
+    optional_links: {
     }
 }
 
 joinable!(item_category_join -> category (category_id));
+joinable!(item_category_join -> item (item_id));
 allow_tables_to_appear_in_same_query!(item_category_join, category);
+allow_tables_to_appear_in_same_query!(item_category_join, item);
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
+#[derive(Clone, Queryable, Debug, PartialEq, Eq, Default)]
 #[diesel(table_name = item_category_join)]
 pub struct ItemCategoryJoinRow {
     pub id: String,
-    pub item_id: String,
     pub category_id: String,
     pub deleted_datetime: Option<NaiveDateTime>,
+    // Resolved from item_link - must be last to match view column order
+    pub item_id: String,
 }
 
 pub struct ItemCategoryJoinRowRepository<'a> {
@@ -38,13 +49,7 @@ impl<'a> ItemCategoryJoinRowRepository<'a> {
         &self,
         item_category_join_row: &ItemCategoryJoinRow,
     ) -> Result<(), RepositoryError> {
-        diesel::insert_into(item_category_join::table)
-            .values(item_category_join_row)
-            .on_conflict(item_category_join::id)
-            .do_update()
-            .set(item_category_join_row)
-            .execute(self.connection.lock().connection())?;
-
+        self._upsert(item_category_join_row)?;
         Ok(())
     }
 
@@ -61,7 +66,8 @@ impl<'a> ItemCategoryJoinRowRepository<'a> {
 
     pub fn delete(&self, item_category_join_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
-            item_category_join::table.filter(item_category_join::id.eq(item_category_join_id)),
+            item_category_join_with_links::table
+                .filter(item_category_join_with_links::id.eq(item_category_join_id)),
         )
         .execute(self.connection.lock().connection())?;
         Ok(())

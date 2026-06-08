@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import {
   Autocomplete,
+  DEFAULT_TRANSLATIONS_NAMESPACE,
   LocaleKey,
   RegexUtils,
   useIntl,
@@ -24,13 +25,13 @@ export const TranslationSearchInput = ({
   existingKeys,
 }: TranslationSearchInputProps) => {
   const t = useTranslation();
-  const defaultT = useTranslation('common');
   const { i18n } = useIntl();
   const theme = useTheme();
 
   const nonTranslatedOptions = useMemo(() => {
     // English common is the base for translations, will always be available and have all keys
-    const baseOptions = i18n?.store?.data['en']?.['common'] ?? {};
+    const baseOptions =
+      i18n?.store?.data['en']?.[DEFAULT_TRANSLATIONS_NAMESPACE] ?? {};
     const keys = Object.keys(baseOptions);
 
     return (
@@ -40,7 +41,7 @@ export const TranslationSearchInput = ({
         .map(k => ({
           key: k,
           // Use defaultT rather than direct from baseOption, so shows in users language
-          default: defaultT(k as LocaleKey),
+          default: t(k as LocaleKey, { ns: DEFAULT_TRANSLATIONS_NAMESPACE }),
         }))
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps

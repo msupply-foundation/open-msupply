@@ -7,4 +7,9 @@ export type PluginDataRow = {
   related_record_id: string | null;
   data_identifier: string;
   data: string;
+  /**
+   * Optional, plugin-controlled timestamp (e.g. "update time"). Kept as a
+   * distinct column to allow efficient filtering by date range.
+   */
+  datetime: string | null;
 };

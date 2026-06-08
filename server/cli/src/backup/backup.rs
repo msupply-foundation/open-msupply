@@ -13,8 +13,7 @@ pub(crate) fn backup(settings: &Settings) -> Result<(), BackupError> {
     let max_number_of_backups = settings
         .backup
         .as_ref()
-        .map(|b| b.max_number_of_backups)
-        .flatten();
+        .and_then(|b| b.max_number_of_backups);
 
     let Dirs {
         backup_name,
@@ -144,7 +143,7 @@ fn copy_sqlite_files(
         // Unwrap should be safe (would panic only if pathname terminates with '...')
         let sqlite_filename = sqlite_filename.file_name().unwrap();
 
-        fs::copy(&sqlite_filename, &backup_database_dir.join(sqlite_filename))?;
+        fs::copy(sqlite_filename, backup_database_dir.join(sqlite_filename))?;
     }
 
     Ok(())
@@ -159,7 +158,6 @@ fn cleanup_backups(
     };
 
     let mut paths: Vec<PathBuf> = fs::read_dir(backups_dir)?
-        .into_iter()
         .filter_map(Result::ok)
         .map(|e| e.path())
         .filter(|f| f.is_dir())
@@ -175,7 +173,7 @@ fn cleanup_backups(
     };
 
     for path in paths.iter().take(number_of_backups_to_delete) {
-        println!("Deleting old backup: {:?}", path);
+        println!("Deleting old backup: {path:?}");
         let _ = fs::remove_dir_all(path);
     }
 

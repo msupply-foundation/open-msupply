@@ -2,6 +2,9 @@ on:
   pull_request:
     paths:
       - "server/**"
+  merge_group:
+    branches:
+      - develop
   workflow_dispatch:
 
 name: Backend Tests

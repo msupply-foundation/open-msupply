@@ -4,12 +4,16 @@ import {
   useTranslation,
   Box,
   FilterMenu,
-  InvoiceNodeStatus,
   SearchBar,
   FilterRule,
   useSimplifiedTabletUI,
   FilterController,
+  usePreferences,
+  InvoiceNodeType,
+  InvoiceTypeInput,
 } from '@openmsupply-client/common';
+import { getStatusSequence } from '../../statuses';
+import { getStatusTranslator } from '../../utils';
 
 interface ToolbarProps {
   filter: FilterController;
@@ -18,6 +22,10 @@ interface ToolbarProps {
 export const Toolbar = ({ filter }: ToolbarProps) => {
   const t = useTranslation();
   const simplifiedTabletView = useSimplifiedTabletUI();
+  const { invoiceStatusOptions } = usePreferences();
+  const statuses = getStatusSequence(InvoiceNodeType.InboundShipment).filter(
+    status => invoiceStatusOptions?.includes(status)
+  );
 
   const filterString =
     ((filter.filterBy?.['invoiceNumber'] as FilterRule)?.equalTo as string) ||
@@ -66,6 +74,41 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                 wide: true,
               },
               {
+                type: 'enum',
+                name: t('label.status'),
+                urlParameter: 'status',
+                options: statuses.map(status => ({
+                  value: status,
+                  label: getStatusTranslator(t)(status),
+                })),
+              },
+              {
+                type: 'enum',
+                name: t('label.type'),
+                urlParameter: 'type',
+                options: [
+                  {
+                    value: InvoiceTypeInput.InboundShipment,
+                    label: t('label.internal'),
+                  },
+                  {
+                    value: InvoiceTypeInput.InboundShipmentExternal,
+                    label: t('label.external'),
+                  },
+                ],
+              },
+              {
+                type: 'text',
+                name: t('label.reference'),
+                urlParameter: 'theirReference',
+              },
+              {
+                type: 'number',
+                name: t('label.linked-order-number'),
+                urlParameter: 'linkedOrderNumber',
+                wide: true,
+              },
+              {
                 type: 'group',
                 name: t('label.created-datetime'),
                 elements: [
@@ -84,26 +127,20 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                 ],
               },
               {
-                type: 'enum',
-                name: t('label.status'),
-                urlParameter: 'status',
-                options: [
-                  { label: t('label.new'), value: InvoiceNodeStatus.New },
+                type: 'group',
+                name: t('label.delivered-datetime'),
+                elements: [
                   {
-                    label: t('label.shipped'),
-                    value: InvoiceNodeStatus.Shipped,
+                    type: 'dateTime',
+                    name: t('label.from-delivered-datetime'),
+                    urlParameter: 'deliveredDatetime',
+                    range: 'from',
                   },
                   {
-                    label: t('label.delivered'),
-                    value: InvoiceNodeStatus.Delivered,
-                  },
-                  {
-                    label: t('label.received'),
-                    value: InvoiceNodeStatus.Received,
-                  },
-                  {
-                    label: t('label.verified'),
-                    value: InvoiceNodeStatus.Verified,
+                    type: 'dateTime',
+                    name: t('label.to-delivered-datetime'),
+                    urlParameter: 'deliveredDatetime',
+                    range: 'to',
                   },
                 ],
               },

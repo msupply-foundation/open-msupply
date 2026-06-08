@@ -9,17 +9,18 @@ export const useAssetLogInsert = () => {
   const queryClient = useQueryClient();
   const api = useAssetApi();
 
-  const { mutateAsync } = useMutation(
-    async (log: Partial<InsertAssetLogInput>) => api.insertLog(log),
-    {
-      onError: e => {
-        console.error(e);
-      },
+  const { mutateAsync } = useMutation({
+    mutationFn: async (log: Partial<InsertAssetLogInput>) => api.insertLog(log),
+
+    onError: e => {
+      console.error(e);
     }
-  );
+  });
 
   return {
     insertLog: mutateAsync,
-    invalidateQueries: () => queryClient.invalidateQueries(api.keys.base()),
+    invalidateQueries: () => queryClient.invalidateQueries({
+      queryKey: api.keys.base()
+    }),
   };
 };
