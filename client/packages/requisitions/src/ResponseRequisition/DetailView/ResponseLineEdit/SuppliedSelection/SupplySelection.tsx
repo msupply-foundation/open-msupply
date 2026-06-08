@@ -156,19 +156,6 @@ export const SupplySelection = ({
             }}
             sx={{
               boxShadow: theme => (!disabled ? theme.shadows[2] : 'none'),
-              '& .MuiInputBase-input': {
-                p: '3px 4px',
-                backgroundColor: theme => theme.palette.background.white,
-              },
-            }}
-            slotProps={{
-              input: {
-                disableUnderline: true,
-                sx: {
-                  backgroundColor: theme => theme.palette.background.white,
-                  borderRadius: 2,
-                },
-              },
             }}
             disabled={disabled}
           />

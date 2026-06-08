@@ -71,6 +71,10 @@ export const BasicTextInput = React.forwardRef<
     });
     const error = formError ? errorProp || storeError : errorProp;
 
+    const isReadOnly =
+      !!(slotProps?.htmlInput as { readOnly?: boolean })?.readOnly ||
+      !!(props.inputProps as { readOnly?: boolean })?.readOnly;
+
     return (
       <Box
         display="flex"
@@ -88,36 +92,30 @@ export const BasicTextInput = React.forwardRef<
         <TextField
           ref={ref}
           inputRef={inputRef}
-          color="secondary"
-          // Sx props can be provided as an array of SxProp objects. In this
-          // case, it doesn't work to try and merge it as though it was an
-          // object. So we're going to convert this input to a single array of
-          // SX props here, which means it'll be safe regardless of the shape of
-          // the incoming sx prop
+          color="primary"
           sx={[
             {
-              '& .MuiInput-underline:before': { borderBottomWidth: 0 },
-              '& .MuiInput-input': { color: 'gray.dark', textAlign },
+              '& .MuiOutlinedInput-input': { color: 'gray.dark', textAlign },
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: isReadOnly
+                  ? 'rgba(0, 0, 0, 0.02)'
+                  : '#ffffff',
+              },
+              '& .MuiOutlinedInput-root.Mui-disabled': {
+                backgroundColor: 'rgba(0, 0, 0, 0.04)',
+              },
             },
             sx ?? {},
           ].flat()}
-          variant="standard"
+          variant="outlined"
           size="small"
+          error={error}
           slotProps={{
             ...slotProps,
             input: {
               disableInjectingGlobalStyles: true,
-              disableUnderline: error ? true : false,
               ...slotProps?.input,
               sx: {
-                border: theme =>
-                  error ? `2px solid ${theme.palette.error.main}` : 'none',
-                backgroundColor: theme =>
-                  props.disabled
-                    ? theme.palette.background.input.disabled
-                    : theme.palette.background.input.main,
-                borderRadius: 2,
-                padding: 0.5,
                 // Ignoring below, see https://github.com/mui/material-ui/issues/45041
                 // @ts-expect-error: use mergeSlotProps when it's available in MUI-6
                 ...slotProps?.input?.sx,
@@ -131,7 +129,7 @@ export const BasicTextInput = React.forwardRef<
               ...slotProps?.htmlInput,
               // Ignoring below, see https://github.com/mui/material-ui/issues/45041
               // @ts-expect-error: use mergeSlotProps when it's available in MUI-6
-              sx: { padding: 0.5, ...slotProps?.htmlInput?.sx },
+              sx: { ...slotProps?.htmlInput?.sx },
             },
             inputLabel: {
               ...slotProps?.inputLabel,

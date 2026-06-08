@@ -30,6 +30,7 @@ interface LocationSearchInputProps {
   /** Alternative to `clearable`, ideal for tables where the X takes up valuable real estate */
   includeRemoveOption?: boolean;
   placeholder?: string;
+  label?: string;
 }
 
 interface LocationOption {
@@ -90,6 +91,7 @@ export const LocationSearchInput = ({
   clearable = false,
   includeRemoveOption = !clearable,
   placeholder,
+  label,
 }: LocationSearchInputProps) => {
   const t = useTranslation();
   const theme = useTheme();
@@ -226,6 +228,7 @@ export const LocationSearchInput = ({
       renderOption={optionRenderer}
       getOptionLabel={getOptionLabel}
       placeholder={placeholder}
+      label={label}
       isOptionEqualToValue={(option, value) => option.value === value?.value}
       slots={{
         paper: paperSlot,

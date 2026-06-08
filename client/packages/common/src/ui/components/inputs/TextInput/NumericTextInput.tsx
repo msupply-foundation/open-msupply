@@ -338,16 +338,7 @@ export const NumericTextInput = React.forwardRef<
                   </InputAdornment>
                 ) : undefined,
                 sx: {
-                  borderRadius: 2,
-                  padding: 0.5,
                   width: fullWidth ? undefined : width,
-                },
-              },
-              htmlInput: {
-                sx: {
-                  backgroundColor: props.disabled
-                    ? 'background.input.disabled'
-                    : 'background.input.main',
                 },
               },
             },

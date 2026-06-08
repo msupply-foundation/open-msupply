@@ -27,6 +27,7 @@ interface CampaignOrProgramSelectorProps {
   programOptionsOrFilter: ProgramFragment[] | { filterByItemId: string };
   fullWidth?: boolean;
   disabled?: boolean;
+  label?: string;
 }
 
 export const CampaignOrProgramSelector = ({
@@ -36,6 +37,7 @@ export const CampaignOrProgramSelector = ({
   programOptionsOrFilter,
   fullWidth = false,
   disabled,
+  label,
 }: CampaignOrProgramSelectorProps): ReactElement => {
   const t = useTranslation();
   const {
@@ -115,6 +117,7 @@ export const CampaignOrProgramSelector = ({
       isOptionEqualToValue={(option, value) => option.value === value?.value}
       width={fullWidth ? '100%' : '160px'}
       disabled={disabled}
+      label={label}
     />
   );
 };

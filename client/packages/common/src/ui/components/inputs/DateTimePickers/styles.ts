@@ -1,53 +1,21 @@
-import { SxProps } from '@mui/material';
+import { SxProps, Theme } from '@mui/material';
 
 export const getTextFieldSx = (
-  hasLabel: boolean,
+  _hasLabel: boolean,
   dateOnly: boolean,
-  inputSx?: SxProps,
   width?: number | string
-) => ({
-  border: 'none',
-  color: 'gray',
+): SxProps<Theme> => ({
   '& .MuiPickersOutlinedInput-root': {
-    backgroundColor: 'background.input.main',
-    height: '36px',
-    marginTop: hasLabel ? '16px' : 0,
-    padding: '0 8px',
-    borderRadius: '8px',
-    '&.Mui-focused:not(.Mui-error)': {
-      '& .MuiPickersOutlinedInput-notchedOutline': {
-        border: 'none',
-        borderBottom: 'solid 2px',
-        borderColor: 'secondary.light',
-        borderRadius: 0,
-      },
-    },
-    '&.Mui-error': {
-      '& .MuiPickersOutlinedInput-notchedOutline': {
-        borderWidth: '2px',
-        borderStyle: 'solid',
-      },
-    },
+    backgroundColor: '#ffffff',
+    // Prevent the section list + calendar icon from being clipped when the
+    // container is narrow. Date-only (MM/YYYY) needs ~160px minimum.
+    minWidth: dateOnly ? 160 : 200,
     '&.Mui-disabled': {
-      backgroundColor: 'background.input.disabled',
+      backgroundColor: 'rgba(0, 0, 0, 0.04)',
     },
-    ...inputSx,
-  },
-  '& .MuiPickersOutlinedInput-notchedOutline': {
-    border: 'none',
-  },
-  '& .MuiInputAdornment-root': {
-    marginLeft: 0,
   },
   '& .MuiPickersSectionList-root': {
     color: 'gray.dark',
-  },
-  '& .MuiInputLabel-root': {
-    top: '6px',
-    color: 'gray.main',
-    '&.Mui-focused': {
-      color: 'gray.main',
-    },
   },
   '& .MuiFormHelperText-root': {
     whiteSpace: 'normal',
@@ -57,18 +25,18 @@ export const getTextFieldSx = (
 
 export const getPaperSx = () => ({
   '& .Mui-selected': {
-    backgroundColor: 'secondary.main!important',
+    backgroundColor: 'primary.main!important',
   },
   '& .Mui-selected:focus': {
-    backgroundColor: 'secondary.main',
+    backgroundColor: 'primary.main',
   },
   '& .Mui-selected:hover': {
-    backgroundColor: 'secondary.main',
+    backgroundColor: 'primary.dark',
   },
 });
 
 export const getActionBarSx = () => ({
   '& .MuiButton-root': {
-    color: 'secondary.main',
+    color: 'primary.main',
   },
 });

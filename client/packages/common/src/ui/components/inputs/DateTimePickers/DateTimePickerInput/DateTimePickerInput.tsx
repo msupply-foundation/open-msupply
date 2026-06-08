@@ -179,6 +179,8 @@ export const DateTimePickerInput = ({
             sx: getActionBarSx(),
           },
           textField: {
+            color: 'primary',
+            size: 'small',
             onBlur: () => {
               if (props.disabled) return;
               setIsInitialEntry(false);
@@ -198,7 +200,8 @@ export const DateTimePickerInput = ({
             helperText:
               errorText ?? (!isInitialEntry ? (internalError ?? '') : ''),
             sx: {
-              ...getTextFieldSx(!!label, !showTime, inputSx, width),
+              ...(getTextFieldSx(!!label, !showTime, width) as object),
+              ...(inputSx as object),
               width,
               minWidth: showTime ? 200 : undefined,
             },

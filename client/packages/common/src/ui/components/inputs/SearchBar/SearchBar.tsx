@@ -3,7 +3,6 @@ import { BasicTextInput } from '../TextInput';
 import { CloseIcon, SearchIcon } from '@common/icons';
 import { useDebouncedValueCallback } from '@common/hooks';
 import { InlineSpinner } from '../../loading';
-import { Box } from '@mui/material';
 import { IconButton, InputAdornment } from '@common/components';
 import { useTranslation } from '@common/intl';
 
@@ -31,7 +30,6 @@ const EndAdornment = ({
 }) => {
   const t = useTranslation();
   if (isLoading) return <InlineSpinner />;
-
   if (!hasValue) return null;
 
   return (
@@ -80,75 +78,51 @@ export const SearchBar = ({
     setLoading(true);
   };
 
-  const searchIcon = (
-    <SearchIcon sx={{ color: 'gray.main', marginBottom: 1 }} fontSize="small" />
+  const searchIcon = onSearchIconClick ? (
+    <InputAdornment position="start">
+      <IconButton
+        icon={<SearchIcon fontSize="small" sx={{ color: 'gray.main' }} />}
+        onClick={onSearchIconClick}
+        label={searchIconButtonLabel}
+      />
+    </InputAdornment>
+  ) : (
+    <InputAdornment position="start">
+      <SearchIcon fontSize="small" sx={{ color: 'gray.main' }} />
+    </InputAdornment>
   );
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'flex-end',
+    <BasicTextInput
+      autoFocus={autoFocus}
+      slotProps={{
+        input: {
+          startAdornment: searchIcon,
+          endAdornment: (
+            <EndAdornment
+              isLoading={isLoading || loading}
+              hasValue={!!buffer}
+              onClear={() => {
+                handleChange('');
+                if (onClear) onClear();
+              }}
+            />
+          ),
+          sx: {
+            width: '220px',
+            ...(expandOnFocus
+              ? {
+                  transition: theme =>
+                    theme.transitions.create('width', { delay: 100 }),
+                  '&.Mui-focused': { width: '360px' },
+                }
+              : {}),
+          },
+        },
       }}
-    >
-      {onSearchIconClick ? (
-        <IconButton
-          icon={searchIcon}
-          onClick={onSearchIconClick}
-          label={searchIconButtonLabel}
-        />
-      ) : (
-        searchIcon
-      )}
-
-      <BasicTextInput
-        autoFocus={autoFocus}
-        slotProps={{
-          input: {
-            endAdornment: (
-              <EndAdornment
-                isLoading={isLoading || loading}
-                hasValue={!!buffer}
-                onClear={() => {
-                  handleChange('');
-                  if (onClear) onClear();
-                }}
-              />
-            ),
-            sx: {
-              paddingLeft: '6px',
-              alignItems: 'center',
-              width: '220px',
-              ...(expandOnFocus
-                ? {
-                    transition: theme =>
-                      theme.transitions.create('width', {
-                        delay: 100,
-                      }),
-                    '&.Mui-focused': {
-                      width: '360px',
-                    },
-                  }
-                : {}),
-              backgroundColor: theme => theme.palette.background.input.main,
-            },
-          },
-        }}
-        value={buffer}
-        onChange={e => handleChange(e.target.value)}
-        label={placeholder}
-        sx={{
-          '& .MuiInputLabel-root': {
-            zIndex: 100,
-            top: '4px',
-            left: '8px',
-            color: 'gray.main',
-          },
-          '& .MuiInputLabel-root.Mui-focused': {
-            color: 'secondary.main',
-          },
-        }}
-      />
-    </Box>
+      value={buffer}
+      onChange={e => handleChange(e.target.value)}
+      label={placeholder}
+    />
   );
 };

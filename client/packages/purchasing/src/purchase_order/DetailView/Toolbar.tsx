@@ -209,6 +209,8 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
           />
           <InputWithLabelRow
             label={t('label.foreign-exchange-rate')}
+            labelWidth="auto"
+            labelProps={{ sx: { whiteSpace: 'nowrap' } }}
             Input={
               <NumericTextInput
                 value={draft?.foreignExchangeRate ?? 0}
@@ -223,6 +225,8 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
           <Grid display="flex" flexDirection="column" gap={1}>
             <InputWithLabelRow
               label={t('label.requested-delivery-date')}
+              labelWidth="auto"
+              labelProps={{ sx: { whiteSpace: 'nowrap' } }}
               Input={
                 <DateTimePickerInput
                   value={requestedDeliveryDate}
@@ -234,6 +238,8 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
             />
             <InputWithLabelRow
               label={t('label.expected-delivery-date')}
+              labelWidth="auto"
+              labelProps={{ sx: { whiteSpace: 'nowrap' } }}
               Input={
                 <DateTimePickerInput
                   value={expectedDeliveryDate}

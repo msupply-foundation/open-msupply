@@ -14,6 +14,7 @@ export interface DonorSearchInputProps {
   donorId: string | null;
   disabled?: boolean;
   clearable?: boolean;
+  label?: string;
 }
 
 export const DonorSearchInput = ({
@@ -23,6 +24,7 @@ export const DonorSearchInput = ({
   donorId,
   disabled = false,
   clearable = false,
+  label,
 }: DonorSearchInputProps) => {
   const t = useTranslation();
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
@@ -42,6 +44,7 @@ export const DonorSearchInput = ({
       width={fullWidth ? undefined : width}
       popperMinWidth={width}
       noOptionsText={t('label.no-options')}
+      label={label}
     />
   );
 };

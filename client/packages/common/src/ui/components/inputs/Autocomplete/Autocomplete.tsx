@@ -65,6 +65,7 @@ export interface AutocompleteProps<T> extends Omit<
   textSx?: SxProps<Theme>;
   clickableOption?: ClickableOptionConfig;
   placeholder?: string;
+  label?: string;
 }
 
 export function Autocomplete<T>({
@@ -96,6 +97,7 @@ export function Autocomplete<T>({
   textSx,
   clickableOption,
   placeholder,
+  label,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const t = useTranslation();
@@ -122,17 +124,14 @@ export function Autocomplete<T>({
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
       required={required}
+      label={label}
       {...props}
       {...inputProps}
       error={error || inputProps?.error}
       autoFocus={autoFocus}
       slotProps={{
         input: {
-          sx: {
-            p: '6.5px',
-            '& .MuiInputBase-input': { pb: '6.5px !important' },
-            ...textSx,
-          },
+          sx: { ...textSx },
           ...props.InputProps,
           placeholder,
         },

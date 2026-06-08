@@ -230,9 +230,9 @@ export const themeOptions = {
     },
     border: '#e4e4eb',
     primary: {
-      main: '#e95c30',
-      light: '#ed7d59',
-      dark: '#c43c11',
+      main: '#F26532',
+      light: '#f5845a',
+      dark: '#c94e1e',
       contrastText: '#fff',
     },
     secondary: { main: '#3e7bfa', light: '#5b8def', dark: '#3568d4' },

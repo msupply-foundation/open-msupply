@@ -92,6 +92,7 @@ export interface InfiniteSearchPickerProps<T extends HasId, TFilter> {
   // Pass `inputSlotProps(disabled).input.sx` from ModalInputs/utils for parity
   // with other inputs in those forms.
   textSx?: SxProps<Theme>;
+  label?: string;
 }
 
 export function InfiniteSearchPicker<T extends HasId, TFilter>({
@@ -117,6 +118,7 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
   id,
   noOptionsText,
   textSx,
+  label,
 }: InfiniteSearchPickerProps<T, TFilter>) {
   const selectControl = useToggle();
   const { filter, onFilter } = useStringFilter(searchKey);
@@ -323,6 +325,7 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
       width={width ? `${width}px` : '100%'}
       popperMinWidth={popperMinWidth ?? width}
       textSx={textSx}
+      label={label}
       isOptionEqualToValue={(option, val) => option?.id === val?.id}
       paginationDebounce={PAGINATION_DEBOUNCE_TIMEOUT}
       onPageChange={() => fetchNextPage()}

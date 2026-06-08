@@ -21,9 +21,11 @@ export const ManufacturerSearchInput = ({
   value,
   disabled = false,
   textSx = {},
+  label,
 }: NullableNameSearchInputProps & {
   textSx?: SxProps<Theme>;
   fullWidth?: boolean;
+  label?: string;
 }) => {
   const t = useTranslation();
   const { data, isLoading } = useName.document.manufacturers();
@@ -48,6 +50,7 @@ export const ManufacturerSearchInput = ({
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       getOptionDisabled={option => option.isOnHold}
       textSx={textSx}
+      label={label}
     />
   );
 };

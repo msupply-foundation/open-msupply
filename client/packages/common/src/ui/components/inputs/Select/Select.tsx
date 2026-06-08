@@ -2,7 +2,7 @@ import React from 'react';
 import {
   Divider,
   MenuItem,
-  StandardTextFieldProps,
+  OutlinedTextFieldProps,
   TextField,
 } from '@mui/material';
 import { useTranslation } from '@common/intl';
@@ -13,7 +13,7 @@ export type Option = {
   value: string | number;
   disabled?: boolean;
 };
-export interface SelectProps extends StandardTextFieldProps {
+export interface SelectProps extends Omit<OutlinedTextFieldProps, 'variant'> {
   options: Option[];
   renderOption?: (option: Option) => React.ReactNode;
   clearable?: boolean;
@@ -36,28 +36,18 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
       <TextField
         ref={ref}
         sx={{
-          '& .MuiInput-underline:before': { borderBottomWidth: 0 },
-          '& .MuiInput-input': { color: theme => theme.palette.gray.dark },
+          '& .MuiOutlinedInput-root': {
+            backgroundColor: props.disabled ? 'rgba(0, 0, 0, 0.04)' : '#ffffff',
+          },
           ...sx,
         }}
         select
-        variant="standard"
+        variant="outlined"
         size="small"
+        color="primary"
         slotProps={merge(
           {
-            input: {
-              color: 'secondary',
-              sx: {
-                backgroundColor: props.disabled
-                  ? 'background.input.disabled'
-                  : 'background.input.main',
-                borderRadius: 2,
-                padding: '4px 8px',
-              },
-            },
-            inputLabel: {
-              color: 'secondary',
-            },
+            inputLabel: { color: 'primary' },
           },
           slotProps
         )}

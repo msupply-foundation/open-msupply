@@ -10,6 +10,7 @@ interface VVMStatusSearchInputProps {
   useDefault?: boolean;
   placeholder?: string;
   required?: boolean;
+  label?: string;
 }
 
 export const VVMStatusSearchInput = ({
@@ -20,6 +21,7 @@ export const VVMStatusSearchInput = ({
   useDefault = false,
   placeholder,
   required = false,
+  label,
 }: VVMStatusSearchInputProps) => {
   const t = useTranslation();
   const { data, isLoading } = useVvmStatusesEnabled();
@@ -53,6 +55,7 @@ export const VVMStatusSearchInput = ({
       }}
       placeholder={placeholder}
       required={required}
+      label={label}
     />
   );
 };

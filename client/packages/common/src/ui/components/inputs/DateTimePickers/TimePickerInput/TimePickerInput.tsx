@@ -47,7 +47,10 @@ export const TimePickerInput = ({
         textField: {
           disabled: !!disabled,
           error: isInvalid(internalValue),
+          size: 'small',
+          color: 'primary',
           sx: getTextFieldSx(!!props.label, false),
+
         },
       }}
       {...props}

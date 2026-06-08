@@ -5,7 +5,6 @@ import {
   FormControl,
   Select,
   InputLabel,
-  outlinedInputClasses,
   Box,
   SvgIconProps,
   ListItemText,
@@ -48,7 +47,6 @@ export const DropdownMenuItem: FC<DropdownMenuItemProps> = ({
 };
 
 const StyledSelect = styled(Select)(({ theme }) => ({
-  borderRadius: '8px',
   width: 160,
   backgroundColor: 'white',
   '& .MuiSelect-icon': {
@@ -56,18 +54,6 @@ const StyledSelect = styled(Select)(({ theme }) => ({
     left: 'calc(100% - 30px)',
     color: theme.palette.primary.main,
   },
-
-  [`& .${outlinedInputClasses.notchedOutline}`]: {
-    borderColor: theme.palette.border,
-  },
-  [`&:hover .${outlinedInputClasses.notchedOutline}`]: {
-    borderColor: theme.palette.border,
-  },
-
-  [`&.${outlinedInputClasses.focused} .${outlinedInputClasses.notchedOutline}`]:
-    {
-      borderColor: theme.palette.gray.dark,
-    },
 }));
 
 interface DropdownMenuProps {
@@ -92,7 +78,7 @@ export const DropdownMenu: FC<PropsWithChildren<DropdownMenuProps>> = ({
     <FormControl size="small" sx={sx}>
       <InputLabel
         shrink={false}
-        sx={{ color: 'gray.main', '&.Mui-focused': { color: 'gray.main' } }}
+        sx={{ color: 'gray.main', '&.Mui-focused': { color: 'primary.main' } }}
         id={`action-drop-down-label-${label}`}
       >
         {label}

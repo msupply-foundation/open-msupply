@@ -103,12 +103,11 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
         [theme.breakpoints.down('sm')]: {
           flexDirection: 'column',
         },
-        alignItems: 'flex-start',
+        alignItems: 'center',
         flexWrap: 'wrap',
       })}
     >
-      {/* 13px margin to make menu match the individual filter inputs */}
-      <DropdownMenu label={t('label.filters')} sx={{ marginTop: '13px' }}>
+      <DropdownMenu label={t('label.filters')}>
         {filterOptions.map(option => (
           <FilterMenuItem
             key={

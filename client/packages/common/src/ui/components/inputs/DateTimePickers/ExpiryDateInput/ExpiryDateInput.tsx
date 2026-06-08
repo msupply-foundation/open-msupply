@@ -7,6 +7,7 @@ interface ExpiryDateInputProps {
   onChange: (value: Date | null) => void;
   disabled?: boolean;
   width?: number | string;
+  label?: string;
 }
 
 export const ExpiryDateInput = ({
@@ -14,6 +15,7 @@ export const ExpiryDateInput = ({
   onChange,
   disabled,
   width,
+  label,
 }: ExpiryDateInputProps) => {
   const pickerOpen = useRef(false);
 
@@ -22,6 +24,7 @@ export const ExpiryDateInput = ({
       disabled={disabled}
       views={['year', 'month']}
       value={value}
+      label={label}
       onChange={d => {
         // Only set the date to last day of month if done through the picker,
         // not the keyboard

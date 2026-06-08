@@ -82,6 +82,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   loadingInputOnly = false,
   sx,
   textSx,
+  label,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteWithPaginationProps<T>>) {
   const t = useTranslation();
@@ -121,6 +122,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
 
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
+      label={label}
       {...props}
       {...inputProps}
       autoFocus={autoFocus}
@@ -137,11 +139,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
       slotProps={{
         input: {
           ...props.InputProps,
-          disableUnderline: false,
-          sx: {
-            paddingY: '4px !important',
-            ...textSx,
-          },
+          sx: { ...textSx },
           endAdornment: (
             <>
               {isLoading || loading ? (
