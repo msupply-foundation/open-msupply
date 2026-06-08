@@ -39,10 +39,9 @@ export const useStockMovementList = (queryParams: StockMovementsParams) => {
     const result = await stockMovementApi.stockRelocations({
       storeId,
       page: { offset, first },
-      sort: {
-        key: toSortField(sortBy?.key),
-        desc: !!sortBy?.isDesc,
-      },
+      sort: sortBy?.key
+        ? { key: toSortField(sortBy.key), desc: !!sortBy.isDesc }
+        : undefined,
       filter: filterBy,
     });
     const { nodes, totalCount } = result?.stockRelocations;
