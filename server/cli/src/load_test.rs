@@ -328,13 +328,14 @@ impl LoadTest {
         // reached migration status "synced" on COGS, so drive OMS central through a full sync
         // cycle for each store we created — pulling and integrating each in turn — before the
         // remotes initialise and request their v7 token.
+        let cycles = store_count + 1; // need one extra cycle as first cycle triggers the first store to get migrated by COGS
         println!(
             "Syncing OMS central to migrate {} store(s) from mSupply central...",
             store_count
         );
-        for cycle in 1..=store_count {
+        for cycle in 1..=cycles {
             run_oms_central_sync_cycle(&api).await?;
-            println!("OMS central sync cycle {}/{} complete", cycle, store_count);
+            println!("OMS central sync cycle {}/{} complete", cycle, cycles);
         }
         println!("OMS central is synced.");
         Ok(())
@@ -540,7 +541,7 @@ async fn run_oms_central_sync_cycle(api: &crate::graphql::Api) -> Result<(), any
             }
         }
 
-        if start.elapsed().as_secs() > 600 {
+        if start.elapsed().as_secs() > 300 {
             return Err(anyhow!(
                 "Timed out waiting for an OMS central sync cycle to finish"
             ));
