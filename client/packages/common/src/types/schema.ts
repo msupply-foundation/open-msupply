@@ -9753,18 +9753,22 @@ export type StockRelocationFilterInput = {
 
 export type StockRelocationNode = {
   __typename: 'StockRelocationNode';
+  availableNumberOfPacks: Scalars['Float']['output'];
   batch?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
   fromLocation?: Maybe<LocationNode>;
+  fromPackSize: Scalars['Float']['output'];
   fromStockLineId: Scalars['String']['output'];
   id: Scalars['String']['output'];
   itemCode: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
   numberOfPacks: Scalars['Float']['output'];
+  restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   status: StockRelocationNodeStatus;
   toLocation?: Maybe<LocationNode>;
+  toPackSize?: Maybe<Scalars['Float']['output']>;
   toStockLineId?: Maybe<Scalars['String']['output']>;
 };
 

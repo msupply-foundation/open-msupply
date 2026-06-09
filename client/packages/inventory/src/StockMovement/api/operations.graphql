@@ -5,6 +5,10 @@ fragment StockMovementRow on StockRelocationNode {
   finalisedDatetime
   status
   numberOfPacks
+  fromPackSize
+  availableNumberOfPacks
+  toPackSize
+  restrictedLocationTypeId
   itemCode
   itemName
   batch
