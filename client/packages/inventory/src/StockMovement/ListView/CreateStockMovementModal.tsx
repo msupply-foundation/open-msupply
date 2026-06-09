@@ -8,6 +8,8 @@ import {
   Autocomplete,
   RadioGroup,
   NumUtils,
+  useConfirmationModal,
+  StockRelocationNodeStatus,
 } from '@openmsupply-client/common';
 import { DialogButton } from '@common/components';
 import { useDialog } from '@common/hooks';
@@ -20,7 +22,11 @@ import {
   useLocationList,
   useStockList,
 } from '@openmsupply-client/system';
-import { DraftStockMovementLine, useInsertStockMovement } from '../api';
+import {
+  DraftStockMovementLine,
+  useInsertStockMovement,
+  useUpdateStockMovement,
+} from '../api';
 import {
   DraftStockMovementLineState,
   StockMovementLineTable,
@@ -79,6 +85,15 @@ export const CreateStockMovementModal = ({
   >({});
 
   const { insert, isSaving } = useInsertStockMovement();
+  const { update } = useUpdateStockMovement();
+
+  const getFinaliseConfirmation = useConfirmationModal({
+    iconType: 'info',
+    title: t('heading.stock-movement-created'),
+    message: t('messages.confirm-finalise-stock-movement'),
+    buttonLabel: t('button.finalise'),
+    cancelButtonLabel: t('button.not-now'),
+  });
 
   const {
     query: { data: locationData },
@@ -210,8 +225,26 @@ export const CreateStockMovementModal = ({
         error(result.error.description)();
         return;
       }
-      success(t('messages.stock-movement-created'))();
-      onClose();
+      const ids = result.ids;
+      getFinaliseConfirmation({
+        onConfirm: async () => {
+          try {
+            await Promise.all(
+              ids.map(id =>
+                update({ id, status: StockRelocationNodeStatus.Finalised })
+              )
+            );
+            success(t('messages.stock-movement-finalised'))();
+          } catch (e) {
+            error((e as Error).message)();
+          }
+          onClose();
+        },
+        onCancel: () => {
+          success(t('messages.stock-movement-created'))();
+          onClose();
+        },
+      });
     } catch (e) {
       error((e as Error).message)();
     }
