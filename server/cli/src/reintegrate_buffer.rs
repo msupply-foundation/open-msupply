@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use log::{info, warn};
+use log::info;
 use repository::{
     get_storage_connection_manager,
     migrations::{migrate, MigrationConfig},
@@ -52,13 +52,9 @@ pub fn reintegrate_buffer(
     }
 
     match (skip_buffer_reset, errors_only) {
-        // When both skip_buffer_reset and errors_only, skip all reset and warn user
-        (true, true) => {
-            info!("Skipping sync buffer reset");
-            warn!("--errors-only has no effect with --skip-buffer-reset (no reset is performed)");
-        }
-        // Skip reset
-        (true, false) => info!("Skipping sync buffer reset"),
+        // Skip reset. `--errors-only` conflicts with `--skip-buffer-reset` at the CLI layer,
+        // so (true, true) can't occur; `(true, _)` covers the only reachable skip case.
+        (true, _) => info!("Skipping sync buffer reset"),
         // Reset only errored records. Ignored rows also carry an integration_error (the ignore
         // message), so exclude IGNORED to retry genuine errors only.
         (false, true) => {
