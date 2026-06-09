@@ -30,6 +30,15 @@ pub struct LoadTest {
     #[clap(long)]
     pub oms_central_url: String,
 
+    /// Username of an OMS central server user account, used to authenticate the readiness
+    /// check that waits for OMS central to sync data from mSupply central before starting remotes
+    #[clap(long, default_value = "admin")]
+    pub oms_central_username: String,
+
+    /// Password for the OMS central server user account
+    #[clap(long, default_value = "pass")]
+    pub oms_central_password: String,
+
     /// The output directory for test results
     #[clap(short, long, default_value = "load_test")]
     pub output_dir: PathBuf,
@@ -64,8 +73,6 @@ struct SyncSite {
     #[serde(rename = "site_ID")]
     site_id: usize,
     name: String,
-    #[serde(rename = "password")]
-    password_sha256: String,
 }
 #[derive(Deserialize, Debug, Clone)]
 struct SyncStore {
@@ -106,10 +113,7 @@ struct LatestSyncStatus {
 struct FullSyncStatus {
     is_syncing: bool,
     push: Option<SyncDone>,
-    push_v6: Option<SyncDone>,
-    pull_v6: Option<SyncDone>,
-    pull_remote: Option<SyncDone>,
-    pull_central: Option<SyncDone>,
+    pull: Option<SyncDone>,
     summary: SyncStatus,
 }
 #[derive(Deserialize, Clone, Debug)]
@@ -121,6 +125,15 @@ struct SyncDone {
 #[serde(rename_all = "camelCase")]
 struct SyncStatus {
     finished: Option<DateTime<Utc>>,
+}
+
+// OMS central is a central server, so its `latestSyncStatus` returns the V5/V6 node
+// (it syncs from mSupply central via v5). Used by the readiness gate below.
+#[derive(Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+struct OmsCentralFullSyncStatus {
+    is_syncing: bool,
+    summary: SyncStatus,
 }
 
 #[derive(Debug, Clone)]
@@ -143,48 +156,13 @@ impl Metric {
     }
 
     fn update_sync_metrics(&mut self, site_info: &SyncInfo) {
-        let FullSyncStatus {
-            push,
-            push_v6,
-            pull_v6,
-            pull_remote,
-            pull_central,
-            ..
-        } = &site_info.data.latest_sync_status;
-        self.pushed = push_v6.as_ref().map_or(0, |s| s.done.unwrap_or(0))
-            + push.as_ref().map_or(0, |s| s.done.unwrap_or(0));
-
-        self.pulled = pull_v6.as_ref().map_or(0, |s| s.done.unwrap_or(0))
-            + pull_remote.as_ref().map_or(0, |s| s.done.unwrap_or(0))
-            + pull_central.as_ref().map_or(0, |s| s.done.unwrap_or(0));
+        let FullSyncStatus { push, pull, .. } = &site_info.data.latest_sync_status;
+        self.pushed = push.as_ref().map_or(0, |s| s.done.unwrap_or(0));
+        self.pulled = pull.as_ref().map_or(0, |s| s.done.unwrap_or(0));
     }
 }
 
 impl LoadTest {
-    pub fn new(
-        msupply_central_url: String,
-        oms_central_url: String,
-        base_port: u16,
-        output_dir: PathBuf,
-        test_site_name: Option<String>,
-        test_site_pass: Option<String>,
-        sites: usize,
-        lines: usize,
-        duration: usize,
-    ) -> Self {
-        Self {
-            msupply_central_url,
-            oms_central_url,
-            base_port,
-            output_dir,
-            test_site_name,
-            test_site_pass,
-            sites,
-            lines,
-            duration,
-        }
-    }
-
     pub async fn run(&self) -> anyhow::Result<()> {
         use tokio::process::Command;
         use util::hash::sha256;
@@ -203,9 +181,6 @@ impl LoadTest {
         let client = Client::new();
         let test_site_name = self.test_site_name.as_ref().unwrap();
         let test_site_pass = Some(sha256(self.test_site_pass.as_ref().unwrap()));
-
-        // Check the OMS central server sync api is available by using the site_status endpoint
-        self.check_oms_central(&client).await?;
 
         // Creating the sites on OG central
         let num_sites = if self.sites > 1 { self.sites } else { 2 };
@@ -228,6 +203,11 @@ impl LoadTest {
                 test_site_pass,
             )
             .await?;
+
+        // The remotes sync v7 solely from OMS central, so it must hold the sites/stores/items
+        // (and the site rows used for auth) before they initialise. Wait for OMS central to pull
+        // the data we just created on mSupply central.
+        self.wait_for_oms_central_synced().await?;
 
         self.create_configs(&test_sites)?;
 
@@ -373,38 +353,55 @@ impl LoadTest {
         Ok(())
     }
 
-    async fn check_oms_central(&self, client: &Client) -> Result<(), anyhow::Error> {
-        let site_status_url = format!("{}/{}", self.oms_central_url, "central/sync/site_status");
+    /// Wait until OMS central has synced the freshly-created sites/stores/items from mSupply
+    /// central. The remotes sync v7 solely from OMS central, so it must hold this data (and the
+    /// site rows used for auth) before they initialise. OMS central is a central server, so its
+    /// `latestSyncStatus` returns the V5/V6 node. We remember the previously completed sync and
+    /// wait for a newer one, so the data we just created is guaranteed to be included.
+    async fn wait_for_oms_central_synced(&self) -> Result<(), anyhow::Error> {
+        // OMS central enforces access control on the sync-status GraphQL, so log in with an
+        // OMS central user account and use the returned bearer token (the spawned remotes get
+        // away with a placeholder header only because they run with debug_no_access_control).
+        let url = reqwest::Url::parse(&self.oms_central_url)
+            .map_err(|e| anyhow!("Invalid OMS central url '{}': {}", self.oms_central_url, e))?;
+        let api = crate::graphql::Api::new_with_token(
+            url,
+            self.oms_central_username.clone(),
+            self.oms_central_password.clone(),
+        )
+        .await
+        .map_err(|e| anyhow!("Failed to authenticate with OMS central: {}", e))?;
 
-        let request = serde_json::json!({
-            "cursor": 0,
-            "batch_size": 512,
-            "is_initialised": true,
-            "syncV5Settings": {
-                "serverUrl": self.msupply_central_url,
-                "username": self.test_site_name.as_ref().unwrap(),
-                "passwordSha256": sha256(self.test_site_pass.as_ref().unwrap()),
-                "siteUuid": "load_test",
-                "appName": "load_test",
-                "appVersion": "0",
-                "syncVersion": "9",
-            },
-            "syncV6Version": 0
-        });
+        let previous_finished = query_oms_central_sync_status(&api)
+            .await?
+            .and_then(|s| s.summary.finished);
 
-        let response = client.post(&site_status_url).json(&request).send().await?;
-        if !response.status().is_success() {
-            let message = response.text().await?;
-            return Err(anyhow!(
-                "Failed to connect to OMS central server: {}",
-                message
-            ));
+        // Trigger a sync now rather than waiting on OMS central's natural sync interval.
+        let _ = api
+            .gql("mutation ManualSync { root: manualSync }", json!({}), None)
+            .await;
+
+        println!("Waiting for OMS central to sync data from mSupply central...");
+        let start = Instant::now();
+        loop {
+            sleep(Duration::from_secs(2)).await;
+
+            if let Some(status) = query_oms_central_sync_status(&api).await? {
+                if !status.is_syncing
+                    && status.summary.finished.is_some()
+                    && status.summary.finished != previous_finished
+                {
+                    println!("OMS central is synced.");
+                    return Ok(());
+                }
+            }
+
+            if start.elapsed().as_secs() > 600 {
+                return Err(anyhow!(
+                    "Timed out waiting for OMS central to finish syncing from Legacy mSupply central"
+                ));
+            }
         }
-        println!(
-            "Connected to OMS central server sync API at {}",
-            site_status_url
-        );
-        Ok(())
     }
 
     fn write_results(&self, results: Vec<Metric>) {
@@ -542,6 +539,7 @@ impl LoadTest {
 
     fn create_test_sites(&self, site_n_stores: Vec<SiteNStore>) -> Vec<TestSite> {
         let mut test_sites: Vec<TestSite> = Vec::new();
+        let password_sha256 = sha256("pass");
         for (i, site_n_store) in site_n_stores.iter().enumerate() {
             let next = if i >= site_n_stores.len() - 1 {
                 0
@@ -578,9 +576,12 @@ impl LoadTest {
                     init_sql: None,
                 },
                 sync: Some(SyncSettings {
-                    url: self.msupply_central_url.clone(),
+                    // Remotes sync v7 solely from OMS central. The remote DB is freshly
+                    // reset, so it defaults to SyncVersion::V7 (see populate_sync_version
+                    // migration); pointing the sync url at OMS central is all that's needed.
+                    url: self.oms_central_url.clone(),
                     username: site_n_store.site.name.clone(),
-                    password_sha256: site_n_store.site.password_sha256.clone(),
+                    password_sha256: password_sha256.clone(),
                     interval_seconds: 600,
                     batch_size: BatchSize {
                         remote_pull: 512,
@@ -614,6 +615,34 @@ impl LoadTest {
     }
 }
 
+/// Query OMS central's `latestSyncStatus`. Returns `None` when OMS central has not produced a
+/// sync log yet (the union resolves to null). OMS central is central, so the status is the
+/// V5/V6 node. The query aliases the field to `root` because `Api::gql` returns `data.root`.
+async fn query_oms_central_sync_status(
+    api: &crate::graphql::Api,
+) -> Result<Option<OmsCentralFullSyncStatus>, anyhow::Error> {
+    const SYNC_STATUS_QUERY: &str = r#"
+query SyncInfo {
+  root: latestSyncStatus {
+    ... on FullSyncStatusV5V6Node {
+      isSyncing
+      summary {
+        finished
+      }
+    }
+  }
+}
+"#;
+
+    let value = api
+        .gql(SYNC_STATUS_QUERY, json!({}), None)
+        .await
+        .map_err(|e| anyhow!("Failed to query OMS central sync status: {}", e))?;
+
+    serde_json::from_value(value)
+        .map_err(|e| anyhow!("Failed to parse OMS central sync status: {}", e))
+}
+
 async fn create_sites(
     url: &String,
     client: &Client,
@@ -636,7 +665,7 @@ async fn create_sites(
             .header("app-name", "load_test")
             .header("app-version", "0")
             .header("msupply-site-uuid", "load_test")
-            .header("sync-version", "9")
+            .header("sync-version", "load_test")
             .header("content-length", body.len())
             .basic_auth(test_site_name, test_site_pass.to_owned())
             .body(body)
@@ -857,21 +886,12 @@ mutation ManualSync {
         const SYNC_INFO_QUERY: &str = r#"
 query SyncInfo {
   latestSyncStatus {
-    ... on FullSyncStatusV5V6Node {
+    ... on FullSyncStatusV7Node {
       isSyncing
       push {
         done
       }
-      pushV6 {
-        done
-      }
-      pullV6 {
-        done
-      }
-      pullRemote {
-        done
-      }
-      pullCentral {
+      pull {
         done
       }
       summary {
