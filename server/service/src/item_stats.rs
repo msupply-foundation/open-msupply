@@ -13,9 +13,8 @@ use crate::{
 use chrono::{Duration, NaiveDate};
 use repository::{
     ConsumptionFilter, ConsumptionRepository, DateFilter, DaysOutOfStockFilter,
-    DaysOutOfStockRepository, DaysOutOfStockRow, EqualFilter, ItemRowRepository, PluginType,
-    RepositoryError, RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow,
-    StorageConnection,
+    DaysOutOfStockRepository, DaysOutOfStockRow, EqualFilter, PluginType, RepositoryError,
+    RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow, StorageConnection,
 };
 use std::{collections::HashMap, ops::Neg};
 use util::{date_now, date_with_offset};
@@ -27,7 +26,6 @@ pub struct ItemStats {
     pub available_stock_on_hand: f64,
     pub total_stock_on_hand: f64,
     pub item_id: String,
-    pub item_name: String,
 }
 
 pub trait ItemStatsServiceTrait: Sync + Send {
@@ -131,22 +129,11 @@ pub fn get_item_stats(
 
     let stock_on_hand_rows = get_stock_on_hand_rows(connection, store_id, Some(item_ids.clone()))?;
 
-    // Item names are sourced from the item table so that stockless items still
-    // resolve correctly. Falling back to stock_on_hand.item_name (the previous
-    // behaviour) silently produced empty item_name for any item with no stock
-    // line in this store — see #11843.
-    let item_name_by_id: HashMap<String, String> = ItemRowRepository::new(connection)
-        .find_many_by_id(&item_ids)?
-        .into_iter()
-        .map(|item| (item.id, item.name))
-        .collect();
-
     Ok(ItemStats::new_vec(
         &item_ids,
         amc_by_item,
         consumption_map,
         stock_on_hand_rows,
-        &item_name_by_id,
     ))
 }
 
@@ -261,7 +248,6 @@ impl ItemStats {
         amc_by_item: amc::Output,
         consumption_map: HashMap<String /* item_id */, f64 /* total consumption */>,
         stock_on_hand_rows: Vec<StockOnHandRow>,
-        item_name_by_id: &HashMap<String, String>,
     ) -> Vec<Self> {
         let soh_map: HashMap<&str, &StockOnHandRow> = stock_on_hand_rows
             .iter()
@@ -275,11 +261,6 @@ impl ItemStats {
                 ItemStats {
                     available_stock_on_hand: soh.map(|s| s.available_stock_on_hand).unwrap_or(0.0),
                     item_id: item_id.clone(),
-                    // Always resolve from the item table — stock_on_hand only
-                    // emits rows for items with at least one stock line, so
-                    // falling back to its item_name silently dropped names for
-                    // stockless items (#11843).
-                    item_name: item_name_by_id.get(item_id).cloned().unwrap_or_default(),
                     average_monthly_consumption: amc_by_item
                         .get(item_id)
                         .and_then(|r| r.average_monthly_consumption)
@@ -297,7 +278,6 @@ impl ItemStats {
             average_monthly_consumption: row.average_monthly_consumption,
             available_stock_on_hand: row.available_stock_on_hand,
             item_id: requisition_line.item_row.id.clone(),
-            item_name: requisition_line.item_row.name.clone(),
             // TODO: Implement total consumption & total_stock_on_hand
             total_consumption: 0.0,
             total_stock_on_hand: 0.0,
@@ -471,12 +451,6 @@ mod test {
         );
         // No stock line check
         assert_eq!(item_stats[1].available_stock_on_hand, 0.0);
-
-        // Regression for #11843: items with no stock line in the store must
-        // still expose their name (previously item_name was sourced from the
-        // stock-on-hand row, which doesn't exist for stockless items).
-        assert_eq!(item_stats[0].item_name, test_item_stats::item().name);
-        assert_eq!(item_stats[1].item_name, test_item_stats::item2().name);
 
         assert_eq!(
             item_stats[0].average_monthly_consumption,
