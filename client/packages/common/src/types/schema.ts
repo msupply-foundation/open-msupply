@@ -11441,7 +11441,7 @@ export type UpdateStockRelocationInput = {
   fromNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   id: Scalars['String']['input'];
   status?: InputMaybe<StockRelocationNodeStatus>;
-  toLocationId?: InputMaybe<Scalars['String']['input']>;
+  toLocationId?: InputMaybe<NullableStringUpdate>;
   toPackSize?: InputMaybe<Scalars['Float']['input']>;
 };
 

@@ -1,4 +1,5 @@
 use async_graphql::*;
+use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
 use graphql_core::ContextExt;
@@ -7,6 +8,7 @@ use service::auth::{Resource, ResourceAccessRequest};
 use service::stock_relocation::update::{
     UpdateStockRelocation as UpdateServiceInput, UpdateStockRelocationError as UpdateServiceError,
 };
+use service::NullableUpdate;
 
 use super::{LocationOnHold, NotEnoughStock, StockLineOnHold};
 use crate::types::StockRelocationNodeStatus;
@@ -16,7 +18,7 @@ use crate::types::StockRelocationNodeStatus;
 pub struct UpdateInput {
     pub id: String,
     pub from_number_of_packs: Option<f64>,
-    pub to_location_id: Option<String>,
+    pub to_location_id: Option<NullableUpdateInput<String>>,
     pub to_pack_size: Option<f64>,
     pub status: Option<StockRelocationNodeStatus>,
 }
@@ -80,7 +82,10 @@ pub fn update_stock_relocation(
                 UpdateServiceInput {
                     id,
                     from_number_of_packs,
-                    to_location_id,
+                    to_location_id: to_location_id
+                        .map(|to_location_id| NullableUpdate {
+                            value: to_location_id.value,
+                        }),
                     to_pack_size,
                     status: status.map(|status| status.into()),
                 },
@@ -156,6 +161,7 @@ mod test {
             },
             StockRelocationServiceTrait,
         },
+        NullableUpdate,
     };
 
     use crate::StockRelocationMutations;
@@ -208,7 +214,12 @@ mod test {
         let test_service = TestService(Box::new(|input| {
             assert_eq!(input.id, "relocation_1");
             assert_eq!(input.from_number_of_packs, Some(3.0));
-            assert_eq!(input.to_location_id, Some("to_location".to_string()));
+            assert_eq!(
+                input.to_location_id,
+                Some(NullableUpdate {
+                    value: Some("to_location".to_string())
+                })
+            );
             assert_eq!(input.to_pack_size, Some(2.0));
             assert_eq!(input.status, Some(StockRelocationStatus::Finalised));
             Ok(StockRelocationRow {
@@ -222,7 +233,7 @@ mod test {
           "input": {
             "id": "relocation_1",
             "fromNumberOfPacks": 3,
-            "toLocationId": "to_location",
+            "toLocationId": { "value": "to_location" },
             "toPackSize": 2,
             "status": "FINALISED"
           }
