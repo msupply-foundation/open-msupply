@@ -101,6 +101,19 @@ the database, so the buffer and any integrated data are preserved:
 cargo run --bin remote_server_cli --features postgres -- reintegrate-buffer --migrate
 ```
 
+### Scope to specific tables
+
+To re-process only certain tables (e.g. after fixing a single translator), pass `--tables` with a
+comma-separated list of `sync_buffer.table_name` values:
+
+```
+cargo run --bin remote_server_cli --features postgres -- reintegrate-buffer --tables item,name
+```
+
+`NOTE` This is a diagnostic shortcut — integration still runs the listed tables in dependency
+order, but it does **not** pull in records those tables depend on, so a scoped run can fail or
+produce incomplete data if a dependency wasn't already integrated.
+
 ### Options
 
 | Flag | Description |
@@ -109,9 +122,12 @@ cargo run --bin remote_server_cli --features postgres -- reintegrate-buffer --mi
 | `--use-transaction` | Wrap integration in a transaction (outer batch + per-record sub-transactions) so the whole batch is atomic. Off by default for speed. |
 | `--migrate` | Run pending database migrations before reintegrating. |
 | `--skip-buffer-reset` | Skip resetting the buffer's integration state — only retry rows that are still pending. |
+| `--tables` | Restrict integration to these comma-separated `sync_buffer.table_name` values (e.g. `item,name`). Defaults to all tables. |
 
 ### Extra
 
 - The reset (when not `--skip-buffer-reset`) drops null-data upsert rows and marks every
   `sync_buffer` row pending again, so integration reprocesses the whole buffer.
 - The integrator logs per-batch progress at `info` level as it works through the buffer.
+- With `--tables`, requested names that aren't part of the integration order are ignored (logged
+  as a warning), so a typo'd table name simply integrates nothing rather than erroring.
