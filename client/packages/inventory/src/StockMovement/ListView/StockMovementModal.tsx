@@ -86,7 +86,7 @@ const lineFromMovement = (
     expiryDate: movement.expiryDate,
     fromPackSize: movement.fromPackSize,
     availableNumberOfPacks: movement.availableNumberOfPacks,
-    onHold: false,
+    onHold: movement.onHold || (movement.fromLocation?.onHold ?? false),
     fromNumberOfPacks: movement.numberOfPacks,
     toLocation: (movement.toLocation as LocationRowFragment | null) ?? null,
     toPackSize,
