@@ -9,8 +9,10 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
+// `${category}/${route}` for a regular page; just `${category}` for a
+// category-root page (page.route === '').
 const pluginPagePath = (categoryKey: string, page: PluginPage) =>
-  `/${categoryKey}/${page.route}`;
+  page.route ? `/${categoryKey}/${page.route}` : `/${categoryKey}`;
 
 const hasAllPermissions = (
   permissions: UserPermission[] | undefined,

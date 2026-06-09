@@ -42,10 +42,17 @@ export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
   const { pathname } = location;
 
   useEffect(() => {
+    // Only the "router" caller (the AppBar's `<Breadcrumbs>`, which knows the
+    // app's top-level paths + plugin category keys) should derive `urlParts`.
+    // Other callers — e.g. detail views that just want `setCustomBreadcrumbs`
+    // — pass no `topLevelPaths` and would otherwise clobber the rich
+    // derivation with their own (which filters out URL index-1 segments).
+    if (topLevelPaths.length === 0) return;
+
     const currentPath = urlParts[urlParts.length - 1]?.path;
 
-    // This hook can be called in multiple places, but we only want to run this effect once
-    // if the path has actually changed
+    // This hook can still be called in multiple places with the same
+    // (non-empty) topLevelPaths — only re-derive if the path has changed.
     if (currentPath === pathname) return;
 
     setCustomBreadcrumbs({});
@@ -67,7 +74,7 @@ export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
     setUrlParts(newUrlParts);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+  }, [pathname, topLevelPaths.join(',')]);
 
   const navigateUpOne = () => {
     if (urlParts.length < 2) return;
