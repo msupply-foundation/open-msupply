@@ -270,6 +270,11 @@ enum Action {
         /// buffer as it already is (e.g. to only retry rows that are still pending).
         #[clap(long)]
         skip_buffer_reset: bool,
+        /// Restrict integration to these sync buffer tables (comma-separated, matched against
+        /// `sync_buffer.table_name`, e.g. `--tables item,name`). Defaults to all tables.
+        /// Diagnostic use only — scoping can skip rows the chosen tables depend on.
+        #[clap(long, value_delimiter = ',')]
+        tables: Vec<String>,
     },
 }
 
@@ -398,6 +403,7 @@ async fn main() -> anyhow::Result<()> {
             use_transaction,
             migrate: should_migrate,
             skip_buffer_reset,
+            tables,
         } => {
             reintegrate_buffer(
                 &settings,
@@ -405,6 +411,8 @@ async fn main() -> anyhow::Result<()> {
                 use_transaction,
                 should_migrate,
                 skip_buffer_reset,
+                // empty `--tables` means no scoping (integrate everything)
+                (!tables.is_empty()).then_some(tables),
             )?;
         }
         Action::InitialiseFromCentral { users } => {

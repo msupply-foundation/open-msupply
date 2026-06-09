@@ -7,19 +7,24 @@ use repository::{
 };
 use service::{
     settings::Settings,
-    sync::{sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer},
+    sync::{
+        sync_status::logger::SyncLogger,
+        synchroniser::integrate_and_translate_sync_buffer_filtered,
+    },
 };
 
 /// Re-runs sync buffer translation + integration against the `sync_buffer` already in the database.
 ///
 /// Optionally migrates the database first, resets the buffer's integration state, then translates
-/// and integrates every pending row. The integrator logs per-batch progress at `info` level.
+/// and integrates every pending row. `tables`, when set, restricts integration to those sync
+/// buffer tables. The integrator logs per-batch progress at `info` level.
 pub fn reintegrate_buffer(
     settings: &Settings,
     source_site_id: i32,
     use_transaction: bool,
     should_migrate: bool,
     skip_buffer_reset: bool,
+    tables: Option<Vec<String>>,
 ) -> anyhow::Result<()> {
     let connection_manager = get_storage_connection_manager(&settings.database);
 
@@ -58,20 +63,29 @@ pub fn reintegrate_buffer(
         )?;
     }
 
+    if let Some(tables) = &tables {
+        info!("Scoping reintegration to tables: {tables:?}");
+    }
+
     let connection = connection_manager.connection()?;
-    let total_pending = SyncBufferRepository::new(&connection)
-        .count_pending(source_site_id, SyncVersion::V5V6, None)?;
+    let total_pending = SyncBufferRepository::new(&connection).count_pending(
+        source_site_id,
+        SyncVersion::V5V6,
+        None,
+        tables.as_deref(),
+    )?;
     info!("Starting reintegration for source_site_id={source_site_id} ({total_pending} pending)");
 
     // The integrator logs per-batch progress at `info` level as it goes.
     let start = std::time::Instant::now();
     let mut logger =
         SyncLogger::start(&connection).map_err(|e| anyhow!("failed to start sync logger: {e:?}"))?;
-    let (upserts, deletes, merges) = integrate_and_translate_sync_buffer(
+    let (upserts, deletes, merges) = integrate_and_translate_sync_buffer_filtered(
         &connection,
         Some(&mut logger),
         source_site_id,
         use_transaction,
+        tables,
     )?;
 
     info!("Reintegration complete in {:?}", start.elapsed());

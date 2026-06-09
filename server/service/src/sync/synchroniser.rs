@@ -446,9 +446,38 @@ async fn integrate_and_translate_sync_outer(
 /// Translation And Integration of sync buffer, pub since used in CLI
 pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
+    logger: Option<&mut SyncLogger<'_>>,
+    source_site_id: i32,
+    use_transaction: bool,
+) -> Result<
+    (
+        TranslationAndIntegrationResults,
+        TranslationAndIntegrationResults,
+        TranslationAndIntegrationResults,
+    ),
+    RepositoryError,
+> {
+    integrate_and_translate_sync_buffer_filtered(
+        connection,
+        logger,
+        source_site_id,
+        use_transaction,
+        None,
+    )
+}
+
+/// Like [`integrate_and_translate_sync_buffer`], but optionally restricts integration to a subset
+/// of sync buffer tables (matched against `sync_buffer.table_name`). `None` integrates every table.
+///
+/// Scoped tables are still processed in dependency order; requested names that aren't part of the
+/// integration order are ignored (with a warning). Diagnostic use only (e.g. the CLI's
+/// `reintegrate-buffer --tables`) — scoping can skip rows that the chosen tables depend on.
+pub fn integrate_and_translate_sync_buffer_filtered(
+    connection: &StorageConnection,
     mut logger: Option<&mut SyncLogger<'_>>,
     source_site_id: i32,
     use_transaction: bool,
+    tables: Option<Vec<String>>,
 ) -> Result<
     (
         TranslationAndIntegrationResults,
@@ -475,14 +504,25 @@ pub fn integrate_and_translate_sync_buffer(
         RepositoryError,
     > {
         let translators = all_translators();
-        let table_order = pull_integration_order(&translators);
+        let mut table_order = pull_integration_order(&translators);
+        if let Some(tables) = &tables {
+            table_order.retain(|table| tables.iter().any(|wanted| wanted.as_str() == *table));
+            let ignored: Vec<&String> = tables
+                .iter()
+                .filter(|wanted| !table_order.iter().any(|table| *table == wanted.as_str()))
+                .collect();
+            if !ignored.is_empty() {
+                log::warn!("Ignoring tables not in the sync integration order: {ignored:?}");
+            }
+        }
 
-        // Seed integration progress total with the global pending count so the logger
+        // Seed integration progress total with the (optionally scoped) pending count so the logger
         // reports a real total across all (action, table) batches, not just the first 10k slice.
         let total_pending = SyncBufferRepository::new(connection).count_pending(
             source_site_id,
             SyncVersion::V5V6,
             None,
+            tables.as_deref(),
         )? as u64;
         if let Some(logger) = logger.as_mut() {
             logger
