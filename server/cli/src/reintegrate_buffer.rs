@@ -59,14 +59,17 @@ pub fn reintegrate_buffer(
     }
 
     let connection = connection_manager.connection()?;
-    let total_pending = SyncBufferRepository::new(&connection)
-        .count_pending(source_site_id, SyncVersion::V5V6, None)?;
+    let total_pending = SyncBufferRepository::new(&connection).count_pending(
+        source_site_id,
+        SyncVersion::V5V6,
+        None,
+    )?;
     info!("Starting reintegration for source_site_id={source_site_id} ({total_pending} pending)");
 
     // The integrator logs per-batch progress at `info` level as it goes.
     let start = std::time::Instant::now();
-    let mut logger =
-        SyncLogger::start(&connection).map_err(|e| anyhow!("failed to start sync logger: {e:?}"))?;
+    let mut logger = SyncLogger::start(&connection)
+        .map_err(|e| anyhow!("failed to start sync logger: {e:?}"))?;
     let (upserts, deletes, merges) = integrate_and_translate_sync_buffer(
         &connection,
         Some(&mut logger),
