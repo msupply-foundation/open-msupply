@@ -14,7 +14,7 @@ use repository::{
     migrations::{migrate, MigrationConfig},
     schema_from_row, test_db, ContextType, EqualFilter, FormSchemaRow, FormSchemaRowRepository,
     KeyType, KeyValueStoreRepository, ReportFilter, ReportRepository, ReportRow,
-    ReportRowRepository, SyncBufferRepository, SyncBufferRowInsert, SyncVersion,
+    ReportRowRepository, SyncBufferRepository, SyncBufferRowInsert,
 };
 use serde::{Deserialize, Serialize};
 use server::{configuration, logging_init};
@@ -44,6 +44,9 @@ use tokio::task::spawn_blocking;
 
 mod backup;
 use backup::*;
+
+mod reintegrate_buffer;
+use reintegrate_buffer::reintegrate_buffer;
 
 #[cfg(feature = "integration_test")]
 use cli::LoadTest;
@@ -396,64 +399,13 @@ async fn main() -> anyhow::Result<()> {
             migrate: should_migrate,
             skip_buffer_reset,
         } => {
-            let connection_manager = get_storage_connection_manager(&settings.database);
-
-            if should_migrate {
-                info!("Applying database migrations");
-                if let Some(init_sql) = &settings.database.startup_sql() {
-                    connection_manager.execute(init_sql).unwrap();
-                }
-                let migration_config = MigrationConfig {
-                    changelog_partition: settings
-                        .changelog_partition
-                        .clone()
-                        .unwrap_or_default()
-                        .to_migration_config(),
-                };
-                migrate(
-                    &connection_manager.connection().unwrap(),
-                    None,
-                    migration_config,
-                )
-                .expect("Failed to run DB migrations");
-                info!("Finished applying database migrations");
-            }
-
-            if skip_buffer_reset {
-                info!("Skipping sync buffer reset");
-            } else {
-                info!("Resetting sync buffer integration state");
-                // Drop null-data upserts (they cannot translate), then mark every row pending
-                // again so integration reprocesses the whole buffer.
-                connection_manager
-                    .execute(
-                        "DELETE FROM sync_buffer WHERE action = 'UPSERT' AND data = 'null'; \
-                         UPDATE sync_buffer SET integration_datetime = NULL, integration_error = NULL, \
-                           integration_result = NULL, integration_started_datetime = NULL, \
-                           is_integrated = false;",
-                    )?;
-            }
-
-            let connection = connection_manager.connection()?;
-            let total_pending = SyncBufferRepository::new(&connection)
-                .count_pending(source_site_id, SyncVersion::V5V6, None)?;
-            info!("Starting reintegration for source_site_id={source_site_id} ({total_pending} pending)");
-
-            // The integrator logs per-batch progress at `info` level as it goes.
-            let start = std::time::Instant::now();
-            let mut logger = SyncLogger::start(&connection)
-                .map_err(|e| anyhow!("failed to start sync logger: {e:?}"))?;
-            let (upserts, deletes, merges) = integrate_and_translate_sync_buffer(
-                &connection,
-                Some(&mut logger),
+            reintegrate_buffer(
+                &settings,
                 source_site_id,
                 use_transaction,
+                should_migrate,
+                skip_buffer_reset,
             )?;
-
-            info!("Reintegration complete in {:?}", start.elapsed());
-            info!("Upsert results: {upserts:#?}");
-            info!("Delete results: {deletes:#?}");
-            info!("Merge results: {merges:#?}");
         }
         Action::InitialiseFromCentral { users } => {
             initialise_from_central(settings, &users).await?;
