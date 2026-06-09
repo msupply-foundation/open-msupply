@@ -122,6 +122,7 @@ produce incomplete data if a dependency wasn't already integrated.
 | `--use-transaction` | Wrap integration in a transaction (outer batch + per-record sub-transactions) so the whole batch is atomic. Off by default for speed. |
 | `--migrate` | Run pending database migrations before reintegrating. |
 | `--skip-buffer-reset` | Skip resetting the buffer's integration state — only retry rows that are still pending. |
+| `-e`, `--errors-only` | Only reintegrate records that previously errored — the reset clears integration state for rows with an `integration_error` (excluding deliberately-ignored rows, which also carry an error message) and leaves successful rows untouched. No effect with `--skip-buffer-reset`. |
 | `--tables` | Restrict integration to these comma-separated `sync_buffer.table_name` values (e.g. `item,name`). Defaults to all tables. |
 
 ### Extra

@@ -1,9 +1,9 @@
 use anyhow::anyhow;
-use log::info;
+use log::{info, warn};
 use repository::{
     get_storage_connection_manager,
     migrations::{migrate, MigrationConfig},
-    SyncBufferRepository, SyncVersion,
+    StorageConnectionManager, SyncBufferRepository, SyncVersion,
 };
 use service::{
     settings::Settings,
@@ -17,13 +17,15 @@ use service::{
 ///
 /// Optionally migrates the database first, resets the buffer's integration state, then translates
 /// and integrates every pending row. `tables`, when set, restricts integration to those sync
-/// buffer tables. The integrator logs per-batch progress at `info` level.
+/// buffer tables. When `errors_only` is set, only rows that previously errored are reset (and so
+/// reprocessed). The integrator logs per-batch progress at `info` level.
 pub fn reintegrate_buffer(
     settings: &Settings,
     source_site_id: i32,
     use_transaction: bool,
     should_migrate: bool,
     skip_buffer_reset: bool,
+    errors_only: bool,
     tables: Option<Vec<String>>,
 ) -> anyhow::Result<()> {
     let connection_manager = get_storage_connection_manager(&settings.database);
@@ -49,18 +51,28 @@ pub fn reintegrate_buffer(
         info!("Finished applying database migrations");
     }
 
-    if skip_buffer_reset {
-        info!("Skipping sync buffer reset");
-    } else {
-        info!("Resetting sync buffer integration state");
-        // Drop null-data upserts (they cannot translate), then mark every row pending
-        // again so integration reprocesses the whole buffer.
-        connection_manager.execute(
-            "DELETE FROM sync_buffer WHERE action = 'UPSERT' AND data = 'null'; \
-             UPDATE sync_buffer SET integration_datetime = NULL, integration_error = NULL, \
-               integration_result = NULL, integration_started_datetime = NULL, \
-               is_integrated = false;",
-        )?;
+    match (skip_buffer_reset, errors_only) {
+        // When both skip_buffer_reset and errors_only, skip all reset and warn user
+        (true, true) => {
+            info!("Skipping sync buffer reset");
+            warn!("--errors-only has no effect with --skip-buffer-reset (no reset is performed)");
+        }
+        // Skip reset
+        (true, false) => info!("Skipping sync buffer reset"),
+        // Reset only errored records. Ignored rows also carry an integration_error (the ignore
+        // message), so exclude IGNORED to retry genuine errors only.
+        (false, true) => {
+            info!("Resetting sync buffer integration state for errored records only");
+            reset_buffer(
+                &connection_manager,
+                " AND integration_error IS NOT NULL AND integration_result != 'IGNORED'",
+            )?;
+        }
+        // Reset all records
+        (false, false) => {
+            info!("Resetting sync buffer integration state");
+            reset_buffer(&connection_manager, "")?;
+        }
     }
 
     if let Some(tables) = &tables {
@@ -93,5 +105,21 @@ pub fn reintegrate_buffer(
     info!("Delete results: {deletes:#?}");
     info!("Merge results: {merges:#?}");
 
+    Ok(())
+}
+
+/// Drops null-data upserts (they cannot translate), then marks the targeted rows pending again so
+/// integration reprocesses them. `errored_filter` narrows both statements to errored rows (empty
+/// string resets the whole buffer).
+fn reset_buffer(
+    connection_manager: &StorageConnectionManager,
+    errored_filter: &str,
+) -> anyhow::Result<()> {
+    connection_manager.execute(&format!(
+        "DELETE FROM sync_buffer WHERE action = 'UPSERT' AND data = 'null'{errored_filter}; \
+         UPDATE sync_buffer SET integration_datetime = NULL, integration_error = NULL, \
+           integration_result = NULL, integration_started_datetime = NULL, \
+           is_integrated = false WHERE 1 = 1{errored_filter};",
+    ))?;
     Ok(())
 }
