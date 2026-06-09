@@ -6,8 +6,8 @@ pub mod queries;
 pub mod types;
 
 use mutations::{
-    insert_stock_relocation, update_stock_relocation, InsertInput, InsertResponse, UpdateInput,
-    UpdateResponse,
+    delete_stock_relocation, insert_stock_relocation, update_stock_relocation, DeleteInput,
+    DeleteStockRelocationResponse, InsertInput, InsertResponse, UpdateInput, UpdateResponse,
 };
 use queries::{
     get_stock_relocation, get_stock_relocations, StockRelocationFilterInput,
@@ -61,5 +61,14 @@ impl StockRelocationMutations {
         input: UpdateInput,
     ) -> Result<UpdateResponse> {
         update_stock_relocation(ctx, &store_id, input)
+    }
+
+    pub async fn delete_stock_relocation(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: DeleteInput,
+    ) -> Result<DeleteStockRelocationResponse> {
+        delete_stock_relocation(ctx, &store_id, input)
     }
 }
