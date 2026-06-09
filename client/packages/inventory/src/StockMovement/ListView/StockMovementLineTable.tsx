@@ -72,7 +72,8 @@ interface StockMovementLineTableProps {
   lines: DraftStockMovementLineState[];
   showFromLocation: boolean;
   onUpdate: (id: string, patch: Partial<DraftStockMovementLineState>) => void;
-  onRemove: (id: string) => void;
+  onRemove?: (id: string) => void;
+  disabled?: boolean;
 }
 
 export const StockMovementLineTable = ({
@@ -80,6 +81,7 @@ export const StockMovementLineTable = ({
   showFromLocation,
   onUpdate,
   onRemove,
+  disabled = false,
 }: StockMovementLineTableProps) => {
   const t = useTranslation();
 
@@ -151,7 +153,7 @@ export const StockMovementLineTable = ({
         Cell: ({ cell, row: { original: row } }) => (
           <NumberInputCell
             cell={cell}
-            disabled={row.onHold}
+            disabled={disabled || row.onHold}
             min={0}
             max={row.availableNumberOfPacks}
             updateFn={value =>
@@ -168,7 +170,7 @@ export const StockMovementLineTable = ({
         Cell: ({ row: { original: row } }) => (
           <LocationSearchInput
             selectedLocation={row.toLocation}
-            disabled={row.onHold}
+            disabled={disabled || row.onHold}
             width={180}
             clearable
             restrictedToLocationTypeId={row.restrictedLocationTypeId}
@@ -184,7 +186,7 @@ export const StockMovementLineTable = ({
         Cell: ({ cell, row: { original: row } }) => (
           <NumberInputCell
             cell={cell}
-            disabled={row.onHold}
+            disabled={disabled || row.onHold}
             min={1}
             updateFn={value => onUpdate(row.id, recalculateValues(row, 'toPackSize', value))}
           />
@@ -198,15 +200,18 @@ export const StockMovementLineTable = ({
         Cell: ({ cell, row: { original: row } }) => (
           <NumberInputCell
             cell={cell}
-            disabled={row.onHold}
+            disabled={disabled || row.onHold}
             min={0}
             updateFn={value =>
               onUpdate(row.id, recalculateValues(row, 'toNumberOfPacks', value))
             }
           />
         ),
-      },
-      {
+      }
+    );
+
+    if (onRemove) {
+      cols.push({
         id: 'delete',
         header: '',
         size: 50,
@@ -220,12 +225,12 @@ export const StockMovementLineTable = ({
             <DeleteIcon fontSize="small" />
           </IconButton>
         ),
-      }
-    );
+      });
+    }
 
     return cols;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showFromLocation, onUpdate, onRemove]);
+  }, [showFromLocation, onUpdate, onRemove, disabled]);
 
   const table = useSimpleMaterialTable({
     tableId: 'stock-movement-lines',

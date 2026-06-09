@@ -4,6 +4,7 @@ import {
   NothingHere,
   useUrlQueryParams,
   usePaginatedMaterialTable,
+  useEditModal,
   ColumnDef,
   ColumnType,
   MaterialTable,
@@ -13,6 +14,7 @@ import { StockMovementRowFragment } from '../api/operations.generated';
 import { useStockMovementList } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
+import { StockMovementModal } from './StockMovementModal';
 
 export const ListView = () => {
   const t = useTranslation();
@@ -33,6 +35,9 @@ export const ListView = () => {
     offset,
     filterBy,
   });
+
+  const { isOpen, entity, mode, onOpen, onClose } =
+    useEditModal<StockMovementRowFragment>();
 
   const columns = useMemo(
     (): ColumnDef<StockMovementRowFragment>[] => [
@@ -110,6 +115,7 @@ export const ListView = () => {
     data: data?.nodes,
     totalCount: data?.totalCount ?? 0,
     enableRowSelection: false,
+    onRowClick: row => onOpen(row),
     noDataElement: <NothingHere body={t('messages.no-stock-movements')} />,
   });
 
@@ -118,6 +124,14 @@ export const ListView = () => {
       <Toolbar />
       <AppBarButtons />
       <MaterialTable table={table} />
+      {isOpen && entity && (
+        <StockMovementModal
+          open={isOpen}
+          mode={mode}
+          movement={entity}
+          onClose={onClose}
+        />
+      )}
     </>
   );
 };
