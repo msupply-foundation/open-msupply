@@ -326,7 +326,7 @@ export const StockMovementModal = ({
         id: movement.id,
         fromNumberOfPacks: line.fromNumberOfPacks ?? 0,
         toPackSize: line.toPackSize ?? line.fromPackSize,
-        ...(line.toLocation ? { toLocationId: line.toLocation.id } : {}),
+        toLocationId: { value: line.toLocation?.id ?? null },
         ...(status ? { status } : {}),
       });
       success(
