@@ -13,6 +13,7 @@ export type StockMovementRowFragment = {
   fromPackSize: number;
   availableNumberOfPacks: number;
   toPackSize?: number | null;
+  onHold: boolean;
   restrictedLocationTypeId?: string | null;
   itemCode: string;
   itemName: string;
@@ -25,6 +26,7 @@ export type StockMovementRowFragment = {
     id: string;
     code: string;
     name: string;
+    onHold: boolean;
   } | null;
   toLocation?: {
     __typename: 'LocationNode';
@@ -58,6 +60,7 @@ export type StockRelocationsQuery = {
       fromPackSize: number;
       availableNumberOfPacks: number;
       toPackSize?: number | null;
+      onHold: boolean;
       restrictedLocationTypeId?: string | null;
       itemCode: string;
       itemName: string;
@@ -70,6 +73,7 @@ export type StockRelocationsQuery = {
         id: string;
         code: string;
         name: string;
+        onHold: boolean;
       } | null;
       toLocation?: {
         __typename: 'LocationNode';
@@ -150,6 +154,7 @@ export const StockMovementRowFragmentDoc = gql`
     fromPackSize
     availableNumberOfPacks
     toPackSize
+    onHold
     restrictedLocationTypeId
     itemCode
     itemName
@@ -162,6 +167,7 @@ export const StockMovementRowFragmentDoc = gql`
       id
       code
       name
+      onHold
     }
     toLocation {
       __typename

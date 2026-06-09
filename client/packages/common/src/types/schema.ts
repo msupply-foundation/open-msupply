@@ -9777,6 +9777,7 @@ export type StockRelocationNode = {
   itemCode: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
   numberOfPacks: Scalars['Float']['output'];
+  onHold: Scalars['Boolean']['output'];
   restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   status: StockRelocationNodeStatus;
   toLocation?: Maybe<LocationNode>;
