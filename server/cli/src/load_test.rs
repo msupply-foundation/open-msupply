@@ -647,9 +647,18 @@ async fn report_site_failure(child: &mut Child, output_dir: &Path, site_id: usiz
     let log_path = output_dir.join(format!("site_{}_output.log", site_id));
     match read_log_tail(&log_path, 40) {
         Ok(tail) if !tail.trim().is_empty() => {
-            error!("Site {} remote log tail ({}):\n{}", site_id, log_path.display(), tail)
+            error!(
+                "Site {} remote log tail ({}):\n{}",
+                site_id,
+                log_path.display(),
+                tail
+            )
         }
-        Ok(_) => error!("Site {} remote log {} is empty", site_id, log_path.display()),
+        Ok(_) => error!(
+            "Site {} remote log {} is empty",
+            site_id,
+            log_path.display()
+        ),
         Err(e) => error!(
             "Site {} could not read remote log {}: {}",
             site_id,
