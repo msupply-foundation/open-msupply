@@ -158,7 +158,7 @@ export const OutboundLineEdit = ({
   return (
     <Modal
       title={t(
-        mode === ModalMode.Update ? 'heading.edit-item' : 'heading.add-item'
+        mode === ModalMode.Update ? 'heading.edit-line' : 'heading.add-item'
       )}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       nextButton={

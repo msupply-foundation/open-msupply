@@ -7,13 +7,22 @@ import {
   usePreferences,
   FilterDefinition,
   GroupFilterDefinition,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { useVvmStatusesEnabled } from '../api';
+import { useMasterLists } from '../../MasterList';
 
 export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
   const t = useTranslation();
+  const { store } = useAuthContext();
   const { manageVvmStatusForStock } = usePreferences();
   const { data: vmmStatuses } = useVvmStatusesEnabled();
+  const { data: masterLists } = useMasterLists({
+    queryParams: {
+      filterBy: { existsForStoreId: { equalTo: store?.id } },
+      first: 1000,
+    },
+  });
 
   // Item-level filters apply in both grouped and ungrouped modes.
   const itemFilters = [
@@ -24,12 +33,19 @@ export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
       placeholder: t('messages.search'),
       isDefault: true,
     },
-    {
-      type: 'text',
-      name: t('label.master-list'),
-      urlParameter: 'masterList.name',
-      placeholder: t('placeholder.search-by-master-list-name'),
-    },
+    ...(masterLists?.nodes?.length
+      ? [
+        {
+          type: 'enum',
+          name: t('label.master-list'),
+          urlParameter: 'masterList.id',
+          options: masterLists.nodes.map(ml => ({
+            label: ml.name,
+            value: ml.id,
+          })),
+        } as FilterDefinition,
+      ]
+      : []),
   ] satisfies FilterDefinition[];
 
   const stockLineFilters = [

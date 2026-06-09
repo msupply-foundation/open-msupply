@@ -1,9 +1,12 @@
 use repository::{
     item_variant::packaging_variant_row::{PackagingVariantRow, PackagingVariantRowRepository},
-    RepositoryError, StorageConnection,
+    ActivityLogType, RepositoryError, StorageConnection,
 };
 
-use crate::{check_item_variant_exists, service_provider::ServiceContext};
+use crate::{
+    activity_log::activity_log_entry_with_diff, check_item_variant_exists,
+    service_provider::ServiceContext,
+};
 
 #[derive(PartialEq, Debug)]
 pub enum UpsertPackagingVariantError {
@@ -31,10 +34,24 @@ pub fn upsert_packaging_variant(
     let packaging_variant = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, &input)?;
+            let existing = validate(connection, &input)?;
             let new_packaging_variant = generate(input);
             let repo = PackagingVariantRowRepository::new(connection);
+
             repo.upsert_one(&new_packaging_variant)?;
+
+            let log_type = if existing.is_some() {
+                ActivityLogType::PackagingVariantUpdated
+            } else {
+                ActivityLogType::PackagingVariantCreated
+            };
+            activity_log_entry_with_diff(
+                ctx,
+                log_type,
+                Some(new_packaging_variant.id.clone()),
+                existing.as_ref(),
+                &new_packaging_variant,
+            )?;
 
             repo.find_one_by_id(&new_packaging_variant.id)?
                 .ok_or(UpsertPackagingVariantError::CreatedRecordNotFound)
@@ -73,14 +90,14 @@ pub fn generate(
 fn validate(
     connection: &StorageConnection,
     input: &UpsertPackagingVariant,
-) -> Result<(), UpsertPackagingVariantError> {
+) -> Result<Option<PackagingVariantRow>, UpsertPackagingVariantError> {
     if check_item_variant_exists(connection, &input.item_variant_id)?.is_none() {
         return Err(UpsertPackagingVariantError::ItemVariantDoesNotExist);
     }
 
     let old_packaging_variant =
         PackagingVariantRowRepository::new(connection).find_one_by_id(&input.id)?;
-    if let Some(old_packaging_variant) = old_packaging_variant {
+    if let Some(old_packaging_variant) = &old_packaging_variant {
         if old_packaging_variant.item_variant_id != input.item_variant_id {
             return Err(UpsertPackagingVariantError::CantChangeItemVariant);
         }
@@ -108,5 +125,5 @@ fn validate(
         }
     }
 
-    Ok(())
+    Ok(old_packaging_variant)
 }
