@@ -26,6 +26,7 @@ import {
 import {
   DraftStockMovementLine,
   StockMovementRowFragment,
+  useDeleteStockMovement,
   useInsertStockMovement,
   useUpdateStockMovement,
 } from '../api';
@@ -122,6 +123,14 @@ export const StockMovementModal = ({
 
   const { insert, isSaving } = useInsertStockMovement();
   const { update, isUpdating } = useUpdateStockMovement();
+  const { delete: deleteMovement, isDeleting } = useDeleteStockMovement();
+
+  const getDeleteConfirmation = useConfirmationModal({
+    iconType: 'alert',
+    title: t('heading.delete-stock-movement'),
+    message: t('messages.confirm-delete-stock-movement'),
+    buttonLabel: t('button.delete'),
+  });
 
   const getCreateFinaliseConfirmation = useConfirmationModal({
     iconType: 'info',
@@ -336,6 +345,21 @@ export const StockMovementModal = ({
       onConfirm: () => onSave(StockRelocationNodeStatus.Finalised),
     });
 
+  const onDelete = () => {
+    if (!movement) return;
+    getDeleteConfirmation({
+      onConfirm: async () => {
+        try {
+          await deleteMovement(movement.id);
+          success(t('messages.stock-movement-deleted'))();
+          onClose();
+        } catch (e) {
+          error((e as Error).message)();
+        }
+      },
+    });
+  };
+
   const title = isEdit
     ? isDisabled
       ? t('label.stock-movement')
@@ -353,6 +377,15 @@ export const StockMovementModal = ({
           variant={isDisabled ? 'close' : 'cancel'}
           onClick={onClose}
         />
+      }
+      deleteButton={
+        isEdit && !isDisabled ? (
+          <DialogButton
+            variant="delete"
+            disabled={isDeleting}
+            onClick={onDelete}
+          />
+        ) : undefined
       }
       saveButton={
         isEdit && !isDisabled ? (
