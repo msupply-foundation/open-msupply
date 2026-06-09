@@ -434,8 +434,7 @@ async fn main() -> anyhow::Result<()> {
                          UPDATE sync_buffer SET integration_datetime = NULL, integration_error = NULL, \
                            integration_result = NULL, integration_started_datetime = NULL, \
                            is_integrated = false;",
-                    )
-                    .unwrap();
+                    )?;
             }
 
             // Count what's about to be integrated so the progress bar has a total.
@@ -463,7 +462,7 @@ async fn main() -> anyhow::Result<()> {
             // `or_latest_row`, overlaying the in-memory cached row that the integration updates
             // on every batch — so progress is visible even with --use-transaction, where the
             // DB updates aren't committed until the end (same mechanism the API/UI uses).
-            let pb = ProgressBar::new(total_pending.max(0) as u64);
+            let pb = ProgressBar::new(total_pending as u64);
             pb.set_style(
                 ProgressStyle::with_template(
                     "[{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({percent}%) {msg}",
@@ -500,7 +499,7 @@ async fn main() -> anyhow::Result<()> {
                 .ok()
                 .flatten();
                 if let Some(done) = done {
-                    pb.set_position(done.max(0) as u64);
+                    pb.set_position(done as u64);
                 }
             }
 
