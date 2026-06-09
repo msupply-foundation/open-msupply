@@ -54,7 +54,8 @@ use cli::{
     all_tests, generate_and_install_plugin_bundle, generate_plugin_bundle,
     generate_plugin_typescript_types, generate_report_data, generate_reports_recursive,
     install_plugin_bundle, GenerateAndInstallPluginBundle, GeneratePluginBundle,
-    InstallPluginBundle, RefreshDatesRepository, ReportError, TestCredentials, TestData,
+    InstallPluginBundle, RefreshDatesRepository, ReportError, SyncThroughputCsv, TestCredentials,
+    TestData,
 };
 
 const DATA_EXPORT_FOLDER: &str = "data";
@@ -239,6 +240,10 @@ enum Action {
     },
     #[cfg(feature = "integration_test")]
     LoadTest(LoadTest),
+    /// Aggregate sync_v7 push/pull throughput from a central server's log file(s) into a CSV,
+    /// bucketing records into fixed-width time windows (default 5 seconds). Works on any logs
+    /// captured at level Info (or lower) to file, not only on load test output.
+    SyncThroughputCsv(SyncThroughputCsv),
     GeneratePluginTypescriptTypes {
         /// Optional path to save typescript types, if not provided will save to `../client/packages/plugins/backendCommon/generated`
         #[clap(
@@ -871,6 +876,9 @@ async fn main() -> anyhow::Result<()> {
         #[cfg(feature = "integration_test")]
         Action::LoadTest(load_test) => {
             load_test.run().await?;
+        }
+        Action::SyncThroughputCsv(args) => {
+            args.run()?;
         }
     }
 
