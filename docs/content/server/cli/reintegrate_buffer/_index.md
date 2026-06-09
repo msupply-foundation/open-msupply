@@ -73,7 +73,7 @@ correctly.
 
 **3. Reintegrate**
 
-Reset the buffer's integration state and re-run integration, with a progress bar:
+Reset the buffer's integration state and re-run integration:
 
 `NOTE` need to pass `APP__DATABASE__DATABASE_NAME=my_replay` before the command if you don't want it to pickup db name from yaml
 ```
@@ -114,7 +114,4 @@ cargo run --bin remote_server_cli --features postgres -- reintegrate-buffer --mi
 
 - The reset (when not `--skip-buffer-reset`) drops null-data upsert rows and marks every
   `sync_buffer` row pending again, so integration reprocesses the whole buffer.
-- The progress bar reflects live progress even with `--use-transaction`, where the integration's
-  DB writes aren't committed until the end — it reads the same in-memory sync log the API/UI uses.
-- The integrator also logs per-batch progress at `info` level; run with a `warn` log level for a
-  clean progress bar.
+- The integrator logs per-batch progress at `info` level as it works through the buffer.
