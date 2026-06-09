@@ -1,6 +1,5 @@
 use anyhow::{anyhow, Result};
 use chrono::{DateTime, Utc};
-use log::{error, info};
 use repository::database_settings::DatabaseSettings;
 use reqwest::{Client, Error, Response};
 use serde::{Deserialize, Serialize};
@@ -206,7 +205,7 @@ impl LoadTest {
 
                 sleep(Duration::from_secs(10)).await; // Let db get created, migrated and initialisation started
 
-                info!(
+                println!(
                     "Site {} started, waiting for initial sync to complete",
                     test_site.site.site_id
                 );
@@ -216,7 +215,7 @@ impl LoadTest {
                     return Err(e);
                 }
 
-                info!("Beginning load test for site: {}", test_site.site.site_id);
+                println!("Beginning load test for site: {}", test_site.site.site_id);
 
                 // Drive load: create a requisition and sync until it has integrated, repeatedly,
                 // until the duration elapses. The records this generates flow to OMS central as
@@ -262,7 +261,7 @@ impl LoadTest {
                         break;
                     }
                 }
-                info!(
+                println!(
                     "Site {} finished after {} sync cycles",
                     test_site.site.site_id, cycles
                 );
@@ -631,15 +630,15 @@ async fn kill(child: &mut Child, site_id: usize) {
 /// since the load test itself only sees "connection refused"/timeouts from outside.
 async fn report_site_failure(child: &mut Child, output_dir: &Path, site_id: usize, phase: &str) {
     match child.try_wait() {
-        Ok(Some(status)) => error!(
+        Ok(Some(status)) => eprintln!(
             "Site {} failed during {}: remote process has exited ({}) — see its log below for the cause",
             site_id, phase, status
         ),
-        Ok(None) => error!(
+        Ok(None) => eprintln!(
             "Site {} failed during {}: remote process is still running but not responding (likely hung or deadlocked)",
             site_id, phase
         ),
-        Err(e) => error!(
+        Err(e) => eprintln!(
             "Site {} failed during {}: could not query remote process state: {}",
             site_id, phase, e
         ),
@@ -648,19 +647,19 @@ async fn report_site_failure(child: &mut Child, output_dir: &Path, site_id: usiz
     let log_path = output_dir.join(format!("site_{}_output.log", site_id));
     match read_log_tail(&log_path, 40) {
         Ok(tail) if !tail.trim().is_empty() => {
-            error!(
+            eprintln!(
                 "Site {} remote log tail ({}):\n{}",
                 site_id,
                 log_path.display(),
                 tail
             )
         }
-        Ok(_) => error!(
+        Ok(_) => eprintln!(
             "Site {} remote log {} is empty",
             site_id,
             log_path.display()
         ),
-        Err(e) => error!(
+        Err(e) => eprintln!(
             "Site {} could not read remote log {}: {}",
             site_id,
             log_path.display(),
@@ -931,7 +930,7 @@ query SyncInfo {
                     // Throttle: log the first failure, then at most once every 5s, with the error
                     // classification and full cause chain to distinguish crash vs hang vs reset.
                     if last_logged_at.map_or(true, |t| t.elapsed() >= Duration::from_secs(5)) {
-                        error!(
+                        eprintln!(
                             "Site {}: cannot reach {} ({} consecutive failures over {:?}) \
                              [connect={}, timeout={}, request={}, status={:?}]: {}",
                             self.site.site_id,
@@ -971,14 +970,14 @@ query SyncInfo {
                             return Ok(sync_info);
                         }
                     }
-                    Err(e) => error!(
+                    Err(e) => eprintln!(
                         "Site {}: failed to parse sync info: {}\nResponse body: {}",
                         self.site.site_id, e, response_text
                     ),
                 };
             } else {
                 let body = response.text().await.unwrap_or_default();
-                error!(
+                eprintln!(
                     "Site {}: sync info query returned HTTP {}: {}",
                     self.site.site_id, status, body
                 );
