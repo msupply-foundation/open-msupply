@@ -2277,6 +2277,12 @@ export type DeleteRnRFormInput = {
 
 export type DeleteRnRFormResponse = DeleteResponse;
 
+export type DeleteStockRelocationInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteStockRelocationResponse = DeleteResponse;
+
 export type DeleteStocktakeError = {
   __typename: 'DeleteStocktakeError';
   error: DeleteStocktakeErrorInterface;
@@ -5576,6 +5582,7 @@ export type Mutations = {
   deleteResponseRequisition: DeleteResponseRequisitionResponse;
   deleteResponseRequisitionLine: DeleteResponseRequisitionLineResponse;
   deleteRnrForm: DeleteRnRFormResponse;
+  deleteStockRelocation: DeleteStockRelocationResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   deleteSupplierReturn: DeleteSupplierReturnResponse;
@@ -5894,6 +5901,11 @@ export type MutationsDeleteResponseRequisitionLineArgs = {
 
 export type MutationsDeleteRnrFormArgs = {
   input: DeleteRnRFormInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteStockRelocationArgs = {
+  input: DeleteStockRelocationInput;
   storeId: Scalars['String']['input'];
 };
 
