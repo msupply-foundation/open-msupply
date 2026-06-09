@@ -71,6 +71,12 @@ impl<'a> PluginDataRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn delete(&self, id: &str, store_id: Option<String>) -> Result<i64, RepositoryError> {
+        diesel::delete(plugin_data::table.filter(plugin_data::id.eq(id)))
+            .execute(self.connection.lock().connection())?;
+        self.insert_changelog(id, store_id, RowActionType::Delete)
+    }
+
     fn insert_changelog(
         &self,
         uid: &str,

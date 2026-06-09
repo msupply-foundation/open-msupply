@@ -54,7 +54,8 @@ export const StockListView = () => {
         condition: 'between',
       },
       {
-        key: 'masterList.name',
+        key: 'masterList.id',
+        condition: 'equalTo',
       },
     ],
   });
@@ -228,6 +229,14 @@ export const StockListView = () => {
         header: t('label.pack-cost-price'),
         accessorKey: 'costPricePerPack',
         description: t('description.pack-cost'),
+        columnType: ColumnType.Currency,
+        size: 125,
+        defaultHideOnMobile: true,
+        enableSorting: !isGrouped,
+      },
+      {
+        header: t('label.pack-sell-price'),
+        accessorKey: 'sellPricePerPack',
         columnType: ColumnType.Currency,
         size: 125,
         defaultHideOnMobile: true,

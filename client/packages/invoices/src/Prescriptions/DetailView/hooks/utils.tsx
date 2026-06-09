@@ -1,4 +1,4 @@
-import { PrescriptionLineFragment, PrescriptionRowFragment } from '../../api';
+import { PrescriptionLineFragment, PrescriptionFragment } from '../../api';
 
 interface ItemDetails {
   id: string;
@@ -61,7 +61,7 @@ export const groupItems = (
 
 export const generateLabel = (
   results: ItemDetails[],
-  prescription: PrescriptionRowFragment,
+  prescription: PrescriptionFragment,
   store: string
 ): Label[] => {
   const clinicianDetails = prescription.clinician
