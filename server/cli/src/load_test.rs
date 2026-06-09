@@ -11,7 +11,7 @@ use service::{
     sync::settings::{BatchSize, SyncSettings},
 };
 use std::{
-    path::PathBuf,
+    path::{Path, PathBuf},
     time::{Duration, Instant},
 };
 use tokio::{process::Child, task::JoinHandle, time::sleep};
@@ -211,7 +211,8 @@ impl LoadTest {
                     test_site.site.site_id
                 );
                 if let Err(e) = test_site.wait_for_sync().await {
-                    kill(&mut child, test_site.site.site_id).await;
+                    report_site_failure(&mut child, &dir, test_site.site.site_id, "initial sync")
+                        .await;
                     return Err(e);
                 }
 
@@ -227,13 +228,25 @@ impl LoadTest {
                     if let Err(e) =
                         create_and_send_requisition(&test_site, num_lines, &item_ids_copy).await
                     {
-                        kill(&mut child, test_site.site.site_id).await;
+                        report_site_failure(
+                            &mut child,
+                            &dir,
+                            test_site.site.site_id,
+                            "creating requisition",
+                        )
+                        .await;
                         return Err(e);
                     };
 
                     let cycle_start = std::time::Instant::now();
                     if let Err(e) = test_site.do_sync_until_integrated().await {
-                        kill(&mut child, test_site.site.site_id).await;
+                        report_site_failure(
+                            &mut child,
+                            &dir,
+                            test_site.site.site_id,
+                            "syncing requisition",
+                        )
+                        .await;
                         return Err(e.into());
                     }
                     cycles += 1;
@@ -478,7 +491,13 @@ impl LoadTest {
             };
 
             let full_site = TestSite {
-                client: Client::new(),
+                // Bound request/connect time so an unresponsive (hung) remote surfaces as a
+                // timeout error instead of blocking a poll forever.
+                client: Client::builder()
+                    .timeout(Duration::from_secs(30))
+                    .connect_timeout(Duration::from_secs(10))
+                    .build()
+                    .expect("Failed to build site HTTP client"),
                 graphql_url: format!("http://localhost:{}/{}", settings.server.port, "graphql"),
                 site: site_n_store.site.clone(),
                 store: site_n_store.store.clone(),
@@ -603,6 +622,67 @@ async fn kill(child: &mut Child, site_id: usize) {
         Ok(_) => println!("Child for site {} terminated successfully", site_id),
         Err(e) => println!("Failed to kill child for site {}: {}", site_id, e),
     }
+}
+
+/// Log diagnostics for a failed/unresponsive site, then kill its remote process. Reports whether
+/// the remote process has already exited (a crash) or is still running but not responding (a hang),
+/// and dumps the tail of the remote's own output log — which holds the underlying panic/error,
+/// since the load test itself only sees "connection refused"/timeouts from outside.
+async fn report_site_failure(child: &mut Child, output_dir: &Path, site_id: usize, phase: &str) {
+    match child.try_wait() {
+        Ok(Some(status)) => error!(
+            "Site {} failed during {}: remote process has exited ({}) — see its log below for the cause",
+            site_id, phase, status
+        ),
+        Ok(None) => error!(
+            "Site {} failed during {}: remote process is still running but not responding (likely hung or deadlocked)",
+            site_id, phase
+        ),
+        Err(e) => error!(
+            "Site {} failed during {}: could not query remote process state: {}",
+            site_id, phase, e
+        ),
+    }
+
+    let log_path = output_dir.join(format!("site_{}_output.log", site_id));
+    match read_log_tail(&log_path, 40) {
+        Ok(tail) if !tail.trim().is_empty() => {
+            error!("Site {} remote log tail ({}):\n{}", site_id, log_path.display(), tail)
+        }
+        Ok(_) => error!("Site {} remote log {} is empty", site_id, log_path.display()),
+        Err(e) => error!(
+            "Site {} could not read remote log {}: {}",
+            site_id,
+            log_path.display(),
+            e
+        ),
+    }
+
+    kill(child, site_id).await;
+}
+
+/// Read the last `max_lines` lines of a file (best-effort, whole-file read — the remote output
+/// logs are small as the remotes don't log verbosely).
+fn read_log_tail(path: &Path, max_lines: usize) -> std::io::Result<String> {
+    let content = std::fs::read_to_string(path)?;
+    let lines: Vec<&str> = content.lines().collect();
+    let start = lines.len().saturating_sub(max_lines);
+    Ok(lines[start..].join("\n"))
+}
+
+/// Render a reqwest error together with its full source chain, so the underlying OS cause
+/// (e.g. "connection refused (os error 61)" vs "operation timed out") is visible — the top-level
+/// Display is only the generic "error sending request for url ...".
+fn format_reqwest_error(e: &reqwest::Error) -> String {
+    use std::error::Error;
+    let mut out = e.to_string();
+    let mut source = e.source();
+    while let Some(cause) = source {
+        out.push_str(" -> ");
+        out.push_str(&cause.to_string());
+        source = cause.source();
+    }
+    out
 }
 
 async fn create_and_send_requisition(
@@ -797,6 +877,10 @@ mutation ManualSync {
     }
 
     async fn wait_for_sync(&self) -> Result<SyncInfo> {
+        // Give up if the remote produces nothing but errors for this long. A successful response
+        // (even one reporting `isSyncing: true`) resets the clock, so a legitimately long sync
+        // doesn't trip it — only a remote that has actually crashed or hung does.
+        const UNRESPONSIVE_TIMEOUT: Duration = Duration::from_secs(60);
         const SYNC_INFO_QUERY: &str = r#"
 query SyncInfo {
   latestSyncStatus {
@@ -809,37 +893,85 @@ query SyncInfo {
   }
 }
 "#;
+        let sync_gql = json!({
+            "operationName": "SyncInfo",
+            "query": SYNC_INFO_QUERY,
+        });
+
+        let mut first_error_at: Option<Instant> = None;
+        let mut consecutive_errors: u32 = 0;
+        let mut last_logged_at: Option<Instant> = None;
+
         loop {
             sleep(Duration::from_millis(1000)).await;
-            let sync_gql = json!({
-                "operationName": "SyncInfo",
-                "query": SYNC_INFO_QUERY,
-            });
 
             let response = match self.do_post(&sync_gql).await {
-                Ok(response) => response,
+                Ok(response) => {
+                    // The remote answered — it's alive. Reset the unresponsive tracker.
+                    first_error_at = None;
+                    consecutive_errors = 0;
+                    last_logged_at = None;
+                    response
+                }
                 Err(e) => {
-                    error!("Error fetching sync info: {}", e);
+                    consecutive_errors += 1;
+                    let since = *first_error_at.get_or_insert_with(Instant::now);
+                    let elapsed = since.elapsed();
+
+                    // Throttle: log the first failure, then at most once every 5s, with the error
+                    // classification and full cause chain to distinguish crash vs hang vs reset.
+                    if last_logged_at.map_or(true, |t| t.elapsed() >= Duration::from_secs(5)) {
+                        error!(
+                            "Site {}: cannot reach {} ({} consecutive failures over {:?}) \
+                             [connect={}, timeout={}, request={}, status={:?}]: {}",
+                            self.site.site_id,
+                            self.graphql_url,
+                            consecutive_errors,
+                            elapsed,
+                            e.is_connect(),
+                            e.is_timeout(),
+                            e.is_request(),
+                            e.status(),
+                            format_reqwest_error(&e),
+                        );
+                        last_logged_at = Some(Instant::now());
+                    }
+
+                    if elapsed >= UNRESPONSIVE_TIMEOUT {
+                        return Err(anyhow!(
+                            "Site {}: remote at {} unresponsive for {:?} ({} consecutive failures); \
+                             last error: {}",
+                            self.site.site_id,
+                            self.graphql_url,
+                            elapsed,
+                            consecutive_errors,
+                            format_reqwest_error(&e),
+                        ));
+                    }
                     continue;
                 }
             };
 
-            if response.status().is_success() {
+            let status = response.status();
+            if status.is_success() {
                 let response_text = response.text().await?;
-                // dbg!(&response_text);
-                let response = serde_json::from_str::<SyncInfo>(&response_text);
-                match response {
+                match serde_json::from_str::<SyncInfo>(&response_text) {
                     Ok(sync_info) => {
-                        // dbg!(&sync_info);
                         if !sync_info.data.latest_sync_status.is_syncing {
                             return Ok(sync_info);
                         }
                     }
-                    Err(e) => error!("Error parsing SyncInfo: {}, \n{}", e, response_text),
+                    Err(e) => error!(
+                        "Site {}: failed to parse sync info: {}\nResponse body: {}",
+                        self.site.site_id, e, response_text
+                    ),
                 };
             } else {
-                // dbg!(&response);
-                // dbg!(&response.text().await.unwrap());
+                let body = response.text().await.unwrap_or_default();
+                error!(
+                    "Site {}: sync info query returned HTTP {}: {}",
+                    self.site.site_id, status, body
+                );
             }
         }
     }
