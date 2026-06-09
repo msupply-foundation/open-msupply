@@ -869,28 +869,7 @@ async fn main() -> anyhow::Result<()> {
             log::set_max_level(current_log_level);
         }
         #[cfg(feature = "integration_test")]
-        Action::LoadTest(LoadTest {
-            msupply_central_url,
-            oms_central_url,
-            base_port,
-            output_dir,
-            test_site_name,
-            test_site_pass,
-            sites,
-            lines,
-            duration,
-        }) => {
-            let load_test = LoadTest::new(
-                msupply_central_url,
-                oms_central_url,
-                base_port,
-                output_dir,
-                test_site_name,
-                test_site_pass,
-                sites,
-                lines,
-                duration,
-            );
+        Action::LoadTest(load_test) => {
             load_test.run().await?;
         }
     }
