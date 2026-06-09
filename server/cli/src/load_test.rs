@@ -11,12 +11,10 @@ use service::{
     sync::settings::{BatchSize, SyncSettings},
 };
 use std::{
-    collections::HashMap,
-    io::Write,
     path::PathBuf,
     time::{Duration, Instant},
 };
-use tokio::{process::Child, sync::mpsc, task::JoinHandle, time::sleep};
+use tokio::{process::Child, task::JoinHandle, time::sleep};
 use util::{hash::sha256, uuid::uuid};
 const TEST_API: &str = "sync/v5/test";
 
@@ -108,18 +106,16 @@ struct SyncInfo {
 struct LatestSyncStatus {
     latest_sync_status: FullSyncStatus,
 }
+// The remote's `latestSyncStatus` returns the V7 node. We only need `isSyncing` (to know a
+// sync cycle has settled) and `summary.finished` (to know the cycle integrated). Per-cycle
+// push/pull counts are NOT read here: on the V7 node they're cursor-delta progress fields that
+// read 0 for single-batch syncs. The actual throughput is measured on OMS central instead, by
+// parsing its `sync_v7 push` / `sync_v7 pull` log lines after the test.
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct FullSyncStatus {
     is_syncing: bool,
-    push: Option<SyncDone>,
-    pull: Option<SyncDone>,
     summary: SyncStatus,
-}
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-struct SyncDone {
-    done: Option<usize>,
 }
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -134,32 +130,6 @@ struct SyncStatus {
 struct OmsCentralFullSyncStatus {
     is_syncing: bool,
     summary: SyncStatus,
-}
-
-#[derive(Debug, Clone)]
-struct Metric {
-    start_time: Instant,
-    end_time: Instant,
-    pushed: usize,
-    pulled: usize,
-}
-
-impl Metric {
-    fn new() -> Self {
-        let now = Instant::now();
-        Self {
-            start_time: now,
-            end_time: now,
-            pushed: 0,
-            pulled: 0,
-        }
-    }
-
-    fn update_sync_metrics(&mut self, site_info: &SyncInfo) {
-        let FullSyncStatus { push, pull, .. } = &site_info.data.latest_sync_status;
-        self.pushed = push.as_ref().map_or(0, |s| s.done.unwrap_or(0));
-        self.pulled = pull.as_ref().map_or(0, |s| s.done.unwrap_or(0));
-    }
 }
 
 impl LoadTest {
@@ -217,12 +187,9 @@ impl LoadTest {
         let duration = self.duration as u64;
         let num_lines = self.lines;
 
-        let (metrics_tx, mut metrics_rx) = mpsc::unbounded_channel::<Metric>();
-
         for test_site in test_sites {
             let dir = self.output_dir.clone();
             let item_ids_copy = item_ids.clone();
-            let metrics_sender = metrics_tx.clone();
             let handle: JoinHandle<anyhow::Result<()>> = tokio::spawn(async move {
                 let log = std::fs::File::create(
                     dir.join(format!("site_{}_output.log", test_site.site.site_id)),
@@ -250,9 +217,13 @@ impl LoadTest {
 
                 info!("Beginning load test for site: {}", test_site.site.site_id);
 
+                // Drive load: create a requisition and sync until it has integrated, repeatedly,
+                // until the duration elapses. The records this generates flow to OMS central as
+                // pushes (and come back to other sites as pulls); the counts are recorded on OMS
+                // central and parsed from its log after the test, not measured here.
                 let start = std::time::Instant::now();
+                let mut cycles = 0u64;
                 loop {
-                    let mut metric = Metric::new();
                     if let Err(e) =
                         create_and_send_requisition(&test_site, num_lines, &item_ids_copy).await
                     {
@@ -260,50 +231,32 @@ impl LoadTest {
                         return Err(e);
                     };
 
-                    let site_info = match test_site.do_sync_until_integrated().await {
-                        Ok(site_info) => site_info,
-                        Err(e) => {
-                            kill(&mut child, test_site.site.site_id).await;
-                            return Err(e.into());
-                        }
-                    };
-
-                    metric.end_time = std::time::Instant::now();
-                    metric.update_sync_metrics(&site_info);
-                    println!(
-                        "Site {}: Pushed: {}, Pulled: {}, Duration: {:?}",
-                        test_site.site.site_id,
-                        metric.pushed,
-                        metric.pulled,
-                        metric.end_time.duration_since(metric.start_time)
-                    );
-
-                    // Send metric to parent process immediately
-                    if let Err(e) = metrics_sender.send(metric) {
-                        println!("Failed to send metric to parent: {}", e);
+                    let cycle_start = std::time::Instant::now();
+                    if let Err(e) = test_site.do_sync_until_integrated().await {
+                        kill(&mut child, test_site.site.site_id).await;
+                        return Err(e.into());
                     }
+                    cycles += 1;
+                    println!(
+                        "Site {}: sync cycle {} done in {:?}",
+                        test_site.site.site_id,
+                        cycles,
+                        cycle_start.elapsed()
+                    );
 
                     if start.elapsed().as_secs() >= duration {
                         kill(&mut child, test_site.site.site_id).await;
                         break;
                     }
                 }
+                info!(
+                    "Site {} finished after {} sync cycles",
+                    test_site.site.site_id, cycles
+                );
                 Ok(())
             });
             handles.push(handle)
         }
-
-        // Drop the sender so the receiver knows when all senders are done
-        drop(metrics_tx);
-
-        // Spawn a task to collect metrics and handle timeout
-        let results_handle = tokio::spawn(async move {
-            let mut all_metrics = Vec::new();
-            while let Some(metric) = metrics_rx.recv().await {
-                all_metrics.push(metric);
-            }
-            all_metrics
-        });
 
         // Wait for either all tasks to complete or timeout. We delay by a significant amount here as the child processes don't start their timers based
         // on duration until after they've initialised, where this timer will start essentially immediately, before the children have initialised.
@@ -331,24 +284,9 @@ impl LoadTest {
             }
         }
 
-        // Collect all metrics that were sent via channels
-        let results = match tokio::time::timeout(Duration::from_secs(5), results_handle).await {
-            Ok(Ok(metrics)) => metrics,
-            Ok(Err(e)) => {
-                println!("Error collecting results: {}", e);
-                Vec::new()
-            }
-            Err(_) => {
-                println!("Timeout waiting for results collection");
-                Vec::new()
-            }
-        };
-
-        // Aggregate the results into groups of 5 seconds
-        println!("\nProcessing results...");
-
-        self.write_results(results);
-
+        // Throughput is measured on OMS central itself, from the `sync_v7 push`/`pull` lines it
+        // logs (it sees all traffic). OMS central normally runs on a separate machine whose log
+        // isn't reachable from here, so analysis happens separately, not in this CLI.
         println!("end");
         Ok(())
     }
@@ -387,49 +325,6 @@ impl LoadTest {
         }
         println!("OMS central is synced.");
         Ok(())
-    }
-
-    fn write_results(&self, results: Vec<Metric>) {
-        // Group metrics by 5-second intervals
-        if !results.is_empty() {
-            let output_file = self.output_dir.join("load_test_results.txt");
-            let mut file =
-                std::fs::File::create(output_file).expect("Failed to create output file");
-            writeln!(file, "time, records pushed, records pulled")
-                .expect("Failed to write to output file");
-
-            let mut grouped_metrics: Vec<(u64, usize, usize)> = Vec::new();
-            let mut interval_map: HashMap<u64, (usize, usize)> = HashMap::new();
-            let first_start = results
-                .iter()
-                .map(|m| m.start_time)
-                .min()
-                .unwrap_or(Instant::now());
-
-            for metric in &results {
-                let seconds_since_start = metric.start_time.duration_since(first_start).as_secs();
-                let interval = seconds_since_start / 5;
-
-                let entry = interval_map.entry(interval).or_insert((0, 0));
-                entry.0 += metric.pushed;
-                entry.1 += metric.pulled;
-            }
-
-            let mut keys: Vec<_> = interval_map.keys().collect();
-            keys.sort();
-
-            for key in keys {
-                if let Some(&(pushed, pulled)) = interval_map.get(key) {
-                    grouped_metrics.push((*key, pushed, pulled));
-                }
-            }
-            for (interval, pushed, pulled) in grouped_metrics {
-                writeln!(file, "{}, {}, {}", (interval + 1) * 5, pushed, pulled)
-                    .expect("Failed to write to output file");
-            }
-        } else {
-            println!("No results collected during the test.");
-        }
     }
 
     fn create_configs(&self, test_sites: &Vec<TestSite>) -> Result<(), anyhow::Error> {
@@ -907,12 +802,6 @@ query SyncInfo {
   latestSyncStatus {
     ... on FullSyncStatusV7Node {
       isSyncing
-      push {
-        done
-      }
-      pull {
-        done
-      }
       summary {
         finished
       }
