@@ -405,7 +405,8 @@ async fn main() -> anyhow::Result<()> {
                 use_transaction,
                 should_migrate,
                 skip_buffer_reset,
-            )?;
+            )
+            .await?;
         }
         Action::InitialiseFromCentral { users } => {
             initialise_from_central(settings, &users).await?;
