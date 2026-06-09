@@ -1303,6 +1303,7 @@
   "label.listening": "Listening for scans",
   "label.location": "Location",
   "label.location-code": "Location code",
+  "label.location-name": "Location name",
   "label.location-temperature-range": " {{locationName}} ({{minTemperature}}°C to {{maxTemperature}}°C)",
   "label.location-type": "Location type",
   "label.location-type-full": "{{locationType}} has no capacity for more items",
