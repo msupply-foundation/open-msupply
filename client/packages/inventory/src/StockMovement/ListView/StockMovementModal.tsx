@@ -309,7 +309,7 @@ export const StockMovementModal = ({
     }
   };
 
-  const saveEdit = async (status?: StockRelocationNodeStatus) => {
+  const onSave = async (status?: StockRelocationNodeStatus) => {
     const line = lines[0];
     if (!movement || !line) return;
     try {
@@ -333,7 +333,7 @@ export const StockMovementModal = ({
 
   const onEditFinalise = () =>
     getEditFinaliseConfirmation({
-      onConfirm: () => saveEdit(StockRelocationNodeStatus.Finalised),
+      onConfirm: () => onSave(StockRelocationNodeStatus.Finalised),
     });
 
   const title = isEdit
@@ -359,7 +359,7 @@ export const StockMovementModal = ({
           <DialogButton
             variant="save"
             disabled={!canSave}
-            onClick={() => saveEdit()}
+            onClick={() => onSave()}
           />
         ) : undefined
       }
