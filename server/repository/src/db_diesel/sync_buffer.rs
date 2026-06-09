@@ -288,7 +288,6 @@ impl<'a> SyncBufferRepository<'a> {
         source_site_id: i32,
         sync_version: SyncVersion,
         reference_id: Option<&str>,
-        tables: Option<&[String]>,
     ) -> Result<i64, RepositoryError> {
         let mut q = sync_buffer::table
             .filter(sync_buffer::is_integrated.eq(false))
@@ -300,10 +299,6 @@ impl<'a> SyncBufferRepository<'a> {
             q = q.filter(sync_buffer::reference_id.eq(reference_id.to_string()));
         } else {
             q = q.filter(sync_buffer::reference_id.is_null());
-        }
-
-        if let Some(tables) = tables {
-            q = q.filter(sync_buffer::table_name.eq_any(tables.to_vec()));
         }
 
         let count: i64 = q.count().get_result(self.connection.lock().connection())?;
