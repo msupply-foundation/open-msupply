@@ -181,6 +181,15 @@ export const StockListView = () => {
         enableColumnFilter: true,
       },
       {
+        id: 'location.name',
+        accessorFn: row => row.location?.name || '',
+        header: t('label.location-name'),
+        Cell: TextWithTooltipCell,
+        size: 150,
+        defaultHideOnMobile: true,
+        enableSorting: false,
+      },
+      {
         id: 'itemUnit',
         accessorKey: 'item.unitName',
         header: t('label.unit'),
