@@ -120,8 +120,8 @@ fn reset_sync_buffer(
 
 /// Resets the sync buffer so integration reprocesses the rows matching `target` (a SQL boolean
 /// predicate). Drops null-data upserts in the target set (they cannot translate). When `scoped`,
-/// first marks every row integrated so that only the target rows are left pending; otherwise the
-/// whole buffer is reset to pending.
+/// first marks the pending rows integrated so that only the target rows are left pending; otherwise
+/// the whole buffer is reset to pending.
 fn reset_buffer(
     connection_manager: &StorageConnectionManager,
     target: &str,
@@ -131,8 +131,10 @@ fn reset_buffer(
         "DELETE FROM sync_buffer WHERE action = 'UPSERT' AND data = 'null' AND ({target});"
     );
     if scoped {
-        // Exclude everything, then re-open just the target rows below.
-        sql.push_str(" UPDATE sync_buffer SET is_integrated = true;");
+        // Mark the currently-pending rows integrated, then re-open just the target rows below.
+        // Restricting to `is_integrated = false` avoids rewriting the whole (possibly huge)
+        // buffer when only a small target subset is being reopened.
+        sql.push_str(" UPDATE sync_buffer SET is_integrated = true WHERE is_integrated = false;");
     }
     sql.push_str(&format!(
         " UPDATE sync_buffer SET integration_datetime = NULL, integration_error = NULL, \
