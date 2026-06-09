@@ -89,6 +89,15 @@ impl<'a> NameStoreJoinRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, id: &str) -> Result<bool, RepositoryError> {
+        let id: Option<String> = name_store_join::table
+            .filter(name_store_join::id.eq(id))
+            .select(name_store_join::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(id.is_some())
+    }
+
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         let changelog = NameStoreJoinRow::generate_changelog(
             RowOrId::Id(id),
@@ -122,7 +131,10 @@ impl<'a> NameStoreJoinRepository<'a> {
         Ok(result.into_iter().map(to_domain).collect())
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NameStoreJoinRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<NameStoreJoinRow>, RepositoryError> {
         Ok(name_store_join::table
             .filter(name_store_join::id.eq_any(ids))
             .load(self.connection.lock().connection())?)

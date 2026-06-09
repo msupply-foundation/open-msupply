@@ -94,6 +94,11 @@ impl SyncTranslation for NameStoreJoinTranslation {
         // given that we don't handle soft deletes, translate to a hard-delete
         if let Some(inactive) = data.inactive {
             if inactive {
+                if !NameStoreJoinRepository::new(connection).check_exists_by_id(&data.id)? {
+                    return Ok(PullTranslateResult::Ignored(
+                        "Is inactive and not found".to_string(),
+                    ));
+                }
                 return self.try_translate_from_delete_sync_record(connection, sync_record);
             }
         }
