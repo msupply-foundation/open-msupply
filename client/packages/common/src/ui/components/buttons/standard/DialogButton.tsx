@@ -214,7 +214,6 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
       }
       shouldShrink={shouldShrink}
       ref={ref}
-      data-shortcut={shortcut}
       aria-keyshortcuts={shortcut}
     />
   );

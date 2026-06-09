@@ -69,7 +69,6 @@ export const ListOptions = ({
               sx={{ padding: '5px 0px', cursor: 'pointer' }}
               onClick={() => onClick(option.id)}
               ref={option.id === currentId ? scrollRef : null}
-              data-shortcut={shortcut}
               aria-keyshortcuts={shortcut}
             >
               <ListItemIcon sx={{ padding: 0, minWidth: 25 }}>
