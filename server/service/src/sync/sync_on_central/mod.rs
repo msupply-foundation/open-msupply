@@ -90,6 +90,8 @@ pub async fn pull(
         response.site_id,
         is_initialised,
     )?;
+    // Clamp the empty-batch fallback so we don't advance past an in-flight (uncommitted, lower)
+    // changelog cursor. The non-empty path is already safe because the query is clamped.
     let max_cursor = changelog_repo.latest_cursor()?;
 
     let end_cursor = changelogs
@@ -243,6 +245,8 @@ pub async fn patient_pull(
         response.site_id,
         fetch_patient_id,
     )?;
+    // Clamp the empty-batch fallback so we don't advance past an in-flight (uncommitted, lower)
+    // changelog cursor. The non-empty path is already safe because the query is clamped.
     let max_cursor = changelog_repo.latest_cursor()?;
 
     let end_cursor = changelogs
