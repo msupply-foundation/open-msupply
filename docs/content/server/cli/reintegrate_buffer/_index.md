@@ -110,9 +110,11 @@ comma-separated list of `sync_buffer.table_name` values:
 cargo run --bin remote_server_cli --features postgres -- reintegrate-buffer --tables item,name
 ```
 
-`NOTE` This is a diagnostic shortcut — integration still runs the listed tables in dependency
-order, but it does **not** pull in records those tables depend on, so a scoped run can fail or
-produce incomplete data if a dependency wasn't already integrated.
+Scoping is done purely through the reset: only the listed tables are reset to pending (everything
+else is marked integrated), and integration only processes pending rows.
+
+`NOTE` This is a diagnostic shortcut — it does **not** pull in records those tables depend on, so a
+scoped run can fail or produce incomplete data if a dependency wasn't already integrated.
 
 ### Options
 
@@ -128,7 +130,7 @@ produce incomplete data if a dependency wasn't already integrated.
 ### Extra
 
 - The reset (when not `--skip-buffer-reset`) drops null-data upsert rows and marks every
-  `sync_buffer` row pending again, so integration reprocesses the whole buffer.
+  `sync_buffer` row pending again, so integration reprocesses the whole buffer. With `--tables`
+  and/or `--errors-only` it instead marks everything integrated and re-opens only the matching rows.
 - The integrator logs per-batch progress at `info` level as it works through the buffer.
-- With `--tables`, requested names that aren't part of the integration order are ignored (logged
-  as a warning), so a typo'd table name simply integrates nothing rather than erroring.
+- A typo'd `--tables` name simply matches no rows, so nothing is reset or integrated for it.
