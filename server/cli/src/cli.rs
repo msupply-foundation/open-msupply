@@ -458,10 +458,7 @@ async fn main() -> anyhow::Result<()> {
                 )?)
             });
 
-            // Progress: poll the latest sync_log row via the repository. Its query applies
-            // `or_latest_row`, overlaying the in-memory cached row that the integration updates
-            // on every batch — so progress is visible even with --use-transaction, where the
-            // DB updates aren't committed until the end (same mechanism the API/UI uses).
+            // Progress: poll the latest sync_log row via the repository. It's cached in memory  
             let pb = ProgressBar::new(total_pending as u64);
             pb.set_style(
                 ProgressStyle::with_template(
@@ -478,9 +475,7 @@ async fn main() -> anyhow::Result<()> {
                 let poll_cm = connection_manager.clone();
                 let done = spawn_blocking(move || -> Option<i32> {
                     let connection = poll_cm.connection().ok()?;
-                    // `query` with an explicit descending sort, not `query_one`: query_one
-                    // passes no sort, which `query` defaults to started_datetime ASC — i.e. the
-                    // oldest row. We want the latest (current) run's row.
+                    // `query` with an explicit descending sort to get the latest
                     SyncLogV5V6Repository::new(&connection)
                         .query(
                             Pagination::one(),
