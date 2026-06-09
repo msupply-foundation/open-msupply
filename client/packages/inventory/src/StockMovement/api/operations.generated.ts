@@ -129,6 +129,16 @@ export type UpdateStockRelocationMutation = {
     | { __typename: 'UpdateStockRelocationNode'; id: string };
 };
 
+export type DeleteStockRelocationMutationVariables = Types.Exact<{
+  input: Types.DeleteStockRelocationInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type DeleteStockRelocationMutation = {
+  __typename: 'Mutations';
+  deleteStockRelocation: { __typename: 'DeleteResponse'; id: string };
+};
+
 export const StockMovementRowFragmentDoc = gql`
   fragment StockMovementRow on StockRelocationNode {
     __typename
@@ -237,6 +247,20 @@ export const UpdateStockRelocationDocument = gql`
     }
   }
 `;
+export const DeleteStockRelocationDocument = gql`
+  mutation deleteStockRelocation(
+    $input: DeleteStockRelocationInput!
+    $storeId: String!
+  ) {
+    deleteStockRelocation(input: $input, storeId: $storeId) {
+      __typename
+      ... on DeleteResponse {
+        __typename
+        id
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -307,6 +331,24 @@ export function getSdk(
             signal,
           }),
         'updateStockRelocation',
+        'mutation',
+        variables
+      );
+    },
+    deleteStockRelocation(
+      variables: DeleteStockRelocationMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<DeleteStockRelocationMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteStockRelocationMutation>({
+            document: DeleteStockRelocationDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'deleteStockRelocation',
         'mutation',
         variables
       );

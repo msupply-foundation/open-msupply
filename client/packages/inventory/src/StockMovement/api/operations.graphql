@@ -100,3 +100,16 @@ mutation updateStockRelocation(
     }
   }
 }
+
+mutation deleteStockRelocation(
+  $input: DeleteStockRelocationInput!
+  $storeId: String!
+) {
+  deleteStockRelocation(input: $input, storeId: $storeId) {
+    __typename
+    ... on DeleteResponse {
+      __typename
+      id
+    }
+  }
+}
