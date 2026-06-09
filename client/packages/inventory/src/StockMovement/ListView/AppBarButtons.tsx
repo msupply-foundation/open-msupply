@@ -3,11 +3,12 @@ import {
   AppBarButtonsPortal,
   Grid,
   ButtonWithIcon,
+  ModalMode,
   PlusCircleIcon,
   useToggle,
   useTranslation,
 } from '@openmsupply-client/common';
-import { CreateStockMovementModal } from './CreateStockMovementModal';
+import { StockMovementModal } from './StockMovementModal';
 
 export const AppBarButtons = () => {
   const t = useTranslation();
@@ -22,8 +23,9 @@ export const AppBarButtons = () => {
           onClick={modalController.toggleOn}
         />
         {modalController.isOn && (
-          <CreateStockMovementModal
+          <StockMovementModal
             open={modalController.isOn}
+            mode={ModalMode.Create}
             onClose={modalController.toggleOff}
           />
         )}
