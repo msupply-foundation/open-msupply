@@ -302,6 +302,16 @@ pub async fn pull(
             Some(input.batch_size),
         )?;
 
+        // Exact count of records this central server is serving to the remote on
+        // this pull. Logged (with the framework's timestamp) so a load test can
+        // measure central-server pull throughput by parsing the log.
+        log::info!(
+            "sync_v7 pull site_id={} records={} remaining={}",
+            site.id,
+            batch.records.len(),
+            batch.remaining
+        );
+
         Ok(batch)
     })
     .await
@@ -432,6 +442,13 @@ pub async fn push(
     })
     .await
     .map_err(join_error)??;
+
+    // Exact count of records this central server ingested from the remote on this
+    // push. Logged (with the framework's timestamp) so a load test can measure
+    // central-server push throughput by parsing the log.
+    log::info!(
+        "sync_v7 push site_id={site_id} records={records_in_this_batch} remaining={remaining}"
+    );
 
     if remaining == 0 {
         spawn_integration(service_provider, site_id);
