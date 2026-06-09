@@ -456,7 +456,7 @@ impl LoadTest {
                     standalone_store_name: None,
                     standalone_admin_username: None,
                     standalone_admin_password: None,
-                    workers: None,
+                    workers: Some(1), // We're spawning many remote site in separate processes. Each one of these remote sites don't need several actix workers. Their main runtime will still have num CPU cores workers.
                 },
                 database: DatabaseSettings {
                     username: "postgres".to_string(),
