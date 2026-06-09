@@ -43,6 +43,20 @@ impl StockRelocationNode {
     pub async fn number_of_packs(&self) -> f64 {
         self.row().from_number_of_packs
     }
+    pub async fn from_pack_size(&self) -> f64 {
+        self.stock_relocation.from_stock_line_row.pack_size
+    }
+    pub async fn available_number_of_packs(&self) -> f64 {
+        self.stock_relocation
+            .from_stock_line_row
+            .available_number_of_packs
+    }
+    pub async fn to_pack_size(&self) -> Option<f64> {
+        self.row().to_pack_size
+    }
+    pub async fn restricted_location_type_id(&self) -> &Option<String> {
+        &self.stock_relocation.item_row.restricted_location_type_id
+    }
     pub async fn item_code(&self) -> &str {
         &self.stock_relocation.item_row.code
     }

@@ -10,6 +10,10 @@ export type StockMovementRowFragment = {
   finalisedDatetime?: string | null;
   status: Types.StockRelocationNodeStatus;
   numberOfPacks: number;
+  fromPackSize: number;
+  availableNumberOfPacks: number;
+  toPackSize?: number | null;
+  restrictedLocationTypeId?: string | null;
   itemCode: string;
   itemName: string;
   batch?: string | null;
@@ -51,6 +55,10 @@ export type StockRelocationsQuery = {
       finalisedDatetime?: string | null;
       status: Types.StockRelocationNodeStatus;
       numberOfPacks: number;
+      fromPackSize: number;
+      availableNumberOfPacks: number;
+      toPackSize?: number | null;
+      restrictedLocationTypeId?: string | null;
       itemCode: string;
       itemName: string;
       batch?: string | null;
@@ -129,6 +137,10 @@ export const StockMovementRowFragmentDoc = gql`
     finalisedDatetime
     status
     numberOfPacks
+    fromPackSize
+    availableNumberOfPacks
+    toPackSize
+    restrictedLocationTypeId
     itemCode
     itemName
     batch
