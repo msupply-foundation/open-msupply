@@ -205,9 +205,9 @@ impl LoadTest {
             .await?;
 
         // The remotes sync v7 solely from OMS central, so it must hold the sites/stores/items
-        // (and the site rows used for auth) before they initialise. Wait for OMS central to pull
-        // the data we just created on mSupply central.
-        self.wait_for_oms_central_synced().await?;
+        // (and the site rows used for auth) before they initialise. Drive OMS central through a
+        // sync cycle per created store so all stores migrate from mSupply central.
+        self.wait_for_oms_central_synced(num_sites).await?;
 
         self.create_configs(&test_sites)?;
 
@@ -358,7 +358,7 @@ impl LoadTest {
     /// site rows used for auth) before they initialise. OMS central is a central server, so its
     /// `latestSyncStatus` returns the V5/V6 node. We remember the previously completed sync and
     /// wait for a newer one, so the data we just created is guaranteed to be included.
-    async fn wait_for_oms_central_synced(&self) -> Result<(), anyhow::Error> {
+    async fn wait_for_oms_central_synced(&self, store_count: usize) -> Result<(), anyhow::Error> {
         // OMS central enforces access control on the sync-status GraphQL, so log in with an
         // OMS central user account and use the returned bearer token (the spawned remotes get
         // away with a placeholder header only because they run with debug_no_access_control).
@@ -372,36 +372,21 @@ impl LoadTest {
         .await
         .map_err(|e| anyhow!("Failed to authenticate with OMS central: {}", e))?;
 
-        let previous_finished = query_oms_central_sync_status(&api)
-            .await?
-            .and_then(|s| s.summary.finished);
-
-        // Trigger a sync now rather than waiting on OMS central's natural sync interval.
-        let _ = api
-            .gql("mutation ManualSync { root: manualSync }", json!({}), None)
-            .await;
-
-        println!("Waiting for OMS central to sync data from mSupply central...");
-        let start = Instant::now();
-        loop {
-            sleep(Duration::from_secs(2)).await;
-
-            if let Some(status) = query_oms_central_sync_status(&api).await? {
-                if !status.is_syncing
-                    && status.summary.finished.is_some()
-                    && status.summary.finished != previous_finished
-                {
-                    println!("OMS central is synced.");
-                    return Ok(());
-                }
-            }
-
-            if start.elapsed().as_secs() > 600 {
-                return Err(anyhow!(
-                    "Timed out waiting for OMS central to finish syncing from Legacy mSupply central"
-                ));
-            }
+        // COGS migrates one store's data to OMS central per sync cycle (see transition.md,
+        // "Moving one Store at a Time"). A site can only upgrade to v7 once all its stores have
+        // reached migration status "synced" on COGS, so drive OMS central through a full sync
+        // cycle for each store we created — pulling and integrating each in turn — before the
+        // remotes initialise and request their v7 token.
+        println!(
+            "Syncing OMS central to migrate {} store(s) from mSupply central...",
+            store_count
+        );
+        for cycle in 1..=store_count {
+            run_oms_central_sync_cycle(&api).await?;
+            println!("OMS central sync cycle {}/{} complete", cycle, store_count);
         }
+        println!("OMS central is synced.");
+        Ok(())
     }
 
     fn write_results(&self, results: Vec<Metric>) {
@@ -612,6 +597,40 @@ impl LoadTest {
             test_sites.push(full_site);
         }
         test_sites
+    }
+}
+
+/// Trigger a single OMS central sync cycle and wait for it to finish (pull + integrate).
+/// Completion is detected by `latestSyncStatus.summary` reporting a newer `finished` timestamp
+/// than before the cycle was triggered, with no sync in progress.
+async fn run_oms_central_sync_cycle(api: &crate::graphql::Api) -> Result<(), anyhow::Error> {
+    let previous_finished = query_oms_central_sync_status(api)
+        .await?
+        .and_then(|s| s.summary.finished);
+
+    // Trigger a sync now rather than waiting on OMS central's natural sync interval.
+    let _ = api
+        .gql("mutation ManualSync { root: manualSync }", json!({}), None)
+        .await;
+
+    let start = Instant::now();
+    loop {
+        sleep(Duration::from_secs(2)).await;
+
+        if let Some(status) = query_oms_central_sync_status(api).await? {
+            if !status.is_syncing
+                && status.summary.finished.is_some()
+                && status.summary.finished != previous_finished
+            {
+                return Ok(());
+            }
+        }
+
+        if start.elapsed().as_secs() > 600 {
+            return Err(anyhow!(
+                "Timed out waiting for an OMS central sync cycle to finish"
+            ));
+        }
     }
 }
 
