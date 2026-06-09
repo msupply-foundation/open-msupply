@@ -123,14 +123,20 @@ export const StockMovementModal = ({
   const { insert, isSaving } = useInsertStockMovement();
   const { update, isUpdating } = useUpdateStockMovement();
 
-  const getFinaliseConfirmation = useConfirmationModal({
+  const getCreateFinaliseConfirmation = useConfirmationModal({
     iconType: 'info',
-    title: isEdit
-      ? t('heading.finalise-stock-movement')
-      : t('heading.stock-movement-created'),
+    title: t('heading.stock-movement-created'),
     message: t('messages.confirm-finalise-stock-movement'),
     buttonLabel: t('button.finalise'),
     cancelButtonLabel: t('button.not-now'),
+  });
+
+  const getEditFinaliseConfirmation = useConfirmationModal({
+    iconType: 'help',
+    title: t('heading.finalise-stock-movement'),
+    message: t('messages.confirm-finalise-stock-movement-edit'),
+    buttonLabel: t('button.finalise'),
+    cancelButtonLabel: t('button.cancel'),
   });
 
   const {
@@ -279,7 +285,7 @@ export const StockMovementModal = ({
         return;
       }
       const ids = result.ids;
-      getFinaliseConfirmation({
+      getCreateFinaliseConfirmation({
         onConfirm: async () => {
           try {
             await Promise.all(
@@ -326,7 +332,7 @@ export const StockMovementModal = ({
   };
 
   const onEditFinalise = () =>
-    getFinaliseConfirmation({
+    getEditFinaliseConfirmation({
       onConfirm: () => saveEdit(StockRelocationNodeStatus.Finalised),
     });
 

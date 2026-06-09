@@ -2154,6 +2154,7 @@
   "messages.confirm-early-vaccination": "The minimum recommended date for this vaccine is {{ date }} (based on patient age and the two-dose interval). Are you sure you can administer this vaccine?",
   "messages.confirm-finalise-rnr": "This will mark the R&R form as finalised and generate an internal order.",
   "messages.confirm-finalise-stock-movement": "The stock will not be moved or repacked until the transaction is finalised. Would you like to finalise now?",
+  "messages.confirm-finalise-stock-movement-edit": "Finalising will move the stock and this movement can no longer be edited. Are you sure you want to finalise?",
   "messages.confirm-inbound-status-as": "Confirm status as $t({{status}})?",
   "messages.confirm-not-fully-supplied_few": "There are {{count}} lines in this requisition that have not been fully supplied to the customer. \n\nWould you still like to continue?",
   "messages.confirm-not-fully-supplied_many": "There are {{count}} lines in this requisition that have not been fully supplied to the customer. \n\nWould you still like to continue?",
