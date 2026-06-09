@@ -272,8 +272,9 @@ enum Action {
         skip_buffer_reset: bool,
         /// Only reintegrate records that previously errored: the buffer reset clears integration
         /// state for rows with an integration_error (excluding deliberately-ignored rows) and
-        /// leaves successfully-integrated rows alone.
-        #[clap(short, long)]
+        /// leaves successfully-integrated rows alone. Errored rows are integrated (not pending),
+        /// so this requires a reset — it conflicts with --skip-buffer-reset.
+        #[clap(short, long, conflicts_with = "skip_buffer_reset")]
         errors_only: bool,
         /// Restrict integration to these sync buffer tables (comma-separated, matched against
         /// `sync_buffer.table_name`, e.g. `--tables item,name`). Defaults to all tables.
