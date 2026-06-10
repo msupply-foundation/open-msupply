@@ -6,7 +6,6 @@
   "auth.alert-title": "Autentikasaun Sala",
   "auth.no-store-assigned": "Ita la aloka ba Store ruma. Favor tama utiliza ujuáriu seluk, ou kontaktu ita nia Admin.",
   "auth.permission-denied": "Permisaun rejeitadu",
-  "auth.server-error": "Servedor hasoru problema, wainhira atu identifika informasaun husi ujuáriu ida Ne'e!\nLabele atu kontinua, favor kontaktu ekipa Suporta.",
   "auth.timeout-message": "Ita bo'ot sai ona husi ita nia sesaun tamba erru ruma. Hanehan 'OK' atu fila fali ba ekran Login.",
   "auth.timeout-title": "Tempu sesaun remata",
   "auth.unauthenticated-message": "Ita seidauk login. Hanehan 'OK' atu fila fali ba ekran login.",
