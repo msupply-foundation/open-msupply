@@ -45,6 +45,7 @@ pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
 pub(crate) mod name;
+pub(crate) mod name_category;
 pub(crate) mod name_insurance_join;
 pub(crate) mod name_oms_fields;
 pub(crate) mod name_property;
@@ -122,6 +123,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         user::boxed(),
         user_store_permissions::boxed(),
         name::boxed(),
+        name_category::boxed(),
         name_tag::boxed(),
         name_tag_join::boxed(),
         unit::boxed(),

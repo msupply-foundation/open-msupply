@@ -100,6 +100,90 @@ fn mapping_properties() -> Vec<MappingProperty> {
             value_type: Boolean,
             table_names: &["item"],
         },
+        // item categories — a single OPTION property whose options are the
+        // mSupply `item_category*` levels. Unlike the fields above, its *options*
+        // are not seeded here: they are authored dynamically by the v5 category
+        // import (`translations/category.rs`, central-only) as `property_option_v2`
+        // rows. The item stores the leaf `category_ID` under this key. See the
+        // properties dev doc — this is the deliberate "hard" mapping test.
+        MappingProperty {
+            id: "legacy_item_category",
+            key: "item_category",
+            name: "Category",
+            value_type: Option,
+            table_names: &["item"],
+        },
+        // item categories 2 & 3 — two additional *flat* OPTION dimensions
+        // (`[item]category2_ID`/`category3_ID` → `item_category2`/`item_category3`,
+        // which have no level tables). Options are authored by the category import
+        // (`translations/category.rs`, central-only); the item stores the chosen id
+        // under these keys. Keys are prefixed `item_category*` (globally-unique
+        // `property_v2.key`, distinct from name's `name_category*`).
+        MappingProperty {
+            id: "legacy_item_category_2",
+            key: "item_category2",
+            name: "Category 2",
+            value_type: Option,
+            table_names: &["item"],
+        },
+        MappingProperty {
+            id: "legacy_item_category_3",
+            key: "item_category3",
+            name: "Category 3",
+            value_type: Option,
+            table_names: &["item"],
+        },
+        // name categories 1–6 — six independent OPTION dimensions
+        // (`[name]category1_ID..category6_ID`). category1 is hierarchical (its
+        // `name_category1*` level tables map via `parent_option_id`); 2–6 are flat.
+        // Options are authored by `translations/name_category.rs` (central-only);
+        // the name stores the chosen leaf id under each key.
+        //
+        // NOTE: `property_v2.key` is globally unique, so the name dimensions can't
+        // reuse item's `category2`/`category3` keys — they are prefixed
+        // `name_category*` (this is the JSONB key on the name record too).
+        MappingProperty {
+            id: "legacy_name_category_1",
+            key: "name_category1",
+            name: "Category 1",
+            value_type: Option,
+            table_names: &["name"],
+        },
+        MappingProperty {
+            id: "legacy_name_category_2",
+            key: "name_category2",
+            name: "Category 2",
+            value_type: Option,
+            table_names: &["name"],
+        },
+        MappingProperty {
+            id: "legacy_name_category_3",
+            key: "name_category3",
+            name: "Category 3",
+            value_type: Option,
+            table_names: &["name"],
+        },
+        MappingProperty {
+            id: "legacy_name_category_4",
+            key: "name_category4",
+            name: "Category 4",
+            value_type: Option,
+            table_names: &["name"],
+        },
+        MappingProperty {
+            id: "legacy_name_category_5",
+            key: "name_category5",
+            name: "Category 5",
+            value_type: Option,
+            table_names: &["name"],
+        },
+        MappingProperty {
+            id: "legacy_name_category_6",
+            key: "name_category6",
+            name: "Category 6",
+            value_type: Option,
+            table_names: &["name"],
+        },
     ]
 }
 
@@ -181,11 +265,12 @@ mod tests {
             .expect("missing legacy_item_user_field_5");
         assert_eq!(item_5.value_type, PropertyValueTypeV2::Real);
 
-        // 10 properties: 3 name customs + 7 item user fields.
-        assert_eq!(property_repo.find_all().unwrap().len(), 10);
-        // 10 table mappings: the 3 name customs map to "name", the 7 item
-        // fields to "item" (1 each).
-        assert_eq!(table_repo.find_all().unwrap().len(), 10);
+        // 19 properties: 3 name customs + 6 name categories + 7 item user fields
+        // + 3 item categories (main + 2 & 3).
+        assert_eq!(property_repo.find_all().unwrap().len(), 19);
+        // 19 table mappings: the 3 name customs + 6 name categories map to
+        // "name", the 7 item fields + 3 item categories to "item" (1 each).
+        assert_eq!(table_repo.find_all().unwrap().len(), 19);
 
         // A second run is a no-op: change-aware seeding must not write (and so
         // must not add changelog rows) when nothing has changed.

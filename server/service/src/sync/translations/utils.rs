@@ -68,6 +68,18 @@ impl LegacyPropertiesBuilder {
         self
     }
 
+    /// Insert an OPTION-typed value, omitting empty/absent. The stored value is
+    /// the option's id string (matching a `property_option_v2.id`); the client
+    /// resolves it to a display name. Behaves like [`text`](Self::text) on the
+    /// wire — the distinct method documents intent at the call site.
+    pub(crate) fn option(mut self, key: &str, value: Option<&str>) -> Self {
+        if let Some(v) = value.filter(|v| !v.is_empty()) {
+            self.map
+                .insert(key.to_string(), serde_json::Value::String(v.to_string()));
+        }
+        self
+    }
+
     /// Insert a BOOLEAN-typed value, storing only `true` — `false`/absent is the
     /// 4D Boolean default / "unchecked".
     pub(crate) fn boolean(mut self, key: &str, value: Option<bool>) -> Self {
@@ -210,6 +222,8 @@ mod tests {
             .real("d", Some(0.0))
             .boolean("e", None)
             .boolean("f", Some(false))
+            .option("g", None)
+            .option("h", Some(""))
             .build();
         assert_eq!(result, None);
     }
@@ -223,10 +237,12 @@ mod tests {
             .real("zero", Some(0.0))
             .boolean("checked", Some(true))
             .boolean("unchecked", Some(false))
+            .option("option", Some("opt_id"))
+            .option("no_option", Some(""))
             .build();
         assert_eq!(
             result,
-            Some(json!({ "text": "hello", "real": 12.5, "checked": true }))
+            Some(json!({ "text": "hello", "real": 12.5, "checked": true, "option": "opt_id" }))
         );
     }
 
