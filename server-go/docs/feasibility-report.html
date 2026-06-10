@@ -63,6 +63,9 @@
   .callout h3{margin-top:0}
   ul{margin:10px 0;padding-left:22px} li{margin:6px 0}
   .ratio{font-size:12px;color:var(--indigo);font-weight:700}
+  .cmd{background:#0f1720;color:#d6e2ee;padding:13px 15px;border-radius:8px;margin:14px 0;
+    font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.5;overflow-x:auto;white-space:pre}
+  .cmd .c{color:#7e93a7}
   footer{margin-top:50px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
   .tag{font-size:12px;color:var(--muted)}
   @media (max-width:680px){.stat-grid{grid-template-columns:1fr}.hero h1{font-size:25px}}
@@ -233,6 +236,28 @@
     </tbody>
   </table>
 
+  <!-- BUILD / CROSS-COMPILE -->
+  <h2>Build &amp; deploy — cross-compilation and CI</h2>
+  <p>A concrete operational win, separate from raw speed. A <strong>pure-Go</strong> build
+     cross-compiles to every target from a single machine, with <strong>one command and zero extra
+     toolchain</strong> — proven for all five targets in the spike. For example, a Windows binary
+     built on a Mac:</p>
+  <div class="cmd"><span class="c"># on a developer Mac or any CI runner — produces a Windows .exe, no Windows machine involved</span>
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o oms-server.exe ./cmd/server</div>
+  <p>Today, shipping a Windows build relies on a <strong>dedicated Windows build server</strong>
+     (plus self-hosted macOS agents for the Mac/Android builds), because cross-compiling Rust —
+     especially with its <strong>bundled C SQLite</strong> (a CGO dependency) — needs a per-target C
+     toolchain and linker. In the spike, getting even <em>one</em> Rust+CGO target to cross-compile
+     required installing <code>zig</code>, adding a Rust target, and wiring a per-target linker by
+     hand. With a pure-Go server, <strong>that dedicated Windows/desktop build server is very likely
+     unnecessary</strong> — Windows, Linux (amd64/arm64) and macOS binaries can all come off one CI
+     runner. That is a real reduction in build infrastructure and CI complexity.</p>
+  <p class="tag"><strong>Conditions &amp; limits:</strong> this holds <em>only</em> while the port
+     stays CGO-free — which the spike showed is achievable, including the JavaScript engine (goja)
+     and a pure-Go SQLite/Postgres stack. Keeping any Rust via CGO reintroduces the per-target
+     toolchain and brings the build-server requirement back. Mobile (Android/iOS) is more than a
+     server binary: the core still compiles pure-Go, but the app / JNI packaging is separate work.</p>
+
   <!-- RESULTS: RUNTIME -->
   <h2>Results 3 — Runtime performance (Postgres head-to-head)</h2>
   <p>Both servers ran against <strong>the same Postgres database</strong> and received the
@@ -261,12 +286,16 @@
      single count over a million-row joined view (~135&nbsp;ms) saturates Postgres long before the
      language matters. <strong>At scale the database is the wall, not the server language.</strong></p>
 
-  <p><strong>Did the same data come back?</strong> For the small store, <strong>yes — byte-identical</strong>
-     responses (5,925 bytes, loader-resolved names included). For the large store, <code>totalCount</code>
-     differs by exactly one (Rust <strong>1,004,135</strong> vs Go <strong>1,004,136</strong>): Rust's
-     <code>invoices</code> query applies a default <code>is_cancellation = false</code> filter the slice
-     hasn't replicated, and that store has exactly one cancelled invoice. Immaterial to the timings, but a
-     concrete example of a business rule a full port must carry over.</p>
+  <p><strong>Did the same data come back?</strong> Small store: <strong>byte-identical</strong>
+     (5,925 bytes, loader-resolved names included). The large store initially differed by one row —
+     Rust's <code>invoices</code> query applies a default <code>is_cancellation = false</code> filter
+     (that store has one cancelled invoice) that the slice hadn't replicated. <strong>We added that
+     filter to the Go slice; both now return exactly 1,004,135</strong> — and re-running the load test
+     <strong>did not change the gap</strong> (Go still ~30 vs Rust ~21 req/s). So the throughput
+     difference is <em>not</em> that filter: it's implementation detail (the Go slice selects only the
+     requested columns while Rust loads the full invoice row, plus HTTPS vs HTTP), and at this scale it
+     is Postgres-bound regardless. Pinning the exact residual cause would need query-plan profiling of
+     each server's emitted SQL.</p>
 
   <p class="tag">Remaining fairness notes: the servers still don't send byte-identical SQL (the Go slice
      selects only the requested columns; Rust loads the full invoice row), and Rust served HTTPS vs Go
@@ -287,6 +316,41 @@
       <tr><td>Platform packaging</td><td>Cross-compilation proven; Android (JNI), Windows service, and desktop packaging integration are not.</td><td><span class="badge b-open">Not started</span></td></tr>
     </tbody>
   </table>
+
+  <!-- TRADE-OFF -->
+  <h2>The honest trade-off — Go's weaker compile-time guarantees</h2>
+  <p>The velocity gains are real, but they come with a cost that matters for a data-integrity-critical
+     system. Rust's type system catches a whole class of <em>"I added something and forgot to handle it
+     everywhere"</em> bugs <strong>at compile time</strong>; Go largely cannot.</p>
+  <p>A live example from this spike: adding the <code>is_cancellation</code> filter. In Rust, the
+     surrounding idioms — <strong>exhaustive <code>match</code></strong> on the sort/enum types and
+     <strong>full destructuring</strong> of the filter struct — mean a newly added field or variant
+     <strong>won't compile</strong> until every site handles it (and unused fields are flagged under
+     <code>deny(warnings)</code>). In Go, adding <code>IsCancellation</code> to the filter struct and
+     forgetting to translate it to SQL <strong>compiles cleanly and silently does nothing</strong> — the
+     bug surfaces only in a test or in production. Go does not warn on unused struct fields, and its
+     <code>switch</code> has no exhaustiveness check. (We caught exactly this class of gap here via a
+     data-parity diff, not the compiler.)</p>
+  <p><strong>Mitigations in Go</strong> — none equivalent to the compiler: the <code>exhaustive</code>
+     linter (CI-time, catches non-exhaustive switches over typed enums), disciplined tests, or
+     <strong>code-generating</strong> the filter→SQL mapping from one source of truth so a field cannot
+     be forgotten. These move the guarantee from "compiler" to "CI + discipline."</p>
+  <p><strong>The same trade-off shows up in column selection.</strong> In the load test the Go slice
+     fetched only a fixed subset of columns while Rust's resolver loaded the full invoice row. Fetching
+     only what you need is good practice and lighter on the database — though most impactful for wide
+     rows / large result sets; for a 50-row page it is marginal, and it's available to <em>either</em>
+     server, so it's an implementation choice rather than a language advantage. The catch is <em>how</em>
+     the Go slice does it: the <code>SELECT</code> list and the row-<code>Scan</code> that reads it are
+     hand-written and positional — <strong>not type-safe</strong>. If the two drift out of sync it's a
+     runtime error or silently wrong data, not a compile error. Rust/Diesel maps rows to typed structs
+     and checks column selections at <strong>compile time</strong>. The Go answer is <strong>sqlc</strong>,
+     which generates typed structs from your SQL so a fixed query is compile-checked — recovering the
+     safety for static queries (a dynamic, per-request projection is hard to make type-safe in either
+     language).</p>
+  <p>This is the core Rust↔Go trade: <strong>Rust buys compile-time correctness at the cost of compile
+     speed; Go buys iteration speed at the cost of weaker static guarantees.</strong> For Open mSupply —
+     fleet-wide data integrity and sync correctness — this is a genuine factor to weigh, and it raises
+     the importance of test coverage and codegen (e.g. sqlc) in any Go port.</p>
 
   <!-- RECOMMENDATION -->
   <h2>Recommendation &amp; next step</h2>

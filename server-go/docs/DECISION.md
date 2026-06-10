@@ -275,10 +275,13 @@ How to read it:
   at scale the database limits throughput, not Go.**
 
 **Same data back?** Small store: **byte-identical** (5,925 B, loader-resolved names included).
-Large store: `totalCount` differs by exactly one — Rust **1,004,135** vs Go **1,004,136** —
-because Rust's `invoices` query applies a default `is_cancellation = false` filter the slice
-hasn't replicated (the store has one cancelled invoice). Immaterial to timings; a concrete
-example of a business rule a full port must carry over.
+Large store initially differed by one row — Rust applies a default `is_cancellation = false`
+filter (`service/src/invoice/query.rs`) the slice hadn't replicated (that store has one cancelled
+invoice). **Added it to the Go slice; both now return exactly 1,004,135**, and the load timings
+were unchanged (Go ~30 vs Rust ~21 rps) — so the throughput gap is *not* the filter; it's
+implementation detail (Go selects only requested columns; Rust loads the full invoice row; HTTPS
+vs HTTP), Postgres-bound regardless. (`is_cancellation = false` is the *only* default filter
+`get_invoices` injects beyond `store_id`.)
 
 Fairness caveats: the servers don't send byte-identical SQL (the Go spike's `invoices` query
 selects fewer fields than Rust's full resolver); Rust used HTTPS vs Go HTTP (negligible at these
@@ -310,6 +313,18 @@ premise was that iteration velocity (compile/test/disk) is the current pain.
   only by disk; not needed given the goja host-function result.
 - WS6 load test: identical query set, p50/p95/p99, throughput, memory, startup.
 - Sync engine: the dominant remaining effort/risk; not yet prototyped.
+
+## Trade-off: weaker compile-time guarantees in Go (a real Rust advantage)
+Rust's exhaustive `match` + full struct destructuring catch "added a field/variant, forgot to
+handle it everywhere" **at compile time** — a new filter field won't compile until it's applied,
+and unused fields warn under `deny(warnings)`. Go does **not**: an unused struct field or a
+non-exhaustive `switch` compiles silently. We hit exactly this — the `is_cancellation` filter
+field added but not translated to SQL — and caught it via a **data-parity diff, not the
+compiler**. Mitigations (none compiler-equivalent): the `exhaustive` linter (CI), disciplined
+tests, or code-generating the filter→SQL mapping from one source of truth. The core trade: **Rust
+= compile-time correctness at the cost of build speed; Go = iteration speed at the cost of weaker
+static guarantees.** For a data-integrity-critical system this is a genuine factor, and it raises
+the bar on test coverage + codegen for any Go port.
 
 ## Tentative read
 Nothing found argues against the port. The compile-time win is decisive; GraphQL + DB parity

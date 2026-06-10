@@ -99,9 +99,12 @@ func (r *queriesResolver) invoices(
 
 // mapInvoiceFilter mirrors the storeId scoping + filter inputs handled by the Rust resolver.
 func mapInvoiceFilter(storeID string, f *model.InvoiceFilterInput, typeArg []model.InvoiceTypeInput) *repository.InvoiceFilter {
+	// Mirror Rust service::invoice::query::get_invoices defaults: scope to the store and
+	// exclude cancellation reversals (is_cancellation = false), regardless of input filter.
+	cancellationFalse := false
 	out := &repository.InvoiceFilter{
-		// invoices are scoped to the requesting store, matching the Rust query.
-		StoreID: &repository.EqualFilter[string]{EqualTo: &storeID},
+		StoreID:        &repository.EqualFilter[string]{EqualTo: &storeID},
+		IsCancellation: &cancellationFalse,
 	}
 	if len(typeArg) > 0 {
 		vals := make([]string, len(typeArg))

@@ -48,6 +48,7 @@ type InvoiceFilter struct {
 	Status         *EqualFilter[string]
 	OtherPartyName *StringFilter
 	Comment        *StringFilter
+	IsCancellation *bool
 }
 
 // InvoiceSortField mirrors the Rust InvoiceSortField (subset).
@@ -159,6 +160,9 @@ func (r *InvoiceRepository) applyFilter(q sq.SelectBuilder, f *InvoiceFilter) sq
 	q = applyEqual(q, "iv.status", f.Status)
 	q = r.applyString(q, "n.name", f.OtherPartyName)
 	q = r.applyString(q, "iv.comment", f.Comment)
+	if f.IsCancellation != nil {
+		q = q.Where(sq.Eq{"iv.is_cancellation": *f.IsCancellation})
+	}
 	return q
 }
 
