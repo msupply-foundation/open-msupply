@@ -204,6 +204,14 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
       }
       throw new Error('Unable to fetch properties');
     },
+    propertiesV2: async () => {
+      const result = await sdk.namePropertiesV2();
+
+      if (result?.propertiesV2?.__typename === 'PropertyV2Connector') {
+        return result?.propertiesV2?.nodes;
+      }
+      throw new Error('Unable to fetch properties');
+    },
   },
   updateNameProperties: async (
     input: UpdateNamePropertiesInput

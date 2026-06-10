@@ -20,6 +20,7 @@ import { ItemVariantsTab } from './Tabs/ItemVariants';
 import { ItemLedgerTab } from './Tabs/ItemLedger';
 import { StoreTab } from './Tabs/Store';
 import { AncillarySupplies } from './Tabs/AncillarySupplies';
+import { PropertiesTab } from './Tabs/Properties';
 
 export const ItemDetailView = () => {
   const t = useTranslation();
@@ -111,6 +112,11 @@ export const ItemDetailView = () => {
       value: t('title.ancillary-supplies'),
     },
   ];
+
+  tabs.push({
+    Component: <PropertiesTab item={data} />,
+    value: t('label.properties'),
+  });
 
   isCentralServer &&
     tabs.push({

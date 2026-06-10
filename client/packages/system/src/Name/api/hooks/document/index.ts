@@ -8,6 +8,7 @@ import { useNames } from './useNames';
 import { useStores } from './useStores';
 import { useDonors } from './useDonors';
 import { useNameProperties } from './useNameProperties';
+import { useNamePropertiesV2 } from './useNamePropertiesV2';
 import { useUpdateProperties } from './useUpdateProperties';
 import { useStoresAll } from './useStoresAll';
 
@@ -23,5 +24,6 @@ export const Document = {
   useNames,
   useDonors,
   useNameProperties,
+  useNamePropertiesV2,
   useStoresAll,
 };

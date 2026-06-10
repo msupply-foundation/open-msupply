@@ -91,6 +91,9 @@ pub use self::repack::*;
 pub mod property;
 pub use self::property::*;
 
+pub mod property_v2;
+pub use self::property_v2::*;
+
 pub mod program;
 pub use self::program::*;
 

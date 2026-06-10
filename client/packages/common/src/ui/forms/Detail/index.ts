@@ -4,3 +4,4 @@ export * from './Section';
 export * from './NumericTextDisplay';
 export * from './CurrencyTextDisplay';
 export * from './TextWithLabelRow';
+export * from './PropertyV2DetailRows';

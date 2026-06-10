@@ -21,7 +21,7 @@ use service::sync::CentralServerConfig;
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
     AbbreviationNode, CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, DiagnosisNode,
-    MasterListFilterInput, StorePreferenceNode,
+    MasterListFilterInput, PropertiesV2Response, StorePreferenceNode,
 };
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
@@ -460,6 +460,17 @@ impl GeneralQueries {
 
     pub async fn name_properties(&self, ctx: &Context<'_>) -> Result<NamePropertyResponse> {
         name_properties(ctx)
+    }
+
+    /// Properties v2 definitions. Used by list views, detail views and modals
+    /// to learn what columns/fields to render. Filter by `tableName` to scope
+    /// to a record kind (`{ equalTo: "name" }`).
+    pub async fn properties_v2(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Filter option")] filter: Option<PropertyV2FilterInput>,
+    ) -> Result<PropertiesV2Response> {
+        properties_v2(ctx, filter)
     }
 
     pub async fn reason_options(
