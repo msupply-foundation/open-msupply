@@ -10,7 +10,7 @@ import { FilterBy, FilterRule } from '../../hooks/useQueryParams';
 import { PropertyNodeValueTypeV2 } from '@common/types';
 import {
   formatPropertyV2Value,
-  getSelectableOptions,
+  getHierarchicalOptions,
   PropertyV2DefinitionLike,
 } from './propertiesV2';
 
@@ -69,7 +69,8 @@ export interface PropertyFilterRangeLabels {
 
 /**
  * One FilterMenu definition per property, by value type: TEXT → substring
- * text filter, OPTION → dropdown of selectable (leaf) options, NUMBER/REAL →
+ * text filter, OPTION → hierarchical dropdown (same control as the edit
+ * input: parents are indented headers, leaves selectable), NUMBER/REAL →
  * min/max range pair, DATE → date range pair, BOOLEAN → toggle. Properties
  * with an unknown value type get no filter.
  */
@@ -88,13 +89,10 @@ export const buildPropertyFilterDefinitions = (
         case PropertyNodeValueTypeV2.Option:
           return [
             {
-              type: 'enum' as const,
+              type: 'hierarchicalEnum' as const,
               name,
               urlParameter,
-              options: getSelectableOptions(property).map(option => ({
-                label: option.name,
-                value: option.id,
-              })),
+              options: getHierarchicalOptions(property),
             },
           ];
         case PropertyNodeValueTypeV2.Number:
