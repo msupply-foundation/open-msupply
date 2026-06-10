@@ -105,21 +105,30 @@ struct SyncInfo {
 struct LatestSyncStatus {
     latest_sync_status: FullSyncStatus,
 }
-// The remote's `latestSyncStatus` returns the V7 node. We only need `isSyncing` (to know a
-// sync cycle has settled) and `summary.finished` (to know the cycle integrated). Per-cycle
-// push/pull counts are NOT read here: on the V7 node they're cursor-delta progress fields that
-// read 0 for single-batch syncs. The actual throughput is measured on OMS central instead, by
-// parsing its `sync_v7 push` / `sync_v7 pull` log lines after the test.
+// The remote's `latestSyncStatus` returns the V7 node. We need `isSyncing` (to know a sync cycle
+// has settled), `error` (to know whether that cycle failed — e.g. central is unreachable; without
+// this a failed sync looks identical to a successful one, just faster) and `summary.finished` (to
+// know the cycle integrated). Per-cycle push/pull counts are NOT read here: on the V7 node they're
+// cursor-delta progress fields that read 0 for single-batch syncs. The actual throughput is
+// measured on OMS central instead, by parsing its `sync_v7 push` / `sync_v7 pull` log lines after
+// the test.
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct FullSyncStatus {
     is_syncing: bool,
+    error: Option<SyncErrorInfo>,
     summary: SyncStatus,
 }
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct SyncStatus {
     finished: Option<DateTime<Utc>>,
+}
+#[derive(Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+struct SyncErrorInfo {
+    variant: String,
+    full_error: String,
 }
 
 // OMS central is a central server, so its `latestSyncStatus` returns the V5/V6 node
@@ -897,6 +906,10 @@ query SyncInfo {
   latestSyncStatus {
     ... on FullSyncStatusV7Node {
       isSyncing
+      error {
+        variant
+        fullError
+      }
       summary {
         finished
       }
@@ -968,7 +981,16 @@ query SyncInfo {
                 let response_text = response.text().await?;
                 match serde_json::from_str::<SyncInfo>(&response_text) {
                     Ok(sync_info) => {
-                        if !sync_info.data.latest_sync_status.is_syncing {
+                        let status = &sync_info.data.latest_sync_status;
+                        if !status.is_syncing {
+                            if let Some(error) = &status.error {
+                                return Err(anyhow!(
+                                    "Site {}: sync finished with error [{}]: {}",
+                                    self.site.site_id,
+                                    error.variant,
+                                    error.full_error,
+                                ));
+                            }
                             return Ok(sync_info);
                         }
                     }
