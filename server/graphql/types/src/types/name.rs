@@ -148,8 +148,11 @@ impl NameNode {
 
     /// Properties v2 values for this name. The raw `name.properties_v2` JSONB
     /// blob is filtered server-side to keys that are (a) defined in
-    /// `property_v2` and not soft-deleted, (b) marked visible for the `name`
-    /// table via `property_table_v2`. Stray keys never reach the client.
+    /// `property_v2` and not soft-deleted, (b) marked visible for this name's
+    /// table scope via `property_table_v2`. Stray keys never reach the client.
+    ///
+    /// Patients have their own visible set (`table_name = "patient"`); every
+    /// other name type uses the generic `"name"` scope.
     pub async fn properties_v2(
         &self,
         ctx: &Context<'_>,
@@ -158,9 +161,15 @@ impl NameNode {
             return Ok(None);
         };
 
+        let table_name = if self.row().r#type == NameRowType::Patient {
+            "patient"
+        } else {
+            "name"
+        };
+
         let loader = ctx.get_loader::<DataLoader<AllowedPropertyV2KeysByTableLoader>>();
         let allowed_keys = loader
-            .load_one("name".to_string())
+            .load_one(table_name.to_string())
             .await?
             .unwrap_or_default();
 

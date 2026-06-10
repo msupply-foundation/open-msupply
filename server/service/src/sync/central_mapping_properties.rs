@@ -16,7 +16,9 @@ struct MappingProperty {
     name: &'static str,
     value_type: PropertyValueTypeV2,
     /// Record tables the property applies to (one `property_table_v2` row per
-    /// entry). A definition can be visible on more than one table.
+    /// entry). A definition can be visible on more than one table — names'
+    /// `custom1/2/3` are shared by every name type, so they map to both `"name"`
+    /// (customers/suppliers/facilities) and `"patient"`.
     table_names: &'static [&'static str],
 }
 
@@ -33,21 +35,21 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "custom_1",
             name: "Custom 1",
             value_type: Text,
-            table_names: &["name"],
+            table_names: &["name", "patient"],
         },
         MappingProperty {
             id: "legacy_name_custom_2",
             key: "custom_2",
             name: "Custom 2",
             value_type: Text,
-            table_names: &["name"],
+            table_names: &["name", "patient"],
         },
         MappingProperty {
             id: "legacy_name_custom_3",
             key: "custom_3",
             name: "Custom 3",
             value_type: Text,
-            table_names: &["name"],
+            table_names: &["name", "patient"],
         },
         // item `[item]user_field_1..7` — 4D names are already snake_case, so the
         // OMS key matches the wire key 1:1. Value types come from the 4D catalog.
@@ -137,7 +139,9 @@ fn mapping_properties() -> Vec<MappingProperty> {
         // (`[name]category1_ID..category6_ID`). category1 is hierarchical (its
         // `name_category1*` level tables map via `parent_option_id`); 2–6 are flat.
         // Options are authored by `translations/name_category.rs` (central-only);
-        // the name stores the chosen leaf id under each key.
+        // the name stores the chosen leaf id under each key. Shared by every name
+        // type, so visible on both "name" (customers/suppliers/facilities) and
+        // "patient" — where they are editable (the first editable OPTION).
         //
         // NOTE: `property_v2.key` is globally unique, so the name dimensions can't
         // reuse item's `category2`/`category3` keys — they are prefixed
@@ -147,42 +151,42 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "name_category1",
             name: "Category 1",
             value_type: Option,
-            table_names: &["name"],
+            table_names: &["name", "patient"],
         },
         MappingProperty {
             id: "legacy_name_category_2",
             key: "name_category2",
             name: "Category 2",
             value_type: Option,
-            table_names: &["name"],
+            table_names: &["name", "patient"],
         },
         MappingProperty {
             id: "legacy_name_category_3",
             key: "name_category3",
             name: "Category 3",
             value_type: Option,
-            table_names: &["name"],
+            table_names: &["name", "patient"],
         },
         MappingProperty {
             id: "legacy_name_category_4",
             key: "name_category4",
             name: "Category 4",
             value_type: Option,
-            table_names: &["name"],
+            table_names: &["name", "patient"],
         },
         MappingProperty {
             id: "legacy_name_category_5",
             key: "name_category5",
             name: "Category 5",
             value_type: Option,
-            table_names: &["name"],
+            table_names: &["name", "patient"],
         },
         MappingProperty {
             id: "legacy_name_category_6",
             key: "name_category6",
             name: "Category 6",
             value_type: Option,
-            table_names: &["name"],
+            table_names: &["name", "patient"],
         },
     ]
 }
@@ -268,9 +272,19 @@ mod tests {
         // 19 properties: 3 name customs + 6 name categories + 7 item user fields
         // + 3 item categories (main + 2 & 3).
         assert_eq!(property_repo.find_all().unwrap().len(), 19);
-        // 19 table mappings: the 3 name customs + 6 name categories map to
-        // "name", the 7 item fields + 3 item categories to "item" (1 each).
-        assert_eq!(table_repo.find_all().unwrap().len(), 19);
+        // 28 table mappings: the 3 name customs + 6 name categories map to both
+        // "name" and "patient" (9×2 = 18), the 7 item fields + 3 item categories
+        // to "item" (10×1 = 10).
+        assert_eq!(table_repo.find_all().unwrap().len(), 28);
+
+        // The name customs are shared by patients (same definition, extra mapping).
+        let patient_mapping = table_repo
+            .find_one_by_id("legacy_name_custom_1__patient")
+            .unwrap()
+            .expect("missing legacy_name_custom_1__patient mapping");
+        assert_eq!(patient_mapping.property_id, "legacy_name_custom_1");
+        assert_eq!(patient_mapping.table_name, "patient");
+        assert!(patient_mapping.is_visible);
 
         // A second run is a no-op: change-aware seeding must not write (and so
         // must not add changelog rows) when nothing has changed.

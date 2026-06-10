@@ -12,6 +12,7 @@ import {
   CentralPatientSearchInput,
   InsertProgramPatientInput,
   UpdateProgramPatientInput,
+  UpdatePatientPropertiesV2Input,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -20,6 +21,7 @@ import {
   LinkPatientToStoreMutation,
   ProgramPatientRowFragment,
   LatestPatientEncounterQuery,
+  PropertyV2Fragment,
 } from './operations.generated';
 
 export type ListParams = {
@@ -134,6 +136,14 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result.centralPatientSearch;
     },
+    // Patient-scoped propertyV2 definitions (what custom fields a patient has).
+    propertiesV2: async (): Promise<PropertyV2Fragment[]> => {
+      const result = await sdk.patientPropertiesV2();
+      if (result?.propertiesV2?.__typename === 'PropertyV2Connector') {
+        return result.propertiesV2.nodes;
+      }
+      return [];
+    },
   },
   insertPatient: async (
     input: InsertPatientInput
@@ -163,6 +173,18 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not update patient');
+  },
+
+  updatePropertiesV2: async (
+    input: UpdatePatientPropertiesV2Input
+  ): Promise<ProgramPatientRowFragment> => {
+    const result = await sdk.updatePatientPropertiesV2({ storeId, input });
+
+    if (result.updatePatientPropertiesV2.__typename === 'PatientNode') {
+      return result.updatePatientPropertiesV2;
+    }
+
+    throw new Error('Could not update patient properties');
   },
 
   insertProgramPatient: async (

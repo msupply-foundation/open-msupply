@@ -2,7 +2,7 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, Local, NaiveDate, Utc};
 use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput};
-use graphql_core::loader::{DocumentLoader, PatientLoader};
+use graphql_core::loader::{AllowedPropertyV2KeysByTableLoader, DocumentLoader, PatientLoader};
 use graphql_core::{map_filter, ContextExt};
 
 use graphql_core::pagination::PaginationInput;
@@ -173,6 +173,23 @@ impl PatientNode {
 
     pub async fn date_of_death(&self) -> Option<NaiveDate> {
         self.patient.date_of_death
+    }
+
+    /// Patient custom property values (`name.properties_v2`), filtered to keys
+    /// defined and visible for the `patient` table scope. Mirrors
+    /// `NameNode.properties_v2` but always uses the `"patient"` scope.
+    pub async fn properties_v2(&self, ctx: &Context<'_>) -> Result<Option<serde_json::Value>> {
+        let Some(raw) = self.patient.properties_v2.clone() else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<AllowedPropertyV2KeysByTableLoader>>();
+        let allowed_keys = loader
+            .load_one("patient".to_string())
+            .await?
+            .unwrap_or_default();
+
+        Ok(Some(crate::types::filter_properties_v2(raw, &allowed_keys)))
     }
 
     pub async fn next_of_kin_id(&self) -> &Option<String> {
