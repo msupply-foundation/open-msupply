@@ -1,0 +1,11 @@
+{
+  "data": {
+    "encounters": {
+      "nodes": [
+        { "id": "e1", "patient": "p1", "startDatetime": "2020-01-01T00:00:00" },
+        { "id": "e2", "patient": "p2", "startDatetime": "2999-01-01T00:00:00" }
+      ]
+    }
+  },
+  "arguments": null
+}

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open mSupply — Rust → Go Backend Port: Feasibility Spike</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#1b2733; --muted:#5b6b7b; --line:#e3e8ee;
+    --indigo:#4f46e5; --indigo-soft:#eef0fe;
+    --go:#0aa3c2; --go-soft:#e6f7fb; --rust:#c1622d; --rust-soft:#fbeee4;
+    --green:#16a34a; --green-soft:#e7f6ec; --amber:#c2790b; --amber-soft:#fbf1de;
+    --slate:#64748b; --slate-soft:#eef2f6; --red:#b91c1c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:0 22px 80px}
+  code,.mono{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.9em}
+  header.hero{background:linear-gradient(135deg,#1b2733,#27384a);color:#fff;
+    margin-bottom:30px;border-radius:0 0 14px 14px}
+  .hero .wrap{padding:46px 22px 38px}
+  .eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:12px;font-weight:700;
+    color:#9db3c9;margin:0 0 10px}
+  .hero h1{margin:0 0 12px;font-size:32px;line-height:1.2;font-weight:800;letter-spacing:-.02em}
+  .hero p{margin:0;color:#c7d4e1;max-width:680px}
+  .meta{margin-top:20px;font-size:13px;color:#90a4b8;display:flex;gap:18px;flex-wrap:wrap}
+  .meta b{color:#cdd9e5;font-weight:600}
+  h2{font-size:22px;font-weight:800;letter-spacing:-.01em;margin:46px 0 14px;
+    padding-bottom:8px;border-bottom:2px solid var(--line)}
+  h3{font-size:16px;font-weight:700;margin:26px 0 8px}
+  p{margin:12px 0}
+  .lead{font-size:17px;color:#33424f}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;
+    margin:16px 0;box-shadow:0 1px 2px rgba(16,32,48,.04)}
+  .summary{border-left:5px solid var(--indigo)}
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:22px 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .stat .big{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.05}
+  .stat .lbl{font-size:13px;color:var(--muted);margin-top:6px}
+  .stat .sub{font-size:12px;color:var(--slate);margin-top:8px;border-top:1px dashed var(--line);padding-top:8px}
+  .go{color:var(--go)} .rust{color:var(--rust)}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14.5px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+  tbody tr:nth-child(odd){background:#fafbfc}
+  .col-go{background:var(--go-soft)!important} .col-rust{background:var(--rust-soft)!important}
+  th.col-go{color:#06748c} th.col-rust{color:#9a4a1d}
+  .win{font-weight:800}
+  .badge{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;
+    text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+  .b-proven{background:var(--green-soft);color:var(--green)}
+  .b-partial{background:var(--amber-soft);color:var(--amber)}
+  .b-open{background:var(--slate-soft);color:var(--slate)}
+  .callout{border-radius:12px;padding:16px 20px;margin:18px 0}
+  .callout.key{background:var(--indigo-soft);border:1px solid #d9ddfb}
+  .callout.risk{background:#fdeceb;border:1px solid #f6cfcc}
+  .callout.caveat{background:var(--amber-soft);border:1px solid #f0d9a8;border-left:6px solid var(--amber)}
+  .callout.caveat h3{color:#8a5a08}
+  .proj td:nth-child(3){background:var(--amber-soft)}
+  .star{color:var(--amber);font-weight:700}
+  .callout h3{margin-top:0}
+  ul{margin:10px 0;padding-left:22px} li{margin:6px 0}
+  .ratio{font-size:12px;color:var(--indigo);font-weight:700}
+  footer{margin-top:50px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+  .tag{font-size:12px;color:var(--muted)}
+  @media (max-width:680px){.stat-grid{grid-template-columns:1fr}.hero h1{font-size:25px}}
+  @media print{body{background:#fff}.card,.stat{box-shadow:none}header.hero{background:#1b2733}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Engineering Feasibility Spike</p>
+    <h1>Porting the Open mSupply backend from Rust to Go</h1>
+    <p>A time-boxed, evidence-driven evaluation. We built a working Go vertical slice against the
+       real schema, GraphQL API, and production databases, then measured it head-to-head with the
+       Rust server. This is what we proved, what it costs, and what still needs answering.</p>
+    <div class="meta">
+      <span><b>Audience</b> Dev leadership &amp; engineering</span>
+      <span><b>Status</b> Spike complete; full port not started</span>
+      <span><b>Date</b> 2026-06-10</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- EXECUTIVE SUMMARY -->
+  <div class="card summary">
+    <h2 style="margin-top:0;border:0;padding:0">Executive summary</h2>
+    <p class="lead">The motivation for this evaluation is <strong>developer velocity</strong>:
+      Rust's compile times, test loop, and on-disk build footprint are a daily tax — and that tax
+      is <strong>multiplied when an AI agent is driving development</strong>, because an agent runs
+      far more build/test cycles than a human. The spike confirms the velocity gap is large and real,
+      and that the API + database port is mechanically feasible. The dominant unknown — the sync
+      engine — has not been touched, and is the one thing that should gate any go/no-go.</p>
+
+    <div class="stat-grid">
+      <div class="stat">
+        <div class="big"><span class="go">~10s</span> vs <span class="rust">15–18&nbsp;min</span></div>
+        <div class="lbl">Cold build (whole server) <span class="star">*</span></div>
+        <div class="sub">Incremental edit: <b class="go">0.1–0.5s</b> vs <b class="rust">33–185s</b></div>
+      </div>
+      <div class="stat">
+        <div class="big"><span class="go">121&nbsp;MB</span> vs <span class="rust">~11&nbsp;GB</span></div>
+        <div class="lbl">Build footprint on disk</div>
+        <div class="sub">Go: one shared cache. Rust: 5.7&nbsp;GB <em>per feature</em> (sqlite + postgres)</div>
+      </div>
+      <div class="stat">
+        <div class="big"><span class="go">0.7s</span> vs <span class="rust">12–83s</span></div>
+        <div class="lbl">Run a test after an edit</div>
+        <div class="sub">Identical tests; execution itself is ~10ms both — the gap is pure compile</div>
+      </div>
+    </div>
+
+    <div class="callout caveat">
+      <h3>⚠ Big caveat — this is <em>not</em> a like-for-like comparison yet</h3>
+      <p style="margin-bottom:6px"><span class="star">*</span> The Go figures come from a <strong>small
+        vertical slice</strong>: roughly <strong>2,700 lines of hand-written Go</strong> (plus a
+        197,000-line auto-generated GraphQL layer and dependencies) measured against
+        <strong>~337,000 lines</strong> of real implementation in the Rust server. We are comparing a
+        fraction of the system to the whole. <strong>As the Go port grows toward full implementation,
+        its absolute build and test times will grow with it</strong> — these numbers are a starting
+        point, not the endpoint.</p>
+      <p style="margin:10px 0 4px"><strong>What the data does and doesn't support:</strong></p>
+      <ul style="margin-top:4px">
+        <li><strong>The cold-build gap will narrow as LOC grows.</strong> Today's ~90× is inflated by
+          the slice being small; expect it to shrink toward ~10–20× at full size (projection below).</li>
+        <li><strong>The per-edit and test-loop advantage is largely structural and size-independent.</strong>
+          Go's incremental compile is package-scoped and cached (only the changed package + its
+          dependents rebuild), and gqlgen's codegen is paid once ahead-of-time, whereas Rust's
+          <code>async-graphql</code> macros re-expand on every compile. This is the loop that dominates
+          AI-agent iteration, and it should stay fast even at full size.</li>
+      </ul>
+      <p style="margin:12px 0 4px"><strong>Build-time growth — rough projection</strong> (to be
+        validated by measuring the trend as the port grows):</p>
+      <table class="proj">
+        <thead><tr><th>Metric</th><th>Go — slice today<br><span class="tag">(measured)</span></th><th>Go — full port<br><span class="tag">(projected)</span></th><th>Rust — full, today<br><span class="tag">(measured)</span></th></tr></thead>
+        <tbody>
+          <tr><td>Hand-written LOC</td><td>~2.7K</td><td>~150–250K</td><td>~337K</td></tr>
+          <tr><td>Cold build (release)</td><td>~10 s</td><td>~30–90 s</td><td>15–18 min</td></tr>
+          <tr><td>Incremental edit</td><td>0.1–0.5 s</td><td>~1–5 s</td><td>33–185 s</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-bottom:0" class="tag">Projected figures are order-of-magnitude estimates derived
+        from observed Go compile throughput (~197K generated lines compiled cold in ~10 s), assuming
+        hand-written code compiles several× slower per line than flat generated code. They are
+        <strong>not measured</strong>. The honest next step is to track build &amp; test time per
+        workstream as the port grows, normalising by lines of code / equivalent functionality.</p>
+    </div>
+
+    <div class="callout key">
+      <h3>Why this matters for AI-driven development</h3>
+      <p style="margin-bottom:6px">An AI agent's throughput is gated by its feedback loop. Every
+        "edit&nbsp;→&nbsp;build&nbsp;→&nbsp;test" cycle in Rust costs tens of seconds to minutes; in Go
+        it is sub-second to a few seconds. Across the hundreds of cycles an agent runs per task that
+        compounds into a <strong>10–100× difference in iteration throughput</strong> — and directly
+        into agent cost and wall-clock. The disk pressure is just as real: during <em>this</em> spike,
+        Rust/CGO builds repeatedly exhausted the disk ("no space left on device"); the pure-Go work
+        never did.</p>
+    </div>
+
+    <p style="margin-bottom:0"><strong>Runtime is a wash where it counts.</strong> Rust's web stack is
+      ~2× faster at trivial requests, but on a realistic large query both servers are bottlenecked by
+      Postgres, not the language (Go was even marginally ahead). For Open mSupply's workload, language
+      runtime speed is not the deciding factor.</p>
+  </div>
+
+  <!-- APPROACH -->
+  <h2>The approach</h2>
+  <p>Rather than estimate from theory, we built a real Go vertical slice and compared it to the live
+     Rust server. The slice deliberately exercised the parts most likely to <em>break</em> a port:</p>
+  <ul>
+    <li><strong>Exact API contract.</strong> Exported the real GraphQL SDL (9,893 lines) from the Rust
+       server and generated the Go server from it — so the API is identical by construction.</li>
+    <li><strong>Real database, both engines.</strong> Drove SQLite <em>and</em> a real Postgres&nbsp;16,
+       including reading live production-shaped databases created by the Rust server.</li>
+    <li><strong>The hard patterns.</strong> The linked-table (core/view) model, dynamic filter/sort,
+       N+1 batching (DataLoader), and the version-based migration framework.</li>
+    <li><strong>The "needs Rust?" question.</strong> Whether the embedded JavaScript engine (reports +
+       plugins) forces us to keep Rust via CGO.</li>
+    <li><strong>Measurement.</strong> Compile time, test time, disk, and a head-to-head load test on
+       the same Postgres database.</li>
+  </ul>
+  <p class="tag">Recommended Go stack validated: <code>gqlgen</code> (schema-first GraphQL),
+     <code>database/sql</code> + <code>sqlc</code> + <code>squirrel</code>, <code>jackc/pgx</code>
+     (Postgres), <code>modernc.org/sqlite</code> (pure-Go SQLite), <code>dop251/goja</code> (pure-Go JS).</p>
+
+  <!-- RESULTS: VELOCITY -->
+  <h2>Results 1 — Developer velocity (the headline)</h2>
+  <table>
+    <thead><tr><th>Metric</th><th class="col-rust">Rust (today)</th><th class="col-go">Go (spike)</th><th>Gap</th></tr></thead>
+    <tbody>
+      <tr><td>Cold build, full server (release)</td><td class="col-rust">15 min (sqlite) · 17m 45s (postgres)</td><td class="col-go win">~10 s</td><td class="ratio">~90×</td></tr>
+      <tr><td>Incremental rebuild after one edit</td><td class="col-rust">33 s (mid-crate) · 185 s (top crate)</td><td class="col-go win">0.1–0.5 s</td><td class="ratio">~70–600×</td></tr>
+      <tr><td>Run a test after an edit <span class="tag">(same tests, ported verbatim)</span></td><td class="col-rust">12 s incremental · 83 s cold</td><td class="col-go win">0.7 s</td><td class="ratio">~16–100×</td></tr>
+      <tr><td>Build footprint on disk</td><td class="col-rust">5.7 GB per feature (~11 GB for both) · a trivial leaf crate = 407 MB</td><td class="col-go win">121 MB shared cache</td><td class="ratio">~50–90×</td></tr>
+      <tr><td>Shipped binary</td><td class="col-rust">273–274 MB</td><td class="col-go win">48 MB</td><td class="ratio">~6×</td></tr>
+    </tbody>
+  </table>
+  <p>The test result is the cleanest apples-to-apples: the same five tests, ported verbatim, execute in
+     ~10&nbsp;ms in both languages. The entire difference is the cost of compiling to run them.
+     Notably, Go's ~10s cold build includes a <strong>180,000-line generated GraphQL layer</strong> —
+     the analogue of the macro-heavy code that dominates Rust's build time.</p>
+
+  <!-- RESULTS: FEASIBILITY -->
+  <h2>Results 2 — Is the port mechanically feasible?</h2>
+  <table>
+    <thead><tr><th>Area</th><th>Finding</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>GraphQL API parity</td><td>gqlgen generates &amp; compiles from the exact exported SDL; the <code>invoices</code> query runs end-to-end with byte-level response parity (incl. a real <code>DateTime</code> format fix the spike caught) and N+1 DataLoader batching.</td><td><span class="badge b-proven">Proven</span></td></tr>
+      <tr><td>Dual database (SQLite + Postgres)</td><td>One code path runs on both; pure-Go SQLite loads the real 208 KB production schema <em>byte-identically</em> to the C library. Surfaced 4 genuine SQLite↔Postgres schema divergences a naive port would hit.</td><td><span class="badge b-proven">Proven</span></td></tr>
+      <tr><td>Migrations (incl. old-version upgrades)</td><td>Version framework ported with <em>byte-exact</em> version + fragment-log parity; ran an old (2.17.3) production DB up to current. ~99% of migrations are reusable raw SQL.</td><td><span class="badge b-partial">Mechanism proven</span></td></tr>
+      <tr><td>Reads real production data</td><td>The Go server read live Rust-created Postgres databases (2.17–2.20) and resolved real invoices, names, and statuses.</td><td><span class="badge b-proven">Proven</span></td></tr>
+      <tr><td>JavaScript engine (reports &amp; plugins)</td><td>The pure-Go engine <code>goja</code> runs the <em>real</em> report transforms with <strong>no CGO</strong>; plugin host functions (<code>sql</code>, etc.) work as plain Go closures. <strong>The JS subsystem does not force us to keep Rust.</strong></td><td><span class="badge b-proven">Proven</span></td></tr>
+      <tr><td>Cross-compilation</td><td>Pure-Go cross-compiles to all 5 targets (Linux amd64/arm64, Android, Windows, macOS) with zero extra toolchain. Keeping any Rust via CGO breaks this — it needed a full zig + per-target toolchain setup to get even one target working.</td><td><span class="badge b-proven">Proven</span></td></tr>
+    </tbody>
+  </table>
+
+  <!-- RESULTS: RUNTIME -->
+  <h2>Results 3 — Runtime performance (Postgres head-to-head)</h2>
+  <p>Both servers, same Postgres database, real <code>invoices</code> query, 50 concurrent users.
+     Rust = release server; Go = the spike server.</p>
+  <table>
+    <thead><tr><th>Scenario</th><th class="col-rust">Rust (req/s · median)</th><th class="col-go">Go (req/s · median)</th><th>Bottleneck</th></tr></thead>
+    <tbody>
+      <tr><td>Framework overhead <span class="tag">(no DB)</span></td><td class="col-rust win">88,125 · 0.3 ms</td><td class="col-go">44,477 · 0.7 ms</td><td>Server (Rust ~2×)</td></tr>
+      <tr><td>Small query (22 invoices)</td><td class="col-rust">2,241 · 22 ms</td><td class="col-go">1,864 · 7.4 ms</td><td>Comparable</td></tr>
+      <tr><td>Large query (1,004,136 invoices)</td><td class="col-rust">22 · 2.2 s</td><td class="col-go win">33 · 1.7 s</td><td><strong>Postgres</strong></td></tr>
+    </tbody>
+  </table>
+  <p>Rust holds a genuine ~2× edge on raw per-request overhead. But on the production-relevant large
+     query, both collapse to ~20–33 req/s — the single count over a million-row joined view (135&nbsp;ms)
+     saturates Postgres long before the language matters. <strong>At scale the database is the wall, not
+     the server language.</strong></p>
+  <p class="tag">Fairness notes: the two servers don't send byte-identical SQL (the Go slice's query
+     selects fewer fields than Rust's full resolver), Rust used HTTPS vs Go HTTP (negligible here), and
+     auth was bypassed on both. Read the large-query result as "same order, Postgres-bound," not a
+     precise language win.</p>
+
+  <!-- OPEN ITEMS -->
+  <h2>What we did <em>not</em> evaluate</h2>
+  <p>The spike was scoped to retire the highest technical risks cheaply. These remain open and are
+     honestly out of scope so far:</p>
+  <table>
+    <thead><tr><th>Area</th><th>Why it matters</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Sync engine</strong> (~47K LOC)</td><td>Protocol-versioned, conflict resolution, per-entity translation; a bug corrupts data across a fleet. The dominant cost and risk of the whole port — and entirely unprototyped.</td><td><span class="badge b-open">Not started</span></td></tr>
+      <tr><td>Full migration chain</td><td>We proved the mechanism and a recent upgrade; the complete 1.x→latest chain (~404 files) is mechanical but unported.</td><td><span class="badge b-open">Not started</span></td></tr>
+      <tr><td>Full API surface</td><td>~200 queries / 150 mutations exist; we implemented one representative slice end-to-end.</td><td><span class="badge b-partial">1 slice</span></td></tr>
+      <tr><td>Report / plugin pipelines</td><td>JS execution proven; the surrounding PDF/Excel generation and plugin lifecycle are not ported.</td><td><span class="badge b-open">Not started</span></td></tr>
+      <tr><td>Platform packaging</td><td>Cross-compilation proven; Android (JNI), Windows service, and desktop packaging integration are not.</td><td><span class="badge b-open">Not started</span></td></tr>
+    </tbody>
+  </table>
+
+  <!-- RECOMMENDATION -->
+  <h2>Recommendation &amp; next step</h2>
+  <div class="callout risk">
+    <h3>Before any go/no-go: a sync-engine spike (seeking go-ahead)</h3>
+    <p style="margin-bottom:6px">Everything we've measured points the same way — the developer-velocity
+      case for Go is strong, and the API + database + JS layers are feasible with no Rust dependency.
+      But the <strong>sync engine is the decisive unknown</strong>, and we have zero evidence on it.
+      We recommend a focused, time-boxed <strong>sync-engine spike</strong> next: port one or two entity
+      translations plus the push/pull state machine against a real central server, to find out whether
+      sync is "mechanical like the rest" or a genuine multi-month hazard. We are seeking the go-ahead to
+      run it.</p>
+  </div>
+  <p><strong>Also worth putting on the table</strong> (cheaper than a rewrite): much of the compile-time
+     pain can be attacked <em>without</em> porting — a faster linker (<code>lld</code>/<code>mold</code>),
+     <code>sccache</code>, a cranelift dev backend, and crate splitting. If velocity is the goal, this is
+     the low-cost interim while the sync question is answered. <span class="tag">(Not yet baselined — we
+     compared against the current, un-tuned Rust build.)</span></p>
+  <p><strong>Net read:</strong> nothing in the spike argues against the port; the velocity economics
+     strongly favour Go and runtime is Postgres-bound at scale. The remaining risk is concentrated almost
+     entirely in the sync engine — de-risk that before committing.</p>
+
+  <footer>
+    <p><strong>Methodology &amp; honesty notes.</strong> All figures were measured on one developer machine
+       (Apple Silicon; Go 1.26, Rust 1.94, Postgres 16) during this spike, not extrapolated. "Proven"
+       means demonstrated with running code and tests; "mechanism proven" means the pattern works but the
+       full breadth is unported. The Go slice has no auth layer and its queries are not byte-identical to
+       Rust's full resolvers, so runtime numbers are directional, not a benchmark. Originals of the
+       production databases used were never modified. Full technical detail and the reproducible test
+       artifacts live in <code>server-go/docs/DECISION.md</code> and the <code>server-go/</code> tree.</p>
+    <p><strong>Code &amp; reproducible artifacts:</strong>
+       <a href="https://github.com/msupply-foundation/open-msupply/tree/rnd/go_server_experiement"><code>rnd/go_server_experiement</code></a>
+       branch — the full <code>server-go/</code> spike tree, this report, and <code>DECISION.md</code>.</p>
+    <p>Open mSupply — Rust→Go backend port feasibility spike · internal engineering document.</p>
+  </footer>
+
+</div>
+</body>
+</html>

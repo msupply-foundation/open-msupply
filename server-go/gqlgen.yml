@@ -1,0 +1,42 @@
+# gqlgen config — schema-first generation against the EXACT SDL exported from the Rust server.
+# WS1 feasibility: prove gqlgen generates + compiles against the real 9,893-line schema.
+schema:
+  - schema/schema.graphql
+
+exec:
+  filename: internal/graphql/generated/generated.go
+  package: generated
+
+model:
+  filename: internal/graphql/model/models_gen.go
+  package: model
+
+resolver:
+  layout: follow-schema
+  dir: internal/graphql/resolvers
+  package: resolvers
+  filename_template: "{name}.resolvers.go"
+
+# Keep generated structs JSON-tagged so response shapes match the wire format.
+struct_tag: json
+
+# Bind the 5 custom scalars. For the spike, date/datetime scalars are passed through as
+# strings (the Rust server emits RFC3339 / YYYY-MM-DD strings); JSON scalars map to maps.
+# (Exact date-format parity is a WS1 refinement, not a generation blocker.)
+models:
+  DateTime:
+    model: github.com/99designs/gqlgen/graphql.String
+  NaiveDate:
+    model: github.com/99designs/gqlgen/graphql.String
+  NaiveDateTime:
+    model: github.com/99designs/gqlgen/graphql.String
+  JSON:
+    model: github.com/99designs/gqlgen/graphql.Map
+  JSONObject:
+    model: github.com/99designs/gqlgen/graphql.Map
+  # WS1/WS2 DataLoader demo: serve InvoiceNode.otherParty via a resolver (not a struct field)
+  # so it can be batched across all invoices in a query (avoids N+1 name lookups).
+  InvoiceNode:
+    fields:
+      otherParty:
+        resolver: true

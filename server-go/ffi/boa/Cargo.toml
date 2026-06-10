@@ -1,0 +1,17 @@
+[package]
+name = "boa_ffi"
+version = "0.1.0"
+edition = "2021"
+
+# Standalone leaf library: run a report convert_data JS bundle (JSON in -> JSON out) with NO
+# host callbacks. Built as a static lib for linking into the Go binary via cgo (WS5).
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+boa_engine = "0.21.0"
+serde_json = "1"
+
+[profile.release]
+# Keep the probe build honest about real release cost.
+opt-level = 2
