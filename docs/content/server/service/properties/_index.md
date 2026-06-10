@@ -75,3 +75,32 @@ The property **values** live in ordinary columns on their host record — `name.
 The legacy mapping property values are **central-authored and flow one-way down** — COMS derives them from the OG record during its v5 import (gated on being central) and they flow out to v7 remotes via the host record. Values are never pushed on to OG.
 
 Note the value rides the **whole host-record row** over v7, so concurrent edits across sites are **last-writer-wins** — there is no key-level merge on the v7 side. The v5 import on COMS *merges* (`merge_legacy_properties`) rather than overwriting: it refreshes only the OG-owned keys and preserves any other keys already in the blob, so an OG re-pull can't clobber OMS-authored values.
+
+## Currently Implemented
+
+### Item Categories
+
+Item categories are the case flagged above as *not* mapping generically. They're modelled through properties anyway — **custom**, as that section recommends — as a deliberate stress test of hierarchical, high-cardinality, externally-synced options, **in parallel to** the untouched relational `category` / `item_category_join` handling.
+
+The fit is near 1:1 (`category.parent_id` ↔ `property_option_v2.parent_option_id`), so categories are a single OPTION property:
+
+- **Mapping property** `legacy_item_category` (key `item_category`, OPTION, table `item`), seeded by `central_mapping_properties`.
+- **Options.** `CategoryTranslation` (central-only) emits a `property_option_v2` row per `item_category*` record — `parent_ID → parent_option_id`, option `id` = category id.
+- **Value.** `build_legacy_item_properties` writes the leaf `category_ID` to `item.properties_v2["item_category"]`. Since option `id` = category id, the client's `resolveOptionValue` renders the name with no client changes.
+
+Sync is unchanged from the rules above: options are v7-only central data; the value rides the `Item` changelog; both are central-authored and one-way.
+
+There are also two **flat** extra dimensions — `[item]category2_ID`/`category3_ID` → `item_category2`/`item_category3` (no level tables) — modelled the same way as `legacy_item_category_2`/`_3` (keys `item_category2`/`item_category3`). They emit only the option (no relational `CategoryRow`, since they aren't part of the relational `category` tree).
+
+### Name categories
+
+`[name]`'s six independent category dimensions become six OPTION properties `legacy_name_category_1..6` (keys `name_category1..6` — prefixed since `property_v2.key` is globally unique and item already owns `category2/3`), visible on `name`. There's no relational name-category table, so this is pure propertiesV2.
+
+- **Options** authored by `NameCategoryTranslation` (central-only). category1 is hierarchical (`name_category1_level1`→`_level2`→`name_category1` leaf, `parent_ID → parent_option_id`); 2–6 are flat. Option `id` = category id; `build_legacy_properties` writes each leaf `categoryN_ID` to `name.properties_v2["name_categoryN"]`.
+- Keys are OG-owned (`LEGACY_NAME_OWNED_KEYS`), so the import/merge/last-writer-wins model matches `custom_1/2/3`.
+
+> **`property_option_v2.parent_option_id` is deliberately not a FK.** Options sync in cursor order with no retry, so a child can arrive before its parent — a FK would silently drop it. Same reason `category.parent_id` isn't a FK.
+
+#### Backfill via sync_buffer re-integration
+
+Options are authored by the translators, so they only appear when a category record is processed — and central data only re-flows from OG on init or change. The migration `v3_00_00/reintegrate_categories_for_property_options` resets those records' `integration_datetime` in the append-only `sync_buffer` (for all `item_category*` and `name_category*` tables), so the next sync replays them through `CategoryTranslation` / `NameCategoryTranslation` and backfills the options — no re-init, no OG change, no edit-history dependency.

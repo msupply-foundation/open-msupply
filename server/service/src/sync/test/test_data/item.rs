@@ -356,6 +356,11 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                         "84AA2B7A18694A2AB1E84DCABAD19617".to_string(),
                     ),
                     universal_code: Some("3fd9b240c".to_string()),
+                    // The leaf category_ID is also imported as a propertiesV2
+                    // OPTION value (central-only), parallel to the join row below.
+                    properties_v2: Some(serde_json::json!({
+                        "item_category": "FA6FC67251CC4560AC7FED0C0B23E5A0",
+                    })),
                     ..Default::default()
                 }),
                 IntegrationOperation::upsert(ItemCategoryJoinRow {

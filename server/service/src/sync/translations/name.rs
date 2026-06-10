@@ -18,10 +18,27 @@ use super::{
 };
 
 /// `properties_v2` keys the legacy OG→OMS name import owns (derived from
-/// `[name]custom1/2/3`). On a v5 re-import these are refreshed from OG; every
-/// other key in the blob (e.g. OMS-authored patient custom-field edits) is
-/// preserved. See [`merge_legacy_properties`].
-const LEGACY_NAME_OWNED_KEYS: &[&str] = &["custom_1", "custom_2", "custom_3"];
+/// `[name]custom1/2/3` and `[name]category1_ID..category6_ID`). On a v5 re-import
+/// these are refreshed from OG; every other key in the blob (e.g. OMS-authored
+/// patient custom-field edits) is preserved. See [`merge_legacy_properties`].
+///
+/// The category keys are editable on patients (the first editable OPTIONs); like
+/// `custom_1/2/3` they remain OG-owned, so a re-pull of a changed OG record
+/// refreshes them — last-writer-wins, identical to the custom fields (push-back
+/// to OG is inert behind the `PushToLegacyCentral` guard).
+const LEGACY_NAME_OWNED_KEYS: &[&str] = &[
+    "custom_1",
+    "custom_2",
+    "custom_3",
+    // `property_v2.key` is globally unique, so the name category dimensions are
+    // prefixed `name_category*` (item already owns `category2`/`category3`).
+    "name_category1",
+    "name_category2",
+    "name_category3",
+    "name_category4",
+    "name_category5",
+    "name_category6",
+];
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyNameRowType {
@@ -56,6 +73,16 @@ fn build_legacy_properties(legacy: &LegacyNameRow) -> Option<serde_json::Value> 
         .text("custom_1", legacy.custom_1.as_deref())
         .text("custom_2", legacy.custom_2.as_deref())
         .text("custom_3", legacy.custom_3.as_deref())
+        // Name categories 1–6 as OPTIONs (parallel to item categories). 4D gives
+        // a name one leaf id per dimension; stored as the option id so the client
+        // resolves it against the `property_option_v2` rows authored by the name
+        // category import. See central_mapping_properties (`legacy_name_category_*`).
+        .option("name_category1", legacy.category1_id.as_deref())
+        .option("name_category2", legacy.category2_id.as_deref())
+        .option("name_category3", legacy.category3_id.as_deref())
+        .option("name_category4", legacy.category4_id.as_deref())
+        .option("name_category5", legacy.category5_id.as_deref())
+        .option("name_category6", legacy.category6_id.as_deref())
         .build()
 }
 
@@ -188,6 +215,22 @@ pub struct LegacyNameRow {
     pub custom_2: Option<String>,
     #[serde(default, rename = "custom3", deserialize_with = "empty_str_as_option_string")]
     pub custom_3: Option<String>,
+
+    // Legacy 4D `[name]category1_ID..category6_ID` columns — six independent
+    // category dimensions, each storing a leaf id. Imported as OPTION props
+    // (`build_legacy_properties`); category1 is hierarchical, 2–6 flat.
+    #[serde(default, rename = "category1_ID", deserialize_with = "empty_str_as_option_string")]
+    pub category1_id: Option<String>,
+    #[serde(default, rename = "category2_ID", deserialize_with = "empty_str_as_option_string")]
+    pub category2_id: Option<String>,
+    #[serde(default, rename = "category3_ID", deserialize_with = "empty_str_as_option_string")]
+    pub category3_id: Option<String>,
+    #[serde(default, rename = "category4_ID", deserialize_with = "empty_str_as_option_string")]
+    pub category4_id: Option<String>,
+    #[serde(default, rename = "category5_ID", deserialize_with = "empty_str_as_option_string")]
+    pub category5_id: Option<String>,
+    #[serde(default, rename = "category6_ID", deserialize_with = "empty_str_as_option_string")]
+    pub category6_id: Option<String>,
 
     #[serde(default)]
     #[serde(rename = "HSH_code")]
@@ -328,6 +371,12 @@ impl SyncTranslation for NameTranslation {
             custom_1: _,
             custom_2: _,
             custom_3: _,
+            category1_id: _,
+            category2_id: _,
+            category3_id: _,
+            category4_id: _,
+            category5_id: _,
+            category6_id: _,
             hsh_code,
             hsh_name,
             margin,
@@ -521,11 +570,17 @@ impl SyncTranslation for NameTranslation {
             freight_factor,
             currency_id,
             custom_data: None,
-            // Import-only: `properties_v2` values are never round-tripped back
-            // into the legacy custom1/2/3 wire columns.
+            // Import-only: `properties_v2` values (custom fields and category
+            // dimensions) are never round-tripped back to the legacy wire columns.
             custom_1: None,
             custom_2: None,
             custom_3: None,
+            category1_id: None,
+            category2_id: None,
+            category3_id: None,
+            category4_id: None,
+            category5_id: None,
+            category6_id: None,
         };
 
         Ok(PushTranslateResult::upsert(
@@ -596,6 +651,12 @@ mod tests {
             custom_1: custom_1.map(String::from),
             custom_2: custom_2.map(String::from),
             custom_3: custom_3.map(String::from),
+            category1_id: None,
+            category2_id: None,
+            category3_id: None,
+            category4_id: None,
+            category5_id: None,
+            category6_id: None,
             hsh_code: None,
             hsh_name: None,
             margin: None,
@@ -625,6 +686,33 @@ mod tests {
         assert_eq!(
             build_legacy_properties(&row),
             Some(json!({"custom_1": "A", "custom_2": "B", "custom_3": "C"}))
+        );
+    }
+
+    #[test]
+    fn build_legacy_properties_categories() {
+        // Categories are stored as OPTION ids alongside the custom fields; empty
+        // / absent dimensions are omitted (untouched rows stay clean).
+        let mut row = legacy_row_with_customs(None, None, None);
+        row.category1_id = Some("CAT1_LEAF".to_string());
+        row.category3_id = Some("CAT3".to_string());
+        row.category6_id = Some("".to_string()); // empty → omitted
+        assert_eq!(
+            build_legacy_properties(&row),
+            Some(json!({ "name_category1": "CAT1_LEAF", "name_category3": "CAT3" }))
+        );
+    }
+
+    #[test]
+    fn merge_preserves_oms_key_while_refreshing_category() {
+        // A category edit on a patient lives under an owned key, so a central
+        // re-import refreshes it from OG; a non-owned OMS key is preserved.
+        let mut row = legacy_row_with_customs(None, None, None);
+        row.category2_id = Some("OG_VALUE".to_string());
+        let existing = Some(json!({ "name_category2": "OMS_EDIT", "patient_note": "keep" }));
+        assert_eq!(
+            merge_legacy_properties(existing, build_legacy_properties(&row), LEGACY_NAME_OWNED_KEYS),
+            Some(json!({ "name_category2": "OG_VALUE", "patient_note": "keep" }))
         );
     }
 
