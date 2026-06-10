@@ -74,7 +74,7 @@ export const PropertyV2Input = ({
     // not-yet-synced id, so an existing value still shows.
     const options =
       existing && !hierarchical.some(o => o.id === existing.id)
-        ? [{ ...existing, depth: 0, selectable: true }, ...hierarchical]
+        ? [{ ...existing, depth: 0, isLeaf: true }, ...hierarchical]
         : hierarchical;
 
     return (

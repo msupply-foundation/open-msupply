@@ -46,8 +46,9 @@ pub enum PropertyValueFilter {
     Date(GeneralFilter<String>),
     Boolean(GeneralFilter<bool>),
     /// OPTION properties — values are property_option_v2 ids (leaves).
-    /// Parent→descendant-leaf expansion is a server-side concern that slots in
-    /// before compilation (replace Equal(parent_id) with In(leaf_ids)).
+    /// `Equal` is an exact id match; for a hierarchy-level filter the client
+    /// expands a parent selection to `In(parent_id + descendant ids)` (see
+    /// client propertyListSupport.ts), so no expansion happens server-side.
     Option(GeneralFilter<String>),
 }
 
