@@ -103,7 +103,7 @@ export const ContactTraceListView: FC = () => {
     noDataElement: <NothingHere
       onCreate={() => selectModal(PatientModal.ContactTraceSearch)}
       body={t('messages.no-contact-traces')}
-      buttonText={t('button.add-contact-trace')}
+      buttonText={t('button.new-contact-trace')}
     />,
   });
 

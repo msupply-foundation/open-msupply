@@ -53,7 +53,7 @@ export const AppBarButtonsComponent = ({
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           onClick={handleClick}
-          label={t('button.add-new-indicator')}
+          label={t('button.new-indicator')}
         />
       </Grid>
     </AppBarButtonsPortal>
