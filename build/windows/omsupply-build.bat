@@ -20,12 +20,11 @@ start /b /wait build\windows\omsupply-prepare.bat
     exit /b %errorlevel%
 )
 
-@cd server 
-
 @ECHO ##### update cargo binary version #####
 @setlocal enabledelayedexpansion
 
 @for /f "delims=v-" %%i in ('type omSupply\version.txt') do set "RAW=%%i"
+@cd server 
 
 @REM --- strip leading zeros from each component 2.20.00 -> 2.20.0 --
 @set "VERSION="
@@ -66,12 +65,12 @@ goto :eof
 
 
 :strip
-setlocal enabledelayedexpansion
-set "n=%~1"
+@setlocal enabledelayedexpansion
+@set "n=%~1"
 :loop
-if not "!n!"=="0" if "!n:~0,1!"=="0" (
-    set "n=!n:~1!"
-    goto loop
+@if not "!n!"=="0" if "!n:~0,1!"=="0" (
+@    set "n=!n:~1!"
+@    goto loop
 )
-endlocal & set "%~2=%n%"
+@endlocal & set "%~2=%n%"
 exit /b
