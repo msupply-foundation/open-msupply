@@ -1,7 +1,7 @@
 use chrono::{Days, Utc};
 use repository::{
-    DatetimeFilter, EqualFilter, RepositoryError, StorageConnection, TemperatureExcursion,
-    TemperatureExcursionRepository, TemperatureLogFilter, TemperatureRow,
+    DatetimeFilter, EqualFilter, RepositoryError, SensorFilter, StorageConnection,
+    TemperatureExcursion, TemperatureExcursionRepository, TemperatureLogFilter, TemperatureRow,
 };
 
 pub struct TemperatureExcursionService {}
@@ -20,7 +20,8 @@ pub trait TemperatureExcursionServiceTrait: Sync + Send {
                     .naive_utc()
                     .checked_sub_days(Days::new(7))
                     .unwrap(),
-            ));
+            ))
+            .sensor(SensorFilter::new().is_active(true));
 
         let log_data = TemperatureExcursionRepository::new(connection).query(filter)?;
 

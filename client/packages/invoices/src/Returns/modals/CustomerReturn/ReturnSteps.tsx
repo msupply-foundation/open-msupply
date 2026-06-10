@@ -60,8 +60,8 @@ export const ReturnSteps = ({
   useAddBatchKeyBinding(addDraftLine);
 
   const returnsSteps = [
-    { tab: Tabs.Quantity, label: t('label.quantity'), description: '' },
-    { tab: Tabs.Reason, label: t('label.reason'), description: '' },
+    { tab: Tabs.Quantity, label: t('label.select-quantity'), description: '' },
+    { tab: Tabs.Reason, label: t('label.select-reason'), description: '' },
   ];
 
   const getActiveStep = () => {

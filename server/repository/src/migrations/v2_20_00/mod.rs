@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_in_progress_and_error_statuses_sync_message;
+mod add_item_store_join_indexes;
 mod add_plugin_data_datetime_field;
 mod add_plugin_data_indexes;
 mod add_stocktake_edited_activity_log_type;
@@ -26,6 +27,7 @@ impl Migration for V2_20_00 {
             Box::new(add_in_progress_and_error_statuses_sync_message::Migrate),
             Box::new(add_variant_and_bundle_activity_log_types::Migrate),
             Box::new(add_stocktake_edited_activity_log_type::Migrate),
+            Box::new(add_item_store_join_indexes::Migrate),
         ]
     }
 }

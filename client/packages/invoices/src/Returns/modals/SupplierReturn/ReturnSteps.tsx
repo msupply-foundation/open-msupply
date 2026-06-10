@@ -54,7 +54,7 @@ export const ReturnSteps = ({
 
   const returnsSteps = [
     { tab: Tabs.Quantity, label: t('label.select-quantity'), description: '' },
-    { tab: Tabs.Reason, label: t('label.reason'), description: '' },
+    { tab: Tabs.Reason, label: t('label.select-reason'), description: '' },
   ];
 
   const getActiveStep = () => {
@@ -100,7 +100,7 @@ export const ReturnSteps = ({
             }
           />
           <InputWithLabelRow
-            label={t('label.supplier-ref')}
+            label={t('label.supplier-reference')}
             labelWidth={null}
             labelProps={{ sx: { whiteSpace: 'nowrap' } }}
             Input={

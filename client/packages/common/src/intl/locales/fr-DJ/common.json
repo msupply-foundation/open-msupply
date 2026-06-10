@@ -12,7 +12,6 @@
   "auth.no-store-assigned": "Vous n'êtes assigné à aucun dépôt. Veuillez vous connecter en tant qu'utilisateur différent ou contacter votre administrateur.",
   "auth.not-a-central-server": "L'opération n'est autorisée que sur le serveur central",
   "auth.permission-denied": "Permission refusée",
-  "auth.server-error": "Le serveur a renvoyé une erreur lors de l'obtention des détails de l'utilisateur !\nImpossible de continuer, veuillez contacter support@msupply.foundation.",
   "auth.timeout-message": "Vous avez été déconnecté de votre session pour cause d'inactivité. Cliquez sur OK pour revenir à l'écran de connexion.",
   "auth.timeout-title": "La session a expiré",
   "auth.unauthenticated-message": "Vous n'êtes pas connecté. Cliquez sur OK pour revenir à l'écran de connexion.",

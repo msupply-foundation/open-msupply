@@ -17,13 +17,13 @@ import {
 } from '@openmsupply-client/common';
 import { useDialog } from '@common/hooks';
 import { DateUtils, useCurrency, useTranslation } from '@common/intl';
-import { PrescriptionRowFragment, usePrescription } from '../../api';
+import { PrescriptionFragment, usePrescription } from '../../api';
 import { useInsurancePolicies } from '@openmsupply-client/system/src';
 
 interface PaymentsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  handleConfirm: (patch: Partial<PrescriptionRowFragment>) => void;
+  handleConfirm: (patch: Partial<PrescriptionFragment>) => void;
 }
 
 export const PaymentsModal: FC<PaymentsModalProps> = ({

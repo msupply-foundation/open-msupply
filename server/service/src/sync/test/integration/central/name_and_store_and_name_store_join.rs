@@ -103,7 +103,6 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             name_id: name_row1.id.clone(),
             code: small_uuid(),
             site_id: new_site_properties.site_id as i32,
-            logo: None,
             store_mode: StoreMode::Store,
             created_date: NaiveDate::from_ymd_opt(2021, 1, 1),
             is_disabled: false,

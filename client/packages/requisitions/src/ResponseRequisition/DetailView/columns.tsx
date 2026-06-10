@@ -211,7 +211,7 @@ export const useResponseColumns = () => {
       },
       {
         accessorKey: 'requestedQuantity',
-        header: t('label.requested'),
+        header: t('label.customer-requested'),
         size: 100,
         columnType: ColumnType.Number,
         Cell: ({ row, ...props }) => {

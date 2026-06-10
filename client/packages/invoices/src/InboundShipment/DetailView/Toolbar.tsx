@@ -60,6 +60,7 @@ export const Toolbar = () => {
             {otherParty && (
               <InputWithLabelRow
                 label={t('label.supplier-name')}
+                labelWidth="9rem"
                 Input={
                   <SupplierSearchInput
                     disabled={isDisabled || isTransfer || isExternal}
@@ -72,7 +73,8 @@ export const Toolbar = () => {
               />
             )}
             <InputWithLabelRow
-              label={t('label.supplier-ref')}
+              label={t('label.supplier-reference')}
+              labelWidth="9rem"
               Input={
                 <Tooltip title={theirReference} placement="bottom-start">
                   <BufferedTextArea
