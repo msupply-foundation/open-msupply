@@ -220,7 +220,7 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_name_store_join_translation",
-            MockDataInserts::none().names(),
+            MockDataInserts::none().names().stores(),
         )
         .await;
 
@@ -232,6 +232,18 @@ mod tests {
 
             assert_eq!(translation_result, record.translated_record);
         }
+
+        // The inactive (soft-delete) record translates to a delete only if the row
+        // already exists locally, so insert it first (it's ignored otherwise).
+        NameStoreJoinRepository::new(&connection)
+            .upsert_one_without_changelog(&NameStoreJoinRow {
+                id: "BE65A4A05E4D47E88303D6105A7872CC".to_string(),
+                store_id: "store_b".to_string(),
+                name_id: "name_store_a".to_string(),
+                name_is_customer: false,
+                name_is_supplier: true,
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_inactive_records() {
             let translation_result = translator
