@@ -75,6 +75,7 @@ export const LocationListView = () => {
         accessorKey: 'volume',
         header: t('label.volume'),
         columnType: ColumnType.Number,
+        decimalLimit: 5,
       },
       {
         id: 'volumeUsed',
