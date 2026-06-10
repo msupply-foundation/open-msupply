@@ -40,6 +40,11 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.custom_translations)
     }
 
+    pub async fn custom_translations_v2(&self) -> Result<serde_json::Value> {
+        let value = self.load_preference(&self.preferences.custom_translations_v2)?;
+        Ok(serde_json::to_value(value)?)
+    }
+
     pub async fn prevent_transfers_months_before_initialisation(&self) -> Result<i32> {
         self.load_preference(
             &self
@@ -272,6 +277,7 @@ pub enum PreferenceKey {
     AllowTrackingOfStockByDonor,
     AuthorisePurchaseOrder,
     CustomTranslations,
+    CustomTranslationsV2,
     GenderOptions,
     PreventTransfersMonthsBeforeInitialisation,
     ShowContactTracing,
@@ -326,6 +332,7 @@ pub enum PreferenceValueNodeType {
     Float,
     MultiChoice,
     CustomTranslations, // Specific type for CustomTranslations preference
+    CustomTranslationsV2, // Specific type for v2 CustomTranslations preference
     WarnWhenMissingRecentStocktakeData,
     BackdatingData,
     String,

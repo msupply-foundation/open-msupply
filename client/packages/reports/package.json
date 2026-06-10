@@ -4,7 +4,6 @@
   "sideEffects": false,
   "main": "./src/index.ts",
   "private": true,
-  "devDependencies": {},
   "scripts": {
     "tsc": "tsc",
     "eslint": "eslint ./src"

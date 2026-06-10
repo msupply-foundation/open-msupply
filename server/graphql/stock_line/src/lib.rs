@@ -231,6 +231,11 @@ impl StockLineQueries {
                     store_id,
                     item_id,
                     datetime.naive_utc(),
+                    // Include lines that are empty *now* but had stock at the
+                    // historical datetime — callers like the backdated
+                    // inventory adjustment modal need to display historical
+                    // availability for a specific line.
+                    true,
                 )
                 .map_err(StandardGraphqlError::from_list_error)?,
         };

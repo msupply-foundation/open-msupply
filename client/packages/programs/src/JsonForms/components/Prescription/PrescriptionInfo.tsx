@@ -10,10 +10,10 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { PrescriptionRowFragment } from 'packages/invoices/src/Prescriptions';
+import { PrescriptionFragment } from 'packages/invoices/src/Prescriptions';
 
 interface PrescriptionInfoProps {
-  prescription: PrescriptionRowFragment | void;
+  prescription: PrescriptionFragment | void;
 }
 
 export const PrescriptionInfo = ({ prescription }: PrescriptionInfoProps) => {

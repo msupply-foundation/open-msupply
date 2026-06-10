@@ -1,4 +1,6 @@
-use repository::db_diesel::sync_file_reference_row::SyncFileReferenceRow;
+use repository::db_diesel::sync_file_reference_row::{
+    SyncFileReferenceRow, SyncFileReferenceWire,
+};
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -47,6 +49,6 @@ pub(crate) fn test_v6_records() -> Vec<TestSyncOutgoingRecord> {
     vec![TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: ASSET_LOG1.0.to_string(),
-        push_data: json!(sync_file_reference1()),
+        push_data: json!(SyncFileReferenceWire::from_row(&sync_file_reference1())),
     }]
 }

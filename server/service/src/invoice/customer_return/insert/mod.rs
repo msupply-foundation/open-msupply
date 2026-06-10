@@ -461,7 +461,7 @@ mod test {
             InvoiceLineRow {
                 invoice_id: "new_customer_return_id".to_string(),
                 id: "new_customer_return_line_id".to_string(),
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 number_of_packs: 1.0,
                 ..lines[0].clone()
             }

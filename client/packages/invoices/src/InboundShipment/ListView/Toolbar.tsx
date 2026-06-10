@@ -10,6 +10,7 @@ import {
   FilterController,
   usePreferences,
   InvoiceNodeType,
+  InvoiceTypeInput,
 } from '@openmsupply-client/common';
 import { getStatusSequence } from '../../statuses';
 import { getStatusTranslator } from '../../utils';
@@ -82,14 +83,29 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                 })),
               },
               {
+                type: 'enum',
+                name: t('label.type'),
+                urlParameter: 'type',
+                options: [
+                  {
+                    value: InvoiceTypeInput.InboundShipment,
+                    label: t('label.internal'),
+                  },
+                  {
+                    value: InvoiceTypeInput.InboundShipmentExternal,
+                    label: t('label.external'),
+                  },
+                ],
+              },
+              {
                 type: 'text',
                 name: t('label.reference'),
                 urlParameter: 'theirReference',
               },
               {
                 type: 'number',
-                name: t('label.purchase-order-number'),
-                urlParameter: 'purchaseOrderNumber',
+                name: t('label.linked-order-number'),
+                urlParameter: 'linkedOrderNumber',
                 wide: true,
               },
               {
