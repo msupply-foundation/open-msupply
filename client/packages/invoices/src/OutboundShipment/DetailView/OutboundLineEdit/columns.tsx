@@ -163,6 +163,7 @@ export const useOutboundLineEditColumns = ({
         header: t('label.manufacturer'),
         size: 120,
         defaultHideOnMobile: true,
+        includeColumn: prefs.showManufacturer,
         accessorFn: rowData =>
           rowData.manufacturer?.name ?? UNDEFINED_STRING_VALUE,
         Cell: TextWithTooltipCell,

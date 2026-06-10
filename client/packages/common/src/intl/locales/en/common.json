@@ -2577,6 +2577,7 @@
   "preference.selectDestinationStoreForAnInternalOrder": "Select destination store for an internal order",
   "preference.showContactTracing": "Show contact tracing",
   "preference.showIndicativePriceInRequisitions": "Show indicative price on internal orders and requisitions",
+  "preference.showManufacturer": "Show manufacturer",
   "preference.skipIntermediateStatusesInOutbound": "Skip 'Picked' and 'Allocated' statuses in outbound shipments",
   "preference.sortByVvmStatusThenExpiry": "Sort available batches by VVM status then expiry",
   "preference.storeCustomColour": "Custom colour of page footer (hex code, e.g. #000000 for black)",
