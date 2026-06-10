@@ -4966,6 +4966,12 @@ export type ItemFilterInput = {
   categoryName?: InputMaybe<Scalars['String']['input']>;
   code?: InputMaybe<StringFilterInput>;
   codeOrName?: InputMaybe<StringFilterInput>;
+  /**
+   * Dynamic filter condition AST, currently supporting property conditions
+   * on keys visible for the "item" table scope, e.g.
+   * `{"And": [{"Property": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
+   */
+  dynamicFilter?: InputMaybe<Scalars['JSON']['input']>;
   /** Items with available stock on hand, regardless of item visibility. This filter is ignored if `is_visible_or_on_hand` is true */
   hasStockOnHand?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
@@ -6509,6 +6515,12 @@ export type NameFilterInput = {
   /** Search filter across name or code */
   codeOrName?: InputMaybe<StringFilterInput>;
   country?: InputMaybe<StringFilterInput>;
+  /**
+   * Dynamic filter condition AST, currently supporting property conditions
+   * on keys visible for the "name" table scope, e.g.
+   * `{"And": [{"Property": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
+   */
+  dynamicFilter?: InputMaybe<Scalars['JSON']['input']>;
   email?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   /** Filter by customer property */
@@ -6896,6 +6908,12 @@ export type PatientFilterInput = {
   country?: InputMaybe<StringFilterInput>;
   dateOfBirth?: InputMaybe<DateFilterInput>;
   dateOfDeath?: InputMaybe<DateFilterInput>;
+  /**
+   * Dynamic filter condition AST, currently supporting property conditions
+   * on keys visible for the "patient" table scope, e.g.
+   * `{"And": [{"Property": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
+   */
+  dynamicFilter?: InputMaybe<Scalars['JSON']['input']>;
   email?: InputMaybe<StringFilterInput>;
   firstName?: InputMaybe<StringFilterInput>;
   gender?: InputMaybe<EqualFilterGenderType>;

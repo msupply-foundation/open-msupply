@@ -11,6 +11,7 @@ export type NameRowFragment = {
   isSupplier: boolean;
   isOnHold: boolean;
   name: string;
+  propertiesV2?: any | null;
   store?: { __typename: 'StoreNode'; id: string; code: string } | null;
 };
 
@@ -104,6 +105,7 @@ export type NamesQuery = {
       isSupplier: boolean;
       isOnHold: boolean;
       name: string;
+      propertiesV2?: any | null;
       store?: { __typename: 'StoreNode'; id: string; code: string } | null;
     }>;
   };
@@ -290,6 +292,7 @@ export const NameRowFragmentDoc = gql`
     isSupplier
     isOnHold
     name
+    propertiesV2
     store {
       id
       code

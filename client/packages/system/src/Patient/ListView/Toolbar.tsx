@@ -5,17 +5,21 @@ import {
   FilterMenu,
   Box,
   FilterDefinition,
+  GroupFilterDefinition,
   useAuthContext,
   usePreferences,
   getGenderTranslationKey,
+  buildPropertyFilterDefinitions,
 } from '@openmsupply-client/common';
+import { usePatient } from '../api';
 
 export const Toolbar = () => {
   const t = useTranslation();
   const { store } = useAuthContext();
   const { genderOptions = [] } = usePreferences();
+  const { data: properties } = usePatient.document.propertiesV2();
 
-  const filters: FilterDefinition[] = [
+  const filters: (FilterDefinition | GroupFilterDefinition)[] = [
     {
       type: 'text',
       name: t('label.first-name'),
@@ -66,6 +70,15 @@ export const Toolbar = () => {
       urlParameter: 'programEnrolmentName',
     });
   }
+
+  filters.push(
+    ...buildPropertyFilterDefinitions(properties ?? [], {
+      min: t('label.min'),
+      max: t('label.max'),
+      fromDate: t('label.from-date'),
+      toDate: t('label.to-date'),
+    })
+  );
 
   return (
     <AppBarContentPortal

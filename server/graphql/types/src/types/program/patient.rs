@@ -46,6 +46,11 @@ pub struct PatientFilterInput {
     pub date_of_death: Option<DateFilterInput>,
     pub program_enrolment_name: Option<StringFilterInput>,
     pub next_of_kin_name: Option<StringFilterInput>,
+
+    /// Dynamic filter condition AST, currently supporting property conditions
+    /// on keys visible for the "patient" table scope, e.g.
+    /// `{"And": [{"Property": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
+    pub dynamic_filter: Option<serde_json::Value>,
 }
 
 impl From<PatientFilterInput> for PatientFilter {
@@ -68,6 +73,10 @@ impl From<PatientFilterInput> for PatientFilter {
             date_of_death: f.date_of_death.map(DateFilter::from),
             program_enrolment_name: f.program_enrolment_name.map(StringFilter::from),
             next_of_kin_name: f.next_of_kin_name.map(StringFilter::from),
+            // Parsed from the JSON `dynamicFilter` input in the resolver (a
+            // serde error there must surface as BadUserInput, so the infallible
+            // From can't do it)
+            dynamic_filter: None,
         }
     }
 }

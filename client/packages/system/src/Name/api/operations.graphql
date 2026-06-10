@@ -5,6 +5,7 @@ fragment NameRow on NameNode {
   isSupplier
   isOnHold
   name
+  propertiesV2
   store {
     id
     code

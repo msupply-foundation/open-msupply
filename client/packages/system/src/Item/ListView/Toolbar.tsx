@@ -5,14 +5,17 @@ import {
   FilterMenu,
   Box,
   usePreferences,
+  buildPropertyFilterDefinitions,
 } from '@openmsupply-client/common';
+import { useItemPropertiesV2 } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation();
   const {
     numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts:
-    numMonthsConsumption,
+      numMonthsConsumption,
   } = usePreferences();
+  const { data: properties } = useItemPropertiesV2();
 
   return (
     <AppBarContentPortal
@@ -72,23 +75,29 @@ export const Toolbar: FC = () => {
             },
             ...(numMonthsConsumption
               ? [
-                {
-                  type: 'enum' as const,
-                  name: t('label.products-at-risk-of-being-out-of-stock'),
-                  urlParameter: 'productsAtRiskOfBeingOutOfStock',
-                  options: [
-                    {
-                      label: t('label.show-products-at-risk'),
-                      value: 'true',
-                    },
-                    {
-                      label: t('label.show-products-not-at-risk'),
-                      value: 'false',
-                    },
-                  ],
-                },
-              ]
+                  {
+                    type: 'enum' as const,
+                    name: t('label.products-at-risk-of-being-out-of-stock'),
+                    urlParameter: 'productsAtRiskOfBeingOutOfStock',
+                    options: [
+                      {
+                        label: t('label.show-products-at-risk'),
+                        value: 'true',
+                      },
+                      {
+                        label: t('label.show-products-not-at-risk'),
+                        value: 'false',
+                      },
+                    ],
+                  },
+                ]
               : []),
+            ...buildPropertyFilterDefinitions(properties ?? [], {
+              min: t('label.min'),
+              max: t('label.max'),
+              fromDate: t('label.from-date'),
+              toDate: t('label.to-date'),
+            }),
           ]}
         />
       </Box>

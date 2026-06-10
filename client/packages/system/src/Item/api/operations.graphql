@@ -352,6 +352,7 @@ fragment ItemsWithStats on ItemNode {
   defaultPackSize
   isVaccine
   doses
+  propertiesV2
   availableStockOnHand(storeId: $storeId)
   stats(storeId: $storeId) {
     __typename

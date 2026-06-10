@@ -9,7 +9,9 @@ mod graphql {
             mock_name_a, mock_name_linked_to_store, mock_name_not_linked_to_store,
             mock_store_linked_to_name, MockDataInserts,
         },
-        EqualFilter, Name, NameFilter, NameSort, NameSortField, NameType, PaginationOption,
+        EqualFilter, GeneralFilter, Name, NameCondition, NameFilter, NameSort, NameSortField,
+        NameType, PaginationOption, PropertyTableV2Row, PropertyTableV2RowRepository,
+        PropertyV2Row, PropertyV2RowRepository, PropertyValueFilter, PropertyValueTypeV2,
         StorageConnectionManager, StringFilter,
     };
     use serde_json::json;
@@ -189,6 +191,7 @@ mod graphql {
                 code_or_name: _,
                 supplying_store_id: _,
                 store: _,
+                dynamic_filter: _,
             } = filter.unwrap();
 
             assert_eq!(
@@ -230,6 +233,121 @@ mod graphql {
             query,
             &Some(variables),
             &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_graphql_names_dynamic_filter() {
+        let (_, connection, connection_manager, settings) = setup_graphql_test(
+            GeneralQueries,
+            EmptyMutation,
+            "test_graphql_names_dynamic_filter",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        // A property visible on the "name" table scope
+        PropertyV2RowRepository::new(&connection)
+            .upsert_one(&PropertyV2Row {
+                id: "prop1".to_string(),
+                key: "category".to_string(),
+                name: "Category".to_string(),
+                value_type: PropertyValueTypeV2::Text,
+                is_legacy: false,
+                deleted_datetime: None,
+            })
+            .unwrap();
+        PropertyTableV2RowRepository::new(&connection)
+            .upsert_one(&PropertyTableV2Row {
+                id: "prop1_name".to_string(),
+                property_id: "prop1".to_string(),
+                table_name: "name".to_string(),
+                is_visible: true,
+            })
+            .unwrap();
+
+        let query = r#"
+        query($storeId: String!, $filter: NameFilterInput) {
+            names(filter: $filter, storeId: $storeId) {
+              ... on NameConnector {
+                totalCount
+              }
+            }
+        }
+        "#;
+
+        // Valid condition AST is parsed and attached to the domain filter
+        let variables = json!({
+          "storeId": "store_a",
+          "filter": {
+            "dynamicFilter": {
+                "And": [
+                    { "Property": { "key": "category", "filter": { "Text": { "Like": "abc" } } } }
+                ]
+            }
+          }
+        });
+
+        let test_service = TestService(Box::new(|_, _, filter, _| {
+            assert_eq!(
+                filter.unwrap().dynamic_filter,
+                Some(NameCondition::And(vec![
+                    NameCondition::Property::condition(
+                        "category",
+                        PropertyValueFilter::Text(GeneralFilter::Like("abc".to_string()))
+                    )
+                ]))
+            );
+            Ok(ListResult::empty())
+        }));
+
+        let expected = json!({ "names": { "totalCount": 0 } });
+        assert_graphql_query!(
+            &settings,
+            query,
+            &Some(variables),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // A key that is not visible for the "name" scope is a BadUserInput
+        let variables = json!({
+          "storeId": "store_a",
+          "filter": {
+            "dynamicFilter": {
+                "Property": { "key": "not_a_key", "filter": { "Text": { "Like": "abc" } } }
+            }
+          }
+        });
+        let test_service = TestService(Box::new(|_, _, _, _| {
+            panic!("service should not be reached for an unknown key")
+        }));
+        assert_standard_graphql_error!(
+            &settings,
+            &query,
+            &Some(variables),
+            &"Bad user input",
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // A malformed AST is a BadUserInput
+        let variables = json!({
+          "storeId": "store_a",
+          "filter": {
+            "dynamicFilter": { "NotAVariant": true }
+          }
+        });
+        let test_service = TestService(Box::new(|_, _, _, _| {
+            panic!("service should not be reached for a malformed AST")
+        }));
+        assert_standard_graphql_error!(
+            &settings,
+            &query,
+            &Some(variables),
+            &"Bad user input",
+            None,
             Some(service_provider(test_service, &connection_manager))
         );
     }
