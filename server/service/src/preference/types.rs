@@ -14,6 +14,7 @@ use super::{
 pub enum PrefKey {
     // Global preferences
     AllowTrackingOfStockByDonor,
+    ShowManufacturer,
     AuthorisePurchaseOrder,
     CustomTranslations,
     GenderOptions,

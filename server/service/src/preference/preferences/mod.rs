@@ -8,6 +8,8 @@ pub mod manage_vvm_status_for_stock;
 pub use manage_vvm_status_for_stock::*;
 pub mod allow_tracking_of_stock_by_donor;
 pub use allow_tracking_of_stock_by_donor::*;
+pub mod show_manufacturer;
+pub use show_manufacturer::*;
 pub mod use_simplified_mobile_ui;
 pub use use_simplified_mobile_ui::*;
 pub mod gender_options;
@@ -76,6 +78,7 @@ pub use backdating::*;
 pub struct PreferenceProvider {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
+    pub show_manufacturer: ShowManufacturer,
     pub authorise_purchase_order: AuthorisePurchaseOrder,
     pub custom_translations: CustomTranslations,
     pub gender_options: GenderOptions,
@@ -125,6 +128,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
     PreferenceProvider {
         // Global preferences
         allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
+        show_manufacturer: ShowManufacturer,
         authorise_purchase_order: AuthorisePurchaseOrder,
         custom_translations: CustomTranslations,
         gender_options: GenderOptions,

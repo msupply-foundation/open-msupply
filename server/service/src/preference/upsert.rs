@@ -17,6 +17,7 @@ pub struct StorePrefUpdate<T> {
 pub struct UpsertPreferences {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
+    pub show_manufacturer: Option<bool>,
     pub authorise_purchase_order: Option<bool>,
     pub custom_translations: Option<BTreeMap<String, String>>,
     pub gender_options: Option<Vec<GenderType>>,
@@ -67,6 +68,7 @@ pub fn upsert_preferences(
     UpsertPreferences {
         // Global preferences
         allow_tracking_of_stock_by_donor: allow_tracking_of_stock_by_donor_input,
+        show_manufacturer: show_manufacturer_input,
         authorise_purchase_order: authorise_purchase_order_input,
         custom_translations: custom_translations_input,
         gender_options: gender_options_input,
@@ -117,6 +119,7 @@ pub fn upsert_preferences(
     let PreferenceProvider {
         // Global preferences
         allow_tracking_of_stock_by_donor,
+        show_manufacturer,
         authorise_purchase_order,
         custom_translations,
         gender_options,
@@ -163,6 +166,10 @@ pub fn upsert_preferences(
             // Global preferences
             if let Some(input) = allow_tracking_of_stock_by_donor_input {
                 allow_tracking_of_stock_by_donor.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = show_manufacturer_input {
+                show_manufacturer.upsert(connection, input, None)?;
             }
 
             if let Some(input) = authorise_purchase_order_input {
