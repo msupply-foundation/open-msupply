@@ -342,6 +342,8 @@ impl SyncTranslation for NameTranslation {
             freight_factor,
             currency_id,
             deleted_datetime: None,
+            // No write path yet — the legacy import populates this when it lands.
+            properties_v2: None,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -403,6 +405,7 @@ impl SyncTranslation for NameTranslation {
             currency_id,
             // See comment in pull translation
             custom_data_string: _,
+            properties_v2: _,
         } = name_row;
         if deleted_datetime.is_some() {
             return Ok(PushTranslateResult::Ignored(

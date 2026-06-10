@@ -48,9 +48,10 @@ Every table is also tagged with a transport flag:
 |---|---|
 | **legacy-only** | Lives on the v5 (legacy) transport. |
 | **OMS-native** | Lives on the v6 transport. |
+| **v7-only** | Tagged for neither legacy nor v6 — served only over v7. |
 | (no v7 tag) | v7 covers every table that has any sync style. |
 
-Filters that ask for "v6 only" pull just the OMS-native tables. Filters that ask for "v5 only" pull just the legacy-only tables. Filters that pass no transport flag (used by v7) pull every table that has any sync style.
+Filters that ask for "v6 only" pull just the OMS-native tables. Filters that ask for "v5 only" pull just the legacy-only tables. A v7-only table matches neither, so it never appears on a v5 or v6 pull — only the no-transport-flag filter (used by v7) includes it. Filters that pass no transport flag pull every table that has any sync style.
 
 ---
 
@@ -117,6 +118,12 @@ Pushed to legacy 4D central; never re-sent down to remotes.
 `AncillaryItem`, `AssetCatalogueItem`, `AssetCatalogueType`, `AssetCategory`, `AssetClass`, `AssetLogReason`, `AssetProperty`, `BackendPlugin`, `BundledItem`, `Campaign`, `Demographic`, `FormSchema`, `FrontendPlugin`, `ItemVariant`, `NameOmsFields`, `NameProperty`, `PackagingVariant`, `Property`, `Report`, `VaccineCourse`, `VaccineCourseDose`, `VaccineCourseItem`, `VaccineCourseStoreConfig`
 
 Authored on OMS central, fans out to every v6 site. A few of these (notably `NameOmsFields`) also allow remote → central writebacks. Some (notably the vaccine-course family) are re-published to legacy 4D so v5-only stores still receive them.
+
+### v7-only, Central
+
+`PropertyV2`, `PropertyOptionV2`, `PropertyTableV2`
+
+The properties-v2 system: property definitions, their option values, and per-table visibility. Central data authored on OMS central, but tagged for **neither** legacy nor v6 — so it is served only over v7. Properties-v2 is a v7-era feature; a site still running v5/v6 during the transition never receives these tables (it would otherwise surface properties without the rest of the v7 infrastructure, and a v5/v6 remote must not author its own copy). The property *values* themselves are not here — they ride their host record (`Name`, `Item`) as an ordinary column.
 
 ### OMS-native, Remote
 

@@ -138,6 +138,21 @@ impl ChangelogTableName {
             ),
 
             // ----------------------------------------------------------
+            // Central — v7 only. Properties v2 is a v7-era feature: it must
+            // never be served over v6 (a v3.0 site can still run in V5V6
+            // mode during transition). The {is_v6:false, is_v5:false} combo
+            // is excluded by both the v5 and v6 changelog filters and only
+            // included by the v7 pull (which passes no SyncVersions filter).
+            // ----------------------------------------------------------
+            PropertyV2 | PropertyOptionV2 | PropertyTableV2 => (
+                vec![Central],
+                SyncVersions {
+                    is_v6: false,
+                    is_v5: false,
+                },
+            ),
+
+            // ----------------------------------------------------------
             // Central (not v6) — central data synced via legacy mSupply.
             // Also a catch-all bucket for tables not yet classified into a
             // more specific sync style.

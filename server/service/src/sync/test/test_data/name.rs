@@ -154,6 +154,7 @@ fn name_1() -> TestSyncIncomingRecord {
             margin: Some(0.0),
             freight_factor: Some(0.0),
             currency_id: None,
+            properties_v2: None,
         },
     )
 }
@@ -298,6 +299,7 @@ fn name_2() -> TestSyncIncomingRecord {
             margin: Some(0.0),
             freight_factor: Some(1.0),
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
+            properties_v2: None,
         },
     )
 }
@@ -442,6 +444,7 @@ fn name_3() -> TestSyncIncomingRecord {
             margin: Some(0.0),
             freight_factor: Some(1.0),
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
+            properties_v2: None,
         },
     )
 }
@@ -592,6 +595,7 @@ fn name_4() -> TestSyncIncomingRecord {
             margin: Some(0.0),
             freight_factor: Some(0.0),
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
+            properties_v2: None,
         },
     )
 }
@@ -778,6 +782,7 @@ fn name_5_dob_t_format_pull() -> TestSyncIncomingRecord {
             margin: None,
             freight_factor: None,
             currency_id: None,
+            properties_v2: None,
         },
     )
 }
@@ -914,6 +919,7 @@ fn name_6_dob_no_t_format_pull() -> TestSyncIncomingRecord {
             margin: None,
             freight_factor: None,
             currency_id: None,
+            properties_v2: None,
         },
     )
 }
