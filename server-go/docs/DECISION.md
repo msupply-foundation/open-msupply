@@ -253,25 +253,32 @@ That weakens the "Rust island" case — lean toward porting sync to Go.
 Both servers ran against **the same Postgres DB** (`demoivory_lt`, a protected copy of an
 initialised production-shaped DB migrated to 2.19.x; the originals `afg`/`demoivory` were never
 modified). Both serve the real `invoices` query; k6 at 50 VUs. Rust = **release** `remote_server`
-(postgres feature, HTTPS); Go = pure-Go gqlgen server (HTTP). Auth was bypassed on both to match
-the Go spike (the Rust `is_develop()` gate on `debug_no_access_control` was temporarily removed
-for the test and reverted).
+(postgres feature, HTTPS); Go = pure-Go gqlgen server (HTTP). Both received the **byte-identical
+GraphQL document** — a single page (`first: 50`) of `invoices`, sorted, **including the
+`otherParty` DataLoader field** so each server's loader is exercised. **All testing ran with
+auth/authorization disabled** on both (the Rust `is_develop()` gate on `debug_no_access_control`
+was temporarily removed for the test and reverted; the Go slice has no auth layer).
 
 | scenario | Rust (rps / med / p95) | Go (rps / med / p95) | bottleneck |
 |---|---|---|---|
-| framework `{__typename}` (no DB) | **88,125** / 0.3 ms / 1.4 ms | 44,477 / 0.7 ms / 3.2 ms | server (Rust ~2×) |
-| small query (22 invoices) | **2,241** / 22 ms / 30 ms | 1,864 / 7.4 ms / 74 ms | mostly server; comparable |
-| big query (1,004,136 invoices) | 22 / 2.2 s / 2.75 s | **33** / 1.7 s / 2.0 s | **Postgres** |
+| framework `{__typename}` (no DB, no loader) | **88,125** / 0.3 ms / 1.4 ms | 44,477 / 0.7 ms / 3.2 ms | server (Rust ~2×) |
+| small query (22 invoices + loader) | **1,373** / 32 ms / 73 ms | 1,015 / 46 ms / 98 ms | server; Rust ahead |
+| big query (1.0M invoices + loader) | 20 / 2.4 s / 3.45 s | **30** / 1.8 s / 2.24 s | **Postgres** |
 | raw PG cost of the big count | — | — | 135 ms / query |
 
 How to read it:
 - **Framework end:** Rust ~2× Go on raw per-request overhead. A genuine Rust advantage.
-- **Small real query:** comparable (~2k rps). Rust has higher throughput + a tighter tail; Go
-  has a lower median but a fatter p95 (GC / pool jitter). Both fine.
-- **Big query (the production-relevant case):** both collapse to **~20–33 rps** — Postgres is
+- **Small real query (with loader):** Rust ahead — 1,373 vs 1,015 rps; both ~1k rps, server-bound.
+- **Big query (the production-relevant case):** both collapse to **~20–30 rps** — Postgres is
   the wall (one count over the joined view = 135 ms; 50 concurrent saturate the single PG). The
   language is **not** the bottleneck; Go is even slightly ahead. **This confirms the hypothesis:
   at scale the database limits throughput, not Go.**
+
+**Same data back?** Small store: **byte-identical** (5,925 B, loader-resolved names included).
+Large store: `totalCount` differs by exactly one — Rust **1,004,135** vs Go **1,004,136** —
+because Rust's `invoices` query applies a default `is_cancellation = false` filter the slice
+hasn't replicated (the store has one cancelled invoice). Immaterial to timings; a concrete
+example of a business rule a full port must carry over.
 
 Fairness caveats: the servers don't send byte-identical SQL (the Go spike's `invoices` query
 selects fewer fields than Rust's full resolver); Rust used HTTPS vs Go HTTP (negligible at these

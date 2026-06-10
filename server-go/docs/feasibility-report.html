@@ -189,6 +189,19 @@
      <code>database/sql</code> + <code>sqlc</code> + <code>squirrel</code>, <code>jackc/pgx</code>
      (Postgres), <code>modernc.org/sqlite</code> (pure-Go SQLite), <code>dop251/goja</code> (pure-Go JS).</p>
 
+  <h3>What the slice implements — and what it doesn't</h3>
+  <p>The Go server is a deliberately narrow vertical slice. Read every number below with this scope
+     in mind:</p>
+  <table>
+    <thead><tr><th>In the slice</th><th>Not yet built</th></tr></thead>
+    <tbody>
+      <tr><td>The <code>invoices</code> list query — store scope, pagination, sort, a subset of filters</td><td>The other ~200 queries / 150 mutations — <code>items</code>, stock lines, requisitions, stocktakes, …</td></tr>
+      <tr><td><code>InvoiceNode</code> scalar fields (id, type, status, invoiceNumber, dates, otherPartyName)</td><td><code>InvoiceNode</code> nested objects: <code>lines</code>, <code>pricing</code>, <code>store</code>, <code>user</code>, <code>requisition</code>, …</td></tr>
+      <tr><td>One DataLoader — <code>otherParty</code> → name, batched by id</td><td>Every other loader (items, store, user, clinician, …)</td></tr>
+      <tr><td>Linked-table read (<code>invoice_view</code>), dynamic filter/sort, both DB engines</td><td>Rust's default business filters on the query (e.g. excluding cancellations — see data parity)</td></tr>
+    </tbody>
+  </table>
+
   <!-- RESULTS: VELOCITY -->
   <h2>Results 1 — Developer velocity (the headline)</h2>
   <table>
@@ -222,24 +235,43 @@
 
   <!-- RESULTS: RUNTIME -->
   <h2>Results 3 — Runtime performance (Postgres head-to-head)</h2>
-  <p>Both servers, same Postgres database, real <code>invoices</code> query, 50 concurrent users.
-     Rust = release server; Go = the spike server.</p>
+  <p>Both servers ran against <strong>the same Postgres database</strong> and received the
+     <strong>byte-identical GraphQL document</strong>: a single page (<code>first: 50</code>) of
+     <code>invoices</code>, sorted, <em>including the <code>otherParty</code> DataLoader field</em> — so
+     each server's loader is exercised, not just scalar columns. 50 concurrent users.</p>
+
+  <div class="callout caveat">
+    <h3>⚠ All load testing ran with authentication &amp; authorization disabled</h3>
+    <p style="margin-bottom:0">On both servers (Rust via a temporary dev-gate patch +
+      <code>debug_no_access_control</code>; the Go slice has no auth layer yet). <strong>Auth and
+      permission-checking overhead is excluded from every number here</strong> — it would add cost to
+      both sides, and on the Go side it is itself unported work.</p>
+  </div>
+
   <table>
     <thead><tr><th>Scenario</th><th class="col-rust">Rust (req/s · median)</th><th class="col-go">Go (req/s · median)</th><th>Bottleneck</th></tr></thead>
     <tbody>
-      <tr><td>Framework overhead <span class="tag">(no DB)</span></td><td class="col-rust win">88,125 · 0.3 ms</td><td class="col-go">44,477 · 0.7 ms</td><td>Server (Rust ~2×)</td></tr>
-      <tr><td>Small query (22 invoices)</td><td class="col-rust">2,241 · 22 ms</td><td class="col-go">1,864 · 7.4 ms</td><td>Comparable</td></tr>
-      <tr><td>Large query (1,004,136 invoices)</td><td class="col-rust">22 · 2.2 s</td><td class="col-go win">33 · 1.7 s</td><td><strong>Postgres</strong></td></tr>
+      <tr><td>Framework overhead <span class="tag">(no DB, no loader)</span></td><td class="col-rust win">88,125 · 0.3 ms</td><td class="col-go">44,477 · 0.7 ms</td><td>Server (Rust ~2×)</td></tr>
+      <tr><td>Small query <span class="tag">(22 invoices + loader)</span></td><td class="col-rust win">1,373 · 32 ms</td><td class="col-go">1,015 · 46 ms</td><td>Server; Rust ahead</td></tr>
+      <tr><td>Large query <span class="tag">(1.0M invoices + loader)</span></td><td class="col-rust">20 · 2.4 s</td><td class="col-go win">30 · 1.8 s</td><td><strong>Postgres</strong></td></tr>
     </tbody>
   </table>
-  <p>Rust holds a genuine ~2× edge on raw per-request overhead. But on the production-relevant large
-     query, both collapse to ~20–33 req/s — the single count over a million-row joined view (135&nbsp;ms)
-     saturates Postgres long before the language matters. <strong>At scale the database is the wall, not
-     the server language.</strong></p>
-  <p class="tag">Fairness notes: the two servers don't send byte-identical SQL (the Go slice's query
-     selects fewer fields than Rust's full resolver), Rust used HTTPS vs Go HTTP (negligible here), and
-     auth was bypassed on both. Read the large-query result as "same order, Postgres-bound," not a
-     precise language win.</p>
+  <p>Rust holds a genuine ~2× edge on raw overhead, and stays ahead on the small real query once the
+     DataLoader is in play (1,373 vs 1,015 req/s). On the large query both collapse to ~20–30 req/s — a
+     single count over a million-row joined view (~135&nbsp;ms) saturates Postgres long before the
+     language matters. <strong>At scale the database is the wall, not the server language.</strong></p>
+
+  <p><strong>Did the same data come back?</strong> For the small store, <strong>yes — byte-identical</strong>
+     responses (5,925 bytes, loader-resolved names included). For the large store, <code>totalCount</code>
+     differs by exactly one (Rust <strong>1,004,135</strong> vs Go <strong>1,004,136</strong>): Rust's
+     <code>invoices</code> query applies a default <code>is_cancellation = false</code> filter the slice
+     hasn't replicated, and that store has exactly one cancelled invoice. Immaterial to the timings, but a
+     concrete example of a business rule a full port must carry over.</p>
+
+  <p class="tag">Remaining fairness notes: the servers still don't send byte-identical SQL (the Go slice
+     selects only the requested columns; Rust loads the full invoice row), and Rust served HTTPS vs Go
+     HTTP (negligible here — connections reused). Read the large-query result as "same order,
+     Postgres-bound," not a precise language win.</p>
 
   <!-- OPEN ITEMS -->
   <h2>What we did <em>not</em> evaluate</h2>

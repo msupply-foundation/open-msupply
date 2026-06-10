@@ -16,11 +16,16 @@ export const options = {
 const URL = __ENV.URL || 'http://localhost:8001/graphql';
 const STORE = __ENV.STORE_ID || 'store-1';
 
+// Identical document sent to BOTH servers. Includes otherParty { ... } so the per-node
+// DataLoader (name batched by id) is exercised on each server, not just scalar columns.
 const query = `query Invoices($storeId: String!) {
   invoices(storeId: $storeId, page: { first: 50 }, sort: [{ key: invoiceNumber }]) {
     ... on InvoiceConnector {
       totalCount
-      nodes { id otherPartyName type status invoiceNumber createdDatetime }
+      nodes {
+        id type status invoiceNumber createdDatetime
+        otherParty(storeId: $storeId) { id name code }
+      }
     }
   }
 }`;
