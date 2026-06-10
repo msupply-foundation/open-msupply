@@ -7,6 +7,8 @@ import { useInsertProgramPatient } from './useInsertProgramPatient';
 import { useUpdateProgramPatient } from './useUpdateProgramPatient';
 import { useDocument } from '@openmsupply-client/programs';
 import { useLatestPatientEncounter } from './useLatestPatientEncounter';
+import { usePatientPropertiesV2 } from './usePatientPropertiesV2';
+import { useUpdatePatientPropertiesV2 } from './useUpdatePatientPropertiesV2';
 
 export const Document = {
   usePatient,
@@ -19,4 +21,6 @@ export const Document = {
   useDocumentHistory: useDocument.get.history,
   usePatientsPromise,
   useLatestPatientEncounter,
+  usePatientPropertiesV2,
+  useUpdatePatientPropertiesV2,
 };
