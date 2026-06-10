@@ -22,6 +22,20 @@ start /b /wait build\windows\omsupply-prepare.bat
 
 @cd server 
 
+@ECHO ##### update cargo binary version #####
+@setlocal enabledelayedexpansion
+
+@for /f "delims=v-" %%i in ('type omSupply\version.txt') do set "RAW=%%i"
+
+@REM --- strip leading zeros from each component 2.20.00 -> 2.20.0 --
+@set "VERSION="
+@for %%p in (%RAW:.= %) do (
+@    call :strip %%p PART
+@    if defined VERSION (set "VERSION=!VERSION!.!PART!") else (set "VERSION=!PART!")
+)
+cargo install cargo-edit
+cargo set-version %VERSION%
+
 @ECHO ##### Building all sqlite binaries #####
 cargo build --release --bin omsupply_service --bin remote_server --bin remote_server_cli --bin test_connection
 @if %errorlevel% neq 0 ( exit /b %errorlevel% )
@@ -48,3 +62,16 @@ start /b /wait build\windows\omsupply-electron.bat
 @if %errorlevel% neq 0 (
     exit /b %errorlevel%
 )
+goto :eof
+
+
+:strip
+setlocal enabledelayedexpansion
+set "n=%~1"
+:loop
+if not "!n!"=="0" if "!n:~0,1!"=="0" (
+    set "n=!n:~1!"
+    goto loop
+)
+endlocal & set "%~2=%n%"
+exit /b
