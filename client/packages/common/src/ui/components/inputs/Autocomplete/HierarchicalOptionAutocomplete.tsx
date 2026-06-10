@@ -8,6 +8,9 @@ interface HierarchicalOptionAutocompleteProps {
   /** The selected option id */
   value: string | null;
   onChange?: (optionId: string | null) => void;
+  /** Allow picking parent levels too (filters: a parent means "anything under
+   * it"). Off by default — the edit input stores leaf ids only. */
+  parentsSelectable?: boolean;
   width?: string;
   disabled?: boolean;
   clearable?: boolean;
@@ -20,10 +23,12 @@ interface HierarchicalOptionAutocompleteProps {
 
 /**
  * Autocomplete over a flattened option hierarchy (see getHierarchicalOptions):
- * parent levels render as indented, non-selectable headers and only leaves can
- * be picked. Flat dimensions are a plain list. Shared by the propertiesV2 edit
- * control (PropertyV2Input) and the property filter dropdowns
- * (HierarchicalEnumFilter) so selection and filtering stay in sync.
+ * parent levels render as indented, bold group levels. By default only leaves
+ * can be picked; `parentsSelectable` opens up the parent levels too (used by
+ * filters, where a parent selection means "anything under it"). Flat
+ * dimensions are a plain list. Shared by the propertiesV2 edit control
+ * (PropertyV2Input) and the property filter dropdowns (HierarchicalEnumFilter)
+ * so selection and filtering stay in sync.
  */
 export const HierarchicalOptionAutocomplete = ({
   options,
@@ -34,6 +39,7 @@ export const HierarchicalOptionAutocomplete = ({
   clearable = true,
   popperMinWidth,
   inputProps,
+  parentsSelectable = false,
 }: HierarchicalOptionAutocompleteProps) => {
   const current = options.find(option => option.id === value) ?? null;
 
@@ -44,7 +50,7 @@ export const HierarchicalOptionAutocomplete = ({
       options={options}
       value={current}
       getOptionLabel={option => option.name}
-      getOptionDisabled={option => !option.selectable}
+      getOptionDisabled={option => !parentsSelectable && !option.isLeaf}
       isOptionEqualToValue={(option, v) => option.id === v.id}
       renderOption={(props, option) => (
         <li
@@ -52,10 +58,11 @@ export const HierarchicalOptionAutocomplete = ({
           key={option.id}
           style={{
             paddingLeft: 16 + option.depth * 20,
-            fontWeight: option.selectable ? undefined : 600,
-            // Headers are dimmed and the MUI disabled styling removes the
-            // pointer; keep them readable as group labels.
-            opacity: option.selectable ? undefined : 0.85,
+            fontWeight: option.isLeaf ? undefined : 600,
+            // Disabled headers are dimmed and the MUI disabled styling removes
+            // the pointer; keep them readable as group labels.
+            opacity:
+              option.isLeaf || parentsSelectable ? undefined : 0.85,
           }}
         >
           {option.name}

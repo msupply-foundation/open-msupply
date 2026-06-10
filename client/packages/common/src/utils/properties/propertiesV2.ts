@@ -40,21 +40,17 @@ export const getSelectableOptions = (
 export interface HierarchicalOption extends PropertyV2OptionLike {
   /** 0 for roots, +1 per level — drives indentation. */
   depth: number;
-  /** A leaf (no children) — only leaves are selectable; parents are headers. */
-  selectable: boolean;
+  /** A leaf (no children). Parents render as bold group levels; whether they
+   * are also pickable is the consuming control's call (filters allow it, the
+   * edit input doesn't — records store leaf ids). */
+  isLeaf: boolean;
 }
 
-/**
- * Flatten the option hierarchy into display order (depth-first pre-order), each
- * option tagged with its `depth` and whether it's a `selectable` leaf. Parent
- * levels are included as non-selectable headers so the dropdown can render the
- * tree with indentation. Flat dimensions (no parents) come back as a depth-0
- * list with every option selectable. Orphans (parent not present) are treated
- * as roots; a `seen` guard makes it safe against cyclic parent references.
- */
-export const getHierarchicalOptions = (
+/** Group options by parent id (orphans — parent not present — count as
+ * roots, keyed under `undefined`). Shared by the hierarchy walkers below. */
+const getChildrenByParent = (
   definition: PropertyV2DefinitionLike
-): HierarchicalOption[] => {
+): Map<string | undefined, PropertyV2OptionLike[]> => {
   const ids = new Set(definition.options.map(o => o.id));
   const childrenByParent = new Map<string | undefined, PropertyV2OptionLike[]>();
   for (const option of definition.options) {
@@ -66,6 +62,21 @@ export const getHierarchicalOptions = (
     siblings.push(option);
     childrenByParent.set(parent, siblings);
   }
+  return childrenByParent;
+};
+
+/**
+ * Flatten the option hierarchy into display order (depth-first pre-order), each
+ * option tagged with its `depth` and whether it's a leaf. Parent levels are
+ * included so the dropdown can render the tree with indentation. Flat
+ * dimensions (no parents) come back as a depth-0 list of leaves. Orphans
+ * (parent not present) are treated as roots; a `seen` guard makes it safe
+ * against cyclic parent references.
+ */
+export const getHierarchicalOptions = (
+  definition: PropertyV2DefinitionLike
+): HierarchicalOption[] => {
+  const childrenByParent = getChildrenByParent(definition);
 
   const result: HierarchicalOption[] = [];
   const seen = new Set<string>();
@@ -73,10 +84,35 @@ export const getHierarchicalOptions = (
     if (seen.has(option.id)) return; // cycle guard
     seen.add(option.id);
     const children = childrenByParent.get(option.id) ?? [];
-    result.push({ ...option, depth, selectable: children.length === 0 });
+    result.push({ ...option, depth, isLeaf: children.length === 0 });
     children.forEach(child => visit(child, depth + 1));
   };
   (childrenByParent.get(undefined) ?? []).forEach(root => visit(root, 0));
+  return result;
+};
+
+/**
+ * The option id plus all its descendant ids (depth-first, cycle-guarded) —
+ * used to expand a parent filter selection into the set of ids a record might
+ * store. Includes intermediate levels, not just leaves, so values stored at
+ * any level under the selection still match. An id with no descendants (or
+ * not in the definition at all) comes back as just itself.
+ */
+export const getOptionAndDescendantIds = (
+  definition: PropertyV2DefinitionLike,
+  optionId: string
+): string[] => {
+  const childrenByParent = getChildrenByParent(definition);
+
+  const result: string[] = [];
+  const seen = new Set<string>();
+  const visit = (id: string) => {
+    if (seen.has(id)) return; // cycle guard
+    seen.add(id);
+    result.push(id);
+    (childrenByParent.get(id) ?? []).forEach(child => visit(child.id));
+  };
+  visit(optionId);
   return result;
 };
 

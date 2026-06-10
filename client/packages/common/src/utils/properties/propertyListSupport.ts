@@ -11,6 +11,7 @@ import { PropertyNodeValueTypeV2 } from '@common/types';
 import {
   formatPropertyV2Value,
   getHierarchicalOptions,
+  getOptionAndDescendantIds,
   PropertyV2DefinitionLike,
 } from './propertiesV2';
 
@@ -70,9 +71,9 @@ export interface PropertyFilterRangeLabels {
 /**
  * One FilterMenu definition per property, by value type: TEXT → substring
  * text filter, OPTION → hierarchical dropdown (same control as the edit
- * input: parents are indented headers, leaves selectable), NUMBER/REAL →
- * min/max range pair, DATE → date range pair, BOOLEAN → toggle. Properties
- * with an unknown value type get no filter.
+ * input, but any level can be picked — a parent means "anything under it"),
+ * NUMBER/REAL → min/max range pair, DATE → date range pair, BOOLEAN →
+ * toggle. Properties with an unknown value type get no filter.
  */
 export const buildPropertyFilterDefinitions = (
   properties: PropertyV2ListDefinition[],
@@ -191,8 +192,13 @@ const propertyValueFilters = (
     }
     case PropertyNodeValueTypeV2.Option: {
       const equalTo = (entry as FilterRule)?.equalTo;
-      return equalTo === undefined || equalTo === null
-        ? []
+      if (equalTo === undefined || equalTo === null) return [];
+      // A parent selection means "anything under it": expand to the id plus
+      // all descendant ids (records store leaf ids). Leaves (and unknown ids)
+      // expand to just themselves and stay an exact match.
+      const ids = getOptionAndDescendantIds(property, String(equalTo));
+      return ids.length > 1
+        ? [{ Option: { In: ids } }]
         : [{ Option: { Equal: String(equalTo) } }];
     }
     case PropertyNodeValueTypeV2.Number:

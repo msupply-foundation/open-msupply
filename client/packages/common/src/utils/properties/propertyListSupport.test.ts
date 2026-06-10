@@ -70,22 +70,22 @@ describe('buildPropertyFilterDefinitions', () => {
         type: 'hierarchicalEnum',
         name: 'Category',
         urlParameter: 'prop-category',
-        // whole hierarchy in display order — the parent is a non-selectable header
+        // whole hierarchy in display order — any level can be picked as a filter
         options: [
-          { id: 'parent', name: 'Parent', depth: 0, selectable: false },
+          { id: 'parent', name: 'Parent', depth: 0, isLeaf: false },
           {
             id: 'leaf_1',
             name: 'Leaf 1',
             parentOptionId: 'parent',
             depth: 1,
-            selectable: true,
+            isLeaf: true,
           },
           {
             id: 'leaf_2',
             name: 'Leaf 2',
             parentOptionId: 'parent',
             depth: 1,
-            selectable: true,
+            isLeaf: true,
           },
         ],
       },
@@ -214,6 +214,38 @@ describe('mapPropertyFilters', () => {
           },
           { Property: { key: 'active', filter: { Boolean: { Equal: true } } } },
         ],
+      },
+    });
+  });
+
+  it('expands a parent option selection to itself plus all descendants', () => {
+    expect(
+      mapPropertyFilters(
+        { [propertyUrlParam('category')]: { equalTo: 'parent' } },
+        properties
+      )
+    ).toEqual({
+      dynamicFilter: {
+        Property: {
+          key: 'category',
+          filter: { Option: { In: ['parent', 'leaf_1', 'leaf_2'] } },
+        },
+      },
+    });
+  });
+
+  it('keeps an exact match for an option id not in the definition', () => {
+    expect(
+      mapPropertyFilters(
+        { [propertyUrlParam('category')]: { equalTo: 'not_synced_yet' } },
+        properties
+      )
+    ).toEqual({
+      dynamicFilter: {
+        Property: {
+          key: 'category',
+          filter: { Option: { Equal: 'not_synced_yet' } },
+        },
       },
     });
   });
