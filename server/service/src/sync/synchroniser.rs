@@ -179,6 +179,17 @@ impl SynchroniserV5V6 {
         let site_info = self.remote.sync_api_v5.get_site_info().await?;
         CentralServerConfig::set_central_server_config(&site_info);
 
+        // Now that we know whether this site is central, ensure the code-defined
+        // mSupply mapping properties exist. Central-server only — remotes receive
+        // them over v7 and must never seed their own (see the properties dev
+        // doc). Change-aware, so steady-state syncs add no changelog churn; a new
+        // mapping property added in a later version is picked up on the next sync.
+        if CentralServerConfig::is_central_server() {
+            crate::sync::central_mapping_properties::seed_central_mapping_properties(
+                &ctx.connection,
+            )?;
+        }
+
         let central_sync_server_id = site_info.msupply_central_site_id;
         // Set central server site id in key value store, so it can be used by other code which hasn't called the get_site_info api
         KeyValueStoreRepository::new(&ctx.connection).set_i32(

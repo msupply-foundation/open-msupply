@@ -2,7 +2,7 @@ use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyRowRepository, GenderType, NameRow, NameRowDelete,
-    NameRowType, Row, StorageConnection, SyncBufferRow,
+    NameRowRepository, NameRowType, Row, StorageConnection, SyncBufferRow,
 };
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
@@ -13,9 +13,15 @@ use serde::{Deserialize, Serialize};
 use crate::sync::{translations::currency::CurrencyTranslation, CentralServerConfig};
 
 use super::{
-    utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation,
-    ToSyncRecordTranslationType,
+    utils::{clear_invalid_fk, merge_legacy_properties, LegacyPropertiesBuilder},
+    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
+
+/// `properties_v2` keys the legacy OG→OMS name import owns (derived from
+/// `[name]custom1/2/3`). On a v5 re-import these are refreshed from OG; every
+/// other key in the blob (e.g. OMS-authored patient custom-field edits) is
+/// preserved. See [`merge_legacy_properties`].
+const LEGACY_NAME_OWNED_KEYS: &[&str] = &["custom_1", "custom_2", "custom_3"];
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyNameRowType {
@@ -34,6 +40,23 @@ pub enum LegacyNameRowType {
 
     #[serde(other)]
     Others,
+}
+
+/// Build the `name.properties_v2` JSONB from legacy `[name]custom1/2/3` fields.
+///
+/// All three are TEXT properties, so they go through the shared
+/// [`LegacyPropertiesBuilder`], which omits empty values and returns `None` when
+/// every field is absent (untouched rows stay NULL rather than carrying `{}`).
+///
+/// Keys match the central mapping-property seeder (`central_mapping_properties`):
+/// snake_case `custom_1`/`custom_2`/`custom_3` on the OMS side, decoupled from
+/// the 4D column names (`custom1` etc.) via this mapping.
+fn build_legacy_properties(legacy: &LegacyNameRow) -> Option<serde_json::Value> {
+    LegacyPropertiesBuilder::new()
+        .text("custom_1", legacy.custom_1.as_deref())
+        .text("custom_2", legacy.custom_2.as_deref())
+        .text("custom_3", legacy.custom_3.as_deref())
+        .build()
 }
 
 impl LegacyNameRowType {
@@ -155,6 +178,17 @@ pub struct LegacyNameRow {
     #[serde(default)]
     pub custom_data: Option<serde_json::Value>,
 
+    // Legacy 4D `[name]custom1/2/3` columns. Field names use snake_case (Rust
+    // convention) and serde rename pins the wire name to the 4D column name.
+    // TODO: when we widen this beyond custom1/2/3, consider #[serde(flatten)]
+    // into a HashMap and filter by property table at translate time.
+    #[serde(default, rename = "custom1", deserialize_with = "empty_str_as_option_string")]
+    pub custom_1: Option<String>,
+    #[serde(default, rename = "custom2", deserialize_with = "empty_str_as_option_string")]
+    pub custom_2: Option<String>,
+    #[serde(default, rename = "custom3", deserialize_with = "empty_str_as_option_string")]
+    pub custom_3: Option<String>,
+
     #[serde(default)]
     #[serde(rename = "HSH_code")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -236,6 +270,29 @@ impl SyncTranslation for NameTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
+        let legacy: LegacyNameRow = sync_record.deserialize()?;
+
+        // Preserve any existing `properties_v2` rather than overwriting the whole
+        // blob: an OMS write path (patient custom-field edits) can author keys the
+        // legacy importer doesn't own, and a v5 re-pull of an unchanged OG record
+        // must not wipe them.
+        let existing_properties = NameRowRepository::new(connection)
+            .find_one_by_id(&legacy.id)?
+            .and_then(|row| row.properties_v2);
+
+        // The OG→OMS legacy import runs on the central server only. On central we
+        // refresh the owned keys (custom_1/2/3) from OG and keep the rest; off
+        // central we leave `properties_v2` untouched — it arrives via v7 instead.
+        let properties = if CentralServerConfig::is_central_server() {
+            merge_legacy_properties(
+                existing_properties,
+                build_legacy_properties(&legacy),
+                LEGACY_NAME_OWNED_KEYS,
+            )
+        } else {
+            existing_properties
+        };
+
         let LegacyNameRow {
             id,
             name,
@@ -268,12 +325,15 @@ impl SyncTranslation for NameTranslation {
             gender,
             date_of_death,
             custom_data,
+            custom_1: _,
+            custom_2: _,
+            custom_3: _,
             hsh_code,
             hsh_name,
             margin,
             freight_factor,
             currency_id,
-        } = sync_record.deserialize()?;
+        } = legacy;
 
         // Custom data for facility or name only (for others, say patient, don't need to have extra overhead or push translation back to json)
         let r#type = legacy_type.to_name_type();
@@ -342,8 +402,7 @@ impl SyncTranslation for NameTranslation {
             freight_factor,
             currency_id,
             deleted_datetime: None,
-            // No write path yet — the legacy import populates this when it lands.
-            properties_v2: None,
+            properties_v2: properties,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -462,6 +521,11 @@ impl SyncTranslation for NameTranslation {
             freight_factor,
             currency_id,
             custom_data: None,
+            // Import-only: `properties_v2` values are never round-tripped back
+            // into the legacy custom1/2/3 wire columns.
+            custom_1: None,
+            custom_2: None,
+            custom_3: None,
         };
 
         Ok(PushTranslateResult::upsert(
@@ -490,11 +554,132 @@ mod tests {
         test_db::{setup_all, setup_all_with_data},
         CurrencyRow, SyncAction, SyncRecordData,
     };
+    use serde_json::json;
+
+    fn legacy_row_with_customs(
+        custom_1: Option<&str>,
+        custom_2: Option<&str>,
+        custom_3: Option<&str>,
+    ) -> LegacyNameRow {
+        LegacyNameRow {
+            id: "id".to_string(),
+            name: "n".to_string(),
+            code: "c".to_string(),
+            r#type: LegacyNameRowType::Patient,
+            is_customer: false,
+            is_supplier: false,
+            supplying_store_id: None,
+            first_name: None,
+            last_name: None,
+            female: false,
+            date_of_birth: None,
+            phone: None,
+            charge_code: None,
+            comment: None,
+            country: None,
+            address1: None,
+            address2: None,
+            email: None,
+            website: None,
+            is_manufacturer: false,
+            is_donor: false,
+            on_hold: false,
+            next_of_kin_id: None,
+            next_of_kin_name: None,
+            created_date: None,
+            national_health_number: None,
+            is_deceased: false,
+            created_datetime: None,
+            gender: None,
+            date_of_death: None,
+            custom_data: None,
+            custom_1: custom_1.map(String::from),
+            custom_2: custom_2.map(String::from),
+            custom_3: custom_3.map(String::from),
+            hsh_code: None,
+            hsh_name: None,
+            margin: None,
+            freight_factor: None,
+            currency_id: None,
+        }
+    }
+
+    #[test]
+    fn build_legacy_properties_none_when_all_absent() {
+        let row = legacy_row_with_customs(None, None, None);
+        assert_eq!(build_legacy_properties(&row), None);
+    }
+
+    #[test]
+    fn build_legacy_properties_skips_absent_fields() {
+        let row = legacy_row_with_customs(Some("Red"), None, Some("Blue"));
+        assert_eq!(
+            build_legacy_properties(&row),
+            Some(json!({"custom_1": "Red", "custom_3": "Blue"}))
+        );
+    }
+
+    #[test]
+    fn build_legacy_properties_all_three() {
+        let row = legacy_row_with_customs(Some("A"), Some("B"), Some("C"));
+        assert_eq!(
+            build_legacy_properties(&row),
+            Some(json!({"custom_1": "A", "custom_2": "B", "custom_3": "C"}))
+        );
+    }
+
+    #[test]
+    fn legacy_properties_only_derived_on_central() {
+        use crate::sync::{test_util_set_is_central_server, CentralServerConfig};
+        let row = legacy_row_with_customs(Some("Red"), None, Some("Blue"));
+
+        // Replicates the pull translator's branch: off central the existing blob is
+        // preserved untouched (no local derivation); on central the owned keys are
+        // refreshed from OG and merged into whatever else the blob holds.
+        let derive = |existing: Option<serde_json::Value>| {
+            if CentralServerConfig::is_central_server() {
+                merge_legacy_properties(
+                    existing,
+                    build_legacy_properties(&row),
+                    LEGACY_NAME_OWNED_KEYS,
+                )
+            } else {
+                existing
+            }
+        };
+
+        // A V5V6 remote must not derive properties locally, even when the legacy
+        // custom fields are present on the wire — the existing blob is preserved.
+        test_util_set_is_central_server(false);
+        assert_eq!(derive(None), None);
+        assert_eq!(
+            derive(Some(json!({"patient_note": "keep"}))),
+            Some(json!({"patient_note": "keep"}))
+        );
+
+        // The central server derives the owned keys and merges them with the
+        // existing OMS-authored keys (and fans the result out over v7).
+        test_util_set_is_central_server(true);
+        assert_eq!(derive(None), Some(json!({"custom_1": "Red", "custom_3": "Blue"})));
+        assert_eq!(
+            derive(Some(json!({"patient_note": "keep"}))),
+            Some(json!({"custom_1": "Red", "custom_3": "Blue", "patient_note": "keep"}))
+        );
+
+        // Reset shared state for other tests (cargo test runs in-process).
+        test_util_set_is_central_server(false);
+    }
 
     #[actix_rt::test]
     async fn test_name_translation() {
         use crate::sync::test::test_data::name as test_data;
+        use crate::sync::test_util_set_is_central_server;
         let translator = NameTranslation {};
+
+        // The properties-v2 import (name_7 fixture) only derives on central,
+        // mirroring where the OG→OMS import actually runs (COMS). Other name
+        // fixtures carry no custom fields, so this doesn't affect them.
+        test_util_set_is_central_server(true);
 
         // FK validation: NEW_ZEALAND_DOLLARS currency and store_a need to exist.
         // mock_currencies() doesn't include NEW_ZEALAND_DOLLARS so we add it explicitly.

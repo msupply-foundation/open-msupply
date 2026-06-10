@@ -246,8 +246,65 @@ const ITEM_3_VACCINE: (&str, &str) = (
 }"#,
 );
 
+// Item carrying non-default custom user fields, to exercise the
+// `item.properties_v2` import (typed JSONB: text strings, a real number, a
+// boolean). user_field_4 is left false to confirm `false` is omitted.
+const ITEM_4_WITH_PROPERTIES: (&str, &str) = (
+    "A1B2C3D4E5F60718293A4B5C6D7E8F90",
+    r#"{
+    "ID": "A1B2C3D4E5F60718293A4B5C6D7E8F90",
+    "item_name": "Item with custom fields",
+    "code": "CUSTOM",
+    "type_of": "general",
+    "default_pack_size": 1,
+    "is_vaccine": false,
+    "VEN_category": "",
+    "strength": "",
+    "doses": 0,
+    "category_ID": "",
+    "restricted_location_type_ID": "",
+    "volume_per_pack": 0,
+    "universalcodes_code": "",
+    "unit_ID": "",
+    "user_field_1": "Cold chain",
+    "user_field_2": "",
+    "user_field_3": "Batch ABC",
+    "user_field_4": false,
+    "user_field_5": 12.5,
+    "user_field_6": "",
+    "user_field_7": true
+}"#,
+);
+
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
+            (
+                ITEM_4_WITH_PROPERTIES.0,
+                &ordered_simple_json(ITEM_4_WITH_PROPERTIES.1).unwrap(),
+            ),
+            ItemRow {
+                id: ITEM_4_WITH_PROPERTIES.0.to_owned(),
+                name: "Item with custom fields".to_string(),
+                code: "CUSTOM".to_string(),
+                unit_id: None,
+                r#type: ItemType::Stock,
+                legacy_record: ordered_simple_json(ITEM_4_WITH_PROPERTIES.1).unwrap(),
+                default_pack_size: 1.0,
+                is_active: true,
+                is_vaccine: false,
+                vaccine_doses: 0,
+                // user_field_2/4/6 omitted (empty/false); user_field_5 12.5 kept.
+                properties_v2: Some(serde_json::json!({
+                    "user_field_1": "Cold chain",
+                    "user_field_3": "Batch ABC",
+                    "user_field_5": 12.5,
+                    "user_field_7": true,
+                })),
+                ..Default::default()
+            },
+        ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             (ITEM_1.0, &ordered_simple_json(ITEM_1.1).unwrap()),
