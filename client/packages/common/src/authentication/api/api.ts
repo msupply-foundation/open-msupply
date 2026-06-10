@@ -1,10 +1,4 @@
-import {
-  AuthError,
-  LocaleKey,
-  LocalStorage,
-  GraphqlStdError,
-  TypedTFunction,
-} from '../..';
+import { LocaleKey, GraphqlStdError, TypedTFunction } from '../..';
 import { Sdk, AuthTokenQuery, RefreshTokenQuery } from './operations.generated';
 
 export type AuthenticationError = {
@@ -113,8 +107,7 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         return result.me;
       } catch (e) {
         console.error(e);
-        LocalStorage.setItem('/error/auth', AuthError.ServerError);
-        LocalStorage.setItem('/error/server', (e as Error).message);
+        throw e;
       }
     },
     permissions: async ({
