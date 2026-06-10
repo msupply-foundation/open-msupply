@@ -18,9 +18,9 @@ table! {
         phone_number -> Nullable<Text>,
         job_title -> Nullable<Text>,
         last_successful_sync -> Nullable<Timestamp>,
+        is_active -> Bool,
     }
 }
-
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default)]
 #[cfg_attr(test, derive(strum::EnumIter))]
@@ -37,7 +37,7 @@ pub enum LanguageType {
     Tetum,
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
 #[diesel(table_name = user_account)]
 pub struct UserAccountRow {
     pub id: String,
@@ -50,6 +50,25 @@ pub struct UserAccountRow {
     pub phone_number: Option<String>,
     pub job_title: Option<String>,
     pub last_successful_sync: Option<NaiveDateTime>,
+    pub is_active: bool,
+}
+
+impl Default for UserAccountRow {
+    fn default() -> Self {
+        Self {
+            id: Default::default(),
+            username: Default::default(),
+            hashed_password: Default::default(),
+            email: Default::default(),
+            language: Default::default(),
+            first_name: Default::default(),
+            last_name: Default::default(),
+            phone_number: Default::default(),
+            job_title: Default::default(),
+            last_successful_sync: Default::default(),
+            is_active: true,
+        }
+    }
 }
 
 pub struct UserAccountRowRepository<'a> {
@@ -100,6 +119,8 @@ impl<'a> UserAccountRowRepository<'a> {
     ) -> Result<Option<UserAccountRow>, RepositoryError> {
         let result: Result<UserAccountRow, diesel::result::Error> = user_account::table
             .filter(lower(user_account::username).eq(lower(username)))
+            .filter(user_account::is_active.eq(true))
+            .filter(user_account::hashed_password.ne(""))
             .first(self.connection.lock().connection());
 
         match result {

@@ -1,8 +1,8 @@
 use super::{
     clinician_link_row::clinician_link, clinician_row::clinician, invoice_line_row::invoice_line,
-    invoice_row::invoice, name_row::name, purchase_order_row::purchase_order, store_row::store,
-    ClinicianRow, DBType, InvoiceRow, InvoiceStatus, InvoiceType, NameRow, RepositoryError,
-    StorageConnection, StoreRow,
+    invoice_row::invoice, name_row::name, purchase_order_row::purchase_order,
+    requisition::requisition_row::requisition, store_row::store, ClinicianRow, DBType,
+    InvoiceRow, InvoiceStatus, InvoiceType, NameRow, RepositoryError, StorageConnection, StoreRow,
 };
 
 use crate::{
@@ -58,6 +58,7 @@ pub struct InvoiceFilter {
     pub is_cancellation: Option<bool>,
     pub purchase_order_id: Option<EqualFilter<String>>,
     pub purchase_order_number: Option<EqualFilter<i64>>,
+    pub linked_order_number: Option<EqualFilter<i64>>,
     pub program_id: Option<EqualFilter<String>>,
 }
 
@@ -251,6 +252,7 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
             is_cancellation,
             purchase_order_id,
             purchase_order_number,
+            linked_order_number,
             program_id,
         } = f;
 
@@ -270,6 +272,26 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
             apply_equal_filter!(po_subquery, Some(purchase_order_number), purchase_order::purchase_order_number);
             query = query
                 .filter(invoice::purchase_order_id.eq_any(po_subquery));
+        }
+
+        if let Some(linked_order_number) = linked_order_number {
+            if let Some(number) = linked_order_number.equal_to {
+                let po_subquery = purchase_order::table
+                    .select(purchase_order::id.nullable())
+                    .filter(purchase_order::purchase_order_number.eq(number))
+                    .into_boxed();
+
+                let req_subquery = requisition::table
+                    .select(requisition::id.nullable())
+                    .filter(requisition::requisition_number.eq(number))
+                    .into_boxed();
+
+                query = query.filter(
+                    invoice::purchase_order_id
+                        .eq_any(po_subquery)
+                        .or(invoice::requisition_id.eq_any(req_subquery)),
+                );
+            }
         }
 
         apply_string_filter!(query, comment, invoice::comment);

@@ -186,7 +186,9 @@ async fn subscription_worker_loop(
                             }
                         },
                         Err(e) => {
-                            log::error!("Failed to get DB connection for initialisation status: {e:?}");
+                            log::error!(
+                                "Failed to get DB connection for initialisation status: {e:?}"
+                            );
                         }
                     }
                 }

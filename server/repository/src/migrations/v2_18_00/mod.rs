@@ -1,7 +1,6 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
-mod add_ancillary_item_table;
 mod add_base_population_to_demographic_projection;
 mod add_cold_room_mapping_properties;
 mod add_created_datetime_to_asset_log;
@@ -21,7 +20,6 @@ impl Migration for V2_18_00 {
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
-            Box::new(add_ancillary_item_table::Migrate),
             Box::new(add_base_population_to_demographic_projection::Migrate),
             Box::new(add_date_property_value_type::Migrate),
             Box::new(add_cold_room_mapping_properties::Migrate),

@@ -195,6 +195,12 @@ fragment StockLineReducedBelowZeroError on StockLineReducedBelowZero {
   __typename
   stockLine {
     id
+    itemId
+    itemName
+    batch
+    item {
+      code
+    }
     totalNumberOfPacks
     availableNumberOfPacks
   }
@@ -215,6 +221,15 @@ fragment SnapshotCountCurrentCountMismatchLineError on SnapshotCountCurrentCount
   __typename
   stocktakeLine {
     id
+    itemId
+    itemName
+    batch
+    item {
+      code
+    }
+    stockLine {
+      id
+    }
   }
   description
 }

@@ -90,12 +90,7 @@ pub fn update_purchase_order_line(
 
                 // Update purchase order status
                 if purchase_order.status == PurchaseOrderStatus::Sent {
-                    update_order_status_on_adjusted_quantity_change(
-                        ctx,
-                        store_id,
-                        purchase_order,
-                        user_has_auth_permission,
-                    )?;
+                    update_order_status_on_adjusted_quantity_change(ctx, store_id, purchase_order)?;
                 }
 
                 // Handle line status change to New separately. The Purchase Order status may have already been changed by another line
@@ -142,17 +137,11 @@ fn update_order_status_on_adjusted_quantity_change(
     ctx: &ServiceContext,
     store_id: &str,
     purchase_order: PurchaseOrderRow,
-    user_has_auth_permission: Option<bool>,
 ) -> Result<(), UpdatePurchaseOrderLineInputError> {
     let purchase_order_input = create_purchase_order_input(&purchase_order.id);
 
-    update_purchase_order(
-        ctx,
-        store_id,
-        purchase_order_input,
-        user_has_auth_permission,
-    )
-    .map_err(|_| UpdatePurchaseOrderLineInputError::DatabaseError(RepositoryError::NotFound))?;
+    update_purchase_order(ctx, store_id, purchase_order_input)
+        .map_err(|_| UpdatePurchaseOrderLineInputError::DatabaseError(RepositoryError::NotFound))?;
 
     Ok(())
 }

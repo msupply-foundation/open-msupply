@@ -48,6 +48,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
             base_dir: "test_output".to_string(),
             machine_uid: None,
             override_is_central_server: false,
+            workers: None,
         },
         database: db_settings,
         sync: None,
@@ -76,6 +77,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         ledger_fix_trigger,
         site_is_initialise_trigger,
         settings.mail.clone(),
+        Some(settings.clone()),
         SubscriptionTriggerHandle::new_void(),
     ));
 
