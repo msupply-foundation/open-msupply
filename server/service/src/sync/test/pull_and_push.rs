@@ -48,7 +48,7 @@ async fn test_sync_pull_and_push() {
 
     // Get push cursor before inserting pull data (so that we can test push, excluding inserted mock data)
     let push_cursor = ChangelogRepository::new(&connection)
-        .latest_cursor()
+        .absolute_latest_cursor()
         .unwrap()
         + 1;
 
