@@ -229,3 +229,101 @@ psql "$DATABASE_URL" -f server/scripts/seed_perf_properties.postgres.sql
 
 The seed counts the file's hard-coded `generate_series(1, 100000)` / `WHERE
 i < 100000` bound as the default; edit it in place for direct runs.
+
+## Insert / delete / index-build performance
+
+`perf_sql_test.py` measures **read** latency (filter + sort). For **write**
+costs — bulk insert, bulk delete, and the "add a new indexed property to a
+huge existing table" case — use [`perf_insert_test.py`](perf_insert_test.py).
+
+For each `(backend, method, N)` it runs a 6-step lifecycle against
+dedicated per-method per-size tables (separate from the read-perf tables,
+so it can share a DB file with `perf_sql_test.py` without disturbing
+read data):
+
+| # | Op | What it measures |
+|---|---|---|
+| 1 | `insert_cold` | Bulk INSERT N records into an empty, unindexed table |
+| 2 | `create_index_cold` | CREATE INDEX over those N rows. The "add a new indexed property to a 100M-row `invoice_line` table" headline |
+| 3 | `delete_indexed` | DELETE all rows with the extra index present |
+| 4 | `insert_indexed` | Empty-but-indexed table, bulk INSERT N records (delta vs `insert_cold` ≈ per-row index maintenance) |
+| 5 | `drop_index` | Mostly trivial but recorded at all sizes |
+| 6 | `delete_unindexed` | DELETE all rows, no extra index |
+
+Methods (same names as `perf_sql_test.py`):
+
+- `legacy` — 1 INSERT per record into `properties` TEXT JSON
+- `legacyJsonb` — 1 INSERT per record into `properties_jsonb`
+- `v2` — 1 INSERT into a name-shaped table + 4 INSERTs into a
+  `property_v2_value`-shaped table per record (full fan-out, matches the
+  dense seed)
+
+Per-method per-size tables (`perf_ins_legacy_<N>`, `perf_ins_jsonb_<N>`,
+`perf_ins_v2_name_<N>`, `perf_ins_v2_value_<N>`) are dropped + recreated
+at the start of each lifecycle. v2's value table carries the same three
+app-level indexes the OMS schema ships with — so `insert_cold` for v2
+reflects the real prod baseline, not a bare table.
+
+### Running
+
+```sh
+# SQLite, full sweep, default sizes:
+python3 server/scripts/perf_insert_test.py \
+    --sqlite /tmp/perf-insert.sqlite
+
+# Both backends, custom sizes, fresh CSV:
+rm -f /tmp/perf_insert.csv
+python3 server/scripts/perf_insert_test.py \
+    --sqlite   /tmp/perf-insert.sqlite \
+    --postgres "postgresql://postgres@localhost:5432/perf_insert" \
+    --sizes    1000,10000,100000,300000,1000000 \
+    --csv-out  /tmp/perf_insert.csv
+```
+
+Defaults: `--sizes 1000,10000,100000,300000,1000000`, all three methods,
+`--csv-out /tmp/perf_insert_test.csv`. CSV is append-only — delete the
+file to start fresh.
+
+Filter to one method while iterating:
+
+```sh
+python3 server/scripts/perf_insert_test.py \
+    --sqlite /tmp/perf-insert.sqlite \
+    --sizes 100000 --methods v2
+```
+
+### Output
+
+- **Stdout** — per-op timing as the lifecycle runs, then a summary table
+  per backend (rows = N, columns = method, one table per op).
+- **CSV** — one row per `(backend, size, method, op, elapsed_ms)`. Each
+  op is timed once (no median-of-N), since at large N a single insert
+  already takes seconds and re-running 10× would burn an hour for not
+  much extra signal.
+
+### Plots
+
+`perf_insert_plot.py` reads the CSV and renders scaling lines (one
+subplot per op, one line per method) and optionally a per-size bar
+chart:
+
+```sh
+# Scaling lines (one subplot per op, log Y):
+python3 server/scripts/perf_insert_plot.py \
+    --csv /tmp/perf_insert.csv \
+    --out /tmp/perf_insert.png
+
+# Add a single-N bar chart (lifecycle at N=300k):
+python3 server/scripts/perf_insert_plot.py \
+    --csv /tmp/perf_insert.csv \
+    --out /tmp/perf_insert.png \
+    --bars-size 300000 \
+    --bars-out  /tmp/perf_insert_bars_300k.png
+```
+
+### Runtime heads-up
+
+v2 is roughly 7–10× the legacy/jsonb cost at every N (one name INSERT
+plus 4 value INSERTs, against a value table that's already carrying 3
+baseline indexes). At N=1,000,000 the full sweep against both backends
+with all three methods is on the order of 10–30 min.
