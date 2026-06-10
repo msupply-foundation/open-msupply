@@ -1,8 +1,11 @@
 use async_graphql::*;
+use graphql_core::dynamic_filter::{parse_dynamic_filter, validate_property_filter_keys};
 use graphql_core::pagination::PaginationInput;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_types::types::patient::{PatientFilterInput, PatientNode};
-use repository::{EqualFilter, PaginationOption, PatientFilter, PatientSort, PatientSortField};
+use repository::{
+    EqualFilter, NameCondition, PaginationOption, PatientFilter, PatientSort, PatientSortField,
+};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(SimpleObject)]
@@ -74,10 +77,27 @@ pub fn patients(
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
+    let filter = filter
+        .map(|filter| -> Result<PatientFilter> {
+            let dynamic_filter: Option<NameCondition::Inner> =
+                parse_dynamic_filter(filter.dynamic_filter.clone())?;
+            if let Some(condition) = &dynamic_filter {
+                validate_property_filter_keys(
+                    &context.connection,
+                    "patient",
+                    &condition.property_conditions(),
+                )?;
+            }
+            let mut filter = PatientFilter::from(filter);
+            filter.dynamic_filter = dynamic_filter;
+            Ok(filter)
+        })
+        .transpose()?;
+
     let patients = service_provider.patient_service.get_patients(
         &context,
         page.map(PaginationOption::from),
-        filter.map(PatientFilter::from),
+        filter,
         sort.and_then(|mut sort_list| sort_list.pop())
             .map(|sort| sort.to_domain()),
         Some(allowed_ctx),

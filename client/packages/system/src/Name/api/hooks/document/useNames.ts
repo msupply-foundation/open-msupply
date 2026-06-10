@@ -1,10 +1,21 @@
-import { useQuery, keepPreviousData, useUrlQueryParams } from '@openmsupply-client/common';
+import {
+  useQuery,
+  keepPreviousData,
+  useUrlQueryParams,
+  buildPropertyUrlFilterConfigs,
+  mapPropertyFilters,
+} from '@openmsupply-client/common';
 import { useNameApi } from '../utils/useNameApi';
+import { useNamePropertiesV2 } from './useNamePropertiesV2';
 
 export const useNames = (type: 'customer' | 'supplier') => {
+  const { data: properties } = useNamePropertiesV2();
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'name', dir: 'asc' },
+    filters: buildPropertyUrlFilterConfigs(properties ?? []),
   });
+  // Property filters travel to the API as the `dynamicFilter` condition AST
+  const filterBy = mapPropertyFilters(queryParams.filterBy, properties ?? []);
   const api = useNameApi();
   return {
     ...useQuery({
@@ -15,10 +26,11 @@ export const useNames = (type: 'customer' | 'supplier') => {
           first: queryParams.first,
           offset: queryParams.offset,
           sortBy: queryParams.sortBy,
+          filterBy,
           type,
         }),
 
-      placeholderData: keepPreviousData
+      placeholderData: keepPreviousData,
     }),
   };
 };

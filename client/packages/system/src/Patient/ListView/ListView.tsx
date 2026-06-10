@@ -15,6 +15,10 @@ import {
   ChipTableCell,
   usePreferences,
   NaiveDateCell,
+  buildPropertyColumns,
+  buildPropertyUrlFilterConfigs,
+  mapPropertyFilters,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -26,7 +30,9 @@ import { Toolbar } from './Toolbar';
 export const PatientListView = () => {
   const t = useTranslation();
   const { genderOptions } = usePreferences();
+  const { localisedDate } = useFormatDateTime();
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const { data: properties } = usePatient.document.propertiesV2();
   const {
     queryParams: { sortBy, filterBy, first, offset },
   } = useUrlQueryParams({
@@ -45,11 +51,13 @@ export const PatientListView = () => {
       { key: 'lastName' },
       { key: 'programEnrolmentName' },
       { key: 'nextOfKinName' },
+      ...buildPropertyUrlFilterConfigs(properties ?? []),
     ],
   });
   const { store } = useAuthContext();
   const queryParams = {
-    filterBy,
+    // Property filters travel to the API as the `dynamicFilter` condition AST
+    filterBy: mapPropertyFilters(filterBy, properties ?? []),
     offset,
     first,
     sortBy,
@@ -153,8 +161,12 @@ export const PatientListView = () => {
         size: 80,
         align: 'center',
       },
+      ...buildPropertyColumns<PatientRowFragment>(
+        properties ?? [],
+        localisedDate
+      ),
     ],
-    [store?.preferences.omProgramModule, t]
+    [store?.preferences.omProgramModule, t, properties, localisedDate]
   );
 
   const { table } = usePaginatedMaterialTable({

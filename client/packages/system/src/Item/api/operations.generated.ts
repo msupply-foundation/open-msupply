@@ -274,6 +274,7 @@ export type ItemVariantFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
+    propertiesV2?: any | null;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   } | null;
   locationType?: {
@@ -466,6 +467,7 @@ export type ItemFragment = {
       isSupplier: boolean;
       isOnHold: boolean;
       name: string;
+      propertiesV2?: any | null;
       store?: { __typename: 'StoreNode'; id: string; code: string } | null;
     } | null;
     locationType?: {
@@ -711,6 +713,7 @@ export type ItemsWithStockLinesQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
+          propertiesV2?: any | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
         locationType?: {
@@ -876,6 +879,7 @@ export type ItemsWithStatsFragment = {
   defaultPackSize: number;
   isVaccine: boolean;
   doses: number;
+  propertiesV2?: any | null;
   availableStockOnHand: number;
   stats: {
     __typename: 'ItemStatsNode';
@@ -911,6 +915,7 @@ export type ItemsWithStatsQuery = {
       defaultPackSize: number;
       isVaccine: boolean;
       doses: number;
+      propertiesV2?: any | null;
       availableStockOnHand: number;
       stats: {
         __typename: 'ItemStatsNode';
@@ -1074,6 +1079,7 @@ export type ItemByIdQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
+          propertiesV2?: any | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
         locationType?: {
@@ -1213,6 +1219,7 @@ export type ItemVariantsQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
+          propertiesV2?: any | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
         locationType?: {
@@ -1390,6 +1397,7 @@ export type UpsertItemVariantMutation = {
               isSupplier: boolean;
               isOnHold: boolean;
               name: string;
+              propertiesV2?: any | null;
               store?: {
                 __typename: 'StoreNode';
                 id: string;
@@ -2040,6 +2048,7 @@ export const ItemsWithStatsFragmentDoc = gql`
     defaultPackSize
     isVaccine
     doses
+    propertiesV2
     availableStockOnHand(storeId: $storeId)
     stats(storeId: $storeId) {
       __typename
