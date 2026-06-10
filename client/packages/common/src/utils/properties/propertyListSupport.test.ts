@@ -67,13 +67,26 @@ describe('buildPropertyFilterDefinitions', () => {
     expect(definitions).toEqual([
       { type: 'text', name: 'Note', urlParameter: 'prop-note' },
       {
-        type: 'enum',
+        type: 'hierarchicalEnum',
         name: 'Category',
         urlParameter: 'prop-category',
-        // leaves only — the parent is not selectable
+        // whole hierarchy in display order — the parent is a non-selectable header
         options: [
-          { label: 'Leaf 1', value: 'leaf_1' },
-          { label: 'Leaf 2', value: 'leaf_2' },
+          { id: 'parent', name: 'Parent', depth: 0, selectable: false },
+          {
+            id: 'leaf_1',
+            name: 'Leaf 1',
+            parentOptionId: 'parent',
+            depth: 1,
+            selectable: true,
+          },
+          {
+            id: 'leaf_2',
+            name: 'Leaf 2',
+            parentOptionId: 'parent',
+            depth: 1,
+            selectable: true,
+          },
         ],
       },
       {

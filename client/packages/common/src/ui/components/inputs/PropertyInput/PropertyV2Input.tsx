@@ -1,7 +1,7 @@
 import React from 'react';
 import { BasicTextInput } from '../TextInput';
 import { Checkbox } from '../Checkbox';
-import { Autocomplete } from '../Autocomplete';
+import { HierarchicalOptionAutocomplete } from '../Autocomplete';
 import { PropertyInput } from './PropertyInput';
 import { PropertyNodeValueTypeV2 } from '@common/types';
 import { useFormatDateTime } from '@common/intl';
@@ -76,38 +76,15 @@ export const PropertyV2Input = ({
       existing && !hierarchical.some(o => o.id === existing.id)
         ? [{ ...existing, depth: 0, selectable: true }, ...hierarchical]
         : hierarchical;
-    const current = options.find(o => o.id === value) ?? null;
 
     return (
-      <Autocomplete
+      <HierarchicalOptionAutocomplete
         width="100%"
         options={options}
-        value={current}
-        getOptionLabel={option => option.name}
-        getOptionDisabled={option => !option.selectable}
-        isOptionEqualToValue={(option, v) => option.id === v.id}
-        renderOption={(props, option) => (
-          <li
-            {...props}
-            key={option.id}
-            style={{
-              paddingLeft: 16 + option.depth * 20,
-              fontWeight: option.selectable ? undefined : 600,
-              // Headers are dimmed and the MUI disabled styling removes the
-              // pointer; keep them readable as group labels.
-              opacity: option.selectable ? undefined : 0.85,
-            }}
-          >
-            {option.name}
-          </li>
-        )}
+        value={typeof value === 'string' ? value : null}
         disabled={disabled || !editable}
         clearable={editable}
-        onChange={
-          editable
-            ? (_e, option) => onChange?.(option?.id ?? null)
-            : undefined
-        }
+        onChange={editable ? id => onChange?.(id) : undefined}
       />
     );
   }
