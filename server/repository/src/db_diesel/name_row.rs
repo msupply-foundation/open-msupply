@@ -1,8 +1,8 @@
 use super::{
     currency_row::currency, location_type_row::location_type,
     master_list_name_join::master_list_name_join, master_list_row::master_list,
-    name_store_join::name_store_join, program_row::program, store_row::store, NameType,
-    StorageConnection,
+    name_store_join::name_store_join, program_row::program, properties_json::JsonValue,
+    store_row::store, NameType, StorageConnection,
 };
 use crate::{
     item_link, name_link, repository_error::RepositoryError, ChangelogRepository, Delete,
@@ -54,7 +54,8 @@ table! {
         hsh_name -> Nullable<Text>,
         margin -> Nullable<Double>,
         freight_factor -> Nullable<Double>,
-        currency_id -> Nullable<Text>
+        currency_id -> Nullable<Text>,
+        properties_v2 -> Nullable<crate::db_diesel::properties_json::PropertiesJson>,
     }
 }
 
@@ -201,6 +202,8 @@ pub struct NameRow {
     pub margin: Option<f64>,
     pub freight_factor: Option<f64>,
     pub currency_id: Option<String>,
+    #[ts(skip)]
+    pub properties_v2: Option<JsonValue>,
 }
 #[derive(
     Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
@@ -341,6 +344,7 @@ impl<'a> NameRowRepository<'a> {
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
+
 }
 
 impl NameRowType {
@@ -471,6 +475,8 @@ mod test {
         NameRow, NameRowRepository,
     };
 
+    // Covers the v2.01 legacy `name.properties` column. A NameRow upsert must
+    // not clobber values written via `update_properties()`.
     #[actix_rt::test]
     async fn name_sync_update_does_not_overwrite_properties() {
         let (_, connection, _, _) = setup_all(
@@ -494,7 +500,9 @@ mod test {
         let properties = Some("{\"key\": \"test\"}".to_string());
 
         // Add properties to name
-        row_repo.update_properties(&row.id, &properties).unwrap();
+        row_repo
+            .update_properties(&row.id, &properties)
+            .unwrap();
 
         let name_filter = NameFilter::new().id(EqualFilter::equal_to(row.id.to_string()));
         let name = name_repo
@@ -515,5 +523,28 @@ mod test {
 
         // Properties have not been overwritten
         assert_eq!(name.properties, properties);
+    }
+
+    // Round-trip the new properties-v2 JSONB column through NameRow on both
+    // PG (native Jsonb) and SQLite (TEXT Json). Verifies the PropertiesJson
+    // sql_type alias and serde_json::Value field wiring.
+    #[actix_rt::test]
+    async fn name_row_properties_round_trip() {
+        let (_, connection, _, _) =
+            setup_all("name_row_properties_round_trip", MockDataInserts::none()).await;
+
+        let row_repo = NameRowRepository::new(&connection);
+
+        let properties = serde_json::json!({"foo": "bar", "n": 42, "nested": [1, 2, 3]});
+        let row = NameRow {
+            id: uuid(),
+            properties_v2: Some(properties.clone()),
+            ..Default::default()
+        };
+
+        row_repo.upsert_one(&row).unwrap();
+
+        let fetched = row_repo.find_one_by_id(&row.id).unwrap().unwrap();
+        assert_eq!(fetched.properties_v2, Some(properties));
     }
 }

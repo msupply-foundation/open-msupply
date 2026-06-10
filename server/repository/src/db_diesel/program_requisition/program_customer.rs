@@ -82,7 +82,8 @@ impl<'a> ProgramCustomerRepository<'a> {
             .select((
                 // Same as NameRepository
                 name::table::all_columns(),
-                name_oms_fields_alias.fields((name_oms_fields::id, name_oms_fields::properties)),
+                name_oms_fields_alias
+                    .fields((name_oms_fields::id, name_oms_fields::properties)),
                 name_store_join::table::all_columns().nullable(),
                 store::table::all_columns().nullable(),
                 program::table::all_columns().nullable().assume_not_null(),
