@@ -53,9 +53,21 @@ export const StocktakeLineEditTabs: FC<
           centered
           onChange={(_, v) => setCurrentTab(v)}
         >
-          <Tab value={Tabs.Batch} label={`${t('label.batch')} (Ctrl+1)`} />
-          <Tab value={Tabs.Pricing} label={`${t('label.pricing')} (Ctrl+2)`} />
-          <Tab value={Tabs.Other} label={`${t('heading.other')} (Ctrl+3)`} />
+          <Tab
+            aria-keyshortcuts="Control+1"
+            value={Tabs.Batch}
+            label={t('label.batch')}
+          />
+          <Tab
+            aria-keyshortcuts="Control+2"
+            value={Tabs.Pricing}
+            label={t('label.pricing')}
+          />
+          <Tab
+            aria-keyshortcuts="Control+3"
+            value={Tabs.Other}
+            label={t('heading.other')}
+          />
         </TabList>
         <Box flex={1} justifyContent="flex-end" display="flex">
           <ButtonWithIcon

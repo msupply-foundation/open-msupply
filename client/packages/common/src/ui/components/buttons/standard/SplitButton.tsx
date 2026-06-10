@@ -40,6 +40,7 @@ export interface SplitButtonProps<T> {
   openFrom?: PopoverOrigin['vertical'];
   isLoadingType?: boolean;
   isLoading?: boolean;
+  dataShortcut?: string;
 }
 
 export const SplitButton = <T,>({
@@ -57,6 +58,7 @@ export const SplitButton = <T,>({
   openFrom = 'top',
   isLoadingType = false,
   isLoading = false,
+  dataShortcut,
 }: SplitButtonProps<T>) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const buttonLabel = staticLabel ?? selectedOption.label;
@@ -89,6 +91,7 @@ export const SplitButton = <T,>({
     <>
       <Tooltip title={label}>
         <ButtonGroup
+          aria-keyshortcuts={dataShortcut}
           color={color}
           variant="outlined"
           aria-label={ariaLabel}
