@@ -48,6 +48,7 @@ export type NameFragment = {
   phone?: string | null;
   website?: string | null;
   properties: string;
+  propertiesV2?: any | null;
   hshCode?: string | null;
   hshName?: string | null;
   margin?: number | null;
@@ -63,6 +64,22 @@ export type PropertyFragment = {
   name: string;
   allowedValues?: string | null;
   valueType: Types.PropertyNodeValueType;
+};
+
+export type PropertyV2Fragment = {
+  __typename: 'PropertyV2Node';
+  id: string;
+  key: string;
+  name: string;
+  valueType: Types.PropertyNodeValueTypeV2;
+  isLegacy: boolean;
+  options: Array<{
+    __typename: 'PropertyOptionV2Node';
+    id: string;
+    key: string;
+    name: string;
+    parentOptionId?: string | null;
+  }>;
 };
 
 export type NamesQueryVariables = Types.Exact<{
@@ -152,6 +169,7 @@ export type NameByIdQuery = {
       phone?: string | null;
       website?: string | null;
       properties: string;
+      propertiesV2?: any | null;
       hshCode?: string | null;
       hshName?: string | null;
       margin?: number | null;
@@ -190,6 +208,33 @@ export type NamePropertiesQuery = {
   };
 };
 
+export type NamePropertiesV2QueryVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type NamePropertiesV2Query = {
+  __typename: 'Queries';
+  propertiesV2: {
+    __typename: 'PropertyV2Connector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'PropertyV2Node';
+      id: string;
+      key: string;
+      name: string;
+      valueType: Types.PropertyNodeValueTypeV2;
+      isLegacy: boolean;
+      options: Array<{
+        __typename: 'PropertyOptionV2Node';
+        id: string;
+        key: string;
+        name: string;
+        parentOptionId?: string | null;
+      }>;
+    }>;
+  };
+};
+
 export type UpdateNamePropertiesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.UpdateNamePropertiesInput;
@@ -219,6 +264,7 @@ export type UpdateNamePropertiesMutation = {
         phone?: string | null;
         website?: string | null;
         properties: string;
+        propertiesV2?: any | null;
         hshCode?: string | null;
         hshName?: string | null;
         margin?: number | null;
@@ -291,6 +337,7 @@ export const NameFragmentDoc = gql`
       code
     }
     properties
+    propertiesV2
     hshCode
     hshName
     margin
@@ -308,6 +355,21 @@ export const PropertyFragmentDoc = gql`
     name
     allowedValues
     valueType
+  }
+`;
+export const PropertyV2FragmentDoc = gql`
+  fragment PropertyV2 on PropertyV2Node {
+    id
+    key
+    name
+    valueType
+    isLegacy
+    options {
+      id
+      key
+      name
+      parentOptionId
+    }
   }
 `;
 export const NamesDocument = gql`
@@ -393,6 +455,20 @@ export const NamePropertiesDocument = gql`
     }
   }
   ${PropertyFragmentDoc}
+`;
+export const NamePropertiesV2Document = gql`
+  query namePropertiesV2 {
+    propertiesV2(filter: { tableName: { equalTo: "name" } }) {
+      ... on PropertyV2Connector {
+        __typename
+        totalCount
+        nodes {
+          ...PropertyV2
+        }
+      }
+    }
+  }
+  ${PropertyV2FragmentDoc}
 `;
 export const UpdateNamePropertiesDocument = gql`
   mutation updateNameProperties(
@@ -502,6 +578,24 @@ export function getSdk(
             signal,
           }),
         'nameProperties',
+        'query',
+        variables
+      );
+    },
+    namePropertiesV2(
+      variables?: NamePropertiesV2QueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<NamePropertiesV2Query> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<NamePropertiesV2Query>({
+            document: NamePropertiesV2Document,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'namePropertiesV2',
         'query',
         variables
       );

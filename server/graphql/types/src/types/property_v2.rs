@@ -1,0 +1,197 @@
+use async_graphql::dataloader::DataLoader;
+use async_graphql::*;
+use graphql_core::loader::PropertyOptionsV2ByPropertyIdLoader;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::ContextExt;
+use repository::{PropertyOptionV2Row, PropertyV2Row};
+use serde::Serialize;
+use service::ListResult;
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum PropertyNodeValueTypeV2 {
+    Number,
+    Text,
+    Date,
+    Real,
+    Option,
+    Boolean,
+    /// A value type configured on a newer central that this site doesn't yet
+    /// recognise (the repository enum's `Other(String)` catch-all). Clients
+    /// should treat it as opaque, e.g. render as read-only text. Mapped
+    /// manually rather than via `#[graphql(remote)]` because the GraphQL enum
+    /// can't carry the captured string payload.
+    Other,
+}
+
+impl From<repository::PropertyValueTypeV2> for PropertyNodeValueTypeV2 {
+    fn from(value: repository::PropertyValueTypeV2) -> Self {
+        use repository::PropertyValueTypeV2 as RepoType;
+        match value {
+            RepoType::Number => Self::Number,
+            RepoType::Text => Self::Text,
+            RepoType::Date => Self::Date,
+            RepoType::Real => Self::Real,
+            RepoType::Option => Self::Option,
+            RepoType::Boolean => Self::Boolean,
+            RepoType::Other(_) => Self::Other,
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub struct PropertyV2Node {
+    pub property: PropertyV2Row,
+}
+
+#[derive(PartialEq, Debug)]
+pub struct PropertyOptionV2Node {
+    pub option: PropertyOptionV2Row,
+}
+
+#[derive(SimpleObject)]
+pub struct PropertyV2Connector {
+    pub total_count: u32,
+    pub nodes: Vec<PropertyV2Node>,
+}
+
+#[derive(Union)]
+pub enum PropertiesV2Response {
+    Response(PropertyV2Connector),
+}
+
+#[Object]
+impl PropertyV2Node {
+    pub async fn id(&self) -> &str {
+        &self.property.id
+    }
+    pub async fn key(&self) -> &str {
+        &self.property.key
+    }
+    pub async fn name(&self) -> &str {
+        &self.property.name
+    }
+    pub async fn value_type(&self) -> PropertyNodeValueTypeV2 {
+        PropertyNodeValueTypeV2::from(self.property.value_type.clone())
+    }
+    pub async fn is_legacy(&self) -> bool {
+        self.property.is_legacy
+    }
+
+    /// Options for OPTION-type properties. Empty list for any other value
+    /// type. Resolved via dataloader so a list of N properties triggers a
+    /// single batched lookup.
+    pub async fn options(&self, ctx: &Context<'_>) -> Result<Vec<PropertyOptionV2Node>> {
+        let loader = ctx.get_loader::<DataLoader<PropertyOptionsV2ByPropertyIdLoader>>();
+        let options = loader
+            .load_one(self.property.id.clone())
+            .await
+            .map_err(StandardGraphqlError::from_repository_error)?
+            .unwrap_or_default();
+        Ok(options.into_iter().map(PropertyOptionV2Node::from_domain).collect())
+    }
+}
+
+#[Object]
+impl PropertyOptionV2Node {
+    pub async fn id(&self) -> &str {
+        &self.option.id
+    }
+    pub async fn property_id(&self) -> &str {
+        &self.option.property_id
+    }
+    pub async fn key(&self) -> &str {
+        &self.option.key
+    }
+    pub async fn name(&self) -> &str {
+        &self.option.name
+    }
+    pub async fn parent_option_id(&self) -> &Option<String> {
+        &self.option.parent_option_id
+    }
+}
+
+impl PropertyV2Node {
+    pub fn from_domain(property: PropertyV2Row) -> PropertyV2Node {
+        PropertyV2Node { property }
+    }
+}
+
+impl PropertyOptionV2Node {
+    pub fn from_domain(option: PropertyOptionV2Row) -> PropertyOptionV2Node {
+        PropertyOptionV2Node { option }
+    }
+}
+
+impl PropertyV2Connector {
+    pub fn from_domain(result: ListResult<PropertyV2Row>) -> PropertyV2Connector {
+        PropertyV2Connector {
+            total_count: result.count,
+            nodes: result.rows.into_iter().map(PropertyV2Node::from_domain).collect(),
+        }
+    }
+}
+
+/// Filters a raw `properties_v2` JSONB blob down to keys allowed for a given
+/// table. Stray keys (not defined in `property_v2`, soft-deleted, or with a
+/// `property_table_v2.is_visible = false`) are dropped. Non-object JSON is
+/// returned untouched — that shape isn't expected, but better than silently
+/// dropping data.
+pub fn filter_properties_v2(
+    raw: serde_json::Value,
+    allowed_keys: &std::collections::HashSet<String>,
+) -> serde_json::Value {
+    match raw {
+        serde_json::Value::Object(map) => {
+            let filtered: serde_json::Map<String, serde_json::Value> = map
+                .into_iter()
+                .filter(|(k, _)| allowed_keys.contains(k))
+                .collect();
+            serde_json::Value::Object(filtered)
+        }
+        other => other,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashSet;
+
+    use serde_json::json;
+
+    use super::filter_properties_v2;
+
+    fn allowed(keys: &[&str]) -> HashSet<String> {
+        keys.iter().map(|s| s.to_string()).collect()
+    }
+
+    #[test]
+    fn drops_stray_keys() {
+        let raw = json!({ "custom_1": "abc", "stray": "xyz" });
+        let allowed = allowed(&["custom_1"]);
+        assert_eq!(filter_properties_v2(raw, &allowed), json!({ "custom_1": "abc" }));
+    }
+
+    #[test]
+    fn keeps_all_when_all_allowed() {
+        let raw = json!({ "a": 1, "b": 2 });
+        let allowed = allowed(&["a", "b"]);
+        assert_eq!(filter_properties_v2(raw.clone(), &allowed), raw);
+    }
+
+    #[test]
+    fn empty_object_when_nothing_allowed() {
+        let raw = json!({ "a": 1 });
+        let allowed = allowed(&[]);
+        assert_eq!(filter_properties_v2(raw, &allowed), json!({}));
+    }
+
+    #[test]
+    fn passes_through_non_object() {
+        // Defensive — writes go through Map-shaped builders, but if a non-object
+        // ever sits in the column we don't want to silently drop it.
+        let raw = json!("just a string");
+        let allowed = allowed(&["anything"]);
+        assert_eq!(filter_properties_v2(raw.clone(), &allowed), raw);
+    }
+}

@@ -73,6 +73,7 @@ pub mod pricing;
 pub mod print;
 pub mod printer;
 pub mod processors;
+pub mod property_v2;
 pub mod program;
 pub mod programs;
 pub mod purchase_order;

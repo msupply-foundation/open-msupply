@@ -16,6 +16,7 @@ import {
 import { SUPPLY_LEVEL_KEY } from '@openmsupply-client/host/src/api/hooks/settings/namePropertyKeys';
 import { useName } from '../api';
 import { NameRenderer } from '../Components';
+import { NamePropertiesV2 } from './NamePropertiesV2';
 
 interface DetailsProps {
   nameId: string;
@@ -209,6 +210,10 @@ export const Details = ({ nameId, type = 'customer' }: DetailsProps) => {
               }}
             />
           )}
+          <NamePropertiesV2
+            properties={data?.propertiesV2}
+            labelWidthPercentage={19}
+          />
         </Box>
       </Box>
     </DetailContainer>
