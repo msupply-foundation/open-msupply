@@ -4563,20 +4563,17 @@ else
 	end
 end
 
-queryResult = Service.Query("Open mSupply Server", "omsupply-server");
-if (queryResult == SERVICE_NOT_FOUND) then
-	-- Delete unchoosen app file (.exe) by a user
-	if (omSupplyServerDatabase == "sqlite") then
-		Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
-		File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"));
-		File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-cli-postgres.exe"));
-		File.Delete(SessionVar.Expand("%AppFolder%\\test-connection-postgres.exe"));
-	else
-		Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
-		File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"));
-		File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-cli-sqlite.exe"));
-		File.Delete(SessionVar.Expand("%AppFolder%\\test-connection-sqlite.exe"));
-	end
+-- Delete unchoosen app file (.exe) by a user
+if (omSupplyServerDatabase == "sqlite") then
+	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
+	File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"));
+	File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-cli-postgres.exe"));
+	File.Delete(SessionVar.Expand("%AppFolder%\\test-connection-postgres.exe"));
+else
+	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
+	File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"));
+	File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-cli-sqlite.exe"));
+	File.Delete(SessionVar.Expand("%AppFolder%\\test-connection-sqlite.exe"));
 end
 
 -- set the startup to Automatic (Delayed Start) (not possible with a service startup type enum, it requires the flag to be set)
