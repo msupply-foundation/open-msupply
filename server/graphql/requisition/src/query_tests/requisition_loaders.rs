@@ -3,7 +3,7 @@ mod test {
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::mock::{
         mock_invoice1_linked_to_requisition, mock_invoice2_linked_to_requisition,
-        mock_invoice3_linked_to_requisition, mock_name_a, mock_name_b,
+        mock_invoice3_linked_to_requisition, mock_item_a, mock_name_a, mock_name_b,
         mock_new_response_requisition_test, mock_request_draft_requisition_all_fields,
         mock_response_draft_requisition_all_fields, MockDataInserts,
     };
@@ -193,7 +193,10 @@ mod test {
                          "nodes": [{
                             "id": &response_requisition.lines[0].id,
                             "itemId":&response_requisition.lines[0].item_id,
-                            "itemName": &response_requisition.lines[0].item_name,
+                            // The resolver falls back to item.name when the row's
+                            // item_name is empty (#11843 — the mock fixture
+                            // leaves it as the Default, i.e. "").
+                            "itemName": &mock_item_a().name,
                             "requestedQuantity": &response_requisition.lines[0].requested_quantity,
                             "supplyQuantity": &response_requisition.lines[0].supply_quantity,
                             "suggestedQuantity": &response_requisition.lines[0].suggested_quantity,
