@@ -17,9 +17,11 @@ import {
   useAuthContext,
   UserPermission,
   useIsCentralServerApi,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { MultiChoice, getMultiChoiceOptions } from '../Components/MultiChoice';
 import { EditCustomTranslations } from '../Components/CustomTranslations/CustomTranslationsModal';
+import { EditCustomTranslationsV2 } from '../Components/CustomTranslations/CustomTranslationsV2Modal';
 import { EditBackdating } from '../Components/EditBackdating';
 import { EditWarningWhenMissingRecentStocktakeData } from '../Components/EditWarningWhenMissingRecentStocktakeData';
 import { PreferenceLabelRow } from './PreferenceLabelRow';
@@ -52,8 +54,15 @@ export const EditPreference = ({
     !isCentralServer ||
     !userHasPermission(UserPermission.EditCentralData);
 
-  const preferenceLabel =
-    label ?? t(`preference.${preference.key}` as LocaleKey);
+  // v2 custom translations reuse the legacy "Custom translations" label so it
+  // looks the same to users (and is already translated in every language). The
+  // legacy v1 editor is hidden, so there's no clash.
+  const labelKey =
+    preference.key === PreferenceKey.CustomTranslationsV2
+      ? PreferenceKey.CustomTranslations
+      : preference.key;
+
+  const preferenceLabel = label ?? t(`preference.${labelKey}` as LocaleKey);
 
   // The preference.value only updates after mutation completes and cache
   // is invalidated - use local state for fast UI change
@@ -201,6 +210,22 @@ export const EditPreference = ({
             <EditCustomTranslations
               value={preference.value}
               update={update}
+              disabled={disabled}
+            />
+          }
+          isLast={isLast}
+        />
+      );
+
+    case PreferenceValueNodeType.CustomTranslationsV2:
+      return (
+        <PreferenceLabelRow
+          label={preferenceLabel}
+          Input={
+            // v2 saves via its own mutation (needs the editing language), so
+            // the generic `update` isn't passed down.
+            <EditCustomTranslationsV2
+              value={preference.value}
               disabled={disabled}
             />
           }

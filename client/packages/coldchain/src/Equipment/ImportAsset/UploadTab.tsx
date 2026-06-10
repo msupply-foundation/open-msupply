@@ -320,7 +320,7 @@ export const EquipmentUploadTab = ({
       );
       addCell(
         'status',
-        'label.status',
+        'label.functional-status',
         status =>
           parseStatusFromString(status, t) ?? AssetLogStatusNodeType.Functioning
       );

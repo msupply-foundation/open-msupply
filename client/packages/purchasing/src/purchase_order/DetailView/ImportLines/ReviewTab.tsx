@@ -55,12 +55,6 @@ export const ReviewTab = ({
         filterVariant: 'range-slider',
       },
       {
-        accessorKey: 'unit',
-        header: t('label.unit'),
-        size: 90,
-        enableColumnFilter: true,
-      },
-      {
         accessorKey: 'supplierItemCode',
         header: t('label.supplier-item-code'),
         size: 90,
