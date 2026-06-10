@@ -293,7 +293,7 @@ export const StockListView = () => {
       <NothingHere
         body={t('error.no-stock')}
         onCreate={onOpen}
-        buttonText={t('button.add-new-stock')}
+        buttonText={t('button.new-stock')}
       />
     ),
   });
