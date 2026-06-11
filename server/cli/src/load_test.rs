@@ -143,7 +143,6 @@ struct OmsCentralFullSyncStatus {
 impl LoadTest {
     pub async fn run(&self) -> anyhow::Result<()> {
         use tokio::process::Command;
-        use util::hash::sha256;
 
         println!("Starting load test with the following parameters:");
         let msupply_central_test_url = format!("{}/{}", self.msupply_central_url, TEST_API);
@@ -154,6 +153,12 @@ impl LoadTest {
         println!("Number of Sites: {}", self.sites);
         println!("Requisition Lines: {}", self.lines);
         println!("Duration: {} seconds", self.duration);
+
+        // Fail fast if either central server is misconfigured. Without this a bad URL or wrong
+        // credential only surfaces deep into setup — after the output dir has been wiped and sites
+        // and items have been created on mSupply central.
+        println!("Checking central server connections");
+        self.validate_central_servers().await?;
 
         let _ = std::fs::remove_dir_all(&self.output_dir);
         let client = Client::new();
@@ -312,6 +317,99 @@ impl LoadTest {
         Ok(())
     }
 
+    /// Verify, before doing any setup, that both central servers are reachable with valid
+    /// credentials: the mSupply central test-site basic-auth credentials are accepted, and an OMS
+    /// central bearer token can be obtained. Each check uses the exact same auth the rest of the
+    /// test relies on, so a pass here means the later requests will authenticate too.
+    async fn validate_central_servers(&self) -> Result<(), anyhow::Error> {
+        self.validate_msupply_central().await?;
+        self.validate_oms_central().await?;
+        Ok(())
+    }
+
+    /// Check the mSupply central URL is reachable and the test-site credentials are accepted, via a
+    /// read-only `sync/v5/site` GET (the same basic auth — site name + sha256 password — that
+    /// `create_sites`/`create_items` use, but without mutating anything).
+    async fn validate_msupply_central(&self) -> Result<(), anyhow::Error> {
+        let url = format!("{}/sync/v5/site", self.msupply_central_url);
+        let username = self.test_site_name.as_ref().unwrap();
+        let password = sha256(self.test_site_pass.as_ref().unwrap());
+
+        let client = Client::builder()
+            .timeout(Duration::from_secs(30))
+            .build()
+            .expect("Failed to build validation HTTP client");
+
+        let response = client
+            .get(&url)
+            .header("app-name", "load_test")
+            .header("app-version", "0")
+            .header("msupply-site-uuid", "load_test")
+            .header("sync-version", "9001")
+            .basic_auth(username, Some(password))
+            .send()
+            .await
+            .map_err(|e| {
+                anyhow!(
+                    "mSupply central is not reachable at '{}': {}",
+                    self.msupply_central_url,
+                    format_reqwest_error(&e)
+                )
+            })?;
+
+        let status = response.status();
+        if status == reqwest::StatusCode::UNAUTHORIZED || status == reqwest::StatusCode::FORBIDDEN {
+            return Err(anyhow!(
+                "mSupply central rejected the credentials for site '{}' (HTTP {})",
+                username,
+                status
+            ));
+        }
+        if !status.is_success() {
+            let body = response.text().await.unwrap_or_default();
+            return Err(anyhow!(
+                "mSupply central at {} returned HTTP {}: {}",
+                url,
+                status,
+                body
+            ));
+        }
+
+        println!(
+            "mSupply central reachable and credentials valid ({})",
+            self.msupply_central_url
+        );
+        Ok(())
+    }
+
+    /// Check the OMS central URL is reachable and the user credentials are valid by logging in for
+    /// a bearer token — the same login `wait_for_oms_central_synced` performs.
+    async fn validate_oms_central(&self) -> Result<(), anyhow::Error> {
+        let url = reqwest::Url::parse(&self.oms_central_url)
+            .map_err(|e| anyhow!("Invalid OMS central url '{}': {}", self.oms_central_url, e))?;
+
+        crate::graphql::Api::new_with_token(
+            url,
+            self.oms_central_username.clone(),
+            self.oms_central_password.clone(),
+        )
+        .await
+        .map_err(|e| {
+            anyhow!(
+                "Could not authenticate with OMS central at '{}' as user '{}': {}",
+                self.oms_central_url,
+                self.oms_central_username,
+                e
+            )
+        })?;
+
+        println!(
+            "OMS central reachable and credentials valid ({})",
+            self.oms_central_url
+        );
+        Ok(())
+    }
+
     /// Wait until OMS central has synced the freshly-created sites/stores/items from mSupply
     /// central. The remotes sync v7 solely from OMS central, so it must hold this data (and the
     /// site rows used for auth) before they initialise. OMS central is a central server, so its
@@ -427,7 +525,7 @@ impl LoadTest {
             .header("app-name", "load_test")
             .header("app-version", "0")
             .header("msupply-site-uuid", "load_test")
-            .header("sync-version", "9")
+            .header("sync-version", "9001")
             .header("content-length", body.len())
             .basic_auth(test_site_name, test_site_pass.to_owned())
             .body(body)
@@ -609,7 +707,7 @@ async fn create_sites(
             .header("app-name", "load_test")
             .header("app-version", "0")
             .header("msupply-site-uuid", "load_test")
-            .header("sync-version", "load_test")
+            .header("sync-version", "9001")
             .header("content-length", body.len())
             .basic_auth(test_site_name, test_site_pass.to_owned())
             .body(body)
