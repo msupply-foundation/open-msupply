@@ -133,6 +133,16 @@ impl SyncApiError {
     pub(crate) fn is_unknown(&self) -> bool {
         matches!(self.source, SyncApiErrorVariantV5::Other(_))
     }
+
+    /// Central is still building the initial sync queue (common for large
+    /// legacy datasets); caller should poll instead of failing the sync.
+    pub(crate) fn is_initialisation_in_progress(&self) -> bool {
+        matches!(
+            &self.source,
+            SyncApiErrorVariantV5::ParsedError { source, .. }
+                if matches!(&source.code, SyncErrorCodeV5::Other(code) if code == "initialisation_in_progress")
+        )
+    }
 }
 
 #[cfg(test)]
@@ -326,5 +336,84 @@ mod test {
                 ..
             }
         );
+    }
+
+    /// `503 initialisation_in_progress` must be classified as benign so
+    /// `request_initialisation` polls instead of failing; others must not be.
+    #[actix_rt::test]
+    async fn test_is_initialisation_in_progress() {
+        // 503 with `initialisation_in_progress` code -> classified as in-progress
+        let mock_server = MockServer::start();
+        let url = mock_server.base_url();
+
+        mock_server.mock(|when, then| {
+            when.method(POST).path("/sync/v5/initialise");
+            then.status(503).body(
+                r#"{
+                    "error": {
+                        "code": "initialisation_in_progress",
+                        "message": "Initialisation in progress",
+                        "data": null
+                    }
+                }"#,
+            );
+        });
+
+        let result = create_api(&url, "", "")
+            .post_initialise()
+            .await
+            .expect_err("Should result in error");
+
+        // Sanity check it parsed into the expected `Other` code...
+        assert_matches!(
+            &result,
+            SyncApiError {
+                source: SyncApiErrorVariantV5::ParsedError {
+                    status: StatusCode::SERVICE_UNAVAILABLE,
+                    source: ParsedError {
+                        code: SyncErrorCodeV5::Other(_),
+                        ..
+                    }
+                },
+                ..
+            }
+        );
+
+        assert!(result.is_initialisation_in_progress());
+        assert!(!result.is_connection());
+        assert!(!result.is_unknown());
+
+        // A different 503 error code must NOT be treated as in-progress.
+        let mock_server = MockServer::start();
+        let url = mock_server.base_url();
+
+        mock_server.mock(|when, then| {
+            when.method(POST).path("/sync/v5/initialise");
+            then.status(503).body(
+                r#"{
+                    "error": {
+                        "code": "sync_is_running",
+                        "message": "Sync is already running - try again later",
+                        "data": null
+                    }
+                }"#,
+            );
+        });
+
+        let result = create_api(&url, "", "")
+            .post_initialise()
+            .await
+            .expect_err("Should result in error");
+
+        assert!(!result.is_initialisation_in_progress());
+
+        // A connection error must NOT be treated as in-progress either.
+        let result = create_api("http://localhost:9999", "", "")
+            .post_initialise()
+            .await
+            .expect_err("Should result in error");
+
+        assert!(!result.is_initialisation_in_progress());
+        assert!(result.is_connection());
     }
 }
