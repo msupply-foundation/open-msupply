@@ -38,6 +38,7 @@ pub(crate) mod item_direction;
 pub(crate) mod item_store_join;
 pub(crate) mod item_variant;
 pub(crate) mod item_warning_join;
+pub(crate) mod legacy_field_labels;
 pub(crate) mod location;
 pub(crate) mod location_movement;
 pub(crate) mod location_type;
@@ -61,9 +62,9 @@ pub(crate) mod preference;
 pub(crate) mod program_indicator;
 pub(crate) mod program_requisition_settings;
 pub(crate) mod property;
-pub(crate) mod property_v2;
 pub(crate) mod property_option_v2;
 pub(crate) mod property_table_v2;
+pub(crate) mod property_v2;
 pub(crate) mod purchase_order;
 pub(crate) mod purchase_order_line;
 pub(crate) mod reason;
@@ -151,6 +152,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         property_v2::boxed(),
         property_option_v2::boxed(),
         property_table_v2::boxed(),
+        legacy_field_labels::boxed(),
         location_type::boxed(),
         campaign::boxed(),
         contact::boxed(),
