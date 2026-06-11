@@ -23,10 +23,6 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.allow_tracking_of_stock_by_donor)
     }
 
-    pub async fn show_manufacturer(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.show_manufacturer)
-    }
-
     pub async fn gender_options(&self) -> Result<Vec<GenderTypeNode>> {
         let domain_genders = self.load_preference(&self.preferences.gender_options)?;
         let genders = domain_genders
@@ -274,7 +270,6 @@ impl PreferenceDescriptionNode {
 pub enum PreferenceKey {
     // Global preferences
     AllowTrackingOfStockByDonor,
-    ShowManufacturer,
     AuthorisePurchaseOrder,
     CustomTranslations,
     GenderOptions,
