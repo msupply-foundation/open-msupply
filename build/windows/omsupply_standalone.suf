@@ -3552,8 +3552,8 @@ a2F0aG1hbmR1MzEy</CodeSignCertificatePasswordSHA256>
 <CodeSignDescriptionURL>https://msupply.foundation</CodeSignDescriptionURL>
 <UseCustomIcon>1</UseCustomIcon>
 <CustomIconFile>#PROJECTFILEDIR#\omSupply.ico</CustomIconFile>
-<ResourceFileVersion>replace with version</ResourceFileVersion>
-<ResourceProductVersion>replace with version</ResourceProductVersion>
+<ResourceFileVersion>replace canonical version</ResourceFileVersion>
+<ResourceProductVersion>replace canonical version</ResourceProductVersion>
 <ResourceCompanyName>mSupply Foundation</ResourceCompanyName>
 <ResourceProductName>Open mSupply</ResourceProductName>
 <ResourceComments/>
