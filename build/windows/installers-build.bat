@@ -3,6 +3,8 @@
 
 @ECHO ##### Adjusting SUFS #####
 FOR /F "delims=*" %%i in ('more omSupply\version.txt') do SET versionTag=%%i
+for /F "delims=*" %%i in ('node getVersion.js') do set version=%%i
+
 @ECHO "current tag = %versionTag%"
 SET installersOutputFolder=%WORKSPACE%\installers
 
