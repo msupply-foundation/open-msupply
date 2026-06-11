@@ -302,6 +302,14 @@ pub async fn pull(
             Some(input.batch_size),
         )?;
 
+        // Load test analyses these logs
+        log::info!(
+            "sync_v7 pull site_id={} records={} remaining={}",
+            site.id,
+            batch.records.len(),
+            batch.remaining
+        );
+
         Ok(batch)
     })
     .await
@@ -432,6 +440,11 @@ pub async fn push(
     })
     .await
     .map_err(join_error)??;
+
+    // Load test analyses these logs
+    log::info!(
+        "sync_v7 push site_id={site_id} records={records_in_this_batch} remaining={remaining}"
+    );
 
     if remaining == 0 {
         spawn_integration(service_provider, site_id);
