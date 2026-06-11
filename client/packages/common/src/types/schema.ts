@@ -4469,6 +4469,7 @@ export type InvoiceFilterInput = {
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
+  invoiceNumberOrStatus?: InputMaybe<StringFilterInput>;
   isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
   linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
   linkedOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
