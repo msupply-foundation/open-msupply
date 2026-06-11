@@ -1,15 +1,14 @@
 use crate::sync::translations::{
-    item::ItemTranslation, requisition::RequisitionTranslation, utils::clear_invalid_fk,
+    item::ItemTranslation, requisition::RequisitionTranslation, FkField,
 };
 
 use util::sync_serde::{empty_str_as_option, empty_str_as_option_string, object_fields_as_option};
 
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository,
-    ReasonOptionRowRepository, RequisitionFilter, RequisitionLineRow, RequisitionLineRowDelete,
-    RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository, Row,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository, RequisitionFilter,
+    RequisitionLineRow, RequisitionLineRowDelete, RequisitionRepository, RnRFormLineFilter,
+    RnRFormLineRepository, Row, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
@@ -117,6 +116,7 @@ impl SyncTranslation for RequisitionLineTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyRequisitionLineRow>()?;
@@ -141,31 +141,23 @@ impl SyncTranslation for RequisitionLineTranslation {
             (None, None, None, None, None, None)
         };
 
-        let option_id = clear_invalid_fk(
-            connection,
-            "requisition_line",
-            &data.ID,
-            "option_id",
-            data.option_id,
-            |c, id| ReasonOptionRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
-    
-        let location_type_id = clear_invalid_fk(
-            connection,
-            "requisition_line",
-            &data.ID,
-            "location_type_id",
-            location_type_id,
-            |c, id| repository::LocationTypeRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        let fk_check = fk_checker.with_table(connection, "requisition_line", &data.ID);
+        let check_fk = fk_checker.with_table_required(connection, "requisition_line", &data.ID);
 
+        let option_id = fk_check(data.option_id, "option_id", FkField::ReasonOption)?;
+
+        let location_type_id =
+            fk_check(location_type_id, "location_type_id", FkField::LocationType)?;
 
         let result = RequisitionLineRow {
             id: data.ID.to_string(),
+<<<<<<< HEAD
             requisition_id: data.requisition_ID,
             item_id: data.item_ID,
+=======
+            requisition_id: check_fk(data.requisition_ID, "requisition_id", FkField::Requisition)?,
+            item_link_id: check_fk(data.item_ID, "item_link_id", FkField::ItemLink)?,
+>>>>>>> 8c6410ebb5 (All fks checked)
             requested_quantity: data.Cust_stock_order,
             suggested_quantity: data.suggested_quantity,
             supply_quantity: data.actualQuan,
@@ -345,8 +337,8 @@ mod tests {
         mock::MockDataInserts,
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::setup_all,
-        ChangelogCondition, ChangelogRepository, SyncAction, SyncRecordData,
-        CursorAndLimit, FilterBuilder, RowOrDelete,
+        ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RowOrDelete,
+        SyncAction, SyncRecordData,
     };
     use serde_json::json;
 
@@ -362,7 +354,11 @@ mod tests {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
 
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -434,7 +430,9 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "requisition_line".to_string(),
             record_id: "REQ_LINE_FK_INVALID".to_string(),
-            data: SyncRecordData(serde_json::from_str(r#"{
+            data: SyncRecordData(
+                serde_json::from_str(
+                    r#"{
                 "ID": "REQ_LINE_FK_INVALID",
                 "requisition_ID": "req_a",
                 "item_ID": "item_a",
@@ -464,13 +462,20 @@ mod tests {
                     "available_volume": null,
                     "location_type_id": "does_not_exist_location_type"
                 }
-            }"#).unwrap()),
+            }"#,
+                )
+                .unwrap(),
+            ),
             action: SyncAction::Upsert,
             ..Default::default()
         };
 
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
             .unwrap();
         let debug = format!("{result:?}");
         assert!(
@@ -484,9 +489,7 @@ mod tests {
             format!("expected location_type_id None; got:\n{debug}")
         );
 
-        let logs = SystemLogRowRepository::new(&connection)
-            .find_all()
-            .unwrap();
+        let logs = SystemLogRowRepository::new(&connection).find_all().unwrap();
         let fk_errors: Vec<_> = logs
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)

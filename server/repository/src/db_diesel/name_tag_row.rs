@@ -67,6 +67,14 @@ impl<'a> NameTagRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
+    pub fn check_exists_by_id(&self, id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            name_tag::table.filter(name_tag::id.eq(id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+
     pub fn find_one_by_name(&self, name: &str) -> Result<Option<NameTagRow>, RepositoryError> {
         let result = name_tag::table
             .filter(name_tag::name.like(name))

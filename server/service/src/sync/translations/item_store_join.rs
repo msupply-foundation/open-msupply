@@ -1,9 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use super::{utils::clear_invalid_location_id, PullTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, SyncTranslation};
 use crate::sync::translations::{
     item::ItemTranslation, location::LocationTranslation, store::StoreTranslation,
-
 };
 use repository::{ItemStoreJoinRow, StorageConnection, SyncBufferRow};
 use util::sync_serde::empty_str_as_option_string;
@@ -50,20 +49,31 @@ impl SyncTranslation for ItemStoreJoinTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyItemStoreJoinRow>()?;
 
-        let default_location_id = clear_invalid_location_id(connection, data.default_location_id)?;
+        let fk_check = fk_checker.with_table(connection, "item_store_join", &data.id);
+        let check_fk = fk_checker.with_table_required(connection, "item_store_join", &data.id);
 
         let result = ItemStoreJoinRow {
             id: data.id,
+<<<<<<< HEAD
             item_id: data.item_id,
             store_id: data.store_id,
+=======
+            item_link_id: check_fk(data.item_id, "item_link_id", FkField::ItemLink)?,
+            store_id: check_fk(data.store_id, "store_id", FkField::Store)?,
+>>>>>>> 8c6410ebb5 (All fks checked)
             default_sell_price_per_pack: data.default_sell_price_per_pack,
             ignore_for_orders: data.ignore_for_orders,
             margin: data.margin,
-            default_location_id,
+            default_location_id: fk_check(
+                data.default_location_id,
+                "default_location_id",
+                FkField::Location,
+            )?,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -85,7 +95,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

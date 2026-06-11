@@ -1,13 +1,11 @@
 use chrono::NaiveDateTime;
 use repository::{
-    ActivityLogRow, ActivityLogType, ChangelogRow, ChangelogTableName,
-    StorageConnection, SyncBufferRow,
-    Row,
-
+    ActivityLogRow, ActivityLogType, ChangelogRow, ChangelogTableName, Row, StorageConnection,
+    SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 use crate::sync::translations::store::StoreTranslation;
 use util::sync_serde::empty_str_as_option_string;
 
@@ -51,16 +49,19 @@ impl SyncTranslation for ActivityLogTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyActivityLogRow>()?;
+
+        let fk_check = fk_checker.with_table(connection, "om_activity_log", &data.id);
 
         let result = ActivityLogRow {
             id: data.id.to_string(),
             r#type: data.r#type,
             user_id: Some(data.user_id),
-            store_id: Some(data.store_id),
+            store_id: fk_check(Some(data.store_id), "store_id", FkField::Store)?,
             record_id: Some(data.record_id),
             datetime: data.datetime,
             changed_to: data.changed_to,
@@ -113,7 +114,11 @@ impl SyncTranslation for ActivityLogTranslation {
             changed_from,
         };
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 }
 
@@ -133,7 +138,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

@@ -9,7 +9,7 @@ use repository::{
 use serde::{Deserialize, Serialize};
 use util::constants::{APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30, MISSING_PROGRAM};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 use crate::sync::translations::{
     master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
     store::StoreTranslation,
@@ -241,6 +241,7 @@ impl SyncTranslation for RequisitionTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         conn: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let json_data = sync_record.deserialize::<serde_json::Value>()?;
@@ -299,12 +300,15 @@ impl SyncTranslation for RequisitionTranslation {
             None
         };
 
+        let fk_check = fk_checker.with_table(conn, "requisition", &data.ID);
+        let check_fk = fk_checker.with_table_required(conn, "requisition", &data.ID);
+
         let result = RequisitionRow {
             id: data.ID.to_string(),
             user_id: data.user_id,
             requisition_number: data.serial_number,
-            name_id: data.name_ID,
-            store_id: data.store_ID,
+            name_id: check_fk(data.name_ID, "name_link_id", FkField::NameLink)?,
+            store_id: check_fk(data.store_ID, "store_id", FkField::Store)?,
             r#type,
             status,
             created_datetime,
@@ -319,14 +323,18 @@ impl SyncTranslation for RequisitionTranslation {
             expected_delivery_date: data.expected_delivery_date,
             approval_status: data.approval_status.map(|s| s.to()),
             program_id,
-            period_id: data.periodID,
+            period_id: fk_check(data.periodID, "period_id", FkField::Period)?,
             order_type: data.orderType,
             is_emergency: data.is_emergency,
             created_from_requisition_id: data
                 .oms_fields
                 .clone()
                 .and_then(|f| f.created_from_requisition_id),
-            destination_customer_id: data.oms_fields.and_then(|f| f.destination_customer_id),
+            destination_customer_id: fk_check(
+                data.oms_fields.and_then(|f| f.destination_customer_id),
+                "destination_customer_link_id",
+                FkField::NameLink,
+            )?,
             ..Default::default()
         };
 
@@ -656,7 +664,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -728,8 +740,11 @@ mod tests {
         };
 
         assert!(translator.should_translate_from_sync_record(&sync_buffer_row));
-        let result =
-            translator.try_translate_from_upsert_sync_record(&connection, &sync_buffer_row);
+        let result = translator.try_translate_from_upsert_sync_record(
+            &connection,
+            &crate::sync::translations::FkChecker::new(),
+            &sync_buffer_row,
+        );
         assert!(
             result.is_err(),
             "Expected error for unsupported 'wp' status on imprest requisition, got: {:?}",
@@ -826,7 +841,7 @@ mod tests {
         };
 
         let mut op = assert_variant!(
-            translator.try_translate_from_upsert_sync_record(&connection, &sync_record),
+            translator.try_translate_from_upsert_sync_record(&connection, &crate::sync::translations::FkChecker::new(), &sync_record),
             Ok( PullTranslateResult::IntegrationOperations(out)) => out
         );
 

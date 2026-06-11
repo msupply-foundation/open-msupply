@@ -70,12 +70,11 @@ impl<'a> CampaignRowRepository<'a> {
     }
 
     pub fn check_exists_by_id(&self, campaign_id: &str) -> Result<bool, RepositoryError> {
-        let result: Option<String> = campaign::table
-            .filter(campaign::id.eq(campaign_id))
-            .select(campaign::id)
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result.is_some())
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            campaign::table.filter(campaign::id.eq(campaign_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<CampaignRow>, RepositoryError> {

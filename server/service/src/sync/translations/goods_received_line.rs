@@ -1,9 +1,7 @@
 use super::{
-    goods_received::GoodsReceivedTranslation,
-    invoice_line::InvoiceLineTranslation,
-    item::ItemTranslation,
-    purchase_order_line::PurchaseOrderLineTranslation,
-    PullTranslateResult, SyncTranslation,
+    goods_received::GoodsReceivedTranslation, invoice_line::InvoiceLineTranslation,
+    item::ItemTranslation, purchase_order_line::PurchaseOrderLineTranslation, PullTranslateResult,
+    SyncTranslation,
 };
 use chrono::NaiveDate;
 use repository::{
@@ -63,6 +61,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyGoodsReceivedLineRow>()?;
@@ -86,8 +85,8 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
         // Non-finalised GR -> the GR translator created an invoice with id == goods_received_ID.
         // Finalised GR     -> no such invoice; the real invoice lives under the transact id,
         //                     linked via legacy_goods_received_id.
-        let parent_invoice = InvoiceRowRepository::new(connection)
-            .find_one_by_id(&data.goods_received_ID)?;
+        let parent_invoice =
+            InvoiceRowRepository::new(connection).find_one_by_id(&data.goods_received_ID)?;
 
         // Finalised GR line: find the invoice_line that was spawned from this GR line
         // via the `legacy_goods_received_line_id` column the invoice_line translator
@@ -190,7 +189,11 @@ mod tests {
             record.insert_extra_data(&connection).await;
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
             assert_eq!(translation_result, record.translated_record);
         }

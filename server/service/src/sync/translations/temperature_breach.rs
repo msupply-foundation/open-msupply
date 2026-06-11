@@ -1,24 +1,19 @@
 use crate::sync::translations::{
     location::LocationTranslation, sensor::SensorTranslation, store::StoreTranslation,
-
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use util::sync_serde::{
     date_from_date_time, date_option_to_isostring, empty_str_as_option, empty_str_as_option_string,
     naive_time, zero_date_as_option,
-
 };
 
 use repository::{
-    ChangelogRow, ChangelogTableName, LocationRowRepository, StorageConnection, SyncBufferRow,
-    TemperatureBreachRow, Row, TemperatureBreachType,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow, TemperatureBreachRow,
+    TemperatureBreachType,
 };
 use serde::{Deserialize, Serialize};
 
-use super::{
-    to_legacy_time, utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult,
-    SyncTranslation,
-};
+use super::{to_legacy_time, FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -101,6 +96,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyTemperatureBreachRow>()?;
@@ -124,24 +120,19 @@ impl SyncTranslation for TemperatureBreachTranslation {
             comment,
         } = data;
 
-        let location_id = clear_invalid_fk(
-            connection,
-            "temperature_breach",
-            &id,
-            "location_id",
-            location_id,
-            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        let fk_check = fk_checker.with_table(connection, "temperature_breach", &id);
+        let check_fk = fk_checker.with_table_required(connection, "temperature_breach", &id);
+
+        let location_id = fk_check(location_id, "location_id", FkField::Location)?;
 
         let r#type = from_legacy_breach_type(&r#type);
         let result = TemperatureBreachRow {
             id,
             duration_milliseconds,
             r#type,
-            sensor_id,
+            sensor_id: check_fk(sensor_id, "sensor_id", FkField::Sensor)?,
             location_id,
-            store_id,
+            store_id: check_fk(store_id, "store_id", FkField::Store)?,
             end_datetime: end_datetime.or(end_date.map(|date| NaiveDateTime::new(date, end_time))),
             unacknowledged: !acknowledged,
             threshold_minimum,
@@ -206,7 +197,11 @@ impl SyncTranslation for TemperatureBreachTranslation {
             comment,
         };
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 }
 
@@ -249,7 +244,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

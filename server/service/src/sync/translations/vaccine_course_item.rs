@@ -1,13 +1,12 @@
 use repository::{
-    vaccine_course::vaccine_course_item_row::VaccineCourseItemRow,
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
-    Row,
-
+    vaccine_course::vaccine_course_item_row::VaccineCourseItemRow, ChangelogRow,
+    ChangelogTableName, Row, StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::{item::ItemTranslation, vaccine_course::VaccineCourseTranslation};
 
 use super::{
+<<<<<<< HEAD
     utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
@@ -16,6 +15,10 @@ use super::{
 /// `item_id` and the legacy `item_link_id` alias and accepts either, for cross-version sync.
 /// See `RenamedKeys`. Each pair is `(canonical, legacy_alias)`.
 const RENAMED_KEYS: RenamedKeys = &[("item_id", "item_link_id")];
+=======
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+};
+>>>>>>> 8c6410ebb5 (All fks checked)
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -39,13 +42,25 @@ impl SyncTranslation for VaccineCourseItemTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
+<<<<<<< HEAD
         let row = from_renamed_keys_str::<VaccineCourseItemRow>(
             &sync_record.data.0.to_string(),
             RENAMED_KEYS,
         )?;
+=======
+        let mut row = serde_json::from_value::<VaccineCourseItemRow>(sync_record.data.0.clone())?;
+
+        let check_fk = fk_checker.with_table_required(connection, "vaccine_course_item", &row.id);
+
+        row.vaccine_course_id =
+            check_fk(row.vaccine_course_id, "vaccine_course_id", FkField::VaccineCourse)?;
+        row.item_link_id = check_fk(row.item_link_id, "item_link_id", FkField::ItemLink)?;
+
+>>>>>>> 8c6410ebb5 (All fks checked)
         Ok(PullTranslateResult::upsert(row))
     }
 
@@ -82,10 +97,19 @@ impl SyncTranslation for VaccineCourseItemTranslation {
             return Ok(PushTranslateResult::NotMatched);
         };
 
+<<<<<<< HEAD
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
             to_renamed_keys_value(&vaccine_course_item_row, RENAMED_KEYS)?,
+=======
+        let row = vaccine_course_item_row;
+
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(row)?,
+>>>>>>> 8c6410ebb5 (All fks checked)
         ))
     }
 }
@@ -109,7 +133,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

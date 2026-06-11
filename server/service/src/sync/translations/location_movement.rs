@@ -1,24 +1,16 @@
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, LocationMovementRow,
-    LocationRowRepository, StorageConnection, SyncBufferRow,
-    Row,
-
+    ChangelogRow, ChangelogTableName, LocationMovementRow, Row, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::sync::translations::{
     location::LocationTranslation, stock_line::StockLineTranslation, store::StoreTranslation,
-
 };
 
-use super::{
-    to_legacy_time, utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult,
-    SyncTranslation,
-};
+use super::{to_legacy_time, FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option_string, naive_time, zero_date_as_option,
-
 };
 
 #[derive(Deserialize, Serialize)]
@@ -72,6 +64,7 @@ impl SyncTranslation for LocationMovementTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyLocationMovementRow {
@@ -85,15 +78,9 @@ impl SyncTranslation for LocationMovementTranslation {
             exit_time,
         } = sync_record.deserialize()?;
 
-        let location_id = clear_invalid_fk(
-            connection,
-            "location_movement",
-            &id,
-            "location_id",
-            location_id,
-            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        let fk_check = fk_checker.with_table(connection, "location_movement", &id);
+
+        let location_id = fk_check(location_id, "location_id", FkField::Location)?;
 
         let result = LocationMovementRow {
             id,
@@ -141,7 +128,11 @@ impl SyncTranslation for LocationMovementTranslation {
                 .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap()),
         };
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 }
 
@@ -164,7 +155,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
