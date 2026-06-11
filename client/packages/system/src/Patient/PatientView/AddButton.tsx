@@ -45,19 +45,19 @@ export const AddButton: React.FC<AddButtonProps> = ({
       baseOptions.push(
         {
           value: PatientModal.ProgramSearch,
-          label: t('button.add-program'),
+          label: t('button.new-program'),
           isDisabled: false,
         },
         {
           value: PatientModal.Encounter,
-          label: t('button.add-encounter'),
+          label: t('button.new-encounter'),
           isDisabled: disableEncounterButton,
         }
       );
       if (showContactTracing) {
         baseOptions.push({
           value: PatientModal.ContactTraceSearch,
-          label: t('button.add-contact-trace'),
+          label: t('button.new-contact-trace'),
         });
       }
     }
