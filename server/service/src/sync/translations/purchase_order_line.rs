@@ -1,5 +1,5 @@
 use crate::sync::translations::{
-    item::ItemTranslation, purchase_order::PurchaseOrderTranslation, PullTranslateResult,
+    item::ItemTranslation, purchase_order::PurchaseOrderTranslation, FkField, PullTranslateResult,
     PushTranslateResult, SyncTranslation,
 };
 use chrono::NaiveDate;
@@ -106,7 +106,8 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyPurchaseOrderLineRow {
@@ -133,12 +134,19 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             oms_fields,
         } = sync_record.deserialize()?;
 
+        let fk_check = fk_checker.with_table(connection, "purchase_order_line", &id);
+        let check_fk = fk_checker.with_table_required(connection, "purchase_order_line", &id);
+
         let result = PurchaseOrderLineRow {
             id,
-            store_id,
-            purchase_order_id,
+            store_id: check_fk(store_id, "store_id", FkField::Store)?,
+            purchase_order_id: check_fk(
+                purchase_order_id,
+                "purchase_order_id",
+                FkField::PurchaseOrder,
+            )?,
             line_number,
-            item_link_id,
+            item_link_id: check_fk(item_link_id, "item_link_id", FkField::ItemLink)?,
             item_name,
             requested_number_of_units,
             requested_pack_size,
@@ -150,7 +158,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             price_per_pack_before_discount,
             price_per_pack_after_discount,
             comment,
-            manufacturer_id: manufacturer_id,
+            manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
             note,
             unit,
             status: oms_fields.map_or(PurchaseOrderLineStatus::New, |f| f.status),
@@ -277,7 +285,11 @@ mod tests {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             println!("Translating record: {:?}", record.sync_buffer_row.data);
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

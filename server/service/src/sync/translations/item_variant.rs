@@ -6,7 +6,7 @@ use crate::sync::translations::location_type::LocationTypeTranslation;
 use crate::sync::translations::name::NameTranslation;
 
 use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 // Needs to be added to all_translators()
@@ -32,14 +32,40 @@ impl SyncTranslation for ItemVariantTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_value::<
-            ItemVariantRow,
-        >(
-            sync_record.data.0.clone()
-        )?))
+        let ItemVariantRow {
+            id,
+            name,
+            item_link_id,
+            location_type_id,
+            deleted_datetime,
+            vvm_type,
+            created_datetime,
+            created_by,
+            manufacturer_id,
+        } = serde_json::from_value::<ItemVariantRow>(sync_record.data.0.clone())?;
+
+        let fk_check = fk_checker.with_table(connection, "item_variant", &id);
+        let check_fk = fk_checker.with_table_required(connection, "item_variant", &id);
+
+        let result = ItemVariantRow {
+            id,
+            name,
+            item_link_id: check_fk(item_link_id, "item_link_id", FkField::ItemLink)?,
+            location_type_id: fk_check(location_type_id, "location_type_id", FkField::LocationType)?,
+            deleted_datetime,
+            vvm_type,
+            created_datetime,
+            created_by,
+            // manufacturer is a name id resolved to name_link on upsert; name_link.id == name.id by
+            // convention, so validating the name id against name_link is correct.
+            manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
+        };
+
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -96,7 +122,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

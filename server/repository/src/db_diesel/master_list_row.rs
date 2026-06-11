@@ -77,6 +77,14 @@ impl<'a> MasterListRowRepository<'a> {
             .filter(master_list::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
+
+    pub fn check_exists_by_id(&self, record_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            master_list::table.filter(master_list::id.eq(record_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
 }
 
 impl Upsert for MasterListRow {

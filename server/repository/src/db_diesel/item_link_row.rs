@@ -93,6 +93,14 @@ impl<'a> ItemLinkRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            item_link::table.filter(item_link::id.eq(id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+
     pub fn delete(&self, item_link_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(item_link::table.filter(item_link::id.eq(item_link_id)))
             .execute(self.connection.lock().connection())?;

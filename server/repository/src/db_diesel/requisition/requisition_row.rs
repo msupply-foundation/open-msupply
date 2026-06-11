@@ -196,6 +196,14 @@ impl<'a> RequisitionRowRepository<'a> {
             .filter(requisition::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
+
+    pub fn check_exists_by_id(&self, id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            requisition::table.filter(requisition::id.eq(id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
 }
 
 #[derive(Debug, Clone)]

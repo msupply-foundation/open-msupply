@@ -3,9 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use repository::{
     ChangelogRow, ChangelogTableName, Document, DocumentRepository, DocumentRow, DocumentStatus,
-    FormSchemaRowRepository, StorageConnection, SyncBufferRow,
-    Row,
-
+    Row, StorageConnection, SyncBufferRow,
 };
 use serde_json::Value;
 
@@ -15,12 +13,11 @@ use crate::sync::{
         document_registry::DocumentRegistryTranslation, form_schema::FormSchemaTranslation,
         name::NameTranslation,
     },
-
 };
 
 use util::sync_serde::empty_str_as_option_string;
 
-use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -80,6 +77,7 @@ impl SyncTranslation for DocumentTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyDocumentRow {
@@ -96,15 +94,10 @@ impl SyncTranslation for DocumentTranslation {
             context_id,
         } = sync_record.deserialize()?;
 
-        let form_schema_id = clear_invalid_fk(
-            connection,
-            "document",
-            &id,
-            "form_schema_id",
-            form_schema_id,
-            |c, id| FormSchemaRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        let fk_check = fk_checker.with_table(connection, "document", &id);
+        let check_fk = fk_checker.with_table_required(connection, "document", &id);
+
+        let form_schema_id = fk_check(form_schema_id, "form_schema_id", FkField::FormSchema)?;
 
         let result = Document {
             id,
@@ -119,8 +112,8 @@ impl SyncTranslation for DocumentTranslation {
                 LegacyDocumentStatus::Active => DocumentStatus::Active,
                 LegacyDocumentStatus::Deleted => DocumentStatus::Deleted,
             },
-            owner_name_id,
-            context_id,
+            owner_name_id: fk_check(owner_name_id, "owner_name_link_id", FkField::NameLink)?,
+            context_id: check_fk(context_id, "context_id", FkField::Context)?,
         };
         Ok(PullTranslateResult::upsert(DocumentUpsert(result)))
     }
@@ -172,6 +165,10 @@ impl SyncTranslation for DocumentTranslation {
             context_id,
         };
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 }

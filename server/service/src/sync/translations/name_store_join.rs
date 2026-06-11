@@ -12,7 +12,8 @@ use crate::sync::{
 };
 
 use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    ToSyncRecordTranslationType,
 };
 
 #[allow(non_snake_case)]
@@ -86,6 +87,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyNameStoreJoinRow>()?;
@@ -124,10 +126,12 @@ impl SyncTranslation for NameStoreJoinTranslation {
             }
         }
 
+        let check_fk = fk_checker.with_table_required(connection, "name_store_join", &data.id);
+
         let result = NameStoreJoinRow {
             id: data.id,
-            name_id: data.name_id,
-            store_id: data.store_id,
+            name_id: check_fk(data.name_id, "name_link_id", FkField::NameLink)?,
+            store_id: check_fk(data.store_id, "store_id", FkField::Store)?,
             // name_is_customer: data.name_is_customer.unwrap_or(name.is_customer),
             // name_is_supplier: data.name_is_supplier.unwrap_or(name.is_supplier),
             // TODO in mirror setup primary server sends name_store_join to central with previous sync
@@ -222,7 +226,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -230,7 +238,11 @@ mod tests {
 
         for record in test_data::test_pull_upsert_inactive_records() {
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

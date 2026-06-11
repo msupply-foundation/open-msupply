@@ -154,6 +154,14 @@ impl<'a> AssetRowRepository<'a> {
             .filter(asset::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
+
+    pub fn check_exists_by_id(&self, asset_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            asset::table.filter(asset::id.eq(asset_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
 }
 
 impl Upsert for AssetRow {

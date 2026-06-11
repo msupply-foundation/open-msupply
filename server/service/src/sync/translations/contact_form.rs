@@ -6,7 +6,7 @@ use repository::{
 use crate::sync::translations::{store::StoreTranslation, user::UserTranslation};
 
 use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 // Needs to be added to all_translations()
@@ -28,14 +28,16 @@ impl SyncTranslation for ContactFormTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_value::<
-            ContactFormRow,
-        >(
-            sync_record.data.0.clone()
-        )?))
+        let mut row = serde_json::from_value::<ContactFormRow>(sync_record.data.0.clone())?;
+
+        let check_fk = fk_checker.with_table_required(connection, "contact_form", &row.id);
+        row.store_id = check_fk(row.store_id, "store_id", FkField::Store)?;
+
+        Ok(PullTranslateResult::upsert(row))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -100,7 +102,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

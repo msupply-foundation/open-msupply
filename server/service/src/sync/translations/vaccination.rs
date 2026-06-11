@@ -1,17 +1,16 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, VaccinationRow,
-    Row,
-
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow, VaccinationRow,
 };
 
 use crate::sync::translations::{
     clinician::ClinicianTranslation, document::DocumentTranslation,
     invoice_line::InvoiceLineTranslation, name::NameTranslation, store::StoreTranslation,
     user::UserTranslation,
-
 };
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
+use super::{
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+};
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -39,12 +38,21 @@ impl SyncTranslation for VaccinationTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_value::<
-            VaccinationRow,
-        >(sync_record.data.0.clone())?))
+        let mut row = serde_json::from_value::<VaccinationRow>(sync_record.data.0.clone())?;
+
+        let check_fk = fk_checker.with_table_required(connection, "vaccination", &row.id);
+
+        row.vaccine_course_dose_id = check_fk(
+            row.vaccine_course_dose_id,
+            "vaccine_course_dose_id",
+            FkField::VaccineCourseDose,
+        )?;
+
+        Ok(PullTranslateResult::upsert(row))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -79,7 +87,11 @@ impl SyncTranslation for VaccinationTranslation {
 
         let row = vaccination_row;
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(row)?,
+        ))
     }
 }
 
@@ -99,7 +111,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

@@ -1,7 +1,6 @@
 use anyhow::anyhow;
 use repository::{
     IndicatorColumnRow, IndicatorLineRow, IndicatorValueType, StorageConnection, SyncBufferRow,
-
 };
 
 use serde::Deserialize;
@@ -69,6 +68,7 @@ impl SyncTranslation for IndicatorAttribute {
     fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyIndicatorAttribute {
@@ -139,7 +139,11 @@ mod tests {
             .for_each(|record| {
                 assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
                 let translation_result = translator
-                    .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                    .try_translate_from_upsert_sync_record(
+                        &connection,
+                        &crate::sync::translations::FkChecker::new(),
+                        &record.sync_buffer_row,
+                    )
                     .unwrap();
 
                 assert_eq!(translation_result, record.translated_record);

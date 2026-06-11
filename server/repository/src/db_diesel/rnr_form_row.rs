@@ -130,6 +130,14 @@ impl<'a> RnRFormRowRepository<'a> {
             .filter(rnr_form::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
+
+    pub fn check_exists_by_id(&self, id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            rnr_form::table.filter(rnr_form::id.eq(id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
 }
 
 #[derive(Debug, Clone)]

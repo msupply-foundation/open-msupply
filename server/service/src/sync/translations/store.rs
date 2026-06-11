@@ -1,7 +1,5 @@
 use chrono::NaiveDate;
-use repository::{
-    NameLinkRowRepository, StorageConnection, StoreMode, StoreRow, SyncBufferRow,
-};
+use repository::{NameLinkRowRepository, StorageConnection, StoreMode, StoreRow, SyncBufferRow};
 
 use crate::sync::translations::name::NameTranslation;
 use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
@@ -56,6 +54,7 @@ impl SyncTranslation for StoreTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyStoreRow>()?;
@@ -146,7 +145,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

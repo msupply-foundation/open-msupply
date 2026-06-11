@@ -103,12 +103,11 @@ impl<'a> ReasonOptionRowRepository<'a> {
     }
 
     pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
-        let result: Option<String> = reason_option::table
-            .filter(reason_option::id.eq(lookup_id))
-            .select(reason_option::id)
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result.is_some())
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            reason_option::table.filter(reason_option::id.eq(lookup_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ReasonOptionRow>, RepositoryError> {

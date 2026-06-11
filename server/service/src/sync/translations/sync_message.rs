@@ -2,15 +2,13 @@ use crate::sync::translations::{store::StoreTranslation, PullTranslateResult, Sy
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncMessageRow, SyncMessageRowRepository,
-    SyncMessageRowStatus, SyncMessageRowType,
-    Row,
-
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncMessageRow,
+    SyncMessageRowRepository, SyncMessageRowStatus, SyncMessageRowType,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{empty_str_as_option_string, naive_time};
 
-use super::{to_legacy_time, PushTranslateResult};
+use super::{to_legacy_time, FkField, PushTranslateResult};
 
 /// Message from mSupply Central Server
 #[derive(Deserialize, Serialize, Debug)]
@@ -60,7 +58,8 @@ impl SyncTranslation for MessageTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &repository::SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyMessageRow {
@@ -82,10 +81,12 @@ impl SyncTranslation for MessageTranslation {
 
         let body = serde_json::to_string(&body).context("Failed to serialize message body")?;
 
+        let fk_check = fk_checker.with_table(connection, "message", &id);
+
         let result = SyncMessageRow {
             id,
-            to_store_id,
-            from_store_id,
+            to_store_id: fk_check(to_store_id, "to_store_id", FkField::Store)?,
+            from_store_id: fk_check(from_store_id, "from_store_id", FkField::Store)?,
             body,
             created_datetime: NaiveDateTime::new(created_date, created_time),
             status,
@@ -150,7 +151,11 @@ impl SyncTranslation for MessageTranslation {
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), json_record))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            json_record,
+        ))
     }
 }
 
@@ -170,7 +175,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

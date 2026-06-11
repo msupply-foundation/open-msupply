@@ -7,11 +7,8 @@ use crate::sync::translations::{
 
 use chrono::NaiveDate;
 use repository::{
-    campaign_row::CampaignRowRepository, item_variant::item_variant_row::ItemVariantRowRepository,
-    ChangelogRow, ChangelogTableName,
-    EqualFilter, LocationRowRepository, ProgramRowRepository, ReasonOptionRowRepository,
-    Row, StockLineRowRepository, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
-    StocktakeLineRow, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, Row, StocktakeLine, StocktakeLineFilter,
+    StocktakeLineRepository, StocktakeLineRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -19,7 +16,7 @@ use util::sync_serde::{
     zero_date_as_option,
 };
 
-use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 const RECORD_TABLE: &str = "stocktake_line";
 
@@ -122,6 +119,7 @@ impl SyncTranslation for StocktakeLineTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyStocktakeLineRow {
@@ -159,16 +157,11 @@ impl SyncTranslation for StocktakeLineTranslation {
 
         // omSupply should be generating the stocktake line with valid stock lines.
         // Currently a uuid is assigned by central for the stock_line id which causes a foreign
-        // key constraint violation; clear_invalid_fk handles the validation + null + system_log.
-        let stock_line_id = clear_invalid_fk(
-            connection,
-            RECORD_TABLE,
-            &ID,
-            "stock_line_id",
-            item_line_ID,
-            |c, id| StockLineRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        // key constraint violation; fk_check handles the validation + null + system_log.
+        let fk_check = fk_checker.with_table(connection, RECORD_TABLE, &ID);
+        let check_fk = fk_checker.with_table_required(connection, RECORD_TABLE, &ID);
+
+        let stock_line_id = fk_check(item_line_ID, "stock_line_id", FkField::StockLine)?;
 
         let (campaign_id, program_id, manufacture_date) = oms_fields
             .map(|fields| {
@@ -180,63 +173,24 @@ impl SyncTranslation for StocktakeLineTranslation {
             })
             .unwrap_or((None, None, None));
 
-        let location_id = clear_invalid_fk(
-            connection,
-            RECORD_TABLE,
-            &ID,
-            "location_id",
-            location_id,
-            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
-        let item_variant_id = clear_invalid_fk(
-            connection,
-            RECORD_TABLE,
-            &ID,
-            "item_variant_id",
-            item_variant_id,
-            |c, id| ItemVariantRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        let location_id = fk_check(location_id, "location_id", FkField::Location)?;
+        let item_variant_id = fk_check(item_variant_id, "item_variant_id", FkField::ItemVariant)?;
         // No DB-level FK constraint on stocktake_line.vvm_status_id (unlike stock_line/invoice_line), skip validation
         // Note: the DB constraint may be missing from the migration and should be added separately
-        let reason_option_id = clear_invalid_fk(
-            connection,
-            RECORD_TABLE,
-            &ID,
-            "reason_option_id",
-            reason_option_id,
-            |c, id| ReasonOptionRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
-        let campaign_id = clear_invalid_fk(
-            connection,
-            RECORD_TABLE,
-            &ID,
-            "campaign_id",
-            campaign_id,
-            |c, id| CampaignRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
-        let program_id = clear_invalid_fk(
-            connection,
-            RECORD_TABLE,
-            &ID,
-            "program_id",
-            program_id,
-            |c, id| ProgramRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        let reason_option_id =
+            fk_check(reason_option_id, "reason_option_id", FkField::ReasonOption)?;
+        let campaign_id = fk_check(campaign_id, "campaign_id", FkField::Campaign)?;
+        let program_id = fk_check(program_id, "program_id", FkField::Program)?;
 
         let result = StocktakeLineRow {
             id: ID,
-            stocktake_id: stock_take_ID,
+            stocktake_id: check_fk(stock_take_ID, "stocktake_id", FkField::Stocktake)?,
             stock_line_id,
             location_id,
             comment,
             snapshot_number_of_packs: snapshot_qty,
             counted_number_of_packs,
-            item_link_id: item_ID,
+            item_link_id: check_fk(item_ID, "item_link_id", FkField::ItemLink)?,
             item_name,
             batch: Batch,
             expiry_date: expiry,
@@ -376,8 +330,8 @@ mod tests {
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
         vvm_status::vvm_status_row::VVMStatusRow,
-        ChangelogCondition, ChangelogRepository, ContextRow, ProgramRow, SyncAction, SyncRecordData,
-        CursorAndLimit, FilterBuilder, RowOrDelete,
+        ChangelogCondition, ChangelogRepository, ContextRow, CursorAndLimit, FilterBuilder,
+        ProgramRow, RowOrDelete, SyncAction, SyncRecordData,
     };
     use serde_json::json;
 
@@ -430,7 +384,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -453,7 +411,9 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "Stock_take_lines".to_string(),
             record_id: "STOCKTAKE_LINE_FK_INVALID".to_string(),
-            data: SyncRecordData(serde_json::from_str(r#"{
+            data: SyncRecordData(
+                serde_json::from_str(
+                    r#"{
                 "ID": "STOCKTAKE_LINE_FK_INVALID",
                 "stock_take_ID": "stocktake_a",
                 "Batch": "",
@@ -478,13 +438,20 @@ mod tests {
                     "campaign_id": "does_not_exist_campaign",
                     "program_id": "does_not_exist_program"
                 }
-            }"#).unwrap()),
+            }"#,
+                )
+                .unwrap(),
+            ),
             action: SyncAction::Upsert,
             ..Default::default()
         };
 
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
             .unwrap();
 
         let expected = PullTranslateResult::upsert(StocktakeLineRow {
@@ -515,9 +482,7 @@ mod tests {
         });
         assert_eq!(result, expected);
 
-        let logs = SystemLogRowRepository::new(&connection)
-            .find_all()
-            .unwrap();
+        let logs = SystemLogRowRepository::new(&connection).find_all().unwrap();
         let fk_errors: Vec<_> = logs
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
