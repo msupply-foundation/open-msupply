@@ -66,7 +66,6 @@ pub struct InvoiceStatusOptionsInput {
 pub struct UpsertPreferencesInput {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
-    pub show_manufacturer: Option<bool>,
     pub authorise_purchase_order: Option<bool>,
     pub custom_translations: Option<BTreeMap<String, String>>,
     pub gender_options: Option<Vec<GenderTypeNode>>,
@@ -138,7 +137,6 @@ impl UpsertPreferencesInput {
         let UpsertPreferencesInput {
             // Global preferences
             allow_tracking_of_stock_by_donor,
-            show_manufacturer,
             authorise_purchase_order,
             custom_translations,
             prevent_transfers_months_before_initialisation,
@@ -182,7 +180,6 @@ impl UpsertPreferencesInput {
         UpsertPreferences {
             // Global preferences
             allow_tracking_of_stock_by_donor: *allow_tracking_of_stock_by_donor,
-            show_manufacturer: *show_manufacturer,
             authorise_purchase_order: *authorise_purchase_order,
             custom_translations: custom_translations.clone(),
             gender_options: gender_options

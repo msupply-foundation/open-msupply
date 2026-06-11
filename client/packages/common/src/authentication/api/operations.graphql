@@ -208,7 +208,6 @@ query preferences($storeId: String!) {
     secondThresholdForExpiringItems
     selectDestinationStoreForAnInternalOrder
     showContactTracing
-    showManufacturer
     sortByVvmStatusThenExpiry
     storeCustomColour
     syncRecordsDisplayThreshold

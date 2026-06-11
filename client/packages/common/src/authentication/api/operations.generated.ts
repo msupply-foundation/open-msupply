@@ -260,7 +260,6 @@ export type PreferencesQuery = {
     secondThresholdForExpiringItems: number;
     selectDestinationStoreForAnInternalOrder: boolean;
     showContactTracing: boolean;
-    showManufacturer: boolean;
     sortByVvmStatusThenExpiry: boolean;
     storeCustomColour: string;
     syncRecordsDisplayThreshold: number;
@@ -529,7 +528,6 @@ export const PreferencesDocument = gql`
       secondThresholdForExpiringItems
       selectDestinationStoreForAnInternalOrder
       showContactTracing
-      showManufacturer
       sortByVvmStatusThenExpiry
       storeCustomColour
       syncRecordsDisplayThreshold
