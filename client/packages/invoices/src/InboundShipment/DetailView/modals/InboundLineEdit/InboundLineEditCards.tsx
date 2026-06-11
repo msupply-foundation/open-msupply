@@ -63,8 +63,6 @@ interface CardProps {
 interface InboundLineEditCardsProps extends CardProps {
   duplicateDraftLine: (id: string) => void;
   removeDraftLine: (id: string) => void;
-  /** Locks adding/duplicating/deleting batches (line authorisation, once received) */
-  batchEditLocked?: boolean;
   lastCardRef?: React.RefObject<HTMLDivElement | null>;
   actions?: React.ReactNode;
   /** The specific line ID to scroll into view when the modal opens */
@@ -77,7 +75,6 @@ export const InboundLineEditCards = ({
   duplicateDraftLine,
   removeDraftLine,
   isDisabled = false,
-  batchEditLocked = false,
   foreignCurrency,
   isExternalSupplier,
   hasItemVariantsEnabled,
@@ -107,6 +104,7 @@ export const InboundLineEditCards = ({
     query: { data: inboundData },
     hasAuthorisePermission,
     isExternal,
+    isAddOrDeleteLinesDisabled,
   } = useInboundShipment();
   const isManualShipment =
     !inboundData?.purchaseOrder && !inboundData?.linkedShipment;
@@ -710,7 +708,7 @@ export const InboundLineEditCards = ({
         pin: 'right',
         Cell: ({ row }) => (
           <IconButton
-            disabled={isDisabled || batchEditLocked}
+            disabled={isDisabled || isAddOrDeleteLinesDisabled}
             label={t('label.duplicate-batch')}
             showLabel={!simplified}
             onClick={() => {
@@ -733,7 +731,7 @@ export const InboundLineEditCards = ({
         pin: 'right',
         Cell: ({ row }) => (
           <IconButton
-            disabled={isDisabled || batchEditLocked}
+            disabled={isDisabled || isAddOrDeleteLinesDisabled}
             label={t('label.delete-batch')}
             showLabel={!simplified}
             color="error"
@@ -753,7 +751,7 @@ export const InboundLineEditCards = ({
     hasItemVariantsEnabled,
     hasVvmStatusesEnabled,
     isDisabled,
-    batchEditLocked,
+    isAddOrDeleteLinesDisabled,
     isExternalSupplier,
     isManualShipment,
     item?.isVaccine,

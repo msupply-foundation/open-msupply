@@ -15,9 +15,7 @@ import {
   useNotification,
   useDisabledNotificationToast,
   InvoiceLineStatusType,
-  InvoiceNodeStatus,
   ModalMode,
-  usePreferences,
   useSimplifiedTabletUI,
   Box,
   ButtonWithIcon,
@@ -88,22 +86,11 @@ export const InboundLineEdit = ({
     query: { data },
     hasAuthorisePermission,
     isExternal,
+    isAddOrDeleteLinesDisabled,
   } = useInboundShipment();
   const permissionDeniedNotification = useDisabledNotificationToast(
     t('auth.permission-denied')
   );
-  const { externalInboundShipmentLinesMustBeAuthorised } = usePreferences();
-  const isReceived =
-    data?.status === InvoiceNodeStatus.Received ||
-    data?.status === InvoiceNodeStatus.Verified;
-  // A shipment with line authorisation can only be received once every line is
-  // approved/rejected, so adding/duplicating/deleting batches (which changes
-  // the line set) is locked once received. Shipments without line
-  // authorisation can still add/delete batches while received (#11936).
-  const requiresLineAuthorisation =
-    data?.lines.nodes.some(line => line.status != null) ||
-    (isExternal && !!externalInboundShipmentLinesMustBeAuthorised);
-  const batchEditLocked = isReceived && !!requiresLineAuthorisation;
   const purchaseOrder = data?.purchaseOrder;
   const hasPurchaseOrder = !!purchaseOrder;
 
@@ -340,7 +327,6 @@ export const InboundLineEdit = ({
       duplicateDraftLine={duplicateDraftLine}
       removeDraftLine={removeDraftLine}
       isDisabled={isDisabled}
-      batchEditLocked={batchEditLocked}
       foreignCurrency={foreignCurrency}
       isExternalSupplier={isExternalSupplier}
       item={effectiveItem}
@@ -386,7 +372,7 @@ export const InboundLineEdit = ({
       }
       headerActions={
         <ButtonWithIcon
-          disabled={isDisabled || batchEditLocked}
+          disabled={isDisabled || isAddOrDeleteLinesDisabled}
           color="primary"
           variant="outlined"
           onClick={handleAddBatch}
