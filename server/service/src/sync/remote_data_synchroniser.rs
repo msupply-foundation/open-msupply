@@ -97,9 +97,12 @@ impl RemoteDataSynchroniser {
             let Err(error) = self.sync_api_v5.post_initialise().await else {
                 return Ok(());
             };
-            // Ignore connection or unknown error. There is high chance of connection error
-            // on post_initialise end point (since it's blocking and can take awhile).
-            if !(error.is_connection() || error.is_unknown()) {
+            // Ignore connection/unknown errors (post_initialise is blocking and can time out)
+            // and `initialisation_in_progress` (central already building the queue) - just poll.
+            if !(error.is_connection()
+                || error.is_unknown()
+                || error.is_initialisation_in_progress())
+            {
                 return Err(error.into());
             }
         }
