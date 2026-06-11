@@ -183,7 +183,7 @@ export const RnRFormLine = ({
         value={line.adjustments}
         onChange={val => updateDraft({ adjustments: val })}
         textColor={textColor}
-        // allowNegative
+        allowNegative
         disabled={disabled}
       />
       <RnRNumberCell
