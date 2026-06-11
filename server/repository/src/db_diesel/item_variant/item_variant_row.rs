@@ -94,12 +94,11 @@ impl<'a> ItemVariantRowRepository<'a> {
     }
 
     pub fn check_exists_by_id(&self, item_variant_id: &str) -> Result<bool, RepositoryError> {
-        let result: Option<String> = item_variant::table
-            .filter(item_variant::id.eq(item_variant_id))
-            .select(item_variant::id)
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result.is_some())
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            item_variant::table.filter(item_variant::id.eq(item_variant_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
     }
 
     pub fn find_one_by_name(

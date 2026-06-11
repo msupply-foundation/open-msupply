@@ -201,6 +201,14 @@ impl<'a> ItemRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, item_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            item.filter(id.eq(item_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+
     pub fn find_one_by_item_link_id(
         &self,
         item_link_id: &str,

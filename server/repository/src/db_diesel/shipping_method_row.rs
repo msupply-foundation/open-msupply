@@ -65,12 +65,11 @@ impl<'a> ShippingMethodRowRepository<'a> {
     }
 
     pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
-        let result: Option<String> = shipping_method::table
-            .filter(shipping_method::id.eq(lookup_id))
-            .select(shipping_method::id)
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result.is_some())
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            shipping_method::table.filter(shipping_method::id.eq(lookup_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
     }
 
     pub fn find_many_by_id(

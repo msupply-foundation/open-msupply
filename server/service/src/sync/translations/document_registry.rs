@@ -1,17 +1,13 @@
 use crate::sync::translations::{
     form_schema::FormSchemaTranslation, master_list::MasterListTranslation,
-
 };
 
-use repository::{
-    DocumentRegistryCategory, DocumentRegistryRow, FormSchemaRowRepository, StorageConnection,
-    SyncBufferRow,
-};
+use repository::{DocumentRegistryCategory, DocumentRegistryRow, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
 use serde_json::Value;
 use util::sync_serde::empty_str_as_option_string;
 
-use super::{utils::clear_invalid_fk, PullTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, SyncTranslation};
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -64,6 +60,7 @@ impl SyncTranslation for DocumentRegistryTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyDocumentRegistryRow {
@@ -76,15 +73,10 @@ impl SyncTranslation for DocumentRegistryTranslation {
             config,
         } = sync_record.deserialize()?;
 
-        let form_schema_id = clear_invalid_fk(
-            connection,
-            "document_registry",
-            &id,
-            "form_schema_id",
-            form_schema_id,
-            |c, id| FormSchemaRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        let fk_check = fk_checker.with_table(connection, "document_registry", &id);
+        let check_fk = fk_checker.with_table_required(connection, "document_registry", &id);
+
+        let form_schema_id = fk_check(form_schema_id, "form_schema_id", FkField::FormSchema)?;
 
         let config_str = match config {
             Some(config) => Some(serde_json::to_string(&config)?),
@@ -94,7 +86,7 @@ impl SyncTranslation for DocumentRegistryTranslation {
         let result = DocumentRegistryRow {
             id,
             document_type,
-            context_id,
+            context_id: check_fk(context_id, "context_id", FkField::Context)?,
             category: match category {
                 LegacyDocumentCategory::Patient => DocumentRegistryCategory::Patient,
                 LegacyDocumentCategory::ProgramEnrolment => {

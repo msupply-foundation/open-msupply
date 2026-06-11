@@ -1,6 +1,11 @@
 use repository::{
+<<<<<<< HEAD
     rnr_form_row::RnRFormRow,
     ChangelogRow, ChangelogTableName, RnRFormDelete, Row, StorageConnection, SyncBufferRow,
+=======
+    rnr_form_row::RnRFormRow, ChangelogRow, ChangelogTableName, RnRFormDelete, Row,
+    StorageConnection, SyncBufferRow,
+>>>>>>> 8c6410ebb5 (All fks checked)
 };
 
 use crate::sync::translations::{
@@ -10,6 +15,7 @@ use crate::sync::translations::{
 };
 
 use super::{
+<<<<<<< HEAD
     utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
@@ -18,6 +24,10 @@ use super::{
 /// `name_id` and the legacy `name_link_id` alias and accepts either, for cross-version sync.
 /// See `RenamedKeys`. Each pair is `(canonical, legacy_alias)`.
 const RENAMED_KEYS: RenamedKeys = &[("name_id", "name_link_id")];
+=======
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+};
+>>>>>>> 8c6410ebb5 (All fks checked)
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -45,12 +55,29 @@ impl SyncTranslation for RnRFormTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
+<<<<<<< HEAD
         let row =
             from_renamed_keys_str::<RnRFormRow>(&sync_record.data.0.to_string(), RENAMED_KEYS)?;
         Ok(PullTranslateResult::upsert(row))
+=======
+        let row = serde_json::from_value::<RnRFormRow>(sync_record.data.0.clone())?;
+
+        let check_fk = fk_checker.with_table_required(connection, "rnr_form", &row.id);
+
+        let result = RnRFormRow {
+            name_id: check_fk(row.name_id, "name_link_id", FkField::NameLink)?,
+            store_id: check_fk(row.store_id, "store_id", FkField::Store)?,
+            period_id: check_fk(row.period_id, "period_id", FkField::Period)?,
+            program_id: check_fk(row.program_id, "program_id", FkField::Program)?,
+            ..row
+        };
+
+        Ok(PullTranslateResult::upsert(result))
+>>>>>>> 8c6410ebb5 (All fks checked)
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -88,7 +115,11 @@ impl SyncTranslation for RnRFormTranslation {
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
+<<<<<<< HEAD
             to_renamed_keys_value(&row, RENAMED_KEYS)?,
+=======
+            serde_json::to_value(row)?,
+>>>>>>> 8c6410ebb5 (All fks checked)
         ))
     }
 
@@ -120,7 +151,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

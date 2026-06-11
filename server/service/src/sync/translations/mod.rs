@@ -110,6 +110,8 @@ use topological_sort::TopologicalSort;
 
 use super::api::{CommonSyncRecord, SyncAction};
 
+pub(crate) use utils::{FkChecker, FkField};
+
 pub(crate) type SyncTranslators = Vec<Box<dyn SyncTranslation>>;
 
 pub(crate) fn all_translators() -> SyncTranslators {
@@ -461,6 +463,7 @@ pub(crate) trait SyncTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
+        _: &FkChecker,
         _: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Ok(PullTranslateResult::NotMatched)

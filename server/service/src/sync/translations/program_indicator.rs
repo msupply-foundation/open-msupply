@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 use crate::sync::translations::master_list::MasterListTranslation;
 
-use super::{PullTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, SyncTranslation};
 
 #[derive(Deserialize)]
 pub struct LegacyProgramIndicator {
@@ -35,15 +35,18 @@ impl SyncTranslation for ProgramIndicatorTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyProgramIndicator>()?;
 
+        let check_fk = fk_checker.with_table_required(connection, "program_indicator", &data.id);
+
         let result = ProgramIndicatorRow {
             id: data.id,
             code: data.code,
-            program_id: data.program_id,
+            program_id: check_fk(data.program_id, "program_id", FkField::Program)?,
             is_active: data.is_active,
         };
         Ok(PullTranslateResult::upsert(result))
@@ -81,7 +84,11 @@ mod tests {
             .for_each(|record| {
                 assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
                 let translation_result = translator
-                    .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                    .try_translate_from_upsert_sync_record(
+                        &connection,
+                        &crate::sync::translations::FkChecker::new(),
+                        &record.sync_buffer_row,
+                    )
                     .unwrap();
 
                 assert_eq!(translation_result, record.translated_record);

@@ -1,17 +1,16 @@
 use repository::{
-    asset_catalogue_item_row::AssetCatalogueItemRow,
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
-    Row,
-
+    asset_catalogue_item_row::AssetCatalogueItemRow, ChangelogRow, ChangelogTableName, Row,
+    StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::{
     asset_catalogue_type::AssetCatalogueTypeTranslation, asset_category::AssetCategoryTranslation,
     asset_class::AssetClassTranslation,
-
 };
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
+use super::{
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+};
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -36,12 +35,40 @@ impl SyncTranslation for AssetCatalogueItemTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_value::<
-            AssetCatalogueItemRow,
-        >(sync_record.data.0.clone())?))
+        let AssetCatalogueItemRow {
+            id,
+            sub_catalogue,
+            category_id,
+            class_id,
+            code,
+            manufacturer,
+            model,
+            type_id,
+            properties,
+            deleted_datetime,
+        } = serde_json::from_value::<AssetCatalogueItemRow>(sync_record.data.0.clone())?;
+
+        let check_fk = fk_checker.with_table_required(connection, "asset_catalogue_item", &id);
+
+        let result = AssetCatalogueItemRow {
+            id,
+            sub_catalogue,
+            category_id: check_fk(category_id, "asset_category_id", FkField::AssetCategory)?,
+            class_id: check_fk(class_id, "asset_class_id", FkField::AssetClass)?,
+            code,
+            manufacturer,
+            model,
+            // asset_catalogue_type_id (type_id): SKIPPED, no repository for asset_catalogue_type
+            type_id,
+            properties,
+            deleted_datetime,
+        };
+
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -74,7 +101,11 @@ impl SyncTranslation for AssetCatalogueItemTranslation {
 
         let row = asset_catalogue_item_row;
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(row)?,
+        ))
     }
 }
 
@@ -97,7 +128,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

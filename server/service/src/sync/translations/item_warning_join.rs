@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::sync::translations::{item::ItemTranslation, warning::WarningTranslation};
 use repository::{ItemWarningJoinRow, StorageConnection, SyncBufferRow};
 
-use super::{PullTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize)]
 
@@ -38,7 +38,8 @@ impl SyncTranslation for ItemWarningJoinTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _connection: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyItemWarningJoinRow {
@@ -48,10 +49,17 @@ impl SyncTranslation for ItemWarningJoinTranslation {
             priority,
         } = sync_record.deserialize()?;
 
+        let check_fk = fk_checker.with_table_required(connection, "item_warning_join", &id);
+
         let result = ItemWarningJoinRow {
             id,
+<<<<<<< HEAD
             item_id: item_link_id,
             warning_id,
+=======
+            item_link_id: check_fk(item_link_id, "item_link_id", FkField::ItemLink)?,
+            warning_id: check_fk(warning_id, "warning_id", FkField::Warning)?,
+>>>>>>> 8c6410ebb5 (All fks checked)
             priority,
         };
         Ok(PullTranslateResult::upsert(result))
@@ -77,7 +85,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
             assert_eq!(translation_result, record.translated_record);
         }
