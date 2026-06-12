@@ -98,6 +98,7 @@ members = [
   "graphql/requisition",
   "graphql/requisition_line",
   "graphql/stock_line",
+  "graphql/stock_relocation",
   "graphql/stocktake",
   "graphql/stocktake_line",
   "graphql/types",
