@@ -13,12 +13,14 @@ import {
   PluginNavLink,
   pluginPagePath,
   PluginNewCategory,
+  usePluginLabelTranslation,
 } from './usePluginNavLinks';
 
 export const PluginCategoryNav: React.FC<{ category: PluginNewCategory }> = ({
   category,
 }) => {
   const { userHasPermission } = useAuthContext();
+  const translateLabel = usePluginLabelTranslation();
   const visiblePages = category.pages.filter(page =>
     hasAllPermissions(page.menu.permissions, userHasPermission)
   );
@@ -38,7 +40,7 @@ export const PluginCategoryNav: React.FC<{ category: PluginNewCategory }> = ({
       <AppNavLink
         to={categoryPath}
         icon={resolvePluginIcon(category.icon)}
-        text={category.label}
+        text={translateLabel(category.label)}
       />
     );
   }
@@ -49,7 +51,7 @@ export const PluginCategoryNav: React.FC<{ category: PluginNewCategory }> = ({
         isParent
         to={categoryPath}
         icon={resolvePluginIcon(category.icon)}
-        text={category.label}
+        text={translateLabel(category.label)}
       />
       <Collapse in={isActive}>
         <List>
