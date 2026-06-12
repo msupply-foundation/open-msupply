@@ -114,7 +114,7 @@
       "excel_template_buffer": null
     },
     {
-      "id": "inbound_2_6_9_false",
+      "id": "inbound_2_6_10_false",
       "name": "Inbound Shipment",
       "description": null,
       "template": {
@@ -145,7 +145,7 @@
           },
           "style.css": {
             "type": "Resource",
-            "data": "@media print {\n  @page {\n    size: A4 landscape;\n    @bottom-right {\n      font-family: Tahoma;\n      font-size: 8pt;\n      /* do not allow formatter to add a line break in the content */\n      /* prettier-ignore*/\n      content: '{{t(k=\"report.page\",f=\"Page\")}} ' counter(page) ' {{t(k=\"report.of\",f=\"of\")}} ' counter(pages);\n    }\n  }\n}\n\n.logo {\n  display: block;\n  height: 96px;\n}\n\n.header_image_section,\n.header_supplied_section,\n.header_date_section,\n.body_section,\n.body_total_section {\n  margin-inline-start: 8px;\n  width: 100%;\n}\n\n.header_supplied_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n}\n\n.header_image_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 8pt;\n}\n\n.header_date_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 1pt;\n}\n\n.header_section_field_right {\n  text-align: end;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.header_section_field_left {\n  text-align: start;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.line_number,\n.quantity,\n.pack,\n.cost_price,\n.total_quantity,\n.total_extension {\n  text-align: right;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.expiry {\n  text-align: end;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.location_code,\n.item_name,\n.batch {\n  text-align: start;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.body_section,\n.body_total_section {\n  width: 100%;\n  font-family: Tahoma;\n}\n\n.body_section tr.body_column_label th {\n  border-bottom: 0.5px solid black;\n}\n\n.body_value td {\n  border-bottom: 0.5px solid black;\n}\n\nhr {\n  width: 100%;\n  margin-inline-start: 8px;\n  border: 0.1px solid black;\n}\n\n.header_left_section {\n  text-align: start;\n  font-family: Tahoma;\n  font-size: 8pt;\n  flex: 0 1 auto;\n  margin-inline-end: 10px;\n}\n\n.header_details_section {\n  flex: 1 1 0;\n  text-align: start;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.header_right_section {\n  text-align: end;\n  font-family: Tahoma;\n  font-size: 8pt;\n  flex: 0 1 auto;\n}\n\n.batch-wrap {\n  word-break: break-word;\n}\n"
+            "data": "@media print {\n  @page {\n    @bottom-right {\n      font-family: Tahoma;\n      font-size: 8pt;\n      /* do not allow formatter to add a line break in the content */\n      /* prettier-ignore*/\n      content: '{{t(k=\"report.page\",f=\"Page\")}} ' counter(page) ' {{t(k=\"report.of\",f=\"of\")}} ' counter(pages);\n    }\n  }\n}\n\n.logo {\n  display: block;\n  height: 96px;\n}\n\n.header_image_section,\n.header_supplied_section,\n.header_date_section,\n.body_section,\n.body_total_section {\n  margin-inline-start: 8px;\n  width: 100%;\n}\n\n.header_supplied_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n}\n\n.header_image_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 8pt;\n}\n\n.header_date_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 1pt;\n}\n\n.header_section_field_right {\n  text-align: end;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.header_section_field_left {\n  text-align: start;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.line_number,\n.quantity,\n.pack,\n.cost_price,\n.total_quantity,\n.total_extension {\n  text-align: right;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.expiry {\n  text-align: end;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.location_code,\n.item_name,\n.batch {\n  text-align: start;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.body_section,\n.body_total_section {\n  width: 100%;\n  font-family: Tahoma;\n}\n\n.body_section tr.body_column_label th {\n  border-bottom: 0.5px solid black;\n}\n\n.body_value td {\n  border-bottom: 0.5px solid black;\n}\n\nhr {\n  width: 100%;\n  margin-inline-start: 8px;\n  border: 0.1px solid black;\n}\n\n.header_left_section {\n  text-align: start;\n  font-family: Tahoma;\n  font-size: 8pt;\n  flex: 0 1 auto;\n  margin-inline-end: 10px;\n}\n\n.header_details_section {\n  flex: 1 1 0;\n  text-align: start;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.header_right_section {\n  text-align: end;\n  font-family: Tahoma;\n  font-size: 8pt;\n  flex: 0 1 auto;\n}\n\n.batch-wrap {\n  word-break: break-word;\n}\n"
           },
           "template.html": {
             "type": "TeraTemplate",
@@ -161,7 +161,7 @@
       "argument_schema_id": null,
       "comment": null,
       "is_custom": false,
-      "version": "2.6.9",
+      "version": "2.6.10",
       "code": "inbound",
       "form_schema": null,
       "excel_template_buffer": null
@@ -446,7 +446,7 @@
       "excel_template_buffer": null
     },
     {
-      "id": "picklist-invoice-with-logo_2_17_1_false",
+      "id": "picklist-invoice-with-logo_2_17_2_false",
       "name": "Pick List",
       "description": null,
       "template": {
@@ -484,7 +484,7 @@
           },
           "style.css": {
             "type": "Resource",
-            "data": "@media print {\n  @page {\n    size: A4 landscape;\n    margin: 0;\n    margin-right: 3mm;\n    margin-bottom: 7mm;\n    padding: 0;\n    counter-increment: page;\n\n    @bottom-right {\n      content: \"Page \" counter(page);\n      font-size: 8pt;\n      font-family: Tahoma;\n    }\n  }\n}\n\nbody > table {\n  width: 100%;\n  padding: 2em;\n}\n\n.logo {\n  display: block;\n  height: 96px;\n}\n\n.header_image_section,\n.header_supplied_section,\n.body_section,\n.body_total_section {\n  width: 100%;\n}\n\n.header_supplied_section {\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 1pt;\n}\n\n.header_image_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 8pt;\n  font-family: \"Gill Sans\", \"Gill Sans MT\", Calibri, \"Trebuchet MS\", sans-serif;\n}\n\n.header_section_field_right {\n  text-align: end;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.header_section_field_left {\n  text-align: start;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.body_section {\n  width: 100%;\n  font-family: Tahoma;\n  border-collapse: collapse;\n  table-layout: fixed;\n}\n\n.body_column_label th {\n  border-bottom: 0.5px solid black;\n}\n\n.body_column_label th,\n.body_value td {\n  font-family: Tahoma;\n  font-size: 8pt;\n  padding: 4px;\n}\n\n.line_number, .quantity, .pack {\n    text-align: right;\n    font-family: Tahoma;\n    font-size: 8pt;\n}\n\n.expiry {\n    text-align: end;\n    font-family: Tahoma;\n    font-size: 8pt;\n}\n\n.location_code, .item_name, .batch, .unit {\n    text-align: start;\n    font-family: Tahoma;\n    font-size: 8pt\n}\n\n.footer {\n    width: 100%;\n    margin-top: 40px;\n    display: flex;\n    justify-content: space-between;\n    font-size: 14px;\n}\n\n.footer-left,\n.footer-right {\n    width: 45%;\n}\n\n.footer p {\n    margin: 20px 0;\n}\n\n.batch-wrap {\n    word-break: break-word;\n}\n\n.blank-line {\n  border-bottom: 1px solid black;\n  width: 100%;\n  margin-top: 8px;\n}\n\ntd.blank-line-cell {\n  padding: 4px 4px 4px 0;\n  vertical-align: bottom;\n}\n\ntd.blank-line-cell:last-child {\n  padding: 4px 0;\n}"
+            "data": "@media print {\n  @page {\n    margin: 0;\n    margin-right: 3mm;\n    margin-bottom: 7mm;\n    padding: 0;\n    counter-increment: page;\n\n    @bottom-right {\n      content: \"Page \" counter(page);\n      font-size: 8pt;\n      font-family: Tahoma;\n    }\n  }\n}\n\nbody > table {\n  width: 100%;\n  padding: 2em;\n}\n\n.logo {\n  display: block;\n  height: 96px;\n}\n\n.header_image_section,\n.header_supplied_section,\n.body_section,\n.body_total_section {\n  width: 100%;\n}\n\n.header_supplied_section {\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 1pt;\n}\n\n.header_image_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 8pt;\n  font-family: \"Gill Sans\", \"Gill Sans MT\", Calibri, \"Trebuchet MS\", sans-serif;\n}\n\n.header_section_field_right {\n  text-align: end;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.header_section_field_left {\n  text-align: start;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.body_section {\n  width: 100%;\n  font-family: Tahoma;\n  border-collapse: collapse;\n  table-layout: fixed;\n}\n\n.body_column_label th {\n  border-bottom: 0.5px solid black;\n}\n\n.body_column_label th,\n.body_value td {\n  font-family: Tahoma;\n  font-size: 8pt;\n  padding: 4px;\n}\n\n.line_number, .quantity, .pack {\n    text-align: right;\n    font-family: Tahoma;\n    font-size: 8pt;\n}\n\n.expiry {\n    text-align: end;\n    font-family: Tahoma;\n    font-size: 8pt;\n}\n\n.location_code, .item_name, .batch, .unit {\n    text-align: start;\n    font-family: Tahoma;\n    font-size: 8pt\n}\n\n.footer {\n    width: 100%;\n    margin-top: 40px;\n    display: flex;\n    justify-content: space-between;\n    font-size: 14px;\n}\n\n.footer-left,\n.footer-right {\n    width: 45%;\n}\n\n.footer p {\n    margin: 20px 0;\n}\n\n.batch-wrap {\n    word-break: break-word;\n}\n\n.blank-line {\n  border-bottom: 1px solid black;\n  width: 100%;\n  margin-top: 8px;\n}\n\ntd.blank-line-cell {\n  padding: 4px 4px 4px 0;\n  vertical-align: bottom;\n}\n\ntd.blank-line-cell:last-child {\n  padding: 4px 0;\n}"
           },
           "template.html": {
             "type": "TeraTemplate",
@@ -500,7 +500,7 @@
       "argument_schema_id": null,
       "comment": null,
       "is_custom": false,
-      "version": "2.17.1",
+      "version": "2.17.2",
       "code": "picklist-invoice-with-logo",
       "form_schema": null,
       "excel_template_buffer": null
