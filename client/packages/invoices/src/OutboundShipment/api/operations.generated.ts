@@ -27,6 +27,7 @@ export type OutboundFragment = {
   type: Types.InvoiceNodeType;
   taxPercentage?: number | null;
   expectedDeliveryDate?: string | null;
+  propertiesV2?: any | null;
   currencyRate: number;
   user?: {
     __typename: 'UserNode';
@@ -161,6 +162,7 @@ export type OutboundRowFragment = {
   colour?: string | null;
   taxPercentage?: number | null;
   expectedDeliveryDate?: string | null;
+  propertiesV2?: any | null;
   currencyRate: number;
   pricing: {
     __typename: 'PricingNode';
@@ -224,6 +226,7 @@ export type InvoicesQuery = {
       colour?: string | null;
       taxPercentage?: number | null;
       expectedDeliveryDate?: string | null;
+      propertiesV2?: any | null;
       currencyRate: number;
       pricing: {
         __typename: 'PricingNode';
@@ -278,6 +281,7 @@ export type InvoiceQuery = {
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
+        propertiesV2?: any | null;
         currencyRate: number;
         user?: {
           __typename: 'UserNode';
@@ -434,6 +438,7 @@ export type OutboundByNumberQuery = {
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
+        propertiesV2?: any | null;
         currencyRate: number;
         user?: {
           __typename: 'UserNode';
@@ -1121,6 +1126,7 @@ export const OutboundFragmentDoc = gql`
     type
     taxPercentage
     expectedDeliveryDate
+    propertiesV2
     user {
       __typename
       username
@@ -1202,6 +1208,7 @@ export const OutboundRowFragmentDoc = gql`
     colour
     taxPercentage
     expectedDeliveryDate
+    propertiesV2
     pricing {
       __typename
       totalAfterTax

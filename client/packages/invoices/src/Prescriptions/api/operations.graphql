@@ -15,6 +15,7 @@ fragment PrescriptionRow on InvoiceNode {
   type
   status
   colour
+  propertiesV2
   nameInsuranceJoinId
   insuranceDiscountAmount
   insuranceDiscountPercentage

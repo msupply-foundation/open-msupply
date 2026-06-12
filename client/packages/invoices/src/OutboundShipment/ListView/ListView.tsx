@@ -14,6 +14,10 @@ import {
   NothingHere,
   usePreferences,
   InvoiceNodeType,
+  buildPropertyColumns,
+  buildPropertyUrlFilterConfigs,
+  mapPropertyFilters,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { getStatusSequence } from '../../statuses';
@@ -22,6 +26,7 @@ import { useOutbound } from '../api';
 import { OutboundRowFragment } from '../api/operations.generated';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
+import { useInvoicePropertiesV2 } from '../../common';
 
 export const OutboundShipmentListView = () => {
   const t = useTranslation();
@@ -29,10 +34,14 @@ export const OutboundShipmentListView = () => {
   const { invoiceStatusOptions } = usePreferences();
   const modalController = useToggle();
   const simplifiedTabletView = useSimplifiedTabletUI();
+  const { localisedDate } = useFormatDateTime();
+  const { data: properties } = useInvoicePropertiesV2(
+    InvoiceNodeType.OutboundShipment
+  );
 
   const {
     filter,
-    queryParams: { sortBy, first, offset },
+    queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'invoiceNumber', dir: 'desc' },
     filters: [
@@ -42,9 +51,17 @@ export const OutboundShipmentListView = () => {
       { key: 'createdDatetime', condition: 'between' },
       { key: 'shippedDatetime', condition: 'between' },
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
+      ...buildPropertyUrlFilterConfigs(properties ?? []),
     ],
   });
-  const queryParams = { ...filter, sortBy, first, offset };
+  const queryParams = {
+    ...filter,
+    // Property filters travel to the API as the `dynamicFilter` condition AST
+    filterBy: mapPropertyFilters(filterBy, properties ?? []),
+    sortBy,
+    first,
+    offset,
+  };
 
   const { data, isFetching, isError } = useOutbound.document.list(queryParams);
   const { mutate: onUpdate } = useOutbound.document.update();
@@ -115,8 +132,12 @@ export const OutboundShipmentListView = () => {
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
       },
+      ...buildPropertyColumns<OutboundRowFragment>(
+        properties ?? [],
+        localisedDate
+      ),
     ],
-    []
+    [properties, localisedDate]
   );
 
   const { table, selectedRows } =

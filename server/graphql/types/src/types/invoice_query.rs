@@ -11,9 +11,10 @@ use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
 
 use graphql_core::loader::{
-    CurrencyByIdLoader, DiagnosisLoader, InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader,
-    NameByIdLoaderInput, NameInsuranceJoinLoader, PatientLoader, ProgramByIdLoader,
-    PurchaseOrderByIdLoader, ShippingMethodByIdLoader, SyncFileReferenceLoader, UserLoader,
+    AllowedPropertyV2KeysByTableLoader, CurrencyByIdLoader, DiagnosisLoader, InvoiceByIdLoader,
+    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, NameInsuranceJoinLoader, PatientLoader,
+    ProgramByIdLoader, PurchaseOrderByIdLoader, ShippingMethodByIdLoader, SyncFileReferenceLoader,
+    UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
@@ -230,6 +231,31 @@ impl InvoiceNode {
 
     pub async fn colour(&self) -> &Option<String> {
         &self.row().colour
+    }
+
+    /// Properties v2 values for this invoice. The raw `invoice.properties_v2`
+    /// JSONB blob is filtered server-side to keys that are (a) defined in
+    /// `property_v2` and not soft-deleted, (b) marked visible for this invoice
+    /// type's scope (e.g. `"inbound_shipment"`) via `property_table_v2`. Stray
+    /// keys never reach the client. `None` for types with no properties scope
+    /// (repack, inventory adjustments).
+    pub async fn properties_v2(&self, ctx: &Context<'_>) -> Result<Option<serde_json::Value>> {
+        let Some(raw) = self.row().properties_v2.clone() else {
+            return Ok(None);
+        };
+
+        let Some(table_name) = service::invoice::invoice_property_table_name(&self.row().r#type)
+        else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<AllowedPropertyV2KeysByTableLoader>>();
+        let allowed_keys = loader
+            .load_one(table_name.to_string())
+            .await?
+            .unwrap_or_default();
+
+        Ok(Some(crate::types::filter_properties_v2(raw, &allowed_keys)))
     }
 
     /// Response Requisition that is the origin of this Outbound Shipment

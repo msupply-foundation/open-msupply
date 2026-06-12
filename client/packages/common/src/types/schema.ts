@@ -4569,6 +4569,14 @@ export type InvoiceFilterInput = {
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   createdOrBackdatedDatetime?: InputMaybe<DatetimeFilterInput>;
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
+  /**
+   * Dynamic filter condition AST, currently supporting property conditions
+   * on keys visible for the requested invoice type's scope, e.g.
+   * `{"And": [{"Property": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`.
+   * Requires the query's `type` argument to pin a single supported invoice
+   * type (the properties scope is per type).
+   */
+  dynamicFilter?: InputMaybe<Scalars['JSON']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
   isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
@@ -4769,6 +4777,15 @@ export type InvoiceNode = {
   pricing: PricingNode;
   program?: Maybe<ProgramNode>;
   programId?: Maybe<Scalars['String']['output']>;
+  /**
+   * Properties v2 values for this invoice. The raw `invoice.properties_v2`
+   * JSONB blob is filtered server-side to keys that are (a) defined in
+   * `property_v2` and not soft-deleted, (b) marked visible for this invoice
+   * type's scope (e.g. `"inbound_shipment"`) via `property_table_v2`. Stray
+   * keys never reach the client. `None` for types with no properties scope
+   * (repack, inventory adjustments).
+   */
+  propertiesV2?: Maybe<Scalars['JSON']['output']>;
   purchaseOrder?: Maybe<PurchaseOrderNode>;
   purchaseOrderId?: Maybe<Scalars['String']['output']>;
   receivedDatetime?: Maybe<Scalars['DateTime']['output']>;
@@ -10657,6 +10674,12 @@ export type UpdateCustomerReturnInput = {
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Patch of propertiesV2 key -> value (JSON object) merged into the
+   * invoice's custom properties; a `null` value clears that key, keys absent
+   * from the patch are left unchanged.
+   */
+  propertiesV2?: InputMaybe<Scalars['JSON']['input']>;
   status?: InputMaybe<UpdateCustomerReturnStatusInput>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
 };
@@ -10777,6 +10800,12 @@ export type UpdateInboundShipmentInput = {
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Patch of propertiesV2 key -> value (JSON object) merged into the
+   * invoice's custom properties; a `null` value clears that key, keys absent
+   * from the patch are left unchanged.
+   */
+  propertiesV2?: InputMaybe<Scalars['JSON']['input']>;
   receivedDatetime?: InputMaybe<Scalars['DateTime']['input']>;
   status?: InputMaybe<UpdateInboundShipmentStatusInput>;
   tax?: InputMaybe<TaxInput>;
@@ -10967,6 +10996,12 @@ export type UpdateOutboundShipmentInput = {
   /** The new invoice id provided by the client */
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  /**
+   * Patch of propertiesV2 key -> value (JSON object) merged into the
+   * invoice's custom properties; a `null` value clears that key, keys absent
+   * from the patch are left unchanged.
+   */
+  propertiesV2?: InputMaybe<Scalars['JSON']['input']>;
   shippingMethodId?: InputMaybe<NullableStringUpdate>;
   /**
    * When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
@@ -11157,6 +11192,12 @@ export type UpdatePrescriptionInput = {
   patientId?: InputMaybe<Scalars['String']['input']>;
   prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;
   programId?: InputMaybe<NullableStringUpdate>;
+  /**
+   * Patch of propertiesV2 key -> value (JSON object) merged into the
+   * invoice's custom properties; a `null` value clears that key, keys absent
+   * from the patch are left unchanged.
+   */
+  propertiesV2?: InputMaybe<Scalars['JSON']['input']>;
   status?: InputMaybe<UpdatePrescriptionStatusInput>;
   theirReference?: InputMaybe<NullableStringUpdate>;
 };
@@ -11596,6 +11637,12 @@ export type UpdateSupplierReturnInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  /**
+   * Patch of propertiesV2 key -> value (JSON object) merged into the
+   * invoice's custom properties; a `null` value clears that key, keys absent
+   * from the patch are left unchanged.
+   */
+  propertiesV2?: InputMaybe<Scalars['JSON']['input']>;
   status?: InputMaybe<UpdateSupplierReturnStatusInput>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
   transportReference?: InputMaybe<Scalars['String']['input']>;

@@ -17,6 +17,10 @@ import {
   CardList,
   InvoiceNodeType,
   RouteBuilder,
+  buildPropertyColumns,
+  buildPropertyUrlFilterConfigs,
+  mapPropertyFilters,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { AppBarButtons } from './AppBarButtons';
@@ -27,6 +31,7 @@ import { InboundRowFragment, useInboundList, useInboundShipment } from '../api';
 import { Footer } from './Footer';
 import { LinkedCell } from './LinkedCell';
 import { SupplierCell } from './SupplierCell';
+import { useInvoicePropertiesV2 } from '../../common';
 
 const TABLE_ID = 'inbound-shipment-list-view';
 
@@ -44,6 +49,10 @@ export const InboundListView = () => {
   const navigate = useNavigate();
   const { invoiceStatusOptions } = usePreferences();
   const { userHasPermission } = useAuthContext();
+  const { localisedDate } = useFormatDateTime();
+  const { data: properties } = useInvoicePropertiesV2(
+    InvoiceNodeType.InboundShipment
+  );
 
   const {
     filter,
@@ -71,6 +80,7 @@ export const InboundListView = () => {
         condition: 'equalTo',
         isNumber: true,
       },
+      ...buildPropertyUrlFilterConfigs(properties ?? []),
     ],
   });
 
@@ -85,7 +95,8 @@ export const InboundListView = () => {
     sortBy,
     first,
     offset,
-    filterBy,
+    // Property filters travel to the API as the `dynamicFilter` condition AST
+    filterBy: mapPropertyFilters(filterBy, properties ?? []),
     type: invoiceTypes,
   };
 
@@ -174,8 +185,12 @@ export const InboundListView = () => {
         columnType: ColumnType.Currency,
         defaultHideOnMobile: true,
       },
+      ...buildPropertyColumns<InboundRowFragment>(
+        properties ?? [],
+        localisedDate
+      ),
     ],
-    [t]
+    [t, properties, localisedDate]
   );
 
   const { table, selectedRows } = usePaginatedMaterialTable<InboundRowFragment>(

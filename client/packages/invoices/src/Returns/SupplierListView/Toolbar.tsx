@@ -6,15 +6,20 @@ import {
   FilterMenu,
   usePreferences,
   InvoiceNodeType,
+  buildPropertyFilterDefinitions,
 } from '@openmsupply-client/common';
 import { getStatusSequence } from '../../statuses';
 import { getStatusTranslator } from '../../utils';
+import { useInvoicePropertiesV2 } from '../../common';
 
 export const Toolbar = () => {
   const t = useTranslation();
   const { invoiceStatusOptions } = usePreferences();
   const statuses = getStatusSequence(InvoiceNodeType.SupplierReturn).filter(
     status => invoiceStatusOptions?.includes(status)
+  );
+  const { data: properties } = useInvoicePropertiesV2(
+    InvoiceNodeType.SupplierReturn
   );
 
   return (
@@ -44,6 +49,12 @@ export const Toolbar = () => {
                 label: getStatusTranslator(t)(status),
               })),
             },
+            ...buildPropertyFilterDefinitions(properties ?? [], {
+              min: t('label.min'),
+              max: t('label.max'),
+              fromDate: t('label.from-date'),
+              toDate: t('label.to-date'),
+            }),
           ]}
         />
       </Box>

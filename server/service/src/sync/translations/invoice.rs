@@ -1,20 +1,24 @@
-use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{
+    utils::{clear_invalid_fk, merge_legacy_properties, LegacyPropertiesBuilder},
+    PullTranslateResult, PushTranslateResult, SyncTranslation,
+};
 use crate::sync::translations::{
     clinician::ClinicianTranslation, currency::CurrencyTranslation,
     diagnosis::DiagnosisTranslation, name::NameTranslation,
     name_insurance_join::NameInsuranceJoinTranslation, purchase_order::PurchaseOrderTranslation,
     shipping_method::ShippingMethodTranslation, store::StoreTranslation, to_legacy_time,
 };
+use crate::sync::CentralServerConfig;
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use repository::name_insurance_join_row::NameInsuranceJoinRowRepository;
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, CurrencyRowRepository,
     DiagnosisRowRepository, EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, InvoiceRow,
     InvoiceRowDelete, InvoiceRowRepository, InvoiceStatus, InvoiceType, KeyValueStoreRepository,
-    NameRow, NameRowRepository, Row, StorageConnection, StoreFilter, StoreRepository, StoreRowRepository,
-    SyncBufferRow, UserAccountRow, UserAccountRowRepository,
+    NameRow, NameRowRepository, Row, StorageConnection, StoreFilter, StoreRepository,
+    StoreRowRepository, SyncBufferRow, UserAccountRow, UserAccountRowRepository,
 };
-use repository::name_insurance_join_row::NameInsuranceJoinRowRepository;
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 use util::sync_serde::{
@@ -160,6 +164,18 @@ pub struct LegacyTransactRow {
     pub transport_reference: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub goods_received_ID: Option<String>,
+    /// Transaction category (`transaction_category.ID`). Mapped to/from the
+    /// invoice type's `*_category` key in `properties_v2` — see
+    /// [`LEGACY_INVOICE_OWNED_KEYS`].
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub category_ID: Option<String>,
+    /// Second transaction category — prescriptions only in OG (the Patient Type
+    /// dropdown, from the "pi2" category pool). Mapped to/from
+    /// [`PRESCRIPTION_CATEGORY2_KEY`].
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub category2_ID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "original_PO_ID")]
     pub purchase_order_id: Option<String>,
@@ -293,6 +309,102 @@ pub struct LegacyTransactRow {
     #[serde(default)]
     #[serde(deserialize_with = "object_fields_as_option")]
     pub oms_fields: Option<TransactRowOmsFields>,
+}
+
+/// `properties_v2` keys the legacy OG→OMS invoice import owns (derived from
+/// `transact.category_ID` / `category2_ID`). On a v5 re-import these are
+/// refreshed from OG; every other key in the blob (OMS-authored values) is
+/// preserved. See [`merge_legacy_properties`]. The keys match the
+/// `legacy_transaction_category_*` mapping properties seeded by
+/// `central_mapping_properties` — one OPTION property per transact type, since
+/// mSupply partitions its category pool by type, plus the second prescription
+/// dimension (`pi2`, the OG Patient Type dropdown → `transact.category2_ID`).
+///
+/// Unlike name/item properties, the values are editable in OMS *and* pushed
+/// back to OG (`category_ID`/`category2_ID` in the push below) — invoices are
+/// store data OMS actively authors, so the one-way rule is relaxed (see the
+/// properties dev doc).
+/// NOTE: this list, [`category_key_for_invoice_type`], the
+/// `legacy_transaction_category_*` seeder entries (`central_mapping_properties`)
+/// and `invoice_property_table_name` must stay in lock-step — the
+/// `transaction_category_mappings_stay_in_lock_step` test in
+/// `central_mapping_properties` asserts it (the migration SQL backfill is the
+/// one copy a test can't reach; a future category-bearing type needs a NEW
+/// migration anyway, since shipped ones are frozen).
+pub(crate) const LEGACY_INVOICE_OWNED_KEYS: &[&str] = &[
+    "inbound_shipment_category",
+    "outbound_shipment_category",
+    "prescription_category",
+    "supplier_return_category",
+    "customer_return_category",
+    PRESCRIPTION_CATEGORY2_KEY,
+];
+
+/// `transact.category2_ID` is only ever written for prescriptions in OG
+/// (dispensary mode, from the "pi2" category pool), so it maps to a single
+/// prescription-scoped key rather than one per type.
+pub(crate) const PRESCRIPTION_CATEGORY2_KEY: &str = "prescription_category2";
+
+/// The `properties_v2` key holding the transaction category for an invoice of
+/// this type — `None` for types without a mapped category property (repack,
+/// inventory adjustments).
+pub(crate) fn category_key_for_invoice_type(invoice_type: &InvoiceType) -> Option<&'static str> {
+    match invoice_type {
+        InvoiceType::InboundShipment => Some("inbound_shipment_category"),
+        InvoiceType::OutboundShipment => Some("outbound_shipment_category"),
+        InvoiceType::Prescription => Some("prescription_category"),
+        InvoiceType::SupplierReturn => Some("supplier_return_category"),
+        InvoiceType::CustomerReturn => Some("customer_return_category"),
+        InvoiceType::InventoryAddition | InvoiceType::InventoryReduction | InvoiceType::Repack => {
+            None
+        }
+    }
+}
+
+/// Build the legacy-owned slice of `invoice.properties_v2` from
+/// `transact.category_ID` (keyed by the resolved invoice type) and, for
+/// prescriptions, `transact.category2_ID`.
+fn build_legacy_invoice_properties(
+    invoice_type: &InvoiceType,
+    category_id: Option<&str>,
+    category2_id: Option<&str>,
+) -> Option<serde_json::Value> {
+    let key = category_key_for_invoice_type(invoice_type)?;
+    let mut builder = LegacyPropertiesBuilder::new().option(key, category_id);
+    if *invoice_type == InvoiceType::Prescription {
+        builder = builder.option(PRESCRIPTION_CATEGORY2_KEY, category2_id);
+    }
+    builder.build()
+}
+
+fn property_string(properties_v2: &Option<serde_json::Value>, key: &str) -> Option<String> {
+    properties_v2
+        .as_ref()?
+        .as_object()?
+        .get(key)?
+        .as_str()
+        .map(str::to_string)
+}
+
+/// Inverse of [`build_legacy_invoice_properties`]: read the invoice type's
+/// category option id out of `properties_v2` for the v5 push back to OG.
+fn legacy_category_id_from_properties(
+    properties_v2: &Option<serde_json::Value>,
+    invoice_type: &InvoiceType,
+) -> Option<String> {
+    property_string(properties_v2, category_key_for_invoice_type(invoice_type)?)
+}
+
+/// Second prescription dimension for the push: only prescriptions carry a
+/// `category2_ID` in OG.
+fn legacy_category2_id_from_properties(
+    properties_v2: &Option<serde_json::Value>,
+    invoice_type: &InvoiceType,
+) -> Option<String> {
+    if *invoice_type != InvoiceType::Prescription {
+        return None;
+    }
+    property_string(properties_v2, PRESCRIPTION_CATEGORY2_KEY)
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
@@ -468,6 +580,33 @@ impl SyncTranslation for InvoiceTranslation {
             true,
         )?;
 
+        // om_type (when present) overrides the legacy-derived type — resolve it
+        // up front so the category maps to the right `properties_v2` key.
+        let resolved_type = data.om_type.clone().unwrap_or(invoice_type);
+
+        // Preserve any existing `properties_v2` rather than overwriting the
+        // whole blob: an OMS write path (invoice category edits) can author keys
+        // the legacy importer doesn't own, and a v5 re-pull of an unchanged OG
+        // record must not wipe them. On central we refresh the owned keys
+        // (`category_ID`) from OG and keep the rest; off central we leave
+        // `properties_v2` untouched — it arrives via v7 instead.
+        let existing_properties = InvoiceRowRepository::new(connection)
+            .find_one_by_id(&data.ID)?
+            .and_then(|row| row.properties_v2);
+        let properties_v2 = if CentralServerConfig::is_central_server() {
+            merge_legacy_properties(
+                existing_properties,
+                build_legacy_invoice_properties(
+                    &resolved_type,
+                    data.category_ID.as_deref(),
+                    data.category2_ID.as_deref(),
+                ),
+                LEGACY_INVOICE_OWNED_KEYS,
+            )
+        } else {
+            existing_properties
+        };
+
         let oms_fields = data.oms_fields.unwrap_or_default();
 
         let status = match data.om_status {
@@ -482,7 +621,7 @@ impl SyncTranslation for InvoiceTranslation {
             name_id: data.name_ID,
             name_store_id,
             invoice_number: data.invoice_num,
-            r#type: data.om_type.unwrap_or(invoice_type),
+            r#type: resolved_type,
             status,
             on_hold: data.hold,
             comment: data.comment,
@@ -522,6 +661,7 @@ impl SyncTranslation for InvoiceTranslation {
             charges_local_currency: oms_fields.charges_local_currency,
             charges_foreign_currency: oms_fields.charges_foreign_currency,
             legacy_goods_received_id: data.goods_received_ID,
+            properties_v2,
             ..Default::default()
         };
 
@@ -619,6 +759,7 @@ impl SyncTranslation for InvoiceTranslation {
                     charges_local_currency,
                     charges_foreign_currency,
                     legacy_goods_received_id: _,
+                    properties_v2,
                 },
             name_row,
             clinician_row,
@@ -642,6 +783,12 @@ impl SyncTranslation for InvoiceTranslation {
                 )))
             }
         };
+
+        // First property values pushed back to OG: the invoice type's category
+        // key round-trips as `transact.category_ID`, and the prescription
+        // Patient Type as `category2_ID`.
+        let category_id = legacy_category_id_from_properties(&properties_v2, &r#type);
+        let category2_id = legacy_category2_id_from_properties(&properties_v2, &r#type);
 
         let legacy_row = LegacyTransactRow {
             ID: id.clone(),
@@ -693,6 +840,8 @@ impl SyncTranslation for InvoiceTranslation {
             expected_delivery_date,
             default_donor_id: default_donor_id,
             goods_received_ID: None,
+            category_ID: category_id,
+            category2_ID: category2_id,
             purchase_order_id,
             shipping_method_id,
             oms_fields: Some(TransactRowOmsFields {
@@ -1092,9 +1241,9 @@ mod tests {
         shipping_method_row::ShippingMethodRowRepository,
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogCondition, ChangelogRepository, CurrencyRow, CurrencyRowRepository, DiagnosisRow,
-        InsuranceProviderRow, CursorAndLimit, FilterBuilder, KeyType,
-        KeyValueStoreRow, ShippingMethodRow, SyncAction, SyncRecordData, RowOrDelete,
+        ChangelogCondition, ChangelogRepository, CurrencyRow, CurrencyRowRepository,
+        CursorAndLimit, DiagnosisRow, FilterBuilder, InsuranceProviderRow, KeyType,
+        KeyValueStoreRow, RowOrDelete, ShippingMethodRow, SyncAction, SyncRecordData,
     };
     use serde_json::json;
 
@@ -1276,7 +1425,9 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "transact".to_string(),
             record_id: "INVOICE_FK_INVALID".to_string(),
-            data: SyncRecordData(serde_json::from_str(r#"{
+            data: SyncRecordData(
+                serde_json::from_str(
+                    r#"{
               "ID": "INVOICE_FK_INVALID",
               "name_ID": "name_store_a",
               "store_ID": "store_b",
@@ -1317,7 +1468,10 @@ mod tests {
               "insuranceDiscountRate": 0,
               "goods_received_ID": "",
               "original_PO_ID": "does_not_exist_purchase_order"
-            }"#).unwrap()),
+            }"#,
+                )
+                .unwrap(),
+            ),
             action: SyncAction::Upsert,
             ..Default::default()
         };
@@ -1352,13 +1506,144 @@ mod tests {
             format!("expected purchase_order_id None; got:\n{debug}")
         );
 
-        let logs = SystemLogRowRepository::new(&connection)
-            .find_all()
-            .unwrap();
+        let logs = SystemLogRowRepository::new(&connection).find_all().unwrap();
         let fk_errors: Vec<_> = logs
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
             .collect();
         assert_eq!(fk_errors.len(), 5, "got {fk_errors:?}");
+    }
+
+    /// `transact.category_ID` maps to the resolved invoice type's category key
+    /// in `properties_v2` — on central only (off central the value arrives via
+    /// v7 and a v5 pull must not touch it). Inverse mapping feeds the push.
+    #[actix_rt::test]
+    async fn test_invoice_category_maps_to_properties_v2() {
+        use crate::sync::test_util_set_is_central_server;
+        let translator = InvoiceTranslation {};
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_invoice_category_maps_to_properties_v2",
+            MockDataInserts::none().names().stores().currencies(),
+            MockData {
+                key_value_store_rows: vec![KeyValueStoreRow {
+                    id: KeyType::SettingsSyncSiteId,
+                    value_int: Some(mock_store_a().site_id),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let sync_record = SyncBufferRow {
+            table_name: "transact".to_string(),
+            record_id: "INVOICE_WITH_CATEGORY".to_string(),
+            data: SyncRecordData(serde_json::json!({
+              "ID": "INVOICE_WITH_CATEGORY",
+              "name_ID": "name_store_a",
+              "store_ID": "store_b",
+              "invoice_num": 1,
+              "type": "si",
+              "status": "cn",
+              "hold": false,
+              "comment": "",
+              "their_ref": "",
+              "requisition_ID": "",
+              "linked_transaction_id": "",
+              "entry_date": "2021-07-30",
+              "entry_time": 47046,
+              "finalised_date": "0000-00-00",
+              "finalised_time": 0,
+              "confirm_date": "2021-07-30",
+              "confirm_time": 47046,
+              "mode": "store",
+              "om_transport_reference": "",
+              "tax_rate": 0,
+              "currency_ID": "",
+              "currency_rate": 1.0,
+              "prescriber_ID": "",
+              "diagnosis_ID": "",
+              "nameInsuranceJoinID": "",
+              "donor_default_id": "",
+              "ship_method_ID": "",
+              "user_ID": "",
+              "is_cancellation": false,
+              "insuranceDiscountAmount": 0,
+              "insuranceDiscountRate": 0,
+              "goods_received_ID": "",
+              "original_PO_ID": "",
+              "category_ID": "CATEGORY_1",
+            })),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        // Central: "si" resolves to InboundShipment, so the category lands under
+        // `inbound_shipment_category`.
+        test_util_set_is_central_server(true);
+        let result = translator
+            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .unwrap();
+        let debug = format!("{result:?}");
+        assert!(
+            debug.contains("inbound_shipment_category") && debug.contains("CATEGORY_1"),
+            "category must map to the type's properties_v2 key: {debug}"
+        );
+
+        // Off central: properties_v2 stays untouched (None here — no existing row).
+        test_util_set_is_central_server(false);
+        let result = translator
+            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .unwrap();
+        let debug = format!("{result:?}");
+        assert!(
+            debug.contains("properties_v2: None"),
+            "remote must not author legacy property values: {debug}"
+        );
+
+        // Push inverse: every supported type reads its own key; unsupported
+        // types carry no category.
+        let properties = Some(serde_json::json!({
+            "inbound_shipment_category": "C_SI",
+            "outbound_shipment_category": "C_CI",
+            "prescription_category": "C_PI",
+            "supplier_return_category": "C_SC",
+            "customer_return_category": "C_CC",
+            "prescription_category2": "C_PI2",
+        }));
+        for (invoice_type, expected) in [
+            (InvoiceType::InboundShipment, Some("C_SI")),
+            (InvoiceType::OutboundShipment, Some("C_CI")),
+            (InvoiceType::Prescription, Some("C_PI")),
+            (InvoiceType::SupplierReturn, Some("C_SC")),
+            (InvoiceType::CustomerReturn, Some("C_CC")),
+            (InvoiceType::Repack, None),
+            (InvoiceType::InventoryAddition, None),
+        ] {
+            assert_eq!(
+                legacy_category_id_from_properties(&properties, &invoice_type),
+                expected.map(str::to_string),
+                "type {invoice_type:?}"
+            );
+            // category2_ID only round-trips for prescriptions.
+            assert_eq!(
+                legacy_category2_id_from_properties(&properties, &invoice_type),
+                (invoice_type == InvoiceType::Prescription).then(|| "C_PI2".to_string()),
+                "category2 for type {invoice_type:?}"
+            );
+        }
+
+        // Prescriptions build both dimensions; other types ignore category2_ID.
+        assert_eq!(
+            build_legacy_invoice_properties(&InvoiceType::Prescription, Some("C1"), Some("C2")),
+            Some(serde_json::json!({
+                "prescription_category": "C1",
+                "prescription_category2": "C2",
+            }))
+        );
+        assert_eq!(
+            build_legacy_invoice_properties(&InvoiceType::InboundShipment, Some("C1"), Some("C2")),
+            Some(serde_json::json!({ "inbound_shipment_category": "C1" }))
+        );
     }
 }

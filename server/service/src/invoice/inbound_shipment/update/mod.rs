@@ -57,6 +57,10 @@ pub struct UpdateInboundShipment {
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDefaultDonor>,
     pub received_datetime: Option<DateTime<Utc>>,
+    /// Patch of propertiesV2 key -> value merged into `invoice.properties_v2`
+    /// (a JSON `null` deletes that key; keys absent from the patch are left
+    /// as-is). Keys must be visible for the "inbound_shipment" scope.
+    pub properties_v2: Option<serde_json::Map<String, serde_json::Value>>,
 }
 
 type OutError = UpdateInboundShipmentError;
@@ -222,6 +226,8 @@ pub enum UpdateInboundShipmentError {
     CannotReceiveWithPendingLines,
     CannotSetShippedStatusOnManualInboundShipment,
     CurrencyRateMustBePositive,
+    /// A propertiesV2 patch key is not a visible inbound shipment property.
+    UnknownPropertyKey(String),
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
@@ -286,7 +292,7 @@ mod test {
             mock_store_linked_to_name, mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a,
             MockData, MockDataInserts,
         },
-        test_db::setup_all_with_data,
+        test_db::{setup_all, setup_all_with_data},
         vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
         ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceLineFilter, InvoiceLineRow,
         InvoiceLineRowRepository, InvoiceLineStatus, InvoiceLineType, InvoiceRow,
@@ -2368,5 +2374,100 @@ mod test {
         );
         assert!(logs[0].activity_log_row.changed_from.is_some());
         assert!(logs[0].activity_log_row.changed_to.is_some());
+    }
+
+    /// propertiesV2 patch through the regular update: unknown keys rejected,
+    /// known keys patch-merged over the existing blob (null deletes; keys
+    /// absent from the patch — e.g. hidden properties — are preserved). Status
+    /// gating is shared with every other field (see CannotEditFinalised above).
+    #[actix_rt::test]
+    async fn update_inbound_shipment_properties_v2() {
+        use repository::{
+            PropertyTableV2Row, PropertyTableV2RowRepository, PropertyV2Row,
+            PropertyV2RowRepository, PropertyValueTypeV2,
+        };
+        use serde_json::json;
+
+        let (_, connection, connection_manager, _) =
+            setup_all("update_inbound_shipment_properties_v2", MockDataInserts::all()).await;
+
+        // Seed one visible inbound shipment property so key validation passes.
+        PropertyV2RowRepository::new(&connection)
+            .upsert_one(&PropertyV2Row {
+                id: "legacy_transaction_category_si".to_string(),
+                key: "inbound_shipment_category".to_string(),
+                name: "Category".to_string(),
+                value_type: PropertyValueTypeV2::Option,
+                is_legacy: true,
+                deleted_datetime: None,
+            })
+            .unwrap();
+        PropertyTableV2RowRepository::new(&connection)
+            .upsert_one(&PropertyTableV2Row {
+                id: "legacy_transaction_category_si__inbound_shipment".to_string(),
+                property_id: "legacy_transaction_category_si".to_string(),
+                table_name: "inbound_shipment".to_string(),
+                is_visible: true,
+            })
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        let invoice_id = mock_inbound_shipment_a().id;
+        let patch = |pairs: &[(&str, serde_json::Value)]| UpdateInboundShipment {
+            id: invoice_id.clone(),
+            properties_v2: Some(
+                pairs
+                    .iter()
+                    .map(|(k, v)| (k.to_string(), v.clone()))
+                    .collect(),
+            ),
+            ..Default::default()
+        };
+
+        // UnknownPropertyKey
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                patch(&[("not_a_property", json!("x"))]),
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(ServiceError::UnknownPropertyKey("not_a_property".to_string()))
+        );
+
+        // Pre-seed a key the client doesn't own (as if hidden/legacy) directly
+        // on the row, then patch the visible key — the other key must survive.
+        let row_repo = InvoiceRowRepository::new(&connection);
+        let mut row = row_repo.find_one_by_id(&invoice_id).unwrap().unwrap();
+        row.properties_v2 = Some(json!({ "hidden": "keep" }));
+        row_repo.upsert_one(&row).unwrap();
+
+        service
+            .update_inbound_shipment(
+                &context,
+                patch(&[("inbound_shipment_category", json!("CAT_1"))]),
+                InboundShipmentType::InboundShipment,
+            )
+            .unwrap();
+        let stored = row_repo.find_one_by_id(&invoice_id).unwrap().unwrap();
+        assert_eq!(
+            stored.properties_v2,
+            Some(json!({ "inbound_shipment_category": "CAT_1", "hidden": "keep" }))
+        );
+
+        // A null value deletes the key.
+        service
+            .update_inbound_shipment(
+                &context,
+                patch(&[("inbound_shipment_category", json!(null))]),
+                InboundShipmentType::InboundShipment,
+            )
+            .unwrap();
+        let stored = row_repo.find_one_by_id(&invoice_id).unwrap().unwrap();
+        assert_eq!(stored.properties_v2, Some(json!({ "hidden": "keep" })));
     }
 }

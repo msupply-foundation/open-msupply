@@ -140,6 +140,7 @@ fragment Inbound on InvoiceNode {
   type
   taxPercentage
   expectedDeliveryDate
+  propertiesV2
   defaultDonor(storeId: $storeId) {
     id
     name
@@ -291,6 +292,7 @@ fragment InboundRow on InvoiceNode {
     number
   }
   inboundType
+  propertiesV2
 }
 
 query invoices(

@@ -12,10 +12,15 @@ import {
   ColumnType,
   NameAndColorSetterCell,
   InvoiceNodeType,
+  buildPropertyColumns,
+  buildPropertyUrlFilterConfigs,
+  mapPropertyFilters,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isPrescriptionDisabled } from '../../utils';
 import { getStatusSequence } from '../../statuses';
 import { usePrescriptionList, usePrescription } from '../api';
+import { useInvoicePropertiesV2 } from '../../common';
 import { PrescriptionRowFragment } from '../api/operations.generated';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
@@ -26,6 +31,10 @@ export const PrescriptionListView = () => {
     update: { update },
   } = usePrescription();
   const t = useTranslation();
+  const { localisedDate } = useFormatDateTime();
+  const { data: properties } = useInvoicePropertiesV2(
+    InvoiceNodeType.Prescription
+  );
   const {
     queryParams: { first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
@@ -42,6 +51,7 @@ export const PrescriptionListView = () => {
         key: 'status',
         condition: 'equalTo',
       },
+      ...buildPropertyUrlFilterConfigs(properties ?? []),
     ],
   });
 
@@ -49,7 +59,8 @@ export const PrescriptionListView = () => {
     sortBy,
     first,
     offset,
-    filterBy,
+    // Property filters travel to the API as the `dynamicFilter` condition AST
+    filterBy: mapPropertyFilters(filterBy, properties ?? []),
   };
   const navigate = useNavigate();
   const modalController = useToggle();
@@ -120,8 +131,12 @@ export const PrescriptionListView = () => {
         columnType: ColumnType.Comment,
         size: 120,
       },
+      ...buildPropertyColumns<PrescriptionRowFragment>(
+        properties ?? [],
+        localisedDate
+      ),
     ],
-    []
+    [properties, localisedDate]
   );
 
   const { table, selectedRows } = usePaginatedMaterialTable({

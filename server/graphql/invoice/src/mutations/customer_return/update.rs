@@ -24,6 +24,10 @@ pub struct UpdateInput {
     comment: Option<String>,
     colour: Option<String>,
     their_reference: Option<String>,
+    /// Patch of propertiesV2 key -> value (JSON object) merged into the
+    /// invoice's custom properties; a `null` value clears that key, keys absent
+    /// from the patch are left unchanged.
+    properties_v2: Option<Json<serde_json::Map<String, serde_json::Value>>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -102,7 +106,8 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::CannotReverseInvoiceStatus
         | ServiceError::ReturnIsNotEditable
         | ServiceError::CannotChangeStatusOfInvoiceOnHold
-        | ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+        | ServiceError::OtherPartyDoesNotExist
+        | ServiceError::UnknownPropertyKey(_) => BadUserInput(formatted_error),
 
         ServiceError::UpdatedInvoiceDoesNotExist | ServiceError::DatabaseError(_) => {
             InternalError(formatted_error)
@@ -122,6 +127,7 @@ impl UpdateInput {
             colour,
             their_reference,
             other_party_id,
+            properties_v2,
         }: UpdateInput = self;
 
         ServiceInput {
@@ -132,6 +138,7 @@ impl UpdateInput {
             colour,
             their_reference,
             other_party_id,
+            properties_v2: properties_v2.map(|json| json.0),
         }
     }
 }

@@ -1,5 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
+    dynamic_filter::{parse_dynamic_filter, validate_property_filter_keys},
     generic_filters::{
         DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput, StringFilterInput,
     },
@@ -13,10 +14,11 @@ use graphql_types::types::{
     EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput, InvoiceConnector, InvoiceNode,
 };
 use repository::{
-    DatetimeFilter, EqualFilter, InvoiceFilter, InvoiceSort, InvoiceSortField, InvoiceStatus,
-    InvoiceType, PaginationOption, StringFilter,
+    DatetimeFilter, EqualFilter, InvoiceCondition, InvoiceFilter, InvoiceSort, InvoiceSortField,
+    InvoiceStatus, InvoiceType, PaginationOption, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
+use service::invoice::invoice_property_table_name;
 
 #[derive(Union)]
 pub enum InvoiceResponse {
@@ -159,6 +161,13 @@ pub struct InvoiceFilterInput {
     pub purchase_order_number: Option<EqualFilterBigNumberInput>,
     pub linked_order_number: Option<EqualFilterBigNumberInput>,
     pub program_id: Option<EqualFilterStringInput>,
+
+    /// Dynamic filter condition AST, currently supporting property conditions
+    /// on keys visible for the requested invoice type's scope, e.g.
+    /// `{"And": [{"Property": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`.
+    /// Requires the query's `type` argument to pin a single supported invoice
+    /// type (the properties scope is per type).
+    pub dynamic_filter: Option<serde_json::Value>,
 }
 
 pub fn get_invoice(
@@ -234,10 +243,44 @@ pub fn get_invoices(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
+    let dynamic_filter_input = filter.as_ref().and_then(|f| f.dynamic_filter.clone());
     let mut domain_filter = filter.map(|filter| filter.to_domain()).unwrap_or_default();
     if let Some(types) = &r#type {
         apply_type_filters(&mut domain_filter, types);
     }
+
+    // Property filters validate against the requested invoice type's properties
+    // scope, so the query must pin exactly one supported scope. List views
+    // request their type via either the top-level `type` argument or the
+    // filter's `type` field — both have landed on the domain filter by here.
+    let dynamic_filter: Option<InvoiceCondition::Inner> =
+        parse_dynamic_filter(dynamic_filter_input)?;
+    if let Some(condition) = &dynamic_filter {
+        let requested_types: Vec<InvoiceType> = domain_filter
+            .r#type
+            .iter()
+            .flat_map(|t| t.equal_to.iter().chain(t.equal_any.iter().flatten()))
+            .cloned()
+            .collect();
+        let mut scopes: Vec<&str> = requested_types
+            .iter()
+            .filter_map(invoice_property_table_name)
+            .collect();
+        scopes.sort_unstable();
+        scopes.dedup();
+        let [scope] = scopes[..] else {
+            return Err(StandardGraphqlError::BadUserInput(
+                "dynamicFilter requires the invoice type (argument or filter) to specify a single invoice type with property support".to_string(),
+            )
+            .extend());
+        };
+        validate_property_filter_keys(
+            &service_context.connection,
+            scope,
+            &condition.property_conditions(),
+        )?;
+    }
+    domain_filter.dynamic_filter = dynamic_filter;
 
     let invoices = service_provider
         .invoice_service
@@ -330,6 +373,10 @@ impl InvoiceFilterInput {
             purchase_order_id: self.purchase_order_id.map(EqualFilter::from),
             purchase_order_number: self.purchase_order_number.map(EqualFilter::from),
             linked_order_number: self.linked_order_number.map(EqualFilter::from),
+            // Parsed from the JSON `dynamicFilter` input in the resolver (a
+            // serde error there must surface as BadUserInput, so the infallible
+            // to_domain can't do it)
+            dynamic_filter: None,
         }
     }
 }

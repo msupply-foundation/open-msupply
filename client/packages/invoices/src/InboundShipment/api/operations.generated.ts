@@ -138,6 +138,7 @@ export type InboundFragment = {
   type: Types.InvoiceNodeType;
   taxPercentage?: number | null;
   expectedDeliveryDate?: string | null;
+  propertiesV2?: any | null;
   currencyRate: number;
   chargesLocalCurrency: number;
   chargesForeignCurrency: number;
@@ -362,6 +363,7 @@ export type InboundRowFragment = {
   onHold: boolean;
   currencyRate: number;
   inboundType: Types.InboundNodeType;
+  propertiesV2?: any | null;
   pricing: {
     __typename: 'PricingNode';
     totalAfterTax: number;
@@ -421,6 +423,7 @@ export type InvoicesQuery = {
       onHold: boolean;
       currencyRate: number;
       inboundType: Types.InboundNodeType;
+      propertiesV2?: any | null;
       pricing: {
         __typename: 'PricingNode';
         totalAfterTax: number;
@@ -480,6 +483,7 @@ export type InvoiceQuery = {
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
+        propertiesV2?: any | null;
         currencyRate: number;
         chargesLocalCurrency: number;
         chargesForeignCurrency: number;
@@ -741,6 +745,7 @@ export type InboundByNumberQuery = {
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
+        propertiesV2?: any | null;
         currencyRate: number;
         chargesLocalCurrency: number;
         chargesForeignCurrency: number;
@@ -1889,6 +1894,7 @@ export const InboundFragmentDoc = gql`
     type
     taxPercentage
     expectedDeliveryDate
+    propertiesV2
     defaultDonor(storeId: $storeId) {
       id
       name
@@ -2029,6 +2035,7 @@ export const InboundRowFragmentDoc = gql`
       number
     }
     inboundType
+    propertiesV2
   }
 `;
 export const LineLinkedToTransferredInvoiceErrorFragmentDoc = gql`
