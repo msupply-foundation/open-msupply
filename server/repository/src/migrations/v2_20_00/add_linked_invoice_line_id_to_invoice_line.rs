@@ -15,7 +15,6 @@ table! {
         data -> Text,
         action -> crate::migrations::v2_20_00::add_linked_invoice_line_id_to_invoice_line::SyncActionMapping,
         table_name -> Text,
-        integration_error -> Nullable<Text>,
     }
 }
 
@@ -57,18 +56,12 @@ impl MigrationFragment for Migrate {
             .load::<(String, String)>(connection.lock().connection())?;
 
         for (id, data) in trans_line_sync_buffer {
-            let linked_id = match serde_json::from_str::<LegacyTransLineRow>(&data) {
-                Ok(row) => match row.linked_invoice_line_id {
-                    Some(ref s) if !s.is_empty() => s.clone(),
-                    _ => continue,
-                },
-                Err(e) => {
-                    diesel::update(sync_buffer::table)
-                        .filter(sync_buffer::record_id.eq(&id))
-                        .set(sync_buffer::integration_error.eq(e.to_string()))
-                        .execute(connection.lock().connection())?;
-                    continue;
-                }
+            let Some(linked_id) = serde_json::from_str::<LegacyTransLineRow>(&data)
+                .ok()
+                .and_then(|row| row.linked_invoice_line_id)
+                .filter(|s| !s.is_empty())
+            else {
+                continue;
             };
 
             diesel::update(invoice_line::table)
