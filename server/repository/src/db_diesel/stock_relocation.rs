@@ -1,14 +1,15 @@
 use super::{
     item_row::{item, ItemRow},
+    location::{LocationFilter, LocationRepository},
+    location_row::location,
     stock_line_row::{stock_line, StockLineRow},
     stock_relocation_row::{stock_relocation, StockRelocationRow, StockRelocationStatus},
     DBType, RepositoryError, StorageConnection,
 };
 use crate::diesel_macros::{
-    apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case,
-    apply_string_filter, apply_string_or_filter,
+    apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
 };
-use crate::{DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
+use crate::{EqualFilter, Pagination, Sort, StringFilter};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -25,10 +26,8 @@ pub struct StockRelocationFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub status: Option<EqualFilter<StockRelocationStatus>>,
     pub item_code_or_name: Option<StringFilter>,
-    pub from_location_id: Option<EqualFilter<String>>,
-    pub to_location_id: Option<EqualFilter<String>>,
-    pub created_datetime: Option<DatetimeFilter>,
-    pub finalised_datetime: Option<DatetimeFilter>,
+    pub from_location_code: Option<StringFilter>,
+    pub to_location_code: Option<StringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -143,10 +142,8 @@ impl<'a> StockRelocationRepository<'a> {
                 store_id,
                 status,
                 item_code_or_name,
-                from_location_id,
-                to_location_id,
-                created_datetime,
-                finalised_datetime,
+                from_location_code,
+                to_location_code,
             } = f;
 
             if item_code_or_name.is_some() {
@@ -154,17 +151,26 @@ impl<'a> StockRelocationRepository<'a> {
                 apply_string_or_filter!(query, item_code_or_name, item::name);
             }
 
+            // Filter by location code via subquery (not join): two location FKs would need
+            // aliases, which break auto_type.
+            if let Some(from_location_code) = from_location_code {
+                let location_ids = LocationRepository::create_filtered_query(Some(
+                    LocationFilter::new().code(from_location_code),
+                ))
+                .select(location::id.nullable());
+                query = query.filter(stock_relocation::from_location_id.eq_any(location_ids));
+            }
+            if let Some(to_location_code) = to_location_code {
+                let location_ids = LocationRepository::create_filtered_query(Some(
+                    LocationFilter::new().code(to_location_code),
+                ))
+                .select(location::id.nullable());
+                query = query.filter(stock_relocation::to_location_id.eq_any(location_ids));
+            }
+
             apply_equal_filter!(query, id, stock_relocation::id);
             apply_equal_filter!(query, store_id, stock_relocation::store_id);
             apply_equal_filter!(query, status, stock_relocation::status);
-            apply_equal_filter!(query, from_location_id, stock_relocation::from_location_id);
-            apply_equal_filter!(query, to_location_id, stock_relocation::to_location_id);
-            apply_date_time_filter!(query, created_datetime, stock_relocation::created_datetime);
-            apply_date_time_filter!(
-                query,
-                finalised_datetime,
-                stock_relocation::finalised_datetime
-            );
         }
 
         query
@@ -209,20 +215,12 @@ impl StockRelocationFilter {
         self.item_code_or_name = Some(filter);
         self
     }
-    pub fn from_location_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.from_location_id = Some(filter);
+    pub fn from_location_code(mut self, filter: StringFilter) -> Self {
+        self.from_location_code = Some(filter);
         self
     }
-    pub fn to_location_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.to_location_id = Some(filter);
-        self
-    }
-    pub fn created_datetime(mut self, filter: DatetimeFilter) -> Self {
-        self.created_datetime = Some(filter);
-        self
-    }
-    pub fn finalised_datetime(mut self, filter: DatetimeFilter) -> Self {
-        self.finalised_datetime = Some(filter);
+    pub fn to_location_code(mut self, filter: StringFilter) -> Self {
+        self.to_location_code = Some(filter);
         self
     }
 }
