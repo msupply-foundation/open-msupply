@@ -12,6 +12,7 @@ import {
   UserPermission,
 } from '@openmsupply-client/common';
 import { NotFound } from './components';
+import { usePluginLabelTranslation } from './components/Navigation/usePluginNavLinks';
 
 const PluginPageGuard: React.FC<{
   permissions: UserPermission[] | undefined;
@@ -53,10 +54,14 @@ const pluginRoutePath = (page: PluginPage): string => {
 const PluginBreadcrumbs: React.FC<{ pageLabel: string }> = ({ pageLabel }) => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { pathname } = useLocation();
+  const translateLabel = usePluginLabelTranslation();
+  // Custom breadcrumbs are rendered verbatim, so translate the plugin label
+  // before setting it (see usePluginLabelTranslation / #12090).
+  const label = translateLabel(pageLabel);
 
   useEffect(() => {
-    setCustomBreadcrumbs({ 0: pageLabel });
-  }, [pageLabel, setCustomBreadcrumbs, pathname]);
+    setCustomBreadcrumbs({ 0: label });
+  }, [label, setCustomBreadcrumbs, pathname]);
 
   return null;
 };
