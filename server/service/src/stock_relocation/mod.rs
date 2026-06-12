@@ -1,5 +1,6 @@
 use self::insert::{insert_stock_relocation, InsertStockRelocation, InsertStockRelocationError};
 use self::query::{get_stock_relocation, get_stock_relocations};
+use self::update::{update_stock_relocation, UpdateStockRelocation, UpdateStockRelocationError};
 use crate::{service_provider::ServiceContext, ListError, ListResult};
 use repository::{
     PaginationOption, RepositoryError, StockRelocation, StockRelocationFilter, StockRelocationRow,
@@ -8,6 +9,7 @@ use repository::{
 
 pub mod insert;
 pub mod query;
+pub mod update;
 pub mod validate;
 
 pub trait StockRelocationServiceTrait: Sync + Send {
@@ -38,6 +40,15 @@ pub trait StockRelocationServiceTrait: Sync + Send {
         input: InsertStockRelocation,
     ) -> Result<Vec<StockRelocationRow>, InsertStockRelocationError> {
         insert_stock_relocation(ctx, store_id, input)
+    }
+
+    fn update_stock_relocation(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: UpdateStockRelocation,
+    ) -> Result<StockRelocationRow, UpdateStockRelocationError> {
+        update_stock_relocation(ctx, store_id, input)
     }
 }
 
