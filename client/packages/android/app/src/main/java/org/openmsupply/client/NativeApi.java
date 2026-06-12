@@ -132,18 +132,27 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         // Potentially avoiding issues if it takes too long to generate.
         client.loadJsInject();
 
-        // this method (handleOnStart) is called when resuming and switching to the app
-        // the webView url will be DEFAULT_URL only on the initial load
-        // so this test is a quick check to see if we should be redirecting to the
-        // /android loader or not
-        if (!webView.getUrl().matches(DEFAULT_URL))
+        // handleOnStart fires on cold start AND on warm resume. On cold start we
+        // begin on the inline LoadingPage (set in MainActivity.onCreate), not on
+        // DEFAULT_URL — so the old `getUrl().matches(DEFAULT_URL)` check no longer
+        // distinguishes the two. Use the readiness/server state instead: if we've
+        // already completed a successful startup and have a connected server,
+        // this is a resume and we should not re-run the poll.
+        if (AppState.getInstance().isWebViewReady() && connectedServer != null)
             return;
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 Boolean isServerRunning = false;
-                Integer retryCount = 5;
+                // Generous budget — the LoadingPage is visible to the user while we wait,
+                // so erring long is cheap and helps slow devices succeed without an error page.
+                Integer retryCount = 30;
+                int attempt = 0;
+                String readySignal = null;
+                final long pollStart = System.currentTimeMillis();
+                Log.i(OM_SUPPLY, "Readiness poll start url=" + localUrl + " retryBudget=" + retryCount);
                 while (!isServerRunning && retryCount > 0) {
+                    attempt++;
                     try {
                         URL url = new URL(localUrl);
                         HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
@@ -152,36 +161,62 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                         // responding
                         urlc.setConnectTimeout(1000);
                         urlc.connect();
-                        if (urlc.getResponseCode() == 200) {
+                        int code = urlc.getResponseCode();
+                        Log.i(OM_SUPPLY, "Readiness poll attempt=" + attempt + " connect ok responseCode=" + code);
+                        if (code == 200) {
                             isServerRunning = true;
+                            readySignal = "HTTP 200";
                         }
                     } catch (SSLHandshakeException e) {
+                        Throwable cause = e.getCause();
+                        String causeDesc = cause == null
+                                ? "null"
+                                : cause.getClass().getName() + ":" + cause.getMessage();
+                        Log.i(OM_SUPPLY, "Readiness poll attempt=" + attempt
+                                + " SSLHandshakeException msg=" + e.getMessage()
+                                + " cause=" + causeDesc);
                         // server is running and responding with an SSL error
                         // which we will ignore, so ok to proceed
                         isServerRunning = true;
+                        readySignal = "SSLHandshakeException(cause="
+                                + (cause == null ? "null" : cause.getClass().getSimpleName()) + ")";
                     } catch (Exception e) {
-                        Log.e(OM_SUPPLY, e.getMessage());
+                        Throwable cause = e.getCause();
+                        String causeDesc = cause == null
+                                ? "null"
+                                : cause.getClass().getName() + ":" + cause.getMessage();
+                        Log.e(OM_SUPPLY, "Readiness poll attempt=" + attempt
+                                + " " + e.getClass().getName()
+                                + " msg=" + e.getMessage()
+                                + " cause=" + causeDesc);
                         isServerRunning = false;
                     }
                     retryCount--;
                     sleep(1000);
                 }
 
+                final long pollElapsed = System.currentTimeMillis() - pollStart;
+                Log.i(OM_SUPPLY, "Readiness poll end isServerRunning=" + isServerRunning
+                        + " readySignal=" + readySignal + " elapsedMs=" + pollElapsed);
+
                 final Handler handler = new Handler(Looper.getMainLooper());
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        AppState.getInstance().setServerReady(true);
+                        AppState.getInstance().setWebViewReady(true);
                     }
                 }, 250);
 
                 // .post to run on UI thread in the two calls below
                 if (isServerRunning) {
-                    webView.post(() -> webView.loadUrl(localUrl + "/android"));
+                    final String targetUrl = localUrl + "/android";
+                    Log.i(OM_SUPPLY, "Loading WebView url=" + targetUrl);
+                    webView.post(() -> webView.loadUrl(targetUrl));
                 } else {
                     Log.e(OM_SUPPLY, "Server not running, displaying error page");
-                    webView.post(() -> webView.addJavascriptInterface(new ErrorPage(getContext()), "ErrorPageInject"));
-                    webView.post(() -> webView.loadData(ErrorPage.getEncodedHtml(localUrl), "text/html", "base64"));
+                    final ErrorPage errorPage = new ErrorPage(getContext(), localUrl);
+                    webView.post(() -> webView.addJavascriptInterface(errorPage, "ErrorPageInject"));
+                    webView.post(() -> webView.loadUrl(ErrorPage.URL));
                 }
             }
         });

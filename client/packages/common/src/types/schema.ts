@@ -121,6 +121,9 @@ export enum ActivityLogNodeType {
   AssetLogReasonDeleted = 'ASSET_LOG_REASON_DELETED',
   AssetPropertyCreated = 'ASSET_PROPERTY_CREATED',
   AssetUpdated = 'ASSET_UPDATED',
+  BundledItemCreated = 'BUNDLED_ITEM_CREATED',
+  BundledItemDeleted = 'BUNDLED_ITEM_DELETED',
+  BundledItemUpdated = 'BUNDLED_ITEM_UPDATED',
   DemographicIndicatorCreated = 'DEMOGRAPHIC_INDICATOR_CREATED',
   DemographicIndicatorUpdated = 'DEMOGRAPHIC_INDICATOR_UPDATED',
   DemographicProjectionCreated = 'DEMOGRAPHIC_PROJECTION_CREATED',
@@ -139,11 +142,15 @@ export enum ActivityLogNodeType {
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
   ItemVariantCreated = 'ITEM_VARIANT_CREATED',
   ItemVariantDeleted = 'ITEM_VARIANT_DELETED',
+  ItemVariantUpdated = 'ITEM_VARIANT_UPDATED',
   ItemVariantUpdatedName = 'ITEM_VARIANT_UPDATED_NAME',
   ItemVariantUpdateDosePerUnit = 'ITEM_VARIANT_UPDATE_DOSE_PER_UNIT',
   ItemVariantUpdateLocationType = 'ITEM_VARIANT_UPDATE_LOCATION_TYPE',
   ItemVariantUpdateManufacturer = 'ITEM_VARIANT_UPDATE_MANUFACTURER',
   ItemVariantUpdateVvmType = 'ITEM_VARIANT_UPDATE_VVM_TYPE',
+  PackagingVariantCreated = 'PACKAGING_VARIANT_CREATED',
+  PackagingVariantDeleted = 'PACKAGING_VARIANT_DELETED',
+  PackagingVariantUpdated = 'PACKAGING_VARIANT_UPDATED',
   PatientCreated = 'PATIENT_CREATED',
   PatientUpdated = 'PATIENT_UPDATED',
   PrescriptionCreated = 'PRESCRIPTION_CREATED',
@@ -181,6 +188,7 @@ export enum ActivityLogNodeType {
   SensorLocationChanged = 'SENSOR_LOCATION_CHANGED',
   StocktakeCreated = 'STOCKTAKE_CREATED',
   StocktakeDeleted = 'STOCKTAKE_DELETED',
+  StocktakeEdited = 'STOCKTAKE_EDITED',
   StocktakeStatusFinalised = 'STOCKTAKE_STATUS_FINALISED',
   StockBatchChange = 'STOCK_BATCH_CHANGE',
   StockCostPriceChange = 'STOCK_COST_PRICE_CHANGE',
@@ -2090,6 +2098,8 @@ export type DeleteOutboundShipmentUnallocatedLineResponseWithId = {
   response: DeleteOutboundShipmentUnallocatedLineResponse;
 };
 
+export type DeletePluginDataResponse = DeleteResponse;
+
 export type DeletePrescriptionError = {
   __typename: 'DeletePrescriptionError';
   error: DeletePrescriptionErrorInterface;
@@ -2903,6 +2913,13 @@ export type EqualFilterRequisitionTypeInput = {
   equalTo?: InputMaybe<RequisitionNodeType>;
   notEqualAll?: InputMaybe<Array<RequisitionNodeType>>;
   notEqualTo?: InputMaybe<RequisitionNodeType>;
+};
+
+export type EqualFilterSensorTypeInput = {
+  equalAny?: InputMaybe<Array<SensorNodeType>>;
+  equalTo?: InputMaybe<SensorNodeType>;
+  notEqualAll?: InputMaybe<Array<SensorNodeType>>;
+  notEqualTo?: InputMaybe<SensorNodeType>;
 };
 
 export type EqualFilterStatusInput = {
@@ -4452,6 +4469,7 @@ export type InvoiceFilterInput = {
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
+  invoiceNumberOrStatus?: InputMaybe<StringFilterInput>;
   isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
   linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
   linkedOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
@@ -5218,6 +5236,7 @@ export type LocationConnector = {
 export type LocationFilterInput = {
   assignedToAsset?: InputMaybe<Scalars['Boolean']['input']>;
   code?: InputMaybe<StringFilterInput>;
+  codeOrName?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   locationTypeId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
@@ -5511,6 +5530,7 @@ export type Mutations = {
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
   deleteOutboundShipmentServiceLine: DeleteOutboundShipmentServiceLineResponse;
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
+  deletePluginData: DeletePluginDataResponse;
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
   deletePurchaseOrder: DeletePurchaseOrderResponse;
@@ -5786,6 +5806,11 @@ export type MutationsDeleteOutboundShipmentServiceLineArgs = {
 
 export type MutationsDeleteOutboundShipmentUnallocatedLineArgs = {
   input: DeleteOutboundShipmentUnallocatedLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeletePluginDataArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -6971,6 +6996,7 @@ export enum PreferenceKey {
   Backdating = 'backdating',
   CanCreateInternalOrderFromARequisition = 'canCreateInternalOrderFromARequisition',
   CustomTranslations = 'customTranslations',
+  CustomTranslationsV2 = 'customTranslationsV2',
   DaysInMonth = 'daysInMonth',
   DisableManualReturns = 'disableManualReturns',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
@@ -7026,6 +7052,7 @@ export enum PreferenceValueNodeType {
   Boolean = 'BOOLEAN',
   Colour = 'COLOUR',
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
+  CustomTranslationsV2 = 'CUSTOM_TRANSLATIONS_V2',
   Float = 'FLOAT',
   Integer = 'INTEGER',
   MultiChoice = 'MULTI_CHOICE',
@@ -7041,6 +7068,7 @@ export type PreferencesNode = {
   backdating: BackdatingNode;
   canCreateInternalOrderFromARequisition: Scalars['Boolean']['output'];
   customTranslations: Scalars['JSONObject']['output'];
+  customTranslationsV2: Scalars['JSON']['output'];
   daysInMonth: Scalars['Float']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
@@ -8253,6 +8281,7 @@ export type QueriesPeriodsArgs = {
 
 export type QueriesPluginDataArgs = {
   filter?: InputMaybe<PluginDataFilterInput>;
+  page?: InputMaybe<PaginationInput>;
   pluginCode: Scalars['String']['input'];
   sort?: InputMaybe<Array<PluginDataSortInput>>;
   storeId: Scalars['String']['input'];
@@ -9364,8 +9393,10 @@ export type SensorConnector = {
 export type SensorFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  locationCode?: InputMaybe<StringFilterInput>;
   name?: InputMaybe<StringFilterInput>;
-  serial?: InputMaybe<EqualFilterStringInput>;
+  serial?: InputMaybe<StringFilterInput>;
+  type?: InputMaybe<EqualFilterSensorTypeInput>;
 };
 
 export type SensorNode = {
@@ -11568,6 +11599,11 @@ export type UpsertPreferencesInput = {
     Array<BoolStorePrefInput>
   >;
   customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
+  /**
+   * v2 custom translations, shape: `language -> namespace -> key -> value`.
+   * Passed as a JSON value to avoid nested-map InputObject friction.
+   */
+  customTranslationsV2?: InputMaybe<Scalars['JSON']['input']>;
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
