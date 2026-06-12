@@ -37,7 +37,8 @@ const STOCK_RELOCATION_2: (&str, &str) = (
     "status": "fn",
     "oms_fields": {
         "created_datetime": "2024-02-01T08:30:00",
-        "finalised_datetime": "2024-02-05T14:00:00"
+        "finalised_datetime": "2024-02-05T14:00:00",
+        "to_pack_size": 4
     }
     }"#,
 );
@@ -58,6 +59,7 @@ fn stock_relocation_1_pull_record() -> TestSyncIncomingRecord {
             from_number_of_packs: 5.0,
             to_stock_line_id: Some("stock_line_b".to_string()),
             to_location_id: Some("location_2".to_string()),
+            to_pack_size: None,
             status: StockRelocationStatus::New,
             store_id: "store_a".to_string(),
             user_id: "user_account_a".to_string(),
@@ -86,6 +88,7 @@ fn stock_relocation_2_pull_record() -> TestSyncIncomingRecord {
             from_number_of_packs: 10.0,
             to_stock_line_id: None,
             to_location_id: None,
+            to_pack_size: Some(4.0),
             status: StockRelocationStatus::Finalised,
             store_id: "store_b".to_string(),
             user_id: "user_account_b".to_string(),
