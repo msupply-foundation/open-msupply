@@ -35,6 +35,7 @@ interface EditPreferenceProps {
   label?: string;
   isLast?: boolean;
   disabled?: boolean;
+  isAutoSave?: boolean; // Global Prefs auto-save instead of using draft
 }
 
 export const EditPreference = ({
@@ -43,6 +44,7 @@ export const EditPreference = ({
   label,
   isLast = false,
   disabled: disabledProp,
+  isAutoSave = true,
 }: EditPreferenceProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -69,23 +71,24 @@ export const EditPreference = ({
   const [value, setValue] = useState(preference.value);
   const [hasError, setHasError] = useState(false);
 
-  const debouncedUpdate = useDebouncedValueCallback(
-    async value => {
-      const success = await update(value);
-      setHasError(!success);
+  const onUpdate = async (newValue: PreferenceDescriptionNode['value']) => {
+    const success = await update(newValue);
+    setHasError(!success);
 
-      if (!success) {
-        // If update fails, revert to original value
-        setValue(preference.value);
-      }
-    },
-    [],
-    350
-  );
+    if (!success) {
+      setValue(preference.value);
+    }
+  };
+
+  const debouncedUpdate = useDebouncedValueCallback(onUpdate, [], 350);
 
   const handleChange = (newValue: PreferenceDescriptionNode['value']) => {
     setValue(newValue);
-    debouncedUpdate(newValue);
+    if (isAutoSave) {
+      debouncedUpdate(newValue);
+    } else {
+      onUpdate(newValue);
+    }
   };
 
   switch (preference.valueType) {
@@ -119,7 +122,7 @@ export const EditPreference = ({
             <NumericTextInput
               value={value}
               onChange={handleChange}
-              onBlur={() => {}}
+              onBlur={() => { }}
               disabled={disabled}
               decimalLimit={
                 preference.valueType === PreferenceValueNodeType.Float
@@ -143,16 +146,16 @@ export const EditPreference = ({
             <BasicTextInput
               value={value}
               onChange={e => handleChange(e.target.value)}
-              onBlur={() => {}}
+              onBlur={() => { }}
               disabled={disabled}
               sx={
                 hasError
                   ? {
-                      borderColor: theme => theme.palette.error.main,
-                      borderWidth: '2px',
-                      borderStyle: 'solid',
-                      borderRadius: '8px',
-                    }
+                    borderColor: theme => theme.palette.error.main,
+                    borderWidth: '2px',
+                    borderStyle: 'solid',
+                    borderRadius: '8px',
+                  }
                   : undefined
               }
             />
