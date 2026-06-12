@@ -23,6 +23,10 @@ pub struct UpdateInput {
     on_hold: Option<bool>,
     their_reference: Option<String>,
     transport_reference: Option<String>,
+    /// Patch of propertiesV2 key -> value (JSON object) merged into the
+    /// invoice's custom properties; a `null` value clears that key, keys absent
+    /// from the patch are left unchanged.
+    properties_v2: Option<Json<serde_json::Map<String, serde_json::Value>>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -73,7 +77,8 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         | ServiceError::ReturnIsNotEditable
         | ServiceError::CannotReverseInvoiceStatus
         | ServiceError::CannotChangeStatusOfInvoiceOnHold
-        | ServiceError::ReturnDoesNotExist => BadUserInput(formatted_error),
+        | ServiceError::ReturnDoesNotExist
+        | ServiceError::UnknownPropertyKey(_) => BadUserInput(formatted_error),
 
         ServiceError::InvoiceLineHasNoStockLine(_)
         | ServiceError::UpdatedReturnDoesNotExist
@@ -93,6 +98,7 @@ impl UpdateInput {
             on_hold,
             their_reference,
             transport_reference,
+            properties_v2,
         }: UpdateInput = self;
 
         ServiceInput {
@@ -103,6 +109,7 @@ impl UpdateInput {
             on_hold,
             their_reference,
             transport_reference,
+            properties_v2: properties_v2.map(|json| json.0),
         }
     }
 }

@@ -1,8 +1,8 @@
 use crate::sync::{
     test::TestSyncIncomingRecord,
     translations::invoice::{
-        LegacyOmStatus, LegacyTransactRow, LegacyTransactStatus, LegacyTransactType,
-        TransactMode, TransactRowOmsFields,
+        LegacyOmStatus, LegacyTransactRow, LegacyTransactStatus, LegacyTransactType, TransactMode,
+        TransactRowOmsFields,
     },
 };
 use chrono::{Duration, NaiveDate, NaiveTime};
@@ -236,6 +236,8 @@ fn transact_1_push_legacy_row() -> LegacyTransactRow {
         expected_delivery_date: None,
         default_donor_id: Some("donor_a".to_string()),
         goods_received_ID: None,
+        category_ID: None,
+        category2_ID: None,
         purchase_order_id: Some("test_purchase_order_a".to_string()),
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
         oms_fields: Some(TransactRowOmsFields {
@@ -446,6 +448,8 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             goods_received_ID: None,
+            category_ID: None,
+            category2_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
             oms_fields: Some(TransactRowOmsFields {
@@ -717,6 +721,8 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             goods_received_ID: None,
+            category_ID: None,
+            category2_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
             oms_fields: Some(TransactRowOmsFields {
@@ -940,6 +946,8 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             goods_received_ID: None,
+            category_ID: None,
+            category2_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
             oms_fields: Some(TransactRowOmsFields {
@@ -1162,6 +1170,8 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             goods_received_ID: None,
+            category_ID: None,
+            category2_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
             oms_fields: Some(TransactRowOmsFields {
@@ -1381,6 +1391,8 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             expected_delivery_date: None,
             default_donor_id: None,
             goods_received_ID: None,
+            category_ID: None,
+            category2_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
             oms_fields: Some(TransactRowOmsFields {
@@ -1611,6 +1623,8 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
             expected_delivery_date: NaiveDate::from_ymd_opt(2021, 7, 30),
             default_donor_id: None,
             goods_received_ID: None,
+            category_ID: None,
+            category2_ID: None,
             purchase_order_id: None,
             shipping_method_id: None,
             oms_fields: Some(TransactRowOmsFields {

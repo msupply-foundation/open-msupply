@@ -22,6 +22,7 @@ import {
   CardList,
   InboundNodeType,
   Box,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -42,6 +43,7 @@ import { SidePanel } from './SidePanel';
 import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InboundItem, ScannedBarcode } from '../../types';
 import { InboundLineFragment, useInboundShipment } from '../api';
+import { InvoicePropertiesTab } from '../../common';
 import { SupplierReturnEditModal } from '../../Returns';
 import {
   canReturnInboundLines,
@@ -109,6 +111,7 @@ const DetailViewInner = () => {
     isExternal,
     isDisabled,
     invalidateQuery,
+    update: { update },
   } = useInboundShipment();
 
   const lines = React.useMemo(() => {
@@ -126,6 +129,7 @@ const DetailViewInner = () => {
     string | null
   >(null);
   const [scrollToLineId, setScrollToLineId] = useState<string | null>(null);
+  const [isDirtyProperties, setIsDirtyProperties] = useState(false);
 
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
@@ -299,6 +303,19 @@ const DetailViewInner = () => {
       value: InboundShipmentDetailTabs.Documents,
     },
     {
+      Component: (
+        <InvoicePropertiesTab
+          invoiceType={InvoiceNodeType.InboundShipment}
+          propertiesV2={data?.propertiesV2}
+          onSave={patch => update({ propertiesV2: patch })}
+          disabled={isDisabled}
+          onEdit={setIsDirtyProperties}
+        />
+      ),
+      value: InboundShipmentDetailTabs.Properties,
+      confirmOnLeaving: isDirtyProperties,
+    },
+    {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: InboundShipmentDetailTabs.Log,
     },
@@ -318,7 +335,12 @@ const DetailViewInner = () => {
 
           {isExtraSmallScreen ? <MobileToolbar /> : <Toolbar />}
 
-          <DetailTabs tabs={tabs} />
+          <DetailTabs
+            tabs={tabs}
+            requiresConfirmation={tab =>
+              tab === InboundShipmentDetailTabs.Properties && isDirtyProperties
+            }
+          />
 
           {(tab === InboundShipmentDetailTabs.Details || !tab) && (
             <Footer

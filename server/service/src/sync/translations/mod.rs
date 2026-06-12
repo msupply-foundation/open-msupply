@@ -61,9 +61,9 @@ pub(crate) mod preference;
 pub(crate) mod program_indicator;
 pub(crate) mod program_requisition_settings;
 pub(crate) mod property;
-pub(crate) mod property_v2;
 pub(crate) mod property_option_v2;
 pub(crate) mod property_table_v2;
+pub(crate) mod property_v2;
 pub(crate) mod purchase_order;
 pub(crate) mod purchase_order_line;
 pub(crate) mod reason;
@@ -87,6 +87,7 @@ pub(crate) mod sync_message;
 pub(crate) mod system_log;
 pub(crate) mod temperature_breach;
 pub(crate) mod temperature_log;
+pub(crate) mod transaction_category;
 pub(crate) mod unit;
 pub(crate) mod user;
 pub(crate) mod user_permission;
@@ -128,6 +129,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         name_tag_join::boxed(),
         unit::boxed(),
         category::boxed(),
+        transaction_category::boxed(),
         item::boxed(),
         item_store_join::boxed(),
         site::boxed(),

@@ -14,6 +14,7 @@ fragment SupplierReturnRow on InvoiceNode {
   verifiedDatetime
   comment
   theirReference
+  propertiesV2
 }
 
 fragment CustomerReturnRow on InvoiceNode {
@@ -28,6 +29,7 @@ fragment CustomerReturnRow on InvoiceNode {
   receivedDatetime
   comment
   theirReference
+  propertiesV2
   linkedShipment {
     __typename
     id
@@ -74,6 +76,7 @@ fragment SupplierReturn on InvoiceNode {
 
   theirReference
   transportReference
+  propertiesV2
 
   originalShipment {
     id
@@ -117,6 +120,7 @@ fragment CustomerReturn on InvoiceNode {
   }
   theirReference
   transportReference
+  propertiesV2
 
   originalShipment {
     __typename

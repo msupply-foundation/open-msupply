@@ -54,6 +54,8 @@ pub mod common;
 pub(crate) mod invoice_date_utils;
 pub mod stock_effect;
 pub mod update_picked_date;
+pub mod properties;
+pub use self::properties::invoice_property_table_name;
 
 pub trait InvoiceServiceTrait: Sync + Send {
     fn get_invoices(

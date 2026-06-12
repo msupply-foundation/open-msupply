@@ -37,6 +37,10 @@ pub(crate) fn generate(
         .their_reference
         .clone()
         .or(updated_return.their_reference);
+    updated_return.properties_v2 = crate::invoice::properties::apply_properties_v2_patch(
+        updated_return.properties_v2,
+        patch.properties_v2.clone(),
+    );
 
     set_new_status_datetime(&mut updated_return, &patch);
 

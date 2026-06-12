@@ -4,5 +4,6 @@ export enum InboundShipmentDetailTabs {
   Currency = 'currency',
   Delivery = 'delivery',
   Documents = 'documents',
+  Properties = 'properties',
   Log = 'log',
 }

@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_invoice_properties_v2;
 mod add_is_standalone_central_pg_enum;
 mod add_item_properties_v2;
 mod add_legacy_goods_received_link_fields;
@@ -27,6 +28,7 @@ mod populate_changelog_with_rows_for_sync_v7_tables;
 mod populate_sync_version;
 mod rebuild_sync_buffer;
 mod reintegrate_categories_for_property_options;
+mod reintegrate_transaction_categories_for_property_options;
 mod seed_sync_request_user_tables;
 mod update_changelog_for_sync_v7;
 
@@ -72,6 +74,8 @@ impl Migration for V3_00_00 {
             Box::new(add_name_properties_v2::Migrate),
             Box::new(add_item_properties_v2::Migrate),
             Box::new(reintegrate_categories_for_property_options::Migrate),
+            Box::new(add_invoice_properties_v2::Migrate),
+            Box::new(reintegrate_transaction_categories_for_property_options::Migrate),
         ]
     }
 }

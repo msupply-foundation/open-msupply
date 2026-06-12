@@ -21,6 +21,7 @@ fragment Outbound on InvoiceNode {
   type
   taxPercentage
   expectedDeliveryDate
+  propertiesV2
 
   user {
     __typename
@@ -109,6 +110,7 @@ fragment OutboundRow on InvoiceNode {
   colour
   taxPercentage
   expectedDeliveryDate
+  propertiesV2
   pricing {
     __typename
     totalAfterTax

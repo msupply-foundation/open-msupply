@@ -85,7 +85,7 @@ Note the value rides the **whole host-record row** over v7, so concurrent edits 
 Patients are `name` rows, so they reuse `name.properties_v2` and the shared legacy `custom_1/2/3` defs — but they are the first **editable** properties (the one place the one-way rule is relaxed), edited on a remote and shown in a "Custom properties" tab on the patient detail view.
 
 - **Scope.** `custom_1/2/3` are seeded for both `name` and `patient` (`central_mapping_properties`); `PatientNode.properties_v2` filters to the `patient` scope, so patients can surface a different visible set from suppliers/facilities (which use `name`).
-- **Write path.** `updatePatientPropertiesV2` patch-merges into `name.properties_v2` and emits a `Name` changelog (`NameRowRepository::update_properties_v2`); gated on `MutatePatient`.
+- **Write path.** `updatePatientPropertiesV2` patch-merges into `name.properties_v2` and emits a `Name` changelog (`NameRowRepository::update_properties_v2`); gated on `MutatePatient`. Note this dedicated-mutation shape is patient-specific — invoice properties deliberately ride each type's own update mutation instead (see [Transaction categories](#transaction-categories)).
 - **Sync up.** Rides the `Name` changelog (Central + Patient) — the local edit is stamped with the site's own `source_site_id`, so it flows remote→COMS→visible remotes with no translator change.
 - **Overwrite guard.** The v5 name import on COMS *merges* (`merge_legacy_properties`) instead of overwriting: it refreshes the OG-owned `custom_1/2/3` and preserves OMS-authored keys, so a v5 re-pull can't clobber a patient edit.
 
@@ -117,3 +117,16 @@ There are also two **flat** extra dimensions — `[item]category2_ID`/`category3
 #### Backfill via sync_buffer re-integration
 
 Options are authored by the translators, so they only appear when a category record is processed — and central data only re-flows from OG on init or change. The migration `v3_00_00/reintegrate_categories_for_property_options` resets those records' `integration_datetime` in the append-only `sync_buffer` (for all `item_category*` and `name_category*` tables), so the next sync replays them through `CategoryTranslation` / `NameCategoryTranslation` and backfills the options — no re-init, no OG change, no edit-history dependency.
+
+### Transaction categories
+
+OG's `transaction_category` table is one pool of categories partitioned by a 3-char `type`. Each OMS-supported type becomes its own OPTION property scoped to the UI record kind.
+
+- **Options**: authored central-only by `TransactionCategoryTranslation`, routed by `type`; **flat** — `master_category_ID` is ignored (masters are shared across types, so parents would need per-type duplicate options).
+- **Value**: maps `transact.category_ID` (+ `category2_ID`) ⇄ `invoice.properties_v2` in the invoice translator; rides the `Invoice` changelog over v7. Migrations backfill historical values and replay the category records.
+- **Editable** via each type's **own update mutation**. Deliberately no separate properties endpoint so the existing permission checks and **status gating** apply unchanged. Patch keys validate against the type's visible scope and the merge runs against the unfiltered row. This way hidden-property values are never clobbered. UI: a "Properties" tab per detail view (draft + Save, patient-tab pattern).
+
+> **Why this deviates from the patient pattern** \
+> Patients have a dedicated `updatePatientPropertiesV2` mutation while invoices deliberately don't. The per-type invoice update endpoints already own the full validation stack — store/type/permission checks and the status gating above — so a standalone properties endpoint would re-implement all of it per type. Patients have no equivalent single update service to ride (patient edits flow through the programs/document system) and no status to gate, so a dedicated mutation is the simpler shape there. Both paths share the same patch helpers (`merge_patch` / key validation in `service/src/property_v2`), so the write semantics stay identical — only the transport differs.
+
+> **First OG push-back.** Unlike every property above, the categories **are pushed to OG** (`category_ID`/`category2_ID` on the v5 invoice push): invoices are *store* data OMS actively authors, so the "values are never pushed on to OG" rule is relaxed — OG reports keep seeing categories on OMS-created invoices. Only the category fields round-trip.

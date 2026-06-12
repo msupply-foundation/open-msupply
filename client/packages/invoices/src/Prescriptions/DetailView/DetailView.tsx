@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   DetailViewSkeleton,
   AlertModal,
@@ -12,10 +12,12 @@ import {
   useNonPaginatedMaterialTable,
   NothingHere,
   MaterialTable,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { PrescriptionLineFragment, usePrescription } from '../api';
+import { InvoicePropertiesTab } from '../../common';
 import { AppBarButtons } from './AppBarButton';
 import { Toolbar } from './Toolbar';
 import { SidePanel } from './SidePanel';
@@ -33,8 +35,10 @@ export const PrescriptionDetailView = () => {
     query: { data, loading },
     rows,
     isDisabled,
+    update: { update },
   } = usePrescription();
   const columns = usePrescriptionColumn();
+  const [isDirtyProperties, setIsDirtyProperties] = useState(false);
 
   const {
     entity: historyEntity,
@@ -102,6 +106,19 @@ export const PrescriptionDetailView = () => {
       value: 'Details',
     },
     {
+      Component: (
+        <InvoicePropertiesTab
+          invoiceType={InvoiceNodeType.Prescription}
+          propertiesV2={data?.propertiesV2}
+          onSave={patch => update({ propertiesV2: patch })}
+          disabled={isDisabled}
+          onEdit={setIsDirtyProperties}
+        />
+      ),
+      value: 'Properties',
+      confirmOnLeaving: isDirtyProperties,
+    },
+    {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: 'Log',
     },
@@ -123,7 +140,12 @@ export const PrescriptionDetailView = () => {
             invoiceId={data.id}
           />
           <Toolbar />
-          <DetailTabs tabs={tabs} />
+          <DetailTabs
+            tabs={tabs}
+            requiresConfirmation={tab =>
+              tab === 'Properties' && isDirtyProperties
+            }
+          />
           <Footer
             selectedRows={selectedRows}
             resetRowSelection={table.resetRowSelection}

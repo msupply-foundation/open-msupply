@@ -1,8 +1,9 @@
 use repository::{
-    EqualFilter, NameRowRepository, NameRowType, Patient, PatientFilter, PropertyV2Repository,
-    RepositoryError, TransactionError,
+    EqualFilter, NameRowRepository, NameRowType, Patient, PatientFilter, RepositoryError,
+    TransactionError,
 };
 
+use crate::property_v2::{check_unknown_property_v2_key, merge_patch};
 use crate::service_provider::{ServiceContext, ServiceProvider};
 
 /// `property_table_v2.table_name` scope for patient custom properties. Patients
@@ -29,34 +30,6 @@ pub struct UpdatePatientPropertiesV2 {
     pub properties: serde_json::Map<String, serde_json::Value>,
 }
 
-/// Merge a key→value patch into an existing `properties_v2` blob.
-///
-/// A `null` value removes the key; any other value sets it. Returns `None` when
-/// the result is empty so an emptied blob becomes NULL rather than `{}`.
-fn merge_patch(
-    existing: Option<serde_json::Value>,
-    patch: serde_json::Map<String, serde_json::Value>,
-) -> Option<serde_json::Value> {
-    let mut map = match existing {
-        Some(serde_json::Value::Object(map)) => map,
-        _ => serde_json::Map::new(),
-    };
-
-    for (key, value) in patch {
-        if value.is_null() {
-            map.remove(&key);
-        } else {
-            map.insert(key, value);
-        }
-    }
-
-    if map.is_empty() {
-        None
-    } else {
-        Some(serde_json::Value::Object(map))
-    }
-}
-
 pub(crate) fn update_patient_properties_v2(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
@@ -75,12 +48,10 @@ pub(crate) fn update_patient_properties_v2(
             }
 
             // Only allow patched keys that are defined and visible for patients.
-            let allowed =
-                PropertyV2Repository::new(con).allowed_keys_for_table(PATIENT_PROPERTY_TABLE)?;
-            if let Some(unknown) = input.properties.keys().find(|key| !allowed.contains(*key)) {
-                return Err(UpdatePatientPropertiesV2Error::UnknownPropertyKey(
-                    unknown.clone(),
-                ));
+            if let Some(unknown) =
+                check_unknown_property_v2_key(con, PATIENT_PROPERTY_TABLE, &input.properties)?
+            {
+                return Err(UpdatePatientPropertiesV2Error::UnknownPropertyKey(unknown));
             }
 
             // Merge the patch over the existing blob (preserves keys not in the
@@ -176,14 +147,16 @@ mod test {
 
         // PatientDoesNotExist
         assert_eq!(
-            service_provider.patient_service.update_patient_properties_v2(
-                &service_context,
-                &service_provider,
-                UpdatePatientPropertiesV2 {
-                    id: "does_not_exist".to_string(),
-                    properties: serde_json::Map::new(),
-                },
-            ),
+            service_provider
+                .patient_service
+                .update_patient_properties_v2(
+                    &service_context,
+                    &service_provider,
+                    UpdatePatientPropertiesV2 {
+                        id: "does_not_exist".to_string(),
+                        properties: serde_json::Map::new(),
+                    },
+                ),
             Err(UpdatePatientPropertiesV2Error::PatientDoesNotExist)
         );
 
@@ -197,14 +170,16 @@ mod test {
             .upsert_one(&facility)
             .unwrap();
         assert_eq!(
-            service_provider.patient_service.update_patient_properties_v2(
-                &service_context,
-                &service_provider,
-                UpdatePatientPropertiesV2 {
-                    id: facility.id.clone(),
-                    properties: serde_json::Map::new(),
-                },
-            ),
+            service_provider
+                .patient_service
+                .update_patient_properties_v2(
+                    &service_context,
+                    &service_provider,
+                    UpdatePatientPropertiesV2 {
+                        id: facility.id.clone(),
+                        properties: serde_json::Map::new(),
+                    },
+                ),
             Err(UpdatePatientPropertiesV2Error::NotAPatient)
         );
 
@@ -213,14 +188,16 @@ mod test {
         let mut patch = serde_json::Map::new();
         patch.insert("not_a_property".to_string(), json!("x"));
         assert_eq!(
-            service_provider.patient_service.update_patient_properties_v2(
-                &service_context,
-                &service_provider,
-                UpdatePatientPropertiesV2 {
-                    id: patient.id.clone(),
-                    properties: patch,
-                },
-            ),
+            service_provider
+                .patient_service
+                .update_patient_properties_v2(
+                    &service_context,
+                    &service_provider,
+                    UpdatePatientPropertiesV2 {
+                        id: patient.id.clone(),
+                        properties: patch,
+                    },
+                ),
             Err(UpdatePatientPropertiesV2Error::UnknownPropertyKey(
                 "not_a_property".to_string()
             ))

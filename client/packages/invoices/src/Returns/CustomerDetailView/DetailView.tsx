@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   DetailViewSkeleton,
   AlertModal,
@@ -11,6 +11,7 @@ import {
   useNonPaginatedMaterialTable,
   NothingHere,
   MaterialTable,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -21,14 +22,17 @@ import { ActivityLogList } from '@openmsupply-client/system';
 import { Footer } from './Footer';
 import { CustomerReturnEditModal } from '../modals';
 import { getNextItemId } from '../../utils';
+import { InvoicePropertiesTab } from '../../common';
 import { useCustomerReturnColumns } from './columns';
 
 export const CustomerReturnDetailView = () => {
   const { data, isLoading } = useReturns.document.customerReturn();
+  const { mutateAsync: update } = useReturns.document.updateCustomerReturn();
   const { lines } = useReturns.lines.customerReturnRows();
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
+  const [isDirtyProperties, setIsDirtyProperties] = useState(false);
 
   const {
     onOpen,
@@ -69,6 +73,24 @@ export const CustomerReturnDetailView = () => {
       value: t('label.details'),
     },
     {
+      Component: (
+        <InvoicePropertiesTab
+          invoiceType={InvoiceNodeType.CustomerReturn}
+          propertiesV2={data?.propertiesV2}
+          onSave={async patch => {
+            // id is only undefined before the return exists; the tab isn't
+            // rendered until then
+            if (!data?.id) return;
+            return update({ id: data.id, propertiesV2: patch });
+          }}
+          disabled={isDisabled}
+          onEdit={setIsDirtyProperties}
+        />
+      ),
+      value: 'Properties',
+      confirmOnLeaving: isDirtyProperties,
+    },
+    {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: t('label.log'),
     },
@@ -107,7 +129,12 @@ export const CustomerReturnDetailView = () => {
             />
           )}
           <Toolbar />
-          <DetailTabs tabs={tabs} />
+          <DetailTabs
+            tabs={tabs}
+            requiresConfirmation={tab =>
+              tab === 'Properties' && isDirtyProperties
+            }
+          />
           <SidePanel />
           <Footer
             selectedRows={selectedRows}

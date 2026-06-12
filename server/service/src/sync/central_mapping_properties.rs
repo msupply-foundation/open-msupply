@@ -188,6 +188,62 @@ fn mapping_properties() -> Vec<MappingProperty> {
             value_type: Option,
             table_names: &["name", "patient"],
         },
+        // transaction categories — mSupply's `transaction_category` table holds
+        // one flat pool of categories partitioned by a 3-char `type` matching the
+        // transact type they apply to. Each OMS-supported type becomes its own
+        // OPTION property (one option set per type), scoped to the UI record kind
+        // the invoice type renders as. Options are authored by
+        // `translations/transaction_category.rs` (central-only); the invoice
+        // stores the chosen id under the type's key, mapped to/from legacy
+        // `transact.category_ID` by the invoice translator. `master_category_ID`
+        // grouping is ignored for now (flat). OG types with no OMS UI surface
+        // (sr repack, bu build, in inventory adjustment, te tender) are not
+        // mapped.
+        MappingProperty {
+            id: "legacy_transaction_category_si",
+            key: "inbound_shipment_category",
+            name: "Category",
+            value_type: Option,
+            table_names: &["inbound_shipment"],
+        },
+        MappingProperty {
+            id: "legacy_transaction_category_ci",
+            key: "outbound_shipment_category",
+            name: "Category",
+            value_type: Option,
+            table_names: &["outbound_shipment"],
+        },
+        MappingProperty {
+            id: "legacy_transaction_category_pi",
+            key: "prescription_category",
+            name: "Category",
+            value_type: Option,
+            table_names: &["prescription"],
+        },
+        MappingProperty {
+            id: "legacy_transaction_category_sc",
+            key: "supplier_return_category",
+            name: "Category",
+            value_type: Option,
+            table_names: &["supplier_return"],
+        },
+        MappingProperty {
+            id: "legacy_transaction_category_cc",
+            key: "customer_return_category",
+            name: "Category",
+            value_type: Option,
+            table_names: &["customer_return"],
+        },
+        // OG's second prescription dimension — the "Prescriptions (2)" category
+        // pool ("pi2"), shown on the OG prescription form as the Patient Type
+        // dropdown and stored in `transact.category2_ID` (dispensary mode only).
+        MappingProperty {
+            id: "legacy_transaction_category_pi2",
+            key: "prescription_category2",
+            name: "Patient type",
+            value_type: Option,
+            table_names: &["prescription"],
+        },
     ]
 }
 
@@ -269,13 +325,22 @@ mod tests {
             .expect("missing legacy_item_user_field_5");
         assert_eq!(item_5.value_type, PropertyValueTypeV2::Real);
 
-        // 19 properties: 3 name customs + 6 name categories + 7 item user fields
-        // + 3 item categories (main + 2 & 3).
-        assert_eq!(property_repo.find_all().unwrap().len(), 19);
-        // 28 table mappings: the 3 name customs + 6 name categories map to both
+        let trans_si = property_repo
+            .find_one_by_id("legacy_transaction_category_si")
+            .unwrap()
+            .expect("missing legacy_transaction_category_si");
+        assert_eq!(trans_si.key, "inbound_shipment_category");
+        assert_eq!(trans_si.value_type, PropertyValueTypeV2::Option);
+
+        // 25 properties: 3 name customs + 6 name categories + 7 item user fields
+        // + 3 item categories (main + 2 & 3) + 6 transaction categories (5 typed
+        // + the pi2 prescription "Patient type" dimension).
+        assert_eq!(property_repo.find_all().unwrap().len(), 25);
+        // 34 table mappings: the 3 name customs + 6 name categories map to both
         // "name" and "patient" (9×2 = 18), the 7 item fields + 3 item categories
-        // to "item" (10×1 = 10).
-        assert_eq!(table_repo.find_all().unwrap().len(), 28);
+        // to "item" (10×1 = 10), the 6 transaction categories to one invoice
+        // scope each (6×1 = 6).
+        assert_eq!(table_repo.find_all().unwrap().len(), 34);
 
         // The name customs are shared by patients (same definition, extra mapping).
         let patient_mapping = table_repo
@@ -307,5 +372,74 @@ mod tests {
             .unwrap()
             .unwrap();
         assert!(!table_row.is_visible, "seeder must not reset is_visible");
+    }
+
+    /// The transaction category type→key/scope relationship is encoded in
+    /// several places that the compiler can't tie together: the seeder entries
+    /// here, the invoice translator's `category_key_for_invoice_type` +
+    /// `LEGACY_INVOICE_OWNED_KEYS`, and `invoice_property_table_name`. This
+    /// test fails if any of them drift (the migration SQL backfill is the one
+    /// copy it can't reach — but shipped migrations are frozen, so a future
+    /// category-bearing type needs a new migration regardless).
+    #[test]
+    fn transaction_category_mappings_stay_in_lock_step() {
+        use crate::invoice::invoice_property_table_name;
+        use crate::sync::translations::invoice::{
+            category_key_for_invoice_type, LEGACY_INVOICE_OWNED_KEYS, PRESCRIPTION_CATEGORY2_KEY,
+        };
+        use repository::InvoiceType::*;
+
+        let seeded: Vec<_> = mapping_properties()
+            .into_iter()
+            .filter(|def| def.id.starts_with("legacy_transaction_category_"))
+            .collect();
+
+        // Every invoice type with a properties scope has exactly one seeded
+        // category property whose key and scope match the translator's maps.
+        let all_types = [
+            OutboundShipment,
+            InboundShipment,
+            Prescription,
+            InventoryAddition,
+            InventoryReduction,
+            Repack,
+            SupplierReturn,
+            CustomerReturn,
+        ];
+        let mut expected_keys = vec![PRESCRIPTION_CATEGORY2_KEY];
+        for invoice_type in &all_types {
+            let (key, scope) = (
+                category_key_for_invoice_type(invoice_type),
+                invoice_property_table_name(invoice_type),
+            );
+            assert_eq!(
+                key.is_some(),
+                scope.is_some(),
+                "type {invoice_type:?}: category key and properties scope must both exist or both not"
+            );
+            let (Some(key), Some(scope)) = (key, scope) else {
+                continue;
+            };
+            expected_keys.push(key);
+            let def = seeded
+                .iter()
+                .find(|def| def.key == key)
+                .unwrap_or_else(|| panic!("no seeded property for key {key:?}"));
+            assert_eq!(
+                def.table_names,
+                &[scope],
+                "seeded scope for {key:?} must match invoice_property_table_name"
+            );
+        }
+
+        // The owned-keys list is exactly the seeded category keys (the per-type
+        // keys + the pi2 prescription dimension), no more, no less.
+        let mut owned: Vec<_> = LEGACY_INVOICE_OWNED_KEYS.to_vec();
+        let mut seeded_keys: Vec<_> = seeded.iter().map(|def| def.key).collect();
+        owned.sort_unstable();
+        seeded_keys.sort_unstable();
+        expected_keys.sort_unstable();
+        assert_eq!(owned, seeded_keys);
+        assert_eq!(owned, expected_keys);
     }
 }

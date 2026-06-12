@@ -10,9 +10,11 @@ import {
   useSimplifiedTabletUI,
   usePreferences,
   InvoiceNodeType,
+  buildPropertyFilterDefinitions,
 } from '@openmsupply-client/common';
 import { getStatusSequence } from '../../statuses';
 import { getStatusTranslator } from '../../utils';
+import { useInvoicePropertiesV2 } from '../../common';
 
 interface ToolbarProps {
   filter: FilterController;
@@ -24,6 +26,9 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
   const { invoiceStatusOptions } = usePreferences();
   const statuses = getStatusSequence(InvoiceNodeType.OutboundShipment).filter(
     status => invoiceStatusOptions?.includes(status)
+  );
+  const { data: properties } = useInvoicePropertiesV2(
+    InvoiceNodeType.OutboundShipment
   );
 
   const key = 'invoiceNumber';
@@ -105,6 +110,12 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                   },
                 ],
               },
+              ...buildPropertyFilterDefinitions(properties ?? [], {
+                min: t('label.min'),
+                max: t('label.max'),
+                fromDate: t('label.from-date'),
+                toDate: t('label.to-date'),
+              }),
             ]}
           />
         ) : (

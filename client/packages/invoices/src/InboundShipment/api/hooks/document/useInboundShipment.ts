@@ -82,10 +82,13 @@ export const useInboundShipment = (id?: string) => {
   ) => {
     if (!data?.id) return;
     // Data can be passed directly to the update method, or if omitted will use
-    // the current patch data
-    if (newData) await updateMutation({ ...newData, id: data.id });
-    else await updateMutation({ ...patch, id: data.id });
+    // the current patch data. The result is returned so callers can inspect
+    // structured (non-throwing) error responses.
+    const result = newData
+      ? await updateMutation({ ...newData, id: data.id })
+      : await updateMutation({ ...patch, id: data.id });
     resetDraft();
+    return result;
   };
 
   // Save using the ref so we always have the latest pending changes,
