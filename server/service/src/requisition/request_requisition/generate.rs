@@ -8,7 +8,8 @@ use crate::requisition::request_requisition::generate_population_forecast::calcu
 use crate::service_provider::ServiceContext;
 use crate::PluginOrRepositoryError;
 use chrono::{NaiveDate, Utc};
-use repository::{RequisitionLineRow, RequisitionRow};
+use repository::{ItemRowRepository, RequisitionLineRow, RequisitionRow};
+use std::collections::HashMap;
 use util::uuid::uuid;
 
 pub struct GenerateSuggestedQuantity {
@@ -58,6 +59,15 @@ pub fn generate_requisition_lines(
         .iter()
         .map(|i| i.item_id.to_string())
         .collect::<Vec<String>>();
+
+    // Item names are denormalised onto the requisition line. Source them from
+    // the item table rather than from stock data — stockless items have no
+    // stock_on_hand row, which previously left item_name empty (#11843).
+    let item_name_by_id: HashMap<String, String> = ItemRowRepository::new(&ctx.connection)
+        .find_many_by_id(&item_ids)?
+        .into_iter()
+        .map(|item| (item.id, item.name))
+        .collect();
     let price_list = if populate_price_per_unit {
         Some(get_pricing_for_items(
             &ctx.connection,
@@ -116,8 +126,11 @@ pub fn generate_requisition_lines(
                 Ok(RequisitionLineRow {
                     id: uuid(),
                     requisition_id: requisition_row.id.clone(),
+                    item_name: item_name_by_id
+                        .get(&item_stats.item_id)
+                        .cloned()
+                        .unwrap_or_default(),
                     item_id: item_stats.item_id.clone(),
-                    item_name: item_stats.item_name,
                     suggested_quantity,
                     available_stock_on_hand,
                     average_monthly_consumption,

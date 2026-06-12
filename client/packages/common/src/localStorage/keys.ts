@@ -26,7 +26,6 @@ export type LocalStorageRecord = {
   '/theme/logohash': string;
   '/mru/credentials': AuthenticationCredentials | AuthenticationCredentials[];
   '/error/auth': AuthError | undefined;
-  '/error/server': string;
   '/pagination/rowsperpage': number;
   '/columns/hidden': Record<string, string[]> | undefined;
   '/printlabel/isusb': boolean;

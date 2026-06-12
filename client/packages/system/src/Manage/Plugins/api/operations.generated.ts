@@ -73,6 +73,44 @@ export type UninstallPluginMutation = {
   };
 };
 
+export type PluginConfigurationQueryVariables = Types.Exact<{
+  pluginCode: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type PluginConfigurationQuery = {
+  __typename: 'Queries';
+  pluginData: {
+    __typename: 'PluginDataConnector';
+    nodes: Array<{
+      __typename: 'PluginDataNode';
+      id: string;
+      data: string;
+      storeId?: string | null;
+    }>;
+  };
+};
+
+export type InsertPluginConfigurationMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertPluginDataInput;
+}>;
+
+export type InsertPluginConfigurationMutation = {
+  __typename: 'Mutations';
+  insertPluginData: { __typename: 'PluginDataNode'; id: string };
+};
+
+export type UpdatePluginConfigurationMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdatePluginDataInput;
+}>;
+
+export type UpdatePluginConfigurationMutation = {
+  __typename: 'Mutations';
+  updatePluginData: { __typename: 'PluginDataNode'; id: string };
+};
+
 export const InstalledPluginNodeFragmentDoc = gql`
   fragment InstalledPluginNode on InstalledPluginNode {
     __typename
@@ -119,6 +157,50 @@ export const UninstallPluginDocument = gql`
           code
           kind
         }
+      }
+    }
+  }
+`;
+export const PluginConfigurationDocument = gql`
+  query pluginConfiguration($pluginCode: String!, $storeId: String!) {
+    pluginData(
+      pluginCode: $pluginCode
+      storeId: $storeId
+      filter: { dataIdentifier: { equalTo: "configuration" } }
+    ) {
+      __typename
+      ... on PluginDataConnector {
+        nodes {
+          id
+          data
+          storeId
+        }
+      }
+    }
+  }
+`;
+export const InsertPluginConfigurationDocument = gql`
+  mutation insertPluginConfiguration(
+    $storeId: String!
+    $input: InsertPluginDataInput!
+  ) {
+    insertPluginData(input: $input, storeId: $storeId) {
+      ... on PluginDataNode {
+        __typename
+        id
+      }
+    }
+  }
+`;
+export const UpdatePluginConfigurationDocument = gql`
+  mutation updatePluginConfiguration(
+    $storeId: String!
+    $input: UpdatePluginDataInput!
+  ) {
+    updatePluginData(input: $input, storeId: $storeId) {
+      ... on PluginDataNode {
+        __typename
+        id
       }
     }
   }
@@ -193,6 +275,60 @@ export function getSdk(
             signal,
           }),
         'uninstallPlugin',
+        'mutation',
+        variables
+      );
+    },
+    pluginConfiguration(
+      variables: PluginConfigurationQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<PluginConfigurationQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PluginConfigurationQuery>({
+            document: PluginConfigurationDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'pluginConfiguration',
+        'query',
+        variables
+      );
+    },
+    insertPluginConfiguration(
+      variables: InsertPluginConfigurationMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InsertPluginConfigurationMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertPluginConfigurationMutation>({
+            document: InsertPluginConfigurationDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'insertPluginConfiguration',
+        'mutation',
+        variables
+      );
+    },
+    updatePluginConfiguration(
+      variables: UpdatePluginConfigurationMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UpdatePluginConfigurationMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdatePluginConfigurationMutation>({
+            document: UpdatePluginConfigurationDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'updatePluginConfiguration',
         'mutation',
         variables
       );

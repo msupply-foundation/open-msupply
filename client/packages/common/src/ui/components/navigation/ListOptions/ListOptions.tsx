@@ -61,49 +61,53 @@ export const ListOptions = ({
         maxHeight: height - 200,
       }}
     >
-      {options?.map((option, _) => (
-        <React.Fragment key={option.id}>
-          <ListItem
-            sx={{ padding: '5px 0px', cursor: 'pointer' }}
-            onClick={() => onClick(option.id)}
-            ref={option.id === currentId ? scrollRef : null}
-          >
-            <ListItemIcon sx={{ padding: 0, minWidth: 25 }}>
-              <Box
-                style={{
-                  visibility: enteredLineIds?.includes(option.id)
-                    ? 'visible'
-                    : 'hidden',
-                }}
-              >
-                {startIcon}
-              </Box>
-            </ListItemIcon>
-            <ListItemText
-              primary={
-                <Typography
+      {options?.map((option, _) => {
+        const shortcut = option.id === 'new' ? 'Alt+N' : undefined;
+        return (
+          <React.Fragment key={option.id}>
+            <ListItem
+              sx={{ padding: '5px 0px', cursor: 'pointer' }}
+              onClick={() => onClick(option.id)}
+              ref={option.id === currentId ? scrollRef : null}
+              aria-keyshortcuts={shortcut}
+            >
+              <ListItemIcon sx={{ padding: 0, minWidth: 25 }}>
+                <Box
                   style={{
-                    fontWeight: option.id === currentId ? 'bold' : 'normal',
+                    visibility: enteredLineIds?.includes(option.id)
+                      ? 'visible'
+                      : 'hidden',
                   }}
                 >
-                  {option.value}
-                </Typography>
-              }
-              sx={{ margin: 0, padding: 0 }}
-            />
-            <ListItemIcon sx={{ padding: 0, minWidth: 15 }}>
-              <Box
-                style={{
-                  visibility: option.id === currentId ? 'visible' : 'hidden',
-                }}
-              >
-                {endIcon}
-              </Box>
-            </ListItemIcon>
-          </ListItem>
-          <Divider component="li" />
-        </React.Fragment>
-      ))}
+                  {startIcon}
+                </Box>
+              </ListItemIcon>
+              <ListItemText
+                primary={
+                  <Typography
+                    style={{
+                      fontWeight: option.id === currentId ? 'bold' : 'normal',
+                    }}
+                  >
+                    {option.value}
+                  </Typography>
+                }
+                sx={{ margin: 0, padding: 0 }}
+              />
+              <ListItemIcon sx={{ padding: 0, minWidth: 15 }}>
+                <Box
+                  style={{
+                    visibility: option.id === currentId ? 'visible' : 'hidden',
+                  }}
+                >
+                  {endIcon}
+                </Box>
+              </ListItemIcon>
+            </ListItem>
+            <Divider component="li" />
+          </React.Fragment>
+        );
+      })}
     </List>
   );
 };

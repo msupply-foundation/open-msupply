@@ -226,14 +226,14 @@ export const RequestStoreStats = ({
               colour="primary.light"
             />
           </Box>
-
-          {!!availableVolumeAtLocationType && (
-            <VolumeInformation
-              availableVolumeAtLocationType={availableVolumeAtLocationType}
-              itemVolume={itemVolume}
-            />
-          )}
         </>
+      )}
+
+      {!!availableVolumeAtLocationType && (
+        <VolumeInformation
+          availableVolumeAtLocationType={availableVolumeAtLocationType}
+          itemVolume={itemVolume}
+        />
       )}
     </Box>
   );

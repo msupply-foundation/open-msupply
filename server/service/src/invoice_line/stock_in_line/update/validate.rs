@@ -1,7 +1,7 @@
 use crate::common::check_program_exists;
 use crate::invoice::inbound_shipment::InboundShipmentType;
 use crate::{
-    campaign::check_campaign_exists,
+    campaign::check_campaign_exists_including_deleted,
     check_item_variant_exists, check_location_exists, check_location_type_is_valid,
     check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
@@ -133,7 +133,7 @@ pub fn validate(
         value: Some(campaign_id),
     }) = &input.campaign_id
     {
-        if !check_campaign_exists(connection, campaign_id)? {
+        if !check_campaign_exists_including_deleted(connection, campaign_id)? {
             return Err(CampaignDoesNotExist);
         }
     }
