@@ -7,10 +7,9 @@ use super::{
     DBType, RepositoryError, StorageConnection,
 };
 use crate::diesel_macros::{
-    apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case,
-    apply_string_filter, apply_string_or_filter,
+    apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
 };
-use crate::{DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
+use crate::{EqualFilter, Pagination, Sort, StringFilter};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -152,6 +151,8 @@ impl<'a> StockRelocationRepository<'a> {
                 apply_string_or_filter!(query, item_code_or_name, item::name);
             }
 
+            // Filter by location code via subquery (not join): two location FKs would need
+            // aliases, which break auto_type.
             if let Some(from_location_code) = from_location_code {
                 let location_ids = LocationRepository::create_filtered_query(Some(
                     LocationFilter::new().code(from_location_code),

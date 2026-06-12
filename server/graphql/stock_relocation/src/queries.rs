@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
+    generic_filters::{EqualFilterStringInput, StringFilterInput},
     map_filter,
     pagination::PaginationInput,
     simple_generic_errors::RecordNotFound,
@@ -8,7 +8,7 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{
-    DatetimeFilter, EqualFilter, PaginationOption, StockRelocationFilter, StockRelocationSort,
+    EqualFilter, PaginationOption, StockRelocationFilter, StockRelocationSort,
     StockRelocationSortField, StockRelocationStatus, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
