@@ -2631,6 +2631,7 @@ export type DraftStockOutLineNode = {
   itemVariant?: Maybe<ItemVariantNode>;
   itemVariantId?: Maybe<Scalars['String']['output']>;
   location?: Maybe<LocationNode>;
+  manufacturer?: Maybe<NameNode>;
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
   program?: Maybe<ProgramNode>;
@@ -2643,6 +2644,10 @@ export type DraftStockOutLineNode = {
 };
 
 export type DraftStockOutLineNodeDonorArgs = {
+  storeId: Scalars['String']['input'];
+};
+
+export type DraftStockOutLineNodeManufacturerArgs = {
   storeId: Scalars['String']['input'];
 };
 

@@ -22,6 +22,10 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
    * Defaults to false */
   defaultHideOnMobile?: boolean;
 
+  /** Hide the column by default. User can unhide it in the table settings,
+   * or a global table config can show it by default. Defaults to false */
+  defaultHidden?: boolean;
+
   /**  Make the column sticky to a side of the table. User can unpin */
   pin?: 'left' | 'right';
 
