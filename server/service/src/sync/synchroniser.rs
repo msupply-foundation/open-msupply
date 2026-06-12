@@ -479,9 +479,6 @@ pub fn integrate_and_translate_sync_buffer(
 
         // Seed integration progress total with the global pending count so the logger
         // reports a real total across all (action, table) batches, not just the first 10k slice.
-        // Restricted to tables in the integration order — the buffer can hold records for
-        // tables with no translator (e.g. legacy pref/report), which would otherwise be
-        // counted but never integrated, leaving reported progress permanently short of total.
         let total_pending = SyncBufferRepository::new(connection).count_pending(
             source_site_id,
             SyncVersion::V5V6,

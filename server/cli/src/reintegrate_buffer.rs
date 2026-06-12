@@ -59,8 +59,6 @@ pub fn reintegrate_buffer(
     }
 
     let connection = connection_manager.connection()?;
-    // Unfiltered count — includes rows for tables with no translator, which the
-    // integrator itself excludes from its progress total.
     let total_pending = SyncBufferRepository::new(&connection).count_pending(
         source_site_id,
         SyncVersion::V5V6,
