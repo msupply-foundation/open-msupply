@@ -55,6 +55,7 @@ export const InboundListView = () => {
     }),
     filters: [
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
+      { key: 'invoiceNumberOrStatus', condition: 'like' },
       { key: 'otherPartyName' },
       {
         key: 'createdDatetime',

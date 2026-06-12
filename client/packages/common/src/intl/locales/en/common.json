@@ -2531,6 +2531,7 @@
   "placeholder.search-by-first-name": "Search by first name",
   "placeholder.search-by-identifier": "Search by ID",
   "placeholder.search-by-invoice-number": "Search by invoice number",
+  "placeholder.search-by-invoice-number-or-status": "Search by invoice number or status",
   "placeholder.search-by-last-name": "Search by last name",
   "placeholder.search-by-location-code": "Search by location code",
   "placeholder.search-by-location-code-or-name": "Search by location code or name",
