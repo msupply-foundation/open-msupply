@@ -10,6 +10,9 @@ export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
    * alignment & rounding for numbers). Defaults to string.*/
   columnType?: ColumnType;
 
+  /** The number of decimal places to display. Defaults to 2. */
+  decimalLimit?: number;
+
   /** Display the column in the table. Use to handle columns only included for
    * certain preferences or permissions. Defaults to true */
   includeColumn?: boolean;

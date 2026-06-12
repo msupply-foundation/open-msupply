@@ -153,6 +153,7 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
               <NumericTextInput
                 value={item?.volumePerPack}
                 disabled={isDisabled}
+                decimalLimit={5}
                 fullWidth
               />
             }
@@ -163,6 +164,7 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
               <NumericTextInput
                 value={item?.volumePerOuterPack}
                 disabled={isDisabled}
+                decimalLimit={5}
                 fullWidth
               />
             }
@@ -173,6 +175,7 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
               <NumericTextInput
                 value={item?.weight}
                 disabled={isDisabled}
+                decimalLimit={5}
                 fullWidth
               />
             }
