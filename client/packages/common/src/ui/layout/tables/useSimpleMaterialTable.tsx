@@ -31,7 +31,7 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
       sorting: [],
     },
     ...tableOptions,
-    renderBottomToolbar: ({ table }) => (
+    bottomToolbar: ({ table, renderSettingsMenu }) => (
       <Box
         sx={{
           display: 'flex',
@@ -40,6 +40,8 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
         }}
       >
         <MRT_ShowHideColumnsButton table={table} />
+        {/* Density is pinned to compact for simple tables, so hide the toggle */}
+        {renderSettingsMenu({ showDensityToggle: false })}
         {bottomToolbarContent && (
           <Box sx={{ marginLeft: 'auto' }}>{bottomToolbarContent}</Box>
         )}

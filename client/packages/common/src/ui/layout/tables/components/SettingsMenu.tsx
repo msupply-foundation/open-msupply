@@ -39,6 +39,7 @@ export const SettingsMenu = ({
   resetTableState,
   onSaveAsGlobalDefault,
   globalDefaults,
+  showDensityToggle = true,
 }: {
   table: MRT_TableInstance<any>;
   tableId: string;
@@ -50,6 +51,8 @@ export const SettingsMenu = ({
   resetTableState: () => void;
   onSaveAsGlobalDefault?: () => void;
   globalDefaults?: ManagedTableState;
+  /** Hide the density toggle for tables with a fixed density (e.g. simple modal tables) */
+  showDensityToggle?: boolean;
 }) => {
   const t = useTranslation();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -175,11 +178,16 @@ export const SettingsMenu = ({
           </ListItemIcon>
           <ListItemText>{t('label.reset-pinned-columns')}</ListItemText>
         </MenuItem>
-        <Divider />
-        <MenuItem onClick={() => density.update(nextDensity)}>
-          <ListItemIcon>{densityIcon()}</ListItemIcon>
-          <ListItemText> {t('label.toggle-density')}</ListItemText>
-        </MenuItem>
+        {showDensityToggle && [
+          <Divider key="density-divider" />,
+          <MenuItem
+            key="density-toggle"
+            onClick={() => density.update(nextDensity)}
+          >
+            <ListItemIcon>{densityIcon()}</ListItemIcon>
+            <ListItemText> {t('label.toggle-density')}</ListItemText>
+          </MenuItem>,
+        ]}
         {onSaveAsGlobalDefault && [
           <Divider key="save-default-divider" />,
           <MenuItem
