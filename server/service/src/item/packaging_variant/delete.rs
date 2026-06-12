@@ -3,7 +3,9 @@ use repository::{
     RepositoryError, TransactionError,
 };
 
-use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
+use crate::{
+    activity_log::activity_log_entry, check_item_variant_exists, service_provider::ServiceContext,
+};
 
 #[derive(PartialEq, Debug)]
 pub enum DeletePackagingVariantError {
@@ -23,12 +25,21 @@ pub fn delete_packaging_variant(
             // No validation needed for delete, since we have a soft delete
             // If it's already deleted, it's fine to delete again...
             let repo = PackagingVariantRowRepository::new(connection);
+
+            let item_id = match repo.find_one_by_id(&input.id)? {
+                Some(packaging_variant) => {
+                    check_item_variant_exists(connection, &packaging_variant.item_variant_id)?
+                        .map(|item_variant| item_variant.item_id)
+                }
+                None => None,
+            };
+
             let result = repo.mark_deleted(&input.id)?;
 
             activity_log_entry(
                 ctx,
                 ActivityLogType::PackagingVariantDeleted,
-                Some(input.id.clone()),
+                item_id,
                 None,
                 None,
             )?;
