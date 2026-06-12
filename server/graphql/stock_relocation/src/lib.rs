@@ -5,7 +5,10 @@ pub mod mutations;
 pub mod queries;
 pub mod types;
 
-use mutations::{insert_stock_relocation, InsertInput, InsertResponse};
+use mutations::{
+    insert_stock_relocation, update_stock_relocation, InsertInput, InsertResponse, UpdateInput,
+    UpdateResponse,
+};
 use queries::{
     get_stock_relocation, get_stock_relocations, StockRelocationFilterInput,
     StockRelocationResponse, StockRelocationSortInput, StockRelocationsResponse,
@@ -49,5 +52,14 @@ impl StockRelocationMutations {
         input: InsertInput,
     ) -> Result<InsertResponse> {
         insert_stock_relocation(ctx, &store_id, input)
+    }
+
+    pub async fn update_stock_relocation(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateInput,
+    ) -> Result<UpdateResponse> {
+        update_stock_relocation(ctx, &store_id, input)
     }
 }

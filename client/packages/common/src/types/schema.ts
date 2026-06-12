@@ -5318,11 +5318,12 @@ export type LocationNotFound = InsertOutboundShipmentLineErrorInterface &
     description: Scalars['String']['output'];
   };
 
-export type LocationOnHold = InsertStockRelocationErrorInterface & {
-  __typename: 'LocationOnHold';
-  description: Scalars['String']['output'];
-  locationId: Scalars['String']['output'];
-};
+export type LocationOnHold = InsertStockRelocationErrorInterface &
+  UpdateStockRelocationErrorInterface & {
+    __typename: 'LocationOnHold';
+    description: Scalars['String']['output'];
+    locationId: Scalars['String']['output'];
+  };
 
 export enum LocationSortFieldInput {
   Code = 'code',
@@ -5701,6 +5702,7 @@ export type Mutations = {
   updateRnrForm: UpdateRnRFormResponse;
   updateSensor: UpdateSensorResponse;
   updateStockLine: UpdateStockLineLineResponse;
+  updateStockRelocation: UpdateStockRelocationResponse;
   updateStocktake: UpdateStocktakeResponse;
   updateStocktakeLine: UpdateStocktakeLineResponse;
   updateSupplierReturn: UpdateSupplierReturnResponse;
@@ -6392,6 +6394,11 @@ export type MutationsUpdateStockLineArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsUpdateStockRelocationArgs = {
+  input: UpdateStockRelocationInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsUpdateStocktakeArgs = {
   input: UpdateStocktakeInput;
   storeId: Scalars['String']['input'];
@@ -6613,11 +6620,12 @@ export type NotAnOutboundShipmentError = UpdateErrorInterface &
     description: Scalars['String']['output'];
   };
 
-export type NotEnoughStock = InsertStockRelocationErrorInterface & {
-  __typename: 'NotEnoughStock';
-  description: Scalars['String']['output'];
-  stockLineId: Scalars['String']['output'];
-};
+export type NotEnoughStock = InsertStockRelocationErrorInterface &
+  UpdateStockRelocationErrorInterface & {
+    __typename: 'NotEnoughStock';
+    description: Scalars['String']['output'];
+    stockLineId: Scalars['String']['output'];
+  };
 
 export type NotEnoughStockForReduction =
   InsertOutboundShipmentLineErrorInterface &
@@ -9692,11 +9700,12 @@ export type StockLineNodeProgramOrderTypeArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type StockLineOnHold = InsertStockRelocationErrorInterface & {
-  __typename: 'StockLineOnHold';
-  description: Scalars['String']['output'];
-  stockLineId: Scalars['String']['output'];
-};
+export type StockLineOnHold = InsertStockRelocationErrorInterface &
+  UpdateStockRelocationErrorInterface & {
+    __typename: 'StockLineOnHold';
+    description: Scalars['String']['output'];
+    stockLineId: Scalars['String']['output'];
+  };
 
 export type StockLineReducedBelowZero =
   InsertInventoryAdjustmentErrorInterface &
@@ -11419,6 +11428,32 @@ export type UpdateStockLineInput = {
 };
 
 export type UpdateStockLineLineResponse = StockLineNode | UpdateStockLineError;
+
+export type UpdateStockRelocationError = {
+  __typename: 'UpdateStockRelocationError';
+  error: UpdateStockRelocationErrorInterface;
+};
+
+export type UpdateStockRelocationErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpdateStockRelocationInput = {
+  fromNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
+  id: Scalars['String']['input'];
+  status?: InputMaybe<StockRelocationNodeStatus>;
+  toLocationId?: InputMaybe<Scalars['String']['input']>;
+  toPackSize?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type UpdateStockRelocationNode = {
+  __typename: 'UpdateStockRelocationNode';
+  id: Scalars['String']['output'];
+};
+
+export type UpdateStockRelocationResponse =
+  | UpdateStockRelocationError
+  | UpdateStockRelocationNode;
 
 export type UpdateStocktakeError = {
   __typename: 'UpdateStocktakeError';
