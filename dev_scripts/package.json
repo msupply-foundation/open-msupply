@@ -1,0 +1,19 @@
+{
+  "name": "dev_scripts",
+  "private": true,
+  "type": "module",
+  "description": "Local dev/test helper scripts for open-mSupply (devs & agents).",
+  "scripts": {
+    "seed": "tsx seed-stocktake-data.ts",
+    "seed:clean": "tsx seed-stocktake-data.ts --clean"
+  },
+  "dependencies": {
+    "pg": "^8.13.1",
+    "yaml": "^2.6.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

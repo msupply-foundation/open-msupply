@@ -1,0 +1,65 @@
+fragment Store on UserStoreNode {
+  __typename
+  id
+  code
+  name
+  storeMode
+}
+
+query authToken($username: String!, $password: String!) {
+  authToken(username: $username, password: $password) {
+    __typename
+    ... on AuthToken {
+      token
+    }
+    ... on AuthTokenError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+query me {
+  me {
+    ... on UserNode {
+      __typename
+      userId
+      username
+      email
+      defaultStore {
+        ...Store
+      }
+      stores {
+        totalCount
+        nodes {
+          ...Store
+        }
+      }
+    }
+  }
+}
+
+query permissions($storeId: String!) {
+  me {
+    ... on UserNode {
+      __typename
+      permissions(storeId: $storeId) {
+        nodes {
+          permissions
+          storeId
+        }
+      }
+    }
+  }
+}
+
+query refreshToken {
+  refreshToken {
+    __typename
+    ... on RefreshToken {
+      token
+    }
+  }
+}

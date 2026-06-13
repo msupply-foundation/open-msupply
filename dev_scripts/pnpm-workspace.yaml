@@ -1,0 +1,3 @@
+# Allow these dependencies to run install build scripts (pnpm blocks them by default).
+allowBuilds:
+  esbuild: true

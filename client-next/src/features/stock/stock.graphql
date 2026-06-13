@@ -1,0 +1,58 @@
+fragment StockLineRow on StockLineNode {
+  __typename
+  id
+  itemId
+  batch
+  expiryDate
+  packSize
+  totalNumberOfPacks
+  availableNumberOfPacks
+  costPricePerPack
+  sellPricePerPack
+  onHold
+  locationName
+  supplierName
+  item {
+    __typename
+    id
+    code
+    name
+    unitName
+  }
+}
+
+query stockLines(
+  $storeId: String!
+  $first: Int
+  $offset: Int
+  $key: StockLineSortFieldInput!
+  $desc: Boolean
+  $filter: StockLineFilterInput
+) {
+  stockLines(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on StockLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...StockLineRow
+      }
+    }
+  }
+}
+
+query stockLine($id: String!, $storeId: String!) {
+  stockLines(storeId: $storeId, filter: { id: { equalTo: $id } }) {
+    ... on StockLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...StockLineRow
+      }
+    }
+  }
+}

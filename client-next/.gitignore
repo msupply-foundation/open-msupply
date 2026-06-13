@@ -1,0 +1,16 @@
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*
+!.env.example
+
+# Generated files (src/routeTree.gen.ts + GraphQL types in src/gql/ and *.generated.ts) are
+# intentionally COMMITTED: they're imported by source, so a fresh clone can typecheck/build
+# with no codegen step. Recreate with `pnpm generate` (GraphQL) and dev/build (route tree).
+# A CI check should regenerate them and `git diff --exit-code` to guard against staleness.
+
+# logs / editor
+*.log
+.DS_Store
