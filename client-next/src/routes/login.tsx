@@ -21,10 +21,22 @@ const loginSchema = z.object({
 
 type LoginValues = z.infer<typeof loginSchema>;
 
+// Only allow internal absolute paths as a post-login target (no open redirects,
+// no protocol-relative URLs, no bouncing back to /login).
+function safeRedirect(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  if (!value.startsWith('/') || value.startsWith('//')) return undefined;
+  if (value === '/login' || value.startsWith('/login?')) return undefined;
+  return value;
+}
+
 export const Route = createFileRoute('/login')({
-  beforeLoad: () => {
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
+    redirect: safeRedirect(search.redirect),
+  }),
+  beforeLoad: ({ search }) => {
     if (useSession.getState().isAuthenticated) {
-      throw redirect({ to: '/' });
+      throw redirect({ href: search.redirect ?? '/' });
     }
   },
   component: LoginPage,
@@ -32,6 +44,7 @@ export const Route = createFileRoute('/login')({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { redirect: redirectTo } = Route.useSearch();
   const login = useLogin();
   const {
     register,
@@ -42,7 +55,7 @@ function LoginPage() {
   const onSubmit = handleSubmit(async values => {
     try {
       await login.mutateAsync(values);
-      await navigate({ to: '/' });
+      await navigate({ href: redirectTo ?? '/' });
     } catch {
       // Error surfaced via login.error below.
     }

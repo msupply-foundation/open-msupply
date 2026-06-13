@@ -67,6 +67,7 @@ interface SessionState {
   permissions: UserPermission[];
   isAuthenticated: boolean;
   setSession: (payload: SessionPayload) => void;
+  setToken: (token: string) => void;
   setStore: (store: SessionStore) => void;
   clear: () => void;
 }
@@ -95,6 +96,16 @@ export const useSession = create<SessionState>(set => ({
       isAuthenticated: true,
     });
   },
+  // Swap in a freshly-refreshed bearer token, keeping the rest of the session.
+  setToken: token =>
+    set(state => {
+      writeAuthCookie({
+        token,
+        user: state.user ?? undefined,
+        store: state.store ?? undefined,
+      });
+      return { token, isAuthenticated: true };
+    }),
   setStore: store =>
     set(state => {
       if (state.token) {
