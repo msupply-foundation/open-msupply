@@ -224,6 +224,7 @@ function DesktopRow({
       <input
         type="number"
         min={0}
+        step="any"
         style={inputBase}
         {...register(`lines.${line.id}.packSize`, numericReg)}
       />
@@ -239,6 +240,7 @@ function DesktopRow({
       <input
         type="number"
         min={0}
+        step="any"
         inputMode="decimal"
         data-index={index}
         style={inputStyle(errField === 'counted')}
@@ -248,12 +250,14 @@ function DesktopRow({
       <input
         type="number"
         min={0}
+        step="any"
         style={inputBase}
         {...register(`lines.${line.id}.costPrice`, numericReg)}
       />
       <input
         type="number"
         min={0}
+        step="any"
         style={inputBase}
         {...register(`lines.${line.id}.sellPrice`, numericReg)}
       />
@@ -305,6 +309,7 @@ function MobileCard({
           <input
             type="number"
             min={0}
+            step="any"
             inputMode="decimal"
             data-index={index}
             style={inputStyle(errField === 'counted')}
@@ -316,6 +321,7 @@ function MobileCard({
           <input
             type="number"
             min={0}
+            step="any"
             style={inputBase}
             {...register(`lines.${line.id}.packSize`, numericReg)}
           />
@@ -334,6 +340,7 @@ function MobileCard({
           <input
             type="number"
             min={0}
+            step="any"
             style={inputBase}
             {...register(`lines.${line.id}.costPrice`, numericReg)}
           />
@@ -342,6 +349,7 @@ function MobileCard({
           <input
             type="number"
             min={0}
+            step="any"
             style={inputBase}
             {...register(`lines.${line.id}.sellPrice`, numericReg)}
           />
@@ -475,8 +483,6 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
       if (!line) continue;
 
       const input: UpdateStocktakeLineInput = { id };
-      if (d.counted)
-        input.countedNumberOfPacks = f.counted === '' ? null : Number(f.counted);
       if (d.batch) input.batch = f.batch;
       if (d.expiry)
         input.expiryDate = { value: f.expiry === '' ? null : f.expiry };
@@ -487,9 +493,16 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
         input.sellPricePerPack = Number(f.sellPrice);
       if (d.comment) input.comment = f.comment;
 
-      // Always send the reason alongside an adjustment so the server can validate it.
-      const direction = adjustmentDirection(f.counted, line.snapshotNumberOfPacks);
-      if (direction !== null && f.reasonId) input.reasonOptionId = f.reasonId;
+      // Count and reason must travel together: the server validates the reason
+      // against the adjustment, and rejects a reason sent without its count.
+      if (d.counted || d.reasonId) {
+        input.countedNumberOfPacks = f.counted === '' ? null : Number(f.counted);
+        const direction = adjustmentDirection(
+          f.counted,
+          line.snapshotNumberOfPacks,
+        );
+        if (direction !== null && f.reasonId) input.reasonOptionId = f.reasonId;
+      }
 
       if (Object.keys(input).length > 1) updates.push(input);
     }
