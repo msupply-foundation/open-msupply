@@ -1,22 +1,38 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useForm } from 'react-hook-form';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { format } from 'date-fns';
-import { z } from 'zod';
 import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react';
+import {
+  useForm,
+  useWatch,
+  type Control,
+  type UseFormRegister,
+} from 'react-hook-form';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import {
+  Alert,
   Box,
   Button,
   Chip,
   Paper,
+  Snackbar,
   Stack,
   Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { ReasonOptionNodeType, type UpdateStocktakeLineInput } from '@/gql/schema';
 import { stocktakeSdk } from './api';
-import { stocktakeKeys } from './queries';
+import { reasonOptionsQueryOptions, stocktakeKeys } from './queries';
 import type {
+  ReasonOptionRowFragment,
   StocktakeLineRowFragment,
   StocktakeRowFragment,
 } from './stocktake.generated';
@@ -28,13 +44,32 @@ interface Props {
   lines: StocktakeLineRowFragment[];
 }
 
+// Every editable field is a plain string in the form; converted on save.
+interface LineForm {
+  counted: string;
+  batch: string;
+  expiry: string;
+  packSize: string;
+  costPrice: string;
+  sellPrice: string;
+  comment: string;
+  reasonId: string;
+}
 interface FormValues {
-  counted: Record<string, string>;
+  lines: Record<string, LineForm>;
 }
 
-const COLS = '110px minmax(220px, 1fr) 130px 110px 80px 110px 140px';
+interface RowReasons {
+  positive: ReasonOptionRowFragment[];
+  negative: ReasonOptionRowFragment[];
+}
+
+// Code | Item | Batch | Expiry | Pack | Snapshot | Counted | Cost | Sell | Reason | Comment
+const COLS =
+  '90px minmax(160px, 1.4fr) 110px 140px 70px 90px 95px 90px 90px 170px 150px';
+const GRID_MIN_WIDTH = 1240;
 const ROW_HEIGHT = 44;
-const CARD_HEIGHT = 132;
+const CARD_HEIGHT = 296;
 
 const cell = {
   overflow: 'hidden',
@@ -42,17 +77,290 @@ const cell = {
   whiteSpace: 'nowrap',
 } as const;
 
-// Per-line validation. Source of truth is a Zod schema; we apply it per field via
-// RHF's `validate` (so only the edited row re-validates, not all ~5,000 at once).
-const countedValueSchema = z
-  .number({ message: 'Enter a number' })
-  .nonnegative('Must be 0 or more');
+const inputBase: CSSProperties = {
+  width: '100%',
+  boxSizing: 'border-box',
+  padding: '4px 6px',
+  border: '1px solid #c4c4c4',
+  borderRadius: 4,
+  font: 'inherit',
+  background: '#fff',
+};
 
-function validateCounted(raw: string): true | string {
-  if (raw === '') return true; // empty = "not counted yet", allowed
+function inputStyle(invalid: boolean): CSSProperties {
+  return invalid ? { ...inputBase, borderColor: '#d32f2f' } : inputBase;
+}
+
+const ERROR_MESSAGES: Record<string, string> = {
+  AdjustmentReasonNotProvided: 'Select a reason for the adjusted lines.',
+  AdjustmentReasonNotValid: 'A selected reason is not valid for its adjustment.',
+  StockLineReducedBelowZero: 'A count would reduce stock below zero.',
+  SnapshotCountCurrentCountMismatchLine:
+    'A snapshot is out of date — reload and recount.',
+  CannotEditStocktake: 'This stocktake can no longer be edited.',
+};
+
+type ErrorField = 'reason' | 'counted' | 'snapshot' | 'row';
+
+function errorField(typename: string): ErrorField {
+  switch (typename) {
+    case 'AdjustmentReasonNotProvided':
+    case 'AdjustmentReasonNotValid':
+      return 'reason';
+    case 'StockLineReducedBelowZero':
+      return 'counted';
+    case 'SnapshotCountCurrentCountMismatchLine':
+      return 'snapshot';
+    default:
+      return 'row';
+  }
+}
+
+// Numbers must be empty (not entered) or a non-negative finite value.
+function validateNonNeg(raw: string): true | string {
+  if (raw === '') return true;
   const n = Number(raw);
-  const result = countedValueSchema.safeParse(Number.isNaN(n) ? raw : n);
-  return result.success || (result.error.issues[0]?.message ?? 'Invalid');
+  if (Number.isNaN(n)) return 'Enter a number';
+  if (n < 0) return 'Must be 0 or more';
+  return true;
+}
+
+function adjustmentDirection(
+  countedRaw: string,
+  snapshot: number,
+): 'positive' | 'negative' | null {
+  if (countedRaw === '') return null;
+  const n = Number(countedRaw);
+  if (Number.isNaN(n) || n === snapshot) return null;
+  return n > snapshot ? 'positive' : 'negative';
+}
+
+interface RowProps {
+  line: StocktakeLineRowFragment;
+  index: number;
+  register: UseFormRegister<FormValues>;
+  control: Control<FormValues>;
+  reasons: RowReasons;
+  errorField: ErrorField | undefined;
+  onCountedKeyDown: (e: KeyboardEvent<HTMLInputElement>, index: number) => void;
+}
+
+// A reason is only relevant (and only required by the server) when the count
+// differs from the snapshot. The select stays present but disabled otherwise so
+// the row keeps a constant height for virtualization.
+function useRowReasons(
+  control: Control<FormValues>,
+  line: StocktakeLineRowFragment,
+  reasons: RowReasons,
+) {
+  const counted = useWatch({ control, name: `lines.${line.id}.counted` });
+  const direction = adjustmentDirection(counted ?? '', line.snapshotNumberOfPacks);
+  const list =
+    direction === 'positive'
+      ? reasons.positive
+      : direction === 'negative'
+        ? reasons.negative
+        : [];
+  return { active: direction !== null, list };
+}
+
+function ReasonSelect({
+  line,
+  register,
+  active,
+  list,
+  invalid,
+}: {
+  line: StocktakeLineRowFragment;
+  register: UseFormRegister<FormValues>;
+  active: boolean;
+  list: ReasonOptionRowFragment[];
+  invalid: boolean;
+}) {
+  return (
+    <select
+      {...register(`lines.${line.id}.reasonId`)}
+      disabled={!active}
+      aria-invalid={invalid}
+      style={{
+        ...inputStyle(invalid),
+        background: active ? '#fff' : '#f5f5f5',
+      }}
+    >
+      <option value="">{active ? 'Select reason…' : '—'}</option>
+      {list.map(r => (
+        <option key={r.id} value={r.id}>
+          {r.reason}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+const numericReg = { validate: validateNonNeg } as const;
+
+function DesktopRow({
+  line,
+  index,
+  register,
+  control,
+  reasons,
+  errorField: errField,
+  onCountedKeyDown,
+}: RowProps) {
+  const reason = useRowReasons(control, line, reasons);
+  return (
+    <>
+      <span style={cell}>{line.item.code}</span>
+      <span style={cell} title={line.item.name}>
+        {line.item.name}
+      </span>
+      <input style={inputBase} {...register(`lines.${line.id}.batch`)} />
+      <input
+        type="date"
+        style={inputBase}
+        {...register(`lines.${line.id}.expiry`)}
+      />
+      <input
+        type="number"
+        min={0}
+        style={inputBase}
+        {...register(`lines.${line.id}.packSize`, numericReg)}
+      />
+      <span
+        style={{
+          textAlign: 'right',
+          color: errField === 'snapshot' ? '#d32f2f' : undefined,
+          fontWeight: errField === 'snapshot' ? 600 : undefined,
+        }}
+      >
+        {line.snapshotNumberOfPacks}
+      </span>
+      <input
+        type="number"
+        min={0}
+        inputMode="decimal"
+        data-index={index}
+        style={inputStyle(errField === 'counted')}
+        {...register(`lines.${line.id}.counted`, numericReg)}
+        onKeyDown={e => onCountedKeyDown(e, index)}
+      />
+      <input
+        type="number"
+        min={0}
+        style={inputBase}
+        {...register(`lines.${line.id}.costPrice`, numericReg)}
+      />
+      <input
+        type="number"
+        min={0}
+        style={inputBase}
+        {...register(`lines.${line.id}.sellPrice`, numericReg)}
+      />
+      <ReasonSelect
+        line={line}
+        register={register}
+        active={reason.active}
+        list={reason.list}
+        invalid={errField === 'reason'}
+      />
+      <input style={inputBase} {...register(`lines.${line.id}.comment`)} />
+    </>
+  );
+}
+
+function CardField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, minWidth: 0 }}>
+      <Typography variant="caption" color="text.secondary">
+        {label}
+      </Typography>
+      {children}
+    </Box>
+  );
+}
+
+function MobileCard({
+  line,
+  index,
+  register,
+  control,
+  reasons,
+  errorField: errField,
+  onCountedKeyDown,
+}: RowProps) {
+  const reason = useRowReasons(control, line, reasons);
+  return (
+    <Stack spacing={1} sx={{ height: '100%' }}>
+      <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+        <Typography variant="subtitle2" sx={{ ...cell, flex: 1 }}>
+          {line.item.name}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {line.item.code}
+        </Typography>
+      </Box>
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+        <CardField label={`Counted (snapshot ${line.snapshotNumberOfPacks})`}>
+          <input
+            type="number"
+            min={0}
+            inputMode="decimal"
+            data-index={index}
+            style={inputStyle(errField === 'counted')}
+            {...register(`lines.${line.id}.counted`, numericReg)}
+            onKeyDown={e => onCountedKeyDown(e, index)}
+          />
+        </CardField>
+        <CardField label="Pack size">
+          <input
+            type="number"
+            min={0}
+            style={inputBase}
+            {...register(`lines.${line.id}.packSize`, numericReg)}
+          />
+        </CardField>
+        <CardField label="Batch">
+          <input style={inputBase} {...register(`lines.${line.id}.batch`)} />
+        </CardField>
+        <CardField label="Expiry">
+          <input
+            type="date"
+            style={inputBase}
+            {...register(`lines.${line.id}.expiry`)}
+          />
+        </CardField>
+        <CardField label="Cost price">
+          <input
+            type="number"
+            min={0}
+            style={inputBase}
+            {...register(`lines.${line.id}.costPrice`, numericReg)}
+          />
+        </CardField>
+        <CardField label="Sell price">
+          <input
+            type="number"
+            min={0}
+            style={inputBase}
+            {...register(`lines.${line.id}.sellPrice`, numericReg)}
+          />
+        </CardField>
+      </Box>
+      <CardField label="Reason">
+        <ReasonSelect
+          line={line}
+          register={register}
+          active={reason.active}
+          list={reason.list}
+          invalid={errField === 'reason'}
+        />
+      </CardField>
+      <CardField label="Comment">
+        <input style={inputBase} {...register(`lines.${line.id}.comment`)} />
+      </CardField>
+    </Stack>
+  );
 }
 
 export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
@@ -60,10 +368,40 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
   const theme = useTheme();
   const isPhone = useMediaQuery(theme.breakpoints.down('sm'));
 
+  const { data: reasonOptions = [] } = useQuery(reasonOptionsQueryOptions());
+  const reasons = useMemo<RowReasons>(
+    () => ({
+      positive: reasonOptions.filter(
+        r => r.type === ReasonOptionNodeType.PositiveInventoryAdjustment,
+      ),
+      negative: reasonOptions.filter(
+        r => r.type === ReasonOptionNodeType.NegativeInventoryAdjustment,
+      ),
+    }),
+    [reasonOptions],
+  );
+
+  const linesById = useMemo(
+    () => new Map(lines.map(l => [l.id, l])),
+    [lines],
+  );
+
   const defaultValues = useMemo<FormValues>(
     () => ({
-      counted: Object.fromEntries(
-        lines.map(l => [l.id, l.countedNumberOfPacks?.toString() ?? '']),
+      lines: Object.fromEntries(
+        lines.map(l => [
+          l.id,
+          {
+            counted: l.countedNumberOfPacks?.toString() ?? '',
+            batch: l.batch ?? '',
+            expiry: l.expiryDate ?? '',
+            packSize: l.packSize?.toString() ?? '',
+            costPrice: l.costPricePerPack?.toString() ?? '',
+            sellPrice: l.sellPricePerPack?.toString() ?? '',
+            comment: l.comment ?? '',
+            reasonId: l.reasonOption?.id ?? '',
+          },
+        ]),
       ),
     }),
     [lines],
@@ -71,10 +409,15 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { dirtyFields, isDirty, errors },
   } = useForm<FormValues>({ defaultValues, mode: 'onChange' });
+
+  // lineId -> server error __typename from the last save.
+  const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
+  const [snackbar, setSnackbar] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const rowHeight = isPhone ? CARD_HEIGHT : ROW_HEIGHT;
@@ -82,31 +425,25 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
     count: lines.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => rowHeight,
-    overscan: 12,
+    overscan: 10,
   });
-
-  // Layout swap (grid <-> cards) changes row height; re-measure so offsets stay correct.
   useEffect(() => virtualizer.measure(), [isPhone, virtualizer]);
 
-  // Keyboard nav: move focus between counted inputs, scrolling the target into view
-  // first (it may be virtualized out of the DOM until then).
   const focusRow = useCallback(
     (index: number) => {
       if (index < 0 || index >= lines.length) return;
       virtualizer.scrollToIndex(index, { align: 'auto' });
       requestAnimationFrame(() => {
-        const el = scrollRef.current?.querySelector<HTMLInputElement>(
-          `input[data-index="${index}"]`,
-        );
-        el?.focus();
-        el?.select();
+        scrollRef.current
+          ?.querySelector<HTMLInputElement>(`input[data-index="${index}"]`)
+          ?.focus();
       });
     },
     [lines.length, virtualizer],
   );
 
-  const onInputKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+  const onCountedKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>, index: number) => {
       if (e.key === 'Enter' || e.key === 'ArrowDown') {
         e.preventDefault();
         focusRow(index + 1);
@@ -119,56 +456,96 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
   );
 
   const save = useMutation({
-    mutationFn: (updates: { id: string; countedNumberOfPacks: number }[]) =>
+    mutationFn: (updates: UpdateStocktakeLineInput[]) =>
       stocktakeSdk.upsertStocktakeLines({
         storeId,
         updateStocktakeLines: updates,
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: stocktakeKeys.lines(storeId, stocktakeId),
-      });
-    },
   });
 
   const onSave = handleSubmit(async values => {
-    const changedIds = Object.keys(dirtyFields.counted ?? {});
-    const updates = changedIds
-      .filter(id => values.counted[id] !== '' && values.counted[id] != null)
-      .map(id => ({ id, countedNumberOfPacks: Number(values.counted[id]) }));
+    const dirtyLines = dirtyFields.lines ?? {};
+    const updates: UpdateStocktakeLineInput[] = [];
+
+    for (const id of Object.keys(dirtyLines)) {
+      const d = dirtyLines[id];
+      const f = values.lines[id];
+      if (!d || !f) continue;
+      const line = linesById.get(id);
+      if (!line) continue;
+
+      const input: UpdateStocktakeLineInput = { id };
+      if (d.counted)
+        input.countedNumberOfPacks = f.counted === '' ? null : Number(f.counted);
+      if (d.batch) input.batch = f.batch;
+      if (d.expiry)
+        input.expiryDate = { value: f.expiry === '' ? null : f.expiry };
+      if (d.packSize && f.packSize !== '') input.packSize = Number(f.packSize);
+      if (d.costPrice && f.costPrice !== '')
+        input.costPricePerPack = Number(f.costPrice);
+      if (d.sellPrice && f.sellPrice !== '')
+        input.sellPricePerPack = Number(f.sellPrice);
+      if (d.comment) input.comment = f.comment;
+
+      // Always send the reason alongside an adjustment so the server can validate it.
+      const direction = adjustmentDirection(f.counted, line.snapshotNumberOfPacks);
+      if (direction !== null && f.reasonId) input.reasonOptionId = f.reasonId;
+
+      if (Object.keys(input).length > 1) updates.push(input);
+    }
+
     if (!updates.length) return;
-    await save.mutateAsync(updates);
-    reset(values); // new clean baseline (clears dirty without a full refetch round-trip)
+
+    const result = await save.mutateAsync(updates);
+    const responses = result.batchStocktake.updateStocktakeLines ?? [];
+
+    const failed: Record<string, string> = {};
+    const messages = new Set<string>();
+    for (const r of responses) {
+      if (r.response.__typename === 'UpdateStocktakeLineError') {
+        const typename = r.response.error.__typename;
+        failed[r.id] = typename;
+        messages.add(ERROR_MESSAGES[typename] ?? r.response.error.description);
+      }
+    }
+
+    queryClient.invalidateQueries({
+      queryKey: stocktakeKeys.lines(storeId, stocktakeId),
+    });
+
+    if (Object.keys(failed).length === 0) {
+      setServerErrors({});
+      setSnackbar(null);
+      reset(values); // clean baseline without a refetch round-trip
+    } else {
+      // Keep edits dirty so the user can fix the flagged lines and re-save.
+      setServerErrors(failed);
+      setSnackbar([...messages].join(' '));
+    }
   });
 
-  const dirtyCount = Object.keys(dirtyFields.counted ?? {}).length;
-  const errorCount = Object.keys(errors.counted ?? {}).length;
-
-  // Shared editable input — same control/validation/keyboard behaviour in both layouts.
-  const countedInput = (
-    line: StocktakeLineRowFragment,
-    index: number,
-    invalid: boolean,
-  ) => (
-    <input
-      type="number"
-      min={0}
-      inputMode="decimal"
-      data-index={index}
-      aria-invalid={invalid}
-      {...register(`counted.${line.id}`, { validate: validateCounted })}
-      onKeyDown={e => onInputKeyDown(e, index)}
-      title={invalid ? errors.counted?.[line.id]?.message : undefined}
-      style={{
-        width: '100%',
-        boxSizing: 'border-box',
-        padding: '4px 8px',
-        border: `1px solid ${invalid ? theme.palette.error.main : '#c4c4c4'}`,
-        borderRadius: 4,
-        font: 'inherit',
-      }}
-    />
+  const dirtyCount = Object.keys(dirtyFields.lines ?? {}).length;
+  const errorCount = useMemo(
+    () =>
+      Object.values(errors.lines ?? {}).filter(e => e && Object.keys(e).length)
+        .length,
+    [errors.lines],
   );
+
+  const renderRow = (index: number) => {
+    const line = lines[index];
+    const serverError = serverErrors[line.id];
+    const props: RowProps = {
+      line,
+      index,
+      register,
+      control,
+      reasons,
+      errorField: serverError ? errorField(serverError) : undefined,
+      onCountedKeyDown,
+    };
+    return isPhone ? <MobileCard {...props} /> : <DesktopRow {...props} />;
+  };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1 }}>
@@ -195,7 +572,7 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
           disabled={!isDirty || errorCount > 0 || save.isPending}
           onClick={onSave}
         >
-          {save.isPending ? 'Saving…' : 'Save counts'}
+          {save.isPending ? 'Saving…' : 'Save'}
         </Button>
       </Box>
 
@@ -203,150 +580,92 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
         variant="outlined"
         sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
       >
-        {!isPhone && (
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: COLS,
-              gap: 1,
-              px: 2,
-              py: 1,
-              borderBottom: 1,
-              borderColor: 'divider',
-              bgcolor: 'grey.100',
-              fontWeight: 600,
-              fontSize: 13,
-            }}
-          >
-            <span>Code</span>
-            <span>Item</span>
-            <span>Batch</span>
-            <span>Expiry</span>
-            <span style={{ textAlign: 'right' }}>Pack</span>
-            <span style={{ textAlign: 'right' }}>Snapshot</span>
-            <span>Counted</span>
-          </Box>
-        )}
-
         <Box ref={scrollRef} sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-          <Box
-            sx={{
-              height: virtualizer.getTotalSize(),
-              position: 'relative',
-              width: '100%',
-            }}
-          >
-            {virtualizer.getVirtualItems().map(vi => {
-              const line = lines[vi.index];
-              const invalid = Boolean(errors.counted?.[line.id]);
-              const rowSx = {
-                position: 'absolute' as const,
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: vi.size,
-                transform: `translateY(${vi.start}px)`,
-              };
+          <Box sx={{ minWidth: isPhone ? undefined : GRID_MIN_WIDTH }}>
+            {!isPhone && (
+              <Box
+                sx={{
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: 1,
+                  display: 'grid',
+                  gridTemplateColumns: COLS,
+                  gap: 1,
+                  px: 2,
+                  py: 1,
+                  borderBottom: 1,
+                  borderColor: 'divider',
+                  bgcolor: 'grey.100',
+                  fontWeight: 600,
+                  fontSize: 13,
+                }}
+              >
+                <span>Code</span>
+                <span>Item</span>
+                <span>Batch</span>
+                <span>Expiry</span>
+                <span>Pack</span>
+                <span style={{ textAlign: 'right' }}>Snapshot</span>
+                <span>Counted</span>
+                <span>Cost</span>
+                <span>Sell</span>
+                <span>Reason</span>
+                <span>Comment</span>
+              </Box>
+            )}
 
-              if (isPhone) {
+            <Box
+              sx={{
+                height: virtualizer.getTotalSize(),
+                position: 'relative',
+                width: '100%',
+              }}
+            >
+              {virtualizer.getVirtualItems().map(vi => {
+                const line = lines[vi.index];
                 return (
                   <Box
                     key={line.id}
                     sx={{
-                      ...rowSx,
-                      px: 2,
-                      py: 1.5,
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: vi.size,
+                      transform: `translateY(${vi.start}px)`,
                       borderBottom: 1,
                       borderColor: 'divider',
+                      px: 2,
+                      fontSize: 13,
+                      ...(isPhone
+                        ? { py: 1.5 }
+                        : {
+                            display: 'grid',
+                            gridTemplateColumns: COLS,
+                            gap: 1,
+                            alignItems: 'center',
+                          }),
                     }}
                   >
-                    <Stack spacing={0.5} sx={{ height: '100%' }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'baseline',
-                          gap: 1,
-                        }}
-                      >
-                        <Typography
-                          variant="subtitle2"
-                          sx={{ ...cell, flex: 1 }}
-                        >
-                          {line.item.name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {line.item.code}
-                        </Typography>
-                      </Box>
-                      <Typography variant="caption" color="text.secondary" sx={cell}>
-                        {[
-                          line.batch ? `Batch ${line.batch}` : null,
-                          line.expiryDate
-                            ? `Exp ${format(new Date(line.expiryDate), 'dd/MM/yyyy')}`
-                            : null,
-                          line.packSize != null ? `Pack ${line.packSize}` : null,
-                          `Snapshot ${line.snapshotNumberOfPacks}`,
-                        ]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          mt: 'auto',
-                        }}
-                      >
-                        <Typography variant="body2" sx={{ minWidth: 64 }}>
-                          Counted
-                        </Typography>
-                        <Box sx={{ flex: 1 }}>{countedInput(line, vi.index, invalid)}</Box>
-                        {invalid && (
-                          <Typography variant="caption" color="error.main">
-                            {errors.counted?.[line.id]?.message}
-                          </Typography>
-                        )}
-                      </Box>
-                    </Stack>
+                    {renderRow(vi.index)}
                   </Box>
                 );
-              }
-
-              return (
-                <Box
-                  key={line.id}
-                  sx={{
-                    ...rowSx,
-                    display: 'grid',
-                    gridTemplateColumns: COLS,
-                    gap: 1,
-                    alignItems: 'center',
-                    px: 2,
-                    borderBottom: 1,
-                    borderColor: 'divider',
-                    fontSize: 13,
-                  }}
-                >
-                  <span style={cell}>{line.item.code}</span>
-                  <span style={cell}>{line.item.name}</span>
-                  <span style={cell}>{line.batch ?? ''}</span>
-                  <span style={cell}>
-                    {line.expiryDate
-                      ? format(new Date(line.expiryDate), 'dd/MM/yyyy')
-                      : ''}
-                  </span>
-                  <span style={{ textAlign: 'right' }}>{line.packSize ?? ''}</span>
-                  <span style={{ textAlign: 'right' }}>
-                    {line.snapshotNumberOfPacks}
-                  </span>
-                  {countedInput(line, vi.index, invalid)}
-                </Box>
-              );
-            })}
+              })}
+            </Box>
           </Box>
         </Box>
       </Paper>
+
+      <Snackbar
+        open={Boolean(snackbar)}
+        autoHideDuration={10000}
+        onClose={() => setSnackbar(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="error" onClose={() => setSnackbar(null)} variant="filled">
+          {snackbar}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
