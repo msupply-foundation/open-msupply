@@ -12,6 +12,7 @@ import {
 import { useNavigate } from '@tanstack/react-router';
 import { useSession } from '@/app/session';
 import { useTokenRefresh } from '@/app/useTokenRefresh';
+import { useIdleTimeout } from '@/app/useIdleTimeout';
 import { NavDrawer } from '@/app/NavDrawer';
 
 export function AppLayout({ children }: { children: ReactNode }) {
@@ -20,8 +21,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  // Keep the bearer token fresh while the authenticated shell is mounted.
+  // Keep the bearer token fresh while the authenticated shell is mounted, and
+  // log out after 15 minutes of inactivity.
   useTokenRefresh();
+  useIdleTimeout();
 
   const onLogout = () => {
     clear();
