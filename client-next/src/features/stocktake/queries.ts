@@ -9,7 +9,22 @@ export const stocktakeKeys = {
     [...stocktakeKeys.all(storeId), 'detail', id] as const,
   lines: (storeId: string, id: string) =>
     [...stocktakeKeys.all(storeId), 'lines', id] as const,
+  // Inventory-adjustment reasons are global config, not store-scoped.
+  reasonOptions: () => ['reasonOptions'] as const,
 };
+
+// Active inventory-adjustment reasons (rarely change — long staleTime).
+export const reasonOptionsQueryOptions = () =>
+  queryOptions({
+    queryKey: stocktakeKeys.reasonOptions(),
+    staleTime: 10 * 60_000,
+    queryFn: async () => {
+      const { reasonOptions } = await stocktakeSdk.reasonOptions();
+      return reasonOptions.__typename === 'ReasonOptionConnector'
+        ? reasonOptions.nodes
+        : [];
+    },
+  });
 
 export const stocktakesQueryOptions = (storeId: string) =>
   queryOptions({

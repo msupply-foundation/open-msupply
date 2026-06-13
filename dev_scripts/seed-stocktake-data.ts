@@ -63,6 +63,7 @@ async function cleanup(client: pg.Client) {
   try {
     await client.query(`DELETE FROM stocktake_line WHERE id LIKE '${ID.stocktakeLine}%'`);
     await client.query(`DELETE FROM stocktake WHERE id LIKE 'seed-stocktake-%'`);
+    await client.query(`DELETE FROM reason_option WHERE id LIKE 'seed-reason-%'`);
     await client.query(`DELETE FROM stock_line WHERE id LIKE '${ID.stock}%'`);
     await client.query(`DELETE FROM item_link WHERE id LIKE 'seed-item-%'`);
     await client.query(`DELETE FROM item WHERE id LIKE 'seed-item-%'`);
@@ -109,6 +110,18 @@ async function seed(client: pg.Client) {
   const started = Date.now();
   await client.query('BEGIN');
   try {
+    // Inventory-adjustment reasons, shown on the stocktake when counted != snapshot.
+    await client.query(
+      `INSERT INTO reason_option (id,type,is_active,reason) VALUES
+         ('seed-reason-pos-found',   'POSITIVE_INVENTORY_ADJUSTMENT', true, 'Stock found'),
+         ('seed-reason-pos-recount', 'POSITIVE_INVENTORY_ADJUSTMENT', true, 'Recount correction (increase)'),
+         ('seed-reason-pos-return',  'POSITIVE_INVENTORY_ADJUSTMENT', true, 'Returned to stock'),
+         ('seed-reason-neg-damaged', 'NEGATIVE_INVENTORY_ADJUSTMENT', true, 'Damaged'),
+         ('seed-reason-neg-expired', 'NEGATIVE_INVENTORY_ADJUSTMENT', true, 'Expired'),
+         ('seed-reason-neg-stolen',  'NEGATIVE_INVENTORY_ADJUSTMENT', true, 'Stolen / lost'),
+         ('seed-reason-neg-recount', 'NEGATIVE_INVENTORY_ADJUSTMENT', true, 'Recount correction (decrease)')
+       ON CONFLICT (id) DO NOTHING`,
+    );
     await client.query(
       `INSERT INTO item (id,name,code,type,default_pack_size,legacy_record,unit_id,is_active,is_vaccine,vaccine_doses,volume_per_pack)
        SELECT 'seed-item-'||g, 'Test Item '||g, 'SEED-'||lpad(g::text,5,'0'), 'STOCK', 1, '', $2, true, false, 0, 0

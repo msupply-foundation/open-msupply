@@ -7,11 +7,39 @@ fragment StocktakeLineRow on StocktakeLineNode {
   packSize
   snapshotNumberOfPacks
   countedNumberOfPacks
+  costPricePerPack
+  sellPricePerPack
+  comment
+  reasonOption {
+    __typename
+    id
+    type
+    reason
+  }
   item {
     __typename
     id
     code
     name
+  }
+}
+
+fragment ReasonOptionRow on ReasonOptionNode {
+  __typename
+  id
+  type
+  reason
+}
+
+query reasonOptions {
+  reasonOptions(filter: { isActive: true }, page: { first: 1000 }) {
+    ... on ReasonOptionConnector {
+      __typename
+      totalCount
+      nodes {
+        ...ReasonOptionRow
+      }
+    }
   }
 }
 
