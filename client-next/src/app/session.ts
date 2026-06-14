@@ -68,6 +68,7 @@ interface SessionState {
   isAuthenticated: boolean;
   setSession: (payload: SessionPayload) => void;
   setToken: (token: string) => void;
+  setUser: (user: SessionUser) => void;
   setStore: (store: SessionStore) => void;
   setStores: (stores: SessionStore[]) => void;
   clear: () => void;
@@ -106,6 +107,19 @@ export const useSession = create<SessionState>(set => ({
         store: state.store ?? undefined,
       });
       return { token, isAuthenticated: true };
+    }),
+  // Restore the user identity into a session that has a token but lost its user
+  // (a partial cookie) — keeps the rest of the cookie intact.
+  setUser: user =>
+    set(state => {
+      if (state.token) {
+        writeAuthCookie({
+          token: state.token,
+          user,
+          store: state.store ?? undefined,
+        });
+      }
+      return { user };
     }),
   // The user's accessible stores aren't persisted in the cookie; populated in
   // memory (e.g. fetched on a cold load to validate a store-scoped URL).

@@ -18,8 +18,10 @@ function StoreLayout() {
   const navigate = useNavigate();
   const store = useSession(s => s.store);
   const stores = useSession(s => s.stores);
+  const user = useSession(s => s.user);
   const setStore = useSession(s => s.setStore);
   const setStores = useSession(s => s.setStores);
+  const setUser = useSession(s => s.setUser);
 
   // The auth cookie doesn't persist the store list, so on a cold load fetch it
   // to validate the URL's store and resolve its name for the drawer.
@@ -29,8 +31,10 @@ function StoreLayout() {
   });
 
   useEffect(() => {
-    if (fetched?.stores.length && stores.length === 0) setStores(fetched.stores);
-  }, [fetched, stores.length, setStores]);
+    if (!fetched) return;
+    if (fetched.stores.length && stores.length === 0) setStores(fetched.stores);
+    if (!user) setUser(fetched.user); // repair a partial cookie missing its user
+  }, [fetched, stores.length, setStores, user, setUser]);
 
   const known = useMemo(
     () => (stores.length ? stores : (fetched?.stores ?? [])),
