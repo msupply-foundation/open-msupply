@@ -1,6 +1,7 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import {
   Alert,
@@ -15,6 +16,8 @@ import {
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { useSession } from '@/app/session';
 import { useLogin } from '@/features/auth/useLogin';
+import { serverInfoQueryOptions } from '@/features/server/queries';
+import { Environment } from '@/lib/config';
 import { MSupplyGuy } from '@/components/MSupplyGuy';
 
 // Branding copy lifted from the legacy login (common.json: login.heading/body).
@@ -131,65 +134,101 @@ function LoginPage() {
         </Typography>
       </Box>
 
-      {/* Form panel. */}
+      {/* Form panel — form centred, server info pinned bottom-right. */}
       <Box
         sx={{
           flex: '1 0 50%',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          flexDirection: 'column',
           backgroundColor: FORM_BG,
-          padding: 3,
+          minHeight: '100vh',
         }}
       >
-        <form onSubmit={onSubmit}>
-          <Stack spacing={5} sx={{ width: 320, maxWidth: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-              <MSupplyGuy
-                width={isSmallScreen ? 155 : 285}
-                height={isSmallScreen ? 90 : 180}
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 3,
+          }}
+        >
+          <form onSubmit={onSubmit}>
+            <Stack spacing={5} sx={{ width: 320, maxWidth: '100%' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                <MSupplyGuy
+                  width={isSmallScreen ? 155 : 285}
+                  height={isSmallScreen ? 90 : 180}
+                />
+              </Box>
+              {login.error ? (
+                <Alert severity="error">{login.error.message}</Alert>
+              ) : null}
+              <TextField
+                label="Username"
+                variant="standard"
+                fullWidth
+                autoFocus
+                focused
+                sx={loginFieldSx}
+                slotProps={{ input: { disableUnderline: true } }}
+                error={Boolean(errors.username)}
+                helperText={errors.username?.message}
+                {...register('username')}
               />
-            </Box>
-            {login.error ? (
-              <Alert severity="error">{login.error.message}</Alert>
-            ) : null}
-            <TextField
-              label="Username"
-              variant="standard"
-              fullWidth
-              autoFocus
-              focused
-              sx={loginFieldSx}
-              slotProps={{ input: { disableUnderline: true } }}
-              error={Boolean(errors.username)}
-              helperText={errors.username?.message}
-              {...register('username')}
-            />
-            <TextField
-              label="Password"
-              type="password"
-              variant="standard"
-              fullWidth
-              focused
-              sx={loginFieldSx}
-              slotProps={{ input: { disableUnderline: true } }}
-              error={Boolean(errors.password)}
-              helperText={errors.password?.message}
-              {...register('password')}
-            />
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Button
-                type="submit"
-                variant="outlined"
-                endIcon={<ArrowForwardIcon />}
-                disabled={login.isPending}
-              >
-                {login.isPending ? 'Logging in…' : 'Login'}
-              </Button>
-            </Box>
-          </Stack>
-        </form>
+              <TextField
+                label="Password"
+                type="password"
+                variant="standard"
+                fullWidth
+                focused
+                sx={loginFieldSx}
+                slotProps={{ input: { disableUnderline: true } }}
+                error={Boolean(errors.password)}
+                helperText={errors.password?.message}
+                {...register('password')}
+              />
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button
+                  type="submit"
+                  variant="outlined"
+                  endIcon={<ArrowForwardIcon />}
+                  disabled={login.isPending}
+                >
+                  {login.isPending ? 'Logging in…' : 'Login'}
+                </Button>
+              </Box>
+            </Stack>
+          </form>
+        </Box>
+        <ServerInfoFooter />
       </Box>
+    </Box>
+  );
+}
+
+/** App version + central-server label, bottom-right of the form panel. */
+function ServerInfoFooter() {
+  // isCentralServer is served without auth, so it resolves on the login screen.
+  const { data } = useQuery(serverInfoQueryOptions());
+
+  return (
+    <Box
+      sx={{
+        padding: 2,
+        textAlign: 'right',
+        color: 'text.secondary',
+        opacity: 0.6,
+      }}
+    >
+      <Typography variant="body2">
+        <strong>App version:</strong> {Environment.APP_VERSION}
+      </Typography>
+      {data?.isCentralServer ? (
+        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+          Central server
+        </Typography>
+      ) : null}
     </Box>
   );
 }
