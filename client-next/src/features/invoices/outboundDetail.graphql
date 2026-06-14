@@ -110,6 +110,24 @@ mutation updateOutbound(
   }
 }
 
+mutation insertOutboundLine(
+  $storeId: String!
+  $input: InsertOutboundShipmentLineInput!
+) {
+  insertOutboundShipmentLine(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceLineNode {
+      id
+    }
+    ... on InsertOutboundShipmentLineError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
 mutation updateOutboundLine(
   $storeId: String!
   $input: UpdateOutboundShipmentLineInput!

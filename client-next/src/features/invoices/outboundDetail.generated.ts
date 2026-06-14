@@ -185,6 +185,31 @@ export type UpdateOutboundMutation = {
       };
 };
 
+export type InsertOutboundLineMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertOutboundShipmentLineInput;
+}>;
+
+export type InsertOutboundLineMutation = {
+  __typename: 'Mutations';
+  insertOutboundShipmentLine:
+    | {
+        __typename: 'InsertOutboundShipmentLineError';
+        error:
+          | { __typename: 'CannotEditInvoice'; description: string }
+          | { __typename: 'ForeignKeyError'; description: string }
+          | { __typename: 'LocationIsOnHold'; description: string }
+          | { __typename: 'LocationNotFound'; description: string }
+          | { __typename: 'NotEnoughStockForReduction'; description: string }
+          | {
+              __typename: 'StockLineAlreadyExistsInInvoice';
+              description: string;
+            }
+          | { __typename: 'StockLineIsOnHold'; description: string };
+      }
+    | { __typename: 'InvoiceLineNode'; id: string };
+};
+
 export type UpdateOutboundLineMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.UpdateOutboundShipmentLineInput;
@@ -348,6 +373,25 @@ export const UpdateOutboundDocument = gql`
     }
   }
 `;
+export const InsertOutboundLineDocument = gql`
+  mutation insertOutboundLine(
+    $storeId: String!
+    $input: InsertOutboundShipmentLineInput!
+  ) {
+    insertOutboundShipmentLine(storeId: $storeId, input: $input) {
+      __typename
+      ... on InvoiceLineNode {
+        id
+      }
+      ... on InsertOutboundShipmentLineError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+`;
 export const UpdateOutboundLineDocument = gql`
   mutation updateOutboundLine(
     $storeId: String!
@@ -456,6 +500,24 @@ export function getSdk(
             signal,
           }),
         'updateOutbound',
+        'mutation',
+        variables,
+      );
+    },
+    insertOutboundLine(
+      variables: InsertOutboundLineMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<InsertOutboundLineMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertOutboundLineMutation>({
+            document: InsertOutboundLineDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'insertOutboundLine',
         'mutation',
         variables,
       );

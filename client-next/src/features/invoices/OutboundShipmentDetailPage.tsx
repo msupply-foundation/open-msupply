@@ -5,8 +5,12 @@ import { getRouteApi } from '@tanstack/react-router';
 import {
   Box,
   Button,
+  FormControl,
   IconButton,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   Snackbar,
   Alert,
   Stack,
@@ -21,6 +25,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
   InvoiceNodeType,
@@ -28,14 +33,19 @@ import {
   UpdateOutboundShipmentStatusInput,
 } from '@/gql/schema';
 import { useTranslation } from '@/intl';
-import { formatCurrency } from '@/lib/format';
+import { formatCurrency, formatDate } from '@/lib/format';
 import { DetailHeaderBar } from '@/components/detail/DetailHeaderBar';
 import { StatusBar } from '@/components/detail/StatusBar';
+import { LineEditDialog } from '@/components/detail/LineEditDialog';
+import { ItemSearchInput } from '@/components/detail/ItemSearchInput';
 import { useConfirm } from '@/components/detail/useConfirm';
 import { inputStyle, makeNonNegativeValidator } from '@/components/detail/inputs';
+import type { ItemOptionFragment } from '@/features/items/items.generated';
+import type { StockLineRowFragment } from '@/features/stock/stock.generated';
 import { useInvoiceStatusName } from './status';
 import { invoiceStatusFlow, invoiceReachedAt } from './statusFlow';
 import {
+  availableStockLinesQueryOptions,
   outboundKeys,
   outboundSdk,
   outboundShipmentQueryOptions,
@@ -125,6 +135,7 @@ function OutboundEditor({
   );
   const [comment, setComment] = useState(invoice.comment ?? '');
   const [snackbar, setSnackbar] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
   // Re-baseline the form whenever the document refetches (after a save/status change).
   useEffect(() => {
@@ -273,14 +284,24 @@ function OutboundEditor({
         saving={save.isPending}
         actions={
           editable ? (
-            <Button
-              size="small"
-              color="inherit"
-              onClick={onToggleHold}
-              disabled={toggleHold.isPending}
-            >
-              {invoice.onHold ? t('button.take-off-hold') : t('button.hold')}
-            </Button>
+            <>
+              <Button
+                size="small"
+                color="inherit"
+                onClick={onToggleHold}
+                disabled={toggleHold.isPending}
+              >
+                {invoice.onHold ? t('button.take-off-hold') : t('button.hold')}
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={() => setAddOpen(true)}
+              >
+                {t('button.add-item')}
+              </Button>
+            </>
           ) : null
         }
       />
@@ -412,6 +433,17 @@ function OutboundEditor({
         disabled={!editable || invoice.onHold}
       />
 
+      <AddOutboundLineDialog
+        open={addOpen}
+        storeId={storeId}
+        invoiceId={invoice.id}
+        onClose={() => setAddOpen(false)}
+        onAdded={() => {
+          setAddOpen(false);
+          invalidate();
+        }}
+      />
+
       {dialog}
 
       <Snackbar
@@ -515,5 +547,133 @@ function OutboundLineCard({
         </CardRow>
       </Box>
     </Paper>
+  );
+}
+
+// Add an outbound line: pick an item, then a specific available batch (stock
+// line), then the number of packs to issue (capped at what's available). This
+// is a single-batch manual allocation — the full FEFO auto-allocation engine
+// is still deferred.
+function AddOutboundLineDialog({
+  open,
+  storeId,
+  invoiceId,
+  onClose,
+  onAdded,
+}: {
+  open: boolean;
+  storeId: string;
+  invoiceId: string;
+  onClose: () => void;
+  onAdded: () => void;
+}) {
+  const { t } = useTranslation();
+  const [item, setItem] = useState<ItemOptionFragment | null>(null);
+  const [stockLineId, setStockLineId] = useState('');
+  const [numberOfPacks, setNumberOfPacks] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setItem(null);
+      setStockLineId('');
+      setNumberOfPacks('');
+      setError(null);
+    }
+  }, [open]);
+
+  const { data: stockLines = [], isFetching } = useQuery({
+    ...availableStockLinesQueryOptions(storeId, item?.id ?? ''),
+    enabled: open && Boolean(item?.id),
+  });
+
+  const selected: StockLineRowFragment | null =
+    stockLines.find(s => s.id === stockLineId) ?? null;
+  const maxPacks = selected?.availableNumberOfPacks ?? 0;
+  const packs = Number(numberOfPacks);
+  const valid = Boolean(selected) && packs > 0 && packs <= maxPacks;
+
+  const insert = useMutation({
+    mutationFn: async () => {
+      const res = await outboundSdk.insertOutboundLine({
+        storeId,
+        input: {
+          id: crypto.randomUUID(),
+          invoiceId,
+          stockLineId,
+          numberOfPacks: packs,
+        },
+      });
+      if (
+        res.insertOutboundShipmentLine.__typename ===
+        'InsertOutboundShipmentLineError'
+      )
+        throw new Error(res.insertOutboundShipmentLine.error.description);
+    },
+    onSuccess: onAdded,
+    onError: e => setError(e instanceof Error ? e.message : String(e)),
+  });
+
+  return (
+    <LineEditDialog
+      open={open}
+      title={t('heading.add-item')}
+      onClose={onClose}
+      onOk={() => insert.mutate()}
+      okDisabled={!valid}
+      saving={insert.isPending}
+    >
+      <Stack spacing={2} sx={{ pt: 1 }}>
+        <ItemSearchInput
+          storeId={storeId}
+          value={item}
+          onChange={v => {
+            setItem(v);
+            setStockLineId('');
+            setNumberOfPacks('');
+          }}
+          autoFocus
+        />
+        {item ? (
+          <FormControl
+            fullWidth
+            size="small"
+            disabled={isFetching || stockLines.length === 0}
+          >
+            <InputLabel>{t('label.batch')}</InputLabel>
+            <Select
+              label={t('label.batch')}
+              value={stockLineId}
+              onChange={e => setStockLineId(e.target.value)}
+            >
+              {stockLines.map(s => (
+                <MenuItem key={s.id} value={s.id}>
+                  {(s.batch || '—') +
+                    ` · ${t('label.expiry')} ${formatDate(s.expiryDate) || '—'}` +
+                    ` · ${s.availableNumberOfPacks} ${t('label.available-packs')}` +
+                    ` · ${t('label.pack-size')} ${s.packSize}`}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        ) : null}
+        {item && !isFetching && stockLines.length === 0 ? (
+          <Alert severity="info">{t('messages.no-results')}</Alert>
+        ) : null}
+        {selected ? (
+          <TextField
+            label={t('label.pack-quantity')}
+            value={numberOfPacks}
+            onChange={e => setNumberOfPacks(e.target.value)}
+            size="small"
+            fullWidth
+            inputMode="decimal"
+            error={packs > maxPacks}
+            helperText={`${t('label.available-packs')}: ${maxPacks}`}
+          />
+        ) : null}
+        {error ? <Alert severity="error">{error}</Alert> : null}
+      </Stack>
+    </LineEditDialog>
   );
 }
