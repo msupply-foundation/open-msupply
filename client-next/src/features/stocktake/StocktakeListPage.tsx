@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import {
@@ -7,6 +8,7 @@ import {
 } from '@tanstack/react-table';
 import { Box, Typography } from '@mui/material';
 import { useSession } from '@/app/session';
+import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
 import { stocktakesQueryOptions } from './queries';
 import type { StocktakeRowFragment } from './stocktake.generated';
@@ -14,23 +16,30 @@ import type { StocktakeRowFragment } from './stocktake.generated';
 const route = getRouteApi('/_authenticated/stocktake/');
 const helper = createColumnHelper<StocktakeRowFragment>();
 
-const columns = [
-  helper.accessor('stocktakeNumber', { id: 'number', header: 'Number' }),
-  helper.accessor('status', { id: 'status', header: 'Status' }),
-  helper.accessor('description', {
-    id: 'description',
-    header: 'Description',
-    cell: c => c.getValue() ?? '',
-  }),
-];
-
 export function StocktakeListPage() {
   const navigate = route.useNavigate();
+  const { t } = useTranslation();
   const storeId = useSession(s => s.store?.id) ?? '';
   const { data } = useQuery({
     ...stocktakesQueryOptions(storeId),
     enabled: Boolean(storeId),
   });
+
+  const columns = useMemo(
+    () => [
+      helper.accessor('stocktakeNumber', {
+        id: 'number',
+        header: t('label.number'),
+      }),
+      helper.accessor('status', { id: 'status', header: t('label.status') }),
+      helper.accessor('description', {
+        id: 'description',
+        header: t('label.description'),
+        cell: c => c.getValue() ?? '',
+      }),
+    ],
+    [t],
+  );
 
   const table = useReactTable({
     data: data ?? [],
@@ -40,7 +49,7 @@ export function StocktakeListPage() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1 }}>
-      <Typography variant="h5">Stocktakes</Typography>
+      <Typography variant="h5">{t('app.stocktakes')}</Typography>
       <DataTable
         table={table}
         onRowClick={row =>

@@ -6,6 +6,7 @@ import { CssBaseline, ThemeProvider } from '@mui/material';
 import { router } from '@/app/router';
 import { queryClient } from '@/lib/queryClient';
 import { theme } from '@/app/theme';
+import '@/intl/i18n'; // initialise i18next before the app renders
 
 const rootEl = document.getElementById('root');
 if (!rootEl) throw new Error('Root element #root not found');

@@ -8,6 +8,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useSession } from '@/app/session';
+import { useTranslation } from '@/intl';
 import { stockLineQueryOptions } from './queries';
 
 const route = getRouteApi('/_authenticated/stock/$stockLineId');
@@ -23,6 +24,7 @@ function Field({ label, value }: { label: string; value: string | number }) {
 
 export function StockDetailPage() {
   const { stockLineId } = route.useParams();
+  const { t } = useTranslation();
   const storeId = useSession(s => s.store?.id) ?? '';
 
   const { data, isLoading } = useQuery({
@@ -30,8 +32,8 @@ export function StockDetailPage() {
     enabled: Boolean(storeId),
   });
 
-  if (isLoading) return <Typography>Loading…</Typography>;
-  if (!data) return <Typography>Stock line not found.</Typography>;
+  if (isLoading) return <Typography>{t('messages.loading')}</Typography>;
+  if (!data) return <Typography>{t('messages.stock-not-found')}</Typography>;
 
   return (
     <Stack spacing={2} sx={{ maxWidth: 560 }}>
@@ -39,14 +41,20 @@ export function StockDetailPage() {
       <Card>
         <CardContent>
           <Stack spacing={1} divider={<Divider flexItem />}>
-            <Field label="Item code" value={data.item.code} />
-            <Field label="Batch" value={data.batch ?? '—'} />
-            <Field label="Pack size" value={data.packSize} />
-            <Field label="Packs in stock" value={data.totalNumberOfPacks} />
-            <Field label="Available packs" value={data.availableNumberOfPacks} />
-            <Field label="Location" value={data.locationName ?? '—'} />
-            <Field label="Supplier" value={data.supplierName ?? '—'} />
-            <Field label="On hold" value={data.onHold ? 'Yes' : 'No'} />
+            <Field label={t('label.item-code')} value={data.item.code} />
+            <Field label={t('label.batch')} value={data.batch ?? '—'} />
+            <Field label={t('label.pack-size')} value={data.packSize} />
+            <Field label={t('label.packs-in-stock')} value={data.totalNumberOfPacks} />
+            <Field
+              label={t('label.available-packs')}
+              value={data.availableNumberOfPacks}
+            />
+            <Field label={t('label.location')} value={data.locationName ?? '—'} />
+            <Field label={t('label.supplier')} value={data.supplierName ?? '—'} />
+            <Field
+              label={t('label.on-hold')}
+              value={data.onHold ? t('messages.yes') : t('messages.no')}
+            />
           </Stack>
         </CardContent>
       </Card>

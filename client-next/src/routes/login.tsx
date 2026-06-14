@@ -19,11 +19,7 @@ import { useLogin } from '@/features/auth/useLogin';
 import { serverInfoQueryOptions } from '@/features/server/queries';
 import { Environment } from '@/lib/config';
 import { MSupplyGuy } from '@/components/MSupplyGuy';
-
-// Branding copy lifted from the legacy login (common.json: login.heading/body).
-const HEADING = 'Simple.\nPowerful.\nPharmaceutical\nManagement.';
-const BODY =
-  'Welcome to Open mSupply. Your partner for managing health supply chains and improving medicine availability.';
+import { useTranslation } from '@/intl';
 
 // Login-screen palette, matching the legacy theme.
 const GRADIENT = 'linear-gradient(156deg, #f80 4%, #e63535 96%)';
@@ -49,12 +45,10 @@ const loginFieldSx = {
   '& .MuiInput-input': { color: INPUT_TEXT },
 } as const;
 
-const loginSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
-  password: z.string().min(1, 'Password is required'),
-});
-
-type LoginValues = z.infer<typeof loginSchema>;
+interface LoginValues {
+  username: string;
+  password: string;
+}
 
 // Only allow internal absolute paths as a post-login target (no open redirects,
 // no protocol-relative URLs, no bouncing back to /login).
@@ -80,14 +74,20 @@ export const Route = createFileRoute('/login')({
 function LoginPage() {
   const navigate = useNavigate();
   const theme = useTheme();
+  const { t } = useTranslation();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
   const { redirect: redirectTo } = Route.useSearch();
   const login = useLogin();
+
+  const schema = z.object({
+    username: z.string().min(1, t('error.username-required')),
+    password: z.string().min(1, t('error.password-required')),
+  });
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
+  } = useForm<LoginValues>({ resolver: zodResolver(schema) });
 
   const onSubmit = handleSubmit(async values => {
     try {
@@ -121,7 +121,7 @@ function LoginPage() {
             whiteSpace: 'pre-line',
           }}
         >
-          {HEADING}
+          {t('login.heading')}
         </Typography>
         <Typography
           sx={{
@@ -130,7 +130,7 @@ function LoginPage() {
             fontWeight: 600,
           }}
         >
-          {BODY}
+          {t('login.body')}
         </Typography>
       </Box>
 
@@ -165,7 +165,7 @@ function LoginPage() {
                 <Alert severity="error">{login.error.message}</Alert>
               ) : null}
               <TextField
-                label="Username"
+                label={t('heading.username')}
                 variant="standard"
                 fullWidth
                 autoFocus
@@ -177,7 +177,7 @@ function LoginPage() {
                 {...register('username')}
               />
               <TextField
-                label="Password"
+                label={t('heading.password')}
                 type="password"
                 variant="standard"
                 fullWidth
@@ -195,7 +195,7 @@ function LoginPage() {
                   endIcon={<ArrowForwardIcon />}
                   disabled={login.isPending}
                 >
-                  {login.isPending ? 'Logging in…' : 'Login'}
+                  {login.isPending ? t('button.logging-in') : t('button.login')}
                 </Button>
               </Box>
             </Stack>
@@ -209,6 +209,7 @@ function LoginPage() {
 
 /** App version + central-server label, bottom-right of the form panel. */
 function ServerInfoFooter() {
+  const { t } = useTranslation();
   // isCentralServer is served without auth, so it resolves on the login screen.
   const { data } = useQuery(serverInfoQueryOptions());
 
@@ -222,11 +223,11 @@ function ServerInfoFooter() {
       }}
     >
       <Typography variant="body2">
-        <strong>App version:</strong> {Environment.APP_VERSION}
+        <strong>{t('label.app-version')}</strong> {Environment.APP_VERSION}
       </Typography>
       {data?.isCentralServer ? (
         <Typography variant="body2" sx={{ fontWeight: 700 }}>
-          Central server
+          {t('label.central-server')}
         </Typography>
       ) : null}
     </Box>

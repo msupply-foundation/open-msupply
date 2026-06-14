@@ -1,0 +1,120 @@
+{
+  "app": {
+    "dashboard": "Dashboard",
+    "distribution": "Distribution",
+    "replenishment": "Replenishment",
+    "inventory": "Inventory",
+    "dispensary": "Dispensary",
+    "cold-chain": "Cold chain",
+    "catalogue": "Catalogue",
+    "reports": "Reports",
+    "manage": "Manage",
+    "settings": "Settings",
+
+    "outbound-shipment": "Outbound shipments",
+    "customer-requisition": "Customer requisitions",
+    "customer-return": "Customer returns",
+    "customers": "Customers",
+    "internal-order": "Internal orders",
+    "inbound-shipment": "Inbound shipments",
+    "supplier-return": "Supplier returns",
+    "suppliers": "Suppliers",
+    "stock": "Stock",
+    "stocktakes": "Stocktakes",
+    "locations": "Locations",
+    "patients": "Patients",
+    "prescription": "Prescriptions",
+    "clinicians": "Clinicians",
+    "equipment": "Equipment",
+    "monitoring": "Monitoring",
+    "sensors": "Sensors",
+    "items": "Items",
+    "assets": "Assets",
+    "master-lists": "Master lists",
+    "stores": "Stores",
+    "campaigns": "Campaigns",
+    "global-preferences": "Global preferences"
+  },
+
+  "button": {
+    "login": "Login",
+    "logging-in": "Logging in…",
+    "logout": "Logout",
+    "save": "Save",
+    "saving": "Saving…",
+    "reload": "Reload"
+  },
+
+  "heading": {
+    "username": "Username",
+    "password": "Password",
+    "something-wrong": "Something went wrong",
+    "stocktake": "Stocktake #{{number}}"
+  },
+
+  "label": {
+    "app-version": "App version:",
+    "central-server": "Central server",
+    "store": "Store",
+    "open-navigation": "Open navigation",
+
+    "code": "Code",
+    "name": "Name",
+    "item": "Item",
+    "item-code": "Item code",
+    "batch": "Batch",
+    "expiry": "Expiry",
+    "pack": "Pack",
+    "pack-size": "Pack size",
+    "packs": "Packs",
+    "packs-in-stock": "Packs in stock",
+    "available-packs": "Available packs",
+    "location": "Location",
+    "supplier": "Supplier",
+    "on-hold": "On hold",
+    "number": "Number",
+    "status": "Status",
+    "description": "Description",
+    "snapshot": "Snapshot",
+    "counted": "Counted",
+    "counted-snapshot": "Counted (snapshot {{snapshot}})",
+    "cost": "Cost",
+    "cost-price": "Cost price",
+    "sell": "Sell",
+    "sell-price": "Sell price",
+    "reason": "Reason",
+    "comment": "Comment"
+  },
+
+  "messages": {
+    "loading": "Loading…",
+    "yes": "Yes",
+    "no": "No",
+    "not-implemented": "This page isn't implemented yet.",
+    "coming-soon": "Coming soon",
+    "restoring-session": "Restoring your session…",
+    "dashboard-intro": "Welcome to open mSupply.",
+    "stock-not-found": "Stock line not found.",
+    "select-reason": "Select reason…",
+    "line-count": "{{value}} lines",
+    "edited-count": "{{value}} edited",
+    "invalid-count": "{{value}} invalid"
+  },
+
+  "error": {
+    "username-required": "Username is required",
+    "password-required": "Password is required",
+    "enter-number": "Enter a number",
+    "non-negative": "Must be 0 or more",
+    "adjustment-reason-not-provided": "Select a reason for the adjusted lines.",
+    "adjustment-reason-not-valid": "A selected reason is not valid for its adjustment.",
+    "stock-below-zero": "A count would reduce stock below zero.",
+    "snapshot-mismatch": "A snapshot is out of date — reload and recount.",
+    "cannot-edit-stocktake": "This stocktake can no longer be edited."
+  },
+
+  "login": {
+    "heading": "Simple.\nPowerful.\nPharmaceutical\nManagement.",
+    "body": "Welcome to Open mSupply. Your partner for managing health supply chains and improving medicine availability."
+  }
+}

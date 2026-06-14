@@ -1,17 +1,17 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { Button, Stack, Typography } from '@mui/material';
+import { createFileRoute } from '@tanstack/react-router';
+import { Stack, Typography } from '@mui/material';
+import { useTranslation } from '@/intl';
 
 export const Route = createFileRoute('/_authenticated/')({
   component: HomePage,
 });
 
 function HomePage() {
+  const { t } = useTranslation();
   return (
     <Stack spacing={2} sx={{ alignItems: 'flex-start' }}>
-      <Typography variant="h6">client-next shell — authenticated home</Typography>
-      <Button component={Link} to="/stock" variant="contained">
-        Go to Stock
-      </Button>
+      <Typography variant="h5">{t('app.dashboard')}</Typography>
+      <Typography color="text.secondary">{t('messages.dashboard-intro')}</Typography>
     </Stack>
   );
 }

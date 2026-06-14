@@ -29,6 +29,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { ReasonOptionNodeType, type UpdateStocktakeLineInput } from '@/gql/schema';
+import { useTranslation, type TxKey } from '@/intl';
+import type { TFunction } from 'i18next';
 import { stocktakeSdk } from './api';
 import { reasonOptionsQueryOptions, stocktakeKeys } from './queries';
 import type {
@@ -94,13 +96,13 @@ function inputStyle(invalid: boolean): CSSProperties {
   return invalid ? { ...inputBase, borderColor: '#d32f2f' } : inputBase;
 }
 
-const ERROR_MESSAGES: Record<string, string> = {
-  AdjustmentReasonNotProvided: 'Select a reason for the adjusted lines.',
-  AdjustmentReasonNotValid: 'A selected reason is not valid for its adjustment.',
-  StockLineReducedBelowZero: 'A count would reduce stock below zero.',
-  SnapshotCountCurrentCountMismatchLine:
-    'A snapshot is out of date — reload and recount.',
-  CannotEditStocktake: 'This stocktake can no longer be edited.',
+// Server error __typename -> message key. Translated at the point of display.
+const ERROR_KEYS: Record<string, TxKey> = {
+  AdjustmentReasonNotProvided: 'error.adjustment-reason-not-provided',
+  AdjustmentReasonNotValid: 'error.adjustment-reason-not-valid',
+  StockLineReducedBelowZero: 'error.stock-below-zero',
+  SnapshotCountCurrentCountMismatchLine: 'error.snapshot-mismatch',
+  CannotEditStocktake: 'error.cannot-edit-stocktake',
 };
 
 type ErrorField = 'reason' | 'counted' | 'snapshot' | 'row';
@@ -119,13 +121,16 @@ function errorField(typename: string): ErrorField {
   }
 }
 
-// Numbers must be empty (not entered) or a non-negative finite value.
-function validateNonNeg(raw: string): true | string {
-  if (raw === '') return true;
-  const n = Number(raw);
-  if (Number.isNaN(n)) return 'Enter a number';
-  if (n < 0) return 'Must be 0 or more';
-  return true;
+// Numbers must be empty (not entered) or a non-negative finite value. Returns a
+// translated message (RHF stores it; the grid surfaces invalid lines visually).
+function makeValidateNonNeg(t: TFunction) {
+  return (raw: string): true | string => {
+    if (raw === '') return true;
+    const n = Number(raw);
+    if (Number.isNaN(n)) return t('error.enter-number');
+    if (n < 0) return t('error.non-negative');
+    return true;
+  };
 }
 
 function adjustmentDirection(
@@ -180,6 +185,7 @@ function ReasonSelect({
   list: ReasonOptionRowFragment[];
   invalid: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <select
       {...register(`lines.${line.id}.reasonId`)}
@@ -190,7 +196,7 @@ function ReasonSelect({
         background: active ? '#fff' : '#f5f5f5',
       }}
     >
-      <option value="">{active ? 'Select reason…' : '—'}</option>
+      <option value="">{active ? t('messages.select-reason') : '—'}</option>
       {list.map(r => (
         <option key={r.id} value={r.id}>
           {r.reason}
@@ -199,8 +205,6 @@ function ReasonSelect({
     </select>
   );
 }
-
-const numericReg = { validate: validateNonNeg } as const;
 
 function DesktopRow({
   line,
@@ -211,6 +215,8 @@ function DesktopRow({
   errorField: errField,
   onCountedKeyDown,
 }: RowProps) {
+  const { t } = useTranslation();
+  const numericReg = useMemo(() => ({ validate: makeValidateNonNeg(t) }), [t]);
   const reason = useRowReasons(control, line, reasons);
   return (
     <>
@@ -291,6 +297,8 @@ function MobileCard({
   errorField: errField,
   onCountedKeyDown,
 }: RowProps) {
+  const { t } = useTranslation();
+  const numericReg = useMemo(() => ({ validate: makeValidateNonNeg(t) }), [t]);
   const reason = useRowReasons(control, line, reasons);
   return (
     <Stack spacing={1} sx={{ height: '100%' }}>
@@ -303,7 +311,11 @@ function MobileCard({
         </Typography>
       </Box>
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
-        <CardField label={`Counted (snapshot ${line.snapshotNumberOfPacks})`}>
+        <CardField
+          label={t('label.counted-snapshot', {
+            snapshot: line.snapshotNumberOfPacks,
+          })}
+        >
           <input
             type="text"
             inputMode="decimal"
@@ -313,7 +325,7 @@ function MobileCard({
             onKeyDown={e => onCountedKeyDown(e, index)}
           />
         </CardField>
-        <CardField label="Pack size">
+        <CardField label={t('label.pack-size')}>
           <input
             type="text"
             inputMode="decimal"
@@ -321,17 +333,17 @@ function MobileCard({
             {...register(`lines.${line.id}.packSize`, numericReg)}
           />
         </CardField>
-        <CardField label="Batch">
+        <CardField label={t('label.batch')}>
           <input style={inputBase} {...register(`lines.${line.id}.batch`)} />
         </CardField>
-        <CardField label="Expiry">
+        <CardField label={t('label.expiry')}>
           <input
             type="date"
             style={inputBase}
             {...register(`lines.${line.id}.expiry`)}
           />
         </CardField>
-        <CardField label="Cost price">
+        <CardField label={t('label.cost-price')}>
           <input
             type="text"
             inputMode="decimal"
@@ -339,7 +351,7 @@ function MobileCard({
             {...register(`lines.${line.id}.costPrice`, numericReg)}
           />
         </CardField>
-        <CardField label="Sell price">
+        <CardField label={t('label.sell-price')}>
           <input
             type="text"
             inputMode="decimal"
@@ -348,7 +360,7 @@ function MobileCard({
           />
         </CardField>
       </Box>
-      <CardField label="Reason">
+      <CardField label={t('label.reason')}>
         <ReasonSelect
           line={line}
           register={register}
@@ -357,7 +369,7 @@ function MobileCard({
           invalid={errField === 'reason'}
         />
       </CardField>
-      <CardField label="Comment">
+      <CardField label={t('label.comment')}>
         <input style={inputBase} {...register(`lines.${line.id}.comment`)} />
       </CardField>
     </Stack>
@@ -367,6 +379,7 @@ function MobileCard({
 export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
   const queryClient = useQueryClient();
   const theme = useTheme();
+  const { t } = useTranslation();
   const isPhone = useMediaQuery(theme.breakpoints.down('sm'));
 
   const { data: reasonOptions = [] } = useQuery(reasonOptionsQueryOptions());
@@ -511,7 +524,8 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
       if (r.response.__typename === 'UpdateStocktakeLineError') {
         const typename = r.response.error.__typename;
         failed[r.id] = typename;
-        messages.add(ERROR_MESSAGES[typename] ?? r.response.error.description);
+        const key = ERROR_KEYS[typename];
+        messages.add(key ? t(key) : r.response.error.description);
       }
     }
 
@@ -564,21 +578,29 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
         }}
       >
         <Typography variant="h5">
-          Stocktake #{header?.stocktakeNumber ?? ''}
+          {t('heading.stocktake', { number: header?.stocktakeNumber ?? '' })}
         </Typography>
         {header?.status ? <Chip label={header.status} size="small" /> : null}
         <Box sx={{ flexGrow: 1 }} />
         <Typography variant="body2" color="text.secondary">
-          {lines.length.toLocaleString()} lines
-          {dirtyCount ? ` · ${dirtyCount} edited` : ''}
-          {errorCount ? ` · ${errorCount} invalid` : ''}
+          {[
+            t('messages.line-count', { value: lines.length.toLocaleString() }),
+            dirtyCount
+              ? t('messages.edited-count', { value: dirtyCount })
+              : null,
+            errorCount
+              ? t('messages.invalid-count', { value: errorCount })
+              : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
         </Typography>
         <Button
           variant="contained"
           disabled={!isDirty || errorCount > 0 || save.isPending}
           onClick={onSave}
         >
-          {save.isPending ? 'Saving…' : 'Save'}
+          {save.isPending ? t('button.saving') : t('button.save')}
         </Button>
       </Box>
 
@@ -606,17 +628,17 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
                   fontSize: 13,
                 }}
               >
-                <span>Code</span>
-                <span>Item</span>
-                <span>Batch</span>
-                <span>Expiry</span>
-                <span>Pack</span>
-                <span style={{ textAlign: 'right' }}>Snapshot</span>
-                <span>Counted</span>
-                <span>Cost</span>
-                <span>Sell</span>
-                <span>Reason</span>
-                <span>Comment</span>
+                <span>{t('label.code')}</span>
+                <span>{t('label.item')}</span>
+                <span>{t('label.batch')}</span>
+                <span>{t('label.expiry')}</span>
+                <span>{t('label.pack')}</span>
+                <span style={{ textAlign: 'right' }}>{t('label.snapshot')}</span>
+                <span>{t('label.counted')}</span>
+                <span>{t('label.cost')}</span>
+                <span>{t('label.sell')}</span>
+                <span>{t('label.reason')}</span>
+                <span>{t('label.comment')}</span>
               </Box>
             )}
 
