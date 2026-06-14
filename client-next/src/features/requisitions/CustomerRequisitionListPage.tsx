@@ -27,7 +27,7 @@ import { useRequisitionStatusName } from '@/features/requisitions/status';
 import { customerRequisitionFilter } from '@/features/requisitions/customerRequisition';
 import type { RequisitionRowFragment } from '@/features/requisitions/requisitions.generated';
 
-const route = getRouteApi('/_authenticated/$storeId/distribution/customer-requisition');
+const route = getRouteApi('/_authenticated/$storeId/distribution/customer-requisition/');
 const helper = createColumnHelper<RequisitionRowFragment>();
 
 // Statuses a requisition moves through (drives the filter dropdown).
@@ -128,7 +128,15 @@ export function CustomerRequisitionListPage() {
           </Select>
         </FormControl>
       </Box>
-      <DataTable table={table} />
+      <DataTable
+        table={table}
+        onRowClick={row =>
+          navigate({
+            to: '/$storeId/distribution/customer-requisition/$requisitionId',
+            params: { storeId, requisitionId: row.id },
+          })
+        }
+      />
       <TablePagination
         component="div"
         count={data?.totalCount ?? 0}

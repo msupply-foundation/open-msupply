@@ -17,7 +17,7 @@ import { nameListQueryOptions } from '@/features/names/queries';
 import { customersFilter } from '@/features/names/customers';
 import type { NameRowFragment } from '@/features/names/names.generated';
 
-const route = getRouteApi('/_authenticated/$storeId/distribution/customers');
+const route = getRouteApi('/_authenticated/$storeId/distribution/customers/');
 const helper = createColumnHelper<NameRowFragment>();
 
 export function CustomersListPage() {
@@ -83,7 +83,15 @@ export function CustomersListPage() {
           placeholder={t('placeholder.search')}
         />
       </Box>
-      <DataTable table={table} />
+      <DataTable
+        table={table}
+        onRowClick={row =>
+          navigate({
+            to: '/$storeId/distribution/customers/$nameId',
+            params: { storeId, nameId: row.id },
+          })
+        }
+      />
       <TablePagination
         component="div"
         count={data?.totalCount ?? 0}

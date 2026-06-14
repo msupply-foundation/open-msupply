@@ -14,7 +14,9 @@ const searchSchema = z.object({
   status: z.nativeEnum(InvoiceNodeStatus).optional().catch(undefined),
 });
 
-export const Route = createFileRoute('/_authenticated/$storeId/replenishment/supplier-return')({
+export const Route = createFileRoute(
+  '/_authenticated/$storeId/replenishment/supplier-return/',
+)({
   validateSearch: search => searchSchema.parse(search),
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps, params }) => {

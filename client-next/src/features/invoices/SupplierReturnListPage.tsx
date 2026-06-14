@@ -27,7 +27,7 @@ import { useInvoiceStatusName } from '@/features/invoices/status';
 import { supplierReturnFilter } from '@/features/invoices/supplierReturn';
 import type { InvoiceRowFragment } from '@/features/invoices/invoices.generated';
 
-const route = getRouteApi('/_authenticated/$storeId/replenishment/supplier-return');
+const route = getRouteApi('/_authenticated/$storeId/replenishment/supplier-return/');
 const helper = createColumnHelper<InvoiceRowFragment>();
 
 // Statuses a supplier return moves through (drives the filter dropdown).
@@ -129,7 +129,15 @@ export function SupplierReturnListPage() {
           </Select>
         </FormControl>
       </Box>
-      <DataTable table={table} />
+      <DataTable
+        table={table}
+        onRowClick={row =>
+          navigate({
+            to: '/$storeId/replenishment/supplier-return/$invoiceId',
+            params: { storeId, invoiceId: row.id },
+          })
+        }
+      />
       <TablePagination
         component="div"
         count={data?.totalCount ?? 0}

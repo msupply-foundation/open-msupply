@@ -1,0 +1,34 @@
+fragment CustomerDetail on NameNode {
+  __typename
+  id
+  name
+  code
+  isCustomer
+  isDonor
+  isManufacturer
+  isOnHold
+  chargeCode
+  comment
+  phone
+  country
+  address1
+  address2
+  website
+  createdDatetime
+  store {
+    __typename
+    id
+    code
+  }
+}
+
+query customerById($storeId: String!, $nameId: String!) {
+  names(storeId: $storeId, filter: { id: { equalTo: $nameId } }) {
+    ... on NameConnector {
+      __typename
+      nodes {
+        ...CustomerDetail
+      }
+    }
+  }
+}

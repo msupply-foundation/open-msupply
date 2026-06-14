@@ -1,0 +1,91 @@
+fragment SupplierDetail on NameNode {
+  __typename
+  id
+  code
+  name
+  chargeCode
+  comment
+  phone
+  email
+  hshCode
+  hshName
+  margin
+  freightFactor
+  createdDatetime
+  isManufacturer
+  isDonor
+  isOnHold
+  address1
+  address2
+  country
+  website
+  currency {
+    __typename
+    id
+    code
+  }
+}
+
+fragment PurchaseOrderRow on PurchaseOrderNode {
+  __typename
+  id
+  number
+  createdDatetime
+  confirmedDatetime
+  status
+  targetMonths
+  comment
+  lines {
+    __typename
+    totalCount
+  }
+}
+
+fragment SupplierContactRow on ContactNode {
+  __typename
+  id
+  firstName
+  lastName
+  position
+  email
+  phone
+  category1
+}
+
+query supplierById($storeId: String!, $nameId: String!) {
+  names(storeId: $storeId, filter: { id: { equalTo: $nameId } }) {
+    ... on NameConnector {
+      __typename
+      totalCount
+      nodes {
+        ...SupplierDetail
+      }
+    }
+  }
+}
+
+query supplierPurchaseOrders($storeId: String!, $supplierName: String!) {
+  purchaseOrders(
+    storeId: $storeId
+    filter: { supplier: { equalTo: $supplierName } }
+  ) {
+    ... on PurchaseOrderConnector {
+      __typename
+      totalCount
+      nodes {
+        ...PurchaseOrderRow
+      }
+    }
+  }
+}
+
+query supplierContacts($storeId: String!, $nameId: String!) {
+  contacts(storeId: $storeId, nameId: $nameId) {
+    ... on ContactConnector {
+      __typename
+      nodes {
+        ...SupplierContactRow
+      }
+    }
+  }
+}

@@ -27,7 +27,7 @@ import { useInvoiceStatusName } from '@/features/invoices/status';
 import { customerReturnFilter } from '@/features/invoices/customerReturn';
 import type { InvoiceRowFragment } from '@/features/invoices/invoices.generated';
 
-const route = getRouteApi('/_authenticated/$storeId/distribution/customer-return');
+const route = getRouteApi('/_authenticated/$storeId/distribution/customer-return/');
 const helper = createColumnHelper<InvoiceRowFragment>();
 
 // Statuses a customer return moves through (drives the filter dropdown).
@@ -127,7 +127,15 @@ export function CustomerReturnListPage() {
           </Select>
         </FormControl>
       </Box>
-      <DataTable table={table} />
+      <DataTable
+        table={table}
+        onRowClick={row =>
+          navigate({
+            to: '/$storeId/distribution/customer-return/$invoiceId',
+            params: { storeId, invoiceId: row.id },
+          })
+        }
+      />
       <TablePagination
         component="div"
         count={data?.totalCount ?? 0}

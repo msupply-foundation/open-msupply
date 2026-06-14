@@ -2,8 +2,8 @@ import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { RequisitionNodeStatus } from '@/gql/schema';
 import { requisitionListQueryOptions } from '@/features/requisitions/queries';
-import { customerRequisitionFilter } from '@/features/requisitions/customerRequisition';
-import { CustomerRequisitionListPage } from '@/features/requisitions/CustomerRequisitionListPage';
+import { internalOrderFilter } from '@/features/requisitions/internalOrder';
+import { InternalOrderListPage } from '@/features/requisitions/InternalOrderListPage';
 
 const searchSchema = z.object({
   page: z.number().int().min(1).catch(1),
@@ -14,16 +14,18 @@ const searchSchema = z.object({
   status: z.nativeEnum(RequisitionNodeStatus).optional().catch(undefined),
 });
 
-export const Route = createFileRoute('/_authenticated/$storeId/distribution/customer-requisition')({
+export const Route = createFileRoute(
+  '/_authenticated/$storeId/replenishment/internal-order/',
+)({
   validateSearch: search => searchSchema.parse(search),
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps, params }) => {
     const storeId = params.storeId;
     if (storeId) {
       return context.queryClient.ensureQueryData(
-        requisitionListQueryOptions(storeId, 'customer-requisition', customerRequisitionFilter(deps), deps),
+        requisitionListQueryOptions(storeId, 'internal-order', internalOrderFilter(deps), deps),
       );
     }
   },
-  component: CustomerRequisitionListPage,
+  component: InternalOrderListPage,
 });

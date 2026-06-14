@@ -17,7 +17,7 @@ import { nameListQueryOptions } from '@/features/names/queries';
 import { suppliersFilter } from '@/features/names/suppliers';
 import type { NameRowFragment } from '@/features/names/names.generated';
 
-const route = getRouteApi('/_authenticated/$storeId/replenishment/suppliers');
+const route = getRouteApi('/_authenticated/$storeId/replenishment/suppliers/');
 const helper = createColumnHelper<NameRowFragment>();
 
 export function SuppliersListPage() {
@@ -83,7 +83,15 @@ export function SuppliersListPage() {
           placeholder={t('placeholder.search')}
         />
       </Box>
-      <DataTable table={table} />
+      <DataTable
+        table={table}
+        onRowClick={row =>
+          navigate({
+            to: '/$storeId/replenishment/suppliers/$nameId',
+            params: { storeId, nameId: row.id },
+          })
+        }
+      />
       <TablePagination
         component="div"
         count={data?.totalCount ?? 0}

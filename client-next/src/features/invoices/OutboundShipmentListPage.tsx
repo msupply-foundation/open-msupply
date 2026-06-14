@@ -27,7 +27,7 @@ import { useInvoiceStatusName } from '@/features/invoices/status';
 import { outboundFilter } from '@/features/invoices/outboundShipment';
 import type { InvoiceRowFragment } from '@/features/invoices/invoices.generated';
 
-const route = getRouteApi('/_authenticated/$storeId/distribution/outbound-shipment');
+const route = getRouteApi('/_authenticated/$storeId/distribution/outbound-shipment/');
 const helper = createColumnHelper<InvoiceRowFragment>();
 
 // Statuses an outbound shipment moves through (drives the filter dropdown).
@@ -131,7 +131,15 @@ export function OutboundShipmentListPage() {
           </Select>
         </FormControl>
       </Box>
-      <DataTable table={table} />
+      <DataTable
+        table={table}
+        onRowClick={row =>
+          navigate({
+            to: '/$storeId/distribution/outbound-shipment/$invoiceId',
+            params: { storeId, invoiceId: row.id },
+          })
+        }
+      />
       <TablePagination
         component="div"
         count={data?.totalCount ?? 0}
