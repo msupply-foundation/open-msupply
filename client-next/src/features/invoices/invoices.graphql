@@ -1,0 +1,40 @@
+fragment InvoiceRow on InvoiceNode {
+  __typename
+  id
+  invoiceNumber
+  otherPartyName
+  status
+  type
+  createdDatetime
+  deliveredDatetime
+  theirReference
+  comment
+  pricing {
+    __typename
+    totalAfterTax
+  }
+}
+
+query invoices(
+  $storeId: String!
+  $first: Int
+  $offset: Int
+  $key: InvoiceSortFieldInput!
+  $desc: Boolean
+  $filter: InvoiceFilterInput
+) {
+  invoices(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on InvoiceConnector {
+      __typename
+      totalCount
+      nodes {
+        ...InvoiceRow
+      }
+    }
+  }
+}

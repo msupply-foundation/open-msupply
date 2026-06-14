@@ -1,0 +1,30 @@
+fragment NameRow on NameNode {
+  __typename
+  id
+  code
+  name
+}
+
+query names(
+  $storeId: String!
+  $first: Int
+  $offset: Int
+  $key: NameSortFieldInput!
+  $desc: Boolean
+  $filter: NameFilterInput
+) {
+  names(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on NameConnector {
+      __typename
+      totalCount
+      nodes {
+        ...NameRow
+      }
+    }
+  }
+}

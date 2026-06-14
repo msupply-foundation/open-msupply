@@ -1,0 +1,43 @@
+fragment RequisitionRow on RequisitionNode {
+  __typename
+  id
+  requisitionNumber
+  otherPartyName
+  status
+  type
+  createdDatetime
+  theirReference
+  comment
+  lines {
+    __typename
+    totalCount
+  }
+  shipments {
+    __typename
+    totalCount
+  }
+}
+
+query requisitions(
+  $storeId: String!
+  $first: Int
+  $offset: Int
+  $key: RequisitionSortFieldInput!
+  $desc: Boolean
+  $filter: RequisitionFilterInput
+) {
+  requisitions(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on RequisitionConnector {
+      __typename
+      totalCount
+      nodes {
+        ...RequisitionRow
+      }
+    }
+  }
+}

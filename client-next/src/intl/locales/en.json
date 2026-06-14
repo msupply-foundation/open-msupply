@@ -83,7 +83,28 @@
     "sell": "Sell",
     "sell-price": "Sell price",
     "reason": "Reason",
-    "comment": "Comment"
+    "comment": "Comment",
+    "created": "Created",
+    "created-datetime": "Created date",
+    "delivered": "Delivered",
+    "reference": "Reference",
+    "total": "Total",
+    "shipments": "Shipments",
+    "count-rows": "Number of rows"
+  },
+
+  "status": {
+    "new": "New",
+    "allocated": "Allocated",
+    "picked": "Picked",
+    "shipped": "Shipped",
+    "delivered": "Delivered",
+    "received": "Received",
+    "verified": "Verified",
+    "cancelled": "Cancelled",
+    "draft": "Draft",
+    "sent": "Sent",
+    "finalised": "Finalised"
   },
 
   "messages": {
