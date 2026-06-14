@@ -1,0 +1,6 @@
+# Lights up the GraphQL language server (VS Code "GraphQL: Language Feature
+# Support" extension): field autocomplete, schema validation, hover docs and
+# go-to-definition while editing .graphql files (and gql`` tags in .ts).
+# Codegen has its own explicit config (codegen.ts) and ignores this file.
+schema: ../server/schema.graphql
+documents: src/**/*.graphql
