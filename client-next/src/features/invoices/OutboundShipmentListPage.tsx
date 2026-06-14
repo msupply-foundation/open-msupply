@@ -9,18 +9,37 @@ import {
   type PaginationState,
   type SortingState,
 } from '@tanstack/react-table';
-import { Box, TablePagination, Typography } from '@mui/material';
+import {
+  Box,
+  FormControl,
+  MenuItem,
+  Select,
+  TablePagination,
+  Typography,
+} from '@mui/material';
 import { useSession } from '@/app/session';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
+import { SearchField } from '@/components/SearchField';
 import { formatDate, formatCurrency } from '@/lib/format';
-import { InvoiceNodeType } from '@/gql/schema';
+import { InvoiceNodeStatus } from '@/gql/schema';
 import { invoiceListQueryOptions } from '@/features/invoices/queries';
 import { useInvoiceStatusName } from '@/features/invoices/status';
+import { outboundFilter } from '@/features/invoices/outboundShipment';
 import type { InvoiceRowFragment } from '@/features/invoices/invoices.generated';
 
 const route = getRouteApi('/_authenticated/distribution/outbound-shipment');
 const helper = createColumnHelper<InvoiceRowFragment>();
+
+// Statuses an outbound shipment moves through (drives the filter dropdown).
+const STATUS_OPTIONS: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Allocated,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Verified,
+];
 
 export function OutboundShipmentListPage() {
   const search = route.useSearch();
@@ -33,7 +52,7 @@ export function OutboundShipmentListPage() {
     ...invoiceListQueryOptions(
       storeId,
       'outbound-shipment',
-      { type: { equalTo: InvoiceNodeType.OutboundShipment } },
+      outboundFilter(search),
       search,
     ),
     enabled: Boolean(storeId),
@@ -79,7 +98,40 @@ export function OutboundShipmentListPage() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1 }}>
-      <Typography variant="h5">{t('app.outbound-shipment')}</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+        <Typography variant="h5" sx={{ flexGrow: 1 }}>
+          {t('app.outbound-shipment')}
+        </Typography>
+        <SearchField
+          value={search.search ?? ''}
+          onChange={value =>
+            navigate({ search: prev => ({ ...prev, search: value || undefined, page: 1 }) })
+          }
+          placeholder={t('placeholder.search')}
+        />
+        <FormControl size="small" sx={{ minWidth: 170 }}>
+          <Select
+            displayEmpty
+            value={search.status ?? ''}
+            onChange={e =>
+              navigate({
+                search: prev => ({
+                  ...prev,
+                  status: (e.target.value || undefined) as InvoiceNodeStatus | undefined,
+                  page: 1,
+                }),
+              })
+            }
+          >
+            <MenuItem value="">{t('label.all-statuses')}</MenuItem>
+            {STATUS_OPTIONS.map(s => (
+              <MenuItem key={s} value={s}>
+                {statusName(s)}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
       <DataTable table={table} />
       <TablePagination
         component="div"

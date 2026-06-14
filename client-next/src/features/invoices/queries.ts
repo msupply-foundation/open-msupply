@@ -26,8 +26,14 @@ const toSortField = (key: string): InvoiceSortFieldInput =>
   SORT_FIELD[key] ?? InvoiceSortFieldInput.InvoiceNumber;
 
 export const invoiceKeys = {
-  list: (storeId: string, listId: string, params: ListParams) =>
-    ['invoices', storeId, listId, params] as const,
+  // `filter` is part of the key so search/status changes refetch (not just
+  // pagination/sort, which live in `params`).
+  list: (
+    storeId: string,
+    listId: string,
+    filter: InvoiceFilterInput,
+    params: ListParams,
+  ) => ['invoices', storeId, listId, filter, params] as const,
 };
 
 export const invoiceListQueryOptions = (
@@ -37,7 +43,7 @@ export const invoiceListQueryOptions = (
   params: ListParams,
 ) =>
   queryOptions({
-    queryKey: invoiceKeys.list(storeId, listId, params),
+    queryKey: invoiceKeys.list(storeId, listId, filter, params),
     queryFn: async () => {
       const res = await invoicesSdk.invoices({
         storeId,

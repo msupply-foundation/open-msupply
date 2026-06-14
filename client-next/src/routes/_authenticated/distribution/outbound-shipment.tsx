@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { getStoreId } from '@/app/session';
-import { InvoiceNodeType } from '@/gql/schema';
+import { InvoiceNodeStatus } from '@/gql/schema';
 import { invoiceListQueryOptions } from '@/features/invoices/queries';
+import { outboundFilter } from '@/features/invoices/outboundShipment';
 import { OutboundShipmentListPage } from '@/features/invoices/OutboundShipmentListPage';
 
 const searchSchema = z.object({
@@ -10,6 +11,8 @@ const searchSchema = z.object({
   pageSize: z.number().int().min(1).max(500).catch(50),
   sortKey: z.string().catch('invoiceNumber'),
   sortDesc: z.boolean().catch(true),
+  search: z.string().optional().catch(undefined),
+  status: z.nativeEnum(InvoiceNodeStatus).optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/_authenticated/distribution/outbound-shipment')({
@@ -19,7 +22,7 @@ export const Route = createFileRoute('/_authenticated/distribution/outbound-ship
     const storeId = getStoreId();
     if (storeId) {
       return context.queryClient.ensureQueryData(
-        invoiceListQueryOptions(storeId, 'outbound-shipment', { type: { equalTo: InvoiceNodeType.OutboundShipment } }, deps),
+        invoiceListQueryOptions(storeId, 'outbound-shipment', outboundFilter(deps), deps),
       );
     }
   },

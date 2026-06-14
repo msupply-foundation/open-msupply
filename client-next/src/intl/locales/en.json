@@ -90,7 +90,12 @@
     "reference": "Reference",
     "total": "Total",
     "shipments": "Shipments",
-    "count-rows": "Number of rows"
+    "count-rows": "Number of rows",
+    "all-statuses": "All statuses"
+  },
+
+  "placeholder": {
+    "search": "Search…"
   },
 
   "status": {
