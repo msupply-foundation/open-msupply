@@ -13,6 +13,7 @@ import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import SyncIcon from '@mui/icons-material/Sync';
 import LogoutIcon from '@mui/icons-material/Logout';
+import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
 import {
   Badge,
   Box,
@@ -23,6 +24,8 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Menu,
+  MenuItem,
   Typography,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
@@ -189,7 +192,20 @@ export function NavDrawer({ mobileOpen, onClose, onOpenSync }: NavDrawerProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const store = useSession(s => s.store);
+  const stores = useSession(s => s.stores);
   const clear = useSession(s => s.clear);
+  const [storeMenuAnchor, setStoreMenuAnchor] = useState<HTMLElement | null>(
+    null,
+  );
+
+  // Switch store: go to the chosen store's dashboard (data is store-scoped by the
+  // URL, so we can't keep the current page's params across stores).
+  const switchStore = (id: string) => {
+    setStoreMenuAnchor(null);
+    onClose(); // close the mobile overlay
+    navigate({ to: '/$storeId', params: { storeId: id } });
+  };
+
   // Slow background poll keeps the push-queue badge fresh; the modal polls fast.
   const { data: syncStatus } = useQuery({
     ...syncStatusQueryOptions(),
@@ -304,17 +320,51 @@ export function NavDrawer({ mobileOpen, onClose, onOpenSync }: NavDrawerProps) {
         </List>
       </Box>
 
-      {/* Footer: store + logout, pinned to the bottom */}
+      {/* Footer: store (switcher when >1) + logout, pinned to the bottom */}
       <Divider />
       {store ? (
-        <Box sx={{ px: 2, py: 1 }}>
-          <Typography variant="caption" color="text.secondary">
-            {t('label.store')}
-          </Typography>
-          <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
-            {store.name}
-          </Typography>
-        </Box>
+        stores.length > 1 ? (
+          <>
+            <ListItemButton
+              onClick={e => setStoreMenuAnchor(e.currentTarget)}
+              sx={{ py: 1 }}
+            >
+              <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                <Typography variant="caption" color="text.secondary">
+                  {t('label.store')}
+                </Typography>
+                <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
+                  {store.name}
+                </Typography>
+              </Box>
+              <UnfoldMoreIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+            </ListItemButton>
+            <Menu
+              anchorEl={storeMenuAnchor}
+              open={Boolean(storeMenuAnchor)}
+              onClose={() => setStoreMenuAnchor(null)}
+            >
+              {stores.map(s => (
+                <MenuItem
+                  key={s.id}
+                  selected={s.id === store.id}
+                  onClick={() => switchStore(s.id)}
+                >
+                  {s.name}
+                </MenuItem>
+              ))}
+            </Menu>
+          </>
+        ) : (
+          <Box sx={{ px: 2, py: 1 }}>
+            <Typography variant="caption" color="text.secondary">
+              {t('label.store')}
+            </Typography>
+            <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
+              {store.name}
+            </Typography>
+          </Box>
+        )
       ) : null}
       <List disablePadding>
         <ListItemButton onClick={onLogout}>
