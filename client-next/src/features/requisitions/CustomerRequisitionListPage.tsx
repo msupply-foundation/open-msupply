@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import {
   createColumnHelper,
@@ -10,22 +10,31 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import {
+  Alert,
   Box,
+  Button,
   FormControl,
   MenuItem,
   Select,
+  Stack,
   TablePagination,
+  TextField,
   Typography,
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
 import { SearchField } from '@/components/SearchField';
+import { LineEditDialog } from '@/components/detail/LineEditDialog';
+import { NameSearchInput } from '@/components/detail/NameSearchInput';
 import { formatDate } from '@/lib/format';
 import { RequisitionNodeStatus } from '@/gql/schema';
 import { requisitionListQueryOptions } from '@/features/requisitions/queries';
 import { useRequisitionStatusName } from '@/features/requisitions/status';
 import { customerRequisitionFilter } from '@/features/requisitions/customerRequisition';
+import { responseSdk } from '@/features/requisitions/responseDetail.queries';
 import type { RequisitionRowFragment } from '@/features/requisitions/requisitions.generated';
+import type { NameRowFragment } from '@/features/names/names.generated';
 
 const route = getRouteApi('/_authenticated/$storeId/distribution/customer-requisition/');
 const helper = createColumnHelper<RequisitionRowFragment>();
@@ -44,6 +53,7 @@ export function CustomerRequisitionListPage() {
   const { t } = useTranslation();
   const statusName = useRequisitionStatusName();
   const { storeId } = route.useParams();
+  const [createOpen, setCreateOpen] = useState(false);
 
   const { data } = useQuery({
     ...requisitionListQueryOptions(
@@ -127,6 +137,13 @@ export function CustomerRequisitionListPage() {
             ))}
           </Select>
         </FormControl>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setCreateOpen(true)}
+        >
+          {t('button.new')}
+        </Button>
       </Box>
       <DataTable
         table={table}
@@ -146,6 +163,113 @@ export function CustomerRequisitionListPage() {
         onPageChange={(_, p) => navigate({ search: prev => ({ ...prev, page: p + 1 }) })}
         onRowsPerPageChange={e => navigate({ search: prev => ({ ...prev, pageSize: Number(e.target.value), page: 1 }) })}
       />
+      <CreateCustomerRequisitionDialog
+        open={createOpen}
+        storeId={storeId}
+        onClose={() => setCreateOpen(false)}
+        onCreated={requisitionId => {
+          setCreateOpen(false);
+          navigate({
+            to: '/$storeId/distribution/customer-requisition/$requisitionId',
+            params: { storeId, requisitionId },
+          });
+        }}
+      />
     </Box>
+  );
+}
+
+// Create-customer-requisition modal: pick a customer and the min/max months of
+// stock, insert the response requisition, then hand the new id back so the list
+// page can route to its detail.
+function CreateCustomerRequisitionDialog({
+  open,
+  storeId,
+  onClose,
+  onCreated,
+}: {
+  open: boolean;
+  storeId: string;
+  onClose: () => void;
+  onCreated: (requisitionId: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [customer, setCustomer] = useState<NameRowFragment | null>(null);
+  const [minMonths, setMinMonths] = useState('1');
+  const [maxMonths, setMaxMonths] = useState('3');
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setCustomer(null);
+      setMinMonths('1');
+      setMaxMonths('3');
+      setError(null);
+    }
+  }, [open]);
+
+  const create = useMutation({
+    mutationFn: async () => {
+      if (!customer) return;
+      const res = await responseSdk.insertResponse({
+        storeId,
+        input: {
+          id: crypto.randomUUID(),
+          otherPartyId: customer.id,
+          minMonthsOfStock: Number(minMonths) || 0,
+          maxMonthsOfStock: Number(maxMonths) || 0,
+        },
+      });
+      if (
+        res.insertResponseRequisition.__typename ===
+        'InsertResponseRequisitionError'
+      )
+        throw new Error(res.insertResponseRequisition.error.description);
+      if (res.insertResponseRequisition.__typename === 'RequisitionNode')
+        onCreated(res.insertResponseRequisition.id);
+    },
+    onError: e => setError(e instanceof Error ? e.message : String(e)),
+  });
+
+  return (
+    <LineEditDialog
+      open={open}
+      title={t('heading.new-customer-requisition')}
+      okLabel={t('button.create')}
+      onClose={onClose}
+      onOk={() => create.mutate()}
+      okDisabled={!customer}
+      saving={create.isPending}
+    >
+      <Stack spacing={2} sx={{ pt: 1 }}>
+        <NameSearchInput
+          storeId={storeId}
+          filter={{ isCustomer: true, isVisible: true }}
+          value={customer}
+          onChange={setCustomer}
+          label={t('label.customer-name')}
+          autoFocus
+        />
+        <Stack direction="row" spacing={2}>
+          <TextField
+            label={t('label.min-months-of-stock')}
+            value={minMonths}
+            onChange={e => setMinMonths(e.target.value)}
+            size="small"
+            fullWidth
+            inputMode="decimal"
+          />
+          <TextField
+            label={t('label.max-months-of-stock')}
+            value={maxMonths}
+            onChange={e => setMaxMonths(e.target.value)}
+            size="small"
+            fullWidth
+            inputMode="decimal"
+          />
+        </Stack>
+        {error ? <Alert severity="error">{error}</Alert> : null}
+      </Stack>
+    </LineEditDialog>
   );
 }

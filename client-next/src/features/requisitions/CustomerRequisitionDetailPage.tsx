@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useForm, type UseFormRegister } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import {
@@ -18,6 +18,8 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -32,7 +34,11 @@ import { StatusBar } from '@/components/detail/StatusBar';
 import { LineEditDialog } from '@/components/detail/LineEditDialog';
 import { ItemSearchInput } from '@/components/detail/ItemSearchInput';
 import { useConfirm } from '@/components/detail/useConfirm';
-import { inputStyle, makeNonNegativeValidator } from '@/components/detail/inputs';
+import {
+  INPUT_BASE,
+  inputStyle,
+  makeNonNegativeValidator,
+} from '@/components/detail/inputs';
 import type { ItemOptionFragment } from '@/features/items/items.generated';
 import { useRequisitionStatusName } from './status';
 import { requisitionStatusFlow, requisitionReachedAt } from './statusFlow';
@@ -67,14 +73,18 @@ export function CustomerRequisitionDetailPage() {
 }
 
 interface LineForm {
+  requestedQuantity: string;
   supplyQuantity: string;
+  comment: string;
 }
 interface FormValues {
   lines: Record<string, LineForm>;
 }
 
 const toLineForm = (l: ResponseLineRowFragment): LineForm => ({
+  requestedQuantity: l.requestedQuantity?.toString() ?? '',
   supplyQuantity: l.supplyQuantity?.toString() ?? '',
+  comment: l.comment ?? '',
 });
 
 function ResponseEditor({
@@ -88,6 +98,8 @@ function ResponseEditor({
   const queryClient = useQueryClient();
   const statusName = useRequisitionStatusName();
   const { confirm, dialog } = useConfirm();
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down('sm'));
 
   const flow = requisitionStatusFlow(RequisitionNodeType.Response);
   const editable = flow.editable.includes(requisition.status);
@@ -161,9 +173,13 @@ function ResponseEditor({
             storeId,
             input: {
               id,
+              ...(d.requestedQuantity && f.requestedQuantity !== ''
+                ? { requestedQuantity: Number(f.requestedQuantity) }
+                : {}),
               ...(d.supplyQuantity && f.supplyQuantity !== ''
                 ? { supplyQuantity: Number(f.supplyQuantity) }
                 : {}),
+              ...(d.comment ? { comment: f.comment } : {}),
             },
           });
           if (
@@ -324,90 +340,149 @@ function ResponseEditor({
         />
       </Stack>
 
-      <Paper variant="outlined" sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-        <Table stickyHeader size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.code')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.name')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.unit')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                {t('label.our-soh')}
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                {t('label.customer-soh')}
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                {t('label.suggested')}
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                {t('label.requested')}
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                {t('label.already-issued')}
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                {t('label.remaining-to-supply')}
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>
-                {t('label.supply-quantity')}
-              </TableCell>
-              {editable ? <TableCell padding="checkbox" /> : null}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {lines.map(line => {
-              const lineErr = errors.lines?.[line.id];
-              return (
-                <TableRow key={line.id} hover>
-                  <TableCell>{line.item.code}</TableCell>
-                  <TableCell>{line.item.name}</TableCell>
-                  <TableCell>{line.item.unitName ?? ''}</TableCell>
-                  <TableCell align="right">
-                    {line.itemStats.stockOnHand}
-                  </TableCell>
-                  <TableCell align="right">{line.availableStockOnHand}</TableCell>
-                  <TableCell align="right">{line.suggestedQuantity}</TableCell>
-                  <TableCell align="right">{line.requestedQuantity}</TableCell>
-                  <TableCell align="right">{line.alreadyIssued}</TableCell>
-                  <TableCell align="right">
-                    {line.remainingQuantityToSupply}
-                  </TableCell>
-                  <TableCell sx={{ width: 110 }}>
-                    {editable ? (
-                      <input
-                        inputMode="decimal"
-                        style={inputStyle(Boolean(lineErr?.supplyQuantity))}
-                        {...register(`lines.${line.id}.supplyQuantity`, numeric)}
-                      />
-                    ) : (
-                      line.supplyQuantity
-                    )}
-                  </TableCell>
-                  {editable ? (
-                    <TableCell padding="checkbox">
-                      <Tooltip title={t('button.delete')}>
-                        <IconButton size="small" onClick={() => onDeleteLine(line)}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  ) : null}
-                </TableRow>
-              );
-            })}
-            {lines.length === 0 ? (
+      {isPhone ? (
+        <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+          {lines.map(line => {
+            const lineErr = errors.lines?.[line.id];
+            return (
+              <ResponseLineCard
+                key={line.id}
+                line={line}
+                editable={editable}
+                requestedInvalid={Boolean(lineErr?.requestedQuantity)}
+                supplyInvalid={Boolean(lineErr?.supplyQuantity)}
+                register={register}
+                numeric={numeric}
+                onDelete={() => onDeleteLine(line)}
+              />
+            );
+          })}
+          {lines.length === 0 ? (
+            <Typography color="text.secondary" sx={{ py: 2 }}>
+              {t('messages.no-lines')}
+            </Typography>
+          ) : null}
+        </Box>
+      ) : (
+        <Paper variant="outlined" sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+          <Table stickyHeader size="small">
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={11}>
-                  <Typography color="text.secondary" sx={{ py: 2 }}>
-                    {t('messages.no-lines')}
-                  </Typography>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.code')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.name')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.unit')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="right">
+                  {t('label.our-soh')}
                 </TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="right">
+                  {t('label.customer-soh')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="right">
+                  {t('label.suggested')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('label.requested')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="right">
+                  {t('label.already-issued')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="right">
+                  {t('label.remaining-to-supply')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('label.supply-quantity')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('label.comment')}
+                </TableCell>
+                {editable ? <TableCell padding="checkbox" /> : null}
               </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
-      </Paper>
+            </TableHead>
+            <TableBody>
+              {lines.map(line => {
+                const lineErr = errors.lines?.[line.id];
+                return (
+                  <TableRow key={line.id} hover>
+                    <TableCell>{line.item.code}</TableCell>
+                    <TableCell>{line.item.name}</TableCell>
+                    <TableCell>{line.item.unitName ?? ''}</TableCell>
+                    <TableCell align="right">
+                      {line.itemStats.stockOnHand}
+                    </TableCell>
+                    <TableCell align="right">
+                      {line.availableStockOnHand}
+                    </TableCell>
+                    <TableCell align="right">{line.suggestedQuantity}</TableCell>
+                    <TableCell sx={{ width: 110 }}>
+                      {editable ? (
+                        <input
+                          inputMode="decimal"
+                          style={inputStyle(Boolean(lineErr?.requestedQuantity))}
+                          {...register(
+                            `lines.${line.id}.requestedQuantity`,
+                            numeric,
+                          )}
+                        />
+                      ) : (
+                        line.requestedQuantity
+                      )}
+                    </TableCell>
+                    <TableCell align="right">{line.alreadyIssued}</TableCell>
+                    <TableCell align="right">
+                      {line.remainingQuantityToSupply}
+                    </TableCell>
+                    <TableCell sx={{ width: 110 }}>
+                      {editable ? (
+                        <input
+                          inputMode="decimal"
+                          style={inputStyle(Boolean(lineErr?.supplyQuantity))}
+                          {...register(
+                            `lines.${line.id}.supplyQuantity`,
+                            numeric,
+                          )}
+                        />
+                      ) : (
+                        line.supplyQuantity
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ minWidth: 160 }}>
+                      {editable ? (
+                        <input
+                          style={INPUT_BASE}
+                          {...register(`lines.${line.id}.comment`)}
+                        />
+                      ) : (
+                        (line.comment ?? '')
+                      )}
+                    </TableCell>
+                    {editable ? (
+                      <TableCell padding="checkbox">
+                        <Tooltip title={t('button.delete')}>
+                          <IconButton
+                            size="small"
+                            onClick={() => onDeleteLine(line)}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    ) : null}
+                  </TableRow>
+                );
+              })}
+              {lines.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={12}>
+                    <Typography color="text.secondary" sx={{ py: 2 }}>
+                      {t('messages.no-lines')}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        </Paper>
+      )}
 
       <StatusBar
         sequence={flow.sequence}
@@ -445,6 +520,114 @@ function ResponseEditor({
         </Alert>
       </Snackbar>
     </Box>
+  );
+}
+
+// Stacked label/value row used inside the phone card layout.
+function CardRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, minWidth: 0 }}>
+      <Typography variant="caption" color="text.secondary">
+        {label}
+      </Typography>
+      {children}
+    </Box>
+  );
+}
+
+// Phone layout for a single response line: the same editable fields as the
+// desktop table row, stacked in a card so there is no horizontal overflow.
+function ResponseLineCard({
+  line,
+  editable,
+  requestedInvalid,
+  supplyInvalid,
+  register,
+  numeric,
+  onDelete,
+}: {
+  line: ResponseLineRowFragment;
+  editable: boolean;
+  requestedInvalid: boolean;
+  supplyInvalid: boolean;
+  register: UseFormRegister<FormValues>;
+  numeric: { validate: (raw: string) => true | string };
+  onDelete: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Paper variant="outlined" sx={{ p: 1.5, mb: 1 }}>
+      <Stack spacing={1}>
+        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+          <Typography variant="subtitle2" sx={{ flex: 1, minWidth: 0 }}>
+            {line.item.name}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {line.item.code}
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+          <CardRow label={t('label.our-soh')}>
+            <Typography variant="body2">{line.itemStats.stockOnHand}</Typography>
+          </CardRow>
+          <CardRow label={t('label.customer-soh')}>
+            <Typography variant="body2">{line.availableStockOnHand}</Typography>
+          </CardRow>
+          <CardRow label={t('label.suggested')}>
+            <Typography variant="body2">{line.suggestedQuantity}</Typography>
+          </CardRow>
+          <CardRow label={t('label.already-issued')}>
+            <Typography variant="body2">{line.alreadyIssued}</Typography>
+          </CardRow>
+          <CardRow label={t('label.requested')}>
+            {editable ? (
+              <input
+                inputMode="decimal"
+                style={inputStyle(requestedInvalid)}
+                {...register(`lines.${line.id}.requestedQuantity`, numeric)}
+              />
+            ) : (
+              <Typography variant="body2">{line.requestedQuantity}</Typography>
+            )}
+          </CardRow>
+          <CardRow label={t('label.supply-quantity')}>
+            {editable ? (
+              <input
+                inputMode="decimal"
+                style={inputStyle(supplyInvalid)}
+                {...register(`lines.${line.id}.supplyQuantity`, numeric)}
+              />
+            ) : (
+              <Typography variant="body2">{line.supplyQuantity}</Typography>
+            )}
+          </CardRow>
+        </Box>
+        <CardRow label={t('label.remaining-to-supply')}>
+          <Typography variant="body2">
+            {line.remainingQuantityToSupply}
+          </Typography>
+        </CardRow>
+        <CardRow label={t('label.comment')}>
+          {editable ? (
+            <input style={INPUT_BASE} {...register(`lines.${line.id}.comment`)} />
+          ) : (
+            <Typography variant="body2">{line.comment ?? ''}</Typography>
+          )}
+        </CardRow>
+        {editable ? (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon fontSize="small" />}
+              onClick={onDelete}
+            >
+              {t('button.delete')}
+            </Button>
+          </Box>
+        ) : null}
+      </Stack>
+    </Paper>
   );
 }
 

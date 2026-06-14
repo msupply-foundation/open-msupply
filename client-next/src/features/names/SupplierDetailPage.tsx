@@ -45,10 +45,27 @@ const PO_STATUS_KEY: Partial<Record<PurchaseOrderNodeStatus, TxKey>> = {
 };
 
 function Field({ label, value }: { label: string; value: ReactNode }) {
+  // Stack the label above the value on phones (xs) and place them side by side
+  // from sm up. minWidth:0 + word-break let long values (URLs, addresses) wrap
+  // instead of forcing horizontal overflow on a narrow viewport.
   return (
-    <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
-      <Typography color="text.secondary">{label}</Typography>
-      <Typography component="div" sx={{ fontWeight: 500 }}>
+    <Stack
+      direction={{ xs: 'column', sm: 'row' }}
+      spacing={{ xs: 0.25, sm: 2 }}
+      sx={{ justifyContent: 'space-between', alignItems: { sm: 'baseline' } }}
+    >
+      <Typography color="text.secondary" sx={{ flexShrink: 0 }}>
+        {label}
+      </Typography>
+      <Typography
+        component="div"
+        sx={{
+          fontWeight: 500,
+          minWidth: 0,
+          textAlign: { sm: 'right' },
+          overflowWrap: 'anywhere',
+        }}
+      >
         {value}
       </Typography>
     </Stack>
@@ -83,11 +100,22 @@ function SupplierDetail({
   const [tab, setTab] = useState(0);
 
   return (
-    <Stack spacing={2} sx={{ height: '100%' }}>
-      <Typography variant="h5" sx={{ fontWeight: 700 }}>
+    // minWidth:0 lets the flex children (the scrollable tables below) shrink
+    // narrower than their content instead of pushing the page wide on a phone.
+    <Stack spacing={2} sx={{ height: '100%', minWidth: 0 }}>
+      <Typography
+        variant="h5"
+        sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}
+      >
         {supplier.name}
       </Typography>
-      <Tabs value={tab} onChange={(_, v) => setTab(v)}>
+      <Tabs
+        value={tab}
+        onChange={(_, v) => setTab(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
+      >
         <Tab label={t('label.details')} />
         <Tab label={t('label.purchase-orders')} />
         <Tab label={t('label.contacts')} />

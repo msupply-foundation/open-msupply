@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
@@ -18,6 +18,8 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -78,6 +80,24 @@ const toLineForm = (l: RequestLineRowFragment): LineForm => ({
   comment: l.comment ?? '',
 });
 
+// Stacked label/value pair used inside the phone line cards.
+function CardField({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, minWidth: 0 }}>
+      <Typography variant="caption" color="text.secondary">
+        {label}
+      </Typography>
+      {children}
+    </Box>
+  );
+}
+
 function RequestEditor({
   storeId,
   requisition,
@@ -89,6 +109,8 @@ function RequestEditor({
   const queryClient = useQueryClient();
   const statusName = useRequisitionStatusName();
   const { confirm, dialog } = useConfirm();
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down('sm'));
 
   const flow = requisitionStatusFlow(RequisitionNodeType.Request);
   const editable = flow.editable.includes(requisition.status);
@@ -327,90 +349,193 @@ function RequestEditor({
       </Stack>
 
       <Paper variant="outlined" sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-        <Table stickyHeader size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.code')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.name')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.unit')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                {t('label.available-soh')}
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                {t('label.amc')}
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                {t('label.suggested')}
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.requested')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.comment')}</TableCell>
-              {editable ? <TableCell padding="checkbox" /> : null}
-            </TableRow>
-          </TableHead>
-          <TableBody>
+        {isPhone ? (
+          <Box sx={{ p: 1 }}>
             {lines.map(line => {
               const lineErr = errors.lines?.[line.id];
               return (
-                <TableRow key={line.id} hover>
-                  <TableCell>{line.item.code}</TableCell>
-                  <TableCell>{line.item.name}</TableCell>
-                  <TableCell>{line.item.unitName ?? ''}</TableCell>
-                  <TableCell align="right">
-                    {line.itemStats.availableStockOnHand.toLocaleString()}
-                  </TableCell>
-                  <TableCell align="right">
-                    {line.itemStats.averageMonthlyConsumption.toLocaleString()}
-                  </TableCell>
-                  <TableCell align="right">
-                    {line.suggestedQuantity.toLocaleString()}
-                  </TableCell>
-                  <TableCell sx={{ width: 110 }}>
+                <Paper
+                  key={line.id}
+                  variant="outlined"
+                  sx={{ p: 1.5, mb: 1 }}
+                >
+                  <Stack spacing={1}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'baseline',
+                        gap: 1,
+                      }}
+                    >
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ flex: 1, minWidth: 0 }}
+                      >
+                        {line.item.name}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {line.item.code}
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr 1fr',
+                        gap: 1,
+                      }}
+                    >
+                      <CardField label={t('label.available-soh')}>
+                        <Typography variant="body2">
+                          {line.itemStats.availableStockOnHand.toLocaleString()}
+                        </Typography>
+                      </CardField>
+                      <CardField label={t('label.amc')}>
+                        <Typography variant="body2">
+                          {line.itemStats.averageMonthlyConsumption.toLocaleString()}
+                        </Typography>
+                      </CardField>
+                      <CardField label={t('label.suggested')}>
+                        <Typography variant="body2">
+                          {line.suggestedQuantity.toLocaleString()}
+                        </Typography>
+                      </CardField>
+                    </Box>
+                    <CardField label={t('label.requested')}>
+                      {editable ? (
+                        <input
+                          inputMode="decimal"
+                          style={inputStyle(Boolean(lineErr?.requestedQuantity))}
+                          {...register(
+                            `lines.${line.id}.requestedQuantity`,
+                            numeric,
+                          )}
+                        />
+                      ) : (
+                        <Typography variant="body2">
+                          {line.requestedQuantity}
+                        </Typography>
+                      )}
+                    </CardField>
+                    <CardField label={t('label.comment')}>
+                      {editable ? (
+                        <input
+                          style={INPUT_BASE}
+                          {...register(`lines.${line.id}.comment`)}
+                        />
+                      ) : (
+                        <Typography variant="body2">
+                          {line.comment ?? ''}
+                        </Typography>
+                      )}
+                    </CardField>
                     {editable ? (
-                      <input
-                        inputMode="decimal"
-                        style={inputStyle(Boolean(lineErr?.requestedQuantity))}
-                        {...register(`lines.${line.id}.requestedQuantity`, numeric)}
-                      />
-                    ) : (
-                      line.requestedQuantity
-                    )}
-                  </TableCell>
-                  <TableCell sx={{ width: 200 }}>
-                    {editable ? (
-                      <input
-                        style={INPUT_BASE}
-                        {...register(`lines.${line.id}.comment`)}
-                      />
-                    ) : (
-                      line.comment ?? ''
-                    )}
-                  </TableCell>
-                  {editable ? (
-                    <TableCell padding="checkbox">
-                      <Tooltip title={t('button.delete')}>
-                        <IconButton
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button
                           size="small"
+                          color="error"
+                          startIcon={<DeleteIcon fontSize="small" />}
                           onClick={() => onDeleteLine(line)}
                         >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  ) : null}
-                </TableRow>
+                          {t('button.delete')}
+                        </Button>
+                      </Box>
+                    ) : null}
+                  </Stack>
+                </Paper>
               );
             })}
             {lines.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9}>
-                  <Typography color="text.secondary" sx={{ py: 2 }}>
-                    {t('messages.no-lines')}
-                  </Typography>
-                </TableCell>
-              </TableRow>
+              <Typography color="text.secondary" sx={{ py: 2, px: 1 }}>
+                {t('messages.no-lines')}
+              </Typography>
             ) : null}
-          </TableBody>
-        </Table>
+          </Box>
+        ) : (
+          <Table stickyHeader size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.code')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.name')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.unit')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="right">
+                  {t('label.available-soh')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="right">
+                  {t('label.amc')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="right">
+                  {t('label.suggested')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.requested')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.comment')}</TableCell>
+                {editable ? <TableCell padding="checkbox" /> : null}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {lines.map(line => {
+                const lineErr = errors.lines?.[line.id];
+                return (
+                  <TableRow key={line.id} hover>
+                    <TableCell>{line.item.code}</TableCell>
+                    <TableCell>{line.item.name}</TableCell>
+                    <TableCell>{line.item.unitName ?? ''}</TableCell>
+                    <TableCell align="right">
+                      {line.itemStats.availableStockOnHand.toLocaleString()}
+                    </TableCell>
+                    <TableCell align="right">
+                      {line.itemStats.averageMonthlyConsumption.toLocaleString()}
+                    </TableCell>
+                    <TableCell align="right">
+                      {line.suggestedQuantity.toLocaleString()}
+                    </TableCell>
+                    <TableCell sx={{ width: 110 }}>
+                      {editable ? (
+                        <input
+                          inputMode="decimal"
+                          style={inputStyle(Boolean(lineErr?.requestedQuantity))}
+                          {...register(`lines.${line.id}.requestedQuantity`, numeric)}
+                        />
+                      ) : (
+                        line.requestedQuantity
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ width: 200 }}>
+                      {editable ? (
+                        <input
+                          style={INPUT_BASE}
+                          {...register(`lines.${line.id}.comment`)}
+                        />
+                      ) : (
+                        line.comment ?? ''
+                      )}
+                    </TableCell>
+                    {editable ? (
+                      <TableCell padding="checkbox">
+                        <Tooltip title={t('button.delete')}>
+                          <IconButton
+                            size="small"
+                            onClick={() => onDeleteLine(line)}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    ) : null}
+                  </TableRow>
+                );
+              })}
+              {lines.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9}>
+                    <Typography color="text.secondary" sx={{ py: 2 }}>
+                      {t('messages.no-lines')}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        )}
       </Paper>
 
       <StatusBar

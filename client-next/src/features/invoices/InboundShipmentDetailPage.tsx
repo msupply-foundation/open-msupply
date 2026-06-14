@@ -1,5 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  useForm,
+  type FieldErrors,
+  type UseFormRegister,
+} from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import {
@@ -18,6 +22,8 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -78,9 +84,12 @@ export function InboundShipmentDetailPage() {
 interface LineForm {
   batch: string;
   expiry: string;
+  manufactureDate: string;
   packSize: string;
   numberOfPacks: string;
   cost: string;
+  sell: string;
+  note: string;
 }
 interface FormValues {
   lines: Record<string, LineForm>;
@@ -89,9 +98,12 @@ interface FormValues {
 const toLineForm = (l: InboundLineRowFragment): LineForm => ({
   batch: l.batch ?? '',
   expiry: l.expiryDate ?? '',
+  manufactureDate: l.manufactureDate ?? '',
   packSize: l.packSize?.toString() ?? '',
   numberOfPacks: l.numberOfPacks?.toString() ?? '',
   cost: l.costPricePerPack?.toString() ?? '',
+  sell: l.sellPricePerPack?.toString() ?? '',
+  note: l.note ?? '',
 });
 
 function InboundEditor({
@@ -105,6 +117,8 @@ function InboundEditor({
   const queryClient = useQueryClient();
   const statusName = useInvoiceStatusName();
   const { confirm, dialog } = useConfirm();
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down('sm'));
 
   const flow = invoiceStatusFlow(InvoiceNodeType.InboundShipment);
   const editable = flow.editable.includes(invoice.status);
@@ -177,6 +191,13 @@ function InboundEditor({
               ...(d.expiry
                 ? { expiryDate: { value: f.expiry === '' ? null : f.expiry } }
                 : {}),
+              ...(d.manufactureDate
+                ? {
+                    manufactureDate: {
+                      value: f.manufactureDate === '' ? null : f.manufactureDate,
+                    },
+                  }
+                : {}),
               ...(d.packSize && f.packSize !== ''
                 ? { packSize: Number(f.packSize) }
                 : {}),
@@ -185,6 +206,12 @@ function InboundEditor({
                 : {}),
               ...(d.cost && f.cost !== ''
                 ? { costPricePerPack: Number(f.cost) }
+                : {}),
+              ...(d.sell && f.sell !== ''
+                ? { sellPricePerPack: Number(f.sell) }
+                : {}),
+              ...(d.note
+                ? { note: { value: f.note === '' ? null : f.note } }
                 : {}),
             },
           });
@@ -313,7 +340,8 @@ function InboundEditor({
           value={invoice.otherPartyName}
           size="small"
           disabled
-          sx={{ minWidth: 220 }}
+          fullWidth={isPhone}
+          sx={{ minWidth: { xs: 0, sm: 220 } }}
         />
         <TextField
           label={t('label.supplier-ref')}
@@ -321,7 +349,8 @@ function InboundEditor({
           onChange={e => setTheirReference(e.target.value)}
           size="small"
           disabled={!editable}
-          sx={{ minWidth: 220 }}
+          fullWidth={isPhone}
+          sx={{ minWidth: { xs: 0, sm: 220 } }}
         />
         <TextField
           label={t('label.comment')}
@@ -333,114 +362,174 @@ function InboundEditor({
         />
       </Stack>
 
-      <Paper variant="outlined" sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-        <Table stickyHeader size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.code')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.name')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.batch')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.expiry')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.pack-size')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.pack-quantity')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.cost-per-pack')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                {t('label.total')}
-              </TableCell>
-              {editable ? <TableCell padding="checkbox" /> : null}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {lines.map(line => {
-              const lineErr = errors.lines?.[line.id];
-              return (
-                <TableRow key={line.id} hover>
-                  <TableCell>{line.item.code}</TableCell>
-                  <TableCell>{line.item.name}</TableCell>
-                  <TableCell sx={{ width: 120 }}>
-                    {editable ? (
-                      <input
-                        style={INPUT_BASE}
-                        {...register(`lines.${line.id}.batch`)}
-                      />
-                    ) : (
-                      line.batch ?? ''
-                    )}
-                  </TableCell>
-                  <TableCell sx={{ width: 150 }}>
-                    {editable ? (
-                      <input
-                        type="date"
-                        style={INPUT_BASE}
-                        {...register(`lines.${line.id}.expiry`)}
-                      />
-                    ) : (
-                      line.expiryDate ?? ''
-                    )}
-                  </TableCell>
-                  <TableCell sx={{ width: 90 }}>
-                    {editable ? (
-                      <input
-                        inputMode="decimal"
-                        style={inputStyle(Boolean(lineErr?.packSize))}
-                        {...register(`lines.${line.id}.packSize`, numeric)}
-                      />
-                    ) : (
-                      line.packSize
-                    )}
-                  </TableCell>
-                  <TableCell sx={{ width: 90 }}>
-                    {editable ? (
-                      <input
-                        inputMode="decimal"
-                        style={inputStyle(Boolean(lineErr?.numberOfPacks))}
-                        {...register(`lines.${line.id}.numberOfPacks`, numeric)}
-                      />
-                    ) : (
-                      line.numberOfPacks
-                    )}
-                  </TableCell>
-                  <TableCell sx={{ width: 100 }}>
-                    {editable ? (
-                      <input
-                        inputMode="decimal"
-                        style={inputStyle(Boolean(lineErr?.cost))}
-                        {...register(`lines.${line.id}.cost`, numeric)}
-                      />
-                    ) : (
-                      formatCurrency(line.costPricePerPack)
-                    )}
-                  </TableCell>
-                  <TableCell align="right">
-                    {formatCurrency(line.costPricePerPack * line.numberOfPacks)}
-                  </TableCell>
-                  {editable ? (
-                    <TableCell padding="checkbox">
-                      <Tooltip title={t('button.delete')}>
-                        <IconButton
-                          size="small"
-                          onClick={() => onDeleteLine(line)}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  ) : null}
-                </TableRow>
-              );
-            })}
-            {lines.length === 0 ? (
+      {isPhone ? (
+        <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+          {lines.map(line => (
+            <InboundLineCard
+              key={line.id}
+              line={line}
+              editable={editable}
+              register={register}
+              numeric={numeric}
+              errors={errors}
+              onDelete={() => onDeleteLine(line)}
+            />
+          ))}
+          {lines.length === 0 ? (
+            <Typography color="text.secondary" sx={{ py: 2 }}>
+              {t('messages.no-lines')}
+            </Typography>
+          ) : null}
+        </Box>
+      ) : (
+        <Paper variant="outlined" sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+          <Table stickyHeader size="small">
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={9}>
-                  <Typography color="text.secondary" sx={{ py: 2 }}>
-                    {t('messages.no-lines')}
-                  </Typography>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.code')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.name')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.batch')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.expiry')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('label.manufacture-date')}
                 </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.pack-size')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.pack-quantity')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.cost-per-pack')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('label.sell-price-per-pack')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.comment')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="right">
+                  {t('label.total')}
+                </TableCell>
+                {editable ? <TableCell padding="checkbox" /> : null}
               </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
-      </Paper>
+            </TableHead>
+            <TableBody>
+              {lines.map(line => {
+                const lineErr = errors.lines?.[line.id];
+                return (
+                  <TableRow key={line.id} hover>
+                    <TableCell>{line.item.code}</TableCell>
+                    <TableCell>{line.item.name}</TableCell>
+                    <TableCell sx={{ width: 120 }}>
+                      {editable ? (
+                        <input
+                          style={INPUT_BASE}
+                          {...register(`lines.${line.id}.batch`)}
+                        />
+                      ) : (
+                        line.batch ?? ''
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ width: 150 }}>
+                      {editable ? (
+                        <input
+                          type="date"
+                          style={INPUT_BASE}
+                          {...register(`lines.${line.id}.expiry`)}
+                        />
+                      ) : (
+                        line.expiryDate ?? ''
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ width: 150 }}>
+                      {editable ? (
+                        <input
+                          type="date"
+                          style={INPUT_BASE}
+                          {...register(`lines.${line.id}.manufactureDate`)}
+                        />
+                      ) : (
+                        line.manufactureDate ?? ''
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ width: 90 }}>
+                      {editable ? (
+                        <input
+                          inputMode="decimal"
+                          style={inputStyle(Boolean(lineErr?.packSize))}
+                          {...register(`lines.${line.id}.packSize`, numeric)}
+                        />
+                      ) : (
+                        line.packSize
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ width: 90 }}>
+                      {editable ? (
+                        <input
+                          inputMode="decimal"
+                          style={inputStyle(Boolean(lineErr?.numberOfPacks))}
+                          {...register(`lines.${line.id}.numberOfPacks`, numeric)}
+                        />
+                      ) : (
+                        line.numberOfPacks
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ width: 100 }}>
+                      {editable ? (
+                        <input
+                          inputMode="decimal"
+                          style={inputStyle(Boolean(lineErr?.cost))}
+                          {...register(`lines.${line.id}.cost`, numeric)}
+                        />
+                      ) : (
+                        formatCurrency(line.costPricePerPack)
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ width: 100 }}>
+                      {editable ? (
+                        <input
+                          inputMode="decimal"
+                          style={inputStyle(Boolean(lineErr?.sell))}
+                          {...register(`lines.${line.id}.sell`, numeric)}
+                        />
+                      ) : (
+                        formatCurrency(line.sellPricePerPack)
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ width: 140 }}>
+                      {editable ? (
+                        <input
+                          style={INPUT_BASE}
+                          {...register(`lines.${line.id}.note`)}
+                        />
+                      ) : (
+                        line.note ?? ''
+                      )}
+                    </TableCell>
+                    <TableCell align="right">
+                      {formatCurrency(line.costPricePerPack * line.numberOfPacks)}
+                    </TableCell>
+                    {editable ? (
+                      <TableCell padding="checkbox">
+                        <Tooltip title={t('button.delete')}>
+                          <IconButton
+                            size="small"
+                            onClick={() => onDeleteLine(line)}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    ) : null}
+                  </TableRow>
+                );
+              })}
+              {lines.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={12}>
+                    <Typography color="text.secondary" sx={{ py: 2 }}>
+                      {t('messages.no-lines')}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        </Paper>
+      )}
 
       <StatusBar
         sequence={flow.sequence}
@@ -481,6 +570,155 @@ function InboundEditor({
   );
 }
 
+function CardField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, minWidth: 0 }}>
+      <Typography variant="caption" color="text.secondary">
+        {label}
+      </Typography>
+      {children}
+    </Box>
+  );
+}
+
+// Phone layout for a single line: a stacked card replacing the desktop table
+// row. Mirrors the same react-hook-form registrations so edits feed one Save.
+function InboundLineCard({
+  line,
+  editable,
+  register,
+  numeric,
+  errors,
+  onDelete,
+}: {
+  line: InboundLineRowFragment;
+  editable: boolean;
+  register: UseFormRegister<FormValues>;
+  numeric: { validate: (raw: string) => true | string };
+  errors: FieldErrors<FormValues>;
+  onDelete: () => void;
+}) {
+  const { t } = useTranslation();
+  const lineErr = errors.lines?.[line.id];
+  return (
+    <Paper variant="outlined" sx={{ p: 1.5, mb: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+        <Typography variant="subtitle2" sx={{ flex: 1, minWidth: 0 }}>
+          {line.item.name}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {line.item.code}
+        </Typography>
+        {editable ? (
+          <IconButton size="small" edge="end" onClick={onDelete}>
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        ) : null}
+      </Box>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 1,
+          mt: 1,
+        }}
+      >
+        <CardField label={t('label.batch')}>
+          {editable ? (
+            <input style={INPUT_BASE} {...register(`lines.${line.id}.batch`)} />
+          ) : (
+            <Typography variant="body2">{line.batch ?? ''}</Typography>
+          )}
+        </CardField>
+        <CardField label={t('label.expiry')}>
+          {editable ? (
+            <input
+              type="date"
+              style={INPUT_BASE}
+              {...register(`lines.${line.id}.expiry`)}
+            />
+          ) : (
+            <Typography variant="body2">{line.expiryDate ?? ''}</Typography>
+          )}
+        </CardField>
+        <CardField label={t('label.manufacture-date')}>
+          {editable ? (
+            <input
+              type="date"
+              style={INPUT_BASE}
+              {...register(`lines.${line.id}.manufactureDate`)}
+            />
+          ) : (
+            <Typography variant="body2">{line.manufactureDate ?? ''}</Typography>
+          )}
+        </CardField>
+        <CardField label={t('label.pack-size')}>
+          {editable ? (
+            <input
+              inputMode="decimal"
+              style={inputStyle(Boolean(lineErr?.packSize))}
+              {...register(`lines.${line.id}.packSize`, numeric)}
+            />
+          ) : (
+            <Typography variant="body2">{line.packSize}</Typography>
+          )}
+        </CardField>
+        <CardField label={t('label.pack-quantity')}>
+          {editable ? (
+            <input
+              inputMode="decimal"
+              style={inputStyle(Boolean(lineErr?.numberOfPacks))}
+              {...register(`lines.${line.id}.numberOfPacks`, numeric)}
+            />
+          ) : (
+            <Typography variant="body2">{line.numberOfPacks}</Typography>
+          )}
+        </CardField>
+        <CardField label={t('label.cost-per-pack')}>
+          {editable ? (
+            <input
+              inputMode="decimal"
+              style={inputStyle(Boolean(lineErr?.cost))}
+              {...register(`lines.${line.id}.cost`, numeric)}
+            />
+          ) : (
+            <Typography variant="body2">
+              {formatCurrency(line.costPricePerPack)}
+            </Typography>
+          )}
+        </CardField>
+        <CardField label={t('label.sell-price-per-pack')}>
+          {editable ? (
+            <input
+              inputMode="decimal"
+              style={inputStyle(Boolean(lineErr?.sell))}
+              {...register(`lines.${line.id}.sell`, numeric)}
+            />
+          ) : (
+            <Typography variant="body2">
+              {formatCurrency(line.sellPricePerPack)}
+            </Typography>
+          )}
+        </CardField>
+        <CardField label={t('label.total')}>
+          <Typography variant="body2">
+            {formatCurrency(line.costPricePerPack * line.numberOfPacks)}
+          </Typography>
+        </CardField>
+      </Box>
+      <Box sx={{ mt: 1 }}>
+        <CardField label={t('label.comment')}>
+          {editable ? (
+            <input style={INPUT_BASE} {...register(`lines.${line.id}.note`)} />
+          ) : (
+            <Typography variant="body2">{line.note ?? ''}</Typography>
+          )}
+        </CardField>
+      </Box>
+    </Paper>
+  );
+}
+
 function AddInboundLineDialog({
   open,
   storeId,
@@ -500,9 +738,12 @@ function AddInboundLineDialog({
   const [item, setItem] = useState<ItemOptionFragment | null>(null);
   const [batch, setBatch] = useState('');
   const [expiry, setExpiry] = useState('');
+  const [manufactureDate, setManufactureDate] = useState('');
   const [packSize, setPackSize] = useState('1');
   const [numberOfPacks, setNumberOfPacks] = useState('0');
   const [cost, setCost] = useState('0');
+  const [sell, setSell] = useState('0');
+  const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -510,9 +751,12 @@ function AddInboundLineDialog({
       setItem(null);
       setBatch('');
       setExpiry('');
+      setManufactureDate('');
       setPackSize('1');
       setNumberOfPacks('0');
       setCost('0');
+      setSell('0');
+      setNote('');
       setError(null);
     }
   }, [open]);
@@ -529,9 +773,11 @@ function AddInboundLineDialog({
           packSize: Number(packSize) || 1,
           numberOfPacks: Number(numberOfPacks) || 0,
           costPricePerPack: Number(cost) || 0,
-          sellPricePerPack: 0,
+          sellPricePerPack: Number(sell) || 0,
           batch: batch || null,
           expiryDate: expiry || null,
+          manufactureDate: manufactureDate || null,
+          note: note || null,
         },
       });
       if (
@@ -578,6 +824,15 @@ function AddInboundLineDialog({
             fullWidth
             slotProps={{ inputLabel: { shrink: true } }}
           />
+          <TextField
+            label={t('label.manufacture-date')}
+            type="date"
+            value={manufactureDate}
+            onChange={e => setManufactureDate(e.target.value)}
+            size="small"
+            fullWidth
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
         </Stack>
         <Stack direction="row" spacing={2}>
           <TextField
@@ -604,7 +859,22 @@ function AddInboundLineDialog({
             fullWidth
             inputMode="decimal"
           />
+          <TextField
+            label={t('label.sell-price-per-pack')}
+            value={sell}
+            onChange={e => setSell(e.target.value)}
+            size="small"
+            fullWidth
+            inputMode="decimal"
+          />
         </Stack>
+        <TextField
+          label={t('label.comment')}
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          size="small"
+          fullWidth
+        />
         {error ? <Alert severity="error">{error}</Alert> : null}
       </Stack>
     </LineEditDialog>

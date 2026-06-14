@@ -117,6 +117,23 @@ export type ResponseRequisitionQuery = {
       };
 };
 
+export type InsertResponseMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertResponseRequisitionInput;
+}>;
+
+export type InsertResponseMutation = {
+  __typename: 'Mutations';
+  insertResponseRequisition:
+    | {
+        __typename: 'InsertResponseRequisitionError';
+        error:
+          | { __typename: 'OtherPartyNotACustomer'; description: string }
+          | { __typename: 'OtherPartyNotVisible'; description: string };
+      }
+    | { __typename: 'RequisitionNode'; id: string };
+};
+
 export type UpdateResponseMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.UpdateResponseRequisitionInput;
@@ -286,6 +303,25 @@ export const ResponseRequisitionDocument = gql`
   }
   ${ResponseDetailFragmentDoc}
 `;
+export const InsertResponseDocument = gql`
+  mutation insertResponse(
+    $storeId: String!
+    $input: InsertResponseRequisitionInput!
+  ) {
+    insertResponseRequisition(storeId: $storeId, input: $input) {
+      __typename
+      ... on RequisitionNode {
+        id
+      }
+      ... on InsertResponseRequisitionError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+`;
 export const UpdateResponseDocument = gql`
   mutation updateResponse(
     $storeId: String!
@@ -417,6 +453,24 @@ export function getSdk(
           }),
         'responseRequisition',
         'query',
+        variables,
+      );
+    },
+    insertResponse(
+      variables: InsertResponseMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<InsertResponseMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertResponseMutation>({
+            document: InsertResponseDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'insertResponse',
+        'mutation',
         variables,
       );
     },

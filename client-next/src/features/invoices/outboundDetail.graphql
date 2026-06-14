@@ -61,6 +61,30 @@ query outboundShipment($storeId: String!, $invoiceId: String!) {
   }
 }
 
+mutation insertOutbound(
+  $storeId: String!
+  $input: InsertOutboundShipmentInput!
+) {
+  insertOutboundShipment(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on InsertOutboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
 mutation updateOutbound(
   $storeId: String!
   $input: UpdateOutboundShipmentInput!

@@ -57,6 +57,24 @@ query responseRequisition($storeId: String!, $requisitionId: String!) {
   }
 }
 
+mutation insertResponse(
+  $storeId: String!
+  $input: InsertResponseRequisitionInput!
+) {
+  insertResponseRequisition(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionNode {
+      id
+    }
+    ... on InsertResponseRequisitionError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
 mutation updateResponse(
   $storeId: String!
   $input: UpdateResponseRequisitionInput!

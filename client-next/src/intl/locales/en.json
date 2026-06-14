@@ -57,7 +57,9 @@
     "supply-requested": "Supply requested quantity",
     "create-shipment": "Create shipment",
     "close": "Close",
-    "delete-lines": "Delete lines"
+    "delete-lines": "Delete lines",
+    "new": "New",
+    "create": "Create"
   },
 
   "heading": {
@@ -73,7 +75,11 @@
     "internal-order": "Internal order #{{number}}",
     "add-item": "Add item",
     "edit-item": "Edit item",
-    "comment": "Comment"
+    "comment": "Comment",
+    "new-inbound-shipment": "New inbound shipment",
+    "new-outbound-shipment": "New outbound shipment",
+    "new-internal-order": "New internal order",
+    "new-customer-requisition": "New customer requisition"
   },
 
   "label": {
@@ -121,6 +127,8 @@
     "customer-name": "Customer name",
     "customer-ref": "Customer reference",
     "cost-per-pack": "Cost price per pack",
+    "sell-price-per-pack": "Sell price per pack",
+    "manufacture-date": "Manufacture date",
     "price-per-pack": "Price per pack",
     "pack-quantity": "Number of packs",
     "quantity-returned": "Quantity returned",

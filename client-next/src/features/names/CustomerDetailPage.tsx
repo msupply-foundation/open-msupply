@@ -25,10 +25,27 @@ function Field({
   label: string;
   value: ReactNode;
 }) {
+  // Stack the label above the value on phones (xs) and place them side by side
+  // from sm up. minWidth:0 + word-break let long values (URLs, addresses) wrap
+  // instead of forcing horizontal overflow on a narrow viewport.
   return (
-    <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
-      <Typography color="text.secondary">{label}</Typography>
-      <Typography component="div" sx={{ fontWeight: 500 }}>
+    <Stack
+      direction={{ xs: 'column', sm: 'row' }}
+      spacing={{ xs: 0.25, sm: 2 }}
+      sx={{ justifyContent: 'space-between', alignItems: { sm: 'baseline' } }}
+    >
+      <Typography color="text.secondary" sx={{ flexShrink: 0 }}>
+        {label}
+      </Typography>
+      <Typography
+        component="div"
+        sx={{
+          fontWeight: 500,
+          minWidth: 0,
+          textAlign: { sm: 'right' },
+          overflowWrap: 'anywhere',
+        }}
+      >
         {value}
       </Typography>
     </Stack>
@@ -55,8 +72,11 @@ function CustomerDetail({ customer }: { customer: CustomerDetailFragment }) {
   const yesNo = (value: boolean) => (value ? t('messages.yes') : t('messages.no'));
 
   return (
-    <Stack spacing={2} sx={{ maxWidth: 560 }}>
-      <Typography variant="h5" sx={{ fontWeight: 700 }}>
+    <Stack spacing={2} sx={{ width: '100%', maxWidth: 560 }}>
+      <Typography
+        variant="h5"
+        sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}
+      >
         {customer.name}
       </Typography>
       <Card>

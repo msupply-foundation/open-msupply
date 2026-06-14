@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import {
@@ -15,6 +15,8 @@ import {
   TableRow,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   InvoiceNodeType,
@@ -70,6 +72,8 @@ function SupplierReturnEditor({
   invoice: SupplierReturnDetailFragment;
 }) {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down('sm'));
   const queryClient = useQueryClient();
   const statusName = useInvoiceStatusName();
   const { confirm, dialog } = useConfirm();
@@ -181,7 +185,8 @@ function SupplierReturnEditor({
           value={invoice.otherPartyName}
           size="small"
           disabled
-          sx={{ minWidth: 220 }}
+          fullWidth={isPhone}
+          sx={{ minWidth: { xs: 0, sm: 220 } }}
         />
         <TextField
           label={t('label.supplier-ref')}
@@ -189,7 +194,8 @@ function SupplierReturnEditor({
           onChange={e => setTheirReference(e.target.value)}
           size="small"
           disabled={!editable}
-          sx={{ minWidth: 220 }}
+          fullWidth={isPhone}
+          sx={{ minWidth: { xs: 0, sm: 220 } }}
         />
         <TextField
           label={t('label.comment')}
@@ -201,49 +207,64 @@ function SupplierReturnEditor({
         />
       </Stack>
 
-      <Paper variant="outlined" sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-        <Table stickyHeader size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.code')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.name')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.batch')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.expiry')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.pack-size')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.pack-quantity')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.cost-per-pack')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                {t('label.total')}
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {lines.map(line => (
-              <TableRow key={line.id} hover>
-                <TableCell>{line.item.code}</TableCell>
-                <TableCell>{line.item.name}</TableCell>
-                <TableCell>{line.batch ?? ''}</TableCell>
-                <TableCell>{line.expiryDate ?? ''}</TableCell>
-                <TableCell>{line.packSize}</TableCell>
-                <TableCell>{line.numberOfPacks}</TableCell>
-                <TableCell>{formatCurrency(line.costPricePerPack)}</TableCell>
-                <TableCell align="right">
-                  {formatCurrency(line.costPricePerPack * line.numberOfPacks)}
-                </TableCell>
-              </TableRow>
-            ))}
-            {lines.length === 0 ? (
+      {isPhone ? (
+        // Phone: stack each read-only line as a card so the page never scrolls
+        // horizontally. The sm+ table below stays unchanged.
+        <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+          {lines.map(line => (
+            <SupplierReturnLineCard key={line.id} line={line} />
+          ))}
+          {lines.length === 0 ? (
+            <Typography color="text.secondary" sx={{ py: 2 }}>
+              {t('messages.no-lines')}
+            </Typography>
+          ) : null}
+        </Box>
+      ) : (
+        <Paper variant="outlined" sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+          <Table stickyHeader size="small">
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={8}>
-                  <Typography color="text.secondary" sx={{ py: 2 }}>
-                    {t('messages.no-lines')}
-                  </Typography>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.code')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.name')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.batch')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.expiry')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.pack-size')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.pack-quantity')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.cost-per-pack')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="right">
+                  {t('label.total')}
                 </TableCell>
               </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
-      </Paper>
+            </TableHead>
+            <TableBody>
+              {lines.map(line => (
+                <TableRow key={line.id} hover>
+                  <TableCell>{line.item.code}</TableCell>
+                  <TableCell>{line.item.name}</TableCell>
+                  <TableCell>{line.batch ?? ''}</TableCell>
+                  <TableCell>{line.expiryDate ?? ''}</TableCell>
+                  <TableCell>{line.packSize}</TableCell>
+                  <TableCell>{line.numberOfPacks}</TableCell>
+                  <TableCell>{formatCurrency(line.costPricePerPack)}</TableCell>
+                  <TableCell align="right">
+                    {formatCurrency(line.costPricePerPack * line.numberOfPacks)}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {lines.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8}>
+                    <Typography color="text.secondary" sx={{ py: 2 }}>
+                      {t('messages.no-lines')}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        </Paper>
+      )}
 
       <StatusBar
         sequence={flow.sequence}
@@ -269,5 +290,68 @@ function SupplierReturnEditor({
         </Alert>
       </Snackbar>
     </Box>
+  );
+}
+
+// Phone-only stacked label/value row inside a line card.
+function CardRow({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        gap: 1,
+        minWidth: 0,
+      }}
+    >
+      <Typography variant="caption" color="text.secondary">
+        {label}
+      </Typography>
+      <Typography
+        variant="body2"
+        sx={{ textAlign: 'right', wordBreak: 'break-word', minWidth: 0 }}
+      >
+        {value}
+      </Typography>
+    </Box>
+  );
+}
+
+// Read-only line rendered as a card on phones (no horizontal scroll). Mirrors
+// the desktop table columns.
+function SupplierReturnLineCard({
+  line,
+}: {
+  line: SupplierReturnDetailFragment['lines']['nodes'][number];
+}) {
+  const { t } = useTranslation();
+  return (
+    <Paper variant="outlined" sx={{ p: 1.5, mb: 1 }}>
+      <Stack spacing={0.75}>
+        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, minWidth: 0 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ flex: 1, wordBreak: 'break-word', minWidth: 0 }}
+          >
+            {line.item.name}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {line.item.code}
+          </Typography>
+        </Box>
+        <CardRow label={t('label.batch')} value={line.batch ?? ''} />
+        <CardRow label={t('label.expiry')} value={line.expiryDate ?? ''} />
+        <CardRow label={t('label.pack-size')} value={line.packSize} />
+        <CardRow label={t('label.pack-quantity')} value={line.numberOfPacks} />
+        <CardRow
+          label={t('label.cost-per-pack')}
+          value={formatCurrency(line.costPricePerPack)}
+        />
+        <CardRow
+          label={t('label.total')}
+          value={formatCurrency(line.costPricePerPack * line.numberOfPacks)}
+        />
+      </Stack>
+    </Paper>
   );
 }

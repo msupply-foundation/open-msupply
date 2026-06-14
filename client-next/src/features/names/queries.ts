@@ -51,3 +51,26 @@ export const nameListQueryOptions = (
     },
     placeholderData: keepPreviousData,
   });
+
+// Name search for the create-document picker (customer / supplier / store). The
+// caller supplies the base filter (isCustomer/isSupplier/isStore + isVisible);
+// `codeOrName` is merged in for the fuzzy search.
+export const nameSearchQueryOptions = (
+  storeId: string,
+  filter: NameFilterInput,
+  search: string,
+) =>
+  queryOptions({
+    queryKey: ['names', storeId, 'search', filter, search] as const,
+    queryFn: async () => {
+      const res = await namesSdk.names({
+        storeId,
+        first: 50,
+        key: NameSortFieldInput.Name,
+        desc: false,
+        filter: { ...filter, ...(search ? { codeOrName: { like: search } } : {}) },
+      });
+      return res.names.__typename === 'NameConnector' ? res.names.nodes : [];
+    },
+    staleTime: 60_000,
+  });

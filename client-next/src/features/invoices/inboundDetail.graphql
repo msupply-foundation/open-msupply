@@ -6,6 +6,7 @@ fragment InboundLineRow on InvoiceLineNode {
   itemCode
   batch
   expiryDate
+  manufactureDate
   packSize
   numberOfPacks
   costPricePerPack
@@ -61,6 +62,21 @@ query inboundShipment($storeId: String!, $invoiceId: String!) {
   invoice(storeId: $storeId, id: $invoiceId) {
     ... on InvoiceNode {
       ...InboundDetail
+    }
+  }
+}
+
+mutation insertInbound($storeId: String!, $input: InsertInboundShipmentInput!) {
+  insertInboundShipment(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on InsertInboundShipmentError {
+      error {
+        __typename
+        description
+      }
     }
   }
 }

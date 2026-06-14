@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import {
@@ -15,6 +15,8 @@ import {
   TableRow,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   InvoiceNodeType,
@@ -33,7 +35,10 @@ import {
   customerReturnSdk,
   customerReturnQueryOptions,
 } from './customerReturnDetail.queries';
-import type { CustomerReturnDetailFragment } from './customerReturnDetail.generated';
+import type {
+  CustomerReturnDetailFragment,
+  CustomerReturnLineRowFragment,
+} from './customerReturnDetail.generated';
 
 const route = getRouteApi(
   '/_authenticated/$storeId/distribution/customer-return/$invoiceId',
@@ -46,6 +51,58 @@ const TO_CUSTOMER_RETURN_STATUS: Partial<
   RECEIVED: UpdateCustomerReturnStatusInput.Received,
   VERIFIED: UpdateCustomerReturnStatusInput.Verified,
 } as Partial<Record<InvoiceNodeStatus, UpdateCustomerReturnStatusInput>>;
+
+// One stacked label/value row inside a mobile line card.
+function CardRow({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, minWidth: 0 }}>
+      <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
+        {label}
+      </Typography>
+      <Typography variant="body2" sx={{ textAlign: 'right', minWidth: 0, wordBreak: 'break-word' }}>
+        {value}
+      </Typography>
+    </Box>
+  );
+}
+
+// Phone equivalent of a read-only line table row: one outlined Paper card with
+// stacked label/value rows. No editable inputs (lines are read-only here).
+function LineCard({ line }: { line: CustomerReturnLineRowFragment }) {
+  const { t } = useTranslation();
+  return (
+    <Paper variant="outlined" sx={{ p: 1.5, mb: 1 }}>
+      <Stack spacing={0.5}>
+        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, minWidth: 0 }}>
+          <Typography variant="subtitle2" sx={{ flex: 1, minWidth: 0, wordBreak: 'break-word' }}>
+            {line.item.name}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
+            {line.item.code}
+          </Typography>
+        </Box>
+        {line.batch ? <CardRow label={t('label.batch')} value={line.batch} /> : null}
+        {line.expiryDate ? (
+          <CardRow label={t('label.expiry')} value={line.expiryDate} />
+        ) : null}
+        <CardRow label={t('label.pack-size')} value={line.packSize} />
+        <CardRow label={t('label.pack-quantity')} value={line.numberOfPacks} />
+        <CardRow
+          label={t('label.total-quantity')}
+          value={(line.packSize * line.numberOfPacks).toLocaleString()}
+        />
+        <CardRow
+          label={t('label.price-per-pack')}
+          value={formatCurrency(line.sellPricePerPack)}
+        />
+        <CardRow
+          label={t('label.total')}
+          value={formatCurrency(line.sellPricePerPack * line.numberOfPacks)}
+        />
+      </Stack>
+    </Paper>
+  );
+}
 
 export function CustomerReturnDetailPage() {
   const { storeId, invoiceId } = route.useParams();
@@ -70,6 +127,8 @@ function CustomerReturnEditor({
   invoice: CustomerReturnDetailFragment;
 }) {
   const { t } = useTranslation();
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down('sm'));
   const queryClient = useQueryClient();
   const statusName = useInvoiceStatusName();
   const { confirm, dialog } = useConfirm();
@@ -212,63 +271,76 @@ function CustomerReturnEditor({
         />
       </Stack>
 
-      <Paper variant="outlined" sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-        <Table stickyHeader size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.code')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.name')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.batch')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>{t('label.expiry')}</TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                {t('label.pack-size')}
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                {t('label.pack-quantity')}
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                {t('label.total-quantity')}
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                {t('label.price-per-pack')}
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                {t('label.total')}
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {lines.map(line => (
-              <TableRow key={line.id} hover>
-                <TableCell>{line.item.code}</TableCell>
-                <TableCell>{line.item.name}</TableCell>
-                <TableCell>{line.batch ?? ''}</TableCell>
-                <TableCell>{line.expiryDate ?? ''}</TableCell>
-                <TableCell align="right">{line.packSize}</TableCell>
-                <TableCell align="right">{line.numberOfPacks}</TableCell>
-                <TableCell align="right">
-                  {(line.packSize * line.numberOfPacks).toLocaleString()}
-                </TableCell>
-                <TableCell align="right">
-                  {formatCurrency(line.sellPricePerPack)}
-                </TableCell>
-                <TableCell align="right">
-                  {formatCurrency(line.sellPricePerPack * line.numberOfPacks)}
-                </TableCell>
-              </TableRow>
-            ))}
-            {lines.length === 0 ? (
+      {isPhone ? (
+        <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+          {lines.map(line => (
+            <LineCard key={line.id} line={line} />
+          ))}
+          {lines.length === 0 ? (
+            <Typography color="text.secondary" sx={{ py: 2 }}>
+              {t('messages.no-lines')}
+            </Typography>
+          ) : null}
+        </Box>
+      ) : (
+        <Paper variant="outlined" sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+          <Table stickyHeader size="small">
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={9}>
-                  <Typography color="text.secondary" sx={{ py: 2 }}>
-                    {t('messages.no-lines')}
-                  </Typography>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.code')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.name')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.batch')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{t('label.expiry')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="right">
+                  {t('label.pack-size')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="right">
+                  {t('label.pack-quantity')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="right">
+                  {t('label.total-quantity')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="right">
+                  {t('label.price-per-pack')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="right">
+                  {t('label.total')}
                 </TableCell>
               </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
-      </Paper>
+            </TableHead>
+            <TableBody>
+              {lines.map(line => (
+                <TableRow key={line.id} hover>
+                  <TableCell>{line.item.code}</TableCell>
+                  <TableCell>{line.item.name}</TableCell>
+                  <TableCell>{line.batch ?? ''}</TableCell>
+                  <TableCell>{line.expiryDate ?? ''}</TableCell>
+                  <TableCell align="right">{line.packSize}</TableCell>
+                  <TableCell align="right">{line.numberOfPacks}</TableCell>
+                  <TableCell align="right">
+                    {(line.packSize * line.numberOfPacks).toLocaleString()}
+                  </TableCell>
+                  <TableCell align="right">
+                    {formatCurrency(line.sellPricePerPack)}
+                  </TableCell>
+                  <TableCell align="right">
+                    {formatCurrency(line.sellPricePerPack * line.numberOfPacks)}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {lines.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9}>
+                    <Typography color="text.secondary" sx={{ py: 2 }}>
+                      {t('messages.no-lines')}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        </Paper>
+      )}
 
       <StatusBar
         sequence={flow.sequence}

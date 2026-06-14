@@ -163,6 +163,23 @@ export type UpdateRequestLineMutation = {
       };
 };
 
+export type InsertRequestMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertRequestRequisitionInput;
+}>;
+
+export type InsertRequestMutation = {
+  __typename: 'Mutations';
+  insertRequestRequisition:
+    | {
+        __typename: 'InsertRequestRequisitionError';
+        error:
+          | { __typename: 'OtherPartyNotASupplier'; description: string }
+          | { __typename: 'OtherPartyNotVisible'; description: string };
+      }
+    | { __typename: 'RequisitionNode'; id: string };
+};
+
 export type InsertRequestLineMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.InsertRequestRequisitionLineInput;
@@ -317,6 +334,25 @@ export const UpdateRequestLineDocument = gql`
     }
   }
 `;
+export const InsertRequestDocument = gql`
+  mutation insertRequest(
+    $storeId: String!
+    $input: InsertRequestRequisitionInput!
+  ) {
+    insertRequestRequisition(storeId: $storeId, input: $input) {
+      __typename
+      ... on RequisitionNode {
+        id
+      }
+      ... on InsertRequestRequisitionError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+`;
 export const InsertRequestLineDocument = gql`
   mutation insertRequestLine(
     $storeId: String!
@@ -441,6 +477,24 @@ export function getSdk(
             signal,
           }),
         'updateRequestLine',
+        'mutation',
+        variables,
+      );
+    },
+    insertRequest(
+      variables: InsertRequestMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<InsertRequestMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertRequestMutation>({
+            document: InsertRequestDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'insertRequest',
         'mutation',
         variables,
       );

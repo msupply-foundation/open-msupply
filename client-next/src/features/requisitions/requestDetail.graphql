@@ -90,6 +90,24 @@ mutation updateRequestLine(
   }
 }
 
+mutation insertRequest(
+  $storeId: String!
+  $input: InsertRequestRequisitionInput!
+) {
+  insertRequestRequisition(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionNode {
+      id
+    }
+    ... on InsertRequestRequisitionError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
 mutation insertRequestLine(
   $storeId: String!
   $input: InsertRequestRequisitionLineInput!

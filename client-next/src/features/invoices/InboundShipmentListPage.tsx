@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import {
   createColumnHelper,
@@ -10,22 +10,29 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import {
+  Alert,
   Box,
+  Button,
   FormControl,
   MenuItem,
   Select,
+  Stack,
   TablePagination,
   Typography,
 } from '@mui/material';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
 import { SearchField } from '@/components/SearchField';
+import { LineEditDialog } from '@/components/detail/LineEditDialog';
+import { NameSearchInput } from '@/components/detail/NameSearchInput';
 import { formatDate, formatCurrency } from '@/lib/format';
 import { InvoiceNodeStatus } from '@/gql/schema';
 import { invoiceListQueryOptions } from '@/features/invoices/queries';
 import { useInvoiceStatusName } from '@/features/invoices/status';
 import { inboundFilter } from '@/features/invoices/inboundShipment';
+import { inboundSdk } from '@/features/invoices/inboundDetail.queries';
 import type { InvoiceRowFragment } from '@/features/invoices/invoices.generated';
+import type { NameRowFragment } from '@/features/names/names.generated';
 
 const route = getRouteApi('/_authenticated/$storeId/replenishment/inbound-shipment/');
 const helper = createColumnHelper<InvoiceRowFragment>();
@@ -69,6 +76,8 @@ export function InboundShipmentListPage() {
     ],
     [t, statusName],
   );
+
+  const [createOpen, setCreateOpen] = useState(false);
 
   const sorting: SortingState = [{ id: search.sortKey, desc: search.sortDesc }];
   const pagination: PaginationState = { pageIndex: search.page - 1, pageSize: search.pageSize };
@@ -130,6 +139,9 @@ export function InboundShipmentListPage() {
             ))}
           </Select>
         </FormControl>
+        <Button variant="contained" onClick={() => setCreateOpen(true)}>
+          {t('button.new')}
+        </Button>
       </Box>
       <DataTable
         table={table}
@@ -149,6 +161,83 @@ export function InboundShipmentListPage() {
         onPageChange={(_, p) => navigate({ search: prev => ({ ...prev, page: p + 1 }) })}
         onRowsPerPageChange={e => navigate({ search: prev => ({ ...prev, pageSize: Number(e.target.value), page: 1 }) })}
       />
+      <CreateInboundDialog
+        open={createOpen}
+        storeId={storeId}
+        onClose={() => setCreateOpen(false)}
+        onCreated={invoiceId => {
+          setCreateOpen(false);
+          navigate({
+            to: '/$storeId/replenishment/inbound-shipment/$invoiceId',
+            params: { storeId, invoiceId },
+          });
+        }}
+      />
     </Box>
+  );
+}
+
+// Pick a supplier and create a new inbound shipment, then jump to its detail.
+const SUPPLIER_FILTER = { isSupplier: true, isVisible: true };
+
+function CreateInboundDialog({
+  open,
+  storeId,
+  onClose,
+  onCreated,
+}: {
+  open: boolean;
+  storeId: string;
+  onClose: () => void;
+  onCreated: (invoiceId: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [supplier, setSupplier] = useState<NameRowFragment | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setSupplier(null);
+      setError(null);
+    }
+  }, [open]);
+
+  const create = useMutation({
+    mutationFn: async () => {
+      if (!supplier) return;
+      const res = await inboundSdk.insertInbound({
+        storeId,
+        input: { id: crypto.randomUUID(), otherPartyId: supplier.id },
+      });
+      const result = res.insertInboundShipment;
+      if (result.__typename === 'InsertInboundShipmentError')
+        throw new Error(result.error.description);
+      onCreated(result.id);
+    },
+    onError: e => setError(e instanceof Error ? e.message : String(e)),
+  });
+
+  return (
+    <LineEditDialog
+      open={open}
+      title={t('heading.new-inbound-shipment')}
+      okLabel={t('button.create')}
+      onClose={onClose}
+      onOk={() => create.mutate()}
+      okDisabled={!supplier}
+      saving={create.isPending}
+    >
+      <Stack spacing={2} sx={{ pt: 1 }}>
+        <NameSearchInput
+          storeId={storeId}
+          filter={SUPPLIER_FILTER}
+          value={supplier}
+          onChange={setSupplier}
+          label={t('label.supplier-name')}
+          autoFocus
+        />
+        {error ? <Alert severity="error">{error}</Alert> : null}
+      </Stack>
+    </LineEditDialog>
   );
 }

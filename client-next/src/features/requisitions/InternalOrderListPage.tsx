@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import {
   createColumnHelper,
@@ -10,22 +10,31 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import {
+  Alert,
   Box,
+  Button,
   FormControl,
   MenuItem,
   Select,
+  Stack,
   TablePagination,
+  TextField,
   Typography,
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
 import { SearchField } from '@/components/SearchField';
+import { LineEditDialog } from '@/components/detail/LineEditDialog';
+import { NameSearchInput } from '@/components/detail/NameSearchInput';
 import { formatDate } from '@/lib/format';
 import { RequisitionNodeStatus } from '@/gql/schema';
 import { requisitionListQueryOptions } from '@/features/requisitions/queries';
 import { useRequisitionStatusName } from '@/features/requisitions/status';
 import { internalOrderFilter } from '@/features/requisitions/internalOrder';
+import { requestSdk } from '@/features/requisitions/requestDetail.queries';
 import type { RequisitionRowFragment } from '@/features/requisitions/requisitions.generated';
+import type { NameRowFragment } from '@/features/names/names.generated';
 
 const route = getRouteApi('/_authenticated/$storeId/replenishment/internal-order/');
 const helper = createColumnHelper<RequisitionRowFragment>();
@@ -44,6 +53,7 @@ export function InternalOrderListPage() {
   const { t } = useTranslation();
   const statusName = useRequisitionStatusName();
   const { storeId } = route.useParams();
+  const [createOpen, setCreateOpen] = useState(false);
 
   const { data } = useQuery({
     ...requisitionListQueryOptions(
@@ -128,7 +138,20 @@ export function InternalOrderListPage() {
             ))}
           </Select>
         </FormControl>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setCreateOpen(true)}
+        >
+          {t('button.new')}
+        </Button>
       </Box>
+
+      <CreateInternalOrderDialog
+        open={createOpen}
+        storeId={storeId}
+        onClose={() => setCreateOpen(false)}
+      />
       <DataTable
         table={table}
         onRowClick={row =>
@@ -148,5 +171,106 @@ export function InternalOrderListPage() {
         onRowsPerPageChange={e => navigate({ search: prev => ({ ...prev, pageSize: Number(e.target.value), page: 1 }) })}
       />
     </Box>
+  );
+}
+
+// A request requisition's other party MUST be a store, so the picker is
+// filtered to visible stores. Min/Max months of stock seed the suggested
+// quantities and default to the usual 1 / 3.
+function CreateInternalOrderDialog({
+  open,
+  storeId,
+  onClose,
+}: {
+  open: boolean;
+  storeId: string;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const navigate = route.useNavigate();
+  const [party, setParty] = useState<NameRowFragment | null>(null);
+  const [minMonths, setMinMonths] = useState('1');
+  const [maxMonths, setMaxMonths] = useState('3');
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setParty(null);
+      setMinMonths('1');
+      setMaxMonths('3');
+      setError(null);
+    }
+  }, [open]);
+
+  const create = useMutation({
+    mutationFn: async () => {
+      if (!party) return null;
+      const res = await requestSdk.insertRequest({
+        storeId,
+        input: {
+          id: crypto.randomUUID(),
+          otherPartyId: party.id,
+          minMonthsOfStock: Number(minMonths) || 0,
+          maxMonthsOfStock: Number(maxMonths) || 0,
+        },
+      });
+      if (
+        res.insertRequestRequisition.__typename ===
+        'InsertRequestRequisitionError'
+      )
+        throw new Error(res.insertRequestRequisition.error.description);
+      return res.insertRequestRequisition.id;
+    },
+    onSuccess: id => {
+      if (!id) return;
+      onClose();
+      navigate({
+        to: '/$storeId/replenishment/internal-order/$requisitionId',
+        params: { storeId, requisitionId: id },
+      });
+    },
+    onError: e => setError(e instanceof Error ? e.message : String(e)),
+  });
+
+  return (
+    <LineEditDialog
+      open={open}
+      title={t('heading.new-internal-order')}
+      okLabel={t('button.create')}
+      onClose={onClose}
+      onOk={() => create.mutate()}
+      okDisabled={!party}
+      saving={create.isPending}
+    >
+      <Stack spacing={2} sx={{ pt: 1 }}>
+        <NameSearchInput
+          storeId={storeId}
+          filter={{ isStore: true, isVisible: true }}
+          value={party}
+          onChange={setParty}
+          label={t('label.supplier-name')}
+          autoFocus
+        />
+        <Stack direction="row" spacing={2}>
+          <TextField
+            label={t('label.min-months-of-stock')}
+            value={minMonths}
+            onChange={e => setMinMonths(e.target.value)}
+            size="small"
+            fullWidth
+            type="number"
+          />
+          <TextField
+            label={t('label.max-months-of-stock')}
+            value={maxMonths}
+            onChange={e => setMaxMonths(e.target.value)}
+            size="small"
+            fullWidth
+            type="number"
+          />
+        </Stack>
+        {error ? <Alert severity="error">{error}</Alert> : null}
+      </Stack>
+    </LineEditDialog>
   );
 }

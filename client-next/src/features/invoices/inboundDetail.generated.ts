@@ -11,6 +11,7 @@ export type InboundLineRowFragment = {
   itemCode: string;
   batch?: string | null;
   expiryDate?: string | null;
+  manufactureDate?: string | null;
   packSize: number;
   numberOfPacks: number;
   costPricePerPack: number;
@@ -54,6 +55,7 @@ export type InboundDetailFragment = {
       itemCode: string;
       batch?: string | null;
       expiryDate?: string | null;
+      manufactureDate?: string | null;
       packSize: number;
       numberOfPacks: number;
       costPricePerPack: number;
@@ -111,6 +113,7 @@ export type InboundShipmentQuery = {
             itemCode: string;
             batch?: string | null;
             expiryDate?: string | null;
+            manufactureDate?: string | null;
             packSize: number;
             numberOfPacks: number;
             costPricePerPack: number;
@@ -132,6 +135,23 @@ export type InboundShipmentQuery = {
         };
       }
     | { __typename: 'NodeError' };
+};
+
+export type InsertInboundMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertInboundShipmentInput;
+}>;
+
+export type InsertInboundMutation = {
+  __typename: 'Mutations';
+  insertInboundShipment:
+    | {
+        __typename: 'InsertInboundShipmentError';
+        error:
+          | { __typename: 'OtherPartyNotASupplier'; description: string }
+          | { __typename: 'OtherPartyNotVisible'; description: string };
+      }
+    | { __typename: 'InvoiceNode'; id: string };
 };
 
 export type UpdateInboundMutationVariables = Types.Exact<{
@@ -229,6 +249,7 @@ export const InboundLineRowFragmentDoc = gql`
     itemCode
     batch
     expiryDate
+    manufactureDate
     packSize
     numberOfPacks
     costPricePerPack
@@ -291,6 +312,25 @@ export const InboundShipmentDocument = gql`
     }
   }
   ${InboundDetailFragmentDoc}
+`;
+export const InsertInboundDocument = gql`
+  mutation insertInbound(
+    $storeId: String!
+    $input: InsertInboundShipmentInput!
+  ) {
+    insertInboundShipment(storeId: $storeId, input: $input) {
+      __typename
+      ... on InvoiceNode {
+        id
+      }
+      ... on InsertInboundShipmentError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
 `;
 export const UpdateInboundDocument = gql`
   mutation updateInbound(
@@ -404,6 +444,24 @@ export function getSdk(
           }),
         'inboundShipment',
         'query',
+        variables,
+      );
+    },
+    insertInbound(
+      variables: InsertInboundMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<InsertInboundMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertInboundMutation>({
+            document: InsertInboundDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'insertInbound',
+        'mutation',
         variables,
       );
     },

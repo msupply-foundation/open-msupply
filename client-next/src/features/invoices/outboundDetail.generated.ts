@@ -124,6 +124,29 @@ export type OutboundShipmentQuery = {
     | { __typename: 'NodeError' };
 };
 
+export type InsertOutboundMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertOutboundShipmentInput;
+}>;
+
+export type InsertOutboundMutation = {
+  __typename: 'Mutations';
+  insertOutboundShipment:
+    | {
+        __typename: 'InsertOutboundShipmentError';
+        error:
+          | { __typename: 'OtherPartyNotACustomer'; description: string }
+          | { __typename: 'OtherPartyNotVisible'; description: string };
+      }
+    | { __typename: 'InvoiceNode'; id: string }
+    | {
+        __typename: 'NodeError';
+        error:
+          | { __typename: 'DatabaseError'; description: string }
+          | { __typename: 'RecordNotFound'; description: string };
+      };
+};
+
 export type UpdateOutboundMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.UpdateOutboundShipmentInput;
@@ -274,6 +297,31 @@ export const OutboundShipmentDocument = gql`
   }
   ${OutboundDetailFragmentDoc}
 `;
+export const InsertOutboundDocument = gql`
+  mutation insertOutbound(
+    $storeId: String!
+    $input: InsertOutboundShipmentInput!
+  ) {
+    insertOutboundShipment(storeId: $storeId, input: $input) {
+      __typename
+      ... on InvoiceNode {
+        id
+      }
+      ... on InsertOutboundShipmentError {
+        error {
+          __typename
+          description
+        }
+      }
+      ... on NodeError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+`;
 export const UpdateOutboundDocument = gql`
   mutation updateOutbound(
     $storeId: String!
@@ -373,6 +421,24 @@ export function getSdk(
           }),
         'outboundShipment',
         'query',
+        variables,
+      );
+    },
+    insertOutbound(
+      variables: InsertOutboundMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<InsertOutboundMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertOutboundMutation>({
+            document: InsertOutboundDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'insertOutbound',
+        'mutation',
         variables,
       );
     },
