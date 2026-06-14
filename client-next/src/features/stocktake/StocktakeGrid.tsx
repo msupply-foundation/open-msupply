@@ -68,6 +68,9 @@ interface RowReasons {
 const COLS =
   '90px minmax(160px, 1.4fr) 110px 140px 70px 90px 95px 90px 90px 170px 150px';
 const GRID_MIN_WIDTH = 1240;
+// Initial size hints only — actual row heights are measured per row
+// (virtualizer.measureElement), so content can never clip. ROW_HEIGHT also acts
+// as the desktop row's minHeight to keep the dense grid comfortably spaced.
 const ROW_HEIGHT = 44;
 const CARD_HEIGHT = 352;
 
@@ -629,14 +632,17 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
                 return (
                   <Box
                     key={line.id}
+                    data-index={vi.index}
+                    ref={virtualizer.measureElement}
                     sx={{
                       // Position with `top` (not `transform`): a transformed
-                      // ancestor breaks native <select>/date popups in Chromium.
+                      // ancestor breaks native <select>/date popups in Chromium,
+                      // and getBoundingClientRect (used by measureElement) ignores
+                      // `top`. Height is measured per row, so content never clips.
                       position: 'absolute',
                       top: vi.start,
                       left: 0,
                       width: '100%',
-                      height: vi.size,
                       borderBottom: 1,
                       borderColor: 'divider',
                       px: 2,
@@ -644,6 +650,7 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
                       ...(isPhone
                         ? { py: 1.5 }
                         : {
+                            minHeight: ROW_HEIGHT,
                             display: 'grid',
                             gridTemplateColumns: COLS,
                             gap: 1,
