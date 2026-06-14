@@ -222,9 +222,8 @@ function DesktopRow({
         {...register(`lines.${line.id}.expiry`)}
       />
       <input
-        type="number"
-        min={0}
-        step="any"
+        type="text"
+        inputMode="decimal"
         style={inputBase}
         {...register(`lines.${line.id}.packSize`, numericReg)}
       />
@@ -238,9 +237,7 @@ function DesktopRow({
         {line.snapshotNumberOfPacks}
       </span>
       <input
-        type="number"
-        min={0}
-        step="any"
+        type="text"
         inputMode="decimal"
         data-index={index}
         style={inputStyle(errField === 'counted')}
@@ -248,16 +245,14 @@ function DesktopRow({
         onKeyDown={e => onCountedKeyDown(e, index)}
       />
       <input
-        type="number"
-        min={0}
-        step="any"
+        type="text"
+        inputMode="decimal"
         style={inputBase}
         {...register(`lines.${line.id}.costPrice`, numericReg)}
       />
       <input
-        type="number"
-        min={0}
-        step="any"
+        type="text"
+        inputMode="decimal"
         style={inputBase}
         {...register(`lines.${line.id}.sellPrice`, numericReg)}
       />
@@ -307,9 +302,7 @@ function MobileCard({
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
         <CardField label={`Counted (snapshot ${line.snapshotNumberOfPacks})`}>
           <input
-            type="number"
-            min={0}
-            step="any"
+            type="text"
             inputMode="decimal"
             data-index={index}
             style={inputStyle(errField === 'counted')}
@@ -319,9 +312,8 @@ function MobileCard({
         </CardField>
         <CardField label="Pack size">
           <input
-            type="number"
-            min={0}
-            step="any"
+            type="text"
+            inputMode="decimal"
             style={inputBase}
             {...register(`lines.${line.id}.packSize`, numericReg)}
           />
@@ -338,18 +330,16 @@ function MobileCard({
         </CardField>
         <CardField label="Cost price">
           <input
-            type="number"
-            min={0}
-            step="any"
+            type="text"
+            inputMode="decimal"
             style={inputBase}
             {...register(`lines.${line.id}.costPrice`, numericReg)}
           />
         </CardField>
         <CardField label="Sell price">
           <input
-            type="number"
-            min={0}
-            step="any"
+            type="text"
+            inputMode="decimal"
             style={inputBase}
             {...register(`lines.${line.id}.sellPrice`, numericReg)}
           />
@@ -640,12 +630,13 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
                   <Box
                     key={line.id}
                     sx={{
+                      // Position with `top` (not `transform`): a transformed
+                      // ancestor breaks native <select>/date popups in Chromium.
                       position: 'absolute',
-                      top: 0,
+                      top: vi.start,
                       left: 0,
                       width: '100%',
                       height: vi.size,
-                      transform: `translateY(${vi.start}px)`,
                       borderBottom: 1,
                       borderColor: 'divider',
                       px: 2,
