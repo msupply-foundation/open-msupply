@@ -69,7 +69,7 @@ const COLS =
   '90px minmax(160px, 1.4fr) 110px 140px 70px 90px 95px 90px 90px 170px 150px';
 const GRID_MIN_WIDTH = 1240;
 const ROW_HEIGHT = 44;
-const CARD_HEIGHT = 296;
+const CARD_HEIGHT = 352;
 
 const cell = {
   overflow: 'hidden',
