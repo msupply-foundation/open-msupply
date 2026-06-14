@@ -1,0 +1,36 @@
+query syncStatus {
+  numberOfRecordsInPushQueue
+  latestSyncStatus {
+    __typename
+    ... on FullSyncStatusV5V6Node {
+      isSyncing
+      summary {
+        started
+        finished
+      }
+      lastSuccessfulSync {
+        finished
+      }
+      error {
+        fullError
+      }
+    }
+    ... on FullSyncStatusV7Node {
+      isSyncing
+      summary {
+        started
+        finished
+      }
+      lastSuccessfulSync {
+        finished
+      }
+      error {
+        fullError
+      }
+    }
+  }
+}
+
+mutation manualSync {
+  manualSync
+}

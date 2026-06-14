@@ -11,8 +11,10 @@ import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
+import SyncIcon from '@mui/icons-material/Sync';
 import LogoutIcon from '@mui/icons-material/Logout';
 import {
+  Badge,
   Box,
   Collapse,
   Divider,
@@ -23,6 +25,7 @@ import {
   ListItemText,
   Typography,
 } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
 import {
   Link,
   useNavigate,
@@ -31,6 +34,7 @@ import {
 } from '@tanstack/react-router';
 import { useSession } from '@/app/session';
 import { useTranslation, type TxKey } from '@/intl';
+import { syncStatusQueryOptions } from '@/features/sync/queries';
 import { MSupplyGuy } from '@/components/MSupplyGuy';
 
 export const DRAWER_WIDTH = 240;
@@ -175,15 +179,22 @@ interface NavDrawerProps {
   /** Controls the temporary (mobile) drawer; ignored by the permanent one. */
   mobileOpen: boolean;
   onClose: () => void;
+  /** Opens the sync modal (Sync is an action, not a destination). */
+  onOpenSync: () => void;
 }
 
 const paperSx = { width: DRAWER_WIDTH, boxSizing: 'border-box' } as const;
 
-export function NavDrawer({ mobileOpen, onClose }: NavDrawerProps) {
+export function NavDrawer({ mobileOpen, onClose, onOpenSync }: NavDrawerProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const store = useSession(s => s.store);
   const clear = useSession(s => s.clear);
+  // Slow background poll keeps the push-queue badge fresh; the modal polls fast.
+  const { data: syncStatus } = useQuery({
+    ...syncStatusQueryOptions(),
+    refetchInterval: 60_000,
+  });
   const pathname = useRouterState({ select: s => s.location.pathname });
   const { storeId } = useParams({ strict: false });
   const withStore: WithStore = to =>
@@ -271,7 +282,26 @@ export function NavDrawer({ mobileOpen, onClose }: NavDrawerProps) {
       <Box sx={{ flex: 1, overflowY: 'auto' }}>
         <List>{UPPER.map(renderEntry)}</List>
         <Divider />
-        <List>{LOWER.map(renderEntry)}</List>
+        <List>
+          {LOWER.map(renderEntry)}
+          <ListItemButton
+            onClick={() => {
+              onClose(); // close the mobile overlay before opening the modal
+              onOpenSync();
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 40 }}>
+              <Badge
+                color="primary"
+                max={999}
+                badgeContent={syncStatus?.numberOfRecordsInPushQueue ?? 0}
+              >
+                <SyncIcon />
+              </Badge>
+            </ListItemIcon>
+            <ListItemText primary={t('app.sync')} />
+          </ListItemButton>
+        </List>
       </Box>
 
       {/* Footer: store + logout, pinned to the bottom */}

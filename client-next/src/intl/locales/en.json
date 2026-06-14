@@ -10,6 +10,7 @@
     "reports": "Reports",
     "manage": "Manage",
     "settings": "Settings",
+    "sync": "Sync",
 
     "outbound-shipment": "Outbound shipments",
     "customer-requisition": "Customer requisitions",
@@ -42,7 +43,8 @@
     "logout": "Logout",
     "save": "Save",
     "saving": "Saving…",
-    "reload": "Reload"
+    "reload": "Reload",
+    "sync-now": "Sync now"
   },
 
   "heading": {
@@ -124,7 +126,12 @@
     "select-reason": "Select reason…",
     "line-count": "{{value}} lines",
     "edited-count": "{{value}} edited",
-    "invalid-count": "{{value}} invalid"
+    "invalid-count": "{{value}} invalid",
+    "syncing": "Syncing…",
+    "records-to-push": "{{value}} records to push",
+    "no-records-to-push": "No records to push",
+    "last-synced": "Last synced {{time}}",
+    "never-synced": "Not yet synced"
   },
 
   "error": {

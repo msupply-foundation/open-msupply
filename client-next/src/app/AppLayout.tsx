@@ -4,11 +4,13 @@ import { Box, IconButton } from '@mui/material';
 import { useTokenRefresh } from '@/app/useTokenRefresh';
 import { useIdleTimeout } from '@/app/useIdleTimeout';
 import { NavDrawer } from '@/app/NavDrawer';
+import { SyncModal } from '@/features/sync/SyncModal';
 import { useTranslation } from '@/intl';
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [syncOpen, setSyncOpen] = useState(false);
 
   // Keep the bearer token fresh while the authenticated shell is mounted, and
   // log out after 15 minutes of inactivity.
@@ -20,7 +22,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <NavDrawer
         mobileOpen={mobileNavOpen}
         onClose={() => setMobileNavOpen(false)}
+        onOpenSync={() => setSyncOpen(true)}
       />
+      <SyncModal open={syncOpen} onClose={() => setSyncOpen(false)} />
 
       {/* No top bar — mobile gets a floating button to open the drawer. */}
       <IconButton
