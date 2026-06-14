@@ -69,6 +69,7 @@ interface SessionState {
   setSession: (payload: SessionPayload) => void;
   setToken: (token: string) => void;
   setStore: (store: SessionStore) => void;
+  setStores: (stores: SessionStore[]) => void;
   clear: () => void;
 }
 
@@ -106,6 +107,9 @@ export const useSession = create<SessionState>(set => ({
       });
       return { token, isAuthenticated: true };
     }),
+  // The user's accessible stores aren't persisted in the cookie; populated in
+  // memory (e.g. fetched on a cold load to validate a store-scoped URL).
+  setStores: stores => set({ stores }),
   setStore: store =>
     set(state => {
       if (state.token) {
