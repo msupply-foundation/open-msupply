@@ -39,22 +39,39 @@ const SUPPLIER_RETURN: InvoiceFlow = {
   editable: [S.New, S.Picked],
 };
 
-// Customer return (manual) skips Delivered; only RECEIVED/VERIFIED are advanced
-// from this side.
-const CUSTOMER_RETURN: InvoiceFlow = {
+// Customer return, manually created (no linked shipment): skips Delivered; only
+// RECEIVED/VERIFIED are advanced from this side.
+const CUSTOMER_RETURN_MANUAL: InvoiceFlow = {
   sequence: [S.New, S.Received, S.Verified],
   next: { [S.New]: [S.Received, S.Verified], [S.Received]: [S.Verified] },
   editable: [S.New, S.Received],
 };
 
-export function invoiceStatusFlow(type: InvoiceNodeType): InvoiceFlow {
+// Customer return created automatically by a supplier-return transfer: its early
+// statuses (Picked/Shipped) are mirrored from the source via sync, and only
+// RECEIVED/VERIFIED are advanced from this (receiving) side.
+const CUSTOMER_RETURN_AUTO: InvoiceFlow = {
+  sequence: [S.New, S.Picked, S.Shipped, S.Received, S.Verified],
+  next: { [S.Shipped]: [S.Received], [S.Received]: [S.Verified] },
+  editable: [S.New, S.Received],
+};
+
+export interface InvoiceFlowOpts {
+  /** True when the document has a linked shipment (an auto/transfer document). */
+  linked?: boolean;
+}
+
+export function invoiceStatusFlow(
+  type: InvoiceNodeType,
+  opts?: InvoiceFlowOpts,
+): InvoiceFlow {
   switch (type) {
     case InvoiceNodeType.InboundShipment:
       return INBOUND;
     case InvoiceNodeType.SupplierReturn:
       return SUPPLIER_RETURN;
     case InvoiceNodeType.CustomerReturn:
-      return CUSTOMER_RETURN;
+      return opts?.linked ? CUSTOMER_RETURN_AUTO : CUSTOMER_RETURN_MANUAL;
     case InvoiceNodeType.OutboundShipment:
     default:
       return OUTBOUND;

@@ -35,8 +35,11 @@ export type CustomerReturnDetailFragment = {
   colour?: string | null;
   otherPartyName: string;
   createdDatetime: string;
+  pickedDatetime?: string | null;
+  shippedDatetime?: string | null;
   receivedDatetime?: string | null;
   verifiedDatetime?: string | null;
+  linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
   user?: { __typename: 'UserNode'; username: string } | null;
   pricing: { __typename: 'PricingNode'; totalAfterTax: number };
   lines: {
@@ -84,8 +87,11 @@ export type CustomerReturnQuery = {
         colour?: string | null;
         otherPartyName: string;
         createdDatetime: string;
+        pickedDatetime?: string | null;
+        shippedDatetime?: string | null;
         receivedDatetime?: string | null;
         verifiedDatetime?: string | null;
+        linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
         user?: { __typename: 'UserNode'; username: string } | null;
         pricing: { __typename: 'PricingNode'; totalAfterTax: number };
         lines: {
@@ -166,8 +172,14 @@ export const CustomerReturnDetailFragmentDoc = gql`
     colour
     otherPartyName
     createdDatetime
+    pickedDatetime
+    shippedDatetime
     receivedDatetime
     verifiedDatetime
+    linkedShipment {
+      __typename
+      id
+    }
     user {
       __typename
       username

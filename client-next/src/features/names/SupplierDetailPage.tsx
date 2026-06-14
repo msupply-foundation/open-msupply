@@ -88,9 +88,9 @@ function SupplierDetail({
         {supplier.name}
       </Typography>
       <Tabs value={tab} onChange={(_, v) => setTab(v)}>
-        <Tab label={t('label.name')} />
-        <Tab label={t('label.lines')} />
-        <Tab label={t('label.first-name')} />
+        <Tab label={t('label.details')} />
+        <Tab label={t('label.purchase-orders')} />
+        <Tab label={t('label.contacts')} />
       </Tabs>
       {tab === 0 ? <DetailsTab supplier={supplier} /> : null}
       {tab === 1 ? (

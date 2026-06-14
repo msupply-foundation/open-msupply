@@ -30,8 +30,14 @@ fragment CustomerReturnDetail on InvoiceNode {
   colour
   otherPartyName
   createdDatetime
+  pickedDatetime
+  shippedDatetime
   receivedDatetime
   verifiedDatetime
+  linkedShipment {
+    __typename
+    id
+  }
   user {
     __typename
     username

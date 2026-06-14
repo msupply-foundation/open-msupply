@@ -161,7 +161,11 @@
     "period": "Period",
     "program": "Program",
     "entered-by": "Entered by",
-    "colour": "Colour"
+    "colour": "Colour",
+    "details": "Details",
+    "purchase-orders": "Purchase orders",
+    "contacts": "Contacts",
+    "total-quantity": "Total quantity"
   },
 
   "placeholder": {

@@ -74,7 +74,9 @@ function CustomerReturnEditor({
   const statusName = useInvoiceStatusName();
   const { confirm, dialog } = useConfirm();
 
-  const flow = invoiceStatusFlow(InvoiceNodeType.CustomerReturn);
+  const flow = invoiceStatusFlow(InvoiceNodeType.CustomerReturn, {
+    linked: Boolean(invoice.linkedShipment?.id),
+  });
   const editable = flow.editable.includes(invoice.status);
   const lines = invoice.lines.nodes;
 
@@ -225,7 +227,7 @@ function CustomerReturnEditor({
                 {t('label.pack-quantity')}
               </TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="right">
-                {t('label.total')}
+                {t('label.total-quantity')}
               </TableCell>
               <TableCell sx={{ fontWeight: 600 }} align="right">
                 {t('label.price-per-pack')}
