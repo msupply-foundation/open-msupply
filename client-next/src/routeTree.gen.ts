@@ -12,10 +12,33 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedStocktakeIndexRouteImport } from './routes/_authenticated/stocktake/index'
 import { Route as AuthenticatedStockIndexRouteImport } from './routes/_authenticated/stock/index'
 import { Route as AuthenticatedStocktakeStocktakeIdRouteImport } from './routes/_authenticated/stocktake/$stocktakeId'
 import { Route as AuthenticatedStockStockLineIdRouteImport } from './routes/_authenticated/stock/$stockLineId'
+import { Route as AuthenticatedReplenishmentSuppliersRouteImport } from './routes/_authenticated/replenishment/suppliers'
+import { Route as AuthenticatedReplenishmentSupplierReturnRouteImport } from './routes/_authenticated/replenishment/supplier-return'
+import { Route as AuthenticatedReplenishmentInternalOrderRouteImport } from './routes/_authenticated/replenishment/internal-order'
+import { Route as AuthenticatedReplenishmentInboundShipmentRouteImport } from './routes/_authenticated/replenishment/inbound-shipment'
+import { Route as AuthenticatedManageStoresRouteImport } from './routes/_authenticated/manage/stores'
+import { Route as AuthenticatedManageGlobalPreferencesRouteImport } from './routes/_authenticated/manage/global-preferences'
+import { Route as AuthenticatedManageCampaignsRouteImport } from './routes/_authenticated/manage/campaigns'
+import { Route as AuthenticatedInventoryLocationsRouteImport } from './routes/_authenticated/inventory/locations'
+import { Route as AuthenticatedDistributionOutboundShipmentRouteImport } from './routes/_authenticated/distribution/outbound-shipment'
+import { Route as AuthenticatedDistributionCustomersRouteImport } from './routes/_authenticated/distribution/customers'
+import { Route as AuthenticatedDistributionCustomerReturnRouteImport } from './routes/_authenticated/distribution/customer-return'
+import { Route as AuthenticatedDistributionCustomerRequisitionRouteImport } from './routes/_authenticated/distribution/customer-requisition'
+import { Route as AuthenticatedDispensaryPrescriptionRouteImport } from './routes/_authenticated/dispensary/prescription'
+import { Route as AuthenticatedDispensaryPatientsRouteImport } from './routes/_authenticated/dispensary/patients'
+import { Route as AuthenticatedDispensaryCliniciansRouteImport } from './routes/_authenticated/dispensary/clinicians'
+import { Route as AuthenticatedColdChainSensorsRouteImport } from './routes/_authenticated/cold-chain/sensors'
+import { Route as AuthenticatedColdChainMonitoringRouteImport } from './routes/_authenticated/cold-chain/monitoring'
+import { Route as AuthenticatedColdChainEquipmentRouteImport } from './routes/_authenticated/cold-chain/equipment'
+import { Route as AuthenticatedCatalogueMasterListsRouteImport } from './routes/_authenticated/catalogue/master-lists'
+import { Route as AuthenticatedCatalogueItemsRouteImport } from './routes/_authenticated/catalogue/items'
+import { Route as AuthenticatedCatalogueAssetsRouteImport } from './routes/_authenticated/catalogue/assets'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -29,6 +52,16 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedStocktakeIndexRoute =
@@ -54,10 +87,159 @@ const AuthenticatedStockStockLineIdRoute =
     path: '/stock/$stockLineId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedReplenishmentSuppliersRoute =
+  AuthenticatedReplenishmentSuppliersRouteImport.update({
+    id: '/replenishment/suppliers',
+    path: '/replenishment/suppliers',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedReplenishmentSupplierReturnRoute =
+  AuthenticatedReplenishmentSupplierReturnRouteImport.update({
+    id: '/replenishment/supplier-return',
+    path: '/replenishment/supplier-return',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedReplenishmentInternalOrderRoute =
+  AuthenticatedReplenishmentInternalOrderRouteImport.update({
+    id: '/replenishment/internal-order',
+    path: '/replenishment/internal-order',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedReplenishmentInboundShipmentRoute =
+  AuthenticatedReplenishmentInboundShipmentRouteImport.update({
+    id: '/replenishment/inbound-shipment',
+    path: '/replenishment/inbound-shipment',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedManageStoresRoute =
+  AuthenticatedManageStoresRouteImport.update({
+    id: '/manage/stores',
+    path: '/manage/stores',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedManageGlobalPreferencesRoute =
+  AuthenticatedManageGlobalPreferencesRouteImport.update({
+    id: '/manage/global-preferences',
+    path: '/manage/global-preferences',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedManageCampaignsRoute =
+  AuthenticatedManageCampaignsRouteImport.update({
+    id: '/manage/campaigns',
+    path: '/manage/campaigns',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedInventoryLocationsRoute =
+  AuthenticatedInventoryLocationsRouteImport.update({
+    id: '/inventory/locations',
+    path: '/inventory/locations',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDistributionOutboundShipmentRoute =
+  AuthenticatedDistributionOutboundShipmentRouteImport.update({
+    id: '/distribution/outbound-shipment',
+    path: '/distribution/outbound-shipment',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDistributionCustomersRoute =
+  AuthenticatedDistributionCustomersRouteImport.update({
+    id: '/distribution/customers',
+    path: '/distribution/customers',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDistributionCustomerReturnRoute =
+  AuthenticatedDistributionCustomerReturnRouteImport.update({
+    id: '/distribution/customer-return',
+    path: '/distribution/customer-return',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDistributionCustomerRequisitionRoute =
+  AuthenticatedDistributionCustomerRequisitionRouteImport.update({
+    id: '/distribution/customer-requisition',
+    path: '/distribution/customer-requisition',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDispensaryPrescriptionRoute =
+  AuthenticatedDispensaryPrescriptionRouteImport.update({
+    id: '/dispensary/prescription',
+    path: '/dispensary/prescription',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDispensaryPatientsRoute =
+  AuthenticatedDispensaryPatientsRouteImport.update({
+    id: '/dispensary/patients',
+    path: '/dispensary/patients',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDispensaryCliniciansRoute =
+  AuthenticatedDispensaryCliniciansRouteImport.update({
+    id: '/dispensary/clinicians',
+    path: '/dispensary/clinicians',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedColdChainSensorsRoute =
+  AuthenticatedColdChainSensorsRouteImport.update({
+    id: '/cold-chain/sensors',
+    path: '/cold-chain/sensors',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedColdChainMonitoringRoute =
+  AuthenticatedColdChainMonitoringRouteImport.update({
+    id: '/cold-chain/monitoring',
+    path: '/cold-chain/monitoring',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedColdChainEquipmentRoute =
+  AuthenticatedColdChainEquipmentRouteImport.update({
+    id: '/cold-chain/equipment',
+    path: '/cold-chain/equipment',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCatalogueMasterListsRoute =
+  AuthenticatedCatalogueMasterListsRouteImport.update({
+    id: '/catalogue/master-lists',
+    path: '/catalogue/master-lists',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCatalogueItemsRoute =
+  AuthenticatedCatalogueItemsRouteImport.update({
+    id: '/catalogue/items',
+    path: '/catalogue/items',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCatalogueAssetsRoute =
+  AuthenticatedCatalogueAssetsRouteImport.update({
+    id: '/catalogue/assets',
+    path: '/catalogue/assets',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
+  '/reports': typeof AuthenticatedReportsRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/catalogue/assets': typeof AuthenticatedCatalogueAssetsRoute
+  '/catalogue/items': typeof AuthenticatedCatalogueItemsRoute
+  '/catalogue/master-lists': typeof AuthenticatedCatalogueMasterListsRoute
+  '/cold-chain/equipment': typeof AuthenticatedColdChainEquipmentRoute
+  '/cold-chain/monitoring': typeof AuthenticatedColdChainMonitoringRoute
+  '/cold-chain/sensors': typeof AuthenticatedColdChainSensorsRoute
+  '/dispensary/clinicians': typeof AuthenticatedDispensaryCliniciansRoute
+  '/dispensary/patients': typeof AuthenticatedDispensaryPatientsRoute
+  '/dispensary/prescription': typeof AuthenticatedDispensaryPrescriptionRoute
+  '/distribution/customer-requisition': typeof AuthenticatedDistributionCustomerRequisitionRoute
+  '/distribution/customer-return': typeof AuthenticatedDistributionCustomerReturnRoute
+  '/distribution/customers': typeof AuthenticatedDistributionCustomersRoute
+  '/distribution/outbound-shipment': typeof AuthenticatedDistributionOutboundShipmentRoute
+  '/inventory/locations': typeof AuthenticatedInventoryLocationsRoute
+  '/manage/campaigns': typeof AuthenticatedManageCampaignsRoute
+  '/manage/global-preferences': typeof AuthenticatedManageGlobalPreferencesRoute
+  '/manage/stores': typeof AuthenticatedManageStoresRoute
+  '/replenishment/inbound-shipment': typeof AuthenticatedReplenishmentInboundShipmentRoute
+  '/replenishment/internal-order': typeof AuthenticatedReplenishmentInternalOrderRoute
+  '/replenishment/supplier-return': typeof AuthenticatedReplenishmentSupplierReturnRoute
+  '/replenishment/suppliers': typeof AuthenticatedReplenishmentSuppliersRoute
   '/stock/$stockLineId': typeof AuthenticatedStockStockLineIdRoute
   '/stocktake/$stocktakeId': typeof AuthenticatedStocktakeStocktakeIdRoute
   '/stock/': typeof AuthenticatedStockIndexRoute
@@ -65,7 +247,30 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
+  '/reports': typeof AuthenticatedReportsRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/': typeof AuthenticatedIndexRoute
+  '/catalogue/assets': typeof AuthenticatedCatalogueAssetsRoute
+  '/catalogue/items': typeof AuthenticatedCatalogueItemsRoute
+  '/catalogue/master-lists': typeof AuthenticatedCatalogueMasterListsRoute
+  '/cold-chain/equipment': typeof AuthenticatedColdChainEquipmentRoute
+  '/cold-chain/monitoring': typeof AuthenticatedColdChainMonitoringRoute
+  '/cold-chain/sensors': typeof AuthenticatedColdChainSensorsRoute
+  '/dispensary/clinicians': typeof AuthenticatedDispensaryCliniciansRoute
+  '/dispensary/patients': typeof AuthenticatedDispensaryPatientsRoute
+  '/dispensary/prescription': typeof AuthenticatedDispensaryPrescriptionRoute
+  '/distribution/customer-requisition': typeof AuthenticatedDistributionCustomerRequisitionRoute
+  '/distribution/customer-return': typeof AuthenticatedDistributionCustomerReturnRoute
+  '/distribution/customers': typeof AuthenticatedDistributionCustomersRoute
+  '/distribution/outbound-shipment': typeof AuthenticatedDistributionOutboundShipmentRoute
+  '/inventory/locations': typeof AuthenticatedInventoryLocationsRoute
+  '/manage/campaigns': typeof AuthenticatedManageCampaignsRoute
+  '/manage/global-preferences': typeof AuthenticatedManageGlobalPreferencesRoute
+  '/manage/stores': typeof AuthenticatedManageStoresRoute
+  '/replenishment/inbound-shipment': typeof AuthenticatedReplenishmentInboundShipmentRoute
+  '/replenishment/internal-order': typeof AuthenticatedReplenishmentInternalOrderRoute
+  '/replenishment/supplier-return': typeof AuthenticatedReplenishmentSupplierReturnRoute
+  '/replenishment/suppliers': typeof AuthenticatedReplenishmentSuppliersRoute
   '/stock/$stockLineId': typeof AuthenticatedStockStockLineIdRoute
   '/stocktake/$stocktakeId': typeof AuthenticatedStocktakeStocktakeIdRoute
   '/stock': typeof AuthenticatedStockIndexRoute
@@ -75,7 +280,30 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/reports': typeof AuthenticatedReportsRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/catalogue/assets': typeof AuthenticatedCatalogueAssetsRoute
+  '/_authenticated/catalogue/items': typeof AuthenticatedCatalogueItemsRoute
+  '/_authenticated/catalogue/master-lists': typeof AuthenticatedCatalogueMasterListsRoute
+  '/_authenticated/cold-chain/equipment': typeof AuthenticatedColdChainEquipmentRoute
+  '/_authenticated/cold-chain/monitoring': typeof AuthenticatedColdChainMonitoringRoute
+  '/_authenticated/cold-chain/sensors': typeof AuthenticatedColdChainSensorsRoute
+  '/_authenticated/dispensary/clinicians': typeof AuthenticatedDispensaryCliniciansRoute
+  '/_authenticated/dispensary/patients': typeof AuthenticatedDispensaryPatientsRoute
+  '/_authenticated/dispensary/prescription': typeof AuthenticatedDispensaryPrescriptionRoute
+  '/_authenticated/distribution/customer-requisition': typeof AuthenticatedDistributionCustomerRequisitionRoute
+  '/_authenticated/distribution/customer-return': typeof AuthenticatedDistributionCustomerReturnRoute
+  '/_authenticated/distribution/customers': typeof AuthenticatedDistributionCustomersRoute
+  '/_authenticated/distribution/outbound-shipment': typeof AuthenticatedDistributionOutboundShipmentRoute
+  '/_authenticated/inventory/locations': typeof AuthenticatedInventoryLocationsRoute
+  '/_authenticated/manage/campaigns': typeof AuthenticatedManageCampaignsRoute
+  '/_authenticated/manage/global-preferences': typeof AuthenticatedManageGlobalPreferencesRoute
+  '/_authenticated/manage/stores': typeof AuthenticatedManageStoresRoute
+  '/_authenticated/replenishment/inbound-shipment': typeof AuthenticatedReplenishmentInboundShipmentRoute
+  '/_authenticated/replenishment/internal-order': typeof AuthenticatedReplenishmentInternalOrderRoute
+  '/_authenticated/replenishment/supplier-return': typeof AuthenticatedReplenishmentSupplierReturnRoute
+  '/_authenticated/replenishment/suppliers': typeof AuthenticatedReplenishmentSuppliersRoute
   '/_authenticated/stock/$stockLineId': typeof AuthenticatedStockStockLineIdRoute
   '/_authenticated/stocktake/$stocktakeId': typeof AuthenticatedStocktakeStocktakeIdRoute
   '/_authenticated/stock/': typeof AuthenticatedStockIndexRoute
@@ -86,6 +314,29 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/reports'
+    | '/settings'
+    | '/catalogue/assets'
+    | '/catalogue/items'
+    | '/catalogue/master-lists'
+    | '/cold-chain/equipment'
+    | '/cold-chain/monitoring'
+    | '/cold-chain/sensors'
+    | '/dispensary/clinicians'
+    | '/dispensary/patients'
+    | '/dispensary/prescription'
+    | '/distribution/customer-requisition'
+    | '/distribution/customer-return'
+    | '/distribution/customers'
+    | '/distribution/outbound-shipment'
+    | '/inventory/locations'
+    | '/manage/campaigns'
+    | '/manage/global-preferences'
+    | '/manage/stores'
+    | '/replenishment/inbound-shipment'
+    | '/replenishment/internal-order'
+    | '/replenishment/supplier-return'
+    | '/replenishment/suppliers'
     | '/stock/$stockLineId'
     | '/stocktake/$stocktakeId'
     | '/stock/'
@@ -93,7 +344,30 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
+    | '/reports'
+    | '/settings'
     | '/'
+    | '/catalogue/assets'
+    | '/catalogue/items'
+    | '/catalogue/master-lists'
+    | '/cold-chain/equipment'
+    | '/cold-chain/monitoring'
+    | '/cold-chain/sensors'
+    | '/dispensary/clinicians'
+    | '/dispensary/patients'
+    | '/dispensary/prescription'
+    | '/distribution/customer-requisition'
+    | '/distribution/customer-return'
+    | '/distribution/customers'
+    | '/distribution/outbound-shipment'
+    | '/inventory/locations'
+    | '/manage/campaigns'
+    | '/manage/global-preferences'
+    | '/manage/stores'
+    | '/replenishment/inbound-shipment'
+    | '/replenishment/internal-order'
+    | '/replenishment/supplier-return'
+    | '/replenishment/suppliers'
     | '/stock/$stockLineId'
     | '/stocktake/$stocktakeId'
     | '/stock'
@@ -102,7 +376,30 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/login'
+    | '/_authenticated/reports'
+    | '/_authenticated/settings'
     | '/_authenticated/'
+    | '/_authenticated/catalogue/assets'
+    | '/_authenticated/catalogue/items'
+    | '/_authenticated/catalogue/master-lists'
+    | '/_authenticated/cold-chain/equipment'
+    | '/_authenticated/cold-chain/monitoring'
+    | '/_authenticated/cold-chain/sensors'
+    | '/_authenticated/dispensary/clinicians'
+    | '/_authenticated/dispensary/patients'
+    | '/_authenticated/dispensary/prescription'
+    | '/_authenticated/distribution/customer-requisition'
+    | '/_authenticated/distribution/customer-return'
+    | '/_authenticated/distribution/customers'
+    | '/_authenticated/distribution/outbound-shipment'
+    | '/_authenticated/inventory/locations'
+    | '/_authenticated/manage/campaigns'
+    | '/_authenticated/manage/global-preferences'
+    | '/_authenticated/manage/stores'
+    | '/_authenticated/replenishment/inbound-shipment'
+    | '/_authenticated/replenishment/internal-order'
+    | '/_authenticated/replenishment/supplier-return'
+    | '/_authenticated/replenishment/suppliers'
     | '/_authenticated/stock/$stockLineId'
     | '/_authenticated/stocktake/$stocktakeId'
     | '/_authenticated/stock/'
@@ -137,6 +434,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/stocktake/': {
       id: '/_authenticated/stocktake/'
       path: '/stocktake'
@@ -165,11 +476,181 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStockStockLineIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/replenishment/suppliers': {
+      id: '/_authenticated/replenishment/suppliers'
+      path: '/replenishment/suppliers'
+      fullPath: '/replenishment/suppliers'
+      preLoaderRoute: typeof AuthenticatedReplenishmentSuppliersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/replenishment/supplier-return': {
+      id: '/_authenticated/replenishment/supplier-return'
+      path: '/replenishment/supplier-return'
+      fullPath: '/replenishment/supplier-return'
+      preLoaderRoute: typeof AuthenticatedReplenishmentSupplierReturnRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/replenishment/internal-order': {
+      id: '/_authenticated/replenishment/internal-order'
+      path: '/replenishment/internal-order'
+      fullPath: '/replenishment/internal-order'
+      preLoaderRoute: typeof AuthenticatedReplenishmentInternalOrderRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/replenishment/inbound-shipment': {
+      id: '/_authenticated/replenishment/inbound-shipment'
+      path: '/replenishment/inbound-shipment'
+      fullPath: '/replenishment/inbound-shipment'
+      preLoaderRoute: typeof AuthenticatedReplenishmentInboundShipmentRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/manage/stores': {
+      id: '/_authenticated/manage/stores'
+      path: '/manage/stores'
+      fullPath: '/manage/stores'
+      preLoaderRoute: typeof AuthenticatedManageStoresRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/manage/global-preferences': {
+      id: '/_authenticated/manage/global-preferences'
+      path: '/manage/global-preferences'
+      fullPath: '/manage/global-preferences'
+      preLoaderRoute: typeof AuthenticatedManageGlobalPreferencesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/manage/campaigns': {
+      id: '/_authenticated/manage/campaigns'
+      path: '/manage/campaigns'
+      fullPath: '/manage/campaigns'
+      preLoaderRoute: typeof AuthenticatedManageCampaignsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/inventory/locations': {
+      id: '/_authenticated/inventory/locations'
+      path: '/inventory/locations'
+      fullPath: '/inventory/locations'
+      preLoaderRoute: typeof AuthenticatedInventoryLocationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/distribution/outbound-shipment': {
+      id: '/_authenticated/distribution/outbound-shipment'
+      path: '/distribution/outbound-shipment'
+      fullPath: '/distribution/outbound-shipment'
+      preLoaderRoute: typeof AuthenticatedDistributionOutboundShipmentRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/distribution/customers': {
+      id: '/_authenticated/distribution/customers'
+      path: '/distribution/customers'
+      fullPath: '/distribution/customers'
+      preLoaderRoute: typeof AuthenticatedDistributionCustomersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/distribution/customer-return': {
+      id: '/_authenticated/distribution/customer-return'
+      path: '/distribution/customer-return'
+      fullPath: '/distribution/customer-return'
+      preLoaderRoute: typeof AuthenticatedDistributionCustomerReturnRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/distribution/customer-requisition': {
+      id: '/_authenticated/distribution/customer-requisition'
+      path: '/distribution/customer-requisition'
+      fullPath: '/distribution/customer-requisition'
+      preLoaderRoute: typeof AuthenticatedDistributionCustomerRequisitionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dispensary/prescription': {
+      id: '/_authenticated/dispensary/prescription'
+      path: '/dispensary/prescription'
+      fullPath: '/dispensary/prescription'
+      preLoaderRoute: typeof AuthenticatedDispensaryPrescriptionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dispensary/patients': {
+      id: '/_authenticated/dispensary/patients'
+      path: '/dispensary/patients'
+      fullPath: '/dispensary/patients'
+      preLoaderRoute: typeof AuthenticatedDispensaryPatientsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dispensary/clinicians': {
+      id: '/_authenticated/dispensary/clinicians'
+      path: '/dispensary/clinicians'
+      fullPath: '/dispensary/clinicians'
+      preLoaderRoute: typeof AuthenticatedDispensaryCliniciansRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/cold-chain/sensors': {
+      id: '/_authenticated/cold-chain/sensors'
+      path: '/cold-chain/sensors'
+      fullPath: '/cold-chain/sensors'
+      preLoaderRoute: typeof AuthenticatedColdChainSensorsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/cold-chain/monitoring': {
+      id: '/_authenticated/cold-chain/monitoring'
+      path: '/cold-chain/monitoring'
+      fullPath: '/cold-chain/monitoring'
+      preLoaderRoute: typeof AuthenticatedColdChainMonitoringRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/cold-chain/equipment': {
+      id: '/_authenticated/cold-chain/equipment'
+      path: '/cold-chain/equipment'
+      fullPath: '/cold-chain/equipment'
+      preLoaderRoute: typeof AuthenticatedColdChainEquipmentRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/catalogue/master-lists': {
+      id: '/_authenticated/catalogue/master-lists'
+      path: '/catalogue/master-lists'
+      fullPath: '/catalogue/master-lists'
+      preLoaderRoute: typeof AuthenticatedCatalogueMasterListsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/catalogue/items': {
+      id: '/_authenticated/catalogue/items'
+      path: '/catalogue/items'
+      fullPath: '/catalogue/items'
+      preLoaderRoute: typeof AuthenticatedCatalogueItemsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/catalogue/assets': {
+      id: '/_authenticated/catalogue/assets'
+      path: '/catalogue/assets'
+      fullPath: '/catalogue/assets'
+      preLoaderRoute: typeof AuthenticatedCatalogueAssetsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedCatalogueAssetsRoute: typeof AuthenticatedCatalogueAssetsRoute
+  AuthenticatedCatalogueItemsRoute: typeof AuthenticatedCatalogueItemsRoute
+  AuthenticatedCatalogueMasterListsRoute: typeof AuthenticatedCatalogueMasterListsRoute
+  AuthenticatedColdChainEquipmentRoute: typeof AuthenticatedColdChainEquipmentRoute
+  AuthenticatedColdChainMonitoringRoute: typeof AuthenticatedColdChainMonitoringRoute
+  AuthenticatedColdChainSensorsRoute: typeof AuthenticatedColdChainSensorsRoute
+  AuthenticatedDispensaryCliniciansRoute: typeof AuthenticatedDispensaryCliniciansRoute
+  AuthenticatedDispensaryPatientsRoute: typeof AuthenticatedDispensaryPatientsRoute
+  AuthenticatedDispensaryPrescriptionRoute: typeof AuthenticatedDispensaryPrescriptionRoute
+  AuthenticatedDistributionCustomerRequisitionRoute: typeof AuthenticatedDistributionCustomerRequisitionRoute
+  AuthenticatedDistributionCustomerReturnRoute: typeof AuthenticatedDistributionCustomerReturnRoute
+  AuthenticatedDistributionCustomersRoute: typeof AuthenticatedDistributionCustomersRoute
+  AuthenticatedDistributionOutboundShipmentRoute: typeof AuthenticatedDistributionOutboundShipmentRoute
+  AuthenticatedInventoryLocationsRoute: typeof AuthenticatedInventoryLocationsRoute
+  AuthenticatedManageCampaignsRoute: typeof AuthenticatedManageCampaignsRoute
+  AuthenticatedManageGlobalPreferencesRoute: typeof AuthenticatedManageGlobalPreferencesRoute
+  AuthenticatedManageStoresRoute: typeof AuthenticatedManageStoresRoute
+  AuthenticatedReplenishmentInboundShipmentRoute: typeof AuthenticatedReplenishmentInboundShipmentRoute
+  AuthenticatedReplenishmentInternalOrderRoute: typeof AuthenticatedReplenishmentInternalOrderRoute
+  AuthenticatedReplenishmentSupplierReturnRoute: typeof AuthenticatedReplenishmentSupplierReturnRoute
+  AuthenticatedReplenishmentSuppliersRoute: typeof AuthenticatedReplenishmentSuppliersRoute
   AuthenticatedStockStockLineIdRoute: typeof AuthenticatedStockStockLineIdRoute
   AuthenticatedStocktakeStocktakeIdRoute: typeof AuthenticatedStocktakeStocktakeIdRoute
   AuthenticatedStockIndexRoute: typeof AuthenticatedStockIndexRoute
@@ -177,7 +658,42 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedCatalogueAssetsRoute: AuthenticatedCatalogueAssetsRoute,
+  AuthenticatedCatalogueItemsRoute: AuthenticatedCatalogueItemsRoute,
+  AuthenticatedCatalogueMasterListsRoute:
+    AuthenticatedCatalogueMasterListsRoute,
+  AuthenticatedColdChainEquipmentRoute: AuthenticatedColdChainEquipmentRoute,
+  AuthenticatedColdChainMonitoringRoute: AuthenticatedColdChainMonitoringRoute,
+  AuthenticatedColdChainSensorsRoute: AuthenticatedColdChainSensorsRoute,
+  AuthenticatedDispensaryCliniciansRoute:
+    AuthenticatedDispensaryCliniciansRoute,
+  AuthenticatedDispensaryPatientsRoute: AuthenticatedDispensaryPatientsRoute,
+  AuthenticatedDispensaryPrescriptionRoute:
+    AuthenticatedDispensaryPrescriptionRoute,
+  AuthenticatedDistributionCustomerRequisitionRoute:
+    AuthenticatedDistributionCustomerRequisitionRoute,
+  AuthenticatedDistributionCustomerReturnRoute:
+    AuthenticatedDistributionCustomerReturnRoute,
+  AuthenticatedDistributionCustomersRoute:
+    AuthenticatedDistributionCustomersRoute,
+  AuthenticatedDistributionOutboundShipmentRoute:
+    AuthenticatedDistributionOutboundShipmentRoute,
+  AuthenticatedInventoryLocationsRoute: AuthenticatedInventoryLocationsRoute,
+  AuthenticatedManageCampaignsRoute: AuthenticatedManageCampaignsRoute,
+  AuthenticatedManageGlobalPreferencesRoute:
+    AuthenticatedManageGlobalPreferencesRoute,
+  AuthenticatedManageStoresRoute: AuthenticatedManageStoresRoute,
+  AuthenticatedReplenishmentInboundShipmentRoute:
+    AuthenticatedReplenishmentInboundShipmentRoute,
+  AuthenticatedReplenishmentInternalOrderRoute:
+    AuthenticatedReplenishmentInternalOrderRoute,
+  AuthenticatedReplenishmentSupplierReturnRoute:
+    AuthenticatedReplenishmentSupplierReturnRoute,
+  AuthenticatedReplenishmentSuppliersRoute:
+    AuthenticatedReplenishmentSuppliersRoute,
   AuthenticatedStockStockLineIdRoute: AuthenticatedStockStockLineIdRoute,
   AuthenticatedStocktakeStocktakeIdRoute:
     AuthenticatedStocktakeStocktakeIdRoute,
