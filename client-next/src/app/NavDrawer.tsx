@@ -23,7 +23,12 @@ import {
   ListItemText,
   Typography,
 } from '@mui/material';
-import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useRouterState,
+} from '@tanstack/react-router';
 import { useSession } from '@/app/session';
 import { useTranslation, type TxKey } from '@/intl';
 import { MSupplyGuy } from '@/components/MSupplyGuy';
@@ -151,9 +156,19 @@ function isPathActive(pathname: string, to: string, exact?: boolean): boolean {
   return pathname === to || pathname.startsWith(`${to}/`);
 }
 
-function isEntryActive(pathname: string, entry: NavEntry): boolean {
-  if (entry.to) return isPathActive(pathname, entry.to, entry.exact);
-  return (entry.children ?? []).some(c => isPathActive(pathname, c.to));
+// `to` values are store-relative ('/', '/stock', …); prefix with the active
+// store so links and active-state match the /$storeId/… URLs.
+type WithStore = (to: string) => string;
+
+function isEntryActive(
+  pathname: string,
+  entry: NavEntry,
+  withStore: WithStore,
+): boolean {
+  if (entry.to) return isPathActive(pathname, withStore(entry.to), entry.exact);
+  return (entry.children ?? []).some(c =>
+    isPathActive(pathname, withStore(c.to)),
+  );
 }
 
 interface NavDrawerProps {
@@ -170,12 +185,15 @@ export function NavDrawer({ mobileOpen, onClose }: NavDrawerProps) {
   const store = useSession(s => s.store);
   const clear = useSession(s => s.clear);
   const pathname = useRouterState({ select: s => s.location.pathname });
+  const { storeId } = useParams({ strict: false });
+  const withStore: WithStore = to =>
+    to === '/' ? `/${storeId}` : `/${storeId}${to}`;
 
   // User-toggled expansion overrides; otherwise a section auto-expands when it
   // contains the active route.
   const [overrides, setOverrides] = useState<Record<string, boolean>>({});
   const isExpanded = (entry: NavEntry) =>
-    overrides[entry.id] ?? isEntryActive(pathname, entry);
+    overrides[entry.id] ?? isEntryActive(pathname, entry, withStore);
   const toggle = (id: string, currentlyOpen: boolean) =>
     setOverrides(prev => ({ ...prev, [id]: !currentlyOpen }));
 
@@ -192,8 +210,8 @@ export function NavDrawer({ mobileOpen, onClose }: NavDrawerProps) {
         <ListItemButton
           key={entry.id}
           component={Link}
-          to={entry.to}
-          selected={isEntryActive(pathname, entry)}
+          to={withStore(entry.to)}
+          selected={isEntryActive(pathname, entry, withStore)}
           onClick={onClose}
         >
           <ListItemIcon sx={{ minWidth: 40 }}>{entry.icon}</ListItemIcon>
@@ -217,8 +235,8 @@ export function NavDrawer({ mobileOpen, onClose }: NavDrawerProps) {
               <ListItemButton
                 key={child.to}
                 component={Link}
-                to={child.to}
-                selected={isPathActive(pathname, child.to)}
+                to={withStore(child.to)}
+                selected={isPathActive(pathname, withStore(child.to))}
                 onClick={onClose}
                 sx={{ pl: 4 }}
               >

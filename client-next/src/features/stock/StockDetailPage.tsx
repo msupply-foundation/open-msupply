@@ -7,11 +7,10 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { useSession } from '@/app/session';
 import { useTranslation } from '@/intl';
 import { stockLineQueryOptions } from './queries';
 
-const route = getRouteApi('/_authenticated/stock/$stockLineId');
+const route = getRouteApi('/_authenticated/$storeId/stock/$stockLineId');
 
 function Field({ label, value }: { label: string; value: string | number }) {
   return (
@@ -23,9 +22,8 @@ function Field({ label, value }: { label: string; value: string | number }) {
 }
 
 export function StockDetailPage() {
-  const { stockLineId } = route.useParams();
+  const { storeId, stockLineId } = route.useParams();
   const { t } = useTranslation();
-  const storeId = useSession(s => s.store?.id) ?? '';
 
   const { data, isLoading } = useQuery({
     ...stockLineQueryOptions(storeId, stockLineId),

@@ -10,7 +10,6 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import { Box, TablePagination, Typography } from '@mui/material';
-import { useSession } from '@/app/session';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
 import { formatDate } from '@/lib/format';
@@ -19,7 +18,7 @@ import { invoiceListQueryOptions } from '@/features/invoices/queries';
 import { useInvoiceStatusName } from '@/features/invoices/status';
 import type { InvoiceRowFragment } from '@/features/invoices/invoices.generated';
 
-const route = getRouteApi('/_authenticated/replenishment/supplier-return');
+const route = getRouteApi('/_authenticated/$storeId/replenishment/supplier-return');
 const helper = createColumnHelper<InvoiceRowFragment>();
 
 export function SupplierReturnListPage() {
@@ -27,7 +26,7 @@ export function SupplierReturnListPage() {
   const navigate = route.useNavigate();
   const { t } = useTranslation();
   const statusName = useInvoiceStatusName();
-  const storeId = useSession(s => s.store?.id) ?? '';
+  const { storeId } = route.useParams();
 
   const { data } = useQuery({
     ...invoiceListQueryOptions(

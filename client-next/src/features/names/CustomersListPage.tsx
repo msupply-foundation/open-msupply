@@ -10,21 +10,20 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import { Box, TablePagination, Typography } from '@mui/material';
-import { useSession } from '@/app/session';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
 import { NameNodeType } from '@/gql/schema';
 import { nameListQueryOptions } from '@/features/names/queries';
 import type { NameRowFragment } from '@/features/names/names.generated';
 
-const route = getRouteApi('/_authenticated/distribution/customers');
+const route = getRouteApi('/_authenticated/$storeId/distribution/customers');
 const helper = createColumnHelper<NameRowFragment>();
 
 export function CustomersListPage() {
   const search = route.useSearch();
   const navigate = route.useNavigate();
   const { t } = useTranslation();
-  const storeId = useSession(s => s.store?.id) ?? '';
+  const { storeId } = route.useParams();
 
   const { data } = useQuery({
     ...nameListQueryOptions(

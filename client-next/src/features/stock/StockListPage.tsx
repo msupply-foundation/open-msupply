@@ -8,20 +8,19 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import { Box, TablePagination, Typography } from '@mui/material';
-import { useSession } from '@/app/session';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
 import { useStockColumns } from './columns';
 import { stockListQueryOptions } from './queries';
 
-const route = getRouteApi('/_authenticated/stock/');
+const route = getRouteApi('/_authenticated/$storeId/stock/');
 
 export function StockListPage() {
   const search = route.useSearch();
   const navigate = route.useNavigate();
   const { t } = useTranslation();
   const columns = useStockColumns();
-  const storeId = useSession(s => s.store?.id) ?? '';
+  const { storeId } = route.useParams();
 
   const { data } = useQuery({
     ...stockListQueryOptions(storeId, search),
@@ -79,8 +78,8 @@ export function StockListPage() {
         table={table}
         onRowClick={row =>
           navigate({
-            to: '/stock/$stockLineId',
-            params: { stockLineId: row.id },
+            to: '/$storeId/stock/$stockLineId',
+            params: { storeId, stockLineId: row.id },
           })
         }
       />

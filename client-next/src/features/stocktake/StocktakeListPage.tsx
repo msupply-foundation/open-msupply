@@ -7,19 +7,18 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { Box, Typography } from '@mui/material';
-import { useSession } from '@/app/session';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
 import { stocktakesQueryOptions } from './queries';
 import type { StocktakeRowFragment } from './stocktake.generated';
 
-const route = getRouteApi('/_authenticated/stocktake/');
+const route = getRouteApi('/_authenticated/$storeId/stocktake/');
 const helper = createColumnHelper<StocktakeRowFragment>();
 
 export function StocktakeListPage() {
   const navigate = route.useNavigate();
   const { t } = useTranslation();
-  const storeId = useSession(s => s.store?.id) ?? '';
+  const { storeId } = route.useParams();
   const { data } = useQuery({
     ...stocktakesQueryOptions(storeId),
     enabled: Boolean(storeId),
@@ -54,8 +53,8 @@ export function StocktakeListPage() {
         table={table}
         onRowClick={row =>
           navigate({
-            to: '/stocktake/$stocktakeId',
-            params: { stocktakeId: row.id },
+            to: '/$storeId/stocktake/$stocktakeId',
+            params: { storeId, stocktakeId: row.id },
           })
         }
       />

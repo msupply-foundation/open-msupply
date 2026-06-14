@@ -1,7 +1,8 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
-import { AppLayout } from '@/app/AppLayout';
 import { useSession } from '@/app/session';
 
+// Pathless auth gate. The app shell (AppLayout) lives one level down on the
+// $storeId layout so the whole shell has the store in scope.
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: () => {
     // Session store is the source of truth, read synchronously (race-free).
@@ -9,13 +10,5 @@ export const Route = createFileRoute('/_authenticated')({
       throw redirect({ to: '/login' });
     }
   },
-  component: AuthenticatedLayout,
+  component: Outlet,
 });
-
-function AuthenticatedLayout() {
-  return (
-    <AppLayout>
-      <Outlet />
-    </AppLayout>
-  );
-}

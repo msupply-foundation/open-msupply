@@ -10,7 +10,6 @@ import {
   type SortingState,
 } from '@tanstack/react-table';
 import { Box, TablePagination, Typography } from '@mui/material';
-import { useSession } from '@/app/session';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
 import { formatDate } from '@/lib/format';
@@ -19,7 +18,7 @@ import { requisitionListQueryOptions } from '@/features/requisitions/queries';
 import { useRequisitionStatusName } from '@/features/requisitions/status';
 import type { RequisitionRowFragment } from '@/features/requisitions/requisitions.generated';
 
-const route = getRouteApi('/_authenticated/replenishment/internal-order');
+const route = getRouteApi('/_authenticated/$storeId/replenishment/internal-order');
 const helper = createColumnHelper<RequisitionRowFragment>();
 
 export function InternalOrderListPage() {
@@ -27,7 +26,7 @@ export function InternalOrderListPage() {
   const navigate = route.useNavigate();
   const { t } = useTranslation();
   const statusName = useRequisitionStatusName();
-  const storeId = useSession(s => s.store?.id) ?? '';
+  const { storeId } = route.useParams();
 
   const { data } = useQuery({
     ...requisitionListQueryOptions(

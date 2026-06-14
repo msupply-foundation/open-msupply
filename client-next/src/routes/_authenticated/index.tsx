@@ -1,17 +1,11 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { Stack, Typography } from '@mui/material';
-import { useTranslation } from '@/intl';
+import { createFileRoute, redirect } from '@tanstack/react-router';
+import { useSession } from '@/app/session';
 
+// `/` carries no store, so send the user to their current store's dashboard.
 export const Route = createFileRoute('/_authenticated/')({
-  component: HomePage,
+  beforeLoad: () => {
+    const storeId = useSession.getState().store?.id;
+    if (!storeId) throw redirect({ to: '/login' });
+    throw redirect({ to: '/$storeId', params: { storeId } });
+  },
 });
-
-function HomePage() {
-  const { t } = useTranslation();
-  return (
-    <Stack spacing={2} sx={{ alignItems: 'flex-start' }}>
-      <Typography variant="h5">{t('app.dashboard')}</Typography>
-      <Typography color="text.secondary">{t('messages.dashboard-intro')}</Typography>
-    </Stack>
-  );
-}

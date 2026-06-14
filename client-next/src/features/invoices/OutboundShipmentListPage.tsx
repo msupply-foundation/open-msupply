@@ -17,7 +17,6 @@ import {
   TablePagination,
   Typography,
 } from '@mui/material';
-import { useSession } from '@/app/session';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
 import { SearchField } from '@/components/SearchField';
@@ -28,7 +27,7 @@ import { useInvoiceStatusName } from '@/features/invoices/status';
 import { outboundFilter } from '@/features/invoices/outboundShipment';
 import type { InvoiceRowFragment } from '@/features/invoices/invoices.generated';
 
-const route = getRouteApi('/_authenticated/distribution/outbound-shipment');
+const route = getRouteApi('/_authenticated/$storeId/distribution/outbound-shipment');
 const helper = createColumnHelper<InvoiceRowFragment>();
 
 // Statuses an outbound shipment moves through (drives the filter dropdown).
@@ -46,7 +45,7 @@ export function OutboundShipmentListPage() {
   const navigate = route.useNavigate();
   const { t } = useTranslation();
   const statusName = useInvoiceStatusName();
-  const storeId = useSession(s => s.store?.id) ?? '';
+  const { storeId } = route.useParams();
 
   const { data } = useQuery({
     ...invoiceListQueryOptions(
