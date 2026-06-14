@@ -14,6 +14,7 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import SyncIcon from '@mui/icons-material/Sync';
 import LogoutIcon from '@mui/icons-material/Logout';
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
+import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import {
   Badge,
   Box,
@@ -24,8 +25,8 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Menu,
-  MenuItem,
+  Popover,
+  TextField,
   Typography,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
@@ -191,17 +192,26 @@ const paperSx = { width: DRAWER_WIDTH, boxSizing: 'border-box' } as const;
 export function NavDrawer({ mobileOpen, onClose, onOpenSync }: NavDrawerProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const user = useSession(s => s.user);
   const store = useSession(s => s.store);
   const stores = useSession(s => s.stores);
   const clear = useSession(s => s.clear);
-  const [storeMenuAnchor, setStoreMenuAnchor] = useState<HTMLElement | null>(
-    null,
+
+  // Account popover (store switcher + logout), anchored at the bottom button.
+  const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null);
+  const [storeQuery, setStoreQuery] = useState('');
+  const closeAccount = () => {
+    setAccountAnchor(null);
+    setStoreQuery('');
+  };
+  const filteredStores = stores.filter(s =>
+    `${s.name} ${s.code}`.toLowerCase().includes(storeQuery.toLowerCase()),
   );
 
   // Switch store: go to the chosen store's dashboard (data is store-scoped by the
   // URL, so we can't keep the current page's params across stores).
   const switchStore = (id: string) => {
-    setStoreMenuAnchor(null);
+    closeAccount();
     onClose(); // close the mobile overlay
     navigate({ to: '/$storeId', params: { storeId: id } });
   };
@@ -320,60 +330,84 @@ export function NavDrawer({ mobileOpen, onClose, onOpenSync }: NavDrawerProps) {
         </List>
       </Box>
 
-      {/* Footer: store (switcher when >1) + logout, pinned to the bottom */}
+      {/* Footer: account button (user + store switcher + logout), pinned bottom */}
       <Divider />
-      {store ? (
-        stores.length > 1 ? (
-          <>
-            <ListItemButton
-              onClick={e => setStoreMenuAnchor(e.currentTarget)}
-              sx={{ py: 1 }}
-            >
-              <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                <Typography variant="caption" color="text.secondary">
-                  {t('label.store')}
-                </Typography>
-                <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
-                  {store.name}
-                </Typography>
-              </Box>
-              <UnfoldMoreIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-            </ListItemButton>
-            <Menu
-              anchorEl={storeMenuAnchor}
-              open={Boolean(storeMenuAnchor)}
-              onClose={() => setStoreMenuAnchor(null)}
-            >
-              {stores.map(s => (
-                <MenuItem
-                  key={s.id}
-                  selected={s.id === store.id}
-                  onClick={() => switchStore(s.id)}
-                >
-                  {s.name}
-                </MenuItem>
-              ))}
-            </Menu>
-          </>
-        ) : (
-          <Box sx={{ px: 2, py: 1 }}>
-            <Typography variant="caption" color="text.secondary">
-              {t('label.store')}
-            </Typography>
-            <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
-              {store.name}
-            </Typography>
-          </Box>
-        )
-      ) : null}
       <List disablePadding>
-        <ListItemButton onClick={onLogout}>
+        <ListItemButton
+          onClick={e => setAccountAnchor(e.currentTarget)}
+          sx={{ py: 1.25 }}
+        >
           <ListItemIcon sx={{ minWidth: 40 }}>
-            <LogoutIcon />
+            <AccountCircleOutlinedIcon />
           </ListItemIcon>
-          <ListItemText primary={t('button.logout')} />
+          <ListItemText
+            primary={user?.username ?? ''}
+            secondary={store?.name}
+            slotProps={{
+              primary: { noWrap: true, sx: { fontWeight: 600 } },
+              secondary: { noWrap: true },
+            }}
+          />
+          <UnfoldMoreIcon fontSize="small" sx={{ color: 'text.secondary' }} />
         </ListItemButton>
       </List>
+
+      <Popover
+        open={Boolean(accountAnchor)}
+        anchorEl={accountAnchor}
+        onClose={closeAccount}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        slotProps={{ paper: { sx: { width: DRAWER_WIDTH - 16 } } }}
+      >
+        {stores.length > 1 ? (
+          <>
+            <Box sx={{ p: 1 }}>
+              <TextField
+                size="small"
+                fullWidth
+                autoFocus
+                placeholder={t('placeholder.search-stores')}
+                value={storeQuery}
+                onChange={e => setStoreQuery(e.target.value)}
+              />
+            </Box>
+            <List dense disablePadding sx={{ maxHeight: 240, overflowY: 'auto' }}>
+              {filteredStores.map(s => (
+                <ListItemButton
+                  key={s.id}
+                  selected={s.id === store?.id}
+                  onClick={() => switchStore(s.id)}
+                >
+                  <ListItemText
+                    primary={s.name}
+                    secondary={s.code}
+                    slotProps={{ primary: { noWrap: true } }}
+                  />
+                </ListItemButton>
+              ))}
+              {filteredStores.length === 0 ? (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ px: 2, py: 1 }}
+                >
+                  {t('messages.no-results')}
+                </Typography>
+              ) : null}
+            </List>
+            <Divider />
+          </>
+        ) : null}
+        <List disablePadding>
+          <ListItemButton onClick={onLogout}>
+            <ListItemIcon sx={{ minWidth: 40 }}>
+              <LogoutIcon />
+            </ListItemIcon>
+            <ListItemText primary={t('button.logout')} />
+          </ListItemButton>
+        </List>
+      </Popover>
     </Box>
   );
 

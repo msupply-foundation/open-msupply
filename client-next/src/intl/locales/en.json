@@ -97,7 +97,8 @@
   },
 
   "placeholder": {
-    "search": "Search…"
+    "search": "Search…",
+    "search-stores": "Search stores…"
   },
 
   "status": {
@@ -131,7 +132,8 @@
     "records-to-push": "{{value}} records to push",
     "no-records-to-push": "No records to push",
     "last-synced": "Last synced {{time}}",
-    "never-synced": "Not yet synced"
+    "never-synced": "Not yet synced",
+    "no-results": "No matches"
   },
 
   "error": {
