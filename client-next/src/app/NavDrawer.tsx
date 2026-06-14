@@ -47,7 +47,7 @@ export function NavDrawer({ mobileOpen, onClose }: NavDrawerProps) {
   const content = (
     <>
       <Toolbar sx={{ px: 2 }}>
-        <Typography variant="h6" noWrap fontWeight={700}>
+        <Typography variant="h6" noWrap sx={{ fontWeight: 700 }}>
           open mSupply
         </Typography>
       </Toolbar>

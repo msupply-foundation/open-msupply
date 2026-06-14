@@ -7,7 +7,7 @@ export const Route = createFileRoute('/_authenticated/')({
 
 function HomePage() {
   return (
-    <Stack spacing={2} alignItems="flex-start">
+    <Stack spacing={2} sx={{ alignItems: 'flex-start' }}>
       <Typography variant="h6">client-next shell — authenticated home</Typography>
       <Button component={Link} to="/stock" variant="contained">
         Go to Stock

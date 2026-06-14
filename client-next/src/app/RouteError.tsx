@@ -26,7 +26,7 @@ export function RouteError({ error }: ErrorComponentProps) {
 
   return (
     <Box sx={{ p: 4 }}>
-      <Stack spacing={2} alignItems="flex-start">
+      <Stack spacing={2} sx={{ alignItems: 'flex-start' }}>
         <Typography variant="h6">Something went wrong</Typography>
         <Typography
           variant="body2"

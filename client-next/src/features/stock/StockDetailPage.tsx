@@ -14,9 +14,9 @@ const route = getRouteApi('/_authenticated/stock/$stockLineId');
 
 function Field({ label, value }: { label: string; value: string | number }) {
   return (
-    <Stack direction="row" justifyContent="space-between" spacing={2}>
+    <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
       <Typography color="text.secondary">{label}</Typography>
-      <Typography fontWeight={500}>{value}</Typography>
+      <Typography sx={{ fontWeight: 500 }}>{value}</Typography>
     </Stack>
   );
 }
