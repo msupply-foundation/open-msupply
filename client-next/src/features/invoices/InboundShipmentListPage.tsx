@@ -27,7 +27,7 @@ import { useInvoiceStatusName } from '@/features/invoices/status';
 import { inboundFilter } from '@/features/invoices/inboundShipment';
 import type { InvoiceRowFragment } from '@/features/invoices/invoices.generated';
 
-const route = getRouteApi('/_authenticated/$storeId/replenishment/inbound-shipment');
+const route = getRouteApi('/_authenticated/$storeId/replenishment/inbound-shipment/');
 const helper = createColumnHelper<InvoiceRowFragment>();
 
 // Statuses an inbound shipment moves through (drives the filter dropdown).
@@ -131,7 +131,15 @@ export function InboundShipmentListPage() {
           </Select>
         </FormControl>
       </Box>
-      <DataTable table={table} />
+      <DataTable
+        table={table}
+        onRowClick={row =>
+          navigate({
+            to: '/$storeId/replenishment/inbound-shipment/$invoiceId',
+            params: { storeId, invoiceId: row.id },
+          })
+        }
+      />
       <TablePagination
         component="div"
         count={data?.totalCount ?? 0}

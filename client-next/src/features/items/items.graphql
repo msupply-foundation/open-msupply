@@ -1,0 +1,22 @@
+fragment ItemOption on ItemNode {
+  __typename
+  id
+  code
+  name
+  unitName
+  defaultPackSize
+  isVaccine
+  doses
+}
+
+query itemsSearch($storeId: String!, $filter: ItemFilterInput, $first: Int) {
+  items(storeId: $storeId, filter: $filter, page: { first: $first }) {
+    ... on ItemConnector {
+      __typename
+      totalCount
+      nodes {
+        ...ItemOption
+      }
+    }
+  }
+}

@@ -23,7 +23,6 @@ import { Route as AuthenticatedStoreIdStockStockLineIdRouteImport } from './rout
 import { Route as AuthenticatedStoreIdReplenishmentSuppliersRouteImport } from './routes/_authenticated/$storeId/replenishment/suppliers'
 import { Route as AuthenticatedStoreIdReplenishmentSupplierReturnRouteImport } from './routes/_authenticated/$storeId/replenishment/supplier-return'
 import { Route as AuthenticatedStoreIdReplenishmentInternalOrderRouteImport } from './routes/_authenticated/$storeId/replenishment/internal-order'
-import { Route as AuthenticatedStoreIdReplenishmentInboundShipmentRouteImport } from './routes/_authenticated/$storeId/replenishment/inbound-shipment'
 import { Route as AuthenticatedStoreIdManageStoresRouteImport } from './routes/_authenticated/$storeId/manage/stores'
 import { Route as AuthenticatedStoreIdManageGlobalPreferencesRouteImport } from './routes/_authenticated/$storeId/manage/global-preferences'
 import { Route as AuthenticatedStoreIdManageCampaignsRouteImport } from './routes/_authenticated/$storeId/manage/campaigns'
@@ -41,6 +40,8 @@ import { Route as AuthenticatedStoreIdColdChainEquipmentRouteImport } from './ro
 import { Route as AuthenticatedStoreIdCatalogueMasterListsRouteImport } from './routes/_authenticated/$storeId/catalogue/master-lists'
 import { Route as AuthenticatedStoreIdCatalogueItemsRouteImport } from './routes/_authenticated/$storeId/catalogue/items'
 import { Route as AuthenticatedStoreIdCatalogueAssetsRouteImport } from './routes/_authenticated/$storeId/catalogue/assets'
+import { Route as AuthenticatedStoreIdReplenishmentInboundShipmentIndexRouteImport } from './routes/_authenticated/$storeId/replenishment/inbound-shipment/index'
+import { Route as AuthenticatedStoreIdReplenishmentInboundShipmentInvoiceIdRouteImport } from './routes/_authenticated/$storeId/replenishment/inbound-shipment/$invoiceId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -119,12 +120,6 @@ const AuthenticatedStoreIdReplenishmentInternalOrderRoute =
   AuthenticatedStoreIdReplenishmentInternalOrderRouteImport.update({
     id: '/replenishment/internal-order',
     path: '/replenishment/internal-order',
-    getParentRoute: () => AuthenticatedStoreIdRoute,
-  } as any)
-const AuthenticatedStoreIdReplenishmentInboundShipmentRoute =
-  AuthenticatedStoreIdReplenishmentInboundShipmentRouteImport.update({
-    id: '/replenishment/inbound-shipment',
-    path: '/replenishment/inbound-shipment',
     getParentRoute: () => AuthenticatedStoreIdRoute,
   } as any)
 const AuthenticatedStoreIdManageStoresRoute =
@@ -229,6 +224,18 @@ const AuthenticatedStoreIdCatalogueAssetsRoute =
     path: '/catalogue/assets',
     getParentRoute: () => AuthenticatedStoreIdRoute,
   } as any)
+const AuthenticatedStoreIdReplenishmentInboundShipmentIndexRoute =
+  AuthenticatedStoreIdReplenishmentInboundShipmentIndexRouteImport.update({
+    id: '/replenishment/inbound-shipment/',
+    path: '/replenishment/inbound-shipment/',
+    getParentRoute: () => AuthenticatedStoreIdRoute,
+  } as any)
+const AuthenticatedStoreIdReplenishmentInboundShipmentInvoiceIdRoute =
+  AuthenticatedStoreIdReplenishmentInboundShipmentInvoiceIdRouteImport.update({
+    id: '/replenishment/inbound-shipment/$invoiceId',
+    path: '/replenishment/inbound-shipment/$invoiceId',
+    getParentRoute: () => AuthenticatedStoreIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -254,7 +261,6 @@ export interface FileRoutesByFullPath {
   '/$storeId/manage/campaigns': typeof AuthenticatedStoreIdManageCampaignsRoute
   '/$storeId/manage/global-preferences': typeof AuthenticatedStoreIdManageGlobalPreferencesRoute
   '/$storeId/manage/stores': typeof AuthenticatedStoreIdManageStoresRoute
-  '/$storeId/replenishment/inbound-shipment': typeof AuthenticatedStoreIdReplenishmentInboundShipmentRoute
   '/$storeId/replenishment/internal-order': typeof AuthenticatedStoreIdReplenishmentInternalOrderRoute
   '/$storeId/replenishment/supplier-return': typeof AuthenticatedStoreIdReplenishmentSupplierReturnRoute
   '/$storeId/replenishment/suppliers': typeof AuthenticatedStoreIdReplenishmentSuppliersRoute
@@ -262,6 +268,8 @@ export interface FileRoutesByFullPath {
   '/$storeId/stocktake/$stocktakeId': typeof AuthenticatedStoreIdStocktakeStocktakeIdRoute
   '/$storeId/stock/': typeof AuthenticatedStoreIdStockIndexRoute
   '/$storeId/stocktake/': typeof AuthenticatedStoreIdStocktakeIndexRoute
+  '/$storeId/replenishment/inbound-shipment/$invoiceId': typeof AuthenticatedStoreIdReplenishmentInboundShipmentInvoiceIdRoute
+  '/$storeId/replenishment/inbound-shipment/': typeof AuthenticatedStoreIdReplenishmentInboundShipmentIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -286,7 +294,6 @@ export interface FileRoutesByTo {
   '/$storeId/manage/campaigns': typeof AuthenticatedStoreIdManageCampaignsRoute
   '/$storeId/manage/global-preferences': typeof AuthenticatedStoreIdManageGlobalPreferencesRoute
   '/$storeId/manage/stores': typeof AuthenticatedStoreIdManageStoresRoute
-  '/$storeId/replenishment/inbound-shipment': typeof AuthenticatedStoreIdReplenishmentInboundShipmentRoute
   '/$storeId/replenishment/internal-order': typeof AuthenticatedStoreIdReplenishmentInternalOrderRoute
   '/$storeId/replenishment/supplier-return': typeof AuthenticatedStoreIdReplenishmentSupplierReturnRoute
   '/$storeId/replenishment/suppliers': typeof AuthenticatedStoreIdReplenishmentSuppliersRoute
@@ -294,6 +301,8 @@ export interface FileRoutesByTo {
   '/$storeId/stocktake/$stocktakeId': typeof AuthenticatedStoreIdStocktakeStocktakeIdRoute
   '/$storeId/stock': typeof AuthenticatedStoreIdStockIndexRoute
   '/$storeId/stocktake': typeof AuthenticatedStoreIdStocktakeIndexRoute
+  '/$storeId/replenishment/inbound-shipment/$invoiceId': typeof AuthenticatedStoreIdReplenishmentInboundShipmentInvoiceIdRoute
+  '/$storeId/replenishment/inbound-shipment': typeof AuthenticatedStoreIdReplenishmentInboundShipmentIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -321,7 +330,6 @@ export interface FileRoutesById {
   '/_authenticated/$storeId/manage/campaigns': typeof AuthenticatedStoreIdManageCampaignsRoute
   '/_authenticated/$storeId/manage/global-preferences': typeof AuthenticatedStoreIdManageGlobalPreferencesRoute
   '/_authenticated/$storeId/manage/stores': typeof AuthenticatedStoreIdManageStoresRoute
-  '/_authenticated/$storeId/replenishment/inbound-shipment': typeof AuthenticatedStoreIdReplenishmentInboundShipmentRoute
   '/_authenticated/$storeId/replenishment/internal-order': typeof AuthenticatedStoreIdReplenishmentInternalOrderRoute
   '/_authenticated/$storeId/replenishment/supplier-return': typeof AuthenticatedStoreIdReplenishmentSupplierReturnRoute
   '/_authenticated/$storeId/replenishment/suppliers': typeof AuthenticatedStoreIdReplenishmentSuppliersRoute
@@ -329,6 +337,8 @@ export interface FileRoutesById {
   '/_authenticated/$storeId/stocktake/$stocktakeId': typeof AuthenticatedStoreIdStocktakeStocktakeIdRoute
   '/_authenticated/$storeId/stock/': typeof AuthenticatedStoreIdStockIndexRoute
   '/_authenticated/$storeId/stocktake/': typeof AuthenticatedStoreIdStocktakeIndexRoute
+  '/_authenticated/$storeId/replenishment/inbound-shipment/$invoiceId': typeof AuthenticatedStoreIdReplenishmentInboundShipmentInvoiceIdRoute
+  '/_authenticated/$storeId/replenishment/inbound-shipment/': typeof AuthenticatedStoreIdReplenishmentInboundShipmentIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -356,7 +366,6 @@ export interface FileRouteTypes {
     | '/$storeId/manage/campaigns'
     | '/$storeId/manage/global-preferences'
     | '/$storeId/manage/stores'
-    | '/$storeId/replenishment/inbound-shipment'
     | '/$storeId/replenishment/internal-order'
     | '/$storeId/replenishment/supplier-return'
     | '/$storeId/replenishment/suppliers'
@@ -364,6 +373,8 @@ export interface FileRouteTypes {
     | '/$storeId/stocktake/$stocktakeId'
     | '/$storeId/stock/'
     | '/$storeId/stocktake/'
+    | '/$storeId/replenishment/inbound-shipment/$invoiceId'
+    | '/$storeId/replenishment/inbound-shipment/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -388,7 +399,6 @@ export interface FileRouteTypes {
     | '/$storeId/manage/campaigns'
     | '/$storeId/manage/global-preferences'
     | '/$storeId/manage/stores'
-    | '/$storeId/replenishment/inbound-shipment'
     | '/$storeId/replenishment/internal-order'
     | '/$storeId/replenishment/supplier-return'
     | '/$storeId/replenishment/suppliers'
@@ -396,6 +406,8 @@ export interface FileRouteTypes {
     | '/$storeId/stocktake/$stocktakeId'
     | '/$storeId/stock'
     | '/$storeId/stocktake'
+    | '/$storeId/replenishment/inbound-shipment/$invoiceId'
+    | '/$storeId/replenishment/inbound-shipment'
   id:
     | '__root__'
     | '/_authenticated'
@@ -422,7 +434,6 @@ export interface FileRouteTypes {
     | '/_authenticated/$storeId/manage/campaigns'
     | '/_authenticated/$storeId/manage/global-preferences'
     | '/_authenticated/$storeId/manage/stores'
-    | '/_authenticated/$storeId/replenishment/inbound-shipment'
     | '/_authenticated/$storeId/replenishment/internal-order'
     | '/_authenticated/$storeId/replenishment/supplier-return'
     | '/_authenticated/$storeId/replenishment/suppliers'
@@ -430,6 +441,8 @@ export interface FileRouteTypes {
     | '/_authenticated/$storeId/stocktake/$stocktakeId'
     | '/_authenticated/$storeId/stock/'
     | '/_authenticated/$storeId/stocktake/'
+    | '/_authenticated/$storeId/replenishment/inbound-shipment/$invoiceId'
+    | '/_authenticated/$storeId/replenishment/inbound-shipment/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -535,13 +548,6 @@ declare module '@tanstack/react-router' {
       path: '/replenishment/internal-order'
       fullPath: '/$storeId/replenishment/internal-order'
       preLoaderRoute: typeof AuthenticatedStoreIdReplenishmentInternalOrderRouteImport
-      parentRoute: typeof AuthenticatedStoreIdRoute
-    }
-    '/_authenticated/$storeId/replenishment/inbound-shipment': {
-      id: '/_authenticated/$storeId/replenishment/inbound-shipment'
-      path: '/replenishment/inbound-shipment'
-      fullPath: '/$storeId/replenishment/inbound-shipment'
-      preLoaderRoute: typeof AuthenticatedStoreIdReplenishmentInboundShipmentRouteImport
       parentRoute: typeof AuthenticatedStoreIdRoute
     }
     '/_authenticated/$storeId/manage/stores': {
@@ -663,6 +669,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStoreIdCatalogueAssetsRouteImport
       parentRoute: typeof AuthenticatedStoreIdRoute
     }
+    '/_authenticated/$storeId/replenishment/inbound-shipment/': {
+      id: '/_authenticated/$storeId/replenishment/inbound-shipment/'
+      path: '/replenishment/inbound-shipment'
+      fullPath: '/$storeId/replenishment/inbound-shipment/'
+      preLoaderRoute: typeof AuthenticatedStoreIdReplenishmentInboundShipmentIndexRouteImport
+      parentRoute: typeof AuthenticatedStoreIdRoute
+    }
+    '/_authenticated/$storeId/replenishment/inbound-shipment/$invoiceId': {
+      id: '/_authenticated/$storeId/replenishment/inbound-shipment/$invoiceId'
+      path: '/replenishment/inbound-shipment/$invoiceId'
+      fullPath: '/$storeId/replenishment/inbound-shipment/$invoiceId'
+      preLoaderRoute: typeof AuthenticatedStoreIdReplenishmentInboundShipmentInvoiceIdRouteImport
+      parentRoute: typeof AuthenticatedStoreIdRoute
+    }
   }
 }
 
@@ -687,7 +707,6 @@ interface AuthenticatedStoreIdRouteChildren {
   AuthenticatedStoreIdManageCampaignsRoute: typeof AuthenticatedStoreIdManageCampaignsRoute
   AuthenticatedStoreIdManageGlobalPreferencesRoute: typeof AuthenticatedStoreIdManageGlobalPreferencesRoute
   AuthenticatedStoreIdManageStoresRoute: typeof AuthenticatedStoreIdManageStoresRoute
-  AuthenticatedStoreIdReplenishmentInboundShipmentRoute: typeof AuthenticatedStoreIdReplenishmentInboundShipmentRoute
   AuthenticatedStoreIdReplenishmentInternalOrderRoute: typeof AuthenticatedStoreIdReplenishmentInternalOrderRoute
   AuthenticatedStoreIdReplenishmentSupplierReturnRoute: typeof AuthenticatedStoreIdReplenishmentSupplierReturnRoute
   AuthenticatedStoreIdReplenishmentSuppliersRoute: typeof AuthenticatedStoreIdReplenishmentSuppliersRoute
@@ -695,6 +714,8 @@ interface AuthenticatedStoreIdRouteChildren {
   AuthenticatedStoreIdStocktakeStocktakeIdRoute: typeof AuthenticatedStoreIdStocktakeStocktakeIdRoute
   AuthenticatedStoreIdStockIndexRoute: typeof AuthenticatedStoreIdStockIndexRoute
   AuthenticatedStoreIdStocktakeIndexRoute: typeof AuthenticatedStoreIdStocktakeIndexRoute
+  AuthenticatedStoreIdReplenishmentInboundShipmentInvoiceIdRoute: typeof AuthenticatedStoreIdReplenishmentInboundShipmentInvoiceIdRoute
+  AuthenticatedStoreIdReplenishmentInboundShipmentIndexRoute: typeof AuthenticatedStoreIdReplenishmentInboundShipmentIndexRoute
 }
 
 const AuthenticatedStoreIdRouteChildren: AuthenticatedStoreIdRouteChildren = {
@@ -734,8 +755,6 @@ const AuthenticatedStoreIdRouteChildren: AuthenticatedStoreIdRouteChildren = {
   AuthenticatedStoreIdManageGlobalPreferencesRoute:
     AuthenticatedStoreIdManageGlobalPreferencesRoute,
   AuthenticatedStoreIdManageStoresRoute: AuthenticatedStoreIdManageStoresRoute,
-  AuthenticatedStoreIdReplenishmentInboundShipmentRoute:
-    AuthenticatedStoreIdReplenishmentInboundShipmentRoute,
   AuthenticatedStoreIdReplenishmentInternalOrderRoute:
     AuthenticatedStoreIdReplenishmentInternalOrderRoute,
   AuthenticatedStoreIdReplenishmentSupplierReturnRoute:
@@ -749,6 +768,10 @@ const AuthenticatedStoreIdRouteChildren: AuthenticatedStoreIdRouteChildren = {
   AuthenticatedStoreIdStockIndexRoute: AuthenticatedStoreIdStockIndexRoute,
   AuthenticatedStoreIdStocktakeIndexRoute:
     AuthenticatedStoreIdStocktakeIndexRoute,
+  AuthenticatedStoreIdReplenishmentInboundShipmentInvoiceIdRoute:
+    AuthenticatedStoreIdReplenishmentInboundShipmentInvoiceIdRoute,
+  AuthenticatedStoreIdReplenishmentInboundShipmentIndexRoute:
+    AuthenticatedStoreIdReplenishmentInboundShipmentIndexRoute,
 }
 
 const AuthenticatedStoreIdRouteWithChildren =
