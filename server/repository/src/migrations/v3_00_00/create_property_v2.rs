@@ -44,7 +44,12 @@ impl MigrationFragment for Migrate {
                 id TEXT NOT NULL PRIMARY KEY,
                 property_id TEXT NOT NULL REFERENCES property_v2(id),
                 table_name TEXT NOT NULL,
-                is_visible BOOLEAN NOT NULL DEFAULT TRUE,
+                -- Per-scope display mode (HIDDEN / VISIBLE / PROMINENT). Plain
+                -- TEXT, not a native enum, for the same v7 forwards-compatibility
+                -- reason as `value_type` above: an unrecognised mode parses into
+                -- the `PropertyDisplayModeV2::Other` catch-all rather than the DB
+                -- rejecting it.
+                display_mode TEXT NOT NULL DEFAULT 'VISIBLE',
                 UNIQUE (property_id, table_name)
             );
             "#

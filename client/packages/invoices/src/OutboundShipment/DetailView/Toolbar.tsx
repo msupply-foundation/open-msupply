@@ -1,8 +1,10 @@
 import React from 'react';
 import {
   AppBarContentPortal,
+  Box,
   InputWithLabelRow,
   BasicTextInput,
+  InvoiceNodeType,
   useTranslation,
   useBufferState,
   Tooltip,
@@ -11,15 +13,17 @@ import {
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
+import { InvoiceToolbarProperties } from '../../common';
 import { AppRoute } from '@openmsupply-client/config';
 
 export const Toolbar = () => {
   const t = useTranslation();
-  const { id, otherParty, theirReference, update, requisition } =
+  const { id, otherParty, theirReference, propertiesV2, update, requisition } =
     useOutbound.document.fields([
       'id',
       'otherParty',
       'theirReference',
+      'propertiesV2',
       'requisition',
     ]);
   const [theirReferenceBuffer, setTheirReferenceBuffer] =
@@ -37,6 +41,7 @@ export const Toolbar = () => {
         marginY: 1,
         gap: 3,
         flexWrap: 'wrap',
+        alignItems: 'flex-start',
       }}
     >
       {otherParty && (
@@ -83,6 +88,14 @@ export const Toolbar = () => {
           </Tooltip>
         }
       />
+      <Box display="flex" flexDirection="column" gap={1}>
+        <InvoiceToolbarProperties
+          invoiceType={InvoiceNodeType.OutboundShipment}
+          propertiesV2={propertiesV2}
+          onUpdate={patch => update({ propertiesV2: patch })}
+          disabled={isDisabled}
+        />
+      </Box>
     </AppBarContentPortal>
   );
 };

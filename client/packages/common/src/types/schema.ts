@@ -7594,6 +7594,25 @@ export type PropertyNode = {
   valueType: PropertyNodeValueType;
 };
 
+export enum PropertyNodeDisplayModeV2 {
+  /** Not shown on this scope. */
+  Hidden = 'HIDDEN',
+  /**
+   * A mode configured on a newer central that this site doesn't yet recognise
+   * (the repository enum's `Other(String)` catch-all). Mapped manually rather
+   * than via `#[graphql(remote)]` because the GraphQL enum can't carry the
+   * captured string payload. Treated as non-hidden (shown) on read.
+   */
+  Other = 'OTHER',
+  /**
+   * Visible, and additionally promoted to the scope's primary surface (e.g.
+   * the invoice detail-view toolbar).
+   */
+  Prominent = 'PROMINENT',
+  /** Shown wherever the scope lists its properties (e.g. the Properties tab). */
+  Visible = 'VISIBLE',
+}
+
 export enum PropertyNodeValueType {
   Boolean = 'BOOLEAN',
   Date = 'DATE',
@@ -7638,15 +7657,24 @@ export type PropertyV2FilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   key?: InputMaybe<EqualFilterStringInput>;
   /**
-   * Restricts to properties marked visible (`property_table_v2.is_visible
-   * = true`) on this table_name. Use `{ equalTo: "name" }` to fetch the
-   * definitions that drive name list views / modal.
+   * Restricts to properties shown on this table_name
+   * (`property_table_v2.display_mode != HIDDEN`). Use `{ equalTo: "name" }`
+   * to fetch the definitions that drive name list views / modal. When a
+   * single `equalTo` table is given, each returned node carries its
+   * `displayMode` for that scope.
    */
   tableName?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type PropertyV2Node = {
   __typename: 'PropertyV2Node';
+  /**
+   * How prominently this property is shown on the queried table scope
+   * (`null` when the query wasn't scoped to a single `tableName`). Clients
+   * promote `PROMINENT` properties to the record's primary surface, e.g. the
+   * invoice detail-view toolbar.
+   */
+  displayMode?: Maybe<PropertyNodeDisplayModeV2>;
   id: Scalars['String']['output'];
   isLegacy: Scalars['Boolean']['output'];
   key: Scalars['String']['output'];
