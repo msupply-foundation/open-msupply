@@ -5,12 +5,14 @@ import {
   InputWithLabelRow,
   BasicTextInput,
   Grid,
+  InvoiceNodeType,
   useTranslation,
   Alert,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { CustomerReturnFragment, useReturns } from '../api';
 import { CustomerSearchInput } from '@openmsupply-client/system';
+import { InvoiceToolbarProperties } from '../../common';
 
 export const Toolbar: FC = () => {
   const t = useTranslation();
@@ -20,6 +22,7 @@ export const Toolbar: FC = () => {
   const {
     otherParty,
     theirReference,
+    propertiesV2,
     id,
     linkedShipment = '',
   } = draft ?? { id: '' };
@@ -34,15 +37,9 @@ export const Toolbar: FC = () => {
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
-      <Grid
-        container
-        flexDirection="row"
-        display="flex"
-        flex={1}
-        alignItems="flex-end"
-      >
-        <Grid display="flex" flex={1}>
-          <Box display="flex" flex={1} flexDirection="column" gap={1}>
+      <Grid container spacing={2} width="100%" alignItems="flex-start">
+        <Grid>
+          <Box display="flex" flexDirection="column" gap={1}>
             {otherParty && (
               <InputWithLabelRow
                 label={t('label.customer-name')}
@@ -71,8 +68,20 @@ export const Toolbar: FC = () => {
                 />
               }
             />
-            <InfoAlert customerReturn={draft} />
           </Box>
+        </Grid>
+        <Grid>
+          <Box display="flex" flexDirection="column" gap={1}>
+            <InvoiceToolbarProperties
+              invoiceType={InvoiceNodeType.CustomerReturn}
+              propertiesV2={propertiesV2}
+              onUpdate={patch => update({ propertiesV2: patch })}
+              disabled={isDisabled}
+            />
+          </Box>
+        </Grid>
+        <Grid size={12}>
+          <InfoAlert customerReturn={draft} />
         </Grid>
       </Grid>
     </AppBarContentPortal>

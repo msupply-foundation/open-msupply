@@ -1,6 +1,6 @@
 use repository::{
-    PropertyTableV2Row, PropertyTableV2RowRepository, PropertyV2Row, PropertyV2RowRepository,
-    PropertyValueTypeV2, RepositoryError, StorageConnection,
+    PropertyDisplayModeV2, PropertyTableV2Row, PropertyTableV2RowRepository, PropertyV2Row,
+    PropertyV2RowRepository, PropertyValueTypeV2, RepositoryError, StorageConnection,
 };
 
 /// A code-defined mSupply "mapping property" — a property in the new system
@@ -15,6 +15,11 @@ struct MappingProperty {
     /// Display name (overridable later only via a visibility/label UI).
     name: &'static str,
     value_type: PropertyValueTypeV2,
+    /// Per-scope display mode applied to each `property_table_v2` row this
+    /// definition seeds. `Prominent` promotes the property to the scope's
+    /// primary surface (e.g. the invoice detail-view toolbar); most mappings are
+    /// plain `Visible`. Only applied on create — a later admin edit is preserved.
+    display_mode: PropertyDisplayModeV2,
     /// Record tables the property applies to (one `property_table_v2` row per
     /// entry). A definition can be visible on more than one table — names'
     /// `custom1/2/3` are shared by every name type, so they map to both `"name"`
@@ -26,7 +31,10 @@ struct MappingProperty {
 /// central server seeds them on its next sync and they fan out to v7 remotes
 /// from there.
 fn mapping_properties() -> Vec<MappingProperty> {
-    use PropertyValueTypeV2::*;
+    // Import variants explicitly rather than glob-importing both enums: each
+    // carries an `Other` variant, so two globs would clash.
+    use PropertyDisplayModeV2::{Prominent, Visible};
+    use PropertyValueTypeV2::{Boolean, Option, Real, Text};
     vec![
         // name `[name]custom1/2/3` — 4D column names are mapped onto snake_case
         // slugs by the v5 name translator.
@@ -35,6 +43,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "custom_1",
             name: "Custom 1",
             value_type: Text,
+            display_mode: Visible,
             table_names: &["name", "patient"],
         },
         MappingProperty {
@@ -42,6 +51,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "custom_2",
             name: "Custom 2",
             value_type: Text,
+            display_mode: Visible,
             table_names: &["name", "patient"],
         },
         MappingProperty {
@@ -49,6 +59,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "custom_3",
             name: "Custom 3",
             value_type: Text,
+            display_mode: Visible,
             table_names: &["name", "patient"],
         },
         // item `[item]user_field_1..7` — 4D names are already snake_case, so the
@@ -58,6 +69,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "user_field_1",
             name: "User field 1",
             value_type: Text,
+            display_mode: Visible,
             table_names: &["item"],
         },
         MappingProperty {
@@ -65,6 +77,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "user_field_2",
             name: "User field 2",
             value_type: Text,
+            display_mode: Visible,
             table_names: &["item"],
         },
         MappingProperty {
@@ -72,6 +85,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "user_field_3",
             name: "User field 3",
             value_type: Text,
+            display_mode: Visible,
             table_names: &["item"],
         },
         MappingProperty {
@@ -79,6 +93,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "user_field_4",
             name: "User field 4",
             value_type: Boolean,
+            display_mode: Visible,
             table_names: &["item"],
         },
         MappingProperty {
@@ -86,6 +101,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "user_field_5",
             name: "User field 5",
             value_type: Real,
+            display_mode: Visible,
             table_names: &["item"],
         },
         MappingProperty {
@@ -93,6 +109,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "user_field_6",
             name: "User field 6",
             value_type: Text,
+            display_mode: Visible,
             table_names: &["item"],
         },
         MappingProperty {
@@ -100,6 +117,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "user_field_7",
             name: "User field 7",
             value_type: Boolean,
+            display_mode: Visible,
             table_names: &["item"],
         },
         // item categories — a single OPTION property whose options are the
@@ -113,6 +131,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "item_category",
             name: "Category",
             value_type: Option,
+            display_mode: Visible,
             table_names: &["item"],
         },
         // item categories 2 & 3 — two additional *flat* OPTION dimensions
@@ -126,6 +145,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "item_category2",
             name: "Category 2",
             value_type: Option,
+            display_mode: Visible,
             table_names: &["item"],
         },
         MappingProperty {
@@ -133,6 +153,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "item_category3",
             name: "Category 3",
             value_type: Option,
+            display_mode: Visible,
             table_names: &["item"],
         },
         // name categories 1–6 — six independent OPTION dimensions
@@ -151,6 +172,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "name_category1",
             name: "Category 1",
             value_type: Option,
+            display_mode: Visible,
             table_names: &["name", "patient"],
         },
         MappingProperty {
@@ -158,6 +180,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "name_category2",
             name: "Category 2",
             value_type: Option,
+            display_mode: Visible,
             table_names: &["name", "patient"],
         },
         MappingProperty {
@@ -165,6 +188,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "name_category3",
             name: "Category 3",
             value_type: Option,
+            display_mode: Visible,
             table_names: &["name", "patient"],
         },
         MappingProperty {
@@ -172,6 +196,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "name_category4",
             name: "Category 4",
             value_type: Option,
+            display_mode: Visible,
             table_names: &["name", "patient"],
         },
         MappingProperty {
@@ -179,6 +204,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "name_category5",
             name: "Category 5",
             value_type: Option,
+            display_mode: Visible,
             table_names: &["name", "patient"],
         },
         MappingProperty {
@@ -186,6 +212,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "name_category6",
             name: "Category 6",
             value_type: Option,
+            display_mode: Visible,
             table_names: &["name", "patient"],
         },
         // transaction categories — mSupply's `transaction_category` table holds
@@ -204,6 +231,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "inbound_shipment_category",
             name: "Category",
             value_type: Option,
+            display_mode: Prominent,
             table_names: &["inbound_shipment"],
         },
         MappingProperty {
@@ -211,6 +239,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "outbound_shipment_category",
             name: "Category",
             value_type: Option,
+            display_mode: Prominent,
             table_names: &["outbound_shipment"],
         },
         MappingProperty {
@@ -218,6 +247,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "prescription_category",
             name: "Category",
             value_type: Option,
+            display_mode: Prominent,
             table_names: &["prescription"],
         },
         MappingProperty {
@@ -225,6 +255,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "supplier_return_category",
             name: "Category",
             value_type: Option,
+            display_mode: Prominent,
             table_names: &["supplier_return"],
         },
         MappingProperty {
@@ -232,6 +263,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "customer_return_category",
             name: "Category",
             value_type: Option,
+            display_mode: Prominent,
             table_names: &["customer_return"],
         },
         // OG's second prescription dimension — the "Prescriptions (2)" category
@@ -242,6 +274,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
             key: "prescription_category2",
             name: "Patient type",
             value_type: Option,
+            display_mode: Prominent,
             table_names: &["prescription"],
         },
     ]
@@ -255,7 +288,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
 /// Idempotent and change-aware: a row is only upserted when missing or when its
 /// code-authoritative content differs, so steady-state runs add no changelog
 /// churn. The `property_table_v2` mapping is only created when **absent**, so a
-/// later visibility edit (`is_visible`) is preserved rather than reset here.
+/// later display-mode edit (`display_mode`) is preserved rather than reset here.
 pub(crate) fn seed_central_mapping_properties(
     connection: &StorageConnection,
 ) -> Result<(), RepositoryError> {
@@ -277,7 +310,7 @@ pub(crate) fn seed_central_mapping_properties(
         }
 
         // Only create each table mapping if it doesn't exist — never overwrite,
-        // so an admin's future visibility change isn't reset on the next sync.
+        // so an admin's future display-mode change isn't reset on the next sync.
         for table_name in def.table_names {
             let table_id = format!("{}__{}", def.id, table_name);
             if table_repo.find_one_by_id(&table_id)?.is_none() {
@@ -285,7 +318,7 @@ pub(crate) fn seed_central_mapping_properties(
                     id: table_id,
                     property_id: def.id.to_string(),
                     table_name: table_name.to_string(),
-                    is_visible: true,
+                    display_mode: def.display_mode.clone(),
                 })?;
             }
         }
@@ -349,7 +382,7 @@ mod tests {
             .expect("missing legacy_name_custom_1__patient mapping");
         assert_eq!(patient_mapping.property_id, "legacy_name_custom_1");
         assert_eq!(patient_mapping.table_name, "patient");
-        assert!(patient_mapping.is_visible);
+        assert_eq!(patient_mapping.display_mode, PropertyDisplayModeV2::Visible);
 
         // A second run is a no-op: change-aware seeding must not write (and so
         // must not add changelog rows) when nothing has changed.
@@ -357,13 +390,13 @@ mod tests {
         seed_central_mapping_properties(&connection).unwrap();
         assert_eq!(changelog_repo.max_cursor().unwrap(), cursor_before);
 
-        // A visibility edit on a table mapping must be preserved across re-seeds.
+        // A display-mode edit on a table mapping must be preserved across re-seeds.
         table_repo
             .upsert_one(&PropertyTableV2Row {
                 id: "legacy_name_custom_1__name".to_string(),
                 property_id: "legacy_name_custom_1".to_string(),
                 table_name: "name".to_string(),
-                is_visible: false,
+                display_mode: PropertyDisplayModeV2::Hidden,
             })
             .unwrap();
         seed_central_mapping_properties(&connection).unwrap();
@@ -371,7 +404,11 @@ mod tests {
             .find_one_by_id("legacy_name_custom_1__name")
             .unwrap()
             .unwrap();
-        assert!(!table_row.is_visible, "seeder must not reset is_visible");
+        assert_eq!(
+            table_row.display_mode,
+            PropertyDisplayModeV2::Hidden,
+            "seeder must not reset display_mode"
+        );
     }
 
     /// The transaction category type→key/scope relationship is encoded in
@@ -393,6 +430,15 @@ mod tests {
             .into_iter()
             .filter(|def| def.id.starts_with("legacy_transaction_category_"))
             .collect();
+
+        // Transaction categories are promoted to the invoice toolbar; lock that
+        // in so a future seeder edit can't silently demote them.
+        assert!(
+            seeded
+                .iter()
+                .all(|def| def.display_mode == PropertyDisplayModeV2::Prominent),
+            "every transaction category mapping must be Prominent"
+        );
 
         // Every invoice type with a properties scope has exactly one seeded
         // category property whose key and scope match the translator's maps.

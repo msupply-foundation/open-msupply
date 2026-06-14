@@ -1,8 +1,9 @@
 use super::property_table_v2_row::property_table_v2::dsl::*;
 
 use diesel::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+use crate::diesel_macros::diesel_string_enum;
 use crate::ChangelogRepository;
 use crate::RepositoryError;
 use crate::RowActionType;
@@ -10,12 +11,51 @@ use crate::SourceSiteId;
 use crate::StorageConnection;
 use crate::{ChangelogSyncType, Upsert};
 
+diesel_string_enum! {
+    #[derive(Clone, Eq)]
+    #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
+    // How much UI presence a property gets on this table scope — a single
+    // ordered axis, not two independent booleans (a hidden-but-prominent
+    // property is meaningless). Stored as plain TEXT (not a native DB enum) for
+    // the same v7 forwards-compatibility reason as `PropertyValueTypeV2`: a mode
+    // added on a newer central but unknown here is captured into `Other(String)`
+    // rather than rejected at insert. See the create_property_v2 migration.
+    pub enum PropertyDisplayModeV2 {
+        /// Not shown on this scope (read paths filter it out).
+        Hidden,
+        /// Shown wherever the scope lists its properties (e.g. the Properties tab).
+        #[default]
+        Visible,
+        /// Visible, and additionally promoted to the scope's primary surface
+        /// (e.g. the invoice detail-view toolbar).
+        Prominent,
+        #[strum(default)]
+        Other(String),
+    }
+}
+
+// Serialize to/from the plain string form on the sync wire, delegating to the
+// strum representation so the SCREAMING_SNAKE_CASE naming and the `Other`
+// catch-all match the DB (TEXT) storage exactly — a remote that receives an
+// unrecognised mode deserialises it into `Other` rather than failing the record.
+impl Serialize for PropertyDisplayModeV2 {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_ref())
+    }
+}
+
+impl<'de> Deserialize<'de> for PropertyDisplayModeV2 {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        Ok(Self::from(String::deserialize(deserializer)?))
+    }
+}
+
 table! {
     property_table_v2 (id) {
         id -> Text,
         property_id -> Text,
         table_name -> Text,
-        is_visible -> Bool,
+        display_mode -> diesel::sql_types::Text,
     }
 }
 
@@ -32,7 +72,7 @@ pub struct PropertyTableV2Row {
     pub id: String,
     pub property_id: String,
     pub table_name: String,
-    pub is_visible: bool,
+    pub display_mode: PropertyDisplayModeV2,
 }
 
 pub struct PropertyTableV2RowRepository<'a> {

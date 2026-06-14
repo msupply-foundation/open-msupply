@@ -2,6 +2,7 @@ import {
   InvoiceNodeType,
   useGql,
   useQuery,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { getSdk } from './operations.generated';
 
@@ -18,6 +19,22 @@ export const INVOICE_PROPERTIES_SCOPE: Partial<Record<InvoiceNodeType, string>> 
     [InvoiceNodeType.SupplierReturn]: 'supplier_return',
     [InvoiceNodeType.CustomerReturn]: 'customer_return',
   };
+
+/**
+ * The permission gating property edits for each invoice type. Shared by both
+ * surfaces that edit propertiesV2 — the Properties tab and the toolbar — so the
+ * same property is editable under the same rules in both places (the server
+ * enforces it on save regardless; this is the client gate).
+ */
+export const INVOICE_PROPERTY_MUTATE_PERMISSION: Partial<
+  Record<InvoiceNodeType, UserPermission>
+> = {
+  [InvoiceNodeType.InboundShipment]: UserPermission.InboundShipmentMutate,
+  [InvoiceNodeType.OutboundShipment]: UserPermission.OutboundShipmentMutate,
+  [InvoiceNodeType.Prescription]: UserPermission.PrescriptionMutate,
+  [InvoiceNodeType.SupplierReturn]: UserPermission.SupplierReturnMutate,
+  [InvoiceNodeType.CustomerReturn]: UserPermission.CustomerReturnMutate,
+};
 
 const INVOICE_PROPERTIES_V2 = 'invoice_properties_v2';
 

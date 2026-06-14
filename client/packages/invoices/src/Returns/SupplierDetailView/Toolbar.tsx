@@ -5,12 +5,14 @@ import {
   InputWithLabelRow,
   BasicTextInput,
   Grid,
+  InvoiceNodeType,
   useTranslation,
   useNavigate,
   RouteBuilder,
 } from '@openmsupply-client/common';
 import { SupplierReturnFragment, useReturns } from '../api';
 import { SupplierSearchInput } from '@openmsupply-client/system';
+import { InvoiceToolbarProperties } from '../../common';
 import { AppRoute } from '@openmsupply-client/config';
 
 export const Toolbar: FC = () => {
@@ -20,7 +22,7 @@ export const Toolbar: FC = () => {
 
   const { bufferedState, setBufferedState } =
     useReturns.document.supplierReturn();
-  const { otherParty, theirReference, id, originalShipment } =
+  const { otherParty, theirReference, propertiesV2, id, originalShipment } =
     bufferedState ?? { id: '' };
   const { mutateAsync: updateOtherParty } =
     useReturns.document.updateOtherParty();
@@ -35,15 +37,9 @@ export const Toolbar: FC = () => {
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
-      <Grid
-        container
-        flexDirection="row"
-        display="flex"
-        flex={1}
-        alignItems="flex-end"
-      >
-        <Grid display="flex" flex={1}>
-          <Box display="flex" flex={1} flexDirection="column" gap={1}>
+      <Grid container spacing={2} width="100%" alignItems="flex-start">
+        <Grid>
+          <Box display="flex" flexDirection="column" gap={1}>
             {otherParty && (
               <InputWithLabelRow
                 label={t('label.supplier-name')}
@@ -84,6 +80,16 @@ export const Toolbar: FC = () => {
                   }}
                 />
               }
+            />
+          </Box>
+        </Grid>
+        <Grid>
+          <Box display="flex" flexDirection="column" gap={1}>
+            <InvoiceToolbarProperties
+              invoiceType={InvoiceNodeType.SupplierReturn}
+              propertiesV2={propertiesV2}
+              onUpdate={patch => update({ propertiesV2: patch })}
+              disabled={isDisabled}
             />
           </Box>
         </Grid>

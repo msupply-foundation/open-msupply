@@ -9,9 +9,11 @@ use repository::{EqualFilter, PropertyV2Filter};
 pub struct PropertyV2FilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub key: Option<EqualFilterStringInput>,
-    /// Restricts to properties marked visible (`property_table_v2.is_visible
-    /// = true`) on this table_name. Use `{ equalTo: "name" }` to fetch the
-    /// definitions that drive name list views / modal.
+    /// Restricts to properties shown on this table_name
+    /// (`property_table_v2.display_mode != HIDDEN`). Use `{ equalTo: "name" }`
+    /// to fetch the definitions that drive name list views / modal. When a
+    /// single `equalTo` table is given, each returned node carries its
+    /// `displayMode` for that scope.
     pub table_name: Option<EqualFilterStringInput>,
 }
 
