@@ -9,17 +9,35 @@ import {
   type PaginationState,
   type SortingState,
 } from '@tanstack/react-table';
-import { Box, TablePagination, Typography } from '@mui/material';
+import {
+  Box,
+  FormControl,
+  MenuItem,
+  Select,
+  TablePagination,
+  Typography,
+} from '@mui/material';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
+import { SearchField } from '@/components/SearchField';
 import { formatDate } from '@/lib/format';
-import { InvoiceNodeType } from '@/gql/schema';
+import { InvoiceNodeStatus } from '@/gql/schema';
 import { invoiceListQueryOptions } from '@/features/invoices/queries';
 import { useInvoiceStatusName } from '@/features/invoices/status';
+import { supplierReturnFilter } from '@/features/invoices/supplierReturn';
 import type { InvoiceRowFragment } from '@/features/invoices/invoices.generated';
 
 const route = getRouteApi('/_authenticated/$storeId/replenishment/supplier-return');
 const helper = createColumnHelper<InvoiceRowFragment>();
+
+// Statuses a supplier return moves through (drives the filter dropdown).
+const STATUS_OPTIONS: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Verified,
+];
 
 export function SupplierReturnListPage() {
   const search = route.useSearch();
@@ -32,7 +50,7 @@ export function SupplierReturnListPage() {
     ...invoiceListQueryOptions(
       storeId,
       'supplier-return',
-      { type: { equalTo: InvoiceNodeType.SupplierReturn } },
+      supplierReturnFilter(search),
       search,
     ),
     enabled: Boolean(storeId),
@@ -77,7 +95,40 @@ export function SupplierReturnListPage() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1 }}>
-      <Typography variant="h5">{t('app.supplier-return')}</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+        <Typography variant="h5" sx={{ flexGrow: 1 }}>
+          {t('app.supplier-return')}
+        </Typography>
+        <SearchField
+          value={search.search ?? ''}
+          onChange={value =>
+            navigate({ search: prev => ({ ...prev, search: value || undefined, page: 1 }) })
+          }
+          placeholder={t('placeholder.search')}
+        />
+        <FormControl size="small" sx={{ minWidth: 170 }}>
+          <Select
+            displayEmpty
+            value={search.status ?? ''}
+            onChange={e =>
+              navigate({
+                search: prev => ({
+                  ...prev,
+                  status: (e.target.value || undefined) as InvoiceNodeStatus | undefined,
+                  page: 1,
+                }),
+              })
+            }
+          >
+            <MenuItem value="">{t('label.all-statuses')}</MenuItem>
+            {STATUS_OPTIONS.map(s => (
+              <MenuItem key={s} value={s}>
+                {statusName(s)}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
       <DataTable table={table} />
       <TablePagination
         component="div"

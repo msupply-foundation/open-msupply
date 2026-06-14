@@ -21,8 +21,13 @@ const toSortField = (key: string): NameSortFieldInput =>
   SORT_FIELD[key] ?? NameSortFieldInput.Name;
 
 export const nameKeys = {
-  list: (storeId: string, listId: string, params: ListParams) =>
-    ['names', storeId, listId, params] as const,
+  // `filter` is part of the key so search changes refetch.
+  list: (
+    storeId: string,
+    listId: string,
+    filter: NameFilterInput,
+    params: ListParams,
+  ) => ['names', storeId, listId, filter, params] as const,
 };
 
 export const nameListQueryOptions = (
@@ -32,7 +37,7 @@ export const nameListQueryOptions = (
   params: ListParams,
 ) =>
   queryOptions({
-    queryKey: nameKeys.list(storeId, listId, params),
+    queryKey: nameKeys.list(storeId, listId, filter, params),
     queryFn: async () => {
       const res = await namesSdk.names({
         storeId,

@@ -9,17 +9,34 @@ import {
   type PaginationState,
   type SortingState,
 } from '@tanstack/react-table';
-import { Box, TablePagination, Typography } from '@mui/material';
+import {
+  Box,
+  FormControl,
+  MenuItem,
+  Select,
+  TablePagination,
+  Typography,
+} from '@mui/material';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
+import { SearchField } from '@/components/SearchField';
 import { formatDate } from '@/lib/format';
-import { RequisitionNodeType } from '@/gql/schema';
+import { RequisitionNodeStatus } from '@/gql/schema';
 import { requisitionListQueryOptions } from '@/features/requisitions/queries';
 import { useRequisitionStatusName } from '@/features/requisitions/status';
+import { customerRequisitionFilter } from '@/features/requisitions/customerRequisition';
 import type { RequisitionRowFragment } from '@/features/requisitions/requisitions.generated';
 
 const route = getRouteApi('/_authenticated/$storeId/distribution/customer-requisition');
 const helper = createColumnHelper<RequisitionRowFragment>();
+
+// Statuses a requisition moves through (drives the filter dropdown).
+const STATUS_OPTIONS: RequisitionNodeStatus[] = [
+  RequisitionNodeStatus.Draft,
+  RequisitionNodeStatus.New,
+  RequisitionNodeStatus.Sent,
+  RequisitionNodeStatus.Finalised,
+];
 
 export function CustomerRequisitionListPage() {
   const search = route.useSearch();
@@ -32,7 +49,7 @@ export function CustomerRequisitionListPage() {
     ...requisitionListQueryOptions(
       storeId,
       'customer-requisition',
-      { type: { equalTo: RequisitionNodeType.Response } },
+      customerRequisitionFilter(search),
       search,
     ),
     enabled: Boolean(storeId),
@@ -77,7 +94,40 @@ export function CustomerRequisitionListPage() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1 }}>
-      <Typography variant="h5">{t('app.customer-requisition')}</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+        <Typography variant="h5" sx={{ flexGrow: 1 }}>
+          {t('app.customer-requisition')}
+        </Typography>
+        <SearchField
+          value={search.search ?? ''}
+          onChange={value =>
+            navigate({ search: prev => ({ ...prev, search: value || undefined, page: 1 }) })
+          }
+          placeholder={t('placeholder.search')}
+        />
+        <FormControl size="small" sx={{ minWidth: 170 }}>
+          <Select
+            displayEmpty
+            value={search.status ?? ''}
+            onChange={e =>
+              navigate({
+                search: prev => ({
+                  ...prev,
+                  status: (e.target.value || undefined) as RequisitionNodeStatus | undefined,
+                  page: 1,
+                }),
+              })
+            }
+          >
+            <MenuItem value="">{t('label.all-statuses')}</MenuItem>
+            {STATUS_OPTIONS.map(s => (
+              <MenuItem key={s} value={s}>
+                {statusName(s)}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
       <DataTable table={table} />
       <TablePagination
         component="div"

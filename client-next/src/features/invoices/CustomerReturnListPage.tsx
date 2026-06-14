@@ -9,17 +9,33 @@ import {
   type PaginationState,
   type SortingState,
 } from '@tanstack/react-table';
-import { Box, TablePagination, Typography } from '@mui/material';
+import {
+  Box,
+  FormControl,
+  MenuItem,
+  Select,
+  TablePagination,
+  Typography,
+} from '@mui/material';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
+import { SearchField } from '@/components/SearchField';
 import { formatDate } from '@/lib/format';
-import { InvoiceNodeType } from '@/gql/schema';
+import { InvoiceNodeStatus } from '@/gql/schema';
 import { invoiceListQueryOptions } from '@/features/invoices/queries';
 import { useInvoiceStatusName } from '@/features/invoices/status';
+import { customerReturnFilter } from '@/features/invoices/customerReturn';
 import type { InvoiceRowFragment } from '@/features/invoices/invoices.generated';
 
 const route = getRouteApi('/_authenticated/$storeId/distribution/customer-return');
 const helper = createColumnHelper<InvoiceRowFragment>();
+
+// Statuses a customer return moves through (drives the filter dropdown).
+const STATUS_OPTIONS: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Received,
+  InvoiceNodeStatus.Verified,
+];
 
 export function CustomerReturnListPage() {
   const search = route.useSearch();
@@ -32,7 +48,7 @@ export function CustomerReturnListPage() {
     ...invoiceListQueryOptions(
       storeId,
       'customer-return',
-      { type: { equalTo: InvoiceNodeType.CustomerReturn } },
+      customerReturnFilter(search),
       search,
     ),
     enabled: Boolean(storeId),
@@ -77,7 +93,40 @@ export function CustomerReturnListPage() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1 }}>
-      <Typography variant="h5">{t('app.customer-return')}</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+        <Typography variant="h5" sx={{ flexGrow: 1 }}>
+          {t('app.customer-return')}
+        </Typography>
+        <SearchField
+          value={search.search ?? ''}
+          onChange={value =>
+            navigate({ search: prev => ({ ...prev, search: value || undefined, page: 1 }) })
+          }
+          placeholder={t('placeholder.search')}
+        />
+        <FormControl size="small" sx={{ minWidth: 170 }}>
+          <Select
+            displayEmpty
+            value={search.status ?? ''}
+            onChange={e =>
+              navigate({
+                search: prev => ({
+                  ...prev,
+                  status: (e.target.value || undefined) as InvoiceNodeStatus | undefined,
+                  page: 1,
+                }),
+              })
+            }
+          >
+            <MenuItem value="">{t('label.all-statuses')}</MenuItem>
+            {STATUS_OPTIONS.map(s => (
+              <MenuItem key={s} value={s}>
+                {statusName(s)}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
       <DataTable table={table} />
       <TablePagination
         component="div"

@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
-import { InvoiceNodeType } from '@/gql/schema';
+import { InvoiceNodeStatus } from '@/gql/schema';
 import { invoiceListQueryOptions } from '@/features/invoices/queries';
+import { supplierReturnFilter } from '@/features/invoices/supplierReturn';
 import { SupplierReturnListPage } from '@/features/invoices/SupplierReturnListPage';
 
 const searchSchema = z.object({
@@ -9,6 +10,8 @@ const searchSchema = z.object({
   pageSize: z.number().int().min(1).max(500).catch(50),
   sortKey: z.string().catch('createdDatetime'),
   sortDesc: z.boolean().catch(true),
+  search: z.string().optional().catch(undefined),
+  status: z.nativeEnum(InvoiceNodeStatus).optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/_authenticated/$storeId/replenishment/supplier-return')({
@@ -18,7 +21,7 @@ export const Route = createFileRoute('/_authenticated/$storeId/replenishment/sup
     const storeId = params.storeId;
     if (storeId) {
       return context.queryClient.ensureQueryData(
-        invoiceListQueryOptions(storeId, 'supplier-return', { type: { equalTo: InvoiceNodeType.SupplierReturn } }, deps),
+        invoiceListQueryOptions(storeId, 'supplier-return', supplierReturnFilter(deps), deps),
       );
     }
   },

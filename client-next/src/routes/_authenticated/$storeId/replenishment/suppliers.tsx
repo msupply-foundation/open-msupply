@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
-import { NameNodeType } from '@/gql/schema';
 import { nameListQueryOptions } from '@/features/names/queries';
+import { suppliersFilter } from '@/features/names/suppliers';
 import { SuppliersListPage } from '@/features/names/SuppliersListPage';
 
 const searchSchema = z.object({
@@ -9,6 +9,7 @@ const searchSchema = z.object({
   pageSize: z.number().int().min(1).max(500).catch(50),
   sortKey: z.string().catch('name'),
   sortDesc: z.boolean().catch(false),
+  search: z.string().optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/_authenticated/$storeId/replenishment/suppliers')({
@@ -18,7 +19,7 @@ export const Route = createFileRoute('/_authenticated/$storeId/replenishment/sup
     const storeId = params.storeId;
     if (storeId) {
       return context.queryClient.ensureQueryData(
-        nameListQueryOptions(storeId, 'suppliers', { isSupplier: true, type: { equalAny: [NameNodeType.Facility, NameNodeType.Store] } }, deps),
+        nameListQueryOptions(storeId, 'suppliers', suppliersFilter(deps), deps),
       );
     }
   },

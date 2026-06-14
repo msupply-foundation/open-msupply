@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
-import { RequisitionNodeType } from '@/gql/schema';
+import { RequisitionNodeStatus } from '@/gql/schema';
 import { requisitionListQueryOptions } from '@/features/requisitions/queries';
+import { customerRequisitionFilter } from '@/features/requisitions/customerRequisition';
 import { CustomerRequisitionListPage } from '@/features/requisitions/CustomerRequisitionListPage';
 
 const searchSchema = z.object({
@@ -9,6 +10,8 @@ const searchSchema = z.object({
   pageSize: z.number().int().min(1).max(500).catch(50),
   sortKey: z.string().catch('createdDatetime'),
   sortDesc: z.boolean().catch(true),
+  search: z.string().optional().catch(undefined),
+  status: z.nativeEnum(RequisitionNodeStatus).optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/_authenticated/$storeId/distribution/customer-requisition')({
@@ -18,7 +21,7 @@ export const Route = createFileRoute('/_authenticated/$storeId/distribution/cust
     const storeId = params.storeId;
     if (storeId) {
       return context.queryClient.ensureQueryData(
-        requisitionListQueryOptions(storeId, 'customer-requisition', { type: { equalTo: RequisitionNodeType.Response } }, deps),
+        requisitionListQueryOptions(storeId, 'customer-requisition', customerRequisitionFilter(deps), deps),
       );
     }
   },

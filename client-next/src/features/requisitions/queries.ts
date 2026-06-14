@@ -28,8 +28,13 @@ const toSortField = (key: string): RequisitionSortFieldInput =>
   SORT_FIELD[key] ?? RequisitionSortFieldInput.CreatedDatetime;
 
 export const requisitionKeys = {
-  list: (storeId: string, listId: string, params: ListParams) =>
-    ['requisitions', storeId, listId, params] as const,
+  // `filter` is part of the key so search/status changes refetch.
+  list: (
+    storeId: string,
+    listId: string,
+    filter: RequisitionFilterInput,
+    params: ListParams,
+  ) => ['requisitions', storeId, listId, filter, params] as const,
 };
 
 export const requisitionListQueryOptions = (
@@ -39,7 +44,7 @@ export const requisitionListQueryOptions = (
   params: ListParams,
 ) =>
   queryOptions({
-    queryKey: requisitionKeys.list(storeId, listId, params),
+    queryKey: requisitionKeys.list(storeId, listId, filter, params),
     queryFn: async () => {
       const res = await requisitionsSdk.requisitions({
         storeId,

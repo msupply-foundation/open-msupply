@@ -12,8 +12,9 @@ import {
 import { Box, TablePagination, Typography } from '@mui/material';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
-import { NameNodeType } from '@/gql/schema';
+import { SearchField } from '@/components/SearchField';
 import { nameListQueryOptions } from '@/features/names/queries';
+import { customersFilter } from '@/features/names/customers';
 import type { NameRowFragment } from '@/features/names/names.generated';
 
 const route = getRouteApi('/_authenticated/$storeId/distribution/customers');
@@ -29,7 +30,7 @@ export function CustomersListPage() {
     ...nameListQueryOptions(
       storeId,
       'customers',
-      { isCustomer: true, type: { equalAny: [NameNodeType.Facility, NameNodeType.Store] } },
+      customersFilter(search),
       search,
     ),
     enabled: Boolean(storeId),
@@ -70,7 +71,18 @@ export function CustomersListPage() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1 }}>
-      <Typography variant="h5">{t('app.customers')}</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+        <Typography variant="h5" sx={{ flexGrow: 1 }}>
+          {t('app.customers')}
+        </Typography>
+        <SearchField
+          value={search.search ?? ''}
+          onChange={value =>
+            navigate({ search: prev => ({ ...prev, search: value || undefined, page: 1 }) })
+          }
+          placeholder={t('placeholder.search')}
+        />
+      </Box>
       <DataTable table={table} />
       <TablePagination
         component="div"
