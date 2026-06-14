@@ -34,7 +34,7 @@ import { StatusBar } from '@/components/detail/StatusBar';
 import { LineEditDialog } from '@/components/detail/LineEditDialog';
 import { ItemSearchInput } from '@/components/detail/ItemSearchInput';
 import { useConfirm } from '@/components/detail/useConfirm';
-import { INPUT_BASE, inputStyle, makeNonNegativeValidator } from '@/components/detail/inputs';
+import { INPUT_BASE, inputStyle, makeNonNegativeValidator, numericField } from '@/components/detail/inputs';
 import type { ItemOptionFragment } from '@/features/items/items.generated';
 import { useRequisitionStatusName } from './status';
 import { requisitionStatusFlow, requisitionReachedAt } from './statusFlow';
@@ -403,11 +403,12 @@ function RequestEditor({
                     <CardField label={t('label.requested')}>
                       {editable ? (
                         <input
-                          inputMode="decimal"
                           style={inputStyle(Boolean(lineErr?.requestedQuantity))}
-                          {...register(
-                            `lines.${line.id}.requestedQuantity`,
-                            numeric,
+                          {...numericField(
+                            register(
+                              `lines.${line.id}.requestedQuantity`,
+                              numeric,
+                            ),
                           )}
                         />
                       ) : (
@@ -491,9 +492,10 @@ function RequestEditor({
                     <TableCell sx={{ width: 110 }}>
                       {editable ? (
                         <input
-                          inputMode="decimal"
                           style={inputStyle(Boolean(lineErr?.requestedQuantity))}
-                          {...register(`lines.${line.id}.requestedQuantity`, numeric)}
+                          {...numericField(
+                            register(`lines.${line.id}.requestedQuantity`, numeric),
+                          )}
                         />
                       ) : (
                         line.requestedQuantity

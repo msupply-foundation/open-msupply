@@ -26,6 +26,7 @@ import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
 import { SearchField } from '@/components/SearchField';
 import { LineEditDialog } from '@/components/detail/LineEditDialog';
+import { sanitizeNumeric } from '@/components/detail/inputs';
 import { NameSearchInput } from '@/components/detail/NameSearchInput';
 import { formatDate } from '@/lib/format';
 import { RequisitionNodeStatus } from '@/gql/schema';
@@ -95,6 +96,7 @@ export function CustomerRequisitionListPage() {
     columns,
     getCoreRowModel: getCoreRowModel(),
     manualSorting: true,
+    enableSortingRemoval: false,
     manualPagination: true,
     rowCount: data?.totalCount ?? 0,
     state: { sorting, pagination },
@@ -254,7 +256,7 @@ function CreateCustomerRequisitionDialog({
           <TextField
             label={t('label.min-months-of-stock')}
             value={minMonths}
-            onChange={e => setMinMonths(e.target.value)}
+            onChange={e => setMinMonths(sanitizeNumeric(e.target.value))}
             size="small"
             fullWidth
             inputMode="decimal"
@@ -262,7 +264,7 @@ function CreateCustomerRequisitionDialog({
           <TextField
             label={t('label.max-months-of-stock')}
             value={maxMonths}
-            onChange={e => setMaxMonths(e.target.value)}
+            onChange={e => setMaxMonths(sanitizeNumeric(e.target.value))}
             size="small"
             fullWidth
             inputMode="decimal"

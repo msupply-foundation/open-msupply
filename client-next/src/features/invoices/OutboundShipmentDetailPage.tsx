@@ -39,7 +39,12 @@ import { StatusBar } from '@/components/detail/StatusBar';
 import { LineEditDialog } from '@/components/detail/LineEditDialog';
 import { ItemSearchInput } from '@/components/detail/ItemSearchInput';
 import { useConfirm } from '@/components/detail/useConfirm';
-import { inputStyle, makeNonNegativeValidator } from '@/components/detail/inputs';
+import {
+  inputStyle,
+  makeNonNegativeValidator,
+  numericField,
+  sanitizeNumeric,
+} from '@/components/detail/inputs';
 import type { ItemOptionFragment } from '@/features/items/items.generated';
 import type { StockLineRowFragment } from '@/features/stock/stock.generated';
 import { useInvoiceStatusName } from './status';
@@ -381,9 +386,10 @@ function OutboundEditor({
                     <TableCell sx={{ width: 90 }}>
                       {editable ? (
                         <input
-                          inputMode="decimal"
                           style={inputStyle(Boolean(lineErr?.numberOfPacks))}
-                          {...register(`lines.${line.id}.numberOfPacks`, numeric)}
+                          {...numericField(
+                            register(`lines.${line.id}.numberOfPacks`, numeric),
+                          )}
                         />
                       ) : (
                         line.numberOfPacks
@@ -527,9 +533,10 @@ function OutboundLineCard({
         <CardRow label={t('label.pack-quantity')}>
           {editable ? (
             <input
-              inputMode="decimal"
               style={inputStyle(invalid)}
-              {...register(`lines.${line.id}.numberOfPacks`, numeric)}
+              {...numericField(
+                register(`lines.${line.id}.numberOfPacks`, numeric),
+              )}
             />
           ) : (
             <Typography variant="body2">{line.numberOfPacks}</Typography>
@@ -664,7 +671,7 @@ function AddOutboundLineDialog({
           <TextField
             label={t('label.pack-quantity')}
             value={numberOfPacks}
-            onChange={e => setNumberOfPacks(e.target.value)}
+            onChange={e => setNumberOfPacks(sanitizeNumeric(e.target.value))}
             size="small"
             fullWidth
             inputMode="decimal"

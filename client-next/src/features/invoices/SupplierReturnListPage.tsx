@@ -86,6 +86,7 @@ export function SupplierReturnListPage() {
     columns,
     getCoreRowModel: getCoreRowModel(),
     manualSorting: true,
+    enableSortingRemoval: false,
     manualPagination: true,
     rowCount: data?.totalCount ?? 0,
     state: { sorting, pagination },

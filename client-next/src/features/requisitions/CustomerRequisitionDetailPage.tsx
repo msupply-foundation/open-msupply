@@ -38,6 +38,7 @@ import {
   INPUT_BASE,
   inputStyle,
   makeNonNegativeValidator,
+  numericField,
 } from '@/components/detail/inputs';
 import type { ItemOptionFragment } from '@/features/items/items.generated';
 import { useRequisitionStatusName } from './status';
@@ -416,11 +417,12 @@ function ResponseEditor({
                     <TableCell sx={{ width: 110 }}>
                       {editable ? (
                         <input
-                          inputMode="decimal"
                           style={inputStyle(Boolean(lineErr?.requestedQuantity))}
-                          {...register(
-                            `lines.${line.id}.requestedQuantity`,
-                            numeric,
+                          {...numericField(
+                            register(
+                              `lines.${line.id}.requestedQuantity`,
+                              numeric,
+                            ),
                           )}
                         />
                       ) : (
@@ -434,11 +436,12 @@ function ResponseEditor({
                     <TableCell sx={{ width: 110 }}>
                       {editable ? (
                         <input
-                          inputMode="decimal"
                           style={inputStyle(Boolean(lineErr?.supplyQuantity))}
-                          {...register(
-                            `lines.${line.id}.supplyQuantity`,
-                            numeric,
+                          {...numericField(
+                            register(
+                              `lines.${line.id}.supplyQuantity`,
+                              numeric,
+                            ),
                           )}
                         />
                       ) : (
@@ -582,9 +585,10 @@ function ResponseLineCard({
           <CardRow label={t('label.requested')}>
             {editable ? (
               <input
-                inputMode="decimal"
                 style={inputStyle(requestedInvalid)}
-                {...register(`lines.${line.id}.requestedQuantity`, numeric)}
+                {...numericField(
+                  register(`lines.${line.id}.requestedQuantity`, numeric),
+                )}
               />
             ) : (
               <Typography variant="body2">{line.requestedQuantity}</Typography>
@@ -593,9 +597,10 @@ function ResponseLineCard({
           <CardRow label={t('label.supply-quantity')}>
             {editable ? (
               <input
-                inputMode="decimal"
                 style={inputStyle(supplyInvalid)}
-                {...register(`lines.${line.id}.supplyQuantity`, numeric)}
+                {...numericField(
+                  register(`lines.${line.id}.supplyQuantity`, numeric),
+                )}
               />
             ) : (
               <Typography variant="body2">{line.supplyQuantity}</Typography>

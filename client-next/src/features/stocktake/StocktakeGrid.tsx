@@ -29,6 +29,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { ReasonOptionNodeType, type UpdateStocktakeLineInput } from '@/gql/schema';
+import { numericField } from '@/components/detail/inputs';
 import { useTranslation, type TxKey } from '@/intl';
 import type { TFunction } from 'i18next';
 import { stocktakeSdk } from './api';
@@ -232,9 +233,8 @@ function DesktopRow({
       />
       <input
         type="text"
-        inputMode="decimal"
         style={inputBase}
-        {...register(`lines.${line.id}.packSize`, numericReg)}
+        {...numericField(register(`lines.${line.id}.packSize`, numericReg))}
       />
       <span
         style={{
@@ -247,23 +247,20 @@ function DesktopRow({
       </span>
       <input
         type="text"
-        inputMode="decimal"
         data-index={index}
         style={inputStyle(errField === 'counted')}
-        {...register(`lines.${line.id}.counted`, numericReg)}
+        {...numericField(register(`lines.${line.id}.counted`, numericReg))}
         onKeyDown={e => onCountedKeyDown(e, index)}
       />
       <input
         type="text"
-        inputMode="decimal"
         style={inputBase}
-        {...register(`lines.${line.id}.costPrice`, numericReg)}
+        {...numericField(register(`lines.${line.id}.costPrice`, numericReg))}
       />
       <input
         type="text"
-        inputMode="decimal"
         style={inputBase}
-        {...register(`lines.${line.id}.sellPrice`, numericReg)}
+        {...numericField(register(`lines.${line.id}.sellPrice`, numericReg))}
       />
       <ReasonSelect
         line={line}
@@ -318,19 +315,17 @@ function MobileCard({
         >
           <input
             type="text"
-            inputMode="decimal"
             data-index={index}
             style={inputStyle(errField === 'counted')}
-            {...register(`lines.${line.id}.counted`, numericReg)}
+            {...numericField(register(`lines.${line.id}.counted`, numericReg))}
             onKeyDown={e => onCountedKeyDown(e, index)}
           />
         </CardField>
         <CardField label={t('label.pack-size')}>
           <input
             type="text"
-            inputMode="decimal"
             style={inputBase}
-            {...register(`lines.${line.id}.packSize`, numericReg)}
+            {...numericField(register(`lines.${line.id}.packSize`, numericReg))}
           />
         </CardField>
         <CardField label={t('label.batch')}>
@@ -346,17 +341,15 @@ function MobileCard({
         <CardField label={t('label.cost-price')}>
           <input
             type="text"
-            inputMode="decimal"
             style={inputBase}
-            {...register(`lines.${line.id}.costPrice`, numericReg)}
+            {...numericField(register(`lines.${line.id}.costPrice`, numericReg))}
           />
         </CardField>
         <CardField label={t('label.sell-price')}>
           <input
             type="text"
-            inputMode="decimal"
             style={inputBase}
-            {...register(`lines.${line.id}.sellPrice`, numericReg)}
+            {...numericField(register(`lines.${line.id}.sellPrice`, numericReg))}
           />
         </CardField>
       </Box>

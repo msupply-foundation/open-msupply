@@ -1,4 +1,5 @@
-import type { CSSProperties } from 'react';
+import type { ChangeEvent, CSSProperties } from 'react';
+import type { UseFormRegisterReturn } from 'react-hook-form';
 import type { TFunction } from 'i18next';
 
 // Shared styling for the inline editable cells used in document line tables.
@@ -22,6 +23,28 @@ const INPUT_DISABLED: CSSProperties = {
 export function inputStyle(invalid: boolean, disabled = false): CSSProperties {
   if (disabled) return INPUT_DISABLED;
   return invalid ? { ...INPUT_BASE, borderColor: '#d32f2f' } : INPUT_BASE;
+}
+
+// Strip everything except digits and decimal points. Used to keep numeric
+// fields numeric as the user types or pastes (letters etc. never appear).
+export const sanitizeNumeric = (value: string): string =>
+  value.replace(/[^0-9.]/g, '');
+
+/**
+ * Wrap a react-hook-form `register(name, opts)` result for a numeric <input>:
+ * spread the return AND restrict input to digits/decimal point on every change
+ * (typing or paste). e.g. `<input {...numericField(register(name, numeric))} />`.
+ */
+export function numericField(reg: UseFormRegisterReturn) {
+  return {
+    ...reg,
+    inputMode: 'decimal' as const,
+    onChange: (e: ChangeEvent<HTMLInputElement>) => {
+      const cleaned = sanitizeNumeric(e.target.value);
+      if (cleaned !== e.target.value) e.target.value = cleaned;
+      return reg.onChange(e);
+    },
+  };
 }
 
 // A field is empty (not entered) or a non-negative finite number. Returns a

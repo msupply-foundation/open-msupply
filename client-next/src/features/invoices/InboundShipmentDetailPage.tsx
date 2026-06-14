@@ -39,7 +39,13 @@ import { StatusBar } from '@/components/detail/StatusBar';
 import { LineEditDialog } from '@/components/detail/LineEditDialog';
 import { ItemSearchInput } from '@/components/detail/ItemSearchInput';
 import { useConfirm } from '@/components/detail/useConfirm';
-import { INPUT_BASE, inputStyle, makeNonNegativeValidator } from '@/components/detail/inputs';
+import {
+  INPUT_BASE,
+  inputStyle,
+  makeNonNegativeValidator,
+  numericField,
+  sanitizeNumeric,
+} from '@/components/detail/inputs';
 import type { ItemOptionFragment } from '@/features/items/items.generated';
 import { useInvoiceStatusName } from './status';
 import { invoiceStatusFlow, invoiceReachedAt } from './statusFlow';
@@ -448,9 +454,10 @@ function InboundEditor({
                     <TableCell sx={{ width: 90 }}>
                       {editable ? (
                         <input
-                          inputMode="decimal"
                           style={inputStyle(Boolean(lineErr?.packSize))}
-                          {...register(`lines.${line.id}.packSize`, numeric)}
+                          {...numericField(
+                            register(`lines.${line.id}.packSize`, numeric),
+                          )}
                         />
                       ) : (
                         line.packSize
@@ -459,9 +466,10 @@ function InboundEditor({
                     <TableCell sx={{ width: 90 }}>
                       {editable ? (
                         <input
-                          inputMode="decimal"
                           style={inputStyle(Boolean(lineErr?.numberOfPacks))}
-                          {...register(`lines.${line.id}.numberOfPacks`, numeric)}
+                          {...numericField(
+                            register(`lines.${line.id}.numberOfPacks`, numeric),
+                          )}
                         />
                       ) : (
                         line.numberOfPacks
@@ -470,9 +478,10 @@ function InboundEditor({
                     <TableCell sx={{ width: 100 }}>
                       {editable ? (
                         <input
-                          inputMode="decimal"
                           style={inputStyle(Boolean(lineErr?.cost))}
-                          {...register(`lines.${line.id}.cost`, numeric)}
+                          {...numericField(
+                            register(`lines.${line.id}.cost`, numeric),
+                          )}
                         />
                       ) : (
                         formatCurrency(line.costPricePerPack)
@@ -481,9 +490,10 @@ function InboundEditor({
                     <TableCell sx={{ width: 100 }}>
                       {editable ? (
                         <input
-                          inputMode="decimal"
                           style={inputStyle(Boolean(lineErr?.sell))}
-                          {...register(`lines.${line.id}.sell`, numeric)}
+                          {...numericField(
+                            register(`lines.${line.id}.sell`, numeric),
+                          )}
                         />
                       ) : (
                         formatCurrency(line.sellPricePerPack)
@@ -655,9 +665,8 @@ function InboundLineCard({
         <CardField label={t('label.pack-size')}>
           {editable ? (
             <input
-              inputMode="decimal"
               style={inputStyle(Boolean(lineErr?.packSize))}
-              {...register(`lines.${line.id}.packSize`, numeric)}
+              {...numericField(register(`lines.${line.id}.packSize`, numeric))}
             />
           ) : (
             <Typography variant="body2">{line.packSize}</Typography>
@@ -666,9 +675,10 @@ function InboundLineCard({
         <CardField label={t('label.pack-quantity')}>
           {editable ? (
             <input
-              inputMode="decimal"
               style={inputStyle(Boolean(lineErr?.numberOfPacks))}
-              {...register(`lines.${line.id}.numberOfPacks`, numeric)}
+              {...numericField(
+                register(`lines.${line.id}.numberOfPacks`, numeric),
+              )}
             />
           ) : (
             <Typography variant="body2">{line.numberOfPacks}</Typography>
@@ -677,9 +687,8 @@ function InboundLineCard({
         <CardField label={t('label.cost-per-pack')}>
           {editable ? (
             <input
-              inputMode="decimal"
               style={inputStyle(Boolean(lineErr?.cost))}
-              {...register(`lines.${line.id}.cost`, numeric)}
+              {...numericField(register(`lines.${line.id}.cost`, numeric))}
             />
           ) : (
             <Typography variant="body2">
@@ -690,9 +699,8 @@ function InboundLineCard({
         <CardField label={t('label.sell-price-per-pack')}>
           {editable ? (
             <input
-              inputMode="decimal"
               style={inputStyle(Boolean(lineErr?.sell))}
-              {...register(`lines.${line.id}.sell`, numeric)}
+              {...numericField(register(`lines.${line.id}.sell`, numeric))}
             />
           ) : (
             <Typography variant="body2">
@@ -838,7 +846,7 @@ function AddInboundLineDialog({
           <TextField
             label={t('label.pack-size')}
             value={packSize}
-            onChange={e => setPackSize(e.target.value)}
+            onChange={e => setPackSize(sanitizeNumeric(e.target.value))}
             size="small"
             fullWidth
             inputMode="decimal"
@@ -846,7 +854,7 @@ function AddInboundLineDialog({
           <TextField
             label={t('label.pack-quantity')}
             value={numberOfPacks}
-            onChange={e => setNumberOfPacks(e.target.value)}
+            onChange={e => setNumberOfPacks(sanitizeNumeric(e.target.value))}
             size="small"
             fullWidth
             inputMode="decimal"
@@ -854,7 +862,7 @@ function AddInboundLineDialog({
           <TextField
             label={t('label.cost-per-pack')}
             value={cost}
-            onChange={e => setCost(e.target.value)}
+            onChange={e => setCost(sanitizeNumeric(e.target.value))}
             size="small"
             fullWidth
             inputMode="decimal"
@@ -862,7 +870,7 @@ function AddInboundLineDialog({
           <TextField
             label={t('label.sell-price-per-pack')}
             value={sell}
-            onChange={e => setSell(e.target.value)}
+            onChange={e => setSell(sanitizeNumeric(e.target.value))}
             size="small"
             fullWidth
             inputMode="decimal"
