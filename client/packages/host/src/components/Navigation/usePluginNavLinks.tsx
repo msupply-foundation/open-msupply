@@ -1,16 +1,20 @@
 import React, { useMemo } from 'react';
 import {
   AppNavLink,
+  LocaleKey,
   PluginIcon,
   PluginPage,
   useAuthContext,
   usePluginProvider,
   UserPermission,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
+// `${category}/${route}` for a regular page; just `${category}` for a
+// category-root page (page.route === '').
 const pluginPagePath = (categoryKey: string, page: PluginPage) =>
-  `/${categoryKey}/${page.route}`;
+  page.route ? `/${categoryKey}/${page.route}` : `/${categoryKey}`;
 
 const hasAllPermissions = (
   permissions: UserPermission[] | undefined,
@@ -20,7 +24,10 @@ const hasAllPermissions = (
 const PluginNavLink: React.FC<{
   to: string;
   label: string;
-}> = ({ to, label }) => <AppNavLink to={to} text={label} />;
+}> = ({ to, label }) => {
+  const t = useTranslation();
+  return <AppNavLink to={to} text={t(label as LocaleKey)} />;
+};
 
 /**
  * Plugin nav links targeting an existing category. Render inside that

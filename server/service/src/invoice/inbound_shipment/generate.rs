@@ -55,6 +55,8 @@ pub fn generate_empty_invoice_lines(
                     volume_per_pack: 0.0,
                     shipped_pack_size: None,
                     status: None, // we know it's an internal order due to add_from_master_list validation, so we can leave status as None
+                    received_number_of_packs: None,
+                    linked_invoice_line_id: None,
                 });
             }
             Ok(None) => {}

@@ -206,6 +206,7 @@ async fn invoice_transfers() {
             tester.update_inbound_shipment_to_delivered(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
+            tester.check_outbound_lines_have_received_qty(&ctx.connection);
             tester.update_inbound_shipment_to_verified(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
@@ -489,6 +490,7 @@ async fn invoice_transfers_with_merged_name() {
             tester.update_inbound_shipment_to_delivered(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
+            tester.check_outbound_lines_have_received_qty(&ctx.connection);
             tester.update_inbound_shipment_to_verified(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
@@ -769,8 +771,7 @@ impl InvoiceTransferTester {
 
         let supplier_return = InvoiceRow {
             id: uuid(),
-            name_id: outbound_name
-                .map_or(outbound_store.name_id.clone(), |n| n.id.clone()),
+            name_id: outbound_name.map_or(outbound_store.name_id.clone(), |n| n.id.clone()),
             store_id: inbound_store.id.clone(),
             invoice_number: 5,
             r#type: InvoiceType::SupplierReturn,
@@ -936,10 +937,7 @@ impl InvoiceTransferTester {
 
         assert_eq!(inbound_shipment.r#type, InvoiceType::InboundShipment);
         assert_eq!(inbound_shipment.store_id, self.inbound_store.id);
-        assert_eq!(
-            inbound_shipment.name_id,
-            self.outbound_store.name_id
-        );
+        assert_eq!(inbound_shipment.name_id, self.outbound_store.name_id);
         assert_eq!(
             inbound_shipment.name_store_id,
             Some(self.outbound_store.id.clone())
@@ -1222,6 +1220,29 @@ impl InvoiceTransferTester {
         )
     }
 
+    pub(crate) fn check_outbound_lines_have_received_qty(&self, connection: &StorageConnection) {
+        let outbound_lines = InvoiceLineRepository::new(connection)
+            .query_by_filter(
+                InvoiceLineFilter::new()
+                    .invoice_id(EqualFilter::equal_to(self.outbound_shipment.id.to_string()))
+                    .r#type(InvoiceLineType::StockOut.equal_to()),
+            )
+            .unwrap();
+
+        assert!(
+            !outbound_lines.is_empty(),
+            "expected outbound stock-out lines to exist"
+        );
+        for line in outbound_lines {
+            assert_eq!(
+                line.invoice_line_row.received_number_of_packs,
+                Some(line.invoice_line_row.number_of_packs),
+                "outbound line {} should have received_number_of_packs set after inbound Received",
+                line.invoice_line_row.id,
+            );
+        }
+    }
+
     pub(crate) fn insert_supplier_return(&self, connection: &StorageConnection) {
         let inbound_shipment_id = self.inbound_shipment.clone().map(|r| r.id);
         insert_extra_mock_data(
@@ -1279,10 +1300,7 @@ impl InvoiceTransferTester {
 
         assert_eq!(customer_return.r#type, InvoiceType::CustomerReturn);
         assert_eq!(customer_return.store_id, self.outbound_store.id);
-        assert_eq!(
-            customer_return.name_id,
-            self.inbound_store.name_id
-        );
+        assert_eq!(customer_return.name_id, self.inbound_store.name_id);
         assert_eq!(
             customer_return.name_store_id,
             Some(self.inbound_store.id.clone())
@@ -1509,9 +1527,7 @@ fn check_line(connection: &StorageConnection, inbound_id: &str, outbound_line: &
         .query_one(
             InvoiceLineFilter::new()
                 .invoice_id(EqualFilter::equal_to(inbound_id.to_string()))
-                .item_id(EqualFilter::equal_to(
-                    outbound_line.item_id.to_string(),
-                )),
+                .item_id(EqualFilter::equal_to(outbound_line.item_id.to_string())),
         )
         .unwrap();
 
@@ -1543,9 +1559,7 @@ fn check_line_pricing(
         .query_one(
             InvoiceLineFilter::new()
                 .invoice_id(EqualFilter::equal_to(inbound_id.to_string()))
-                .item_id(EqualFilter::equal_to(
-                    outbound_line.item_id.to_string(),
-                )),
+                .item_id(EqualFilter::equal_to(outbound_line.item_id.to_string())),
         )
         .unwrap();
 

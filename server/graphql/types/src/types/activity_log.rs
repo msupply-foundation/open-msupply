@@ -120,6 +120,7 @@ pub enum ActivityLogNodeType {
     BundledItemCreated,
     BundledItemUpdated,
     BundledItemDeleted,
+    InvoiceReceivedQtyUpdated,
 }
 
 #[Object]

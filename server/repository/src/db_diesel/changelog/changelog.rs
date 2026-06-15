@@ -1,7 +1,7 @@
 use crate::{
     db_diesel::store_row::store, diesel_macros::apply_equal_filter,
-    name_store_join::name_store_join, vaccination_row::vaccination, DBType, EqualFilter,
-    LockedConnection, RepositoryError, StorageConnection, TransactionNotification,
+    name_store_join::name_store_join, vaccination_row::vaccination, ChangelogCursorTracker, DBType,
+    EqualFilter, RepositoryError, StorageConnection, TransactionNotification,
 };
 use diesel::{helper_types::IntoBoxed, prelude::*};
 use serde::{Deserialize, Serialize};
@@ -282,20 +282,19 @@ impl<'a> ChangelogRepository<'a> {
         limit: u32,
         filter: Option<ChangelogFilter>,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let result = with_locked_changelog_table(self.connection, |locked_con| {
-            let query = create_filtered_query(earliest, filter)
-                .order(changelog_deduped::dsl::cursor.asc())
-                .limit(limit.into());
+        let mut query = create_filtered_query(earliest, filter);
+        query = clamp_to_safe_cursor(self.connection, query);
+        let query = query
+            .order(changelog_deduped::dsl::cursor.asc())
+            .limit(limit.into());
 
-            // // Debug diesel query
-            // println!(
-            //     "{}",
-            //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
-            // );
+        // // Debug diesel query
+        // println!(
+        //     "{}",
+        //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
+        // );
 
-            let result: Vec<ChangelogRow> = query.load(locked_con.connection())?;
-            Ok(result)
-        })?;
+        let result: Vec<ChangelogRow> = query.load(self.connection.lock().connection())?;
         Ok(result)
     }
 
@@ -304,7 +303,12 @@ impl<'a> ChangelogRepository<'a> {
         earliest: u64,
         filter: Option<ChangelogFilter>,
     ) -> Result<u64, RepositoryError> {
-        let result = create_filtered_query(earliest, filter)
+        // Clamp identically to the row reader so callers that drive a push/processor loop off
+        // `count` (e.g. the `_ => continue` termination check) stay consistent with `changelogs()`
+        // while a tx is in flight — otherwise count could report rows the clamped reader won't
+        // return, spinning the loop.
+        let query = clamp_to_safe_cursor(self.connection, create_filtered_query(earliest, filter));
+        let result = query
             .count()
             .get_result::<i64>(self.connection.lock().connection())?;
         Ok(result as u64)
@@ -317,20 +321,19 @@ impl<'a> ChangelogRepository<'a> {
         sync_site_id: i32,
         is_initialized: bool,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let result = with_locked_changelog_table(self.connection, |locked_con| {
-            let query = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
-                .order(changelog_deduped::cursor.asc())
-                .limit(batch_size.into());
+        let mut query = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized);
+        query = clamp_to_safe_cursor(self.connection, query);
+        let query = query
+            .order(changelog_deduped::cursor.asc())
+            .limit(batch_size.into());
 
-            // Debug diesel query
-            // println!(
-            //     "{}",
-            //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
-            // );
+        // Debug diesel query
+        // println!(
+        //     "{}",
+        //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
+        // );
 
-            let result: Vec<ChangelogRow> = query.load(locked_con.connection())?;
-            Ok(result)
-        })?;
+        let result: Vec<ChangelogRow> = query.load(self.connection.lock().connection())?;
         Ok(result)
     }
 
@@ -341,24 +344,20 @@ impl<'a> ChangelogRepository<'a> {
         sync_site_id: i32,
         fetch_patient_id: String,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let result = with_locked_changelog_table(self.connection, |locked_con| {
-            let query = create_filtered_outgoing_patient_sync_query(
-                earliest,
-                sync_site_id,
-                fetch_patient_id,
-            )
+        let mut query =
+            create_filtered_outgoing_patient_sync_query(earliest, sync_site_id, fetch_patient_id);
+        query = clamp_to_safe_cursor(self.connection, query);
+        let query = query
             .order(changelog_deduped::cursor.asc())
             .limit(batch_size.into());
 
-            // Debug diesel query
-            // println!(
-            //     "{}",
-            //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
-            // );
+        // Debug diesel query
+        // println!(
+        //     "{}",
+        //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
+        // );
 
-            let result: Vec<ChangelogRow> = query.load(locked_con.connection())?;
-            Ok(result)
-        })?;
+        let result: Vec<ChangelogRow> = query.load(self.connection.lock().connection())?;
         Ok(result)
     }
 
@@ -371,7 +370,11 @@ impl<'a> ChangelogRepository<'a> {
         sync_site_id: i32,
         is_initialized: bool,
     ) -> Result<u64, RepositoryError> {
-        let result = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
+        let query = clamp_to_safe_cursor(
+            self.connection,
+            create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized),
+        );
+        let result = query
             .count()
             .get_result::<i64>(self.connection.lock().connection())?;
         Ok(result as u64)
@@ -383,20 +386,37 @@ impl<'a> ChangelogRepository<'a> {
         sync_site_id: i32,
         fetch_patient_id: String,
     ) -> Result<u64, RepositoryError> {
-        let result =
-            create_filtered_outgoing_patient_sync_query(earliest, sync_site_id, fetch_patient_id)
-                .count()
-                .get_result::<i64>(self.connection.lock().connection())?;
+        let query = clamp_to_safe_cursor(
+            self.connection,
+            create_filtered_outgoing_patient_sync_query(earliest, sync_site_id, fetch_patient_id),
+        );
+        let result = query
+            .count()
+            .get_result::<i64>(self.connection.lock().connection())?;
         Ok(result as u64)
     }
 
     /// Returns latest change log
     /// After initial sync we use this method to get the latest cursor to make sure we don't try to push any records that were synced to this site on initialisation
-    pub fn latest_cursor(&self) -> Result<u64, RepositoryError> {
+    pub fn absolute_latest_cursor(&self) -> Result<u64, RepositoryError> {
         let result = changelog::table
             .select(diesel::dsl::max(changelog::cursor))
             .first::<Option<i64>>(self.connection.lock().connection())?;
         Ok(result.unwrap_or(0) as u64)
+    }
+
+    /// Like [`absolute_latest_cursor`], but clamped to the max safe cursor while another connection has an
+    /// in-flight changelog tx (see [`ChangelogCursorTracker`]). Use this for sync push cursor
+    /// advancement so we never advance past an in-flight (uncommitted, lower) cursor.
+    ///
+    /// Note: `absolute_latest_cursor` itself is deliberately left un-clamped — migration bookkeeping
+    /// (`run_without_change_log_updates`) inserts changelog rows then reads the cursor on the same
+    /// connection, where a clamp would return the pre-insert max.
+    pub fn latest_cursor(&self) -> Result<u64, RepositoryError> {
+        match ChangelogCursorTracker::max_safe_cursor(self.connection) {
+            Some(safe) => Ok(safe),
+            None => self.absolute_latest_cursor(),
+        }
     }
 
     // Delete all change logs with cursor greater-equal cursor_ge
@@ -436,6 +456,10 @@ impl<'a> ChangelogRepository<'a> {
     /// Inserts a changelog record, and returns the cursor of the inserted record
     #[cfg(feature = "postgres")]
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {
+        // Register this connection's in-flight cursor boundary before the insert so concurrent
+        // readers clamp below it (see ChangelogCursorTracker).
+        ChangelogCursorTracker::track(self.connection)?;
+
         // Insert the record, and then return the cursor of the inserted record
         // Using a returning clause makes this thread safe
         let cursor_id = diesel::insert_into(changelog::table)
@@ -445,12 +469,17 @@ impl<'a> ChangelogRepository<'a> {
             .pop()
             .unwrap_or_default(); // This shouldn't happen, maybe should unwrap or panic?
 
-        self.connection.notify(TransactionNotification::ChangelogInsert);
+        self.connection
+            .notify(TransactionNotification::ChangelogInsert);
         Ok(cursor_id)
     }
 
     #[cfg(not(feature = "postgres"))]
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {
+        // Register this connection's in-flight cursor boundary before the insert so concurrent
+        // readers clamp below it (see ChangelogCursorTracker).
+        ChangelogCursorTracker::track(self.connection)?;
+
         // Insert the record, and then return the cursor of the inserted record
         // SQLite docs say this is safe if you don't have different threads sharing a single connection
         diesel::insert_into(changelog::table)
@@ -458,7 +487,8 @@ impl<'a> ChangelogRepository<'a> {
             .execute(self.connection.lock().connection())?;
         let cursor_id = diesel::select(last_insert_rowid())
             .get_result::<i64>(self.connection.lock().connection())?;
-        self.connection.notify(TransactionNotification::ChangelogInsert);
+        self.connection
+            .notify(TransactionNotification::ChangelogInsert);
         Ok(cursor_id)
     }
 }
@@ -620,8 +650,9 @@ fn create_filtered_outgoing_patient_sync_query(
     query
 }
 
-/// Runs some DB operation with a fully locked `changelog` table.
-/// This only applies for for Postgres and does nothing for Sqlite.
+/// Clamps a changelog query to the max safe cursor reported by the
+/// `ChangelogCursorTracker`, so reads never advance past an in-flight
+/// (uncommitted, lower) changelog cursor on another connection.
 ///
 /// Motivation:
 /// When querying changelog entries, ongoing transactions might continue adding changelog entries
@@ -632,37 +663,21 @@ fn create_filtered_outgoing_patient_sync_query(
 ///
 /// For example, a changelog may contain [1, 3, 4, 5] while another (slow) tx is about to commit a
 /// changelog row with cursor = 2.
-/// We need to wait for this changelog 2 to be added before doing the changelogs() query, otherwise
-/// we might update the latest changelog cursor to 5 and the changelog with cursor = 2 will be left
+/// If we update the latest changelog cursor to 5, the changelog with cursor = 2 will be left
 /// unhandled when continuing from the latest cursor position.
 ///
-/// Locking the changelog table will wait for ongoing writers and will prevent new writers while
-/// reading the changelog.
-fn with_locked_changelog_table<T, F>(
+/// While that tx is in flight the tracker reports a safe cursor below 2, so this filter caps the
+/// query at that boundary. The ceiling comes from the raw `changelog` table and is conservative vs
+/// the `changelog_deduped` view (`MAX(deduped) <= MAX(raw)`). When no tx is in flight the tracker
+/// returns `None` and the query is unchanged. This replaces the previous `LOCK TABLE` approach,
+/// which blocked concurrent readers under load.
+fn clamp_to_safe_cursor(
     connection: &StorageConnection,
-    f: F,
-) -> Result<T, RepositoryError>
-where
-    F: FnOnce(&mut LockedConnection) -> Result<T, RepositoryError>,
-{
-    if cfg!(feature = "postgres") {
-        use diesel::connection::SimpleConnection;
-        let result = connection.transaction_sync_etc(
-            |con| {
-                let mut locked_con = con.lock();
-                locked_con
-                    .connection()
-                    .batch_execute("LOCK TABLE ONLY changelog IN ACCESS EXCLUSIVE MODE")?;
-
-                f(&mut locked_con)
-            },
-            false,
-        )?;
-
-        Ok(result)
-    } else {
-        let mut locked_con = connection.lock();
-        f(&mut locked_con)
+    query: BoxedChangelogQuery,
+) -> BoxedChangelogQuery {
+    match ChangelogCursorTracker::max_safe_cursor(connection) {
+        Some(safe) => query.filter(changelog_deduped::cursor.le(safe as i64)),
+        None => query,
     }
 }
 
@@ -736,70 +751,137 @@ impl RowActionType {
 mod test {
     use super::*;
     use strum::IntoEnumIterator;
-    use tokio::sync::oneshot;
     use util::assert_matches;
 
+    use crate::{mock::MockDataInserts, test_db::setup_all};
+    #[cfg(feature = "postgres")]
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, ClinicianRow, ClinicianRowRepository,
-        ClinicianRowRepositoryTrait, RepositoryError, TransactionError,
+        ClinicianRow, ClinicianRowRepository, ClinicianRowRepositoryTrait, RepositoryError,
+        TransactionError,
     };
 
-    /// Example from with_locked_changelog_table() comment
+    /// Concurrent-tx race (the scenario the `ChangelogCursorTracker` guards): while connection A
+    /// holds an in-flight (uncommitted, lower) changelog cursor, connection B commits a *higher*
+    /// cursor. Without clamping, a reader on a third connection would return the higher committed
+    /// row and advance its push cursor past A's in-flight row, skipping it forever. The tracker
+    /// caps reads at A's tracked boundary until A commits.
+    ///
+    /// Postgres-only: SQLite serialises writers under `BEGIN IMMEDIATE`, so a concurrent in-flight
+    /// tx on a separate connection cannot be reproduced (and the channel handshake below would
+    /// deadlock on the single writer).
+    #[cfg(feature = "postgres")]
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-    async fn test_late_changelog_rows() {
-        let (_, connection, connection_manager, _) =
-            setup_all("test_late_changelog_rows", MockDataInserts::none()).await;
+    async fn test_changelog_clamped_by_in_flight_tx() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "test_changelog_clamped_by_in_flight_tx",
+            MockDataInserts::none(),
+        )
+        .await;
 
-        ClinicianRowRepository::new(&connection)
-            .upsert_one(&ClinicianRow {
-                id: String::from("1"),
-                is_active: true,
-                ..Default::default()
-            })
+        let not_system_log = || {
+            Some(
+                ChangelogFilter::new()
+                    .table_name(EqualFilter::not_equal_to(ChangelogTableName::SystemLog)),
+            )
+        };
+
+        let observer = connection_manager.connection().unwrap();
+        let cursor_before = ChangelogRepository::new(&observer)
+            .absolute_latest_cursor()
             .unwrap();
 
-        let (sender, receiver) = oneshot::channel::<()>();
-        let manager_2 = connection_manager.clone();
-        let process_2 = tokio::spawn(async move {
-            let connection = manager_2.connection().unwrap();
-            let result: Result<(), TransactionError<RepositoryError>> = connection
-                .transaction_sync(|con| {
-                    ClinicianRowRepository::new(con)
-                        .upsert_one(&ClinicianRow {
-                            id: String::from("2"),
-                            is_active: true,
-                            ..Default::default()
-                        })
-                        .unwrap();
-                    sender.send(()).unwrap();
-                    std::thread::sleep(core::time::Duration::from_millis(100));
+        // Channels to drive connection A: signal it has registered an in-flight cursor, then
+        // signal it to commit.
+        let (registered_tx, registered_rx) = std::sync::mpsc::channel::<()>();
+        let (release_tx, release_rx) = std::sync::mpsc::channel::<()>();
+
+        let manager_a = connection_manager.clone();
+        let slow_tx = tokio::task::spawn_blocking(move || {
+            let conn = manager_a.connection().unwrap();
+            let _: Result<(), TransactionError<RepositoryError>> =
+                conn.transaction_sync(|con| -> Result<(), RepositoryError> {
+                    ClinicianRowRepository::new(con).upsert_one(&ClinicianRow {
+                        id: "clinician_in_flight".to_string(),
+                        is_active: true,
+                        ..Default::default()
+                    })?;
+                    registered_tx.send(()).unwrap();
+                    release_rx.recv().unwrap();
                     Ok(())
                 });
-            result
         });
-        receiver.await.unwrap();
+
+        registered_rx.recv().unwrap();
+
+        // Connection B commits a higher changelog cursor while A's lower cursor is still in flight.
         ClinicianRowRepository::new(&connection)
             .upsert_one(&ClinicianRow {
-                id: String::from("3"),
+                id: "clinician_committed_after".to_string(),
                 is_active: true,
                 ..Default::default()
             })
             .unwrap();
 
-        let changelogs = ChangelogRepository::new(&connection)
-            .changelogs(
-                0,
-                10,
-                Some(
-                    ChangelogFilter::new()
-                        .table_name(EqualFilter::not_equal_to(ChangelogTableName::SystemLog)),
-                ),
-            )
+        // The clamp is active: safe cursor is pegged below the (now higher) raw max.
+        assert!(ChangelogCursorTracker::max_safe_cursor(&observer).is_some());
+        let safe_during = ChangelogRepository::new(&observer).latest_cursor().unwrap();
+        let raw_during = ChangelogRepository::new(&observer)
+            .absolute_latest_cursor()
             .unwrap();
-        assert_eq!(changelogs.len(), 3);
+        assert!(
+            safe_during <= cursor_before && safe_during < raw_during,
+            "expected safe cursor clamped (<= {}, < raw {}), got {}",
+            cursor_before,
+            raw_during,
+            safe_during
+        );
 
-        // being good and awaiting the task to finish orderly and check it did run fine
-        process_2.await.unwrap().unwrap();
+        // The reader must not return the committed-after row past the clamp.
+        let rows_during = ChangelogRepository::new(&observer)
+            .changelogs(0, 100, not_system_log())
+            .unwrap();
+        assert!(
+            !rows_during
+                .iter()
+                .any(|r| r.record_id == "clinician_committed_after"),
+            "reader returned a row past the in-flight clamp"
+        );
+
+        // `count` must clamp identically to the row reader, otherwise a push/processor loop that
+        // continues while `count > 0` but the clamped reader returns nothing would spin until the
+        // in-flight tx commits. (Fails if `count` is left un-clamped — it would include the
+        // committed-after row.)
+        let count_during = ChangelogRepository::new(&observer)
+            .count(0, not_system_log())
+            .unwrap();
+        assert_eq!(
+            count_during as usize,
+            rows_during.len(),
+            "count must clamp identically to changelogs() while a tx is in flight"
+        );
+
+        // Release A; once it commits the tracker entry is removed and the clamp lifts.
+        release_tx.send(()).unwrap();
+        slow_tx.await.unwrap();
+
+        assert_eq!(ChangelogCursorTracker::max_safe_cursor(&observer), None);
+        let safe_after = ChangelogRepository::new(&observer).latest_cursor().unwrap();
+        assert!(
+            safe_after > cursor_before,
+            "expected cursor to advance past {} after commit, got {}",
+            cursor_before,
+            safe_after
+        );
+
+        let rows_after = ChangelogRepository::new(&observer)
+            .changelogs(0, 100, not_system_log())
+            .unwrap();
+        assert!(rows_after
+            .iter()
+            .any(|r| r.record_id == "clinician_in_flight"));
+        assert!(rows_after
+            .iter()
+            .any(|r| r.record_id == "clinician_committed_after"));
     }
 
     #[actix_rt::test]

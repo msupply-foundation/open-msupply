@@ -1,7 +1,7 @@
 use crate::activity_log::{activity_log_entry_with_store, log_type_from_invoice_status};
 use crate::invoice_line::ShipmentTaxUpdate;
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, FixedOffset};
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRowRepository;
 use repository::{
     ActivityLogType, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus,
@@ -56,7 +56,7 @@ pub struct UpdateInboundShipment {
     pub charges_local_currency: Option<f64>,
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDefaultDonor>,
-    pub received_datetime: Option<DateTime<Utc>>,
+    pub received_datetime: Option<DateTime<FixedOffset>>,
 }
 
 type OutError = UpdateInboundShipmentError;
@@ -180,15 +180,20 @@ pub fn update_inbound_shipment(
                 )?;
             }
 
-            if patch.received_datetime.is_some() {
+            if let Some(received_datetime) = patch.received_datetime {
+                let offset = received_datetime.offset();
+                let local_date = |d: chrono::NaiveDateTime| {
+                    d.and_utc()
+                        .with_timezone(offset)
+                        .format("%Y-%m-%d")
+                        .to_string()
+                };
                 activity_log_entry_with_store(
                     ctx,
                     ActivityLogType::InvoiceDateBackdated,
                     Some(update_invoice.id.to_string()),
-                    old_received_datetime.map(|d| d.format("%Y-%m-%d").to_string()),
-                    update_invoice
-                        .received_datetime
-                        .map(|d| d.format("%Y-%m-%d").to_string()),
+                    old_received_datetime.map(local_date),
+                    update_invoice.received_datetime.map(local_date),
                     store_id.map(|id| id.to_string()),
                 )?;
             }
@@ -2015,9 +2020,9 @@ mod test {
 
     #[actix_rt::test]
     async fn update_inbound_shipment_backdate_received_errors() {
-        use chrono::DateTime;
+        use chrono::{DateTime, FixedOffset};
 
-        let now = Utc::now();
+        let now = Utc::now().fixed_offset();
         let two_days_ago = now - Duration::days(2);
         fn new_inbound() -> InvoiceRow {
             InvoiceRow {
@@ -2030,7 +2035,7 @@ mod test {
             }
         }
 
-        fn received_inbound(received_datetime: DateTime<Utc>) -> InvoiceRow {
+        fn received_inbound(received_datetime: DateTime<FixedOffset>) -> InvoiceRow {
             let naive = received_datetime.naive_utc();
             InvoiceRow {
                 id: "received_inbound_backdate".to_string(),
@@ -2080,7 +2085,9 @@ mod test {
             .upsert_one(&PreferenceRow {
                 id: "backdating_global".to_string(),
                 key: "backdating".to_string(),
-                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#.to_string(),
+                value:
+                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#
+                        .to_string(),
                 store_id: None,
             })
             .unwrap();
@@ -2154,7 +2161,9 @@ mod test {
             .upsert_one(&PreferenceRow {
                 id: "backdating_global".to_string(),
                 key: "backdating".to_string(),
-                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":1}"#.to_string(),
+                value:
+                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":1}"#
+                        .to_string(),
                 store_id: None,
             })
             .unwrap();
@@ -2176,16 +2185,16 @@ mod test {
 
     #[actix_rt::test]
     async fn update_inbound_shipment_backdate_received_success() {
-        use chrono::DateTime;
+        use chrono::{DateTime, FixedOffset};
         use repository::{
             location_movement::{LocationMovementFilter, LocationMovementRepository},
             LocationMovementRow, LocationMovementRowRepository,
         };
 
-        let now = Utc::now();
+        let now = Utc::now().fixed_offset();
         let three_days_ago = now - Duration::days(3);
 
-        fn received_inbound(received_datetime: DateTime<Utc>) -> InvoiceRow {
+        fn received_inbound(received_datetime: DateTime<FixedOffset>) -> InvoiceRow {
             let naive = received_datetime.naive_utc();
             InvoiceRow {
                 id: "received_inbound_backdate_success".to_string(),
@@ -2274,7 +2283,9 @@ mod test {
             .upsert_one(&PreferenceRow {
                 id: "backdating_global".to_string(),
                 key: "backdating".to_string(),
-                value: r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#.to_string(),
+                value:
+                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#
+                        .to_string(),
                 store_id: None,
             })
             .unwrap();
@@ -2303,10 +2314,7 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(
-            updated.received_datetime,
-            Some(three_days_ago.naive_utc())
-        );
+        assert_eq!(updated.received_datetime, Some(three_days_ago.naive_utc()));
 
         // delivered_datetime and created_datetime are intentionally left untouched
         // so the resulting out-of-order dates make backdating visible.
@@ -2368,5 +2376,91 @@ mod test {
         );
         assert!(logs[0].activity_log_row.changed_from.is_some());
         assert!(logs[0].activity_log_row.changed_to.is_some());
+    }
+
+    #[actix_rt::test]
+    async fn update_inbound_shipment_backdate_received_log_uses_local_timezone() {
+        use chrono::{FixedOffset, TimeZone};
+        use repository::activity_log::{ActivityLogFilter, ActivityLogRepository};
+        use repository::{PreferenceRow, PreferenceRowRepository};
+
+        let now = Utc::now().fixed_offset();
+
+        fn received_inbound(received_datetime: chrono::NaiveDateTime) -> InvoiceRow {
+            InvoiceRow {
+                id: "received_inbound_backdate_tz".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Received,
+                received_datetime: Some(received_datetime),
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_inbound_shipment_backdate_received_log_uses_local_timezone",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![received_inbound(now.naive_utc())],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        PreferenceRowRepository::new(&connection)
+            .upsert_one(&PreferenceRow {
+                id: "backdating_global".to_string(),
+                key: "backdating".to_string(),
+                value:
+                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":0}"#
+                        .to_string(),
+                store_id: None,
+            })
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = &service_provider.invoice_service;
+
+        // User in UTC+13 picks local midnight on 2024-12-10. As a UTC instant this is
+        // 2024-12-09T11:00:00, so the naive (UTC) date is the 9th
+        let plus_13 = FixedOffset::east_opt(13 * 60 * 60).unwrap();
+        let backdate = plus_13.with_ymd_and_hms(2024, 12, 10, 0, 0, 0).unwrap();
+        assert_eq!(
+            backdate.naive_utc().format("%Y-%m-%d").to_string(),
+            "2024-12-09"
+        );
+
+        service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: received_inbound(now.naive_utc()).id,
+                    received_datetime: Some(backdate),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            )
+            .unwrap();
+
+        let logs = ActivityLogRepository::new(&connection)
+            .query(
+                Default::default(),
+                Some(
+                    ActivityLogFilter::new()
+                        .r#type(ActivityLogType::InvoiceDateBackdated.equal_to()),
+                ),
+                None,
+            )
+            .unwrap();
+
+        assert_eq!(logs.len(), 1);
+        assert_eq!(
+            logs[0].activity_log_row.changed_to,
+            Some("2024-12-10".to_string())
+        );
     }
 }

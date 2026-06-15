@@ -1,6 +1,7 @@
 import {
   RecordPatch,
   UpdateInboundShipmentInput,
+  InvoiceNodeStatus,
   InvoiceTypeInput,
   useMutation,
   useQuery,
@@ -56,6 +57,19 @@ export const useInboundShipment = (id?: string) => {
     : userHasPermission(UserPermission.InboundShipmentVerify);
   const isDisabled = isInboundDisabled(data) || !hasMutatePermission;
   const isStatusChangeDisabled = isInboundStatusChangeDisabled(data);
+  // A shipment that went through line authorisation (any line has an auth
+  // status) can only be received once every line is approved or rejected, so
+  // its set of lines is locked from then on — lines/batches cannot be added
+  // or deleted, though other line details remain editable. The server
+  // enforces the same lock via the externalInboundShipmentLinesMustBeAuthorised
+  // preference (check_lines_locked_by_authorisation).
+  const requiresLineAuthorisation =
+    data?.lines.nodes.some(line => line.status != null) ?? false;
+  const isAddOrDeleteLinesDisabled =
+    isDisabled ||
+    (requiresLineAuthorisation &&
+      (data?.status === InvoiceNodeStatus.Received ||
+        data?.status === InvoiceNodeStatus.Verified));
 
   const rows = useMemo(() => {
     const lines = data?.lines?.nodes ?? [];
@@ -158,6 +172,7 @@ export const useInboundShipment = (id?: string) => {
     draft,
     isExternal,
     isDisabled,
+    isAddOrDeleteLinesDisabled,
     hasMutatePermission,
     isHoldable,
     isStatusChangeDisabled,
