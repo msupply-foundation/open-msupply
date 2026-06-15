@@ -2631,6 +2631,7 @@ export type DraftStockOutLineNode = {
   itemVariant?: Maybe<ItemVariantNode>;
   itemVariantId?: Maybe<Scalars['String']['output']>;
   location?: Maybe<LocationNode>;
+  manufacturer?: Maybe<NameNode>;
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
   program?: Maybe<ProgramNode>;
@@ -2643,6 +2644,10 @@ export type DraftStockOutLineNode = {
 };
 
 export type DraftStockOutLineNodeDonorArgs = {
+  storeId: Scalars['String']['input'];
+};
+
+export type DraftStockOutLineNodeManufacturerArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -2913,6 +2918,13 @@ export type EqualFilterRequisitionTypeInput = {
   equalTo?: InputMaybe<RequisitionNodeType>;
   notEqualAll?: InputMaybe<Array<RequisitionNodeType>>;
   notEqualTo?: InputMaybe<RequisitionNodeType>;
+};
+
+export type EqualFilterSensorTypeInput = {
+  equalAny?: InputMaybe<Array<SensorNodeType>>;
+  equalTo?: InputMaybe<SensorNodeType>;
+  notEqualAll?: InputMaybe<Array<SensorNodeType>>;
+  notEqualTo?: InputMaybe<SensorNodeType>;
 };
 
 export type EqualFilterStatusInput = {
@@ -4500,6 +4512,7 @@ export type InvoiceFilterInput = {
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
+  invoiceNumberOrStatus?: InputMaybe<StringFilterInput>;
   isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
   linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
   linkedOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
@@ -5266,6 +5279,7 @@ export type LocationConnector = {
 export type LocationFilterInput = {
   assignedToAsset?: InputMaybe<Scalars['Boolean']['input']>;
   code?: InputMaybe<StringFilterInput>;
+  codeOrName?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   locationTypeId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
@@ -7051,6 +7065,7 @@ export enum PreferenceKey {
   Backdating = 'backdating',
   CanCreateInternalOrderFromARequisition = 'canCreateInternalOrderFromARequisition',
   CustomTranslations = 'customTranslations',
+  CustomTranslationsV2 = 'customTranslationsV2',
   DaysInMonth = 'daysInMonth',
   DisableManualReturns = 'disableManualReturns',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
@@ -7106,6 +7121,7 @@ export enum PreferenceValueNodeType {
   Boolean = 'BOOLEAN',
   Colour = 'COLOUR',
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
+  CustomTranslationsV2 = 'CUSTOM_TRANSLATIONS_V2',
   Float = 'FLOAT',
   Integer = 'INTEGER',
   MultiChoice = 'MULTI_CHOICE',
@@ -7121,6 +7137,7 @@ export type PreferencesNode = {
   backdating: BackdatingNode;
   canCreateInternalOrderFromARequisition: Scalars['Boolean']['output'];
   customTranslations: Scalars['JSONObject']['output'];
+  customTranslationsV2: Scalars['JSON']['output'];
   daysInMonth: Scalars['Float']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
@@ -9459,8 +9476,10 @@ export type SensorConnector = {
 export type SensorFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  locationCode?: InputMaybe<StringFilterInput>;
   name?: InputMaybe<StringFilterInput>;
-  serial?: InputMaybe<EqualFilterStringInput>;
+  serial?: InputMaybe<StringFilterInput>;
+  type?: InputMaybe<EqualFilterSensorTypeInput>;
 };
 
 export type SensorNode = {
@@ -11760,6 +11779,11 @@ export type UpsertPreferencesInput = {
     Array<BoolStorePrefInput>
   >;
   customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
+  /**
+   * v2 custom translations, shape: `language -> namespace -> key -> value`.
+   * Passed as a JSON value to avoid nested-map InputObject friction.
+   */
+  customTranslationsV2?: InputMaybe<Scalars['JSON']['input']>;
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;

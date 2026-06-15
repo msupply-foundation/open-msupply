@@ -1,16 +1,10 @@
-import {
-  AuthError,
-  LocaleKey,
-  LocalStorage,
-  GraphqlStdError,
-  TypedTFunction,
-} from '../..';
+import { LocaleKey, NetworkError, TypedTFunction } from '../..';
 import { Sdk, AuthTokenQuery, RefreshTokenQuery } from './operations.generated';
 
 export type AuthenticationError = {
   message: string;
   detail?: string;
-  stdError?: string | undefined;
+  cause?: Error;
   timeoutRemaining?: number;
 };
 
@@ -75,21 +69,17 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         });
         return authTokenGuard(result, t);
       } catch (e) {
-        const error = e as GraphqlStdError;
-        if ('message' in error) {
-          console.error(error.message);
-        }
+        const err = e as Error & { detail?: string };
+        if (err?.message) console.error(err.message);
 
-        const errorMessage = error.message.includes('Network request failed')
-          ? 'ConnectionError'
-          : 'UnknownError';
+        const isNetwork = e instanceof NetworkError;
 
         return {
           token: '',
           error: {
-            message: errorMessage,
-            detail: error.message,
-            stdError: error.stdError,
+            message: isNetwork ? 'ConnectionError' : 'UnknownError',
+            detail: err?.detail ?? err?.message,
+            cause: e instanceof Error ? e : undefined,
           },
         };
       }
@@ -113,8 +103,7 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         return result.me;
       } catch (e) {
         console.error(e);
-        LocalStorage.setItem('/error/auth', AuthError.ServerError);
-        LocalStorage.setItem('/error/server', (e as Error).message);
+        throw e;
       }
     },
     permissions: async ({
