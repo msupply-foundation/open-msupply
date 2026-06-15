@@ -133,6 +133,7 @@ export enum ActivityLogNodeType {
   InvoiceDateBackdated = 'INVOICE_DATE_BACKDATED',
   InvoiceDeleted = 'INVOICE_DELETED',
   InvoiceNumberAllocated = 'INVOICE_NUMBER_ALLOCATED',
+  InvoiceReceivedQtyUpdated = 'INVOICE_RECEIVED_QTY_UPDATED',
   InvoiceStatusAllocated = 'INVOICE_STATUS_ALLOCATED',
   InvoiceStatusCancelled = 'INVOICE_STATUS_CANCELLED',
   InvoiceStatusDelivered = 'INVOICE_STATUS_DELIVERED',
@@ -2641,6 +2642,8 @@ export type DraftStockOutLineNode = {
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
   program?: Maybe<ProgramNode>;
+  reasonOption?: Maybe<ReasonOptionNode>;
+  receivedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
   stockLineId: Scalars['String']['output'];
   stockLineOnHold: Scalars['Boolean']['output'];
@@ -4608,6 +4611,7 @@ export type InvoiceLineNode = {
   program?: Maybe<ProgramNode>;
   purchaseOrderLine?: Maybe<PurchaseOrderLineNode>;
   reasonOption?: Maybe<ReasonOptionNode>;
+  receivedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
   returnReason?: Maybe<ReturnReasonNode>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
@@ -6792,6 +6796,8 @@ export type OutboundShipmentLineInput = {
   id: Scalars['String']['input'];
   numberOfPacks: Scalars['Float']['input'];
   programId?: InputMaybe<Scalars['String']['input']>;
+  reasonOptionId?: InputMaybe<Scalars['String']['input']>;
+  receivedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   stockLineId: Scalars['String']['input'];
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
@@ -8706,6 +8712,7 @@ export enum ReasonOptionNodeType {
   PositiveInventoryAdjustment = 'POSITIVE_INVENTORY_ADJUSTMENT',
   RequisitionLineVariance = 'REQUISITION_LINE_VARIANCE',
   ReturnReason = 'RETURN_REASON',
+  ShipmentVariance = 'SHIPMENT_VARIANCE',
 }
 
 export type ReasonOptionResponse = ReasonOptionConnector;
@@ -10752,6 +10759,7 @@ export type UpdateInboundShipmentLineInput = {
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
   programId?: InputMaybe<NullableStringUpdate>;
+  reasonOptionId?: InputMaybe<NullableStringUpdate>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
@@ -10936,6 +10944,7 @@ export type UpdateOutboundShipmentLineInput = {
   id: Scalars['String']['input'];
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
+  reasonOptionId?: InputMaybe<NullableStringUpdate>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   tax?: InputMaybe<TaxInput>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;

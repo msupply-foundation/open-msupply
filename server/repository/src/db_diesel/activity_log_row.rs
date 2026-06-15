@@ -122,6 +122,7 @@ pub enum ActivityLogType {
     PatientUpdated,
     PatientCreated,
     InvoiceDateBackdated,
+    InvoiceReceivedQtyUpdated,
     PackagingVariantCreated,
     PackagingVariantUpdated,
     PackagingVariantDeleted,

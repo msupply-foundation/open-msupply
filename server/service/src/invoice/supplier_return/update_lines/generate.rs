@@ -79,6 +79,8 @@ pub fn generate(
             campaign_id: None,
             program_id: None,
             vvm_status_id: None,
+            received_number_of_packs: None,
+            reason_option_id: None,
         })
         .collect();
 
