@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   DetailLoadingSkeleton,
+  LocaleKey,
   PluginPage,
   QueryClientProviderProxy,
   Route,
@@ -10,9 +11,9 @@ import {
   useBreadcrumbs,
   usePluginProvider,
   UserPermission,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { NotFound } from './components';
-import { usePluginLabelTranslation } from './components/Navigation/usePluginNavLinks';
 
 const PluginPageGuard: React.FC<{
   permissions: UserPermission[] | undefined;
@@ -52,12 +53,12 @@ const pluginRoutePath = (page: PluginPage): string => {
  * on the way back from a detail view.
  */
 const PluginBreadcrumbs: React.FC<{ pageLabel: string }> = ({ pageLabel }) => {
+  const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { pathname } = useLocation();
-  const translateLabel = usePluginLabelTranslation();
   // Custom breadcrumbs are rendered verbatim, so translate the plugin label
   // before setting it (see usePluginLabelTranslation / #12090).
-  const label = translateLabel(pageLabel);
+  const label = t(pageLabel as LocaleKey);
 
   useEffect(() => {
     setCustomBreadcrumbs({ 0: label });

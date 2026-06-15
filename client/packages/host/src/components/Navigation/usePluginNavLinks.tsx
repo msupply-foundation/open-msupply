@@ -11,23 +11,6 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
-/**
- * Translate a plugin-provided nav / breadcrumb label.
- *
- * Plugins declare their labels as static English strings in the module-scope
- * `Plugins` object, where there's no React/translation context — so the host
- * does the lookup here. The English label text is used as the i18n key, falling
- * back to the label itself when there's no custom-translation override. This is
- * fully backwards-compatible: an untranslated label renders unchanged. A plugin
- * localises its label by uploading a custom translation keyed by that English
- * text. See https://github.com/msupply-foundation/open-msupply/issues/12090.
- */
-export const usePluginLabelTranslation = () => {
-  const t = useTranslation();
-  return (label: string): string =>
-    t(label as LocaleKey, { defaultValue: label });
-};
-
 // `${category}/${route}` for a regular page; just `${category}` for a
 // category-root page (page.route === '').
 const pluginPagePath = (categoryKey: string, page: PluginPage) =>
@@ -42,8 +25,8 @@ const PluginNavLink: React.FC<{
   to: string;
   label: string;
 }> = ({ to, label }) => {
-  const translateLabel = usePluginLabelTranslation();
-  return <AppNavLink to={to} text={translateLabel(label)} />;
+  const t = useTranslation();
+  return <AppNavLink to={to} text={t(label as LocaleKey)} />;
 };
 
 /**
