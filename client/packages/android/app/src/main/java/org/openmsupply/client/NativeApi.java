@@ -646,7 +646,15 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
          */
         public String getUrl() {
             String host = data.getBool("isLocal") ? "localhost" : data.getString("ip");
-            return data.getString("protocol") + "://" + host + ":" + data.getString("port");
+            Integer port = data.getInteger("port");
+            // A port of 0 (or unspecified) means "use the protocol's default port"
+            // (e.g. 443 for https, 80 for http), so it's omitted from the URL.
+            // This mirrors the frontEndHostUrl helper in the TS client. Appending
+            // ":0" produces an invalid URL (INVALID_PORT) and the connection fails.
+            if (port == null || port == 0) {
+                return data.getString("protocol") + "://" + host;
+            }
+            return data.getString("protocol") + "://" + host + ":" + port;
         }
 
         /**
