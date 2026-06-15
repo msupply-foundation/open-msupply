@@ -50,15 +50,11 @@ export const PluginConfigModal = ({
     setValue(configuration?.data ?? slot?.defaultConfig);
   }, [isLoading, configuration, slot, value]);
 
-  const persist = async () => {
-    await save(value);
-    success(t('messages.plugin-config-saved'))();
-  };
-
   // Save without closing — lets the user persist progress and keep editing.
   const onSave = async () => {
     try {
-      await persist();
+      await save(value);
+      success(t('messages.plugin-config-saved'))();
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       error(`${t('error.unable-to-save-plugin-config')}: ${message}`)();
@@ -67,7 +63,8 @@ export const PluginConfigModal = ({
 
   const onOk = async () => {
     try {
-      await persist();
+      await save(value);
+      success(t('messages.plugin-config-saved'))();
       onClose();
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
