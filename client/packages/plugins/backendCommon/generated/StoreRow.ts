@@ -3,10 +3,11 @@ import type { StoreMode } from './StoreMode';
 
 export type StoreRow = {
   id: string;
+  name_link_id: string;
   code: string;
   site_id: number;
+  logo: string | null;
   store_mode: StoreMode;
   created_date: string | null;
   is_disabled: boolean;
-  name_id: string;
 };

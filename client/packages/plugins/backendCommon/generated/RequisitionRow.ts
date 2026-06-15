@@ -6,6 +6,7 @@ import type { RequisitionType } from './RequisitionType';
 export type RequisitionRow = {
   id: string;
   requisition_number: bigint;
+  name_link_id: string;
   store_id: string;
   user_id: string | null;
   type: RequisitionType;
@@ -26,6 +27,5 @@ export type RequisitionRow = {
   order_type: string | null;
   is_emergency: boolean;
   created_from_requisition_id: string | null;
-  name_id: string;
   destination_customer_id: string | null;
 };
