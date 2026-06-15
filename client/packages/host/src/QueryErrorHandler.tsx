@@ -128,6 +128,11 @@ export const QueryErrorHandler = () => {
 
     const currentDefaults = client.getDefaultOptions();
     client.setDefaultOptions({
+      // setDefaultOptions replaces (not merges) the whole object, so spread
+      // the existing defaults to preserve the `queries` config (retry,
+      // throwOnError, etc.) set in Host.tsx — otherwise queries fall back to
+      // React Query's defaults and every typed error gets retried 3x.
+      ...currentDefaults,
       mutations: {
         ...currentDefaults.mutations,
         onError: e => setPending(route(e)),
