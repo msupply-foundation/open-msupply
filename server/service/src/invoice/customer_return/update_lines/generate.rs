@@ -134,6 +134,7 @@ pub fn generate(
                 shipped_number_of_packs: None,
                 shipped_pack_size: None,
                 status: None,
+                reason_option_id: None,
             },
         )
         .collect();

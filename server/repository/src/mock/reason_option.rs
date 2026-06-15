@@ -18,9 +18,19 @@ pub fn mock_requisition_variance_reason_option() -> ReasonOptionRow {
     }
 }
 
+pub fn mock_shipment_variance_reason_option() -> ReasonOptionRow {
+    ReasonOptionRow {
+        id: "shipment_variance_option_id".to_string(),
+        r#type: ReasonOptionType::ShipmentVariance,
+        is_active: true,
+        reason: "shipment variance reason".to_string(),
+    }
+}
+
 pub fn mock_reason_options() -> Vec<ReasonOptionRow> {
     vec![
         mock_reason_option(),
         mock_requisition_variance_reason_option(),
+        mock_shipment_variance_reason_option(),
     ]
 }

@@ -105,6 +105,14 @@ fragment InboundLine on InvoiceLineNode {
     }
   }
 
+  reasonOption {
+    __typename
+    id
+    reason
+    type
+    isActive
+  }
+
   purchaseOrderLine {
     __typename
     id

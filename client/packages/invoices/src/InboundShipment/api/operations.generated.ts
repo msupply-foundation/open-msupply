@@ -102,6 +102,13 @@ export type InboundLineFragment = {
       volumePerUnit?: number | null;
     }>;
   } | null;
+  reasonOption?: {
+    __typename: 'ReasonOptionNode';
+    id: string;
+    reason: string;
+    type: Types.ReasonOptionNodeType;
+    isActive: boolean;
+  } | null;
   purchaseOrderLine?: {
     __typename: 'PurchaseOrderLineNode';
     id: string;
@@ -263,6 +270,13 @@ export type InboundFragment = {
           packSize?: number | null;
           volumePerUnit?: number | null;
         }>;
+      } | null;
+      reasonOption?: {
+        __typename: 'ReasonOptionNode';
+        id: string;
+        reason: string;
+        type: Types.ReasonOptionNodeType;
+        isActive: boolean;
       } | null;
       purchaseOrderLine?: {
         __typename: 'PurchaseOrderLineNode';
@@ -619,6 +633,13 @@ export type InvoiceQuery = {
                 volumePerUnit?: number | null;
               }>;
             } | null;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
+              id: string;
+              reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+            } | null;
             purchaseOrderLine?: {
               __typename: 'PurchaseOrderLineNode';
               id: string;
@@ -880,6 +901,13 @@ export type InboundByNumberQuery = {
                 packSize?: number | null;
                 volumePerUnit?: number | null;
               }>;
+            } | null;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
+              id: string;
+              reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
             } | null;
             purchaseOrderLine?: {
               __typename: 'PurchaseOrderLineNode';
@@ -1853,6 +1881,13 @@ export const InboundLineFragmentDoc = gql`
         packSize
         volumePerUnit
       }
+    }
+    reasonOption {
+      __typename
+      id
+      reason
+      type
+      isActive
     }
     purchaseOrderLine {
       __typename

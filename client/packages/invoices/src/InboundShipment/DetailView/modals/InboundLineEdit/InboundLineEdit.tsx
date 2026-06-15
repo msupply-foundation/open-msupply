@@ -22,6 +22,8 @@ import {
   PlusCircleIcon,
   TableContainer,
   PurchaseOrderLineStatusNode,
+  usePluginEvents,
+  ShipmentLinePluginState,
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import {
@@ -81,6 +83,10 @@ export const InboundLineEdit = ({
 }: InboundLineEditProps) => {
   const t = useTranslation();
   const { error } = useNotification();
+  const pluginEvents = usePluginEvents<ShipmentLinePluginState>({});
+  const hasInvalidPluginLines = Object.values(
+    pluginEvents.state.invalidLines ?? {}
+  ).some(Boolean);
 
   const {
     query: { data },
@@ -310,15 +316,19 @@ export const InboundLineEdit = ({
   };
 
   // --- Next/OK disabled logic ---
-  const okNextDisabled = hasPurchaseOrder
-    ? (mode === ModalMode.Update && !nextPOLine) || !selectedPOLine
-    : (mode === ModalMode.Update && nextDisabled) || !currentItem;
+  const okNextDisabled =
+    (hasPurchaseOrder
+      ? (mode === ModalMode.Update && !nextPOLine) || !selectedPOLine
+      : (mode === ModalMode.Update && nextDisabled) || !currentItem) ||
+    hasInvalidPluginLines;
 
-  const okDisabled = hasPurchaseOrder
-    ? !selectedPOLine ||
-    draftLines.length === 0 ||
-    manualLinesWithZeroNumberOfPacks
-    : !currentItem || manualLinesWithZeroNumberOfPacks;
+  const okDisabled =
+    (hasPurchaseOrder
+      ? !selectedPOLine ||
+      draftLines.length === 0 ||
+      manualLinesWithZeroNumberOfPacks
+      : !currentItem || manualLinesWithZeroNumberOfPacks) ||
+    hasInvalidPluginLines;
 
   const cards = (
     <InboundLineEditCards
@@ -336,6 +346,7 @@ export const InboundLineEdit = ({
       restrictedToLocationTypeId={effectiveItem?.restrictedLocationTypeId}
       lastCardRef={lastCardRef}
       scrollToLineId={scrollToLineId}
+      pluginEvents={pluginEvents}
     />
   );
 

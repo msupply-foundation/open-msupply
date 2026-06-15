@@ -18,6 +18,9 @@ import {
   CurrencyValueCell,
   ExpiryDateCell,
   NumberInputCell,
+  usePluginProvider,
+  UsePluginEvents,
+  ShipmentLinePluginState,
 } from '@openmsupply-client/common';
 import {
   CurrencyRowFragment,
@@ -29,6 +32,7 @@ import {
   canAutoAllocate,
   getDoseQuantity,
   DraftStockOutLineFragment,
+  StockOutLineFragment,
   DraftItem,
   AllocateInOption,
   AllocateInType,
@@ -51,6 +55,8 @@ export const useOutboundLineEditColumns = ({
   isExternalSupplier,
   allocateIn,
   setVvmStatus,
+  setReceivedNumberOfPacks,
+  pluginEvents,
   getIsDisabled,
 }: {
   getIsDisabled: (row: DraftStockOutLineFragment) => boolean;
@@ -60,10 +66,13 @@ export const useOutboundLineEditColumns = ({
   isExternalSupplier: boolean;
   allocateIn: AllocateInOption;
   setVvmStatus: (id: string, vvmStatus?: VvmStatusFragment | null) => void;
+  setReceivedNumberOfPacks: (id: string, value: number | null) => void;
+  pluginEvents: UsePluginEvents<ShipmentLinePluginState>;
 }) => {
   const { store } = useAuthContext();
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
+  const { plugins } = usePluginProvider();
 
   const unit = Formatter.sentenceCase(item?.unitName ?? t('label.unit'));
   const pluralisedUnitName = getPlural(unit, 2);
@@ -255,9 +264,9 @@ export const useOutboundLineEditColumns = ({
             max={
               dosesView
                 ? QuantityUtils.packsToDoses(
-                    row.original.availablePacks,
-                    row.original
-                  )
+                  row.original.availablePacks,
+                  row.original
+                )
                 : row.original.availablePacks
             }
             disabled={getIsDisabled(row.original)}
@@ -280,6 +289,56 @@ export const useOutboundLineEditColumns = ({
         defaultHideOnMobile: true,
       },
       {
+        id: 'receivedNumberOfPacks',
+        // Pre-populate with issued packs; user can edit to record a variance.
+        accessorFn: row => row.receivedNumberOfPacks ?? row.numberOfPacks,
+        header: t('label.packs-received'),
+        description: t('description.packs-received'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        includeColumn: isExternalSupplier,
+        Cell: ({ cell, row }) => (
+          <NumberInputCell
+            cell={cell}
+            updateFn={value => {
+              const newValue = Number.isNaN(value) ? null : value;
+              setReceivedNumberOfPacks(row.original.id, newValue);
+            }}
+            disabled={getIsDisabled(row.original)}
+            min={0}
+          />
+        ),
+      },
+      {
+        id: 'difference',
+        accessorFn: row =>
+          row.receivedNumberOfPacks == null
+            ? null
+            : row.receivedNumberOfPacks - row.numberOfPacks,
+        header: t('label.difference'),
+        description: t('description.difference-packs'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        size: 100,
+        includeColumn: isExternalSupplier,
+      },
+      ...(plugins.outboundShipmentLine?.editViewField ?? []).map(
+        ({ header, Component }, index): ColumnDef<DraftStockOutLineFragment> => ({
+          id: `plugin-field-${index}`,
+          header,
+          size: 180,
+          defaultHideOnMobile: true,
+          includeColumn: isExternalSupplier,
+          Cell: ({ row }) => (
+            <Component
+              line={row.original as unknown as StockOutLineFragment}
+              events={pluginEvents}
+              isExternal={isExternalSupplier}
+            />
+          ),
+        })
+      ),
+      {
         id: 'volume',
         header: t('label.volume'),
         size: 100,
@@ -296,7 +355,8 @@ export const useOutboundLineEditColumns = ({
       },
     ];
     return cols;
-  }, [allocateIn.type]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allocateIn.type, plugins.outboundShipmentLine?.editViewField]);
 
   return columns;
 };

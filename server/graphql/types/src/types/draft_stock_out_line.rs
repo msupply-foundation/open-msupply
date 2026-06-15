@@ -7,9 +7,10 @@ use graphql_core::{
     },
     ContextExt,
 };
+use graphql_core::loader::ReasonOptionLoader;
 use service::invoice_line::get_draft_outbound_lines::DraftStockOutLine;
 
-use crate::types::program_node::ProgramNode;
+use crate::types::{program_node::ProgramNode, ReasonOptionNode};
 
 use super::{CampaignNode, ItemVariantNode, LocationNode, NameNode, VVMStatusNode};
 
@@ -203,5 +204,21 @@ impl DraftStockOutLineNode {
 
     pub async fn volume_per_pack(&self) -> Option<f64> {
         Some(self.shipment_line.volume_per_pack)
+    }
+
+    pub async fn received_number_of_packs(&self) -> Option<f64> {
+        self.shipment_line.received_number_of_packs
+    }
+
+    pub async fn reason_option(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {
+        let reason_id = match &self.shipment_line.reason_option_id {
+            None => return Ok(None),
+            Some(reason_id) => reason_id.clone(),
+        };
+        let loader = ctx.get_loader::<DataLoader<ReasonOptionLoader>>();
+        Ok(loader
+            .load_one(reason_id)
+            .await?
+            .map(ReasonOptionNode::from_domain))
     }
 }

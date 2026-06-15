@@ -5,6 +5,7 @@ fragment StockOutLine on InvoiceLineNode {
   batch
   expiryDate
   numberOfPacks
+  receivedNumberOfPacks
   prescribedQuantity
   packSize
   invoiceId
@@ -18,6 +19,14 @@ fragment StockOutLine on InvoiceLineNode {
   itemName
   itemVariantId
   vvmStatusId
+
+  reasonOption {
+    __typename
+    id
+    reason
+    type
+    isActive
+  }
 
   vvmStatus {
     id
@@ -69,6 +78,7 @@ fragment DraftStockOutLine on DraftStockOutLineNode {
   id
   stockLineId
   numberOfPacks
+  receivedNumberOfPacks
   packSize
   batch
   expiryDate
@@ -79,6 +89,13 @@ fragment DraftStockOutLine on DraftStockOutLineNode {
   dosesPerUnit
   itemVariantId
   vvmStatusId
+  reasonOption {
+    __typename
+    id
+    reason
+    type
+    isActive
+  }
   location {
     __typename
     id
