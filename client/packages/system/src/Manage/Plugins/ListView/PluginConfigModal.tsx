@@ -40,12 +40,26 @@ export const PluginConfigModal = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   // Seed the local form value once the loaded row resolves; from then on the
-  // form owns its state until save.
+  // form owns its state. Seeding only while `value` is undefined matters for
+  // Save (below): saving refetches the row, and re-seeding here would clobber
+  // any edits made after the save. The modal unmounts on close, so a reopen
+  // remounts fresh and re-seeds.
   const [value, setValue] = useState<unknown>(undefined);
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || value !== undefined) return;
     setValue(configuration?.data ?? slot?.defaultConfig);
-  }, [isLoading, configuration, slot]);
+  }, [isLoading, configuration, slot, value]);
+
+  // Save without closing — lets the user persist progress and keep editing.
+  const onSave = async () => {
+    try {
+      await save(value);
+      success(t('messages.plugin-config-saved'))();
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      error(`${t('error.unable-to-save-plugin-config')}: ${message}`)();
+    }
+  };
 
   const onOk = async () => {
     try {
@@ -88,6 +102,13 @@ export const PluginConfigModal = ({
       height={modalHeight}
       contentProps={{ sx: { overflowY: 'hidden' } }}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+      saveButton={
+        <DialogButton
+          variant="save"
+          onClick={onSave}
+          disabled={isSaving || isLoading || value === undefined}
+        />
+      }
       okButton={
         <DialogButton
           variant="ok"
