@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.webkit.WebView;
 
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -25,18 +26,33 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(HoneywellScannerPlugin.class);
         super.onCreate(savedInstanceState);
 
+        // Replace Capacitor's auto-loaded https://localhost:<PORT>/ with an inline
+        // "Starting omSupply…" page. Without this, the WebView fires a GET against
+        // a server that hasn't bound yet, which paints Chromium's native error page
+        // and leaks through the brief window between splash dismissal and the real
+        // /android URL finishing its load.
+        WebView webView = getBridge().getWebView();
+        webView.addJavascriptInterface(new LoadingPage(this), "LoadingPageInject");
+        webView.loadUrl(LoadingPage.URL);
+
+        // The LoadingPage IS our loading UX now — release the native splash on the
+        // next UI message (after loadData has been queued for rendering) so the
+        // spinner becomes visible immediately rather than waiting for the readiness
+        // poll to finish.
+        webView.post(() -> AppState.getInstance().setWebViewReady(true));
+
         discoveryConstants = new DiscoveryConstants(getContentResolver());
         fileManager = new FileManager(this);
 
         // Set up an OnPreDrawListener to the root view
-        // This allows us to show the splash until the server is ready
+        // This holds the native splash up until the WebView has its initial
+        // content (the LoadingPage), so there's no white flash on cold start.
         final View content = findViewById(android.R.id.content);
         content.getViewTreeObserver().addOnPreDrawListener(
                 new ViewTreeObserver.OnPreDrawListener() {
                     @Override
                     public boolean onPreDraw() {
-                        // Check whether the server has started (or is in error state)
-                        if (AppState.getInstance().isServerReady()) {
+                        if (AppState.getInstance().isWebViewReady()) {
                             // The content is ready: start drawing
                             content.getViewTreeObserver().removeOnPreDrawListener(this);
                             return true;

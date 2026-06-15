@@ -65,20 +65,25 @@ export const StockLevelsSummary = ({
       title={t('heading.stock-levels')}
       panelContext={panelContext}
       stats={[
+        ...(outOfStockProducts
+          ? [
+              {
+                label: t('label.out-of-stock-recently-used', {
+                  num: outOfStockProducts,
+                }),
+                value: formatNumber.round(stats?.outOfStockProducts || 0),
+                link: RouteBuilder.create(AppRoute.Catalogue)
+                  .addPart(AppRoute.Items)
+                  .addQuery({
+                    stockStatus: 'outOfStockWithRecentConsumption',
+                  })
+                  .build(),
+                statContext: `${panelContext}-out-of-stock-products`,
+              },
+            ]
+          : []),
         {
-          label: t('label.total-items', {
-            count: Math.round(stats?.total || 0),
-          }),
-          value: formatNumber.round(stats?.total || 0),
-          link: RouteBuilder.create(AppRoute.Catalogue)
-            .addPart(AppRoute.Items)
-            .build(),
-          statContext: `${panelContext}-total-items`,
-        },
-        {
-          label: t('label.items-no-stock', {
-            count: Math.round(stats?.noStock || 0),
-          }),
+          label: t('label.out-of-stock-all-items'),
           value: formatNumber.round(stats?.noStock || 0),
           link: RouteBuilder.create(AppRoute.Catalogue)
             .addPart(AppRoute.Items)
@@ -88,6 +93,30 @@ export const StockLevelsSummary = ({
             .build(),
           statContext: `${panelContext}-items-no-stock`,
         },
+        ...(lowStockAlert
+          ? [
+              {
+                label: t('label.products-at-risk-of-being-out-of-stock', {
+                  count: Math.round(
+                    stats?.productsAtRiskOfBeingOutOfStock || 0
+                  ),
+                }),
+                value: formatNumber.round(
+                  stats?.productsAtRiskOfBeingOutOfStock || 0
+                ),
+                link: RouteBuilder.create(AppRoute.Catalogue)
+                  .addPart(AppRoute.Items)
+                  .addQuery({
+                    productsAtRiskOfBeingOutOfStock: true,
+                  })
+                  .build(),
+                statContext: `${panelContext}-products-at-risk-of-stockout`,
+                infoTooltip: t('messages.products-at-risk-of-stock-out-info', {
+                  num: lowStockAlert,
+                }),
+              },
+            ]
+          : []),
         {
           label: t('label.low-stock-items', {
             count: Math.round(stats?.lowStock || 0),
@@ -133,44 +162,16 @@ export const StockLevelsSummary = ({
             .build(),
           statContext: `${panelContext}-over-six-months-stock`,
         },
-        ...(outOfStockProducts
-          ? [
-              {
-                label: t('label.out-of-stock-products', {
-                  count: Math.round(stats?.outOfStockProducts || 0),
-                }),
-                value: formatNumber.round(stats?.outOfStockProducts || 0),
-                link: RouteBuilder.create(AppRoute.Catalogue)
-                  .addPart(AppRoute.Items)
-                  .addQuery({
-                    stockStatus: 'outOfStockWithRecentConsumption',
-                  })
-                  .build(),
-                statContext: `${panelContext}-out-of-stock-products`,
-              },
-            ]
-          : []),
-        ...(lowStockAlert
-          ? [
-              {
-                label: t('label.products-at-risk-of-being-out-of-stock', {
-                  count: Math.round(
-                    stats?.productsAtRiskOfBeingOutOfStock || 0
-                  ),
-                }),
-                value: formatNumber.round(
-                  stats?.productsAtRiskOfBeingOutOfStock || 0
-                ),
-                link: RouteBuilder.create(AppRoute.Catalogue)
-                  .addPart(AppRoute.Items)
-                  .addQuery({
-                    productsAtRiskOfBeingOutOfStock: true,
-                  })
-                  .build(),
-                statContext: `${panelContext}-products-at-risk-of-stockout`,
-              },
-            ]
-          : []),
+        {
+          label: t('label.total-items', {
+            count: Math.round(stats?.total || 0),
+          }),
+          value: formatNumber.round(stats?.total || 0),
+          link: RouteBuilder.create(AppRoute.Catalogue)
+            .addPart(AppRoute.Items)
+            .build(),
+          statContext: `${panelContext}-total-items`,
+        },
       ]}
       link={RouteBuilder.create(AppRoute.Inventory)
         .addPart(AppRoute.Stock)

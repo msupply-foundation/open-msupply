@@ -50,6 +50,7 @@ def handle_android_build_notification(filenames):
         "success": ("✅", "Completed Successfully"),
         "failure": ("❌", "Failed"),
         "cancelled": ("⏹️", "Cancelled"),
+        "timed_out": ("⏱️", "Timed Out"),
         "skipped": ("⏭️", "Skipped")
     }
 
@@ -59,11 +60,22 @@ def handle_android_build_notification(filenames):
     message += f"Tag: `{tag}`\n"
     message += f"Status: {status_text}"
 
+    # A cancelled build is most often the self-hosted runner being offline: the
+    # queued job is force-cancelled after waiting too long for a runner. Surface
+    # an actionable hint (manual cancellation is the other possibility).
+    if build_status == "cancelled":
+        message += "\n\n⚠️ Often caused by the self-hosted build runner being offline or unavailable (the queued job is cancelled if no runner picks it up) — check the runner. Otherwise the build was cancelled manually."
+
     for filename in filenames:
         # Construct the full URL for the APK file
         file_url = f"{BASE_URL}/{tag}/{filename}"
         print(f"📦 File URL: {file_url}")
         message += f"\n\n Download: <{file_url}|{filename}>"
+
+    # Link straight to the workflow run when available (set by the notify job).
+    run_url = os.getenv("RUN_URL")
+    if run_url:
+        message += f"\n\n<{run_url}|View workflow run>"
 
     print(f"Sending Message:\n {message}")
     if send_slack_notification(webhook_url, message):

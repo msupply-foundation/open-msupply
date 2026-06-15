@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { GlobalStyles } from '@mui/material';
 import {
   Box,
   RandomLoader,
@@ -34,17 +35,22 @@ export const MigrationInfoProvider: React.FC<React.PropsWithChildren> = ({
 
   if (inProgress) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        height="100vh"
-        flexDirection="column"
-        gap={2}
-      >
-        <RandomLoader />
-        <MigrationStatusIndicator />
-      </Box>
+      <>
+        <GlobalStyles
+          styles={{ 'html, body': { margin: 0, overflow: 'hidden' } }}
+        />
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          height="100vh"
+          flexDirection="column"
+          gap={2}
+        >
+          <RandomLoader />
+          <MigrationStatusIndicator />
+        </Box>
+      </>
     );
   }
 

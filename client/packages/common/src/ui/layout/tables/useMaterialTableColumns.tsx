@@ -17,6 +17,7 @@ import {
   multipleKeys,
   Tooltip,
   useGetColumnTypeDefaults,
+  useIntlUtils,
   useTranslation,
 } from '@openmsupply-client/common';
 
@@ -26,6 +27,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
   omsColumns: ColumnDef<T>[]
 ) => {
   const t = useTranslation();
+  const { isRtl } = useIntlUtils();
   const getColumnTypeDefaults = useGetColumnTypeDefaults();
 
   const tableDefinition = useMemo(() => {
@@ -38,13 +40,38 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
         // so all the mapping is in one place, easily discoverable?
 
         // Add alignment styling
-        const alignment = col.align ?? columnDefaults.align;
+        const physicalAlignment = col.align ?? columnDefaults.align;
+
+        // Logical text alignment, for wide/block cell content that fills the
+        // column (e.g. item names). Logical start/end track the cell's
+        // direction natively in both LTR and RTL, and aren't flipped by
+        // stylis-plugin-rtl. start = text columns, end = numeric/date columns.
+        const textAlign =
+          physicalAlignment === 'right'
+            ? 'end'
+            : physicalAlignment === 'center'
+              ? 'center'
+              : 'start';
+
+        // Flexbox alignment, for narrow content positioned via justifyContent
+        // (numbers, icons). This must be flipped left<->right for RTL: MRT sets
+        // every cell to align="right" in RTL, applying flex-direction:
+        // row-reverse, which cancels the cell's direction: rtl and leaves the
+        // flex main axis physically LTR — so justifyContent renders unflipped.
+        const alignment = !isRtl
+          ? physicalAlignment
+          : physicalAlignment === 'right'
+            ? 'left' // numeric/date: end edge (left in RTL)
+            : physicalAlignment === 'center'
+              ? 'center'
+              : 'right'; // text: start edge (right in RTL), incl. implicit default
         if (alignment) {
           col.muiTableBodyCellProps = params => {
             return mergeCellProps(
               {
-                sx:
-                  alignment === 'right'
+                sx: {
+                  textAlign,
+                  ...(alignment === 'right'
                     ? {
                         justifyContent: 'flex-end',
                       }
@@ -58,7 +85,8 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
                             params.table.getState().density === 'compact'
                               ? '0.7em'
                               : '1.2em',
-                        },
+                        }),
+                },
               },
               params
             );
@@ -120,7 +148,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
       });
 
     return { columns };
-  }, [omsColumns]);
+  }, [omsColumns, isRtl]);
 
   return tableDefinition;
 };

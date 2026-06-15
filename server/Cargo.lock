@@ -4436,6 +4436,7 @@ dependencies = [
  "graphql_requisition",
  "graphql_requisition_line",
  "graphql_stock_line",
+ "graphql_stock_relocation",
  "graphql_stocktake",
  "graphql_stocktake_line",
  "graphql_sync_message",
@@ -4839,6 +4840,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "graphql_core",
+ "graphql_types",
  "repository",
  "serde",
  "serde_json",
@@ -5038,6 +5040,26 @@ dependencies = [
  "chrono",
  "graphql_core",
  "graphql_general",
+ "graphql_types",
+ "repository",
+ "serde",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_stock_relocation"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
  "graphql_types",
  "repository",
  "serde",

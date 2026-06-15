@@ -89,7 +89,7 @@ export const Toolbar = () => {
             />
           )}
           <InputWithLabelRow
-            label={t('label.supplier-ref')}
+            label={t('label.supplier-reference')}
             Input={
               <Tooltip title={theirReference} placement="bottom-start">
                 <Box>
