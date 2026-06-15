@@ -1,6 +1,6 @@
 use repository::{
-    PropertyTableV2Row, PropertyTableV2RowRepository, PropertyV2Row, PropertyV2RowRepository,
-    PropertyValueTypeV2, RepositoryError, StorageConnection,
+    PropertyKindV2, PropertyTableV2Row, PropertyTableV2RowRepository, PropertyV2Row,
+    PropertyV2RowRepository, PropertyValueTypeV2, RepositoryError, StorageConnection,
 };
 
 /// A code-defined mSupply "mapping property" — a property in the new system
@@ -124,7 +124,7 @@ pub(crate) fn seed_central_mapping_properties(
             key: def.key.to_string(),
             name: def.name.to_string(),
             value_type: def.value_type.clone(),
-            is_legacy: true,
+            kind: PropertyKindV2::Legacy,
             deleted_datetime: None,
         };
         // Code is the source of truth for the definition (key/name/value_type).
@@ -172,7 +172,7 @@ mod tests {
             .unwrap()
             .expect("missing legacy_name_custom_1");
         assert_eq!(name_1.key, "custom_1");
-        assert!(name_1.is_legacy);
+        assert_eq!(name_1.kind, PropertyKindV2::Legacy);
         assert_eq!(name_1.value_type, PropertyValueTypeV2::Text);
 
         let item_5 = property_repo
