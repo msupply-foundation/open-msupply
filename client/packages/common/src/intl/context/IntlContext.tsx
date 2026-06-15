@@ -92,12 +92,18 @@ export function initialiseI18n({
     });
 
   // i18next's built-in `number` formatter uses `Intl.NumberFormat(lng)` directly,
-  // which ignores our numbering-system overrides (e.g. Pashto defaults to Latin
-  // digits). Route `{{x, number}}` through `intlNumberFormat` so interpolated
-  // counts render in the locale's numerals (Eastern/extended-Arabic for ar/prs/ps).
-  i18next.services.formatter?.add('number', (value, lng, options) =>
-    intlNumberFormat(lng ?? 'en', options).format(Number(value))
-  );
+  // which ignores our numbering-system overrides (see localeNumberOverrides —
+  // e.g. Pashto otherwise defaults to Latin digits). Route `{{x, number}}`
+  // through `intlNumberFormat` so interpolated counts render in
+  // locale-appropriate digits (Arabic-Indic ٠-٩ for ar; extended-Arabic ۰-۹ for
+  // prs/ps). Fall back to the active language rather than 'en' if i18next
+  // doesn't supply one, and leave non-numeric values untouched instead of
+  // emitting "NaN".
+  i18next.services.formatter?.add('number', (value, lng, options) => {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return value == null ? '' : String(value);
+    return intlNumberFormat(lng ?? i18next.language, options).format(num);
+  });
 }
 
 export const IntlContext = createRegisteredContext<I18nextProviderProps>(
