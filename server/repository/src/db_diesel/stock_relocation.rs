@@ -10,8 +10,11 @@ use crate::diesel_macros::{
     apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
 };
 use crate::{EqualFilter, Pagination, Sort, StringFilter};
-
-use diesel::{dsl::IntoBoxed, prelude::*};
+use diesel::{
+    dsl::{sql, IntoBoxed},
+    prelude::*,
+    sql_types::{Nullable, Text},
+};
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct StockRelocation {
@@ -112,12 +115,20 @@ impl<'a> StockRelocationRepository<'a> {
                 StockRelocationSortField::ExpiryDate => {
                     apply_sort!(query, sort, stock_line::expiry_date)
                 }
-                StockRelocationSortField::FromLocation => {
-                    apply_sort!(query, sort, stock_relocation::from_location_id)
-                }
-                StockRelocationSortField::ToLocation => {
-                    apply_sort!(query, sort, stock_relocation::to_location_id)
-                }
+                StockRelocationSortField::FromLocation => apply_sort!(
+                    query,
+                    sort,
+                    sql::<Nullable<Text>>(
+                        "(SELECT lower(code) FROM location WHERE location.id = stock_relocation.from_location_id)"
+                    )
+                ),
+                StockRelocationSortField::ToLocation => apply_sort!(
+                    query,
+                    sort,
+                    sql::<Nullable<Text>>(
+                        "(SELECT lower(code) FROM location WHERE location.id = stock_relocation.to_location_id)"
+                    )
+                ),
             }
         } else {
             query = query.order(stock_relocation::created_datetime.desc())
@@ -239,7 +250,7 @@ mod test {
     use chrono::NaiveDate;
 
     use crate::{
-        mock::{mock_location_1, mock_stock_line_a, MockDataInserts},
+        mock::{mock_location_1, mock_location_2, mock_stock_line_a, MockDataInserts},
         test_db::setup_all,
         EqualFilter, StockRelocationFilter, StockRelocationRepository, StockRelocationRow,
         StockRelocationSort, StockRelocationSortField, StockRelocationStatus, StringFilter, Upsert,
@@ -314,5 +325,37 @@ mod test {
         assert!(sorted
             .iter()
             .any(|r| r.stock_relocation_row.id == "stock_relocation_1"));
+
+        StockRelocationRow {
+            from_location_id: Some(mock_location_2().id),
+            ..relocation("stock_relocation_2")
+        }
+        .upsert(&connection)
+        .unwrap();
+        let from_location_ids = |desc: bool| {
+            repo.query(
+                crate::Pagination::all(),
+                Some(
+                    StockRelocationFilter::new()
+                        .store_id(EqualFilter::equal_to("store_a".to_string())),
+                ),
+                Some(StockRelocationSort {
+                    key: StockRelocationSortField::FromLocation,
+                    desc: Some(desc),
+                }),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|r| r.stock_relocation_row.id)
+            .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            from_location_ids(false),
+            vec!["stock_relocation_1", "stock_relocation_2"]
+        );
+        assert_eq!(
+            from_location_ids(true),
+            vec!["stock_relocation_2", "stock_relocation_1"]
+        );
     }
 }

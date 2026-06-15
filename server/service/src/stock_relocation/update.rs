@@ -33,6 +33,7 @@ pub enum UpdateStockRelocationError {
     LocationOnHold(String),
     ToLocationDoesNotExist,
     NotThisStoreLocation,
+    IncorrectLocationType,
     NotEnoughStock(String),
     InvalidNumberOfPacks,
     InvalidPackSize,
@@ -178,6 +179,7 @@ impl From<ValidateMovementError> for UpdateStockRelocationError {
             ValidateMovementError::LocationOnHold(id) => E::LocationOnHold(id),
             ValidateMovementError::ToLocationDoesNotExist => E::ToLocationDoesNotExist,
             ValidateMovementError::NotThisStoreLocation => E::NotThisStoreLocation,
+            ValidateMovementError::IncorrectLocationType => E::IncorrectLocationType,
             ValidateMovementError::NotEnoughStock(id) => E::NotEnoughStock(id),
             ValidateMovementError::InvalidNumberOfPacks => E::InvalidNumberOfPacks,
             ValidateMovementError::InvalidPackSize => E::InvalidPackSize,
@@ -274,7 +276,6 @@ mod test {
                 ctx,
                 "store_a",
                 InsertStockRelocation {
-                    from_location_id: None,
                     lines: vec![line],
                 },
             )

@@ -10,6 +10,10 @@ export type StockMovementRowFragment = {
   finalisedDatetime?: string | null;
   status: Types.StockRelocationNodeStatus;
   numberOfPacks: number;
+  fromPackSize: number;
+  availableNumberOfPacks: number;
+  toPackSize?: number | null;
+  restrictedLocationTypeId?: string | null;
   itemCode: string;
   itemName: string;
   batch?: string | null;
@@ -51,6 +55,10 @@ export type StockRelocationsQuery = {
       finalisedDatetime?: string | null;
       status: Types.StockRelocationNodeStatus;
       numberOfPacks: number;
+      fromPackSize: number;
+      availableNumberOfPacks: number;
+      toPackSize?: number | null;
+      restrictedLocationTypeId?: string | null;
       itemCode: string;
       itemName: string;
       batch?: string | null;
@@ -73,6 +81,54 @@ export type StockRelocationsQuery = {
   };
 };
 
+export type InsertStockRelocationMutationVariables = Types.Exact<{
+  input: Types.InsertStockRelocationInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type InsertStockRelocationMutation = {
+  __typename: 'Mutations';
+  insertStockRelocation:
+    | {
+        __typename: 'InsertStockRelocationError';
+        error:
+          | {
+              __typename: 'LocationOnHold';
+              locationId: string;
+              description: string;
+            }
+          | {
+              __typename: 'NotEnoughStock';
+              stockLineId: string;
+              description: string;
+            }
+          | {
+              __typename: 'StockLineOnHold';
+              stockLineId: string;
+              description: string;
+            };
+      }
+    | { __typename: 'InsertStockRelocationNode'; ids: Array<string> };
+};
+
+export type UpdateStockRelocationMutationVariables = Types.Exact<{
+  input: Types.UpdateStockRelocationInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type UpdateStockRelocationMutation = {
+  __typename: 'Mutations';
+  updateStockRelocation:
+    | {
+        __typename: 'UpdateStockRelocationError';
+        error:
+          | { __typename: 'LocationOnHold'; description: string }
+          | { __typename: 'NotEnoughStock'; description: string }
+          | { __typename: 'StockLineOnHold'; description: string };
+      }
+    | { __typename: 'UpdateStockRelocationNode'; id: string };
+};
+
 export const StockMovementRowFragmentDoc = gql`
   fragment StockMovementRow on StockRelocationNode {
     __typename
@@ -81,6 +137,10 @@ export const StockMovementRowFragmentDoc = gql`
     finalisedDatetime
     status
     numberOfPacks
+    fromPackSize
+    availableNumberOfPacks
+    toPackSize
+    restrictedLocationTypeId
     itemCode
     itemName
     batch
@@ -126,6 +186,57 @@ export const StockRelocationsDocument = gql`
   }
   ${StockMovementRowFragmentDoc}
 `;
+export const InsertStockRelocationDocument = gql`
+  mutation insertStockRelocation(
+    $input: InsertStockRelocationInput!
+    $storeId: String!
+  ) {
+    insertStockRelocation(input: $input, storeId: $storeId) {
+      __typename
+      ... on InsertStockRelocationNode {
+        __typename
+        ids
+      }
+      ... on InsertStockRelocationError {
+        __typename
+        error {
+          __typename
+          description
+          ... on StockLineOnHold {
+            stockLineId
+          }
+          ... on LocationOnHold {
+            locationId
+          }
+          ... on NotEnoughStock {
+            stockLineId
+          }
+        }
+      }
+    }
+  }
+`;
+export const UpdateStockRelocationDocument = gql`
+  mutation updateStockRelocation(
+    $input: UpdateStockRelocationInput!
+    $storeId: String!
+  ) {
+    updateStockRelocation(input: $input, storeId: $storeId) {
+      __typename
+      ... on UpdateStockRelocationNode {
+        __typename
+        id
+      }
+      ... on UpdateStockRelocationError {
+        __typename
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -161,6 +272,42 @@ export function getSdk(
           }),
         'stockRelocations',
         'query',
+        variables
+      );
+    },
+    insertStockRelocation(
+      variables: InsertStockRelocationMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InsertStockRelocationMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertStockRelocationMutation>({
+            document: InsertStockRelocationDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'insertStockRelocation',
+        'mutation',
+        variables
+      );
+    },
+    updateStockRelocation(
+      variables: UpdateStockRelocationMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UpdateStockRelocationMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdateStockRelocationMutation>({
+            document: UpdateStockRelocationDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'updateStockRelocation',
+        'mutation',
         variables
       );
     },
