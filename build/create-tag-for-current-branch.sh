@@ -42,7 +42,7 @@ PKG_VERSION=$(cat ./package.json | grep 'version":' | sed 's/.*"version":[ \t]*"
 CLEAN_VERSION=$(echo "$PKG_VERSION" | sed -E 's/-(develop|rc)$//i')
 
 # --- Label (from branch name) ---
-if [[ "$ORIGINAL_BRANCH" =~ (R|r)(C|c) ]]; then
+if [[ "$ORIGINAL_BRANCH" =~ -[Rr][Cc]$ ]]; then
     LABEL="RC"
     LABEL_NOTE="RC branch"
 else
