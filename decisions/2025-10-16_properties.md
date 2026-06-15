@@ -12,11 +12,11 @@ Open mSupply should be extendable with user configurable and enterable fields.
 ### Requirements
 
 1. User can configure a new property:
-- **Type:** Can be one of `Number (int)`, `Text`, `Date`, `Real (Float)`, or `Option` (user-defined categories/options).
+- **Type:** Can be one of `Text`, `Integer`, `Real`, `Date`, `Boolean`, or `Option` (user-defined categories/options).
 - **Name:** Can be specified by the user.
 - **Translation:** Can be provided; defaults to a translation if available for the current language, otherwise uses the general name.
 - **Table Assignment:** Tables that will have this property can be specified; properties may be reused across multiple tables.
-- **Hierarchical Options:** Options can be hierarchical (e.g., item categories in mSupply or organisation units in DHIS2) — to be confirmed.
+- **Hierarchical Options:** Options can be hierarchical (e.g., item categories in mSupply or organisation units in DHIS2).
 - **Advance Type Validation:** A way to restrict entry further then by type/option, like regex, external API lookup. Could be plugin (to be confirmed but good idea to have a way forward for this), similar for updating/displaying property
 
 2. User is able to update the value of the properties. All properties should be clearable and should conform to the rules defined/configured for that property, such as type or particular option linked to property
@@ -120,36 +120,7 @@ OMS legacy properties migration?
 - Use the same column?
 - Leave for later? (Keep same tables and graphql so that existing frontend + plugins + sync unchanged - do new system as properties v2)
 
-**Properties Sync** \
-There's two levels of sync that need to be sorted out with properties. Sync from OG to OMS central and sync v7 to the remote sites. For the OG to OMS central path:
-- **Property configuration** \
-  Will add mSupply properties we're wanting to migrate to the new properties system on DB migration *of central*. I will refer to these as mapping properties as they are properties in the new system that map to mSupply properties. Remote sites will pull in new mSupply mapping properties through sync v7 *not* from a migration. The safety of this between different versions will be covered by the v7 sync path of properties. Note that modifying these OG mapping properties added in migrations beyond visibility will break things as hardcoded sync code will depend on them.
-  > Why/Alternatives \
-  > The reason we do this through DB migrations is some mSupply properties will need custom code to handle turning from OG data structures to properties. We could have a script or even UI for configuring this but I don't see an advantage given the complexity this would introduce. To be clear I'm talking about configuring the mapping properties themselves here, having a UI (shared with normal properties) for changing visibility is planned, just not adding/deleting/renaming or changing keys.
-- **Property sync** \
-  Due to the complexity of turning some mSupply data structures into properties this will be done custom per property we want to migrate. However, common patterns will have abstractions to make things easier.
-  > Why/Alternatives \
-  > Generic system for everything isn't going to be possible - see item categories in mSupply. Item categories has tables for each level in OG which just doesn't map to the new properties system generically. As such I think it's better to just do everything custom instead of trying to have the way things are translated be generic. We could have an OG translation type column on properties with `BASIC` or `ADVANCED` where `BASIC` uses the key to grab off the sync record automatically and `ADVANCED` relies on custom code or something like that. However I think abstractions can get us most of the way to this without a DB column. And seem as the the mapping properties are tied to code through migrations I think it makes more sense to define the way mSupply properties are translated through code and leave the mapping properties as only what's needed for remote v7 sites to understand what they're being sent.
-During transition to v3/sync v7, version 3 remote sites can be syncing in v6/v5 mode. To make sure they don't try doing their own v5 import/migration all OG to OMS paths will be gated on being central and everything bellow is gated on v7 only. For sync v7:
-- **Property configuration** \
-  This will will be central only (for now) and sync through v7 but not through v5 back to OG. We will need to design this with forwards compatibility in mind. For example the property type will need to be able to parse into `OTHER` for when we get sent a newly property type that isn't recognised on the remote.
-  > Why/Alternatives \
-  > Doesn't make sense to sync back to mSupply as mSupply doesn't have generic enough properties. 
-- **Property sync** \
-  
-  
-
-
-  - Central Only
-    Can send all properties on each sync and overwrite - don't need to worry about pull
-  - Remote only
-    Same as above, can send all properties and overwrite
-  
-
-> Can be one of `Number (int)`, `Text`, `Date`, `Real (Float)`, or `Option` 
-
-Confusing names and doesn't include boolean?
-
+[Thoughts on sync implementation](https://github.com/msupply-foundation/open-msupply/blob/078958fec1557c51a2d7ddd5561df1057a396221/docs/content/server/service/properties/_index.md)
 
 ### Consequences
 
