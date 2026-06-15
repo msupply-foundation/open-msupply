@@ -32,6 +32,7 @@ pub enum StockLineSortFieldInput {
     SupplierName,
     LocationCode,
     CostPricePerPack,
+    SellPricePerPack,
     VvmStatusThenExpiry,
 }
 #[derive(InputObject)]
