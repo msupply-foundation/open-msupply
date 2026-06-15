@@ -36,13 +36,32 @@ jobs:
           cp "$HOME/android/local.properties" ./client/packages/android
           cp "$HOME/android/release.keystore" ./client/packages/android/app
 
+      - name: Read Rust toolchain channel
+        id: rust_toolchain
+        # Scope the toolchain to this job only via RUSTUP_TOOLCHAIN; do NOT set a
+        # global rustup default/override on the shared self-hosted runner, or it
+        # would leak into develop builds (which pin a different channel).
+        run: |
+          CHANNEL=$(grep '^channel' server/rust-toolchain.toml | cut -d '"' -f2)
+          echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
+          echo "RUSTUP_TOOLCHAIN=$CHANNEL" >> "$GITHUB_ENV"
       - name: Set Up Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: ${{ steps.rust_toolchain.outputs.channel }}
+          override: false
+          default: false
           targets: aarch64-linux-android
             armv7-linux-androideabi
         # Targets need to match in the config.toml of the self-hosted machine
+
+      - name: Add Android targets for pinned toolchain
+        # The self-hosted runner pre-installs the Android targets for its default
+        # (stable) toolchain only. Now that cargo runs under the pinned channel
+        # (RUSTUP_TOOLCHAIN), those targets must be installed for it explicitly or
+        # the std crate can't be found (E0463). actions-rs/toolchain's `targets`
+        # input doesn't reliably cover the named channel on this runner.
+        run: rustup target add aarch64-linux-android armv7-linux-androideabi --toolchain "${{ steps.rust_toolchain.outputs.channel }}"
 
       - name: Set Up Java
         uses: actions/setup-java@v4

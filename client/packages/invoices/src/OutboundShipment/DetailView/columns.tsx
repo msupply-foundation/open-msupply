@@ -9,6 +9,7 @@ import {
   Box,
   weightedAverageByUnits,
   usePluginProvider,
+  NumericTextDisplay,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 
@@ -176,6 +177,7 @@ export const useOutboundColumns = () => {
         header: t('label.volume'),
         size: 100,
         columnType: ColumnType.Number,
+        decimalLimit: 5,
         accessorFn: row =>
           (row.stockLine?.volumePerPack ?? 0) * row.numberOfPacks,
         aggregationFn: 'sum',
@@ -186,7 +188,7 @@ export const useOutboundColumns = () => {
               return (
                 sum +
                 (row.original.stockLine?.volumePerPack ?? 0) *
-                  row.original.numberOfPacks
+                row.original.numberOfPacks
               );
             }, 0);
           return (
@@ -196,7 +198,7 @@ export const useOutboundColumns = () => {
                 width: '100%',
               }}
             >
-              {totalVolume}
+              <NumericTextDisplay value={totalVolume} decimalLimit={5} />
             </Box>
           );
         },

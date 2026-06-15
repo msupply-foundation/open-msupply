@@ -63,7 +63,7 @@ export const StatusHistory = ({
         }}
       >
         <ButtonWithIcon
-          label={t('button.add-status-entry')}
+          label={t('button.new-status-entry')}
           Icon={<PlusCircleIcon />}
           onClick={handleAddClick}
         />

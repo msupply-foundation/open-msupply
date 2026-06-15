@@ -2,7 +2,7 @@ use super::InsertPurchaseOrderLineInput;
 use crate::number::next_number;
 use repository::{
     ItemRow, NumberRowType, PurchaseOrderLineRow, PurchaseOrderLineStatus, RepositoryError,
-    StorageConnection,
+    StorageConnection, UnitRowRepository,
 };
 
 pub fn generate(
@@ -32,6 +32,14 @@ pub fn generate(
         store_id,
     )?;
 
+    let unit = match &item.unit_id {
+        Some(unit_id) => UnitRowRepository::new(connection)
+            .find_one_by_id(unit_id)?
+            .map(|unit_row| unit_row.name)
+            .or(unit),
+        None => unit,
+    };
+
     Ok(PurchaseOrderLineRow {
         id,
         store_id: store_id.to_string(),
@@ -45,7 +53,7 @@ pub fn generate(
         expected_delivery_date,
         price_per_pack_before_discount: price_per_pack_before_discount.unwrap_or(0.0),
         price_per_pack_after_discount: price_per_pack_after_discount.unwrap_or(0.0),
-        manufacturer_id: manufacturer_id,
+        manufacturer_id,
         note,
         unit,
         supplier_item_code,

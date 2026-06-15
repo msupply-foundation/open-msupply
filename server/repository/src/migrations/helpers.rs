@@ -11,11 +11,11 @@ pub(crate) fn run_without_change_log_updates<
 ) -> anyhow::Result<u64> {
     // Remember the current changelog cursor in order to be able to delete all changelog entries
     // triggered by the merge migrations.
-    let cursor_before_job = ChangelogRepository::new(connection).latest_cursor()?;
+    let cursor_before_job = ChangelogRepository::new(connection).absolute_latest_cursor()?;
 
     job(connection)?;
 
-    let cursor_after_job = ChangelogRepository::new(connection).latest_cursor()?;
+    let cursor_after_job = ChangelogRepository::new(connection).absolute_latest_cursor()?;
     // Revert changelog to the state before the merge migrations
     ChangelogRepository::new(connection).delete((cursor_before_job + 1).try_into()?)?;
     Ok(cursor_after_job)
@@ -40,7 +40,7 @@ async fn check_change_log_update() {
 
     // First insert
     let cursor = ChangelogRepository::new(&connection)
-        .latest_cursor()
+        .absolute_latest_cursor()
         .unwrap();
     NameRowRepository::new(&connection)
         .upsert_one(&name_row)
@@ -48,12 +48,12 @@ async fn check_change_log_update() {
     assert!(
         cursor
             < ChangelogRepository::new(&connection)
-                .latest_cursor()
+                .absolute_latest_cursor()
                 .unwrap()
     );
     // Now update
     let cursor = ChangelogRepository::new(&connection)
-        .latest_cursor()
+        .absolute_latest_cursor()
         .unwrap();
     NameRowRepository::new(&connection)
         .upsert_one(&name_row)
@@ -61,13 +61,13 @@ async fn check_change_log_update() {
     assert!(
         cursor
             < ChangelogRepository::new(&connection)
-                .latest_cursor()
+                .absolute_latest_cursor()
                 .unwrap()
     );
 
     // Now update with run_without_change_log_updates
     let cursor = ChangelogRepository::new(&connection)
-        .latest_cursor()
+        .absolute_latest_cursor()
         .unwrap();
     run_without_change_log_updates(&connection, |connection| {
         NameRowRepository::new(connection).upsert_one(&name_row)?;
@@ -77,7 +77,7 @@ async fn check_change_log_update() {
     assert_eq!(
         cursor,
         ChangelogRepository::new(&connection)
-            .latest_cursor()
+            .absolute_latest_cursor()
             .unwrap()
     );
 }
