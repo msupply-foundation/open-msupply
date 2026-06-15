@@ -22,7 +22,7 @@ const toDraftLine = (
   toLocation: (draft.toLocation as LocationRowFragment | null) ?? null,
 });
 
-interface UseStockMovementDraftArgs {
+interface UseStockMovementDraftProps {
   isEdit: boolean;
   movement?: StockMovementRowFragment | null;
 }
@@ -30,7 +30,7 @@ interface UseStockMovementDraftArgs {
 export const useStockMovementDraft = ({
   isEdit,
   movement,
-}: UseStockMovementDraftArgs) => {
+}: UseStockMovementDraftProps) => {
   const [selectionMode, setSelectionMode] =
     useState<SelectionMode>('byLocation');
   const [fromLocation, setFromLocation] = useState<LocationRowFragment | null>(
