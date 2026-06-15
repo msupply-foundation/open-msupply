@@ -109,6 +109,7 @@ pub enum InsertStockInLineError {
     DonorNotVisible,
     SelectedDonorPartyIsNotADonor,
     CannotEditFinalised,
+    CannotAddLinesToAuthorisedReceivedInvoice,
     LocationDoesNotExist,
     ItemVariantDoesNotExist,
     ItemNotFound,
@@ -511,6 +512,91 @@ mod test {
                 invoice_id: mock_inbound_shipment_e().id,
                 r#type: StockInType::InboundShipment,
                 program_id: Some(mock_immunisation_program_a().id),
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn insert_stock_in_line_authorised_received_invoice() {
+        fn authorised_received_inbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "authorised_received_inbound".to_string(),
+                store_id: mock_store_a().id,
+                name_id: mock_name_store_b().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Received,
+                purchase_order_id: Some(mock_purchase_order_a().id),
+                ..Default::default()
+            }
+        }
+
+        // Received inbound in the same store but not linked to a purchase
+        // order, so not subject to line authorisation
+        fn received_inbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "received_inbound_without_auth".to_string(),
+                store_id: mock_store_a().id,
+                name_id: mock_name_store_b().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Received,
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "insert_stock_in_line_authorised_received_invoice",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![authorised_received_inbound(), received_inbound()],
+                preferences: vec![PreferenceRow {
+                    id: "ext_auth_pref_received_insert_test".to_string(),
+                    key: "external_inbound_shipment_lines_must_be_authorised".to_string(),
+                    value: "true".to_string(),
+                    store_id: Some(mock_store_a().id),
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        // Lines cannot be added once an authorised shipment is received
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "new_line_authorised_received".to_string(),
+                    invoice_id: authorised_received_inbound().id,
+                    item_id: mock_item_a().id,
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    r#type: StockInType::InboundShipment,
+                    purchase_order_line_id: Some(mock_purchase_order_a_line_1().id),
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(ServiceError::CannotAddLinesToAuthorisedReceivedInvoice)
+        );
+
+        // A received shipment not subject to line authorisation still accepts
+        // new lines
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "new_line_received_no_auth".to_string(),
+                invoice_id: received_inbound().id,
+                item_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                r#type: StockInType::InboundShipment,
                 ..Default::default()
             },
             None,

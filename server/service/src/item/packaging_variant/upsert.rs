@@ -1,5 +1,8 @@
 use repository::{
-    item_variant::packaging_variant_row::{PackagingVariantRow, PackagingVariantRowRepository},
+    item_variant::{
+        item_variant_row::ItemVariantRow,
+        packaging_variant_row::{PackagingVariantRow, PackagingVariantRowRepository},
+    },
     ActivityLogType, RepositoryError, StorageConnection,
 };
 
@@ -34,7 +37,7 @@ pub fn upsert_packaging_variant(
     let packaging_variant = ctx
         .connection
         .transaction_sync(|connection| {
-            let existing = validate(connection, &input)?;
+            let (existing, item_variant) = validate(connection, &input)?;
             let new_packaging_variant = generate(input);
             let repo = PackagingVariantRowRepository::new(connection);
 
@@ -48,7 +51,7 @@ pub fn upsert_packaging_variant(
             activity_log_entry_with_diff(
                 ctx,
                 log_type,
-                Some(new_packaging_variant.id.clone()),
+                Some(item_variant.item_id.clone()),
                 existing.as_ref(),
                 &new_packaging_variant,
             )?;
@@ -90,10 +93,11 @@ pub fn generate(
 fn validate(
     connection: &StorageConnection,
     input: &UpsertPackagingVariant,
-) -> Result<Option<PackagingVariantRow>, UpsertPackagingVariantError> {
-    if check_item_variant_exists(connection, &input.item_variant_id)?.is_none() {
-        return Err(UpsertPackagingVariantError::ItemVariantDoesNotExist);
-    }
+) -> Result<(Option<PackagingVariantRow>, ItemVariantRow), UpsertPackagingVariantError> {
+    let item_variant = match check_item_variant_exists(connection, &input.item_variant_id)? {
+        Some(item_variant) => item_variant,
+        None => return Err(UpsertPackagingVariantError::ItemVariantDoesNotExist),
+    };
 
     let old_packaging_variant =
         PackagingVariantRowRepository::new(connection).find_one_by_id(&input.id)?;
@@ -125,5 +129,5 @@ fn validate(
         }
     }
 
-    Ok(old_packaging_variant)
+    Ok((old_packaging_variant, item_variant))
 }

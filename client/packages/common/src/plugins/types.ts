@@ -7,7 +7,11 @@ import {
   RequestLineFragment,
   StockLineRowFragment,
 } from '@openmsupply-client/system';
-import { InboundFragment } from '@openmsupply-client/invoices';
+import {
+  InboundFragment,
+  InboundLineFragment,
+  StockOutLineFragment,
+} from '@openmsupply-client/invoices';
 import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
 import { DraftRequestLine } from 'packages/requisitions/src/RequestRequisition/DetailView/RequestLineEdit';
 import { StocktakeLineFragment } from '@openmsupply-client/inventory';
@@ -44,9 +48,36 @@ export type PluginPage = {
   pluginCode?: string;
 };
 
+export type ShipmentLinePluginState = {
+  isDirty?: boolean;
+  invalidLines?: Record<string, boolean>;
+};
+
 export type Plugins = {
   prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
+  inboundShipmentLine?: {
+    editViewField: {
+      header: string;
+      Component: React.ComponentType<{
+        line: InboundLineFragment;
+        update: (patch: Partial<InboundLineFragment>) => void;
+        events: UsePluginEvents<ShipmentLinePluginState>;
+      }>;
+    }[];
+    tableColumn?: ColumnDef<InboundLineFragment>[];
+  };
+  outboundShipmentLine?: {
+    editViewField: {
+      header: string;
+      Component: React.ComponentType<{
+        line: StockOutLineFragment;
+        events: UsePluginEvents<ShipmentLinePluginState>;
+        isExternal: boolean;
+      }>;
+    }[];
+    tableColumn?: ColumnDef<StockOutLineFragment>[];
+  };
   item?: {
     detailViewField: React.ComponentType<{ item: ItemFragment }>[];
   };
@@ -105,7 +136,31 @@ export type Plugins = {
     tableColumn: ColumnDef<StocktakeLineFragment>[];
   };
   pages?: PluginPage[];
+  // Configuration UI for this plugin. Surfaced from Manage > Plugins. The plugin
+  // provides a free-form React `Component` that edits its config via
+  // `value`/`onChange`. `defaultConfig` seeds the form when no plugin_data row
+  // exists yet for this plugin. Typed as `any` so a plugin can supply a
+  // strongly-typed `PluginConfiguration<ItsOwnConfig>` here without casting; the
+  // host treats the config as opaque JSON regardless.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  configuration?: PluginConfiguration<any>;
 };
+
+export type PluginConfiguration<TConfig = unknown> = {
+  defaultConfig: TConfig;
+  Component: React.ComponentType<{
+    value: TConfig;
+    onChange: (next: TConfig) => void;
+  }>;
+};
+
+// Shared React-Query key for a plugin's configuration row. Both the host's
+// save hook and any plugin-side read hook should use this so the host's
+// invalidate-on-save triggers a live refetch in the plugin without a reload.
+// (The host and plugin bundles share the same QueryClient via the federated
+// `@openmsupply-client/common` package.)
+export const pluginConfigurationQueryKey = (pluginCode: string) =>
+  ['pluginConfiguration', pluginCode] as const;
 
 type PluginData<D> = { relatedRecordId?: string | null; data: D };
 export type PluginDataStore<T, D> = {

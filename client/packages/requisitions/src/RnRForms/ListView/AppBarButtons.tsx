@@ -23,9 +23,9 @@ export const AppBarButtons = ({
           variant="outlined"
           onClick={onCreate}
           Icon={<PlusCircleIcon />}
-          label={t('button.add-form')}
+          label={t('button.new-form')}
         >
-          {t('button.add-form')}
+          {t('button.new-form')}
         </ButtonWithIcon>
       </Grid>
     </AppBarButtonsPortal>
