@@ -1,8 +1,10 @@
 use async_graphql::*;
 
+pub mod delete;
 pub mod insert;
 pub mod update;
 
+pub use delete::{delete_stock_relocation, DeleteInput, DeleteStockRelocationResponse};
 pub use insert::{insert_stock_relocation, InsertInput, InsertResponse};
 pub use update::{update_stock_relocation, UpdateInput, UpdateResponse};
 

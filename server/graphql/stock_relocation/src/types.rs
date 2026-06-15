@@ -51,6 +51,9 @@ impl StockRelocationNode {
             .from_stock_line_row
             .available_number_of_packs
     }
+    pub async fn on_hold(&self) -> bool {
+        self.stock_relocation.from_stock_line_row.on_hold
+    }
     pub async fn to_pack_size(&self) -> Option<f64> {
         self.row().to_pack_size
     }
