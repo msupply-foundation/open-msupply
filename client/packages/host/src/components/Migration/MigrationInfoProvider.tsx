@@ -6,6 +6,7 @@ import {
   useMigrationStatus,
 } from '@openmsupply-client/common';
 import { MigrationStatusIndicator } from './MigrationStatusIndicator';
+import { ConnectionLostPage } from './ConnectionLostPage';
 
 export const MigrationInfoProvider: React.FC<React.PropsWithChildren> = ({
   children,
@@ -13,10 +14,26 @@ export const MigrationInfoProvider: React.FC<React.PropsWithChildren> = ({
   const [isComplete, setIsComplete] = useState(false);
 
   // Poll every second until migrations are complete, then stop polling
-  const inProgress = useMigrationStatus(isComplete ? 0 : 1000);
+  const { isLoading, inProgress, connectionLost } = useMigrationStatus(
+    isComplete ? 0 : 1000
+  );
+
+  // Bootstrap query failed with a NetworkError. Render a dedicated
+  // gate rather than letting the rest of the tree mount — child
+  // queries would hit the same wall and present a confusing mixture
+  // of stale/empty data + banners.
+  if (connectionLost) {
+    return <ConnectionLostPage />;
+  }
+
+  // Server hasn't responded yet — show a neutral loader. Without this,
+  // we'd default-render the migration page before the server has
+  // actually said migrations are in progress.
+  if (isLoading) {
+    return <RandomLoader />;
+  }
 
   if (inProgress) {
-    // Migrations are in progress - show migration message
     return (
       <>
         <GlobalStyles

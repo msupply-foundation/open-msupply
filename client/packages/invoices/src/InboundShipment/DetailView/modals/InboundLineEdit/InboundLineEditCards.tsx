@@ -28,6 +28,9 @@ import {
   InvoiceNodeStatus,
   InfoIcon,
   useSimplifiedTabletUI,
+  usePluginProvider,
+  UsePluginEvents,
+  ShipmentLinePluginState,
 } from '@openmsupply-client/common';
 import { Select, MenuItem } from '@mui/material';
 import { DraftInboundLine } from '../../../../types';
@@ -63,11 +66,11 @@ interface CardProps {
 interface InboundLineEditCardsProps extends CardProps {
   duplicateDraftLine: (id: string) => void;
   removeDraftLine: (id: string) => void;
-  isReceived?: boolean;
   lastCardRef?: React.RefObject<HTMLDivElement | null>;
   actions?: React.ReactNode;
   /** The specific line ID to scroll into view when the modal opens */
   scrollToLineId?: string | null;
+  pluginEvents: UsePluginEvents<ShipmentLinePluginState>;
 }
 
 export const InboundLineEditCards = ({
@@ -76,7 +79,6 @@ export const InboundLineEditCards = ({
   duplicateDraftLine,
   removeDraftLine,
   isDisabled = false,
-  isReceived = false,
   foreignCurrency,
   isExternalSupplier,
   hasItemVariantsEnabled,
@@ -87,9 +89,11 @@ export const InboundLineEditCards = ({
   lastCardRef,
   actions,
   scrollToLineId,
+  pluginEvents,
 }: InboundLineEditCardsProps) => {
   const t = useTranslation();
   const simplified = useSimplifiedTabletUI();
+  const { plugins } = usePluginProvider();
   const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
   // Ref avoids format in useMemo deps (unstable reference)
@@ -106,6 +110,7 @@ export const InboundLineEditCards = ({
     query: { data: inboundData },
     hasAuthorisePermission,
     isExternal,
+    isAddOrDeleteLinesDisabled,
   } = useInboundShipment();
   const isManualShipment =
     !inboundData?.purchaseOrder && !inboundData?.linkedShipment;
@@ -193,8 +198,8 @@ export const InboundLineEditCards = ({
                 helperText={
                   isPlaceholder
                     ? t('error.field-must-be-specified', {
-                        field: t('label.packs-received'),
-                      })
+                      field: t('label.packs-received'),
+                    })
                     : undefined
                 }
               />
@@ -233,7 +238,7 @@ export const InboundLineEditCards = ({
                   const shouldClearSellPrice =
                     item?.defaultPackSize !== line.packSize &&
                     item?.itemStoreProperties?.defaultSellPricePerPack ===
-                      line.sellPricePerPack;
+                    line.sellPricePerPack;
 
                   updateDraftLine({
                     volumePerPack:
@@ -336,6 +341,34 @@ export const InboundLineEditCards = ({
           />
         ),
       },
+      {
+        id: 'difference',
+        header: t('label.difference'),
+        description: t('description.difference-packs'),
+        size: 100,
+        columnGroup: 'stockLineDetails',
+        accessorFn: row =>
+          row.shippedNumberOfPacks == null
+            ? null
+            : row.shippedNumberOfPacks - row.numberOfPacks,
+      },
+      ...(plugins.inboundShipmentLine?.editViewField ?? []).map(
+        ({ header, Component }, index): ColumnDef<DraftInboundLine> => ({
+          id: `plugin-field-${index}`,
+          header,
+          size: 180,
+          columnGroup: 'stockLineDetails',
+          Cell: ({ row }) => (
+            <Component
+              line={row.original}
+              update={patch =>
+                updateDraftLine({ id: row.original.id, ...patch })
+              }
+              events={pluginEvents}
+            />
+          ),
+        })
+      ),
       {
         accessorKey: 'shippedPackSize',
         header: t('label.shipped-pack-size'),
@@ -709,7 +742,7 @@ export const InboundLineEditCards = ({
         pin: 'right',
         Cell: ({ row }) => (
           <IconButton
-            disabled={isDisabled || isReceived}
+            disabled={isDisabled || isAddOrDeleteLinesDisabled}
             label={t('label.duplicate-batch')}
             showLabel={!simplified}
             onClick={() => {
@@ -732,7 +765,7 @@ export const InboundLineEditCards = ({
         pin: 'right',
         Cell: ({ row }) => (
           <IconButton
-            disabled={isDisabled || isReceived}
+            disabled={isDisabled || isAddOrDeleteLinesDisabled}
             label={t('label.delete-batch')}
             showLabel={!simplified}
             color="error"
@@ -752,7 +785,7 @@ export const InboundLineEditCards = ({
     hasItemVariantsEnabled,
     hasVvmStatusesEnabled,
     isDisabled,
-    isReceived,
+    isAddOrDeleteLinesDisabled,
     isExternalSupplier,
     isManualShipment,
     item?.isVaccine,
@@ -765,6 +798,7 @@ export const InboundLineEditCards = ({
     store?.preferences.issueInForeignCurrency,
     unitName,
     updateDraftLine,
+    plugins.inboundShipmentLine?.editViewField,
   ]);
 
   const table = useSimpleMaterialTable<DraftInboundLine>({
@@ -780,9 +814,9 @@ export const InboundLineEditCards = ({
   const groupIcons = simplified
     ? undefined
     : {
-        stockLineDetails: <StockIcon />,
-        moreInfo: <InfoIcon />,
-      };
+      stockLineDetails: <StockIcon />,
+      moreInfo: <InfoIcon />,
+    };
 
   return (
     <>

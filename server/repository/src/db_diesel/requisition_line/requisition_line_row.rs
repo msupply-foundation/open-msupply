@@ -89,7 +89,10 @@ pub struct RequisitionLineRow {
     pub forecast_total_units: Option<f64>,
     pub forecast_total_doses: Option<f64>,
     pub vaccine_courses: Option<String>,
-    // Resolved from item_link - must be last to match view column order
+    // Resolved from item_link - must be last to match view column order.
+    // Serialized as `item_link_id` to preserve the backend plugin JSON contract
+    // (e.g. TransformRequestRequisitionLines) after the #11668 item_link rename.
+    #[serde(rename = "item_link_id")]
     pub item_id: String,
 }
 
@@ -227,5 +230,31 @@ impl Upsert for RequisitionLineRow {
             RequisitionLineRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::RequisitionLineRow;
+
+    // The backend plugin contract (e.g. TransformRequestRequisitionLines) serializes
+    // RequisitionLineRow to/from JSON. The #11668 item_link refactor renamed the Rust
+    // field item_link_id -> item_id; a #[serde(rename)] keeps the JSON key as
+    // `item_link_id` so existing plugins don't break. This test pins that contract.
+    #[test]
+    fn requisition_line_row_serializes_item_link_id_key() {
+        let row = RequisitionLineRow {
+            id: "line".to_string(),
+            item_id: "item".to_string(),
+            ..Default::default()
+        };
+
+        let json = serde_json::to_value(&row).unwrap();
+        assert_eq!(json.get("item_link_id").and_then(|v| v.as_str()), Some("item"));
+        assert!(json.get("item_id").is_none());
+
+        // And it round-trips back from the `item_link_id` key.
+        let parsed: RequisitionLineRow = serde_json::from_value(json).unwrap();
+        assert_eq!(parsed.item_id, "item");
     }
 }
