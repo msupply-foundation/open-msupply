@@ -95,7 +95,7 @@ export const AppBarButtonsComponent = ({
 
   const getCsvData = async () => {
     const result = await fetchAsync();
-    return result?.nodes
+    return result?.nodes?.length
       ? assetsToCsv(
           result.nodes,
           t,
