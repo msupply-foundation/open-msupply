@@ -43,28 +43,32 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
         const physicalAlignment = col.align ?? columnDefaults.align;
 
         // Logical text alignment, for wide/block cell content that fills the
-        // column (e.g. item names). Logical start/end track the cell's
-        // direction natively in both LTR and RTL, and aren't flipped by
-        // stylis-plugin-rtl. start = text columns, end = numeric/date columns.
+        // column (e.g. item names). Text columns use the logical start edge so
+        // they flip naturally with direction. Numeric/date columns instead stay
+        // on the physical right in both LTR and RTL, so digits line up by place
+        // value for comparison (the units digit is always on the right) — they
+        // take whichever logical edge is physically right in each direction.
         const textAlign =
           physicalAlignment === 'right'
-            ? 'end'
+            ? isRtl
+              ? 'start' // RTL: the start edge is on the right
+              : 'end' // LTR: the end edge is on the right
             : physicalAlignment === 'center'
               ? 'center'
               : 'start';
 
         // Flexbox alignment, for narrow content positioned via justifyContent
-        // (numbers, icons). This must be flipped left<->right for RTL: MRT sets
-        // every cell to align="right" in RTL, applying flex-direction:
-        // row-reverse, which cancels the cell's direction: rtl and leaves the
-        // flex main axis physically LTR — so justifyContent renders unflipped.
+        // (numbers, icons). MRT sets every cell to align="right" in RTL,
+        // applying flex-direction: row-reverse, which cancels the cell's
+        // direction: rtl and leaves the flex main axis physically LTR — so
+        // flex-end is physically right in both LTR and RTL.
         const alignment = !isRtl
           ? physicalAlignment
           : physicalAlignment === 'right'
-            ? 'left' // numeric/date: end edge (left in RTL)
+            ? 'right' // numeric/date: stay right in RTL too (place-value line-up)
             : physicalAlignment === 'center'
               ? 'center'
-              : 'right'; // text: start edge (right in RTL), incl. implicit default
+              : 'right'; // text: the start edge is on the right in RTL
         if (alignment) {
           col.muiTableBodyCellProps = params => {
             return mergeCellProps(
