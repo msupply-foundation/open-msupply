@@ -17,9 +17,11 @@ import {
   useAuthContext,
   UserPermission,
   useIsCentralServerApi,
+  PreferenceKey,
 } from '@openmsupply-client/common';
 import { MultiChoice, getMultiChoiceOptions } from '../Components/MultiChoice';
 import { EditCustomTranslations } from '../Components/CustomTranslations/CustomTranslationsModal';
+import { EditCustomTranslationsV2 } from '../Components/CustomTranslations/CustomTranslationsV2Modal';
 import { EditBackdating } from '../Components/EditBackdating';
 import { EditWarningWhenMissingRecentStocktakeData } from '../Components/EditWarningWhenMissingRecentStocktakeData';
 import { PreferenceLabelRow } from './PreferenceLabelRow';
@@ -33,6 +35,7 @@ interface EditPreferenceProps {
   label?: string;
   isLast?: boolean;
   disabled?: boolean;
+  isAutoSave?: boolean; // Global Prefs auto-save instead of using draft
 }
 
 export const EditPreference = ({
@@ -41,6 +44,7 @@ export const EditPreference = ({
   label,
   isLast = false,
   disabled: disabledProp,
+  isAutoSave = true,
 }: EditPreferenceProps) => {
   const t = useTranslation();
   const { error } = useNotification();
@@ -52,31 +56,39 @@ export const EditPreference = ({
     !isCentralServer ||
     !userHasPermission(UserPermission.EditCentralData);
 
-  const preferenceLabel =
-    label ?? t(`preference.${preference.key}` as LocaleKey);
+  // v2 custom translations reuse the legacy "Custom translations" label so it
+  // looks the same to users (and is already translated in every language). The
+  // legacy v1 editor is hidden, so there's no clash.
+  const labelKey =
+    preference.key === PreferenceKey.CustomTranslationsV2
+      ? PreferenceKey.CustomTranslations
+      : preference.key;
+
+  const preferenceLabel = label ?? t(`preference.${labelKey}` as LocaleKey);
 
   // The preference.value only updates after mutation completes and cache
   // is invalidated - use local state for fast UI change
   const [value, setValue] = useState(preference.value);
   const [hasError, setHasError] = useState(false);
 
-  const debouncedUpdate = useDebouncedValueCallback(
-    async value => {
-      const success = await update(value);
-      setHasError(!success);
+  const onUpdate = async (newValue: PreferenceDescriptionNode['value']) => {
+    const success = await update(newValue);
+    setHasError(!success);
 
-      if (!success) {
-        // If update fails, revert to original value
-        setValue(preference.value);
-      }
-    },
-    [],
-    350
-  );
+    if (!success) {
+      setValue(preference.value);
+    }
+  };
+
+  const debouncedUpdate = useDebouncedValueCallback(onUpdate, [], 350);
 
   const handleChange = (newValue: PreferenceDescriptionNode['value']) => {
     setValue(newValue);
-    debouncedUpdate(newValue);
+    if (isAutoSave) {
+      debouncedUpdate(newValue);
+    } else {
+      onUpdate(newValue);
+    }
   };
 
   switch (preference.valueType) {
@@ -110,7 +122,7 @@ export const EditPreference = ({
             <NumericTextInput
               value={value}
               onChange={handleChange}
-              onBlur={() => {}}
+              onBlur={() => { }}
               disabled={disabled}
               decimalLimit={
                 preference.valueType === PreferenceValueNodeType.Float
@@ -134,16 +146,16 @@ export const EditPreference = ({
             <BasicTextInput
               value={value}
               onChange={e => handleChange(e.target.value)}
-              onBlur={() => {}}
+              onBlur={() => { }}
               disabled={disabled}
               sx={
                 hasError
                   ? {
-                      borderColor: theme => theme.palette.error.main,
-                      borderWidth: '2px',
-                      borderStyle: 'solid',
-                      borderRadius: '8px',
-                    }
+                    borderColor: theme => theme.palette.error.main,
+                    borderWidth: '2px',
+                    borderStyle: 'solid',
+                    borderRadius: '8px',
+                  }
                   : undefined
               }
             />
@@ -201,6 +213,22 @@ export const EditPreference = ({
             <EditCustomTranslations
               value={preference.value}
               update={update}
+              disabled={disabled}
+            />
+          }
+          isLast={isLast}
+        />
+      );
+
+    case PreferenceValueNodeType.CustomTranslationsV2:
+      return (
+        <PreferenceLabelRow
+          label={preferenceLabel}
+          Input={
+            // v2 saves via its own mutation (needs the editing language), so
+            // the generic `update` isn't passed down.
+            <EditCustomTranslationsV2
+              value={preference.value}
               disabled={disabled}
             />
           }

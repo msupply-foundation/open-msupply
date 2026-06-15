@@ -1,3 +1,12 @@
+[test-groups]
+# Sync integration tests share a single 4D mSupply server and several
+# process-global statics; running them concurrently causes data contamination.
+sync-integration = { max-threads = 1 }
+
+[[profile.default.overrides]]
+filter = 'test(integration_sync)'
+test-group = 'sync-integration'
+
 [profile.ci]
 test-threads = "num-cpus"
 fail-fast = false
