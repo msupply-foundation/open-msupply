@@ -8,6 +8,7 @@ fragment StockMovementRow on StockRelocationNode {
   fromPackSize
   availableNumberOfPacks
   toPackSize
+  onHold
   restrictedLocationTypeId
   itemCode
   itemName
@@ -20,6 +21,7 @@ fragment StockMovementRow on StockRelocationNode {
     id
     code
     name
+    onHold
   }
   toLocation {
     __typename
@@ -97,6 +99,19 @@ mutation updateStockRelocation(
         __typename
         description
       }
+    }
+  }
+}
+
+mutation deleteStockRelocation(
+  $input: DeleteStockRelocationInput!
+  $storeId: String!
+) {
+  deleteStockRelocation(input: $input, storeId: $storeId) {
+    __typename
+    ... on DeleteResponse {
+      __typename
+      id
     }
   }
 }

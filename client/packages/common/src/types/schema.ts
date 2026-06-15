@@ -2277,6 +2277,12 @@ export type DeleteRnRFormInput = {
 
 export type DeleteRnRFormResponse = DeleteResponse;
 
+export type DeleteStockRelocationInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteStockRelocationResponse = DeleteResponse;
+
 export type DeleteStocktakeError = {
   __typename: 'DeleteStocktakeError';
   error: DeleteStocktakeErrorInterface;
@@ -5590,6 +5596,7 @@ export type Mutations = {
   deleteResponseRequisition: DeleteResponseRequisitionResponse;
   deleteResponseRequisitionLine: DeleteResponseRequisitionLineResponse;
   deleteRnrForm: DeleteRnRFormResponse;
+  deleteStockRelocation: DeleteStockRelocationResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   deleteSupplierReturn: DeleteSupplierReturnResponse;
@@ -5908,6 +5915,11 @@ export type MutationsDeleteResponseRequisitionLineArgs = {
 
 export type MutationsDeleteRnrFormArgs = {
   input: DeleteRnRFormInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteStockRelocationArgs = {
+  input: DeleteStockRelocationInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -9785,6 +9797,7 @@ export type StockRelocationNode = {
   itemCode: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
   numberOfPacks: Scalars['Float']['output'];
+  onHold: Scalars['Boolean']['output'];
   restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   status: StockRelocationNodeStatus;
   toLocation?: Maybe<LocationNode>;
@@ -11449,7 +11462,7 @@ export type UpdateStockRelocationInput = {
   fromNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   id: Scalars['String']['input'];
   status?: InputMaybe<StockRelocationNodeStatus>;
-  toLocationId?: InputMaybe<Scalars['String']['input']>;
+  toLocationId?: InputMaybe<NullableStringUpdate>;
   toPackSize?: InputMaybe<Scalars['Float']['input']>;
 };
 
