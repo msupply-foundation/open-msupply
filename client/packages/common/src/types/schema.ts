@@ -2652,6 +2652,26 @@ export type DraftStockOutLineNodeDonorArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type DraftStockRelocationLineNode = {
+  __typename: 'DraftStockRelocationLineNode';
+  availableNumberOfPacks: Scalars['Float']['output'];
+  batch?: Maybe<Scalars['String']['output']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  fromLocation?: Maybe<LocationNode>;
+  fromNumberOfPacks?: Maybe<Scalars['Float']['output']>;
+  fromPackSize: Scalars['Float']['output'];
+  fromStockLineId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  itemCode: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
+  onHold: Scalars['Boolean']['output'];
+  restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
+  toLocation?: Maybe<LocationNode>;
+  toNumberOfPacks?: Maybe<Scalars['Float']['output']>;
+  toPackSize?: Maybe<Scalars['Float']['output']>;
+};
+
 export type DuplicateAncillaryItem = UpsertAncillaryItemErrorInterface & {
   __typename: 'DuplicateAncillaryItem';
   description: Scalars['String']['output'];
@@ -7869,6 +7889,7 @@ export type Queries = {
   /** Query for "stock_line" entries */
   stockLines: StockLinesResponse;
   stockRelocation: StockRelocationResponse;
+  stockRelocationDraftLines: Array<DraftStockRelocationLineNode>;
   stockRelocations: StockRelocationsResponse;
   stocktake: StocktakeResponse;
   stocktakeByNumber: StocktakeResponse;
@@ -8541,6 +8562,11 @@ export type QueriesStockLinesArgs = {
 
 export type QueriesStockRelocationArgs = {
   id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesStockRelocationDraftLinesArgs = {
+  input: StockRelocationDraftLinesInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -9752,6 +9778,12 @@ export type StockRelocationConnector = {
   __typename: 'StockRelocationConnector';
   nodes: Array<StockRelocationNode>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type StockRelocationDraftLinesInput = {
+  fromLocationId?: InputMaybe<Scalars['String']['input']>;
+  itemId?: InputMaybe<Scalars['String']['input']>;
+  stockRelocationId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type StockRelocationFilterInput = {
