@@ -289,10 +289,6 @@ export const StockMovementModal = ({
 
     try {
       const result = await insert({ lines: draftLines });
-      if (result.__typename === 'InsertStockRelocationError') {
-        error(result.error.description)();
-        return;
-      }
       const ids = result.ids;
       getCreateFinaliseConfirmation({
         onConfirm: async () => {
