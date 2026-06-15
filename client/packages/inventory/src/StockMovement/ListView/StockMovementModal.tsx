@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   Alert,
+  ArrayUtils,
   Box,
   Typography,
   useTranslation,
@@ -217,21 +218,16 @@ export const StockMovementModal = ({
         ...edits[stockLine.id],
       }));
 
-  const itemOptions = fromStockNodes
-    .reduce<ItemOption[]>((acc, node) => {
-      if (
-        !acc.some(o => o.id === node.itemId) &&
-        !addedItemIds.includes(node.itemId)
-      ) {
-        acc.push({
-          id: node.itemId,
-          code: node.item.code,
-          name: node.item.name,
-        });
-      }
-      return acc;
-    }, [])
-    .sort((a, b) => a.name.localeCompare(b.name));
+  const itemOptions = ArrayUtils.uniqBy(
+    fromStockNodes
+      .filter(node => !addedItemIds.includes(node.itemId))
+      .map(node => ({
+        id: node.itemId,
+        code: node.item.code,
+        name: node.item.name,
+      })),
+    'id'
+  ).sort((a, b) => a.name.localeCompare(b.name));
 
   const onAddItem = (item: ItemOption) =>
     setAddedItemIds(prev =>
