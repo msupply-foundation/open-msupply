@@ -8,6 +8,7 @@ import { browserLanguageDetector } from './browserLanguageDetector';
 import { createRegisteredContext } from 'react-singleton-context';
 import { Environment } from '@openmsupply-client/config';
 import { GetBackendByNamespace } from './GetBackendByNamespace';
+import { intlNumberFormat } from '../number/IntlNumber';
 const appVersion = require('../../../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
 // Created by webpack DefinePlugin see webpack.config.js
@@ -89,6 +90,14 @@ export function initialiseI18n({
         escapeValue: false, // not needed for react!!
       },
     });
+
+  // i18next's built-in `number` formatter uses `Intl.NumberFormat(lng)` directly,
+  // which ignores our numbering-system overrides (e.g. Pashto defaults to Latin
+  // digits). Route `{{x, number}}` through `intlNumberFormat` so interpolated
+  // counts render in the locale's numerals (Eastern/extended-Arabic for ar/prs/ps).
+  i18next.services.formatter?.add('number', (value, lng, options) =>
+    intlNumberFormat(lng ?? 'en', options).format(Number(value))
+  );
 }
 
 export const IntlContext = createRegisteredContext<I18nextProviderProps>(
