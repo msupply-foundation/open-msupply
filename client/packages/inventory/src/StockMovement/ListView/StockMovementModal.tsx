@@ -20,14 +20,13 @@ import {
   StockItemSearchInput,
 } from '@openmsupply-client/system';
 import {
-  DraftStockMovementLine,
   StockMovementRowFragment,
   useDeleteStockMovement,
   useInsertStockMovement,
   useUpdateStockMovement,
 } from '../api';
 import {
-  DraftStockMovementLineState,
+  DraftStockMovementLine,
   StockMovementLineTable,
 } from './StockMovementLineTable';
 import {
@@ -99,13 +98,13 @@ export const StockMovementModal = ({
     cancelButtonLabel: t('button.cancel'),
   });
 
-  const resultingToPacks = (line: DraftStockMovementLineState) => {
+  const resultingToPacks = (line: DraftStockMovementLine) => {
     const toPackSize = line.toPackSize ?? line.fromPackSize;
     if (!toPackSize) return undefined;
     return ((line.fromNumberOfPacks ?? 0) * line.fromPackSize) / toPackSize;
   };
 
-  const isValid = (line: DraftStockMovementLineState) => {
+  const isValid = (line: DraftStockMovementLine) => {
     const toPacks = resultingToPacks(line);
     return (
       (line.fromNumberOfPacks ?? 0) > 0 &&
@@ -131,7 +130,7 @@ export const StockMovementModal = ({
     linesToMove.every(isValid);
 
   const onCreate = async () => {
-    const draftLines: DraftStockMovementLine[] = linesToMove.map(line => ({
+    const draftLines = linesToMove.map(line => ({
       fromStockLineId: line.fromStockLineId,
       fromNumberOfPacks: line.fromNumberOfPacks ?? 0,
       toLocationId: line.toLocation?.id,
@@ -341,11 +340,13 @@ export const StockMovementModal = ({
             disabled={isDisabled}
           />
         ) : (
-          <Typography sx={{ color: 'gray.main' }}>
-            {selectionMode === 'byLocation'
-              ? t('messages.select-from-location')
-              : t('messages.select-an-item')}
-          </Typography>
+          !isEdit && (
+            <Typography sx={{ color: 'gray.main' }}>
+              {selectionMode === 'byLocation'
+                ? t('messages.select-from-location')
+                : t('messages.select-an-item')}
+            </Typography>
+          )
         )}
       </Box>
     </Modal>
