@@ -283,11 +283,17 @@ impl<'a> SyncBufferRepository<'a> {
 
     /// Total pending rows across all tables and actions, for the given
     /// source/version/reference_id. Used for progress reporting.
+    ///
+    /// `table_names`, when given, restricts the count to those tables. Integration only
+    /// visits tables it has translators for, so the buffer can hold rows (e.g. legacy
+    /// tables with no translator) that will never integrate — pass the set of tables
+    /// integration will actually visit so those rows don't report as forever-pending.
     pub fn count_pending(
         &self,
         source_site_id: i32,
         sync_version: SyncVersion,
         reference_id: Option<&str>,
+        table_names: Option<&[&str]>,
     ) -> Result<i64, RepositoryError> {
         let mut q = sync_buffer::table
             .filter(sync_buffer::is_integrated.eq(false))
@@ -299,6 +305,11 @@ impl<'a> SyncBufferRepository<'a> {
             q = q.filter(sync_buffer::reference_id.eq(reference_id.to_string()));
         } else {
             q = q.filter(sync_buffer::reference_id.is_null());
+        }
+
+        if let Some(table_names) = table_names {
+            let table_names: Vec<String> = table_names.iter().map(|s| s.to_string()).collect();
+            q = q.filter(sync_buffer::table_name.eq_any(table_names));
         }
 
         let count: i64 = q.count().get_result(self.connection.lock().connection())?;
@@ -462,6 +473,44 @@ mod test {
             .unwrap();
         let ids: Vec<_> = rows.iter().map(|r| r.record_id.as_str()).collect();
         assert_eq!(ids, vec!["b1"]);
+    }
+
+    #[actix_rt::test]
+    async fn test_sync_buffer_count_pending() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_sync_buffer_count_pending", MockDataInserts::none()).await;
+
+        let repo = SyncBufferRepository::new(&connection);
+
+        repo.insert_many(&[
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                ..insert("s1", "store")
+            },
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                ..insert("n1", "name")
+            },
+            // Legacy table with no translator — never visited by integration
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                ..insert("p1", "pref")
+            },
+        ])
+        .unwrap();
+
+        // Unfiltered count includes the unsupported table
+        assert_eq!(
+            repo.count_pending(1, SyncVersion::V5V6, None, None).unwrap(),
+            3
+        );
+
+        // Filtered to the tables integration will visit, the unsupported row is excluded
+        assert_eq!(
+            repo.count_pending(1, SyncVersion::V5V6, None, Some(&["store", "name"]))
+                .unwrap(),
+            2
+        );
     }
 
     #[actix_rt::test]

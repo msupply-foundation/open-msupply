@@ -305,7 +305,13 @@ fn validate_translate_integrate_inner<'a>(
 
     let repo = SyncBufferRepository::new(connection);
 
-    let mut total = repo.count_pending(source_site_id, SyncVersion::V7, reference_id)?;
+    let integration_tables: Vec<&str> = INTEGRATION_ORDER.iter().map(|t| t.as_ref()).collect();
+    let mut total = repo.count_pending(
+        source_site_id,
+        SyncVersion::V7,
+        reference_id,
+        Some(&integration_tables),
+    )?;
     let mut last_progress = total / PROGRESS_INTERVAL;
 
     if let Some(logger) = logger.as_mut() {

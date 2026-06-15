@@ -483,6 +483,7 @@ pub fn integrate_and_translate_sync_buffer(
             source_site_id,
             SyncVersion::V5V6,
             None,
+            Some(&table_order),
         )? as u64;
         if let Some(logger) = logger.as_mut() {
             logger
