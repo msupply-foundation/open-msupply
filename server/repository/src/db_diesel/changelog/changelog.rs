@@ -12,7 +12,7 @@ use strum::IntoEnumIterator;
 use thiserror::Error;
 use ts_rs::TS;
 
-use super::sync_style::{ChangeLogSyncStyle, SyncVersions};
+use super::sync_style::{Authoring, Distribution, SyncVersions};
 
 // Underlying table — INSERTs target this. Carries raw `*_link_id` columns.
 table! {
@@ -433,11 +433,12 @@ impl ChangelogFilter {
         sync_style_options: Option<SyncVersions>,
     ) -> ChangelogCondition::Inner {
         // TODO can optimise, not filter at all by remote data when initialising
-        use ChangeLogSyncStyle::*;
         use ChangelogCondition as C;
+        use Distribution::*;
         let mut inner_or_conditions = vec![];
-        for sync_style in ChangeLogSyncStyle::iter() {
-            let table_names = sync_style.get_table_names_for_sync_style(sync_style_options.clone());
+        for distribution in Distribution::iter() {
+            let table_names =
+                distribution.get_table_names_for_distribution(sync_style_options.clone());
 
             if table_names.is_empty() {
                 continue;
@@ -445,14 +446,14 @@ impl ChangelogFilter {
 
             let pre_condition = C::table_name::any(table_names);
 
-            let condition = match sync_style {
-                Central | File => C::And(vec![
+            let condition = match distribution {
+                Everyone => C::And(vec![
                     // We have central and remote records with same table_name, so need to make sure to include only central ones (where store_id is null)
                     C::store_id::is_null(),
                     // We have patients that are also central data, therefore patient_id should be null
                     C::patient_id::is_null(),
                 ]),
-                ToLegacyCentralOnly | RemoteToCentral => {
+                NotDistributed => {
                     // Don't sync
                     continue;
                 }
@@ -487,10 +488,10 @@ impl ChangelogFilter {
         sync_style_options: Option<SyncVersions>,
     ) -> ChangelogCondition::Inner {
         // TODO do we need to sync name_store_join ?
-        use ChangeLogSyncStyle::*;
         use ChangelogCondition as C;
+        use Distribution::*;
 
-        let table_names = Patient.get_table_names_for_sync_style(sync_style_options);
+        let table_names = Patient.get_table_names_for_distribution(sync_style_options);
 
         C::And(vec![
             C::table_name::any(table_names),
@@ -499,12 +500,12 @@ impl ChangelogFilter {
     }
 
     pub fn data_for_store(store_id: &str) -> ChangelogCondition::Inner {
-        use ChangeLogSyncStyle::*;
         use ChangelogCondition as C;
+        use Distribution::*;
 
-        let mut store_scoped_table_names = Remote.get_table_names_for_sync_style(None);
-        store_scoped_table_names.extend(RemoteOwned.get_table_names_for_sync_style(None));
-        let transfer_table_names = Transfer.get_table_names_for_sync_style(None);
+        let mut store_scoped_table_names = Remote.get_table_names_for_distribution(None);
+        store_scoped_table_names.extend(RemoteOwned.get_table_names_for_distribution(None));
+        let transfer_table_names = Transfer.get_table_names_for_distribution(None);
 
         C::Or(vec![
             C::And(vec![
@@ -532,7 +533,7 @@ impl ChangelogFilter {
     pub fn all_data_for_legacy_central(
         connection: &StorageConnection,
     ) -> Result<ChangelogCondition::Inner, LegacyDataFilterError> {
-        use ChangeLogSyncStyle::*;
+        use Authoring::*;
         use ChangelogCondition as C;
 
         let msupply_central_server_id = KeyValueStoreRepository::new(connection)
@@ -545,18 +546,18 @@ impl ChangelogFilter {
             is_v6: false,
             is_v5: true,
         });
-        for sync_style in ChangeLogSyncStyle::iter() {
-            let table_names = sync_style.get_table_names_for_sync_style(options.clone());
+        for authoring in Authoring::iter() {
+            let table_names = authoring.get_table_names_for_authoring(options.clone());
 
             if table_names.is_empty() {
                 continue;
             }
 
-            match sync_style {
-                ToLegacyCentralOnly | Remote | RemoteOwned | Transfer | Patient => {
+            match authoring {
+                RemoteOwned | Patient | LegacyOnly => {
                     inner_or_conditions.push(C::table_name::any(table_names))
                 }
-                Central | RemoteToCentral | File => continue,
+                Central | Anyone => continue,
             };
         }
 
