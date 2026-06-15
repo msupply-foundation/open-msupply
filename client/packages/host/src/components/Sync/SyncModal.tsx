@@ -227,15 +227,6 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
           </Box>
         )}
 
-        {!!numberOfRecordsInPushQueue && numberOfRecordsInPushQueue >= 100 && (
-          <Alert
-            severity="warning"
-            sx={{ fontSize: '14px', marginTop: error ? '5' : '20' }}
-          >
-            {t('warning.high-number-records-to-sync')}
-          </Alert>
-        )}
-
         {!error && latestSuccessfulSyncDate && (
           <Alert
             sx={{
