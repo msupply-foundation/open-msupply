@@ -1,11 +1,13 @@
 import React, { useMemo } from 'react';
 import {
   AppNavLink,
+  LocaleKey,
   PluginIcon,
   PluginPage,
   useAuthContext,
   usePluginProvider,
   UserPermission,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -22,7 +24,10 @@ const hasAllPermissions = (
 const PluginNavLink: React.FC<{
   to: string;
   label: string;
-}> = ({ to, label }) => <AppNavLink to={to} text={label} />;
+}> = ({ to, label }) => {
+  const t = useTranslation();
+  return <AppNavLink to={to} text={t(label as LocaleKey)} />;
+};
 
 /**
  * Plugin nav links targeting an existing category. Render inside that
