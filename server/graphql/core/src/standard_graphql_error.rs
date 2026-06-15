@@ -58,6 +58,11 @@ impl StandardGraphqlError {
         StandardGraphqlError::from(error).extend()
     }
 
+    /// Maps a `spawn_blocking` join failure (e.g. the plugin task panicked) to an internal error.
+    pub fn from_join_error(error: tokio::task::JoinError) -> async_graphql::Error {
+        StandardGraphqlError::InternalError(format!("Plugin task error: {error}")).extend()
+    }
+
     pub fn from_str_slice(str_slice: &str) -> async_graphql::Error {
         StandardGraphqlError::InternalError(str_slice.to_string()).extend()
     }
@@ -104,35 +109,6 @@ pub fn validate_auth(
         };
         graphql_error.extend()
     })
-}
-
-/// Run a synchronous service call that may invoke a backend plugin on the tokio blocking pool, so
-/// the synchronous boajs interpreter (and any blocking `fetch`/`use_graphql` http the plugin makes)
-/// doesn't block the async runtime thread. See issue #11949.
-///
-/// The `ServiceContext` is built inside the blocking closure from the cheaply-cloneable
-/// `Data<ServiceProvider>`, so nothing non-`Send` has to cross the spawn boundary.
-pub async fn spawn_blocking_plugin_call<T, F>(
-    service_provider: actix_web::web::Data<service::service_provider::ServiceProvider>,
-    store_id: String,
-    user_id: String,
-    f: F,
-) -> Result<T>
-where
-    F: FnOnce(
-            &service::service_provider::ServiceProvider,
-            &service::service_provider::ServiceContext,
-        ) -> T
-        + Send
-        + 'static,
-    T: Send + 'static,
-{
-    tokio::task::spawn_blocking(move || {
-        let service_context = service_provider.context(store_id, user_id)?;
-        Ok(f(&service_provider, &service_context))
-    })
-    .await
-    .map_err(|e| StandardGraphqlError::InternalError(format!("Plugin task error: {e}")).extend())?
 }
 
 pub fn list_error_to_gql_err(err: ListError) -> async_graphql::Error {

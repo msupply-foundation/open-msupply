@@ -5004,6 +5004,7 @@ dependencies = [
  "serde",
  "serde_json",
  "service",
+ "tokio",
  "util",
 ]
 
@@ -5024,6 +5025,7 @@ dependencies = [
  "serde",
  "serde_json",
  "service",
+ "tokio",
  "util",
 ]
 

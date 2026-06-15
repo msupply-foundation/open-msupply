@@ -4,11 +4,11 @@ use graphql_core::{
     simple_generic_errors::{
         CannotEditRequisition, MasterListNotFoundForThisStore, RecordNotFound,
     },
-    standard_graphql_error::spawn_blocking_plugin_call,
     standard_graphql_error::validate_auth,
     standard_graphql_error::StandardGraphqlError,
 };
 use graphql_types::types::RequisitionLineConnector;
+use repository::RequisitionLine;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     requisition::request_requisition::{
@@ -59,16 +59,21 @@ pub async fn add_from_master_list(
     )?;
 
     let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
+    let store_id = store_id.to_string();
     let input = input.to_domain();
 
-    // Runs on the blocking pool: this service call may invoke a transform plugin (#11949).
-    let result = spawn_blocking_plugin_call(
-        service_provider,
-        store_id.to_string(),
-        user.user_id,
-        move |sp, ctx| sp.requisition_service.add_from_master_list(ctx, input),
+    // Runs on the blocking pool: this service call may invoke a transform plugin (#11949). The
+    // ServiceContext is built inside the closure so nothing non-`Send` crosses the boundary.
+    let result = tokio::task::spawn_blocking(
+        move || -> Result<Result<Vec<RequisitionLine>, ServiceError>> {
+            let service_context = service_provider.context(store_id, user.user_id)?;
+            Ok(service_provider
+                .requisition_service
+                .add_from_master_list(&service_context, input))
+        },
     )
-    .await?;
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     let response = match result {
         Ok(requisition_lines) => AddFromMasterListResponse::Response(

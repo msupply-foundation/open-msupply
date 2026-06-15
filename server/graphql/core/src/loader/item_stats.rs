@@ -2,7 +2,6 @@ use crate::standard_graphql_error::StandardGraphqlError;
 
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
-use async_graphql::ErrorExtensions;
 use chrono::NaiveDate;
 use ordered_float::OrderedFloat;
 use service::{item_stats::ItemStats, service_provider::ServiceProvider};
@@ -113,8 +112,6 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
             },
         )
         .await
-        .map_err(|e| {
-            StandardGraphqlError::InternalError(format!("Item stats task error: {e}")).extend()
-        })?
+        .map_err(StandardGraphqlError::from_join_error)?
     }
 }

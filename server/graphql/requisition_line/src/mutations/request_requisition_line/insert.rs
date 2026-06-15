@@ -2,7 +2,7 @@ use actix_web::web::Data;
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{CannotEditRequisition, ForeignKey, ForeignKeyError},
-    standard_graphql_error::{spawn_blocking_plugin_call, validate_auth, StandardGraphqlError},
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
 };
 use graphql_types::types::RequisitionLineNode;
 use repository::RequisitionLine;
@@ -60,19 +60,21 @@ pub async fn insert(
     )?;
 
     let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
+    let store_id = store_id.to_string();
     let input = input.to_domain();
 
-    // Runs on the blocking pool: this service call may invoke a transform plugin (#11949).
-    let result = spawn_blocking_plugin_call(
-        service_provider,
-        store_id.to_string(),
-        user.user_id,
-        move |sp, ctx| {
-            sp.requisition_line_service
-                .insert_request_requisition_line(ctx, input)
+    // Runs on the blocking pool: this service call may invoke a transform plugin (#11949). The
+    // ServiceContext is built inside the closure so nothing non-`Send` crosses the boundary.
+    let result = tokio::task::spawn_blocking(
+        move || -> Result<Result<RequisitionLine, ServiceError>> {
+            let service_context = service_provider.context(store_id, user.user_id)?;
+            Ok(service_provider
+                .requisition_line_service
+                .insert_request_requisition_line(&service_context, input))
         },
     )
-    .await?;
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
 
     map_response(result)
 }
