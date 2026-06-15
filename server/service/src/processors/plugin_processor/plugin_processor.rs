@@ -1,11 +1,14 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use repository::{ChangelogFilter, ChangelogRow};
+use repository::{ChangelogFilter, ChangelogRow, PluginType};
 use util::format_error;
 
 use crate::{
-    backend_plugin::{plugin_provider::PluginInstance, types::processor},
+    backend_plugin::{
+        plugin_provider::{call_plugin_async, PluginInstance},
+        types::processor,
+    },
     cursor_controller::CursorType,
     processors::general_processor::{Processor, ProcessorError},
     service_provider::{ServiceContext, ServiceProvider},
@@ -18,11 +21,8 @@ impl PluginProcessor {
     /// synchronously (including any `fetch`/`use_graphql` http calls), so this is the single
     /// async abstraction the `Processor` impl below delegates to, keeping it off the runtime.
     /// See issue #11949.
-    async fn call(
-        &self,
-        input: processor::Input,
-    ) -> Result<processor::Output, ProcessorError> {
-        processor::call_async(self.0.clone(), input.clone())
+    async fn call(&self, input: processor::Input) -> Result<processor::Output, ProcessorError> {
+        call_plugin_async(input.clone(), PluginType::Processor, self.0.clone())
             .await
             .map_err(|e| ProcessorError::PluginError(input, e))
     }
