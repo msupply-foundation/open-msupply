@@ -1,4 +1,5 @@
 use super::{UpdateStockOutLine, UpdateStockOutLineError};
+use crate::NullableUpdate;
 use crate::{
     check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
@@ -12,7 +13,10 @@ use crate::{
     service_provider::ServiceContext,
     stock_line::historical_stock::get_historical_stock_line_available_quantity,
 };
-use repository::{InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, StorageConnection};
+use repository::{
+    InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, ReasonOptionRowRepository,
+    ReasonOptionType, StorageConnection,
+};
 
 pub fn validate(
     ctx: &ServiceContext,
@@ -48,7 +52,7 @@ pub fn validate(
         return Err(StockLineAlreadyExistsInInvoice(existing_stock.id));
     }
 
-    let stock_out_type = if let Some(r#type) = &input.r#type {
+    let stock_out_type = if let Some(r#type) = input.r#type.clone() {
         if !check_invoice_type(&invoice, r#type.to_domain()) {
             return Err(InvoiceTypeDoesNotMatch);
         }
@@ -71,18 +75,33 @@ pub fn validate(
 
     let item = line.item_row.clone();
 
-    if !check_batch_on_hold(&batch_pair.main_batch, stock_out_type) {
+    if !check_batch_on_hold(&batch_pair.main_batch, &stock_out_type) {
         return Err(BatchIsOnHold);
     }
-    check_location_on_hold(&batch_pair.main_batch.location_row, stock_out_type).map_err(
-        |e| match e {
+    check_location_on_hold(&batch_pair.main_batch.location_row, &stock_out_type).map_err(|e| {
+        match e {
             LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
-        },
-    )?;
+        }
+    })?;
 
     if let Some(vvm_status_id) = &input.vvm_status_id {
         if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
             return Err(VVMStatusDoesNotExist);
+        }
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(reason_option_id),
+    }) = &input.reason_option_id
+    {
+        let reason = ReasonOptionRowRepository::new(connection)
+            .find_one_by_id(reason_option_id)?
+            .ok_or(ReasonOptionDoesNotExist)?;
+        if !reason.is_active {
+            return Err(ReasonOptionIsNotActive);
+        }
+        if reason.r#type != ReasonOptionType::ShipmentVariance {
+            return Err(ReasonOptionTypeInvalid);
         }
     }
 

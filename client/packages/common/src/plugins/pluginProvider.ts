@@ -16,6 +16,15 @@ const RESERVED_TOP_LEVEL_SEGMENTS: ReadonlySet<string> = new Set(
 const isValidSegment = (value: string | undefined): value is string =>
   typeof value === 'string' && VALID_SEGMENT.test(value);
 
+// A page route may be either a regular single-segment string (matching
+// VALID_SEGMENT) or the empty string. An empty route means the page mounts
+// at the category root (`/<category>` instead of `/<category>/<route>`), so
+// the category-level nav item links straight to it. At most one root page
+// per category is allowed; dedup is enforced via the same `seen` set used
+// for sibling routes.
+const isValidPageRoute = (value: string | undefined): value is string =>
+  typeof value === 'string' && (value === '' || VALID_SEGMENT.test(value));
+
 const stampAndValidatePages = (
   bundle: Plugins,
   code: string,
@@ -32,7 +41,7 @@ const stampAndValidatePages = (
 
   const validated: PluginPage[] = [];
   for (const page of bundle.pages) {
-    if (!isValidSegment(page.route)) {
+    if (!isValidPageRoute(page.route)) {
       console.warn(
         `Plugin "${code}" page route "${page.route}" is not a valid URL segment; skipping.`
       );
@@ -97,14 +106,17 @@ export const usePluginProvider = create<PluginProvider>(set => {
         // detection runs across the merged set, so the `seen` set is rebuilt
         // each time rather than carried in state.
         const seen = new Set<string>();
-        // TODO: Here can determine if version is suitable
         const plugins = Object.entries(cachedPluginBundles).reduce(
-          (acc, [bundleCode, bundle]) =>
-            mergeWith(
-              acc,
-              stampAndValidatePages(bundle, bundleCode, seen),
-              (a, b) => (isArray(a) ? a.concat(b) : undefined)
-            ),
+          (acc, [bundleCode, bundle]) => {
+            // `configuration` is per-plugin (looked up by code from
+            // cachedPluginBundles) and must not be merged across bundles —
+            // deep-merging two plugins' configurations would corrupt them.
+            const { configuration: _configuration, ...mergeable } =
+              stampAndValidatePages(bundle, bundleCode, seen);
+            return mergeWith(acc, mergeable, (a, b) =>
+              isArray(a) ? a.concat(b) : undefined
+            );
+          },
           {}
         );
 

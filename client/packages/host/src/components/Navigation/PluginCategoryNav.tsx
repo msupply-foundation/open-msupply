@@ -4,8 +4,10 @@ import {
   AppNavSection,
   Collapse,
   List,
+  LocaleKey,
   resolvePluginIcon,
   useAuthContext,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { useNestedNav } from './useNestedNav';
 import {
@@ -18,6 +20,7 @@ import {
 export const PluginCategoryNav: React.FC<{ category: PluginNewCategory }> = ({
   category,
 }) => {
+  const t = useTranslation();
   const { userHasPermission } = useAuthContext();
   const visiblePages = category.pages.filter(page =>
     hasAllPermissions(page.menu.permissions, userHasPermission)
@@ -28,13 +31,28 @@ export const PluginCategoryNav: React.FC<{ category: PluginNewCategory }> = ({
 
   const categoryPath = `/${category.key}`;
 
+  // Single root-page category (e.g. a Plugin with one main surface and no
+  // sub-pages) renders as a flat leaf link straight into the category root,
+  // without a chevron / Collapse / sub-list. This matches the menu UX of
+  // built-in single-page sections.
+  const onlyPage = visiblePages.length === 1 ? visiblePages[0] : undefined;
+  if (onlyPage && onlyPage.route === '') {
+    return (
+      <AppNavLink
+        to={categoryPath}
+        icon={resolvePluginIcon(category.icon)}
+        text={t(category.label as LocaleKey)}
+      />
+    );
+  }
+
   return (
     <AppNavSection isActive={isActive} to={categoryPath}>
       <AppNavLink
         isParent
         to={categoryPath}
         icon={resolvePluginIcon(category.icon)}
-        text={category.label}
+        text={t(category.label as LocaleKey)}
       />
       <Collapse in={isActive}>
         <List>

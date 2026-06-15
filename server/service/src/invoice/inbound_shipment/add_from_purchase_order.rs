@@ -96,6 +96,8 @@ pub fn add_from_purchase_order(
             volume_per_pack: 0.0,
             shipped_pack_size: Some(pack_size),
             status: status.clone(),
+            received_number_of_packs: None,
+            linked_invoice_line_id: None,
         })?;
     }
 

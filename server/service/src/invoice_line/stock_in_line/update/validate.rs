@@ -1,7 +1,7 @@
 use crate::common::check_program_exists;
 use crate::invoice::inbound_shipment::InboundShipmentType;
 use crate::{
-    campaign::check_campaign_exists,
+    campaign::check_campaign_exists_including_deleted,
     check_item_variant_exists, check_location_exists, check_location_type_is_valid,
     check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
@@ -15,7 +15,11 @@ use crate::{
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate,
 };
-use repository::{InvoiceLine, InvoiceRow, ItemRow, StorageConnection};
+use repository::{
+    InvoiceLine, InvoiceRow, ItemRow, ReasonOptionRowRepository, ReasonOptionType,
+    StorageConnection,
+};
+
 use util::f64_approx_eq;
 
 use super::{UpdateStockInLine, UpdateStockInLineError};
@@ -133,7 +137,7 @@ pub fn validate(
         value: Some(campaign_id),
     }) = &input.campaign_id
     {
-        if !check_campaign_exists(connection, campaign_id)? {
+        if !check_campaign_exists_including_deleted(connection, campaign_id)? {
             return Err(CampaignDoesNotExist);
         }
     }
@@ -146,6 +150,18 @@ pub fn validate(
             && !f64_approx_eq(new_cost_price, line_row.cost_price_per_pack)
         {
             return Err(CannotEditCostPrice);
+        }
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(reason_option_id),
+    }) = &input.reason_option_id
+    {
+        let reason = ReasonOptionRowRepository::new(connection)
+            .find_one_by_id(reason_option_id)?
+            .ok_or(UpdateStockInLineError::ReasonOptionDoesNotExist)?;
+        if reason.r#type != ReasonOptionType::ShipmentVariance {
+            return Err(UpdateStockInLineError::ReasonOptionTypeInvalid);
         }
     }
 
