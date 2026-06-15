@@ -1,3 +1,4 @@
+use actix_web::web::Data;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
@@ -6,8 +7,7 @@ use graphql_core::{
         CannotEditRequisition, OrderingTooManyItems, OtherPartyNotACustomer,
         OtherPartyNotASupplier, OtherPartyNotVisible, RecordNotFound,
     },
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{spawn_blocking_plugin_call, validate_auth, StandardGraphqlError},
 };
 use graphql_types::types::RequisitionNode;
 use repository::Requisition;
@@ -17,6 +17,7 @@ use service::{
         UpdateRequestRequisition as ServiceInput, UpdateRequestRequisitionError as ServiceError,
         UpdateRequestRequisitionStatus,
     },
+    service_provider::ServiceProvider,
     NullableUpdate,
 };
 
@@ -70,7 +71,11 @@ pub enum UpdateResponse {
     Response(RequisitionNode),
 }
 
-pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+pub async fn update(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: UpdateInput,
+) -> Result<UpdateResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -89,14 +94,19 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
         )?;
     }
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
+    let input = input.to_domain();
 
-    map_response(
-        service_provider
-            .requisition_service
-            .update_request_requisition(&service_context, input.to_domain()),
+    // Runs on the blocking pool: this service call may invoke a transform plugin (#11949).
+    let result = spawn_blocking_plugin_call(
+        service_provider,
+        store_id.to_string(),
+        user.user_id,
+        move |sp, ctx| sp.requisition_service.update_request_requisition(ctx, input),
     )
+    .await?;
+
+    map_response(result)
 }
 
 pub fn map_response(from: Result<Requisition, ServiceError>) -> Result<UpdateResponse> {

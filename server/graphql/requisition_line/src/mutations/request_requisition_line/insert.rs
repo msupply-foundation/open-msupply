@@ -1,8 +1,8 @@
+use actix_web::web::Data;
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{CannotEditRequisition, ForeignKey, ForeignKeyError},
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+    standard_graphql_error::{spawn_blocking_plugin_call, validate_auth, StandardGraphqlError},
 };
 use graphql_types::types::RequisitionLineNode;
 use repository::RequisitionLine;
@@ -12,6 +12,7 @@ use service::{
         InsertRequestRequisitionLine as ServiceInput,
         InsertRequestRequisitionLineError as ServiceError,
     },
+    service_provider::ServiceProvider,
 };
 
 use crate::mutations::errors::RequisitionLineWithItemIdExists;
@@ -45,7 +46,11 @@ pub enum InsertResponse {
     Error(InsertError),
     Response(RequisitionLineNode),
 }
-pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
+pub async fn insert(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: InsertInput,
+) -> Result<InsertResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -54,14 +59,22 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
+    let input = input.to_domain();
 
-    map_response(
-        service_provider
-            .requisition_line_service
-            .insert_request_requisition_line(&service_context, input.to_domain()),
+    // Runs on the blocking pool: this service call may invoke a transform plugin (#11949).
+    let result = spawn_blocking_plugin_call(
+        service_provider,
+        store_id.to_string(),
+        user.user_id,
+        move |sp, ctx| {
+            sp.requisition_line_service
+                .insert_request_requisition_line(ctx, input)
+        },
     )
+    .await?;
+
+    map_response(result)
 }
 
 pub fn map_response(from: Result<RequisitionLine, ServiceError>) -> Result<InsertResponse> {

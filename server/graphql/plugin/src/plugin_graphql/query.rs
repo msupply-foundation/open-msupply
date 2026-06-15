@@ -27,7 +27,7 @@ pub async fn plugin_graphql_query(
     // Calling a plugin runs the whole boajs interpreter synchronously, including any
     // `fetch`/`use_graphql` http calls the plugin makes. The plugin service method is sync, so
     // run it on the blocking threadpool rather than the request worker's runtime thread (#11949).
-    let result = actix_web::web::block(move || {
+    let result = tokio::task::spawn_blocking(move || {
         service_provider
             .plugin_service
             .plugin_graphql_query(store_id, &plugin_code, input)
