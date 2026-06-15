@@ -1,11 +1,12 @@
+use actix_web::web::Data;
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{
         CannotEditRequisition, MasterListNotFoundForThisStore, RecordNotFound,
     },
+    standard_graphql_error::spawn_blocking_plugin_call,
     standard_graphql_error::validate_auth,
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
 use graphql_types::types::RequisitionLineConnector;
 use service::{
@@ -13,6 +14,7 @@ use service::{
     requisition::request_requisition::{
         AddFromMasterList as ServiceInput, AddFromMasterListError as ServiceError,
     },
+    service_provider::ServiceProvider,
 };
 
 #[derive(InputObject)]
@@ -43,7 +45,7 @@ pub enum AddFromMasterListResponse {
     Response(RequisitionLineConnector),
 }
 
-pub fn add_from_master_list(
+pub async fn add_from_master_list(
     ctx: &Context<'_>,
     store_id: &str,
     input: AddFromMasterListInput,
@@ -56,13 +58,19 @@ pub fn add_from_master_list(
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
+    let input = input.to_domain();
 
-    let response = match service_provider
-        .requisition_service
-        .add_from_master_list(&service_context, input.to_domain())
-    {
+    // Runs on the blocking pool: this service call may invoke a transform plugin (#11949).
+    let result = spawn_blocking_plugin_call(
+        service_provider,
+        store_id.to_string(),
+        user.user_id,
+        move |sp, ctx| sp.requisition_service.add_from_master_list(ctx, input),
+    )
+    .await?;
+
+    let response = match result {
         Ok(requisition_lines) => AddFromMasterListResponse::Response(
             RequisitionLineConnector::from_vec(requisition_lines),
         ),
