@@ -154,7 +154,6 @@ export const StockMovementModal = ({
   } = useLocationList(
     {
       sortBy: { key: 'name', direction: 'asc', isDesc: false },
-      filterBy: { onHold: false },
       first: 1000,
     },
     undefined,
@@ -430,8 +429,11 @@ export const StockMovementModal = ({
                 options={locations}
                 value={fromLocation}
                 getOptionLabel={location =>
-                  `${location.code} - ${location.name}`
+                  `${location.code} - ${location.name}${
+                    location.onHold ? ` (${t('label.on-hold')})` : ''
+                  }`
                 }
+                getOptionDisabled={location => location.onHold}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 onChange={(_, location) => {
                   setFromLocation(location);
