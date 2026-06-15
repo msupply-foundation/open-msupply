@@ -4,14 +4,15 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "create_property_v2_tables"
+        "create_property_v2"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        // `value_type` is stored as plain TEXT (not a native PG enum) so that a
-        // remote on an older build can accept an unrecognised value type sent
-        // over v7 — the `PropertyValueTypeV2` Rust enum parses unknown values
-        // into an `Other(String)` catch-all rather than the DB rejecting them.
+        // `value_type` and `kind` are stored as plain TEXT (not native PG enums)
+        // so that a remote on an older build can accept an unrecognised value
+        // sent over v7 — the `PropertyValueTypeV2` / `PropertyKindV2` Rust enums
+        // parse unknown values into an `Other(String)` catch-all rather than the
+        // DB rejecting them. `kind` defaults to 'STANDARD'.
         sql!(
             connection,
             r#"
@@ -20,7 +21,7 @@ impl MigrationFragment for Migrate {
                 key TEXT NOT NULL UNIQUE,
                 name TEXT NOT NULL,
                 value_type TEXT NOT NULL,
-                is_legacy BOOLEAN NOT NULL DEFAULT FALSE,
+                kind TEXT NOT NULL DEFAULT 'STANDARD',
                 deleted_datetime {DATETIME}
             );
 
