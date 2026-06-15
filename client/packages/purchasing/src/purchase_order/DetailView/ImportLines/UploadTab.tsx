@@ -50,7 +50,6 @@ export const UploadTab = ({
         itemCode: t('label.code'),
         requestedPackSize: 0,
         numberOfPacks: 0,
-        unit: '',
         supplierItemCode: '',
         pricePerPackBeforeDiscount: 0,
         discountPercentage: 0,
@@ -100,8 +99,6 @@ export const UploadTab = ({
       });
       return parsedValue;
     });
-
-    addCell('unit', 'label.unit');
 
     addCell('supplierItemCode', 'label.supplier-item-code');
 

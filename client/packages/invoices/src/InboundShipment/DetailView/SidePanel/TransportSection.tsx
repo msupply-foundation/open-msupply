@@ -56,7 +56,7 @@ export const TransportSectionComponent: FC = () => {
         </PanelRow>
         <PanelRow>
           <PanelLabel display="flex" alignItems="center">
-            {t('heading.reference')}
+            {t('label.transport-reference')}
           </PanelLabel>
           <BufferedTextInput
             disabled={true}

@@ -71,6 +71,7 @@ pub(crate) mod sensor;
 pub(crate) mod shipping_method;
 pub(crate) mod special;
 pub(crate) mod stock_line;
+pub(crate) mod stock_relocation;
 pub(crate) mod stocktake;
 pub(crate) mod stocktake_line;
 pub(crate) mod store;
@@ -216,6 +217,11 @@ pub(crate) fn get_all_pull_delete_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut clinician_store_join::test_pull_delete_records());
     test_records.append(&mut rnr_form_line::test_pull_delete_records());
     test_records.append(&mut rnr_form::test_pull_delete_records());
+
+    // Open mSupply central
+    test_records.append(&mut backend_plugin::test_pull_delete_records());
+    test_records.append(&mut frontend_plugin::test_pull_delete_records());
+    test_records.append(&mut plugin_data::test_pull_delete_records());
 
     test_records
 }

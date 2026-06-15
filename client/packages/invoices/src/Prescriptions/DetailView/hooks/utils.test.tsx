@@ -8,7 +8,7 @@ import { FnUtils } from '@common/utils';
 import { generateLabel, groupItems } from './utils';
 import {
   PrescriptionLineFragment,
-  PrescriptionRowFragment,
+  PrescriptionFragment,
   WarningFragment,
 } from '../../api';
 
@@ -113,8 +113,8 @@ const createTestLine = ({
     },
   });
 
-const createTestPrescription = (): PrescriptionRowFragment => {
-  // this generates a line to satisfy the PrescriptionRowFragment type - not used for the labels
+const createTestPrescription = (): PrescriptionFragment => {
+  // this generates a line to satisfy the PrescriptionFragment type - not used for the labels
   const prescriptionLine = createTestLine({
     id: 'test',
     itemId: 'test',
@@ -133,6 +133,8 @@ const createTestPrescription = (): PrescriptionRowFragment => {
     type: InvoiceNodeType.Prescription,
     currencyRate: 0,
     status: InvoiceNodeStatus.Picked,
+    isCancellation: false,
+    store: { __typename: 'StoreNode', id: 'store-id' },
     patientId: '',
     pricing: {
       __typename: 'PricingNode',

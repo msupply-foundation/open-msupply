@@ -68,6 +68,14 @@ impl CentralPluginMutations {
     ) -> Result<PluginInfoNode> {
         mutations::install::install_uploaded_plugin(ctx, file_id)
     }
+
+    async fn uninstall_plugin(
+        &self,
+        ctx: &Context<'_>,
+        id: String,
+    ) -> Result<mutations::uninstall::UninstallPluginNode> {
+        mutations::uninstall::uninstall_plugin(ctx, id)
+    }
 }
 
 #[derive(Default, Clone)]
@@ -91,5 +99,14 @@ impl PluginMutations {
         input: plugin_data::mutations::update::UpdatePluginDataInput,
     ) -> Result<plugin_data::mutations::update::UpdateResponse> {
         plugin_data::mutations::update::update_plugin_data(ctx, &store_id, input)
+    }
+
+    async fn delete_plugin_data(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<plugin_data::mutations::delete::DeleteResponse> {
+        plugin_data::mutations::delete::delete_plugin_data(ctx, &store_id, id)
     }
 }

@@ -44,8 +44,9 @@ mutation MyMutation(
             minIntervalDays: 1
           }
           coverageRate: 1
-          isActive: true
           wastageRate: 1
+          useInGapsCalculations: true
+          canSkipDose: false
         }
         storeId: $storeId
       ) {
@@ -87,7 +88,7 @@ pub(super) async fn test_vaccine_card() {
                     "ID": program_id,
                     "inactive":false,
                     "isProgram":true,
-                    "programSettings":"{}"
+                    "programSettings":{"storeTags":{}}
                 }
             ],
             "list_master_name_join":[
@@ -146,6 +147,9 @@ pub(super) async fn test_vaccine_card() {
         // None would be translated to 'male' when records syncs back again
         // which would break assertions in check_integrated
         gender: Some(GenderType::Female),
+        // 4D defaults these float columns to 0 when the upsert omits them.
+        margin: Some(0.0),
+        freight_factor: Some(0.0),
         ..Default::default()
     };
 

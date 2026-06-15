@@ -3,6 +3,7 @@ import {
   MRT_Row,
   MRT_RowData,
   MRT_ShowHideColumnsButton,
+  MRT_TableInstance,
   MRT_TableOptions,
   MRT_ToggleFiltersButton,
   MRT_ToggleFullScreenButton,
@@ -19,25 +20,10 @@ import { ColumnDef } from './types';
 import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { EnvUtils } from '@common/utils';
-import { SettingsMenu } from './components/SettingsMenu';
-import { ManagedTableState } from './tableState/utils';
-import {
-  useColumnDensity,
-  useColumnOrder,
-  useColumnPinning,
-  useColumnSizing,
-  useColumnVisibility,
-} from './tableState';
 import { useTableKeyboardNavigation } from './useTableKeyboardNavigation';
 
 export const useTableDisplayOptions = <T extends MRT_RowData>({
-  tableId,
-  density,
-  columnSizing,
-  columnVisibility,
-  columnPinning,
-  columnOrder,
-  resetTableState,
+  renderSettingsMenu,
   onRowClick,
   isGrouped,
   toggleGrouped,
@@ -47,16 +33,8 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   getIsRestrictedRow = () => false,
   muiTableBodyRowProps = {},
   isMobile = false,
-  onSaveAsGlobalDefault,
-  globalDefaults,
 }: {
-  tableId: string;
-  density: ReturnType<typeof useColumnDensity>;
-  columnSizing: ReturnType<typeof useColumnSizing>;
-  columnVisibility: ReturnType<typeof useColumnVisibility>;
-  columnPinning: ReturnType<typeof useColumnPinning>;
-  columnOrder: ReturnType<typeof useColumnOrder>;
-  resetTableState: () => void;
+  renderSettingsMenu: (table: MRT_TableInstance<T>) => React.ReactNode;
   onRowClick?: (row: T, isCtrlClick: boolean) => void;
   isGrouped: boolean;
   hasColumnFilters: boolean;
@@ -65,8 +43,6 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   getIsPlaceholderRow?: (row: MRT_Row<T>) => boolean;
   getIsRestrictedRow?: (row: MRT_Row<T>) => boolean;
   isMobile?: boolean;
-  onSaveAsGlobalDefault?: () => void;
-  globalDefaults?: ManagedTableState;
 
   // This object is merged with the default row props in muiTableBodyRowProps
   // below. We can do the same for other muiTable props if needed in future.
@@ -138,18 +114,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         {hasColumnFilters && <MRT_ToggleFiltersButton table={table} />}
         <MRT_ShowHideColumnsButton table={table} />
         {!isMobile && <MRT_ToggleFullScreenButton table={table} />}
-        <SettingsMenu
-          table={table}
-          tableId={tableId}
-          density={density}
-          columnSizing={columnSizing}
-          columnVisibility={columnVisibility}
-          columnPinning={columnPinning}
-          columnOrder={columnOrder}
-          resetTableState={resetTableState}
-          onSaveAsGlobalDefault={onSaveAsGlobalDefault}
-          globalDefaults={globalDefaults}
-        />
+        {renderSettingsMenu(table)}
       </>
     ),
 

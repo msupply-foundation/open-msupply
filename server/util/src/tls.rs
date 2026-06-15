@@ -55,6 +55,10 @@ mod tests {
     #[test]
     fn bundled_root_store_is_populated() {
         let count = webpki_roots::TLS_SERVER_ROOTS.len();
-        assert!(count > 100, "bundled CA root store unexpectedly small: {count}");
+        assert!(
+            count > 100,
+            "bundled CA root store unexpectedly small: {}",
+            count
+        );
     }
 }

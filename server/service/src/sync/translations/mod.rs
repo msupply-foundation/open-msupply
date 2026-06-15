@@ -72,6 +72,7 @@ pub(crate) mod sensor;
 pub(crate) mod shipping_method;
 pub(crate) mod special;
 pub(crate) mod stock_line;
+pub(crate) mod stock_relocation;
 pub(crate) mod stocktake;
 pub(crate) mod stocktake_line;
 pub(crate) mod store;
@@ -225,6 +226,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Purchase Order
         purchase_order::boxed(),
         purchase_order_line::boxed(),
+        stock_relocation::boxed(), // OG -> Replenishment
         // Shipping Method
         shipping_method::boxed(),
         // Goods Received (legacy OG → InboundShipment)
