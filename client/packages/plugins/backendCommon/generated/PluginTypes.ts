@@ -7,7 +7,6 @@ import type { FetchOutput } from './FetchOutput';
 import type { Function } from './Function';
 import type { GetConsumptionInput } from './GetConsumptionInput';
 import type { GraphqlQueryInput } from './GraphqlQueryInput';
-import type { JsonValue } from './serde_json/JsonValue';
 import type { PluginDataFilter } from './PluginDataFilter';
 import type { PluginDataRow } from './PluginDataRow';
 import type { ProcessorInput } from './ProcessorInput';
@@ -20,17 +19,18 @@ import type { TransformRequestRequisitionLineOutput } from './TransformRequestRe
 import type { UseGraphqlInput } from './UseGraphqlInput';
 import type { UseRepositoryInput } from './UseRepositoryInput';
 import type { UseRepositoryOutput } from './UseRepositoryOutput';
+import type { JsonValue } from './serde_json/JsonValue';
 
 export type PluginTypes = {
   average_monthly_consumption: Function<
     AverageMonthlyConsumptionInput,
-    { [key in string]?: AverageMonthlyConsumptionItem }
+    { [key in string]: AverageMonthlyConsumptionItem }
   >;
   transform_request_requisition_lines: Function<
     TransformRequestRequisitionLineInput,
     TransformRequestRequisitionLineOutput
   >;
-  get_consumption: Function<GetConsumptionInput, { [key in string]?: number }>;
+  get_consumption: Function<GetConsumptionInput, { [key in string]: number }>;
   graphql_query: Function<GraphqlQueryInput, JsonValue>;
   processor: Function<ProcessorInput, ProcessorOutput>;
   schedule: Function<ScheduleInput, ScheduleOutput>;
