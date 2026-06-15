@@ -104,9 +104,12 @@ fn mapping_properties() -> Vec<MappingProperty> {
 }
 
 /// Seed the code-defined mapping property definitions. **Central-server only** —
-/// callers must gate on `CentralServerConfig::is_central_server()`. Remotes
-/// receive these over v7; they must never seed their own (see the properties
-/// dev doc for why version-safety lives entirely in the v7 path).
+/// callers must gate on `CentralServerConfig::is_central_server()` and exclude
+/// standalone central (`!is_standalone_central()`): standalone has no legacy
+/// mSupply upstream, so the v5 import never runs and these definitions could only
+/// ever be empty. Remotes receive these over v7; they must never seed their own
+/// (see the properties dev doc for why version-safety lives entirely in the v7
+/// path).
 ///
 /// Idempotent and change-aware: a row is only upserted when missing or when its
 /// code-authoritative content differs, so steady-state runs add no changelog
