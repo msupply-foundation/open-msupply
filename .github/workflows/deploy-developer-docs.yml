@@ -1,5 +1,5 @@
 # Simple workflow for deploying static content to GitHub Pages
-name: Deploy developer docs to Pages
+name: Deploy developer docs
 
 on:
   # Runs on pushes targeting the default branch
@@ -34,7 +34,7 @@ jobs:
       - name: Zola Build
         uses: shalzz/zola-deploy-action@v0.22.1
         env:
-          BUILD_DIR: .
+          BUILD_DIR: ./docs
           BUILD_ONLY: true
       - name: Setup Pages
         uses: actions/configure-pages@v6
@@ -42,7 +42,7 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           # Upload public directory only
-          path: 'public/.'
+          path: 'docs/public/.'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
