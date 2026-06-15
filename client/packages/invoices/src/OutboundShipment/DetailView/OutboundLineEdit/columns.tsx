@@ -168,6 +168,16 @@ export const useOutboundLineEditColumns = ({
         Cell: TextWithTooltipCell,
       },
       {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        size: 120,
+        defaultHidden: true,
+        defaultHideOnMobile: true,
+        accessorFn: rowData =>
+          rowData.manufacturer?.name ?? UNDEFINED_STRING_VALUE,
+        Cell: TextWithTooltipCell,
+      },
+      {
         accessorKey: 'sellPricePerPack',
         header: t('label.pack-sell-price'),
         columnType: ColumnType.Currency,

@@ -26,7 +26,6 @@ pub struct ItemStats {
     pub available_stock_on_hand: f64,
     pub total_stock_on_hand: f64,
     pub item_id: String,
-    pub item_name: String,
 }
 
 pub trait ItemStatsServiceTrait: Sync + Send {
@@ -260,22 +259,14 @@ impl ItemStats {
             .map(|item_id| {
                 let soh = soh_map.get(item_id.as_str());
                 ItemStats {
-                    available_stock_on_hand: soh
-                        .map(|s| s.available_stock_on_hand)
-                        .unwrap_or(0.0),
+                    available_stock_on_hand: soh.map(|s| s.available_stock_on_hand).unwrap_or(0.0),
                     item_id: item_id.clone(),
-                    item_name: soh.map(|s| s.item_name.clone()).unwrap_or_default(),
                     average_monthly_consumption: amc_by_item
                         .get(item_id)
                         .and_then(|r| r.average_monthly_consumption)
                         .unwrap_or_default(),
-                    total_consumption: consumption_map
-                        .get(item_id)
-                        .copied()
-                        .unwrap_or_default(),
-                    total_stock_on_hand: soh
-                        .map(|s| s.total_stock_on_hand)
-                        .unwrap_or(0.0),
+                    total_consumption: consumption_map.get(item_id).copied().unwrap_or_default(),
+                    total_stock_on_hand: soh.map(|s| s.total_stock_on_hand).unwrap_or(0.0),
                 }
             })
             .collect()
@@ -287,7 +278,6 @@ impl ItemStats {
             average_monthly_consumption: row.average_monthly_consumption,
             available_stock_on_hand: row.available_stock_on_hand,
             item_id: requisition_line.item_row.id.clone(),
-            item_name: requisition_line.item_row.name.clone(),
             // TODO: Implement total consumption & total_stock_on_hand
             total_consumption: 0.0,
             total_stock_on_hand: 0.0,

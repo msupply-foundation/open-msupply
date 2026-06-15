@@ -1,0 +1,49 @@
+fragment StockMovementRow on StockRelocationNode {
+  __typename
+  id
+  createdDatetime
+  finalisedDatetime
+  status
+  numberOfPacks
+  itemCode
+  itemName
+  batch
+  expiryDate
+  fromStockLineId
+  toStockLineId
+  fromLocation {
+    __typename
+    id
+    code
+    name
+  }
+  toLocation {
+    __typename
+    id
+    code
+    name
+  }
+}
+
+query stockRelocations(
+  $storeId: String!
+  $filter: StockRelocationFilterInput
+  $page: PaginationInput
+  $sort: [StockRelocationSortInput!]
+) {
+  stockRelocations(
+    storeId: $storeId
+    filter: $filter
+    page: $page
+    sort: $sort
+  ) {
+    __typename
+    ... on StockRelocationConnector {
+      __typename
+      totalCount
+      nodes {
+        ...StockMovementRow
+      }
+    }
+  }
+}

@@ -86,7 +86,7 @@ export const ProgramListView = () => {
       <NothingHere
         onCreate={() => selectModal(PatientModal.ProgramSearch)}
         body={t('messages.no-programs')}
-        buttonText={t('button.add-program')}
+        buttonText={t('button.new-program')}
       />
     ),
   });

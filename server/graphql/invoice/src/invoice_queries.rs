@@ -133,6 +133,7 @@ pub struct InvoiceFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name_id: Option<EqualFilterStringInput>,
     pub invoice_number: Option<EqualFilterBigNumberInput>,
+    pub invoice_number_or_status: Option<StringFilterInput>,
     pub other_party_name: Option<StringFilterInput>,
     pub other_party_id: Option<EqualFilterStringInput>,
     pub store_id: Option<EqualFilterStringInput>,
@@ -297,6 +298,7 @@ impl InvoiceFilterInput {
         InvoiceFilter {
             id: self.id.map(EqualFilter::from),
             invoice_number: self.invoice_number.map(EqualFilter::from),
+            invoice_number_or_status: self.invoice_number_or_status.map(StringFilter::from),
             name_id: self.other_party_id.map(EqualFilter::from),
             name: self.other_party_name.map(StringFilter::from),
             store_id: self.store_id.map(EqualFilter::from),
