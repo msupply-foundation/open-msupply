@@ -164,6 +164,8 @@ impl SyncTranslation for ItemTranslation {
             restricted_location_type_id,
             volume_per_pack: data.volume_per_pack,
             universal_code: data.universal_code,
+            // No write path yet — the legacy import populates this when it lands.
+            properties_v2: None,
         };
 
         integration_operations.push(IntegrationOperation::upsert(item_row));
@@ -220,6 +222,7 @@ impl SyncTranslation for ItemTranslation {
             restricted_location_type_id,
             volume_per_pack,
             universal_code,
+            properties_v2: _,
         } = item;
 
         let legacy_row = LegacyItemRow {

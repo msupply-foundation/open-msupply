@@ -25,6 +25,11 @@ pub const INTEGRATION_ORDER: &[ChangelogTableName] = &[
     ChangelogTableName::PeriodSchedule,
     ChangelogTableName::Printer,
     ChangelogTableName::Property,
+    // property_v2 must precede its children (property_option_v2 / property_table_v2
+    // both FK property_v2.property_id).
+    ChangelogTableName::PropertyV2,
+    ChangelogTableName::PropertyOptionV2,
+    ChangelogTableName::PropertyTableV2,
     ChangelogTableName::ReasonOption,
     ChangelogTableName::ShippingMethod,
     ChangelogTableName::Site,

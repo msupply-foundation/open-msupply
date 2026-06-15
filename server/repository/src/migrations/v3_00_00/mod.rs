@@ -2,8 +2,10 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_is_standalone_central_pg_enum;
+mod add_item_properties_v2;
 mod add_legacy_goods_received_link_fields;
 mod add_merge_sync_message_processor_cursor_pg_enum;
+mod add_name_properties_v2;
 mod add_site_sync_version;
 mod add_sync_log_v7;
 mod add_sync_log_v7_reference;
@@ -17,6 +19,7 @@ mod alter_sqlite_changelog_table_for_syncv7;
 mod alter_sync_buffer_for_sync_v7;
 mod convert_user_permission_to_text;
 mod create_changelog_indexes;
+mod create_property_v2;
 mod create_site_table;
 mod migrate_user_permission_to_deterministic_id;
 mod partition_changelog_by_cursor;
@@ -64,6 +67,9 @@ impl Migration for V3_00_00 {
             Box::new(create_changelog_indexes::Migrate),
             Box::new(seed_sync_request_user_tables::Migrate),
             Box::new(add_legacy_goods_received_link_fields::Migrate),
+            Box::new(create_property_v2::Migrate),
+            Box::new(add_name_properties_v2::Migrate),
+            Box::new(add_item_properties_v2::Migrate),
         ]
     }
 }
