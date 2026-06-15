@@ -13,7 +13,7 @@ export const useInboundDeleteSelectedLines = (
   resetRowSelection: () => void
 ): (() => void) => {
   const t = useTranslation();
-  const { isDisabled, isExternal } = useInboundShipment();
+  const { isAddOrDeleteLinesDisabled, isExternal } = useInboundShipment();
   const { mutateAsync } = useDeleteInboundLines(isExternal);
   const errorsContext = useInboundShipmentLineErrorContext();
 
@@ -49,7 +49,7 @@ export const useInboundDeleteSelectedLines = (
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows: rowsToDelete,
     deleteAction: onDelete,
-    canDelete: !isDisabled,
+    canDelete: !isAddOrDeleteLinesDisabled,
     messages: {
       confirmMessage: t('messages.confirm-delete-shipment-lines', {
         count: rowsToDelete.length,
@@ -57,7 +57,7 @@ export const useInboundDeleteSelectedLines = (
       deleteSuccess: t('messages.deleted-lines', {
         count: rowsToDelete.length,
       }),
-      cantDelete: handleCantDelete({ isDisabled }),
+      cantDelete: handleCantDelete({ isDisabled: isAddOrDeleteLinesDisabled }),
     },
   });
 
