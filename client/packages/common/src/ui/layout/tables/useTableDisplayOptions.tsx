@@ -18,7 +18,7 @@ import {
 import { MenuItem, Typography, alpha } from '@mui/material';
 import { ColumnDef } from './types';
 import { IconButton } from '@common/components';
-import { useTranslation } from '@common/intl';
+import { useIntlUtils, useTranslation } from '@common/intl';
 import { EnvUtils } from '@common/utils';
 import { useTableKeyboardNavigation } from './useTableKeyboardNavigation';
 
@@ -49,6 +49,9 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   muiTableBodyRowProps?: MRT_TableOptions<T>['muiTableBodyRowProps'];
 }): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
+  const { isRtl } = useIntlUtils();
+  // Collapsed expand-chevron points "into" the row; mirror it for RTL
+  const collapsedRotation = isRtl ? 'rotate(90deg)' : 'rotate(-90deg)';
   const { focusedRowId, containerRef, rowVirtualizerRef, handleKeyDown } =
     useTableKeyboardNavigation<T>(onRowClick);
 
@@ -336,7 +339,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
     muiExpandButtonProps: ({ row }) => ({
       sx: {
         display: row.getCanExpand() ? 'flex' : 'none',
-        transform: row.getIsExpanded() ? 'rotate(180deg)' : 'rotate(-90deg)',
+        transform: row.getIsExpanded() ? 'rotate(180deg)' : collapsedRotation,
         transition: 'transform 0.2s',
       },
     }),
@@ -346,7 +349,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         transform: table.getIsAllRowsExpanded()
           ? 'rotate(180deg)'
           : !table.getIsSomeRowsExpanded()
-            ? 'rotate(-90deg)'
+            ? collapsedRotation
             : undefined,
         transition: 'transform 0.2s',
       },
