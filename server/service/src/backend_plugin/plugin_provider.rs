@@ -31,8 +31,7 @@ impl Plugin {
     }
 }
 pub enum PluginInstanceVariant {
-    // Arc so the bundle can be shared cheaply onto the blocking pool in `call_plugin_async`.
-    BoaJs(Arc<Vec<u8>>),
+    BoaJs(Vec<u8>),
 }
 pub struct PluginInstance {
     pub id: String,
@@ -79,9 +78,12 @@ where
     })
 }
 
-/// Async sibling of [`call_plugin`] for callers running on the async runtime. Runs the plugin
-/// on the blocking pool (via [`boajs::call_method_async`]) so the synchronous boajs interpreter
-/// doesn't block the runtime. See issue #11949.
+/// Async sibling of [`call_plugin`] for callers running on the async runtime. Runs the
+/// synchronous boajs interpreter on the blocking pool so it doesn't block the runtime.
+/// See issue #11949.
+///
+/// Takes an owned `Arc<PluginInstance>` (rather than a borrow) so it can move onto the
+/// blocking thread; the `Arc` makes that move cheap.
 pub(crate) async fn call_plugin_async<I, O>(
     input: I,
     r#type: PluginType,
@@ -91,19 +93,15 @@ where
     I: Serialize + Send + 'static,
     O: DeserializeOwned + Send + 'static,
 {
+    // Clone the code up front for the join-error branch, since `plugin` moves into the closure.
     let code = plugin.code.clone();
 
-    // Single variant, irrefutable. Clone the Arc'd bundle so nothing borrows `plugin` across await.
-    let PluginInstanceVariant::BoaJs(bundle) = &plugin.variant;
-    let bundle = bundle.clone();
-    let export_location = vec!["plugins".to_string(), plugin_type_to_string(r#type)];
-
-    boajs::call_method_async(input, export_location, bundle)
+    tokio::task::spawn_blocking(move || call_plugin(input, r#type, &plugin))
         .await
-        .map_err(|variant| PluginError {
+        .map_err(|join_error| PluginError {
             code,
-            variant: variant.into(),
-        })
+            variant: PluginErrorVariant::BoaJs(BoaJsError::TaskJoin(join_error.to_string())),
+        })?
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -185,7 +183,7 @@ impl PluginInstance {
             PluginVariantType::BoaJs => PluginInstance {
                 id,
                 code: code.clone(),
-                variant: PluginInstanceVariant::BoaJs(Arc::new(plugin_bundle)),
+                variant: PluginInstanceVariant::BoaJs(plugin_bundle),
                 version,
             },
         };
