@@ -127,6 +127,7 @@ fn map_error(error: UpdateServiceError) -> Result<UpdateErrorInterface> {
         | E::NotThisStoreStockLine
         | E::ToLocationDoesNotExist
         | E::NotThisStoreLocation
+        | E::IncorrectLocationType
         | E::InvalidNumberOfPacks
         | E::InvalidPackSize
         | E::CannotHaveFractionalPack => BadUserInput(formatted_error),

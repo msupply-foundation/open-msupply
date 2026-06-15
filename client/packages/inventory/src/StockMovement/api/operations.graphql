@@ -5,6 +5,10 @@ fragment StockMovementRow on StockRelocationNode {
   finalisedDatetime
   status
   numberOfPacks
+  fromPackSize
+  availableNumberOfPacks
+  toPackSize
+  restrictedLocationTypeId
   itemCode
   itemName
   batch
@@ -43,6 +47,55 @@ query stockRelocations(
       totalCount
       nodes {
         ...StockMovementRow
+      }
+    }
+  }
+}
+
+mutation insertStockRelocation(
+  $input: InsertStockRelocationInput!
+  $storeId: String!
+) {
+  insertStockRelocation(input: $input, storeId: $storeId) {
+    __typename
+    ... on InsertStockRelocationNode {
+      __typename
+      ids
+    }
+    ... on InsertStockRelocationError {
+      __typename
+      error {
+        __typename
+        description
+        ... on StockLineOnHold {
+          stockLineId
+        }
+        ... on LocationOnHold {
+          locationId
+        }
+        ... on NotEnoughStock {
+          stockLineId
+        }
+      }
+    }
+  }
+}
+
+mutation updateStockRelocation(
+  $input: UpdateStockRelocationInput!
+  $storeId: String!
+) {
+  updateStockRelocation(input: $input, storeId: $storeId) {
+    __typename
+    ... on UpdateStockRelocationNode {
+      __typename
+      id
+    }
+    ... on UpdateStockRelocationError {
+      __typename
+      error {
+        __typename
+        description
       }
     }
   }

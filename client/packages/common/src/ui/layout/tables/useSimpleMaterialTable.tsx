@@ -51,6 +51,9 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
     muiTableHeadCellProps: {
       sx: {
         fontSize: '0.85em',
+        '& .Mui-TableHeadCell-Content-Wrapper': {
+          whiteSpace: 'normal',
+        },
       },
     },
     muiTableBodyCellProps: ({ row }) => ({
