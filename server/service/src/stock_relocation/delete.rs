@@ -24,12 +24,32 @@ pub fn delete_stock_relocation(
     input: DeleteStockRelocation,
 ) -> Result<String, DeleteStockRelocationError> {
     ctx.connection
+        .transaction_sync(|connection| delete_one(connection, store_id, &input.id))
+        .map_err(|error: TransactionError<DeleteStockRelocationError>| error.to_inner_error())
+}
+
+pub fn delete_stock_relocations(
+    ctx: &ServiceContext,
+    store_id: &str,
+    ids: Vec<String>,
+) -> Result<Vec<String>, DeleteStockRelocationError> {
+    ctx.connection
         .transaction_sync(|connection| {
-            validate(connection, store_id, &input.id)?;
-            StockRelocationRowRepository::new(connection).delete(&input.id)?;
-            Ok(input.id.clone())
+            ids.iter()
+                .map(|id| delete_one(connection, store_id, id))
+                .collect::<Result<Vec<_>, _>>()
         })
         .map_err(|error: TransactionError<DeleteStockRelocationError>| error.to_inner_error())
+}
+
+fn delete_one(
+    connection: &StorageConnection,
+    store_id: &str,
+    id: &str,
+) -> Result<String, DeleteStockRelocationError> {
+    validate(connection, store_id, id)?;
+    StockRelocationRowRepository::new(connection).delete(id)?;
+    Ok(id.to_string())
 }
 
 fn validate(
@@ -136,6 +156,32 @@ mod test {
                 .unwrap(),
             None
         );
+    }
+
+    #[actix_rt::test]
+    async fn delete_stock_relocations_batch() {
+        let (service_provider, ctx) = setup("delete_stock_relocations_batch").await;
+        whole_line("batch_del_1").upsert(&ctx.connection).unwrap();
+        whole_line("batch_del_2").upsert(&ctx.connection).unwrap();
+        let service = &service_provider.stock_relocation_service;
+        let relocation_repo = StockRelocationRowRepository::new(&ctx.connection);
+
+        let id1 = insert_relocation(&service_provider, &ctx, "batch_del_1").await;
+        let id2 = insert_relocation(&service_provider, &ctx, "batch_del_2").await;
+
+        let deleted = service
+            .delete_stock_relocations(&ctx, "store_a", vec![id1.clone(), id2.clone()])
+            .unwrap();
+        assert_eq!(deleted.len(), 2);
+        assert!(relocation_repo.find_one_by_id(&id1).unwrap().is_none());
+        assert!(relocation_repo.find_one_by_id(&id2).unwrap().is_none());
+
+        whole_line("batch_del_3").upsert(&ctx.connection).unwrap();
+        let id3 = insert_relocation(&service_provider, &ctx, "batch_del_3").await;
+
+        let result = service.delete_stock_relocations(&ctx, "store_a", vec![id3.clone(), uuid()]);
+        assert!(result.is_err());
+        assert!(relocation_repo.find_one_by_id(&id3).unwrap().is_some());
     }
 
     #[actix_rt::test]
