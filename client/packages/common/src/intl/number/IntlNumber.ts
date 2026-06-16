@@ -22,7 +22,14 @@ export const intlNumberFormat = (
   locale: string,
   params?: Intl.NumberFormatOptions
 ) => {
-  return new Intl.NumberFormat(localeNumberOverrides[locale] ?? locale, params);
+  // Fall back to the base language so regional tags (e.g. `ps-AF`, `ar-SA`)
+  // still pick up the override; otherwise their digits revert to the browser
+  // default (Latin for Pashto).
+  const override =
+    localeNumberOverrides[locale] ??
+    localeNumberOverrides[locale.split('-')[0] ?? locale] ??
+    locale;
+  return new Intl.NumberFormat(override, params);
 };
 
 export const useFormatNumber = () => {
