@@ -10022,6 +10022,8 @@ export type StoreNode = {
   code: Scalars['String']['output'];
   createdDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  /** Whether the store has been disabled, either by a user or as a result of a store merge. */
+  isDisabled: Scalars['Boolean']['output'];
   /**
    * Returns the associated store logo.
    * The logo is returned as a data URL schema, e.g. "data:image/png;base64,..."
