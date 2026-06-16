@@ -27,20 +27,11 @@ pub enum UpdateStockRelocationError {
     RelocationDoesNotExist,
     NotThisStoreRelocation,
     RelocationAlreadyFinalised,
-    StockLineDoesNotExist,
-    NotThisStoreStockLine,
-    StockLineOnHold(String),
-    LocationOnHold(String),
-    ToLocationDoesNotExist,
-    NotThisStoreLocation,
-    IncorrectLocationType,
-    NotEnoughStock(String),
-    InvalidNumberOfPacks,
-    InvalidPackSize,
-    CannotHaveFractionalPack,
     NewlyCreatedStockLineDoesNotExist,
+    ValidateMovement(ValidateMovementError),
+    InsertRepack(InsertRepackError),
+    UpdateStockLine(UpdateStockLineError),
     DatabaseError(RepositoryError),
-    InternalError(String),
 }
 
 pub fn update_stock_relocation(
@@ -95,7 +86,8 @@ fn update_one(
             to_location_id: row.to_location_id.clone(),
             to_pack_size: row.to_pack_size,
         },
-    )?;
+    )
+    .map_err(UpdateStockRelocationError::ValidateMovement)?;
     row.from_location_id = stock_line.location_id.clone();
 
     let finalising = matches!(input.status, Some(StockRelocationStatus::Finalised));
@@ -126,7 +118,8 @@ fn apply_movement(
                 }),
                 ..Default::default()
             },
-        )?;
+        )
+        .map_err(UpdateStockRelocationError::UpdateStockLine)?;
         Ok(row.from_stock_line_id.clone())
     } else {
         let invoice = insert_repack(
@@ -137,7 +130,8 @@ fn apply_movement(
                 new_pack_size: row.to_pack_size.unwrap_or(stock_line.pack_size),
                 new_location_id: row.to_location_id.clone(),
             },
-        )?;
+        )
+        .map_err(UpdateStockRelocationError::InsertRepack)?;
         new_stock_line_id(connection, &invoice.invoice_row.id)
     }
 }
@@ -185,57 +179,6 @@ fn new_stock_line_id(
 impl From<RepositoryError> for UpdateStockRelocationError {
     fn from(error: RepositoryError) -> Self {
         UpdateStockRelocationError::DatabaseError(error)
-    }
-}
-
-impl From<ValidateMovementError> for UpdateStockRelocationError {
-    fn from(error: ValidateMovementError) -> Self {
-        use UpdateStockRelocationError as E;
-        match error {
-            ValidateMovementError::StockLineDoesNotExist => E::StockLineDoesNotExist,
-            ValidateMovementError::NotThisStoreStockLine => E::NotThisStoreStockLine,
-            ValidateMovementError::StockLineOnHold(id) => E::StockLineOnHold(id),
-            ValidateMovementError::LocationOnHold(id) => E::LocationOnHold(id),
-            ValidateMovementError::ToLocationDoesNotExist => E::ToLocationDoesNotExist,
-            ValidateMovementError::NotThisStoreLocation => E::NotThisStoreLocation,
-            ValidateMovementError::IncorrectLocationType => E::IncorrectLocationType,
-            ValidateMovementError::NotEnoughStock(id) => E::NotEnoughStock(id),
-            ValidateMovementError::InvalidNumberOfPacks => E::InvalidNumberOfPacks,
-            ValidateMovementError::InvalidPackSize => E::InvalidPackSize,
-            ValidateMovementError::DatabaseError(e) => E::DatabaseError(e),
-        }
-    }
-}
-
-impl From<InsertRepackError> for UpdateStockRelocationError {
-    fn from(error: InsertRepackError) -> Self {
-        use UpdateStockRelocationError as E;
-        match error {
-            InsertRepackError::StockLineDoesNotExist => E::StockLineDoesNotExist,
-            InsertRepackError::NotThisStoreStockLine => E::NotThisStoreStockLine,
-            InsertRepackError::CannotHaveFractionalPack => E::CannotHaveFractionalPack,
-            InsertRepackError::StockLineReducedBelowZero(stock_line) => {
-                E::NotEnoughStock(stock_line.stock_line_row.id)
-            }
-            InsertRepackError::DatabaseError(e) => E::DatabaseError(e),
-            InsertRepackError::NewlyCreatedInvoiceDoesNotExist => {
-                E::NewlyCreatedStockLineDoesNotExist
-            }
-            InsertRepackError::InternalError(s) => E::InternalError(s),
-        }
-    }
-}
-
-impl From<UpdateStockLineError> for UpdateStockRelocationError {
-    fn from(error: UpdateStockLineError) -> Self {
-        use UpdateStockRelocationError as E;
-        match error {
-            UpdateStockLineError::StockDoesNotExist => E::StockLineDoesNotExist,
-            UpdateStockLineError::StockDoesNotBelongToStore => E::NotThisStoreStockLine,
-            UpdateStockLineError::LocationDoesNotExist => E::ToLocationDoesNotExist,
-            UpdateStockLineError::DatabaseError(e) => E::DatabaseError(e),
-            other => E::InternalError(format!("{:?}", other)),
-        }
     }
 }
 
@@ -497,8 +440,8 @@ mod test {
                     ..Default::default()
                 }
             ),
-            Err(UpdateStockRelocationError::NotEnoughStock(
-                "ok_sl".to_string()
+            Err(UpdateStockRelocationError::ValidateMovement(
+                ValidateMovementError::NotEnoughStock("ok_sl".to_string())
             ))
         );
 

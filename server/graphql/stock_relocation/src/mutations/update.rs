@@ -5,9 +5,11 @@ use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, I
 use graphql_core::ContextExt;
 use repository::StockRelocationRow;
 use service::auth::{Resource, ResourceAccessRequest};
+use service::repack::InsertRepackError;
 use service::stock_relocation::update::{
     UpdateStockRelocation as UpdateServiceInput, UpdateStockRelocationError as UpdateServiceError,
 };
+use service::stock_relocation::validate::ValidateMovementError;
 use service::NullableUpdate;
 
 use super::{LocationOnHold, NotEnoughStock, StockLineOnHold};
@@ -150,35 +152,35 @@ fn map_error(error: UpdateServiceError) -> Result<UpdateErrorInterface> {
     use UpdateServiceError as E;
     let formatted_error = format!("{error:#?}");
 
+    use ValidateMovementError as V;
     let graphql_error = match error {
-        E::StockLineOnHold(stock_line_id) => {
+        E::ValidateMovement(V::StockLineOnHold(stock_line_id)) => {
             return Ok(UpdateErrorInterface::StockLineOnHold(StockLineOnHold {
                 stock_line_id,
             }))
         }
-        E::LocationOnHold(location_id) => {
+        E::ValidateMovement(V::LocationOnHold(location_id)) => {
             return Ok(UpdateErrorInterface::LocationOnHold(LocationOnHold {
                 location_id,
             }))
         }
-        E::NotEnoughStock(stock_line_id) => {
+        E::ValidateMovement(V::NotEnoughStock(stock_line_id)) => {
             return Ok(UpdateErrorInterface::NotEnoughStock(NotEnoughStock {
                 stock_line_id,
+            }))
+        }
+        E::InsertRepack(InsertRepackError::StockLineReducedBelowZero(stock_line)) => {
+            return Ok(UpdateErrorInterface::NotEnoughStock(NotEnoughStock {
+                stock_line_id: stock_line.stock_line_row.id,
             }))
         }
 
         E::RelocationDoesNotExist
         | E::NotThisStoreRelocation
         | E::RelocationAlreadyFinalised
-        | E::StockLineDoesNotExist
-        | E::NotThisStoreStockLine
-        | E::ToLocationDoesNotExist
-        | E::NotThisStoreLocation
-        | E::IncorrectLocationType
-        | E::InvalidNumberOfPacks
-        | E::InvalidPackSize
-        | E::CannotHaveFractionalPack => BadUserInput(formatted_error),
-        E::NewlyCreatedStockLineDoesNotExist | E::DatabaseError(_) | E::InternalError(_) => {
+        | E::ValidateMovement(_)
+        | E::InsertRepack(_) => BadUserInput(formatted_error),
+        E::NewlyCreatedStockLineDoesNotExist | E::UpdateStockLine(_) | E::DatabaseError(_) => {
             InternalError(formatted_error)
         }
     };

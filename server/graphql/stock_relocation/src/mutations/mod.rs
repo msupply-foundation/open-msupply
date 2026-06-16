@@ -10,8 +10,7 @@ pub use delete::{
 };
 pub use insert::{insert_stock_relocation, InsertInput, InsertResponse};
 pub use update::{
-    update_stock_relocation, update_stock_relocations, UpdateInput, UpdateResponse,
-    UpdateResponses,
+    update_stock_relocation, update_stock_relocations, UpdateInput, UpdateResponse, UpdateResponses,
 };
 
 pub struct StockLineOnHold {
