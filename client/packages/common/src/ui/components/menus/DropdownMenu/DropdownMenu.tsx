@@ -52,8 +52,12 @@ const StyledSelect = styled(Select)(({ theme }) => ({
   width: 160,
   backgroundColor: 'white',
   '& .MuiSelect-icon': {
-    // If left is not explicitly defined, sometimes the icon floats to the left
-    left: 'calc(100% - 30px)',
+    // Pin the dropdown chevron to the trailing edge. In LTR that's the right
+    // side; in RTL it must move to the left so the menu reads right-to-left.
+    // (Without an explicit value the icon sometimes floats to the wrong side.)
+    ...(theme.direction === 'rtl'
+      ? { left: 7, right: 'unset' }
+      : { left: 'calc(100% - 30px)' }),
     color: theme.palette.primary.main,
   },
 
