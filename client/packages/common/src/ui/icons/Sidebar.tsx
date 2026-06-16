@@ -1,9 +1,10 @@
 import React from 'react';
-import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
+import { SvgIconProps } from '@mui/material/SvgIcon';
+import { RtlFlipIcon } from './RtlFlipIcon';
 
 export const SidebarIcon = (props: SvgIconProps): JSX.Element => {
   return (
-    <SvgIcon
+    <RtlFlipIcon
       {...props}
       style={{
         fill: 'none',
@@ -16,6 +17,6 @@ export const SidebarIcon = (props: SvgIconProps): JSX.Element => {
     >
       <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
       <line x1="9" y1="3" x2="9" y2="21"></line>
-    </SvgIcon>
+    </RtlFlipIcon>
   );
 };
