@@ -89,7 +89,7 @@ export const StockMovementLineTable = ({
       {
         accessorKey: 'batch',
         header: t('label.batch'),
-        size: 110,
+        size: 100,
         enableSorting: false,
       },
       {
@@ -97,7 +97,7 @@ export const StockMovementLineTable = ({
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         header: t('label.expiry'),
         columnType: ColumnType.Date,
-        size: 110,
+        size: 80,
         enableSorting: false,
       },
       {
