@@ -9,7 +9,6 @@ import {
   LocalStorage,
   useFormatDateTime,
   BoxedErrorWithDetails,
-  InternalServerError,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from './LoginTextInput';
 import { useLoginForm } from './hooks';
@@ -96,7 +95,7 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
       };
     }
 
-    if (error?.cause instanceof InternalServerError) {
+    if (error?.stdError === 'Internal error') {
       return {
         error: t('error.internal-error'),
         hint: t('error.login-support'),
