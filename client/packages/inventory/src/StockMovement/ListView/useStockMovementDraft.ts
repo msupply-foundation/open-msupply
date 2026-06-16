@@ -3,7 +3,6 @@ import { ArrayUtils } from '@openmsupply-client/common';
 import {
   ItemStockOnHandFragment,
   LocationRowFragment,
-  useLocationList,
 } from '@openmsupply-client/system';
 import {
   StockMovementDraftLineFragment,
@@ -42,18 +41,6 @@ export const useStockMovementDraft = ({
   const [edits, setEdits] = useState<
     Record<string, Partial<DraftStockMovementLine>>
   >({});
-
-  const {
-    query: { data: locationData },
-  } = useLocationList(
-    {
-      sortBy: { key: 'name', direction: 'asc', isDesc: false },
-      first: 1000,
-    },
-    undefined,
-    !isEdit
-  );
-  const locations = locationData?.nodes ?? [];
 
   const { data: locationDraftLines = [] } = useStockMovementDraftLines(
     { fromLocationId: fromLocation?.id },
@@ -134,7 +121,6 @@ export const useStockMovementDraft = ({
     selectFromLocation,
     byItem,
     selectByItem,
-    locations,
     itemOptions,
     lines,
     linesToMove,
