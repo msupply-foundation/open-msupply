@@ -209,6 +209,11 @@ fn get_initialisation_sync_status_tester(
                  ..
              }| {
                 let mut new_status = previous_status.clone();
+                // `summary.duration_in_seconds` is wall-clock and advances during the
+                // initialisation poll wait (the last `/site` poll captured a stale value); it isn't
+                // what this assertion checks (pull_central progress is), so reconcile it like the
+                // `initialise` handler does.
+                new_status.summary.clone_from(&current_status.summary);
                 if iteration == 0 {
                     new_status
                         .prepare_initial
@@ -358,7 +363,10 @@ fn get_initialisation_sync_status_tester(
             let site_info = SiteInfoV5 {
                 id: "abc123".to_string(),
                 site_id: 123,
-                initialisation_status: crate::sync::api::InitialisationStatus::New,
+                // Central reports initialisation completed: `wait_for_initialisation` polls
+                // `/site` and finishes when `initialisationStatus == completed`.
+                initialisation_status: crate::sync::api::InitialisationStatus::Completed,
+                queue_length: None,
                 central_server_url: format!("http://127.0.0.1:{}", ctx.open_msupply_central_port),
                 is_central_server: false,
                 msupply_central_site_id: 1,
@@ -508,7 +516,10 @@ fn get_push_and_error_sync_status_tester(
             let site_info = SiteInfoV5 {
                 id: "abc123".to_string(),
                 site_id: 123,
-                initialisation_status: crate::sync::api::InitialisationStatus::New,
+                // Central reports initialisation completed: `wait_for_initialisation` polls
+                // `/site` and finishes when `initialisationStatus == completed`.
+                initialisation_status: crate::sync::api::InitialisationStatus::Completed,
+                queue_length: None,
                 central_server_url: format!("http://127.0.0.1:{}", ctx.open_msupply_central_port),
                 is_central_server: false,
                 msupply_central_site_id: 1,

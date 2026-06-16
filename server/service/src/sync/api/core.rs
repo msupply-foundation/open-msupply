@@ -11,7 +11,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
 use url::ParseError;
-use util::{format_error, with_retries, RetrySeconds};
+use util::{format_error, with_retries_opts, RetrySeconds};
 
 use super::*;
 
@@ -132,7 +132,10 @@ impl SyncApiV5 {
             .join(route)
             .map_err(|error| self.api_error(route, error.into()))?;
 
-        let result = with_retries(RetrySeconds::default(), |client| {
+        // Don't retry idle-timeouts: legacy sync v5 requests can run for minutes server-side
+        // and continue after the client gives up; retrying would overlap the same site's
+        // in-flight request and trip `sync_is_running`. Connect errors are still retried.
+        let result = with_retries_opts(RetrySeconds::default(), false, |client| {
             client
                 .get(url.clone())
                 .headers(tuple_vec_to_header(vec![
@@ -170,7 +173,8 @@ impl SyncApiV5 {
             .join(route)
             .map_err(|error| self.api_error(route, error.into()))?;
 
-        let result = with_retries(RetrySeconds::default(), |client| {
+        // See `do_get`: don't retry idle-timeouts for sync v5 (avoids same-site self-overlap).
+        let result = with_retries_opts(RetrySeconds::default(), false, |client| {
             client
                 .post(url.clone())
                 .headers(tuple_vec_to_header(vec![
@@ -194,7 +198,40 @@ impl SyncApiV5 {
     pub(crate) async fn do_empty_post(&self, route: &str) -> Result<Response, SyncApiError> {
         self.do_post(route, &json!({})).await
     }
+
+    /// Poll `/sync/v5/site_status` until central reports `Idle`. Used to wait out a
+    /// "central busy" response (another sync session for this site is in progress;
+    /// legacy central gates sync per-site) before retrying. Errors on timeout.
+    pub(crate) async fn wait_until_central_idle(&self) -> Result<(), SyncApiError> {
+        let route = "/sync/v5/site_status";
+        let start = std::time::SystemTime::now();
+        let poll_period = std::time::Duration::from_secs(CENTRAL_BUSY_POLL_PERIOD_SECONDS);
+        let timeout = std::time::Duration::from_secs(CENTRAL_BUSY_TIMEOUT_SECONDS);
+        log::info!("Central server busy with another sync session for this site; waiting for it to become idle...");
+        loop {
+            tokio::time::sleep(poll_period).await;
+
+            if self.get_site_status().await?.code == SiteStatusCodeV5::Idle {
+                log::info!("Central server is idle; retrying request");
+                return Ok(());
+            }
+
+            if start.elapsed().unwrap_or(timeout) >= timeout {
+                return Err(self.api_error(
+                    route,
+                    SyncApiErrorVariantV5::Other(anyhow::anyhow!(
+                        "Timed out waiting for central server to become idle"
+                    )),
+                ));
+            }
+        }
+    }
 }
+
+// When central is busy with another sync session for this site, poll site status
+// this often, up to this long, before giving up.
+const CENTRAL_BUSY_POLL_PERIOD_SECONDS: u64 = 15;
+const CENTRAL_BUSY_TIMEOUT_SECONDS: u64 = 30 * 60;
 
 #[derive(Error, Debug)]
 pub enum ParsingResponseError {

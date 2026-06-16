@@ -401,41 +401,6 @@ impl<'a> ChangelogRepository<'a> {
         Ok(result.into_iter().map(ChangelogRow::from_join).collect())
     }
 
-    /// This returns the number of changelog records that should be evaluated to send to the remote site when doing a v6_pull
-    /// This looks up associated records to decide if change log should be sent to the site or not
-    /// Update this method when adding new record types to the system
-    pub fn count_outgoing_sync_records_from_central(
-        &self,
-        earliest: u64,
-        sync_site_id: i32,
-        is_initialized: bool,
-    ) -> Result<u64, RepositoryError> {
-        let query = clamp_to_safe_cursor(
-            self.connection,
-            create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized),
-        );
-        let result = query
-            .count()
-            .get_result::<i64>(self.connection.lock().connection())?;
-        Ok(result as u64)
-    }
-
-    pub fn count_outgoing_patient_sync_records_from_central(
-        &self,
-        earliest: u64,
-        sync_site_id: i32,
-        fetch_patient_id: String,
-    ) -> Result<u64, RepositoryError> {
-        let query = clamp_to_safe_cursor(
-            self.connection,
-            create_filtered_outgoing_patient_sync_query(earliest, sync_site_id, fetch_patient_id),
-        );
-        let result = query
-            .count()
-            .get_result::<i64>(self.connection.lock().connection())?;
-        Ok(result as u64)
-    }
-
     /// Returns latest change log
     /// After initial sync we use this method to get the latest cursor to make sure we don't try to push any records that were synced to this site on initialisation
     pub fn absolute_latest_cursor(&self) -> Result<u64, RepositoryError> {
@@ -586,7 +551,11 @@ fn create_filtered_head_count_query(
     filter: Option<ChangelogFilter>,
 ) -> BoxedRawChangelogQuery {
     let head_max_cursors = changelog_head
-        .filter(changelog_head.field(changelog::cursor).ge(earliest.try_into().unwrap_or(0)))
+        .filter(
+            changelog_head
+                .field(changelog::cursor)
+                .ge(earliest.try_into().unwrap_or(0)),
+        )
         .group_by((
             changelog_head.field(changelog::record_id),
             changelog_head.field(changelog::store_id),
@@ -908,7 +877,9 @@ mod test {
             })
             .unwrap();
 
-        let cursor_before = ChangelogRepository::new(&observer).absolute_latest_cursor().unwrap();
+        let cursor_before = ChangelogRepository::new(&observer)
+            .absolute_latest_cursor()
+            .unwrap();
 
         // Channels to drive connection A: signal it has registered an in-flight cursor, then
         // signal it to commit.
@@ -953,14 +924,16 @@ mod test {
 
         // The clamp is active: safe cursor is pegged below the (now higher) raw max.
         assert!(ChangelogCursorTracker::max_safe_cursor(&observer).is_some());
-        let safe_during = ChangelogRepository::new(&observer)
-            .latest_cursor()
+        let safe_during = ChangelogRepository::new(&observer).latest_cursor().unwrap();
+        let raw_during = ChangelogRepository::new(&observer)
+            .absolute_latest_cursor()
             .unwrap();
-        let raw_during = ChangelogRepository::new(&observer).absolute_latest_cursor().unwrap();
         assert!(
             safe_during <= cursor_before && safe_during < raw_during,
             "expected safe cursor clamped (<= {}, < raw {}), got {}",
-            cursor_before, raw_during, safe_during
+            cursor_before,
+            raw_during,
+            safe_during
         );
 
         // The reader must not return the committed-after row past the clamp.
@@ -1000,13 +973,12 @@ mod test {
         slow_tx.await.unwrap();
 
         assert_eq!(ChangelogCursorTracker::max_safe_cursor(&observer), None);
-        let safe_after = ChangelogRepository::new(&observer)
-            .latest_cursor()
-            .unwrap();
+        let safe_after = ChangelogRepository::new(&observer).latest_cursor().unwrap();
         assert!(
             safe_after > cursor_before,
             "expected cursor to advance past {} after commit, got {}",
-            cursor_before, safe_after
+            cursor_before,
+            safe_after
         );
 
         let rows_after = ChangelogRepository::new(&observer)

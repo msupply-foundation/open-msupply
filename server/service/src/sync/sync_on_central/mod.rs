@@ -83,11 +83,11 @@ pub async fn pull(
         response.site_id,
         is_initialised,
     )?;
-    let total_records = changelog_repo.count_outgoing_sync_records_from_central(
-        cursor,
-        response.site_id,
-        is_initialised,
-    )?;
+    // A batch shorter than `batch_size` means the changelog tail is exhausted, so this is the last
+    // batch. We deliberately avoid a full `count_outgoing_sync_records_from_central` here: on a large
+    // central it scans the changelog on every pull and, under concurrent multi-site init, holds DB
+    // connections long enough to exhaust the pool. See `total_records` below for the progress value.
+    let num_changelogs = changelogs.len();
     // Clamp the empty-batch fallback so we don't advance past an in-flight (uncommitted, lower)
     // changelog cursor. The non-empty path is already safe because the query is clamped.
     let max_cursor = changelog_repo.latest_cursor()?;
@@ -114,7 +114,12 @@ pub async fn pull(
     );
     log::debug!("Sending records as central server: {:#?}", records);
 
-    let is_last_batch = total_records <= batch_size as u64;
+    let is_last_batch = num_changelogs < batch_size as usize;
+    // Progress estimate for the client's progress bar (the only consumer of `total_records`):
+    // remaining changelog cursors from the requested cursor. Cheap (max_cursor is already loaded),
+    // monotonically decreasing across batches, and the client snaps progress to done on the last
+    // batch. It over-estimates (counts pre-dedup/pre-filter rows) but is purely cosmetic.
+    let total_records = max_cursor.saturating_sub(cursor);
 
     Ok(SyncBatchV6 {
         total_records,
@@ -238,11 +243,9 @@ pub async fn patient_pull(
         response.site_id,
         fetch_patient_id.clone(),
     )?;
-    let total_records = changelog_repo.count_outgoing_patient_sync_records_from_central(
-        cursor,
-        response.site_id,
-        fetch_patient_id,
-    )?;
+    // See `pull` above: a short batch means the tail is exhausted; we avoid the expensive full
+    // `count_outgoing_patient_sync_records_from_central` and use a cheap cursor-based progress value.
+    let num_changelogs = changelogs.len();
     // Clamp the empty-batch fallback so we don't advance past an in-flight (uncommitted, lower)
     // changelog cursor. The non-empty path is already safe because the query is clamped.
     let max_cursor = changelog_repo.latest_cursor()?;
@@ -272,7 +275,8 @@ pub async fn patient_pull(
         records
     );
 
-    let is_last_batch = total_records <= batch_size as u64;
+    let is_last_batch = num_changelogs < batch_size as usize;
+    let total_records = max_cursor.saturating_sub(cursor);
 
     Ok(SyncBatchV6 {
         total_records,
