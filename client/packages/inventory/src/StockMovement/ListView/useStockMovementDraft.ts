@@ -68,11 +68,13 @@ export const useStockMovementDraft = ({
     isEdit && !!movement?.id
   );
 
-  const sourceDraftLines = isEdit
-    ? editDraftLines
-    : selectionMode === 'byLocation'
-      ? locationDraftLines.filter(line => addedItemIds.includes(line.itemId))
-      : itemDraftLines;
+  const sourceDraftLines = (() => {
+    if (isEdit) return editDraftLines;
+    if (selectionMode === 'byItem') return itemDraftLines;
+    return locationDraftLines.filter(line =>
+      addedItemIds.includes(line.itemId)
+    );
+  })();
 
   const lines: DraftStockMovementLine[] = sourceDraftLines
     .filter(draft => !removedLineIds.includes(draft.id))
