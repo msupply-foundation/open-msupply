@@ -48,6 +48,9 @@ use backup::*;
 mod reintegrate_buffer;
 use reintegrate_buffer::reintegrate_buffer;
 
+mod reset_site_auth;
+use reset_site_auth::reset_site_auth;
+
 #[cfg(feature = "integration_test")]
 use cli::LoadTest;
 use cli::{
@@ -276,6 +279,22 @@ enum Action {
         #[clap(long)]
         skip_buffer_reset: bool,
     },
+    /// Reset the sync token and/or hardware id for sites (central server only).
+    /// Clearing the token forces a site to re-authenticate; clearing the hardware id
+    /// allows the site to sync from a different machine. Pass `--token` and/or
+    /// `--hardware-id` to choose what to reset; at least one is required.
+    ResetSiteAuth {
+        /// Comma-separated list of site names to reset (matched exactly, case-sensitive).
+        /// Names may contain spaces, e.g. `--site-names "Site A,Site B"`.
+        #[clap(short = 'n', long, value_delimiter = ',')]
+        site_names: Vec<String>,
+        /// Reset the sync token. Pass together with `--hardware-id` to reset both.
+        #[clap(short, long, action = ArgAction::SetTrue)]
+        token: bool,
+        /// Reset the hardware id. Pass together with `--token` to reset both.
+        #[clap(short = 'i', long, action = ArgAction::SetTrue)]
+        hardware_id: bool,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -411,6 +430,13 @@ async fn main() -> anyhow::Result<()> {
                 should_migrate,
                 skip_buffer_reset,
             )?;
+        }
+        Action::ResetSiteAuth {
+            site_names,
+            token,
+            hardware_id,
+        } => {
+            reset_site_auth(&settings, site_names, token, hardware_id)?;
         }
         Action::InitialiseFromCentral { users } => {
             initialise_from_central(settings, &users).await?;

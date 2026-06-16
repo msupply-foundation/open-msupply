@@ -92,6 +92,14 @@ impl<'a> SiteRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_one_by_name(&self, name: &str) -> Result<Option<SiteRow>, RepositoryError> {
+        let result = site::table
+            .filter(site::name.eq(name))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn find_many_by_id(&self, ids: &[i32]) -> Result<Vec<SiteRow>, RepositoryError> {
         Ok(site::table
             .filter(site::id.eq_any(ids))
