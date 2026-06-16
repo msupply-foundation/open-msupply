@@ -16,11 +16,7 @@ export const useFinaliseStockMovements = () => {
         status: StockRelocationNodeStatus.Finalised,
       })),
     });
-    const response = result.updateStockRelocations;
-    if (response.__typename === 'UpdateStockRelocationError') {
-      throw new Error(response.error.description);
-    }
-    return response;
+    return result.updateStockRelocations;
   };
 
   const { mutateAsync, isPending } = useMutation({
