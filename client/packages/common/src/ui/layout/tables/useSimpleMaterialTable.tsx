@@ -1,6 +1,7 @@
 import React from 'react';
 import { MRT_RowData, MRT_ShowHideColumnsButton } from 'material-react-table';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
+import { ColumnDef } from './types';
 import { Box } from '@mui/material';
 
 interface SimpleTableConfig<T extends MRT_RowData> extends BaseTableConfig<T> {
@@ -56,7 +57,7 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
         },
       },
     },
-    muiTableBodyCellProps: ({ row }) => ({
+    muiTableBodyCellProps: ({ column, row }) => ({
       sx: {
         fontSize: '0.85em',
         fontWeight: 400,
@@ -67,6 +68,13 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
             ? 'gray.main'
             : undefined,
         paddingY: '0.2rem',
+        ...((column.columnDef as ColumnDef<T>).getIsError?.(row.original)
+          ? {
+            border: '2px solid',
+            borderColor: 'error.main',
+            borderRadius: '8px',
+          }
+          : {}),
       },
     }),
     muiTableBodyRowProps: {
