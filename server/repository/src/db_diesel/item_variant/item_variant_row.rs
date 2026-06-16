@@ -57,10 +57,9 @@ pub struct ItemVariantRow {
     #[serde(default)]
     pub created_by: Option<String>,
     // Resolved from link tables - must be last to match view column order.
-    // `rename` keeps the wire format emitting `*_link_id` for sync compatibility.
-    #[serde(rename = "item_link_id")]
+    // Serialise as `item_id` / `manufacturer_id`; the sync translator also emits the legacy
+    // `*_link_id` aliases for cross-version compatibility (see `RenamedKeys`).
     pub item_id: String,
-    #[serde(rename = "manufacturer_link_id")]
     pub manufacturer_id: Option<String>,
 }
 
