@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   Box,
@@ -77,6 +77,41 @@ export const StockMovementModal = ({
   const { finalise, isFinalising } = useFinaliseStockMovements();
   const { delete: deleteMovement, isDeleting } = useDeleteStockMovement();
 
+  const [failedLineIds, setFailedLineIds] = useState<string[]>([]);
+  const [createdIds, setCreatedIds] = useState<string[] | null>(null);
+
+  const linesForError = (errorNode: {
+    stockLineId?: string;
+    locationId?: string;
+  }) =>
+    lines.filter(
+      line =>
+        (!!errorNode.stockLineId &&
+          line.fromStockLineId === errorNode.stockLineId) ||
+        (!!errorNode.locationId &&
+          line.toLocation?.id === errorNode.locationId)
+    );
+
+  const showLineError = (errorNode: {
+    description: string;
+    stockLineId?: string;
+    locationId?: string;
+  }) => {
+    const failed = linesForError(errorNode);
+    setFailedLineIds(failed.map(line => line.id));
+    const [first] = failed;
+    error(
+      first
+        ? `${first.itemCode} - ${first.itemName}: ${errorNode.description}`
+        : errorNode.description
+    )();
+  };
+
+  const handleUpdate = (id: string, patch: Partial<DraftStockMovementLine>) => {
+    setFailedLineIds([]);
+    onUpdate(id, patch);
+  };
+
   const getDeleteConfirmation = useConfirmationModal({
     iconType: 'alert',
     title: t('heading.delete-stock-movement'),
@@ -133,25 +168,40 @@ export const StockMovementModal = ({
     linesToMove.every(isValid);
 
   const onCreate = async () => {
-    const draftLines = linesToMove.map(line => ({
-      fromStockLineId: line.fromStockLineId,
-      fromNumberOfPacks: line.fromNumberOfPacks ?? 0,
-      toLocationId: line.toLocation?.id,
-      toPackSize: line.toPackSize ?? line.fromPackSize,
-    }));
-
+    setFailedLineIds([]);
     try {
-      const result = await insert({ lines: draftLines });
-      const ids = result.ids;
+      // Reuse the already created movements on a finalise retry
+      let ids = createdIds;
+      if (!ids) {
+        const result = await insert({
+          lines: linesToMove.map(line => ({
+            fromStockLineId: line.fromStockLineId,
+            fromNumberOfPacks: line.fromNumberOfPacks ?? 0,
+            toLocationId: line.toLocation?.id,
+            toPackSize: line.toPackSize ?? line.fromPackSize,
+          })),
+        });
+        if (result.__typename === 'InsertStockRelocationError') {
+          showLineError(result.error);
+          return;
+        }
+        ids = result.ids;
+        setCreatedIds(ids);
+      }
+      const relocationIds = ids;
       getCreateFinaliseConfirmation({
         onConfirm: async () => {
           try {
-            await finalise(ids);
+            const finaliseResult = await finalise(relocationIds);
+            if (finaliseResult.__typename === 'UpdateStockRelocationError') {
+              showLineError(finaliseResult.error);
+              return;
+            }
             success(t('messages.stock-movement-finalised'))();
+            onClose();
           } catch (e) {
             error((e as Error).message)();
           }
-          onClose();
         },
         onCancel: () => {
           success(t('messages.stock-movement-created'))();
@@ -166,14 +216,19 @@ export const StockMovementModal = ({
   const onSave = async (status?: StockRelocationNodeStatus) => {
     const line = lines[0];
     if (!movement || !line) return;
+    setFailedLineIds([]);
     try {
-      await update({
+      const result = await update({
         id: movement.id,
         fromNumberOfPacks: line.fromNumberOfPacks ?? 0,
         toPackSize: line.toPackSize ?? line.fromPackSize,
         toLocationId: { value: line.toLocation?.id ?? null },
         ...(status ? { status } : {}),
       });
+      if (result.__typename === 'UpdateStockRelocationError') {
+        showLineError(result.error);
+        return;
+      }
       success(
         status === StockRelocationNodeStatus.Finalised
           ? t('messages.stock-movement-finalised')
@@ -334,9 +389,10 @@ export const StockMovementModal = ({
           <StockMovementLineTable
             lines={lines}
             showFromLocation={isEdit || selectionMode === 'byItem'}
-            onUpdate={onUpdate}
+            onUpdate={handleUpdate}
             onRemove={isEdit ? undefined : onRemove}
             disabled={isDisabled}
+            failedLineIds={failedLineIds}
           />
         ) : (
           !isEdit && (
