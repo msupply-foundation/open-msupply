@@ -67,6 +67,7 @@ use crate::{
     settings_service::{SettingsService, SettingsServiceTrait},
     shipping_method::{ShippingMethodService, ShippingMethodServiceTrait},
     standard_reports::StandardReports,
+    stock_relocation::{StockRelocationService, StockRelocationServiceTrait},
     stock_line::{StockLineService, StockLineServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
@@ -203,6 +204,8 @@ pub struct ServiceProvider {
     pub contact_service: Box<dyn ContactServiceTrait>,
     // Shipping Method
     pub shipping_method_service: Box<dyn ShippingMethodServiceTrait>,
+    // Stock Relocation (Replenishments)
+    pub stock_relocation_service: Box<dyn StockRelocationServiceTrait>,
     // Sync Message
     pub sync_message_service: Box<dyn SyncMessageTrait>,
     // Subscription trigger handle — used by SyncLogger and changelog callbacks
@@ -324,6 +327,7 @@ impl ServiceProvider {
             sync_message_service: Box::new(SyncMessageService),
             ledger_fix_trigger,
             shipping_method_service: Box::new(ShippingMethodService {}),
+            stock_relocation_service: Box::new(StockRelocationService),
             subscription_trigger,
         }
     }

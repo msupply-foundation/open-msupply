@@ -22,10 +22,16 @@ import {
   getAllocatedQuantity,
   DraftStockOutLineFragment,
 } from '../../../StockOut';
+import { min } from 'lodash';
+import {
+  UsePluginEvents,
+  ShipmentLinePluginState,
+} from '@openmsupply-client/common';
 
 export interface OutboundLineEditTableProps {
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
+  pluginEvents: UsePluginEvents<ShipmentLinePluginState>;
 }
 
 const compactTableContainerSx = {
@@ -51,6 +57,7 @@ const compactTableContainerSx = {
 export const OutboundLineEditTable = ({
   currency,
   isExternalSupplier,
+  pluginEvents,
 }: OutboundLineEditTableProps) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
@@ -65,6 +72,7 @@ export const OutboundLineEditTable = ({
     item,
     manualAllocate,
     setVvmStatus,
+    setReceivedNumberOfPacks,
   } = useAllocationContext(
     useShallow(state => {
       const { placeholderUnits, item, allocateIn } = state;
@@ -77,6 +85,7 @@ export const OutboundLineEditTable = ({
         item,
         manualAllocate: state.manualAllocate,
         setVvmStatus: state.setVvmStatus,
+        setReceivedNumberOfPacks: state.setReceivedNumberOfPacks,
         // In packs & units: we show totals in units
         // In doses: we show totals in doses
         allocatedQuantity: getAllocatedQuantity({
@@ -138,6 +147,8 @@ export const OutboundLineEditTable = ({
     isExternalSupplier,
     allocateIn: allocateIn,
     setVvmStatus,
+    setReceivedNumberOfPacks,
+    pluginEvents,
     getIsDisabled,
   });
 

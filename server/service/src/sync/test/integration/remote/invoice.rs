@@ -101,7 +101,10 @@ impl SyncRecordTester for InvoiceRecordTester {
             reason_option_id: None, // TODO: Add test to update this with update_inventory_adjustment_reason_id
             note: None,
             item_variant_id: None,
-            prescribed_quantity: None,
+            // 4D defaults these float columns to 0 when the upsert omits them.
+            prescribed_quantity: Some(0.0),
+            shipped_number_of_packs: Some(0.0),
+            shipped_pack_size: Some(0.0),
             linked_invoice_id: None,
             donor_id: None,
             ..Default::default()
@@ -260,6 +263,8 @@ impl SyncRecordTester for InvoiceRecordTester {
             d.delivered_datetime = NaiveDate::from_ymd_opt(2022, 03, 27)
                 .unwrap()
                 .and_hms_opt(11, 35, 15);
+            // 4D mirrors delivered_datetime into received_datetime for inbound shipments.
+            d.received_datetime = d.delivered_datetime;
             d.verified_datetime = NaiveDate::from_ymd_opt(2022, 03, 28)
                 .unwrap()
                 .and_hms_opt(11, 35, 15);
