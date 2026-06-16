@@ -60,8 +60,9 @@ pub fn reintegrate_buffer(
         source_site_id,
         SyncVersion::V5V6,
         None,
+        None,
     )?;
-    info!("Starting reintegration for source_site_id={source_site_id} ({total_pending} pending)");
+    info!("Starting reintegration for source_site_id: {source_site_id} pending: {total_pending}");
 
     // The integrator logs per-batch progress at `info` level as it goes.
     let start = std::time::Instant::now();
