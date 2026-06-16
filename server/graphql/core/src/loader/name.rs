@@ -53,6 +53,7 @@ impl Loader<NameByIdLoaderInput> for NameByIdLoader {
                     // Names referenced by an existing record should still show
                     Some(
                         NameFilter::new()
+                            .id(EqualFilter::equal_any(names))
                             .include_disabled(true),
                     ),
                     None,

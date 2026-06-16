@@ -38,7 +38,12 @@ export type InboundLineFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
@@ -203,7 +208,12 @@ export type InboundFragment = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        store?: {
+          __typename: 'StoreNode';
+          id: string;
+          code: string;
+          isDisabled: boolean;
+        } | null;
       } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
@@ -299,7 +309,12 @@ export type InboundFragment = {
     isCustomer: boolean;
     isSupplier: boolean;
     isOnHold: boolean;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   };
   pricing: {
     __typename: 'PricingNode';
@@ -561,6 +576,7 @@ export type InvoiceQuery = {
                 __typename: 'StoreNode';
                 id: string;
                 code: string;
+                isDisabled: boolean;
               } | null;
             } | null;
             program?: {
@@ -661,7 +677,12 @@ export type InvoiceQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
         pricing: {
           __typename: 'PricingNode';
@@ -830,6 +851,7 @@ export type InboundByNumberQuery = {
                 __typename: 'StoreNode';
                 id: string;
                 code: string;
+                isDisabled: boolean;
               } | null;
             } | null;
             program?: {
@@ -930,7 +952,12 @@ export type InboundByNumberQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
         pricing: {
           __typename: 'PricingNode';
@@ -1969,6 +1996,7 @@ export const InboundFragmentDoc = gql`
       store {
         id
         code
+        isDisabled
       }
     }
     pricing {
