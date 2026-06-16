@@ -10,8 +10,14 @@ use crate::sync::translations::{
 };
 
 use super::{
+    utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
+
+/// FK column renamed during the name_link abstraction. Central emits both the canonical
+/// `name_id` and the legacy `name_link_id` alias and accepts either, for cross-version sync.
+/// See `RenamedKeys`. Each pair is `(canonical, legacy_alias)`.
+const RENAMED_KEYS: RenamedKeys = &[("name_id", "name_link_id")];
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -42,9 +48,8 @@ impl SyncTranslation for RnRFormTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_str::<
-            RnRFormRow,
-        >(&sync_record.data)?))
+        let row = from_renamed_keys_str::<RnRFormRow>(&sync_record.data, RENAMED_KEYS)?;
+        Ok(PullTranslateResult::upsert(row))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -82,7 +87,7 @@ impl SyncTranslation for RnRFormTranslation {
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(row)?,
+            to_renamed_keys_value(&row, RENAMED_KEYS)?,
         ))
     }
 
@@ -121,20 +126,32 @@ mod tests {
         }
     }
 
-    /// `try_translate_to_upsert_sync_record` serializes `RnRFormRow` directly.
-    /// The JSON wire format must keep the legacy `name_link_id` field name so older
-    /// remote clients can still deserialize records pulled from an upgraded central.
+    /// Central serialises `RnRFormRow` for the v6 wire. After the name_link rename the
+    /// canonical field is `name_id`; central must still emit the legacy `name_link_id` alias
+    /// and accept either name on the way back in (see `RenamedKeys` for the version details).
     #[test]
-    fn test_push_wire_format_uses_legacy_field_names() {
+    fn test_wire_format_keeps_both_link_id_names() {
         let row = RnRFormRow {
             name_id: "test_name".to_string(),
             ..Default::default()
         };
-        let json = serde_json::to_value(&row).unwrap();
+
+        let json = to_renamed_keys_value(&row, RENAMED_KEYS).unwrap();
+        assert_eq!(json["name_id"], "test_name");
         assert_eq!(json["name_link_id"], "test_name");
-        assert!(
-            json.get("name_id").is_none(),
-            "JSON should not contain `name_id`; expected legacy name `name_link_id`"
-        );
+
+        // Records carrying both keys round-trip.
+        let parsed: RnRFormRow = from_renamed_keys_str(&json.to_string(), RENAMED_KEYS).unwrap();
+        assert_eq!(parsed, row);
+
+        // A <= v2.16 remote sends only the legacy `name_link_id`; it is promoted.
+        let mut legacy_only = json.clone();
+        let object = legacy_only.as_object_mut().unwrap();
+        for (canonical_key, _) in RENAMED_KEYS {
+            object.remove(*canonical_key);
+        }
+        let parsed: RnRFormRow =
+            from_renamed_keys_str(&legacy_only.to_string(), RENAMED_KEYS).unwrap();
+        assert_eq!(parsed, row);
     }
 }
