@@ -14,7 +14,8 @@ use crate::sync::{
         CentralPullErrorV6, RemotePushErrorV6, WaitForSyncOperationErrorV6,
     },
     remote_data_synchroniser::{
-        PostInitialisationError, RemotePullError, RemotePushError, WaitForSyncOperationError,
+        PostInitialisationError, RemotePullError, RemotePushError, WaitForInitialisationError,
+        WaitForSyncOperationError,
     },
     synchroniser::SyncError,
 };
@@ -395,7 +396,7 @@ impl SyncLogError {
             | SyncError::WaitForIntegrationError(WaitForSyncOperationError::SyncApiError(error))
             | SyncError::PostInitialisationError(
                 PostInitialisationError::WaitForInitialisationError(
-                    WaitForSyncOperationError::SyncApiError(error),
+                    WaitForInitialisationError::SyncApiError(error),
                 ),
             ) => {
                 return Self::from_sync_api_error(
