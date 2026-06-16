@@ -12,8 +12,8 @@ use serde::Deserialize;
 use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
-struct LegacyGoodsReceivedRow {
+#[derive(Deserialize, schemars::JsonSchema)]
+pub struct LegacyGoodsReceivedRow {
     #[serde(rename = "ID")]
     id: String,
     store_ID: String,
@@ -35,7 +35,7 @@ struct LegacyGoodsReceivedRow {
 
 /// Helper to extract goods_received_ID from a transact sync buffer record
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
+#[derive(Deserialize, schemars::JsonSchema)]
 struct TransactGoodsReceivedId {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]

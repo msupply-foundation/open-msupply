@@ -27,7 +27,7 @@ pub struct FormSchemaRow {
     pub ui_schema: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, schemars::JsonSchema)]
 pub struct FormSchemaJson {
     pub id: String,
     pub r#type: String,

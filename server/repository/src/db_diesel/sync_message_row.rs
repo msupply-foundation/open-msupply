@@ -10,7 +10,7 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-#[derive(DbEnum, Debug, Clone, PartialEq, TS, Eq, Hash, Default, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, TS, Eq, Hash, Default, Serialize, Deserialize, schemars::JsonSchema)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 #[PgType = "sync_message_status"]
 pub enum SyncMessageRowStatus {
@@ -21,7 +21,7 @@ pub enum SyncMessageRowStatus {
     Error,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, TS, schemars::JsonSchema)]
 pub enum SyncMessageRowType {
     #[default]
     RequestFieldChange,
@@ -61,8 +61,7 @@ allow_tables_to_appear_in_same_query!(sync_message, store);
 allow_tables_to_appear_in_same_query!(sync_message, name);
 
 #[derive(
-    Clone, Queryable, Insertable, Debug, PartialEq, AsChangeset, Default, Serialize, Deserialize, TS,
-)]
+    Clone, Queryable, Insertable, Debug, PartialEq, AsChangeset, Default, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[diesel(table_name = sync_message)]
 pub struct SyncMessageRow {
     pub id: String,

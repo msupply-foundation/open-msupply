@@ -24,7 +24,7 @@ use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, S
 const RECORD_TABLE: &str = "stocktake_line";
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyStocktakeLineRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -37,7 +37,7 @@ pub struct LegacyStocktakeLineRowOmsFields {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyStocktakeLineRow {
     pub ID: String,
     pub stock_take_ID: String,

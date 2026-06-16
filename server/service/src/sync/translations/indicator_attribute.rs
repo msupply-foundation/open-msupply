@@ -9,7 +9,7 @@ use crate::sync::translations::program_indicator::ProgramIndicatorTranslation;
 
 use super::{PullTranslateResult, SyncTranslation};
 
-#[derive(Deserialize, PartialEq)]
+#[derive(Deserialize, PartialEq, schemars::JsonSchema)]
 enum LegacyAxis {
     #[serde(rename = "column")]
     Column,
@@ -17,7 +17,7 @@ enum LegacyAxis {
     Row,
 }
 
-#[derive(Deserialize, PartialEq)]
+#[derive(Deserialize, PartialEq, schemars::JsonSchema)]
 enum LegacyValueType {
     #[serde(rename = "number")]
     Number,
@@ -35,7 +35,7 @@ fn to_value_type(value_type: LegacyValueType) -> Option<IndicatorValueType> {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, schemars::JsonSchema)]
 pub struct LegacyIndicatorAttribute {
     #[serde(rename = "ID")]
     id: String,

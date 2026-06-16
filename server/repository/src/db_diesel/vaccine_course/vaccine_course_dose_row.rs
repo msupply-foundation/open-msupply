@@ -36,8 +36,7 @@ allow_tables_to_appear_in_same_query!(vaccine_course_dose, name);
 allow_tables_to_appear_in_same_query!(vaccine_course_dose, item);
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default, Serialize, Deserialize,
-)]
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default, Serialize, Deserialize, schemars::JsonSchema)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = vaccine_course_dose)]
 pub struct VaccineCourseDoseRow {

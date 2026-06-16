@@ -42,7 +42,7 @@ table! {
 
 joinable!(latest_asset_log -> asset (asset_id));
 
-#[derive(DbEnum, Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum AssetLogStatus {
@@ -55,7 +55,7 @@ pub enum AssetLogStatus {
     Unserviceable,
 }
 
-#[derive(DbEnum, Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum AssetLogType {
@@ -65,8 +65,7 @@ pub enum AssetLogType {
 }
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
-)]
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize, schemars::JsonSchema)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = asset_log)]
 pub struct AssetLogRow {

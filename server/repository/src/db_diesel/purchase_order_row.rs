@@ -117,7 +117,7 @@ pub struct PurchaseOrderRow {
     pub donor_id: Option<String>,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, Ord, PartialOrd)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, Ord, PartialOrd, schemars::JsonSchema)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]

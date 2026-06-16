@@ -5,7 +5,7 @@ use serde_json::Value;
 use super::{PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
+#[derive(Deserialize, schemars::JsonSchema)]
 pub struct LegacyFormSchemaRow {
     #[serde(rename = "ID")]
     id: String,

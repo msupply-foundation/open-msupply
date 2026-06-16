@@ -16,7 +16,7 @@ use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
-#[derive(Deserialize, Serialize, PartialEq)]
+#[derive(Deserialize, Serialize, PartialEq, schemars::JsonSchema)]
 pub struct RequisitionLineOmsFields {
     pub rnr_form_line_id: Option<String>, // Actually from rnr table and only included in sync push so that OG auth module can use
     pub expiry_date: Option<NaiveDate>, // Actually from rnr table and only included in sync push so that OG auth module can use
@@ -29,7 +29,7 @@ pub struct RequisitionLineOmsFields {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, PartialEq)]
+#[derive(Deserialize, Serialize, PartialEq, schemars::JsonSchema)]
 pub struct LegacyRequisitionLineRow {
     pub ID: String,
     pub requisition_ID: String,

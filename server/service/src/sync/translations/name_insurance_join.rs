@@ -16,7 +16,7 @@ use super::{
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, schemars::JsonSchema)]
 pub enum LegacyInsurancePolicyType {
     #[serde(rename = "personal")]
     Personal,
@@ -24,7 +24,7 @@ pub enum LegacyInsurancePolicyType {
     Business,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyNameInsuranceJoinRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -41,7 +41,7 @@ impl LegacyInsurancePolicyType {
 }
 
 #[allow(non_snake_case)]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, schemars::JsonSchema)]
 pub struct LegacyNameInsuranceJoinRow {
     pub ID: String,
     pub nameID: String,

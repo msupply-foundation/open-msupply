@@ -520,8 +520,8 @@ fn is_sync_version_compatible(sync_v6_version: u32) -> bool {
 }
 
 /// The inclusive `[min, max]` range of `sync_v6_version` values this server accepts on V6
-/// endpoints. Exposed so the sync wire-format contract snapshot (see [`crate::sync::wire_schema`])
-/// can record it and CI can flag changes to the supported version window.
+/// endpoints. Exposed so the sync schema snapshot (see [`crate::sync::sync_schema`]) can record it
+/// and CI can flag changes to the supported version window.
 pub(crate) fn supported_sync_v6_version_range() -> (u32, u32) {
     (MIN_VERSION, MAX_VERSION)
 }

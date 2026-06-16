@@ -4,7 +4,7 @@ use repository::{StorageConnection, SyncBufferRow, WarningRow};
 
 use super::{PullTranslateResult, SyncTranslation};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyWarningRow {
     #[serde(rename = "ID")]
     pub id: String,

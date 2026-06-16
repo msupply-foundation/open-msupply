@@ -19,7 +19,7 @@ use super::{
 };
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, schemars::JsonSchema)]
 pub struct LegacyListMasterRow {
     #[serde(rename = "ID")]
     id: String,
@@ -33,7 +33,7 @@ pub struct LegacyListMasterRow {
     inactive: Option<bool>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, schemars::JsonSchema)]
 struct LegacyProgramSettings {
     #[serde(rename = "storeTags")]
     store_tags: Option<HashMap<String, LegacyProgramSettingsStoreTag>>,
@@ -43,14 +43,14 @@ struct LegacyProgramSettings {
     elmis_code: Option<String>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
 struct LegacyProgramSettingsStoreTag {
     order_types: Option<Vec<LegacyOrderType>>,
     period_schedule_name: String,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, schemars::JsonSchema)]
 struct LegacyOrderType {
     name: String,
     #[serde(rename = "thresholdMOS")]

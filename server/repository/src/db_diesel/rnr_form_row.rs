@@ -49,8 +49,7 @@ allow_tables_to_appear_in_same_query!(rnr_form, program);
 allow_tables_to_appear_in_same_query!(rnr_form, period_schedule);
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
-)]
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default, schemars::JsonSchema)]
 #[diesel(table_name = rnr_form)]
 #[diesel(treat_none_as_null = true)]
 pub struct RnRFormRow {
@@ -70,7 +69,7 @@ pub struct RnRFormRow {
     pub name_id: String,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, schemars::JsonSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum RnRFormStatus {

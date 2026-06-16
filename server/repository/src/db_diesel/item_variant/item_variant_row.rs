@@ -44,7 +44,7 @@ allow_tables_to_appear_in_same_query!(item_variant, location_type);
 allow_tables_to_appear_in_same_query!(item_variant, barcode);
 allow_tables_to_appear_in_same_query!(item_variant, location);
 
-#[derive(Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize, schemars::JsonSchema)]
 #[diesel(table_name = item_variant)]
 pub struct ItemVariantRow {
     pub id: String,

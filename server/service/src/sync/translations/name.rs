@@ -17,7 +17,7 @@ use super::{
     ToSyncRecordTranslationType,
 };
 
-#[derive(Deserialize, Serialize, Debug, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, schemars::JsonSchema)]
 pub enum LegacyNameRowType {
     #[serde(rename = "facility")]
     Facility,
@@ -51,7 +51,7 @@ impl LegacyNameRowType {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyNameRow {
     #[serde(rename = "ID")]
     pub id: String,

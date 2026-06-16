@@ -22,7 +22,7 @@ use util::sync_serde::{
     naive_time, object_fields_as_option, zero_date_as_option, zero_f64_as_none,
 };
 
-#[derive(Deserialize, Serialize, Debug, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, schemars::JsonSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum LegacyOmStatus {
     New,
@@ -64,7 +64,7 @@ impl LegacyOmStatus {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, schemars::JsonSchema)]
 pub enum LegacyTransactType {
     /// Supplier invoice
     #[serde(rename = "si")]
@@ -89,7 +89,7 @@ pub enum LegacyTransactType {
     Others,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, schemars::JsonSchema)]
 pub enum LegacyTransactStatus {
     /// new
     #[serde(rename = "nw")]
@@ -110,7 +110,7 @@ pub enum LegacyTransactStatus {
     Others,
 }
 
-#[derive(Deserialize, Serialize, PartialEq, Eq, Clone, Debug)]
+#[derive(Deserialize, Serialize, PartialEq, Eq, Clone, Debug, schemars::JsonSchema)]
 pub enum TransactMode {
     #[serde(rename = "store")]
     Store,
@@ -120,7 +120,7 @@ pub enum TransactMode {
     #[serde(other)]
     Others,
 }
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Deserialize, Serialize, Default, schemars::JsonSchema)]
 pub struct TransactRowOmsFields {
     #[serde(default)]
     pub charges_local_currency: f64,
@@ -129,7 +129,7 @@ pub struct TransactRowOmsFields {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyTransactRow {
     pub ID: String,
 

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{PullTranslateResult, SyncTranslation};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyLocationTypeRow {
     #[serde(rename = "ID")]
     pub id: String,

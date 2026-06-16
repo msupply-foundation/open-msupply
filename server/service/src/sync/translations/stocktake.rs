@@ -12,7 +12,7 @@ use util::sync_serde::{
 
 use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub enum LegacyStocktakeStatus {
     /// From the 4d code this is used for new
     #[serde(rename = "sg")]
@@ -26,7 +26,7 @@ pub enum LegacyStocktakeStatus {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyStocktakeRow {
     pub ID: String,
     #[serde(rename = "created_by_ID")]

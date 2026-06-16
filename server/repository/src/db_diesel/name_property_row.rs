@@ -23,8 +23,7 @@ joinable!(name_property -> property (property_id));
 allow_tables_to_appear_in_same_query!(name_property, property);
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
-)]
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 #[diesel(table_name = name_property)]
 #[diesel(treat_none_as_null = true)]
 pub struct NamePropertyRow {

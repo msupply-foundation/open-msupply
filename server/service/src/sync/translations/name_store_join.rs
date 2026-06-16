@@ -16,7 +16,7 @@ use super::{
 };
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyNameStoreJoinRow {
     #[serde(rename = "ID")]
     pub id: String,

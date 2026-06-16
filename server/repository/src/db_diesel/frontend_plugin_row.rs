@@ -7,13 +7,13 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone, schemars::JsonSchema)]
 pub struct FrontendPluginFile {
     pub file_name: String,
     pub file_content_base64: String,
 }
 
-#[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct FrontendPluginFiles(pub Vec<FrontendPluginFile>);
 
 impl From<String> for FrontendPluginFiles {
@@ -28,7 +28,7 @@ impl From<FrontendPluginFiles> for String {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct FrontendPluginTypes(pub Vec<String>);
 
 impl From<String> for FrontendPluginTypes {
@@ -64,8 +64,7 @@ table! {
 }
 
 #[derive(
-    Clone, Insertable, Default, Queryable, Debug, PartialEq, Eq, AsChangeset, Serialize, Deserialize,
-)]
+    Clone, Insertable, Default, Queryable, Debug, PartialEq, Eq, AsChangeset, Serialize, Deserialize, schemars::JsonSchema)]
 #[diesel(table_name = frontend_plugin)]
 pub struct FrontendPluginRow {
     pub id: String,

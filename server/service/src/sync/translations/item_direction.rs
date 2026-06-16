@@ -7,7 +7,7 @@ use crate::sync::translations::item::ItemTranslation;
 use super::{PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
+#[derive(Deserialize, schemars::JsonSchema)]
 pub struct LegacyItemDirectionRow {
     ID: String,
     item_ID: String,

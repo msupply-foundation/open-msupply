@@ -10,7 +10,7 @@ use crate::sync::translations::indicator_attribute::IndicatorAttribute;
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyIndicatorValue {
     #[serde(rename = "ID")]
     id: String,

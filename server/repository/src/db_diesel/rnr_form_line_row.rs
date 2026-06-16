@@ -59,8 +59,7 @@ allow_tables_to_appear_in_same_query!(rnr_form_line, item);
 allow_tables_to_appear_in_same_query!(rnr_form_line, requisition_line);
 
 #[derive(
-    Clone, Queryable, Debug, PartialEq, Serialize, Deserialize, Default,
-)]
+    Clone, Queryable, Debug, PartialEq, Serialize, Deserialize, Default, schemars::JsonSchema)]
 #[diesel(table_name = rnr_form_line)]
 pub struct RnRFormLineRow {
     pub id: String,
@@ -93,7 +92,7 @@ pub struct RnRFormLineRow {
     pub item_id: String,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, schemars::JsonSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum RnRFormLowStock {

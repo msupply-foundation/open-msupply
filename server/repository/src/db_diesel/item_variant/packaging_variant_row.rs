@@ -19,8 +19,7 @@ table! {
 }
 
 #[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
-)]
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize, schemars::JsonSchema)]
 #[diesel(table_name = packaging_variant)]
 pub struct PackagingVariantRow {
     pub id: String,

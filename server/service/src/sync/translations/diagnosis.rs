@@ -7,7 +7,7 @@ use serde::Deserialize;
 use super::{PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
+#[derive(Deserialize, schemars::JsonSchema)]
 pub struct LegacyDiagnosisRow {
     pub ID: String,
     pub ICD_CODE: String,

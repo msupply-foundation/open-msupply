@@ -20,7 +20,7 @@ use super::{
 };
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyTemperatureLogRow {
     #[serde(rename = "ID")]
     pub id: String,

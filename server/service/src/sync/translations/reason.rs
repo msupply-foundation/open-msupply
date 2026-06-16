@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{PullTranslateResult, SyncTranslation};
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, schemars::JsonSchema)]
 pub enum LegacyOptionsType {
     #[serde(rename = "positiveInventoryAdjustment")]
     PositiveInventoryAdjustment,
@@ -25,7 +25,7 @@ pub enum LegacyOptionsType {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyOptionsRow {
     #[serde(rename = "ID")]
     pub id: String,

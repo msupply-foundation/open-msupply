@@ -62,8 +62,7 @@ allow_tables_to_appear_in_same_query!(vaccination, name_store_join);
 allow_tables_to_appear_in_same_query!(vaccination, store);
 
 #[derive(
-    Clone, Queryable, Debug, PartialEq, Eq, Serialize, Deserialize, Default,
-)]
+    Clone, Queryable, Debug, PartialEq, Eq, Serialize, Deserialize, Default, schemars::JsonSchema)]
 #[diesel(table_name = vaccination)]
 pub struct VaccinationRow {
     pub id: String,

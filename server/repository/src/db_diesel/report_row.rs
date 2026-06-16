@@ -10,7 +10,7 @@ use diesel_derive_enum::DbEnum;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ValueEnum, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ValueEnum, Default, schemars::JsonSchema)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -59,8 +59,7 @@ joinable!(report -> form_schema (argument_schema_id));
 allow_tables_to_appear_in_same_query!(report, form_schema);
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Serialize, Deserialize, Default,
-)]
+    Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Serialize, Deserialize, Default, schemars::JsonSchema)]
 #[diesel(table_name = report)]
 pub struct ReportRow {
     pub id: String,

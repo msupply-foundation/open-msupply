@@ -9,7 +9,7 @@ use crate::sync::translations::{clinician::ClinicianTranslation, store::StoreTra
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyClinicianStoreJoinRow {
     #[serde(rename = "ID")]
     pub id: String,

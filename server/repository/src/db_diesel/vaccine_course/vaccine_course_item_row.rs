@@ -29,8 +29,7 @@ joinable!(vaccine_course_item -> item (item_id));
 allow_tables_to_appear_in_same_query!(vaccine_course_item, item);
 
 #[derive(
-    Clone, Queryable, Debug, PartialEq, Default, Deserialize, Serialize,
-)]
+    Clone, Queryable, Debug, PartialEq, Default, Deserialize, Serialize, schemars::JsonSchema)]
 #[diesel(table_name = vaccine_course_item)]
 pub struct VaccineCourseItemRow {
     pub id: String,

@@ -13,7 +13,7 @@ use repository::{
 */
 
 #[allow(non_snake_case)]
-#[derive(Serialize)]
+#[derive(Serialize, schemars::JsonSchema)]
 pub struct LegacyEncounterRow {
     pub ID: String,
     pub document_type: String,

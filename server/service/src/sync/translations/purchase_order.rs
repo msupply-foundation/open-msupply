@@ -16,7 +16,7 @@ use util::sync_serde::{
     zero_f64_as_none,
 };
 
-#[derive(Deserialize, Serialize, Debug, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, schemars::JsonSchema)]
 pub enum LegacyPurchaseOrderStatus {
     /// new
     #[serde(rename = "nw")]
@@ -37,7 +37,7 @@ pub enum LegacyPurchaseOrderStatus {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default, schemars::JsonSchema)]
 pub struct PurchaseOrderOmsFields {
     #[serde(default)]
     pub created_datetime: NaiveDateTime,
@@ -56,7 +56,7 @@ pub struct PurchaseOrderOmsFields {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyPurchaseOrderRow {
     #[serde(rename = "name_ID")]
     pub name_id: String,

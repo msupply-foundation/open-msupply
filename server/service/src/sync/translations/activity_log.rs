@@ -10,7 +10,7 @@ use crate::sync::translations::store::StoreTranslation;
 use util::sync_serde::empty_str_as_option_string;
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyActivityLogRow {
     #[serde(rename = "ID")]
     pub id: String,

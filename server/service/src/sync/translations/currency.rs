@@ -8,7 +8,7 @@ use super::{PullTranslateResult, SyncTranslation};
 use util::sync_serde::{date_option_to_isostring, zero_date_as_option};
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyCurrencyRow {
     #[serde(rename = "ID")]
     pub id: String,

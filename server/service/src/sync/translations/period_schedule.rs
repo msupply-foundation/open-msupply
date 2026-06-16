@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use super::{PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyPeriodScheduleRow {
     #[serde(rename = "ID")]
     pub id: String,

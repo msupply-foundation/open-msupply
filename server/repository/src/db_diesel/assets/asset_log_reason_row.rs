@@ -24,8 +24,7 @@ table! {
 }
 
 #[derive(
-    Clone, Insertable, Queryable, Default, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
-)]
+    Clone, Insertable, Queryable, Default, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 #[diesel(table_name = asset_log_reason)]
 pub struct AssetLogReasonRow {
     pub id: String,

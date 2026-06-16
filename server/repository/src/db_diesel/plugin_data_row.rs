@@ -26,8 +26,7 @@ table! {
 joinable!(plugin_data -> store (store_id));
 
 #[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Serialize, Deserialize, TS,
-)]
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Serialize, Deserialize, TS, schemars::JsonSchema)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = plugin_data)]
 pub struct PluginDataRow {

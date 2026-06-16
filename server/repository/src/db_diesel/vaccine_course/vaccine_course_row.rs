@@ -25,8 +25,7 @@ table! {
 }
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Serialize, Deserialize, Default,
-)]
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Serialize, Deserialize, Default, schemars::JsonSchema)]
 #[diesel(table_name = vaccine_course)]
 #[diesel(treat_none_as_null = true)]
 pub struct VaccineCourseRow {

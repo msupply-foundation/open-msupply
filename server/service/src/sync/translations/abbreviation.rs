@@ -5,7 +5,7 @@ use serde::Deserialize;
 use super::{PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
+#[derive(Deserialize, schemars::JsonSchema)]
 pub struct LegacyAbbreviationRow {
     ID: String,
     abbreviation: String,

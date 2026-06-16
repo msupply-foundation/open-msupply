@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{IntegrationOperation, PullTranslateResult, SyncTranslation};
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, schemars::JsonSchema)]
 pub enum LegacyStoreMode {
     #[serde(rename = "store")]
     Store,
@@ -20,7 +20,7 @@ pub enum LegacyStoreMode {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
+#[derive(Deserialize, schemars::JsonSchema)]
 pub struct LegacyStoreRow {
     #[serde(rename = "ID")]
     id: String,

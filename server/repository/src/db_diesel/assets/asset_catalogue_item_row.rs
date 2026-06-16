@@ -25,8 +25,7 @@ table! {
 }
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
-)]
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize, schemars::JsonSchema)]
 #[diesel(table_name = asset_catalogue_item)]
 #[diesel(treat_none_as_null = true)]
 pub struct AssetCatalogueItemRow {

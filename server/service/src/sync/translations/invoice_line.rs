@@ -25,7 +25,7 @@ use super::{
     PushTranslateResult, SyncTranslation,
 };
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, schemars::JsonSchema)]
 pub enum LegacyTransLineType {
     #[serde(rename = "stock_in")]
     StockIn,
@@ -42,7 +42,7 @@ pub enum LegacyTransLineType {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Deserialize, Serialize, Default, schemars::JsonSchema)]
 pub struct TransLineRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -61,7 +61,7 @@ pub struct TransLineRowOmsFields {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyTransLineRow {
     #[serde(rename = "ID")]
     pub id: String,

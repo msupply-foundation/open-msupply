@@ -353,10 +353,10 @@ async fn main() -> anyhow::Result<()> {
             info!("Schema exported in schema.graphql");
         }
         Action::ExportSyncSchema { path } => {
-            info!("Exporting sync wire-format schema");
-            let path = path.unwrap_or(PathBuf::from("sync-wire-schema.json"));
-            fs::write(&path, service::sync::wire_schema::sync_wire_schema_string())?;
-            info!("Sync wire-format schema exported to {}", path.display());
+            info!("Exporting sync schema");
+            let path = path.unwrap_or(PathBuf::from("sync-schema.json"));
+            fs::write(&path, service::sync::sync_schema::sync_schema_string())?;
+            info!("Sync schema exported to {}", path.display());
         }
         Action::InitialiseDatabase => {
             info!("Resetting database");

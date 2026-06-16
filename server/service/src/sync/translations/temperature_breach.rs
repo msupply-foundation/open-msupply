@@ -18,7 +18,7 @@ use super::{
     SyncTranslation,
 };
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, schemars::JsonSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum LegacyTemperatureBreachType {
     ColdConsecutive,
@@ -29,7 +29,7 @@ pub enum LegacyTemperatureBreachType {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyTemperatureBreachRow {
     #[serde(rename = "ID")]
     pub id: String,

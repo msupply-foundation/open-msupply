@@ -27,8 +27,7 @@ table! {
 }
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
-)]
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 #[diesel(table_name = asset_property)]
 #[diesel(treat_none_as_null = true)]
 pub struct AssetPropertyRow {

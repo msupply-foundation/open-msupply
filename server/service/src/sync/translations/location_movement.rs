@@ -17,7 +17,7 @@ use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option_string, naive_time, zero_date_as_option,
 };
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyLocationMovementRow {
     #[serde(rename = "ID")]
     pub id: String,

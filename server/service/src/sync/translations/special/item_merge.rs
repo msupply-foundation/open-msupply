@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use crate::sync::translations::{item::ItemTranslation, PullTranslateResult, SyncTranslation};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, schemars::JsonSchema)]
 pub struct ItemMergeMessage {
     #[serde(rename = "mergeIdToKeep")]
     pub merge_id_to_keep: String,

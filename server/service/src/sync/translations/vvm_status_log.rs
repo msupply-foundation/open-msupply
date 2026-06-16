@@ -14,7 +14,7 @@ use util::sync_serde::{date_to_isostring, empty_str_as_option_string, naive_time
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyVVMStatusLogRow {
     #[serde(rename = "ID")]
     pub id: String,

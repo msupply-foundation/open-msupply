@@ -21,8 +21,7 @@ table! {
 }
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
-)]
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 #[diesel(table_name = asset_internal_location)]
 pub struct AssetInternalLocationRow {
     pub id: String,

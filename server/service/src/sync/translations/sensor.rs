@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{to_legacy_time, PullTranslateResult, PushTranslateResult, SyncTranslation};
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacySensorRow {
     #[serde(rename = "ID")]
     pub id: String,

@@ -8,7 +8,7 @@ use util::sync_serde::empty_str_as_option_string;
 use super::{PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
+#[derive(Deserialize, schemars::JsonSchema)]
 pub struct LegacyVVMStatusRow {
     ID: String,
     description: String,

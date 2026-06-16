@@ -38,8 +38,7 @@ joinable!(asset -> store (store_id));
 allow_tables_to_appear_in_same_query!(latest_asset_log, asset, store);
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
-)]
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize, schemars::JsonSchema)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = asset)]
 pub struct AssetRow {

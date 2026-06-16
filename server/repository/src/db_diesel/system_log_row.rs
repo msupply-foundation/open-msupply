@@ -18,7 +18,7 @@ table! {
     }
 }
 
-#[derive(DbEnum, Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Display)]
+#[derive(DbEnum, Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Display, schemars::JsonSchema)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum SystemLogType {
@@ -45,8 +45,7 @@ impl SystemLogType {
 }
 
 #[derive(
-    Clone, Queryable, Insertable, AsChangeset, Default, Debug, PartialEq, Serialize, Deserialize,
-)]
+    Clone, Queryable, Insertable, AsChangeset, Default, Debug, PartialEq, Serialize, Deserialize, schemars::JsonSchema)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = system_log)]
 pub struct SystemLogRow {

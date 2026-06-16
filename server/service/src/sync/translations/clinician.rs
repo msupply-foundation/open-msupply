@@ -9,14 +9,14 @@ use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, S
 use crate::sync::translations::store::StoreTranslation;
 use util::sync_serde::{empty_str_as_option_string, object_fields_as_option, ok_or_none};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct ClinicianOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "ok_or_none")]
     pub gender: Option<GenderType>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyClinicianRow {
     #[serde(rename = "ID")]
     pub id: String,

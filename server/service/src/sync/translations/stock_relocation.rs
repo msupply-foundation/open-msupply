@@ -13,7 +13,7 @@ use util::sync_serde::{
     empty_str_as_option_string, object_fields_as_option, zero_date_as_option,
 };
 
-#[derive(Deserialize, Serialize, Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default, schemars::JsonSchema)]
 pub struct LegacyReplenishmentRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option")]
@@ -25,7 +25,7 @@ pub struct LegacyReplenishmentRowOmsFields {
     pub to_pack_size: Option<f64>,
 }
 
-#[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, Clone, schemars::JsonSchema)]
 pub enum LegacyReplenishmentStatus {
     #[serde(rename = "sg")]
     Sg,
@@ -53,7 +53,7 @@ fn legacy_stock_relocation_status(status: &StockRelocationStatus) -> LegacyReple
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, schemars::JsonSchema)]
 pub struct LegacyReplenishmentRow {
     #[serde(rename = "ID")]
     pub id: String,

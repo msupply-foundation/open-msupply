@@ -7,7 +7,7 @@ use crate::sync::translations::period_schedule::PeriodScheduleTranslation;
 use super::{PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyPeriodRow {
     #[serde(rename = "ID")]
     pub id: String,

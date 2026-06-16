@@ -27,6 +27,9 @@ rusqlite = "0.38.0"
 regex = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+# JsonSchema derives on Row structs that are serialized directly to the sync wire format,
+# so the sync schema snapshot (service/src/sync/sync_schema.rs) covers them.
+schemars = { workspace = true }
 thiserror = { workspace = true }
 log = { workspace = true }
 # Migration script embeds package.json from repository root, single files is embeded and accessed

@@ -9,7 +9,7 @@ use crate::sync::translations::{master_list::MasterListTranslation, name::NameTr
 use super::{PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
+#[derive(Deserialize, schemars::JsonSchema)]
 pub struct LegacyListMasterNameJoinRow {
     ID: String,
     name_ID: String,

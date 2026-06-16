@@ -35,8 +35,7 @@ allow_tables_to_appear_in_same_query!(contact_form, user_account);
 allow_tables_to_appear_in_same_query!(contact_form, name);
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
-)]
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default, schemars::JsonSchema)]
 #[diesel(table_name = contact_form)]
 pub struct ContactFormRow {
     pub id: String,
@@ -49,7 +48,7 @@ pub struct ContactFormRow {
     pub contact_type: ContactType,
 }
 
-#[derive(Clone, Debug, PartialEq, Default, DbEnum, Eq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Default, DbEnum, Eq, Deserialize, Serialize, schemars::JsonSchema)]
 #[PgType = "contact_type_enum"]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]

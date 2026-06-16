@@ -6,7 +6,7 @@ use crate::sync::translations::{
     clinician::ClinicianTranslation, PullTranslateResult, SyncTranslation,
 };
 
-#[derive(Deserialize)]
+#[derive(Deserialize, schemars::JsonSchema)]
 pub struct ClinicianMergeMessage {
     #[serde(rename = "mergeIdToKeep")]
     pub merge_id_to_keep: String,

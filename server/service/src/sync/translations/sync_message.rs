@@ -11,7 +11,7 @@ use util::sync_serde::{empty_str_as_option_string, naive_time};
 use super::{to_legacy_time, PushTranslateResult};
 
 /// Message from mSupply Central Server
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, schemars::JsonSchema)]
 pub struct LegacyMessageRow {
     #[serde(rename = "ID")]
     pub id: String,
@@ -34,7 +34,7 @@ pub struct LegacyMessageRow {
     pub error_message: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Default, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, Default, PartialEq, schemars::JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum LegacySyncMessageStatus {
     #[default]

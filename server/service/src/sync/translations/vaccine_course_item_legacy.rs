@@ -14,7 +14,7 @@ use repository::{
 */
 
 #[allow(non_snake_case)]
-#[derive(Serialize)]
+#[derive(Serialize, schemars::JsonSchema)]
 pub struct LegacyVaccineCourseItemRow {
     pub ID: String,
     pub vaccine_course_ID: String,

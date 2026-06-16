@@ -7,7 +7,7 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize, schemars::JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum PluginType {
     AverageMonthlyConsumption,
@@ -19,7 +19,7 @@ pub enum PluginType {
     Schedule,
 }
 
-#[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct PluginTypes(pub Vec<PluginType>);
 
 impl From<String> for PluginTypes {
@@ -34,7 +34,7 @@ impl From<PluginTypes> for String {
     }
 }
 
-#[derive(DbEnum, Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[cfg_attr(test, derive(strum::EnumIter))]
@@ -55,8 +55,7 @@ table! {
 }
 
 #[derive(
-    Clone, Insertable, Default, Queryable, Debug, PartialEq, Eq, AsChangeset, Serialize, Deserialize,
-)]
+    Clone, Insertable, Default, Queryable, Debug, PartialEq, Eq, AsChangeset, Serialize, Deserialize, schemars::JsonSchema)]
 #[diesel(table_name = backend_plugin)]
 pub struct BackendPluginRow {
     pub id: String,

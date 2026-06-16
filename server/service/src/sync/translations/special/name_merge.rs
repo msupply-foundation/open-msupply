@@ -10,7 +10,7 @@ use crate::sync::translations::{
     name::NameTranslation, IntegrationOperation, PullTranslateResult, SyncTranslation,
 };
 
-#[derive(Deserialize)]
+#[derive(Deserialize, schemars::JsonSchema)]
 pub struct NameMergeMessage {
     #[serde(rename = "mergeIdToKeep")]
     pub merge_id_to_keep: String,

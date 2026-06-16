@@ -21,7 +21,7 @@ use util::sync_serde::empty_str_as_option_string;
 use super::{IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_camel_case_types)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub enum LegacyItemType {
     non_stock,
     service,
@@ -29,7 +29,7 @@ pub enum LegacyItemType {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyItemRow {
     ID: String,
     item_name: String,

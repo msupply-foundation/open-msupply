@@ -5,7 +5,7 @@ use repository::{
 use serde::{Deserialize, Serialize};
 use util::sync_serde::empty_str_as_option_string;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyUserTable {
     #[serde(rename = "ID")]
     pub id: String,

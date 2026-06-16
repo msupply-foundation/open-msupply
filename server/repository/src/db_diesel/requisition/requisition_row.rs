@@ -71,7 +71,7 @@ pub enum RequisitionType {
     Imprest,
     StockHistory,
 }
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize, Default, schemars::JsonSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum RequisitionStatus {

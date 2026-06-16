@@ -10,7 +10,7 @@ use crate::sync::translations::{item::ItemTranslation, master_list::MasterListTr
 use super::{PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
+#[derive(Deserialize, schemars::JsonSchema)]
 pub struct LegacyListMasterLineRow {
     ID: String,
     item_master_ID: String,

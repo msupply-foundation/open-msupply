@@ -8,7 +8,7 @@ use serde::Deserialize;
 use crate::sync::translations::{name::NameTranslation, PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
+#[derive(Deserialize, schemars::JsonSchema)]
 pub struct PartialLegacyNameRow {
     pub ID: String,
     #[serde(rename = "customer")]

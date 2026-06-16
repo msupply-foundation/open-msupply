@@ -19,15 +19,15 @@ use util::sync_serde::empty_str_as_option_string;
 
 use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, schemars::JsonSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-enum LegacyDocumentStatus {
+pub enum LegacyDocumentStatus {
     Active,
     Deleted,
 }
 
-#[derive(Deserialize, Serialize)]
-struct LegacyDocumentRow {
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
+pub struct LegacyDocumentRow {
     #[serde(rename = "ID")]
     pub id: String,
     pub name: String,

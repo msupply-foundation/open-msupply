@@ -19,8 +19,7 @@ table! {
 }
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
-)]
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default, schemars::JsonSchema)]
 #[diesel(table_name = asset_catalogue_type)]
 pub struct AssetTypeRow {
     pub id: String,

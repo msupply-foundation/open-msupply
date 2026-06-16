@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{PullTranslateResult, SyncTranslation};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyInsuranceProvider {
     #[serde(rename = "ID")]
     id: String,

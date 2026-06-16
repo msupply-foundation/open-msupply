@@ -8,7 +8,7 @@ use crate::sync::translations::master_list::MasterListTranslation;
 
 use super::{PullTranslateResult, SyncTranslation};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, schemars::JsonSchema)]
 pub struct LegacyProgramIndicator {
     #[serde(rename = "ID")]
     id: String,

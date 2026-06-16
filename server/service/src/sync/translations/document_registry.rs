@@ -12,9 +12,9 @@ use util::sync_serde::empty_str_as_option_string;
 
 use super::{utils::clear_invalid_fk, PullTranslateResult, SyncTranslation};
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, schemars::JsonSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-enum LegacyDocumentCategory {
+pub enum LegacyDocumentCategory {
     Patient,
     ProgramEnrolment,
     Encounter,
@@ -25,8 +25,8 @@ enum LegacyDocumentCategory {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
-struct LegacyDocumentRegistryRow {
+#[derive(Deserialize, schemars::JsonSchema)]
+pub struct LegacyDocumentRegistryRow {
     #[serde(rename = "ID")]
     pub id: String,
     pub category: LegacyDocumentCategory,

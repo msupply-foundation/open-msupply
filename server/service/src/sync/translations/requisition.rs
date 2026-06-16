@@ -20,7 +20,7 @@ use util::sync_serde::{
 };
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, schemars::JsonSchema)]
 pub struct OmsFields {
     #[serde(default)]
     pub created_from_requisition_id: Option<String>,
@@ -30,7 +30,7 @@ pub struct OmsFields {
     pub destination_customer_id: Option<String>,
 }
 
-#[derive(Deserialize, Serialize, Debug, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, schemars::JsonSchema)]
 pub enum LegacyRequisitionType {
     /// A response to the request created for the supplying store
     #[serde(rename = "response")]
@@ -58,7 +58,7 @@ pub enum LegacyRequisitionType {
     Others,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, schemars::JsonSchema)]
 pub enum LegacyRequisitionStatus {
     /// suggested
     #[serde(rename = "sg")]
@@ -80,7 +80,7 @@ pub enum LegacyRequisitionStatus {
 }
 
 // https://github.com/sussol/msupply/blob/master/Project/Sources/Methods/AUTHORISATION_STATUSES.4dm
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, schemars::JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum LegacyAuthorisationStatus {
     None,
@@ -96,7 +96,7 @@ pub enum LegacyAuthorisationStatus {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyRequisitionRow {
     pub ID: String,
     pub serial_number: i64,
@@ -181,7 +181,7 @@ pub struct LegacyRequisitionRow {
 /// This method will sanitise om_fields if it sees a mismatch between legacy
 /// and new omSupply fields (for response requisition)
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 struct PartialLegacyRequisitionRow {
     pub r#type: LegacyRequisitionType,
     pub status: LegacyRequisitionStatus,

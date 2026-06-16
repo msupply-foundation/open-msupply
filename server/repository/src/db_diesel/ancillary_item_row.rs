@@ -28,7 +28,7 @@ define_linked_tables! {
 /// `ancillary_quantity`) rather than a derived decimal, so we don't lose precision through
 /// a y/x round-trip. At order time the ancillary count is
 /// `requested_quantity * ancillary_quantity / item_quantity`.
-#[derive(Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize, schemars::JsonSchema)]
 #[diesel(table_name = ancillary_item)]
 pub struct AncillaryItemRow {
     pub id: String,

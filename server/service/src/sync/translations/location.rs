@@ -10,7 +10,7 @@ use crate::sync::translations::{location_type::LocationTypeTranslation, store::S
 
 use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyLocationRow {
     #[serde(rename = "ID")]
     pub id: String,

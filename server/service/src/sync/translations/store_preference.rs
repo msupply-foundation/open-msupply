@@ -6,14 +6,14 @@ use util::sync_serde::string_to_f64;
 
 use super::{PullTranslateResult, SyncTranslation};
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, schemars::JsonSchema)]
 pub enum LegacyOptionsType {
     #[serde(rename = "store_preferences")]
     StorePreferences,
     #[serde(other)]
     Others,
 }
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, schemars::JsonSchema)]
 pub struct LegacyPrefRow {
     #[serde(rename = "store_ID")]
     pub id: String,
@@ -22,7 +22,7 @@ pub struct LegacyPrefRow {
     pub data: LegacyPrefData,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, schemars::JsonSchema)]
 pub struct LegacyPrefData {
     #[serde(default)] // In case preference is missing, use default
     #[serde(rename = "default_item_packsize_to_one")]

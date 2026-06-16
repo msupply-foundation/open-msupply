@@ -5,7 +5,7 @@ use repository::{ItemWarningJoinRow, StorageConnection, SyncBufferRow};
 
 use super::{PullTranslateResult, SyncTranslation};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 
 pub struct LegacyItemWarningJoinRow {
     #[serde(rename = "item_ID")]

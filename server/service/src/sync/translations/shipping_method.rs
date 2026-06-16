@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{PullTranslateResult, SyncTranslation};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, schemars::JsonSchema)]
 pub struct LegacyShippingMethod {
     #[serde(rename = "ID")]
     id: String,

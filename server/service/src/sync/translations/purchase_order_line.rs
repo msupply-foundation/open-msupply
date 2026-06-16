@@ -12,14 +12,14 @@ use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, zero_date_as_option, zero_f64_as_none,
 };
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, schemars::JsonSchema)]
 pub struct LegacyPurchaseOrderLineRowOmsFields {
     #[serde(default)]
     pub status: PurchaseOrderLineStatus,
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, schemars::JsonSchema)]
 pub struct LegacyPurchaseOrderLineRow {
     #[serde(rename = "ID")]
     pub id: String,

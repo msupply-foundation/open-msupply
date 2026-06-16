@@ -7,7 +7,7 @@ use crate::sync::translations::{name::NameTranslation, name_tag::NameTagTranslat
 use super::{PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
+#[derive(Deserialize, schemars::JsonSchema)]
 pub struct LegacyNameTagJoinRow {
     ID: String,
     name_ID: String,

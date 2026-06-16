@@ -78,8 +78,7 @@ allow_tables_to_appear_in_same_query!(invoice, item_link);
 allow_tables_to_appear_in_same_query!(invoice, purchase_order);
 
 #[derive(
-    DbEnum, Debug, Display, Clone, PartialEq, Eq, Serialize, Deserialize, Default, PartialOrd, Ord,
-)]
+    DbEnum, Debug, Display, Clone, PartialEq, Eq, Serialize, Deserialize, Default, PartialOrd, Ord, schemars::JsonSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceType {

@@ -5,7 +5,7 @@ use serde::Deserialize;
 use util::sync_serde::empty_str_as_option_string;
 
 #[allow(non_snake_case)]
-#[derive(Deserialize)]
+#[derive(Deserialize, schemars::JsonSchema)]
 pub struct LegacyContactRow {
     ID: String,
     #[serde(deserialize_with = "empty_str_as_option_string")]

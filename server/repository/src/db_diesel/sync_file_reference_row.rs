@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, Upsert};
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, schemars::JsonSchema)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum SyncFileStatus {
     #[default]
@@ -76,7 +76,7 @@ pub struct SyncFileReferenceRow {
 /// is local-only per-site state (retry counters, transfer progress, direction).
 /// On pull, [`Self::into_row`] merges the wire payload over the existing local row
 /// so a status sync from central never clobbers our own bookkeeping.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct SyncFileReferenceWire {
     pub id: String,
     pub table_name: String,
