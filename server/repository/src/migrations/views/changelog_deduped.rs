@@ -19,18 +19,12 @@ impl ViewMigrationFragment for ViewMigration {
         sql!(
             connection,
             r#"
-                -- View of the changelog that only contains the most recent changes to a row, i.e. previous row
-    -- edits are removed.
-    -- Note, an insert + delete will show up as an orphaned delete.
-    -- For records that can be transferred between stores (like assets), we dedupe by both
-    -- record_id and store_id so changes are not lost when an asset is moved.
-    --
-    -- This is expressed as "keep the row that has no newer row for the same (record_id, store_id)"
-    -- (a NOT EXISTS anti-join) rather than the equivalent GROUP BY ... MAX(cursor) self-join.
-    -- Both produce the same rows (cursor is unique), but the anti-join form lets the query planner
-    -- push a caller's `WHERE cursor >= ?` predicate down to the base table's cursor index instead of
-    -- deduping the entire changelog first. On a large changelog (e.g. a central server) this turns
-    -- the per-batch sync push/pull queries from a full-table dedup into a tail scan.
+                -- Most recent change per row only (an insert + delete shows as an orphaned delete).
+    -- Dedupe by (record_id, store_id) so store transfers (e.g. assets) aren't lost.
+    -- "Keep the row with no newer row for the same key" (NOT EXISTS anti-join) is equivalent to the
+    -- old GROUP BY MAX(cursor) self-join (cursor is unique), but lets the planner push a
+    -- `WHERE cursor >= ?` down to the cursor index instead of deduping the whole changelog first -
+    -- turning per-batch sync queries on a large changelog from a full scan into a tail scan.
   CREATE VIEW changelog_deduped AS
     SELECT c.cursor,
         c.table_name,

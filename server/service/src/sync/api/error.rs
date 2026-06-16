@@ -134,9 +134,8 @@ impl SyncApiError {
         matches!(self.source, SyncApiErrorVariantV5::Other(_))
     }
 
-    /// Central is busy with another sync session for this site (legacy central gates
-    /// sync per-site via the site_status state machine: sync / integration /
-    /// initialisation in progress). Caller should wait for central to be idle and retry.
+    /// Central is busy with another session for this site (sync / integration / initialisation in
+    /// progress). Caller should wait for central to be idle and retry.
     pub(crate) fn is_central_busy(&self) -> bool {
         matches!(
             &self.source,

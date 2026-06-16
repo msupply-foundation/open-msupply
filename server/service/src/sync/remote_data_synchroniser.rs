@@ -26,11 +26,8 @@ use repository::{
 use thiserror::Error;
 
 const INITIALISATION_POLL_PERIOD_SECONDS: u64 = 15;
-// Fail only after this long with NO forward progress: i.e. central reports no live worker AND
-// the sync queue is not growing. This is a *stall* timeout, NOT a run-length cap - a legitimate
-// large initial sync can run for hours and never trip it, as long as the queue keeps growing.
-// Mirrors the `util::api_helper::READ_IDLE_TIMEOUT` philosophy (succeed while making progress,
-// fail fast when genuinely stalled).
+// Stall timeout, not a run-length cap: fail only after this long with no forward progress (no live
+// worker and the queue not growing). A large initial sync can run for hours as long as it progresses.
 const INITIALISATION_STALL_TIMEOUT_SECONDS: u64 = 20 * 60;
 
 #[derive(Error, Debug)]
@@ -94,17 +91,12 @@ pub struct RemoteDataSynchroniser {
 }
 
 impl RemoteDataSynchroniser {
-    /// Request initialisation.
+    /// Request initialisation, then poll until central finishes generating the queue.
     ///
-    /// `post_initialise` returns immediately: central generates the initial sync queue in a
-    /// dedicated worker process (see `syncInitialiseSiteProcess` in legacy central) rather than
-    /// inline in the request. We then poll until central reports the queue is `completed`.
-    ///
-    /// We decide whether to POST on the *live* worker status (`site_status`), not the persisted
-    /// `initialisation_status`. A worker that crashed (or whose spawn failed) leaves the persisted
-    /// status stuck at `started` with no process running; gating on that would suppress the
-    /// re-POST forever. Gating on liveness instead makes a crashed initialisation self-heal on the
-    /// next sync cycle, while still avoiding a duplicate POST when a worker is genuinely running.
+    /// `post_initialise` returns immediately (central generates the queue in a worker process). We
+    /// gate the POST on live worker status (`site_status`), not the persisted `initialisation_status`:
+    /// a crashed worker leaves status stuck at `started`, and gating on liveness lets it self-heal on
+    /// the next cycle while still avoiding a duplicate POST when a worker is genuinely running.
     pub(crate) async fn request_initialisation(
         &self,
         _site_info: &SiteInfoV5,
@@ -117,16 +109,12 @@ impl RemoteDataSynchroniser {
 
         if !worker_running {
             if let Err(error) = self.sync_api_v5.post_initialise().await {
-                // Tolerate transient conditions and just poll: connection/unknown errors, and any
-                // "central busy" code (another sync session for this site is in progress, or central
-                // is already building the queue - e.g. a worker started between our status check and
-                // the POST). Anything else is a real failure.
+                // Tolerate transient errors (connection/unknown) and "central busy" codes, then poll.
                 if !(error.is_connection() || error.is_unknown() || error.is_central_busy()) {
                     return Err(error.into());
                 }
             }
         }
-        // Wait for the central worker to finish generating the initial sync queue
         self.wait_for_initialisation(
             INITIALISATION_POLL_PERIOD_SECONDS,
             INITIALISATION_STALL_TIMEOUT_SECONDS,
@@ -138,19 +126,11 @@ impl RemoteDataSynchroniser {
 
     /// Wait for central to finish generating the initial sync queue.
     ///
-    /// Central does this work in a worker process; on a large dataset it can legitimately run for
-    /// hours. Rather than a fixed wall-clock cap, we wait as long as central is making *progress*
-    /// and only give up after `stall_timeout_seconds` of none:
-    /// - `site_info.initialisation_status` gives the authoritative outcome (`completed`/`error`),
-    ///   set before the worker exits so it's race-safe.
-    /// - `site_status` tells us whether a worker is alive, and `queue_length` tells us whether the
-    ///   queue is actually growing (a server-side count, independent of our network speed).
-    ///
-    /// We refresh the progress clock while the worker is alive and either still in its pre-generation
-    /// phase (`queue_length == 0`) or the queue is growing. A `TimeoutReached` therefore only fires
-    /// when central is genuinely stalled: the worker died without finishing (`idle` + not
-    /// `completed`/`error`), or it's alive but the queue has stopped growing (a wedge). Both are
-    /// recoverable - the next sync cycle re-POSTs via `request_initialisation`.
+    /// No fixed wall-clock cap: we wait while central makes progress and only give up after
+    /// `stall_timeout_seconds` of none. `site_info.initialisation_status` is the authoritative outcome
+    /// (`completed`/`error`, set before the worker exits); `site_status` (worker alive) and a growing
+    /// `queue_length` are the progress signals. `TimeoutReached` only fires when genuinely stalled
+    /// (worker died, or alive but queue not growing) - recoverable via a re-POST next cycle.
     pub(crate) async fn wait_for_initialisation(
         &self,
         poll_period_seconds: u64,
@@ -164,11 +144,10 @@ impl RemoteDataSynchroniser {
         loop {
             tokio::time::sleep(poll_period).await;
 
-            // Outcome first - this is authoritative and set before the worker exits.
+            // Outcome first - authoritative, set before the worker exits.
             let site_info = match self.sync_api_v5.get_site_info().await {
                 Ok(info) => info,
-                // A transient poll failure doesn't affect the server-side worker; log and retry
-                // rather than aborting the whole sync. A prolonged outage trips the stall timeout.
+                // Transient poll failures don't affect the worker; retry until the stall timeout.
                 Err(error) if error.is_connection() || error.is_unknown() => {
                     log::warn!(
                         "Polling central site info failed (will retry): {:#?}",
@@ -403,11 +382,9 @@ impl From<PushSyncRecord> for RemoteSyncRecordV5 {
     }
 }
 
-/// Whether an initialisation poll observation represents forward progress, and so should refresh
-/// the stall clock in [`RemoteDataSynchroniser::wait_for_initialisation`]. Progress means a live
-/// worker that is either still in its pre-generation phase (no records queued yet) or actively
-/// growing the queue. A live worker whose non-empty queue has stopped growing (a wedge), or a dead
-/// worker (`worker_alive == false`), is NOT progress and will eventually trip the stall timeout.
+/// Forward progress (refreshes the stall clock): a live worker that's either still pre-generation
+/// (`queue_length == 0`) or growing the queue. A dead worker, or a live worker whose non-empty queue
+/// has stopped growing (a wedge), is not progress and eventually trips the stall timeout.
 fn is_initialisation_progressing(
     worker_alive: bool,
     queue_length: i64,
@@ -597,7 +574,7 @@ mod test {
         .await;
 
         assert!(result.is_err(), "should still be waiting, not returned");
-        post.assert_calls(0); // no duplicate POST while a worker is running
+        post.assert_hits(0); // no duplicate POST while a worker is running
     }
 
     fn dummy_site_info() -> SiteInfoV5 {
