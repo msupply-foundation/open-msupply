@@ -6,7 +6,9 @@ export const useFormSchemaByType = (type: string | undefined) => {
 
   return useQuery({
     queryKey: api.keys.byType(type ?? ''),
-    queryFn: () => api.get.byType(type ?? ''),
+    // Coalesce to null: api.get.byType returns undefined when no schema
+    // matches, which TanStack Query forbids and would crash the page.
+    queryFn: async () => (await api.get.byType(type ?? '')) ?? null,
     refetchOnMount: false,
     gcTime: 0,
     enabled: !!type

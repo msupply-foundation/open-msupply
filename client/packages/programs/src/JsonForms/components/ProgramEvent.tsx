@@ -95,8 +95,8 @@ const Options = z
 type Options = z.infer<typeof Options>;
 
 const extractAt = (
-  encounter?: EncounterFragment,
-  program?: ProgramEnrolmentFragment,
+  encounter?: EncounterFragment | null,
+  program?: ProgramEnrolmentFragment | null,
   options?: Options
 ): Date => {
   const date = new Date();
