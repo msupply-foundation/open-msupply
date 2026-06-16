@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import Bugsnag from '@bugsnag/js';
 import {
   Routes,
@@ -19,11 +19,6 @@ import {
   EnvUtils,
   LocalStorage,
   AuthError,
-  BadUserInputError,
-  InternalServerError,
-  NetworkError,
-  PermissionDeniedError,
-  UnauthenticatedError,
   createBrowserRouter,
   createRoutesFromElements,
   RouterProvider,
@@ -41,7 +36,6 @@ import { Initialise, Login, Viewport } from './components';
 import { MigrationInfoProvider } from './components/Migration';
 import { Site } from './Site';
 import { ErrorAlert } from './components/ErrorAlert';
-import { ConnectionLostBanner } from './components/ConnectionLostBanner';
 import { Discovery } from './components/Discovery';
 import { Android } from './components/Android';
 import { BackButtonHandler } from './BackButtonHandler';
@@ -55,25 +49,6 @@ const queryClient = new QueryClient({
     queries: {
       // Creates unnecessary requests
       refetchOnWindowFocus: false,
-      // Only retry transport failures; auth/permission/internal errors
-      // won't change on a retry, and the user is waiting.
-      retry: (failureCount, error) =>
-        error instanceof NetworkError && failureCount < 3,
-      retryDelay: attempt => Math.min(1000 * 2 ** attempt, 10000),
-      // Queries throw errors during render unless this is set, which would
-      // trip the global ErrorBoundary. Every typed GraphQL error is already
-      // surfaced elsewhere — network by the connection banner, auth by
-      // the existing auth-error modal, permission/internal/bad-input by
-      // toasts in QueryErrorHandler — so none of them should escalate.
-      // The error boundary stays as a backstop for unexpected throws.
-      throwOnError: error =>
-        !(
-          error instanceof NetworkError ||
-          error instanceof UnauthenticatedError ||
-          error instanceof PermissionDeniedError ||
-          error instanceof BadUserInputError ||
-          error instanceof InternalServerError
-        ),
     },
   },
 });
@@ -90,22 +65,17 @@ const skipRequest = () =>
 const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { logout } = useAuthContext();
   const data = useInitialisationStatus(false);
-  const status = data?.data?.status;
 
-  // The server reporting anything other than Initialised means any cached
-  // auth cookie from a previous DB is stale. Clear it so authed queries
-  // (e.g. usePreferences, gated by `enabled: !!storeId`) stop firing while
-  // the user is on the init flow. Render-time side effects are unsafe, so
-  // do it in an effect that fires on status transitions.
-  useEffect(() => {
-    if (status && status !== InitialisationStatusType.Initialised) {
-      logout();
-    }
-  }, [status, logout]);
+  // Query still loading — don't render children yet, but don't logout either
+  if (!data?.data) return null;
 
-  if (!status) return null;
-  if (status !== InitialisationStatusType.Initialised) return null;
-  return children;
+  if (data.data.status == InitialisationStatusType.Initialised)
+    return children;
+
+  // Server is not initialised — clear token
+  logout();
+
+  return null;
 };
 
 /**
@@ -157,7 +127,6 @@ const router = createBrowserRouter(
         // Now need to apply additional error boundary inside the router
         <ErrorBoundary Fallback={GenericErrorFallback}>
           <Viewport>
-            <ConnectionLostBanner />
             <ErrorAlert />
             <BackButtonHandler />
             <Box display="flex" style={{ minHeight: '100%' }}>

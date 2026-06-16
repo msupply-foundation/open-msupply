@@ -1,10 +1,10 @@
-import { LocaleKey, NetworkError, TypedTFunction } from '../..';
+import { LocaleKey, GraphqlStdError, TypedTFunction } from '../..';
 import { Sdk, AuthTokenQuery, RefreshTokenQuery } from './operations.generated';
 
 export type AuthenticationError = {
   message: string;
   detail?: string;
-  cause?: Error;
+  stdError?: string | undefined;
   timeoutRemaining?: number;
 };
 
@@ -69,17 +69,21 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         });
         return authTokenGuard(result, t);
       } catch (e) {
-        const err = e as Error & { detail?: string };
-        if (err?.message) console.error(err.message);
+        const error = e as GraphqlStdError;
+        if ('message' in error) {
+          console.error(error.message);
+        }
 
-        const isNetwork = e instanceof NetworkError;
+        const errorMessage = error.message.includes('Network request failed')
+          ? 'ConnectionError'
+          : 'UnknownError';
 
         return {
           token: '',
           error: {
-            message: isNetwork ? 'ConnectionError' : 'UnknownError',
-            detail: err?.detail ?? err?.message,
-            cause: e instanceof Error ? e : undefined,
+            message: errorMessage,
+            detail: error.message,
+            stdError: error.stdError,
           },
         };
       }
