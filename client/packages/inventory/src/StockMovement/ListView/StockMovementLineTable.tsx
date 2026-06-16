@@ -63,6 +63,7 @@ interface StockMovementLineTableProps {
   onUpdate: (id: string, patch: Partial<DraftStockMovementLine>) => void;
   onRemove?: (id: string) => void;
   disabled?: boolean;
+  failedLineIds?: string[];
 }
 
 export const StockMovementLineTable = ({
@@ -71,6 +72,7 @@ export const StockMovementLineTable = ({
   onUpdate,
   onRemove,
   disabled = false,
+  failedLineIds = [],
 }: StockMovementLineTableProps) => {
   const t = useTranslation();
 
@@ -80,6 +82,7 @@ export const StockMovementLineTable = ({
         id: 'item',
         header: t('label.item'),
         accessorFn: row => `${row.itemCode} - ${row.itemName}`,
+        getIsError: row => failedLineIds.includes(row.id),
         size: 200,
         enableSorting: false,
       },
@@ -219,7 +222,7 @@ export const StockMovementLineTable = ({
 
     return cols;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showFromLocation, onUpdate, onRemove, disabled]);
+  }, [showFromLocation, onUpdate, onRemove, disabled, failedLineIds]);
 
   const table = useSimpleMaterialTable({
     tableId: 'stock-movement-lines',
