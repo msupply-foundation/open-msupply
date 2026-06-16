@@ -57,6 +57,7 @@ pub mod android {
                 standalone_store_name: None,
                 standalone_admin_username: None,
                 standalone_admin_password: None,
+                workers: None,
             },
             database: DatabaseSettings {
                 username: "n/a".to_string(),
@@ -102,7 +103,10 @@ pub mod android {
     }
 
     #[no_mangle]
-    pub extern "C" fn Java_org_openmsupply_client_RemoteServer_stopServer(_: EnvUnowned, _: JClass) {
+    pub extern "C" fn Java_org_openmsupply_client_RemoteServer_stopServer(
+        _: EnvUnowned,
+        _: JClass,
+    ) {
         let ServerBucket { off_switch, thread } = SERVER_BUCKET.lock().unwrap().take().unwrap();
         futures::executor::block_on(off_switch.send(())).unwrap();
         thread.join().unwrap();

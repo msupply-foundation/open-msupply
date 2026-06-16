@@ -7,14 +7,14 @@ use crate::sync::translations::{
 };
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use repository::name_insurance_join_row::NameInsuranceJoinRowRepository;
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, CurrencyRowRepository,
     DiagnosisRowRepository, EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, InvoiceRow,
     InvoiceRowDelete, InvoiceRowRepository, InvoiceStatus, InvoiceType, KeyValueStoreRepository,
-    NameRow, NameRowRepository, Row, StorageConnection, StoreFilter, StoreRepository, StoreRowRepository,
-    SyncBufferRow, UserAccountRow, UserAccountRowRepository,
+    NameRow, NameRowRepository, Row, StorageConnection, StoreFilter, StoreRepository,
+    StoreRowRepository, SyncBufferRow, UserAccountRow, UserAccountRowRepository,
 };
-use repository::name_insurance_join_row::NameInsuranceJoinRowRepository;
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 use util::sync_serde::{
@@ -1092,9 +1092,9 @@ mod tests {
         shipping_method_row::ShippingMethodRowRepository,
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogCondition, ChangelogRepository, CurrencyRow, CurrencyRowRepository, DiagnosisRow,
-        InsuranceProviderRow, CursorAndLimit, FilterBuilder, KeyType,
-        KeyValueStoreRow, ShippingMethodRow, SyncAction, SyncRecordData, RowOrDelete,
+        ChangelogCondition, ChangelogRepository, CurrencyRow, CurrencyRowRepository,
+        CursorAndLimit, DiagnosisRow, FilterBuilder, InsuranceProviderRow, KeyType,
+        KeyValueStoreRow, RowOrDelete, ShippingMethodRow, SyncAction, SyncRecordData,
     };
     use serde_json::json;
 
@@ -1276,7 +1276,9 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "transact".to_string(),
             record_id: "INVOICE_FK_INVALID".to_string(),
-            data: SyncRecordData(serde_json::from_str(r#"{
+            data: SyncRecordData(
+                serde_json::from_str(
+                    r#"{
               "ID": "INVOICE_FK_INVALID",
               "name_ID": "name_store_a",
               "store_ID": "store_b",
@@ -1317,7 +1319,10 @@ mod tests {
               "insuranceDiscountRate": 0,
               "goods_received_ID": "",
               "original_PO_ID": "does_not_exist_purchase_order"
-            }"#).unwrap()),
+            }"#,
+                )
+                .unwrap(),
+            ),
             action: SyncAction::Upsert,
             ..Default::default()
         };
@@ -1352,9 +1357,7 @@ mod tests {
             format!("expected purchase_order_id None; got:\n{debug}")
         );
 
-        let logs = SystemLogRowRepository::new(&connection)
-            .find_all()
-            .unwrap();
+        let logs = SystemLogRowRepository::new(&connection).find_all().unwrap();
         let fk_errors: Vec<_> = logs
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
