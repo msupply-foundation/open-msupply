@@ -8,6 +8,10 @@ pub struct SiteInfoV5 {
     pub(crate) id: String,
     pub(crate) site_id: i32,
     pub(crate) initialisation_status: InitialisationStatus,
+    /// Live count of `sync_out` records queued for this site on central (an init progress signal).
+    /// Optional: older central versions may omit it.
+    #[serde(default)]
+    pub(crate) queue_length: Option<i64>,
     #[serde(rename = "omSupplyCentralServerUrl")]
     pub(crate) central_server_url: String,
     #[serde(rename = "isOmSupplyCentralServer")]
@@ -73,6 +77,7 @@ mod test {
                 id: "abc123".to_string(),
                 site_id: 123,
                 initialisation_status: InitialisationStatus::New,
+                queue_length: None,
                 is_central_server: false,
                 central_server_url: "http://localhost:2000".to_string(),
                 msupply_central_site_id: 1,

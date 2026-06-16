@@ -134,13 +134,19 @@ impl SyncApiError {
         matches!(self.source, SyncApiErrorVariantV5::Other(_))
     }
 
-    /// Central is still building the initial sync queue (common for large
-    /// legacy datasets); caller should poll instead of failing the sync.
-    pub(crate) fn is_initialisation_in_progress(&self) -> bool {
+    /// Central is busy with another session for this site (sync / integration / initialisation in
+    /// progress). Caller should wait for central to be idle and retry.
+    pub(crate) fn is_central_busy(&self) -> bool {
         matches!(
             &self.source,
             SyncApiErrorVariantV5::ParsedError { source, .. }
-                if matches!(&source.code, SyncErrorCodeV5::Other(code) if code == "initialisation_in_progress")
+                if matches!(
+                    &source.code,
+                    SyncErrorCodeV5::Other(code)
+                        if code == "sync_is_running"
+                            || code == "integration_in_progress"
+                            || code == "initialisation_in_progress"
+                )
         )
     }
 }
@@ -338,33 +344,41 @@ mod test {
         );
     }
 
-    /// `503 initialisation_in_progress` must be classified as benign so
-    /// `request_initialisation` polls instead of failing; others must not be.
+    /// The three transient "central busy" codes must classify as busy (so callers poll and
+    /// retry instead of failing). Connection / unrelated errors must not.
     #[actix_rt::test]
-    async fn test_is_initialisation_in_progress() {
-        // 503 with `initialisation_in_progress` code -> classified as in-progress
-        let mock_server = MockServer::start();
-        let url = mock_server.base_url();
-
-        mock_server.mock(|when, then| {
-            when.method(POST).path("/sync/v5/initialise");
-            then.status(503).body(
-                r#"{
-                    "error": {
-                        "code": "initialisation_in_progress",
-                        "message": "Initialisation in progress",
-                        "data": null
-                    }
-                }"#,
+    async fn test_central_busy_classification() {
+        // Helper: stand up a mock that returns `code` with 503 on /initialise, and return
+        // the resulting parsed error.
+        async fn busy_error(code: &str) -> SyncApiError {
+            let mock_server = MockServer::start();
+            let url = mock_server.base_url();
+            let body = format!(
+                r#"{{ "error": {{ "code": "{}", "message": "busy", "data": null }} }}"#,
+                code
             );
-        });
+            mock_server.mock(|when, then| {
+                when.method(POST).path("/sync/v5/initialise");
+                then.status(503).body(body);
+            });
+            create_api(&url, "", "")
+                .post_initialise()
+                .await
+                .expect_err("Should result in error")
+        }
 
-        let result = create_api(&url, "", "")
-            .post_initialise()
-            .await
-            .expect_err("Should result in error");
+        // All three transient codes must classify as central-busy.
+        for code in [
+            "initialisation_in_progress",
+            "sync_is_running",
+            "integration_in_progress",
+        ] {
+            let result = busy_error(code).await;
+            assert!(result.is_central_busy(), "{} should be central-busy", code);
+        }
 
-        // Sanity check it parsed into the expected `Other` code...
+        // `initialisation_in_progress` parses as an `Other` 503 code.
+        let result = busy_error("initialisation_in_progress").await;
         assert_matches!(
             &result,
             SyncApiError {
@@ -379,41 +393,16 @@ mod test {
             }
         );
 
-        assert!(result.is_initialisation_in_progress());
-        assert!(!result.is_connection());
-        assert!(!result.is_unknown());
+        // An unrelated 503 code must NOT be treated as busy.
+        let result = busy_error("some_other_error").await;
+        assert!(!result.is_central_busy());
 
-        // A different 503 error code must NOT be treated as in-progress.
-        let mock_server = MockServer::start();
-        let url = mock_server.base_url();
-
-        mock_server.mock(|when, then| {
-            when.method(POST).path("/sync/v5/initialise");
-            then.status(503).body(
-                r#"{
-                    "error": {
-                        "code": "sync_is_running",
-                        "message": "Sync is already running - try again later",
-                        "data": null
-                    }
-                }"#,
-            );
-        });
-
-        let result = create_api(&url, "", "")
-            .post_initialise()
-            .await
-            .expect_err("Should result in error");
-
-        assert!(!result.is_initialisation_in_progress());
-
-        // A connection error must NOT be treated as in-progress either.
+        // A connection error must NOT be treated as busy.
         let result = create_api("http://localhost:9999", "", "")
             .post_initialise()
             .await
             .expect_err("Should result in error");
-
-        assert!(!result.is_initialisation_in_progress());
+        assert!(!result.is_central_busy());
         assert!(result.is_connection());
     }
 }
