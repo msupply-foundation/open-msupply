@@ -284,7 +284,7 @@ enum Action {
     /// allows the site to sync from a different machine. Pass `--token` and/or
     /// `--hardware-id` to choose what to reset; at least one is required.
     ResetSiteAuth {
-        /// Comma-separated list of site names to reset (matched exactly, case-sensitive).
+        /// Comma-separated list of site names to reset (matched case-insensitively).
         /// Names may contain spaces, e.g. `--site-names "Site A,Site B"`.
         #[clap(short = 'n', long, value_delimiter = ',')]
         site_names: Vec<String>,

@@ -13,7 +13,7 @@ use service::{
 /// Intended to be run on a central server, where the `site` table holds the downstream
 /// sites' tokens and hardware ids. Clearing a site's token forces it to re-authenticate;
 /// clearing its hardware id lets it sync from a different machine. Site names are matched
-/// exactly (case-sensitive). All names are resolved up front, so an unknown name or a
+/// case-insensitively. All names are resolved up front, so an unknown name or a
 /// reference to the current site aborts before anything is mutated — resetting the current
 /// site's own auth is not allowed. Each reset is logged at `info` level.
 ///
@@ -77,7 +77,7 @@ fn reset_site_auth_inner(
     for name in &site_names {
         let name = name.trim();
         let site = site_row_repo
-            .find_one_by_name(name)?
+            .find_one_by_name_case_insensitive(name)?
             .ok_or(anyhow!("No site found with name '{}'", name))?;
 
         if current_site_id == Some(site.id) {
@@ -174,7 +174,7 @@ mod tests {
             .to_string()
             .contains("--token"));
 
-        // Unknown site name (also covers wrong-case, since matching is exact).
+        // Unknown site name.
         assert!(reset(vec!["nonexistent".to_string()], true, true)
             .unwrap_err()
             .to_string()
@@ -231,7 +231,7 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn reset_site_auth_both_multiple_sites_exact_case() {
+    async fn reset_site_auth_both_multiple_sites_case_insensitive() {
         let (_, connection, connection_manager, _) =
             setup_all("reset_site_auth_multiple", MockDataInserts::none()).await;
         let service_provider = ServiceProvider::new(connection_manager);
@@ -241,11 +241,12 @@ mod tests {
         let b = site(&connection, 2, "Site B");
         let c = site(&connection, 3, "Site C");
 
-        // Exact-case names (whitespace trimmed) reset both fields; "Site C" is untouched.
+        // Names are matched case-insensitively and whitespace-trimmed; both fields are
+        // reset for the matched sites, while "Site C" is left untouched.
         reset_site_auth_inner(
             &service_provider,
             &ctx,
-            vec!["Site A".to_string(), " Site B ".to_string()],
+            vec!["site a".to_string(), " SITE B ".to_string()],
             true,
             true,
         )

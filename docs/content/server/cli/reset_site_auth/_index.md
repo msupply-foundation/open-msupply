@@ -29,8 +29,8 @@ For the full cli argument list and up to date description please run the command
 
 ### Usage
 
-Target sites by name with `--site-names` (comma-separated; names are matched **exactly**,
-case-sensitive, and may contain spaces). Choose what to clear with `--token` and/or
+Target sites by name with `--site-names` (comma-separated; names are matched
+**case-insensitively** and may contain spaces). Choose what to clear with `--token` and/or
 `--hardware-id` — at least one is required; pass both to clear both.
 
 ```
@@ -56,7 +56,7 @@ aborts with an error.
 
 | Flag | Description |
 | --- | --- |
-| `-n`, `--site-names` | Comma-separated list of site names to reset (matched exactly, case-sensitive). Names may contain spaces, e.g. `--site-names "Site A,Site B"`. |
+| `-n`, `--site-names` | Comma-separated list of site names to reset (matched case-insensitively). Names may contain spaces, e.g. `--site-names "Site A,Site B"`. |
 | `-t`, `--token` | Reset the sync token. Pass together with `--hardware-id` to reset both. |
 | `-i`, `--hardware-id` | Reset the hardware id. Pass together with `--token` to reset both. |
 
