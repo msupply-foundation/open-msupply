@@ -6,7 +6,6 @@ fragment StockMovementRow on StockRelocationNode {
   status
   numberOfPacks
   fromPackSize
-  availableNumberOfPacks
   toPackSize
   onHold
   restrictedLocationTypeId
@@ -43,6 +42,7 @@ fragment StockMovementDraftLine on DraftStockRelocationLineNode {
   expiryDate
   fromPackSize
   availableNumberOfPacks
+  totalNumberOfPacks
   onHold
   fromNumberOfPacks
   toPackSize

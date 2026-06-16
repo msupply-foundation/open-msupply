@@ -101,9 +101,9 @@ export const StockMovementLineTable = ({
         enableSorting: false,
       },
       {
-        id: 'availableNumberOfPacks',
-        accessorFn: row => row.availableNumberOfPacks,
-        header: t('label.from-available-packs'),
+        id: 'totalNumberOfPacks',
+        accessorFn: row => row.totalNumberOfPacks,
+        header: t('label.total-packs'),
         columnType: ColumnType.Number,
         size: 100,
         enableSorting: false,
