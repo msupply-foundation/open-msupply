@@ -31,7 +31,7 @@ export const useStockMovementDraft = ({
   movement,
 }: UseStockMovementDraftProps) => {
   const [selectionMode, setSelectionMode] =
-    useState<SelectionMode>('byLocation');
+    useState<SelectionMode>('byItem');
   const [fromLocation, setFromLocation] = useState<LocationRowFragment | null>(
     null
   );

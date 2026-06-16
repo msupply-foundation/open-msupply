@@ -314,14 +314,14 @@ export const StockMovementModal = ({
             onChange={(_, value) => switchMode(value as SelectionMode)}
           >
             <FormControlLabel
-              value="byLocation"
-              control={<Radio />}
-              label={t('label.select-by-location')}
-            />
-            <FormControlLabel
               value="byItem"
               control={<Radio />}
               label={t('label.select-by-item')}
+            />
+            <FormControlLabel
+              value="byLocation"
+              control={<Radio />}
+              label={t('label.select-by-location')}
             />
           </RadioGroup>
         )}
