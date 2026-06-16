@@ -133,6 +133,36 @@ mutation updateStockRelocation(
   }
 }
 
+mutation updateStockRelocations(
+  $input: [UpdateStockRelocationInput!]!
+  $storeId: String!
+) {
+  updateStockRelocations(input: $input, storeId: $storeId) {
+    __typename
+    ... on UpdateStockRelocationsNode {
+      __typename
+      ids
+    }
+    ... on UpdateStockRelocationError {
+      __typename
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+mutation deleteStockRelocations($ids: [String!]!, $storeId: String!) {
+  deleteStockRelocations(ids: $ids, storeId: $storeId) {
+    __typename
+    ... on DeleteStockRelocationsNode {
+      __typename
+      ids
+    }
+  }
+}
+
 mutation deleteStockRelocation(
   $input: DeleteStockRelocationInput!
   $storeId: String!
