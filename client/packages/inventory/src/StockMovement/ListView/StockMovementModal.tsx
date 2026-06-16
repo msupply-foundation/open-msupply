@@ -16,7 +16,7 @@ import { DialogButton } from '@common/components';
 import { useDialog } from '@common/hooks';
 import { FormControlLabel, Radio } from '@mui/material';
 import {
-  LocationRowFragment,
+  LocationSearchInput,
   StockItemSearchInput,
 } from '@openmsupply-client/system';
 import {
@@ -63,7 +63,6 @@ export const StockMovementModal = ({
     selectFromLocation,
     byItem,
     selectByItem,
-    locations,
     itemOptions,
     lines,
     linesToMove,
@@ -333,22 +332,18 @@ export const StockMovementModal = ({
               <Typography variant="caption">
                 {t('label.from-location')}
               </Typography>
-              <Autocomplete<LocationRowFragment>
-                width="280px"
-                options={locations}
-                value={fromLocation}
-                getOptionLabel={location => {
-                  const label = `${location.code} - ${location.name}`;
-                  if (location.onHold) return `${label} (${t('label.on-hold')})`;
-                  if (location.stock.totalCount === 0)
-                    return `${label} (${t('label.no-stock')})`;
-                  return label;
+              <LocationSearchInput
+                width={280}
+                selectedLocation={fromLocation}
+                disabled={false}
+                clearable
+                getDisabledReason={location => {
+                  if (location.onHold) return t('label.on-hold');
+                  if (location.stock?.totalCount === 0)
+                    return t('label.no-stock');
+                  return undefined;
                 }}
-                getOptionDisabled={location =>
-                  location.onHold || location.stock.totalCount === 0
-                }
-                isOptionEqualToValue={(option, value) => option.id === value.id}
-                onChange={(_, location) => selectFromLocation(location)}
+                onChange={location => selectFromLocation(location)}
               />
             </Box>
             {fromLocation && (
