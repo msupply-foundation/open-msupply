@@ -8,9 +8,8 @@ pub struct SiteInfoV5 {
     pub(crate) id: String,
     pub(crate) site_id: i32,
     pub(crate) initialisation_status: InitialisationStatus,
-    /// Live count of `sync_out` records queued for this site on central. Grows server-side as
-    /// the initialisation worker generates records, so it's a network-independent progress
-    /// signal. Optional: older central versions / some responses may omit it.
+    /// Live count of `sync_out` records queued for this site on central (an init progress signal).
+    /// Optional: older central versions may omit it.
     #[serde(default)]
     pub(crate) queue_length: Option<i64>,
     #[serde(rename = "omSupplyCentralServerUrl")]

@@ -114,11 +114,9 @@ where
         };
 
         let idle_timeout = is_timeout_error || status == Some(StatusCode::REQUEST_TIMEOUT);
-        // A mid-flight connection drop (server closed before completing the response, e.g. hyper
-        // `IncompleteMessage`) is retried for endpoints that opt in via `retry_on_idle_timeout` —
-        // i.e. idempotent reads / upserts like sync v6. Gated the same way as idle timeout so legacy
-        // sync v5 keeps it OFF: there a retry would overlap an in-flight server-side request for the
-        // same site. Connect errors are always retried (no server-side work began).
+        // A mid-flight connection drop (e.g. hyper `IncompleteMessage`) is retried only for endpoints
+        // opting in via `retry_on_idle_timeout` (idempotent reads/upserts like v6); v5 keeps it off to
+        // avoid overlapping an in-flight server-side request. Connect errors are always retried.
         let will_retry = (is_connect_error
             || (retry_on_idle_timeout && (idle_timeout || is_dropped_connection)))
             && (index + 1) < connection_timeouts.0.len();
@@ -171,11 +169,9 @@ where
     }
 }
 
-/// True if `error` is the server closing the connection before the response completed (hyper
-/// `IncompleteMessage` — "connection closed before message completed") or another transient
-/// transport-level drop (reset / broken pipe). Distinct from `is_connect` (never connected) and
-/// `is_timeout` (slow/idle socket): the request was sent on an established connection that was then
-/// dropped, so it's safe to retry for idempotent requests.
+/// True if the server dropped an established connection mid-response (hyper `IncompleteMessage`,
+/// reset, broken pipe) - distinct from `is_connect`/`is_timeout`, and safe to retry for idempotent
+/// requests.
 fn is_connection_dropped(error: &reqwest::Error) -> bool {
     // Only request-phase transport errors; never status / decode / body errors.
     error.is_request() && chain_contains_transient_drop(error)

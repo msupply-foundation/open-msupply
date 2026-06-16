@@ -61,10 +61,8 @@ impl LedgerFixDriver {
 }
 
 async fn ledger_fix(service_provider: Arc<ServiceProvider>) {
-    // This runs on the main `select!` loop, so a panic here would take down the whole server.
-    // Acquiring a DB context can fail under transient connection-pool exhaustion (e.g. a large
-    // central serving many concurrent sync pulls) - log and skip this run rather than crash; the
-    // loop will re-trigger on the next interval.
+    // Runs on the main loop, so never panic: a transient pool-exhaustion failure here would crash
+    // the server. Log and skip; the loop retries next interval.
     let ctx = match service_provider.basic_context() {
         Ok(ctx) => ctx,
         Err(error) => {
