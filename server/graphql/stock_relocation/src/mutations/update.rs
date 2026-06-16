@@ -41,6 +41,18 @@ pub enum UpdateResponse {
     Error(UpdateError),
 }
 
+#[derive(SimpleObject)]
+pub struct UpdateStockRelocationsNode {
+    pub ids: Vec<String>,
+}
+
+#[derive(Union)]
+#[graphql(name = "UpdateStockRelocationsResponse")]
+pub enum UpdateResponses {
+    Response(UpdateStockRelocationsNode),
+    Error(UpdateError),
+}
+
 #[derive(Interface)]
 #[graphql(name = "UpdateStockRelocationErrorInterface")]
 #[graphql(field(name = "description", ty = "String"))]
@@ -65,32 +77,62 @@ pub fn update_stock_relocation(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    let UpdateInput {
-        id,
-        from_number_of_packs,
-        to_location_id,
-        to_pack_size,
-        status,
-    } = input;
-
     map_response(
         service_provider
             .stock_relocation_service
-            .update_stock_relocation(
-                &service_context,
-                store_id,
-                UpdateServiceInput {
-                    id,
-                    from_number_of_packs,
-                    to_location_id: to_location_id
-                        .map(|to_location_id| NullableUpdate {
-                            value: to_location_id.value,
-                        }),
-                    to_pack_size,
-                    status: status.map(|status| status.into()),
-                },
-            ),
+            .update_stock_relocation(&service_context, store_id, input.to_domain()),
     )
+}
+
+impl UpdateInput {
+    pub fn to_domain(self) -> UpdateServiceInput {
+        let UpdateInput {
+            id,
+            from_number_of_packs,
+            to_location_id,
+            to_pack_size,
+            status,
+        } = self;
+        UpdateServiceInput {
+            id,
+            from_number_of_packs,
+            to_location_id: to_location_id.map(|to_location_id| NullableUpdate {
+                value: to_location_id.value,
+            }),
+            to_pack_size,
+            status: status.map(|status| status.into()),
+        }
+    }
+}
+
+pub fn update_stock_relocations(
+    ctx: &Context<'_>,
+    store_id: &str,
+    inputs: Vec<UpdateInput>,
+) -> Result<UpdateResponses> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateStockLine,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+
+    let service_inputs = inputs.into_iter().map(UpdateInput::to_domain).collect();
+
+    match service_provider
+        .stock_relocation_service
+        .update_stock_relocations(&service_context, store_id, service_inputs)
+    {
+        Ok(rows) => Ok(UpdateResponses::Response(UpdateStockRelocationsNode {
+            ids: rows.into_iter().map(|row| row.id).collect(),
+        })),
+        Err(error) => Ok(UpdateResponses::Error(UpdateError {
+            error: map_error(error)?,
+        })),
+    }
 }
 
 fn map_response(from: Result<StockRelocationRow, UpdateServiceError>) -> Result<UpdateResponse> {

@@ -20,6 +20,17 @@ pub enum DeleteStockRelocationResponse {
     Response(DeleteResponse),
 }
 
+#[derive(SimpleObject)]
+pub struct DeleteStockRelocationsNode {
+    pub ids: Vec<String>,
+}
+
+#[derive(Union)]
+#[graphql(name = "DeleteStockRelocationsResponse")]
+pub enum DeleteResponses {
+    Response(DeleteStockRelocationsNode),
+}
+
 pub fn delete_stock_relocation(
     ctx: &Context<'_>,
     store_id: &str,
@@ -44,25 +55,51 @@ pub fn delete_stock_relocation(
     )
 }
 
-fn map_response(
-    from: Result<String, DeleteServiceError>,
-) -> Result<DeleteStockRelocationResponse> {
+pub fn delete_stock_relocations(
+    ctx: &Context<'_>,
+    store_id: &str,
+    ids: Vec<String>,
+) -> Result<DeleteResponses> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateStockLine,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+
+    match service_provider
+        .stock_relocation_service
+        .delete_stock_relocations(&service_context, store_id, ids)
+    {
+        Ok(ids) => Ok(DeleteResponses::Response(DeleteStockRelocationsNode {
+            ids,
+        })),
+        Err(error) => Err(map_error(error)),
+    }
+}
+
+fn map_response(from: Result<String, DeleteServiceError>) -> Result<DeleteStockRelocationResponse> {
     match from {
         Ok(id) => Ok(DeleteStockRelocationResponse::Response(DeleteResponse(id))),
-        Err(error) => {
-            use DeleteServiceError as E;
-            let formatted_error = format!("{error:#?}");
-
-            let graphql_error = match error {
-                E::RelocationDoesNotExist
-                | E::NotThisStoreRelocation
-                | E::RelocationAlreadyFinalised => BadUserInput(formatted_error),
-                E::DatabaseError(_) => InternalError(formatted_error),
-            };
-
-            Err(graphql_error.extend())
-        }
+        Err(error) => Err(map_error(error)),
     }
+}
+
+fn map_error(error: DeleteServiceError) -> async_graphql::Error {
+    use DeleteServiceError as E;
+    let formatted_error = format!("{error:#?}");
+
+    let graphql_error = match error {
+        E::RelocationDoesNotExist | E::NotThisStoreRelocation | E::RelocationAlreadyFinalised => {
+            BadUserInput(formatted_error)
+        }
+        E::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    graphql_error.extend()
 }
 
 #[cfg(test)]

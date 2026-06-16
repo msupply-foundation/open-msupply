@@ -4,9 +4,15 @@ pub mod delete;
 pub mod insert;
 pub mod update;
 
-pub use delete::{delete_stock_relocation, DeleteInput, DeleteStockRelocationResponse};
+pub use delete::{
+    delete_stock_relocation, delete_stock_relocations, DeleteInput, DeleteResponses,
+    DeleteStockRelocationResponse,
+};
 pub use insert::{insert_stock_relocation, InsertInput, InsertResponse};
-pub use update::{update_stock_relocation, UpdateInput, UpdateResponse};
+pub use update::{
+    update_stock_relocation, update_stock_relocations, UpdateInput, UpdateResponse,
+    UpdateResponses,
+};
 
 pub struct StockLineOnHold {
     pub stock_line_id: String,
