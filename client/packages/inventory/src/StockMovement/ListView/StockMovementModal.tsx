@@ -337,11 +337,16 @@ export const StockMovementModal = ({
                 width="280px"
                 options={locations}
                 value={fromLocation}
-                getOptionLabel={location =>
-                  `${location.code} - ${location.name}${location.onHold ? ` (${t('label.on-hold')})` : ''
-                  }`
+                getOptionLabel={location => {
+                  const label = `${location.code} - ${location.name}`;
+                  if (location.onHold) return `${label} (${t('label.on-hold')})`;
+                  if (location.stock.totalCount === 0)
+                    return `${label} (${t('label.no-stock')})`;
+                  return label;
+                }}
+                getOptionDisabled={location =>
+                  location.onHold || location.stock.totalCount === 0
                 }
-                getOptionDisabled={location => location.onHold}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 onChange={(_, location) => selectFromLocation(location)}
               />

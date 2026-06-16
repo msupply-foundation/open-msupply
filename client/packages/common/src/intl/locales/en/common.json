@@ -1390,6 +1390,7 @@
   "label.no-program-options": "No programs available for this customer",
   "label.no-reason": "No reason",
   "label.no-records-to-push": "There are no records to push",
+  "label.no-stock": "No stock",
   "label.no-supply-levels-configured": "No supply levels configured...",
   "label.no-unallocated-rows-selected": "All of the selected rows are already allocated",
   "label.non-catalogue": "Non-catalogue",
