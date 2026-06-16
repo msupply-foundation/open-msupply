@@ -5,13 +5,13 @@ pub mod mutations;
 pub mod queries;
 pub mod types;
 
+use graphql_types::types::DraftStockRelocationLineNode;
 use mutations::{
     delete_stock_relocation, delete_stock_relocations, insert_stock_relocation,
     update_stock_relocation, update_stock_relocations, DeleteInput, DeleteResponses,
     DeleteStockRelocationResponse, InsertInput, InsertResponse, UpdateInput, UpdateResponse,
     UpdateResponses,
 };
-use graphql_types::types::DraftStockRelocationLineNode;
 use queries::{
     get_stock_relocation, get_stock_relocation_draft_lines, get_stock_relocations,
     StockRelocationDraftLinesInput, StockRelocationFilterInput, StockRelocationResponse,
