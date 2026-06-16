@@ -361,41 +361,6 @@ impl<'a> ChangelogRepository<'a> {
         Ok(result)
     }
 
-    /// This returns the number of changelog records that should be evaluated to send to the remote site when doing a v6_pull
-    /// This looks up associated records to decide if change log should be sent to the site or not
-    /// Update this method when adding new record types to the system
-    pub fn count_outgoing_sync_records_from_central(
-        &self,
-        earliest: u64,
-        sync_site_id: i32,
-        is_initialized: bool,
-    ) -> Result<u64, RepositoryError> {
-        let query = clamp_to_safe_cursor(
-            self.connection,
-            create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized),
-        );
-        let result = query
-            .count()
-            .get_result::<i64>(self.connection.lock().connection())?;
-        Ok(result as u64)
-    }
-
-    pub fn count_outgoing_patient_sync_records_from_central(
-        &self,
-        earliest: u64,
-        sync_site_id: i32,
-        fetch_patient_id: String,
-    ) -> Result<u64, RepositoryError> {
-        let query = clamp_to_safe_cursor(
-            self.connection,
-            create_filtered_outgoing_patient_sync_query(earliest, sync_site_id, fetch_patient_id),
-        );
-        let result = query
-            .count()
-            .get_result::<i64>(self.connection.lock().connection())?;
-        Ok(result as u64)
-    }
-
     /// Returns latest change log
     /// After initial sync we use this method to get the latest cursor to make sure we don't try to push any records that were synced to this site on initialisation
     pub fn absolute_latest_cursor(&self) -> Result<u64, RepositoryError> {
