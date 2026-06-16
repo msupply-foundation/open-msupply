@@ -22,6 +22,7 @@ import {
 import {
   StockMovementRowFragment,
   useDeleteStockMovement,
+  useFinaliseStockMovements,
   useInsertStockMovement,
   useUpdateStockMovement,
 } from '../api';
@@ -73,6 +74,7 @@ export const StockMovementModal = ({
 
   const { insert, isSaving } = useInsertStockMovement();
   const { update, isUpdating } = useUpdateStockMovement();
+  const { finalise, isFinalising } = useFinaliseStockMovements();
   const { delete: deleteMovement, isDeleting } = useDeleteStockMovement();
 
   const getDeleteConfirmation = useConfirmationModal({
@@ -125,6 +127,7 @@ export const StockMovementModal = ({
   const canSave =
     !isSaving &&
     !isUpdating &&
+    !isFinalising &&
     !isDisabled &&
     linesToMove.length > 0 &&
     linesToMove.every(isValid);
@@ -143,11 +146,7 @@ export const StockMovementModal = ({
       getCreateFinaliseConfirmation({
         onConfirm: async () => {
           try {
-            await Promise.all(
-              ids.map(id =>
-                update({ id, status: StockRelocationNodeStatus.Finalised })
-              )
-            );
+            await finalise(ids);
             success(t('messages.stock-movement-finalised'))();
           } catch (e) {
             error((e as Error).message)();
