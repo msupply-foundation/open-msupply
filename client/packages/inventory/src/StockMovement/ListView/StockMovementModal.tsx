@@ -269,8 +269,8 @@ export const StockMovementModal = ({
     <Modal
       slideAnimation={false}
       title={title}
-      height={700}
-      width={1200}
+      height={window.innerHeight * 0.8}
+      width={window.innerWidth * 0.8}
       cancelButton={
         <DialogButton
           variant={isDisabled ? 'close' : 'cancel'}
