@@ -39,11 +39,14 @@ pub enum SyncApiErrorVariantV5 {
     Other(#[source] anyhow::Error),
 }
 
-#[derive(Error, Debug, Serialize, Deserialize)]
+#[derive(Error, Debug, Serialize, Deserialize, schemars::JsonSchema)]
 #[error("code: '{code:?}' message: '{message}' data: '{}'", serde_json::to_string(data).unwrap())]
 pub struct ParsedError {
+    // `code` is serialised as a plain string (see sync_error_code_v5_se/de), so the wire schema
+    // must describe it as a string rather than as the SyncErrorCodeV5 enum shape.
     #[serde(serialize_with = "sync_error_code_v5_se")]
     #[serde(deserialize_with = "sync_error_code_v5_de")]
+    #[schemars(with = "String")]
     pub code: SyncErrorCodeV5,
     pub message: String,
     pub data: Option<serde_json::Value>,

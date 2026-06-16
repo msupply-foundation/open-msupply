@@ -1,5 +1,6 @@
 use chrono::Utc;
 use repository::{ChangelogTableName, SyncAction as SyncActionRepo, SyncBufferRow};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
@@ -9,7 +10,7 @@ fn empty_object() -> serde_json::Value {
     json!({})
 }
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct CommonSyncRecord {
     pub(crate) table_name: String,
@@ -20,7 +21,7 @@ pub(crate) struct CommonSyncRecord {
     pub(crate) record_data: serde_json::Value,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Serialize, JsonSchema)]
 pub(crate) struct RemoteSyncRecordV5 {
     #[serde(rename = "syncOutId")]
     pub(crate) sync_id: String,
@@ -28,7 +29,7 @@ pub(crate) struct RemoteSyncRecordV5 {
     pub(crate) record: CommonSyncRecord,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Serialize, JsonSchema)]
 pub(crate) struct RemoteSyncBatchV5 {
     #[serde(rename = "queueLength")]
     pub(crate) queue_length: u64,
@@ -36,7 +37,7 @@ pub(crate) struct RemoteSyncBatchV5 {
     pub(crate) data: Vec<RemoteSyncRecordV5>,
 }
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize, JsonSchema)]
 pub(crate) enum SyncAction {
     #[serde(alias = "insert")]
     Insert,

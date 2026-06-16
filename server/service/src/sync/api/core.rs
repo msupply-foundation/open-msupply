@@ -21,7 +21,7 @@ const APP_NAME: &str = "Open mSupply Android";
 #[cfg(not(target_os = "android"))]
 const APP_NAME: &str = "Open mSupply Desktop";
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncApiSettings {
     pub server_url: String,

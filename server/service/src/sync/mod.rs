@@ -19,6 +19,7 @@ pub mod synchroniser;
 pub mod synchroniser_driver;
 pub(crate) mod translation_and_integration;
 pub(crate) mod translations;
+pub mod wire_schema;
 
 use crate::service_provider::ServiceProvider;
 use std::sync::RwLock;

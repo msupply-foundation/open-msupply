@@ -518,3 +518,33 @@ fn set_integrating(site_id: i32, is_integrating: bool) {
 fn is_sync_version_compatible(sync_v6_version: u32) -> bool {
     MIN_VERSION <= sync_v6_version && sync_v6_version <= MAX_VERSION
 }
+
+/// The inclusive `[min, max]` range of `sync_v6_version` values this server accepts on V6
+/// endpoints. Exposed so the sync wire-format contract snapshot (see [`crate::sync::wire_schema`])
+/// can record it and CI can flag changes to the supported version window.
+pub(crate) fn supported_sync_v6_version_range() -> (u32, u32) {
+    (MIN_VERSION, MAX_VERSION)
+}
+
+#[cfg(test)]
+mod version_compatibility_tests {
+    use super::*;
+    use crate::sync::settings::SYNC_V6_VERSION;
+
+    // `SYNC_V6_VERSION` is what this build *sends* on V6 requests; `[MIN_VERSION, MAX_VERSION]` is
+    // what this build *accepts* as a central server. If they drift apart, a freshly-built remote
+    // would be rejected by a same-version central with `SyncVersionMismatch`. This guards the
+    // self-compatible invariant; mixed-version fleet ordering is still a deployment concern.
+    #[test]
+    fn sent_sync_v6_version_is_within_supported_range() {
+        assert!(
+            is_sync_version_compatible(SYNC_V6_VERSION),
+            "SYNC_V6_VERSION ({}) is outside the accepted range [{}, {}]. When raising \
+             SYNC_V6_VERSION in settings.rs, also raise MAX_VERSION here (see ../README.md for when \
+             to increment versions).",
+            SYNC_V6_VERSION,
+            MIN_VERSION,
+            MAX_VERSION
+        );
+    }
+}

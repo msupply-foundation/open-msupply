@@ -3,6 +3,7 @@ pub mod download_file;
 pub mod upload_file;
 use repository::RepositoryError;
 use reqwest::{Response, Url};
+use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
 use util::format_error;
@@ -20,7 +21,7 @@ use super::{
 };
 use crate::sync::api::ParsingSyncRecordError;
 
-#[derive(Deserialize, Debug, Error, Serialize)]
+#[derive(Deserialize, Debug, Error, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum SyncParsedErrorV6 {
     #[error("Problem connecting to legacy server: {0}")]
@@ -81,26 +82,26 @@ impl From<ParsingSyncRecordError> for SyncParsedErrorV6 {
     }
 }
 
-#[derive(Deserialize, Debug, Default, Serialize)]
+#[derive(Deserialize, Debug, Default, Serialize, JsonSchema)]
 pub struct SyncPushSuccessV6 {
     pub(crate) records_pushed: u64,
 }
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum SyncPushResponseV6 {
     Data(SyncPushSuccessV6),
     Error(SyncParsedErrorV6),
 }
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum SyncPullResponseV6 {
     Data(SyncBatchV6),
     Error(SyncParsedErrorV6),
 }
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum SiteStatusResponseV6 {
     Data(SiteStatusV6),
@@ -127,12 +128,12 @@ pub enum SyncApiErrorVariantV6 {
     Other(#[from] anyhow::Error),
 }
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, JsonSchema)]
 pub(crate) struct SyncRecordV6 {
     pub(crate) cursor: u64,
     pub(crate) record: CommonSyncRecord,
 }
-#[derive(Deserialize, Debug, Default, Serialize)]
+#[derive(Deserialize, Debug, Default, Serialize, JsonSchema)]
 pub struct SyncBatchV6 {
     // Latest changelog cursor in the 'records'
     // being pushed/pulled
@@ -153,7 +154,7 @@ impl From<PushSyncRecord> for SyncRecordV6 {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncPullRequestV6 {
     pub(crate) cursor: u64,
@@ -164,7 +165,7 @@ pub struct SyncPullRequestV6 {
     pub(crate) sync_v6_version: u32,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncPushRequestV6 {
     pub(crate) batch: SyncBatchV6,
@@ -173,7 +174,7 @@ pub struct SyncPushRequestV6 {
     pub(crate) sync_v6_version: u32,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncPatientPullRequestV6 {
     pub(crate) cursor: u64,
@@ -186,7 +187,7 @@ pub struct SyncPatientPullRequestV6 {
     pub(crate) fetch_patient_id: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SiteStatusRequestV6 {
     pub(crate) sync_v5_settings: SyncApiSettings,
@@ -194,12 +195,12 @@ pub struct SiteStatusRequestV6 {
     pub(crate) sync_v6_version: u32,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct SiteStatusV6 {
     pub(crate) is_integrating: bool,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncDownloadFileRequestV6 {
     pub(crate) table_name: String,
@@ -221,7 +222,7 @@ pub struct SyncDownloadFileRequestV6 {
 // Do NOT use these types from new client code. They are only referenced by the legacy server
 // handler in `sync_on_central::upload_file_legacy`. Once all deployed remote sites have moved
 // to the tus path these types and the handler can be removed together.
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, JsonSchema)]
 pub struct SyncUploadFileRequestV6 {
     pub file_id: String,
     pub sync_v5_settings: SyncApiSettings,
@@ -233,7 +234,7 @@ pub struct SyncUploadFileRequestV6 {
     pub table_name: Option<String>,
 }
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum SyncUploadFileResponseV6 {
     Data(()),

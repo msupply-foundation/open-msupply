@@ -75,6 +75,11 @@ enum Action {
         #[clap(short, long)]
         path: Option<PathBuf>,
     },
+    /// Export the sync wire-format contract snapshot (used to detect breaking sync API changes in CI)
+    ExportSyncSchema {
+        #[clap(short, long)]
+        path: Option<PathBuf>,
+    },
     /// Initialise empty database (existing database will be dropped, and new one created and migrated)
     InitialiseDatabase,
     /// Apply any pending migrations to the database, drop and build views
@@ -346,6 +351,12 @@ async fn main() -> anyhow::Result<()> {
                 schema.sdl(),
             )?;
             info!("Schema exported in schema.graphql");
+        }
+        Action::ExportSyncSchema { path } => {
+            info!("Exporting sync wire-format schema");
+            let path = path.unwrap_or(PathBuf::from("sync-wire-schema.json"));
+            fs::write(&path, service::sync::wire_schema::sync_wire_schema_string())?;
+            info!("Sync wire-format schema exported to {}", path.display());
         }
         Action::InitialiseDatabase => {
             info!("Resetting database");

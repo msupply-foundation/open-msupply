@@ -1,0 +1,66 @@
+name: Sync API Compatibility
+
+# Detects changes to the open-mSupply sync wire-format contract (the V5 records this site sends to
+# legacy mSupply central, the V6 request/response/payload types, and the supported sync version
+# window). The contract is snapshotted into `server/sync-wire-schema.json`; this job regenerates it
+# and fails if the committed file is stale, so every wire change is reviewed as a potential breaking
+# change. See server/service/src/sync/wire_schema.rs.
+#
+# Note: the same drift is also asserted by the `wire_schema_snapshot_is_up_to_date` unit test in the
+# main server test suite (server-tests.yaml, which gates the merge queue). This job exists to give a
+# clear, actionable diff and remediation steps on the PR.
+
+on:
+  pull_request:
+    paths:
+      - 'server/service/src/sync/**'
+      - 'server/sync-wire-schema.json'
+      - '.github/workflows/sync-schema-compatibility.yaml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  sync-schema-diff:
+    name: Detect sync wire-format changes
+    runs-on: self-hosted
+    timeout-minutes: 30
+    env:
+      CARGO_TARGET_DIR: /tmp/target/sync-schema
+    steps:
+      - name: Update PATH
+        run: echo "$HOME/.cargo/bin:/opt/homebrew/bin" >> $GITHUB_PATH
+
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Regenerate the sync wire-format snapshot
+        working-directory: server
+        run: cargo run --bin remote_server_cli -- export-sync-schema --path sync-wire-schema.json
+
+      - name: Fail if the committed snapshot is stale
+        working-directory: server
+        run: |
+          if ! git diff --quiet -- sync-wire-schema.json; then
+            echo "::error::The sync wire-format contract changed but server/sync-wire-schema.json was not updated."
+            echo ""
+            echo "This typically means a sync API change that may break compatibility with sites running"
+            echo "older builds (renamed/removed wire fields, changed enum strings, or a changed version window)."
+            echo ""
+            echo "To resolve:"
+            echo "  1. Regenerate:  cd server && cargo run --bin remote_server_cli -- export-sync-schema"
+            echo "  2. Review the diff below. Removals, renames and type changes are breaking; additions"
+            echo "     are usually safe only when the new field has #[serde(default)]."
+            echo "  3. If the change warrants a sync version bump, update SYNC_V5_VERSION / SYNC_V6_VERSION"
+            echo "     (server/service/src/sync/settings.rs) and/or MIN_VERSION / MAX_VERSION"
+            echo "     (server/service/src/sync/sync_on_central/mod.rs)."
+            echo "  4. Commit the regenerated server/sync-wire-schema.json."
+            echo ""
+            echo "----- drift -----"
+            git --no-pager diff -- sync-wire-schema.json
+            exit 1
+          fi
+          echo "Sync wire-format contract is unchanged."
