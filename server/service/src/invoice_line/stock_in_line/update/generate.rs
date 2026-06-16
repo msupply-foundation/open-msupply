@@ -157,6 +157,7 @@ fn generate_line(
         item_id: _,
         r#type: _,
         status,
+        reason_option_id,
     }: UpdateStockInLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
@@ -249,6 +250,10 @@ fn generate_line(
     update_line.shipped_pack_size = shipped_pack_size.or(update_line.shipped_pack_size);
 
     update_line.volume_per_pack = volume_per_pack.unwrap_or(update_line.volume_per_pack);
+
+    update_line.reason_option_id = reason_option_id
+        .map(|r| r.value)
+        .unwrap_or(update_line.reason_option_id);
 
     Ok(update_line)
 }

@@ -1,0 +1,117 @@
+fragment StockMovementRow on StockRelocationNode {
+  __typename
+  id
+  createdDatetime
+  finalisedDatetime
+  status
+  numberOfPacks
+  fromPackSize
+  availableNumberOfPacks
+  toPackSize
+  onHold
+  restrictedLocationTypeId
+  itemCode
+  itemName
+  batch
+  expiryDate
+  fromStockLineId
+  toStockLineId
+  fromLocation {
+    __typename
+    id
+    code
+    name
+    onHold
+  }
+  toLocation {
+    __typename
+    id
+    code
+    name
+  }
+}
+
+query stockRelocations(
+  $storeId: String!
+  $filter: StockRelocationFilterInput
+  $page: PaginationInput
+  $sort: [StockRelocationSortInput!]
+) {
+  stockRelocations(
+    storeId: $storeId
+    filter: $filter
+    page: $page
+    sort: $sort
+  ) {
+    __typename
+    ... on StockRelocationConnector {
+      __typename
+      totalCount
+      nodes {
+        ...StockMovementRow
+      }
+    }
+  }
+}
+
+mutation insertStockRelocation(
+  $input: InsertStockRelocationInput!
+  $storeId: String!
+) {
+  insertStockRelocation(input: $input, storeId: $storeId) {
+    __typename
+    ... on InsertStockRelocationNode {
+      __typename
+      ids
+    }
+    ... on InsertStockRelocationError {
+      __typename
+      error {
+        __typename
+        description
+        ... on StockLineOnHold {
+          stockLineId
+        }
+        ... on LocationOnHold {
+          locationId
+        }
+        ... on NotEnoughStock {
+          stockLineId
+        }
+      }
+    }
+  }
+}
+
+mutation updateStockRelocation(
+  $input: UpdateStockRelocationInput!
+  $storeId: String!
+) {
+  updateStockRelocation(input: $input, storeId: $storeId) {
+    __typename
+    ... on UpdateStockRelocationNode {
+      __typename
+      id
+    }
+    ... on UpdateStockRelocationError {
+      __typename
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+mutation deleteStockRelocation(
+  $input: DeleteStockRelocationInput!
+  $storeId: String!
+) {
+  deleteStockRelocation(input: $input, storeId: $storeId) {
+    __typename
+    ... on DeleteResponse {
+      __typename
+      id
+    }
+  }
+}

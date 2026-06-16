@@ -109,9 +109,11 @@ export const ReceivedDateInput = () => {
     // other same-day transactions and is available all day. For today, send the
     // actual moment — startOfDay would be in the past beyond the max-backdating
     // window in some timezones, and we want today to mean "now".
+    // Send the local offset (not UTC "Z") so the server's backdating audit log records the
+    // calendar date the user picked rather than the UTC date, which can be a day earlier.
     const receivedDatetime = DateUtils.isToday(newDate)
-      ? newDate.toISOString()
-      : Formatter.toIsoString(DateUtils.startOfDay(newDate));
+      ? Formatter.localIsoString(newDate)
+      : Formatter.localIsoString(DateUtils.startOfDay(newDate));
 
     const doUpdate = async () => {
       const hasStocktakeAfter = await checkStocktakeAfterDate(newDate);

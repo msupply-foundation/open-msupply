@@ -68,7 +68,7 @@ export const EncounterListView = () => {
             : () => selectModal(PatientModal.Encounter)
         }
         body={t('messages.no-encounters')}
-        buttonText={t('button.add-encounter')}
+        buttonText={t('button.new-encounter')}
       />
     ),
   });

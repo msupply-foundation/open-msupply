@@ -3,6 +3,7 @@ import {
   MRT_Row,
   MRT_RowData,
   MRT_ShowHideColumnsButton,
+  MRT_TableInstance,
   MRT_TableOptions,
   MRT_ToggleFiltersButton,
   MRT_ToggleFullScreenButton,
@@ -17,27 +18,12 @@ import {
 import { MenuItem, Typography, alpha } from '@mui/material';
 import { ColumnDef } from './types';
 import { IconButton } from '@common/components';
-import { useTranslation } from '@common/intl';
+import { useIntlUtils, useTranslation } from '@common/intl';
 import { EnvUtils } from '@common/utils';
-import { SettingsMenu } from './components/SettingsMenu';
-import { ManagedTableState } from './tableState/utils';
-import {
-  useColumnDensity,
-  useColumnOrder,
-  useColumnPinning,
-  useColumnSizing,
-  useColumnVisibility,
-} from './tableState';
 import { useTableKeyboardNavigation } from './useTableKeyboardNavigation';
 
 export const useTableDisplayOptions = <T extends MRT_RowData>({
-  tableId,
-  density,
-  columnSizing,
-  columnVisibility,
-  columnPinning,
-  columnOrder,
-  resetTableState,
+  renderSettingsMenu,
   onRowClick,
   isGrouped,
   toggleGrouped,
@@ -47,16 +33,8 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   getIsRestrictedRow = () => false,
   muiTableBodyRowProps = {},
   isMobile = false,
-  onSaveAsGlobalDefault,
-  globalDefaults,
 }: {
-  tableId: string;
-  density: ReturnType<typeof useColumnDensity>;
-  columnSizing: ReturnType<typeof useColumnSizing>;
-  columnVisibility: ReturnType<typeof useColumnVisibility>;
-  columnPinning: ReturnType<typeof useColumnPinning>;
-  columnOrder: ReturnType<typeof useColumnOrder>;
-  resetTableState: () => void;
+  renderSettingsMenu: (table: MRT_TableInstance<T>) => React.ReactNode;
   onRowClick?: (row: T, isCtrlClick: boolean) => void;
   isGrouped: boolean;
   hasColumnFilters: boolean;
@@ -65,14 +43,15 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   getIsPlaceholderRow?: (row: MRT_Row<T>) => boolean;
   getIsRestrictedRow?: (row: MRT_Row<T>) => boolean;
   isMobile?: boolean;
-  onSaveAsGlobalDefault?: () => void;
-  globalDefaults?: ManagedTableState;
 
   // This object is merged with the default row props in muiTableBodyRowProps
   // below. We can do the same for other muiTable props if needed in future.
   muiTableBodyRowProps?: MRT_TableOptions<T>['muiTableBodyRowProps'];
 }): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
+  const { isRtl } = useIntlUtils();
+  // Collapsed expand-chevron points "into" the row; mirror it for RTL
+  const collapsedRotation = isRtl ? 'rotate(90deg)' : 'rotate(-90deg)';
   const { focusedRowId, containerRef, rowVirtualizerRef, handleKeyDown } =
     useTableKeyboardNavigation<T>(onRowClick);
 
@@ -138,18 +117,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         {hasColumnFilters && <MRT_ToggleFiltersButton table={table} />}
         <MRT_ShowHideColumnsButton table={table} />
         {!isMobile && <MRT_ToggleFullScreenButton table={table} />}
-        <SettingsMenu
-          table={table}
-          tableId={tableId}
-          density={density}
-          columnSizing={columnSizing}
-          columnVisibility={columnVisibility}
-          columnPinning={columnPinning}
-          columnOrder={columnOrder}
-          resetTableState={resetTableState}
-          onSaveAsGlobalDefault={onSaveAsGlobalDefault}
-          globalDefaults={globalDefaults}
-        />
+        {renderSettingsMenu(table)}
       </>
     ),
 
@@ -371,7 +339,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
     muiExpandButtonProps: ({ row }) => ({
       sx: {
         display: row.getCanExpand() ? 'flex' : 'none',
-        transform: row.getIsExpanded() ? 'rotate(180deg)' : 'rotate(-90deg)',
+        transform: row.getIsExpanded() ? 'rotate(180deg)' : collapsedRotation,
         transition: 'transform 0.2s',
       },
     }),
@@ -381,7 +349,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         transform: table.getIsAllRowsExpanded()
           ? 'rotate(180deg)'
           : !table.getIsSomeRowsExpanded()
-            ? 'rotate(-90deg)'
+            ? collapsedRotation
             : undefined,
         transition: 'transform 0.2s',
       },

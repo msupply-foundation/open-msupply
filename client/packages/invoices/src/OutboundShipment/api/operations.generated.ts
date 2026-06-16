@@ -50,6 +50,7 @@ export type OutboundFragment = {
       batch?: string | null;
       expiryDate?: string | null;
       numberOfPacks: number;
+      receivedNumberOfPacks?: number | null;
       prescribedQuantity?: number | null;
       packSize: number;
       invoiceId: string;
@@ -62,6 +63,13 @@ export type OutboundFragment = {
       itemName: string;
       itemVariantId?: string | null;
       vvmStatusId?: string | null;
+      reasonOption?: {
+        __typename: 'ReasonOptionNode';
+        id: string;
+        reason: string;
+        type: Types.ReasonOptionNodeType;
+        isActive: boolean;
+      } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
@@ -301,6 +309,7 @@ export type InvoiceQuery = {
             batch?: string | null;
             expiryDate?: string | null;
             numberOfPacks: number;
+            receivedNumberOfPacks?: number | null;
             prescribedQuantity?: number | null;
             packSize: number;
             invoiceId: string;
@@ -313,6 +322,13 @@ export type InvoiceQuery = {
             itemName: string;
             itemVariantId?: string | null;
             vvmStatusId?: string | null;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
+              id: string;
+              reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+            } | null;
             vvmStatus?: {
               __typename: 'VvmstatusNode';
               id: string;
@@ -457,6 +473,7 @@ export type OutboundByNumberQuery = {
             batch?: string | null;
             expiryDate?: string | null;
             numberOfPacks: number;
+            receivedNumberOfPacks?: number | null;
             prescribedQuantity?: number | null;
             packSize: number;
             invoiceId: string;
@@ -469,6 +486,13 @@ export type OutboundByNumberQuery = {
             itemName: string;
             itemVariantId?: string | null;
             vvmStatusId?: string | null;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
+              id: string;
+              reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+            } | null;
             vvmStatus?: {
               __typename: 'VvmstatusNode';
               id: string;

@@ -5,10 +5,11 @@ use repository::{
         packaging_variant::{PackagingVariantFilter, PackagingVariantRepository},
         packaging_variant_row::PackagingVariantRowRepository,
     },
-    EqualFilter, RepositoryError, TransactionError,
+    ActivityLogType, EqualFilter, RepositoryError, TransactionError,
 };
 
 use crate::{
+    activity_log::activity_log_entry,
     item::packaging_variant::{
         upsert_packaging_variant, UpsertPackagingVariant, UpsertPackagingVariantError,
     },
@@ -80,6 +81,14 @@ pub fn upsert_item_variant(
                     .any(|v| v.id == existing_packaging_variant_id)
                 {
                     packaging_variant_row_repo.mark_deleted(&existing_packaging_variant_id)?;
+
+                    activity_log_entry(
+                        ctx,
+                        ActivityLogType::PackagingVariantDeleted,
+                        Some(new_item_variant.item_id.clone()),
+                        None,
+                        None,
+                    )?;
                 }
             }
 
