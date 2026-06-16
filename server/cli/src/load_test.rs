@@ -231,8 +231,13 @@ impl LoadTest {
                 let mut last_finished = match test_site.wait_for_initial_sync().await {
                     Ok(finished) => finished,
                     Err(e) => {
-                        report_site_failure(&mut child, &dir, test_site.site.site_id, "initial sync")
-                            .await;
+                        report_site_failure(
+                            &mut child,
+                            &dir,
+                            test_site.site.site_id,
+                            "initial sync",
+                        )
+                        .await;
                         return Err(e);
                     }
                 };
@@ -819,7 +824,38 @@ fn format_reqwest_error(e: &reqwest::Error) -> String {
     out
 }
 
+/// Run `create_and_send_requisition_once`, retrying transient failures. Creating a requisition is a
+/// set of local GraphQL mutations against the site's *own* server (independent of central), but
+/// under heavy load those can briefly fail (e.g. the local server is momentarily saturated). Give it
+/// a few spaced-out attempts before declaring the site dead, so a transient blip doesn't drop a site
+/// mid-test. Each attempt builds a fresh requisition, so a partially-created one is just harmless
+/// orphaned local data.
 async fn create_and_send_requisition(
+    test_site: &TestSite,
+    num_lines: usize,
+    item_ids: &Vec<String>,
+) -> anyhow::Result<()> {
+    const MAX_ATTEMPTS: u32 = 5;
+    const RETRY_DELAY: Duration = Duration::from_secs(30);
+
+    let mut attempt = 1;
+    loop {
+        match create_and_send_requisition_once(test_site, num_lines, item_ids).await {
+            Ok(()) => return Ok(()),
+            Err(e) if attempt < MAX_ATTEMPTS => {
+                eprintln!(
+                    "Site {}: failed to create requisition (attempt {}/{}): {} — retrying in {:?}",
+                    test_site.site.site_id, attempt, MAX_ATTEMPTS, e, RETRY_DELAY
+                );
+                attempt += 1;
+                sleep(RETRY_DELAY).await;
+            }
+            Err(e) => return Err(e),
+        }
+    }
+}
+
+async fn create_and_send_requisition_once(
     test_site: &TestSite,
     num_lines: usize,
     item_ids: &Vec<String>,
@@ -1072,7 +1108,7 @@ mutation ManualSync {
         &self,
         previous_finished: Option<DateTime<Utc>>,
     ) -> Result<FullSyncStatus> {
-        const UNRESPONSIVE_TIMEOUT: Duration = Duration::from_secs(60);
+        const UNRESPONSIVE_TIMEOUT: Duration = Duration::from_secs(300);
         // A fresh site reports `latestSyncStatus: null` until its first sync run inserts a log
         // row, and that window stretches when many sites initialise concurrently on one machine —
         // so this is deliberately generous. It only exists so a site whose sync never starts
