@@ -7,6 +7,7 @@ import {
   useTranslation,
   AppFooterPortal,
   useDeleteConfirmation,
+  useConfirmationModal,
   useNavigate,
   useNotification,
   RouteBuilder,
@@ -52,31 +53,44 @@ export const FooterComponent = ({
 
   const onlyOneSelected = selectedRows.length === 1;
 
-  const duplicateAction = async () => {
+  const getDuplicateConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: '',
+  });
+
+  const duplicateAction = () => {
     const source = selectedRows[0];
     if (!source) return;
-    try {
-      const { id, invoiceNumber } = await duplicate(source.id);
-      resetRowSelection();
-      success(
-        t('messages.shipment-copied', {
-          newNumber: invoiceNumber,
-          sourceNumber: source.invoiceNumber,
-        })
-      )();
-      navigate(
-        RouteBuilder.create(AppRoute.Replenishment)
-          .addPart(AppRoute.InboundShipment)
-          .addPart(id)
-          .build()
-      );
-    } catch (e) {
-      error(
-        t('error.failed-to-duplicate-shipment', {
-          message: (e as Error).message,
-        })
-      )();
-    }
+    getDuplicateConfirmation({
+      message: t('messages.confirm-duplicate-shipment', {
+        number: source.invoiceNumber,
+        supplierName: source.otherPartyName,
+      }),
+      onConfirm: async () => {
+        try {
+          const { id, invoiceNumber } = await duplicate(source.id);
+          resetRowSelection();
+          success(
+            t('messages.shipment-copied', {
+              newNumber: invoiceNumber,
+              sourceNumber: source.invoiceNumber,
+            })
+          )();
+          navigate(
+            RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.InboundShipment)
+              .addPart(id)
+              .build()
+          );
+        } catch (e) {
+          error(
+            t('error.failed-to-duplicate-shipment', {
+              message: (e as Error).message,
+            })
+          )();
+        }
+      },
+    });
   };
 
   const actions: Action[] = [
