@@ -65,6 +65,9 @@ pub fn generate(
             linked_invoice_line_id: None,
             vvm_status_id: None,
             shipped_number_of_packs: None,
+            location_id: None,
+            batch: None,
+            expiry_date: None,
             ..line
         })
         .collect();
