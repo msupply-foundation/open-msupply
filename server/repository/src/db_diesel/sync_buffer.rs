@@ -189,6 +189,25 @@ pub struct SyncBufferRowInsert {
     pub reference_id: Option<String>,
 }
 
+/// Number of columns inserted per `SyncBufferRowInsert` (keep in sync with the
+/// struct above). Used to bound the insert batch under the bind-parameter limit.
+const SYNC_BUFFER_COLUMNS: usize = 12;
+/// The active backend's limit on bind parameters per statement. Mirrors the
+/// backend selection in `db_diesel` (postgres feature wins when both are on).
+///
+/// Only the postgres value matters in practice. Postgres inserts every row in
+/// one statement (`rows * columns` parameters), so a large batch can go over
+/// 65535. On SQLite, diesel inserts one row at a time (12 parameters each), so
+/// this limit is never reached — the SQLite value is here is for consistency
+#[cfg(feature = "postgres")]
+const MAX_BIND_PARAMS: usize = 65535;
+#[cfg(not(feature = "postgres"))]
+const MAX_BIND_PARAMS: usize = 32766;
+/// Rows per insert statement, so `rows * columns` stays under the limit. A large
+/// pull batch (e.g. remote_pull = 10000 → 120k params) would otherwise overflow
+/// a single insert.
+const INSERT_CHUNK_SIZE: usize = MAX_BIND_PARAMS / SYNC_BUFFER_COLUMNS;
+
 impl From<SyncBufferRow> for SyncBufferRowInsert {
     fn from(row: SyncBufferRow) -> Self {
         SyncBufferRowInsert {
@@ -227,14 +246,14 @@ impl<'a> SyncBufferRepository<'a> {
         SyncBufferRepository { connection }
     }
 
-    /// The only insertion path. Cursor is auto-assigned per row.
+    /// The only insertion path. Cursor is auto-assigned per row. Chunked to stay
+    /// under the bind-parameter limit (see `INSERT_CHUNK_SIZE`).
     pub fn insert_many(&self, rows: &[SyncBufferRowInsert]) -> Result<(), RepositoryError> {
-        if rows.is_empty() {
-            return Ok(());
+        for chunk in rows.chunks(INSERT_CHUNK_SIZE) {
+            diesel::insert_into(sync_buffer::table)
+                .values(chunk)
+                .execute(self.connection.lock().connection())?;
         }
-        diesel::insert_into(sync_buffer::table)
-            .values(rows)
-            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -501,7 +520,8 @@ mod test {
 
         // Unfiltered count includes the unsupported table
         assert_eq!(
-            repo.count_pending(1, SyncVersion::V5V6, None, None).unwrap(),
+            repo.count_pending(1, SyncVersion::V5V6, None, None)
+                .unwrap(),
             3
         );
 
