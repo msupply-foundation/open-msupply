@@ -36,7 +36,6 @@ pub enum KeyType {
     ContactFormProcessorCursor,
     LoadPluginProcessorCursor,
     AssignRequisitionNumberProcessorCursor,
-    AddCentralPatientVisibilityProcessorCursor,
     RequisitionAutoFinaliseProcessorCursor,
     MergeSyncMessageProcessorCursor,
     // Nested key value store to store dynamic cursor values as JSON text
