@@ -523,6 +523,36 @@ mod test {
         assert_matches!(result, Err(WaitForInitialisationError::TimeoutReached));
     }
 
+    /// A transient poll failure (connection/unknown) must NOT abort the wait - it's tolerated and
+    /// retried. With no server listening every poll fails this way; with no forward progress the
+    /// wait ends in the recoverable `TimeoutReached`, never surfacing the connection error.
+    #[actix_rt::test]
+    async fn test_wait_for_initialisation_tolerates_transient_poll_failure() {
+        // Port 1 has nothing listening -> every `get_site_info` is a connection error.
+        let result = synchroniser("http://localhost:1")
+            .wait_for_initialisation(0, 0)
+            .await;
+        assert_matches!(result, Err(WaitForInitialisationError::TimeoutReached));
+    }
+
+    /// A hard (non-transient) error from `/site` propagates as `SyncApiError`, distinct from the
+    /// recoverable `TimeoutReached` - the outcome is not recoverable by re-POSTing.
+    #[actix_rt::test]
+    async fn test_wait_for_initialisation_hard_error_propagates() {
+        let server = MockServer::start();
+        server.mock(|when, then| {
+            when.method(GET).path("/sync/v5/site");
+            then.status(401).body(
+                r#"{ "error": { "code": "site_incorrect_password", "message": "x", "data": null } }"#,
+            );
+        });
+
+        let result = synchroniser(&server.base_url())
+            .wait_for_initialisation(0, 600)
+            .await;
+        assert_matches!(result, Err(WaitForInitialisationError::SyncApiError(_)));
+    }
+
     /// No live worker (idle) -> `request_initialisation` re-POSTs `/sync/v5/initialise`.
     /// (POST is made to return a non-tolerated error so the call returns immediately.)
     #[actix_rt::test]

@@ -203,10 +203,24 @@ impl SyncApiV5 {
     /// "central busy" response (another sync session for this site is in progress;
     /// legacy central gates sync per-site) before retrying. Errors on timeout.
     pub(crate) async fn wait_until_central_idle(&self) -> Result<(), SyncApiError> {
+        self.wait_until_central_idle_for(
+            CENTRAL_BUSY_POLL_PERIOD_SECONDS,
+            CENTRAL_BUSY_TIMEOUT_SECONDS,
+        )
+        .await
+    }
+
+    /// As [`Self::wait_until_central_idle`], with the poll period and timeout injected so tests can
+    /// pass `0` to avoid real sleeping / waiting. Behaviour is identical otherwise.
+    async fn wait_until_central_idle_for(
+        &self,
+        poll_period_seconds: u64,
+        timeout_seconds: u64,
+    ) -> Result<(), SyncApiError> {
         let route = "/sync/v5/site_status";
         let start = std::time::SystemTime::now();
-        let poll_period = std::time::Duration::from_secs(CENTRAL_BUSY_POLL_PERIOD_SECONDS);
-        let timeout = std::time::Duration::from_secs(CENTRAL_BUSY_TIMEOUT_SECONDS);
+        let poll_period = std::time::Duration::from_secs(poll_period_seconds);
+        let timeout = std::time::Duration::from_secs(timeout_seconds);
         log::info!("Central server busy with another sync session for this site; waiting for it to become idle...");
         loop {
             tokio::time::sleep(poll_period).await;
@@ -321,7 +335,10 @@ pub async fn validate_site_auth(
 
 #[cfg(test)]
 mod tests {
-    use httpmock::{Method::POST, MockServer};
+    use httpmock::{
+        Method::{GET, POST},
+        MockServer,
+    };
     use reqwest::header::AUTHORIZATION;
 
     use super::*;
@@ -379,5 +396,106 @@ mod tests {
             .await;
 
         assert!(result_with_auth.is_err());
+    }
+
+    fn site_status_body(code: &str) -> String {
+        format!(r#"{{ "code": "{}", "message": "", "data": null }}"#, code)
+    }
+
+    /// Central reports idle on the first poll -> return Ok promptly (the caller can retry).
+    #[actix_rt::test]
+    async fn test_wait_until_central_idle_returns_when_idle() {
+        let server = MockServer::start();
+        let mock = server.mock(|when, then| {
+            when.method(GET).path("/sync/v5/site_status");
+            then.status(200).body(site_status_body("idle"));
+        });
+
+        // Poll fast (0s) so the test doesn't sleep; generous timeout it never reaches.
+        let result = create_api(&server.base_url(), "", "")
+            .wait_until_central_idle_for(0, 600)
+            .await;
+
+        mock.assert();
+        assert!(result.is_ok());
+    }
+
+    /// Central stays busy past the timeout -> error (so a wedged central can't block forever).
+    #[actix_rt::test]
+    async fn test_wait_until_central_idle_times_out_while_busy() {
+        let server = MockServer::start();
+        server.mock(|when, then| {
+            when.method(GET).path("/sync/v5/site_status");
+            then.status(200).body(site_status_body("sync_is_running"));
+        });
+
+        // timeout = 0 -> trips on the first non-idle observation.
+        let result = create_api(&server.base_url(), "", "")
+            .wait_until_central_idle_for(0, 0)
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    /// A hard error from `/site_status` (e.g. auth) propagates rather than being treated as "busy".
+    #[actix_rt::test]
+    async fn test_wait_until_central_idle_propagates_status_error() {
+        let server = MockServer::start();
+        server.mock(|when, then| {
+            when.method(GET).path("/sync/v5/site_status");
+            then.status(401).body(
+                r#"{ "error": { "code": "site_incorrect_password", "message": "x", "data": null } }"#,
+            );
+        });
+
+        let result = create_api(&server.base_url(), "", "")
+            .wait_until_central_idle_for(0, 600)
+            .await;
+
+        assert!(result.is_err());
+    }
+
+    /// v5 endpoints pass `retry_on_idle_timeout = false`: an idle timeout (modelled here as a 408,
+    /// which `with_retries_opts` classifies as one) must NOT be retried. Retrying would overlap the
+    /// same site's still-running server-side request and trip `sync_is_running` - the bug this fix
+    /// addresses. One attempt, one upstream hit.
+    #[actix_rt::test]
+    async fn test_idle_timeout_not_retried_for_v5() {
+        let server = MockServer::start();
+        let mock = server.mock(|when, then| {
+            when.method(GET).path("/timeout");
+            then.status(408);
+        });
+        let url = format!("{}/timeout", server.base_url());
+
+        let _ = with_retries_opts(RetrySeconds::default(), false, |client| {
+            client.get(url.as_str())
+        })
+        .await;
+
+        mock.assert_hits(1);
+    }
+
+    /// The default (v6) policy opts in to retrying idle timeouts (idempotent reads/upserts), so the
+    /// same 408 is retried for each `RetrySeconds` entry. Contrasts with the v5 case above.
+    #[actix_rt::test]
+    async fn test_idle_timeout_retried_for_v6() {
+        let server = MockServer::start();
+        let mock = server.mock(|when, then| {
+            when.method(GET).path("/timeout");
+            then.status(408);
+        });
+        let url = format!("{}/timeout", server.base_url());
+
+        let _ = with_retries_opts(RetrySeconds::default(), true, |client| {
+            client.get(url.as_str())
+        })
+        .await;
+
+        assert!(
+            mock.hits() > 1,
+            "expected an idle timeout to be retried, got {} attempt(s)",
+            mock.hits()
+        );
     }
 }
