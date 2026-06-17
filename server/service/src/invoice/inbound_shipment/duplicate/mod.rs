@@ -16,6 +16,7 @@ pub enum DuplicateInboundShipmentError {
     InvoiceDoesNotExist,
     NotThisStoreInvoice,
     NotAnInboundShipment,
+    SupplierIsInactive,
     NewlyCreatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),
 }
@@ -78,15 +79,16 @@ impl From<RepositoryError> for DuplicateInboundShipmentError {
 
 #[cfg(test)]
 mod test {
+    use chrono::NaiveDate;
     use repository::{
         mock::{
             common::FullMockMasterList, mock_inbound_shipment_a,
             mock_inbound_shipment_a_invoice_lines, mock_outbound_shipment_e, mock_store_a,
             mock_store_b, mock_user_account_a, MockData, MockDataInserts,
         },
-        test_db::{setup_all, setup_all_with_data},
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, MasterListLineRow,
-        MasterListNameJoinRow, MasterListRow,
+        test_db::setup_all_with_data,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType,
+        MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameLinkRow, NameRow,
     };
 
     use crate::service_provider::ServiceProvider;
@@ -124,8 +126,51 @@ mod test {
 
     #[actix_rt::test]
     async fn duplicate_inbound_shipment_errors() {
-        let (_, _, connection_manager, _) =
-            setup_all("duplicate_inbound_shipment_errors", MockDataInserts::all()).await;
+        fn inactive_supplier() -> NameRow {
+            NameRow {
+                id: "duplicate_is_inactive_supplier".to_string(),
+                name: "Inactive supplier".to_string(),
+                code: "inactive_supplier".to_string(),
+                // A deleted name is treated as inactive
+                deleted_datetime: Some(
+                    NaiveDate::from_ymd_opt(2020, 1, 1)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                ),
+                ..Default::default()
+            }
+        }
+        fn shipment_with_inactive_supplier() -> InvoiceRow {
+            InvoiceRow {
+                id: "duplicate_is_inactive_supplier_shipment".to_string(),
+                name_id: inactive_supplier().id,
+                store_id: mock_store_a().id,
+                invoice_number: 999,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Received,
+                created_datetime: NaiveDate::from_ymd_opt(2020, 1, 1)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "duplicate_inbound_shipment_errors",
+            MockDataInserts::all(),
+            MockData {
+                names: vec![inactive_supplier()],
+                name_links: vec![NameLinkRow {
+                    id: inactive_supplier().id,
+                    name_id: inactive_supplier().id,
+                }],
+                invoices: vec![shipment_with_inactive_supplier()],
+                ..Default::default()
+            },
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let mut context = service_provider
@@ -143,6 +188,12 @@ mod test {
         assert_eq!(
             service.duplicate_inbound_shipment(&context, mock_outbound_shipment_e().id),
             Err(ServiceError::NotAnInboundShipment)
+        );
+
+        // SupplierIsInactive
+        assert_eq!(
+            service.duplicate_inbound_shipment(&context, shipment_with_inactive_supplier().id),
+            Err(ServiceError::SupplierIsInactive)
         );
 
         context.store_id = mock_store_b().id;
@@ -242,4 +293,5 @@ mod test {
             );
         }
     }
+
 }
