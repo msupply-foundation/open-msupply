@@ -25,7 +25,7 @@ export const FooterComponent = ({
 }) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { success, warning, error } = useNotification();
+  const { success, warning } = useNotification();
 
   const {
     delete: { deleteInbounds },
@@ -67,37 +67,30 @@ export const FooterComponent = ({
         supplierName: source.otherPartyName,
       }),
       onConfirm: async () => {
-        try {
-          const { id, invoiceNumber, skippedItemCount } = await duplicate(
-            source.id
-          );
-          resetRowSelection();
-          success(
-            t('messages.shipment-copied', {
-              newNumber: invoiceNumber,
-              sourceNumber: source.invoiceNumber,
-            })
-          )();
-          if (skippedItemCount > 0) {
-            warning(
-              t('messages.shipment-copied-skipped-items', {
-                count: skippedItemCount,
-              })
-            )();
-          }
-          navigate(
-            RouteBuilder.create(AppRoute.Replenishment)
-              .addPart(AppRoute.InboundShipment)
-              .addPart(id)
-              .build()
-          );
-        } catch (e) {
-          error(
-            t('error.failed-to-duplicate-shipment', {
-              message: (e as Error).message,
+        const result = await duplicate(source.id);
+        if (!result) return;
+
+        const { id, invoiceNumber, skippedItemCount } = result;
+        resetRowSelection();
+        success(
+          t('messages.shipment-copied', {
+            newNumber: invoiceNumber,
+            sourceNumber: source.invoiceNumber,
+          })
+        )();
+        if (skippedItemCount > 0) {
+          warning(
+            t('messages.shipment-copied-skipped-items', {
+              count: skippedItemCount,
             })
           )();
         }
+        navigate(
+          RouteBuilder.create(AppRoute.Replenishment)
+            .addPart(AppRoute.InboundShipment)
+            .addPart(id)
+            .build()
+        );
       },
     });
   };
