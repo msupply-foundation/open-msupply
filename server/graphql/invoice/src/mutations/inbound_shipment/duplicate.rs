@@ -1,13 +1,23 @@
 use async_graphql::*;
-
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::InvoiceNode;
-use repository::Invoice;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice::inbound_shipment::DuplicateInboundShipmentError as ServiceError;
+use service::invoice::inbound_shipment::{
+    DuplicateInboundShipment as ServiceResult, DuplicateInboundShipmentError as ServiceError,
+};
 
-pub fn duplicate(ctx: &Context<'_>, store_id: &str, id: String) -> Result<InvoiceNode> {
+#[derive(SimpleObject)]
+pub struct DuplicateInboundShipmentNode {
+    pub invoice: InvoiceNode,
+    pub skipped_item_count: u32,
+}
+
+pub fn duplicate(
+    ctx: &Context<'_>,
+    store_id: &str,
+    id: String,
+) -> Result<DuplicateInboundShipmentNode> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -26,9 +36,14 @@ pub fn duplicate(ctx: &Context<'_>, store_id: &str, id: String) -> Result<Invoic
     )
 }
 
-pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<InvoiceNode> {
+pub fn map_response(
+    from: Result<ServiceResult, ServiceError>,
+) -> Result<DuplicateInboundShipmentNode> {
     match from {
-        Ok(invoice) => Ok(InvoiceNode::from_domain(invoice)),
+        Ok(result) => Ok(DuplicateInboundShipmentNode {
+            invoice: InvoiceNode::from_domain(result.invoice),
+            skipped_item_count: result.skipped_item_count as u32,
+        }),
         Err(error) => Err(map_error(error)),
     }
 }
@@ -62,14 +77,18 @@ mod test {
     use serde_json::json;
     use service::{
         invoice::{
-            inbound_shipment::DuplicateInboundShipmentError as ServiceError, InvoiceServiceTrait,
+            inbound_shipment::{
+                DuplicateInboundShipment, DuplicateInboundShipmentError as ServiceError,
+            },
+            InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
 
     use crate::InvoiceMutations;
 
-    type DuplicateMethod = dyn Fn(String) -> Result<Invoice, ServiceError> + Sync + Send;
+    type DuplicateMethod =
+        dyn Fn(String) -> Result<DuplicateInboundShipment, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<DuplicateMethod>);
 
@@ -78,7 +97,7 @@ mod test {
             &self,
             _: &ServiceContext,
             source_id: String,
-        ) -> Result<Invoice, ServiceError> {
+        ) -> Result<DuplicateInboundShipment, ServiceError> {
             self.0(source_id)
         }
     }
@@ -112,7 +131,9 @@ mod test {
         let mutation = r#"
         mutation ($id: String!, $storeId: String!) {
             duplicateInboundShipment(storeId: $storeId, id: $id) {
-                id
+                invoice {
+                    id
+                }
             }
           }
         "#;
@@ -181,7 +202,10 @@ mod test {
         let mutation = r#"
         mutation ($storeId: String!, $id: String!) {
             duplicateInboundShipment(storeId: $storeId, id: $id) {
-                id
+                invoice {
+                    id
+                }
+                skippedItemCount
             }
           }
         "#;
@@ -189,11 +213,14 @@ mod test {
         // Success
         let test_service = TestService(Box::new(|source_id| {
             assert_eq!(source_id, "source id".to_string());
-            Ok(Invoice {
-                invoice_row: mock_inbound_shipment_c(),
-                name_row: mock_name_a(),
-                store_row: mock_store_a(),
-                clinician_row: None,
+            Ok(DuplicateInboundShipment {
+                invoice: Invoice {
+                    invoice_row: mock_inbound_shipment_c(),
+                    name_row: mock_name_a(),
+                    store_row: mock_store_a(),
+                    clinician_row: None,
+                },
+                skipped_item_count: 2,
             })
         }));
 
@@ -204,7 +231,10 @@ mod test {
 
         let expected = json!({
             "duplicateInboundShipment": {
-                "id": mock_inbound_shipment_c().id
+                "invoice": {
+                    "id": mock_inbound_shipment_c().id
+                },
+                "skippedItemCount": 2
             }
           }
         );
