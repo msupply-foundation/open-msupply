@@ -164,13 +164,21 @@ export const useDuplicate = () => {
 
   const mutationFn = async (
     id: string
-  ): Promise<{ id: string; invoiceNumber: number }> => {
+  ): Promise<{ id: string; invoiceNumber: number; skippedItemCount: number }> => {
     const result = await inboundApi.duplicateInboundShipment({ id, storeId });
 
     const duplicated = result?.duplicateInboundShipment;
 
-    if (duplicated?.__typename === 'InvoiceNode') {
-      return { id: duplicated.id, invoiceNumber: duplicated.invoiceNumber };
+    if (duplicated?.__typename === 'DuplicateInboundShipmentNode') {
+      return {
+        id: duplicated.invoice.id,
+        invoiceNumber: duplicated.invoice.invoiceNumber,
+        skippedItemCount: duplicated.skippedItemCount,
+      };
+    }
+
+    if (duplicated?.__typename === 'DuplicateInboundShipmentError') {
+      throw new Error(duplicated.error.description);
     }
 
     throw new Error('Could not duplicate invoice');
