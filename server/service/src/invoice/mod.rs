@@ -136,7 +136,7 @@ pub trait InvoiceServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         source_id: String,
-    ) -> Result<Invoice, DuplicateOutboundShipmentError> {
+    ) -> Result<DuplicateOutboundShipment, DuplicateOutboundShipmentError> {
         duplicate_outbound_shipment(ctx, source_id)
     }
 
