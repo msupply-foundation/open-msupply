@@ -1,4 +1,4 @@
-use super::{name_row::name, store_row::store, StorageConnection};
+use super::{name_link_row::name_link, name_row::name, store_row::store, StorageConnection};
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::diesel_macros::define_linked_tables;
 use crate::{
@@ -45,6 +45,9 @@ pub struct NameStoreJoin {
 
 joinable!(name_store_join -> store (store_id));
 joinable!(name_store_join -> name (name_id));
+allow_tables_to_appear_in_same_query!(name_store_join, name_link);
+// store + name_link both appear (as aliases) in the changelog patient_site_id subquery.
+allow_tables_to_appear_in_same_query!(store, name_link);
 
 type NameStoreJoins = (NameStoreJoinRow, NameRow);
 
