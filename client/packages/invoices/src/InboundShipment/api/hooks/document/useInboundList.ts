@@ -95,9 +95,16 @@ export const useInboundList = (queryParams?: ListParams) => {
     await deleteMutation(selectedRows);
   };
 
+  const {
+    mutateAsync: duplicate,
+    isPending: isDuplicating,
+    error: duplicateError,
+  } = useDuplicate();
+
   return {
     query: { data, isLoading, isFetching, isError, refetch },
     delete: { deleteInbounds, isDeleting, deleteError },
+    duplicate: { duplicate, isDuplicating, duplicateError },
   };
 };
 
@@ -149,5 +156,31 @@ const useDelete = () => {
     onSuccess: () => queryClient.invalidateQueries({
       queryKey: [LIST]
     }),
+  });
+};
+
+const useDuplicate = () => {
+  const { inboundApi, storeId, queryClient } = useInboundGraphQL();
+
+  const mutationFn = async (
+    id: string
+  ): Promise<{ id: string; invoiceNumber: number }> => {
+    const result = await inboundApi.duplicateInboundShipment({ id, storeId });
+
+    const duplicated = result?.duplicateInboundShipment;
+
+    if (duplicated?.__typename === 'InvoiceNode') {
+      return { id: duplicated.id, invoiceNumber: duplicated.invoiceNumber };
+    }
+
+    throw new Error('Could not duplicate invoice');
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: [LIST],
+      }),
   });
 };
