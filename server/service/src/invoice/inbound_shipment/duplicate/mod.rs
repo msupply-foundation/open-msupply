@@ -63,3 +63,133 @@ impl From<RepositoryError> for DuplicateInboundShipmentError {
         DuplicateInboundShipmentError::DatabaseError(error)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use repository::{
+        mock::{
+            mock_inbound_shipment_a, mock_inbound_shipment_a_invoice_lines,
+            mock_outbound_shipment_e, mock_store_a, mock_store_b, mock_user_account_a,
+            MockDataInserts,
+        },
+        test_db::setup_all,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus,
+    };
+
+    use crate::service_provider::ServiceProvider;
+
+    use super::DuplicateInboundShipmentError;
+
+    type ServiceError = DuplicateInboundShipmentError;
+
+    #[actix_rt::test]
+    async fn duplicate_inbound_shipment_errors() {
+        let (_, _, connection_manager, _) =
+            setup_all("duplicate_inbound_shipment_errors", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let mut context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        // InvoiceDoesNotExist
+        assert_eq!(
+            service.duplicate_inbound_shipment(&context, "does_not_exist".to_string()),
+            Err(ServiceError::InvoiceDoesNotExist)
+        );
+
+        // NotAnInboundShipment
+        assert_eq!(
+            service.duplicate_inbound_shipment(&context, mock_outbound_shipment_e().id),
+            Err(ServiceError::NotAnInboundShipment)
+        );
+
+        context.store_id = mock_store_b().id;
+        assert_eq!(
+            service.duplicate_inbound_shipment(&context, mock_inbound_shipment_a().id),
+            Err(ServiceError::NotThisStoreInvoice)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn duplicate_inbound_shipment_success() {
+        let (_, connection, connection_manager, _) =
+            setup_all("duplicate_inbound_shipment_success", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        let source = mock_inbound_shipment_a();
+
+        let duplicate = service
+            .duplicate_inbound_shipment(&context, source.id.clone())
+            .unwrap();
+        let new_invoice = duplicate.invoice_row;
+
+        assert_ne!(new_invoice.id, source.id);
+        assert_ne!(new_invoice.invoice_number, source.invoice_number);
+
+        assert_eq!(
+            new_invoice,
+            InvoiceRow {
+                id: new_invoice.id.clone(),
+                invoice_number: new_invoice.invoice_number,
+                created_datetime: new_invoice.created_datetime,
+                user_id: Some(mock_user_account_a().id),
+                status: InvoiceStatus::New,
+                comment: Some(format!(
+                    "Copied from shipment #{} (Sort comment test Ac)",
+                    source.invoice_number
+                )),
+                on_hold: false,
+                expected_delivery_date: None,
+                requisition_id: None,
+                purchase_order_id: None,
+                allocated_datetime: None,
+                picked_datetime: None,
+                shipped_datetime: None,
+                delivered_datetime: None,
+                received_datetime: None,
+                verified_datetime: None,
+                cancelled_datetime: None,
+                backdated_datetime: None,
+                linked_invoice_id: None,
+                original_shipment_id: None,
+                is_cancellation: false,
+                ..source.clone()
+            }
+        );
+
+        let source_lines = mock_inbound_shipment_a_invoice_lines();
+        let new_lines = InvoiceLineRowRepository::new(&connection)
+            .find_many_by_invoice_id(&new_invoice.id)
+            .unwrap();
+        assert_eq!(new_lines.len(), source_lines.len());
+
+        for new_line in &new_lines {
+            let source_line = source_lines
+                .iter()
+                .find(|line| line.item_id == new_line.item_id)
+                .unwrap();
+            assert_ne!(new_line.id, source_line.id);
+            assert_eq!(
+                new_line,
+                &InvoiceLineRow {
+                    id: new_line.id.clone(),
+                    invoice_id: new_invoice.id.clone(),
+                    stock_line_id: None,
+                    received_number_of_packs: None,
+                    status: None,
+                    purchase_order_line_id: None,
+                    linked_invoice_id: None,
+                    linked_invoice_line_id: None,
+                    ..source_line.clone()
+                }
+            );
+        }
+    }
+}
