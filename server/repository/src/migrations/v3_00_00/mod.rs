@@ -23,6 +23,7 @@ mod partition_changelog_by_cursor;
 mod populate_changelog_with_rows_for_sync_v7_tables;
 mod populate_sync_version;
 mod rebuild_sync_buffer;
+mod remove_add_central_patient_visibility_processor_cursor;
 mod seed_sync_request_user_tables;
 mod update_changelog_for_sync_v7;
 
@@ -64,6 +65,7 @@ impl Migration for V3_00_00 {
             Box::new(create_changelog_indexes::Migrate),
             Box::new(seed_sync_request_user_tables::Migrate),
             Box::new(add_legacy_goods_received_link_fields::Migrate),
+            Box::new(remove_add_central_patient_visibility_processor_cursor::Migrate),
         ]
     }
 }
