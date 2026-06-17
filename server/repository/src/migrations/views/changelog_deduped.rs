@@ -31,12 +31,10 @@ impl ViewMigrationFragment for ViewMigration {
         c.record_id,
         c.row_action,
         c.name_link_id,
-        name_link.name_id,
         c.store_id,
         c.is_sync_update,
         c.source_site_id
     FROM changelog c
-    LEFT JOIN name_link ON c.name_link_id = name_link.id
     WHERE NOT EXISTS (
         SELECT 1
         FROM changelog newer
