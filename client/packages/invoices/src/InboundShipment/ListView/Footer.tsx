@@ -3,10 +3,15 @@ import {
   Action,
   ActionsFooter,
   DeleteIcon,
+  CopyIcon,
   useTranslation,
   AppFooterPortal,
   useDeleteConfirmation,
+  useNavigate,
+  useNotification,
+  RouteBuilder,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { InboundRowFragment, useInboundList } from '../api';
 import { canDeleteInbound } from '../../utils';
 
@@ -18,9 +23,12 @@ export const FooterComponent = ({
   resetRowSelection: () => void;
 }) => {
   const t = useTranslation();
+  const navigate = useNavigate();
+  const { success, error } = useNotification();
 
   const {
     delete: { deleteInbounds },
+    duplicate: { duplicate },
   } = useInboundList();
 
   const deleteAction = async () => {
@@ -42,11 +50,49 @@ export const FooterComponent = ({
     },
   });
 
+  const onlyOneSelected = selectedRows.length === 1;
+
+  const duplicateAction = async () => {
+    const source = selectedRows[0];
+    if (!source) return;
+    try {
+      const { id, invoiceNumber } = await duplicate(source.id);
+      resetRowSelection();
+      success(
+        t('messages.shipment-copied', {
+          newNumber: invoiceNumber,
+          sourceNumber: source.invoiceNumber,
+        })
+      )();
+      navigate(
+        RouteBuilder.create(AppRoute.Replenishment)
+          .addPart(AppRoute.InboundShipment)
+          .addPart(id)
+          .build()
+      );
+    } catch (e) {
+      error(
+        t('error.failed-to-duplicate-shipment', {
+          message: (e as Error).message,
+        })
+      )();
+    }
+  };
+
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
+    },
+    {
+      label: t('button.make-a-copy'),
+      icon: <CopyIcon />,
+      onClick: duplicateAction,
+      disabled: !onlyOneSelected,
+      tooltip: onlyOneSelected
+        ? undefined
+        : t('messages.select-single-shipment-to-copy'),
     },
   ];
 
