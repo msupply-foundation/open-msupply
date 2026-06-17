@@ -187,7 +187,7 @@ pub(crate) async fn process_records(
                 }
 
                 cursor_controller
-                    .update(&ctx.connection, (log.cursor + 1) as u64)
+                    .update(&ctx.connection, log.cursor as u64)
                     .map_err(Error::DatabaseError)?;
             }
         }
