@@ -12,7 +12,7 @@ use strum::IntoEnumIterator;
 use thiserror::Error;
 use ts_rs::TS;
 
-use super::sync_style::{Authoring, Distribution, SyncVersions};
+use super::sync_style::{Distribution, SyncVersions};
 
 // Underlying table — INSERTs target this. Carries raw `*_link_id` columns.
 table! {
@@ -533,36 +533,24 @@ impl ChangelogFilter {
     pub fn all_data_for_legacy_central(
         connection: &StorageConnection,
     ) -> Result<ChangelogCondition::Inner, LegacyDataFilterError> {
-        use Authoring::*;
         use ChangelogCondition as C;
 
         let msupply_central_server_id = KeyValueStoreRepository::new(connection)
             .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
             .ok_or(LegacyDataFilterError::CentralSiteIdNotSet)?;
 
-        let mut inner_or_conditions = vec![];
-
-        let options = Some(SyncVersions {
+        // OG central only takes v5-only-transport records
+        let options = SyncVersions {
             is_v6: false,
             is_v5: true,
-        });
-        for authoring in Authoring::iter() {
-            let table_names = authoring.get_table_names_for_authoring(options.clone());
+        };
 
-            if table_names.is_empty() {
-                continue;
-            }
-
-            match authoring {
-                RemoteOwned | Patient | LegacyOnly => {
-                    inner_or_conditions.push(C::table_name::any(table_names))
-                }
-                Central | Anyone => continue,
-            };
-        }
+        let table_names: Vec<_> = ChangelogTableName::iter()
+            .filter(|table| table.sync_style().transport == options)
+            .collect();
 
         Ok(C::And(vec![
-            C::Or(inner_or_conditions),
+            C::table_name::any(table_names),
             C::source_site_id::not_equal(msupply_central_server_id),
         ]))
     }
