@@ -6,6 +6,8 @@ import {
   useQuery,
   useMutation,
   keepPreviousData,
+  useNotification,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { useInboundGraphQL } from '../../useInboundGraphQL';
 import { LIST, INBOUND } from './keys';
@@ -95,11 +97,7 @@ export const useInboundList = (queryParams?: ListParams) => {
     await deleteMutation(selectedRows);
   };
 
-  const {
-    mutateAsync: duplicate,
-    isPending: isDuplicating,
-    error: duplicateError,
-  } = useDuplicate();
+  const { duplicate, isDuplicating, duplicateError } = useDuplicate();
 
   return {
     query: { data, isLoading, isFetching, isError, refetch },
@@ -153,42 +151,62 @@ const useDelete = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries({
-      queryKey: [LIST]
-    }),
-  });
-};
-
-export const useDuplicate = () => {
-  const { inboundApi, storeId, queryClient } = useInboundGraphQL();
-
-  const mutationFn = async (
-    id: string
-  ): Promise<{ id: string; invoiceNumber: number; skippedItemCount: number }> => {
-    const result = await inboundApi.duplicateInboundShipment({ id, storeId });
-
-    const duplicated = result?.duplicateInboundShipment;
-
-    if (duplicated?.__typename === 'DuplicateInboundShipmentNode') {
-      return {
-        id: duplicated.invoice.id,
-        invoiceNumber: duplicated.invoice.invoiceNumber,
-        skippedItemCount: duplicated.skippedItemCount,
-      };
-    }
-
-    if (duplicated?.__typename === 'DuplicateInboundShipmentError') {
-      throw new Error(duplicated.error.description);
-    }
-
-    throw new Error('Could not duplicate invoice');
-  };
-
-  return useMutation({
-    mutationFn,
     onSuccess: () =>
       queryClient.invalidateQueries({
         queryKey: [LIST],
       }),
   });
+};
+
+export const useDuplicate = () => {
+  const { inboundApi, storeId, queryClient } = useInboundGraphQL();
+  const t = useTranslation();
+  const { error } = useNotification();
+
+  const {
+    mutateAsync,
+    isPending: isDuplicating,
+    error: duplicateError,
+  } = useMutation({
+    mutationFn: (id: string) =>
+      inboundApi.duplicateInboundShipment({ id, storeId }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: [LIST],
+      }),
+  });
+
+  const duplicate = async (id: string) => {
+    try {
+      const duplicated = (await mutateAsync(id))?.duplicateInboundShipment;
+
+      if (duplicated?.__typename === 'DuplicateInboundShipmentNode') {
+        return {
+          id: duplicated.invoice.id,
+          invoiceNumber: duplicated.invoice.invoiceNumber,
+          skippedItemCount: duplicated.skippedItemCount,
+        };
+      }
+
+      if (
+        duplicated?.__typename === 'DuplicateInboundShipmentError' &&
+        duplicated.error.__typename === 'SupplierIsInactive'
+      ) {
+        error(t('error.duplicate-supplier-inactive'))();
+        return undefined;
+      }
+
+      error(t('error.failed-to-duplicate-shipment', { message: '' }))();
+      return undefined;
+    } catch (e) {
+      error(
+        t('error.failed-to-duplicate-shipment', {
+          message: (e as Error).message,
+        })
+      )();
+      return undefined;
+    }
+  };
+
+  return { duplicate, isDuplicating, duplicateError };
 };

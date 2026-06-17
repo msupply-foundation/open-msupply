@@ -22,7 +22,7 @@ import { AppRoute } from '@openmsupply-client/config';
 export const SidePanel = () => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { success, warning, error } = useNotification();
+  const { success, warning } = useNotification();
 
   const {
     query: { data },
@@ -53,36 +53,29 @@ export const SidePanel = () => {
         supplierName: data.otherPartyName,
       }),
       onConfirm: async () => {
-        try {
-          const { id, invoiceNumber, skippedItemCount } = await duplicate(
-            data.id
-          );
-          success(
-            t('messages.shipment-copied', {
-              newNumber: invoiceNumber,
-              sourceNumber: data.invoiceNumber,
-            })
-          )();
-          if (skippedItemCount > 0) {
-            warning(
-              t('messages.shipment-copied-skipped-items', {
-                count: skippedItemCount,
-              })
-            )();
-          }
-          navigate(
-            RouteBuilder.create(AppRoute.Replenishment)
-              .addPart(AppRoute.InboundShipment)
-              .addPart(id)
-              .build()
-          );
-        } catch (e) {
-          error(
-            t('error.failed-to-duplicate-shipment', {
-              message: (e as Error).message,
+        const result = await duplicate(data.id);
+        if (!result) return;
+
+        const { id, invoiceNumber, skippedItemCount } = result;
+        success(
+          t('messages.shipment-copied', {
+            newNumber: invoiceNumber,
+            sourceNumber: data.invoiceNumber,
+          })
+        )();
+        if (skippedItemCount > 0) {
+          warning(
+            t('messages.shipment-copied-skipped-items', {
+              count: skippedItemCount,
             })
           )();
         }
+        navigate(
+          RouteBuilder.create(AppRoute.Replenishment)
+            .addPart(AppRoute.InboundShipment)
+            .addPart(id)
+            .build()
+        );
       },
     });
   };

@@ -360,6 +360,7 @@
   "error.facility-not-found": "Facility not found",
   "error.failed-to-create-inbound-shipment": "Failed to create inbound shipment! {{message}}",
   "error.failed-to-create-internal-order": "Failed to create internal order!",
+  "error.duplicate-supplier-inactive": "Cannot copy this shipment because its supplier is no longer active.",
   "error.failed-to-duplicate-shipment": "Failed to copy shipment! {{message}}",
   "error.failed-to-create-outbound": "Failed to create outbound shipment",
   "error.failed-to-create-outbound-shipment": "Failed to create outbound shipment! {{message}}",
