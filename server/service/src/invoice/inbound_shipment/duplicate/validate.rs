@@ -1,4 +1,5 @@
 use crate::invoice::{check_invoice_exists, check_invoice_type, check_store};
+use crate::validate::get_other_party;
 use repository::{InvoiceRow, InvoiceType, StorageConnection};
 
 use super::DuplicateInboundShipmentError;
@@ -18,6 +19,13 @@ pub fn validate(
 
     if !check_invoice_type(&source_invoice, InvoiceType::InboundShipment) {
         return Err(NotAnInboundShipment);
+    }
+
+    let supplier_is_active = get_other_party(connection, store_id, &source_invoice.name_id)?
+        .map(|supplier| supplier.is_visible())
+        .unwrap_or(false);
+    if !supplier_is_active {
+        return Err(SupplierIsInactive);
     }
 
     Ok(source_invoice)
