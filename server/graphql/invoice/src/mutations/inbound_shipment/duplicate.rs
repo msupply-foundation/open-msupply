@@ -13,11 +13,35 @@ pub struct DuplicateInboundShipmentNode {
     pub skipped_item_count: u32,
 }
 
-pub fn duplicate(
-    ctx: &Context<'_>,
-    store_id: &str,
-    id: String,
-) -> Result<DuplicateInboundShipmentNode> {
+pub struct SupplierIsInactive;
+#[Object]
+impl SupplierIsInactive {
+    pub async fn description(&self) -> &str {
+        "Cannot duplicate this shipment because its supplier is no longer active"
+    }
+}
+
+#[derive(Interface)]
+#[graphql(name = "DuplicateInboundShipmentErrorInterface")]
+#[graphql(field(name = "description", ty = "&str"))]
+pub enum DuplicateErrorInterface {
+    SupplierIsInactive(SupplierIsInactive),
+}
+
+#[derive(SimpleObject)]
+#[graphql(name = "DuplicateInboundShipmentError")]
+pub struct DuplicateError {
+    pub error: DuplicateErrorInterface,
+}
+
+#[derive(Union)]
+#[graphql(name = "DuplicateInboundShipmentResponse")]
+pub enum DuplicateResponse {
+    Error(DuplicateError),
+    Response(DuplicateInboundShipmentNode),
+}
+
+pub fn duplicate(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DuplicateResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -36,23 +60,32 @@ pub fn duplicate(
     )
 }
 
-pub fn map_response(
-    from: Result<ServiceResult, ServiceError>,
-) -> Result<DuplicateInboundShipmentNode> {
-    match from {
-        Ok(result) => Ok(DuplicateInboundShipmentNode {
+pub fn map_response(from: Result<ServiceResult, ServiceError>) -> Result<DuplicateResponse> {
+    let result = match from {
+        Ok(result) => DuplicateResponse::Response(DuplicateInboundShipmentNode {
             invoice: InvoiceNode::from_domain(result.invoice),
             skipped_item_count: result.skipped_item_count as u32,
         }),
-        Err(error) => Err(map_error(error)),
-    }
+        Err(error) => DuplicateResponse::Error(DuplicateError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(result)
 }
 
-fn map_error(error: ServiceError) -> async_graphql::Error {
+fn map_error(error: ServiceError) -> Result<DuplicateErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
+        // Structured Errors
+        ServiceError::SupplierIsInactive => {
+            return Ok(DuplicateErrorInterface::SupplierIsInactive(
+                SupplierIsInactive,
+            ))
+        }
+        // Standard Graphql Errors
         ServiceError::InvoiceDoesNotExist
         | ServiceError::NotAnInboundShipment
         | ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
@@ -61,7 +94,7 @@ fn map_error(error: ServiceError) -> async_graphql::Error {
         }
     };
 
-    graphql_error.extend()
+    Err(graphql_error.extend())
 }
 
 #[cfg(test)]
@@ -131,8 +164,10 @@ mod test {
         let mutation = r#"
         mutation ($id: String!, $storeId: String!) {
             duplicateInboundShipment(storeId: $storeId, id: $id) {
-                invoice {
-                    id
+                ... on DuplicateInboundShipmentNode {
+                    invoice {
+                        id
+                    }
                 }
             }
           }
@@ -147,6 +182,34 @@ mod test {
             &Some(empty_variables()),
             &expected_message,
             None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // SupplierIsInactive (structured error)
+        let supplier_inactive_mutation = r#"
+        mutation ($id: String!, $storeId: String!) {
+            duplicateInboundShipment(storeId: $storeId, id: $id) {
+                ... on DuplicateInboundShipmentError {
+                    error {
+                        __typename
+                    }
+                }
+            }
+          }
+        "#;
+        let test_service = TestService(Box::new(|_| Err(ServiceError::SupplierIsInactive)));
+        let expected = json!({
+            "duplicateInboundShipment": {
+                "error": {
+                    "__typename": "SupplierIsInactive"
+                }
+            }
+        });
+        assert_graphql_query!(
+            &settings,
+            supplier_inactive_mutation,
+            &Some(empty_variables()),
+            &expected,
             Some(service_provider(test_service, &connection_manager))
         );
 
@@ -202,10 +265,12 @@ mod test {
         let mutation = r#"
         mutation ($storeId: String!, $id: String!) {
             duplicateInboundShipment(storeId: $storeId, id: $id) {
-                invoice {
-                    id
+                ... on DuplicateInboundShipmentNode {
+                    invoice {
+                        id
+                    }
+                    skippedItemCount
                 }
-                skippedItemCount
             }
           }
         "#;

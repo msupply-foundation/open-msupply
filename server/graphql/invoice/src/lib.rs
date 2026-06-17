@@ -170,7 +170,7 @@ impl InvoiceMutations {
         ctx: &Context<'_>,
         store_id: String,
         #[graphql(desc = "id of the inbound shipment to duplicate")] id: String,
-    ) -> Result<inbound_shipment::duplicate::DuplicateInboundShipmentNode> {
+    ) -> Result<inbound_shipment::duplicate::DuplicateResponse> {
         inbound_shipment::duplicate::duplicate(ctx, &store_id, id)
     }
 
