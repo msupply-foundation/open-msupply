@@ -44,6 +44,8 @@ pub fn generate(
         linked_invoice_id: None,
         original_shipment_id: None,
         is_cancellation: false,
+        charges_local_currency: 0.0,
+        charges_foreign_currency: 0.0,
         ..source_invoice.clone()
     };
 
@@ -61,6 +63,8 @@ pub fn generate(
             purchase_order_line_id: None,
             linked_invoice_id: None,
             linked_invoice_line_id: None,
+            vvm_status_id: None,
+            shipped_number_of_packs: None,
             ..line
         })
         .collect();
