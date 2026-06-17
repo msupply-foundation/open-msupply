@@ -7,6 +7,7 @@ import {
   InvoiceNodeStatus,
   useNotification,
   useDeleteConfirmation,
+  useConfirmationModal,
   useTranslation,
   RouteBuilder,
   useNavigate,
@@ -39,29 +40,42 @@ export const SidePanel = () => {
       .then(() => success(t('message.copy-success'))());
   };
 
-  const duplicateAction = async () => {
+  const getDuplicateConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: '',
+  });
+
+  const duplicateAction = () => {
     if (!data) return;
-    try {
-      const { id, invoiceNumber } = await duplicate(data.id);
-      success(
-        t('messages.shipment-copied', {
-          newNumber: invoiceNumber,
-          sourceNumber: data.invoiceNumber,
-        })
-      )();
-      navigate(
-        RouteBuilder.create(AppRoute.Replenishment)
-          .addPart(AppRoute.InboundShipment)
-          .addPart(id)
-          .build()
-      );
-    } catch (e) {
-      error(
-        t('error.failed-to-duplicate-shipment', {
-          message: (e as Error).message,
-        })
-      )();
-    }
+    getDuplicateConfirmation({
+      message: t('messages.confirm-duplicate-shipment', {
+        number: data.invoiceNumber,
+        supplierName: data.otherPartyName,
+      }),
+      onConfirm: async () => {
+        try {
+          const { id, invoiceNumber } = await duplicate(data.id);
+          success(
+            t('messages.shipment-copied', {
+              newNumber: invoiceNumber,
+              sourceNumber: data.invoiceNumber,
+            })
+          )();
+          navigate(
+            RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.InboundShipment)
+              .addPart(id)
+              .build()
+          );
+        } catch (e) {
+          error(
+            t('error.failed-to-duplicate-shipment', {
+              message: (e as Error).message,
+            })
+          )();
+        }
+      },
+    });
   };
 
   const deleteAction = async () => {
