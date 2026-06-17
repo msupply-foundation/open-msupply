@@ -1,15 +1,19 @@
+use std::collections::HashSet;
+
 use crate::invoice::common::generate_duplicate_comment;
 use crate::number::next_number;
 use chrono::Utc;
 use repository::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, NumberRowType,
-    RepositoryError, StorageConnection,
+    EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
+    InvoiceStatus, ItemFilter, ItemRepository, NumberRowType, RepositoryError, StorageConnection,
 };
 use util::uuid::uuid;
 
 pub struct GenerateResult {
     pub new_invoice: InvoiceRow,
     pub new_lines: Vec<InvoiceLineRow>,
+    /// Number of source stock lines skipped because their item is no longer in the active/visible.
+    pub skipped_item_count: usize,
 }
 
 pub fn generate(
@@ -52,9 +56,18 @@ pub fn generate(
     let source_lines =
         InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(&source_invoice.id)?;
 
-    let new_lines = source_lines
-        .into_iter()
-        .map(|line| InvoiceLineRow {
+    let active_item_ids = active_item_ids(connection, store_id, &source_lines)?;
+
+    let mut new_lines = Vec::new();
+    let mut skipped_item_count = 0;
+
+    for line in source_lines {
+        if line.r#type == InvoiceLineType::StockIn && !active_item_ids.contains(&line.item_id) {
+            skipped_item_count += 1;
+            continue;
+        }
+
+        new_lines.push(InvoiceLineRow {
             id: uuid(),
             invoice_id: new_invoice_id.clone(),
             stock_line_id: None,
@@ -65,15 +78,38 @@ pub fn generate(
             linked_invoice_line_id: None,
             vvm_status_id: None,
             shipped_number_of_packs: None,
-            location_id: None,
-            batch: None,
-            expiry_date: None,
             ..line
-        })
-        .collect();
+        });
+    }
 
     Ok(GenerateResult {
         new_invoice,
         new_lines,
+        skipped_item_count,
     })
+}
+
+fn active_item_ids(
+    connection: &StorageConnection,
+    store_id: &str,
+    source_lines: &[InvoiceLineRow],
+) -> Result<HashSet<String>, RepositoryError> {
+    let stock_item_ids: Vec<String> = source_lines
+        .iter()
+        .map(|line| line.item_id.clone())
+        .collect();
+
+    if stock_item_ids.is_empty() {
+        return Ok(HashSet::new());
+    }
+
+    let items = ItemRepository::new(connection).query_by_filter(
+        ItemFilter::new()
+            .id(EqualFilter::equal_any(stock_item_ids))
+            .is_visible(true)
+            .is_active(true),
+        Some(store_id.to_string()),
+    )?;
+
+    Ok(items.into_iter().map(|item| item.item_row.id).collect())
 }

@@ -166,11 +166,7 @@ export const useInboundShipment = (id?: string) => {
     return result;
   };
 
-  const {
-    mutateAsync: duplicate,
-    isPending: isDuplicating,
-    error: duplicateError,
-  } = useDuplicate();
+  const { duplicate, isDuplicating, duplicateError } = useDuplicate();
 
   const invalidateQuery = () => {
     queryClient.invalidateQueries({
