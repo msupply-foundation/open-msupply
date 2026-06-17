@@ -1,4 +1,4 @@
-use crate::invoice::common::generate_duplicate_comment;
+use crate::invoice::common::{active_items, generate_duplicate_comment};
 use crate::number::next_number;
 use chrono::Utc;
 use repository::{
@@ -10,6 +10,7 @@ use util::uuid::uuid;
 pub struct GenerateResult {
     pub new_invoice: InvoiceRow,
     pub new_lines: Vec<InvoiceLineRow>,
+    pub skipped_item_count: usize,
 }
 
 pub fn generate(
@@ -50,14 +51,32 @@ pub fn generate(
     let source_lines =
         InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(&source_invoice.id)?;
 
-    let new_lines = source_lines
-        .into_iter()
-        .map(|line| generate_line(&new_invoice_id, line))
-        .collect();
+    let active_item_ids = active_items(
+        connection,
+        store_id,
+        source_lines
+            .iter()
+            .filter(|line| line.r#type != InvoiceLineType::Service)
+            .map(|line| line.item_id.clone())
+            .collect(),
+    )?;
+
+    let mut new_lines = Vec::new();
+    let mut skipped_item_count = 0;
+
+    for line in source_lines {
+        if line.r#type != InvoiceLineType::Service && !active_item_ids.contains(&line.item_id) {
+            skipped_item_count += 1;
+            continue;
+        }
+
+        new_lines.push(generate_line(&new_invoice_id, line));
+    }
 
     Ok(GenerateResult {
         new_invoice,
         new_lines,
+        skipped_item_count,
     })
 }
 

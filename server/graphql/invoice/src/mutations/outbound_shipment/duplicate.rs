@@ -3,11 +3,46 @@ use async_graphql::*;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::InvoiceNode;
-use repository::Invoice;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice::outbound_shipment::DuplicateOutboundShipmentError as ServiceError;
+use service::invoice::outbound_shipment::{
+    DuplicateOutboundShipment as ServiceResult, DuplicateOutboundShipmentError as ServiceError,
+};
 
-pub fn duplicate(ctx: &Context<'_>, store_id: &str, id: String) -> Result<InvoiceNode> {
+#[derive(SimpleObject)]
+pub struct DuplicateOutboundShipmentNode {
+    pub invoice: InvoiceNode,
+    pub skipped_item_count: u32,
+}
+
+pub struct CustomerIsInactive;
+#[Object]
+impl CustomerIsInactive {
+    pub async fn description(&self) -> &str {
+        "Cannot duplicate this shipment because its customer is no longer active"
+    }
+}
+
+#[derive(Interface)]
+#[graphql(name = "DuplicateOutboundShipmentErrorInterface")]
+#[graphql(field(name = "description", ty = "&str"))]
+pub enum DuplicateErrorInterface {
+    CustomerIsInactive(CustomerIsInactive),
+}
+
+#[derive(SimpleObject)]
+#[graphql(name = "DuplicateOutboundShipmentError")]
+pub struct DuplicateError {
+    pub error: DuplicateErrorInterface,
+}
+
+#[derive(Union)]
+#[graphql(name = "DuplicateOutboundShipmentResponse")]
+pub enum DuplicateResponse {
+    Error(DuplicateError),
+    Response(DuplicateOutboundShipmentNode),
+}
+
+pub fn duplicate(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DuplicateResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -26,18 +61,32 @@ pub fn duplicate(ctx: &Context<'_>, store_id: &str, id: String) -> Result<Invoic
     )
 }
 
-pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<InvoiceNode> {
-    match from {
-        Ok(invoice) => Ok(InvoiceNode::from_domain(invoice)),
-        Err(error) => Err(map_error(error)),
-    }
+pub fn map_response(from: Result<ServiceResult, ServiceError>) -> Result<DuplicateResponse> {
+    let result = match from {
+        Ok(result) => DuplicateResponse::Response(DuplicateOutboundShipmentNode {
+            invoice: InvoiceNode::from_domain(result.invoice),
+            skipped_item_count: result.skipped_item_count as u32,
+        }),
+        Err(error) => DuplicateResponse::Error(DuplicateError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(result)
 }
 
-fn map_error(error: ServiceError) -> async_graphql::Error {
+fn map_error(error: ServiceError) -> Result<DuplicateErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
+        // Structured Errors
+        ServiceError::CustomerIsInactive => {
+            return Ok(DuplicateErrorInterface::CustomerIsInactive(
+                CustomerIsInactive,
+            ))
+        }
+        // Standard Graphql Errors
         ServiceError::InvoiceDoesNotExist
         | ServiceError::NotAnOutboundShipment
         | ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
@@ -46,7 +95,7 @@ fn map_error(error: ServiceError) -> async_graphql::Error {
         }
     };
 
-    graphql_error.extend()
+    Err(graphql_error.extend())
 }
 
 #[cfg(test)]
@@ -56,20 +105,24 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{mock_outbound_shipment_c, mock_name_a, mock_store_a, MockDataInserts},
+        mock::{mock_name_a, mock_outbound_shipment_c, mock_store_a, MockDataInserts},
         Invoice, RepositoryError, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
         invoice::{
-            outbound_shipment::DuplicateOutboundShipmentError as ServiceError, InvoiceServiceTrait,
+            outbound_shipment::{
+                DuplicateOutboundShipment, DuplicateOutboundShipmentError as ServiceError,
+            },
+            InvoiceServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
 
     use crate::InvoiceMutations;
 
-    type DuplicateMethod = dyn Fn(String) -> Result<Invoice, ServiceError> + Sync + Send;
+    type DuplicateMethod =
+        dyn Fn(String) -> Result<DuplicateOutboundShipment, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<DuplicateMethod>);
 
@@ -78,7 +131,7 @@ mod test {
             &self,
             _: &ServiceContext,
             source_id: String,
-        ) -> Result<Invoice, ServiceError> {
+        ) -> Result<DuplicateOutboundShipment, ServiceError> {
             self.0(source_id)
         }
     }
@@ -112,7 +165,11 @@ mod test {
         let mutation = r#"
         mutation ($id: String!, $storeId: String!) {
             duplicateOutboundShipment(storeId: $storeId, id: $id) {
-                id
+                ... on DuplicateOutboundShipmentNode {
+                    invoice {
+                        id
+                    }
+                }
             }
           }
         "#;
@@ -126,6 +183,34 @@ mod test {
             &Some(empty_variables()),
             &expected_message,
             None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // CustomerIsInactive (structured error)
+        let customer_inactive_mutation = r#"
+        mutation ($id: String!, $storeId: String!) {
+            duplicateOutboundShipment(storeId: $storeId, id: $id) {
+                ... on DuplicateOutboundShipmentError {
+                    error {
+                        __typename
+                    }
+                }
+            }
+          }
+        "#;
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CustomerIsInactive)));
+        let expected = json!({
+            "duplicateOutboundShipment": {
+                "error": {
+                    "__typename": "CustomerIsInactive"
+                }
+            }
+        });
+        assert_graphql_query!(
+            &settings,
+            customer_inactive_mutation,
+            &Some(empty_variables()),
+            &expected,
             Some(service_provider(test_service, &connection_manager))
         );
 
@@ -181,7 +266,12 @@ mod test {
         let mutation = r#"
         mutation ($storeId: String!, $id: String!) {
             duplicateOutboundShipment(storeId: $storeId, id: $id) {
-                id
+                ... on DuplicateOutboundShipmentNode {
+                    invoice {
+                        id
+                    }
+                    skippedItemCount
+                }
             }
           }
         "#;
@@ -189,11 +279,14 @@ mod test {
         // Success
         let test_service = TestService(Box::new(|source_id| {
             assert_eq!(source_id, "source id".to_string());
-            Ok(Invoice {
-                invoice_row: mock_outbound_shipment_c(),
-                name_row: mock_name_a(),
-                store_row: mock_store_a(),
-                clinician_row: None,
+            Ok(DuplicateOutboundShipment {
+                invoice: Invoice {
+                    invoice_row: mock_outbound_shipment_c(),
+                    name_row: mock_name_a(),
+                    store_row: mock_store_a(),
+                    clinician_row: None,
+                },
+                skipped_item_count: 2,
             })
         }));
 
@@ -204,7 +297,10 @@ mod test {
 
         let expected = json!({
             "duplicateOutboundShipment": {
-                "id": mock_outbound_shipment_c().id
+                "invoice": {
+                    "id": mock_outbound_shipment_c().id
+                },
+                "skippedItemCount": 2
             }
           }
         );
