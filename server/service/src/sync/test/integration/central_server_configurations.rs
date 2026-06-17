@@ -120,6 +120,10 @@ impl ConfigureCentralServer {
         &self,
         records: serde_json::Value,
     ) -> Result<(), SyncApiError> {
+        // TestStepData fields default to Value::Null; 4D rejects a null body so skip the call.
+        if records.is_null() {
+            return Ok(());
+        }
         Ok(with_retry(|| self.api.upsert_central_records(&records)).await?)
     }
 
@@ -127,6 +131,9 @@ impl ConfigureCentralServer {
         &self,
         records: serde_json::Value,
     ) -> Result<(), SyncApiError> {
+        if records.is_null() {
+            return Ok(());
+        }
         Ok(with_retry(|| self.api.delete_central_records(&records)).await?)
     }
 
@@ -154,6 +161,7 @@ impl ConfigureCentralServer {
                 // fresh data file has 230 central change logs
                 // and a small number makes integration tests super slow
                 batch_size: Default::default(),
+                disable_integration_transaction: false,
             },
             new_site_properties,
         })

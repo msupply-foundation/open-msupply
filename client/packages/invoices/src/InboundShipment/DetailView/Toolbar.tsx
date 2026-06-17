@@ -44,6 +44,7 @@ export const Toolbar = () => {
   const {
     query: { data: shipment },
     isDisabled,
+    isExternal,
     update: { update },
   } = useInboundShipment();
 
@@ -59,9 +60,10 @@ export const Toolbar = () => {
             {otherParty && (
               <InputWithLabelRow
                 label={t('label.supplier-name')}
+                labelWidth="9rem"
                 Input={
                   <SupplierSearchInput
-                    disabled={isDisabled || isTransfer}
+                    disabled={isDisabled || isTransfer || isExternal}
                     value={otherParty}
                     onChange={name => {
                       update({ otherParty: name ?? undefined });
@@ -71,7 +73,8 @@ export const Toolbar = () => {
               />
             )}
             <InputWithLabelRow
-              label={t('label.supplier-ref')}
+              label={t('label.supplier-reference')}
+              labelWidth="9rem"
               Input={
                 <Tooltip title={theirReference} placement="bottom-start">
                   <BufferedTextArea

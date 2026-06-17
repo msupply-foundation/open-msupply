@@ -24,6 +24,11 @@ const fullStocktakePath = RouteBuilder.create(AppRoute.Inventory)
   .addWildCard()
   .build();
 
+const fullStockMovementPath = RouteBuilder.create(AppRoute.Inventory)
+  .addPart(AppRoute.StockMovement)
+  .addWildCard()
+  .build();
+
 const fullLocationPath = RouteBuilder.create(AppRoute.Inventory)
   .addPart(AppRoute.Locations)
   .build();
@@ -31,6 +36,7 @@ const fullLocationPath = RouteBuilder.create(AppRoute.Inventory)
 export const InventoryRouter: FC = () => {
   const gotoStock = useMatch(fullItemPath);
   const gotoStocktakes = useMatch(fullStocktakePath);
+  const gotoStockMovement = useMatch(fullStockMovementPath);
   const gotoLocations = useMatch(fullLocationPath);
 
   if (gotoStock) {
@@ -38,6 +44,10 @@ export const InventoryRouter: FC = () => {
   }
 
   if (gotoStocktakes) {
+    return <InventoryService />;
+  }
+
+  if (gotoStockMovement) {
     return <InventoryService />;
   }
 

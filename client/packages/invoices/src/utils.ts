@@ -18,6 +18,7 @@ import { OutboundFragment, OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
 import { InboundItem } from './types';
 import {
+  PrescriptionFragment,
   PrescriptionLineFragment,
   PrescriptionRowFragment,
 } from './Prescriptions/api';
@@ -239,7 +240,7 @@ export const canDeleteInvoice = (
   invoice.status === InvoiceNodeStatus.Allocated ||
   invoice.status === InvoiceNodeStatus.Picked;
 
-export const canCancelInvoice = (invoice: PrescriptionRowFragment) =>
+export const canCancelInvoice = (invoice: PrescriptionFragment) =>
   invoice.type === InvoiceNodeType.Prescription &&
   invoice.status === InvoiceNodeStatus.Verified &&
   !invoice.isCancellation;

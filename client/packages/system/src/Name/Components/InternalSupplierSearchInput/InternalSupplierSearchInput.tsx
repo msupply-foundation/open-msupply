@@ -1,47 +1,54 @@
 import React, { FC } from 'react';
 import {
-  Autocomplete,
-  useBufferState,
+  InfiniteSearchPicker,
+  NameFilterInput,
   useTranslation,
 } from '@openmsupply-client/common';
 import { NameRowFragment, useName } from '../../api';
-import {
-  basicFilterOptions,
-  filterByNameAndCode,
-  NameSearchInputProps,
-} from '../../utils';
+import { NameSearchInputProps } from '../../utils';
 import { getNameOptionRenderer } from '../NameOptionRenderer';
 
-export const InternalSupplierSearchInput: FC<NameSearchInputProps> = ({
+interface InternalSupplierSearchInputExtraProps {
+  autoFocus?: boolean;
+  openOnFocus?: boolean;
+}
+
+export const InternalSupplierSearchInput: FC<
+  NameSearchInputProps & InternalSupplierSearchInputExtraProps
+> = ({
   onChange,
-  width = 250,
+  width,
   value,
   disabled = false,
+  clearable = false,
+  currentId,
+  extraFilter,
+  filterBy,
+  autoFocus = false,
+  openOnFocus = false,
 }) => {
   const t = useTranslation();
-  const { data, isLoading } = useName.document.internalSuppliers();
-  const [buffer, setBuffer] = useBufferState(value);
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
   return (
-    <Autocomplete
-      disabled={disabled}
-      clearable={false}
-      value={buffer && { ...buffer, label: buffer.name }}
-      filterOptionConfig={basicFilterOptions}
-      loading={isLoading}
-      onChange={(_, name) => {
-        setBuffer(name);
-        name && onChange(name);
-      }}
-      options={data?.nodes ?? []}
+    <InfiniteSearchPicker<NameRowFragment, NameFilterInput>
+      value={value}
+      onChange={onChange}
+      currentId={currentId}
+      useInfiniteData={useName.document.internalSuppliersInfinite}
+      useGetById={useName.document.get}
+      apiFilter={filterBy as NameFilterInput | undefined}
+      getOptionLabel={option => option.name}
+      getOptionCode={option => option.code}
       renderOption={NameOptionRenderer}
-      getOptionLabel={(option: NameRowFragment) => option.name}
-      filterOptions={filterByNameAndCode}
-      width={`${width}px`}
-      popperMinWidth={width}
-      isOptionEqualToValue={(option, value) => option?.id === value?.id}
       getOptionDisabled={option => option.isOnHold}
+      extraFilter={extraFilter}
+      disabled={disabled}
+      clearable={clearable}
+      autoFocus={autoFocus}
+      openOnFocus={openOnFocus}
+      width={width}
+      noOptionsText={t('label.no-options')}
     />
   );
 };

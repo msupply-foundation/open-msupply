@@ -76,13 +76,18 @@ pub fn generate_reports_recursive(
         return Ok(());
     }
 
-    let files_and_folders =
-        fs::read_dir(path).map_err(|e| Error::FailedToReadDir(path.clone(), e))?;
+    let mut next_paths = fs::read_dir(path)
+        .map_err(|e| Error::FailedToReadDir(path.clone(), e))?
+        .map(|entry| {
+            entry
+                .map(|e| e.path())
+                .map_err(|e| Error::FailedToGetFileOrDir(path.clone(), e))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    // Sort for deterministic output, so generated reports json doesn't churn across builds.
+    next_paths.sort();
 
-    for file_or_folder in files_and_folders {
-        let next_path = file_or_folder
-            .map_err(|e| Error::FailedToGetFileOrDir(path.clone(), e))?
-            .path();
+    for next_path in next_paths {
         generate_reports_recursive(reports_data, ignore_paths, manifest_name, &next_path)?;
     }
     Ok(())

@@ -12,8 +12,8 @@ export const useRequisitionCounts = () => {
       api.requisitionCounts({
         storeId,
       }),
-
-    retry: false
+    enabled: !!storeId,
+    retry: false,
   });
 
   if (!data?.requisitionCounts) {

@@ -11,6 +11,8 @@ import {
   Divider,
   useFormatNumber,
   usePreferences,
+  UsePluginEvents,
+  ShipmentLinePluginState,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import {
@@ -32,6 +34,7 @@ interface AllocationProps {
   invoiceId: string;
   allowPlaceholder: boolean;
   scannedBatch?: string;
+  pluginEvents: UsePluginEvents<ShipmentLinePluginState>;
 }
 
 export const Allocation = ({
@@ -39,6 +42,7 @@ export const Allocation = ({
   invoiceId,
   allowPlaceholder,
   scannedBatch,
+  pluginEvents,
 }: AllocationProps) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
@@ -72,9 +76,9 @@ export const Allocation = ({
       const allocateInPacksize: AllocateInOption | undefined =
         packsizes.length === 1 && packsizes[0]
           ? {
-              type: AllocateInType.Packs,
-              packSize: packsizes[0],
-            }
+            type: AllocateInType.Packs,
+            packSize: packsizes[0],
+          }
           : undefined;
 
       initialise(
@@ -103,10 +107,18 @@ export const Allocation = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return isFetching ? <BasicSpinner /> : item ? <AllocationInner /> : null;
+  return isFetching ? (
+    <BasicSpinner />
+  ) : item ? (
+    <AllocationInner pluginEvents={pluginEvents} />
+  ) : null;
 };
 
-const AllocationInner = () => {
+const AllocationInner = ({
+  pluginEvents,
+}: {
+  pluginEvents: UsePluginEvents<ShipmentLinePluginState>;
+}) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
 
@@ -130,14 +142,14 @@ const AllocationInner = () => {
 
     return allocateIn.type === AllocateInType.Doses
       ? t('label.available-quantity-doses', {
-          doseCount: sumAvailableDoses(draftLines).toFixed(0),
-          unitCount: unitCount,
-          unitName: pluralisedUnitName,
-        })
+        doseCount: sumAvailableDoses(draftLines).toFixed(0),
+        unitCount: unitCount,
+        unitName: pluralisedUnitName,
+      })
       : t('label.available-quantity', {
-          number: unitCount,
-          unitName: pluralisedUnitName,
-        });
+        number: unitCount,
+        unitName: pluralisedUnitName,
+      });
   };
 
   return (
@@ -170,6 +182,7 @@ const AllocationInner = () => {
       <OutboundLineEditTable
         currency={currency}
         isExternalSupplier={!otherParty?.store}
+        pluginEvents={pluginEvents}
       />
     </>
   );

@@ -1,10 +1,12 @@
+use crate::common::check_program_exists;
+use crate::invoice::inbound_shipment::InboundShipmentType;
 use crate::{
-    campaign::check_campaign_exists,
+    campaign::check_campaign_exists_including_deleted,
     check_item_variant_exists, check_location_exists, check_location_type_is_valid,
     check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        stock_in_line::{check_batch, check_pack_size, check_program_visible_to_store},
+        stock_in_line::{check_batch, check_pack_size},
         validate::{
             check_item_exists, check_line_belongs_to_invoice, check_line_exists,
             check_number_of_packs,
@@ -13,8 +15,12 @@ use crate::{
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
     NullableUpdate,
 };
-use crate::invoice::inbound_shipment::InboundShipmentType;
-use repository::{InvoiceLine, InvoiceRow, ItemRow, StorageConnection};
+use repository::{
+    InvoiceLine, InvoiceRow, ItemRow, ReasonOptionRowRepository, ReasonOptionType,
+    StorageConnection,
+};
+
+use util::f64_approx_eq;
 
 use super::{UpdateStockInLine, UpdateStockInLineError};
 
@@ -96,9 +102,12 @@ pub fn validate(
         return Err(NotThisInvoiceLine(line.invoice_line_row.invoice_id));
     }
 
-    if let Some(program_id) = &input.program_id {
-        if !check_program_visible_to_store(connection, store_id, &program_id.value)? {
-            return Err(ProgramNotVisible);
+    if let Some(NullableUpdate {
+        value: Some(program_id),
+    }) = &input.program_id
+    {
+        if check_program_exists(connection, program_id)?.is_none() {
+            return Err(ProgramDoesNotExist);
         }
     }
 
@@ -128,7 +137,7 @@ pub fn validate(
         value: Some(campaign_id),
     }) = &input.campaign_id
     {
-        if !check_campaign_exists(connection, campaign_id)? {
+        if !check_campaign_exists_including_deleted(connection, campaign_id)? {
             return Err(CampaignDoesNotExist);
         }
     }
@@ -141,6 +150,18 @@ pub fn validate(
             && !f64_approx_eq(new_cost_price, line_row.cost_price_per_pack)
         {
             return Err(CannotEditCostPrice);
+        }
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(reason_option_id),
+    }) = &input.reason_option_id
+    {
+        let reason = ReasonOptionRowRepository::new(connection)
+            .find_one_by_id(reason_option_id)?
+            .ok_or(UpdateStockInLineError::ReasonOptionDoesNotExist)?;
+        if reason.r#type != ReasonOptionType::ShipmentVariance {
+            return Err(UpdateStockInLineError::ReasonOptionTypeInvalid);
         }
     }
 
@@ -160,14 +181,6 @@ pub fn validate(
     Ok((line, item, invoice))
 }
 
-/// Compare two f64 values for approximate equality using a relative tolerance.
-/// Uses a minimum absolute tolerance of 1e-8 to handle values near zero,
-/// scaled by the magnitude of the larger operand for large values.
-fn f64_approx_eq(a: f64, b: f64) -> bool {
-    let tolerance = f64::EPSILON * a.abs().max(b.abs()) * 10.0;
-    (a - b).abs() <= tolerance.max(1e-8)
-}
-
 fn check_item_option(
     item_id_option: &Option<String>,
     connection: &StorageConnection,
@@ -178,33 +191,5 @@ fn check_item_option(
         ))
     } else {
         Ok(None)
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::f64_approx_eq;
-
-    #[test]
-    fn test_f64_approx_eq() {
-        // Identical values
-        assert!(f64_approx_eq(1.0, 1.0));
-        assert!(f64_approx_eq(0.0, 0.0));
-
-        // Clearly different values
-        assert!(!f64_approx_eq(1.0, 2.0));
-        assert!(!f64_approx_eq(100.0, 100.01));
-
-        // Large values: difference within relative tolerance should be equal
-        let large = 1_000_000.0;
-        let drift = f64::EPSILON * large * 5.0;
-        assert!(f64_approx_eq(large, large + drift));
-
-        // Large values: meaningful difference should not be equal
-        assert!(!f64_approx_eq(large, large + 0.01));
-
-        // Near zero: uses minimum absolute tolerance of 1e-8
-        assert!(f64_approx_eq(0.0, 1e-9));
-        assert!(!f64_approx_eq(0.0, 1e-7));
     }
 }

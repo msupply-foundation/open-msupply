@@ -10,12 +10,14 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
+import { usePluginNavLinksForCategory } from './usePluginNavLinks';
 
 export const DistributionNav: FC = () => {
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Distribution).addWildCard().build()
   );
   const t = useTranslation();
+  const pluginLinks = usePluginNavLinksForCategory(AppRoute.Distribution);
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Distribution}>
@@ -51,6 +53,7 @@ export const DistributionNav: FC = () => {
               .build()}
             text={t('customers')}
           />
+          {pluginLinks}
         </List>
       </Collapse>
     </AppNavSection>

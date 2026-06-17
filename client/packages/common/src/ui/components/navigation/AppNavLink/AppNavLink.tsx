@@ -13,6 +13,7 @@ import { styled } from '@mui/material/styles';
 import { useMatch, Link } from 'react-router-dom';
 import { useDrawer, useIsExtraSmallScreen } from '@common/hooks';
 import { ChevronDownIcon } from '@common/icons';
+import { useIntlUtils } from '@common/intl';
 
 const useSelectedNavMenuItem = (
   to: string,
@@ -85,6 +86,9 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
     onClick,
   } = props;
   const drawer = useDrawer();
+  const { isRtl } = useIntlUtils();
+  // Chevron points "into" the content; mirror its rotation for RTL navigation
+  const chevronRotation = isRtl ? 'rotate(90deg)' : 'rotate(-90deg)';
 
   const selected = useSelectedNavMenuItem(to, isParent, drawer.isOpen);
   const match = useMatch({ path: `${to}/*` });
@@ -152,7 +156,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
               marginLeft: 0.5,
               stroke: theme => theme.palette.gray.main,
               strokeWidth: 1.5,
-              transform: 'rotate(-90deg)',
+              transform: chevronRotation,
             }}
           />
         )}
@@ -204,7 +208,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
           >
             <ChevronDownIcon
               sx={{
-                transform: 'rotate(-90deg)',
+                transform: chevronRotation,
                 fontSize: '1rem',
                 color: 'primary.main',
               }}

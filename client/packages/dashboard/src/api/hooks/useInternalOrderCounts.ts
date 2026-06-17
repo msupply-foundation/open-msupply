@@ -12,8 +12,8 @@ export const useInternalOrderCounts = () => {
       api.internalOrderCounts({
         storeId,
       }),
-
-    retry: false
+    enabled: !!storeId,
+    retry: false,
   });
 
   if (!data?.requisitionCounts) {

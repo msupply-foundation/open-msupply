@@ -86,6 +86,17 @@ export const useExportCSV = () => {
   return exportCsv;
 };
 
+export const useExportJSON = () => {
+  const exportFile = useExportFile();
+
+  const exportJson = async (data: string, title: string) => {
+    const filename = getFilename('application/json', title);
+    exportFile(data, 'application/json', filename);
+  };
+
+  return exportJson;
+};
+
 export const useExportLog = () => {
   const exportFile = useExportFile();
 
@@ -174,6 +185,9 @@ const getFilename = (type?: string, title?: string) => {
   switch (type) {
     case 'text/csv':
       extension = 'csv';
+      break;
+    case 'application/json':
+      extension = 'json';
       break;
   }
 

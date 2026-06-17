@@ -55,7 +55,7 @@ pub fn generate(
         comment,
         snapshot_number_of_packs,
         counted_number_of_packs,
-        item_link_id: item_id.to_string(),
+        item_id: item_id.to_string(),
         item_name,
         batch,
         expiry_date,

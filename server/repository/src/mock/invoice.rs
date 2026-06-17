@@ -430,7 +430,7 @@ pub fn mock_outbound_shipment_line_a() -> InvoiceLineRow {
     InvoiceLineRow {
         id: String::from("outbound_shipment_line_a"),
         invoice_id: String::from("outbound_shipment_c"),
-        item_link_id: String::from("item_a"),
+        item_id: String::from("item_a"),
         item_name: String::from("Item A"),
         item_code: String::from("a"),
         pack_size: 1.0,
