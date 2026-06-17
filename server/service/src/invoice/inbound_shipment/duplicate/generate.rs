@@ -1,18 +1,15 @@
-use std::collections::HashSet;
-
-use crate::invoice::common::generate_duplicate_comment;
+use crate::invoice::common::{active_items, generate_duplicate_comment};
 use crate::number::next_number;
 use chrono::Utc;
 use repository::{
-    EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
-    InvoiceStatus, ItemFilter, ItemRepository, NumberRowType, RepositoryError, StorageConnection,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
+    NumberRowType, RepositoryError, StorageConnection,
 };
 use util::uuid::uuid;
 
 pub struct GenerateResult {
     pub new_invoice: InvoiceRow,
     pub new_lines: Vec<InvoiceLineRow>,
-    /// Number of source stock lines skipped because their item is no longer in the active/visible.
     pub skipped_item_count: usize,
 }
 
@@ -56,7 +53,15 @@ pub fn generate(
     let source_lines =
         InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(&source_invoice.id)?;
 
-    let active_item_ids = active_item_ids(connection, store_id, &source_lines)?;
+    let active_item_ids = active_items(
+        connection,
+        store_id,
+        source_lines
+            .iter()
+            .filter(|line| line.r#type == InvoiceLineType::StockIn)
+            .map(|line| line.item_id.clone())
+            .collect(),
+    )?;
 
     let mut new_lines = Vec::new();
     let mut skipped_item_count = 0;
@@ -87,29 +92,4 @@ pub fn generate(
         new_lines,
         skipped_item_count,
     })
-}
-
-fn active_item_ids(
-    connection: &StorageConnection,
-    store_id: &str,
-    source_lines: &[InvoiceLineRow],
-) -> Result<HashSet<String>, RepositoryError> {
-    let stock_item_ids: Vec<String> = source_lines
-        .iter()
-        .map(|line| line.item_id.clone())
-        .collect();
-
-    if stock_item_ids.is_empty() {
-        return Ok(HashSet::new());
-    }
-
-    let items = ItemRepository::new(connection).query_by_filter(
-        ItemFilter::new()
-            .id(EqualFilter::equal_any(stock_item_ids))
-            .is_visible(true)
-            .is_active(true),
-        Some(store_id.to_string()),
-    )?;
-
-    Ok(items.into_iter().map(|item| item.item_row.id).collect())
 }
