@@ -86,14 +86,10 @@ pub async fn pull(
     // A short batch means the changelog tail is exhausted (= last batch). Avoids a full count, which
     // scans the changelog on every pull and exhausts the DB pool under concurrent multi-site init.
     let num_changelogs = changelogs.len();
+    let last_cursor = changelogs.last().map(|log| log.cursor as u64);
     // Clamp the empty-batch fallback so we don't advance past an in-flight (uncommitted, lower)
     // changelog cursor. The non-empty path is already safe because the query is clamped.
     let max_cursor = changelog_repo.latest_cursor()?;
-
-    let end_cursor = changelogs
-        .last()
-        .map(|log| log.cursor as u64)
-        .unwrap_or(max_cursor);
 
     let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
         &ctx.connection,
@@ -112,9 +108,11 @@ pub async fn pull(
     );
     log::debug!("Sending records as central server: {:#?}", records);
 
-    let is_last_batch = num_changelogs < batch_size as usize;
-    // Cheap progress-bar estimate (over-estimates, but monotonic and snaps to done on the last batch).
-    let total_records = max_cursor.saturating_sub(cursor);
+    let BatchPaging {
+        end_cursor,
+        is_last_batch,
+        total_records,
+    } = derive_batch_paging(last_cursor, num_changelogs, batch_size, max_cursor, cursor);
 
     Ok(SyncBatchV6 {
         total_records,
@@ -240,14 +238,10 @@ pub async fn patient_pull(
     )?;
     // See `pull`: short batch = last batch; avoids a full count and uses a cheap progress estimate.
     let num_changelogs = changelogs.len();
+    let last_cursor = changelogs.last().map(|log| log.cursor as u64);
     // Clamp the empty-batch fallback so we don't advance past an in-flight (uncommitted, lower)
     // changelog cursor. The non-empty path is already safe because the query is clamped.
     let max_cursor = changelog_repo.latest_cursor()?;
-
-    let end_cursor = changelogs
-        .last()
-        .map(|log| log.cursor as u64)
-        .unwrap_or(max_cursor);
 
     let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
         &ctx.connection,
@@ -269,8 +263,11 @@ pub async fn patient_pull(
         records
     );
 
-    let is_last_batch = num_changelogs < batch_size as usize;
-    let total_records = max_cursor.saturating_sub(cursor);
+    let BatchPaging {
+        end_cursor,
+        is_last_batch,
+        total_records,
+    } = derive_batch_paging(last_cursor, num_changelogs, batch_size, max_cursor, cursor);
 
     Ok(SyncBatchV6 {
         total_records,
@@ -475,4 +472,80 @@ fn set_integrating(site_id: i32, is_integrating: bool) {
 
 fn is_sync_version_compatible(sync_v6_version: u32) -> bool {
     MIN_VERSION <= sync_v6_version && sync_v6_version <= MAX_VERSION
+}
+
+/// The paging fields a v6 pull batch reports back to the requesting site, derived from the batch
+/// alone - without a full changelog count (which scans the whole changelog on every pull and, under
+/// concurrent multi-site init, exhausts the DB pool).
+struct BatchPaging {
+    /// Cursor the site resumes from on its next pull.
+    end_cursor: u64,
+    /// Whether the changelog tail is exhausted (the pull loop terminates on this).
+    is_last_batch: bool,
+    /// Progress-bar estimate only (see [`derive_batch_paging`]).
+    total_records: u64,
+}
+
+/// Derive a batch's paging fields for [`pull`] / [`patient_pull`].
+///
+/// - `is_last_batch`: a short batch (fewer rows than `batch_size`) means the tail is exhausted, so
+///   this is the final batch. An exactly-full batch is treated as not-last; the next pull confirms
+///   it by returning a short/empty batch. (An empty batch is `0 < batch_size`, i.e. also last.)
+/// - `end_cursor`: the last row's cursor, or `max_cursor` for an empty batch so the site still
+///   advances past the clamped head instead of re-requesting the same empty tail forever.
+/// - `total_records`: a cheap cursor-span estimate for the progress bar - it over-counts (the span
+///   includes filtered/deduped rows) but is monotonic; `is_last_batch` is what actually terminates
+///   the loop, not this.
+fn derive_batch_paging(
+    last_cursor: Option<u64>,
+    num_changelogs: usize,
+    batch_size: u32,
+    max_cursor: u64,
+    cursor: u64,
+) -> BatchPaging {
+    BatchPaging {
+        end_cursor: last_cursor.unwrap_or(max_cursor),
+        is_last_batch: num_changelogs < batch_size as usize,
+        total_records: max_cursor.saturating_sub(cursor),
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    /// A short batch (fewer rows than asked for) is the last batch; an exactly-full one is not.
+    #[test]
+    fn test_is_last_batch() {
+        // Short batch -> tail exhausted -> last.
+        assert!(derive_batch_paging(Some(40), 3, 10, 100, 0).is_last_batch);
+        // Empty batch (0 rows) is short -> also last.
+        assert!(derive_batch_paging(None, 0, 10, 100, 0).is_last_batch);
+        // Exactly-full batch -> assume more to come (next pull confirms).
+        assert!(!derive_batch_paging(Some(40), 10, 10, 100, 0).is_last_batch);
+        // batch_size of 1: a single-row batch is full, so not last.
+        assert!(!derive_batch_paging(Some(5), 1, 1, 100, 0).is_last_batch);
+        // batch_size of 1: an empty batch is last.
+        assert!(derive_batch_paging(None, 0, 1, 100, 0).is_last_batch);
+    }
+
+    /// `end_cursor` is the last row's cursor, or `max_cursor` when the batch is empty (so the site
+    /// still advances past the clamped head rather than re-requesting the same empty tail).
+    #[test]
+    fn test_end_cursor() {
+        assert_eq!(derive_batch_paging(Some(42), 5, 10, 100, 0).end_cursor, 42);
+        // Empty batch falls back to max_cursor.
+        assert_eq!(derive_batch_paging(None, 0, 10, 100, 0).end_cursor, 100);
+    }
+
+    /// `total_records` is the cursor span from the request cursor to the latest, saturating at 0
+    /// (never underflows if `cursor` somehow exceeds `max_cursor`).
+    #[test]
+    fn test_total_records_estimate() {
+        assert_eq!(derive_batch_paging(Some(40), 3, 10, 100, 30).total_records, 70);
+        // cursor already at the head -> 0 remaining.
+        assert_eq!(derive_batch_paging(None, 0, 10, 100, 100).total_records, 0);
+        // cursor past max_cursor (e.g. clamp moved it) -> saturates at 0, no underflow panic.
+        assert_eq!(derive_batch_paging(None, 0, 10, 100, 150).total_records, 0);
+    }
 }

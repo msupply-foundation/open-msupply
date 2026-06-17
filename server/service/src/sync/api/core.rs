@@ -37,6 +37,10 @@ pub struct SyncApiSettings {
 pub struct SyncApiV5 {
     pub url: Url,
     pub settings: SyncApiSettings,
+    /// Poll period for [`SyncApiV5::wait_until_central_idle`] when central is busy with another
+    /// session for this site. Defaults to `CENTRAL_BUSY_POLL_PERIOD_SECONDS` in production; tests
+    /// set it to 0 to drive the busy-retry loops without real sleeps.
+    pub(crate) busy_poll_period_seconds: u64,
 }
 
 fn tuple_vec_to_header(tuple_vec: Vec<(&str, &str)>) -> HeaderMap {
@@ -91,6 +95,7 @@ impl SyncApiV5 {
                 SyncApiV5CreatingError::CannotParseSyncUrl(settings.server_url.clone(), error)
             })?,
             settings,
+            busy_poll_period_seconds: CENTRAL_BUSY_POLL_PERIOD_SECONDS,
         })
     }
 
@@ -110,6 +115,7 @@ impl SyncApiV5 {
                 app_version: Version::from_package_json().to_string(),
                 app_name: APP_NAME.to_string(),
             },
+            busy_poll_period_seconds: CENTRAL_BUSY_POLL_PERIOD_SECONDS,
         }
     }
 
@@ -203,11 +209,8 @@ impl SyncApiV5 {
     /// "central busy" response (another sync session for this site is in progress;
     /// legacy central gates sync per-site) before retrying. Errors on timeout.
     pub(crate) async fn wait_until_central_idle(&self) -> Result<(), SyncApiError> {
-        self.wait_until_central_idle_for(
-            CENTRAL_BUSY_POLL_PERIOD_SECONDS,
-            CENTRAL_BUSY_TIMEOUT_SECONDS,
-        )
-        .await
+        self.wait_until_central_idle_for(self.busy_poll_period_seconds, CENTRAL_BUSY_TIMEOUT_SECONDS)
+            .await
     }
 
     /// As [`Self::wait_until_central_idle`], with the poll period and timeout injected so tests can

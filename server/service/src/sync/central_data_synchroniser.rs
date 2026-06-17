@@ -101,3 +101,89 @@ impl CentralDataSynchroniser {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use actix_web::{web, App, HttpResponse, HttpServer};
+    use repository::{mock::MockDataInserts, test_db};
+    use std::sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    };
+
+    /// The central pull loop must treat a "central busy" error (central is mid-session for another
+    /// sync of this site; legacy central gates sync per-site) as retryable: wait for central to go
+    /// idle, then re-request the same cursor - rather than failing the whole pull. Here a mock
+    /// central is busy on the first `central_records` call and serves an empty (terminal) batch
+    /// thereafter; the loop should poll `site_status`, see idle, retry, and finish Ok.
+    #[actix_rt::test]
+    async fn test_central_pull_retries_when_central_busy() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_central_pull_retries_when_central_busy",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        // Count `central_records` calls to prove the loop retried after the busy response.
+        let central_records_hits = Arc::new(AtomicUsize::new(0));
+
+        async fn central_records(hits: web::Data<Arc<AtomicUsize>>) -> HttpResponse {
+            // First call: central busy with another session for this site.
+            if hits.fetch_add(1, Ordering::SeqCst) == 0 {
+                return HttpResponse::ServiceUnavailable().json(serde_json::json!({
+                    "error": { "code": "sync_is_running", "message": "busy", "data": null }
+                }));
+            }
+            // Subsequent calls: empty terminal batch (maxCursor 0 ends the pull loop).
+            HttpResponse::Ok().json(serde_json::json!({ "maxCursor": 0, "data": [] }))
+        }
+
+        // Central is idle, so `wait_until_central_idle` returns on its first poll.
+        async fn site_status() -> HttpResponse {
+            HttpResponse::Ok()
+                .json(serde_json::json!({ "code": "idle", "message": "", "data": null }))
+        }
+
+        let hits_for_server = central_records_hits.clone();
+        let server = HttpServer::new(move || {
+            App::new()
+                .app_data(web::Data::new(hits_for_server.clone()))
+                .route("/sync/v5/central_records", web::to(central_records))
+                .route("/sync/v5/site_status", web::to(site_status))
+        })
+        .workers(1)
+        .bind(("127.0.0.1", 0))
+        .unwrap();
+
+        let url = format!("http://{}", server.addrs()[0]);
+
+        let mut sync_api_v5 = SyncApiV5::new_test(&url, "", "", "site");
+        // Poll for idle immediately - no real 15s sleep between the busy response and the retry.
+        sync_api_v5.busy_poll_period_seconds = 0;
+        let synchroniser = CentralDataSynchroniser { sync_api_v5 };
+
+        let mut logger = SyncLogger::start(&connection).unwrap();
+
+        let server_future = server.run();
+        let server_handle = server_future.handle();
+
+        let result = tokio::select! {
+            _ = server_future => unreachable!("server should not finish before the pull"),
+            result = synchroniser.pull(&connection, 10, &mut logger) => result,
+        };
+
+        server_handle.stop(false).await;
+
+        assert!(
+            result.is_ok(),
+            "pull should succeed after retrying: {:?}",
+            result
+        );
+        assert!(
+            central_records_hits.load(Ordering::SeqCst) >= 2,
+            "expected a retry after the busy response, got {} call(s)",
+            central_records_hits.load(Ordering::SeqCst)
+        );
+    }
+}
