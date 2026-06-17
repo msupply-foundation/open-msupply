@@ -187,9 +187,6 @@ mod test {
                     purchase_order_line_id: None,
                     linked_invoice_id: None,
                     linked_invoice_line_id: None,
-                    location_id: None,
-                    batch: None,
-                    expiry_date: None,
                     ..source_line.clone()
                 }
             );
