@@ -2431,6 +2431,11 @@ export type DemographicNode = {
   __typename: 'DemographicNode';
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  /**
+   * Percentage of the store's served population this demographic represents
+   * (e.g. 3.5 for under-1s). Used by population-based vaccine forecasting.
+   */
+  populationPercentage: Scalars['Float']['output'];
 };
 
 export type DemographicProjectionConnector = {
