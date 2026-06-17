@@ -7,6 +7,7 @@ import {
   useTranslation,
   AppFooterPortal,
   useDeleteConfirmation,
+  useConfirmationModal,
   useNavigate,
   useNotification,
   RouteBuilder,
@@ -24,7 +25,7 @@ export const FooterComponent = ({
 }) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { success, error } = useNotification();
+  const { success, warning } = useNotification();
 
   const {
     delete: { deleteInbounds },
@@ -52,31 +53,46 @@ export const FooterComponent = ({
 
   const onlyOneSelected = selectedRows.length === 1;
 
-  const duplicateAction = async () => {
+  const getDuplicateConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: '',
+  });
+
+  const duplicateAction = () => {
     const source = selectedRows[0];
     if (!source) return;
-    try {
-      const { id, invoiceNumber } = await duplicate(source.id);
-      resetRowSelection();
-      success(
-        t('messages.shipment-copied', {
-          newNumber: invoiceNumber,
-          sourceNumber: source.invoiceNumber,
-        })
-      )();
-      navigate(
-        RouteBuilder.create(AppRoute.Replenishment)
-          .addPart(AppRoute.InboundShipment)
-          .addPart(id)
-          .build()
-      );
-    } catch (e) {
-      error(
-        t('error.failed-to-duplicate-shipment', {
-          message: (e as Error).message,
-        })
-      )();
-    }
+    getDuplicateConfirmation({
+      message: t('messages.confirm-duplicate-shipment', {
+        number: source.invoiceNumber,
+        supplierName: source.otherPartyName,
+      }),
+      onConfirm: async () => {
+        const result = await duplicate(source.id);
+        if (!result) return;
+
+        const { id, invoiceNumber, skippedItemCount } = result;
+        resetRowSelection();
+        success(
+          t('messages.shipment-copied', {
+            newNumber: invoiceNumber,
+            sourceNumber: source.invoiceNumber,
+          })
+        )();
+        if (skippedItemCount > 0) {
+          warning(
+            t('messages.shipment-copied-skipped-items', {
+              count: skippedItemCount,
+            })
+          )();
+        }
+        navigate(
+          RouteBuilder.create(AppRoute.Replenishment)
+            .addPart(AppRoute.InboundShipment)
+            .addPart(id)
+            .build()
+        );
+      },
+    });
   };
 
   const actions: Action[] = [

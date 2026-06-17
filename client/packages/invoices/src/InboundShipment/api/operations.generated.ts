@@ -1167,11 +1167,20 @@ export type DuplicateInboundShipmentMutationVariables = Types.Exact<{
 
 export type DuplicateInboundShipmentMutation = {
   __typename: 'Mutations';
-  duplicateInboundShipment: {
-    __typename: 'InvoiceNode';
-    id: string;
-    invoiceNumber: number;
-  };
+  duplicateInboundShipment:
+    | {
+        __typename: 'DuplicateInboundShipmentError';
+        error: { __typename: 'SupplierIsInactive'; description: string };
+      }
+    | {
+        __typename: 'DuplicateInboundShipmentNode';
+        skippedItemCount: number;
+        invoice: {
+          __typename: 'InvoiceNode';
+          id: string;
+          invoiceNumber: number;
+        };
+      };
 };
 
 export type LineLinkedToTransferredInvoiceErrorFragment = {
@@ -2444,8 +2453,20 @@ export const DuplicateInboundShipmentDocument = gql`
   mutation duplicateInboundShipment($id: String!, $storeId: String!) {
     duplicateInboundShipment(storeId: $storeId, id: $id) {
       __typename
-      id
-      invoiceNumber
+      ... on DuplicateInboundShipmentNode {
+        invoice {
+          __typename
+          id
+          invoiceNumber
+        }
+        skippedItemCount
+      }
+      ... on DuplicateInboundShipmentError {
+        error {
+          __typename
+          description
+        }
+      }
     }
   }
 `;

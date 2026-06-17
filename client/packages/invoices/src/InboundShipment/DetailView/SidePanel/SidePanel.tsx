@@ -7,6 +7,7 @@ import {
   InvoiceNodeStatus,
   useNotification,
   useDeleteConfirmation,
+  useConfirmationModal,
   useTranslation,
   RouteBuilder,
   useNavigate,
@@ -21,7 +22,7 @@ import { AppRoute } from '@openmsupply-client/config';
 export const SidePanel = () => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { success, error } = useNotification();
+  const { success, warning } = useNotification();
 
   const {
     query: { data },
@@ -39,29 +40,44 @@ export const SidePanel = () => {
       .then(() => success(t('message.copy-success'))());
   };
 
-  const duplicateAction = async () => {
+  const getDuplicateConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: '',
+  });
+
+  const duplicateAction = () => {
     if (!data) return;
-    try {
-      const { id, invoiceNumber } = await duplicate(data.id);
-      success(
-        t('messages.shipment-copied', {
-          newNumber: invoiceNumber,
-          sourceNumber: data.invoiceNumber,
-        })
-      )();
-      navigate(
-        RouteBuilder.create(AppRoute.Replenishment)
-          .addPart(AppRoute.InboundShipment)
-          .addPart(id)
-          .build()
-      );
-    } catch (e) {
-      error(
-        t('error.failed-to-duplicate-shipment', {
-          message: (e as Error).message,
-        })
-      )();
-    }
+    getDuplicateConfirmation({
+      message: t('messages.confirm-duplicate-shipment', {
+        number: data.invoiceNumber,
+        supplierName: data.otherPartyName,
+      }),
+      onConfirm: async () => {
+        const result = await duplicate(data.id);
+        if (!result) return;
+
+        const { id, invoiceNumber, skippedItemCount } = result;
+        success(
+          t('messages.shipment-copied', {
+            newNumber: invoiceNumber,
+            sourceNumber: data.invoiceNumber,
+          })
+        )();
+        if (skippedItemCount > 0) {
+          warning(
+            t('messages.shipment-copied-skipped-items', {
+              count: skippedItemCount,
+            })
+          )();
+        }
+        navigate(
+          RouteBuilder.create(AppRoute.Replenishment)
+            .addPart(AppRoute.InboundShipment)
+            .addPart(id)
+            .build()
+        );
+      },
+    });
   };
 
   const deleteAction = async () => {
