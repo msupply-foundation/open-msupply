@@ -1,7 +1,12 @@
-import { FilterBy, useQuery } from '@openmsupply-client/common';
+import { useQuery } from '@openmsupply-client/common';
 import { useNameApi } from '../utils/useNameApi';
 
-export const useCustomers = (filterBy?: FilterBy | null) => {
+// Merge note: RC removed the filterBy param and hardcoded first:1000 because
+// server-side customer search now lives in useCustomersInfinite (via
+// InfiniteSearchPicker).  The underlying api.get.customers() was also
+// refactored from ListParams { filterBy } to a standalone type that uses
+// `filter` (NameFilterInput) instead.  Keeping the RC version.
+export const useCustomers = () => {
   const api = useNameApi();
 
   return useQuery({
@@ -9,7 +14,7 @@ export const useCustomers = (filterBy?: FilterBy | null) => {
 
     queryFn: () =>
       api.get.customers({
-        filterBy,
+        first: 1000,
       })
   });
 };

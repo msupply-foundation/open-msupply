@@ -5,8 +5,10 @@ import {
   useTranslation,
   ColumnDef,
   ColumnType,
+  ExpiryDateCell,
   StatusCell,
   weightedAverageByUnits,
+  usePluginProvider,
 } from '@openmsupply-client/common';
 import { useInboundShipmentLineErrorContext } from '../context/inboundShipmentLineError';
 import { isInboundPlaceholderRow } from '../../utils';
@@ -25,6 +27,7 @@ export const useInboundShipmentColumns = (
   } = usePreferences();
   const { getError } = useInboundShipmentLineErrorContext();
   const statusMap = useInvoiceLineStatusMap();
+  const { plugins } = usePluginProvider();
 
   return useMemo((): ColumnDef<InboundLineFragment>[] => {
     return [
@@ -74,6 +77,7 @@ export const useInboundShipmentColumns = (
         accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
         header: t('label.expiry-date'),
         columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
         size: 120,
         enableColumnFilter: true,
         enableSorting: true,
@@ -123,6 +127,18 @@ export const useInboundShipmentColumns = (
         accessorKey: 'numberOfPacks',
         header: t('label.pack-quantity'),
         columnType: ColumnType.Number,
+        size: 100,
+      },
+      {
+        id: 'difference',
+        accessorFn: row =>
+          row.shippedNumberOfPacks == null
+            ? null
+            : row.shippedNumberOfPacks - row.numberOfPacks,
+        header: t('label.difference'),
+        description: t('description.difference-packs'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
         size: 100,
       },
       {
@@ -222,6 +238,7 @@ export const useInboundShipmentColumns = (
         accessorFn: row => row.campaign?.name ?? row.program?.name ?? '',
         includeColumn: !external,
       },
+      ...(plugins.inboundShipmentLine?.tableColumn ?? []),
     ];
   }, [
     external,
@@ -232,5 +249,6 @@ export const useInboundShipmentColumns = (
     allowTrackingOfStockByDonor,
     getError,
     statusMap,
+    plugins.inboundShipmentLine?.tableColumn,
   ]);
 };

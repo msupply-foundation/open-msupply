@@ -45,6 +45,7 @@ pub struct UpdateInput {
     pub volume_per_pack: Option<f64>,
     pub shipped_pack_size: Option<f64>,
     pub status: Option<Option<InvoiceLineStatusType>>,
+    pub reason_option_id: Option<NullableUpdateInput<String>>,
 }
 
 #[derive(SimpleObject)]
@@ -136,6 +137,7 @@ impl UpdateInput {
             volume_per_pack,
             shipped_pack_size,
             status,
+            reason_option_id,
         } = self;
 
         ServiceInput {
@@ -184,6 +186,9 @@ impl UpdateInput {
             shipped_pack_size,
             status: status.map(|status| NullableUpdate {
                 value: status.map(|s| InvoiceLineStatus::from(s)),
+            }),
+            reason_option_id: reason_option_id.map(|reason_option_id| NullableUpdate {
+                value: reason_option_id.value,
             }),
         }
     }
@@ -239,9 +244,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::ManufacturerDoesNotExist
         | ServiceError::ManufacturerNotVisible
         | ServiceError::ManufacturerIsNotAManufacturer
-        | ServiceError::ProgramNotVisible
+        | ServiceError::ProgramDoesNotExist
         | ServiceError::CampaignDoesNotExist
         | ServiceError::CannotEditCostPrice
+        | ServiceError::ReasonOptionDoesNotExist
+        | ServiceError::ReasonOptionTypeInvalid
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),

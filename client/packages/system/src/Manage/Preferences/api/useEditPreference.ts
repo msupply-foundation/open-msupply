@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import {
   isEmpty,
   PreferenceNodeType,
@@ -5,6 +6,7 @@ import {
   UpsertPreferencesInput,
   useMutation,
   useNotification,
+  usePatchState,
   useTranslation,
 } from '@openmsupply-client/common';
 import { usePreferencesGraphQL } from './usePreferencesGraphQL';
@@ -34,9 +36,26 @@ export const useEditPreferences = (
     }
   };
 
+  const { patch, updatePatch, resetDraft, isDirty } =
+    usePatchState<UpsertPreferencesInput>({});
+
+  useEffect(() => {
+    resetDraft();
+  }, [storeId, resetDraft]);
+
+  const saveDraft = async (): Promise<boolean> => {
+    if (isEmpty(patch)) return true;
+    return update(patch);
+  };
+
   return {
     preferences: data ?? [],
     update,
+    draft: patch,
+    updateDraft: updatePatch,
+    resetDraft,
+    saveDraft,
+    isDirty,
   };
 };
 
@@ -63,13 +82,8 @@ const useUpsertPref = () => {
         queryKey: [PREFERENCE_DESCRIPTION_QUERY_KEY],
       });
       queryClient.invalidateQueries({
-        queryKey: [
-          'dashboard',
-          'count',
-          requestStoreId,
-          'stock',
-        ]
+        queryKey: ['dashboard', 'count', requestStoreId, 'stock'],
       });
-    }
+    },
   });
 };

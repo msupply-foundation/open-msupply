@@ -9,10 +9,14 @@ import { StockLineRowFragment } from '../operations.generated';
 import { useStockGraphQL } from '../useStockGraphQL';
 import { LIST, STOCK } from './keys';
 
-// Only a subset of stock-line filters can be translated to item-level filters.
-// Stock-line-specific filters (location, expiry, VVM, masterList) don't apply
-// when paginating by item — the Toolbar hides them in grouped mode.
-type GroupedFilterBy = Pick<StockLineFilterInput, 'search' | 'name' | 'code'>;
+// Only a subset of stock-line filters apply in grouped mode — the Toolbar
+// hides location/expiry/VVM filters when grouping is active. masterList is an
+// item-level filter so it stays available; the rest is what the Toolbar
+// exposes when grouped.
+type GroupedFilterBy = Pick<
+  StockLineFilterInput,
+  'search' | 'name' | 'code' | 'masterList'
+>;
 
 export type GroupedStockListParams = {
   first?: number;
@@ -53,14 +57,18 @@ export const useGroupedStockList = (
     nodes: StockLineRowFragment[];
     totalCount: number;
   }> => {
-    const filter = {
-      hasStockOnHand: true,
-      ...(filterBy?.search ? { codeOrName: filterBy.search } : {}),
-      ...(filterBy?.name ? { codeOrName: filterBy.name } : {}),
+    // hasPacksInStore: true is the parity-guaranteeing predicate — items
+    // appear here iff at least one of their stock lines would appear in the
+    // non-aggregated `stockLines` query (which uses the same predicate).
+    const filter: StockLineFilterInput = {
+      hasPacksInStore: true,
+      ...(filterBy?.search ? { search: filterBy.search } : {}),
+      ...(filterBy?.name ? { name: filterBy.name } : {}),
       ...(filterBy?.code ? { code: filterBy.code } : {}),
+      ...(filterBy?.masterList ? { masterList: filterBy.masterList } : {}),
     };
 
-    const query = await stockApi.stockItemsGrouped({
+    const query = await stockApi.itemsByStockLineFilter({
       storeId,
       first,
       offset,
@@ -69,7 +77,7 @@ export const useGroupedStockList = (
       filter,
     });
 
-    const items = query?.items;
+    const items = query?.itemsByStockLineFilter;
     if (!items || !('nodes' in items)) return { nodes: [], totalCount: 0 };
 
     // Flatten: items with nested stock lines → flat stock line array.

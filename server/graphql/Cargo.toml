@@ -22,6 +22,7 @@ graphql_asset_catalogue = { path = "asset_catalogue" }
 graphql_inventory_adjustment = { path = "inventory_adjustment" }
 graphql_item_variant = { path = "item_variant" }
 graphql_item_bundle = { path = "item_bundle" }
+graphql_ancillary_item = { path = "ancillary_item" }
 graphql_invoice = { path = "invoice" }
 graphql_invoice_line = { path = "invoice_line" }
 graphql_vaccine_course = { path = "vaccine_course" }
@@ -35,6 +36,7 @@ graphql_stocktake_line = { path = "stocktake_line" }
 graphql_types = { path = "types" }
 graphql_batch_mutations = { path = "batch_mutations" }
 graphql_stock_line = { path = "stock_line" }
+graphql_stock_relocation = { path = "stock_relocation" }
 graphql_repack = { path = "repack" }
 graphql_printer = { path = "printer" }
 graphql_form_schema = { path = "form_schema" }
@@ -46,6 +48,7 @@ graphql_vvm = { path = "vvm" }
 graphql_purchase_order = { path = "purchase_order" }
 graphql_purchase_order_line = { path = "purchase_order_line" }
 graphql_contact = { path = "contact" }
+graphql_sync_message = { path = "sync_message" }
 
 actix-web = { workspace = true }
 async-graphql = { workspace = true }

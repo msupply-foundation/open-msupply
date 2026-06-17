@@ -49,6 +49,7 @@ const createDraftFromItem = (
     additionInUnits: 0,
     daysOutOfStock: 0,
     expiringUnits: 0,
+    ancillaryParents: [],
   };
 };
 

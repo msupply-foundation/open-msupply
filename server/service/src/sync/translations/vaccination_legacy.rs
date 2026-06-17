@@ -4,8 +4,8 @@ use crate::sync::CentralServerConfig;
 
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
-    vaccination_row::VaccinationRowRepository, ChangelogRow, ChangelogTableName,
-    ItemLinkRowRepository, StorageConnection, VaccinationRow,
+    vaccination_row::VaccinationRowRepository, ChangelogRow, ChangelogTableName, StorageConnection,
+    VaccinationRow,
 };
 
 /*
@@ -92,7 +92,7 @@ impl SyncTranslation for VaccinationLegacyTranslation {
             facility_free_text: _,
             invoice_id,
             stock_line_id,
-            item_link_id,
+            item_id,
             clinician_link_id,
             vaccination_date,
             given,
@@ -108,17 +108,6 @@ impl SyncTranslation for VaccinationLegacyTranslation {
         // patient_id and facility_name_id are already resolved by the view
         let patient_name_id = patient_id;
         let legacy_facility_name_id = facility_name_id;
-
-        // Look up item link ID, if it exists
-
-        let item_link_repo = ItemLinkRowRepository::new(connection);
-
-        let item_id = match item_link_id {
-            Some(item_link_id) => item_link_repo
-                .find_one_by_id(&item_link_id)?
-                .map(|item_link| item_link.id),
-            None => None,
-        };
 
         let legacy_row = LegacyVaccinationRow {
             ID: id,
@@ -178,7 +167,7 @@ mod tests {
 
         // Get the current cursor value
         let cursor = ChangelogRepository::new(&connection)
-            .latest_cursor()
+            .absolute_latest_cursor()
             .unwrap();
 
         // Create a new VaccinationRow (this will get a changelog entry created automatically)
@@ -191,7 +180,7 @@ mod tests {
             encounter_id: mock_immunisation_encounter_a().id,
             given: true,
             given_store_id: Some(mock_store_a().id),
-            item_link_id: Some(mock_vaccine_item_a().id),
+            item_id: Some(mock_vaccine_item_a().id),
             patient_id: mock_patient().id,
             created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
                 .unwrap()

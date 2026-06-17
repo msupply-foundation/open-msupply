@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useShallow } from 'zustand/react/shallow';
 
 export {
   KBarProvider,
@@ -49,4 +50,4 @@ export * from './api';
 export * from './authentication';
 export * from './plugins';
 
-export { create };
+export { create, useShallow };

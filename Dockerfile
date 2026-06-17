@@ -20,7 +20,6 @@ WORKDIR /usr/src/omsupply/server/configuration
 COPY server/configuration/base.yaml .
 COPY docker/local.yaml .
 
-RUN echo "test-uuid" > /etc/machine-id
 RUN mkdir -p /database
 
 WORKDIR /usr/src/omsupply/server
@@ -39,10 +38,16 @@ COPY --chmod=755 server/target-postgres/release/remote_server .
 COPY --chmod=755 server/target-postgres/release/remote_server_cli .
 RUN apt-get update && apt-get install -y postgresql-17 libpq5 gosu && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
+# dbus (pulled in by postgresql-17) bakes a machine-id into the image at build
+# time. The machine_uid crate reads /var/lib/dbus/machine-id before
+# /etc/machine-id, so symlink them and truncate so entry.sh's runtime UUID
+# (or an operator's bind-mounted /etc/machine-id) is what gets read.
+RUN ln -sf /etc/machine-id /var/lib/dbus/machine-id && \
+    truncate -s 0 /etc/machine-id
 ENV PATH="/usr/lib/postgresql/17/bin:$PATH"
 COPY docker/local.postgres.yaml /usr/src/omsupply/server/configuration/local.yaml
 COPY --chmod=755 docker/entry-postgres.sh /usr/src/omsupply/server/entry-postgres.sh
-RUN mkdir -p /var/lib/postgresql/data && chown -R postgres:postgres /var/lib/postgresql
+RUN chown -R postgres:postgres /var/lib/postgresql
 ENTRYPOINT ["/usr/src/omsupply/server/entry-postgres.sh"]
 
 FROM sqlite as dev

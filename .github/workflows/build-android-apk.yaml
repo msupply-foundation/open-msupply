@@ -36,13 +36,32 @@ jobs:
           cp "$HOME/android/local.properties" ./client/packages/android
           cp "$HOME/android/release.keystore" ./client/packages/android/app
 
+      - name: Read Rust toolchain channel
+        id: rust_toolchain
+        # Scope the toolchain to this job only via RUSTUP_TOOLCHAIN; do NOT set a
+        # global rustup default/override on the shared self-hosted runner, or it
+        # would leak into develop builds (which pin a different channel).
+        run: |
+          CHANNEL=$(grep '^channel' server/rust-toolchain.toml | cut -d '"' -f2)
+          echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
+          echo "RUSTUP_TOOLCHAIN=$CHANNEL" >> "$GITHUB_ENV"
       - name: Set Up Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: ${{ steps.rust_toolchain.outputs.channel }}
+          override: false
+          default: false
           targets: aarch64-linux-android
             armv7-linux-androideabi
         # Targets need to match in the config.toml of the self-hosted machine
+
+      - name: Add Android targets for pinned toolchain
+        # The self-hosted runner pre-installs the Android targets for its default
+        # (stable) toolchain only. Now that cargo runs under the pinned channel
+        # (RUSTUP_TOOLCHAIN), those targets must be installed for it explicitly or
+        # the std crate can't be found (E0463). actions-rs/toolchain's `targets`
+        # input doesn't reliably cover the named channel on this runner.
+        run: rustup target add aarch64-linux-android armv7-linux-androideabi --toolchain "${{ steps.rust_toolchain.outputs.channel }}"
 
       - name: Set Up Java
         uses: actions/setup-java@v4
@@ -75,9 +94,8 @@ jobs:
 
       - name: Upload Universal APK to Backblaze B2
         env:
-          TELEGRAM_RELEASE_BOT_KEY: ${{ secrets.TELEGRAM_RELEASE_BOT_KEY }}
-          TELEGRAM_DEV_RELEASE_CHAT_ID: ${{ secrets.TELEGRAM_DEV_RELEASE_CHAT_ID }}
-          TELEGRAM_RC_RELEASE_CHAT_ID: ${{ secrets.TELEGRAM_RC_RELEASE_CHAT_ID }}
+          SLACK_DEV_RELEASE_WEBHOOK_URL: ${{ secrets.SLACK_DEV_RELEASE_WEBHOOK_URL }}
+          SLACK_RC_RELEASE_WEBHOOK_URL: ${{ secrets.SLACK_RC_RELEASE_WEBHOOK_URL }}
           NOTIFICATION_TYPE: 'android_build'
           BUILD_STATUS: ${{ job.status }}
           TAG_NAME: ${{ github.ref_name }}
@@ -85,13 +103,22 @@ jobs:
           B2_APPLICATION_KEY: ${{ secrets.B2_APPLICATION_KEY }}
         run: bash .github/scripts/mac_backblaze_upload.sh
 
+  # Reports non-success outcomes (failure, cancellation, and the queue-timeout
+  # that happens when no self-hosted runner is available) to Slack. Runs on a
+  # GitHub-hosted runner so it still fires when the self-hosted runner is down -
+  # the build job's own steps never execute in that case, so they cannot notify.
+  notify-build-result:
+    needs: create-android-build
+    if: ${{ always() && needs.create-android-build.result != 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - name: Send build completion notification
-        if: ${{ failure() }}
         env:
-          TELEGRAM_RELEASE_BOT_KEY: ${{ secrets.TELEGRAM_RELEASE_BOT_KEY }}
-          TELEGRAM_DEV_RELEASE_CHAT_ID: ${{ secrets.TELEGRAM_DEV_RELEASE_CHAT_ID }}
-          TELEGRAM_RC_RELEASE_CHAT_ID: ${{ secrets.TELEGRAM_RC_RELEASE_CHAT_ID }}
+          SLACK_DEV_RELEASE_WEBHOOK_URL: ${{ secrets.SLACK_DEV_RELEASE_WEBHOOK_URL }}
+          SLACK_RC_RELEASE_WEBHOOK_URL: ${{ secrets.SLACK_RC_RELEASE_WEBHOOK_URL }}
           NOTIFICATION_TYPE: 'android_build'
-          BUILD_STATUS: ${{ job.status }}
+          BUILD_STATUS: ${{ needs.create-android-build.result }}
           TAG_NAME: ${{ github.ref_name }}
-        run: bash .github/scripts/send-telegram-notification.sh
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash .github/scripts/send-slack-notification.sh

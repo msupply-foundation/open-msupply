@@ -158,7 +158,11 @@ export const inboundParsers = {
     id: line.id,
     itemId: line.item.id,
     batch: line.batch,
-    costPricePerPack: line.costPricePerPack,
+    // For PO-linked lines the cost cell is read-only on the UI and the stored
+    // value is authoritative (see issue #11186); omit so the server preserves it.
+    costPricePerPack: line.purchaseOrderLine?.id
+      ? undefined
+      : line.costPricePerPack,
     expiryDate: {
       value: line.expiryDate || null,
     },
@@ -186,6 +190,7 @@ export const inboundParsers = {
     volumePerPack: line.volumePerPack ?? null,
     shippedPackSize: line.shippedPackSize ?? null,
     status: line.status ?? null,
+    reasonOptionId: setNullableInput('id', line.reasonOption ?? null),
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };

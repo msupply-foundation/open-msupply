@@ -5,6 +5,7 @@ import {
   useFormatNumber,
   useDebounceCallback,
   InputLabel,
+  useShallow,
 } from '@openmsupply-client/common';
 
 import { AllocateInType, useAllocationContext } from '../../StockOut';
@@ -14,14 +15,16 @@ export const AutoAllocatePrescribedQuantityField = () => {
   const { format } = useFormatNumber();
 
   const { autoAllocate, prescribedQuantity, setPrescribedQuantity } =
-    useAllocationContext(state => ({
-      autoAllocate: state.autoAllocate,
-      prescribedQuantity:
-        state.allocateIn.type === AllocateInType.Doses
-          ? (state.prescribedUnits ?? 0) * (state.item?.doses ?? 1)
-          : state.prescribedUnits,
-      setPrescribedQuantity: state.setPrescribedQuantity,
-    }));
+    useAllocationContext(
+      useShallow(state => ({
+        autoAllocate: state.autoAllocate,
+        prescribedQuantity:
+          state.allocateIn.type === AllocateInType.Doses
+            ? (state.prescribedUnits ?? 0) * (state.item?.doses ?? 1)
+            : state.prescribedUnits,
+        setPrescribedQuantity: state.setPrescribedQuantity,
+      }))
+    );
 
   // using a debounced value for the allocation. In the scenario where
   // you have only pack sizes > 1 available, and try to type a quantity which starts with 1

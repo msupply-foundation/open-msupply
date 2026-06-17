@@ -15,6 +15,7 @@ import {
   useSimpleMaterialTable,
   ColumnDef,
   ColumnType,
+  NaiveDateCell,
 } from '@openmsupply-client/common';
 import { PatientPanel } from './PatientPanel';
 import { FetchPatientModal } from './FetchPatientModal';
@@ -181,6 +182,7 @@ export const PatientResultsTab: FC<
         accessorKey: 'dateOfBirth',
         header: t('label.date-of-birth'),
         columnType: ColumnType.Date,
+        Cell: NaiveDateCell,
         size: 100,
       },
       {
