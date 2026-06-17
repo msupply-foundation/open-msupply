@@ -5609,6 +5609,7 @@ export type Mutations = {
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   deleteSupplierReturn: DeleteSupplierReturnResponse;
+  duplicateInboundShipment: InvoiceNode;
   finaliseRnrForm: FinaliseRnRFormResponse;
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
@@ -5943,6 +5944,11 @@ export type MutationsDeleteStocktakeLineArgs = {
 };
 
 export type MutationsDeleteSupplierReturnArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDuplicateInboundShipmentArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
