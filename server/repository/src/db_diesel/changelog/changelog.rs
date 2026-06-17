@@ -49,11 +49,6 @@ allow_tables_to_appear_in_same_query!(changelog_deduped, vaccination);
 joinable!(changelog -> name_link (name_link_id));
 allow_tables_to_appear_in_same_query!(changelog, name_link);
 
-// Aliased changelog used to build the head-dedupe subquery in `create_filtered_head_count_query`.
-// Diesel rejects a subquery on the same table as the outer query's FROM clause; the alias makes
-// the inner `changelog` distinct from the outer one.
-diesel::alias!(changelog as changelog_head: ChangelogHead);
-
 #[cfg(not(feature = "postgres"))]
 define_sql_function!(
     fn last_insert_rowid() -> BigInt
@@ -328,17 +323,9 @@ impl<'a> ChangelogRepository<'a> {
 
     /// Counts deduped changelog records with cursor >= `earliest` that match `filter`.
     ///
-    /// This is equivalent to counting rows of the `changelog_deduped` view (see
-    /// [`create_filtered_query`]), but only dedupes the "head" of the changelog
-    /// (rows with cursor >= `earliest`) instead of grouping the entire history and
-    /// trimming afterwards.
-    ///
-    /// It is exact, not approximate: the deduped view keeps the global-max-cursor row
-    /// per (record_id, store_id) group, and a group's global max is >= `earliest` iff
-    /// the group has any row >= `earliest` — in which case that max row is itself in the
-    /// head. So grouping only over the head yields the same latest row per group, and the
-    /// filter is applied to that same row (important for fields like `is_sync_update` /
-    /// `source_site_id` that can vary within a group).
+    /// Counts rows of the `changelog_deduped` view (see [`create_filtered_query`]). The view's
+    /// `NOT EXISTS` anti-join lets the planner push the `cursor >= earliest` predicate down to the
+    /// cursor index, so this stays a tail scan on a large changelog rather than a full dedupe.
     pub fn count(
         &self,
         earliest: u64,
@@ -347,8 +334,10 @@ impl<'a> ChangelogRepository<'a> {
         // Clamp identically to the row reader so callers that drive a push/processor loop off
         // `count` (e.g. the `_ => continue` termination check) stay consistent with `changelogs()`
         // while a tx is in flight — otherwise count could report rows the clamped reader won't
-        // return, spinning the loop. The clamp is applied inside the head-count query.
-        let result = create_filtered_head_count_query(self.connection, earliest, filter)
+        // return, spinning the loop.
+        let mut query = create_filtered_query(earliest, filter);
+        query = clamp_to_safe_cursor(self.connection, query);
+        let result = query
             .count()
             .get_result::<i64>(self.connection.lock().connection())?;
         Ok(result as u64)
@@ -529,70 +518,6 @@ fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> Boxe
         apply_equal_filter!(query, action, changelog_deduped::row_action);
         apply_equal_filter!(query, is_sync_update, changelog_deduped::is_sync_update);
         apply_equal_filter!(query, source_site_id, changelog_deduped::source_site_id);
-    }
-
-    query
-}
-
-type BoxedRawChangelogQuery =
-    IntoBoxed<'static, LeftJoin<changelog::table, name_link::table>, DBType>;
-
-/// Builds the filtered count query for [`ChangelogRepository::count`], deduping only the
-/// head of the changelog (cursor >= `earliest`) rather than the whole history.
-///
-/// `head_max_cursors` is the latest cursor per (record_id, store_id) group restricted to the
-/// head — one cursor per group, and (since cursor is unique) exactly the global-latest row of
-/// each group present in the head. Filtering `cursor IN (head_max_cursors)` therefore selects
-/// the same rows the `changelog_deduped` view would keep, and the `ChangelogFilter` is applied
-/// to those latest rows — matching the view's filter-on-latest semantics.
-fn create_filtered_head_count_query(
-    connection: &StorageConnection,
-    earliest: u64,
-    filter: Option<ChangelogFilter>,
-) -> BoxedRawChangelogQuery {
-    let head_max_cursors = changelog_head
-        .filter(
-            changelog_head
-                .field(changelog::cursor)
-                .ge(earliest.try_into().unwrap_or(0)),
-        )
-        .group_by((
-            changelog_head.field(changelog::record_id),
-            changelog_head.field(changelog::store_id),
-        ))
-        .select(diesel::dsl::max(changelog_head.field(changelog::cursor)));
-
-    let mut query = changelog::table
-        .left_join(name_link::table)
-        .into_boxed()
-        .filter(changelog::cursor.nullable().eq_any(head_max_cursors));
-
-    // Apply the same safe-cursor ceiling as [`clamp_to_safe_cursor`] (see its docs for why).
-    // The clamp goes on the OUTER query only: the inner subquery still takes the unbounded global
-    // max per group, so a group whose latest change sits above the safe cursor is excluded
-    // entirely — exactly matching `clamp_to_safe_cursor(create_filtered_query(..))`.
-    if let Some(safe) = ChangelogCursorTracker::max_safe_cursor(connection) {
-        query = query.filter(changelog::cursor.le(safe as i64));
-    }
-
-    if let Some(f) = filter {
-        let ChangelogFilter {
-            table_name,
-            name_id,
-            store_id,
-            record_id,
-            is_sync_update,
-            action,
-            source_site_id,
-        } = f;
-
-        apply_equal_filter!(query, table_name, changelog::table_name);
-        apply_equal_filter!(query, name_id, name_link::name_id);
-        apply_equal_filter!(query, store_id, changelog::store_id);
-        apply_equal_filter!(query, record_id, changelog::record_id);
-        apply_equal_filter!(query, action, changelog::row_action);
-        apply_equal_filter!(query, is_sync_update, changelog::is_sync_update);
-        apply_equal_filter!(query, source_site_id, changelog::source_site_id);
     }
 
     query

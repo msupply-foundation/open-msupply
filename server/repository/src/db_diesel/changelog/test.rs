@@ -313,14 +313,17 @@ async fn test_changelog_filter() {
     );
 }
 
-/// `count` dedupes only the head of the changelog (cursor >= earliest) instead of the whole
-/// view, but must stay exactly equal to the deduped result. We pin that against `changelogs`
-/// (which reads the `changelog_deduped` view) for the same earliest/filter — this is the same
-/// consistency the sync push loop relies on (count vs the batch fetch).
+/// `count` must stay exactly equal to the deduped result returned by `changelogs` (which reads the
+/// `changelog_deduped` view) for the same earliest/filter — this is the consistency the sync push
+/// loop relies on (count vs the batch fetch). In particular the filter must apply to the latest row
+/// per (record_id, store_id), not any earlier row in the group.
 #[actix_rt::test]
-async fn test_changelog_count_head_dedupe() {
-    let (_, connection, _, _) =
-        setup_all("test_changelog_count_head_dedupe", MockDataInserts::none().names()).await;
+async fn test_changelog_count_dedupes_to_latest_row() {
+    let (_, connection, _, _) = setup_all(
+        "test_changelog_count_dedupes_to_latest_row",
+        MockDataInserts::none().names(),
+    )
+    .await;
 
     let repo = ChangelogRepository::new(&connection);
     repo.delete(0).unwrap();
