@@ -165,6 +165,15 @@ impl InvoiceMutations {
         )
     }
 
+    async fn duplicate_inbound_shipment(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "id of the inbound shipment to duplicate")] id: String,
+    ) -> Result<graphql_types::types::InvoiceNode> {
+        inbound_shipment::duplicate::duplicate(ctx, &store_id, id)
+    }
+
     async fn delete_inbound_shipment_external(
         &self,
         ctx: &Context<'_>,
