@@ -25,7 +25,7 @@ export const FooterComponent = ({
 }) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { success, error } = useNotification();
+  const { success, warning, error } = useNotification();
 
   const {
     delete: { deleteInbounds },
@@ -68,7 +68,9 @@ export const FooterComponent = ({
       }),
       onConfirm: async () => {
         try {
-          const { id, invoiceNumber } = await duplicate(source.id);
+          const { id, invoiceNumber, skippedItemCount } = await duplicate(
+            source.id
+          );
           resetRowSelection();
           success(
             t('messages.shipment-copied', {
@@ -76,6 +78,13 @@ export const FooterComponent = ({
               sourceNumber: source.invoiceNumber,
             })
           )();
+          if (skippedItemCount > 0) {
+            warning(
+              t('messages.shipment-copied-skipped-items', {
+                count: skippedItemCount,
+              })
+            )();
+          }
           navigate(
             RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.InboundShipment)

@@ -22,7 +22,7 @@ import { AppRoute } from '@openmsupply-client/config';
 export const SidePanel = () => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { success, error } = useNotification();
+  const { success, warning, error } = useNotification();
 
   const {
     query: { data },
@@ -54,13 +54,22 @@ export const SidePanel = () => {
       }),
       onConfirm: async () => {
         try {
-          const { id, invoiceNumber } = await duplicate(data.id);
+          const { id, invoiceNumber, skippedItemCount } = await duplicate(
+            data.id
+          );
           success(
             t('messages.shipment-copied', {
               newNumber: invoiceNumber,
               sourceNumber: data.invoiceNumber,
             })
           )();
+          if (skippedItemCount > 0) {
+            warning(
+              t('messages.shipment-copied-skipped-items', {
+                count: skippedItemCount,
+              })
+            )();
+          }
           navigate(
             RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.InboundShipment)

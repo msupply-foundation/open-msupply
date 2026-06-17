@@ -2501,6 +2501,8 @@
   "messages.select-store-instructions": "Click a store to highlight it, or use the <bold>up/down arrow keys</bold>, then press <bold>Continue</bold> or <bold>Enter</bold>. You can also check the box below to skip this selection in the future if you always use the same store.",
   "messages.service-charges-description": "Total amounts of service charges. The calculated tax amount is an effective tax rate using the total tax paid over the subtotal of all service charges.",
   "messages.shipment-copied": "Shipment #{{newNumber}} created as a copy of #{{sourceNumber}}.",
+  "messages.shipment-copied-skipped-items_one": "{{count}} item was not copied because it is no longer in the catalogue.",
+  "messages.shipment-copied-skipped-items_other": "{{count}} items were not copied because they are no longer in the catalogue.",
   "messages.shipment-saved": "Shipment saved 🥳",
   "messages.skip-dose-warning": "Administering this dose will skip one or more earlier doses and mark them as Not Given.",
   "messages.starting-continuous-scanning": "Starting continuous scanning...",
