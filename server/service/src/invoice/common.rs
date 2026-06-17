@@ -2,8 +2,8 @@ use chrono::Utc;
 use repository::{
     vvm_status::vvm_status_log_row::VVMStatusLogRow, CurrencyFilter, CurrencyRepository,
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType,
-    InvoiceRow, MasterList, MasterListFilter, MasterListRepository, RepositoryError,
-    StockLineRow, StorageConnection,
+    InvoiceRow, MasterList, MasterListFilter, MasterListRepository, RepositoryError, StockLineRow,
+    StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -30,6 +30,13 @@ pub(crate) fn get_lines_for_invoice(
     )?;
 
     Ok(result)
+}
+
+pub fn generate_duplicate_comment(source_number: i64, source_comment: &Option<String>) -> String {
+    match source_comment {
+        Some(comment) => format!("Copied from shipment #{source_number} ({comment})"),
+        None => format!("Copied from shipment #{source_number}"),
+    }
 }
 
 pub fn calculate_total_after_tax(total_before_tax: f64, tax: Option<f64>) -> f64 {
