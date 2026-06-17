@@ -114,6 +114,14 @@ pub trait InvoiceServiceTrait: Sync + Send {
         delete_inbound_shipment(ctx, input, expected_type)
     }
 
+    fn duplicate_inbound_shipment(
+        &self,
+        ctx: &ServiceContext,
+        source_id: String,
+    ) -> Result<Invoice, DuplicateInboundShipmentError> {
+        duplicate_inbound_shipment(ctx, source_id)
+    }
+
     fn insert_outbound_shipment(
         &self,
         ctx: &ServiceContext,
