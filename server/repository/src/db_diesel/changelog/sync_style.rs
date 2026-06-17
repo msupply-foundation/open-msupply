@@ -9,7 +9,7 @@ pub struct SyncVersions {
 }
 
 // Authoring axis — what central accepts on a v7 push (drives validate_on_central).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, strum::EnumIter)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Authoring {
     Central,     // reject any remote push — central manages it
     RemoteOwned, // accept if store_id is active on the source site
@@ -56,29 +56,6 @@ impl Distribution {
                 distributions
                     .iter()
                     .any(|distribution| distribution == self)
-            })
-            .collect()
-    }
-}
-
-impl Authoring {
-    pub(crate) fn get_table_names_for_authoring(
-        &self,
-        sync_style_options: Option<SyncVersions>,
-    ) -> Vec<ChangelogTableName> {
-        ChangelogTableName::iter()
-            .filter(|table| {
-                let SyncStyle {
-                    authoring: authorings,
-                    transport,
-                    ..
-                } = table.sync_style();
-                if let Some(sync_style_options) = &sync_style_options {
-                    if sync_style_options != &transport {
-                        return false;
-                    }
-                }
-                authorings.iter().any(|authoring| authoring == self)
             })
             .collect()
     }
