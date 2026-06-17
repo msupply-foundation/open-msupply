@@ -21,20 +21,47 @@ import { AppRoute } from '@openmsupply-client/config';
 export const SidePanel = () => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { success } = useNotification();
+  const { success, error } = useNotification();
 
   const {
     query: { data },
     delete: { deleteInbound },
+    duplicate: { duplicate },
+    hasMutatePermission,
   } = useInboundShipment();
 
   const isTransfer = !!data?.linkedShipment?.id;
-  const canDelete = data?.status === InvoiceNodeStatus.New;
+  const canDelete = data?.status === InvoiceNodeStatus.New && hasMutatePermission;
 
   const copyToClipboard = () => {
     navigator.clipboard
       .writeText(JSON.stringify(data, null, 4) ?? '')
       .then(() => success(t('message.copy-success'))());
+  };
+
+  const duplicateAction = async () => {
+    if (!data) return;
+    try {
+      const { id, invoiceNumber } = await duplicate(data.id);
+      success(
+        t('messages.shipment-copied', {
+          newNumber: invoiceNumber,
+          sourceNumber: data.invoiceNumber,
+        })
+      )();
+      navigate(
+        RouteBuilder.create(AppRoute.Replenishment)
+          .addPart(AppRoute.InboundShipment)
+          .addPart(id)
+          .build()
+      );
+    } catch (e) {
+      error(
+        t('error.failed-to-duplicate-shipment', {
+          message: (e as Error).message,
+        })
+      )();
+    }
   };
 
   const deleteAction = async () => {
@@ -69,6 +96,12 @@ export const SidePanel = () => {
             title={t('label.delete')}
             onClick={onDelete}
             disabled={!canDelete}
+          />
+          <DetailPanelAction
+            icon={<CopyIcon />}
+            title={t('button.make-a-copy')}
+            onClick={duplicateAction}
+            disabled={!hasMutatePermission}
           />
           <DetailPanelAction
             icon={<CopyIcon />}
