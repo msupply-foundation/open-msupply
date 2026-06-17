@@ -159,7 +159,7 @@ const useDelete = () => {
   });
 };
 
-const useDuplicate = () => {
+export const useDuplicate = () => {
   const { inboundApi, storeId, queryClient } = useInboundGraphQL();
 
   const mutationFn = async (
