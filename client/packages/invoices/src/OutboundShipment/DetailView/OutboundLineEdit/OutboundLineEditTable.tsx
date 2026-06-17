@@ -22,7 +22,6 @@ import {
   getAllocatedQuantity,
   DraftStockOutLineFragment,
 } from '../../../StockOut';
-import { min } from 'lodash';
 import {
   UsePluginEvents,
   ShipmentLinePluginState,
