@@ -124,6 +124,27 @@ pub fn check_other_party(
     Ok(other_party)
 }
 
+pub fn check_other_party_store_is_disabled(
+    connection: &StorageConnection,
+    store_id: &str,
+    other_party_id: &str,
+) -> Result<bool, RepositoryError> {
+    let mut results = NameRepository::new(connection).query_by_filter(
+        store_id,
+        NameFilter::new()
+            .id(EqualFilter::equal_to(other_party_id.to_string()))
+            .include_disabled(true),
+    )?;
+
+    let name = results
+        .iter()
+        .find(|name| name.name_store_join_row.is_some())
+        .cloned()
+        .or_else(|| results.pop());
+
+    Ok(name.map(|name| name.is_disabled()).unwrap_or(false))
+}
+
 pub fn check_property_key_does_not_exist(
     connection: &StorageConnection,
     key: &str,
