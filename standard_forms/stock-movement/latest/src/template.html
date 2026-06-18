@@ -1,0 +1,44 @@
+<style>
+    {% include "style.css" %}
+</style>
+
+<body>
+    <table class="body_section" cellpadding="2" cellspacing="0">
+        <tr class="body_column_label">
+            <th class="item">{{t(k="label.item-name",f="Item name")}}</th>
+            <th class="batch">{{t(k="label.batch",f="Batch")}}</th>
+            <th class="expiry">{{t(k="label.expiry",f="Expiry")}}</th>
+            <th class="pack">{{t(k="label.from-pack-size",f="From pack size")}}</th>
+            <th class="location">{{t(k="label.from-location",f="From location")}}</th>
+            <th class="packs">{{t(k="label.from-number-of-packs",f="From number of packs")}}</th>
+            <th class="location">{{t(k="label.to-location",f="To location")}}</th>
+            <th class="packs">{{t(k="label.to-number-of-packs",f="To number of packs")}}</th>
+            <th class="pack">{{t(k="label.to-pack-size",f="To pack size")}}</th>
+            <th class="done">{{t(k="label.done",f="Done")}}</th>
+            <th class="moved-on">{{t(k="label.moved-on",f="Moved on")}}</th>
+        </tr>
+        {% for movement in data.stockRelocations.nodes %}
+        <tr class="body_value">
+            <td class="item">{{ movement.itemCode }} {{ movement.itemName }}</td>
+            <td class="batch">{{ movement.batch }}</td>
+            <td class="expiry">
+                {% if movement.expiryDate %}{{ movement.expiryDate | date(format="%d/%m/%Y") }}{% endif %}
+            </td>
+            <td class="pack">{{ movement.fromPackSize }}</td>
+            <td class="location">
+                {% if movement.fromLocation %}{{ movement.fromLocation.code }}{% endif %}
+            </td>
+            <td class="packs">{{ movement.numberOfPacks }}</td>
+            <td class="location">
+                {% if movement.toLocation %}{{ movement.toLocation.code }}{% endif %}
+            </td>
+            <td class="packs">
+                {% if movement.toPackSize and movement.toPackSize > 0 %}{{ movement.numberOfPacks * movement.fromPackSize / movement.toPackSize }}{% endif %}
+            </td>
+            <td class="pack">{{ movement.toPackSize }}</td>
+            <td class="done"></td>
+            <td class="moved-on"></td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
