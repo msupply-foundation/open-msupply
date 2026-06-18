@@ -78,37 +78,37 @@ One row per table, sorted by matrix cell (authoring, then distribution-set, then
 
 | Table | Authoring | Distribution | Transport |
 |---|---|---|---|
-| `NameStoreJoin` | Everyone | Remote | v5 |
-| `ItemStoreJoin` | Central | Remote | v5 |
-| `ClinicianStoreJoin` | Everyone | Remote | v5 |
-| `ActivityLog` | RemoteOwned (Gaps) | Remote | v5 |
+| `NameStoreJoin` | RemoteOwned | Remote | v5 |
+| `ItemStoreJoin` | RemoteOwned | Remote | v5 |
+| `ClinicianStoreJoin` | RemoteOwned | Remote | v5 |
+| `ActivityLog` | RemoteOwned | RemoteOwned | v5 |
 | `IndicatorValue` | RemoteOwned | RemoteOwned | v5 |
 | `Location` | RemoteOwned | RemoteOwned | v5 |
 | `LocationMovement` | RemoteOwned | RemoteOwned | v5 |
 | `PurchaseOrder` | RemoteOwned | RemoteOwned | v5 |
 | `PurchaseOrderLine` | RemoteOwned | RemoteOwned | v5 |
-| `Sensor` | RemoteOwned  (Gaps)| Remote | v5 |
+| `Sensor` | RemoteOwned | RemoteOwned | v5 |
 | `StockLine` | RemoteOwned | RemoteOwned | v5 |
 | `Stocktake` | RemoteOwned | RemoteOwned | v5 |
 | `StocktakeLine` | RemoteOwned | RemoteOwned | v5 |
-| `TemperatureBreach` | RemoteOwned (Gaps) | Remote | v5 |
-| `TemperatureLog` | RemoteOwned (Gaps) | Remote | v5 |
+| `TemperatureBreach` | RemoteOwned | RemoteOwned | v5 |
+| `TemperatureLog` | RemoteOwned | RemoteOwned | v5 |
 | `VVMStatusLog` | RemoteOwned | RemoteOwned | v5 |
-| `SyncMessage` | Anyone | Everyone + Remote | v5 |
+| `SyncMessage` | RemoteOwned | Everyone + Remote | v5 |
 | `Requisition` | RemoteOwned | RemoteOwned + Transfer | v5 |
 | `RequisitionLine` | RemoteOwned | RemoteOwned + Transfer | v5 |
 | `Invoice` | RemoteOwned | RemoteOwned + Transfer + Patient | v5 |
 | `InvoiceLine` | RemoteOwned | RemoteOwned + Transfer + Patient | v5 |
-| `Asset` | Anyone | Remote | v6 |
-| `AssetInternalLocation` | Anyone | Remote | v6 |
-| `AssetLog` | Anyone | Remote | v6 |
+| `Asset` | RemoteOwned | Remote | v6 |
+| `AssetInternalLocation` | RemoteOwned | Remote | v6 |
+| `AssetLog` | RemoteOwned | RemoteOwned | v6 |
 | `RnrForm` | RemoteOwned | RemoteOwned | v6 |
 | `RnrFormLine` | RemoteOwned | RemoteOwned | v6 |
 | `Encounter` | RemoteOwned | Remote + Patient | v6 |
 | `Vaccination` | RemoteOwned | Remote + Patient | v6 |
 | `ContactTrace` | RemoteOwned | Remote + Patient | v6 |
 | `PluginData` | RemoteOwned | Everyone + Remote | v6 |
-| `Preference` | Central | Everyone + Remote | v6 |
+| `Preference` | RemoteOwned | Everyone + Remote | v6 |
 | `Abbreviation` | Central | Everyone | v5 |
 | `Barcode` | Central | Everyone | v5 |
 | `Category` | Central | Everyone | v5 |
