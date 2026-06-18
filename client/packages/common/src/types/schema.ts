@@ -2284,6 +2284,13 @@ export type DeleteStockRelocationInput = {
 
 export type DeleteStockRelocationResponse = DeleteResponse;
 
+export type DeleteStockRelocationsNode = {
+  __typename: 'DeleteStockRelocationsNode';
+  ids: Array<Scalars['String']['output']>;
+};
+
+export type DeleteStockRelocationsResponse = DeleteStockRelocationsNode;
+
 export type DeleteStocktakeError = {
   __typename: 'DeleteStocktakeError';
   error: DeleteStocktakeErrorInterface;
@@ -5626,6 +5633,7 @@ export type Mutations = {
   deleteResponseRequisitionLine: DeleteResponseRequisitionLineResponse;
   deleteRnrForm: DeleteRnRFormResponse;
   deleteStockRelocation: DeleteStockRelocationResponse;
+  deleteStockRelocations: DeleteStockRelocationsResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   deleteSupplierReturn: DeleteSupplierReturnResponse;
@@ -5743,6 +5751,7 @@ export type Mutations = {
   updateSensor: UpdateSensorResponse;
   updateStockLine: UpdateStockLineLineResponse;
   updateStockRelocation: UpdateStockRelocationResponse;
+  updateStockRelocations: UpdateStockRelocationsResponse;
   updateStocktake: UpdateStocktakeResponse;
   updateStocktakeLine: UpdateStocktakeLineResponse;
   updateSupplierReturn: UpdateSupplierReturnResponse;
@@ -5949,6 +5958,11 @@ export type MutationsDeleteRnrFormArgs = {
 
 export type MutationsDeleteStockRelocationArgs = {
   input: DeleteStockRelocationInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteStockRelocationsArgs = {
+  ids: Array<Scalars['String']['input']>;
   storeId: Scalars['String']['input'];
 };
 
@@ -6441,6 +6455,11 @@ export type MutationsUpdateStockLineArgs = {
 
 export type MutationsUpdateStockRelocationArgs = {
   input: UpdateStockRelocationInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsUpdateStockRelocationsArgs = {
+  input: Array<UpdateStockRelocationInput>;
   storeId: Scalars['String']['input'];
 };
 
@@ -11520,6 +11539,15 @@ export type UpdateStockRelocationNode = {
 export type UpdateStockRelocationResponse =
   | UpdateStockRelocationError
   | UpdateStockRelocationNode;
+
+export type UpdateStockRelocationsNode = {
+  __typename: 'UpdateStockRelocationsNode';
+  ids: Array<Scalars['String']['output']>;
+};
+
+export type UpdateStockRelocationsResponse =
+  | UpdateStockRelocationError
+  | UpdateStockRelocationsNode;
 
 export type UpdateStocktakeError = {
   __typename: 'UpdateStocktakeError';

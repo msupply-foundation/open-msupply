@@ -25,16 +25,7 @@ pub struct InsertStockRelocationLine {
 
 #[derive(Debug, PartialEq)]
 pub enum InsertStockRelocationError {
-    StockLineDoesNotExist,
-    NotThisStoreStockLine,
-    StockLineOnHold(String),
-    LocationOnHold(String),
-    ToLocationDoesNotExist,
-    NotThisStoreLocation,
-    IncorrectLocationType,
-    NotEnoughStock(String),
-    InvalidNumberOfPacks,
-    InvalidPackSize,
+    ValidateMovement(ValidateMovementError),
     DatabaseError(RepositoryError),
 }
 
@@ -59,7 +50,8 @@ pub fn insert_stock_relocation(
                         to_location_id: line.to_location_id.clone(),
                         to_pack_size: Some(line.to_pack_size),
                     },
-                )?;
+                )
+                .map_err(InsertStockRelocationError::ValidateMovement)?;
 
                 let row = StockRelocationRow {
                     id: line.id.clone(),
@@ -89,25 +81,6 @@ pub fn insert_stock_relocation(
 impl From<RepositoryError> for InsertStockRelocationError {
     fn from(error: RepositoryError) -> Self {
         InsertStockRelocationError::DatabaseError(error)
-    }
-}
-
-impl From<ValidateMovementError> for InsertStockRelocationError {
-    fn from(error: ValidateMovementError) -> Self {
-        use InsertStockRelocationError as E;
-        match error {
-            ValidateMovementError::StockLineDoesNotExist => E::StockLineDoesNotExist,
-            ValidateMovementError::NotThisStoreStockLine => E::NotThisStoreStockLine,
-            ValidateMovementError::StockLineOnHold(id) => E::StockLineOnHold(id),
-            ValidateMovementError::LocationOnHold(id) => E::LocationOnHold(id),
-            ValidateMovementError::ToLocationDoesNotExist => E::ToLocationDoesNotExist,
-            ValidateMovementError::NotThisStoreLocation => E::NotThisStoreLocation,
-            ValidateMovementError::IncorrectLocationType => E::IncorrectLocationType,
-            ValidateMovementError::NotEnoughStock(id) => E::NotEnoughStock(id),
-            ValidateMovementError::InvalidNumberOfPacks => E::InvalidNumberOfPacks,
-            ValidateMovementError::InvalidPackSize => E::InvalidPackSize,
-            ValidateMovementError::DatabaseError(e) => E::DatabaseError(e),
-        }
     }
 }
 
@@ -183,8 +156,8 @@ mod test {
 
         assert_eq!(
             insert(line("held_sl")),
-            Err(InsertStockRelocationError::StockLineOnHold(
-                "held_sl".to_string()
+            Err(InsertStockRelocationError::ValidateMovement(
+                ValidateMovementError::StockLineOnHold("held_sl".to_string())
             ))
         );
         assert_eq!(
@@ -192,8 +165,8 @@ mod test {
                 from_number_of_packs: 999.0,
                 ..line("ok_sl")
             }),
-            Err(InsertStockRelocationError::NotEnoughStock(
-                "ok_sl".to_string()
+            Err(InsertStockRelocationError::ValidateMovement(
+                ValidateMovementError::NotEnoughStock("ok_sl".to_string())
             ))
         );
         assert_eq!(
@@ -201,8 +174,8 @@ mod test {
                 to_location_id: Some(mock_location_on_hold().id),
                 ..line("ok_sl")
             }),
-            Err(InsertStockRelocationError::LocationOnHold(
-                mock_location_on_hold().id
+            Err(InsertStockRelocationError::ValidateMovement(
+                ValidateMovementError::LocationOnHold(mock_location_on_hold().id)
             ))
         );
         assert_eq!(
@@ -210,7 +183,9 @@ mod test {
                 to_location_id: Some(mock_location_with_restricted_location_type_a().id),
                 ..line("restricted_sl")
             }),
-            Err(InsertStockRelocationError::IncorrectLocationType)
+            Err(InsertStockRelocationError::ValidateMovement(
+                ValidateMovementError::IncorrectLocationType
+            ))
         );
     }
 

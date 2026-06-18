@@ -5,9 +5,11 @@ use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, I
 use graphql_core::ContextExt;
 use repository::StockRelocationRow;
 use service::auth::{Resource, ResourceAccessRequest};
+use service::repack::InsertRepackError;
 use service::stock_relocation::update::{
     UpdateStockRelocation as UpdateServiceInput, UpdateStockRelocationError as UpdateServiceError,
 };
+use service::stock_relocation::validate::ValidateMovementError;
 use service::NullableUpdate;
 
 use super::{LocationOnHold, NotEnoughStock, StockLineOnHold};
@@ -41,6 +43,18 @@ pub enum UpdateResponse {
     Error(UpdateError),
 }
 
+#[derive(SimpleObject)]
+pub struct UpdateStockRelocationsNode {
+    pub ids: Vec<String>,
+}
+
+#[derive(Union)]
+#[graphql(name = "UpdateStockRelocationsResponse")]
+pub enum UpdateResponses {
+    Response(UpdateStockRelocationsNode),
+    Error(UpdateError),
+}
+
 #[derive(Interface)]
 #[graphql(name = "UpdateStockRelocationErrorInterface")]
 #[graphql(field(name = "description", ty = "String"))]
@@ -65,32 +79,62 @@ pub fn update_stock_relocation(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    let UpdateInput {
-        id,
-        from_number_of_packs,
-        to_location_id,
-        to_pack_size,
-        status,
-    } = input;
-
     map_response(
         service_provider
             .stock_relocation_service
-            .update_stock_relocation(
-                &service_context,
-                store_id,
-                UpdateServiceInput {
-                    id,
-                    from_number_of_packs,
-                    to_location_id: to_location_id
-                        .map(|to_location_id| NullableUpdate {
-                            value: to_location_id.value,
-                        }),
-                    to_pack_size,
-                    status: status.map(|status| status.into()),
-                },
-            ),
+            .update_stock_relocation(&service_context, store_id, input.to_domain()),
     )
+}
+
+impl UpdateInput {
+    pub fn to_domain(self) -> UpdateServiceInput {
+        let UpdateInput {
+            id,
+            from_number_of_packs,
+            to_location_id,
+            to_pack_size,
+            status,
+        } = self;
+        UpdateServiceInput {
+            id,
+            from_number_of_packs,
+            to_location_id: to_location_id.map(|to_location_id| NullableUpdate {
+                value: to_location_id.value,
+            }),
+            to_pack_size,
+            status: status.map(|status| status.into()),
+        }
+    }
+}
+
+pub fn update_stock_relocations(
+    ctx: &Context<'_>,
+    store_id: &str,
+    inputs: Vec<UpdateInput>,
+) -> Result<UpdateResponses> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateStockLine,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+
+    let service_inputs = inputs.into_iter().map(UpdateInput::to_domain).collect();
+
+    match service_provider
+        .stock_relocation_service
+        .update_stock_relocations(&service_context, store_id, service_inputs)
+    {
+        Ok(rows) => Ok(UpdateResponses::Response(UpdateStockRelocationsNode {
+            ids: rows.into_iter().map(|row| row.id).collect(),
+        })),
+        Err(error) => Ok(UpdateResponses::Error(UpdateError {
+            error: map_error(error)?,
+        })),
+    }
 }
 
 fn map_response(from: Result<StockRelocationRow, UpdateServiceError>) -> Result<UpdateResponse> {
@@ -108,35 +152,35 @@ fn map_error(error: UpdateServiceError) -> Result<UpdateErrorInterface> {
     use UpdateServiceError as E;
     let formatted_error = format!("{error:#?}");
 
+    use ValidateMovementError as V;
     let graphql_error = match error {
-        E::StockLineOnHold(stock_line_id) => {
+        E::ValidateMovement(V::StockLineOnHold(stock_line_id)) => {
             return Ok(UpdateErrorInterface::StockLineOnHold(StockLineOnHold {
                 stock_line_id,
             }))
         }
-        E::LocationOnHold(location_id) => {
+        E::ValidateMovement(V::LocationOnHold(location_id)) => {
             return Ok(UpdateErrorInterface::LocationOnHold(LocationOnHold {
                 location_id,
             }))
         }
-        E::NotEnoughStock(stock_line_id) => {
+        E::ValidateMovement(V::NotEnoughStock(stock_line_id)) => {
             return Ok(UpdateErrorInterface::NotEnoughStock(NotEnoughStock {
                 stock_line_id,
+            }))
+        }
+        E::InsertRepack(InsertRepackError::StockLineReducedBelowZero(stock_line)) => {
+            return Ok(UpdateErrorInterface::NotEnoughStock(NotEnoughStock {
+                stock_line_id: stock_line.stock_line_row.id,
             }))
         }
 
         E::RelocationDoesNotExist
         | E::NotThisStoreRelocation
         | E::RelocationAlreadyFinalised
-        | E::StockLineDoesNotExist
-        | E::NotThisStoreStockLine
-        | E::ToLocationDoesNotExist
-        | E::NotThisStoreLocation
-        | E::IncorrectLocationType
-        | E::InvalidNumberOfPacks
-        | E::InvalidPackSize
-        | E::CannotHaveFractionalPack => BadUserInput(formatted_error),
-        E::NewlyCreatedStockLineDoesNotExist | E::DatabaseError(_) | E::InternalError(_) => {
+        | E::ValidateMovement(_)
+        | E::InsertRepack(_) => BadUserInput(formatted_error),
+        E::NewlyCreatedStockLineDoesNotExist | E::UpdateStockLine(_) | E::DatabaseError(_) => {
             InternalError(formatted_error)
         }
     };

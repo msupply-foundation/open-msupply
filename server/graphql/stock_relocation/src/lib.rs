@@ -5,11 +5,13 @@ pub mod mutations;
 pub mod queries;
 pub mod types;
 
-use mutations::{
-    delete_stock_relocation, insert_stock_relocation, update_stock_relocation, DeleteInput,
-    DeleteStockRelocationResponse, InsertInput, InsertResponse, UpdateInput, UpdateResponse,
-};
 use graphql_types::types::DraftStockRelocationLineNode;
+use mutations::{
+    delete_stock_relocation, delete_stock_relocations, insert_stock_relocation,
+    update_stock_relocation, update_stock_relocations, DeleteInput, DeleteResponses,
+    DeleteStockRelocationResponse, InsertInput, InsertResponse, UpdateInput, UpdateResponse,
+    UpdateResponses,
+};
 use queries::{
     get_stock_relocation, get_stock_relocation_draft_lines, get_stock_relocations,
     StockRelocationDraftLinesInput, StockRelocationFilterInput, StockRelocationResponse,
@@ -74,6 +76,15 @@ impl StockRelocationMutations {
         update_stock_relocation(ctx, &store_id, input)
     }
 
+    pub async fn update_stock_relocations(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: Vec<UpdateInput>,
+    ) -> Result<UpdateResponses> {
+        update_stock_relocations(ctx, &store_id, input)
+    }
+
     pub async fn delete_stock_relocation(
         &self,
         ctx: &Context<'_>,
@@ -81,5 +92,14 @@ impl StockRelocationMutations {
         input: DeleteInput,
     ) -> Result<DeleteStockRelocationResponse> {
         delete_stock_relocation(ctx, &store_id, input)
+    }
+
+    pub async fn delete_stock_relocations(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        ids: Vec<String>,
+    ) -> Result<DeleteResponses> {
+        delete_stock_relocations(ctx, &store_id, ids)
     }
 }

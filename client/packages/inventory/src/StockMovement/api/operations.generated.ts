@@ -189,6 +189,41 @@ export type UpdateStockRelocationMutation = {
     | { __typename: 'UpdateStockRelocationNode'; id: string };
 };
 
+export type UpdateStockRelocationsMutationVariables = Types.Exact<{
+  input:
+    | Array<Types.UpdateStockRelocationInput>
+    | Types.UpdateStockRelocationInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type UpdateStockRelocationsMutation = {
+  __typename: 'Mutations';
+  updateStockRelocations:
+    | {
+        __typename: 'UpdateStockRelocationError';
+        error:
+          | { __typename: 'LocationOnHold'; description: string }
+          | { __typename: 'NotEnoughStock'; description: string }
+          | { __typename: 'StockLineOnHold'; description: string };
+      }
+    | { __typename: 'UpdateStockRelocationsNode'; ids: Array<string> };
+};
+
+export type DeleteStockRelocationsMutationVariables = Types.Exact<{
+  ids:
+    | Array<Types.Scalars['String']['input']>
+    | Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type DeleteStockRelocationsMutation = {
+  __typename: 'Mutations';
+  deleteStockRelocations: {
+    __typename: 'DeleteStockRelocationsNode';
+    ids: Array<string>;
+  };
+};
+
 export type DeleteStockRelocationMutationVariables = Types.Exact<{
   input: Types.DeleteStockRelocationInput;
   storeId: Types.Scalars['String']['input'];
@@ -342,6 +377,38 @@ export const UpdateStockRelocationDocument = gql`
     }
   }
 `;
+export const UpdateStockRelocationsDocument = gql`
+  mutation updateStockRelocations(
+    $input: [UpdateStockRelocationInput!]!
+    $storeId: String!
+  ) {
+    updateStockRelocations(input: $input, storeId: $storeId) {
+      __typename
+      ... on UpdateStockRelocationsNode {
+        __typename
+        ids
+      }
+      ... on UpdateStockRelocationError {
+        __typename
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+`;
+export const DeleteStockRelocationsDocument = gql`
+  mutation deleteStockRelocations($ids: [String!]!, $storeId: String!) {
+    deleteStockRelocations(ids: $ids, storeId: $storeId) {
+      __typename
+      ... on DeleteStockRelocationsNode {
+        __typename
+        ids
+      }
+    }
+  }
+`;
 export const DeleteStockRelocationDocument = gql`
   mutation deleteStockRelocation(
     $input: DeleteStockRelocationInput!
@@ -444,6 +511,42 @@ export function getSdk(
             signal,
           }),
         'updateStockRelocation',
+        'mutation',
+        variables
+      );
+    },
+    updateStockRelocations(
+      variables: UpdateStockRelocationsMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UpdateStockRelocationsMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdateStockRelocationsMutation>({
+            document: UpdateStockRelocationsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'updateStockRelocations',
+        'mutation',
+        variables
+      );
+    },
+    deleteStockRelocations(
+      variables: DeleteStockRelocationsMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<DeleteStockRelocationsMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteStockRelocationsMutation>({
+            document: DeleteStockRelocationsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'deleteStockRelocations',
         'mutation',
         variables
       );
