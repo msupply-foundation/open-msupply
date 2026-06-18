@@ -96,12 +96,7 @@ export type StockLineRowFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    store?: {
-      __typename: 'StoreNode';
-      id: string;
-      code: string;
-      isDisabled: boolean;
-    } | null;
+    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
@@ -351,12 +346,7 @@ export type StockLinesQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        store?: {
-          __typename: 'StoreNode';
-          id: string;
-          code: string;
-          isDisabled: boolean;
-        } | null;
+        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
       } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
@@ -482,12 +472,7 @@ export type StockLineQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        store?: {
-          __typename: 'StoreNode';
-          id: string;
-          code: string;
-          isDisabled: boolean;
-        } | null;
+        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
       } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
@@ -651,12 +636,7 @@ export type UpdateStockLineMutation = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          store?: {
-            __typename: 'StoreNode';
-            id: string;
-            code: string;
-            isDisabled: boolean;
-          } | null;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
         program?: {
           __typename: 'ProgramNode';
@@ -994,12 +974,7 @@ export type InsertStockLineMutation = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          store?: {
-            __typename: 'StoreNode';
-            id: string;
-            code: string;
-            isDisabled: boolean;
-          } | null;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
         program?: {
           __typename: 'ProgramNode';
@@ -1196,7 +1171,6 @@ export type ItemsByStockLineFilterQuery = {
               __typename: 'StoreNode';
               id: string;
               code: string;
-              isDisabled: boolean;
             } | null;
           } | null;
           program?: {

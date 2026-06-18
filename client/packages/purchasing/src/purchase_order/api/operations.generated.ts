@@ -102,12 +102,7 @@ export type PurchaseOrderFragment = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        store?: {
-          __typename: 'StoreNode';
-          id: string;
-          code: string;
-          isDisabled: boolean;
-        } | null;
+        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
       } | null;
       purchaseOrder?: {
         __typename: 'PurchaseOrderNode';
@@ -195,12 +190,7 @@ export type PurchaseOrderLineFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    store?: {
-      __typename: 'StoreNode';
-      id: string;
-      code: string;
-      isDisabled: boolean;
-    } | null;
+    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   } | null;
   purchaseOrder?: {
     __typename: 'PurchaseOrderNode';
@@ -347,7 +337,6 @@ export type PurchaseOrderByIdQuery = {
                 __typename: 'StoreNode';
                 id: string;
                 code: string;
-                isDisabled: boolean;
               } | null;
             } | null;
             purchaseOrder?: {
@@ -520,12 +509,7 @@ export type PurchaseOrderLinesQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        store?: {
-          __typename: 'StoreNode';
-          id: string;
-          code: string;
-          isDisabled: boolean;
-        } | null;
+        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
       } | null;
       purchaseOrder?: {
         __typename: 'PurchaseOrderNode';
@@ -603,12 +587,7 @@ export type PurchaseOrderLineQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        store?: {
-          __typename: 'StoreNode';
-          id: string;
-          code: string;
-          isDisabled: boolean;
-        } | null;
+        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
       } | null;
       purchaseOrder?: {
         __typename: 'PurchaseOrderNode';

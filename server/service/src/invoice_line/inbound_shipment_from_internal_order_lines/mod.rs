@@ -23,6 +23,7 @@ pub enum InsertFromInternalOrderLineError {
     InvoiceDoesNotExist,
     NotThisStoreInvoice,
     CannotEditFinalised,
+    OtherPartyStoreDisabled,
     NotAnInboundShipment,
     RequisitionLineDoesNotExist,
     ItemDoesNotExist,
