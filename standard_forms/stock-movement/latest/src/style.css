@@ -1,0 +1,62 @@
+@media print {
+  @page {
+    @bottom-right {
+      font-family: Tahoma;
+      font-size: 8pt;
+      /* do not allow formatter to add a line break in the content */
+      /* prettier-ignore*/
+      content: '{{t(k="report.page",f="Page")}} ' counter(page) ' {{t(k="report.of",f="of")}} ' counter(pages);
+    }
+  }
+}
+
+body > table {
+  width: 100%;
+  padding: 2em;
+}
+
+.logo {
+  display: block;
+  height: 96px;
+}
+
+.header_image_section {
+  width: 100%;
+  font-family: Tahoma;
+  font-size: 8pt;
+  border-bottom: 0.5px solid black;
+  padding-top: 8pt;
+}
+
+.body_section {
+  width: 100%;
+  font-family: Tahoma;
+  font-size: 8pt;
+  text-align: left;
+}
+
+.body_section tr.body_column_label th {
+  border-bottom: 0.5px solid black;
+  text-align: left;
+  vertical-align: bottom;
+}
+
+.body_value td {
+  border-bottom: 0.5px solid black;
+}
+
+/* Numeric columns are right-aligned */
+.pack,
+.packs {
+  text-align: right;
+}
+
+/* Manual-entry columns for warehouse staff */
+.done {
+  width: 40px;
+  text-align: center;
+}
+
+.moved-on {
+  width: 70px;
+}
