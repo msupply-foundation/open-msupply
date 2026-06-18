@@ -12,6 +12,7 @@ import {
   useIsExtraSmallScreen,
   ChevronsDownIcon,
   ChevronDownIcon,
+  ClockIcon,
   DownloadIcon,
   Accordion,
   AccordionDetails,
@@ -99,7 +100,20 @@ const LinkedSyncProcesses = ({
 }) => {
   const t = useTranslation();
   return (
-    <Accordion sx={{ mt: 1 }}>
+    <Accordion
+      disableGutters
+      sx={theme => ({
+        mt: 1,
+        borderRadius: '8px',
+        // MUI rounds only the first/last child's outer corners by default; force
+        // all four to match and clip the summary/details to the rounded shape.
+        '&:first-of-type, &:last-of-type': { borderRadius: '8px' },
+        overflow: 'hidden',
+        boxShadow: theme.shadows[2],
+        // Remove MUI's default top divider pseudo-element.
+        '&:before': { display: 'none' },
+      })}
+    >
       <AccordionSummary expandIcon={<ChevronDownIcon />}>
         <Typography sx={{ fontWeight: 600 }}>
           {t('sync-status.linked-sync-requests', {
@@ -133,7 +147,7 @@ const ProgressIndicator = ({
     fontSize={12}
     color={`${colour}.light`}
     whiteSpace="nowrap"
-    minWidth="8em"
+    width="9em"
   >
     {progress ? `${progress.done} / ${progress.total}` : null}
   </Box>
@@ -146,16 +160,29 @@ type Progress = {
 
 type Step = Partial<Omit<SyncStatusWithProgressFragment, '__typename'>>;
 
-const buildStep = (
+type RawStep = {
+  labelKey: LocaleKey;
+  step: Step;
+  icon: React.ReactNode;
+};
+
+const toStepDefinition = (
   t: TypedTFunction<LocaleKey>,
   colour: StepperColour,
-  labelKey: LocaleKey,
   isError: boolean,
-  step: Step,
-  icon: React.ReactNode
+  { labelKey, step, icon }: RawStep,
+  index: number,
+  furthestStartedIndex: number
 ): StepDefinition => {
-  const completed = !!step.finished;
-  const active = !completed && !!step.started;
+  // Steps always run in order, so anything before the furthest-reached step is
+  // complete - even if its own `finished` timestamp never came back (e.g. a
+  // push with nothing to send). Deriving from progression keeps the
+  // "completed" styling consistent across every passed step, instead of only
+  // the step that happened to report a finish time. See issue #12172.
+  const isFurthest = index === furthestStartedIndex;
+  const finished = !!step.finished;
+  const completed = index < furthestStartedIndex || (isFurthest && finished);
+  const active = isFurthest && !finished;
   const isActiveAndError = isError && active;
 
   const progress = step.total
@@ -189,53 +216,63 @@ const getSteps = ({
 }): StepDefinition[] => {
   const pullDown = <ChevronsDownIcon />;
   const pushUp = <ChevronsDownIcon sx={{ transform: 'rotate(180deg)' }} />;
+  const waiting = <ClockIcon sx={{ fontSize: '18px' }} />;
   const integrate = <DownloadIcon sx={{ fontSize: '18px' }} />;
 
   const make = (
     labelKey: LocaleKey,
     step: Step | null | undefined,
     icon: React.ReactNode
-  ) => buildStep(t, colour, labelKey, isError, step ?? {}, icon);
+  ): RawStep => ({ labelKey, step: step ?? {}, icon });
 
-  const steps: StepDefinition[] = [];
+  const raws: RawStep[] = [];
 
   if (isSyncStatusV7(syncStatus)) {
     // Push and WaitForIntegration are skipped during initialisation.
     if (isOperational) {
-      steps.push(make('sync-status.push', syncStatus.push, pushUp));
-      steps.push(
+      raws.push(make('sync-status.push', syncStatus.push, pushUp));
+      raws.push(
         make(
           'sync-status.waiting-for-integration',
           syncStatus.waitingForIntegration,
-          null
+          waiting
         )
       );
     }
-    steps.push(make('sync-status.pull', syncStatus.pull, pullDown));
-    steps.push(
-      make('sync-status.integrate', syncStatus.integration, integrate)
-    );
-    return steps;
-  }
-  // V5_V6
-
-  if (!isOperational) {
-    steps.push(make('sync-status.prepare', syncStatus?.prepareInitial, null));
-  }
-  if (isOperational) {
-    if (!isCentralServer) {
-      steps.push(make('sync-status.push-v6', syncStatus?.pushV6, pushUp));
+    raws.push(make('sync-status.pull', syncStatus.pull, pullDown));
+    raws.push(make('sync-status.integrate', syncStatus.integration, integrate));
+  } else {
+    // V5_V6
+    if (!isOperational) {
+      raws.push(make('sync-status.prepare', syncStatus?.prepareInitial, null));
     }
-    steps.push(make('sync-status.push', syncStatus?.push, pushUp));
+    if (isOperational) {
+      if (!isCentralServer) {
+        raws.push(make('sync-status.push-v6', syncStatus?.pushV6, pushUp));
+      }
+      raws.push(make('sync-status.push', syncStatus?.push, pushUp));
+    }
+    raws.push(
+      make('sync-status.pull-central', syncStatus?.pullCentral, pullDown)
+    );
+    raws.push(
+      make('sync-status.pull-remote', syncStatus?.pullRemote, pullDown)
+    );
+    if (!isCentralServer) {
+      raws.push(make('sync-status.pull-v6', syncStatus?.pullV6, pullDown));
+    }
+    raws.push(
+      make('sync-status.integrate', syncStatus?.integration, integrate)
+    );
   }
-  steps.push(
-    make('sync-status.pull-central', syncStatus?.pullCentral, pullDown)
-  );
-  steps.push(make('sync-status.pull-remote', syncStatus?.pullRemote, pullDown));
-  if (!isCentralServer) {
-    steps.push(make('sync-status.pull-v6', syncStatus?.pullV6, pullDown));
-  }
-  steps.push(make('sync-status.integrate', syncStatus?.integration, integrate));
 
-  return steps;
+  // Furthest-reached step = the last one that has started.
+  let furthestStartedIndex = -1;
+  raws.forEach((raw, i) => {
+    if (raw.step.started) furthestStartedIndex = i;
+  });
+
+  return raws.map((raw, i) =>
+    toStepDefinition(t, colour, isError, raw, i, furthestStartedIndex)
+  );
 };
