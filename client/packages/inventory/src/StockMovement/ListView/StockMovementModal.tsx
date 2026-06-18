@@ -12,7 +12,7 @@ import {
   StockRelocationNodeStatus,
   ModalMode,
 } from '@openmsupply-client/common';
-import { DialogButton } from '@common/components';
+import { DialogButton, FlatButton } from '@common/components';
 import { useDialog } from '@common/hooks';
 import { FormControlLabel, Radio } from '@mui/material';
 import {
@@ -78,6 +78,7 @@ export const StockMovementModal = ({
 
   const [failedLineIds, setFailedLineIds] = useState<string[]>([]);
   const [createdIds, setCreatedIds] = useState<string[] | null>(null);
+  const [isSwitchingMode, setIsSwitchingMode] = useState<SelectionMode | null>(null);
 
   const linesForError = (errorNode: {
     stockLineId?: string;
@@ -133,6 +134,20 @@ export const StockMovementModal = ({
     buttonLabel: t('button.finalise'),
     cancelButtonLabel: t('button.cancel'),
   });
+
+  const onSwitchMode = (nextMode: SelectionMode) => {
+    if (nextMode === selectionMode) return;
+    if (lines.length === 0) {
+      switchMode(nextMode);
+      return;
+    }
+    setIsSwitchingMode(nextMode);
+  };
+
+  const confirmSwitchMode = () => {
+    if (isSwitchingMode) switchMode(isSwitchingMode);
+    setIsSwitchingMode(null);
+  };
 
   const resultingToPacks = (line: DraftStockMovementLine) => {
     const toPackSize = line.toPackSize ?? line.fromPackSize;
@@ -308,22 +323,51 @@ export const StockMovementModal = ({
     >
       <Box display="flex" flexDirection="column" gap={2}>
         {!isEdit && (
-          <RadioGroup
-            row
-            value={selectionMode}
-            onChange={(_, value) => switchMode(value as SelectionMode)}
-          >
-            <FormControlLabel
-              value="byItem"
-              control={<Radio />}
-              label={t('label.select-by-item')}
-            />
-            <FormControlLabel
-              value="byLocation"
-              control={<Radio />}
-              label={t('label.select-by-location')}
-            />
-          </RadioGroup>
+          <Box sx={{ position: 'relative' }}>
+            <RadioGroup
+              row
+              value={selectionMode}
+              onChange={(_, value) => onSwitchMode(value as SelectionMode)}
+            >
+              <FormControlLabel
+                value="byItem"
+                control={<Radio />}
+                label={t('label.select-by-item')}
+              />
+              <FormControlLabel
+                value="byLocation"
+                control={<Radio />}
+                label={t('label.select-by-location')}
+              />
+            </RadioGroup>
+            {isSwitchingMode && (
+              <Alert
+                severity="warning"
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  zIndex: 1,
+                }}
+                action={
+                  <Box>
+                    <FlatButton
+                      color="inherit"
+                      label={t('button.cancel')}
+                      onClick={() => setIsSwitchingMode(null)}
+                    />
+                    <FlatButton
+                      label={t('button.continue')}
+                      onClick={confirmSwitchMode}
+                    />
+                  </Box>
+                }
+              >
+                {t('messages.confirm-change-selection-mode')}
+              </Alert>
+            )}
+          </Box>
         )}
 
         {!isEdit && selectionMode === 'byLocation' && (
