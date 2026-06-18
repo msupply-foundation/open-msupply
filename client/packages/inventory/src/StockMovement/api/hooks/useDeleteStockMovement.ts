@@ -26,11 +26,7 @@ export const useDeleteStockMovements = () => {
   const { stockMovementApi, storeId, queryClient } = useStockMovementGraphQL();
 
   const mutationFn = async (ids: string[]) => {
-    await Promise.all(
-      ids.map(id =>
-        stockMovementApi.deleteStockRelocation({ storeId, input: { id } })
-      )
-    );
+    await stockMovementApi.deleteStockRelocations({ storeId, ids });
   };
 
   const { mutateAsync, isPending, error } = useMutation({

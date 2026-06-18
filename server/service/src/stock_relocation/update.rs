@@ -27,20 +27,11 @@ pub enum UpdateStockRelocationError {
     RelocationDoesNotExist,
     NotThisStoreRelocation,
     RelocationAlreadyFinalised,
-    StockLineDoesNotExist,
-    NotThisStoreStockLine,
-    StockLineOnHold(String),
-    LocationOnHold(String),
-    ToLocationDoesNotExist,
-    NotThisStoreLocation,
-    IncorrectLocationType,
-    NotEnoughStock(String),
-    InvalidNumberOfPacks,
-    InvalidPackSize,
-    CannotHaveFractionalPack,
     NewlyCreatedStockLineDoesNotExist,
+    ValidateMovement(ValidateMovementError),
+    InsertRepack(InsertRepackError),
+    UpdateStockLine(UpdateStockLineError),
     DatabaseError(RepositoryError),
-    InternalError(String),
 }
 
 pub fn update_stock_relocation(
@@ -48,47 +39,67 @@ pub fn update_stock_relocation(
     store_id: &str,
     input: UpdateStockRelocation,
 ) -> Result<StockRelocationRow, UpdateStockRelocationError> {
-    let result = ctx
-        .connection
+    ctx.connection
+        .transaction_sync(|connection| update_one(ctx, connection, store_id, input))
+        .map_err(|error: TransactionError<UpdateStockRelocationError>| error.to_inner_error())
+}
+
+pub fn update_stock_relocations(
+    ctx: &ServiceContext,
+    store_id: &str,
+    inputs: Vec<UpdateStockRelocation>,
+) -> Result<Vec<StockRelocationRow>, UpdateStockRelocationError> {
+    ctx.connection
         .transaction_sync(|connection| {
-            let mut row = validate(connection, store_id, &input.id)?;
-
-            if let Some(from_number_of_packs) = input.from_number_of_packs {
-                row.from_number_of_packs = from_number_of_packs;
-            }
-            if let Some(to_location_id) = input.to_location_id {
-                row.to_location_id = to_location_id.value;
-            }
-            if let Some(to_pack_size) = input.to_pack_size {
-                row.to_pack_size = Some(to_pack_size);
-            }
-
-            let stock_line = validate_movement(
-                connection,
-                store_id,
-                &RelocationMovement {
-                    from_stock_line_id: row.from_stock_line_id.clone(),
-                    from_number_of_packs: row.from_number_of_packs,
-                    to_location_id: row.to_location_id.clone(),
-                    to_pack_size: row.to_pack_size,
-                },
-            )?;
-            row.from_location_id = stock_line.location_id.clone();
-
-            let finalising = matches!(input.status, Some(StockRelocationStatus::Finalised));
-            if finalising {
-                row.to_stock_line_id = Some(apply_movement(ctx, connection, &row, &stock_line)?);
-                row.status = StockRelocationStatus::Finalised;
-                row.finalised_datetime = Some(Utc::now().naive_utc());
-            }
-
-            StockRelocationRowRepository::new(connection).upsert_one(&row)?;
-
-            Ok(row)
+            inputs
+                .into_iter()
+                .map(|input| update_one(ctx, connection, store_id, input))
+                .collect::<Result<Vec<_>, _>>()
         })
-        .map_err(|error: TransactionError<UpdateStockRelocationError>| error.to_inner_error())?;
+        .map_err(|error: TransactionError<UpdateStockRelocationError>| error.to_inner_error())
+}
 
-    Ok(result)
+fn update_one(
+    ctx: &ServiceContext,
+    connection: &StorageConnection,
+    store_id: &str,
+    input: UpdateStockRelocation,
+) -> Result<StockRelocationRow, UpdateStockRelocationError> {
+    let mut row = validate(connection, store_id, &input.id)?;
+
+    if let Some(from_number_of_packs) = input.from_number_of_packs {
+        row.from_number_of_packs = from_number_of_packs;
+    }
+    if let Some(to_location_id) = input.to_location_id {
+        row.to_location_id = to_location_id.value;
+    }
+    if let Some(to_pack_size) = input.to_pack_size {
+        row.to_pack_size = Some(to_pack_size);
+    }
+
+    let stock_line = validate_movement(
+        connection,
+        store_id,
+        &RelocationMovement {
+            from_stock_line_id: row.from_stock_line_id.clone(),
+            from_number_of_packs: row.from_number_of_packs,
+            to_location_id: row.to_location_id.clone(),
+            to_pack_size: row.to_pack_size,
+        },
+    )
+    .map_err(UpdateStockRelocationError::ValidateMovement)?;
+    row.from_location_id = stock_line.location_id.clone();
+
+    let finalising = matches!(input.status, Some(StockRelocationStatus::Finalised));
+    if finalising {
+        row.to_stock_line_id = Some(apply_movement(ctx, connection, &row, &stock_line)?);
+        row.status = StockRelocationStatus::Finalised;
+        row.finalised_datetime = Some(Utc::now().naive_utc());
+    }
+
+    StockRelocationRowRepository::new(connection).upsert_one(&row)?;
+
+    Ok(row)
 }
 
 fn apply_movement(
@@ -107,7 +118,8 @@ fn apply_movement(
                 }),
                 ..Default::default()
             },
-        )?;
+        )
+        .map_err(UpdateStockRelocationError::UpdateStockLine)?;
         Ok(row.from_stock_line_id.clone())
     } else {
         let invoice = insert_repack(
@@ -118,7 +130,8 @@ fn apply_movement(
                 new_pack_size: row.to_pack_size.unwrap_or(stock_line.pack_size),
                 new_location_id: row.to_location_id.clone(),
             },
-        )?;
+        )
+        .map_err(UpdateStockRelocationError::InsertRepack)?;
         new_stock_line_id(connection, &invoice.invoice_row.id)
     }
 }
@@ -166,57 +179,6 @@ fn new_stock_line_id(
 impl From<RepositoryError> for UpdateStockRelocationError {
     fn from(error: RepositoryError) -> Self {
         UpdateStockRelocationError::DatabaseError(error)
-    }
-}
-
-impl From<ValidateMovementError> for UpdateStockRelocationError {
-    fn from(error: ValidateMovementError) -> Self {
-        use UpdateStockRelocationError as E;
-        match error {
-            ValidateMovementError::StockLineDoesNotExist => E::StockLineDoesNotExist,
-            ValidateMovementError::NotThisStoreStockLine => E::NotThisStoreStockLine,
-            ValidateMovementError::StockLineOnHold(id) => E::StockLineOnHold(id),
-            ValidateMovementError::LocationOnHold(id) => E::LocationOnHold(id),
-            ValidateMovementError::ToLocationDoesNotExist => E::ToLocationDoesNotExist,
-            ValidateMovementError::NotThisStoreLocation => E::NotThisStoreLocation,
-            ValidateMovementError::IncorrectLocationType => E::IncorrectLocationType,
-            ValidateMovementError::NotEnoughStock(id) => E::NotEnoughStock(id),
-            ValidateMovementError::InvalidNumberOfPacks => E::InvalidNumberOfPacks,
-            ValidateMovementError::InvalidPackSize => E::InvalidPackSize,
-            ValidateMovementError::DatabaseError(e) => E::DatabaseError(e),
-        }
-    }
-}
-
-impl From<InsertRepackError> for UpdateStockRelocationError {
-    fn from(error: InsertRepackError) -> Self {
-        use UpdateStockRelocationError as E;
-        match error {
-            InsertRepackError::StockLineDoesNotExist => E::StockLineDoesNotExist,
-            InsertRepackError::NotThisStoreStockLine => E::NotThisStoreStockLine,
-            InsertRepackError::CannotHaveFractionalPack => E::CannotHaveFractionalPack,
-            InsertRepackError::StockLineReducedBelowZero(stock_line) => {
-                E::NotEnoughStock(stock_line.stock_line_row.id)
-            }
-            InsertRepackError::DatabaseError(e) => E::DatabaseError(e),
-            InsertRepackError::NewlyCreatedInvoiceDoesNotExist => {
-                E::NewlyCreatedStockLineDoesNotExist
-            }
-            InsertRepackError::InternalError(s) => E::InternalError(s),
-        }
-    }
-}
-
-impl From<UpdateStockLineError> for UpdateStockRelocationError {
-    fn from(error: UpdateStockLineError) -> Self {
-        use UpdateStockRelocationError as E;
-        match error {
-            UpdateStockLineError::StockDoesNotExist => E::StockLineDoesNotExist,
-            UpdateStockLineError::StockDoesNotBelongToStore => E::NotThisStoreStockLine,
-            UpdateStockLineError::LocationDoesNotExist => E::ToLocationDoesNotExist,
-            UpdateStockLineError::DatabaseError(e) => E::DatabaseError(e),
-            other => E::InternalError(format!("{:?}", other)),
-        }
     }
 }
 
@@ -272,13 +234,7 @@ mod test {
     ) -> String {
         service_provider
             .stock_relocation_service
-            .insert_stock_relocation(
-                ctx,
-                "store_a",
-                InsertStockRelocation {
-                    lines: vec![line],
-                },
-            )
+            .insert_stock_relocation(ctx, "store_a", InsertStockRelocation { lines: vec![line] })
             .unwrap()[0]
             .id
             .clone()
@@ -393,6 +349,68 @@ mod test {
     }
 
     #[actix_rt::test]
+    async fn update_stock_relocations_batch() {
+        let (service_provider, ctx) = setup("update_stock_relocations_batch").await;
+        whole_line("batch_sl_1").upsert(&ctx.connection).unwrap();
+        whole_line("batch_sl_2").upsert(&ctx.connection).unwrap();
+        let service = &service_provider.stock_relocation_service;
+        let relocation_repo = StockRelocationRowRepository::new(&ctx.connection);
+
+        let id1 = insert_one(&service_provider, &ctx, insert_line("batch_sl_1", 1.0)).await;
+        let id2 = insert_one(&service_provider, &ctx, insert_line("batch_sl_2", 1.0)).await;
+
+        let finalised = service
+            .update_stock_relocations(
+                &ctx,
+                "store_a",
+                vec![
+                    UpdateStockRelocation {
+                        id: id1.clone(),
+                        status: Some(StockRelocationStatus::Finalised),
+                        ..Default::default()
+                    },
+                    UpdateStockRelocation {
+                        id: id2,
+                        status: Some(StockRelocationStatus::Finalised),
+                        ..Default::default()
+                    },
+                ],
+            )
+            .unwrap();
+        assert_eq!(finalised.len(), 2);
+        assert!(finalised
+            .iter()
+            .all(|row| row.status == StockRelocationStatus::Finalised));
+
+        whole_line("batch_sl_3").upsert(&ctx.connection).unwrap();
+        whole_line("batch_sl_4").upsert(&ctx.connection).unwrap();
+        let id3 = insert_one(&service_provider, &ctx, insert_line("batch_sl_3", 1.0)).await;
+        let id4 = insert_one(&service_provider, &ctx, insert_line("batch_sl_4", 1.0)).await;
+
+        let result = service.update_stock_relocations(
+            &ctx,
+            "store_a",
+            vec![
+                UpdateStockRelocation {
+                    id: id3.clone(),
+                    status: Some(StockRelocationStatus::Finalised),
+                    ..Default::default()
+                },
+                // More packs than available → fails validation.
+                UpdateStockRelocation {
+                    id: id4,
+                    from_number_of_packs: Some(999.0),
+                    status: Some(StockRelocationStatus::Finalised),
+                    ..Default::default()
+                },
+            ],
+        );
+        assert!(result.is_err());
+        let row3 = relocation_repo.find_one_by_id(&id3).unwrap().unwrap();
+        assert_eq!(row3.status, StockRelocationStatus::New);
+    }
+
+    #[actix_rt::test]
     async fn update_validation_errors() {
         let (service_provider, ctx) = setup("update_validation_errors").await;
         whole_line("ok_sl").upsert(&ctx.connection).unwrap();
@@ -422,8 +440,8 @@ mod test {
                     ..Default::default()
                 }
             ),
-            Err(UpdateStockRelocationError::NotEnoughStock(
-                "ok_sl".to_string()
+            Err(UpdateStockRelocationError::ValidateMovement(
+                ValidateMovementError::NotEnoughStock("ok_sl".to_string())
             ))
         );
 

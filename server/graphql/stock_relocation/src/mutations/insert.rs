@@ -8,6 +8,7 @@ use service::stock_relocation::insert::{
     InsertStockRelocation as ServiceInput, InsertStockRelocationError as ServiceError,
     InsertStockRelocationLine as ServiceLine,
 };
+use service::stock_relocation::validate::ValidateMovementError;
 
 use super::{LocationOnHold, NotEnoughStock, StockLineOnHold};
 
@@ -108,31 +109,36 @@ fn map_response(from: Result<Vec<StockRelocationRow>, ServiceError>) -> Result<I
 fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     let formatted_error = format!("{error:#?}");
 
+    use ValidateMovementError as V;
     let graphql_error = match error {
-        ServiceError::StockLineOnHold(stock_line_id) => {
+        ServiceError::ValidateMovement(V::StockLineOnHold(stock_line_id)) => {
             return Ok(InsertErrorInterface::StockLineOnHold(StockLineOnHold {
                 stock_line_id,
             }))
         }
-        ServiceError::LocationOnHold(location_id) => {
+        ServiceError::ValidateMovement(V::LocationOnHold(location_id)) => {
             return Ok(InsertErrorInterface::LocationOnHold(LocationOnHold {
                 location_id,
             }))
         }
-        ServiceError::NotEnoughStock(stock_line_id) => {
+        ServiceError::ValidateMovement(V::NotEnoughStock(stock_line_id)) => {
             return Ok(InsertErrorInterface::NotEnoughStock(NotEnoughStock {
                 stock_line_id,
             }))
         }
 
-        ServiceError::StockLineDoesNotExist
-        | ServiceError::NotThisStoreStockLine
-        | ServiceError::ToLocationDoesNotExist
-        | ServiceError::NotThisStoreLocation
-        | ServiceError::IncorrectLocationType
-        | ServiceError::InvalidNumberOfPacks
-        | ServiceError::InvalidPackSize => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::ValidateMovement(
+            V::StockLineDoesNotExist
+            | V::NotThisStoreStockLine
+            | V::ToLocationDoesNotExist
+            | V::NotThisStoreLocation
+            | V::IncorrectLocationType
+            | V::InvalidNumberOfPacks
+            | V::InvalidPackSize,
+        ) => BadUserInput(formatted_error),
+        ServiceError::ValidateMovement(V::DatabaseError(_)) | ServiceError::DatabaseError(_) => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())
@@ -153,6 +159,7 @@ mod test {
                 InsertStockRelocation as ServiceInput, InsertStockRelocationError as ServiceError,
                 InsertStockRelocationLine as ServiceLine,
             },
+            validate::ValidateMovementError,
             StockRelocationServiceTrait,
         },
     };
@@ -219,7 +226,9 @@ mod test {
         "#;
 
         let test_service = TestService(Box::new(|_| {
-            Err(ServiceError::StockLineOnHold("stock_line_a".to_string()))
+            Err(ServiceError::ValidateMovement(
+                ValidateMovementError::StockLineOnHold("stock_line_a".to_string()),
+            ))
         }));
         let expected = json!({
             "insertStockRelocation": {
@@ -238,7 +247,9 @@ mod test {
         );
 
         let test_service = TestService(Box::new(|_| {
-            Err(ServiceError::LocationOnHold("location_a".to_string()))
+            Err(ServiceError::ValidateMovement(
+                ValidateMovementError::LocationOnHold("location_a".to_string()),
+            ))
         }));
         let expected = json!({
             "insertStockRelocation": {
@@ -257,7 +268,9 @@ mod test {
         );
 
         let test_service = TestService(Box::new(|_| {
-            Err(ServiceError::NotEnoughStock("stock_line_a".to_string()))
+            Err(ServiceError::ValidateMovement(
+                ValidateMovementError::NotEnoughStock("stock_line_a".to_string()),
+            ))
         }));
         let expected = json!({
             "insertStockRelocation": {
@@ -275,7 +288,11 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        let test_service = TestService(Box::new(|_| Err(ServiceError::StockLineDoesNotExist)));
+        let test_service = TestService(Box::new(|_| {
+            Err(ServiceError::ValidateMovement(
+                ValidateMovementError::StockLineDoesNotExist,
+            ))
+        }));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
