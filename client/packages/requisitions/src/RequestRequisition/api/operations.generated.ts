@@ -854,7 +854,12 @@ export type SupplierProgramSettingsFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   }>;
   orderTypes: Array<{
     __typename: 'ProgramRequisitionOrderTypeNode';
@@ -888,7 +893,12 @@ export type SupplierProgramSettingsQuery = {
       isSupplier: boolean;
       isOnHold: boolean;
       name: string;
-      store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      store?: {
+        __typename: 'StoreNode';
+        id: string;
+        code: string;
+        isDisabled: boolean;
+      } | null;
     }>;
     orderTypes: Array<{
       __typename: 'ProgramRequisitionOrderTypeNode';
