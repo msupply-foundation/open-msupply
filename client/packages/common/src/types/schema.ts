@@ -8965,6 +8965,7 @@ export enum ReportContext {
   Report = 'REPORT',
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
+  StockMovement = 'STOCK_MOVEMENT',
   Stocktake = 'STOCKTAKE',
   SupplierReturn = 'SUPPLIER_RETURN',
 }
