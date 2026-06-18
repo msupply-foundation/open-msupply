@@ -11,7 +11,6 @@ export type StockMovementRowFragment = {
   status: Types.StockRelocationNodeStatus;
   numberOfPacks: number;
   fromPackSize: number;
-  availableNumberOfPacks: number;
   toPackSize?: number | null;
   onHold: boolean;
   restrictedLocationTypeId?: string | null;
@@ -48,6 +47,7 @@ export type StockMovementDraftLineFragment = {
   expiryDate?: string | null;
   fromPackSize: number;
   availableNumberOfPacks: number;
+  totalNumberOfPacks: number;
   onHold: boolean;
   fromNumberOfPacks?: number | null;
   toPackSize?: number | null;
@@ -85,6 +85,7 @@ export type StockRelocationDraftLinesQuery = {
     expiryDate?: string | null;
     fromPackSize: number;
     availableNumberOfPacks: number;
+    totalNumberOfPacks: number;
     onHold: boolean;
     fromNumberOfPacks?: number | null;
     toPackSize?: number | null;
@@ -126,7 +127,6 @@ export type StockRelocationsQuery = {
       status: Types.StockRelocationNodeStatus;
       numberOfPacks: number;
       fromPackSize: number;
-      availableNumberOfPacks: number;
       toPackSize?: number | null;
       onHold: boolean;
       restrictedLocationTypeId?: string | null;
@@ -267,7 +267,6 @@ export const StockMovementRowFragmentDoc = gql`
     status
     numberOfPacks
     fromPackSize
-    availableNumberOfPacks
     toPackSize
     onHold
     restrictedLocationTypeId
@@ -305,6 +304,7 @@ export const StockMovementDraftLineFragmentDoc = gql`
     expiryDate
     fromPackSize
     availableNumberOfPacks
+    totalNumberOfPacks
     onHold
     fromNumberOfPacks
     toPackSize

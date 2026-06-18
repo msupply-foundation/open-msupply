@@ -2690,6 +2690,7 @@ export type DraftStockRelocationLineNode = {
   toLocation?: Maybe<LocationNode>;
   toNumberOfPacks?: Maybe<Scalars['Float']['output']>;
   toPackSize?: Maybe<Scalars['Float']['output']>;
+  totalNumberOfPacks: Scalars['Float']['output'];
 };
 
 export type DuplicateAncillaryItem = UpsertAncillaryItemErrorInterface & {
