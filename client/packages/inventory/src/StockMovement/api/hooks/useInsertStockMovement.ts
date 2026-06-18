@@ -35,11 +35,7 @@ export const useInsertStockMovement = () => {
       storeId,
       input,
     });
-    const response = result.insertStockRelocation;
-    if (response.__typename === 'InsertStockRelocationError') {
-      throw new Error(response.error.description);
-    }
-    return response;
+    return result.insertStockRelocation;
   };
 
   const { mutateAsync, isPending, error } = useMutation({
