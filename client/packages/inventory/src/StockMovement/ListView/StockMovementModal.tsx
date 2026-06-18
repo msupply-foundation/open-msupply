@@ -80,7 +80,7 @@ export const StockMovementModal = ({
   const { delete: deleteMovement, isDeleting } = useDeleteStockMovement();
 
   const [failedLineIds, setFailedLineIds] = useState<string[]>([]);
-  const [createdIds, setCreatedIds] = useState<string[] | null>(null);
+  const [savedLines, setSavedLines] = useState<Record<string, string>>({});
   const [isSwitchingMode, setIsSwitchingMode] = useState<SelectionMode | null>(
     null
   );
@@ -186,23 +186,50 @@ export const StockMovementModal = ({
     linesToMove.every(isValid);
 
   const saveDraft = async (): Promise<string[] | null> => {
-    if (createdIds) return createdIds;
     setFailedLineIds([]);
     try {
-      const result = await insert({
-        lines: linesToMove.map(line => ({
-          fromStockLineId: line.fromStockLineId,
+      // Update already-created lines, collecting the rest to insert
+      const nextSaved: Record<string, string> = {};
+      const toInsert: DraftStockMovementLine[] = [];
+      for (const line of linesToMove) {
+        const relocationId = savedLines[line.id];
+        if (!relocationId) {
+          toInsert.push(line);
+          continue;
+        }
+        nextSaved[line.id] = relocationId;
+        const result = await update({
+          id: relocationId,
           fromNumberOfPacks: line.fromNumberOfPacks ?? 0,
-          toLocationId: line.toLocation?.id,
           toPackSize: line.toPackSize ?? line.fromPackSize,
-        })),
-      });
-      if (result.__typename === 'InsertStockRelocationError') {
-        showLineError(result.error);
-        return null;
+          toLocationId: { value: line.toLocation?.id ?? null },
+        });
+        if (result.__typename === 'UpdateStockRelocationError') {
+          showLineError(result.error);
+          return null;
+        }
       }
-      setCreatedIds(result.ids);
-      return result.ids;
+
+      if (toInsert.length) {
+        const result = await insert({
+          lines: toInsert.map(line => ({
+            fromStockLineId: line.fromStockLineId,
+            fromNumberOfPacks: line.fromNumberOfPacks ?? 0,
+            toLocationId: line.toLocation?.id,
+            toPackSize: line.toPackSize ?? line.fromPackSize,
+          })),
+        });
+        if (result.__typename === 'InsertStockRelocationError') {
+          showLineError(result.error);
+          return null;
+        }
+        toInsert.forEach((line, index) => {
+          nextSaved[line.id] = result.ids[index] ?? '';
+        });
+      }
+
+      setSavedLines(nextSaved);
+      return Object.values(nextSaved);
     } catch (e) {
       error((e as Error).message)();
       return null;
@@ -291,17 +318,18 @@ export const StockMovementModal = ({
         />
       );
     }
+    const savedRelocationIds = Object.values(savedLines);
     return (
       <ReportSelector
         context={ReportContext.StockMovement}
-        dataId={createdIds?.[0] ?? ''}
-        extraArguments={{ relocationIds: createdIds ?? [] }}
+        dataId={savedRelocationIds[0] ?? ''}
+        extraArguments={{ relocationIds: savedRelocationIds }}
         CustomButton={({ onPrint }) => (
           <LoadingButton
             startIcon={<PrinterIcon />}
             label={t('button.print')}
             disabled={!canSave}
-            isLoading={isSaving}
+            isLoading={isSaving || isUpdating}
             onClick={async () => {
               const ids = await saveDraft();
               if (ids) onPrint();
