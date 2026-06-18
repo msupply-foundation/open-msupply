@@ -426,6 +426,26 @@ mutation deleteOutboundShipments(
   }
 }
 
+mutation duplicateOutboundShipment($id: String!, $storeId: String!) {
+  duplicateOutboundShipment(storeId: $storeId, id: $id) {
+    __typename
+    ... on DuplicateOutboundShipmentNode {
+      invoice {
+        __typename
+        id
+        invoiceNumber
+      }
+      skippedItemCount
+    }
+    ... on DuplicateOutboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
 mutation upsertOutboundShipment(
   $storeId: String!
   $input: BatchOutboundShipmentInput!
