@@ -1,3 +1,4 @@
+pub(crate) mod enqueue_email;
 pub(crate) mod fetch;
 pub(crate) mod get_active_stores_on_site;
 pub(crate) mod get_plugin_data;
