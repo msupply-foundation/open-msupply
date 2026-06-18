@@ -2,6 +2,11 @@ use serde::{Deserialize, Serialize};
 
 // See README.md for description of when this API version needs to be updated
 pub(crate) static SYNC_V5_VERSION: u32 = 14; // bumped for v2.13.0 OG version 8.06
+// Minor ("patch") version for incremental, backward-compatible sync v5 changes within a major version.
+// Sent as the `version-minor` header alongside `version`; central servers that don't understand it
+// ignore it and treat the client as minor 0 (legacy behaviour). 14.1 = this client understands the
+// async (202 + initialisationStatus) initialise response.
+pub(crate) static SYNC_V5_MINOR: u32 = 1;
 pub(crate) static SYNC_V6_VERSION: u32 = 5; // bumped for 2.9.02 (adding new types to system log)
 
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Default)]

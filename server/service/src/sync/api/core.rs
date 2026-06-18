@@ -3,7 +3,7 @@ use std::{collections::HashMap, convert::TryInto};
 use crate::{
     apis::api_on_central::CentralApiError,
     service_provider::{ServiceContext, ServiceProvider},
-    sync::settings::SyncSettings,
+    sync::settings::{SyncSettings, SYNC_V5_MINOR},
 };
 use repository::{migrations::Version, KeyType, KeyValueStoreRepository};
 use reqwest::{header::HeaderMap, Response, Url};
@@ -141,6 +141,7 @@ impl SyncApiV5 {
         // Don't retry idle-timeouts: legacy sync v5 requests can run for minutes server-side
         // and continue after the client gives up; retrying would overlap the same site's
         // in-flight request and trip `sync_is_running`. Connect errors are still retried.
+        let sync_v5_minor = SYNC_V5_MINOR.to_string();
         let result = with_retries_opts(RetrySeconds::default(), false, |client| {
             client
                 .get(url.clone())
@@ -149,6 +150,7 @@ impl SyncApiV5 {
                     ("app-version", app_version),
                     ("app-name", app_name),
                     ("version", sync_version),
+                    ("version-minor", &sync_v5_minor),
                 ]))
                 .basic_auth(username, Some(password_sha256))
                 .query(query)
@@ -180,6 +182,7 @@ impl SyncApiV5 {
             .map_err(|error| self.api_error(route, error.into()))?;
 
         // See `do_get`: don't retry idle-timeouts for sync v5 (avoids same-site self-overlap).
+        let sync_v5_minor = SYNC_V5_MINOR.to_string();
         let result = with_retries_opts(RetrySeconds::default(), false, |client| {
             client
                 .post(url.clone())
@@ -188,6 +191,7 @@ impl SyncApiV5 {
                     ("app-version", app_version),
                     ("app-name", app_name),
                     ("version", sync_version),
+                    ("version-minor", &sync_v5_minor),
                 ]))
                 .basic_auth(username, Some(password_sha256))
                 // Re unwrap, from to_string documentation:
@@ -356,6 +360,7 @@ mod tests {
                 .header("msupply-site-uuid", "site_id")
                 .header("app-version", Version::from_package_json().to_string())
                 .header("app-name", "Open mSupply Desktop")
+                .header("version-minor", SYNC_V5_MINOR.to_string())  // advertise sync v5 minor (e.g. 14.1) for compatibility gating
                 .path("/sync/v5/acknowledged_records");
             then.status(204);
         });

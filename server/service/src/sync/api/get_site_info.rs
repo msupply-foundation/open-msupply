@@ -52,7 +52,10 @@ mod test {
         let url = mock_server.base_url();
 
         let mock = mock_server.mock(|when, then| {
-            when.method(GET).path("/sync/v5/site");
+            // GET requests also advertise the sync v5 minor version (compatibility gating)
+            when.method(GET)
+                .header("version-minor", "1")
+                .path("/sync/v5/site");
             then.status(200).body(
                 r#"{
                     "id": "abc123",
