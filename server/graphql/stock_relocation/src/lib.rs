@@ -9,9 +9,11 @@ use mutations::{
     delete_stock_relocation, insert_stock_relocation, update_stock_relocation, DeleteInput,
     DeleteStockRelocationResponse, InsertInput, InsertResponse, UpdateInput, UpdateResponse,
 };
+use graphql_types::types::DraftStockRelocationLineNode;
 use queries::{
-    get_stock_relocation, get_stock_relocations, StockRelocationFilterInput,
-    StockRelocationResponse, StockRelocationSortInput, StockRelocationsResponse,
+    get_stock_relocation, get_stock_relocation_draft_lines, get_stock_relocations,
+    StockRelocationDraftLinesInput, StockRelocationFilterInput, StockRelocationResponse,
+    StockRelocationSortInput, StockRelocationsResponse,
 };
 
 #[derive(Default, Clone)]
@@ -37,6 +39,15 @@ impl StockRelocationQueries {
         sort: Option<Vec<StockRelocationSortInput>>,
     ) -> Result<StockRelocationsResponse> {
         get_stock_relocations(ctx, &store_id, page, filter, sort)
+    }
+
+    pub async fn stock_relocation_draft_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: StockRelocationDraftLinesInput,
+    ) -> Result<Vec<DraftStockRelocationLineNode>> {
+        get_stock_relocation_draft_lines(ctx, &store_id, input)
     }
 }
 

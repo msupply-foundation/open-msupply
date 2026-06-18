@@ -7,11 +7,15 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::DraftStockRelocationLineNode;
 use repository::{
     EqualFilter, PaginationOption, StockRelocationFilter, StockRelocationSort,
     StockRelocationSortField, StockRelocationStatus, StringFilter,
 };
-use service::auth::{Resource, ResourceAccessRequest};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    stock_relocation::query::StockRelocationDraftFilter,
+};
 
 use crate::types::{StockRelocationConnector, StockRelocationNode, StockRelocationNodeStatus};
 
@@ -129,6 +133,45 @@ pub fn get_stock_relocations(
     Ok(StockRelocationsResponse::Response(
         StockRelocationConnector::from_domain(result),
     ))
+}
+
+#[derive(InputObject)]
+pub struct StockRelocationDraftLinesInput {
+    pub from_location_id: Option<String>,
+    pub item_id: Option<String>,
+    pub stock_relocation_id: Option<String>,
+}
+
+pub fn get_stock_relocation_draft_lines(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: StockRelocationDraftLinesInput,
+) -> Result<Vec<DraftStockRelocationLineNode>> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryStockLine,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+
+    let draft_lines = service_provider
+        .stock_relocation_service
+        .get_stock_relocation_draft_lines(
+            &service_context,
+            store_id,
+            StockRelocationDraftFilter {
+                from_location_id: input.from_location_id,
+                item_id: input.item_id,
+                stock_relocation_id: input.stock_relocation_id,
+            },
+        )
+        .map_err(StandardGraphqlError::from_list_error)?;
+
+    Ok(DraftStockRelocationLineNode::from_vec(draft_lines))
 }
 
 impl StockRelocationFilterInput {
