@@ -315,55 +315,48 @@ export const StocktakeLineEdit = ({
       hasNext={!!nextItem || hasMorePages}
       isValid={hasValidBatches && !isSaving}
     >
-      {(() => {
-        if (isSaving) {
-          return (
-            <Box sx={{ height: isMediumScreen ? 350 : 450 }}>
-              <BasicSpinner messageKey="saving" />
-            </Box>
-          );
-        }
-
-        return (
-          <>
-            <StocktakeLineEditForm
-              item={currentItem}
-              items={items}
-              onChangeItem={setCurrentItem}
-              mode={mode}
-              hasInvalidLocationLines={hasInvalidLocationLines ?? false}
-            />
-            {!currentItem ? (
-              <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
-            ) : null}
-            {!!currentItem ? (
-              <>
-                <StocktakeLineEditErrorBanner draftLines={draftLines} />
-                <Divider margin={5} />
-                {tableContent}
-                <ItemVariantSelectPanel
-                  itemId={currentItem.id}
-                  open={variantAction !== null}
-                  onClose={() => setVariantAction(null)}
-                  onSelect={applyVariant}
-                  onManual={() => {
-                    // Auto-pop with a server-seeded placeholder already
-                    // present (all-items stocktake): leave it for the
-                    // user to fill in. Otherwise add a blank row (Add
-                    // Batch, or auto-pop with no placeholder yet).
-                    const hasPlaceholder =
-                      draftLines.some(isFreshPlaceholder);
-                    if (variantAction === 'add' || !hasPlaceholder) {
-                      addLine();
-                    }
-                    setVariantAction(null);
-                  }}
-                />
-              </>
-            ) : null}
-          </>
-        );
-      })()}
+      {isSaving ? (
+        <Box sx={{ height: isMediumScreen ? 350 : 450 }}>
+          <BasicSpinner messageKey="saving" />
+        </Box>
+      ) : (
+        <>
+          <StocktakeLineEditForm
+            item={currentItem}
+            items={items}
+            onChangeItem={setCurrentItem}
+            mode={mode}
+            hasInvalidLocationLines={hasInvalidLocationLines ?? false}
+          />
+          {!currentItem ? (
+            <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
+          ) : null}
+          {!!currentItem ? (
+            <>
+              <StocktakeLineEditErrorBanner draftLines={draftLines} />
+              <Divider margin={5} />
+              {tableContent}
+              <ItemVariantSelectPanel
+                itemId={currentItem.id}
+                open={variantAction !== null}
+                onClose={() => setVariantAction(null)}
+                onSelect={applyVariant}
+                onManual={() => {
+                  // Auto-pop with a server-seeded placeholder already
+                  // present (all-items stocktake): leave it for the
+                  // user to fill in. Otherwise add a blank row (Add
+                  // Batch, or auto-pop with no placeholder yet).
+                  const hasPlaceholder = draftLines.some(isFreshPlaceholder);
+                  if (variantAction === 'add' || !hasPlaceholder) {
+                    addLine();
+                  }
+                  setVariantAction(null);
+                }}
+              />
+            </>
+          ) : null}
+        </>
+      )}
     </StocktakeLineEditModal>
   );
 };

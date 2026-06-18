@@ -98,6 +98,24 @@ export const ReturnReasonsComponent = ({
     columns,
     data: lines,
     enableRowSelection: false,
+    muiTablePaperProps: {
+      sx: {
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: 'none',
+      },
+    },
+    muiTableContainerProps: {
+      sx: {
+        flex: 1,
+        minHeight: 0,
+        overflowX: 'auto',
+        overflowY: 'auto',
+        maxHeight: 'unset',
+      },
+    },
   });
 
   return <MaterialTable table={table} />;

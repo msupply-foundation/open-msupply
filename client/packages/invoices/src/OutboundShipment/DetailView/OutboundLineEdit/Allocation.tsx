@@ -8,7 +8,6 @@ import {
   Grid,
   useIntlUtils,
   BasicSpinner,
-  Divider,
   useFormatNumber,
   usePreferences,
   UsePluginEvents,
@@ -153,10 +152,18 @@ const AllocationInner = ({
   };
 
   return (
-    <>
+    <Box
+      sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        overflow: 'hidden',
+      }}
+    >
       <ModalRow>
         <ModalLabel label="" />
-        <Grid display="flex">
+        <Grid display="flex" pt={0.25} pb={0.25}>
           <Typography
             sx={{
               display: 'flex',
@@ -168,15 +175,13 @@ const AllocationInner = ({
           </Typography>
         </Grid>
       </ModalRow>
-      <Grid container gap="4px" width="100%">
-        <Divider margin={10} />
-
-        <Box display="flex" alignItems="flex-start" gap={2}>
-          <Grid container alignItems="center" pt={1} gap={1}>
+      <Grid container gap="2px" width="100%">
+        <Box display="flex" alignItems="center" gap={1}>
+          <Grid container alignItems="center" pt={0} gap={1}>
             <AutoAllocateField />
             <AllocateInSelector includePackSizeOptions />
           </Grid>
-          <AutoAllocationAlerts />
+          <AutoAllocationAlerts sx={{ paddingTop: 0, paddingBottom: 0 }} />
         </Box>
       </Grid>
       <OutboundLineEditTable
@@ -184,6 +189,6 @@ const AllocationInner = ({
         isExternalSupplier={!otherParty?.store}
         pluginEvents={pluginEvents}
       />
-    </>
+    </Box>
   );
 };
