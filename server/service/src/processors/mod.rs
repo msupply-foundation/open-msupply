@@ -16,7 +16,6 @@ use self::transfer::{
 };
 use general_processor::{process_records, ProcessorError};
 
-mod add_central_patient_visibility;
 mod assign_requisition_number;
 mod contact_form;
 mod general_processor;
