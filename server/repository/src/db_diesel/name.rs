@@ -411,6 +411,14 @@ impl Name {
         self.name_store_join_row.is_some()
     }
 
+    /// Name store's disabled based on merge or user action
+    pub fn is_disabled(&self) -> bool {
+        self.store_row
+            .as_ref()
+            .map(|store_row| store_row.is_disabled)
+            .unwrap_or(false)
+    }
+
     pub fn is_system_name(&self) -> bool {
         SYSTEM_NAME_CODES
             .iter()
