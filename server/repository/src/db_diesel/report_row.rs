@@ -35,6 +35,8 @@ pub enum ContextType {
     PurchaseOrder,
     SupplierReturn,
     CustomerReturn,
+    /// OG "replenishment"
+    StockMovement,
 }
 
 table! {

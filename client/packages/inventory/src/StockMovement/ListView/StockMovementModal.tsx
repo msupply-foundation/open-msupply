@@ -11,17 +11,21 @@ import {
   useConfirmationModal,
   StockRelocationNodeStatus,
   ModalMode,
+  ReportContext,
+  PrinterIcon,
 } from '@openmsupply-client/common';
-import { DialogButton, FlatButton } from '@common/components';
+import { DialogButton, FlatButton, LoadingButton } from '@common/components';
 import { useDialog } from '@common/hooks';
 import { FormControlLabel, Radio } from '@mui/material';
 import {
   LocationSearchInput,
+  ReportSelector,
   StockItemSearchInput,
 } from '@openmsupply-client/system';
 import {
   StockMovementRowFragment,
   useDeleteStockMovement,
+  useDeleteStockMovements,
   useFinaliseStockMovements,
   useInsertStockMovement,
   useUpdateStockMovement,
@@ -75,10 +79,14 @@ export const StockMovementModal = ({
   const { update, isUpdating } = useUpdateStockMovement();
   const { finalise, isFinalising } = useFinaliseStockMovements();
   const { delete: deleteMovement, isDeleting } = useDeleteStockMovement();
+  const { deleteStockMovements, isDeleting: isDeletingDraft } =
+    useDeleteStockMovements();
 
   const [failedLineIds, setFailedLineIds] = useState<string[]>([]);
-  const [createdIds, setCreatedIds] = useState<string[] | null>(null);
-  const [isSwitchingMode, setIsSwitchingMode] = useState<SelectionMode | null>(null);
+  const [savedLines, setSavedLines] = useState<Record<string, string>>({});
+  const [isSwitchingMode, setIsSwitchingMode] = useState<SelectionMode | null>(
+    null
+  );
 
   const linesForError = (errorNode: {
     stockLineId?: string;
@@ -88,8 +96,7 @@ export const StockMovementModal = ({
       line =>
         (!!errorNode.stockLineId &&
           line.fromStockLineId === errorNode.stockLineId) ||
-        (!!errorNode.locationId &&
-          line.toLocation?.id === errorNode.locationId)
+        (!!errorNode.locationId && line.toLocation?.id === errorNode.locationId)
     );
 
   const showLineError = (errorNode: {
@@ -181,14 +188,42 @@ export const StockMovementModal = ({
     linesToMove.length > 0 &&
     linesToMove.every(isValid);
 
-  const onCreate = async () => {
+  const saveDraft = async (): Promise<string[] | null> => {
     setFailedLineIds([]);
+    const currentLineIds = new Set(linesToMove.map(line => line.id));
+
     try {
-      // Reuse the already created movements on a finalise retry
-      let ids = createdIds;
-      if (!ids) {
+      // Delete movements whose line has since been removed
+      const toDelete = Object.entries(savedLines)
+        .filter(([lineId]) => !currentLineIds.has(lineId))
+        .map(([, relocationId]) => relocationId);
+      if (toDelete.length) await deleteStockMovements(toDelete);
+
+      // Update already-created lines, collecting the rest to insert
+      const nextSaved: Record<string, string> = {};
+      const toInsert: DraftStockMovementLine[] = [];
+      for (const line of linesToMove) {
+        const relocationId = savedLines[line.id];
+        if (!relocationId) {
+          toInsert.push(line);
+          continue;
+        }
+        nextSaved[line.id] = relocationId;
+        const result = await update({
+          id: relocationId,
+          fromNumberOfPacks: line.fromNumberOfPacks ?? 0,
+          toPackSize: line.toPackSize ?? line.fromPackSize,
+          toLocationId: { value: line.toLocation?.id ?? null },
+        });
+        if (result.__typename === 'UpdateStockRelocationError') {
+          showLineError(result.error);
+          return null;
+        }
+      }
+
+      if (toInsert.length) {
         const result = await insert({
-          lines: linesToMove.map(line => ({
+          lines: toInsert.map(line => ({
             fromStockLineId: line.fromStockLineId,
             fromNumberOfPacks: line.fromNumberOfPacks ?? 0,
             toLocationId: line.toLocation?.id,
@@ -197,34 +232,43 @@ export const StockMovementModal = ({
         });
         if (result.__typename === 'InsertStockRelocationError') {
           showLineError(result.error);
-          return;
+          return null;
         }
-        ids = result.ids;
-        setCreatedIds(ids);
+        toInsert.forEach((line, index) => {
+          nextSaved[line.id] = result.ids[index] ?? '';
+        });
       }
-      const relocationIds = ids;
-      getCreateFinaliseConfirmation({
-        onConfirm: async () => {
-          try {
-            const finaliseResult = await finalise(relocationIds);
-            if (finaliseResult.__typename === 'UpdateStockRelocationError') {
-              showLineError(finaliseResult.error);
-              return;
-            }
-            success(t('messages.stock-movement-finalised'))();
-            onClose();
-          } catch (e) {
-            error((e as Error).message)();
-          }
-        },
-        onCancel: () => {
-          success(t('messages.stock-movement-created'))();
-          onClose();
-        },
-      });
+
+      setSavedLines(nextSaved);
+      return Object.values(nextSaved);
     } catch (e) {
       error((e as Error).message)();
+      return null;
     }
+  };
+
+  const onCreate = async () => {
+    const relocationIds = await saveDraft();
+    if (!relocationIds) return;
+    getCreateFinaliseConfirmation({
+      onConfirm: async () => {
+        try {
+          const finaliseResult = await finalise(relocationIds);
+          if (finaliseResult.__typename === 'UpdateStockRelocationError') {
+            showLineError(finaliseResult.error);
+            return;
+          }
+          success(t('messages.stock-movement-finalised'))();
+          onClose();
+        } catch (e) {
+          error((e as Error).message)();
+        }
+      },
+      onCancel: () => {
+        success(t('messages.stock-movement-created'))();
+        onClose();
+      },
+    });
   };
 
   const onSave = async (status?: StockRelocationNodeStatus) => {
@@ -274,6 +318,39 @@ export const StockMovementModal = ({
     });
   };
 
+  const renderReportSelector = () => {
+    if (isEdit) {
+      if (!movement) return undefined;
+      return (
+        <ReportSelector
+          context={ReportContext.StockMovement}
+          dataId={movement.id}
+          extraArguments={{ relocationIds: [movement.id] }}
+        />
+      );
+    }
+    const savedRelocationIds = Object.values(savedLines);
+    return (
+      <ReportSelector
+        context={ReportContext.StockMovement}
+        dataId={savedRelocationIds[0] ?? ''}
+        extraArguments={{ relocationIds: savedRelocationIds }}
+        CustomButton={({ onPrint }) => (
+          <LoadingButton
+            startIcon={<PrinterIcon />}
+            label={t('button.print')}
+            disabled={!canSave}
+            isLoading={isSaving || isUpdating || isDeletingDraft}
+            onClick={async () => {
+              const ids = await saveDraft();
+              if (ids) onPrint();
+            }}
+          />
+        )}
+      />
+    );
+  };
+
   const title = isEdit
     ? isDisabled
       ? t('label.stock-movement')
@@ -320,6 +397,7 @@ export const StockMovementModal = ({
           />
         )
       }
+      reportSelector={renderReportSelector()}
     >
       <Box display="flex" flexDirection="column" gap={2}>
         {!isEdit && (

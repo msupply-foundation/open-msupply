@@ -831,6 +831,59 @@
       "excel_template_buffer": null
     },
     {
+      "id": "stock-movement_2_20_0_false",
+      "name": "Stock Movement",
+      "description": null,
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": "header.html",
+          "footer": null,
+          "query": [
+            "stock-movement.graphql"
+          ],
+          "convert_data": null,
+          "convert_data_type": "Extism"
+        },
+        "entries": {
+          "header.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<table class=\"header_image_section\" style=\"width: 100%;height: 98%;\">\n  <tr>\n    {% if data.store.logo %}\n    <th style=\"text-align:start;width:10%;height:70%;\">\n      <img class=\"logo\" src=\"{{ data.store.logo }}\" />\n    </th>\n    {% endif %}\n    <th style=\"text-align:start;width:30%;\">\n      <span style=\"font-weight:bold;\">{{ data.store.storeName }}</span><br>\n      <span style=\"font-size:6pt;\">{{ data.store.name.address1 }}</span><br>\n      <span style=\"font-size:6pt;\">{{ data.store.name.address2 }}</span><br>\n      <span style=\"font-size:6pt;\">\n        {{t(k=\"label.phone\",f=\"Telephone\")}}: {{ data.store.name.phone }}\n      </span><br>\n      <span style=\"font-size:6pt;\">\n        {{t(k=\"label.email\",f=\"Email\")}}: {{ data.store.name.email }}\n      </span>\n      <br>\n      <br>\n    </th>\n    <th style=\"text-align:end;width:60%;font-size:24pt;\">\n      {{ t(k=\"label.stock-movements\", f=\"Stock movements\") }}<br>\n    </th>\n  </tr>\n</table>\n\n<div class=\"header_image_section\" style=\"display: flex; flex-direction: column;\">\n  <div style=\"display: flex; justify-content: flex-end;\">\n    {{t(k=\"label.date\", f=\"Date\")}}: {{ now() | date(format=\"%d/%m/%Y\") }}\n  </div>\n</div>\n"
+            }
+          },
+          "stock-movement.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query StockMovement($storeId: String!, $relocationIds: [String!]) {\n  stockRelocations(\n    storeId: $storeId\n    filter: { id: { equalAny: $relocationIds } }\n  ) {\n    ... on StockRelocationConnector {\n      totalCount\n      nodes {\n        id\n        itemCode\n        itemName\n        batch\n        expiryDate\n        numberOfPacks\n        fromPackSize\n        toPackSize\n        status\n        createdDatetime\n        fromLocation {\n          code\n          name\n        }\n        toLocation {\n          code\n          name\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      id\n      code\n      storeName\n      logo\n      name(storeId: $storeId) {\n        address1\n        address2\n        phone\n        email\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "@media print {\n  @page {\n    @bottom-right {\n      font-family: Tahoma;\n      font-size: 8pt;\n      /* do not allow formatter to add a line break in the content */\n      /* prettier-ignore*/\n      content: '{{t(k=\"report.page\",f=\"Page\")}} ' counter(page) ' {{t(k=\"report.of\",f=\"of\")}} ' counter(pages);\n    }\n  }\n}\n\nbody > table {\n  width: 100%;\n  padding: 2em;\n}\n\n.logo {\n  display: block;\n  height: 96px;\n}\n\n.header_image_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 8pt;\n}\n\n.body_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  text-align: left;\n}\n\n.body_section tr.body_column_label th {\n  border-bottom: 0.5px solid black;\n  text-align: left;\n  vertical-align: bottom;\n}\n\n.body_value td {\n  border-bottom: 0.5px solid black;\n}\n\n/* Numeric columns are right-aligned */\n.pack,\n.packs {\n  text-align: right;\n}\n\n/* Manual-entry columns for warehouse staff */\n.done {\n  width: 40px;\n  text-align: center;\n}\n\n.moved-on {\n  width: 70px;\n}\n"
+          },
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n    {% include \"style.css\" %}\n</style>\n\n<body>\n    <table class=\"body_section\" cellpadding=\"2\" cellspacing=\"0\">\n        <tr class=\"body_column_label\">\n            <th class=\"item\">{{t(k=\"label.item-name\",f=\"Item name\")}}</th>\n            <th class=\"batch\">{{t(k=\"label.batch\",f=\"Batch\")}}</th>\n            <th class=\"expiry\">{{t(k=\"label.expiry\",f=\"Expiry\")}}</th>\n            <th class=\"pack\">{{t(k=\"label.from-pack-size\",f=\"From pack size\")}}</th>\n            <th class=\"location\">{{t(k=\"label.from-location\",f=\"From location\")}}</th>\n            <th class=\"packs\">{{t(k=\"label.from-number-of-packs\",f=\"From number of packs\")}}</th>\n            <th class=\"location\">{{t(k=\"label.to-location\",f=\"To location\")}}</th>\n            <th class=\"packs\">{{t(k=\"label.to-number-of-packs\",f=\"To number of packs\")}}</th>\n            <th class=\"pack\">{{t(k=\"label.to-pack-size\",f=\"To pack size\")}}</th>\n            <th class=\"done\">{{t(k=\"label.done\",f=\"Done\")}}</th>\n            <th class=\"moved-on\">{{t(k=\"label.moved-on\",f=\"Moved on\")}}</th>\n        </tr>\n        {% for movement in data.stockRelocations.nodes %}\n        <tr class=\"body_value\">\n            <td class=\"item\">{{ movement.itemCode }} {{ movement.itemName }}</td>\n            <td class=\"batch\">{{ movement.batch }}</td>\n            <td class=\"expiry\">\n                {% if movement.expiryDate %}{{ movement.expiryDate | date(format=\"%d/%m/%Y\") }}{% endif %}\n            </td>\n            <td class=\"pack\">{{ movement.fromPackSize }}</td>\n            <td class=\"location\">\n                {% if movement.fromLocation %}{{ movement.fromLocation.code }}{% endif %}\n            </td>\n            <td class=\"packs\">{{ movement.numberOfPacks }}</td>\n            <td class=\"location\">\n                {% if movement.toLocation %}{{ movement.toLocation.code }}{% endif %}\n            </td>\n            <td class=\"packs\">\n                {% if movement.toPackSize and movement.toPackSize > 0 %}{{ movement.numberOfPacks * movement.fromPackSize / movement.toPackSize }}{% endif %}\n            </td>\n            <td class=\"pack\">{{ movement.toPackSize }}</td>\n            <td class=\"done\"></td>\n            <td class=\"moved-on\"></td>\n        </tr>\n        {% endfor %}\n    </table>\n</body>\n"
+            }
+          }
+        }
+      },
+      "context": "STOCK_MOVEMENT",
+      "sub_context": null,
+      "argument_schema_id": null,
+      "comment": null,
+      "is_custom": false,
+      "version": "2.20.0",
+      "code": "stock-movement",
+      "form_schema": null,
+      "excel_template_buffer": null
+    },
+    {
       "id": "stock-take-detail-view_2_6_4_false",
       "name": "Stocktake",
       "description": null,
