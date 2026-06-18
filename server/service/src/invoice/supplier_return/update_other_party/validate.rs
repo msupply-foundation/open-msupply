@@ -1,7 +1,9 @@
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
 };
-use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
+use crate::validate::{
+    check_other_party, check_other_party_store_is_disabled, CheckOtherPartyType, OtherPartyErrors,
+};
 use repository::{InvoiceRow, InvoiceType, Name, StorageConnection};
 
 use super::{UpdateSupplierReturnOtherParty, UpdateSupplierReturnOtherPartyError};
@@ -21,6 +23,9 @@ pub fn validate(
         return Err(NotAnSupplierReturn);
     }
     if !check_invoice_is_editable(&return_row) {
+        return Err(InvoiceIsNotEditable);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &return_row.name_id)? {
         return Err(InvoiceIsNotEditable);
     }
 
