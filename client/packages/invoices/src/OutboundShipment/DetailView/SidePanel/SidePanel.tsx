@@ -7,6 +7,7 @@ import {
   DetailPanelPortal,
   useNotification,
   useDeleteConfirmation,
+  useConfirmationModal,
   useTranslation,
   useNavigate,
   RouteBuilder,
@@ -21,9 +22,10 @@ import { canDeleteInvoice } from '../../../utils';
 export const SidePanelComponent = () => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { success } = useNotification();
+  const { success, warning } = useNotification();
   const { data } = useOutbound.document.get();
   const { mutateAsync } = useOutbound.document.delete();
+  const { duplicate } = useOutbound.document.duplicate();
   const canDelete = data ? canDeleteInvoice(data) : false;
 
   const deleteAction = async () => {
@@ -55,6 +57,46 @@ export const SidePanelComponent = () => {
       .then(() => success(t('message.copy-success'))());
   };
 
+  const getDuplicateConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: '',
+  });
+
+  const duplicateAction = () => {
+    if (!data) return;
+    getDuplicateConfirmation({
+      message: t('messages.confirm-duplicate-shipment-customer', {
+        number: data.invoiceNumber,
+        customerName: data.otherPartyName,
+      }),
+      onConfirm: async () => {
+        const result = await duplicate(data.id);
+        if (!result) return;
+
+        const { id, invoiceNumber, skippedItemCount } = result;
+        success(
+          t('messages.shipment-copied', {
+            newNumber: invoiceNumber,
+            sourceNumber: data.invoiceNumber,
+          })
+        )();
+        if (skippedItemCount > 0) {
+          warning(
+            t('messages.shipment-copied-skipped-items', {
+              count: skippedItemCount,
+            })
+          )();
+        }
+        navigate(
+          RouteBuilder.create(AppRoute.Distribution)
+            .addPart(AppRoute.OutboundShipment)
+            .addPart(id)
+            .build()
+        );
+      },
+    });
+  };
+
   return (
     <DetailPanelPortal
       Actions={
@@ -64,6 +106,11 @@ export const SidePanelComponent = () => {
             title={t('label.delete')}
             onClick={onDelete}
             disabled={!canDelete}
+          />
+          <DetailPanelAction
+            icon={<CopyIcon />}
+            title={t('button.make-a-copy')}
+            onClick={duplicateAction}
           />
           <DetailPanelAction
             icon={<CopyIcon />}
