@@ -20,7 +20,6 @@ use crate::{
 };
 
 use super::{
-    add_central_patient_visibility::AddPatientVisibilityForCentral,
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
     load_plugin::LoadPlugin, merge_sync_message::MergeSyncMessageProcessor,
     plugin_processor::PluginProcessor,
@@ -52,7 +51,6 @@ pub enum ProcessorType {
     ContactFormEmail,
     LoadPlugin,
     AssignRequisitionNumber,
-    AddPatientVisibilityForCentral,
     Plugins,
     RequisitionAutoFinalise,
     MergeSyncMessage,
@@ -65,9 +63,6 @@ impl ProcessorType {
             ProcessorType::ContactFormEmail => vec![Box::new(QueueContactEmailProcessor)],
             ProcessorType::LoadPlugin => vec![Box::new(LoadPlugin)],
             ProcessorType::AssignRequisitionNumber => vec![Box::new(AssignRequisitionNumber)],
-            ProcessorType::AddPatientVisibilityForCentral => {
-                vec![Box::new(AddPatientVisibilityForCentral)]
-            }
             ProcessorType::Plugins => get_plugin_processors(),
             ProcessorType::RequisitionAutoFinalise => {
                 vec![Box::new(RequisitionAutoFinaliseProcessor)]
@@ -187,7 +182,7 @@ pub(crate) async fn process_records(
                 }
 
                 cursor_controller
-                    .update(&ctx.connection, (log.cursor + 1) as u64)
+                    .update(&ctx.connection, log.cursor as u64)
                     .map_err(Error::DatabaseError)?;
             }
         }
