@@ -452,7 +452,7 @@ impl ChangelogFilter {
             let pre_condition = C::table_name::any(table_names);
 
             let condition = match distribution {
-                Everyone => C::And(vec![
+                Central => C::And(vec![
                     // We have central and remote records with same table_name, so need to make sure to include only central ones (where store_id is null)
                     C::store_id::is_null(),
                     // We have patients that are also central data, therefore patient_id should be null

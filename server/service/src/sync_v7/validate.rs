@@ -38,7 +38,7 @@ pub(crate) fn validate_on_remote(
     for distribution in &style.distribution {
         match distribution {
             // Reject rows that have a store id or patient id - these are remote or patient data, not central
-            Everyone => match (&sync_buffer_row.store_id, &sync_buffer_row.patient_id) {
+            Central => match (&sync_buffer_row.store_id, &sync_buffer_row.patient_id) {
                 (None, None) => return Ok(()),
                 _ => last_err = ValidationError::UnexpectedSyncStyleForV7,
             },

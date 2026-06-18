@@ -21,7 +21,7 @@ pub enum Authoring {
 // Distribution axis — who receives a row on pull-down (drives all_data_for_site + validate_on_remote)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, strum::EnumIter)]
 pub enum Distribution {
-    Everyone,       // sent everywhere when keyless (store_id/patient_id null)
+    Central,        // sent everywhere when keyless (store_id/patient_id null)
     Remote,         // owning store's site, every cycle
     RemoteOwned,    // owning store's site, init only
     Transfer,       // transfer store's site
@@ -165,7 +165,7 @@ impl ChangelogTableName {
 
             SyncMessage => SyncStyle {
                 authoring: vec![Anyone],
-                distribution: vec![D::Everyone, D::Remote],
+                distribution: vec![D::Central, D::Remote],
                 transport: V5,
             },
 
@@ -193,294 +193,294 @@ impl ChangelogTableName {
 
             AncillaryItem => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             AssetCatalogueItem => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             AssetCatalogueType => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             AssetCategory => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             AssetClass => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             AssetLogReason => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             AssetProperty => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             BackendPlugin => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             BundledItem => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             Campaign => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             Demographic => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             FormSchema => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             FrontendPlugin => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             ItemVariant => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             NameOmsFields => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             NameProperty => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             PackagingVariant => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             Property => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             Report => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             VaccineCourse => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             VaccineCourseDose => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             VaccineCourseItem => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
             VaccineCourseStoreConfig => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
 
             // Also the catch-all for tables not yet classified into a more specific style.
             Abbreviation => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             Barcode => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             Category => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             Contact => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             Context => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             Currency => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             DemographicIndicator => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             Diagnosis => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             DocumentRegistry => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             IndicatorColumn => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             IndicatorLine => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             InsuranceProvider => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             Item => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             ItemCategoryJoin => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             ItemDirection => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             ItemWarningJoin => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             LocationType => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             MasterList => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             MasterListLine => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             MasterListNameJoin => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             NameTag => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             NameTagJoin => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             Period => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             PeriodSchedule => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             Printer => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             Program => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             ProgramIndicator => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             ProgramRequisitionOrderType => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             ProgramRequisitionSettings => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             ReasonOption => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             ShippingMethod => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             Store => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             StorePreference => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             Unit => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             UserAccount => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             UserPermission => SyncStyle {
@@ -490,18 +490,18 @@ impl ChangelogTableName {
             },
             UserStoreJoin => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
             VVMStatus => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
 
             Clinician => SyncStyle {
                 authoring: vec![Anyone],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V5,
             },
 
@@ -539,7 +539,7 @@ impl ChangelogTableName {
 
             Name => SyncStyle {
                 authoring: vec![Patient],
-                distribution: vec![D::Everyone, D::Patient],
+                distribution: vec![D::Central, D::Patient],
                 transport: V5_V6,
             },
 
@@ -582,18 +582,18 @@ impl ChangelogTableName {
 
             SyncFileReference => SyncStyle {
                 authoring: vec![Anyone],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Central],
                 transport: V6,
             },
 
             PluginData => SyncStyle {
                 authoring: vec![RemoteOwned],
-                distribution: vec![D::Everyone, D::Remote],
+                distribution: vec![D::Central, D::Remote],
                 transport: V6,
             },
             Preference => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone, D::Remote],
+                distribution: vec![D::Central, D::Remote],
                 transport: V6,
             },
 
