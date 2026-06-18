@@ -2073,6 +2073,7 @@
   "messages.confirm-cancel-prescription": "Cancelling this prescription cannot be undone",
   "messages.confirm-change-campaign-or-program": "This will change the campaign or program for all selected lines",
   "messages.confirm-change-location": "This will change the location of all selected lines",
+  "messages.confirm-change-selection-mode": "Changing this option will clear the currently selected items. Do you want to continue?",
   "messages.confirm-changing-from-new": "Note: changing from 'New' will remove any lines with zero quantity.",
   "messages.confirm-close-purchase-order-lines_few": "This will permanently close {{count}} lines from this purchase order. Once closed you cannot receive any more stock against these lines.",
   "messages.confirm-close-purchase-order-lines_many": "This will permanently close {{count}} lines from this purchase order. Once closed you cannot receive any more stock against these lines.",
