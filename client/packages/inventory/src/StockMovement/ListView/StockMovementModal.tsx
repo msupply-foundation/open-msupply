@@ -11,12 +11,15 @@ import {
   useConfirmationModal,
   StockRelocationNodeStatus,
   ModalMode,
+  ReportContext,
+  PrinterIcon,
 } from '@openmsupply-client/common';
-import { DialogButton, FlatButton } from '@common/components';
+import { DialogButton, FlatButton, LoadingButton } from '@common/components';
 import { useDialog } from '@common/hooks';
 import { FormControlLabel, Radio } from '@mui/material';
 import {
   LocationSearchInput,
+  ReportSelector,
   StockItemSearchInput,
 } from '@openmsupply-client/system';
 import {
@@ -78,7 +81,9 @@ export const StockMovementModal = ({
 
   const [failedLineIds, setFailedLineIds] = useState<string[]>([]);
   const [createdIds, setCreatedIds] = useState<string[] | null>(null);
-  const [isSwitchingMode, setIsSwitchingMode] = useState<SelectionMode | null>(null);
+  const [isSwitchingMode, setIsSwitchingMode] = useState<SelectionMode | null>(
+    null
+  );
 
   const linesForError = (errorNode: {
     stockLineId?: string;
@@ -88,8 +93,7 @@ export const StockMovementModal = ({
       line =>
         (!!errorNode.stockLineId &&
           line.fromStockLineId === errorNode.stockLineId) ||
-        (!!errorNode.locationId &&
-          line.toLocation?.id === errorNode.locationId)
+        (!!errorNode.locationId && line.toLocation?.id === errorNode.locationId)
     );
 
   const showLineError = (errorNode: {
@@ -181,50 +185,52 @@ export const StockMovementModal = ({
     linesToMove.length > 0 &&
     linesToMove.every(isValid);
 
-  const onCreate = async () => {
+  const saveDraft = async (): Promise<string[] | null> => {
+    if (createdIds) return createdIds;
     setFailedLineIds([]);
     try {
-      // Reuse the already created movements on a finalise retry
-      let ids = createdIds;
-      if (!ids) {
-        const result = await insert({
-          lines: linesToMove.map(line => ({
-            fromStockLineId: line.fromStockLineId,
-            fromNumberOfPacks: line.fromNumberOfPacks ?? 0,
-            toLocationId: line.toLocation?.id,
-            toPackSize: line.toPackSize ?? line.fromPackSize,
-          })),
-        });
-        if (result.__typename === 'InsertStockRelocationError') {
-          showLineError(result.error);
-          return;
-        }
-        ids = result.ids;
-        setCreatedIds(ids);
-      }
-      const relocationIds = ids;
-      getCreateFinaliseConfirmation({
-        onConfirm: async () => {
-          try {
-            const finaliseResult = await finalise(relocationIds);
-            if (finaliseResult.__typename === 'UpdateStockRelocationError') {
-              showLineError(finaliseResult.error);
-              return;
-            }
-            success(t('messages.stock-movement-finalised'))();
-            onClose();
-          } catch (e) {
-            error((e as Error).message)();
-          }
-        },
-        onCancel: () => {
-          success(t('messages.stock-movement-created'))();
-          onClose();
-        },
+      const result = await insert({
+        lines: linesToMove.map(line => ({
+          fromStockLineId: line.fromStockLineId,
+          fromNumberOfPacks: line.fromNumberOfPacks ?? 0,
+          toLocationId: line.toLocation?.id,
+          toPackSize: line.toPackSize ?? line.fromPackSize,
+        })),
       });
+      if (result.__typename === 'InsertStockRelocationError') {
+        showLineError(result.error);
+        return null;
+      }
+      setCreatedIds(result.ids);
+      return result.ids;
     } catch (e) {
       error((e as Error).message)();
+      return null;
     }
+  };
+
+  const onCreate = async () => {
+    const relocationIds = await saveDraft();
+    if (!relocationIds) return;
+    getCreateFinaliseConfirmation({
+      onConfirm: async () => {
+        try {
+          const finaliseResult = await finalise(relocationIds);
+          if (finaliseResult.__typename === 'UpdateStockRelocationError') {
+            showLineError(finaliseResult.error);
+            return;
+          }
+          success(t('messages.stock-movement-finalised'))();
+          onClose();
+        } catch (e) {
+          error((e as Error).message)();
+        }
+      },
+      onCancel: () => {
+        success(t('messages.stock-movement-created'))();
+        onClose();
+      },
+    });
   };
 
   const onSave = async (status?: StockRelocationNodeStatus) => {
@@ -274,6 +280,38 @@ export const StockMovementModal = ({
     });
   };
 
+  const renderReportSelector = () => {
+    if (isEdit) {
+      if (!movement) return undefined;
+      return (
+        <ReportSelector
+          context={ReportContext.StockMovement}
+          dataId={movement.id}
+          extraArguments={{ relocationIds: [movement.id] }}
+        />
+      );
+    }
+    return (
+      <ReportSelector
+        context={ReportContext.StockMovement}
+        dataId={createdIds?.[0] ?? ''}
+        extraArguments={{ relocationIds: createdIds ?? [] }}
+        CustomButton={({ onPrint }) => (
+          <LoadingButton
+            startIcon={<PrinterIcon />}
+            label={t('button.print')}
+            disabled={!canSave}
+            isLoading={isSaving}
+            onClick={async () => {
+              const ids = await saveDraft();
+              if (ids) onPrint();
+            }}
+          />
+        )}
+      />
+    );
+  };
+
   const title = isEdit
     ? isDisabled
       ? t('label.stock-movement')
@@ -320,6 +358,7 @@ export const StockMovementModal = ({
           />
         )
       }
+      reportSelector={renderReportSelector()}
     >
       <Box display="flex" flexDirection="column" gap={2}>
         {!isEdit && (
