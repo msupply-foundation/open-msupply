@@ -22,6 +22,7 @@ export const ListView = () => {
   const {
     queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({
+    initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
       { key: 'status', condition: 'equalTo' },
       { key: 'itemCodeOrName' },

@@ -14,7 +14,9 @@ impl DraftStockRelocationLineNode {
         DraftStockRelocationLineNode { draft_line }
     }
 
-    pub fn from_vec(draft_lines: Vec<DraftStockRelocationLine>) -> Vec<DraftStockRelocationLineNode> {
+    pub fn from_vec(
+        draft_lines: Vec<DraftStockRelocationLine>,
+    ) -> Vec<DraftStockRelocationLineNode> {
         draft_lines
             .into_iter()
             .map(DraftStockRelocationLineNode::from_domain)
@@ -62,6 +64,10 @@ impl DraftStockRelocationLineNode {
 
     pub async fn available_number_of_packs(&self) -> f64 {
         self.draft_line.available_number_of_packs
+    }
+
+    pub async fn total_number_of_packs(&self) -> f64 {
+        self.draft_line.total_number_of_packs
     }
 
     pub async fn on_hold(&self) -> bool {

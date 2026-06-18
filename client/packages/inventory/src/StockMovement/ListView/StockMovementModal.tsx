@@ -16,7 +16,7 @@ import { DialogButton } from '@common/components';
 import { useDialog } from '@common/hooks';
 import { FormControlLabel, Radio } from '@mui/material';
 import {
-  LocationRowFragment,
+  LocationSearchInput,
   StockItemSearchInput,
 } from '@openmsupply-client/system';
 import {
@@ -63,7 +63,6 @@ export const StockMovementModal = ({
     selectFromLocation,
     byItem,
     selectByItem,
-    locations,
     itemOptions,
     lines,
     linesToMove,
@@ -270,8 +269,8 @@ export const StockMovementModal = ({
     <Modal
       slideAnimation={false}
       title={title}
-      height={700}
-      width={1200}
+      height={window.innerHeight * 0.8}
+      width={window.innerWidth * 0.8}
       cancelButton={
         <DialogButton
           variant={isDisabled ? 'close' : 'cancel'}
@@ -315,14 +314,14 @@ export const StockMovementModal = ({
             onChange={(_, value) => switchMode(value as SelectionMode)}
           >
             <FormControlLabel
-              value="byLocation"
-              control={<Radio />}
-              label={t('label.select-by-location')}
-            />
-            <FormControlLabel
               value="byItem"
               control={<Radio />}
               label={t('label.select-by-item')}
+            />
+            <FormControlLabel
+              value="byLocation"
+              control={<Radio />}
+              label={t('label.select-by-location')}
             />
           </RadioGroup>
         )}
@@ -333,17 +332,18 @@ export const StockMovementModal = ({
               <Typography variant="caption">
                 {t('label.from-location')}
               </Typography>
-              <Autocomplete<LocationRowFragment>
-                width="280px"
-                options={locations}
-                value={fromLocation}
-                getOptionLabel={location =>
-                  `${location.code} - ${location.name}${location.onHold ? ` (${t('label.on-hold')})` : ''
-                  }`
-                }
-                getOptionDisabled={location => location.onHold}
-                isOptionEqualToValue={(option, value) => option.id === value.id}
-                onChange={(_, location) => selectFromLocation(location)}
+              <LocationSearchInput
+                width={280}
+                selectedLocation={fromLocation}
+                disabled={false}
+                clearable
+                getDisabledReason={location => {
+                  if (location.onHold) return t('label.on-hold');
+                  if (location.stock?.totalCount === 0)
+                    return t('label.no-stock');
+                  return undefined;
+                }}
+                onChange={location => selectFromLocation(location)}
               />
             </Box>
             {fromLocation && (

@@ -28,6 +28,7 @@ pub struct DraftStockRelocationLine {
     pub expiry_date: Option<NaiveDate>,
     pub from_pack_size: f64,
     pub available_number_of_packs: f64,
+    pub total_number_of_packs: f64,
     /// Stock line or location on hold
     pub on_hold: bool,
     pub from_number_of_packs: Option<f64>,
@@ -59,6 +60,7 @@ impl DraftStockRelocationLine {
             expiry_date: stock_line_row.expiry_date,
             from_pack_size: stock_line_row.pack_size,
             available_number_of_packs: stock_line_row.available_number_of_packs,
+            total_number_of_packs: stock_line_row.total_number_of_packs,
             on_hold: stock_line_row.on_hold || location_on_hold,
             from_number_of_packs: None,
             to_location_id: None,
