@@ -30,8 +30,6 @@ use crate::{
 /// This test is for requesting and responding store on the same site
 /// See same site transfer diagram in requisition README.md for example of how
 /// changelog is upserted and processed by the same instance of triggered processor
-// TODO fix test v7
-#[ignore]
 #[tokio::test(flavor = "multi_thread", worker_threads = 3)]
 async fn invoice_transfers() {
     let site_id = 25;
@@ -302,8 +300,6 @@ async fn invoice_transfers() {
 }
 
 /// Checking behavior when a request requisition name_id is that of a merged name. Response requisition for the merged name store should be generated regardless.
-// TODO fix test v7
-#[ignore]
 #[tokio::test(flavor = "multi_thread", worker_threads = 3)]
 async fn invoice_transfers_with_merged_name() {
     let site_id = 25;
