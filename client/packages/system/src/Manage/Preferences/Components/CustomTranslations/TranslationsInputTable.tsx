@@ -1,12 +1,15 @@
-import React, { useMemo } from 'react';
-import { DeleteIcon } from '@common/icons';
+import React, { useMemo, useState } from 'react';
+import { DeleteIcon, FilterIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 import {
+  BasicTextInput,
   Box,
   ColumnDef,
   IconButton,
+  InputAdornment,
   MaterialTable,
   NothingHere,
+  RegexUtils,
   TextWithTooltipCell,
   useSimpleMaterialTable,
   TextInputCell,
@@ -28,6 +31,8 @@ export const TranslationsTable = ({
   showValidationErrors: boolean;
 }) => {
   const t = useTranslation();
+
+  const [filter, setFilter] = useState('');
 
   const onAdd = (options: TranslationOption[]) => {
     if (options.length === 0) return;
@@ -131,20 +136,54 @@ export const TranslationsTable = ({
     [translations]
   );
 
+  const filteredTranslations = useMemo(() => {
+    if (!filter.trim()) return translations;
+    const searchTerm = RegexUtils.escapeChars(filter);
+    return translations.filter(
+      tr =>
+        RegexUtils.includes(searchTerm, tr.key) ||
+        RegexUtils.includes(searchTerm, tr.default) ||
+        RegexUtils.includes(searchTerm, tr.custom)
+    );
+  }, [translations, filter]);
+
   const table = useSimpleMaterialTable<Translation>({
     tableId: 'custom-translations-input-table',
-    data: translations,
+    data: filteredTranslations,
     columns,
     getIsPlaceholderRow: row => row.original.isNew ?? false,
-    noDataElement: <NothingHere body={t('message.add-a-translation')} />,
+    noDataElement: (
+      <NothingHere
+        body={
+          filter
+            ? t('messages.no-matching-translations')
+            : t('message.add-a-translation')
+        }
+      />
+    ),
   });
 
   return (
     <>
-      <Box display="flex" justifyContent="flex-start" marginBottom="8px">
-        <TranslationSearchInput
-          onChange={onAdd}
-          existingKeys={existingKeys}
+      <Box display="flex" flexDirection="column" gap={1} marginBottom="8px">
+        <TranslationSearchInput onChange={onAdd} existingKeys={existingKeys} />
+        <BasicTextInput
+          fullWidth
+          value={filter}
+          onChange={e => setFilter(e.target.value)}
+          placeholder={t('placeholder.filter-translations')}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <FilterIcon sx={{ color: 'gray.main' }} fontSize="small" />
+                </InputAdornment>
+              ),
+              sx: {
+                backgroundColor: theme => theme.palette.background.drawer,
+              },
+            },
+          }}
         />
       </Box>
 
