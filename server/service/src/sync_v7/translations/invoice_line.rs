@@ -2,12 +2,10 @@ use repository::{syncv7::SyncRecordSerializeError, ChangeLogInsertRow, InvoiceLi
 
 use crate::sync_v7::{serde::DeserializeResult, validate_translate_integrate::SyncContext};
 
-/// Deserialise an invoice_line and, when the line belongs to a store this site
-/// doesn't own, null `stock_line_id` and `location_id` — those FKs reference
-/// records on the owning site that won't exist here.
-/// This happens when:
-/// - this site is a transfer recipient or
-/// - a patient-lookup occurred, where prescription records belong to the owning store
+// Deserialise an invoice_line, nulling `stock_line_id` and `location_id` when
+// the line is for a store this site doesn't own (a transfer recipient, or a
+// patient lookup pulling another store's data) — those FKs point at
+// stock/location on the owning site that don't exist here.
 pub(crate) fn translate_invoice_line(
     changelog_insert: ChangeLogInsertRow,
     owning_store_id: Option<&str>,
@@ -18,8 +16,9 @@ pub(crate) fn translate_invoice_line(
         .map_err(|e| SyncRecordSerializeError::SerdeError(e.to_string()))?;
 
     let belongs_to_other_site = match sync_context {
-        SyncContext::PatientLookup => true,
-        SyncContext::Remote { active_stores, .. } => owning_store_id
+        // Preserve our own store's FKs if a patient lookup re-pulls a previously joined patient.
+        SyncContext::Remote { active_stores, .. }
+        | SyncContext::PatientLookup { active_stores, .. } => owning_store_id
             .map(|store_id| !active_stores.store_ids().iter().any(|s| s == store_id))
             .unwrap_or(false),
         SyncContext::Central { .. } => false,
@@ -103,7 +102,9 @@ mod test {
     fn nulls_cross_site_fks_on_patient_lookup() {
         let input = input_row();
         let data = serde_json::to_value(&input).unwrap();
-        let ctx = SyncContext::PatientLookup;
+        let ctx = SyncContext::PatientLookup {
+            active_stores: site_with_store("our_store"),
+        };
 
         let translated_row = translated(translate_invoice_line(
             changelog_for(&input),
