@@ -164,9 +164,21 @@ export type InsertStockRelocationMutation = {
     | {
         __typename: 'InsertStockRelocationError';
         error:
-          | { __typename: 'LocationOnHold'; description: string }
-          | { __typename: 'NotEnoughStock'; description: string }
-          | { __typename: 'StockLineOnHold'; description: string };
+          | {
+              __typename: 'LocationOnHold';
+              locationId: string;
+              description: string;
+            }
+          | {
+              __typename: 'NotEnoughStock';
+              stockLineId: string;
+              description: string;
+            }
+          | {
+              __typename: 'StockLineOnHold';
+              stockLineId: string;
+              description: string;
+            };
       }
     | { __typename: 'InsertStockRelocationNode'; ids: Array<string> };
 };
@@ -202,9 +214,21 @@ export type UpdateStockRelocationsMutation = {
     | {
         __typename: 'UpdateStockRelocationError';
         error:
-          | { __typename: 'LocationOnHold'; description: string }
-          | { __typename: 'NotEnoughStock'; description: string }
-          | { __typename: 'StockLineOnHold'; description: string };
+          | {
+              __typename: 'LocationOnHold';
+              locationId: string;
+              description: string;
+            }
+          | {
+              __typename: 'NotEnoughStock';
+              stockLineId: string;
+              description: string;
+            }
+          | {
+              __typename: 'StockLineOnHold';
+              stockLineId: string;
+              description: string;
+            };
       }
     | { __typename: 'UpdateStockRelocationsNode'; ids: Array<string> };
 };
@@ -351,6 +375,15 @@ export const InsertStockRelocationDocument = gql`
         error {
           __typename
           description
+          ... on StockLineOnHold {
+            stockLineId
+          }
+          ... on LocationOnHold {
+            locationId
+          }
+          ... on NotEnoughStock {
+            stockLineId
+          }
         }
       }
     }
@@ -393,6 +426,15 @@ export const UpdateStockRelocationsDocument = gql`
         error {
           __typename
           description
+          ... on StockLineOnHold {
+            stockLineId
+          }
+          ... on LocationOnHold {
+            locationId
+          }
+          ... on NotEnoughStock {
+            stockLineId
+          }
         }
       }
     }

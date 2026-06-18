@@ -108,6 +108,15 @@ mutation insertStockRelocation(
       error {
         __typename
         description
+        ... on StockLineOnHold {
+          stockLineId
+        }
+        ... on LocationOnHold {
+          locationId
+        }
+        ... on NotEnoughStock {
+          stockLineId
+        }
       }
     }
   }
@@ -148,6 +157,15 @@ mutation updateStockRelocations(
       error {
         __typename
         description
+        ... on StockLineOnHold {
+          stockLineId
+        }
+        ... on LocationOnHold {
+          locationId
+        }
+        ... on NotEnoughStock {
+          stockLineId
+        }
       }
     }
   }
