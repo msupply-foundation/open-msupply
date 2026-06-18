@@ -196,6 +196,9 @@ Permissions are checked **at call time**, not at tool registration. If you chang
 - `list_requisition_documents` — list attachments on a requisition (includes the linked requisition on the other side of a transfer).
 - `list_purchase_order_documents` — list attachments on a purchase order.
 
+### GraphQL (1)
+- `graphql` — escape hatch for endpoints without a dedicated tool. Runs an arbitrary GraphQL `query` (optionally with `variables`) and returns the raw JSON response. Mutation documents are gated behind the mutation permission, just like the purpose-built mutation tools. Prefer a dedicated tool when one exists — it returns cleaner, summarised output.
+
 ## Common Workflows
 
 ### First-time connect

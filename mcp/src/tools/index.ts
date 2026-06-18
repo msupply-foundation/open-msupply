@@ -24,6 +24,7 @@ import { dashboardQueryTools } from './dashboard/queries.js';
 import { reportQueryTools } from './reports/queries.js';
 import { fileQueryTools } from './files/queries.js';
 import { documentQueryTools } from './documents/queries.js';
+import { graphqlQueryTools } from './graphql/queries.js';
 
 export function registerAllTools(
   server: McpServer,
@@ -52,6 +53,7 @@ export function registerAllTools(
     ...reportQueryTools(client),
     ...fileQueryTools(client),
     ...documentQueryTools(client),
+    ...graphqlQueryTools(client, permissions),
   ];
 
   console.error(
