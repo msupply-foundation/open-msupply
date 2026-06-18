@@ -237,7 +237,7 @@ pub async fn patient_pull(
                 is_v5: false,
             }),
         ),
-        ChangelogCondition::patient_id::equal(fetch_patient_id),
+        ChangelogCondition::patient_id::matching(fetch_patient_id),
     ]);
     let QueryWithData {
         rows,

@@ -6,9 +6,9 @@ use std::{
 use repository::{
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
-    ChangelogCondition, ChangelogFilter, EqualFilter, FilterBuilder, KeyType,
-    KeyValueStoreRepository, Pagination, RepositoryError, SiteFilter, SiteRepository, SiteRow,
-    SiteRowRepository, SourceSiteId, StorageConnection, SyncBufferRepository, SyncVersion,
+    ChangelogCondition, ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination,
+    RepositoryError, SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId,
+    StorageConnection, SyncBufferRepository, SyncVersion,
 };
 use thiserror::Error;
 use util::format_error;
@@ -381,7 +381,7 @@ pub async fn patient_data_for_site(
 
         let filter = ChangelogCondition::And(vec![
             ChangelogFilter::patient_data_for_site(site.id, None),
-            ChangelogCondition::patient_id::equal(patient_id),
+            ChangelogCondition::patient_id::matching(patient_id),
         ]);
 
         let batch = SyncBatchV7::generate(&ctx.connection, filter, 0, None)?;
