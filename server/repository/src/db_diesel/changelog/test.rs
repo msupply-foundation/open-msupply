@@ -903,7 +903,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
         .query(
             ChangelogCondition::And(vec![
                 ChangelogFilter::patient_data_for_site(site1_id, None),
-                ChangelogCondition::patient_id::equal("patient2".to_string()),
+                ChangelogCondition::patient_id::matching("patient2".to_string()),
             ]),
             CursorAndLimit {
                 cursor: cursor_before,
@@ -921,7 +921,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
         .query(
             ChangelogCondition::And(vec![
                 ChangelogFilter::patient_data_for_site(5, None),
-                ChangelogCondition::patient_id::equal("patient2".to_string()),
+                ChangelogCondition::patient_id::matching("patient2".to_string()),
             ]),
             CursorAndLimit {
                 cursor: cursor + 500,

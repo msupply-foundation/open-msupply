@@ -34,7 +34,7 @@ impl<'a> ChangelogRepository<'a> {
         filter: Option<CompatibilityChangelogFilter>,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
         let query = create_filtered_query(earliest, filter)
-            .order(changelog::dsl::cursor.asc())
+            .order(changelog_with_links::dsl::cursor.asc())
             .limit(limit.into());
 
         // // Debug diesel query
@@ -48,11 +48,11 @@ impl<'a> ChangelogRepository<'a> {
     }
 }
 
-type BoxedChangelogQuery = IntoBoxed<'static, changelog::table, DBType>;
+type BoxedChangelogQuery = IntoBoxed<'static, changelog_with_links::table, DBType>;
 
 fn create_base_query(earliest: u64) -> BoxedChangelogQuery {
-    changelog::table
-        .filter(changelog::cursor.ge(earliest.try_into().unwrap_or(0)))
+    changelog_with_links::table
+        .filter(changelog_with_links::cursor.ge(earliest.try_into().unwrap_or(0)))
         .into_boxed()
 }
 
@@ -72,12 +72,12 @@ fn create_filtered_query(
             source_site_id,
         } = f;
 
-        apply_equal_filter!(query, table_name, changelog::table_name);
-        apply_equal_filter!(query, store_id, changelog::store_id);
-        apply_equal_filter!(query, record_id, changelog::record_id);
-        apply_equal_filter!(query, action, changelog::row_action);
-        apply_equal_filter!(query, is_sync_update, changelog::is_sync_update);
-        apply_equal_filter!(query, source_site_id, changelog::source_site_id);
+        apply_equal_filter!(query, table_name, changelog_with_links::table_name);
+        apply_equal_filter!(query, store_id, changelog_with_links::store_id);
+        apply_equal_filter!(query, record_id, changelog_with_links::record_id);
+        apply_equal_filter!(query, action, changelog_with_links::row_action);
+        apply_equal_filter!(query, is_sync_update, changelog_with_links::is_sync_update);
+        apply_equal_filter!(query, source_site_id, changelog_with_links::source_site_id);
     }
 
     query
