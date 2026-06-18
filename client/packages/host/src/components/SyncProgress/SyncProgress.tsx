@@ -103,7 +103,7 @@ const LinkedSyncProcesses = ({
     <Accordion
       disableGutters
       sx={theme => ({
-        mt: 1,
+        mt: 3,
         borderRadius: '8px',
         // MUI rounds only the first/last child's outer corners by default; force
         // all four to match and clip the summary/details to the rounded shape.
