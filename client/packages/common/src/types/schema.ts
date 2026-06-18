@@ -1738,6 +1738,11 @@ export type CustomerIndicatorInformationNodeCustomerArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type CustomerIsInactive = DuplicateOutboundShipmentErrorInterface & {
+  __typename: 'CustomerIsInactive';
+  description: Scalars['String']['output'];
+};
+
 export type CustomerProgramRequisitionSettingNode = {
   __typename: 'CustomerProgramRequisitionSettingNode';
   customerNameId: Scalars['String']['output'];
@@ -2688,6 +2693,25 @@ export type DuplicateInboundShipmentNode = {
 export type DuplicateInboundShipmentResponse =
   | DuplicateInboundShipmentError
   | DuplicateInboundShipmentNode;
+
+export type DuplicateOutboundShipmentError = {
+  __typename: 'DuplicateOutboundShipmentError';
+  error: DuplicateOutboundShipmentErrorInterface;
+};
+
+export type DuplicateOutboundShipmentErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DuplicateOutboundShipmentNode = {
+  __typename: 'DuplicateOutboundShipmentNode';
+  invoice: InvoiceNode;
+  skippedItemCount: Scalars['Int']['output'];
+};
+
+export type DuplicateOutboundShipmentResponse =
+  | DuplicateOutboundShipmentError
+  | DuplicateOutboundShipmentNode;
 
 export type EmergencyResponseRequisitionCounts = {
   __typename: 'EmergencyResponseRequisitionCounts';
@@ -5629,6 +5653,7 @@ export type Mutations = {
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   deleteSupplierReturn: DeleteSupplierReturnResponse;
   duplicateInboundShipment: DuplicateInboundShipmentResponse;
+  duplicateOutboundShipment: DuplicateOutboundShipmentResponse;
   finaliseRnrForm: FinaliseRnRFormResponse;
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
@@ -5968,6 +5993,11 @@ export type MutationsDeleteSupplierReturnArgs = {
 };
 
 export type MutationsDuplicateInboundShipmentArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDuplicateOutboundShipmentArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
