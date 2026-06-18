@@ -25,6 +25,7 @@ import {
 import {
   StockMovementRowFragment,
   useDeleteStockMovement,
+  useDeleteStockMovements,
   useFinaliseStockMovements,
   useInsertStockMovement,
   useUpdateStockMovement,
@@ -78,6 +79,8 @@ export const StockMovementModal = ({
   const { update, isUpdating } = useUpdateStockMovement();
   const { finalise, isFinalising } = useFinaliseStockMovements();
   const { delete: deleteMovement, isDeleting } = useDeleteStockMovement();
+  const { deleteStockMovements, isDeleting: isDeletingDraft } =
+    useDeleteStockMovements();
 
   const [failedLineIds, setFailedLineIds] = useState<string[]>([]);
   const [savedLines, setSavedLines] = useState<Record<string, string>>({});
@@ -187,7 +190,15 @@ export const StockMovementModal = ({
 
   const saveDraft = async (): Promise<string[] | null> => {
     setFailedLineIds([]);
+    const currentLineIds = new Set(linesToMove.map(line => line.id));
+
     try {
+      // Delete movements whose line has since been removed
+      const toDelete = Object.entries(savedLines)
+        .filter(([lineId]) => !currentLineIds.has(lineId))
+        .map(([, relocationId]) => relocationId);
+      if (toDelete.length) await deleteStockMovements(toDelete);
+
       // Update already-created lines, collecting the rest to insert
       const nextSaved: Record<string, string> = {};
       const toInsert: DraftStockMovementLine[] = [];
@@ -329,7 +340,7 @@ export const StockMovementModal = ({
             startIcon={<PrinterIcon />}
             label={t('button.print')}
             disabled={!canSave}
-            isLoading={isSaving || isUpdating}
+            isLoading={isSaving || isUpdating || isDeletingDraft}
             onClick={async () => {
               const ids = await saveDraft();
               if (ids) onPrint();
