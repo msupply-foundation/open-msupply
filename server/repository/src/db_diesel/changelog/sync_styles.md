@@ -72,111 +72,134 @@ Filters that ask for "v6 only" pull just the OMS-native tables. Filters that ask
 
 ---
 
-## 3. Tables by matrix cell
+## 3. The matrix — every table by axis
 
-Each group below is one cell — an (authoring, distribution-set, transport) triple. Two tables in the same cell route and validate identically. The lists mirror the code exactly.
+One row per table, sorted by matrix cell (authoring, then distribution-set, then transport) so tables that route and validate identically sit together. Distribution is a **set** — a row reaches a site if any one of its listed clauses includes it. The lists mirror the code exactly. Per-cell notes follow the table.
 
-### Authored: RemoteOwned · Distributed: Remote · v5
+| Table | Authoring | Distribution | Transport |
+|---|---|---|---|
+| `NameStoreJoin` | RemoteOwned | Remote | v5 |
+| `ItemStoreJoin` | RemoteOwned | Remote | v5 |
+| `ClinicianStoreJoin` | RemoteOwned | Remote | v5 |
+| `ActivityLog` | RemoteOwned | RemoteOwned | v5 |
+| `IndicatorValue` | RemoteOwned | RemoteOwned | v5 |
+| `Location` | RemoteOwned | RemoteOwned | v5 |
+| `LocationMovement` | RemoteOwned | RemoteOwned | v5 |
+| `PurchaseOrder` | RemoteOwned | RemoteOwned | v5 |
+| `PurchaseOrderLine` | RemoteOwned | RemoteOwned | v5 |
+| `Sensor` | RemoteOwned | RemoteOwned | v5 |
+| `StockLine` | RemoteOwned | RemoteOwned | v5 |
+| `Stocktake` | RemoteOwned | RemoteOwned | v5 |
+| `StocktakeLine` | RemoteOwned | RemoteOwned | v5 |
+| `TemperatureBreach` | RemoteOwned | RemoteOwned | v5 |
+| `TemperatureLog` | RemoteOwned | RemoteOwned | v5 |
+| `VVMStatusLog` | RemoteOwned | RemoteOwned | v5 |
+| `SyncMessage` | RemoteOwned | Everyone + Remote | v5 |
+| `Requisition` | RemoteOwned | RemoteOwned + Transfer | v5 |
+| `RequisitionLine` | RemoteOwned | RemoteOwned + Transfer | v5 |
+| `Invoice` | RemoteOwned | RemoteOwned + Transfer + Patient | v5 |
+| `InvoiceLine` | RemoteOwned | RemoteOwned + Transfer + Patient | v5 |
+| `Asset` | RemoteOwned | Remote | v6 |
+| `AssetInternalLocation` | RemoteOwned | Remote | v6 |
+| `AssetLog` | RemoteOwned | RemoteOwned | v6 |
+| `RnrForm` | RemoteOwned | RemoteOwned | v6 |
+| `RnrFormLine` | RemoteOwned | RemoteOwned | v6 |
+| `Encounter` | RemoteOwned | Remote + Patient | v6 |
+| `Vaccination` | RemoteOwned | Remote + Patient | v6 |
+| `ContactTrace` | RemoteOwned | Remote + Patient | v6 |
+| `PluginData` | RemoteOwned | Everyone + Remote | v6 |
+| `Preference` | RemoteOwned | Everyone + Remote | v6 |
+| `Abbreviation` | Central | Everyone | v5 |
+| `Barcode` | Central | Everyone | v5 |
+| `Category` | Central | Everyone | v5 |
+| `Contact` | Central | Everyone | v5 |
+| `Context` | Central | Everyone | v5 |
+| `Currency` | Central | Everyone | v5 |
+| `DemographicIndicator` | Central | Everyone | v5 |
+| `Diagnosis` | Central | Everyone | v5 |
+| `DocumentRegistry` | Central | Everyone | v5 |
+| `IndicatorColumn` | Central | Everyone | v5 |
+| `IndicatorLine` | Central | Everyone | v5 |
+| `InsuranceProvider` | Central | Everyone | v5 |
+| `Item` | Central | Everyone | v5 |
+| `ItemCategoryJoin` | Central | Everyone | v5 |
+| `ItemDirection` | Central | Everyone | v5 |
+| `ItemWarningJoin` | Central | Everyone | v5 |
+| `LocationType` | Central | Everyone | v5 |
+| `MasterList` | Central | Everyone | v5 |
+| `MasterListLine` | Central | Everyone | v5 |
+| `MasterListNameJoin` | Central | Everyone | v5 |
+| `NameTag` | Central | Everyone | v5 |
+| `NameTagJoin` | Central | Everyone | v5 |
+| `Period` | Central | Everyone | v5 |
+| `PeriodSchedule` | Central | Everyone | v5 |
+| `Printer` | Central | Everyone | v5 |
+| `Program` | Central | Everyone | v5 |
+| `ProgramIndicator` | Central | Everyone | v5 |
+| `ProgramRequisitionOrderType` | Central | Everyone | v5 |
+| `ProgramRequisitionSettings` | Central | Everyone | v5 |
+| `ReasonOption` | Central | Everyone | v5 |
+| `ShippingMethod` | Central | Everyone | v5 |
+| `Store` | Central | Everyone | v5 |
+| `StorePreference` | Central | Everyone | v5 |
+| `Unit` | Central | Everyone | v5 |
+| `UserAccount` | Central | Everyone | v5 |
+| `UserPermission` | Central | Everyone | v5 |
+| `UserStoreJoin` | Central | Everyone | v5 |
+| `VVMStatus` | Central | Everyone | v5 |
+| `AncillaryItem` | Central | Everyone | v6 |
+| `AssetCatalogueItem` | Central | Everyone | v6 |
+| `AssetCatalogueType` | Central | Everyone | v6 |
+| `AssetCategory` | Central | Everyone | v6 |
+| `AssetClass` | Central | Everyone | v6 |
+| `AssetLogReason` | Central | Everyone | v6 |
+| `AssetProperty` | Central | Everyone | v6 |
+| `BackendPlugin` | Central | Everyone | v6 |
+| `BundledItem` | Central | Everyone | v6 |
+| `Campaign` | Central | Everyone | v6 |
+| `Demographic` | Central | Everyone | v6 |
+| `FormSchema` | Central | Everyone | v6 |
+| `FrontendPlugin` | Central | Everyone | v6 |
+| `ItemVariant` | Central | Everyone | v6 |
+| `NameOmsFields` | Central | Everyone | v6 |
+| `NameProperty` | Central | Everyone | v6 |
+| `PackagingVariant` | Central | Everyone | v6 |
+| `Property` | Central | Everyone | v6 |
+| `Report` | Central | Everyone | v6 |
+| `VaccineCourse` | Central | Everyone | v6 |
+| `VaccineCourseDose` | Central | Everyone | v6 |
+| `VaccineCourseItem` | Central | Everyone | v6 |
+| `VaccineCourseStoreConfig` | Central | Everyone | v6 |
+| `Name` | Patient | Everyone + Patient | v5 + v6 |
+| `Document` | Patient | Patient | v5 |
+| `NameInsuranceJoin` | Patient | Patient | v5 |
+| `ProgramEnrolment` | Patient | Patient | v5 |
+| `ProgramEvent` | Patient | Patient | v5 |
+| `Clinician` | Anyone | Everyone | v5 |
+| `SyncFileReference` | Anyone | Everyone | v6 |
+| `ContactForm` | Anyone | NotDistributed | v6 |
+| `SystemLog` | Anyone | NotDistributed | v6 |
+| `Site` | LegacyOnly | NotDistributed | v5 |
 
-`NameStoreJoin`, `ItemStoreJoin`, `ClinicianStoreJoin`
+### Per-cell notes
 
-Store-scoped join tables that central legitimately edits — `NameStoreJoin` in particular is rewritten on central whenever a name's patient visibility changes, or whenever the customer/supplier flag on a name flips (which cascades across every site's join row for that name). Because central authors edits, the return path is on every cycle (not just at initialisation).
-
-### Authored: RemoteOwned · Distributed: RemoteOwned · v5
-
-`ActivityLog`, `IndicatorValue`, `Location`, `LocationMovement`, `PurchaseOrder`, `PurchaseOrderLine`, `Sensor`, `StockLine`, `Stocktake`, `StocktakeLine`, `TemperatureBreach`, `TemperatureLog`, `VVMStatusLog`
-
-Site-owned data on the legacy transport. A remote pushes these up to legacy 4D central, which fans them back out via its own routing. From the OMS central perspective there is nothing to send back, so the OMS-side return path is suppressed except at initialisation.
-
-### Authored: RemoteOwned · Distributed: Everyone + Remote · v5
-
-`SyncMessage`
-
-Site-owned plus a broadcast clause. The changelog `store_id` is populated from the message's destination store, so the routing matches `PluginData` / `Preference`: with a destination store only the owning site receives the message; without one it fans out to every site. Used to ship cross-site instructions like name/item/clinician merges from OMS central down to v7 remotes (see §7).
-
-### Authored: RemoteOwned · Distributed: RemoteOwned + Transfer · v5
-
-`Requisition`, `RequisitionLine`
-
-Site-owned plus a transfer counterpart store. The changelog records the row's own store and a *transfer* store, so the row routes to the owning site (RemoteOwned) and to the counterpart site (Transfer).
-
-### Authored: RemoteOwned · Distributed: RemoteOwned + Transfer + Patient · v5
-
-`Invoice`, `InvoiceLine`
-
-Adds patient routing on top of RemoteOwned+Transfer; an invoice also follows its patient (prescriptions only) through name-store-join.
-
-### Authored: Central · Distributed: Everyone · v5
-
-`Abbreviation`, `Barcode`, `Category`, `Contact`, `Context`, `Currency`, `DemographicIndicator`, `Diagnosis`, `DocumentRegistry`, `IndicatorColumn`, `IndicatorLine`, `InsuranceProvider`, `Item`, `ItemCategoryJoin`, `ItemDirection`, `ItemWarningJoin`, `LocationType`, `MasterList`, `MasterListLine`, `MasterListNameJoin`, `NameTag`, `NameTagJoin`, `Period`, `PeriodSchedule`, `Printer`, `Program`, `ProgramIndicator`, `ProgramRequisitionOrderType`, `ProgramRequisitionSettings`, `ReasonOption`, `ShippingMethod`, `Store`, `StorePreference`, `Unit`, `UserAccount`, `UserPermission`, `UserStoreJoin`, `VVMStatus`
-
-Central data still served from legacy 4D. This bucket also acts as a catch-all for tables that exist in the changelog but haven't been classified into a more specific cell yet.
-
-### Authored: Central · Distributed: Everyone · v6
-
-`AncillaryItem`, `AssetCatalogueItem`, `AssetCatalogueType`, `AssetCategory`, `AssetClass`, `AssetLogReason`, `AssetProperty`, `BackendPlugin`, `BundledItem`, `Campaign`, `Demographic`, `FormSchema`, `FrontendPlugin`, `ItemVariant`, `NameOmsFields`, `NameProperty`, `PackagingVariant`, `Property`, `Report`, `VaccineCourse`, `VaccineCourseDose`, `VaccineCourseItem`, `VaccineCourseStoreConfig`
-
-Authored on OMS central, fans out to every v6 site. A few of these (notably `NameOmsFields`) also allow remote → central writebacks. Some (notably the vaccine-course family) are re-published to legacy 4D so v5-only stores still receive them (see §7).
-
-### Authored: Anyone · Distributed: Everyone · v5
-
-`Clinician`
-
-Remote-authored data that broadcasts to every site. The changelog row is keyless — no store, no patient — so it matches the broadcast predicate; the clinician's own store travels in the record data, where store-join and invoice foreign keys still resolve it.
-
-### Authored: LegacyOnly · Distributed: NotDistributed · v5
-
-`Site`
-
-Pushed to legacy 4D central; never re-sent down to remotes, and never a valid v7 record.
-
-### Authored: RemoteOwned · Distributed: Remote · v6
-
-`Asset`, `AssetInternalLocation`
-
-Site-owned data that central may also edit, on the OMS-native transport.
-
-### Authored: RemoteOwned · Distributed: RemoteOwned · v6
-
-`AssetLog`, `RnrForm`, `RnrFormLine`
-
-Site-owned data on the OMS-native transport. Central does not author edits; the return path is suppressed except at initialisation.
-
-### Authored: Patient · Distributed: Everyone + Patient · v5 + v6
-
-`Name`
-
-Names are central data — every site needs the full directory — but a patient-typed name additionally carries its own id as the patient on the changelog. Non-patient names route via the broadcast (`Everyone`) clause; patient names route via the `Patient` clause to every site that knows the patient. Authoring is `Patient`, not `Central`: the only name-push central accepts is a patient name. `Name` is the only table tagged for **both** transports.
-
-### Authored: RemoteOwned · Distributed: Remote + Patient · v6
-
-`Encounter`, `Vaccination`, `ContactTrace`
-
-Store-scoped clinical records that should also follow the patient. Each row carries the authoring store *and* the patient. The `Remote` clause delivers it to the owning site; the `Patient` clause delivers it to every other site that knows the patient. The broadcast clause never matches because the patient is set.
-
-### Authored: Patient · Distributed: Patient · v5
-
-`Document`, `NameInsuranceJoin`, `ProgramEnrolment`, `ProgramEvent`
-
-Pure patient-scoped data on the legacy transport. The changelog row carries only the patient, no store, so routing is purely by Patient and the record follows the patient across stores.
-
-### Authored: Anyone · Distributed: Everyone · v6
-
-`SyncFileReference`
-
-Every site receives every reference row. The file blobs themselves are negotiated separately by the file-sync pipeline.
-
-### Authored: RemoteOwned · Distributed: Everyone + Remote · v6
-
-`PluginData`, `Preference`
-
-If the record carries a store, it routes like Remote (the owning site only). If it doesn't, it broadcasts (every site).
-
-### Authored: Anyone · Distributed: NotDistributed · v6
-
-`ContactForm`, `SystemLog`
-
-Pushed up to OMS central; **not** sent back to remotes. On re-initialisation a site does not get its old contact-forms / system-logs back.
+- **RemoteOwned · Remote · v5** (`NameStoreJoin`, `ItemStoreJoin`, `ClinicianStoreJoin`) — store-scoped join tables that central legitimately edits. `NameStoreJoin` in particular is rewritten on central whenever a name's patient visibility changes, or whenever the customer/supplier flag on a name flips (which cascades across every site's join row for that name). Because central authors edits, the return path is on every cycle (not just at initialisation).
+- **RemoteOwned · RemoteOwned · v5** (`ActivityLog`, `IndicatorValue`, `Location`, …) — site-owned data on the legacy transport. A remote pushes these up to legacy 4D central, which fans them back out via its own routing. From the OMS central perspective there is nothing to send back, so the OMS-side return path is suppressed except at initialisation.
+- **RemoteOwned · Everyone + Remote · v5** (`SyncMessage`) — site-owned plus a broadcast clause. The changelog `store_id` is populated from the message's destination store, so the routing matches `PluginData` / `Preference`: with a destination store only the owning site receives the message; without one it fans out to every site. Used to ship cross-site instructions like name/item/clinician merges from OMS central down to v7 remotes (see §7).
+- **RemoteOwned · RemoteOwned + Transfer · v5** (`Requisition`, `RequisitionLine`) — site-owned plus a transfer counterpart store. The changelog records the row's own store and a *transfer* store, so the row routes to the owning site (RemoteOwned) and to the counterpart site (Transfer).
+- **RemoteOwned · RemoteOwned + Transfer + Patient · v5** (`Invoice`, `InvoiceLine`) — adds patient routing on top of RemoteOwned+Transfer; an invoice also follows its patient (prescriptions only) through name-store-join.
+- **RemoteOwned · Remote · v6** (`Asset`, `AssetInternalLocation`) — site-owned data that central may also edit, on the OMS-native transport.
+- **RemoteOwned · RemoteOwned · v6** (`AssetLog`, `RnrForm`, `RnrFormLine`) — site-owned data on the OMS-native transport. Central does not author edits; the return path is suppressed except at initialisation.
+- **RemoteOwned · Remote + Patient · v6** (`Encounter`, `Vaccination`, `ContactTrace`) — store-scoped clinical records that should also follow the patient. Each row carries the authoring store *and* the patient. The `Remote` clause delivers it to the owning site; the `Patient` clause delivers it to every other site that knows the patient. The broadcast clause never matches because the patient is set.
+- **RemoteOwned · Everyone + Remote · v6** (`PluginData`, `Preference`) — if the record carries a store, it routes like Remote (the owning site only). If it doesn't, it broadcasts (every site).
+- **Central · Everyone · v5** (`Abbreviation`, `Barcode`, …) — central data still served from legacy 4D. This bucket also acts as a catch-all for tables that exist in the changelog but haven't been classified into a more specific cell yet.
+- **Central · Everyone · v6** (`AncillaryItem`, `AssetCatalogueItem`, …) — authored on OMS central, fans out to every v6 site. A few of these (notably `NameOmsFields`) also allow remote → central writebacks. Some (notably the vaccine-course family) are re-published to legacy 4D so v5-only stores still receive them (see §7).
+- **Patient · Everyone + Patient · v5 + v6** (`Name`) — names are central data — every site needs the full directory — but a patient-typed name additionally carries its own id as the patient on the changelog. Non-patient names route via the broadcast (`Everyone`) clause; patient names route via the `Patient` clause to every site that knows the patient. Authoring is `Patient`, not `Central`: the only name-push central accepts is a patient name. `Name` is the only table tagged for **both** transports.
+- **Patient · Patient · v5** (`Document`, `NameInsuranceJoin`, `ProgramEnrolment`, `ProgramEvent`) — pure patient-scoped data on the legacy transport. The changelog row carries only the patient, no store, so routing is purely by Patient and the record follows the patient across stores.
+- **Anyone · Everyone · v5** (`Clinician`) — remote-authored data that broadcasts to every site. The changelog row is keyless — no store, no patient — so it matches the broadcast predicate; the clinician's own store travels in the record data, where store-join and invoice foreign keys still resolve it.
+- **Anyone · Everyone · v6** (`SyncFileReference`) — every site receives every reference row. The file blobs themselves are negotiated separately by the file-sync pipeline.
+- **Anyone · NotDistributed · v6** (`ContactForm`, `SystemLog`) — pushed up to OMS central; **not** sent back to remotes. On re-initialisation a site does not get its old contact-forms / system-logs back.
+- **LegacyOnly · NotDistributed · v5** (`Site`) — pushed to legacy 4D central; never re-sent down to remotes, and never a valid v7 record.
 
 ### Special — `MasterList`
 
