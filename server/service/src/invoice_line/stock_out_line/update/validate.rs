@@ -66,7 +66,7 @@ pub fn validate(
         return Err(CannotEditFinalised);
     }
     if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
-        return Err(CannotEditFinalised);
+        return Err(OtherPartyStoreDisabled);
     }
     if !check_line_belongs_to_invoice(line_row, &invoice) {
         return Err(NotThisInvoiceLine(line.invoice_line_row.invoice_id));

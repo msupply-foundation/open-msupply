@@ -94,7 +94,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                 ForeignKey::InvoiceId,
             )))
         }
-        CannotEditFinalised => {
+        CannotEditFinalised | OtherPartyStoreDisabled => {
             return Ok(InsertErrorInterface::CannotEditInvoice(
                 simple_generic_errors::CannotEditInvoice {},
             ))

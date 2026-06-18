@@ -274,12 +274,7 @@ export type ItemVariantFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    store?: {
-      __typename: 'StoreNode';
-      id: string;
-      code: string;
-      isDisabled: boolean;
-    } | null;
+    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   } | null;
   locationType?: {
     __typename: 'LocationTypeNode';
@@ -470,12 +465,7 @@ export type ItemFragment = {
       isSupplier: boolean;
       isOnHold: boolean;
       name: string;
-      store?: {
-        __typename: 'StoreNode';
-        id: string;
-        code: string;
-        isDisabled: boolean;
-      } | null;
+      store?: { __typename: 'StoreNode'; id: string; code: string } | null;
     } | null;
     locationType?: {
       __typename: 'LocationTypeNode';
@@ -719,12 +709,7 @@ export type ItemsWithStockLinesQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          store?: {
-            __typename: 'StoreNode';
-            id: string;
-            code: string;
-            isDisabled: boolean;
-          } | null;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
         locationType?: {
           __typename: 'LocationTypeNode';
@@ -1096,12 +1081,7 @@ export type ItemByIdQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          store?: {
-            __typename: 'StoreNode';
-            id: string;
-            code: string;
-            isDisabled: boolean;
-          } | null;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
         locationType?: {
           __typename: 'LocationTypeNode';
@@ -1240,12 +1220,7 @@ export type ItemVariantsQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          store?: {
-            __typename: 'StoreNode';
-            id: string;
-            code: string;
-            isDisabled: boolean;
-          } | null;
+          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
         locationType?: {
           __typename: 'LocationTypeNode';
@@ -1426,7 +1401,6 @@ export type UpsertItemVariantMutation = {
                 __typename: 'StoreNode';
                 id: string;
                 code: string;
-                isDisabled: boolean;
               } | null;
             } | null;
             locationType?: {
