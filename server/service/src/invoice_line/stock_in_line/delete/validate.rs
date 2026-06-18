@@ -8,6 +8,7 @@ use crate::{
             check_line_row_exists,
         },
     },
+    validate::check_other_party_store_is_disabled,
 };
 use repository::{InvoiceLineRow, InvoiceRow, StorageConnection};
 
@@ -36,6 +37,9 @@ pub fn validate(
         }
     }
     if !check_invoice_is_editable(&invoice) {
+        return Err(CannotEditFinalised);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
         return Err(CannotEditFinalised);
     }
     if check_lines_locked_by_authorisation(connection, &invoice) {

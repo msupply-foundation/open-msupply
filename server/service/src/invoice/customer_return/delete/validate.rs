@@ -2,6 +2,7 @@ use super::DeleteCustomerReturnError;
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
 };
+use crate::validate::check_other_party_store_is_disabled;
 use repository::{InvoiceRow, InvoiceType, StorageConnection};
 
 pub fn validate(
@@ -16,6 +17,9 @@ pub fn validate(
         return Err(NotThisStoreInvoice);
     }
     if !check_invoice_is_editable(&invoice) {
+        return Err(CannotEditFinalised);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
         return Err(CannotEditFinalised);
     }
     if !check_invoice_type(&invoice, InvoiceType::CustomerReturn) {
