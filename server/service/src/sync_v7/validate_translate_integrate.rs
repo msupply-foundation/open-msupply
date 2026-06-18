@@ -26,7 +26,7 @@ pub(crate) enum SyncContext {
     },
     /// Records arrived via a patient-lookup pull. They belong to other sites'
     /// stores.
-    PatientLookup,
+    PatientLookup { active_stores: ActiveStoresOnSite },
 }
 
 #[derive(Error, Debug)]
@@ -232,7 +232,7 @@ fn validate_translate_integrate_one(
             is_initialising,
             active_stores,
         } => validate_on_remote(row, &table_name, active_stores, *is_initialising)?,
-        SyncContext::PatientLookup => {} // Patient records belong to another store
+        SyncContext::PatientLookup { .. } => {}
     };
 
     match row.action {
