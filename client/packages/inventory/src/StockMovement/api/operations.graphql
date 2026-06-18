@@ -31,6 +31,45 @@ fragment StockMovementRow on StockRelocationNode {
   }
 }
 
+fragment StockMovementDraftLine on DraftStockRelocationLineNode {
+  __typename
+  id
+  fromStockLineId
+  itemId
+  itemCode
+  itemName
+  restrictedLocationTypeId
+  batch
+  expiryDate
+  fromPackSize
+  availableNumberOfPacks
+  onHold
+  fromNumberOfPacks
+  toPackSize
+  toNumberOfPacks
+  fromLocation {
+    __typename
+    id
+    code
+    name
+  }
+  toLocation {
+    __typename
+    id
+    code
+    name
+  }
+}
+
+query stockRelocationDraftLines(
+  $storeId: String!
+  $input: StockRelocationDraftLinesInput!
+) {
+  stockRelocationDraftLines(storeId: $storeId, input: $input) {
+    ...StockMovementDraftLine
+  }
+}
+
 query stockRelocations(
   $storeId: String!
   $filter: StockRelocationFilterInput
@@ -69,15 +108,6 @@ mutation insertStockRelocation(
       error {
         __typename
         description
-        ... on StockLineOnHold {
-          stockLineId
-        }
-        ... on LocationOnHold {
-          locationId
-        }
-        ... on NotEnoughStock {
-          stockLineId
-        }
       }
     }
   }

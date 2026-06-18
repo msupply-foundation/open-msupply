@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Alert,
   Box,
@@ -16,28 +16,24 @@ import { DialogButton } from '@common/components';
 import { useDialog } from '@common/hooks';
 import { FormControlLabel, Radio } from '@mui/material';
 import {
-  ItemStockOnHandFragment,
   LocationRowFragment,
   StockItemSearchInput,
-  StockLineRowFragment,
-  useLocationList,
-  useStockList,
 } from '@openmsupply-client/system';
 import {
-  DraftStockMovementLine,
   StockMovementRowFragment,
   useDeleteStockMovement,
   useInsertStockMovement,
   useUpdateStockMovement,
 } from '../api';
 import {
-  DraftStockMovementLineState,
+  DraftStockMovementLine,
   StockMovementLineTable,
 } from './StockMovementLineTable';
-
-type SelectionMode = 'byLocation' | 'byItem';
-
-type ItemOption = { id: string; code: string; name: string };
+import {
+  ItemOption,
+  SelectionMode,
+  useStockMovementDraft,
+} from './useStockMovementDraft';
 
 interface StockMovementModalProps {
   open: boolean;
@@ -45,56 +41,6 @@ interface StockMovementModalProps {
   mode: ModalMode | null;
   movement?: StockMovementRowFragment | null;
 }
-
-const lineFromStockLine = (
-  stockLine: StockLineRowFragment
-): DraftStockMovementLineState => {
-  const onHold = stockLine.onHold || (stockLine.location?.onHold ?? false);
-  return {
-    id: stockLine.id,
-    itemId: stockLine.itemId,
-    itemCode: stockLine.item.code,
-    itemName: stockLine.item.name,
-    restrictedLocationTypeId: stockLine.item.restrictedLocationTypeId,
-    fromStockLineId: stockLine.id,
-    fromLocationCode: stockLine.location?.code ?? null,
-    batch: stockLine.batch,
-    expiryDate: stockLine.expiryDate,
-    fromPackSize: stockLine.packSize,
-    availableNumberOfPacks: stockLine.availableNumberOfPacks,
-    onHold,
-    fromNumberOfPacks: undefined,
-    toLocation: null,
-    toPackSize: undefined,
-    toNumberOfPacks: undefined,
-  };
-};
-
-const lineFromMovement = (
-  movement: StockMovementRowFragment
-): DraftStockMovementLineState => {
-  const toPackSize = movement.toPackSize ?? movement.fromPackSize;
-  return {
-    id: movement.id,
-    itemId: '',
-    itemCode: movement.itemCode,
-    itemName: movement.itemName,
-    restrictedLocationTypeId: movement.restrictedLocationTypeId,
-    fromStockLineId: movement.fromStockLineId,
-    fromLocationCode: movement.fromLocation?.code ?? null,
-    batch: movement.batch,
-    expiryDate: movement.expiryDate,
-    fromPackSize: movement.fromPackSize,
-    availableNumberOfPacks: movement.availableNumberOfPacks,
-    onHold: movement.onHold || (movement.fromLocation?.onHold ?? false),
-    fromNumberOfPacks: movement.numberOfPacks,
-    toLocation: (movement.toLocation as LocationRowFragment | null) ?? null,
-    toPackSize,
-    toNumberOfPacks: toPackSize
-      ? (movement.numberOfPacks * movement.fromPackSize) / toPackSize
-      : undefined,
-  };
-};
 
 export const StockMovementModal = ({
   open,
@@ -109,17 +55,21 @@ export const StockMovementModal = ({
   const isEdit = mode === ModalMode.Update;
   const isDisabled = movement?.status === StockRelocationNodeStatus.Finalised;
 
-  const [selectionMode, setSelectionMode] =
-    useState<SelectionMode>('byLocation');
-  const [fromLocation, setFromLocation] = useState<LocationRowFragment | null>(
-    null
-  );
-  const [byItem, setByItem] = useState<ItemStockOnHandFragment | null>(null);
-  const [addedItemIds, setAddedItemIds] = useState<string[]>([]);
-  const [removedLineIds, setRemovedLineIds] = useState<string[]>([]);
-  const [edits, setEdits] = useState<
-    Record<string, Partial<DraftStockMovementLineState>>
-  >({});
+  const {
+    selectionMode,
+    switchMode,
+    fromLocation,
+    selectFromLocation,
+    byItem,
+    selectByItem,
+    locations,
+    itemOptions,
+    lines,
+    linesToMove,
+    onAddItem,
+    onUpdate,
+    onRemove,
+  } = useStockMovementDraft({ isEdit, movement });
 
   const { insert, isSaving } = useInsertStockMovement();
   const { update, isUpdating } = useUpdateStockMovement();
@@ -148,109 +98,13 @@ export const StockMovementModal = ({
     cancelButtonLabel: t('button.cancel'),
   });
 
-  const {
-    query: { data: locationData },
-  } = useLocationList(
-    {
-      sortBy: { key: 'name', direction: 'asc', isDesc: false },
-      filterBy: { onHold: false },
-      first: 1000,
-    },
-    undefined,
-    !isEdit
-  );
-  const locations = locationData?.nodes ?? [];
-
-  const { data: locationStock } = useStockList(
-    {
-      filterBy: fromLocation
-        ? { location: { id: { equalTo: fromLocation.id } } }
-        : undefined,
-      first: 1000,
-    },
-    { enabled: !isEdit && selectionMode === 'byLocation' && !!fromLocation }
-  );
-
-  const { data: itemStock } = useStockList(
-    {
-      filterBy: byItem ? { itemId: { equalTo: byItem.id } } : undefined,
-      first: 1000,
-    },
-    { enabled: !isEdit && selectionMode === 'byItem' && !!byItem }
-  );
-
-  const clearSelection = () => {
-    setAddedItemIds([]);
-    setRemovedLineIds([]);
-    setEdits({});
-  };
-
-  const switchMode = (nextMode: SelectionMode) => {
-    setSelectionMode(nextMode);
-    setFromLocation(null);
-    setByItem(null);
-    clearSelection();
-  };
-
-  const fromStockNodes = (locationStock?.nodes ?? []).filter(
-    node =>
-      !!fromLocation &&
-      node.locationId === fromLocation.id &&
-      node.availableNumberOfPacks > 0
-  );
-  const itemStockNodes = (itemStock?.nodes ?? []).filter(
-    node =>
-      !!byItem && node.itemId === byItem.id && node.availableNumberOfPacks > 0
-  );
-
-  const sourceStockLines =
-    selectionMode === 'byLocation'
-      ? fromStockNodes.filter(node => addedItemIds.includes(node.itemId))
-      : itemStockNodes;
-
-  const lines: DraftStockMovementLineState[] = movement
-    ? [{ ...lineFromMovement(movement), ...edits[movement.id] }]
-    : sourceStockLines
-      .filter(stockLine => !removedLineIds.includes(stockLine.id))
-      .map(stockLine => ({
-        ...lineFromStockLine(stockLine),
-        ...edits[stockLine.id],
-      }));
-
-  const itemOptions = fromStockNodes
-    .reduce<ItemOption[]>((acc, node) => {
-      if (
-        !acc.some(o => o.id === node.itemId) &&
-        !addedItemIds.includes(node.itemId)
-      ) {
-        acc.push({
-          id: node.itemId,
-          code: node.item.code,
-          name: node.item.name,
-        });
-      }
-      return acc;
-    }, [])
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  const onAddItem = (item: ItemOption) =>
-    setAddedItemIds(prev =>
-      prev.includes(item.id) ? prev : [...prev, item.id]
-    );
-
-  const onUpdate = (id: string, patch: Partial<DraftStockMovementLineState>) =>
-    setEdits(prev => ({ ...prev, [id]: { ...prev[id], ...patch } }));
-
-  const onRemove = (id: string) =>
-    setRemovedLineIds(prev => [...prev, id]);
-
-  const resultingToPacks = (line: DraftStockMovementLineState) => {
+  const resultingToPacks = (line: DraftStockMovementLine) => {
     const toPackSize = line.toPackSize ?? line.fromPackSize;
     if (!toPackSize) return undefined;
     return ((line.fromNumberOfPacks ?? 0) * line.fromPackSize) / toPackSize;
   };
 
-  const isValid = (line: DraftStockMovementLineState) => {
+  const isValid = (line: DraftStockMovementLine) => {
     const toPacks = resultingToPacks(line);
     return (
       (line.fromNumberOfPacks ?? 0) > 0 &&
@@ -260,10 +114,6 @@ export const StockMovementModal = ({
       NumUtils.isWholeNumber(toPacks)
     );
   };
-
-  const linesToMove = isEdit
-    ? lines
-    : lines.filter(line => !line.onHold && !!edits[line.id]);
 
   const hasFractionalPacks = linesToMove.some(line => {
     const toPacks = resultingToPacks(line);
@@ -280,7 +130,7 @@ export const StockMovementModal = ({
     linesToMove.every(isValid);
 
   const onCreate = async () => {
-    const draftLines: DraftStockMovementLine[] = linesToMove.map(line => ({
+    const draftLines = linesToMove.map(line => ({
       fromStockLineId: line.fromStockLineId,
       fromNumberOfPacks: line.fromNumberOfPacks ?? 0,
       toLocationId: line.toLocation?.id,
@@ -289,10 +139,6 @@ export const StockMovementModal = ({
 
     try {
       const result = await insert({ lines: draftLines });
-      if (result.__typename === 'InsertStockRelocationError') {
-        error(result.error.description)();
-        return;
-      }
       const ids = result.ids;
       getCreateFinaliseConfirmation({
         onConfirm: async () => {
@@ -438,13 +284,12 @@ export const StockMovementModal = ({
                 options={locations}
                 value={fromLocation}
                 getOptionLabel={location =>
-                  `${location.code} - ${location.name}`
+                  `${location.code} - ${location.name}${location.onHold ? ` (${t('label.on-hold')})` : ''
+                  }`
                 }
+                getOptionDisabled={location => location.onHold}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
-                onChange={(_, location) => {
-                  setFromLocation(location);
-                  clearSelection();
-                }}
+                onChange={(_, location) => selectFromLocation(location)}
               />
             </Box>
             {fromLocation && (
@@ -475,10 +320,7 @@ export const StockMovementModal = ({
               currentItemId={byItem?.id}
               disabled={false}
               filter={{ hasStockOnHand: true }}
-              onChange={item => {
-                setByItem(item);
-                clearSelection();
-              }}
+              onChange={item => selectByItem(item)}
             />
           </Box>
         )}
@@ -498,11 +340,13 @@ export const StockMovementModal = ({
             disabled={isDisabled}
           />
         ) : (
-          <Typography sx={{ color: 'gray.main' }}>
-            {selectionMode === 'byLocation'
-              ? t('messages.select-from-location')
-              : t('messages.select-an-item')}
-          </Typography>
+          !isEdit && (
+            <Typography sx={{ color: 'gray.main' }}>
+              {selectionMode === 'byLocation'
+                ? t('messages.select-from-location')
+                : t('messages.select-an-item')}
+            </Typography>
+          )
         )}
       </Box>
     </Modal>

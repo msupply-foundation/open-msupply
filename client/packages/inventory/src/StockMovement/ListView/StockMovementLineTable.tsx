@@ -14,33 +14,22 @@ import {
   LocationRowFragment,
   LocationSearchInput,
 } from '@openmsupply-client/system';
+import { StockMovementDraftLineFragment } from '../api';
 
-export interface DraftStockMovementLineState {
-  id: string;
-  itemId: string;
-  itemCode: string;
-  itemName: string;
-  restrictedLocationTypeId?: string | null;
-  fromStockLineId: string;
-  fromLocationCode?: string | null;
-  batch?: string | null;
-  expiryDate?: string | null;
-  fromPackSize: number;
-  availableNumberOfPacks: number;
-  onHold: boolean;
-  fromNumberOfPacks?: number;
+export type DraftStockMovementLine = Omit<
+  StockMovementDraftLineFragment,
+  'toLocation' | '__typename'
+> & {
   toLocation: LocationRowFragment | null;
-  toPackSize?: number;
-  toNumberOfPacks?: number;
-}
+};
 
 type CalculateField = 'fromNumberOfPacks' | 'toPackSize' | 'toNumberOfPacks';
 
 const recalculateValues = (
-  line: DraftStockMovementLineState,
+  line: DraftStockMovementLine,
   field: CalculateField,
   value?: number
-): Partial<DraftStockMovementLineState> => {
+): Partial<DraftStockMovementLine> => {
   switch (field) {
     case 'fromNumberOfPacks': {
       const toPackSize = line.toPackSize ?? line.fromPackSize;
@@ -69,9 +58,9 @@ const recalculateValues = (
 };
 
 interface StockMovementLineTableProps {
-  lines: DraftStockMovementLineState[];
+  lines: DraftStockMovementLine[];
   showFromLocation: boolean;
-  onUpdate: (id: string, patch: Partial<DraftStockMovementLineState>) => void;
+  onUpdate: (id: string, patch: Partial<DraftStockMovementLine>) => void;
   onRemove?: (id: string) => void;
   disabled?: boolean;
 }
@@ -85,8 +74,8 @@ export const StockMovementLineTable = ({
 }: StockMovementLineTableProps) => {
   const t = useTranslation();
 
-  const columns = useMemo((): ColumnDef<DraftStockMovementLineState>[] => {
-    const cols: ColumnDef<DraftStockMovementLineState>[] = [
+  const columns = useMemo((): ColumnDef<DraftStockMovementLine>[] => {
+    const cols: ColumnDef<DraftStockMovementLine>[] = [
       {
         id: 'item',
         header: t('label.item'),
@@ -130,7 +119,7 @@ export const StockMovementLineTable = ({
       cols.push({
         id: 'fromLocation',
         header: t('label.from-location'),
-        accessorFn: row => row.fromLocationCode ?? '-',
+        accessorFn: row => row.fromLocation?.code ?? '-',
         size: 110,
         enableSorting: false,
       });

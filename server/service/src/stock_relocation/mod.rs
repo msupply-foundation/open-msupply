@@ -1,6 +1,9 @@
 use self::delete::{delete_stock_relocation, DeleteStockRelocation, DeleteStockRelocationError};
 use self::insert::{insert_stock_relocation, InsertStockRelocation, InsertStockRelocationError};
-use self::query::{get_stock_relocation, get_stock_relocations};
+use self::query::{
+    get_stock_relocation, get_stock_relocation_draft_lines, get_stock_relocations,
+    DraftStockRelocationLine, StockRelocationDraftFilter,
+};
 use self::update::{update_stock_relocation, UpdateStockRelocation, UpdateStockRelocationError};
 use crate::{service_provider::ServiceContext, ListError, ListResult};
 use repository::{
@@ -33,6 +36,15 @@ pub trait StockRelocationServiceTrait: Sync + Send {
         id: &str,
     ) -> Result<Option<StockRelocation>, RepositoryError> {
         get_stock_relocation(ctx, store_id, id)
+    }
+
+    fn get_stock_relocation_draft_lines(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        filter: StockRelocationDraftFilter,
+    ) -> Result<Vec<DraftStockRelocationLine>, ListError> {
+        get_stock_relocation_draft_lines(ctx, store_id, filter)
     }
 
     fn insert_stock_relocation(
