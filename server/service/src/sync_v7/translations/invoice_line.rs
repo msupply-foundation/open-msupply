@@ -2,10 +2,12 @@ use repository::{syncv7::SyncRecordSerializeError, ChangeLogInsertRow, InvoiceLi
 
 use crate::sync_v7::{serde::DeserializeResult, validate_translate_integrate::SyncContext};
 
-/// Deserialise an invoice_line and, when this site is a transfer recipient
-/// (a remote site receiving the row for a store it doesn't own), null
-/// `stock_line_id` and `location_id` — those FKs reference records on the
-/// sending site that won't exist here.
+/// Deserialise an invoice_line and, when the line belongs to a store this site
+/// doesn't own, null `stock_line_id` and `location_id` — those FKs reference
+/// records on the owning site that won't exist here.
+/// This happens when:
+/// - this site is a transfer recipient or
+/// - a patient-lookup occurred, where prescription records belong to the owning store
 pub(crate) fn translate_invoice_line(
     changelog_insert: ChangeLogInsertRow,
     owning_store_id: Option<&str>,
@@ -15,13 +17,17 @@ pub(crate) fn translate_invoice_line(
     let mut row: InvoiceLineRow = serde_json::from_value(data.clone())
         .map_err(|e| SyncRecordSerializeError::SerdeError(e.to_string()))?;
 
-    if let (SyncContext::Remote { active_stores, .. }, Some(store_id)) =
-        (sync_context, owning_store_id)
-    {
-        if !active_stores.store_ids().iter().any(|s| s == store_id) {
-            row.stock_line_id = None;
-            row.location_id = None;
-        }
+    let belongs_to_other_site = match sync_context {
+        SyncContext::PatientLookup => true,
+        SyncContext::Remote { active_stores, .. } => owning_store_id
+            .map(|store_id| !active_stores.store_ids().iter().any(|s| s == store_id))
+            .unwrap_or(false),
+        SyncContext::Central { .. } => false,
+    };
+
+    if belongs_to_other_site {
+        row.stock_line_id = None;
+        row.location_id = None;
     }
 
     Ok(vec![(Box::new(row) as Box<dyn Upsert>, changelog_insert)])
@@ -81,6 +87,23 @@ mod test {
             is_initialising: false,
             active_stores: site_with_store("our_store"),
         };
+
+        let translated_row = translated(translate_invoice_line(
+            changelog_for(&input),
+            Some("sender_store"),
+            &data,
+            &ctx,
+        ));
+
+        assert_eq!(translated_row.stock_line_id, None);
+        assert_eq!(translated_row.location_id, None);
+    }
+
+    #[test]
+    fn nulls_cross_site_fks_on_patient_lookup() {
+        let input = input_row();
+        let data = serde_json::to_value(&input).unwrap();
+        let ctx = SyncContext::PatientLookup;
 
         let translated_row = translated(translate_invoice_line(
             changelog_for(&input),
