@@ -82,24 +82,24 @@ impl ChangelogTableName {
 
         match self {
             NameStoreJoin => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![Anyone],
                 distribution: vec![D::Remote],
                 transport: V5,
             },
             ItemStoreJoin => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![Central],
                 distribution: vec![D::Remote],
                 transport: V5,
             },
             ClinicianStoreJoin => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![Anyone],
                 distribution: vec![D::Remote],
                 transport: V5,
             },
 
             ActivityLog => SyncStyle {
                 authoring: vec![RemoteOwned],
-                distribution: vec![D::RemoteOwned],
+                distribution: vec![D::Remote],
                 transport: V5,
             },
             IndicatorValue => SyncStyle {
@@ -129,7 +129,7 @@ impl ChangelogTableName {
             },
             Sensor => SyncStyle {
                 authoring: vec![RemoteOwned],
-                distribution: vec![D::RemoteOwned],
+                distribution: vec![D::Remote],
                 transport: V5,
             },
             StockLine => SyncStyle {
@@ -149,12 +149,12 @@ impl ChangelogTableName {
             },
             TemperatureBreach => SyncStyle {
                 authoring: vec![RemoteOwned],
-                distribution: vec![D::RemoteOwned],
+                distribution: vec![D::Remote],
                 transport: V5,
             },
             TemperatureLog => SyncStyle {
                 authoring: vec![RemoteOwned],
-                distribution: vec![D::RemoteOwned],
+                distribution: vec![D::Remote],
                 transport: V5,
             },
             VVMStatusLog => SyncStyle {
@@ -164,7 +164,7 @@ impl ChangelogTableName {
             },
 
             SyncMessage => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![Anyone],
                 distribution: vec![D::Everyone, D::Remote],
                 transport: V5,
             },
@@ -485,7 +485,7 @@ impl ChangelogTableName {
             },
             UserPermission => SyncStyle {
                 authoring: vec![Central],
-                distribution: vec![D::Everyone],
+                distribution: vec![D::Remote],
                 transport: V5,
             },
             UserStoreJoin => SyncStyle {
@@ -512,18 +512,18 @@ impl ChangelogTableName {
             },
 
             Asset => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![Anyone],
                 distribution: vec![D::Remote],
                 transport: V6,
             },
             AssetInternalLocation => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![Anyone],
                 distribution: vec![D::Remote],
                 transport: V6,
             },
             AssetLog => SyncStyle {
-                authoring: vec![RemoteOwned],
-                distribution: vec![D::RemoteOwned],
+                authoring: vec![Anyone],
+                distribution: vec![D::Remote],
                 transport: V6,
             },
             RnrForm => SyncStyle {
@@ -592,7 +592,7 @@ impl ChangelogTableName {
                 transport: V6,
             },
             Preference => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![Central],
                 distribution: vec![D::Everyone, D::Remote],
                 transport: V6,
             },
