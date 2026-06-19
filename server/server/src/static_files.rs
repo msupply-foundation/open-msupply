@@ -119,9 +119,9 @@ async fn download_log_file(
 
     // Whitelist the requested file against the actual log files in the log directory.
     // This prevents path traversal (e.g. ?file=../../etc/passwd).
-    let file_names = log_service.get_log_file_names(&context).map_err(|err| {
-        InternalError::new(format!("{err}"), StatusCode::INTERNAL_SERVER_ERROR)
-    })?;
+    let file_names = log_service
+        .get_log_file_names(&context)
+        .map_err(|err| InternalError::new(format!("{err}"), StatusCode::INTERNAL_SERVER_ERROR))?;
     let LogFileQuery {
         file,
         tail,

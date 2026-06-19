@@ -59,9 +59,10 @@ pub trait LogServiceTrait: Send + Sync {
         let log_file_path = Path::new(&log_dir).join(&file_name);
         let is_gz = file_name.ends_with(".gz");
 
-        let (content, total_size, truncated) =
-            tokio::task::spawn_blocking(move || read_log_content(&log_file_path, is_gz, tail_bytes))
-                .await??;
+        let (content, total_size, truncated) = tokio::task::spawn_blocking(move || {
+            read_log_content(&log_file_path, is_gz, tail_bytes)
+        })
+        .await??;
 
         Ok(LogFileContent {
             file_name,
@@ -89,7 +90,12 @@ pub trait LogServiceTrait: Send + Sync {
         let file_name = file_name.unwrap_or(default_filename);
         let log_file_path = Path::new(&log_dir).join(&file_name);
 
-        Ok(tokio::task::spawn_blocking(move || compress_log_for_download(log_file_path, file_name)).await??)
+        Ok(
+            tokio::task::spawn_blocking(move || {
+                compress_log_for_download(log_file_path, file_name)
+            })
+            .await??,
+        )
     }
 
     fn get_log_level(&self, ctx: &ServiceContext) -> Result<Option<Level>, RepositoryError> {
