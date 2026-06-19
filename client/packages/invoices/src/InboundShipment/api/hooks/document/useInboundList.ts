@@ -97,12 +97,9 @@ export const useInboundList = (queryParams?: ListParams) => {
     await deleteMutation(selectedRows);
   };
 
-  const { duplicate, isDuplicating, duplicateError } = useDuplicate();
-
   return {
     query: { data, isLoading, isFetching, isError, refetch },
     delete: { deleteInbounds, isDeleting, deleteError },
-    duplicate: { duplicate, isDuplicating, duplicateError },
   };
 };
 
