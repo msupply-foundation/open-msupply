@@ -135,7 +135,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 ForeignKey::InvoiceId,
             )))
         }
-        CannotEditFinalised => {
+        CannotEditFinalised | OtherPartyStoreDisabled => {
             return Ok(UpdateErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
             ))

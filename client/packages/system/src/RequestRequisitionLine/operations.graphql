@@ -159,6 +159,7 @@ fragment Request on RequisitionNode {
     store {
       id
       code
+      isDisabled
     }
   }
 
@@ -172,6 +173,7 @@ fragment Request on RequisitionNode {
     store {
       id
       code
+      isDisabled
     }
   }
 

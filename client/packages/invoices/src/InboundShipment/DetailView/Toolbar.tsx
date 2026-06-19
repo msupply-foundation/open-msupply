@@ -11,6 +11,7 @@ import {
   BufferedTextArea,
   Link,
   RouteBuilder,
+  DisabledStoreNotice,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { SupplierSearchInput } from '@openmsupply-client/system';
@@ -134,6 +135,9 @@ export const Toolbar = () => {
         )}
         <Grid>
           <ReceivedDateInput />
+        </Grid>
+        <Grid size={12}>
+          <DisabledStoreNotice otherParty={otherParty} />
         </Grid>
         <Grid size={12}>
           <InboundInfoPanel shipment={shipment} />
