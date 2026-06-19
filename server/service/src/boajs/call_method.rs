@@ -79,6 +79,7 @@ where
     methods::use_graphql::bind_method(context)?;
     methods::get_active_stores_on_site::bind_method(context)?;
     methods::fetch::bind_method(context)?;
+    methods::enqueue_email::bind_method(context)?;
 
     let callable = find_callable_in_exports(context, module, export_location)?;
 

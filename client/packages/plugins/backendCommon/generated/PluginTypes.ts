@@ -2,6 +2,8 @@
 import type { ActiveStoresOnSite } from './ActiveStoresOnSite';
 import type { AverageMonthlyConsumptionInput } from './AverageMonthlyConsumptionInput';
 import type { AverageMonthlyConsumptionItem } from './AverageMonthlyConsumptionItem';
+import type { EnqueueEmailInput } from './EnqueueEmailInput';
+import type { EnqueueEmailOutput } from './EnqueueEmailOutput';
 import type { FetchInput } from './FetchInput';
 import type { FetchOutput } from './FetchOutput';
 import type { Function } from './Function';
@@ -40,4 +42,5 @@ export type PluginTypes = {
   use_graphql: Function<UseGraphqlInput, JsonValue>;
   get_active_stores_on_site: Function<null, ActiveStoresOnSite>;
   fetch: Function<FetchInput, FetchOutput>;
+  enqueue_email: Function<EnqueueEmailInput, EnqueueEmailOutput>;
 };
