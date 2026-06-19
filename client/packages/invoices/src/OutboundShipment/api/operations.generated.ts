@@ -744,6 +744,29 @@ export type DeleteOutboundShipmentsMutation = {
   };
 };
 
+export type DuplicateOutboundShipmentMutationVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type DuplicateOutboundShipmentMutation = {
+  __typename: 'Mutations';
+  duplicateOutboundShipment:
+    | {
+        __typename: 'DuplicateOutboundShipmentError';
+        error: { __typename: 'CustomerIsInactive'; description: string };
+      }
+    | {
+        __typename: 'DuplicateOutboundShipmentNode';
+        skippedItemCount: number;
+        invoice: {
+          __typename: 'InvoiceNode';
+          id: string;
+          invoiceNumber: number;
+        };
+      };
+};
+
 export type UpsertOutboundShipmentMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.BatchOutboundShipmentInput;
@@ -1558,6 +1581,27 @@ export const DeleteOutboundShipmentsDocument = gql`
     }
   }
 `;
+export const DuplicateOutboundShipmentDocument = gql`
+  mutation duplicateOutboundShipment($id: String!, $storeId: String!) {
+    duplicateOutboundShipment(storeId: $storeId, id: $id) {
+      __typename
+      ... on DuplicateOutboundShipmentNode {
+        invoice {
+          __typename
+          id
+          invoiceNumber
+        }
+        skippedItemCount
+      }
+      ... on DuplicateOutboundShipmentError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+`;
 export const UpsertOutboundShipmentDocument = gql`
   mutation upsertOutboundShipment(
     $storeId: String!
@@ -2170,6 +2214,24 @@ export function getSdk(
             signal,
           }),
         'deleteOutboundShipments',
+        'mutation',
+        variables
+      );
+    },
+    duplicateOutboundShipment(
+      variables: DuplicateOutboundShipmentMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<DuplicateOutboundShipmentMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DuplicateOutboundShipmentMutation>({
+            document: DuplicateOutboundShipmentDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'duplicateOutboundShipment',
         'mutation',
         variables
       );
