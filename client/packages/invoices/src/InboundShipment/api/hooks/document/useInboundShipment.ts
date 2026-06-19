@@ -42,7 +42,11 @@ export const useInboundShipment = (id?: string) => {
     ? InvoiceTypeInput.InboundShipmentExternal
     : InvoiceTypeInput.InboundShipment;
 
-  const { data, isLoading: loading, error } = useGetById(invoiceId, invoiceType);
+  const {
+    data,
+    isLoading: loading,
+    error,
+  } = useGetById(invoiceId, invoiceType);
   const { queryClient } = useInboundGraphQL();
   const { userHasPermission } = useAuthContext();
   const isHoldable = isInboundHoldable(data);
@@ -163,7 +167,7 @@ export const useInboundShipment = (id?: string) => {
 
   const invalidateQuery = () => {
     queryClient.invalidateQueries({
-      queryKey: [INBOUND, INBOUND_LINE, invoiceId]
+      queryKey: [INBOUND, INBOUND_LINE, invoiceId],
     });
   };
 
@@ -188,10 +192,7 @@ export const useInboundShipment = (id?: string) => {
   };
 };
 
-const useGetById = (
-  invoiceId: string | undefined,
-  type?: InvoiceTypeInput
-) => {
+const useGetById = (invoiceId: string | undefined, type?: InvoiceTypeInput) => {
   const { inboundApi, storeId } = useInboundGraphQL();
 
   const queryFn = async (): Promise<InboundFragment> => {
@@ -250,7 +251,7 @@ const useUpdate = (isExternal: boolean) => {
     mutationFn,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: [INBOUND]
+        queryKey: [INBOUND],
       });
     },
   });
@@ -282,8 +283,9 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries({
-      queryKey: [INBOUND]
-    }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: [INBOUND],
+      }),
   });
 };

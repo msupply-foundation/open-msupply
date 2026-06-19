@@ -591,6 +591,26 @@ mutation insertInboundShipmentExternal(
   }
 }
 
+mutation duplicateInboundShipment($id: String!, $storeId: String!) {
+  duplicateInboundShipment(storeId: $storeId, id: $id) {
+    __typename
+    ... on DuplicateInboundShipmentNode {
+      invoice {
+        __typename
+        id
+        invoiceNumber
+      }
+      skippedItemCount
+    }
+    ... on DuplicateInboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
 fragment LineLinkedToTransferredInvoiceError on LineLinkedToTransferredInvoice {
   __typename
   description
