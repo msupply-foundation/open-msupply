@@ -23,11 +23,11 @@ pub fn generate(
     let comment =
         generate_duplicate_comment(source_invoice.invoice_number, &source_invoice.comment);
 
-    // Field-level rules follow the duplication spec for inbound shipments.
+    // Field-level rules follow the duplication spec for outbound shipments.
     let new_invoice = InvoiceRow {
         // --- New shipment identity ---
         id: new_invoice_id.clone(),
-        invoice_number: next_number(connection, &NumberRowType::InboundShipment, store_id)?,
+        invoice_number: next_number(connection, &NumberRowType::OutboundShipment, store_id)?,
         created_datetime: Utc::now().naive_utc(),
         user_id: Some(user_id.to_string()),
         status: InvoiceStatus::New,
@@ -58,8 +58,8 @@ pub fn generate(
         currency_id: source_invoice.currency_id.clone(),
         currency_rate: source_invoice.currency_rate,
 
-        // --- Prescription/dispensing fields: never set on an inbound shipment
-        //     (the inbound insert leaves these None too) ---
+        // --- Prescription/dispensing fields: never set on an outbound shipment
+        //     (the outbound insert leaves these None too) ---
         clinician_link_id: None,
         diagnosis_id: None,
         program_id: None,
@@ -89,7 +89,7 @@ pub fn generate(
         store_id,
         source_lines
             .iter()
-            .filter(|line| line.r#type == InvoiceLineType::StockIn)
+            .filter(|line| line.r#type != InvoiceLineType::Service)
             .map(|line| line.item_id.clone())
             .collect(),
     )?;
@@ -98,21 +98,30 @@ pub fn generate(
     let mut skipped_item_count = 0;
 
     for line in source_lines {
-        // Skip stock lines whose item is no longer in the catalogue; service lines are kept.
-        if line.r#type == InvoiceLineType::StockIn && !active_item_ids.contains(&line.item_id) {
+        if line.r#type != InvoiceLineType::Service && !active_item_ids.contains(&line.item_id) {
             skipped_item_count += 1;
             continue;
         }
 
-        // Inbound rule: copy every line field (item, batch, expiry, pack size, packs, cost/sell
-        // price, location, donor, campaign/program, comment, manufacturer) and only reset the
-        // identity and the fields that tie a line to stock, receipt or another shipment.
-        // Listed explicitly (rather than `..line`) so any new field — particularly a new link —
-        // forces a deliberate copy-vs-reset decision here.
-        new_lines.push(InvoiceLineRow {
+        new_lines.push(generate_line(&new_invoice_id, line));
+    }
+
+    Ok(GenerateResult {
+        new_invoice,
+        new_lines,
+        skipped_item_count,
+    })
+}
+
+// Listed explicitly (rather than `..line`) so any new field — particularly a new link —
+// forces a deliberate copy-vs-reset decision here.
+fn generate_line(new_invoice_id: &str, line: InvoiceLineRow) -> InvoiceLineRow {
+    // Service lines carry no stock: copy every field, only resetting the line identity.
+    if line.r#type == InvoiceLineType::Service {
+        return InvoiceLineRow {
             // --- New line identity ---
             id: uuid(),
-            invoice_id: new_invoice_id.clone(),
+            invoice_id: new_invoice_id.to_string(),
 
             // --- Copied from source ---
             r#type: line.r#type,
@@ -141,22 +150,61 @@ pub fn generate(
             note: line.note,
             volume_per_pack: line.volume_per_pack,
             shipped_pack_size: line.shipped_pack_size,
-
-            // --- Reset: a new New line is not tied to stock, receipt or another shipment ---
-            stock_line_id: None,
-            received_number_of_packs: None,
-            status: None,
-            purchase_order_line_id: None,
-            linked_invoice_id: None,
-            linked_invoice_line_id: None,
-            vvm_status_id: None,
-            shipped_number_of_packs: None,
-        });
+            status: line.status,
+            stock_line_id: line.stock_line_id,
+            vvm_status_id: line.vvm_status_id,
+            shipped_number_of_packs: line.shipped_number_of_packs,
+            received_number_of_packs: line.received_number_of_packs,
+            purchase_order_line_id: line.purchase_order_line_id,
+            linked_invoice_id: line.linked_invoice_id,
+            linked_invoice_line_id: line.linked_invoice_line_id,
+        };
     }
 
-    Ok(GenerateResult {
-        new_invoice,
-        new_lines,
-        skipped_item_count,
-    })
+    // Stock lines are reset to an unallocated request: keep the item, requested quantity and
+    // descriptive fields, but drop the specific stock, pricing, location and workflow details
+    // so the copy must be re-allocated.
+    InvoiceLineRow {
+        // --- New line identity ---
+        id: uuid(),
+        invoice_id: new_invoice_id.to_string(),
+        r#type: InvoiceLineType::UnallocatedStock,
+
+        // --- Copied from source ---
+        item_id: line.item_id,
+        item_name: line.item_name,
+        item_code: line.item_code,
+        item_variant_id: line.item_variant_id,
+        pack_size: line.pack_size,
+        number_of_packs: line.number_of_packs,
+        note: line.note,
+        donor_id: line.donor_id,
+        manufacturer_id: line.manufacturer_id,
+        campaign_id: line.campaign_id,
+        program_id: line.program_id,
+
+        // --- Reset: not tied to specific stock, pricing, location or workflow ---
+        stock_line_id: None,
+        location_id: None,
+        batch: None,
+        expiry_date: None,
+        cost_price_per_pack: 0.0,
+        sell_price_per_pack: 0.0,
+        total_before_tax: 0.0,
+        total_after_tax: 0.0,
+        tax_percentage: None,
+        foreign_currency_price_before_tax: None,
+        prescribed_quantity: None,
+        manufacture_date: None,
+        volume_per_pack: 0.0,
+        shipped_pack_size: None,
+        shipped_number_of_packs: None,
+        received_number_of_packs: None,
+        status: None,
+        vvm_status_id: None,
+        reason_option_id: None,
+        purchase_order_line_id: None,
+        linked_invoice_id: None,
+        linked_invoice_line_id: None,
+    }
 }
