@@ -2670,6 +2670,25 @@ export type DuplicateAncillaryItem = UpsertAncillaryItemErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type DuplicateInboundShipmentError = {
+  __typename: 'DuplicateInboundShipmentError';
+  error: DuplicateInboundShipmentErrorInterface;
+};
+
+export type DuplicateInboundShipmentErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DuplicateInboundShipmentNode = {
+  __typename: 'DuplicateInboundShipmentNode';
+  invoice: InvoiceNode;
+  skippedItemCount: Scalars['Int']['output'];
+};
+
+export type DuplicateInboundShipmentResponse =
+  | DuplicateInboundShipmentError
+  | DuplicateInboundShipmentNode;
+
 export type EmergencyResponseRequisitionCounts = {
   __typename: 'EmergencyResponseRequisitionCounts';
   new: Scalars['Int']['output'];
@@ -5609,6 +5628,7 @@ export type Mutations = {
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   deleteSupplierReturn: DeleteSupplierReturnResponse;
+  duplicateInboundShipment: DuplicateInboundShipmentResponse;
   finaliseRnrForm: FinaliseRnRFormResponse;
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
@@ -5943,6 +5963,11 @@ export type MutationsDeleteStocktakeLineArgs = {
 };
 
 export type MutationsDeleteSupplierReturnArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDuplicateInboundShipmentArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
@@ -10122,6 +10147,11 @@ export type SuggestedQuantityCalculationNode = {
   minimumStockOnHand: Scalars['Int']['output'];
   stockOnHand: Scalars['Int']['output'];
   suggestedQuantity: Scalars['Int']['output'];
+};
+
+export type SupplierIsInactive = DuplicateInboundShipmentErrorInterface & {
+  __typename: 'SupplierIsInactive';
+  description: Scalars['String']['output'];
 };
 
 export type SupplierNotValid = InsertProgramRequestRequisitionErrorInterface & {
