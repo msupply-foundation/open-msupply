@@ -4,6 +4,7 @@ import { Document } from './document';
 
 export { useOutboundItems } from './line/useOutboundItems';
 export { useOutboundLines } from './line/useOutboundLines';
+export { useDuplicateOutbound } from './document/useDuplicateOutbound';
 
 export const useOutbound = {
   utils: {
