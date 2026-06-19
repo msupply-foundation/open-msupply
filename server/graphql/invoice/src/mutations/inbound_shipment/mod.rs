@@ -4,6 +4,7 @@ use graphql_core::standard_graphql_error::validate_auth;
 use service::auth::{Resource, ResourceAccessRequest};
 
 pub mod delete;
+pub mod duplicate;
 pub mod insert;
 pub mod update;
 
