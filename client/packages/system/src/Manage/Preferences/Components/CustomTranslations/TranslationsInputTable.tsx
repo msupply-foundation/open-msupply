@@ -9,7 +9,6 @@ import {
   InputAdornment,
   MaterialTable,
   NothingHere,
-  RegexUtils,
   TextWithTooltipCell,
   useSimpleMaterialTable,
   TextInputCell,
@@ -32,7 +31,11 @@ export const TranslationsTable = ({
 }) => {
   const t = useTranslation();
 
+  // filterInput drives the text field (immediate), filter drives the
+  // table data (debounced) so typing doesn't re-render every row per keystroke.
+  const [filterInput, setFilterInput] = useState('');
   const [filter, setFilter] = useState('');
+  const debouncedSetFilter = useDebounceCallback(setFilter, [], 300);
 
   const onAdd = (options: TranslationOption[]) => {
     if (options.length === 0) return;
@@ -137,13 +140,13 @@ export const TranslationsTable = ({
   );
 
   const filteredTranslations = useMemo(() => {
-    if (!filter.trim()) return translations;
-    const searchTerm = RegexUtils.escapeChars(filter);
+    const searchTerm = filter.trim().toLowerCase();
+    if (!searchTerm) return translations;
     return translations.filter(
       tr =>
-        RegexUtils.includes(searchTerm, tr.key) ||
-        RegexUtils.includes(searchTerm, tr.default) ||
-        RegexUtils.includes(searchTerm, tr.custom)
+        tr.key.toLowerCase().includes(searchTerm) ||
+        tr.default.toLowerCase().includes(searchTerm) ||
+        tr.custom.toLowerCase().includes(searchTerm)
     );
   }, [translations, filter]);
 
@@ -152,6 +155,7 @@ export const TranslationsTable = ({
     data: filteredTranslations,
     columns,
     getIsPlaceholderRow: row => row.original.isNew ?? false,
+    enableRowVirtualization: true,
     noDataElement: (
       <NothingHere
         body={
@@ -169,8 +173,11 @@ export const TranslationsTable = ({
         <TranslationSearchInput onChange={onAdd} existingKeys={existingKeys} />
         <BasicTextInput
           fullWidth
-          value={filter}
-          onChange={e => setFilter(e.target.value)}
+          value={filterInput}
+          onChange={e => {
+            setFilterInput(e.target.value);
+            debouncedSetFilter(e.target.value);
+          }}
           placeholder={t('placeholder.filter-translations')}
           slotProps={{
             input: {
