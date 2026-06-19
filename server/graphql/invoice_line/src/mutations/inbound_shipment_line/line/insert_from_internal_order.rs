@@ -65,6 +65,7 @@ fn map_error(error: ServiceError) -> Result<InsertFromInternalOrderResponse> {
         InvoiceDoesNotExist
         | NotThisStoreInvoice
         | CannotEditFinalised
+        | OtherPartyStoreDisabled
         | NotAnInboundShipment
         | RequisitionLineDoesNotExist
         | RequisitionNotLinkedToInvoice
