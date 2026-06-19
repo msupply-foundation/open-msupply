@@ -1,10 +1,12 @@
-import React, { useMemo } from 'react';
-import { DeleteIcon } from '@common/icons';
+import React, { useMemo, useState } from 'react';
+import { DeleteIcon, FilterIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 import {
+  BasicTextInput,
   Box,
   ColumnDef,
   IconButton,
+  InputAdornment,
   MaterialTable,
   NothingHere,
   TextWithTooltipCell,
@@ -28,6 +30,12 @@ export const TranslationsTable = ({
   showValidationErrors: boolean;
 }) => {
   const t = useTranslation();
+
+  // filterInput drives the text field (immediate), filter drives the
+  // table data (debounced) so typing doesn't re-render every row per keystroke.
+  const [filterInput, setFilterInput] = useState('');
+  const [filter, setFilter] = useState('');
+  const debouncedSetFilter = useDebounceCallback(setFilter, [], 300);
 
   const onAdd = (options: TranslationOption[]) => {
     if (options.length === 0) return;
@@ -131,20 +139,58 @@ export const TranslationsTable = ({
     [translations]
   );
 
+  const filteredTranslations = useMemo(() => {
+    const searchTerm = filter.trim().toLowerCase();
+    if (!searchTerm) return translations;
+    return translations.filter(
+      tr =>
+        tr.key.toLowerCase().includes(searchTerm) ||
+        tr.default.toLowerCase().includes(searchTerm) ||
+        tr.custom.toLowerCase().includes(searchTerm)
+    );
+  }, [translations, filter]);
+
   const table = useSimpleMaterialTable<Translation>({
     tableId: 'custom-translations-input-table',
-    data: translations,
+    data: filteredTranslations,
     columns,
     getIsPlaceholderRow: row => row.original.isNew ?? false,
-    noDataElement: <NothingHere body={t('message.add-a-translation')} />,
+    enableRowVirtualization: true,
+    noDataElement: (
+      <NothingHere
+        body={
+          filter
+            ? t('messages.no-matching-translations')
+            : t('message.add-a-translation')
+        }
+      />
+    ),
   });
 
   return (
     <>
-      <Box display="flex" justifyContent="flex-start" marginBottom="8px">
-        <TranslationSearchInput
-          onChange={onAdd}
-          existingKeys={existingKeys}
+      <Box display="flex" flexDirection="column" gap={1} marginBottom="8px">
+        <TranslationSearchInput onChange={onAdd} existingKeys={existingKeys} />
+        <BasicTextInput
+          fullWidth
+          value={filterInput}
+          onChange={e => {
+            setFilterInput(e.target.value);
+            debouncedSetFilter(e.target.value);
+          }}
+          placeholder={t('placeholder.filter-translations')}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <FilterIcon sx={{ color: 'gray.main' }} fontSize="small" />
+                </InputAdornment>
+              ),
+              sx: {
+                backgroundColor: theme => theme.palette.background.drawer,
+              },
+            },
+          }}
         />
       </Box>
 
