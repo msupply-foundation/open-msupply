@@ -3,6 +3,7 @@ use repository::{InvoiceRow, InvoiceType, StorageConnection};
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_store},
     invoice_line::save_stock_out_item_lines::SaveStockOutItemLinesError,
+    validate::check_other_party_store_is_disabled,
 };
 
 fn is_stock_out_invoice(invoice: &InvoiceRow) -> bool {
@@ -25,6 +26,9 @@ pub fn validate(
         return Err(InvoiceDoesNotBelongToCurrentStore);
     }
     if !check_invoice_is_editable(&invoice) {
+        return Err(InvoiceNotEditable);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
         return Err(InvoiceNotEditable);
     }
     if !is_stock_out_invoice(&invoice) {

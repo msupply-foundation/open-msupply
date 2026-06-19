@@ -122,7 +122,12 @@ export type OutboundFragment = {
     isCustomer: boolean;
     isSupplier: boolean;
     isOnHold: boolean;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   };
   pricing: {
     __typename: 'PricingNode';
@@ -381,7 +386,12 @@ export type InvoiceQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
         pricing: {
           __typename: 'PricingNode';
@@ -545,7 +555,12 @@ export type OutboundByNumberQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
         pricing: {
           __typename: 'PricingNode';
@@ -1201,6 +1216,7 @@ export const OutboundFragmentDoc = gql`
       store {
         id
         code
+        isDisabled
       }
     }
     pricing {

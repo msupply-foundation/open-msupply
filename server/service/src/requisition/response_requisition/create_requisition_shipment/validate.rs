@@ -7,6 +7,7 @@ use crate::requisition::requisition_supply_status::RequisitionLineSupplyStatus;
 use crate::requisition::{
     common::check_requisition_exists, requisition_supply_status::get_requisitions_supply_statuses,
 };
+use crate::validate::check_other_party_store_is_disabled;
 
 use super::{CreateRequisitionShipment, OutError};
 
@@ -27,6 +28,10 @@ pub fn validate(
     }
 
     if requisition_row.status != RequisitionStatus::New {
+        return Err(OutError::CannotEditRequisition);
+    }
+
+    if check_other_party_store_is_disabled(connection, store_id, &requisition_row.name_id)? {
         return Err(OutError::CannotEditRequisition);
     }
 

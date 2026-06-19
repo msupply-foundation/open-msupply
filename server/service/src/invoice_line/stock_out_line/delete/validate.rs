@@ -1,6 +1,7 @@
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::validate::{check_line_belongs_to_invoice, check_line_row_exists},
+    validate::check_other_party_store_is_disabled,
 };
 use repository::{InvoiceLineRow, StorageConnection};
 
@@ -27,6 +28,9 @@ pub fn validate(
         return Err(NoInvoiceType);
     }
     if !check_invoice_is_editable(&invoice) {
+        return Err(CannotEditInvoice);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
         return Err(CannotEditInvoice);
     }
     if !check_line_belongs_to_invoice(&line, &invoice) {

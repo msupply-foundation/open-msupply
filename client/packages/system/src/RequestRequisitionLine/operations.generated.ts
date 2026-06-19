@@ -244,7 +244,12 @@ export type RequestFragment = {
     isOnHold: boolean;
     name: string;
     margin?: number | null;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   };
   destinationCustomer?: {
     __typename: 'NameNode';
@@ -254,7 +259,12 @@ export type RequestFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   } | null;
   linkedRequisition?: {
     __typename: 'RequisitionNode';
@@ -446,6 +456,7 @@ export const RequestFragmentDoc = gql`
       store {
         id
         code
+        isDisabled
       }
     }
     destinationCustomer(storeId: $storeId) {
@@ -458,6 +469,7 @@ export const RequestFragmentDoc = gql`
       store {
         id
         code
+        isDisabled
       }
     }
     linkedRequisition {

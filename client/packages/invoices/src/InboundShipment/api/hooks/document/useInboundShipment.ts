@@ -59,7 +59,9 @@ export const useInboundShipment = (id?: string) => {
   const hasVerifyPermission = isExternal
     ? userHasPermission(UserPermission.InboundShipmentExternalVerify)
     : userHasPermission(UserPermission.InboundShipmentVerify);
-  const isDisabled = isInboundDisabled(data) || !hasMutatePermission;
+  const isOtherPartyDisabled = !!data?.otherParty?.store?.isDisabled;
+  const isDisabled =
+    isInboundDisabled(data) || isOtherPartyDisabled || !hasMutatePermission;
   const isStatusChangeDisabled = isInboundStatusChangeDisabled(data);
   // A shipment that went through line authorisation (any line has an auth
   // status) can only be received once every line is approved or rejected, so

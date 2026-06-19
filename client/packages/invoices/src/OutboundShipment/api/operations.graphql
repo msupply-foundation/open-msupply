@@ -59,6 +59,7 @@ fragment Outbound on InvoiceNode {
     store {
       id
       code
+      isDisabled
     }
   }
 

@@ -7,6 +7,7 @@ use util::constants::DEFAULT_SERVICE_ITEM_CODE;
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::validate::{check_item_exists, check_line_exists},
+    validate::check_other_party_store_is_disabled,
 };
 
 use super::{InsertOutboundShipmentServiceLine, InsertOutboundShipmentServiceLineError};
@@ -44,6 +45,9 @@ pub fn validate(
         return Err(OutError::NotAnOutboundShipment);
     }
     if !check_invoice_is_editable(&invoice) {
+        return Err(OutError::CannotEditInvoice);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
         return Err(OutError::CannotEditInvoice);
     }
 
