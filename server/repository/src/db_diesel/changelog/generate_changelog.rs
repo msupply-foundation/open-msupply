@@ -169,6 +169,7 @@ impl NameStoreJoinRow {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
+            // TODO does this need to be here
             transfer_store_id: transfer_store_id_for_name(con, &row.name_id)?,
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
