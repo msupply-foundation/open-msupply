@@ -1,4 +1,4 @@
-use repository::{Authoring, ChangelogTableName, Distribution, SyncBufferRow};
+use repository::{Authoring, ChangelogTableName, SyncBufferRow};
 use thiserror::Error;
 
 use crate::sync::ActiveStoresOnSite;
@@ -29,14 +29,14 @@ pub(crate) fn validate_on_remote(
     active_on_site: &ActiveStoresOnSite,
     is_initialising: bool,
 ) -> Result<(), ValidationError> {
-    use Distribution::*;
-    let style = table_name.sync_style();
+    use Authoring::*;
+    let sync_style = table_name.sync_style();
 
     let active_store_ids = active_on_site.store_ids();
     let mut last_err = ValidationError::UnexpectedSyncStyleForV7;
 
-    for distribution in &style.distribution {
-        match distribution {
+    for style in &sync_style.authoring {
+        match style {
             // Reject rows that have a store id or patient id - these are remote or patient data, not central
             Central => match (&sync_buffer_row.store_id, &sync_buffer_row.patient_id) {
                 (None, None) => return Ok(()),
@@ -69,7 +69,8 @@ pub(crate) fn validate_on_remote(
                 Some(_) => return Ok(()),
                 None => last_err = ValidationError::NoPatientId,
             },
-            NotDistributed => last_err = ValidationError::UnexpectedSyncStyleForV7,
+            Anyone => return Ok(()),
+            LegacyOnly => last_err = ValidationError::UnexpectedSyncStyleForV7,
         }
     }
 
@@ -82,17 +83,17 @@ pub(crate) fn validate_on_central(
     source_site_active_store_ids: &[String],
 ) -> Result<(), ValidationError> {
     use Authoring::*;
-    let style = table_name.sync_style();
-
+    let sync_style = table_name.sync_style();
     let mut last_err = ValidationError::UnexpectedSyncStyleForV7;
+
     let store_active_on_source = |id: &String| source_site_active_store_ids.iter().any(|s| s == id);
 
-    for authoring in &style.authoring {
-        match authoring {
+    for style in &sync_style.authoring {
+        match style {
             Central => last_err = ValidationError::CentralOnlyEditableByCentral,
             // Accept only if the row's store belongs to the source site —
             // this also rejects rows referencing central's own stores.
-            RemoteOwned => match &sync_buffer_row.store_id {
+            Remote | RemoteOwned | Transfer => match &sync_buffer_row.store_id {
                 None => last_err = ValidationError::NoStoreId,
                 Some(id) if store_active_on_source(id) => return Ok(()),
                 Some(_) => last_err = ValidationError::StoreNotActiveOnSourceSite,
