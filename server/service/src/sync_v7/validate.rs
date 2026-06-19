@@ -214,7 +214,7 @@ mod tests {
             ),
             Err(ValidationError::InactiveStore)
         );
-        // Post-initialisation, reject a record for one of our own stores
+        // Sync style: RemoteOwned - Post-initialisation, reject a record for one of our own stores
         assert_eq!(
             validate_on_remote(
                 &SyncBufferRow {
@@ -237,41 +237,15 @@ mod tests {
                     source_site_id: 2,
                     ..Default::default()
                 },
-                &NameStoreJoin,
+                &Preference,
                 &site(),
                 false,
             ),
             Ok(())
         );
-        assert_eq!(
-            validate_on_remote(
-                &SyncBufferRow {
-                    store_id: Some("inactive_store".into()),
-                    source_site_id: 2,
-                    ..Default::default()
-                },
-                &NameStoreJoin,
-                &site(),
-                false,
-            ),
-            Err(ValidationError::InactiveStore)
-        );
-        // A row with no store_id can't be routed to an owner.
-        assert_eq!(
-            validate_on_remote(
-                &SyncBufferRow {
-                    source_site_id: 2,
-                    ..Default::default()
-                },
-                &NameStoreJoin,
-                &site(),
-                false,
-            ),
-            Err(ValidationError::NoStoreId)
-        );
 
         // Sync style: Transfer — transfer_store must be active.
-        // (Requisition's styles are Remote+Transfer; the Remote arm rejects
+        // (Requisition's styles are RemoteOwned+Transfer; the RemoteOwned arm rejects
         // with NoStoreId, but Transfer accepts.)
         assert_eq!(
             validate_on_remote(
@@ -327,7 +301,7 @@ mod tests {
             Err(ValidationError::NoPatientId)
         );
 
-        // Sync style: NotDistributed — never routed to a remote, always rejected.
+        // Sync style: LegacyOnly — not a v7 record, always rejected.
         assert_eq!(
             validate_on_remote(
                 &SyncBufferRow {
