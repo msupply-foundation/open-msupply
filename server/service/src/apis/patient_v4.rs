@@ -146,3 +146,84 @@ pub fn gender<'de, D: Deserializer<'de>>(d: D) -> Result<Option<GenderType>, D::
     let value: Option<serde_json::Value> = Option::deserialize(d)?;
     Ok(value.and_then(|v| serde_json::from_value::<GenderType>(v).ok()))
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn deserialize_dob() {
+        let patient: PatientV4 = serde_json::from_value(serde_json::json!({
+            "ID": "p1", "name": "", "phone": "", "email": "", "code": "",
+            "last": "", "first": "", "date_of_birth": "2000-01-02T00:00:00",
+        }))
+        .unwrap();
+        assert_eq!(
+            patient.date_of_birth,
+            Some(NaiveDate::from_ymd_opt(2000, 1, 2).unwrap())
+        );
+
+        let patient: PatientV4 = serde_json::from_value(serde_json::json!({
+            "ID": "p1", "name": "", "phone": "", "email": "", "code": "",
+            "last": "", "first": "", "date_of_birth": "0000-00-00T00:00:00",
+        }))
+        .unwrap();
+        assert_eq!(patient.date_of_birth, None);
+    }
+
+    #[test]
+    fn deserialize_gender() {
+        let empty: PatientV4 = serde_json::from_value(serde_json::json!({
+            "ID": "p1", "name": "", "phone": "", "email": "", "code": "",
+            "last": "", "first": "", "date_of_birth": "2000-01-02T00:00:00",
+            "om_gender": "", "isDeceased": true,
+        }))
+        .unwrap();
+        assert_eq!(empty.gender, None);
+        assert!(empty.is_deceased);
+
+        let set: PatientV4 = serde_json::from_value(serde_json::json!({
+            "ID": "p2", "name": "", "phone": "", "email": "", "code": "",
+            "last": "", "first": "", "date_of_birth": "2000-01-02T00:00:00",
+            "om_gender": "FEMALE",
+        }))
+        .unwrap();
+        assert_eq!(set.gender, Some(GenderType::Female));
+
+        let unknown: PatientV4 = serde_json::from_value(serde_json::json!({
+            "ID": "p3", "name": "", "phone": "", "email": "", "code": "",
+            "last": "", "first": "", "date_of_birth": "2000-01-02T00:00:00",
+            "gender": "male",
+        }))
+        .unwrap();
+        assert_eq!(unknown.gender, None);
+    }
+
+    #[test]
+    fn v7_round_trip_preserves_all_fields() {
+        let patient = PatientV4 {
+            id: "p1".to_string(),
+            name: "Patient, A".to_string(),
+            phone: String::new(),
+            email: String::new(),
+            code: "1234567".to_string(),
+            last: "A".to_string(),
+            first: "Patient".to_string(),
+            date_of_birth: Some(NaiveDate::from_ymd_opt(2000, 1, 2).unwrap()),
+            gender: Some(GenderType::Female),
+            code_2: Some("CODE1234567".to_string()),
+            is_deceased: true,
+        };
+
+        let json = serde_json::to_string(&patient).unwrap();
+        let parsed: PatientV4 = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(
+            parsed.date_of_birth,
+            Some(NaiveDate::from_ymd_opt(2000, 1, 2).unwrap())
+        );
+        assert_eq!(parsed.gender, Some(GenderType::Female));
+        assert_eq!(parsed.code_2, Some("CODE1234567".to_string()));
+        assert!(parsed.is_deceased);
+    }
+}
