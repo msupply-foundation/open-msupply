@@ -8,17 +8,19 @@ pub struct SyncVersions {
     pub is_v5: bool,
 }
 
-// Authoring axis — what central accepts on a v7 push (drives validate_on_central).
+// Authoring axis — the validation/sanity-check axis: drives validation of incoming rows on push
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Authoring {
     Central,     // reject any remote push — central manages it
+    Remote,      // store-scoped; owning store and central may edit
     RemoteOwned, // accept if store_id is active on the source site
+    Transfer,    // cross-store; accept via the transfer-store id
     Patient,     // accept if patient_id present (store_id, if set, active on source)
     Anyone,      // accept as-is, no checks
     LegacyOnly,  // not a v7 record; reject
 }
 
-// Distribution axis — who receives a row on pull-down (drives all_data_for_site + validate_on_remote)
+// Distribution axis — who receives a row on pull-down (drives changelog query filter)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, strum::EnumIter)]
 pub enum Distribution {
     Central,        // sent everywhere when keyless (store_id/patient_id null)
