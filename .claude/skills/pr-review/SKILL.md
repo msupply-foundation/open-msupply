@@ -1,3 +1,9 @@
+---
+name: pr-review
+description: This skill should be used when the user asks to "review this PR", "review the changes", "review against the issue", "code review this branch", "check this PR for issues", or pastes a GitHub PR/issue number/URL and wants feedback. It fetches the issue requirements, computes the right diff base (PR base, upstream, or merge-base fallback), checks requirement coverage, flags unmentioned changes, and produces a severity-graded findings report. Trigger it whenever the user wants a structured code review tied to a specific issue or PR.
+argument-hint: "[issue-or-pr-number-or-url]"
+---
+
 Review code changes against a GitHub issue or PR./
 
 Arguments: $ARGUMENTS (optional: issue/PR number or URL)
