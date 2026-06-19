@@ -5456,7 +5456,6 @@ export type LogLevelNode = {
 
 export type LogNode = {
   __typename: 'LogNode';
-  fileContent?: Maybe<Array<Scalars['String']['output']>>;
   fileNames?: Maybe<Array<Scalars['String']['output']>>;
 };
 
@@ -7836,7 +7835,6 @@ export type Queries = {
   locationTypes: LocationTypesResponse;
   /** Query omSupply "locations" entries */
   locations: LocationsResponse;
-  logContents: LogNode;
   logFileNames: LogNode;
   logLevel: LogLevelNode;
   logout: LogoutResponse;
@@ -8317,10 +8315,6 @@ export type QueriesLocationsArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<LocationSortInput>>;
   storeId: Scalars['String']['input'];
-};
-
-export type QueriesLogContentsArgs = {
-  fileName?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type QueriesMasterListLinesArgs = {

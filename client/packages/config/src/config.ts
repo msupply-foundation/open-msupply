@@ -27,6 +27,7 @@ export const Environment = {
   API_HOST: apiHost,
   FILE_URL: `${apiHost}/files?id=`,
   GRAPHQL_URL: `${apiHost}/graphql`,
+  LOG_URL: `${apiHost}/log`,
   PLUGIN_URL: pluginUrl,
   SYNC_FILES_URL: `${apiHost}/sync_files`,
   UPLOAD_FRIDGE_TAG: `${apiHost}/fridge-tag`,

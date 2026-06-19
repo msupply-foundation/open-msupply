@@ -382,14 +382,6 @@ impl GeneralQueries {
         log_file_names(ctx)
     }
 
-    pub async fn log_contents(
-        &self,
-        ctx: &Context<'_>,
-        file_name: Option<String>,
-    ) -> Result<LogNode> {
-        log_content(ctx, file_name)
-    }
-
     pub async fn log_level(&self, ctx: &Context<'_>) -> Result<LogLevelNode> {
         log_level(ctx)
     }

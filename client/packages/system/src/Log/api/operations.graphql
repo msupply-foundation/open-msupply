@@ -5,7 +5,6 @@ fragment LogLevelRow on LogLevelNode {
 
 fragment LogRow on LogNode {
   __typename
-  fileContent
   fileNames
 }
 
@@ -22,15 +21,6 @@ query logFileNames {
   logFileNames {
     __typename
 
-    ... on LogNode {
-      ...LogRow
-    }
-  }
-}
-
-query logContentsByFileName($fileName: String!) {
-  logContents(fileName: $fileName) {
-    __typename
     ... on LogNode {
       ...LogRow
     }

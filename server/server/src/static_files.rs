@@ -21,6 +21,7 @@ use serde::Deserialize;
 
 use repository::sync_file_reference_row::SyncFileReferenceRow;
 
+use service::auth::{Resource, ResourceAccessRequest};
 use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
@@ -42,6 +43,7 @@ pub(crate) struct UploadForm {
 // this function could be located in different module
 pub fn config_static_files(cfg: &mut web::ServiceConfig) {
     cfg.service(web::resource("/files").guard(guard::Get()).to(files));
+    cfg.service(download_log_file);
     cfg.service(
         web::scope("/sync_files")
             .service(download_sync_file)
@@ -49,6 +51,116 @@ pub fn config_static_files(cfg: &mut web::ServiceConfig) {
             .service(upload_sync_file)
             .wrap(limit_content_length()),
     );
+}
+
+#[derive(Deserialize)]
+struct LogFileQuery {
+    /// Name of the log file to fetch. If omitted, the current active log file is used.
+    file: Option<String>,
+    /// If set, only the trailing `tail` bytes of the (decompressed) file are returned.
+    /// The viewer uses this to avoid loading very large logs in full; downloads omit it.
+    tail: Option<usize>,
+    /// If true, the file is returned as a gzip archive for download (already-compressed
+    /// `.gz` files are sent as-is, plain files are compressed on the fly).
+    download: Option<bool>,
+}
+
+#[derive(Deserialize)]
+struct AuthCookieToken {
+    token: String,
+}
+
+/// Extracts the auth token from the `Authorization: Bearer ...` header (used by the
+/// web and Capacitor clients) falling back to the `auth` cookie.
+fn extract_auth_token(req: &HttpRequest) -> Option<String> {
+    if let Some(value) = req.headers().get("Authorization") {
+        if let Ok(header) = value.to_str() {
+            if let Some(token) = header.strip_prefix("Bearer ") {
+                return Some(token.to_string());
+            }
+        }
+    }
+    req.cookie("auth")
+        .and_then(|cookie| serde_json::from_str::<AuthCookieToken>(cookie.value()).ok())
+        .map(|auth_cookie| auth_cookie.token)
+}
+
+/// Streams a server log file as plain text. Used by the admin log viewer for both
+/// displaying and downloading logs, replacing the previous GraphQL query that
+/// returned the whole file as an array of lines.
+#[get("/log")]
+async fn download_log_file(
+    req: HttpRequest,
+    query: web::Query<LogFileQuery>,
+    service_provider: Data<ServiceProvider>,
+    auth_data: Data<AuthData>,
+) -> Result<HttpResponse, Error> {
+    let context = service_provider
+        .basic_context()
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
+
+    let token = extract_auth_token(&req);
+    service_provider
+        .validation_service
+        .validate(
+            &context,
+            &auth_data,
+            &token,
+            &None,
+            &ResourceAccessRequest {
+                resource: Resource::ServerAdmin,
+                store_id: None,
+                require_central_standalone: false,
+            },
+        )
+        .map_err(|_| InternalError::new("You are not authorised", StatusCode::UNAUTHORIZED))?;
+
+    let log_service = &service_provider.log_service;
+
+    // Whitelist the requested file against the actual log files in the log directory.
+    // This prevents path traversal (e.g. ?file=../../etc/passwd).
+    let file_names = log_service.get_log_file_names(&context).map_err(|err| {
+        InternalError::new(format!("{err}"), StatusCode::INTERNAL_SERVER_ERROR)
+    })?;
+    let LogFileQuery {
+        file,
+        tail,
+        download,
+    } = query.into_inner();
+    if let Some(name) = &file {
+        if !file_names.contains(name) {
+            return Err(InternalError::new("Log file not found", StatusCode::NOT_FOUND).into());
+        }
+    }
+
+    // Download: serve the log as a gzip archive (much smaller than the raw text).
+    if download.unwrap_or(false) {
+        let (download_name, bytes) = log_service
+            .get_log_file_download(&context, file)
+            .await
+            .map_err(|err| {
+                InternalError::new(format!("{err}"), StatusCode::INTERNAL_SERVER_ERROR)
+            })?;
+        return Ok(HttpResponse::Ok()
+            .content_type("application/gzip")
+            .insert_header(ContentDisposition {
+                disposition: DispositionType::Attachment,
+                parameters: vec![DispositionParam::Filename(download_name)],
+            })
+            .body(bytes));
+    }
+
+    // View: serve (a tail of) the log as plain text for display.
+    let log_content = log_service
+        .get_log_content(&context, file, tail)
+        .await
+        .map_err(|err| InternalError::new(format!("{err}"), StatusCode::INTERNAL_SERVER_ERROR))?;
+
+    Ok(HttpResponse::Ok()
+        .content_type("text/plain; charset=utf-8")
+        .insert_header(("x-log-truncated", log_content.truncated.to_string()))
+        .insert_header(("x-log-total-size", log_content.total_size.to_string()))
+        .body(log_content.content))
 }
 
 /// Returns an error response if the record is a purchase order in Sent or Finalised status,

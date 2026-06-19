@@ -9,40 +9,63 @@ import {
   Box,
   useDialog,
   useNotification,
-  useExportLog,
 } from '@openmsupply-client/common';
 import { Capacitor } from '@capacitor/core';
-import { useLog } from '@openmsupply-client/system';
+import {
+  LogFileContent,
+  useDownloadLogFile,
+  useLog,
+} from '@openmsupply-client/system';
 import { LogTextDisplay } from './LogTextDisplay';
+
+const formatMb = (bytes: number) => `${(bytes / 1_000_000).toFixed(1)} MB`;
 
 export const LogDisplay = ({
   fileName,
-  logContent,
-  setLogContent,
+  onContentLoaded,
 }: {
   fileName: string;
-  setLogContent: (content: string[]) => void;
-  logContent: string[];
+  onContentLoaded: (content: LogFileContent) => void;
 }) => {
+  const t = useTranslation();
   const {
     logContents: { data, isLoading },
   } = useLog(fileName);
 
   useEffect(() => {
-    if (!!data?.fileContent) {
-      setLogContent(data.fileContent);
+    if (data) {
+      onContentLoaded(data);
     }
-  }, [data?.fileContent]);
+  }, [data]);
 
   if (isLoading) {
     return <BasicSpinner />;
   }
 
-  return !!logContent ? (
-    <Box paddingTop={2} maxHeight={400}>
-      <LogTextDisplay logText={logContent} />
+  if (!data?.text) {
+    return null;
+  }
+
+  return (
+    <Box paddingTop={2}>
+      {data.truncated && (
+        <Typography
+          component="div"
+          sx={{
+            fontStyle: 'italic',
+            color: 'text.secondary',
+            paddingBottom: 0.5,
+          }}
+        >
+          {t('message.log-truncated', {
+            shown: formatMb(data.text.length),
+            total: formatMb(data.totalSize),
+          })}
+        </Typography>
+      )}
+      <LogTextDisplay logText={data.text} />
     </Box>
-  ) : null;
+  );
 };
 
 export const LogFileModal = ({
@@ -55,12 +78,12 @@ export const LogFileModal = ({
   const t = useTranslation();
   const { success, warning } = useNotification();
   const [logToRender, setLogToRender] = useState('');
-  const [logContent, setLogContent] = useState<string[]>([]);
+  const [logContent, setLogContent] = useState<LogFileContent | undefined>();
   const { Modal } = useDialog({ isOpen, onClose });
-  const exportLog = useExportLog();
+  const downloadLogFile = useDownloadLogFile();
 
   const [isSaving, setIsSaving] = useState(false);
-  const noLog = logContent.length === 0;
+  const noLog = !logContent?.text;
 
   const {
     fileNames: { data, isLoading, isError },
@@ -69,19 +92,27 @@ export const LogFileModal = ({
   const isAndroid = Capacitor.isNativePlatform();
 
   const saveLog = async () => {
-    if (noLog) {
+    if (!logContent?.text) {
       warning(t('message.nothing-to-save'))();
-    } else if (isSaving) {
+      return;
+    }
+    if (isSaving) {
       warning(t('message.already-saving'))();
-    } else {
-      setIsSaving(true);
-      exportLog(logContent.toString(), logToRender);
+      return;
+    }
+    setIsSaving(true);
+    try {
+      // Download the full log as a gzip archive (the viewer only holds the tail).
+      await downloadLogFile(logToRender);
+    } catch {
+      warning(t('error.unable-to-load-server-log'))();
+    } finally {
       setIsSaving(false);
     }
   };
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(logContent.toString()).then(() => {
+    navigator.clipboard.writeText(logContent?.text ?? '').then(() => {
       success(t('message.copy-success'))();
     });
   };
@@ -135,7 +166,7 @@ export const LogFileModal = ({
             {logToRender && (
               <DropdownMenuItem
                 onClick={() => {
-                  setLogContent([]);
+                  setLogContent(undefined);
                 }}
               >
                 {logToRender}
@@ -152,7 +183,7 @@ export const LogFileModal = ({
                   key={i}
                   onClick={() => {
                     setLogToRender(fileName);
-                    setLogContent([]);
+                    setLogContent(undefined);
                   }}
                 >
                   {fileName}
@@ -160,11 +191,7 @@ export const LogFileModal = ({
               ))}
           </DropdownMenu>
 
-          <LogDisplay
-            fileName={logToRender}
-            logContent={logContent}
-            setLogContent={setLogContent}
-          />
+          <LogDisplay fileName={logToRender} onContentLoaded={setLogContent} />
         </>
       )}
     </Modal>

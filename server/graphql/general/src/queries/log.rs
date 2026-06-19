@@ -5,15 +5,11 @@ use service::auth::{Resource, ResourceAccessRequest};
 #[derive(SimpleObject)]
 pub struct LogNode {
     pub file_names: Option<Vec<String>>,
-    pub file_content: Option<Vec<String>>,
 }
 
 impl LogNode {
-    fn from_domain(file_names: Option<Vec<String>>, file_content: Option<Vec<String>>) -> LogNode {
-        LogNode {
-            file_names,
-            file_content,
-        }
+    fn from_domain(file_names: Option<Vec<String>>) -> LogNode {
+        LogNode { file_names }
     }
 }
 
@@ -47,25 +43,7 @@ pub fn log_file_names(ctx: &Context<'_>) -> Result<LogNode> {
     let log_service = &service_provider.log_service;
     let file_names = log_service.get_log_file_names(&service_context)?;
 
-    Ok(LogNode::from_domain(Some(file_names), None))
-}
-
-pub fn log_content(ctx: &Context<'_>, file_name: Option<String>) -> Result<LogNode> {
-    validate_auth(
-        ctx,
-        &ResourceAccessRequest {
-            resource: Resource::ServerAdmin,
-            store_id: None,
-            require_central_standalone: false,
-        },
-    )?;
-
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
-    let log_service = &service_provider.log_service;
-    let content = log_service.get_log_content(&service_context, file_name)?;
-
-    Ok(LogNode::from_domain(Some(vec![content.0]), Some(content.1)))
+    Ok(LogNode::from_domain(Some(file_names)))
 }
 
 pub fn log_level(ctx: &Context<'_>) -> Result<LogLevelNode> {

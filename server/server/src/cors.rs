@@ -19,6 +19,12 @@ pub fn cors_policy(config_settings: &Settings) -> Cors {
                 // Required for GraphQL subscriptions over WebSocket
                 header::HeaderName::from_static("sec-websocket-protocol"),
             ])
+            // Allow the log viewer to read tail/size metadata from the /log endpoint
+            // when the frontend is served from a different origin to the API.
+            .expose_headers(vec![
+                header::HeaderName::from_static("x-log-truncated"),
+                header::HeaderName::from_static("x-log-total-size"),
+            ])
             .max_age(3600);
         for origin in config_settings.server.cors_origins.iter() {
             cors = cors.allowed_origin(origin);

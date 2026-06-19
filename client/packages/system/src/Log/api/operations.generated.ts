@@ -10,7 +10,6 @@ export type LogLevelRowFragment = {
 
 export type LogRowFragment = {
   __typename: 'LogNode';
-  fileContent?: Array<string> | null;
   fileNames?: Array<string> | null;
 };
 
@@ -25,24 +24,7 @@ export type LogFileNamesQueryVariables = Types.Exact<{ [key: string]: never }>;
 
 export type LogFileNamesQuery = {
   __typename: 'Queries';
-  logFileNames: {
-    __typename: 'LogNode';
-    fileContent?: Array<string> | null;
-    fileNames?: Array<string> | null;
-  };
-};
-
-export type LogContentsByFileNameQueryVariables = Types.Exact<{
-  fileName: Types.Scalars['String']['input'];
-}>;
-
-export type LogContentsByFileNameQuery = {
-  __typename: 'Queries';
-  logContents: {
-    __typename: 'LogNode';
-    fileContent?: Array<string> | null;
-    fileNames?: Array<string> | null;
-  };
+  logFileNames: { __typename: 'LogNode'; fileNames?: Array<string> | null };
 };
 
 export const LogLevelRowFragmentDoc = gql`
@@ -54,7 +36,6 @@ export const LogLevelRowFragmentDoc = gql`
 export const LogRowFragmentDoc = gql`
   fragment LogRow on LogNode {
     __typename
-    fileContent
     fileNames
   }
 `;
@@ -72,17 +53,6 @@ export const LogLevelDocument = gql`
 export const LogFileNamesDocument = gql`
   query logFileNames {
     logFileNames {
-      __typename
-      ... on LogNode {
-        ...LogRow
-      }
-    }
-  }
-  ${LogRowFragmentDoc}
-`;
-export const LogContentsByFileNameDocument = gql`
-  query logContentsByFileName($fileName: String!) {
-    logContents(fileName: $fileName) {
       __typename
       ... on LogNode {
         ...LogRow
@@ -143,24 +113,6 @@ export function getSdk(
             signal,
           }),
         'logFileNames',
-        'query',
-        variables
-      );
-    },
-    logContentsByFileName(
-      variables: LogContentsByFileNameQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
-    ): Promise<LogContentsByFileNameQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<LogContentsByFileNameQuery>({
-            document: LogContentsByFileNameDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'logContentsByFileName',
         'query',
         variables
       );
