@@ -7,13 +7,12 @@ import {
   useTranslation,
   AppFooterPortal,
   useDeleteConfirmation,
-  useConfirmationModal,
-  useNavigate,
-  useNotification,
-  RouteBuilder,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
-import { InboundRowFragment, useInboundList } from '../api';
+import {
+  InboundRowFragment,
+  useInboundList,
+  useDuplicateInbound,
+} from '../api';
 import { canDeleteInbound } from '../../utils';
 
 export const FooterComponent = ({
@@ -24,13 +23,11 @@ export const FooterComponent = ({
   resetRowSelection: () => void;
 }) => {
   const t = useTranslation();
-  const navigate = useNavigate();
-  const { success, warning } = useNotification();
 
   const {
     delete: { deleteInbounds },
-    duplicate: { duplicate },
   } = useInboundList();
+  const { duplicateInbound, hasMutatePermission } = useDuplicateInbound();
 
   const deleteAction = async () => {
     await deleteInbounds(selectedRows);
@@ -51,49 +48,10 @@ export const FooterComponent = ({
     },
   });
 
+  const source = selectedRows[0];
   const onlyOneSelected = selectedRows.length === 1;
-
-  const getDuplicateConfirmation = useConfirmationModal({
-    title: t('heading.are-you-sure'),
-    message: '',
-  });
-
-  const duplicateAction = () => {
-    const source = selectedRows[0];
-    if (!source) return;
-    getDuplicateConfirmation({
-      message: t('messages.confirm-duplicate-shipment', {
-        number: source.invoiceNumber,
-        supplierName: source.otherPartyName,
-      }),
-      onConfirm: async () => {
-        const result = await duplicate(source.id);
-        if (!result) return;
-
-        const { id, invoiceNumber, skippedItemCount } = result;
-        resetRowSelection();
-        success(
-          t('messages.shipment-copied', {
-            newNumber: invoiceNumber,
-            sourceNumber: source.invoiceNumber,
-          })
-        )();
-        if (skippedItemCount > 0) {
-          warning(
-            t('messages.shipment-copied-skipped-items', {
-              count: skippedItemCount,
-            })
-          )();
-        }
-        navigate(
-          RouteBuilder.create(AppRoute.Replenishment)
-            .addPart(AppRoute.InboundShipment)
-            .addPart(id)
-            .build()
-        );
-      },
-    });
-  };
+  const canDuplicate =
+    onlyOneSelected && !!source && hasMutatePermission(!!source.purchaseOrder);
 
   const actions: Action[] = [
     {
@@ -104,8 +62,8 @@ export const FooterComponent = ({
     {
       label: t('button.make-a-copy'),
       icon: <CopyIcon />,
-      onClick: duplicateAction,
-      disabled: !onlyOneSelected,
+      onClick: () => source && duplicateInbound(source, resetRowSelection),
+      disabled: !canDuplicate,
       tooltip: onlyOneSelected
         ? undefined
         : t('messages.select-single-shipment-to-copy'),

@@ -26,7 +26,6 @@ import {
 } from '@openmsupply-client/invoices/src/utils';
 import { inboundParsers } from '../../api';
 import { useInboundDelete } from './useInboundDelete';
-import { useDuplicate } from './useInboundList';
 import { useCallback, useMemo } from 'react';
 
 export const useInboundShipment = (id?: string) => {
@@ -166,8 +165,6 @@ export const useInboundShipment = (id?: string) => {
     return result;
   };
 
-  const { duplicate, isDuplicating, duplicateError } = useDuplicate();
-
   const invalidateQuery = () => {
     queryClient.invalidateQueries({
       queryKey: [INBOUND, INBOUND_LINE, invoiceId],
@@ -188,7 +185,6 @@ export const useInboundShipment = (id?: string) => {
     update: { update, saveDraft, isUpdating, updateError },
     create: { create, isCreating, createError },
     delete: { deleteInbound, isDeleting, deleteError },
-    duplicate: { duplicate, isDuplicating, duplicateError },
     isDirty,
     updatePatch,
     rows,
