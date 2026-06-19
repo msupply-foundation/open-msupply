@@ -89,7 +89,7 @@ impl ChangelogTableName {
                 transport: V5,
             },
             ItemStoreJoin => SyncStyle {
-                authoring: vec![Central],
+                authoring: vec![Anyone],
                 distribution: vec![D::Remote],
                 transport: V5,
             },
@@ -172,23 +172,23 @@ impl ChangelogTableName {
             },
 
             Requisition => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![RemoteOwned, Transfer],
                 distribution: vec![D::RemoteOwned, D::Transfer],
                 transport: V5,
             },
             RequisitionLine => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![RemoteOwned, Transfer],
                 distribution: vec![D::RemoteOwned, D::Transfer],
                 transport: V5,
             },
 
             Invoice => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![RemoteOwned, Transfer, Patient],
                 distribution: vec![D::RemoteOwned, D::Transfer, D::Patient],
                 transport: V5,
             },
             InvoiceLine => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![RemoteOwned, Transfer, Patient],
                 distribution: vec![D::RemoteOwned, D::Transfer, D::Patient],
                 transport: V5,
             },
@@ -308,8 +308,6 @@ impl ChangelogTableName {
                 distribution: vec![D::Central],
                 transport: V6,
             },
-
-            // Also the catch-all for tables not yet classified into a more specific style.
             Abbreviation => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
@@ -540,23 +538,23 @@ impl ChangelogTableName {
             },
 
             Name => SyncStyle {
-                authoring: vec![Patient],
+                authoring: vec![Central, Patient],
                 distribution: vec![D::Central, D::Patient],
                 transport: V5_V6,
             },
 
             Encounter => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![Remote, Patient],
                 distribution: vec![D::Remote, D::Patient],
                 transport: V6,
             },
             Vaccination => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![Remote, Patient],
                 distribution: vec![D::Remote, D::Patient],
                 transport: V6,
             },
             ContactTrace => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![Remote, Patient],
                 distribution: vec![D::Remote, D::Patient],
                 transport: V6,
             },
@@ -589,12 +587,12 @@ impl ChangelogTableName {
             },
 
             PluginData => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![Central, Remote],
                 distribution: vec![D::Central, D::Remote],
                 transport: V6,
             },
             Preference => SyncStyle {
-                authoring: vec![Central],
+                authoring: vec![Central, Remote],
                 distribution: vec![D::Central, D::Remote],
                 transport: V6,
             },
