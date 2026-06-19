@@ -50,10 +50,7 @@ public class MainActivity extends BridgeActivity {
                     "document.documentElement.style.setProperty('--inset-left',   '" + (bars.left / d)   + "px');" +
                     "document.documentElement.style.setProperty('--inset-right',  '" + (bars.right / d)  + "px');";
 
-            // Apply immediately to the currently loaded document. The insets are
-            // set on the documentElement, so they are lost whenever the WebView
-            // navigates to a new document (e.g. loading page -> real app); see
-            // onPageFinished below where we re-inject after every page load.
+            // Apply immediately to the currently loaded document
             ((WebView) v).evaluateJavascript(js, null);
 
             return WindowInsetsCompat.CONSUMED;
@@ -62,10 +59,6 @@ public class MainActivity extends BridgeActivity {
         // Re-inject the inset variables after every page navigation. A full page
         // load replaces the document, discarding any custom properties previously
         // set on documentElement, so the values must be re-applied to the new page.
-        // Registering a WebViewListener (rather than replacing the WebViewClient)
-        // keeps Capacitor's own BridgeWebViewClient — and its local-server request
-        // interception and routing — intact; onPageLoaded is fired from its
-        // onPageFinished.
         getBridge().addWebViewListener(new WebViewListener() {
             @Override
             public void onPageLoaded(WebView view) {
@@ -96,7 +89,6 @@ public class MainActivity extends BridgeActivity {
                         if (AppState.getInstance().isWebViewReady()) {
                             // The content is ready: start drawing
                             content.getViewTreeObserver().removeOnPreDrawListener(this);
-
                             return true;
                         } else {
                             // The content isn't ready. Suspend.
