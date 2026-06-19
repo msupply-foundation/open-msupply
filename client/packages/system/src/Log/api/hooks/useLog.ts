@@ -14,7 +14,7 @@ const authHeaders = () => ({
 // The viewer only loads the tail of a log by default, so very large files (which
 // can be tens or hundreds of MB) render instantly. The full file is still
 // available via the download/save button.
-export const LOG_VIEW_TAIL_BYTES = 2_000_000;
+export const LOG_VIEW_TAIL_BYTES = 1_000_000;
 
 export interface LogFileContent {
   text: string;
