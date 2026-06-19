@@ -6,9 +6,9 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.webkit.WebView;
 
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
-import androidx.lifecycle.ViewModelProvider;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.getcapacitor.BridgeActivity;
 import java.io.File;
@@ -19,6 +19,7 @@ public class MainActivity extends BridgeActivity {
     RemoteServer server = new RemoteServer();
     DiscoveryConstants discoveryConstants;
     private FileManager fileManager;
+    private String js = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +35,22 @@ public class MainActivity extends BridgeActivity {
         WebView webView = getBridge().getWebView();
         webView.addJavascriptInterface(new LoadingPage(this), "LoadingPageInject");
         webView.loadUrl(LoadingPage.URL);
+
+        ViewCompat.setOnApplyWindowInsetsListener(webView, (v, insets) -> {
+            Insets bars = insets.getInsets(
+                    WindowInsetsCompat.Type.systemBars()
+                            | WindowInsetsCompat.Type.displayCutout()
+                            | WindowInsetsCompat.Type.ime());
+
+            float d = v.getResources().getDisplayMetrics().density;
+            js = "document.documentElement.style.setProperty('--inset-top',    '" + (bars.top / d)    + "px');" +
+                            "document.documentElement.style.setProperty('--inset-bottom', '" + (bars.bottom / d) + "px');" +
+                            "document.documentElement.style.setProperty('--inset-left',   '" + (bars.left / d)   + "px');" +
+                            "document.documentElement.style.setProperty('--inset-right',  '" + (bars.right / d)  + "px');";
+
+            return WindowInsetsCompat.CONSUMED;
+        });
+
 
         // The LoadingPage IS our loading UX now — release the native splash on the
         // next UI message (after loadData has been queued for rendering) so the
@@ -55,6 +72,8 @@ public class MainActivity extends BridgeActivity {
                         if (AppState.getInstance().isWebViewReady()) {
                             // The content is ready: start drawing
                             content.getViewTreeObserver().removeOnPreDrawListener(this);
+                            webView.evaluateJavascript(js, null);
+
                             return true;
                         } else {
                             // The content isn't ready. Suspend.

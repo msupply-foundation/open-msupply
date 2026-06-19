@@ -39,7 +39,12 @@ export const AppFooter = ({
   const hideFooter = fullScreen || keyboardIsOpen;
 
   return (
-    <Box sx={{ display: hideFooter ? 'none' : undefined }}>
+    <Box
+      sx={{
+        display: hideFooter ? 'none' : undefined,
+        paddingBottom: 'var(--safe-area-inset-bottom)',
+      }}
+    >
       <Container ref={appFooterRef} style={{ flex: 0 }} />
       <Container
         ref={appSessionDetailsRef}
