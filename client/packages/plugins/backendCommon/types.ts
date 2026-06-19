@@ -41,4 +41,10 @@ declare global {
   // Synchronous http request, similar to browser `fetch` but blocking (boajs has no event loop).
   // Body is returned as text, use `JSON.parse(response.body)` for json responses.
   var fetch: (_: PluginTypes['fetch']['input']) => PluginTypes['fetch']['output'];
+  // Adds an email to the queue (the central server's scheduled task sends it).
+  // Both html_body and text_body are sent as a multipart/alternative message,
+  // so supply both. Returns the id of the queued email row.
+  var enqueue_email: (
+    _: PluginTypes['enqueue_email']['input']
+  ) => PluginTypes['enqueue_email']['output'];
 }
