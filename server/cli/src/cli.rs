@@ -310,6 +310,7 @@ async fn initialise_from_central(
     let sync_settings = settings
         .clone()
         .sync
+        .filter(|s| s.has_core_sync_settings())
         .ok_or(anyhow!("sync settings not set in yaml configurations"))?;
     let central_server_url = sync_settings.url.clone();
 
@@ -439,6 +440,7 @@ async fn main() -> anyhow::Result<()> {
             let url = settings
                 .sync
                 .clone()
+                .filter(|s| s.has_core_sync_settings())
                 .ok_or(anyhow!("sync settings not set in yaml configurations"))?
                 .url;
             let (service_provider, ctx) = initialise_from_central(settings, &users).await?;

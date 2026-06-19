@@ -93,14 +93,20 @@ pub async fn get_token(
     tokio::task::spawn_blocking(move || {
         let ctx = service_provider.basic_context()?;
 
+        // When `disable_remote_site_auth` is set, skip the "token already allocated" guard
+        // (mint a fresh token, overwriting any existing one) and the hardware-id match, so a
+        // site can re-pair from a new machine without an admin reset. Site name + password
+        // were still verified above.
+        let disable_auth = ctx.disable_remote_site_auth;
+
         ctx.connection
             .transaction_sync(|connection| {
-                if site.token.is_some() {
+                if !disable_auth && site.token.is_some() {
                     return Err(SyncError::TokenAlreadyAllocated);
                 }
 
                 let hardware_id = match &site.hardware_id {
-                    Some(existing) if existing != &input.hardware_id => {
+                    Some(existing) if !disable_auth && existing != &input.hardware_id => {
                         return Err(SyncError::HardwareIdMismatch);
                     }
                     _ => input.hardware_id.clone(),
@@ -243,9 +249,14 @@ fn validate(
     let site =
         get_site_by_token(&ctx.connection, &common.token)?.ok_or(SyncError::TokenNotFound)?;
 
-    match site.hardware_id.as_deref() {
-        Some(id) if id == common.hardware_id => {}
-        _ => return Err(SyncError::HardwareIdMismatch),
+    // The token (above) identifies the site and is always required. The hardware-id match
+    // pins the site to a machine; it can be disabled for recovery/migration via the
+    // `disable_remote_site_auth` sync setting.
+    if !ctx.disable_remote_site_auth {
+        match site.hardware_id.as_deref() {
+            Some(id) if id == common.hardware_id => {}
+            _ => return Err(SyncError::HardwareIdMismatch),
+        }
     }
 
     // Defense in depth: any v7 endpoint must refuse a site that has not been
@@ -754,6 +765,88 @@ mod tests {
         .err()
         .unwrap();
         assert!(matches!(err, SyncError::SyncVersionMismatch { .. }));
+    }
+
+    #[actix_rt::test]
+    async fn get_token_with_disable_remote_site_auth_skips_token_and_hardware_id_guards() {
+        let (_, connection, connection_manager, _) =
+            setup_all("get_token_disable_remote_site_auth", MockDataInserts::none()).await;
+        test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
+            .unwrap();
+
+        // Site already has a token AND a different hardware id — normally get_token rejects with
+        // TokenAlreadyAllocated / HardwareIdMismatch.
+        let site = test_site(&connection, Some("existing_token".to_string()));
+        SiteRowRepository::new(&connection)
+            .upsert(&SiteRow {
+                hardware_id: Some("old-hw".to_string()),
+                ..site
+            })
+            .unwrap();
+
+        let mut sp = ServiceProvider::new(connection_manager);
+        sp.disable_remote_site_auth = true;
+        let sp = Arc::new(sp);
+
+        let output = get_token(sp, input()).await.unwrap();
+
+        // A fresh token is minted (overwriting the old one) and the hardware id is overwritten
+        // with the incoming one.
+        assert!(!output.token.is_empty());
+        assert_ne!(output.token, "existing_token");
+        let stored = SiteRowRepository::new(&connection)
+            .find_one_by_id(1)
+            .unwrap()
+            .unwrap();
+        assert_eq!(stored.token.as_deref(), Some(output.token.as_str()));
+        assert_eq!(stored.hardware_id.as_deref(), Some(HARDWARE_ID));
+    }
+
+    #[actix_rt::test]
+    async fn validate_with_disable_remote_site_auth_ignores_hardware_id_mismatch() {
+        let (_, connection, connection_manager, _) =
+            setup_all("validate_disable_remote_site_auth", MockDataInserts::none()).await;
+        test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
+            .unwrap();
+        test_site(&connection, None);
+
+        // Allocate a token normally (auth enabled).
+        let sp = Arc::new(ServiceProvider::new(connection_manager.clone()));
+        let allocated = get_token(sp, input()).await.unwrap();
+
+        let wrong_hw = Common {
+            token: allocated.token.clone(),
+            hardware_id: "wrong_hw".to_string(),
+            version: Version::from_package_json(),
+        };
+
+        // With auth enabled a mismatched hardware id is rejected.
+        let sp = Arc::new(ServiceProvider::new(connection_manager.clone()));
+        let err = validate(&sp, &wrong_hw).err().unwrap();
+        assert!(matches!(err, SyncError::HardwareIdMismatch));
+
+        // With disable_remote_site_auth the mismatch is ignored.
+        let mut sp = ServiceProvider::new(connection_manager);
+        sp.disable_remote_site_auth = true;
+        let sp = Arc::new(sp);
+        let (site, _) = validate(&sp, &wrong_hw).unwrap();
+        assert_eq!(site.id, 1);
+
+        // The token still identifies the site, so an unknown token is rejected even with auth off.
+        let err = validate(
+            &sp,
+            &Common {
+                token: "wrong_token".to_string(),
+                ..wrong_hw
+            },
+        )
+        .err()
+        .unwrap();
+        assert!(matches!(err, SyncError::TokenNotFound));
     }
 
     #[actix_rt::test]
