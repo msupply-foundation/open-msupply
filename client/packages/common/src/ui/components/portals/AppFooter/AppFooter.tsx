@@ -25,7 +25,9 @@ export const AppFooter = ({
   textColor,
 }: AppFooterProps) => {
   const setAppFooterRef = useHostContext(s => s.setAppFooterRef);
-  const setAppSessionDetailsRef = useHostContext(s => s.setAppSessionDetailsRef);
+  const setAppSessionDetailsRef = useHostContext(
+    s => s.setAppSessionDetailsRef
+  );
   const fullScreen = useHostContext(s => s.fullScreen);
   const { keyboardIsOpen } = useKeyboard();
   const appFooterRef = useRef(null);
@@ -42,7 +44,7 @@ export const AppFooter = ({
     <Box
       sx={{
         display: hideFooter ? 'none' : undefined,
-        paddingBottom: 'var(--safe-area-inset-bottom)',
+        paddingBottom: 'var(--inset-bottom)',
       }}
     >
       <Container ref={appFooterRef} style={{ flex: 0 }} />
