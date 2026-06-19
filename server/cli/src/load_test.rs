@@ -591,6 +591,7 @@ impl LoadTest {
                         central_pull: 512,
                     },
                     disable_integration_transaction: false,
+                    disable_remote_site_auth: false,
                 }),
                 logging: None,
                 backup: None,

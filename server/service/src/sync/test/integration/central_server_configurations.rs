@@ -155,6 +155,7 @@ impl ConfigureCentralServer {
                 // and a small number makes integration tests super slow
                 batch_size: Default::default(),
                 disable_integration_transaction: false,
+                disable_remote_site_auth: false,
             },
             new_site_properties,
         })

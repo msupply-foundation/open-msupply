@@ -21,6 +21,9 @@
 #     ] # Used to set the allowed Origin in Cross Origin Request Security
 #   base_dir: "app_data"
 # sync:
+#   # The credential fields below (url/username/password_sha256/interval_seconds) are all-or-nothing:
+#   # set them all to configure upstream sync, or omit them all to carry only flags such as
+#   # `disable_remote_site_auth` (e.g. on a central server). A partial set is a startup error.
 #   url: "http://localhost:2048"
 #   username: "demo"
 #   # 'd74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1' = 'pass'
@@ -33,6 +36,11 @@
 #   # Set to true to disable the outer transaction during integration. This can prevent PostgreSQL
 #   # from exhausting max_locks_per_transaction during large store migrations. Use with caution.
 #   disable_integration_transaction: false
+#   # Central server only. Set to true to skip v7 remote-site auth checks: the hardware-id match
+#   # and, during token issuance, the hardware-id match and "token already allocated" guard (so a
+#   # site can re-pair from a new machine without an admin reset). Site name + password are still
+#   # required. For recovery/migration only — leave false in normal operation.
+#   disable_remote_site_auth: false
 # database:
 #   host: "localhost"
 #   port: 5432

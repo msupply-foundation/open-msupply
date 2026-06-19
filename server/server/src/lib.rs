@@ -162,6 +162,14 @@ pub async fn start_server(
         .as_ref()
         .map(|s| s.disable_integration_transaction)
         .unwrap_or(false);
+    let disable_remote_site_auth = settings
+        .sync
+        .as_ref()
+        .map(|s| s.disable_remote_site_auth)
+        .unwrap_or(false);
+    if disable_remote_site_auth {
+        log::warn!("disable_remote_site_auth is set — v7 remote-site hardware-id/token checks are DISABLED");
+    }
     let service_provider = Data::new(ServiceProvider::new_with_triggers(
         connection_manager.clone(),
         processors_trigger,
@@ -172,6 +180,7 @@ pub async fn start_server(
         subscription_trigger,
         batch_size,
         disable_integration_transaction,
+        disable_remote_site_auth,
     ));
     let loaders = get_loaders(&connection_manager, service_provider.clone()).await;
     let certificates = Certificates::try_load(&settings.server).unwrap();
@@ -447,7 +456,12 @@ pub async fn start_server(
 
     // CHECK SYNC STATUS
     info!("Checking sync status..");
-    let yaml_sync_settings = settings.sync.clone();
+    // A `sync:` block may carry only flags (e.g. `disable_remote_site_auth`) without upstream-sync
+    // credentials — treat such a block as "no sync settings" for the credential/seed/auth logic.
+    let yaml_sync_settings = settings
+        .sync
+        .clone()
+        .filter(|s| s.has_core_sync_settings());
     let database_sync_settings = service_provider
         .settings
         .sync_settings(&service_context)
