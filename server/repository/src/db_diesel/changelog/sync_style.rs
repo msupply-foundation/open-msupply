@@ -8,7 +8,7 @@ pub struct SyncVersions {
     pub is_v5: bool,
 }
 
-// Authoring axis — the validation/sanity-check axis: drives validation of incoming rows on push
+// Authoring axis — what central accepts when validating an incoming push; a sanity check, not routing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Authoring {
     Central,     // reject any remote push — central manages it
@@ -20,7 +20,7 @@ pub enum Authoring {
     LegacyOnly,  // not a v7 record; reject
 }
 
-// Distribution axis — who receives a row on pull-down (drives changelog query filter)
+// Distribution axis — which sites central sends each row to; drives the changelog filters.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, strum::EnumIter)]
 pub enum Distribution {
     Central,        // sent everywhere when keyless (store_id/patient_id null)

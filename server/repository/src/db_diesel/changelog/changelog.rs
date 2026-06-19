@@ -544,14 +544,9 @@ impl ChangelogFilter {
             .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
             .ok_or(LegacyDataFilterError::CentralSiteIdNotSet)?;
 
-        // OG central only takes v5-only-transport records
-        let options = SyncVersions {
-            is_v6: false,
-            is_v5: true,
-        };
-
         let table_names: Vec<_> = ChangelogTableName::iter()
-            .filter(|table| table.sync_style().transport == options)
+            // OG central takes all records that have a V5 transport tag
+            .filter(|table| table.sync_style().transport.is_v5)
             .collect();
 
         Ok(C::And(vec![
