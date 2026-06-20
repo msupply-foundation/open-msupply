@@ -5,9 +5,9 @@ use crate::{
     sync::translations::{store::StoreTranslation, user::UserTranslation, IntegrationOperation},
 };
 use repository::{
-    EqualFilter, PermissionType, StorageConnection, SyncBufferRow, UserPermissionFilter,
-    UserPermissionRepository, UserPermissionRow, UserPermissionRowDelete, UserStoreJoinRow,
-    UserStoreJoinRowDelete, UserStoreJoinRowRepository,
+    ChangelogTableName, EqualFilter, PermissionType, Row, StorageConnection, SyncBufferRow,
+    UserPermissionFilter, UserPermissionRepository, UserPermissionRow, UserStoreJoinRow,
+    UserStoreJoinRowRepository,
 };
 use serde::{Deserialize, Serialize};
 
@@ -86,20 +86,24 @@ impl SyncTranslation for UserStorePermissionTranslation {
 
         if !can_login {
             // delete it all!!
-            integration_operations.push(IntegrationOperation::delete(UserStoreJoinRowDelete(
+            integration_operations.push(IntegrationOperation::delete(
+                ChangelogTableName::UserStoreJoin,
                 user_store_join_row.id,
-            )));
+            ));
             for permission in existing_permissions {
-                integration_operations.push(IntegrationOperation::delete(UserPermissionRowDelete(
+                integration_operations.push(IntegrationOperation::delete(
+                    ChangelogTableName::UserPermission,
                     permission.id,
-                )))
+                ))
             }
             return Ok(PullTranslateResult::IntegrationOperations(
                 integration_operations,
             ));
         }
 
-        integration_operations.push(IntegrationOperation::upsert(user_store_join_row));
+        integration_operations.push(IntegrationOperation::upsert(Row::UserStoreJoin(
+            user_store_join_row,
+        )));
 
         let new_permissions = map_api_permissions(permissions);
         let mut new_permission_set = permissions_to_domain(new_permissions);
@@ -116,20 +120,27 @@ impl SyncTranslation for UserStorePermissionTranslation {
 
         for permission in new_permission_set {
             if existing_permissions.remove(&permission).is_none() {
-                integration_operations.push(IntegrationOperation::upsert(UserPermissionRow {
-                    id: UserPermissionRow::deterministic_id(&user_id, Some(&store_id), &permission),
-                    user_id: user_id.clone(),
-                    store_id: Some(store_id.clone()),
-                    permission: permission.clone(),
-                    context_id: None,
-                }));
+                integration_operations.push(IntegrationOperation::upsert(Row::UserPermission(
+                    UserPermissionRow {
+                        id: UserPermissionRow::deterministic_id(
+                            &user_id,
+                            Some(&store_id),
+                            &permission,
+                        ),
+                        user_id: user_id.clone(),
+                        store_id: Some(store_id.clone()),
+                        permission: permission.clone(),
+                        context_id: None,
+                    },
+                )));
             }
         }
 
         for (_, row) in existing_permissions {
-            integration_operations.push(IntegrationOperation::delete(UserPermissionRowDelete(
+            integration_operations.push(IntegrationOperation::delete(
+                ChangelogTableName::UserPermission,
                 row.id,
-            )))
+            ))
         }
 
         Ok(PullTranslateResult::IntegrationOperations(
@@ -237,8 +248,8 @@ mod tests {
             )
             .unwrap();
         let expected = PullTranslateResult::IntegrationOperations(vec![
-            IntegrationOperation::upsert(expected_join),
-            IntegrationOperation::delete(UserPermissionRowDelete(remove.id)),
+            IntegrationOperation::upsert(Row::UserStoreJoin(expected_join)),
+            IntegrationOperation::delete(ChangelogTableName::UserPermission, remove.id),
         ]);
         assert_eq!(result, expected);
     }
@@ -295,8 +306,8 @@ mod tests {
             )
             .unwrap();
         let expected = PullTranslateResult::IntegrationOperations(vec![
-            IntegrationOperation::delete(UserStoreJoinRowDelete(join.id)),
-            IntegrationOperation::delete(UserPermissionRowDelete(permission.id)),
+            IntegrationOperation::delete(ChangelogTableName::UserStoreJoin, join.id),
+            IntegrationOperation::delete(ChangelogTableName::UserPermission, permission.id),
         ]);
         assert_eq!(result, expected);
     }

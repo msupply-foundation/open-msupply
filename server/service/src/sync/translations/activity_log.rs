@@ -68,7 +68,7 @@ impl SyncTranslation for ActivityLogTranslation {
             changed_from: data.changed_from,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::ActivityLog(result)))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

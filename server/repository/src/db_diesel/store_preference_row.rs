@@ -1,8 +1,7 @@
 use super::{user_store_join_row::user_store_join, StorageConnection};
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType,
-    SourceSiteId, Upsert,
+    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
 };
 
 use super::{store_row::store, user_row::user_account};
@@ -112,7 +111,7 @@ impl<'a> StorePreferenceRowRepository<'a> {
         StorePreferenceRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
         diesel::insert_into(store_preference::table)
             .values(row)
             .on_conflict(store_preference::id)
@@ -147,14 +146,6 @@ impl<'a> StorePreferenceRowRepository<'a> {
             .map(|r| r.unwrap_or_default())
     }
 
-    fn find_one_by_id(&self, id: &str) -> Result<Option<StorePreferenceRow>, RepositoryError> {
-        let result = store_preference::table
-            .filter(store_preference::id.eq(id))
-            .first(self.connection.lock().connection())
-            .optional();
-        result.map_err(RepositoryError::from)
-    }
-
     pub fn find_many_by_id(
         &self,
         ids: &[String],
@@ -162,36 +153,5 @@ impl<'a> StorePreferenceRowRepository<'a> {
         Ok(store_preference::table
             .filter(store_preference::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
-    }
-}
-
-impl Upsert for StorePreferenceRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        StorePreferenceRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            StorePreferenceRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

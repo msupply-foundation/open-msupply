@@ -6,7 +6,7 @@ use super::{
 use chrono::NaiveDate;
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRowRepository,
-    ItemRowRepository, StorageConnection, SyncBufferRow,
+    ItemRowRepository, Row, StorageConnection, SyncBufferRow,
 };
 use serde::Deserialize;
 use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
@@ -108,7 +108,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             return match linked_line {
                 Some(mut line) => {
                     line.purchase_order_line_id = Some(po_line_id);
-                    Ok(PullTranslateResult::upsert(line))
+                    Ok(PullTranslateResult::upsert(Row::InvoiceLine(line)))
                 }
                 None => Ok(PullTranslateResult::Ignored(format!(
                     "no invoice_line with legacy_goods_received_line_id {} found",
@@ -163,7 +163,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             legacy_goods_received_line_id: None,
         };
 
-        Ok(PullTranslateResult::upsert(line))
+        Ok(PullTranslateResult::upsert(Row::InvoiceLine(line)))
     }
 }
 

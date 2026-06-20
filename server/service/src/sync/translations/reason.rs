@@ -1,6 +1,6 @@
 use repository::{
-    reason_option_row::{ReasonOptionRow, ReasonOptionRowDelete, ReasonOptionType},
-    StorageConnection, SyncBufferRow,
+    reason_option_row::{ReasonOptionRow, ReasonOptionType},
+    ChangelogTableName, Row, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -72,12 +72,12 @@ impl SyncTranslation for ReasonTranslation {
             LegacyOptionsType::ClosedVialWastage => ReasonOptionType::ClosedVialWastage,
         };
 
-        let result = PullTranslateResult::upsert(ReasonOptionRow {
+        let result = PullTranslateResult::upsert(Row::ReasonOption(ReasonOptionRow {
             id: data.id.to_string(),
             r#type: reason_option_type,
             is_active: data.is_active,
             reason: data.reason,
-        });
+        }));
 
         Ok(result)
     }
@@ -88,9 +88,10 @@ impl SyncTranslation for ReasonTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(ReasonOptionRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::ReasonOption,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 }
 

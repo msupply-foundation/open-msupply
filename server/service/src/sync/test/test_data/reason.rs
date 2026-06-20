@@ -1,5 +1,5 @@
 use crate::sync::test::TestSyncIncomingRecord;
-use repository::{ReasonOptionRow, ReasonOptionType};
+use repository::{ReasonOptionRow, ReasonOptionType, Row};
 
 const INVENTORY_ADJUSTMENT_REASON_1: (&str, &str) = (
     "positive_adjustment",
@@ -34,32 +34,32 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             "options",
             INVENTORY_ADJUSTMENT_REASON_1,
-            ReasonOptionRow {
+            Row::ReasonOption(ReasonOptionRow {
                 id: INVENTORY_ADJUSTMENT_REASON_1.0.to_string(),
                 r#type: ReasonOptionType::PositiveInventoryAdjustment,
                 is_active: true,
                 reason: "Found".to_string(),
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             "options",
             RETURN_REASON_1,
-            ReasonOptionRow {
+            Row::ReasonOption(ReasonOptionRow {
                 id: RETURN_REASON_1.0.to_string(),
                 r#type: ReasonOptionType::ReturnReason,
                 is_active: true,
                 reason: "Damaged".to_string(),
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             "options",
             CLOSED_VIAL_WASTAGE_REASON_1,
-            ReasonOptionRow {
+            Row::ReasonOption(ReasonOptionRow {
                 id: CLOSED_VIAL_WASTAGE_REASON_1.0.to_string(),
                 r#type: ReasonOptionType::ClosedVialWastage,
                 is_active: true,
                 reason: "VVM Status Unusable".to_string(),
-            },
+            }),
         ),
     ]
 }

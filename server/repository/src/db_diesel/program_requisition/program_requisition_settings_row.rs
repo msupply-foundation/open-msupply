@@ -5,8 +5,7 @@ use crate::{
     repository_error::RepositoryError, StorageConnection,
 };
 use crate::{
-    name_oms_fields, ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId,
-    Upsert,
+    name_oms_fields, ChangelogRepository, RowActionType, SourceSiteId,
 };
 use diesel::prelude::*;
 
@@ -42,7 +41,10 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
         ProgramRequisitionSettingsRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &ProgramRequisitionSettingsRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(
+        &self,
+        row: &ProgramRequisitionSettingsRow,
+    ) -> Result<(), RepositoryError> {
         diesel::insert_into(program_requisition_settings::table)
             .values(row)
             .on_conflict(program_requisition_settings::id)
@@ -102,6 +104,10 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
         Ok(())
     }
 
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        self._delete(record_id)
+    }
+
     pub fn delete(&self, settings_id: &str) -> Result<(), RepositoryError> {
         self._delete(settings_id)?;
         let changelog = ProgramRequisitionSettingsRow::generate_changelog(
@@ -114,68 +120,3 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct ProgramRequisitionSettingsRowDelete(pub String);
-impl Delete for ProgramRequisitionSettingsRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let repo = ProgramRequisitionSettingsRowRepository::new(con);
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                ProgramRequisitionSettingsRow::generate_changelog(
-                    self.0.clone(),
-                    con,
-                    RowActionType::Delete,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        repo._delete(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ProgramRequisitionSettingsRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
-}
-
-impl Upsert for ProgramRequisitionSettingsRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        ProgramRequisitionSettingsRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ProgramRequisitionSettingsRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}

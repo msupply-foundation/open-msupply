@@ -1,7 +1,6 @@
 use super::{IndicatorValueType, StorageConnection};
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType,
-    SourceSiteId, Upsert,
+    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
 };
 use diesel::prelude::*;
 
@@ -38,7 +37,7 @@ impl<'a> IndicatorColumnRowRepository<'a> {
         IndicatorColumnRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &IndicatorColumnRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &IndicatorColumnRow) -> Result<(), RepositoryError> {
         let query = diesel::insert_into(indicator_column::table)
             .values(row)
             .on_conflict(indicator_column::id)
@@ -100,35 +99,5 @@ impl<'a> IndicatorColumnRowRepository<'a> {
             .filter(indicator_column::program_indicator_id.eq_any(ids))
             .load(self.connection.lock().connection())?;
         Ok(result)
-    }
-}
-impl Upsert for IndicatorColumnRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        IndicatorColumnRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            IndicatorColumnRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

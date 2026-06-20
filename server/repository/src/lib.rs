@@ -17,72 +17,8 @@ pub use self::db_diesel::*;
 pub use self::repository_error::RepositoryError;
 pub use database_settings::get_storage_connection_manager;
 use diesel::sql_types::Text;
-use std::any::Any;
 use std::str;
 
 mod tests;
 
 define_sql_function!(fn lower(x: Text) -> Text);
-
-use std::fmt::Debug as DebugTrait;
-pub trait Delete: DebugTrait {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError>;
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection);
-}
-
-#[derive(Debug)]
-pub enum ChangelogSyncType {
-    SyncTypeV5V6 { source_site_id: Option<i32> },
-    SyncTypeV7 { changelog_row: ChangeLogInsertRow },
-}
-
-pub trait Upsert: DebugTrait {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError>;
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection);
-    // Test only, can be used to drill down to concrete type (see test below)
-    // also casting to any must be implemented by concrete type to be able to downcast to it
-    // This is needed for integration test (where test record is generated for inventory adjustment, but id is not know until site is created)
-    fn as_mut_any(&mut self) -> Option<&mut dyn Any> {
-        None
-    }
-}
-
-#[test]
-fn downcast_example() {
-    let mut boxed: Vec<Box<dyn Upsert>> = vec![
-        Box::<InvoiceRow>::default(),
-        Box::<InvoiceLineRow>::default(),
-    ];
-
-    for record in &mut boxed {
-        let Some(mut_invoice) = record
-            .as_mut_any()
-            .and_then(|any| any.downcast_mut::<InvoiceRow>())
-        else {
-            continue;
-        };
-
-        mut_invoice.id = "changed_id".to_string()
-    }
-
-    let compare_to: Vec<Box<dyn Upsert>> = vec![
-        Box::new(InvoiceRow {
-            id: "changed_id".to_string(),
-            ..Default::default()
-        }),
-        Box::<InvoiceLineRow>::default(),
-    ];
-
-    assert_eq!(format!("{boxed:?}"), format!("{compare_to:?}"))
-}

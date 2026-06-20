@@ -1,6 +1,6 @@
 use crate::{
-    db_diesel::changelog::ChangelogRepository, lower, ChangelogSyncType, Delete, RepositoryError,
-    RowActionType, SourceSiteId, StorageConnection, SyncVersion, Upsert,
+    db_diesel::changelog::ChangelogRepository, lower, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, SyncVersion,
 };
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -43,7 +43,7 @@ impl<'a> SiteRowRepository<'a> {
         SiteRowRepository { connection }
     }
 
-    fn _upsert(&self, row: &SiteRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert(&self, row: &SiteRow) -> Result<(), RepositoryError> {
         diesel::insert_into(site::table)
             .values(row)
             .on_conflict(site::id)
@@ -114,69 +114,14 @@ impl<'a> SiteRowRepository<'a> {
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
-}
 
-impl Upsert for SiteRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        SiteRowRepository::new(con)._upsert(self)?;
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => SiteRow::generate_changelog(
-                self.id.to_string(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            SiteRowRepository::new(con).find_one_by_id(self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct SiteRowDelete(pub String);
-impl Delete for SiteRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let repo = SiteRowRepository::new(con);
-        let Some(site) = repo.find_one_by_og_id(&self.0)? else {
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        // record_id is the og_id (site id is i32); look up the row to find the integer id,
+        // matching the old delete_sync behaviour.
+        let Some(site) = self.find_one_by_og_id(record_id)? else {
             return Ok(());
         };
-        repo._delete(site.id)?;
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => SiteRow::generate_changelog(
-                site.id.to_string(),
-                con,
-                RowActionType::Delete,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            SiteRowRepository::new(con).find_one_by_og_id(&self.0),
-            Ok(None)
-        )
+        self._delete(site.id)
     }
 }
 

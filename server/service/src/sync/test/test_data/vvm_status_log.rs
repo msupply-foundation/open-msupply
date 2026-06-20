@@ -1,4 +1,5 @@
 use repository::vvm_status::vvm_status_log_row::VVMStatusLogRow;
+use repository::Row;
 
 use chrono::{NaiveDate, NaiveTime};
 use serde_json::json;
@@ -32,7 +33,7 @@ fn vvm_status_log_1_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         VVM_STATUS_LOG_1,
-        VVMStatusLogRow {
+        Row::VVMStatusLog(VVMStatusLogRow {
             id: VVM_STATUS_LOG_1.0.to_string(),
             status_id: "VVM_STATUS_1".to_string(),
             created_datetime,
@@ -41,7 +42,7 @@ fn vvm_status_log_1_pull_record() -> TestSyncIncomingRecord {
             created_by: "user1".to_string(),
             invoice_line_id: Some("12ee2f10f0d211eb8dddb54df6d741bc".to_string()),
             store_id: "store_a".to_string(),
-        },
+        }),
     )
 }
 
@@ -85,7 +86,7 @@ fn vvm_status_log_2_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         VVM_STATUS_LOG_2,
-        VVMStatusLogRow {
+        Row::VVMStatusLog(VVMStatusLogRow {
             id: VVM_STATUS_LOG_2.0.to_string(),
             status_id: "VVM_STATUS_2".to_string(),
             created_datetime,
@@ -94,7 +95,7 @@ fn vvm_status_log_2_pull_record() -> TestSyncIncomingRecord {
             created_by: "user1".to_string(),
             invoice_line_id: None,
             store_id: "store_a".to_string(),
-        },
+        }),
     )
 }
 

@@ -1,8 +1,8 @@
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, GenderType, NameRow, NameRowDelete, NameRowType, Row,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, GenderType, NameRow, NameRowType, Row, StorageConnection,
+    SyncBufferRow,
 };
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
@@ -338,7 +338,7 @@ impl SyncTranslation for NameTranslation {
             deleted_datetime: None,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Name(result)))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -346,9 +346,10 @@ impl SyncTranslation for NameTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(NameRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::Name,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 
     fn try_translate_to_upsert_sync_record(

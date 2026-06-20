@@ -1,7 +1,7 @@
 use crate::sync::translations::sensor::LegacySensorRow;
 
 use chrono::{Duration, NaiveDate, NaiveTime};
-use repository::{SensorRow, SensorType};
+use repository::{Row, SensorRow, SensorType};
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -29,7 +29,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         SENSOR_1,
-        SensorRow {
+        Row::Sensor(SensorRow {
             id: SENSOR_1.0.to_string(),
             name: "NameRed.02".to_string(),
             serial: "SerialRed.02".to_string(),
@@ -46,7 +46,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     + Duration::seconds(47046),
             ),
             r#type: SensorType::BlueMaestro,
-        },
+        }),
     )]
 }
 

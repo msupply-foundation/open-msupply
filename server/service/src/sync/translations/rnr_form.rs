@@ -1,6 +1,6 @@
 use repository::{
-    rnr_form_row::RnRFormRow, ChangelogRow, ChangelogTableName, RnRFormDelete, Row,
-    StorageConnection, SyncBufferRow,
+    rnr_form_row::RnRFormRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
+    SyncBufferRow,
 };
 
 use crate::sync::translations::{
@@ -55,7 +55,7 @@ impl SyncTranslation for RnRFormTranslation {
             ..row
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::RnrForm(result)))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -102,9 +102,10 @@ impl SyncTranslation for RnRFormTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(RnRFormDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::RnrForm,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 }
 

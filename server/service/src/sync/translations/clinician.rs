@@ -125,7 +125,7 @@ impl SyncTranslation for ClinicianTranslation {
             is_active,
             store_id,
         };
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Clinician(result)))
     }
 
     fn try_translate_to_upsert_sync_record(

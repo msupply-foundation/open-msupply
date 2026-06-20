@@ -15,6 +15,9 @@ pub use self::compatibility_changelog::*;
 
 mod generate_changelog;
 pub(crate) use self::generate_changelog::Changelogs;
+pub use self::generate_changelog::{
+    generate_delete_changelog, integrate_delete_no_changelog, DeleteOutcome, NonSyncRow,
+};
 
 pub mod partition;
 pub use self::partition::ensure_partition_lookahead;

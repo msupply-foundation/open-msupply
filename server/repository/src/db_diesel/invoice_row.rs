@@ -5,13 +5,12 @@ use super::{
 };
 use crate::{
     db_diesel::changelog::changelog::RowOrId, diesel_macros::define_linked_tables,
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert,
+    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
-use std::any::Any;
 use strum::Display;
 
 define_linked_tables! {
@@ -207,6 +206,10 @@ impl<'a> InvoiceRowRepository<'a> {
         Ok(())
     }
 
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        self._delete(record_id)
+    }
+
     pub fn find_one_by_id(&self, invoice_id: &str) -> Result<Option<InvoiceRow>, RepositoryError> {
         let result = invoice::table
             .filter(invoice::id.eq(invoice_id))
@@ -254,69 +257,3 @@ impl<'a> InvoiceRowRepository<'a> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct InvoiceRowDelete(pub String);
-impl Delete for InvoiceRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let repo = InvoiceRowRepository::new(con);
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => InvoiceRow::generate_changelog(
-                RowOrId::Id(&self.0),
-                con,
-                RowActionType::Delete,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        repo._delete(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            InvoiceRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
-}
-
-impl Upsert for InvoiceRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        InvoiceRowRepository::new(con)._upsert(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => InvoiceRow::generate_changelog(
-                RowOrId::Row(self),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            InvoiceRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-
-    fn as_mut_any(&mut self) -> Option<&mut dyn Any> {
-        Some(self)
-    }
-}

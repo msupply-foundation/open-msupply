@@ -6,10 +6,7 @@ use super::{
 
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::diesel_macros::define_linked_tables;
-use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId,
-    Upsert,
-};
+use crate::{repository_error::RepositoryError, SourceSiteId};
 use crate::{ChangelogRepository, RowActionType};
 
 use diesel::prelude::*;
@@ -146,74 +143,12 @@ impl<'a> StocktakeLineRowRepository<'a> {
             .load(self.connection.lock().connection())?;
         Ok(result)
     }
-}
 
-#[derive(Debug, Clone)]
-pub struct StocktakeLineRowDelete(pub String);
-// For tests only
-impl Delete for StocktakeLineRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                StocktakeLineRow::generate_changelog(
-                    RowOrId::Id(&self.0),
-                    con,
-                    RowActionType::Delete,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
-            stocktake_line_with_links::table.filter(stocktake_line_with_links::id.eq(&self.0)),
+            stocktake_line_with_links::table.filter(stocktake_line_with_links::id.eq(record_id)),
         )
-        .execute(con.lock().connection())?;
-        ChangelogRepository::new(con).insert(&changelog)?;
+        .execute(self.connection.lock().connection())?;
         Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            StocktakeLineRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
-}
-
-impl Upsert for StocktakeLineRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        StocktakeLineRowRepository::new(con)._upsert(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                StocktakeLineRow::generate_changelog(
-                    RowOrId::Row(self),
-                    con,
-                    RowActionType::Upsert,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            StocktakeLineRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

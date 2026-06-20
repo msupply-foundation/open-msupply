@@ -2,8 +2,7 @@ use super::asset_row::asset::dsl::*;
 use crate::asset_log_row::latest_asset_log;
 use crate::db_diesel::store_row::store;
 use crate::{
-    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
-    StorageConnection, Upsert,
+    ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -162,73 +161,8 @@ impl<'a> AssetRowRepository<'a> {
         .get_result(self.connection.lock().connection())?;
         Ok(exists)
     }
-}
 
-impl Upsert for AssetRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        AssetRowRepository::new(con)._upsert_one(self)?;
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            AssetRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct AssetRowDelete(pub String);
-impl Delete for AssetRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let repo = AssetRowRepository::new(con);
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                let row = repo
-                    .find_one_by_id(&self.0)?
-                    .ok_or(RepositoryError::NotFound)?;
-                row.generate_changelog(
-                    con,
-                    RowActionType::Upsert,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        repo._mark_deleted(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert!(matches!(
-            AssetRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(Some(AssetRow {
-                deleted_datetime: Some(_),
-                ..
-            })) | Ok(None)
-        ));
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        self._mark_deleted(record_id)
     }
 }

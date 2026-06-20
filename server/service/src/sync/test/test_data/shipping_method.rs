@@ -1,5 +1,6 @@
 use super::TestSyncIncomingRecord;
 use repository::shipping_method_row::ShippingMethodRow;
+use repository::Row;
 
 const TABLE_NAME: &str = "ship_method";
 
@@ -24,6 +25,6 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         SHIPPING_METHOD_1,
-        shipping_method_1(),
+        Row::ShippingMethod(shipping_method_1()),
     )]
 }

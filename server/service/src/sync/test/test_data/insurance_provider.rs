@@ -1,5 +1,5 @@
 use super::TestSyncIncomingRecord;
-use repository::InsuranceProviderRow;
+use repository::{InsuranceProviderRow, Row};
 
 const TABLE_NAME: &str = "insuranceProvider";
 
@@ -28,6 +28,6 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         INSURANCE_PROVIDER_1,
-        insurance_provider_1(),
+        Row::InsuranceProvider(insurance_provider_1()),
     )]
 }

@@ -18,15 +18,12 @@ pub(crate) struct TestSyncIncomingRecord {
 }
 
 impl TestSyncIncomingRecord {
-    fn new_pull_upsert<U>(
+    fn new_pull_upsert(
         table_name: &str,
         // .0 = id .1 = data
         id_and_data: (&str, &str),
-        upsert: U,
-    ) -> TestSyncIncomingRecord
-    where
-        U: Upsert + 'static,
-    {
+        upsert: Row,
+    ) -> TestSyncIncomingRecord {
         TestSyncIncomingRecord {
             translated_record: PullTranslateResult::upsert(upsert),
             sync_buffer_row: SyncBufferRow {
@@ -40,16 +37,36 @@ impl TestSyncIncomingRecord {
         }
     }
 
-    fn new_pull_delete<U>(table_name: &str, id: &str, result: U) -> TestSyncIncomingRecord
-    where
-        U: Delete + Clone + 'static,
-    {
-        Self::new_pull_deletes(table_name, id, vec![result])
+    fn new_pull_upsert_non_sync(
+        table_name: &str,
+        id_and_data: (&str, &str),
+        upsert: NonSyncRow,
+    ) -> TestSyncIncomingRecord {
+        TestSyncIncomingRecord {
+            translated_record: PullTranslateResult::upsert_non_sync(upsert),
+            sync_buffer_row: SyncBufferRow {
+                table_name: table_name.to_string(),
+                record_id: id_and_data.0.to_string(),
+                data: SyncRecordData(serde_json::from_str(id_and_data.1).unwrap()),
+                action: SyncAction::Upsert,
+                ..Default::default()
+            },
+            extra_data: None,
+        }
     }
-    fn new_pull_deletes<U>(table_name: &str, id: &str, deletes: Vec<U>) -> TestSyncIncomingRecord
-    where
-        U: Delete + Clone + 'static,
-    {
+
+    fn new_pull_delete(
+        table_name: &str,
+        id: &str,
+        delete_table: ChangelogTableName,
+    ) -> TestSyncIncomingRecord {
+        Self::new_pull_deletes(table_name, id, vec![(delete_table, id.to_string())])
+    }
+    fn new_pull_deletes(
+        table_name: &str,
+        id: &str,
+        deletes: Vec<(ChangelogTableName, String)>,
+    ) -> TestSyncIncomingRecord {
         TestSyncIncomingRecord {
             translated_record: PullTranslateResult::deletes(deletes),
             sync_buffer_row: SyncBufferRow {
@@ -121,8 +138,19 @@ pub(crate) fn check_integrated(
 ) {
     for record in integration_records {
         match record {
-            IntegrationOperation::Upsert(upsert) => upsert.assert_upserted(con),
-            IntegrationOperation::Delete(delete) => delete.assert_deleted(con),
+            IntegrationOperation::Upsert(row) => row.assert_upserted(con),
+            // Non-changelog rows (link tables / sync_request): no dedicated assert.
+            IntegrationOperation::UpsertNonSync(_) => {}
+            IntegrationOperation::UpsertDocument(document) => {
+                assert_eq!(
+                    repository::DocumentRepository::new(con).find_one_by_id(&document.id),
+                    Ok(Some((**document).clone()))
+                );
+            }
+            IntegrationOperation::Delete {
+                table_name,
+                record_id,
+            } => assert_row_deleted(con, table_name.clone(), record_id),
         }
     }
 }

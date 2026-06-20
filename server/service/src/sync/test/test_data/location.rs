@@ -1,6 +1,6 @@
 use crate::sync::translations::location::LegacyLocationRow;
 
-use repository::LocationRow;
+use repository::{LocationRow, Row};
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -56,7 +56,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             LOCATION_1,
-            LocationRow {
+            Row::Location(LocationRow {
                 id: LOCATION_1.0.to_string(),
                 name: "NameRed.02".to_string(),
                 code: "Red.02".to_string(),
@@ -64,12 +64,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 store_id: "store_a".to_string(),
                 location_type_id: None,
                 volume: 0.0,
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             LOCATION_2,
-            LocationRow {
+            Row::Location(LocationRow {
                 id: LOCATION_2.0.to_string(),
                 name: "NameGRE.02".to_string(),
                 code: "Green.02".to_string(),
@@ -77,7 +77,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 store_id: "store_a".to_string(),
                 location_type_id: Some("84AA2B7A18694A2AB1E84DCABAD19617".to_string()),
                 volume: 10.0,
-            },
+            }),
         ),
     ]
 }

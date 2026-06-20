@@ -3,7 +3,7 @@ use crate::sync::{
     translations::stocktake::{LegacyStocktakeRow, LegacyStocktakeStatus},
 };
 use chrono::{NaiveDate, NaiveTime};
-use repository::{StocktakeRow, StocktakeStatus};
+use repository::{Row, StocktakeRow, StocktakeStatus};
 use serde_json::json;
 
 use super::TestSyncOutgoingRecord;
@@ -42,7 +42,7 @@ fn stocktake_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         STOCKTAKE_1,
-        StocktakeRow {
+        Row::Stocktake(StocktakeRow {
             id: STOCKTAKE_1.0.to_string(),
             user_id: "".to_string(),
             store_id: "store_a".to_string(),
@@ -60,7 +60,7 @@ fn stocktake_pull_record() -> TestSyncIncomingRecord {
             counted_by: None,
             verified_by: None,
             is_initial_stocktake: false,
-        },
+        }),
     )
 }
 fn stocktake_push_record() -> TestSyncOutgoingRecord {
@@ -124,7 +124,7 @@ fn stocktake_om_field_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         STOCKTAKE_OM_FIELD,
-        StocktakeRow {
+        Row::Stocktake(StocktakeRow {
             id: STOCKTAKE_OM_FIELD.0.to_string(),
             user_id: "".to_string(),
             store_id: "store_a".to_string(),
@@ -150,7 +150,7 @@ fn stocktake_om_field_pull_record() -> TestSyncIncomingRecord {
             counted_by: Some("testuser1".to_string()),
             verified_by: Some("testuser2".to_string()),
             is_initial_stocktake: false,
-        },
+        }),
     )
 }
 fn stocktake_om_field_push_record() -> TestSyncOutgoingRecord {
@@ -223,7 +223,7 @@ fn stocktake_initial_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         STOCKTAKE_INITIAL,
-        StocktakeRow {
+        Row::Stocktake(StocktakeRow {
             id: STOCKTAKE_INITIAL.0.to_string(),
             user_id: "".to_string(),
             store_id: "store_a".to_string(),
@@ -241,7 +241,7 @@ fn stocktake_initial_pull_record() -> TestSyncIncomingRecord {
             counted_by: None,
             verified_by: None,
             is_initial_stocktake: true,
-        },
+        }),
     )
 }
 fn stocktake_initial_push_record() -> TestSyncOutgoingRecord {

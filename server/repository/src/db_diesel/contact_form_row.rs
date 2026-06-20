@@ -1,6 +1,5 @@
 use crate::{
-    ChangelogRepository, ChangelogSyncType,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
 };
 
 use super::{
@@ -102,33 +101,5 @@ impl<'a> ContactFormRowRepository<'a> {
         Ok(contact_form::table
             .filter(contact_form::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
-    }
-}
-
-impl Upsert for ContactFormRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        ContactFormRowRepository::new(con)._upsert_one(self)?;
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ContactFormRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

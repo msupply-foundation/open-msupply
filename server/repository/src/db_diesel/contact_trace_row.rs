@@ -1,8 +1,7 @@
 use super::{document::document, program_row::program, StorageConnection};
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, GenderType,
-    RowActionType, SourceSiteId, Upsert,
+    repository_error::RepositoryError, ChangelogRepository, GenderType, RowActionType, SourceSiteId,
 };
 
 use chrono::{NaiveDate, NaiveDateTime};
@@ -138,7 +137,7 @@ impl<'a> ContactTraceRowRepository<'a> {
         ContactTraceRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
         diesel::insert_into(contact_trace::dsl::contact_trace)
             .values(row.to_raw())
             .on_conflict(contact_trace::dsl::id)
@@ -183,36 +182,6 @@ impl<'a> ContactTraceRowRepository<'a> {
         Ok(contact_trace_name_link_view::table
             .filter(contact_trace_name_link_view::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
-    }
-}
-
-impl Upsert for ContactTraceRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        ContactTraceRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert!(ContactTraceRowRepository::new(con)
-            .find_one_by_id(&self.id)
-            .unwrap()
-            .is_some())
     }
 }
 

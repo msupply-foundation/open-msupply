@@ -1,5 +1,5 @@
 use super::email_queue_row::email_queue::dsl::*;
-use crate::{RepositoryError, StorageConnection, ChangelogSyncType, Upsert};
+use crate::{RepositoryError, StorageConnection};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -92,20 +92,5 @@ impl<'a> EmailQueueRowRepository<'a> {
             )
             .load::<EmailQueueRow>(self.connection.lock().connection())?;
         Ok(result)
-    }
-}
-
-impl Upsert for EmailQueueRow {
-    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
-        EmailQueueRowRepository::new(con).upsert_one(self)?;
-        Ok(())
-    }
-
-    //Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            EmailQueueRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

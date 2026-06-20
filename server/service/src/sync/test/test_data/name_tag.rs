@@ -1,6 +1,6 @@
 use crate::sync::test::TestSyncIncomingRecord;
 
-use repository::NameTagRow;
+use repository::{NameTagRow, Row};
 
 const TABLE_NAME: &str = "name_tag";
 
@@ -16,10 +16,10 @@ fn name_tag_1() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_TAG_1,
-        NameTagRow {
+        Row::NameTag(NameTagRow {
             id: NAME_TAG_1.0.to_owned(),
             name: "a1".to_string(),
-        },
+        }),
     )
 }
 
@@ -35,10 +35,10 @@ fn name_tag_2() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_TAG_2,
-        NameTagRow {
+        Row::NameTag(NameTagRow {
             id: NAME_TAG_2.0.to_owned(),
             name: "b2".to_string(),
-        },
+        }),
     )
 }
 

@@ -1,6 +1,5 @@
 use crate::sync::translations::{name::NameTranslation, FkField, PullTranslateResult, SyncTranslation};
-use repository::db_diesel::contact_row::ContactRowDelete;
-use repository::{ContactRow, StorageConnection, SyncBufferRow};
+use repository::{ChangelogTableName, ContactRow, Row, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
 use util::sync_serde::empty_str_as_option_string;
 
@@ -72,7 +71,7 @@ impl SyncTranslation for ContactTranslation {
             country: data.country,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Contact(result)))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -80,9 +79,10 @@ impl SyncTranslation for ContactTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(ContactRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::Contact,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 }
 

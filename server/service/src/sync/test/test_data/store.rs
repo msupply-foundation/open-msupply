@@ -1,6 +1,6 @@
 use crate::sync::{test::TestSyncIncomingRecord, translations::PullTranslateResult};
 use chrono::NaiveDate;
-use repository::{sync_buffer::SyncRecordData, StoreRow, SyncBufferRow};
+use repository::{sync_buffer::SyncRecordData, Row, StoreRow, SyncBufferRow};
 
 const TABLE_NAME: &str = "store";
 
@@ -53,7 +53,7 @@ fn store_1() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         STORE_1,
-        StoreRow {
+        Row::Store(StoreRow {
             id: STORE_1.0.to_string(),
             name_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
             code: "GEN".to_string(),
@@ -61,7 +61,7 @@ fn store_1() -> TestSyncIncomingRecord {
             logo: Some("No logo".to_string()),
             created_date: NaiveDate::from_ymd_opt(2021, 9, 3),
             ..Default::default()
-        },
+        }),
     )
 }
 

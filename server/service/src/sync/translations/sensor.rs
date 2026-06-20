@@ -110,7 +110,7 @@ impl SyncTranslation for SensorTranslation {
             r#type,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Sensor(result)))
     }
 
     fn try_translate_to_upsert_sync_record(

@@ -3,7 +3,7 @@ use crate::sync::{
     translations::barcode::LegacyBarcodeRow,
 };
 
-use repository::BarcodeRow;
+use repository::{BarcodeRow, Row};
 use serde_json::json;
 
 const TABLE_NAME: &str = "barcode";
@@ -37,26 +37,26 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             BARCODE_1,
-            BarcodeRow {
+            Row::Barcode(BarcodeRow {
                 id: BARCODE_1.0.to_string(),
                 gtin: "0123456789".to_string(),
                 item_id: "item_a".to_string(),
                 manufacturer_id: Some("name_a".to_string()),
                 pack_size: Some(1.0),
                 parent_id: None,
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             BARCODE_2,
-            BarcodeRow {
+            Row::Barcode(BarcodeRow {
                 id: BARCODE_2.0.to_string(),
                 gtin: "9876543210".to_string(),
                 item_id: "item_b".to_string(),
                 manufacturer_id: Some("name_a".to_string()),
                 pack_size: Some(1.0),
                 parent_id: None,
-            },
+            }),
         ),
     ]
 }

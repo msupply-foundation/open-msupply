@@ -312,8 +312,11 @@ impl SyncRecordTester for InvoiceRecordTester {
         result.push(TestStepData {
             integration_records: vec![
                 IntegrationOperation::upsert(invoice_row_2),
-                IntegrationOperation::delete(InvoiceLineRowDelete(invoice_line_row_1.id.clone())),
-                IntegrationOperation::delete(InvoiceRowDelete(invoice_row_1.id.clone())),
+                IntegrationOperation::delete(
+                    ChangelogTableName::InvoiceLine,
+                    invoice_line_row_1.id.clone(),
+                ),
+                IntegrationOperation::delete(ChangelogTableName::Invoice, invoice_row_1.id.clone()),
             ],
             ..Default::default()
         });

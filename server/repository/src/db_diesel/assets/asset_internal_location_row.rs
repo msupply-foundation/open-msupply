@@ -1,12 +1,10 @@
 use super::asset_internal_location_row::asset_internal_location::dsl::*;
 
 use crate::db_diesel::changelog::changelog::RowOrId;
-use crate::Delete;
 use crate::RepositoryError;
 use crate::SourceSiteId;
 use crate::StorageConnection;
 use crate::{ChangelogRepository, RowActionType};
-use crate::{ChangelogSyncType, Upsert};
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -132,70 +130,10 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
             .filter(asset_internal_location::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
-}
 
-impl Upsert for AssetInternalLocationRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        AssetInternalLocationRowRepository::new(con)._upsert_one(self)?;
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                AssetInternalLocationRow::generate_changelog(
-                    RowOrId::Row(self),
-                    con,
-                    RowActionType::Upsert,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-        ChangelogRepository::new(con).insert(&changelog)?;
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(asset_internal_location.filter(id.eq(record_id)))
+            .execute(self.connection.lock().connection())?;
         Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            AssetInternalLocationRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct AssetInternalLocationRowDelete(pub String);
-impl Delete for AssetInternalLocationRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                AssetInternalLocationRow::generate_changelog(
-                    RowOrId::Id(&self.0),
-                    con,
-                    RowActionType::Delete,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        diesel::delete(asset_internal_location.filter(id.eq(&self.0)))
-            .execute(con.lock().connection())?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            AssetInternalLocationRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        );
     }
 }

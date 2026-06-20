@@ -3,7 +3,7 @@ use super::{
     StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, ChangelogSyncType, SourceSiteId, Upsert};
+use crate::{repository_error::RepositoryError, SourceSiteId};
 
 use diesel::prelude::*;
 
@@ -45,7 +45,7 @@ impl<'a> PluginDataRowRepository<'a> {
         PluginDataRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &PluginDataRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &PluginDataRow) -> Result<(), RepositoryError> {
         diesel::insert_into(plugin_data::table)
             .values(row)
             .on_conflict(plugin_data::id)
@@ -78,35 +78,5 @@ impl<'a> PluginDataRowRepository<'a> {
         Ok(plugin_data::table
             .filter(plugin_data::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
-    }
-}
-
-impl Upsert for PluginDataRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        PluginDataRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            PluginDataRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

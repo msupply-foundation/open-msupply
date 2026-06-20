@@ -1,6 +1,6 @@
 use super::{PullTranslateResult, SyncTranslation};
 use repository::{
-    LanguageType, StorageConnection, SyncBufferRow, UserAccountRow, UserAccountRowRepository,
+    LanguageType, Row, StorageConnection, SyncBufferRow, UserAccountRow, UserAccountRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::empty_str_as_option_string;
@@ -96,7 +96,7 @@ impl SyncTranslation for UserTranslation {
             last_successful_sync,
             is_active,
         };
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::UserAccount(result)))
     }
 }
 

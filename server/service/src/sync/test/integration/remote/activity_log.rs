@@ -5,7 +5,7 @@ use crate::sync::{
     translations::IntegrationOperation,
 };
 use chrono::NaiveDate;
-use repository::{ActivityLogRow, ActivityLogRowDelete, ActivityLogType};
+use repository::{ActivityLogRow, ActivityLogType, ChangelogTableName};
 use util::uuid::uuid;
 
 pub struct ActivityLogRecordTester;
@@ -47,7 +47,7 @@ impl SyncRecordTester for ActivityLogRecordTester {
                 IntegrationOperation::upsert(log_1),
                 IntegrationOperation::upsert(log_2),
                 // Should not sync out thus need to check if it's missing after re-initialisation
-                IntegrationOperation::delete(ActivityLogRowDelete(log_3.id)),
+                IntegrationOperation::delete(ChangelogTableName::ActivityLog, log_3.id),
             ],
             ..Default::default()
         });

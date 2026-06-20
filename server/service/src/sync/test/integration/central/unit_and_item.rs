@@ -7,7 +7,7 @@ use crate::sync::{
     },
     translations::IntegrationOperation,
 };
-use repository::{ItemRow, ItemRowDelete, ItemType, UnitRow, UnitRowDelete};
+use repository::{ChangelogTableName, ItemRow, ItemType, UnitRow};
 
 use serde_json::json;
 use util::{merge_json, uuid::uuid};
@@ -136,8 +136,8 @@ impl SyncRecordTester for UnitAndItemTester {
         result.push(TestStepData {
             central_delete: json!({ "item": [item_row2.id], "unit": [unit_row1.id] }),
             integration_records: vec![
-                IntegrationOperation::delete(UnitRowDelete(unit_row1.id)),
-                IntegrationOperation::delete(ItemRowDelete(item_row2.id)),
+                IntegrationOperation::delete(ChangelogTableName::Unit, unit_row1.id),
+                IntegrationOperation::delete(ChangelogTableName::Item, item_row2.id),
             ],
             ..Default::default()
         });

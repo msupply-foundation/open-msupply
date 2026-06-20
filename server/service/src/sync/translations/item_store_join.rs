@@ -4,7 +4,7 @@ use super::{FkField, PullTranslateResult, SyncTranslation};
 use crate::sync::translations::{
     item::ItemTranslation, location::LocationTranslation, store::StoreTranslation,
 };
-use repository::{ItemStoreJoinRow, StorageConnection, SyncBufferRow};
+use repository::{ItemStoreJoinRow, Row, StorageConnection, SyncBufferRow};
 use util::sync_serde::empty_str_as_option_string;
 
 #[allow(non_snake_case)]
@@ -70,7 +70,7 @@ impl SyncTranslation for ItemStoreJoinTranslation {
                 FkField::Location,
             )?,
         };
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::ItemStoreJoin(result)))
     }
 }
 

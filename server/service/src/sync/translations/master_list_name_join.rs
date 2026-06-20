@@ -1,5 +1,5 @@
 use repository::{
-    MasterListNameJoinRow, MasterListNameJoinRowDelete, StorageConnection, SyncBufferRow,
+    ChangelogTableName, MasterListNameJoinRow, Row, StorageConnection, SyncBufferRow,
 };
 
 use serde::Deserialize;
@@ -54,7 +54,7 @@ impl SyncTranslation for MasterListNameJoinTranslation {
             name_id: check_fk(data.name_ID, "name_link_id", FkField::NameLink)?,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::MasterListNameJoin(result)))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -62,9 +62,10 @@ impl SyncTranslation for MasterListNameJoinTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(MasterListNameJoinRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::MasterListNameJoin,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 }
 

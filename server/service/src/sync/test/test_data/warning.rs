@@ -1,4 +1,4 @@
-use repository::WarningRow;
+use repository::{NonSyncRow, WarningRow};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
@@ -33,32 +33,32 @@ const WARNING_3: (&str, &str) = (
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestSyncIncomingRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert_non_sync(
             TABLE_NAME,
             WARNING_1,
-            WarningRow {
+            NonSyncRow::Warning(WarningRow {
                 id: WARNING_1.0.to_owned(),
                 warning_text: "1".to_string(),
                 code: "WARNING_1_exp".to_string(),
-            },
+            }),
         ),
-        TestSyncIncomingRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert_non_sync(
             TABLE_NAME,
             WARNING_2,
-            WarningRow {
+            NonSyncRow::Warning(WarningRow {
                 id: WARNING_2.0.to_owned(),
                 warning_text: "2".to_string(),
                 code: "WARNING_2_exp".to_string(),
-            },
+            }),
         ),
-        TestSyncIncomingRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert_non_sync(
             TABLE_NAME,
             WARNING_3,
-            WarningRow {
+            NonSyncRow::Warning(WarningRow {
                 id: WARNING_3.0.to_owned(),
                 warning_text: "3".to_string(),
                 code: "WARNING_3_exp".to_string(),
-            },
+            }),
         ),
     ]
 }

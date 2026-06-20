@@ -1,6 +1,6 @@
 use repository::{
-    EqualFilter, NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, StorageConnection,
-    SyncBufferRow,
+    EqualFilter, NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, Row,
+    StorageConnection, SyncBufferRow,
 };
 
 use serde::Deserialize;
@@ -54,10 +54,12 @@ impl SyncTranslation for NameToNameStoreJoinTranslation {
 
         let upserts = name_store_joins
             .into_iter()
-            .map(|r| NameStoreJoinRow {
-                name_is_customer: data.name_is_customer,
-                name_is_supplier: data.name_is_supplier,
-                ..r.name_store_join
+            .map(|r| {
+                Row::NameStoreJoin(NameStoreJoinRow {
+                    name_is_customer: data.name_is_customer,
+                    name_is_supplier: data.name_is_supplier,
+                    ..r.name_store_join
+                })
             })
             .collect();
 

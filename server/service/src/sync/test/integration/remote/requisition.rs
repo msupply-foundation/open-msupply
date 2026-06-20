@@ -7,7 +7,7 @@ use crate::sync::{
 use chrono::NaiveDate;
 use repository::{
     requisition_row::{RequisitionStatus, RequisitionType},
-    RequisitionLineRow, RequisitionLineRowDelete, RequisitionRow, RequisitionRowDelete,
+    ChangelogTableName, RequisitionLineRow, RequisitionRow,
 };
 use serde_json::json;
 use util::uuid::uuid;
@@ -168,10 +168,14 @@ impl SyncRecordTester for RequisitionRecordTester {
         result.push(TestStepData {
             integration_records: vec![
                 IntegrationOperation::upsert(requisition_row_2),
-                IntegrationOperation::delete(RequisitionLineRowDelete(
+                IntegrationOperation::delete(
+                    ChangelogTableName::RequisitionLine,
                     requisition_line_row_1.id.clone(),
-                )),
-                IntegrationOperation::delete(RequisitionRowDelete(requisition_row_1.id.clone())),
+                ),
+                IntegrationOperation::delete(
+                    ChangelogTableName::Requisition,
+                    requisition_row_1.id.clone(),
+                ),
             ],
             ..Default::default()
         });

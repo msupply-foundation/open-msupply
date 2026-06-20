@@ -3,7 +3,7 @@ use super::{
 };
 
 use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, SourceSiteId, Upsert,
+    repository_error::RepositoryError, SourceSiteId,
 };
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -79,7 +79,7 @@ impl<'a> InsuranceProviderRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn _upsert_one(&self, row: &InsuranceProviderRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &InsuranceProviderRow) -> Result<(), RepositoryError> {
         diesel::insert_into(insurance_provider::table)
             .values(row)
             .on_conflict(insurance_provider::id)
@@ -98,34 +98,5 @@ impl<'a> InsuranceProviderRowRepository<'a> {
             SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
-    }
-}
-
-impl Upsert for InsuranceProviderRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        InsuranceProviderRowRepository::new(con)._upsert_one(self)?;
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            InsuranceProviderRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

@@ -6,7 +6,6 @@ use crate::diesel_macros::{
 };
 use crate::SourceSiteId;
 use crate::{ChangelogRepository, RowActionType};
-use crate::{ChangelogSyncType, Upsert};
 use crate::{DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, StringFilter};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -394,34 +393,6 @@ fn to_document(row: DocumentRow) -> Result<Document, RepositoryError> {
     };
 
     Ok(document)
-}
-
-impl Upsert for DocumentRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        DocumentRepository::new(con)._upsert(self)?;
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        let stored = DocumentRepository::new(con)
-            .find_many_by_id(&[self.id.clone()])
-            .expect("document lookup");
-        assert_eq!(stored.first(), Some(self));
-    }
 }
 
 impl Document {

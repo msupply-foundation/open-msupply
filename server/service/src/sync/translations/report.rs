@@ -5,8 +5,7 @@ use super::{
     ToSyncRecordTranslationType,
 };
 use repository::{
-    ChangelogRow, ChangelogTableName, ReportRow, ReportRowDelete, Row, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, ReportRow, Row, StorageConnection, SyncBufferRow,
 };
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -40,7 +39,7 @@ impl SyncTranslation for OmReportTranslator {
             ..row
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Report(result)))
     }
     fn change_log_type(&self) -> Option<ChangelogTableName> {
         Some(ChangelogTableName::Report)
@@ -80,9 +79,10 @@ impl SyncTranslation for OmReportTranslator {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(ReportRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::Report,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 }
 

@@ -5,7 +5,7 @@ use crate::sync::{
     translations::IntegrationOperation,
 };
 use chrono::NaiveDate;
-use repository::{LocationRow, StockLineRow, StockLineRowDelete};
+use repository::{ChangelogTableName, LocationRow, StockLineRow};
 use serde_json::json;
 use util::uuid::uuid;
 pub struct StockLineRecordTester;
@@ -82,9 +82,10 @@ impl SyncRecordTester for StockLineRecordTester {
         });
         // STEP 3 - delete
         result.push(TestStepData {
-            integration_records: vec![IntegrationOperation::delete(StockLineRowDelete(
+            integration_records: vec![IntegrationOperation::delete(
+                ChangelogTableName::StockLine,
                 stock_line_row.id,
-            ))],
+            )],
             ..Default::default()
         });
         result

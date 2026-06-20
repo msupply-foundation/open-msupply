@@ -1,4 +1,5 @@
 use repository::name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoinRow};
+use repository::Row;
 
 use crate::sync::{
     test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
@@ -32,7 +33,7 @@ fn name_insurance_join_1() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_INSURANCE_JOIN_1,
-        NameInsuranceJoinRow {
+        Row::NameInsuranceJoin(NameInsuranceJoinRow {
             id: NAME_INSURANCE_JOIN_1.0.to_owned(),
             name_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
             insurance_provider_id: "INSURANCE_PROVIDER_1_ID".to_string(),
@@ -45,7 +46,7 @@ fn name_insurance_join_1() -> TestSyncIncomingRecord {
             is_active: true,
             entered_by_id: None,
             name_of_insured: Some("D".to_string()),
-        },
+        }),
     )
 }
 
@@ -71,7 +72,7 @@ fn name_insurance_join_2() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_INSURANCE_JOIN_2,
-        NameInsuranceJoinRow {
+        Row::NameInsuranceJoin(NameInsuranceJoinRow {
             id: NAME_INSURANCE_JOIN_2.0.to_owned(),
             name_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
             insurance_provider_id: "INSURANCE_PROVIDER_1_ID".to_string(),
@@ -84,7 +85,7 @@ fn name_insurance_join_2() -> TestSyncIncomingRecord {
             is_active: true,
             entered_by_id: None,
             name_of_insured: None,
-        },
+        }),
     )
 }
 

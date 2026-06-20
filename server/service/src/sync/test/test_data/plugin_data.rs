@@ -1,7 +1,7 @@
 use crate::sync::test::TestSyncOutgoingRecord;
 
 use super::TestSyncIncomingRecord;
-use repository::PluginDataRow;
+use repository::{PluginDataRow, Row};
 use serde_json::json;
 
 const TABLE_NAME: &str = "plugin_data";
@@ -32,7 +32,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         PLUGIN_DATA,
-        plugin_data(),
+        Row::PluginData(plugin_data()),
     )]
 }
 

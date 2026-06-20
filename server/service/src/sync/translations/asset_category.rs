@@ -46,7 +46,7 @@ impl SyncTranslation for AssetCategoryTranslation {
             class_id: check_fk(class_id, "asset_class_id", FkField::AssetClass)?,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::AssetCategory(result)))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

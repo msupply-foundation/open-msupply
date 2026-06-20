@@ -209,7 +209,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             program_id,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::StocktakeLine(result)))
     }
 
     fn try_translate_to_upsert_sync_record(
@@ -331,7 +331,7 @@ mod tests {
         test_db::{setup_all, setup_all_with_data},
         vvm_status::vvm_status_row::VVMStatusRow,
         ChangelogCondition, ChangelogRepository, ContextRow, CursorAndLimit, FilterBuilder,
-        ProgramRow, RowOrDelete, SyncAction, SyncRecordData,
+        ProgramRow, Row, RowOrDelete, SyncAction, SyncRecordData,
     };
     use serde_json::json;
 
@@ -454,7 +454,7 @@ mod tests {
             )
             .unwrap();
 
-        let expected = PullTranslateResult::upsert(StocktakeLineRow {
+        let expected = PullTranslateResult::upsert(Row::StocktakeLine(StocktakeLineRow {
             id: "STOCKTAKE_LINE_FK_INVALID".to_string(),
             stocktake_id: "stocktake_a".to_string(),
             stock_line_id: None,
@@ -479,7 +479,7 @@ mod tests {
             volume_per_pack: 0.0,
             campaign_id: None,
             program_id: None,
-        });
+        }));
         assert_eq!(result, expected);
 
         let logs = SystemLogRowRepository::new(&connection).find_all().unwrap();

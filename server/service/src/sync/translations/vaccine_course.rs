@@ -47,7 +47,7 @@ impl SyncTranslation for VaccineCourseTranslation {
         row.program_id = check_fk(row.program_id, "program_id", FkField::Program)?;
         row.demographic_id = fk_check(row.demographic_id, "demographic_id", FkField::Demographic)?;
 
-        Ok(PullTranslateResult::upsert(row))
+        Ok(PullTranslateResult::upsert(Row::VaccineCourse(row)))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

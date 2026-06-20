@@ -64,7 +64,7 @@ impl SyncTranslation for AssetLogTranslation {
             created_datetime,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::AssetLog(result)))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

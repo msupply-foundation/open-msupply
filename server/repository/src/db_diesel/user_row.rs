@@ -1,8 +1,7 @@
 use super::StorageConnection;
 
 use crate::{
-    lower, repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, Delete,
-    RowActionType, SourceSiteId, Upsert,
+    lower, repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
 };
 
 use chrono::NaiveDateTime;
@@ -84,7 +83,7 @@ impl<'a> UserAccountRowRepository<'a> {
         UserAccountRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
         diesel::insert_into(user_account::table)
             .values(row)
             .on_conflict(user_account::id)
@@ -172,72 +171,10 @@ impl<'a> UserAccountRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)?;
         Ok(result)
     }
-}
 
-impl Upsert for UserAccountRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        UserAccountRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        self._delete_by_id(record_id)?;
         Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            UserAccountRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct UserAccountRowDelete(pub String);
-impl Delete for UserAccountRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let repo = UserAccountRowRepository::new(con);
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                UserAccountRow::generate_changelog(
-                    self.0.clone(),
-                    con,
-                    RowActionType::Delete,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        repo._delete_by_id(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            UserAccountRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
     }
 }
 

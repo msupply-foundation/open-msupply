@@ -2,7 +2,7 @@ use super::{
     clinician_link_row::clinician_link, clinician_row::clinician, item_row::item,
     location_type_row::location_type, StorageConnection,
 };
-use crate::{repository_error::RepositoryError, ChangelogSyncType, Upsert};
+use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
 
@@ -105,20 +105,5 @@ impl<'a> ItemLinkRowRepository<'a> {
         diesel::delete(item_link::table.filter(item_link::id.eq(item_link_id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
-    }
-}
-
-impl Upsert for ItemLinkRow {
-    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
-        ItemLinkRowRepository::new(con).upsert_one(self)?;
-        Ok(()) // Table not in Changelog
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ItemLinkRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

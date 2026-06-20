@@ -1,4 +1,4 @@
-use repository::ProgramIndicatorRow;
+use repository::{ProgramIndicatorRow, Row};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
@@ -29,22 +29,22 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             PROGRAM_INDICATOR_A,
-            ProgramIndicatorRow {
+            Row::ProgramIndicator(ProgramIndicatorRow {
                 id: PROGRAM_INDICATOR_A.0.to_owned(),
                 code: Some("Program Indicator a".to_string()),
                 program_id: "program_a".to_string(),
                 is_active: true,
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             PROGRAM_INDICATOR_B,
-            ProgramIndicatorRow {
+            Row::ProgramIndicator(ProgramIndicatorRow {
                 id: PROGRAM_INDICATOR_B.0.to_owned(),
                 code: None,
                 program_id: "program_a".to_string(),
                 is_active: true,
-            },
+            }),
         ),
     ]
 }

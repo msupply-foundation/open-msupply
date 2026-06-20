@@ -1,4 +1,4 @@
-use repository::MasterListRow;
+use repository::{MasterListRow, Row};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
@@ -95,7 +95,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             MASTER_LIST_1,
-            MasterListRow {
+            Row::MasterList(MasterListRow {
                 id: MASTER_LIST_1.0.to_owned(),
                 name: "District Store".to_string(),
                 code: "".to_string(),
@@ -103,12 +103,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 is_active: false,
                 is_default_price_list: false,
                 discount_percentage: None,
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             MASTER_LIST_2,
-            MasterListRow {
+            Row::MasterList(MasterListRow {
                 id: MASTER_LIST_2.0.to_owned(),
                 name: "District Store 2".to_string(),
                 code: "".to_string(),
@@ -116,12 +116,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 is_active: true,
                 is_default_price_list: false,
                 discount_percentage: None,
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             DEFAULT_PRICE_LIST,
-            MasterListRow {
+            Row::MasterList(MasterListRow {
                 id: DEFAULT_PRICE_LIST.0.to_owned(),
                 name: "Default Price List".to_string(),
                 code: "".to_string(),
@@ -129,12 +129,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 is_active: true,
                 is_default_price_list: true,
                 discount_percentage: Some(0.0),
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             DISCOUNT_LIST,
-            MasterListRow {
+            Row::MasterList(MasterListRow {
                 id: DISCOUNT_LIST.0.to_owned(),
                 name: "Discount List".to_string(),
                 code: "".to_string(),
@@ -142,7 +142,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 is_active: true,
                 is_default_price_list: false,
                 discount_percentage: Some(20.0),
-            },
+            }),
         ),
     ]
 }

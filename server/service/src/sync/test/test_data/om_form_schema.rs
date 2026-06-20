@@ -1,4 +1,4 @@
-use repository::FormSchemaJson;
+use repository::{row_from_schema, FormSchemaJson, Row};
 use serde_json::json;
 // Data in this file is used in "test_om_report_translation" and "test_sync_pull_and_push"
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -24,7 +24,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         FORM_SCHEMA,
-        form_schema(),
+        Row::FormSchema(row_from_schema(&form_schema()).unwrap()),
     )]
 }
 pub(crate) fn test_v6_central_push_records() -> Vec<TestSyncOutgoingRecord> {

@@ -1,4 +1,4 @@
-use repository::{MasterListRow, MasterListRowRepository, StorageConnection, SyncBufferRow};
+use repository::{MasterListRow, MasterListRowRepository, Row, StorageConnection, SyncBufferRow};
 
 use serde::Deserialize;
 
@@ -50,7 +50,7 @@ impl SyncTranslation for MasterListTranslation {
             is_default_price_list: data.is_default_price_list.unwrap_or(false),
             discount_percentage: data.discount_percentage,
         };
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::MasterList(result)))
     }
 
     // Soft delete
@@ -72,7 +72,7 @@ impl SyncTranslation for MasterListTranslation {
             is_active: false,
             ..master_list
         };
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::MasterList(result)))
     }
 }
 

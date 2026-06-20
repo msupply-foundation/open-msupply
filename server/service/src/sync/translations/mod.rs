@@ -276,23 +276,40 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&str>
 
 #[derive(Debug)]
 pub(crate) enum IntegrationOperation {
-    Upsert(Box<dyn Upsert>), // Upsert record
-    Delete(Box<dyn Delete>), // Delete record
+    /// Upsert a changelog-tracked, push-eligible row (carried as the `Row` enum).
+    Upsert(Row),
+    /// Upsert a row that is not in the changelog and never pushed (link tables,
+    /// sync_request).
+    UpsertNonSync(NonSyncRow),
+    /// Upsert a high-level immutable `Document`. Special-cased because integration
+    /// also updates aux tables (program_enrolment / encounter / contact_trace) for
+    /// the latest document. See `integrate_document::sync_upsert_document`.
+    UpsertDocument(Box<Document>),
+    /// Delete a record by identity; dispatched by table name.
+    Delete {
+        table_name: ChangelogTableName,
+        record_id: String,
+    },
 }
 
 impl IntegrationOperation {
-    pub(crate) fn upsert<U>(upsert: U) -> Self
-    where
-        U: Upsert + 'static,
-    {
-        Self::Upsert(Box::new(upsert))
+    pub(crate) fn upsert(upsert: Row) -> Self {
+        Self::Upsert(upsert)
     }
 
-    pub(crate) fn delete<U>(delete: U) -> Self
-    where
-        U: Delete + 'static,
-    {
-        Self::Delete(Box::new(delete))
+    pub(crate) fn upsert_non_sync(upsert: NonSyncRow) -> Self {
+        Self::UpsertNonSync(upsert)
+    }
+
+    pub(crate) fn upsert_document(document: Document) -> Self {
+        Self::UpsertDocument(Box::new(document))
+    }
+
+    pub(crate) fn delete(table_name: ChangelogTableName, record_id: impl Into<String>) -> Self {
+        Self::Delete {
+            table_name,
+            record_id: record_id.into(),
+        }
     }
 }
 
@@ -313,40 +330,38 @@ impl PartialEq for PullTranslateResult {
 }
 
 impl PullTranslateResult {
-    pub(crate) fn upsert<U>(upsert: U) -> Self
-    where
-        U: Upsert + 'static,
-    {
-        Self::upserts(vec![upsert])
+    pub(crate) fn upsert(upsert: Row) -> Self {
+        Self::IntegrationOperations(vec![IntegrationOperation::upsert(upsert)])
     }
 
-    pub(crate) fn upserts<U>(upserts: Vec<U>) -> Self
-    where
-        U: Upsert + 'static,
-    {
+    pub(crate) fn upserts(upserts: Vec<Row>) -> Self {
         Self::IntegrationOperations(
             upserts
                 .into_iter()
-                .map(|upsert| IntegrationOperation::Upsert(Box::new(upsert))) // Source site is added later using add_source_site_id
+                .map(IntegrationOperation::upsert) // Source site is added later using add_source_site_id
                 .collect(),
         )
     }
 
-    pub(crate) fn delete<U>(upsert: U) -> Self
-    where
-        U: Delete + 'static,
-    {
-        Self::deletes(vec![upsert])
+    /// Upsert a non-changelog row (link tables, sync_request).
+    pub(crate) fn upsert_non_sync(upsert: NonSyncRow) -> Self {
+        Self::IntegrationOperations(vec![IntegrationOperation::upsert_non_sync(upsert)])
     }
 
-    pub(crate) fn deletes<U>(deletes: Vec<U>) -> Self
-    where
-        U: Delete + 'static,
-    {
+    /// Upsert a high-level `Document` (with aux-table side effects).
+    pub(crate) fn upsert_document(document: Document) -> Self {
+        Self::IntegrationOperations(vec![IntegrationOperation::upsert_document(document)])
+    }
+
+    pub(crate) fn delete(table_name: ChangelogTableName, record_id: impl Into<String>) -> Self {
+        Self::IntegrationOperations(vec![IntegrationOperation::delete(table_name, record_id)])
+    }
+
+    pub(crate) fn deletes(deletes: Vec<(ChangelogTableName, String)>) -> Self {
         Self::IntegrationOperations(
             deletes
                 .into_iter()
-                .map(|delete| IntegrationOperation::Delete(Box::new(delete))) // Source site is added later using add_source_site_id
+                .map(|(table_name, record_id)| IntegrationOperation::delete(table_name, record_id))
                 .collect(),
         )
     }

@@ -6,7 +6,7 @@ use super::{
 use crate::{
     db_diesel::barcode_row::barcode, db_diesel::changelog::changelog::RowOrId,
     db_diesel::vvm_status::vvm_status_row::vvm_status, diesel_macros::define_linked_tables,
-    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert,
+    repository_error::RepositoryError, SourceSiteId,
 };
 use crate::{ChangelogRepository, RowActionType};
 
@@ -158,66 +158,8 @@ impl<'a> StockLineRowRepository<'a> {
             .load::<StockLineRow>(self.connection.lock().connection())
             .map_err(RepositoryError::from)
     }
-}
 
-#[derive(Debug, Clone)]
-pub struct StockLineRowDelete(pub String);
-// For tests only
-impl Delete for StockLineRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => StockLineRow::generate_changelog(
-                RowOrId::Id(&self.0),
-                con,
-                RowActionType::Delete,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        StockLineRowRepository::new(con)._delete(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            StockLineRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
-}
-
-impl Upsert for StockLineRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        StockLineRowRepository::new(con)._upsert(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => StockLineRow::generate_changelog(
-                RowOrId::Row(self),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            StockLineRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        self._delete(record_id)
     }
 }

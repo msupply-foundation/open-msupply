@@ -5,10 +5,7 @@ use super::{
 
 use crate::diesel_macros::define_linked_tables;
 use crate::SourceSiteId;
-use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType,
-    Upsert,
-};
+use crate::{repository_error::RepositoryError, ChangelogRepository, RowActionType};
 
 use diesel::prelude::*;
 
@@ -106,33 +103,5 @@ impl<'a> EncounterRowRepository<'a> {
         Ok(encounter::table
             .filter(encounter::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
-    }
-}
-
-impl Upsert for EncounterRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        EncounterRowRepository::new(con)._upsert(self)?;
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            EncounterRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

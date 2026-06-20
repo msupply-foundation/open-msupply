@@ -167,7 +167,7 @@ impl SyncTranslation for StocktakeTranslation {
             is_initial_stocktake: data.is_initial_stocktake,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Stocktake(result)))
     }
 
     fn try_translate_to_upsert_sync_record(

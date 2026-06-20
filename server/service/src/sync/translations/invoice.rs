@@ -9,7 +9,7 @@ use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
-    InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceRowRepository,
+    InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowRepository,
     InvoiceStatus, InvoiceType, KeyValueStoreRepository, NameRow, NameRowRepository, Row,
     StorageConnection, StoreFilter, StoreRepository, StoreRowRepository, SyncBufferRow,
     UserAccountRow, UserAccountRowRepository,
@@ -528,7 +528,7 @@ impl SyncTranslation for InvoiceTranslation {
             }
         }
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Invoice(result)))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -537,9 +537,10 @@ impl SyncTranslation for InvoiceTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         // TODO, check site ? (should never get delete records for this site, only transfer other half)
-        Ok(PullTranslateResult::delete(InvoiceRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::Invoice,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 
     fn try_translate_to_upsert_sync_record(
@@ -1075,13 +1076,15 @@ mod tests {
     use repository::{
         insurance_provider_row::InsuranceProviderRowRepository,
         mock::{mock_store_a, MockData, MockDataInserts},
-        name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoinRow},
+        name_insurance_join_row::{
+            InsurancePolicyType, NameInsuranceJoinRow, NameInsuranceJoinRowRepository,
+        },
         shipping_method_row::ShippingMethodRowRepository,
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
         ChangelogCondition, ChangelogRepository, CurrencyRow, CurrencyRowRepository,
-        CursorAndLimit, DiagnosisRow, FilterBuilder, InsuranceProviderRow, KeyType,
-        KeyValueStoreRow, RowOrDelete, ShippingMethodRow, SyncAction, SyncRecordData,
+        CursorAndLimit, DiagnosisRow, DiagnosisRowRepository, FilterBuilder, InsuranceProviderRow,
+        KeyType, KeyValueStoreRow, RowOrDelete, ShippingMethodRow, SyncAction, SyncRecordData,
     };
     use serde_json::json;
 

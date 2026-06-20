@@ -1,4 +1,4 @@
-use repository::{asset_log_reason_row::AssetLogReasonRow, asset_log_row::AssetLogStatus};
+use repository::{asset_log_reason_row::AssetLogReasonRow, asset_log_row::AssetLogStatus, Row};
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -52,8 +52,16 @@ fn asset_log_reason2() -> AssetLogReasonRow {
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, ASSET_LOG_REASON1, asset_log_reason1()),
-        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, ASSET_LOG_REASON2, asset_log_reason2()),
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
+            ASSET_LOG_REASON1,
+            Row::AssetLogReason(asset_log_reason1()),
+        ),
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
+            ASSET_LOG_REASON2,
+            Row::AssetLogReason(asset_log_reason2()),
+        ),
     ]
 }
 

@@ -68,7 +68,7 @@ impl SyncTranslation for AssetCatalogueItemTranslation {
             deleted_datetime,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::AssetCatalogueItem(result)))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

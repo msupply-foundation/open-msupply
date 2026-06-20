@@ -1,5 +1,4 @@
 use crate::sync::{
-    integrate_document::DocumentUpsert,
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
@@ -72,7 +71,7 @@ impl SyncRecordTester for DocumentRecordTester {
                 "name_store_join": [patient_name_store_join_json],
                 "form_schema": [schema_json],
             }),
-            integration_records: vec![IntegrationOperation::upsert(DocumentUpsert(row))],
+            integration_records: vec![IntegrationOperation::upsert_document(row)],
             ..Default::default()
         });
 

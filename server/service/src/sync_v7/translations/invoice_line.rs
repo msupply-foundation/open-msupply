@@ -1,6 +1,9 @@
-use repository::{syncv7::SyncRecordSerializeError, ChangeLogInsertRow, InvoiceLineRow, Upsert};
+use repository::{syncv7::SyncRecordSerializeError, ChangeLogInsertRow, InvoiceLineRow, Row};
 
-use crate::sync_v7::{serde::DeserializeResult, validate_translate_integrate::SyncContext};
+use crate::sync_v7::{
+    serde::{DeserializeResult, V7Upsert},
+    validate_translate_integrate::SyncContext,
+};
 
 /// Deserialise an invoice_line and, when this site is a transfer recipient
 /// (a remote site receiving the row for a store it doesn't own), null
@@ -24,14 +27,17 @@ pub(crate) fn translate_invoice_line(
         }
     }
 
-    Ok(vec![(Box::new(row) as Box<dyn Upsert>, changelog_insert)])
+    Ok(vec![(
+        V7Upsert::Row(Row::InvoiceLine(row)),
+        changelog_insert,
+    )])
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::sync::ActiveStoresOnSite;
-    use repository::{ChangelogTableName, NameRow, RowActionType, Store, StoreRow};
+    use repository::{ChangelogTableName, NameRow, Row, RowActionType, Store, StoreRow};
 
     fn site_with_store(store_id: &str) -> ActiveStoresOnSite {
         ActiveStoresOnSite {
@@ -65,12 +71,11 @@ mod test {
     }
 
     fn translated(result: DeserializeResult) -> InvoiceLineRow {
-        let (mut upsert, _) = result.unwrap().pop().unwrap();
-        upsert
-            .as_mut_any()
-            .and_then(|any| any.downcast_mut::<InvoiceLineRow>())
-            .unwrap()
-            .clone()
+        let (upsert, _) = result.unwrap().pop().unwrap();
+        match upsert {
+            V7Upsert::Row(Row::InvoiceLine(row)) => row,
+            other => panic!("expected V7Upsert::Row(Row::InvoiceLine), got {other:?}"),
+        }
     }
 
     #[test]

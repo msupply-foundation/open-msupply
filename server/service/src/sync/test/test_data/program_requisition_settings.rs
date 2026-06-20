@@ -4,7 +4,7 @@ use repository::{
         mock_period_schedule_2,
     },
     sync_buffer::SyncRecordData, ContextRow, ProgramRequisitionOrderTypeRow,
-    ProgramRequisitionSettingsRow, ProgramRow, SyncAction, SyncBufferRow,
+    ProgramRequisitionSettingsRow, ProgramRow, Row, SyncAction, SyncBufferRow,
 };
 
 use crate::sync::{
@@ -123,11 +123,11 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
         TestSyncIncomingRecord {
             translated_record: PullTranslateResult::IntegrationOperations(vec![
-                IntegrationOperation::upsert(ContextRow {
+                IntegrationOperation::upsert(Row::Context(ContextRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                     name: "Program Test 01".to_string(),
-                }),
-                IntegrationOperation::upsert(ProgramRow {
+                })),
+                IntegrationOperation::upsert(Row::Program(ProgramRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                     name: "Program Test 01".to_string(),
                     master_list_id: Some(MASTER_LIST_WITH_PROGRAM_1.0.to_owned()),
@@ -135,14 +135,14 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     is_immunisation: false,
                     elmis_code: Some("elmis".to_string()),
                     deleted_datetime: None,
-                }),
-                IntegrationOperation::upsert(ProgramRequisitionSettingsRow {
+                })),
+                IntegrationOperation::upsert(Row::ProgramRequisitionSettings(ProgramRequisitionSettingsRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_1().id,
                     name_tag_id: mock_name_tag_1().id,
                     program_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                     period_schedule_id: mock_period_schedule_1().id,
-                }),
-                IntegrationOperation::upsert(ProgramRequisitionOrderTypeRow {
+                })),
+                IntegrationOperation::upsert(Row::ProgramRequisitionOrderType(ProgramRequisitionOrderTypeRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned()
                         + &mock_name_tag_1().id
                         + "New order 1",
@@ -154,8 +154,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     max_order_per_period: 1,
                     is_emergency: false,
                     max_items_in_emergency_order: 0,
-                }),
-                IntegrationOperation::upsert(ProgramRequisitionOrderTypeRow {
+                })),
+                IntegrationOperation::upsert(Row::ProgramRequisitionOrderType(ProgramRequisitionOrderTypeRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned()
                         + &mock_name_tag_1().id
                         + "New order 2",
@@ -167,14 +167,14 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     max_order_per_period: 1,
                     is_emergency: false,
                     max_items_in_emergency_order: 0,
-                }),
-                IntegrationOperation::upsert(ProgramRequisitionSettingsRow {
+                })),
+                IntegrationOperation::upsert(Row::ProgramRequisitionSettings(ProgramRequisitionSettingsRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_2().id,
                     name_tag_id: mock_name_tag_2().id,
                     program_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                     period_schedule_id: mock_period_schedule_1().id,
-                }),
-                IntegrationOperation::upsert(ProgramRequisitionOrderTypeRow {
+                })),
+                IntegrationOperation::upsert(Row::ProgramRequisitionOrderType(ProgramRequisitionOrderTypeRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned()
                         + &mock_name_tag_2().id
                         + "New order 1",
@@ -186,14 +186,14 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     max_order_per_period: 1,
                     is_emergency: false,
                     max_items_in_emergency_order: 0,
-                }),
-                IntegrationOperation::upsert(ProgramRequisitionSettingsRow {
+                })),
+                IntegrationOperation::upsert(Row::ProgramRequisitionSettings(ProgramRequisitionSettingsRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_3().id,
                     name_tag_id: mock_name_tag_3().id,
                     program_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                     period_schedule_id: mock_period_schedule_2().id,
-                }),
-                IntegrationOperation::upsert(ProgramRequisitionOrderTypeRow {
+                })),
+                IntegrationOperation::upsert(Row::ProgramRequisitionOrderType(ProgramRequisitionOrderTypeRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned()
                         + &mock_name_tag_3().id
                         + "New order 1",
@@ -205,7 +205,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     max_order_per_period: 0,
                     is_emergency: true,
                     max_items_in_emergency_order: 2,
-                }),
+                })),
             ]),
             sync_buffer_row: SyncBufferRow {
                 table_name: TABLE_NAME.to_string(),
@@ -218,11 +218,11 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         },
         TestSyncIncomingRecord {
             translated_record: PullTranslateResult::IntegrationOperations(vec![
-                IntegrationOperation::upsert(ContextRow {
+                IntegrationOperation::upsert(Row::Context(ContextRow {
                     id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
                     name: "Program Test 02".to_string(),
-                }),
-                IntegrationOperation::upsert(ProgramRow {
+                })),
+                IntegrationOperation::upsert(Row::Program(ProgramRow {
                     id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
                     name: "Program Test 02".to_string(),
                     master_list_id: Some(MASTER_LIST_WITH_PROGRAM_2.0.to_owned()),
@@ -230,13 +230,13 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     is_immunisation: true,
                     elmis_code: None,
                     deleted_datetime: None,
-                }),
-                IntegrationOperation::upsert(ProgramRequisitionSettingsRow {
+                })),
+                IntegrationOperation::upsert(Row::ProgramRequisitionSettings(ProgramRequisitionSettingsRow {
                     id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned() + &mock_name_tag_1().id,
                     name_tag_id: mock_name_tag_1().id,
                     program_id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
                     period_schedule_id: mock_period_schedule_1().id,
-                }),
+                })),
             ]),
             sync_buffer_row: SyncBufferRow {
                 table_name: TABLE_NAME.to_string(),

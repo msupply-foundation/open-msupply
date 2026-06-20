@@ -1,4 +1,4 @@
-use repository::{BackendPluginRow, PluginType, PluginTypes, PluginVariantType};
+use repository::{BackendPluginRow, PluginType, PluginTypes, PluginVariantType, Row};
 use serde_json::json;
 
 // Data in this file is used in "test_backend_plugin_translation" and "test_sync_pull_and_push"
@@ -33,7 +33,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         BACKEND_PLUGIN,
-        backend_plugin(),
+        Row::BackendPlugin(backend_plugin()),
     )]
 }
 

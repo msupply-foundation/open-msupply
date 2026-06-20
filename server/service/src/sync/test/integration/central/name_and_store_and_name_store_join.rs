@@ -6,7 +6,7 @@ use crate::sync::{
 };
 use chrono::NaiveDate;
 use repository::{
-    NameRow, NameRowType, NameStoreJoinRow, NameStoreJoinRowDelete, StoreMode, StoreRow,
+    ChangelogTableName, NameRow, NameRowType, NameStoreJoinRow, StoreMode, StoreRow,
 };
 
 use serde_json::json;
@@ -197,9 +197,10 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
         // TODO should we check for name and store deletes ?
         result.push(TestStepData {
             central_delete: json!({ "name_store_join": [name_store_join_row1.id] }),
-            integration_records: vec![IntegrationOperation::delete(NameStoreJoinRowDelete(
+            integration_records: vec![IntegrationOperation::delete(
+                ChangelogTableName::NameStoreJoin,
                 name_store_join_row1.id,
-            ))],
+            )],
             ..Default::default()
         });
         result

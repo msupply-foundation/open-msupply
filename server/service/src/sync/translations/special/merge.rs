@@ -1,9 +1,9 @@
 use chrono::Utc;
 use repository::{
     ChangelogTableName, ClinicianLinkRow, ClinicianLinkRowRepository, EqualFilter, ItemLinkRow,
-    ItemLinkRowRepository, NameLinkRow, NameLinkRowRepository, NameRowDelete, NameStoreJoinFilter,
-    NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete, StorageConnection,
-    StoreFilter, StoreRepository, SyncMessageRow, SyncMessageRowStatus, SyncMessageRowType,
+    ItemLinkRowRepository, NameLinkRow, NameLinkRowRepository, NameStoreJoinFilter,
+    NameStoreJoinRepository, NameStoreJoinRow, NonSyncRow, Row, StorageConnection, StoreFilter,
+    StoreRepository, SyncMessageRow, SyncMessageRowStatus, SyncMessageRowType,
 };
 use serde::{Deserialize, Serialize};
 
@@ -97,16 +97,17 @@ pub(crate) fn apply_name_merge(
     let mut operations: Vec<IntegrationOperation> = name_links
         .into_iter()
         .map(|NameLinkRow { id, .. }| {
-            IntegrationOperation::upsert(NameLinkRow {
+            IntegrationOperation::upsert_non_sync(NonSyncRow::NameLink(NameLinkRow {
                 id,
                 name_id: indirect_link.name_id.clone(),
-            })
+            }))
         })
         .collect();
     // delete the merged name
-    operations.push(IntegrationOperation::delete(NameRowDelete(
+    operations.push(IntegrationOperation::delete(
+        ChangelogTableName::Name,
         data.merge_id_to_delete.clone(),
-    )));
+    ));
 
     let name_store_join_repo = NameStoreJoinRepository::new(connection);
     let name_store_joins_for_delete = name_store_join_repo.query_by_filter(
@@ -144,9 +145,10 @@ pub(crate) fn apply_name_merge(
             // storeK joined to nameK (delete the join before this happens, stores shouldn't be visible to themselves)
             if let Some(store) = &store {
                 if nsj_delete.name_store_join.store_id == store.store_row.id {
-                    return Some(IntegrationOperation::delete(NameStoreJoinRowDelete(
+                    return Some(IntegrationOperation::delete(
+                        ChangelogTableName::NameStoreJoin,
                         nsj_delete.name_store_join.id.clone(),
-                    )));
+                    ));
                 }
             }
 
@@ -170,18 +172,21 @@ pub(crate) fn apply_name_merge(
                     || (!nsj_keep.name_store_join.name_is_supplier
                         && nsj_delete.name_store_join.name_is_supplier)
                 {
-                    operations.push(IntegrationOperation::upsert(NameStoreJoinRow {
-                        name_is_customer: nsj_keep.name_store_join.name_is_customer
-                            || nsj_delete.name_store_join.name_is_customer,
-                        name_is_supplier: nsj_keep.name_store_join.name_is_supplier
-                            || nsj_delete.name_store_join.name_is_supplier,
-                        ..nsj_keep.name_store_join.clone()
-                    }));
+                    operations.push(IntegrationOperation::upsert(Row::NameStoreJoin(
+                        NameStoreJoinRow {
+                            name_is_customer: nsj_keep.name_store_join.name_is_customer
+                                || nsj_delete.name_store_join.name_is_customer,
+                            name_is_supplier: nsj_keep.name_store_join.name_is_supplier
+                                || nsj_delete.name_store_join.name_is_supplier,
+                            ..nsj_keep.name_store_join.clone()
+                        },
+                    )));
                 }
 
-                return Some(IntegrationOperation::delete(NameStoreJoinRowDelete(
+                return Some(IntegrationOperation::delete(
+                    ChangelogTableName::NameStoreJoin,
                     nsj_delete.name_store_join.id.clone(),
-                )));
+                ));
             }
 
             None
@@ -213,10 +218,10 @@ pub(crate) fn apply_item_merge(
     let operations = item_links
         .into_iter()
         .map(|ItemLinkRow { id, .. }| {
-            IntegrationOperation::upsert(ItemLinkRow {
+            IntegrationOperation::upsert_non_sync(NonSyncRow::ItemLink(ItemLinkRow {
                 id,
                 item_id: indirect_link.item_id.clone(),
-            })
+            }))
         })
         .collect();
 
@@ -247,10 +252,10 @@ pub(crate) fn apply_clinician_merge(
     let operations = clinician_links
         .into_iter()
         .map(|ClinicianLinkRow { id, .. }| {
-            IntegrationOperation::upsert(ClinicianLinkRow {
+            IntegrationOperation::upsert_non_sync(NonSyncRow::ClinicianLink(ClinicianLinkRow {
                 id,
                 clinician_id: indirect_link.clinician_id.clone(),
-            })
+            }))
         })
         .collect();
 

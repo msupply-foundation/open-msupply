@@ -1,4 +1,5 @@
 use repository::item_variant::packaging_variant_row::PackagingVariantRow;
+use repository::Row;
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -62,12 +63,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             PACKAGING_VARIANT_1,
-            packaging_variant1(),
+            Row::PackagingVariant(packaging_variant1()),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             PACKAGING_VARIANT_2,
-            packaging_variant2(),
+            Row::PackagingVariant(packaging_variant2()),
         ),
     ]
 }

@@ -91,7 +91,7 @@ impl SyncTranslation for LocationMovementTranslation {
             exit_datetime: exit_date.map(|exit_date| NaiveDateTime::new(exit_date, exit_time)),
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::LocationMovement(result)))
     }
 
     fn try_translate_to_upsert_sync_record(

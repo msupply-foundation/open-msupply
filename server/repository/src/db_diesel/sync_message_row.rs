@@ -1,7 +1,7 @@
 use super::{
     store_row::store, ChangelogRepository, RowActionType, RowOrId, StorageConnection,
 };
-use crate::{ChangelogSyncType, RepositoryError, SourceSiteId, Upsert};
+use crate::{RepositoryError, SourceSiteId};
 use ts_rs::TS;
 
 use chrono::NaiveDateTime;
@@ -116,37 +116,6 @@ impl<'a> SyncMessageRowRepository<'a> {
         Ok(sync_message::table
             .filter(sync_message::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
-    }
-}
-
-impl Upsert for SyncMessageRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        SyncMessageRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                RowOrId::Row(self),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            SyncMessageRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }
 

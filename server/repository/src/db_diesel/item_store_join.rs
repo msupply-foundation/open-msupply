@@ -1,8 +1,8 @@
 use diesel::prelude::*;
 
 use crate::{
-    item_link, ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType,
-    SourceSiteId, StorageConnection, Upsert,
+    item_link, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 
 table! {
@@ -85,7 +85,7 @@ impl<'a> ItemStoreJoinRowRepository<'a> {
         ItemStoreJoinRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &ItemStoreJoinRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &ItemStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item_store_join::dsl::item_store_join)
             .values(row)
             .on_conflict(item_store_join::dsl::id)
@@ -102,36 +102,6 @@ impl<'a> ItemStoreJoinRowRepository<'a> {
         Ok(item_store_join::dsl::item_store_join
             .filter(item_store_join::dsl::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
-    }
-}
-
-impl Upsert for ItemStoreJoinRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        ItemStoreJoinRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ItemStoreJoinRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }
 

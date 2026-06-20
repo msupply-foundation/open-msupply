@@ -1,4 +1,5 @@
 use repository::db_diesel::sync_file_reference_row::SyncFileReferenceRow;
+use repository::Row;
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -39,7 +40,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         ASSET_LOG1,
-        sync_file_reference1(),
+        Row::SyncFileReference(sync_file_reference1()),
     )]
 }
 

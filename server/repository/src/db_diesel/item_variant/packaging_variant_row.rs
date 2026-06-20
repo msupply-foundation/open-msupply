@@ -1,6 +1,6 @@
 use crate::{
-    ChangelogRepository, ChangelogSyncType,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    ChangelogRepository,
+    RepositoryError, RowActionType, SourceSiteId, StorageConnection,
 };
 
 use diesel::prelude::*;
@@ -40,7 +40,7 @@ impl<'a> PackagingVariantRowRepository<'a> {
         PackagingVariantRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &PackagingVariantRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &PackagingVariantRow) -> Result<(), RepositoryError> {
         diesel::insert_into(packaging_variant::table)
             .values(row)
             .on_conflict(packaging_variant::id)
@@ -93,36 +93,5 @@ impl<'a> PackagingVariantRowRepository<'a> {
         Ok(packaging_variant::table
             .filter(packaging_variant::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
-    }
-}
-
-impl Upsert for PackagingVariantRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        PackagingVariantRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            PackagingVariantRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

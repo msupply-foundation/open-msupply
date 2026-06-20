@@ -1,4 +1,4 @@
-use repository::{StorageConnection, SyncBufferRow, UnitRow, UnitRowDelete};
+use repository::{ChangelogTableName, Row, StorageConnection, SyncBufferRow, UnitRow};
 
 use serde::Deserialize;
 
@@ -47,7 +47,7 @@ impl SyncTranslation for UnitTranslation {
             result.description = Some(data.comment);
         }
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Unit(result)))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -55,9 +55,10 @@ impl SyncTranslation for UnitTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(UnitRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::Unit,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 }
 

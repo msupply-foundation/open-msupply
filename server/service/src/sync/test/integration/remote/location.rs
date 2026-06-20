@@ -4,7 +4,7 @@ use crate::sync::{
     },
     translations::IntegrationOperation,
 };
-use repository::{LocationRow, LocationRowDelete};
+use repository::{ChangelogTableName, LocationRow};
 use util::uuid::uuid;
 
 pub struct LocationRecordTester;
@@ -38,7 +38,10 @@ impl SyncRecordTester for LocationRecordTester {
         });
         // STEP 3 - delete
         result.push(TestStepData {
-            integration_records: vec![IntegrationOperation::delete(LocationRowDelete(row.id))],
+            integration_records: vec![IntegrationOperation::delete(
+                ChangelogTableName::Location,
+                row.id,
+            )],
             ..Default::default()
         });
         result

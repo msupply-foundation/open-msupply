@@ -65,7 +65,7 @@ impl SyncTranslation for ItemVariantTranslation {
             manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::ItemVariant(result)))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

@@ -4,8 +4,7 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::define_linked_tables, ChangelogRepository, ChangelogSyncType, RowActionType,
-    SourceSiteId, Upsert,
+    diesel_macros::define_linked_tables, ChangelogRepository, RowActionType, SourceSiteId,
 };
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -92,35 +91,5 @@ impl<'a> ProgramEnrolmentRowRepository<'a> {
             SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
-    }
-}
-
-impl Upsert for ProgramEnrolmentRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        ProgramEnrolmentRowRepository::new(con)._upsert(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert!(ProgramEnrolmentRowRepository::new(con)
-            .find_one_by_id(&self.id)
-            .unwrap()
-            .is_some())
     }
 }

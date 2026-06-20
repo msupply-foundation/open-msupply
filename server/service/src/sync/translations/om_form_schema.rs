@@ -2,7 +2,7 @@ use super::{
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 use repository::{
-    schema_from_row, ChangelogRow, ChangelogTableName, FormSchemaJson, FormSchemaRowDelete, Row,
+    row_from_schema, schema_from_row, ChangelogRow, ChangelogTableName, FormSchemaJson, Row,
     StorageConnection, SyncBufferRow,
 };
 // Needs to be added to all_translators()
@@ -24,11 +24,10 @@ impl SyncTranslation for OmFormSchemaTranslation {
         _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_value::<
-            FormSchemaJson,
-        >(
-            sync_record.data.0.clone()
-        )?))
+        let schema = serde_json::from_value::<FormSchemaJson>(sync_record.data.0.clone())?;
+        Ok(PullTranslateResult::upsert(Row::FormSchema(
+            row_from_schema(&schema)?,
+        )))
     }
     fn change_log_type(&self) -> Option<ChangelogTableName> {
         Some(ChangelogTableName::FormSchema)
@@ -70,9 +69,10 @@ impl SyncTranslation for OmFormSchemaTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(FormSchemaRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::FormSchema,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 }
 

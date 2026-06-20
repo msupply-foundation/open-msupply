@@ -40,7 +40,7 @@ impl SyncTranslation for PackagingVariantTranslation {
             ..row
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::PackagingVariant(result)))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

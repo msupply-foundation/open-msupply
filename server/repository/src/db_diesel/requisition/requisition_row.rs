@@ -1,5 +1,3 @@
-use std::any::Any;
-
 use crate::db_diesel::{
     item_link_row::item_link, name_row::name, period::period_row::period,
     program_requisition::program_row::program, store_row::store, user_row::user_account,
@@ -10,7 +8,7 @@ use crate::repository_error::RepositoryError;
 
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::{ChangelogRepository, RowActionType};
-use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
+use crate::SourceSiteId;
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -204,74 +202,13 @@ impl<'a> RequisitionRowRepository<'a> {
         .get_result(self.connection.lock().connection())?;
         Ok(exists)
     }
-}
 
-#[derive(Debug, Clone)]
-pub struct RequisitionRowDelete(pub String);
-impl Delete for RequisitionRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RequisitionRow::generate_changelog(
-                RowOrId::Id(&self.0),
-                con,
-                RowActionType::Delete,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
-            requisition_with_links::table.filter(requisition_with_links::id.eq(&self.0)),
+            requisition_with_links::table.filter(requisition_with_links::id.eq(record_id)),
         )
-        .execute(con.lock().connection())?;
-        ChangelogRepository::new(con).insert(&changelog)?;
+        .execute(self.connection.lock().connection())?;
         Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            RequisitionRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
-}
-
-impl Upsert for RequisitionRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        RequisitionRowRepository::new(con)._upsert(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RequisitionRow::generate_changelog(
-                RowOrId::Row(self),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            RequisitionRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-
-    fn as_mut_any(&mut self) -> Option<&mut dyn Any> {
-        Some(self)
     }
 }
 

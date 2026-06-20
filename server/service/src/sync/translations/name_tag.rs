@@ -1,4 +1,4 @@
-use repository::{NameTagRow, StorageConnection, SyncBufferRow};
+use repository::{NameTagRow, Row, StorageConnection, SyncBufferRow};
 
 use serde::{Deserialize, Serialize};
 
@@ -39,7 +39,7 @@ impl SyncTranslation for NameTagTranslation {
             name: description,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::NameTag(result)))
     }
 }
 

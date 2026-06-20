@@ -1,4 +1,4 @@
-use repository::{contact_row::ContactRow, ContactRowDelete};
+use repository::{contact_row::ContactRow, ChangelogTableName, Row};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
@@ -57,7 +57,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             CONTACT_1,
-            ContactRow {
+            Row::Contact(ContactRow {
                 id: "CONTACT_1".to_string(),
                 name_id: "name_store_a".to_string(),
                 first_name: "test first".to_string(),
@@ -72,12 +72,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 address_1: Some("test address1".to_string()),
                 address_2: Some("test address2".to_string()),
                 country: Some("test country".to_string()),
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             CONTACT_2,
-            ContactRow {
+            Row::Contact(ContactRow {
                 id: "CONTACT_2".to_string(),
                 name_id: "name_store_a".to_string(),
                 first_name: "second test first".to_string(),
@@ -92,7 +92,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 address_1: Some("second test address1".to_string()),
                 address_2: Some("second test address2".to_string()),
                 country: Some("second test country".to_string()),
-            },
+            }),
         ),
     ]
 }
@@ -101,6 +101,6 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         CONTACT_1.0,
-        ContactRowDelete(CONTACT_1.0.to_string()),
+        ChangelogTableName::Contact,
     )]
 }

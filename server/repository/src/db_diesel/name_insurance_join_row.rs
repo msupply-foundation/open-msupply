@@ -3,12 +3,11 @@ use super::{
     StorageConnection,
 };
 
-use crate::ChangelogSyncType;
 use crate::SourceSiteId;
 use crate::{
     diesel_macros::{apply_sort, define_linked_tables},
     repository_error::RepositoryError,
-    Sort, Upsert,
+    Sort,
 };
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -148,35 +147,5 @@ impl<'a> NameInsuranceJoinRowRepository<'a> {
             SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
-    }
-}
-
-impl Upsert for NameInsuranceJoinRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        NameInsuranceJoinRowRepository::new(con)._upsert(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            NameInsuranceJoinRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

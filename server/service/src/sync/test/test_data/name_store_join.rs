@@ -2,7 +2,7 @@ use crate::sync::{
     test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
     translations::name_store_join::LegacyNameStoreJoinRow,
 };
-use repository::{sync_buffer::SyncRecordData, NameStoreJoinRow, NameStoreJoinRowDelete};
+use repository::{sync_buffer::SyncRecordData, ChangelogTableName, NameStoreJoinRow, Row};
 use serde_json::json;
 
 const TABLE_NAME: &str = "name_store_join";
@@ -24,13 +24,13 @@ fn name_store_join_1_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_STORE_JOIN_1,
-        NameStoreJoinRow {
+        Row::NameStoreJoin(NameStoreJoinRow {
             id: NAME_STORE_JOIN_1.0.to_string(),
             store_id: "store_a".to_string(),
             name_id: "name_store_c".to_string(),
             name_is_customer: false,
             name_is_supplier: true,
-        },
+        }),
     )
 }
 
@@ -62,20 +62,20 @@ fn name_store_join_2_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_STORE_JOIN_2,
-        NameStoreJoinRow {
+        Row::NameStoreJoin(NameStoreJoinRow {
             id: NAME_STORE_JOIN_2.0.to_string(),
             store_id: "store_b".to_string(),
             name_id: "name_store_a".to_string(),
             name_is_customer: false,
             name_is_supplier: true,
-        },
+        }),
     )
 }
 fn name_store_join_2_delete_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         NAME_STORE_JOIN_2.0,
-        NameStoreJoinRowDelete(NAME_STORE_JOIN_2.0.to_string()),
+        ChangelogTableName::NameStoreJoin,
     )
 }
 

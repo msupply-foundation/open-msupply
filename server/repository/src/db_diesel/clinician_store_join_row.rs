@@ -1,7 +1,7 @@
 use super::{clinician_link_row::clinician_link, clinician_row::clinician, StorageConnection};
 
-use crate::{ChangelogRepository, Delete, RowActionType};
-use crate::{ChangelogSyncType, RepositoryError, SourceSiteId, Upsert};
+use crate::{ChangelogRepository, RowActionType};
+use crate::{RepositoryError, SourceSiteId};
 
 use diesel::prelude::*;
 
@@ -74,57 +74,18 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         Ok(())
     }
 
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(
+            clinician_store_join::dsl::clinician_store_join
+                .filter(clinician_store_join::dsl::id.eq(record_id)),
+        )
+        .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ClinicianStoreJoinRow>, RepositoryError> {
         Ok(clinician_store_join::table
             .filter(clinician_store_join::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
-    }
-}
-
-impl Upsert for ClinicianStoreJoinRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        ClinicianStoreJoinRowRepository::new(con)._upsert_one(self)?;
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ClinicianStoreJoinRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct ClinicianStoreJoinRowDelete(pub String);
-impl Delete for ClinicianStoreJoinRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        _sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        ClinicianStoreJoinRowRepository::new(con).delete(&self.0)?;
-        Ok(()) // Clinician store joins not in Changelog/not synced out
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert!(matches!(
-            ClinicianStoreJoinRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        ));
     }
 }

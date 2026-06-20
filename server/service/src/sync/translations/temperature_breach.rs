@@ -144,7 +144,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             comment,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::TemperatureBreach(result)))
     }
 
     fn try_translate_to_upsert_sync_record(

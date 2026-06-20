@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::sync::translations::{item::ItemTranslation, warning::WarningTranslation};
-use repository::{ItemWarningJoinRow, StorageConnection, SyncBufferRow};
+use repository::{ItemWarningJoinRow, Row, StorageConnection, SyncBufferRow};
 
 use super::{FkField, PullTranslateResult, SyncTranslation};
 
@@ -57,7 +57,7 @@ impl SyncTranslation for ItemWarningJoinTranslation {
             warning_id: check_fk(warning_id, "warning_id", FkField::Warning)?,
             priority,
         };
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::ItemWarningJoin(result)))
     }
 }
 

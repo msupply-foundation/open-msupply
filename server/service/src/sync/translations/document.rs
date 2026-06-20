@@ -8,7 +8,6 @@ use repository::{
 use serde_json::Value;
 
 use crate::sync::{
-    integrate_document::DocumentUpsert,
     translations::{
         document_registry::DocumentRegistryTranslation, form_schema::FormSchemaTranslation,
         name::NameTranslation,
@@ -115,7 +114,7 @@ impl SyncTranslation for DocumentTranslation {
             owner_name_id: fk_check(owner_name_id, "owner_name_link_id", FkField::NameLink)?,
             context_id: check_fk(context_id, "context_id", FkField::Context)?,
         };
-        Ok(PullTranslateResult::upsert(DocumentUpsert(result)))
+        Ok(PullTranslateResult::upsert_document(result))
     }
 
     fn try_translate_to_upsert_sync_record(

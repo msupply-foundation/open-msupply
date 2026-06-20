@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use repository::StockLineRow;
+use repository::{Row, StockLineRow};
 use serde_json::json;
 
 use crate::sync::{
@@ -62,7 +62,7 @@ fn item_line_1_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         ITEM_LINE_1,
-        StockLineRow {
+        Row::StockLine(StockLineRow {
             id: ITEM_LINE_1.0.to_string(),
             store_id: "store_a".to_string(),
             item_link_id: "item_a".to_string(),
@@ -87,7 +87,7 @@ fn item_line_1_pull_record() -> TestSyncIncomingRecord {
             program_id: Some("program_a".to_string()),
             volume_per_pack: 10.0,
             total_volume: 100.0,
-        },
+        }),
     )
 }
 fn item_line_1_push_record() -> TestSyncOutgoingRecord {
@@ -174,7 +174,7 @@ fn item_line_2_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         ITEM_LINE_2,
-        StockLineRow {
+        Row::StockLine(StockLineRow {
             id: ITEM_LINE_2.0.to_string(),
             store_id: "store_a".to_string(),
             item_link_id: "item_b".to_string(),
@@ -199,7 +199,7 @@ fn item_line_2_pull_record() -> TestSyncIncomingRecord {
             program_id: None,
             total_volume: 0.0,
             volume_per_pack: 0.0,
-        },
+        }),
     )
 }
 fn item_line_2_push_record() -> TestSyncOutgoingRecord {
@@ -286,7 +286,7 @@ fn item_line_3_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         ITEM_LINE_3,
-        StockLineRow {
+        Row::StockLine(StockLineRow {
             id: ITEM_LINE_3.0.to_string(),
             store_id: "store_a".to_string(),
             item_link_id: "item_b".to_string(),
@@ -311,7 +311,7 @@ fn item_line_3_pull_record() -> TestSyncIncomingRecord {
             program_id: None,
             total_volume: 0.0,
             volume_per_pack: 0.0,
-        },
+        }),
     )
 }
 fn item_line_3_push_record() -> TestSyncOutgoingRecord {
@@ -398,7 +398,7 @@ fn item_line_4_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         ITEM_LINE_4,
-        StockLineRow {
+        Row::StockLine(StockLineRow {
             id: ITEM_LINE_4.0.to_string(),
             store_id: "store_a".to_string(),
             item_link_id: "item_b".to_string(),
@@ -423,7 +423,7 @@ fn item_line_4_pull_record() -> TestSyncIncomingRecord {
             program_id: None,
             total_volume: 0.0,
             volume_per_pack: 0.0,
-        },
+        }),
     )
 }
 fn item_line_4_push_record() -> TestSyncOutgoingRecord {
@@ -509,7 +509,7 @@ fn item_line_5_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         ITEM_LINE_5,
-        StockLineRow {
+        Row::StockLine(StockLineRow {
             id: ITEM_LINE_5.0.to_string(),
             store_id: "store_a".to_string(),
             item_link_id: "item_b".to_string(),
@@ -534,7 +534,7 @@ fn item_line_5_pull_record() -> TestSyncIncomingRecord {
             program_id: None,
             total_volume: 0.0,
             volume_per_pack: 0.0,
-        },
+        }),
     )
 }
 fn item_line_5_push_record() -> TestSyncOutgoingRecord {

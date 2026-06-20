@@ -1,4 +1,4 @@
-use repository::{ItemDirectionRow, ItemDirectionRowDelete, StorageConnection, SyncBufferRow};
+use repository::{ChangelogTableName, ItemDirectionRow, Row, StorageConnection, SyncBufferRow};
 
 use serde::Deserialize;
 
@@ -47,7 +47,7 @@ impl SyncTranslation for ItemDirectionTranslation {
             priority: data.priority,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::ItemDirection(result)))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -55,9 +55,10 @@ impl SyncTranslation for ItemDirectionTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(ItemDirectionRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::ItemDirection,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 }
 

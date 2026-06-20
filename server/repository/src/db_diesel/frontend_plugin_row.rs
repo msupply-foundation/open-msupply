@@ -2,9 +2,7 @@ use super::{
     ChangelogRepository, RowActionType, StorageConnection,
 };
 
-use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert,
-};
+use crate::{repository_error::RepositoryError, SourceSiteId};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -141,6 +139,12 @@ impl<'a> FrontendPluginRowRepository<'a> {
         Ok(())
     }
 
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(frontend_plugin::table.filter(frontend_plugin::id.eq(record_id)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<FrontendPluginRow>, RepositoryError> {
         Ok(frontend_plugin::table
             .filter(frontend_plugin::id.eq_any(ids))
@@ -148,65 +152,3 @@ impl<'a> FrontendPluginRowRepository<'a> {
     }
 }
 
-impl Upsert for FrontendPluginRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        FrontendPluginRowRepository::new(con)._upsert_one(self)?;
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            FrontendPluginRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
-// Most central data will be soft deleted (via upsert), and this trait will not be implemented
-// frontend_plugins don't have referencial relations to any other tables so it's ok to delete as an example
-pub struct FrontendPluginRowDelete(pub String);
-impl Delete for FrontendPluginRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => FrontendPluginRow::generate_changelog(
-                self.0.clone(),
-                con,
-                RowActionType::Delete,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        diesel::delete(frontend_plugin::table.filter(frontend_plugin::id.eq(&self.0)))
-            .execute(con.lock().connection())?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            FrontendPluginRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
-}

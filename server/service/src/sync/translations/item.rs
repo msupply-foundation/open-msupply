@@ -2,8 +2,8 @@ use chrono::Utc;
 use repository::{
     item_category::{ItemCategoryFilter, ItemCategoryRepository},
     item_category_row::ItemCategoryJoinRow,
-    ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemType, Row,
-    StorageConnection, SyncBufferRow, VENCategory,
+    ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemType, Row, StorageConnection,
+    SyncBufferRow, VENCategory,
 };
 use serde::{Deserialize, Serialize};
 
@@ -156,7 +156,7 @@ impl SyncTranslation for ItemTranslation {
             universal_code: data.universal_code,
         };
 
-        integration_operations.push(IntegrationOperation::upsert(item_row));
+        integration_operations.push(IntegrationOperation::upsert(Row::Item(item_row)));
         integration_operations.extend(item_category_upserts);
 
         Ok(PullTranslateResult::IntegrationOperations(
@@ -169,9 +169,10 @@ impl SyncTranslation for ItemTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(ItemRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::Item,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -263,7 +264,9 @@ fn translate_item_category_join(
                 deleted_datetime: Some(Utc::now().naive_utc()),
                 ..item_category.item_category_join_row
             };
-            integration_operations.push(IntegrationOperation::upsert(deleted_join));
+            integration_operations.push(IntegrationOperation::upsert(Row::ItemCategoryJoin(
+                deleted_join,
+            )));
         }
     }
 
@@ -275,7 +278,9 @@ fn translate_item_category_join(
             category_id: category_id.clone(),
             deleted_datetime: None,
         };
-        integration_operations.push(IntegrationOperation::upsert(item_category_join_row));
+        integration_operations.push(IntegrationOperation::upsert(Row::ItemCategoryJoin(
+            item_category_join_row,
+        )));
     }
 
     Ok(integration_operations)

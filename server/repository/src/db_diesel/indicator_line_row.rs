@@ -1,8 +1,7 @@
 use super::StorageConnection;
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType,
-    SourceSiteId, Upsert,
+    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
 };
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -56,7 +55,7 @@ impl<'a> IndicatorLineRowRepository<'a> {
         IndicatorLineRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &IndicatorLineRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &IndicatorLineRow) -> Result<(), RepositoryError> {
         diesel::insert_into(indicator_line::table)
             .values(row)
             .on_conflict(indicator_line::id)
@@ -114,36 +113,5 @@ impl<'a> IndicatorLineRowRepository<'a> {
         ))
         .get_result(self.connection.lock().connection())?;
         Ok(exists)
-    }
-}
-
-impl Upsert for IndicatorLineRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        IndicatorLineRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            IndicatorLineRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

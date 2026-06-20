@@ -1,4 +1,5 @@
 use repository::asset_type_row::AssetTypeRow;
+use repository::Row;
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -26,7 +27,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         ASSET_TYPE1,
-        asset_type1(),
+        Row::AssetCatalogueType(asset_type1()),
     )]
 }
 

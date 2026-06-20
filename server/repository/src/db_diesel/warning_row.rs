@@ -1,5 +1,5 @@
 use super::{item_link, item_row::item, StorageConnection};
-use crate::{RepositoryError, ChangelogSyncType, Upsert};
+use crate::RepositoryError;
 
 use diesel::prelude::*;
 
@@ -56,20 +56,5 @@ impl<'a> WarningRowRepository<'a> {
         ))
         .get_result(self.connection.lock().connection())?;
         Ok(exists)
-    }
-}
-
-impl Upsert for WarningRow {
-    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
-        WarningRowRepository::new(con).upsert_one(self)?;
-        Ok(()) // Table not in Changelog
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            WarningRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

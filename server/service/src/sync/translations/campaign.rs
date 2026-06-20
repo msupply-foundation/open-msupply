@@ -28,11 +28,9 @@ impl SyncTranslation for CampaignTranslation {
         _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_value::<
-            CampaignRow,
-        >(
-            sync_record.data.0.clone()
-        )?))
+        Ok(PullTranslateResult::upsert(Row::Campaign(
+            serde_json::from_value::<CampaignRow>(sync_record.data.0.clone())?,
+        )))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

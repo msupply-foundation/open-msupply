@@ -41,7 +41,7 @@ impl SyncTranslation for PluginDataTranslator {
             ..row
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::PluginData(result)))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

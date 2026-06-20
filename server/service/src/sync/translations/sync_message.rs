@@ -94,7 +94,7 @@ impl SyncTranslation for MessageTranslation {
             error_message,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::SyncMessage(result)))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

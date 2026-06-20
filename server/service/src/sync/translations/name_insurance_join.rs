@@ -126,7 +126,7 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
             name_of_insured: oms_fields.and_then(|f| f.name_of_insured),
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::NameInsuranceJoin(result)))
     }
 
     fn should_translate_to_sync_record(

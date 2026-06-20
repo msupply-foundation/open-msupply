@@ -6,7 +6,7 @@ use crate::sync::translations::requisition::{
 use chrono::NaiveDate;
 use repository::{
     requisition_row::{RequisitionStatus, RequisitionType},
-    ApprovalStatusType, RequisitionRow, RequisitionRowDelete,
+    ApprovalStatusType, ChangelogTableName, RequisitionRow, Row,
 };
 use serde_json::json;
 
@@ -59,7 +59,7 @@ fn requisition_request_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         REQUISITION_REQUEST,
-        RequisitionRow {
+        Row::Requisition(RequisitionRow {
             id: REQUISITION_REQUEST.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 8,
@@ -93,7 +93,7 @@ fn requisition_request_pull_record() -> TestSyncIncomingRecord {
             created_from_requisition_id: Some("created_from_id".to_string()),
             destination_customer_id: Some("name1".to_string()),
             ..Default::default()
-        },
+        }),
     )
 }
 fn requisition_request_push_record() -> TestSyncOutgoingRecord {
@@ -182,7 +182,7 @@ fn requisition_response_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         REQUISITION_RESPONSE,
-        RequisitionRow {
+        Row::Requisition(RequisitionRow {
             id: REQUISITION_RESPONSE.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 1,
@@ -216,7 +216,7 @@ fn requisition_response_pull_record() -> TestSyncIncomingRecord {
             created_from_requisition_id: None,
             destination_customer_id: None,
             ..Default::default()
-        },
+        }),
     )
 }
 fn requisition_response_push_record() -> TestSyncOutgoingRecord {
@@ -309,7 +309,7 @@ fn requisition_om_fields_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         REQUISITION_OM_FIELDS,
-        RequisitionRow {
+        Row::Requisition(RequisitionRow {
             id: REQUISITION_OM_FIELDS.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 1,
@@ -348,7 +348,7 @@ fn requisition_om_fields_pull_record() -> TestSyncIncomingRecord {
             created_from_requisition_id: None,
             destination_customer_id: None,
             ..Default::default()
-        },
+        }),
     )
 }
 fn requisition_om_fields_push_record() -> TestSyncOutgoingRecord {
@@ -446,7 +446,7 @@ fn program_requisition_request_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         PROGRAM_REQUISITION_REQUEST,
-        RequisitionRow {
+        Row::Requisition(RequisitionRow {
             id: PROGRAM_REQUISITION_REQUEST.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 8,
@@ -480,7 +480,7 @@ fn program_requisition_request_pull_record() -> TestSyncIncomingRecord {
             created_from_requisition_id: None,
             destination_customer_id: None,
             ..Default::default()
-        },
+        }),
     )
 }
 fn program_requisition_request_push_record() -> TestSyncOutgoingRecord {
@@ -576,7 +576,7 @@ fn requisition_imprest_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         REQUISITION_IMPREST,
-        RequisitionRow {
+        Row::Requisition(RequisitionRow {
             id: REQUISITION_IMPREST.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 10,
@@ -605,7 +605,7 @@ fn requisition_imprest_pull_record() -> TestSyncIncomingRecord {
             created_from_requisition_id: None,
             destination_customer_id: None,
             ..Default::default()
-        },
+        }),
     )
 }
 fn requisition_imprest_push_record() -> TestSyncOutgoingRecord {
@@ -693,7 +693,7 @@ fn requisition_stock_history_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         REQUISITION_STOCK_HISTORY,
-        RequisitionRow {
+        Row::Requisition(RequisitionRow {
             id: REQUISITION_STOCK_HISTORY.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 11,
@@ -727,7 +727,7 @@ fn requisition_stock_history_pull_record() -> TestSyncIncomingRecord {
             created_from_requisition_id: None,
             destination_customer_id: None,
             ..Default::default()
-        },
+        }),
     )
 }
 fn requisition_stock_history_push_record() -> TestSyncOutgoingRecord {
@@ -791,7 +791,7 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         REQUISITION_OM_FIELDS.0,
-        RequisitionRowDelete(REQUISITION_OM_FIELDS.0.to_string()),
+        ChangelogTableName::Requisition,
     )]
 }
 

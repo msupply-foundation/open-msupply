@@ -1,4 +1,4 @@
-use repository::{SiteRow, SiteRowDelete, SyncVersion};
+use repository::{ChangelogTableName, Row, SiteRow, SyncVersion};
 
 use super::TestSyncIncomingRecord;
 
@@ -79,7 +79,7 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         SITE_1.0,
-        SiteRowDelete(SITE_1.0.to_string()),
+        ChangelogTableName::Site,
     )]
 }
 
@@ -88,7 +88,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             SITE_1,
-            SiteRow {
+            Row::Site(SiteRow {
                 id: 1,
                 og_id: Some("1".to_string()),
                 name: "Site A".to_string(),
@@ -97,12 +97,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 code: "code1".to_string(),
                 token: None,
                 sync_version: SyncVersion::V5V6,
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             SITE_2,
-            SiteRow {
+            Row::Site(SiteRow {
                 id: 2,
                 og_id: Some("2".to_string()),
                 name: "Site B".to_string(),
@@ -111,7 +111,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 code: "code2".to_string(),
                 token: None,
                 sync_version: SyncVersion::V5V6,
-            },
+            }),
         ),
     ]
 }

@@ -3,7 +3,7 @@ use crate::sync::{
     translations::activity_log::LegacyActivityLogRow,
 };
 use chrono::NaiveDate;
-use repository::{ActivityLogRow, ActivityLogType};
+use repository::{ActivityLogRow, ActivityLogType, Row};
 use serde_json::json;
 
 const TABLE_NAME: &str = "om_activity_log";
@@ -41,7 +41,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             ACTIVITY_LOG_1,
-            ActivityLogRow {
+            Row::ActivityLog(ActivityLogRow {
                 id: ACTIVITY_LOG_1.0.to_string(),
                 r#type: ActivityLogType::InvoiceCreated,
                 user_id: Some("user_account_a".to_string()),
@@ -53,12 +53,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     .unwrap(),
                 changed_to: None,
                 changed_from: None,
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             ACTIVITY_LOG_2,
-            ActivityLogRow {
+            Row::ActivityLog(ActivityLogRow {
                 id: ACTIVITY_LOG_2.0.to_string(),
                 r#type: ActivityLogType::InvoiceStatusAllocated,
                 user_id: Some("user_account_a".to_string()),
@@ -70,7 +70,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     .unwrap(),
                 changed_to: None,
                 changed_from: None,
-            },
+            }),
         ),
     ]
 }

@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use repository::{
-    IndicatorColumnRow, IndicatorLineRow, IndicatorValueType, StorageConnection, SyncBufferRow,
+    IndicatorColumnRow, IndicatorLineRow, IndicatorValueType, Row, StorageConnection, SyncBufferRow,
 };
 
 use serde::Deserialize;
@@ -84,7 +84,7 @@ impl SyncTranslation for IndicatorAttribute {
             default_value,
         } = sync_record.deserialize()?;
         Ok(match axis {
-            LegacyAxis::Column => PullTranslateResult::upsert(IndicatorColumnRow {
+            LegacyAxis::Column => PullTranslateResult::upsert(Row::IndicatorColumn(IndicatorColumnRow {
                 id,
                 program_indicator_id,
                 column_number: index,
@@ -92,8 +92,8 @@ impl SyncTranslation for IndicatorAttribute {
                 value_type: to_value_type(value_type),
                 default_value,
                 is_active,
-            }),
-            LegacyAxis::Row => PullTranslateResult::upsert(IndicatorLineRow {
+            })),
+            LegacyAxis::Row => PullTranslateResult::upsert(Row::IndicatorLine(IndicatorLineRow {
                 id,
                 program_indicator_id,
                 line_number: index,
@@ -103,7 +103,7 @@ impl SyncTranslation for IndicatorAttribute {
                 default_value,
                 is_required,
                 is_active,
-            }),
+            })),
         })
     }
 

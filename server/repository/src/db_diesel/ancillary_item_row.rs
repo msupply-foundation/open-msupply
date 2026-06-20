@@ -1,6 +1,6 @@
 use crate::{
-    diesel_macros::define_linked_tables, ChangelogRepository, ChangelogSyncType,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    diesel_macros::define_linked_tables, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 
 use chrono::NaiveDateTime;
@@ -93,36 +93,5 @@ impl<'a> AncillaryItemRowRepository<'a> {
             SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
-    }
-}
-
-impl Upsert for AncillaryItemRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        AncillaryItemRowRepository::new(con)._upsert(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            AncillaryItemRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

@@ -1,4 +1,4 @@
-use repository::{AbbreviationRow, AbbreviationRowDelete};
+use repository::{AbbreviationRow, ChangelogTableName, Row};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
@@ -36,29 +36,29 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             ABBREVIATION_1,
-            AbbreviationRow {
+            Row::Abbreviation(AbbreviationRow {
                 id: ABBREVIATION_1.0.to_owned(),
                 text: "1".to_string(),
                 expansion: "ABBREVIATION_1_exp".to_string(),
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             ABBREVIATION_2,
-            AbbreviationRow {
+            Row::Abbreviation(AbbreviationRow {
                 id: ABBREVIATION_2.0.to_owned(),
                 text: "2".to_string(),
                 expansion: "ABBREVIATION_2_exp".to_string(),
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             ABBREVIATION_3,
-            AbbreviationRow {
+            Row::Abbreviation(AbbreviationRow {
                 id: ABBREVIATION_3.0.to_owned(),
                 text: "3".to_string(),
                 expansion: "ABBREVIATION_3_exp".to_string(),
-            },
+            }),
         ),
     ]
 }
@@ -67,6 +67,6 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         ABBREVIATION_1.0,
-        AbbreviationRowDelete(ABBREVIATION_1.0.to_string()),
+        ChangelogTableName::Abbreviation,
     )]
 }

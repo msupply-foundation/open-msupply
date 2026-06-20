@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use repository::{RnRFormLineDelete, RnRFormLineRow, RnRFormLowStock};
+use repository::{ChangelogTableName, RnRFormLineRow, RnRFormLowStock, Row};
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -121,11 +121,15 @@ fn rnr_form_line_with_expiry() -> RnRFormLineRow {
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, RNR_FORM_LINE_1, rnr_form_line_1()),
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
+            RNR_FORM_LINE_1,
+            Row::RnrFormLine(rnr_form_line_1()),
+        ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             RNR_FORM_LINE_WITH_EXPIRY,
-            rnr_form_line_with_expiry(),
+            Row::RnrFormLine(rnr_form_line_with_expiry()),
         ),
     ]
 }
@@ -150,12 +154,12 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_delete(
             TABLE_NAME,
             RNR_FORM_LINE_1.0,
-            RnRFormLineDelete(RNR_FORM_LINE_1.0.to_string()),
+            ChangelogTableName::RnrFormLine,
         ),
         TestSyncIncomingRecord::new_pull_delete(
             TABLE_NAME,
             RNR_FORM_LINE_WITH_EXPIRY.0,
-            RnRFormLineDelete(RNR_FORM_LINE_WITH_EXPIRY.0.to_string()),
+            ChangelogTableName::RnrFormLine,
         ),
     ]
 }

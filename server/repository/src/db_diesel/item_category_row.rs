@@ -1,7 +1,7 @@
 use super::{category_row::category, item_link_row::item_link, item_row::item, StorageConnection};
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType,
-    SourceSiteId, Upsert,
+    repository_error::RepositoryError, ChangelogRepository, RowActionType,
+    SourceSiteId,
 };
 
 use chrono::NaiveDateTime;
@@ -40,7 +40,7 @@ impl<'a> ItemCategoryJoinRowRepository<'a> {
         ItemCategoryJoinRowRepository { connection }
     }
 
-    fn _upsert_one(
+    pub(crate) fn _upsert_one(
         &self,
         item_category_join_row: &ItemCategoryJoinRow,
     ) -> Result<(), RepositoryError> {
@@ -88,36 +88,5 @@ impl<'a> ItemCategoryJoinRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-}
-
-impl Upsert for ItemCategoryJoinRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        ItemCategoryJoinRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ItemCategoryJoinRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
 }
 

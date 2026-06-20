@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use repository::{ProgramIndicatorRow, StorageConnection, SyncBufferRow};
+use repository::{ProgramIndicatorRow, Row, StorageConnection, SyncBufferRow};
 use util::sync_serde::empty_str_as_option_string;
 
 use serde::Deserialize;
@@ -49,7 +49,7 @@ impl SyncTranslation for ProgramIndicatorTranslation {
             program_id: check_fk(data.program_id, "program_id", FkField::Program)?,
             is_active: data.is_active,
         };
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::ProgramIndicator(result)))
     }
 
     fn try_translate_from_delete_sync_record(

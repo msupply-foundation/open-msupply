@@ -1,4 +1,4 @@
-use repository::{ChangelogTableName, LocationTypeRow, StorageConnection, SyncBufferRow};
+use repository::{ChangelogTableName, LocationTypeRow, Row, StorageConnection, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 
 use super::{PullTranslateResult, SyncTranslation};
@@ -54,7 +54,7 @@ impl SyncTranslation for LocationTypeTranslation {
             max_temperature: temperature_max,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::LocationType(result)))
     }
 }
 

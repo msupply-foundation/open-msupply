@@ -4,8 +4,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::{
-    ChangelogRepository, ChangelogSyncType,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
 };
 
 use diesel::prelude::*;
@@ -50,7 +49,7 @@ impl<'a> VaccineCourseRowRepository<'a> {
         VaccineCourseRowRepository { connection }
     }
 
-    pub fn _upsert_one(
+    pub(crate) fn _upsert_one(
         &self,
         vaccine_course_row: &VaccineCourseRow,
     ) -> Result<(), RepositoryError> {
@@ -112,36 +111,5 @@ impl<'a> VaccineCourseRowRepository<'a> {
         ))
         .get_result(self.connection.lock().connection())?;
         Ok(exists)
-    }
-}
-
-impl Upsert for VaccineCourseRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        VaccineCourseRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            VaccineCourseRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

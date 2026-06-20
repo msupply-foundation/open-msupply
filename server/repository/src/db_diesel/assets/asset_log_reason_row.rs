@@ -6,7 +6,6 @@ use crate::RepositoryError;
 use crate::RowActionType;
 use crate::SourceSiteId;
 use crate::StorageConnection;
-use crate::{ChangelogSyncType, Upsert};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -112,34 +111,5 @@ impl<'a> AssetLogReasonRowRepository<'a> {
         ))
         .get_result(self.connection.lock().connection())?;
         Ok(exists)
-    }
-}
-
-impl Upsert for AssetLogReasonRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        AssetLogReasonRowRepository::new(con)._upsert_one(self)?;
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            AssetLogReasonRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

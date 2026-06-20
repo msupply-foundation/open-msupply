@@ -1,4 +1,4 @@
-use repository::{LanguageType, UserAccountRow};
+use repository::{LanguageType, Row, UserAccountRow};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
@@ -99,7 +99,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             USER1,
-            UserAccountRow {
+            Row::UserAccount(UserAccountRow {
                 id: USER1.0.to_owned(),
                 username: "user1".to_string(),
                 hashed_password: "$2y$12$H.hz8ElIhJIU.0ZN6opwpuVDD8sSd1XOq8UzScofHjN/3yDBj03a."
@@ -112,12 +112,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 job_title: Some("Support".to_string()),
                 last_successful_sync: None,
                 is_active: true,
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             USER2,
-            UserAccountRow {
+            Row::UserAccount(UserAccountRow {
                 id: USER2.0.to_owned(),
                 username: "user2".to_string(),
                 hashed_password: "$2y$12$H.hz8ElIhJIU.0ZN6opwpuVDD8sSd1XOq8UzScofHjN/3yDBj03a."
@@ -130,7 +130,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 job_title: Some("Support".to_string()),
                 last_successful_sync: None,
                 is_active: true,
-            },
+            }),
         ),
     ]
 }

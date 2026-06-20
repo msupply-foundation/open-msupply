@@ -1,7 +1,7 @@
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, NameRowRepository, NameStoreJoin,
-    NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete, Row,
-    StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
+    NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, Row, StorageConnection,
+    StoreFilter, StoreRepository, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -141,7 +141,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
             name_is_supplier: name.is_supplier,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::NameStoreJoin(result)))
     }
 
     fn try_translate_to_upsert_sync_record(
@@ -194,9 +194,10 @@ impl SyncTranslation for NameStoreJoinTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         // it is possible for name store join to be set inactive
         // this is handled in the upsert translation
-        Ok(PullTranslateResult::delete(NameStoreJoinRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::NameStoreJoin,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 }
 

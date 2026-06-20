@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use repository::{DiagnosisRow, StorageConnection, SyncBufferRow};
+use repository::{DiagnosisRow, Row, StorageConnection, SyncBufferRow};
 use util::sync_serde::zero_date_as_option;
 
 use serde::Deserialize;
@@ -47,7 +47,7 @@ impl SyncTranslation for DiagnosisTranslation {
             valid_till: data.VALID_TILL,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Diagnosis(result)))
     }
 
     fn try_translate_from_delete_sync_record(

@@ -1,4 +1,4 @@
-use repository::{ClinicianStoreJoinRow, ClinicianStoreJoinRowDelete};
+use repository::{ChangelogTableName, ClinicianStoreJoinRow, Row};
 use serde_json::json;
 
 use crate::sync::{
@@ -21,11 +21,11 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         CLINICIAN_STORE_JOIN_TABLE,
         CLINICIAN_STORE_JOIN_1,
-        ClinicianStoreJoinRow {
+        Row::ClinicianStoreJoin(ClinicianStoreJoinRow {
             id: CLINICIAN_STORE_JOIN_1.0.to_owned(),
             store_id: "store_a".to_string(),
             clinician_link_id: "clinician_a".to_string(),
-        },
+        }),
     )]
 }
 
@@ -33,7 +33,7 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         CLINICIAN_STORE_JOIN_TABLE,
         CLINICIAN_STORE_JOIN_1.0,
-        ClinicianStoreJoinRowDelete(CLINICIAN_STORE_JOIN_1.0.to_string()),
+        ChangelogTableName::ClinicianStoreJoin,
     )]
 }
 

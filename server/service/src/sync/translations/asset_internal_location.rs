@@ -1,7 +1,6 @@
 use repository::{
-    asset_internal_location_row::AssetInternalLocationRow,
-    asset_internal_location_row::AssetInternalLocationRowDelete, ChangelogRow, ChangelogTableName,
-    Row, StorageConnection, SyncBufferRow,
+    asset_internal_location_row::AssetInternalLocationRow, ChangelogRow, ChangelogTableName, Row,
+    StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::{asset::AssetTranslation, location::LocationTranslation};
@@ -50,7 +49,9 @@ impl SyncTranslation for AssetInternalLocation {
             location_id,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::AssetInternalLocation(
+            result,
+        )))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -97,9 +98,10 @@ impl SyncTranslation for AssetInternalLocation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(AssetInternalLocationRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::AssetInternalLocation,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 
     fn try_translate_to_delete_sync_record(

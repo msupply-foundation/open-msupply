@@ -2,7 +2,9 @@ use crate::sync::translations::{
     form_schema::FormSchemaTranslation, master_list::MasterListTranslation,
 };
 
-use repository::{DocumentRegistryCategory, DocumentRegistryRow, StorageConnection, SyncBufferRow};
+use repository::{
+    DocumentRegistryCategory, DocumentRegistryRow, Row, StorageConnection, SyncBufferRow,
+};
 use serde::Deserialize;
 use serde_json::Value;
 use util::sync_serde::empty_str_as_option_string;
@@ -106,6 +108,6 @@ impl SyncTranslation for DocumentRegistryTranslation {
             config: config_str,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::DocumentRegistry(result)))
     }
 }

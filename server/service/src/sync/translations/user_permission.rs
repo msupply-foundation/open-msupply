@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use repository::{
-    PermissionType, StorageConnection, SyncBufferRow, UserPermissionRow, UserPermissionRowDelete,
+    ChangelogTableName, PermissionType, Row, StorageConnection, SyncBufferRow, UserPermissionRow,
 };
 
 use crate::sync::translations::{master_list::MasterListTranslation, store::StoreTranslation};
@@ -78,7 +78,7 @@ impl SyncTranslation for UserPermissionTranslation {
             permission: user_permission,
             context_id: fk_check(context, "context_id", FkField::Context)?,
         };
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::UserPermission(result)))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -86,9 +86,10 @@ impl SyncTranslation for UserPermissionTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(UserPermissionRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::UserPermission,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 }
 

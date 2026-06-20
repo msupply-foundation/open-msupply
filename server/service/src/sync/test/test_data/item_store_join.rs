@@ -1,5 +1,5 @@
 use crate::sync::test::TestSyncIncomingRecord;
-use repository::ItemStoreJoinRow;
+use repository::{ItemStoreJoinRow, Row};
 
 const TABLE_NAME: &str = "item_store_join";
 
@@ -84,7 +84,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             ITEM_STORE_JOIN_INVALID_LOCATION,
-            ItemStoreJoinRow {
+            Row::ItemStoreJoin(ItemStoreJoinRow {
                 id: ITEM_STORE_JOIN_INVALID_LOCATION.0.to_owned(),
                 item_link_id: "item_a".to_string(),
                 store_id: "store_b".to_string(),
@@ -92,12 +92,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 ignore_for_orders: true,
                 margin: 0.0,
                 default_location_id: None, // Invalid location cleared
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             ITEM_STORE_JOIN_1,
-            ItemStoreJoinRow {
+            Row::ItemStoreJoin(ItemStoreJoinRow {
                 id: ITEM_STORE_JOIN_1.0.to_owned(),
                 item_link_id: "item_a".to_string(),
                 store_id: "store_b".to_string(),
@@ -105,7 +105,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 ignore_for_orders: false,
                 margin: 10.0,
                 default_location_id: None,
-            },
+            }),
         ),
     ]
 }

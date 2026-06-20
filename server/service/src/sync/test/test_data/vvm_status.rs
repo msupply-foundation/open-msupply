@@ -1,4 +1,4 @@
-use repository::vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowDelete};
+use repository::{vvm_status::vvm_status_row::VVMStatusRow, ChangelogTableName, Row};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
@@ -34,7 +34,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             VVM_STATUS_1,
-            VVMStatusRow {
+            Row::VVMStatus(VVMStatusRow {
                 id: "VVM_STATUS_1".to_string(),
                 code: "2".to_string(),
                 description: "TEST DESCRIPTION 1".to_string(),
@@ -42,12 +42,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 priority: 1.to_owned(),
                 unusable: false.to_owned(),
                 reason_id: None,
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             VVM_STATUS_2,
-            VVMStatusRow {
+            Row::VVMStatus(VVMStatusRow {
                 id: "VVM_STATUS_2".to_string(),
                 code: "4".to_string(),
                 description: "TEST DESCRIPTION 2".to_string(),
@@ -55,7 +55,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 priority: 2.to_owned(),
                 unusable: true.to_owned(),
                 reason_id: None,
-            },
+            }),
         ),
     ]
 }
@@ -64,6 +64,6 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         VVM_STATUS_1.0,
-        VVMStatusRowDelete(VVM_STATUS_1.0.to_string()),
+        ChangelogTableName::VVMStatus,
     )]
 }

@@ -19,7 +19,6 @@ table! {
         max_items_in_emergency_order -> Integer,
     }
 }
-use crate::{Delete, ChangelogSyncType, Upsert};
 
 joinable!(program_requisition_order_type -> program_requisition_settings (program_requisition_settings_id));
 
@@ -45,7 +44,10 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
         ProgramRequisitionOrderTypeRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &ProgramRequisitionOrderTypeRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(
+        &self,
+        row: &ProgramRequisitionOrderTypeRow,
+    ) -> Result<(), RepositoryError> {
         diesel::insert_into(program_requisition_order_type::table)
             .values(row)
             .on_conflict(program_requisition_order_type::id)
@@ -122,6 +124,10 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
         Ok(())
     }
 
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        self._delete(record_id)
+    }
+
     pub fn delete(&self, order_type_id: &str) -> Result<(), RepositoryError> {
         self._delete(order_type_id)?;
         let changelog = ProgramRequisitionOrderTypeRow::generate_changelog(
@@ -134,68 +140,3 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct ProgramRequisitionOrderTypeRowDelete(pub String);
-impl Delete for ProgramRequisitionOrderTypeRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let repo = ProgramRequisitionOrderTypeRowRepository::new(con);
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                ProgramRequisitionOrderTypeRow::generate_changelog(
-                    self.0.clone(),
-                    con,
-                    RowActionType::Delete,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        repo._delete(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ProgramRequisitionOrderTypeRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
-}
-
-impl Upsert for ProgramRequisitionOrderTypeRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        ProgramRequisitionOrderTypeRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ProgramRequisitionOrderTypeRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}

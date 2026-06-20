@@ -1,6 +1,6 @@
 use crate::{
     diesel_macros::diesel_json_type, dynamic_query_filter::create_condition, ChangelogCondition,
-    ChangelogSyncType, RepositoryError, StorageConnection, Upsert,
+    RepositoryError, StorageConnection,
 };
 
 use chrono::NaiveDateTime;
@@ -125,23 +125,5 @@ impl<'a> SyncRequestRepository<'a> {
             .order(sync_request::created_datetime.asc())
             .load::<SyncRequestRow>(self.connection.lock().connection())?;
         Ok(rows)
-    }
-
-}
-
-impl Upsert for SyncRequestRow {
-    /// sync_request is a remote-local-only record and is not in the changelog,
-    /// so the sync_type is ignored. Only `upsert_local` should be used in
-    /// practice (via the v7 translator); this is provided for completeness.
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        _sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        SyncRequestRepository::new(con).upsert_one(self)
-    }
-
-    fn assert_upserted(&self, _con: &StorageConnection) {
-        // Not implemented
     }
 }

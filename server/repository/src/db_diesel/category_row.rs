@@ -1,7 +1,7 @@
 use super::item_link_row::item_link;
 use crate::{
-    item_row::item, repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType,
-    Delete, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    item_row::item, repository_error::RepositoryError, ChangelogRepository, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -49,7 +49,7 @@ impl<'a> CategoryRowRepository<'a> {
         CategoryRowRepository { connection }
     }
 
-    fn _upsert_one(&self, category_row: &CategoryRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, category_row: &CategoryRow) -> Result<(), RepositoryError> {
         diesel::insert_into(category::table)
             .values(category_row)
             .on_conflict(category::id)
@@ -106,71 +106,8 @@ impl<'a> CategoryRowRepository<'a> {
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
-}
 
-impl Upsert for CategoryRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        CategoryRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            CategoryRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct CategoryRowDelete(pub String);
-impl Delete for CategoryRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let repo = CategoryRowRepository::new(con);
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => CategoryRow::generate_changelog(
-                self.0.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        repo._mark_deleted(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert!(matches!(
-            CategoryRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(Some(CategoryRow {
-                deleted_datetime: Some(_),
-                ..
-            })) | Ok(None)
-        ));
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        self._mark_deleted(record_id)
     }
 }

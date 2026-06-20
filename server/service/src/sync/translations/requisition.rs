@@ -3,7 +3,7 @@ use repository::{
     requisition_row::{RequisitionStatus, RequisitionType},
     ApprovalStatusType, ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter,
     InvoiceRepository, ProgramRowRepository, Requisition, RequisitionFilter, RequisitionRepository,
-    RequisitionRow, RequisitionRowDelete, Row, StorageConnection, SyncBufferRow,
+    RequisitionRow, Row, StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -338,7 +338,7 @@ impl SyncTranslation for RequisitionTranslation {
             ..Default::default()
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Requisition(result)))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -347,9 +347,10 @@ impl SyncTranslation for RequisitionTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         // TODO, check site ? (should never get delete records for this site, only transfer other half)
-        Ok(PullTranslateResult::delete(RequisitionRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::Requisition,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 
     fn try_translate_to_upsert_sync_record(
@@ -845,13 +846,10 @@ mod tests {
             Ok( PullTranslateResult::IntegrationOperations(out)) => out
         );
 
-        let mut upsert = assert_variant!(op.pop(), Some(IntegrationOperation::Upsert(out)) => out);
-
-        let requisition_row = upsert
-            .as_mut_any()
-            .and_then(|any| any.downcast_mut::<RequisitionRow>())
-            .unwrap()
-            .clone();
+        let requisition_row = assert_variant!(
+            op.pop(),
+            Some(IntegrationOperation::Upsert(repository::Row::Requisition(row))) => row
+        );
 
         assert_eq!(
             requisition_row.clone(),

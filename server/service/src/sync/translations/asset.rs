@@ -1,6 +1,5 @@
 use repository::{
-    asset_row::{AssetRow, AssetRowDelete},
-    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
+    asset_row::AssetRow, ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::{
@@ -99,7 +98,7 @@ impl SyncTranslation for AssetTranslation {
             locked_fields_json,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Asset(result)))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -146,9 +145,10 @@ impl SyncTranslation for AssetTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(AssetRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::Asset,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 
     fn try_translate_to_delete_sync_record(

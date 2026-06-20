@@ -1,7 +1,4 @@
-use repository::{
-    category_row::CategoryRow, contact_trace_row::ContactTraceRow,
-    item_category_row::ItemCategoryJoinRow, syncv7::SyncRecordSerializeError, *,
-};
+use repository::{syncv7::SyncRecordSerializeError, *};
 use serde::de::DeserializeOwned;
 
 use crate::sync_v7::{
@@ -9,11 +6,37 @@ use crate::sync_v7::{
     validate_translate_integrate::{create_changelog, SyncContext},
 };
 
-fn from_value<T: DeserializeOwned + Upsert + 'static>(
+/// What a v7 upsert deserialises into: either a changelog-tracked `Row`, or a
+/// non-changelog row (link tables / sync_request). Replaces `Box<dyn Upsert>`.
+#[derive(Debug)]
+pub(crate) enum V7Upsert {
+    Row(Row),
+    NonSync(NonSyncRow),
+}
+
+impl V7Upsert {
+    /// Write the row only (no changelog); the v7 integrator inserts the changelog
+    /// separately from the changelog row it carries.
+    pub(crate) fn integrate_no_changelog(
+        &self,
+        con: &StorageConnection,
+    ) -> Result<(), RepositoryError> {
+        match self {
+            V7Upsert::Row(row) => row.integrate_no_changelog(con),
+            V7Upsert::NonSync(row) => row.upsert_no_changelog(con),
+        }
+    }
+}
+
+/// Deserialise `data` as `T`, then map it into a `Row` variant via `wrap` (e.g.
+/// `Row::Invoice`). The wrapper is passed explicitly per table since there is no
+/// blanket `From<XRow> for Row`.
+fn from_value<T: DeserializeOwned>(
     data: &serde_json::Value,
-) -> Result<Box<dyn Upsert>, SyncRecordSerializeError> {
+    wrap: impl FnOnce(T) -> Row,
+) -> Result<V7Upsert, SyncRecordSerializeError> {
     serde_json::from_value::<T>(data.clone())
-        .map(|r| Box::new(r) as Box<dyn Upsert>)
+        .map(|r| V7Upsert::Row(wrap(r)))
         .map_err(|e| SyncRecordSerializeError::SerdeError(e.to_string()))
 }
 
@@ -127,7 +150,7 @@ pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeErro
 }
 
 pub(crate) type DeserializeResult =
-    Result<Vec<(Box<dyn Upsert>, ChangeLogInsertRow)>, SyncRecordSerializeError>;
+    Result<Vec<(V7Upsert, ChangeLogInsertRow)>, SyncRecordSerializeError>;
 
 pub(crate) fn deserialize(
     connection: &StorageConnection,
@@ -149,112 +172,112 @@ pub(crate) fn deserialize(
             )
         }
         // Basic
-        ChangelogTableName::Unit => from_value::<UnitRow>(data),
-        ChangelogTableName::Currency => from_value::<CurrencyRow>(data),
-        ChangelogTableName::Name => from_value::<NameRow>(data),
-        ChangelogTableName::LocationType => from_value::<LocationTypeRow>(data),
-        ChangelogTableName::Item => from_value::<ItemRow>(data),
-        ChangelogTableName::StockLine => from_value::<StockLineRow>(data),
-        ChangelogTableName::Invoice => from_value::<InvoiceRow>(data),
-        ChangelogTableName::ActivityLog => from_value::<ActivityLogRow>(data),
-        ChangelogTableName::Barcode => from_value::<BarcodeRow>(data),
-        ChangelogTableName::Clinician => from_value::<ClinicianRow>(data),
-        ChangelogTableName::ClinicianStoreJoin => from_value::<ClinicianStoreJoinRow>(data),
-        ChangelogTableName::Document => from_value::<DocumentRow>(data),
-        ChangelogTableName::IndicatorValue => from_value::<IndicatorValueRow>(data),
-        ChangelogTableName::InsuranceProvider => from_value::<InsuranceProviderRow>(data),
-        ChangelogTableName::Location => from_value::<LocationRow>(data),
-        ChangelogTableName::LocationMovement => from_value::<LocationMovementRow>(data),
-        ChangelogTableName::NameInsuranceJoin => from_value::<NameInsuranceJoinRow>(data),
-        ChangelogTableName::NameStoreJoin => from_value::<NameStoreJoinRow>(data),
-        ChangelogTableName::PurchaseOrder => from_value::<PurchaseOrderRow>(data),
-        ChangelogTableName::PurchaseOrderLine => from_value::<PurchaseOrderLineRow>(data),
-        ChangelogTableName::Sensor => from_value::<SensorRow>(data),
-        ChangelogTableName::Stocktake => from_value::<StocktakeRow>(data),
-        ChangelogTableName::StocktakeLine => from_value::<StocktakeLineRow>(data),
-        ChangelogTableName::TemperatureBreach => from_value::<TemperatureBreachRow>(data),
-        ChangelogTableName::TemperatureLog => from_value::<TemperatureLogRow>(data),
-        ChangelogTableName::VVMStatusLog => from_value::<VVMStatusLogRow>(data),
-        ChangelogTableName::Requisition => from_value::<RequisitionRow>(data),
-        ChangelogTableName::RequisitionLine => from_value::<RequisitionLineRow>(data),
-        ChangelogTableName::AssetCatalogueItem => from_value::<AssetCatalogueItemRow>(data),
-        ChangelogTableName::AssetCatalogueType => from_value::<AssetTypeRow>(data),
-        ChangelogTableName::AssetCategory => from_value::<AssetCategoryRow>(data),
-        ChangelogTableName::AssetClass => from_value::<AssetClassRow>(data),
-        ChangelogTableName::AssetLogReason => from_value::<AssetLogReasonRow>(data),
-        ChangelogTableName::AssetProperty => from_value::<AssetPropertyRow>(data),
-        ChangelogTableName::BackendPlugin => from_value::<BackendPluginRow>(data),
-        ChangelogTableName::AncillaryItem => from_value::<AncillaryItemRow>(data),
-        ChangelogTableName::BundledItem => from_value::<BundledItemRow>(data),
-        ChangelogTableName::Campaign => from_value::<CampaignRow>(data),
-        ChangelogTableName::Demographic => from_value::<DemographicRow>(data),
-        ChangelogTableName::FormSchema => from_value::<FormSchemaRow>(data),
-        ChangelogTableName::FrontendPlugin => from_value::<FrontendPluginRow>(data),
-        ChangelogTableName::ItemVariant => from_value::<ItemVariantRow>(data),
-        ChangelogTableName::NameOmsFields => from_value::<NameOmsFieldsRow>(data),
-        ChangelogTableName::NameProperty => from_value::<NamePropertyRow>(data),
-        ChangelogTableName::PackagingVariant => from_value::<PackagingVariantRow>(data),
-        ChangelogTableName::Property => from_value::<PropertyRow>(data),
-        ChangelogTableName::Report => from_value::<ReportRow>(data),
-        ChangelogTableName::VaccineCourse => from_value::<VaccineCourseRow>(data),
-        ChangelogTableName::VaccineCourseDose => from_value::<VaccineCourseDoseRow>(data),
-        ChangelogTableName::VaccineCourseItem => from_value::<VaccineCourseItemRow>(data),
+        ChangelogTableName::Unit => from_value(data, Row::Unit),
+        ChangelogTableName::Currency => from_value(data, Row::Currency),
+        ChangelogTableName::Name => from_value(data, Row::Name),
+        ChangelogTableName::LocationType => from_value(data, Row::LocationType),
+        ChangelogTableName::Item => from_value(data, Row::Item),
+        ChangelogTableName::StockLine => from_value(data, Row::StockLine),
+        ChangelogTableName::Invoice => from_value(data, Row::Invoice),
+        ChangelogTableName::ActivityLog => from_value(data, Row::ActivityLog),
+        ChangelogTableName::Barcode => from_value(data, Row::Barcode),
+        ChangelogTableName::Clinician => from_value(data, Row::Clinician),
+        ChangelogTableName::ClinicianStoreJoin => from_value(data, Row::ClinicianStoreJoin),
+        ChangelogTableName::Document => from_value(data, Row::Document),
+        ChangelogTableName::IndicatorValue => from_value(data, Row::IndicatorValue),
+        ChangelogTableName::InsuranceProvider => from_value(data, Row::InsuranceProvider),
+        ChangelogTableName::Location => from_value(data, Row::Location),
+        ChangelogTableName::LocationMovement => from_value(data, Row::LocationMovement),
+        ChangelogTableName::NameInsuranceJoin => from_value(data, Row::NameInsuranceJoin),
+        ChangelogTableName::NameStoreJoin => from_value(data, Row::NameStoreJoin),
+        ChangelogTableName::PurchaseOrder => from_value(data, Row::PurchaseOrder),
+        ChangelogTableName::PurchaseOrderLine => from_value(data, Row::PurchaseOrderLine),
+        ChangelogTableName::Sensor => from_value(data, Row::Sensor),
+        ChangelogTableName::Stocktake => from_value(data, Row::Stocktake),
+        ChangelogTableName::StocktakeLine => from_value(data, Row::StocktakeLine),
+        ChangelogTableName::TemperatureBreach => from_value(data, Row::TemperatureBreach),
+        ChangelogTableName::TemperatureLog => from_value(data, Row::TemperatureLog),
+        ChangelogTableName::VVMStatusLog => from_value(data, Row::VVMStatusLog),
+        ChangelogTableName::Requisition => from_value(data, Row::Requisition),
+        ChangelogTableName::RequisitionLine => from_value(data, Row::RequisitionLine),
+        ChangelogTableName::AssetCatalogueItem => from_value(data, Row::AssetCatalogueItem),
+        ChangelogTableName::AssetCatalogueType => from_value(data, Row::AssetCatalogueType),
+        ChangelogTableName::AssetCategory => from_value(data, Row::AssetCategory),
+        ChangelogTableName::AssetClass => from_value(data, Row::AssetClass),
+        ChangelogTableName::AssetLogReason => from_value(data, Row::AssetLogReason),
+        ChangelogTableName::AssetProperty => from_value(data, Row::AssetProperty),
+        ChangelogTableName::BackendPlugin => from_value(data, Row::BackendPlugin),
+        ChangelogTableName::AncillaryItem => from_value(data, Row::AncillaryItem),
+        ChangelogTableName::BundledItem => from_value(data, Row::BundledItem),
+        ChangelogTableName::Campaign => from_value(data, Row::Campaign),
+        ChangelogTableName::Demographic => from_value(data, Row::Demographic),
+        ChangelogTableName::FormSchema => from_value(data, Row::FormSchema),
+        ChangelogTableName::FrontendPlugin => from_value(data, Row::FrontendPlugin),
+        ChangelogTableName::ItemVariant => from_value(data, Row::ItemVariant),
+        ChangelogTableName::NameOmsFields => from_value(data, Row::NameOmsFields),
+        ChangelogTableName::NameProperty => from_value(data, Row::NameProperty),
+        ChangelogTableName::PackagingVariant => from_value(data, Row::PackagingVariant),
+        ChangelogTableName::Property => from_value(data, Row::Property),
+        ChangelogTableName::Report => from_value(data, Row::Report),
+        ChangelogTableName::VaccineCourse => from_value(data, Row::VaccineCourse),
+        ChangelogTableName::VaccineCourseDose => from_value(data, Row::VaccineCourseDose),
+        ChangelogTableName::VaccineCourseItem => from_value(data, Row::VaccineCourseItem),
         ChangelogTableName::VaccineCourseStoreConfig => {
-            from_value::<VaccineCourseStoreConfigRow>(data)
+            from_value(data, Row::VaccineCourseStoreConfig)
         }
-        ChangelogTableName::Abbreviation => from_value::<AbbreviationRow>(data),
-        ChangelogTableName::Category => from_value::<CategoryRow>(data),
-        ChangelogTableName::Contact => from_value::<ContactRow>(data),
-        ChangelogTableName::ContactTrace => from_value::<ContactTraceRow>(data),
-        ChangelogTableName::Context => from_value::<ContextRow>(data),
-        ChangelogTableName::DemographicIndicator => from_value::<DemographicIndicatorRow>(data),
-        ChangelogTableName::Diagnosis => from_value::<DiagnosisRow>(data),
-        ChangelogTableName::DocumentRegistry => from_value::<DocumentRegistryRow>(data),
-        ChangelogTableName::IndicatorColumn => from_value::<IndicatorColumnRow>(data),
-        ChangelogTableName::IndicatorLine => from_value::<IndicatorLineRow>(data),
-        ChangelogTableName::ItemCategoryJoin => from_value::<ItemCategoryJoinRow>(data),
-        ChangelogTableName::ItemDirection => from_value::<ItemDirectionRow>(data),
-        ChangelogTableName::ItemStoreJoin => from_value::<ItemStoreJoinRow>(data),
-        ChangelogTableName::ItemWarningJoin => from_value::<ItemWarningJoinRow>(data),
-        ChangelogTableName::MasterList => from_value::<MasterListRow>(data),
-        ChangelogTableName::MasterListLine => from_value::<MasterListLineRow>(data),
-        ChangelogTableName::MasterListNameJoin => from_value::<MasterListNameJoinRow>(data),
-        ChangelogTableName::NameTag => from_value::<NameTagRow>(data),
-        ChangelogTableName::NameTagJoin => from_value::<NameTagJoinRow>(data),
-        ChangelogTableName::Period => from_value::<PeriodRow>(data),
-        ChangelogTableName::PeriodSchedule => from_value::<PeriodScheduleRow>(data),
-        ChangelogTableName::Printer => from_value::<PrinterRow>(data),
-        ChangelogTableName::Program => from_value::<ProgramRow>(data),
-        ChangelogTableName::ProgramEnrolment => from_value::<ProgramEnrolmentRow>(data),
-        ChangelogTableName::ProgramEvent => from_value::<ProgramEventRow>(data),
-        ChangelogTableName::ProgramIndicator => from_value::<ProgramIndicatorRow>(data),
+        ChangelogTableName::Abbreviation => from_value(data, Row::Abbreviation),
+        ChangelogTableName::Category => from_value(data, Row::Category),
+        ChangelogTableName::Contact => from_value(data, Row::Contact),
+        ChangelogTableName::ContactTrace => from_value(data, Row::ContactTrace),
+        ChangelogTableName::Context => from_value(data, Row::Context),
+        ChangelogTableName::DemographicIndicator => from_value(data, Row::DemographicIndicator),
+        ChangelogTableName::Diagnosis => from_value(data, Row::Diagnosis),
+        ChangelogTableName::DocumentRegistry => from_value(data, Row::DocumentRegistry),
+        ChangelogTableName::IndicatorColumn => from_value(data, Row::IndicatorColumn),
+        ChangelogTableName::IndicatorLine => from_value(data, Row::IndicatorLine),
+        ChangelogTableName::ItemCategoryJoin => from_value(data, Row::ItemCategoryJoin),
+        ChangelogTableName::ItemDirection => from_value(data, Row::ItemDirection),
+        ChangelogTableName::ItemStoreJoin => from_value(data, Row::ItemStoreJoin),
+        ChangelogTableName::ItemWarningJoin => from_value(data, Row::ItemWarningJoin),
+        ChangelogTableName::MasterList => from_value(data, Row::MasterList),
+        ChangelogTableName::MasterListLine => from_value(data, Row::MasterListLine),
+        ChangelogTableName::MasterListNameJoin => from_value(data, Row::MasterListNameJoin),
+        ChangelogTableName::NameTag => from_value(data, Row::NameTag),
+        ChangelogTableName::NameTagJoin => from_value(data, Row::NameTagJoin),
+        ChangelogTableName::Period => from_value(data, Row::Period),
+        ChangelogTableName::PeriodSchedule => from_value(data, Row::PeriodSchedule),
+        ChangelogTableName::Printer => from_value(data, Row::Printer),
+        ChangelogTableName::Program => from_value(data, Row::Program),
+        ChangelogTableName::ProgramEnrolment => from_value(data, Row::ProgramEnrolment),
+        ChangelogTableName::ProgramEvent => from_value(data, Row::ProgramEvent),
+        ChangelogTableName::ProgramIndicator => from_value(data, Row::ProgramIndicator),
         ChangelogTableName::ProgramRequisitionOrderType => {
-            from_value::<ProgramRequisitionOrderTypeRow>(data)
+            from_value(data, Row::ProgramRequisitionOrderType)
         }
         ChangelogTableName::ProgramRequisitionSettings => {
-            from_value::<ProgramRequisitionSettingsRow>(data)
+            from_value(data, Row::ProgramRequisitionSettings)
         }
-        ChangelogTableName::ReasonOption => from_value::<ReasonOptionRow>(data),
-        ChangelogTableName::ShippingMethod => from_value::<ShippingMethodRow>(data),
-        ChangelogTableName::StorePreference => from_value::<StorePreferenceRow>(data),
-        ChangelogTableName::UserAccount => from_value::<UserAccountRow>(data),
-        ChangelogTableName::UserPermission => from_value::<UserPermissionRow>(data),
-        ChangelogTableName::UserStoreJoin => from_value::<UserStoreJoinRow>(data),
-        ChangelogTableName::VVMStatus => from_value::<VVMStatusRow>(data),
-        ChangelogTableName::Site => from_value::<SiteRow>(data),
-        ChangelogTableName::Asset => from_value::<AssetRow>(data),
-        ChangelogTableName::AssetInternalLocation => from_value::<AssetInternalLocationRow>(data),
-        ChangelogTableName::AssetLog => from_value::<AssetLogRow>(data),
-        ChangelogTableName::Encounter => from_value::<EncounterRow>(data),
-        ChangelogTableName::RnrForm => from_value::<RnRFormRow>(data),
-        ChangelogTableName::RnrFormLine => from_value::<RnRFormLineRow>(data),
-        ChangelogTableName::SyncMessage => from_value::<SyncMessageRow>(data),
-        ChangelogTableName::Vaccination => from_value::<VaccinationRow>(data),
-        ChangelogTableName::SyncFileReference => from_value::<SyncFileReferenceRow>(data),
-        ChangelogTableName::PluginData => from_value::<PluginDataRow>(data),
-        ChangelogTableName::Preference => from_value::<PreferenceRow>(data),
-        ChangelogTableName::ContactForm => from_value::<ContactFormRow>(data),
-        ChangelogTableName::SystemLog => from_value::<SystemLogRow>(data),
+        ChangelogTableName::ReasonOption => from_value(data, Row::ReasonOption),
+        ChangelogTableName::ShippingMethod => from_value(data, Row::ShippingMethod),
+        ChangelogTableName::StorePreference => from_value(data, Row::StorePreference),
+        ChangelogTableName::UserAccount => from_value(data, Row::UserAccount),
+        ChangelogTableName::UserPermission => from_value(data, Row::UserPermission),
+        ChangelogTableName::UserStoreJoin => from_value(data, Row::UserStoreJoin),
+        ChangelogTableName::VVMStatus => from_value(data, Row::VVMStatus),
+        ChangelogTableName::Site => from_value(data, Row::Site),
+        ChangelogTableName::Asset => from_value(data, Row::Asset),
+        ChangelogTableName::AssetInternalLocation => from_value(data, Row::AssetInternalLocation),
+        ChangelogTableName::AssetLog => from_value(data, Row::AssetLog),
+        ChangelogTableName::Encounter => from_value(data, Row::Encounter),
+        ChangelogTableName::RnrForm => from_value(data, Row::RnrForm),
+        ChangelogTableName::RnrFormLine => from_value(data, Row::RnrFormLine),
+        ChangelogTableName::SyncMessage => from_value(data, Row::SyncMessage),
+        ChangelogTableName::Vaccination => from_value(data, Row::Vaccination),
+        ChangelogTableName::SyncFileReference => from_value(data, Row::SyncFileReference),
+        ChangelogTableName::PluginData => from_value(data, Row::PluginData),
+        ChangelogTableName::Preference => from_value(data, Row::Preference),
+        ChangelogTableName::ContactForm => from_value(data, Row::ContactForm),
+        ChangelogTableName::SystemLog => from_value(data, Row::SystemLog),
     }?;
 
     Ok(vec![(upsert, changelog_insert)])

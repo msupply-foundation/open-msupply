@@ -46,7 +46,9 @@ impl SyncTranslation for VaccineCourseStoreConfigTranslation {
             check_fk(row.vaccine_course_id, "vaccine_course_id", FkField::VaccineCourse)?;
         row.store_id = check_fk(row.store_id, "store_id", FkField::Store)?;
 
-        Ok(PullTranslateResult::upsert(row))
+        Ok(PullTranslateResult::upsert(Row::VaccineCourseStoreConfig(
+            row,
+        )))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

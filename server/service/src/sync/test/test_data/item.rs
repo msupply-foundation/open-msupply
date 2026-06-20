@@ -4,7 +4,8 @@ use crate::sync::{
 };
 use repository::{
     category_row::CategoryRow, item_category_row::ItemCategoryJoinRow, mock::MockData,
-    sync_buffer::SyncRecordData, ItemRow, ItemRowDelete, ItemType, SyncAction, SyncBufferRow,
+    sync_buffer::SyncRecordData, ChangelogTableName, ItemRow, ItemType, Row, SyncAction,
+    SyncBufferRow,
 };
 
 const TABLE_NAME: &str = "item";
@@ -251,7 +252,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             (ITEM_1.0, &ordered_simple_json(ITEM_1.1).unwrap()),
-            ItemRow {
+            Row::Item(ItemRow {
                 id: ITEM_1.0.to_owned(),
                 name: "Non stock items".to_string(),
                 code: "NSI".to_string(),
@@ -263,12 +264,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 is_vaccine: false,
                 vaccine_doses: 0,
                 ..Default::default()
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             (ITEM_2.0, &ordered_simple_json(ITEM_2.1).unwrap()),
-            ItemRow {
+            Row::Item(ItemRow {
                 id: ITEM_2.0.to_owned(),
                 name: "Non stock items 2".to_string(),
                 code: "NSI".to_string(),
@@ -280,11 +281,11 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 is_vaccine: false,
                 vaccine_doses: 0,
                 ..Default::default()
-            },
+            }),
         ),
         TestSyncIncomingRecord {
             translated_record: PullTranslateResult::IntegrationOperations(vec![
-                IntegrationOperation::upsert(ItemRow {
+                IntegrationOperation::upsert(Row::Item(ItemRow {
                     id: ITEM_3_VACCINE.0.to_owned(),
                     name: "Covid-19 Vaccine".to_string(),
                     code: "Covid19-Pfizer-BioNTech".to_string(),
@@ -300,8 +301,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     ),
                     universal_code: Some("3fd9b240c".to_string()),
                     ..Default::default()
-                }),
-                IntegrationOperation::upsert(ItemCategoryJoinRow {
+                })),
+                IntegrationOperation::upsert(Row::ItemCategoryJoin(ItemCategoryJoinRow {
                     id: format!(
                         "{}-{}",
                         ITEM_3_VACCINE.0, "FA6FC67251CC4560AC7FED0C0B23E5A0"
@@ -309,7 +310,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     item_link_id: ITEM_3_VACCINE.0.to_owned(),
                     category_id: "FA6FC67251CC4560AC7FED0C0B23E5A0".to_string(),
                     deleted_datetime: None,
-                }),
+                })),
             ]),
             sync_buffer_row: SyncBufferRow {
                 table_name: TABLE_NAME.to_string(),
@@ -333,6 +334,6 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         ITEM_1.0,
-        ItemRowDelete(ITEM_1.0.to_string()),
+        ChangelogTableName::Item,
     )]
 }

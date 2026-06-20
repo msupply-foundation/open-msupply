@@ -1,8 +1,7 @@
 use super::StorageConnection;
 
 use crate::{
-    db_diesel::store_row::store, repository_error::RepositoryError, user_account,
-    ChangelogSyncType, Delete, SourceSiteId, Upsert,
+    db_diesel::store_row::store, repository_error::RepositoryError, user_account, SourceSiteId,
 };
 use crate::{ChangelogRepository, RowActionType};
 
@@ -183,58 +182,13 @@ impl<'a> ActivityLogRowRepository<'a> {
             .filter(activity_log::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
-}
 
-impl Upsert for ActivityLogRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        ActivityLogRowRepository::new(con)._insert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ActivityLogRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
-// Only used in tests
-pub struct ActivityLogRowDelete(pub String);
-impl Delete for ActivityLogRowDelete {
-    fn delete_sync(
-        &self,
-        _con: &StorageConnection,
-        _sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
+    pub(crate) fn delete_no_changelog(&self, _record_id: &str) -> Result<(), RepositoryError> {
         // Not deleting in tests, just want to check asserted_deleted
         Ok(())
     }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ActivityLogRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
 }
+
 #[cfg(test)]
 mod test {
     use super::*;

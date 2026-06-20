@@ -39,7 +39,7 @@ impl SyncTranslation for VaccineCourseDoseTranslation {
         row.vaccine_course_id =
             check_fk(row.vaccine_course_id, "vaccine_course_id", FkField::VaccineCourse)?;
 
-        Ok(PullTranslateResult::upsert(row))
+        Ok(PullTranslateResult::upsert(Row::VaccineCourseDose(row)))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

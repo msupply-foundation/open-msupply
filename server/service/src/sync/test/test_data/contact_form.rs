@@ -1,4 +1,5 @@
 use repository::contact_form_row::{ContactFormRow, ContactType};
+use repository::Row;
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -39,7 +40,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         CONTACT_FORM1,
-        contact_form1(),
+        Row::ContactForm(contact_form1()),
     )]
 }
 

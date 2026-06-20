@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use repository::PeriodRow;
+use repository::{PeriodRow, Row};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
@@ -56,46 +56,46 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             PERIOD_1,
-            PeriodRow {
+            Row::Period(PeriodRow {
                 id: "period_1".to_string(),
                 period_schedule_id: "period_schedule_1".to_string(),
                 name: "Jan Wk01 2023".to_string(),
                 start_date: NaiveDate::from_ymd_opt(2023, 1, 1).unwrap(),
                 end_date: NaiveDate::from_ymd_opt(2023, 1, 7).unwrap(),
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             PERIOD_2,
-            PeriodRow {
+            Row::Period(PeriodRow {
                 id: "period_2".to_string(),
                 period_schedule_id: "period_schedule_2".to_string(),
                 name: "2023".to_string(),
                 start_date: NaiveDate::from_ymd_opt(2023, 1, 1).unwrap(),
                 end_date: NaiveDate::from_ymd_opt(2023, 12, 31).unwrap(),
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             PERIOD_3,
-            PeriodRow {
+            Row::Period(PeriodRow {
                 id: "641A3560C84A44BC9E6DDC01F3D75923".to_string(),
                 period_schedule_id: "597074CBCCC24166B8C1F82553DACC2F".to_string(),
                 name: "2020_Q2".to_string(),
                 start_date: NaiveDate::from_ymd_opt(2020, 4, 1).unwrap(),
                 end_date: NaiveDate::from_ymd_opt(2020, 6, 30).unwrap(),
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             PERIOD_4,
-            PeriodRow {
+            Row::Period(PeriodRow {
                 id: "772B3984DBA14A5F941ED0EF857FDB31".to_string(),
                 period_schedule_id: "597074CBCCC24166B8C1F82553DACC2F".to_string(),
                 name: "2020_Q3".to_string(),
                 start_date: NaiveDate::from_ymd_opt(2020, 7, 1).unwrap(),
                 end_date: NaiveDate::from_ymd_opt(2020, 9, 30).unwrap(),
-            },
+            }),
         ),
     ]
 }

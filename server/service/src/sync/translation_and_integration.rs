@@ -184,19 +184,51 @@ impl IntegrationOperation {
         source_site_id: Option<i32>,
     ) -> Result<(), RepositoryError> {
         match self {
-            IntegrationOperation::Upsert(upsert) => {
-                upsert.upsert_sync(
+            IntegrationOperation::Upsert(row) => {
+                // v5/v6: write the row, then generate + insert its changelog(s) with
+                // the originating site id.
+                row.integrate_no_changelog(connection)?;
+                let changelogs = row.generate_changelog(
                     connection,
-                    ChangelogSyncType::SyncTypeV5V6 { source_site_id },
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
                 )?;
+                let changelog_repo = ChangelogRepository::new(connection);
+                for changelog in &changelogs {
+                    changelog_repo.insert(changelog)?;
+                }
                 Ok(())
             }
 
-            IntegrationOperation::Delete(delete) => {
-                delete.delete_sync(
+            IntegrationOperation::UpsertNonSync(row) => {
+                // Not in the changelog; just write the row.
+                row.upsert_no_changelog(connection)
+            }
+
+            IntegrationOperation::UpsertDocument(document) => {
+                // Immutable document insert + aux-table updates. Documents manage their
+                // own changelog inside the repository, so no separate changelog here.
+                crate::sync::integrate_document::sync_upsert_document(connection, document)
+            }
+
+            IntegrationOperation::Delete {
+                table_name,
+                record_id,
+            } => {
+                // Generate the changelog from the still-present row FIRST (it carries
+                // store_id/transfer_store_id/patient_id needed for routing), then delete
+                // the row, then insert the changelog. Mirrors the old `delete_sync` order.
+                let changelogs = generate_delete_changelog(
                     connection,
-                    ChangelogSyncType::SyncTypeV5V6 { source_site_id },
+                    table_name,
+                    record_id,
+                    SourceSiteId::SourceSiteId(source_site_id),
                 )?;
+                integrate_delete_no_changelog(connection, table_name, record_id)?;
+                let changelog_repo = ChangelogRepository::new(connection);
+                for changelog in &changelogs {
+                    changelog_repo.insert(changelog)?;
+                }
                 Ok(())
             }
         }
@@ -287,10 +319,10 @@ mod test {
                     connection,
                     &[(
                         None,
-                        IntegrationOperation::upsert(UnitRow {
+                        IntegrationOperation::upsert(Row::Unit(UnitRow {
                             id: "unit".to_string(),
                             ..Default::default()
-                        }),
+                        })),
                     )],
                 );
 
@@ -301,11 +333,11 @@ mod test {
                     connection,
                     &[(
                         None,
-                        IntegrationOperation::upsert(ItemRow {
+                        IntegrationOperation::upsert(Row::Item(ItemRow {
                             id: "item".to_string(),
                             unit_id: Some("invalid".to_string()),
                             ..Default::default()
-                        }),
+                        })),
                     )],
                 );
 

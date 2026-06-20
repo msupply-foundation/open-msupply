@@ -1,4 +1,5 @@
 use repository::vaccine_course::vaccine_course_dose_row::VaccineCourseDoseRow;
+use repository::Row;
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -35,7 +36,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         VACCINE_COURSE_DOSE1,
-        vaccine_course_dose1(),
+        Row::VaccineCourseDose(vaccine_course_dose1()),
     )]
 }
 

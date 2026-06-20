@@ -1,7 +1,7 @@
 use super::{unit_row::unit::dsl::*, StorageConnection};
 use crate::{
     db_diesel::changelog::ChangelogRepository, repository_error::RepositoryError,
-    ChangelogSyncType, ChangelogTableName, Delete, RowActionType, SourceSiteId, Upsert,
+    ChangelogTableName, RowActionType, SourceSiteId,
 };
 use diesel::prelude::*;
 
@@ -54,7 +54,7 @@ impl<'a> UnitRowRepository<'a> {
         UnitRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &UnitRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &UnitRow) -> Result<(), RepositoryError> {
         diesel::insert_into(unit)
             .values(row)
             .on_conflict(id)
@@ -130,66 +130,8 @@ impl<'a> UnitRowRepository<'a> {
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
-}
 
-#[derive(Debug, Clone)]
-pub struct UnitRowDelete(pub String);
-impl Delete for UnitRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let repo = UnitRowRepository::new(con);
-        repo._mark_deleted(&self.0)?;
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => UnitRow::generate_changelog(
-                self.0.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert!(matches!(
-            UnitRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(Some(UnitRow {
-                is_active: false,
-                ..
-            })) | Ok(None)
-        ));
-    }
-}
-
-impl Upsert for UnitRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        UnitRowRepository::new(con)._upsert_one(self)?;
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => UnitRow::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            UnitRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        self._mark_deleted(record_id)
     }
 }

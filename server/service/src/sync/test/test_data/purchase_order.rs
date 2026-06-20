@@ -5,7 +5,7 @@ use crate::sync::{
     },
 };
 use chrono::NaiveDate;
-use repository::{PurchaseOrderDelete, PurchaseOrderRow, PurchaseOrderStatus};
+use repository::{ChangelogTableName, PurchaseOrderRow, PurchaseOrderStatus, Row};
 use serde_json::json;
 
 use super::TestSyncOutgoingRecord;
@@ -89,7 +89,7 @@ fn purchase_order_1_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         PURCHASE_ORDER_1,
-        PurchaseOrderRow {
+        Row::PurchaseOrder(PurchaseOrderRow {
             id: PURCHASE_ORDER_1.0.to_string(),
             store_id: "store_b".to_string(),
             created_by: Some("some user".to_string()),
@@ -147,7 +147,7 @@ fn purchase_order_1_pull_record() -> TestSyncIncomingRecord {
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
             ),
-        },
+        }),
     )
 }
 fn purchase_order_1_push_record() -> TestSyncOutgoingRecord {
@@ -294,7 +294,7 @@ fn purchase_order_2_migration_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         PURCHASE_ORDER_2,
-        PurchaseOrderRow {
+        Row::PurchaseOrder(PurchaseOrderRow {
             id: "FA9FFB5F474E4EE998ADA2632E41E6BF".to_string(),
             store_id: "store_a".to_string(),
             created_by: Some("user_account_a".to_string()),
@@ -342,7 +342,7 @@ fn purchase_order_2_migration_pull_record() -> TestSyncIncomingRecord {
             supplier_discount_percentage: None,
             request_approval_datetime: None,
             finalised_datetime: None,
-        },
+        }),
     )
 }
 
@@ -434,7 +434,7 @@ fn purchase_order_3_empty_string_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         PURCHASE_ORDER_3,
-        PurchaseOrderRow {
+        Row::PurchaseOrder(PurchaseOrderRow {
             id: PURCHASE_ORDER_3.0.to_string(),
             store_id: "store_b".to_string(),
             created_by: None,
@@ -472,7 +472,7 @@ fn purchase_order_3_empty_string_pull_record() -> TestSyncIncomingRecord {
             supplier_discount_percentage: None,
             request_approval_datetime: None,
             finalised_datetime: None,
-        },
+        }),
     )
 }
 fn purchase_order_3_empty_string_push_record() -> TestSyncOutgoingRecord {
@@ -553,7 +553,7 @@ fn purchase_order_4_empty_object_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         PURCHASE_ORDER_4,
-        PurchaseOrderRow {
+        Row::PurchaseOrder(PurchaseOrderRow {
             id: PURCHASE_ORDER_4.0.to_string(),
             store_id: "store_b".to_string(),
             created_by: None,
@@ -589,7 +589,7 @@ fn purchase_order_4_empty_object_pull_record() -> TestSyncIncomingRecord {
             freight_charge: None,
             freight_conditions: None,
             ..Default::default()
-        },
+        }),
     )
 }
 
@@ -669,7 +669,7 @@ fn purchase_order_5_null_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         PURCHASE_ORDER_5,
-        PurchaseOrderRow {
+        Row::PurchaseOrder(PurchaseOrderRow {
             id: PURCHASE_ORDER_5.0.to_string(),
             store_id: "store_b".to_string(),
             created_by: None,
@@ -682,7 +682,7 @@ fn purchase_order_5_null_pull_record() -> TestSyncIncomingRecord {
                 .and_hms_opt(0, 0, 0)
                 .unwrap(),
             ..Default::default()
-        },
+        }),
     )
 }
 
@@ -760,7 +760,7 @@ fn purchase_order_6_no_fields_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         PURCHASE_ORDER_6,
-        PurchaseOrderRow {
+        Row::PurchaseOrder(PurchaseOrderRow {
             id: PURCHASE_ORDER_6.0.to_string(),
             store_id: "store_b".to_string(),
             created_by: None,
@@ -773,7 +773,7 @@ fn purchase_order_6_no_fields_pull_record() -> TestSyncIncomingRecord {
                 .and_hms_opt(0, 0, 0)
                 .unwrap(),
             ..Default::default()
-        },
+        }),
     )
 }
 fn purchase_order_6_no_fields_push_record() -> TestSyncOutgoingRecord {
@@ -853,6 +853,6 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         PURCHASE_ORDER_5.0,
-        PurchaseOrderDelete(PURCHASE_ORDER_5.0.to_string()),
+        ChangelogTableName::PurchaseOrder,
     )]
 }

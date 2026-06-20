@@ -6,7 +6,7 @@ use crate::{
     NameRow,
 };
 use crate::{ChangelogRepository, RowActionType};
-use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
+use crate::SourceSiteId;
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -127,6 +127,15 @@ impl<'a> NameStoreJoinRepository<'a> {
             .filter(name_store_join::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
+
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(
+            name_store_join_with_links::table
+                .filter(name_store_join_with_links::id.eq(record_id)),
+        )
+        .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
 }
 
 #[diesel::dsl::auto_type]
@@ -182,71 +191,3 @@ impl NameStoreJoinFilter {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct NameStoreJoinRowDelete(pub String);
-impl Delete for NameStoreJoinRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                NameStoreJoinRow::generate_changelog(
-                    RowOrId::Id(&self.0),
-                    con,
-                    RowActionType::Delete,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        diesel::delete(
-            name_store_join_with_links::table.filter(name_store_join_with_links::id.eq(&self.0)),
-        )
-        .execute(con.lock().connection())?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            NameStoreJoinRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
-}
-
-impl Upsert for NameStoreJoinRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        NameStoreJoinRepository::new(con)._upsert(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                NameStoreJoinRow::generate_changelog(
-                    RowOrId::Row(self),
-                    con,
-                    RowActionType::Upsert,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            NameStoreJoinRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}

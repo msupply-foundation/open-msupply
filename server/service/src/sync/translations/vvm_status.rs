@@ -1,6 +1,6 @@
 use repository::{
-    vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowDelete},
-    StorageConnection, SyncBufferRow,
+    vvm_status::vvm_status_row::VVMStatusRow, ChangelogTableName, Row, StorageConnection,
+    SyncBufferRow,
 };
 use serde::Deserialize;
 use util::sync_serde::empty_str_as_option_string;
@@ -55,7 +55,7 @@ impl SyncTranslation for VVMStatusTranslation {
             reason_id: data.option_id,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::VVMStatus(result)))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -63,9 +63,10 @@ impl SyncTranslation for VVMStatusTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(VVMStatusRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::VVMStatus,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 }
 

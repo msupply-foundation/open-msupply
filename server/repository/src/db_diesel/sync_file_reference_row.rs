@@ -9,10 +9,7 @@ use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 use crate::SourceSiteId;
-use crate::{
-    ChangelogRepository, ChangelogSyncType, RowActionType,
-    Upsert,
-};
+use crate::{ChangelogRepository, RowActionType};
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -98,7 +95,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         SyncFileReferenceRowRepository { connection }
     }
 
-    fn _upsert_one(
+    pub(crate) fn _upsert_one(
         &self,
         sync_file_reference_row: &SyncFileReferenceRow,
     ) -> Result<(), RepositoryError> {
@@ -181,36 +178,5 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         Ok(sync_file_reference::table
             .filter(sync_file_reference::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
-    }
-}
-
-impl Upsert for SyncFileReferenceRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        SyncFileReferenceRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            SyncFileReferenceRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

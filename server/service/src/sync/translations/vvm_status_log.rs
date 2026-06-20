@@ -96,7 +96,7 @@ impl SyncTranslation for VVMStatusLogTranslation {
             store_id: check_fk(store_id, "store_id", FkField::Store)?,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::VVMStatusLog(result)))
     }
 
     fn try_translate_to_upsert_sync_record(

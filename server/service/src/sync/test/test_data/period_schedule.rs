@@ -1,4 +1,4 @@
-use repository::PeriodScheduleRow;
+use repository::{PeriodScheduleRow, Row};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
@@ -33,26 +33,26 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             PERIOD_SCHEDULE_1,
-            PeriodScheduleRow {
+            Row::PeriodSchedule(PeriodScheduleRow {
                 id: "period_schedule_1".to_string(),
                 name: "Weekly1".to_string(),
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             PERIOD_SCHEDULE_2,
-            PeriodScheduleRow {
+            Row::PeriodSchedule(PeriodScheduleRow {
                 id: "period_schedule_2".to_string(),
                 name: "Yearly2".to_string(),
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             PERIOD_SCHEDULE_3,
-            PeriodScheduleRow {
+            Row::PeriodSchedule(PeriodScheduleRow {
                 id: "597074CBCCC24166B8C1F82553DACC2F".to_string(),
                 name: "Quarterly".to_string(),
-            },
+            }),
         ),
     ]
 }

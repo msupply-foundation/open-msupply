@@ -79,7 +79,7 @@ impl SyncTranslation for LocationTranslation {
             volume,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Location(result)))
     }
 
     fn try_translate_to_upsert_sync_record(

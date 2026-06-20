@@ -1,6 +1,7 @@
 use repository::{
     asset_log_row::{AssetLogStatus, AssetLogType},
     db_diesel::assets::asset_log_row::AssetLogRow,
+    Row,
 };
 use serde_json::json;
 
@@ -46,7 +47,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         ASSET_LOG1,
-        asset_log1(),
+        Row::AssetLog(asset_log1()),
     )]
 }
 

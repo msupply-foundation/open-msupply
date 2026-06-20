@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use repository::{StorageConnection, SyncBufferRow, WarningRow};
+use repository::{NonSyncRow, StorageConnection, SyncBufferRow, WarningRow};
 
 use super::{PullTranslateResult, SyncTranslation};
 
@@ -46,7 +46,9 @@ impl SyncTranslation for WarningTranslation {
             code,
             warning_text,
         };
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert_non_sync(NonSyncRow::Warning(
+            result,
+        )))
     }
 }
 

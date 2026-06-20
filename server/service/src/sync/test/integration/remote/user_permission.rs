@@ -5,7 +5,7 @@ use crate::sync::{
     translations::IntegrationOperation,
 };
 
-use repository::{ContextRow, PermissionType, UserPermissionRow, UserPermissionRowDelete};
+use repository::{ChangelogTableName, ContextRow, PermissionType, UserPermissionRow};
 use serde_json::json;
 use util::uuid::uuid;
 
@@ -76,9 +76,10 @@ impl SyncRecordTester for UserPermissionTester {
             central_delete: json!({
                 "om_user_permission": [user_permission_row_1.id],
             }),
-            integration_records: vec![IntegrationOperation::delete(UserPermissionRowDelete(
+            integration_records: vec![IntegrationOperation::delete(
+                ChangelogTableName::UserPermission,
                 user_permission_row_1.id,
-            ))],
+            )],
             ..Default::default()
         });
         result

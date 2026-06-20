@@ -1,4 +1,4 @@
-use repository::{FormSchemaJson, StorageConnection, SyncBufferRow};
+use repository::{row_from_schema, FormSchemaJson, Row, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -50,6 +50,8 @@ impl SyncTranslation for FormSchemaTranslation {
             ui_schema,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::FormSchema(row_from_schema(
+            &result,
+        )?)))
     }
 }

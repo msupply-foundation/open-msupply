@@ -5,13 +5,13 @@
 
 use repository::{
     syncv7::SyncRecordSerializeError, ChangeLogInsertRow, ChangelogFilter, Description, KeyType,
-    KeyValueStoreRepository, StorageConnection, StoreRow, StoreRowRepository, SyncRequestFilter,
-    SyncRequestRow, Upsert,
+    KeyValueStoreRepository, NonSyncRow, Row, StorageConnection, StoreRow, StoreRowRepository,
+    SyncRequestFilter, SyncRequestRow,
 };
 
-use crate::sync_v7::serde::DeserializeResult;
+use crate::sync_v7::serde::{DeserializeResult, V7Upsert};
 
-pub fn translate_store(
+pub(crate) fn translate_store(
     connection: &StorageConnection,
     changelog_insert: ChangeLogInsertRow,
     data: &serde_json::Value,
@@ -21,12 +21,12 @@ pub fn translate_store(
 
     let sync_request = sync_request_for_site_change(connection, &store)?;
 
-    let mut out = vec![(Box::new(store) as Box<dyn Upsert>, changelog_insert)];
+    let mut out = vec![(V7Upsert::Row(Row::Store(store)), changelog_insert)];
     if let Some(sync_request) = sync_request {
-        // Upsert from sync_request will ignore changelog, for now just provide default value
-        // in the future probably need upsert with changelog on Upsert trait, and optional ChangelogInsertRow here
+        // sync_request is not in the changelog (NonSync); the paired changelog row is
+        // unused for it, so just provide a default.
         out.push((
-            Box::new(sync_request) as Box<dyn Upsert>,
+            V7Upsert::NonSync(NonSyncRow::SyncRequest(sync_request)),
             ChangeLogInsertRow::default(),
         ));
     }

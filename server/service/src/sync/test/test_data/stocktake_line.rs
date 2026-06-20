@@ -3,7 +3,7 @@ use crate::sync::{
     test::TestSyncIncomingRecord,
     translations::stocktake_line::{LegacyStocktakeLineRow, LegacyStocktakeLineRowOmsFields},
 };
-use repository::{mock::mock_item_a, StocktakeLineRow};
+use repository::{mock::mock_item_a, Row, StocktakeLineRow};
 use serde_json::json;
 
 const TABLE_NAME: &str = "Stock_take_lines";
@@ -43,7 +43,7 @@ fn stocktake_line_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         STOCKTAKE_LINE_1,
-        StocktakeLineRow {
+        Row::StocktakeLine(StocktakeLineRow {
             id: STOCKTAKE_LINE_1.0.to_string(),
             stocktake_id: "stocktake_a".to_string(),
             stock_line_id: Some("item_c_line_a".to_string()),
@@ -68,7 +68,7 @@ fn stocktake_line_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 10.0,
             campaign_id: None,
             program_id: Some("program_test".to_string()),
-        },
+        }),
     )
 }
 fn stocktake_line_push_record() -> TestSyncOutgoingRecord {
@@ -143,7 +143,7 @@ fn stocktake_line_om_field_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         STOCKTAKE_LINE_OM_FIELDS,
-        StocktakeLineRow {
+        Row::StocktakeLine(StocktakeLineRow {
             id: STOCKTAKE_LINE_OM_FIELDS.0.to_string(),
             stocktake_id: "stocktake_a".to_string(),
             stock_line_id: Some("item_c_line_a".to_string()),
@@ -168,7 +168,7 @@ fn stocktake_line_om_field_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             campaign_id: Some("campaign_a".to_string()),
             program_id: None,
-        },
+        }),
     )
 }
 fn stocktake_line_om_field_push_record() -> TestSyncOutgoingRecord {

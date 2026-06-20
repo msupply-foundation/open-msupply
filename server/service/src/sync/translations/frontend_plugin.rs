@@ -1,6 +1,5 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, FrontendPluginRow, FrontendPluginRowDelete, Row,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, FrontendPluginRow, Row, StorageConnection, SyncBufferRow,
 };
 
 use super::{
@@ -30,11 +29,9 @@ impl SyncTranslation for FrontendPluginTranslator {
         _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_value::<
-            FrontendPluginRow,
-        >(
-            sync_record.data.0.clone()
-        )?))
+        Ok(PullTranslateResult::upsert(Row::FrontendPlugin(
+            serde_json::from_value::<FrontendPluginRow>(sync_record.data.0.clone())?,
+        )))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -79,9 +76,10 @@ impl SyncTranslation for FrontendPluginTranslator {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(FrontendPluginRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::FrontendPlugin,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::sync::test::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
-use repository::{PreferenceRow, PreferenceRowDelete};
+use repository::{ChangelogTableName, PreferenceRow, Row};
 use serde_json::json;
 
 const TABLE_NAME: &str = "preference";
@@ -27,7 +27,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         PREFERENCE_1,
-        preference(),
+        Row::Preference(preference()),
     )]
 }
 
@@ -44,6 +44,6 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         PREFERENCE_1.0,
-        PreferenceRowDelete(PREFERENCE_1.0.to_string()),
+        ChangelogTableName::Preference,
     )]
 }

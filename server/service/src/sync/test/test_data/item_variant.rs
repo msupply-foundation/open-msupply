@@ -1,5 +1,6 @@
 use chrono::NaiveDate;
 use repository::item_variant::item_variant_row::ItemVariantRow;
+use repository::Row;
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -68,8 +69,16 @@ fn item_variant2() -> ItemVariantRow {
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, ITEM_VARIANT1, item_variant1()),
-        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, ITEM_VARIANT2, item_variant2()),
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
+            ITEM_VARIANT1,
+            Row::ItemVariant(item_variant1()),
+        ),
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
+            ITEM_VARIANT2,
+            Row::ItemVariant(item_variant2()),
+        ),
     ]
 }
 

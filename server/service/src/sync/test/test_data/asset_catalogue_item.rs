@@ -1,4 +1,5 @@
 use repository::asset_catalogue_item_row::AssetCatalogueItemRow;
+use repository::Row;
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -38,7 +39,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         ASSET_CATALOGUE_ITEM1,
-        asset_catalogue_item1(),
+        Row::AssetCatalogueItem(asset_catalogue_item1()),
     )]
 }
 

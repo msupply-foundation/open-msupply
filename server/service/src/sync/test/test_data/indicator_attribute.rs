@@ -1,4 +1,4 @@
-use repository::{IndicatorColumnRow, IndicatorLineRow, IndicatorValueType};
+use repository::{IndicatorColumnRow, IndicatorLineRow, IndicatorValueType, Row};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
@@ -25,7 +25,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     data.push(TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         INDICATOR_LINE_A,
-        IndicatorLineRow {
+        Row::IndicatorLine(IndicatorLineRow {
             id: INDICATOR_LINE_A.0.to_owned(),
             code: "ira".to_string(),
             program_indicator_id: "program_indicator_a".to_string(),
@@ -35,7 +35,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             default_value: "".to_string(),
             is_required: false,
             is_active: true,
-        },
+        }),
     ));
 
     const INDICATOR_LINE_B: (&str, &str) = (
@@ -56,7 +56,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     data.push(TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         INDICATOR_LINE_B,
-        IndicatorLineRow {
+        Row::IndicatorLine(IndicatorLineRow {
             id: INDICATOR_LINE_B.0.to_owned(),
             code: "irb".to_string(),
             program_indicator_id: "program_indicator_a".to_string(),
@@ -66,7 +66,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             default_value: "".to_string(),
             is_required: false,
             is_active: true,
-        },
+        }),
     ));
 
     const INDICATOR_LINE_C: (&str, &str) = (
@@ -87,7 +87,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     data.push(TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         INDICATOR_LINE_C,
-        IndicatorLineRow {
+        Row::IndicatorLine(IndicatorLineRow {
             id: INDICATOR_LINE_C.0.to_owned(),
             code: "irc".to_string(),
             program_indicator_id: "program_indicator_a".to_string(),
@@ -97,7 +97,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             default_value: "0".to_string(),
             is_required: false,
             is_active: true,
-        },
+        }),
     ));
 
     const INDICATOR_COLUMN_A: (&str, &str) = (
@@ -118,7 +118,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     data.push(TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         INDICATOR_COLUMN_A,
-        IndicatorColumnRow {
+        Row::IndicatorColumn(IndicatorColumnRow {
             id: INDICATOR_COLUMN_A.0.to_owned(),
             program_indicator_id: "program_indicator_a".to_string(),
             column_number: 0,
@@ -126,7 +126,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             value_type: None,
             default_value: "".to_string(),
             is_active: true,
-        },
+        }),
     ));
 
     const INDICATOR_COLUMN_B: (&str, &str) = (
@@ -147,7 +147,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     data.push(TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         INDICATOR_COLUMN_B,
-        IndicatorColumnRow {
+        Row::IndicatorColumn(IndicatorColumnRow {
             id: INDICATOR_COLUMN_B.0.to_owned(),
             program_indicator_id: "program_indicator_a".to_string(),
             column_number: 1,
@@ -155,7 +155,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             value_type: Some(IndicatorValueType::String),
             default_value: "test default value".to_string(),
             is_active: true,
-        },
+        }),
     ));
 
     data

@@ -1,7 +1,7 @@
 use super::{store_row::store, user_row::user_account, StorageConnection};
 
 use crate::repository_error::RepositoryError;
-use crate::{ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert};
+use crate::{ChangelogRepository, RowActionType, SourceSiteId};
 
 use diesel::prelude::*;
 
@@ -49,7 +49,7 @@ impl<'a> UserStoreJoinRowRepository<'a> {
         UserStoreJoinRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(user_store_join::table)
             .values(row)
             .on_conflict(user_store_join::id)
@@ -84,6 +84,11 @@ impl<'a> UserStoreJoinRowRepository<'a> {
         Ok(())
     }
 
+    /// Row-only delete used by sync integration; no changelog.
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        self.delete_by_id(record_id)
+    }
+
     pub fn find_many_by_id(
         &self,
         ids: &[String],
@@ -97,69 +102,5 @@ impl<'a> UserStoreJoinRowRepository<'a> {
         diesel::delete(user_store_join::table.filter(user_store_join::user_id.eq(id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
-    }
-}
-
-impl Upsert for UserStoreJoinRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        UserStoreJoinRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            UserStoreJoinRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct UserStoreJoinRowDelete(pub String);
-impl Delete for UserStoreJoinRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                UserStoreJoinRow::generate_changelog(
-                    self.0.clone(),
-                    con,
-                    RowActionType::Delete,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        UserStoreJoinRowRepository::new(con).delete_by_id(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            UserStoreJoinRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        );
     }
 }

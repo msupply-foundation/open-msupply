@@ -47,7 +47,7 @@ impl SyncTranslation for NamePropertyTranslation {
             remote_editable,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::NameProperty(result)))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

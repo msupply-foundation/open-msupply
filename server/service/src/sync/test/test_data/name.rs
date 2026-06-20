@@ -3,7 +3,7 @@ use crate::sync::{
     translations::name::{LegacyNameRow, LegacyNameRowType},
 };
 use chrono::NaiveDate;
-use repository::{GenderType, NameRow, NameRowDelete, NameRowType};
+use repository::{ChangelogTableName, GenderType, NameRow, NameRowType, Row};
 use serde_json::json;
 
 const TABLE_NAME: &str = "name";
@@ -112,7 +112,7 @@ fn name_1() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_1,
-        NameRow {
+        Row::Name(NameRow {
             id: NAME_1.0.to_owned(),
             name: "General".to_string(),
             code: "GEN".to_string(),
@@ -154,7 +154,7 @@ fn name_1() -> TestSyncIncomingRecord {
             margin: Some(0.0),
             freight_factor: Some(0.0),
             currency_id: None,
-        },
+        }),
     )
 }
 
@@ -262,7 +262,7 @@ fn name_2() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_2,
-        NameRow {
+        Row::Name(NameRow {
             id: NAME_2.0.to_owned(),
             name: "Birch Store".to_string(),
             code: "SNA".to_string(),
@@ -298,7 +298,7 @@ fn name_2() -> TestSyncIncomingRecord {
             margin: Some(0.0),
             freight_factor: Some(1.0),
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
-        },
+        }),
     )
 }
 
@@ -406,7 +406,7 @@ fn name_3() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_3,
-        NameRow {
+        Row::Name(NameRow {
             id: NAME_3.0.to_owned(),
             name: "Birch Store 2".to_string(),
             code: "SNA".to_string(),
@@ -442,7 +442,7 @@ fn name_3() -> TestSyncIncomingRecord {
             margin: Some(0.0),
             freight_factor: Some(1.0),
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
-        },
+        }),
     )
 }
 
@@ -551,7 +551,7 @@ fn name_4() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_4,
-        NameRow {
+        Row::Name(NameRow {
             id: NAME_4.0.to_string(),
             name: "Moemoe, Alex".to_string(),
             code: "00102/19/00".to_string(),
@@ -592,7 +592,7 @@ fn name_4() -> TestSyncIncomingRecord {
             margin: Some(0.0),
             freight_factor: Some(0.0),
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
-        },
+        }),
     )
 }
 
@@ -737,7 +737,7 @@ fn name_5_dob_t_format_pull() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_5_DOB_T_FORMAT,
-        NameRow {
+        Row::Name(NameRow {
             id: NAME_5_DOB_T_FORMAT.0.to_string(),
             name: "Mikalsen, N5".to_string(),
             code: "MJ200303A".to_string(),
@@ -778,7 +778,7 @@ fn name_5_dob_t_format_pull() -> TestSyncIncomingRecord {
             margin: None,
             freight_factor: None,
             currency_id: None,
-        },
+        }),
     )
 }
 
@@ -873,7 +873,7 @@ fn name_6_dob_no_t_format_pull() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_6_DOB_NO_T_FORMAT,
-        NameRow {
+        Row::Name(NameRow {
             id: NAME_6_DOB_NO_T_FORMAT.0.to_string(),
             name: "Mikalsen, N6".to_string(),
             code: "MJ200303B".to_string(),
@@ -914,7 +914,7 @@ fn name_6_dob_no_t_format_pull() -> TestSyncIncomingRecord {
             margin: None,
             freight_factor: None,
             currency_id: None,
-        },
+        }),
     )
 }
 
@@ -983,7 +983,7 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         NAME_4.0,
-        NameRowDelete(NAME_4.0.to_string()),
+        ChangelogTableName::Name,
     )]
 }
 

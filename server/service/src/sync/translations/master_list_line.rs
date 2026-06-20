@@ -1,5 +1,5 @@
 use repository::{
-    MasterListLineRow, MasterListLineRowDelete, MasterListRowRepository, StorageConnection,
+    ChangelogTableName, MasterListLineRow, MasterListRowRepository, Row, StorageConnection,
     SyncBufferRow,
 };
 
@@ -44,9 +44,10 @@ impl SyncTranslation for MasterListLineTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         // TODO, check site ? (should never get delete records for this site,
         // only transfer other half)
-        Ok(PullTranslateResult::delete(MasterListLineRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::MasterListLine,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 
     fn try_translate_from_upsert_sync_record(
@@ -73,7 +74,7 @@ impl SyncTranslation for MasterListLineTranslation {
             price_per_unit: data.price,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::MasterListLine(result)))
     }
 }
 

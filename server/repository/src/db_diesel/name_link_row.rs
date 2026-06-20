@@ -1,6 +1,6 @@
 use super::{name_link_row::name_link::dsl::*, name_row::name};
 
-use crate::{RepositoryError, StorageConnection, ChangelogSyncType, Upsert};
+use crate::{RepositoryError, StorageConnection};
 
 use diesel::prelude::*;
 
@@ -78,20 +78,5 @@ impl<'a> NameLinkRowRepository<'a> {
         ))
         .get_result(self.connection.lock().connection())?;
         Ok(exists)
-    }
-}
-
-impl Upsert for NameLinkRow {
-    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
-        NameLinkRowRepository::new(con).upsert_one(self)?;
-        Ok(()) // Table not in Changelog
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            NameLinkRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

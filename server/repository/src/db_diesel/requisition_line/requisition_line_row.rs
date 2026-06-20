@@ -7,7 +7,7 @@ use ts_rs::TS;
 
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::{ChangelogRepository, RowActionType};
-use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
+use crate::SourceSiteId;
 
 use chrono::NaiveDateTime;
 
@@ -94,7 +94,7 @@ impl<'a> RequisitionLineRowRepository<'a> {
         RequisitionLineRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
         diesel::insert_into(requisition_line::table)
             .values(row)
             .on_conflict(requisition_line::id)
@@ -176,71 +176,10 @@ impl<'a> RequisitionLineRowRepository<'a> {
             .filter(requisition_line::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
-}
 
-#[derive(Debug, Clone)]
-pub struct RequisitionLineRowDelete(pub String);
-impl Delete for RequisitionLineRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                RequisitionLineRow::generate_changelog(
-                    RowOrId::Id(&self.0),
-                    con,
-                    RowActionType::Delete,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        diesel::delete(requisition_line::table.filter(requisition_line::id.eq(&self.0)))
-            .execute(con.lock().connection())?;
-        ChangelogRepository::new(con).insert(&changelog)?;
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(requisition_line::table.filter(requisition_line::id.eq(record_id)))
+            .execute(self.connection.lock().connection())?;
         Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            RequisitionLineRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
-}
-
-impl Upsert for RequisitionLineRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        RequisitionLineRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                RequisitionLineRow::generate_changelog(
-                    RowOrId::Row(self),
-                    con,
-                    RowActionType::Upsert,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            RequisitionLineRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

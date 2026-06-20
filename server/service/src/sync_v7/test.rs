@@ -6,8 +6,8 @@ mod test_sync_v7_client_api {
     use repository::{
         migrations::Version, mock::MockDataInserts, ChangelogCondition, ChangelogRepository,
         ChangelogRow, ChangelogTableName, CurrencyRow, CursorAndLimit, FilterBuilder, ItemRow,
-        KeyType, KeyValueStoreRepository, NameRow, RowActionType, StockLineRow, StorageConnection,
-        StoreRow, SyncBufferRepository, UnitRow, Upsert,
+        KeyType, KeyValueStoreRepository, NameRow, Row, RowActionType, StockLineRow,
+        StorageConnection, StoreRow, SyncBufferRepository, UnitRow,
     };
     use repository::{KeyValueStoreRow, SyncAction, SyncBufferRow};
     use serde_json::json;
@@ -83,19 +83,19 @@ mod test_sync_v7_client_api {
         }
     }
 
-    fn test_records() -> Vec<Box<dyn Upsert>> {
+    fn test_records() -> Vec<Row> {
         vec![
-            Box::new(unit()),
-            Box::new(currency()),
-            Box::new(name()),
-            Box::new(item()),
-            Box::new(store()),
-            Box::new(stock_line()),
+            Row::Unit(unit()),
+            Row::Currency(currency()),
+            Row::Name(name()),
+            Row::Item(item()),
+            Row::Store(store()),
+            Row::StockLine(stock_line()),
         ]
     }
 
-    fn fk_order_test_records() -> Vec<Box<dyn Upsert>> {
-        vec![Box::new(unit()), Box::new(name()), Box::new(store())]
+    fn fk_order_test_records() -> Vec<Row> {
+        vec![Row::Unit(unit()), Row::Name(name()), Row::Store(store())]
     }
 
     // ---- Mock pull responses ----

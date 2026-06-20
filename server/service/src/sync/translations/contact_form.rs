@@ -37,7 +37,7 @@ impl SyncTranslation for ContactFormTranslation {
         let check_fk = fk_checker.with_table_required(connection, "contact_form", &row.id);
         row.store_id = check_fk(row.store_id, "store_id", FkField::Store)?;
 
-        Ok(PullTranslateResult::upsert(row))
+        Ok(PullTranslateResult::upsert(Row::ContactForm(row)))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

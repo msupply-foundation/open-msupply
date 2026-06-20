@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use repository::{
-    CurrencyRow, CurrencyRowDelete, CurrencyRowRepository, StorageConnection, SyncBufferRow,
+    ChangelogTableName, CurrencyRow, CurrencyRowRepository, Row, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -62,7 +62,7 @@ impl SyncTranslation for CurrencyTranslation {
             is_active: currency.is_none_or(|c| c.is_active),
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Currency(result)))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -70,9 +70,10 @@ impl SyncTranslation for CurrencyTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(CurrencyRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::Currency,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 }
 

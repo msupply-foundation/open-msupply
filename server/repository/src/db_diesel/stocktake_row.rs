@@ -1,9 +1,9 @@
 use super::{user_row::user_account, StorageConnection};
 
 use crate::db_diesel::changelog::changelog::RowOrId;
-use crate::{repository_error::RepositoryError, Delete};
+use crate::repository_error::RepositoryError;
 use crate::{ChangelogRepository, RowActionType};
-use crate::{ChangelogSyncType, SourceSiteId, Upsert};
+use crate::SourceSiteId;
 
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -139,68 +139,10 @@ impl<'a> StocktakeRowRepository<'a> {
             .first(self.connection.lock().connection())?;
         Ok(result)
     }
-}
 
-#[derive(Debug, Clone)]
-pub struct StocktakeRowDelete(pub String);
-// For tests only
-impl Delete for StocktakeRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => StocktakeRow::generate_changelog(
-                RowOrId::Id(&self.0),
-                con,
-                RowActionType::Delete,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        diesel::delete(stocktake::table.filter(stocktake::id.eq(&self.0)))
-            .execute(con.lock().connection())?;
-        ChangelogRepository::new(con).insert(&changelog)?;
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(stocktake::table.filter(stocktake::id.eq(record_id)))
+            .execute(self.connection.lock().connection())?;
         Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            StocktakeRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
-}
-
-impl Upsert for StocktakeRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        StocktakeRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => StocktakeRow::generate_changelog(
-                RowOrId::Row(self),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            StocktakeRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

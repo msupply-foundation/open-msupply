@@ -1,4 +1,5 @@
 use repository::name_property_row::NamePropertyRow;
+use repository::Row;
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -26,7 +27,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_PROPERTY1,
-        name_property1(),
+        Row::NameProperty(name_property1()),
     )]
 }
 

@@ -1,4 +1,4 @@
-use repository::{AbbreviationRow, AbbreviationRowDelete, StorageConnection, SyncBufferRow};
+use repository::{AbbreviationRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow};
 
 use serde::Deserialize;
 
@@ -40,7 +40,7 @@ impl SyncTranslation for AbbreviationTranslation {
             expansion: data.expansion,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Abbreviation(result)))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -48,9 +48,10 @@ impl SyncTranslation for AbbreviationTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(AbbreviationRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::Abbreviation,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 }
 

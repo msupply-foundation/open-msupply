@@ -34,9 +34,9 @@ impl SyncTranslation for NameOmsFieldsTranslation {
         _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let upsert_record = PullTranslateResult::upsert(
+        let upsert_record = PullTranslateResult::upsert(Row::NameOmsFields(
             serde_json::from_value::<NameOmsFieldsRow>(sync_record.data.0.clone())?,
-        );
+        ));
         Ok(upsert_record)
     }
 

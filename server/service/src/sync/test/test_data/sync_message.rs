@@ -1,5 +1,5 @@
 use chrono::{NaiveDate, NaiveTime};
-use repository::{sync_buffer::SyncRecordData, SyncBufferRow, SyncMessageRow, SyncMessageRowStatus, SyncMessageRowType};
+use repository::{sync_buffer::SyncRecordData, Row, SyncBufferRow, SyncMessageRow, SyncMessageRowStatus, SyncMessageRowType};
 use serde_json::json;
 
 use crate::sync::{
@@ -42,7 +42,7 @@ pub fn message_1() -> TestSyncIncomingRecord {
     };
 
     TestSyncIncomingRecord {
-        translated_record: PullTranslateResult::upsert(row),
+        translated_record: PullTranslateResult::upsert(Row::SyncMessage(row)),
         sync_buffer_row: SyncBufferRow {
             table_name: TABLE_NAME.to_string(),
             record_id: MESSAGE_1.0.to_string(),

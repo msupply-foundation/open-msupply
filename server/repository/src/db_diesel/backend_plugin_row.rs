@@ -2,9 +2,7 @@ use super::{
     ChangelogRepository, RowActionType, StorageConnection,
 };
 
-use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert,
-};
+use crate::{repository_error::RepositoryError, SourceSiteId};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -135,70 +133,11 @@ impl<'a> BackendPluginRowRepository<'a> {
             .filter(backend_plugin::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
-}
 
-impl Upsert for BackendPluginRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        BackendPluginRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(backend_plugin::table.filter(backend_plugin::id.eq(record_id)))
+            .execute(self.connection.lock().connection())?;
         Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            BackendPluginRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
-// Most central data will be soft deleted (via upsert), and this trait will not be implemented
-// backend_plugins don't have referential relations to any other tables so it's ok to delete as an example
-pub struct BackendPluginRowDelete(pub String);
-impl Delete for BackendPluginRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => BackendPluginRow::generate_changelog(
-                self.0.clone(),
-                con,
-                RowActionType::Delete,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        diesel::delete(backend_plugin::table.filter(backend_plugin::id.eq(&self.0)))
-            .execute(con.lock().connection())?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            BackendPluginRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
     }
 }
 

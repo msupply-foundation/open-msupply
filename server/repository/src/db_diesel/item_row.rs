@@ -1,6 +1,6 @@
 use crate::{
-    db_diesel::changelog::ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete,
-    RowActionType, SourceSiteId, Upsert,
+    db_diesel::changelog::ChangelogRepository, ChangelogTableName,
+    RowActionType, SourceSiteId,
 };
 
 use super::{
@@ -141,7 +141,7 @@ impl<'a> ItemRowRepository<'a> {
         ItemRowRepository { connection }
     }
 
-    fn _upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item)
             .values(item_row)
             .on_conflict(id)
@@ -257,68 +257,10 @@ impl<'a> ItemRowRepository<'a> {
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
-}
 
-#[derive(Debug, Clone)]
-pub struct ItemRowDelete(pub String);
-impl Delete for ItemRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let repo = ItemRowRepository::new(con);
-        repo._mark_deleted(&self.0)?;
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => ItemRow::generate_changelog(
-                self.0.clone(),
-                con,
-                // Soft delete: keep row, emit Upsert so receivers see is_active=false.
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert!(matches!(
-            ItemRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(Some(ItemRow {
-                is_active: false,
-                ..
-            })) | Ok(None)
-        ));
-    }
-}
-
-impl Upsert for ItemRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        ItemRowRepository::new(con)._upsert_one(self)?;
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => ItemRow::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ItemRowRepository::new(con).find_active_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        // Soft delete: keep the row, just mark it inactive.
+        self._mark_deleted(record_id)
     }
 }
 

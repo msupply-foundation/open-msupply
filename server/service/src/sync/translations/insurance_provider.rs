@@ -1,4 +1,4 @@
-use repository::{InsuranceProviderRow, StorageConnection, SyncBufferRow};
+use repository::{InsuranceProviderRow, Row, StorageConnection, SyncBufferRow};
 
 use serde::{Deserialize, Serialize};
 
@@ -57,7 +57,7 @@ impl SyncTranslation for InsuranceProviderTranslator {
             prescription_validity_days,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::InsuranceProvider(result)))
     }
 }
 

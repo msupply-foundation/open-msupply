@@ -15,7 +15,7 @@ const ROW_FETCH_BATCH_SIZE: usize = 500;
 /// One of the row variants that can appear in a changelog. Generated
 /// to cover every push-translated `ChangelogTableName`. Tables not in
 /// this enum trigger `unimplemented!()` in `fetch_rows_for_table`.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Row {
     ActivityLog(ActivityLogRow),
     Barcode(BarcodeRow),
@@ -137,6 +137,51 @@ impl RowOrDelete {
             RowOrDelete::Delete { changelog } => changelog,
         }
     }
+}
+
+impl Row {
+    /// (table_name, record_id) for this row, derived via the changelog generation
+    /// (which already knows each variant's table and id). Test/assert helper.
+    fn table_and_record_id(
+        &self,
+        con: &StorageConnection,
+    ) -> (ChangelogTableName, String) {
+        let changelog = self
+            .generate_changelog(con, RowActionType::Upsert, SourceSiteId::CurrentSiteId)
+            .expect("generate_changelog for assert")
+            .pop()
+            .expect("at least one changelog row");
+        (changelog.table_name, changelog.record_id)
+    }
+
+    /// Test only: assert this exact row was written (re-fetched by id equals `self`).
+    pub fn assert_upserted(&self, con: &StorageConnection) {
+        let (table_name, record_id) = self.table_and_record_id(con);
+        let fetched = fetch_rows_for_table(con, &table_name, &[record_id.clone()])
+            .expect("fetch row for assert_upserted");
+        assert_eq!(
+            fetched.get(&record_id),
+            Some(self),
+            "expected row {record_id} in {table_name:?} to be upserted to match"
+        );
+    }
+}
+
+/// Test only: assert the row identified by (table_name, record_id) no longer exists.
+/// Soft-deleted tables are skipped (the row still exists, just inactive).
+pub fn assert_row_deleted(
+    con: &StorageConnection,
+    table_name: ChangelogTableName,
+    record_id: &str,
+) {
+    let fetched = fetch_rows_for_table(con, &table_name, &[record_id.to_string()])
+        .expect("fetch row for assert_row_deleted");
+    assert!(
+        fetched.get(record_id).is_none(),
+        "expected row {} in {:?} to be deleted",
+        record_id,
+        table_name
+    );
 }
 
 pub struct QueryWithData {

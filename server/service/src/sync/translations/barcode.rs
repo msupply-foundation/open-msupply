@@ -78,7 +78,7 @@ impl SyncTranslation for BarcodeTranslation {
             parent_id,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Barcode(result)))
     }
 
     fn try_translate_to_upsert_sync_record(

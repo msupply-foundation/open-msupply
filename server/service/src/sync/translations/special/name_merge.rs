@@ -1,4 +1,4 @@
-use repository::{ChangelogTableName, StorageConnection, SyncBufferRow};
+use repository::{ChangelogTableName, Row, StorageConnection, SyncBufferRow};
 
 use crate::sync::{
     translations::{
@@ -45,7 +45,7 @@ impl SyncTranslation for NameMergeTranslation {
         // central.
         if CentralServerConfig::is_central_server() {
             let row = build_central_merge_message(ChangelogTableName::Name, &data)?;
-            ops.push(IntegrationOperation::upsert(row));
+            ops.push(IntegrationOperation::upsert(Row::SyncMessage(row)));
         }
 
         Ok(PullTranslateResult::IntegrationOperations(ops))

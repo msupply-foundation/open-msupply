@@ -1,4 +1,4 @@
-use repository::{ClinicianRow, GenderType};
+use repository::{ClinicianRow, GenderType, Row};
 use serde_json::json;
 
 use crate::sync::{
@@ -94,7 +94,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             CLINICIAN_TABLE,
             CLINICIAN_1,
-            ClinicianRow {
+            Row::Clinician(ClinicianRow {
                 id: CLINICIAN_1.0.to_owned(),
                 code: "CLINICIAN_CODE".to_string(),
                 last_name: "Surname".to_string(),
@@ -104,12 +104,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 is_active: true,
                 store_id: Some("store_a".to_string()),
                 ..Default::default()
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             CLINICIAN_TABLE,
             CLINICIAN_VALID_OMS_FIELDS_GENDER,
-            ClinicianRow {
+            Row::Clinician(ClinicianRow {
                 id: CLINICIAN_VALID_OMS_FIELDS_GENDER.0.to_owned(),
                 code: "CLINICIAN_CODE".to_string(),
                 last_name: "Surname".to_string(),
@@ -119,12 +119,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 is_active: true,
                 store_id: Some("store_a".to_string()),
                 ..Default::default()
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             CLINICIAN_TABLE,
             CLINICIAN_INVALID_OMS_FIELDS_GENDER,
-            ClinicianRow {
+            Row::Clinician(ClinicianRow {
                 id: CLINICIAN_INVALID_OMS_FIELDS_GENDER.0.to_owned(),
                 code: "CLINICIAN_CODE".to_string(),
                 last_name: "Surname".to_string(),
@@ -134,7 +134,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 is_active: true,
                 store_id: Some("store_a".to_string()),
                 ..Default::default()
-            },
+            }),
         ),
     ]
 }

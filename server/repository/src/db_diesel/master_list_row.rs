@@ -1,7 +1,7 @@
 use super::{item_link_row::item_link, master_list_row::master_list::dsl::*, StorageConnection};
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, Upsert,
+    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
 };
 
 use diesel::prelude::*;
@@ -40,7 +40,7 @@ impl<'a> MasterListRowRepository<'a> {
         MasterListRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
         diesel::insert_into(master_list)
             .values(row)
             .on_conflict(id)
@@ -84,36 +84,5 @@ impl<'a> MasterListRowRepository<'a> {
         ))
         .get_result(self.connection.lock().connection())?;
         Ok(exists)
-    }
-}
-
-impl Upsert for MasterListRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        MasterListRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            MasterListRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

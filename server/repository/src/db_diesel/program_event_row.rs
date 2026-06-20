@@ -3,9 +3,7 @@ use super::StorageConnection;
 use crate::db_diesel::{name_link_row::name_link, name_row::name};
 use crate::diesel_macros::define_linked_tables;
 use crate::repository_error::RepositoryError;
-use crate::{
-    ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, Upsert,
-};
+use crate::{ChangelogRepository, RowActionType, SourceSiteId};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -110,35 +108,5 @@ impl<'a> ProgramEventRowRepository<'a> {
             SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
-    }
-}
-
-impl Upsert for ProgramEventRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        ProgramEventRowRepository::new(con)._upsert(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert!(ProgramEventRowRepository::new(con)
-            .find_one_by_id(&self.id)
-            .unwrap()
-            .is_some())
     }
 }

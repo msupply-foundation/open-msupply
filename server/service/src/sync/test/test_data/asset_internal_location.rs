@@ -1,4 +1,5 @@
 use repository::assets::asset_internal_location_row::AssetInternalLocationRow;
+use repository::Row;
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -26,7 +27,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         ASSET_INTERNAL_LOCATION1,
-        asset_internal_location1(),
+        Row::AssetInternalLocation(asset_internal_location1()),
     )]
 }
 

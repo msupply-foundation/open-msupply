@@ -1,5 +1,5 @@
 use crate::sync::test::TestSyncIncomingRecord;
-use repository::{MasterListNameJoinRow, MasterListNameJoinRowDelete};
+use repository::{ChangelogTableName, MasterListNameJoinRow, Row};
 
 const TABLE_NAME: &str = "list_master_name_join";
 
@@ -21,11 +21,11 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         LIST_MASTER_NAME_JOIN_1,
-        MasterListNameJoinRow {
+        Row::MasterListNameJoin(MasterListNameJoinRow {
             id: LIST_MASTER_NAME_JOIN_1.0.to_owned(),
             master_list_id: "87027C44835B48E6989376F42A58F7E3".to_string(),
             name_id: "name_store_a".to_string(),
-        },
+        }),
     )]
 }
 
@@ -33,6 +33,6 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         LIST_MASTER_NAME_JOIN_1.0,
-        MasterListNameJoinRowDelete(LIST_MASTER_NAME_JOIN_1.0.to_string()),
+        ChangelogTableName::MasterListNameJoin,
     )]
 }

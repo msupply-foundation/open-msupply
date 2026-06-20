@@ -6,7 +6,7 @@ use crate::{
         purchase_order_row::purchase_order,
     },
     diesel_macros::define_linked_tables,
-    ChangelogSyncType, Delete, SourceSiteId, Upsert,
+    SourceSiteId,
 };
 use crate::{
     ChangelogRepository, RepositoryError, RowActionType, StorageConnection,
@@ -227,81 +227,14 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
         .get_result(self.connection.lock().connection())?;
         Ok(exists)
     }
-}
 
-impl Upsert for PurchaseOrderLineRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        PurchaseOrderLineRowRepository::new(con)._upsert(self)?;
-
-        let repo = ChangelogRepository::new(con);
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                Self::generate_changelogs(
-                    RowOrId::Row(self),
-                    con,
-                    RowActionType::Upsert,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-                .purchase_order_line_changelog
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        repo.insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            PurchaseOrderLineRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct PurchaseOrderLineDelete(pub String);
-
-impl Delete for PurchaseOrderLineDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        // Build changelog BEFORE deleting — generate_changelog needs to fetch the row by id
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                PurchaseOrderLineRow::generate_changelogs(
-                    RowOrId::Id(&self.0),
-                    con,
-                    RowActionType::Delete,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-                .purchase_order_line_changelog
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             purchase_order_line_with_links::table
-                .filter(purchase_order_line_with_links::id.eq(&self.0)),
+                .filter(purchase_order_line_with_links::id.eq(record_id)),
         )
-        .execute(con.lock().connection())?;
-
-        ChangelogRepository::new(con).insert(&changelog)?;
+        .execute(self.connection.lock().connection())?;
         Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            PurchaseOrderLineRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
     }
 }
 

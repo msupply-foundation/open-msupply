@@ -1,5 +1,5 @@
 use crate::sync::test::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
-use repository::{ContextType, ReportRow};
+use repository::{ContextType, ReportRow, Row};
 use serde_json::json;
 
 const TABLE_NAME: &str = "om_report";
@@ -41,7 +41,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         REPORT_1,
-        report(),
+        Row::Report(report()),
     )]
 }
 

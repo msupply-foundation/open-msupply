@@ -93,14 +93,7 @@ fn replace_system_name_ids(
         .expect("Cannot find inventory adjustment name");
 
     for record in records {
-        let IntegrationOperation::Upsert(record) = record else {
-            continue;
-        };
-
-        let Some(mut_invoice) = record
-            .as_mut_any()
-            .and_then(|any| any.downcast_mut::<InvoiceRow>())
-        else {
+        let IntegrationOperation::Upsert(Row::Invoice(mut_invoice)) = record else {
             continue;
         };
 

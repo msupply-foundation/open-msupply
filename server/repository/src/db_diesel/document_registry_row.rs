@@ -1,8 +1,8 @@
 use super::StorageConnection;
 
 use crate::{
-    db_diesel::form_schema_row::form_schema, ChangelogRepository, ChangelogSyncType,
-    RepositoryError, RowActionType, SourceSiteId, Upsert,
+    db_diesel::form_schema_row::form_schema, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId,
 };
 
 use diesel::prelude::*;
@@ -57,7 +57,7 @@ impl<'a> DocumentRegistryRowRepository<'a> {
         DocumentRegistryRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &DocumentRegistryRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &DocumentRegistryRow) -> Result<(), RepositoryError> {
         diesel::insert_into(document_registry::table)
             .values(row)
             .on_conflict(document_registry::id)
@@ -101,35 +101,4 @@ impl<'a> DocumentRegistryRowRepository<'a> {
     //     .execute(self.connection.lock().connection())?;
     //     Ok(())
     // }
-}
-
-impl Upsert for DocumentRegistryRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        DocumentRegistryRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            DocumentRegistryRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
 }

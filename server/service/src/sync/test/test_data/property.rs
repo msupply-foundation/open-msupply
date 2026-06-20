@@ -1,4 +1,4 @@
-use repository::{property_row::PropertyRow, types::PropertyValueType};
+use repository::{property_row::PropertyRow, types::PropertyValueType, Row};
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -30,7 +30,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         PROPERTY1,
-        property1(),
+        Row::Property(property1()),
     )]
 }
 

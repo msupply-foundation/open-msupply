@@ -1,4 +1,4 @@
-use repository::{StorageConnection, StorePreferenceRow, StorePreferenceType, SyncBufferRow};
+use repository::{Row, StorageConnection, StorePreferenceRow, StorePreferenceType, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 use util::constants::DEFAULT_AMC_LOOKBACK_MONTHS;
 
@@ -160,7 +160,7 @@ impl SyncTranslation for StorePreferenceTranslation {
             edit_prescribed_quantity_on_prescription,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::StorePreference(result)))
     }
 }
 

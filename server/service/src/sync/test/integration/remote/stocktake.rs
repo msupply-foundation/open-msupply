@@ -166,8 +166,14 @@ impl SyncRecordTester for StocktakeRecordTester {
         // STEP 3 - delete
         result.push(TestStepData {
             integration_records: vec![
-                IntegrationOperation::delete(StocktakeLineRowDelete(stocktake_line_row.id.clone())),
-                IntegrationOperation::delete(StocktakeRowDelete(stocktake_row.id.clone())),
+                IntegrationOperation::delete(
+                    ChangelogTableName::StocktakeLine,
+                    stocktake_line_row.id.clone(),
+                ),
+                IntegrationOperation::delete(
+                    ChangelogTableName::Stocktake,
+                    stocktake_row.id.clone(),
+                ),
             ],
             ..Default::default()
         });

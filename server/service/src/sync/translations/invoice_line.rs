@@ -7,9 +7,8 @@ use crate::sync::translations::{
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
-    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineStatus,
-    InvoiceLineType, InvoiceRowRepository, InvoiceType, ItemRowRepository, Row, StorageConnection,
-    SyncBufferRow,
+    InvoiceLineRepository, InvoiceLineRow, InvoiceLineStatus, InvoiceLineType,
+    InvoiceRowRepository, InvoiceType, ItemRowRepository, Row, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -386,7 +385,7 @@ impl SyncTranslation for InvoiceLineTranslation {
 
         let result = adjust_negative_values(result);
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::InvoiceLine(result)))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -395,9 +394,10 @@ impl SyncTranslation for InvoiceLineTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         // TODO, check site ? (should never get delete records for this site, only transfer other half)
-        Ok(PullTranslateResult::delete(InvoiceLineRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::InvoiceLine,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 
     fn try_translate_to_upsert_sync_record(

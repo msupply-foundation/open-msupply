@@ -2,7 +2,7 @@ use super::{
     ChangelogRepository, RowActionType, StorageConnection,
 };
 
-use crate::{ChangelogSyncType, Delete, RepositoryError, SourceSiteId, Upsert};
+use crate::{RepositoryError, SourceSiteId};
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -57,7 +57,7 @@ pub fn schema_from_row(schema_row: FormSchemaRow) -> Result<FormSchemaJson, Repo
     })
 }
 
-fn row_from_schema(schema: &FormSchemaJson) -> Result<FormSchemaRow, RepositoryError> {
+pub fn row_from_schema(schema: &FormSchemaJson) -> Result<FormSchemaRow, RepositoryError> {
     let json_schema =
         serde_json::to_string(&schema.json_schema).map_err(|err| RepositoryError::DBError {
             msg: "Can't serialize json schema".to_string(),
@@ -151,6 +151,10 @@ impl<'a> FormSchemaRowRepository<'a> {
         Ok(())
     }
 
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        self.delete(record_id)
+    }
+
     pub fn _upsert_one_row(&self, row: &FormSchemaRow) -> Result<(), RepositoryError> {
         diesel::insert_into(form_schema::dsl::form_schema)
             .values(row)
@@ -162,90 +166,3 @@ impl<'a> FormSchemaRowRepository<'a> {
     }
 }
 
-impl Upsert for FormSchemaRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        FormSchemaRowRepository::new(con)._upsert_one_row(self)?;
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => FormSchemaJson::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        let stored = FormSchemaRowRepository::new(con)
-            .find_many_rows_by_id(&[self.id.clone()])
-            .expect("form schema lookup");
-        assert_eq!(stored.first(), Some(self));
-    }
-}
-
-impl Upsert for FormSchemaJson {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        FormSchemaRowRepository::new(con)._upsert_one(self)?;
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            FormSchemaRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct FormSchemaRowDelete(pub String);
-impl Delete for FormSchemaRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => FormSchemaJson::generate_changelog(
-                self.0.clone(),
-                con,
-                RowActionType::Delete,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        FormSchemaRowRepository::new(con).delete(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            FormSchemaRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
-}

@@ -4,9 +4,9 @@ use crate::sync::translations::{
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, PurchaseOrderDelete, PurchaseOrderFilter,
-    PurchaseOrderRepository, PurchaseOrderRow, PurchaseOrderStatsRow, PurchaseOrderStatus, Row,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository,
+    PurchaseOrderRow, PurchaseOrderStatsRow, PurchaseOrderStatus, Row, StorageConnection,
+    SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -308,7 +308,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             request_approval_datetime,
             finalised_datetime,
         };
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::PurchaseOrder(result)))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -316,9 +316,10 @@ impl SyncTranslation for PurchaseOrderTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(PurchaseOrderDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::PurchaseOrder,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 
     fn try_translate_to_upsert_sync_record(

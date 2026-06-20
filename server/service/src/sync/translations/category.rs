@@ -1,6 +1,5 @@
 use repository::{
-    category_row::{CategoryRow, CategoryRowDelete},
-    StorageConnection, SyncBufferRow,
+    category_row::CategoryRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::empty_str_as_option_string;
@@ -53,7 +52,7 @@ impl SyncTranslation for CategoryTranslation {
             deleted_datetime: None,
         };
 
-        Ok(PullTranslateResult::upsert(category_row))
+        Ok(PullTranslateResult::upsert(Row::Category(category_row)))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -61,9 +60,10 @@ impl SyncTranslation for CategoryTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(CategoryRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::Category,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 }
 

@@ -1,6 +1,7 @@
 use crate::sync::test::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 use chrono::NaiveDate;
 use repository::system_log_row::{SystemLogRow, SystemLogType};
+use repository::Row;
 use serde_json::json;
 
 const TABLE_NAME: &str = "system_log";
@@ -33,7 +34,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         SYSTEM_LOG_1,
-        system_log_1(),
+        Row::SystemLog(system_log_1()),
     )]
 }
 

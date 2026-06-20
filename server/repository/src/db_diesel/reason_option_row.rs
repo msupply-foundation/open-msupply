@@ -1,8 +1,7 @@
 use super::StorageConnection;
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, Delete,
-    RowActionType, SourceSiteId, Upsert,
+    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
 };
 
 use diesel::prelude::*;
@@ -73,7 +72,7 @@ impl<'a> ReasonOptionRowRepository<'a> {
         ReasonOptionRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &ReasonOptionRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &ReasonOptionRow) -> Result<(), RepositoryError> {
         diesel::insert_into(reason_option::table)
             .values(row)
             .on_conflict(reason_option::id)
@@ -124,6 +123,11 @@ impl<'a> ReasonOptionRowRepository<'a> {
         Ok(())
     }
 
+    /// Row-only delete (soft delete) used by sync integration; no changelog.
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        self._mark_deleted(record_id)
+    }
+
     pub fn mark_deleted(&self, reason_option_id: &str) -> Result<(), RepositoryError> {
         self._mark_deleted(reason_option_id)?;
         let changelog = ReasonOptionRow::generate_changelog(
@@ -133,77 +137,6 @@ impl<'a> ReasonOptionRowRepository<'a> {
             SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct ReasonOptionRowDelete(pub String);
-
-impl Delete for ReasonOptionRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let repo = ReasonOptionRowRepository::new(con);
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                ReasonOptionRow::generate_changelog(
-                    self.0.clone(),
-                    con,
-                    RowActionType::Upsert,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        repo._mark_deleted(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert!(matches!(
-            ReasonOptionRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(Some(ReasonOptionRow {
-                is_active: false,
-                ..
-            })) | Ok(None)
-        ));
-    }
-}
-
-impl Upsert for ReasonOptionRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        ReasonOptionRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ReasonOptionRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }
 

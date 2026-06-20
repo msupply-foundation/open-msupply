@@ -1,7 +1,4 @@
-use crate::{
-    ChangelogRepository, ChangelogSyncType, RowActionType,
-    Upsert,
-};
+use crate::{ChangelogRepository, RowActionType};
 use crate::{RepositoryError, SourceSiteId, StorageConnection};
 
 use chrono::NaiveDateTime;
@@ -70,7 +67,7 @@ impl<'a> SystemLogRowRepository<'a> {
         SystemLogRowRepository { connection }
     }
 
-    pub fn _insert_one(&self, row: &SystemLogRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _insert_one(&self, row: &SystemLogRow) -> Result<(), RepositoryError> {
         diesel::insert_into(system_log::table)
             .values(row)
             .execute(self.connection.lock().connection())?;
@@ -113,37 +110,6 @@ impl<'a> SystemLogRowRepository<'a> {
         Ok(system_log::table
             .filter(system_log::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
-    }
-}
-
-impl Upsert for SystemLogRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        SystemLogRowRepository::new(con)._insert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            SystemLogRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }
 

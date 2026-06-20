@@ -1,5 +1,5 @@
 use chrono::Utc;
-use repository::{shipping_method_row::ShippingMethodRow, StorageConnection, SyncBufferRow};
+use repository::{shipping_method_row::ShippingMethodRow, Row, StorageConnection, SyncBufferRow};
 
 use serde::{Deserialize, Serialize};
 
@@ -55,7 +55,7 @@ impl SyncTranslation for ShippingMethodTranslation {
             deleted_datetime,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::ShippingMethod(result)))
     }
 }
 

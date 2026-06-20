@@ -175,7 +175,7 @@ impl SyncTranslation for StockLineTranslation {
             volume_per_pack,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::StockLine(result)))
     }
 
     fn try_translate_to_upsert_sync_record(
@@ -292,7 +292,7 @@ mod tests {
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
         ChangelogCondition, ChangelogRepository, ContextRow, CursorAndLimit, FilterBuilder,
-        ProgramRow, RowOrDelete, SyncAction, SyncRecordData,
+        ProgramRow, Row, RowOrDelete, SyncAction, SyncRecordData,
     };
     use serde_json::json;
 
@@ -402,7 +402,7 @@ mod tests {
             )
             .unwrap();
 
-        let expected = PullTranslateResult::upsert(StockLineRow {
+        let expected = PullTranslateResult::upsert(Row::StockLine(StockLineRow {
             id: "ITEM_LINE_FK_INVALID".to_string(),
             store_id: "store_a".to_string(),
             item_link_id: "item_a".to_string(),
@@ -427,7 +427,7 @@ mod tests {
             program_id: None,
             volume_per_pack: 0.0,
             total_volume: 0.0,
-        });
+        }));
         assert_eq!(result, expected);
 
         // One system_log entry per invalid FK

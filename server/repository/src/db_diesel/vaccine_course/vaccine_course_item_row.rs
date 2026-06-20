@@ -3,10 +3,7 @@ use crate::db_diesel::item_link_row::item_link;
 use crate::db_diesel::item_row::item;
 use crate::RepositoryError;
 use crate::StorageConnection;
-use crate::{
-    ChangelogRepository, ChangelogSyncType, RowActionType,
-    SourceSiteId, Upsert,
-};
+use crate::{ChangelogRepository, RowActionType, SourceSiteId};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -46,7 +43,7 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
         VaccineCourseItemRowRepository { connection }
     }
 
-    pub fn _upsert_one(
+    pub(crate) fn _upsert_one(
         &self,
         vaccine_course_item_row: &VaccineCourseItemRow,
     ) -> Result<(), RepositoryError> {
@@ -108,36 +105,5 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
         Ok(vaccine_course_item::table
             .filter(vaccine_course_item::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
-    }
-}
-
-impl Upsert for VaccineCourseItemRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        VaccineCourseItemRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            VaccineCourseItemRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

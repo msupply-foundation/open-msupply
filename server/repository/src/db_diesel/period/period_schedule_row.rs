@@ -1,6 +1,6 @@
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType,
-    SourceSiteId, StorageConnection, Upsert,
+    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
+    StorageConnection,
 };
 
 use diesel::prelude::*;
@@ -28,7 +28,7 @@ impl<'a> PeriodScheduleRowRepository<'a> {
         PeriodScheduleRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &PeriodScheduleRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &PeriodScheduleRow) -> Result<(), RepositoryError> {
         diesel::insert_into(period_schedule::table)
             .values(row)
             .on_conflict(period_schedule::id)
@@ -83,36 +83,5 @@ impl<'a> PeriodScheduleRowRepository<'a> {
         ))
         .get_result(self.connection.lock().connection())?;
         Ok(exists)
-    }
-}
-
-impl Upsert for PeriodScheduleRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        PeriodScheduleRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            PeriodScheduleRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

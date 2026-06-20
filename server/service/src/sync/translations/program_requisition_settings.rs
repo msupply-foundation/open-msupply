@@ -1,9 +1,8 @@
 use repository::{
-    ContextRow, NameTagRowRepository, PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
-    ProgramRequisitionOrderTypeRowDelete, ProgramRequisitionOrderTypeRowRepository,
-    ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowDelete,
-    ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, StorageConnection,
-    SyncBufferRow,
+    ChangelogTableName, ContextRow, NameTagRowRepository, PeriodScheduleRowRepository,
+    ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
+    ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow,
+    ProgramRowRepository, Row, StorageConnection, SyncBufferRow,
 };
 
 use serde::Deserialize;
@@ -105,7 +104,7 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
                         ..program
                     };
                     return Ok(PullTranslateResult::IntegrationOperations(vec![
-                        IntegrationOperation::upsert(program_row),
+                        IntegrationOperation::upsert(Row::Program(program_row)),
                     ]));
                 }
                 // This is a non-program master list, don't translate
@@ -125,7 +124,8 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
             .into_iter()
             .for_each(|order_type_id| {
                 integration_operations.push(IntegrationOperation::delete(
-                    ProgramRequisitionOrderTypeRowDelete(order_type_id),
+                    ChangelogTableName::ProgramRequisitionOrderType,
+                    order_type_id,
                 ))
             });
 
@@ -134,22 +134,34 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
             .into_iter()
             .for_each(|settings_id| {
                 integration_operations.push(IntegrationOperation::delete(
-                    ProgramRequisitionSettingsRowDelete(settings_id),
+                    ChangelogTableName::ProgramRequisitionSettings,
+                    settings_id,
                 ))
             });
 
-        integration_operations.push(IntegrationOperation::upsert(upserts.context_row));
-        integration_operations.push(IntegrationOperation::upsert(upserts.program_row));
+        integration_operations.push(IntegrationOperation::upsert(Row::Context(
+            upserts.context_row,
+        )));
+        integration_operations.push(IntegrationOperation::upsert(Row::Program(
+            upserts.program_row,
+        )));
 
         upserts
             .program_requisition_settings_rows
             .into_iter()
-            .for_each(|u| integration_operations.push(IntegrationOperation::upsert(u)));
+            .for_each(|u| {
+                integration_operations
+                    .push(IntegrationOperation::upsert(Row::ProgramRequisitionSettings(u)))
+            });
 
         upserts
             .program_requisition_order_type_rows
             .into_iter()
-            .for_each(|u| integration_operations.push(IntegrationOperation::upsert(u)));
+            .for_each(|u| {
+                integration_operations.push(IntegrationOperation::upsert(
+                    Row::ProgramRequisitionOrderType(u),
+                ))
+            });
         Ok(PullTranslateResult::IntegrationOperations(
             integration_operations,
         ))

@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use repository::{PeriodRow, StorageConnection, SyncBufferRow};
+use repository::{PeriodRow, Row, StorageConnection, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 
 use crate::sync::translations::period_schedule::PeriodScheduleTranslation;
@@ -63,7 +63,7 @@ impl SyncTranslation for PeriodTranslation {
             name,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Period(result)))
     }
 }
 

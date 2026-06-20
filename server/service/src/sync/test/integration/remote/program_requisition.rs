@@ -5,9 +5,8 @@ use crate::sync::{
     translations::IntegrationOperation,
 };
 use repository::{
-    MasterListNameJoinRow, MasterListRow, NameTagRow, PeriodScheduleRow,
-    ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowDelete,
-    ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowDelete, ProgramRow,
+    ChangelogTableName, MasterListNameJoinRow, MasterListRow, NameTagRow, PeriodScheduleRow,
+    ProgramRequisitionOrderTypeRow, ProgramRequisitionSettingsRow, ProgramRow,
 };
 
 use serde_json::json;
@@ -325,15 +324,26 @@ impl SyncRecordTester for ProgramRequisitionTester {
                 IntegrationOperation::upsert(upsert_name_tag),
                 IntegrationOperation::upsert(upsert_program_requisition_settings),
                 IntegrationOperation::upsert(upsert_order_type),
-                IntegrationOperation::delete(ProgramRequisitionOrderTypeRowDelete(order_type1.id)),
-                IntegrationOperation::delete(ProgramRequisitionOrderTypeRowDelete(order_type2.id)),
-                IntegrationOperation::delete(ProgramRequisitionOrderTypeRowDelete(order_type3.id)),
-                IntegrationOperation::delete(ProgramRequisitionSettingsRowDelete(
+                IntegrationOperation::delete(
+                    ChangelogTableName::ProgramRequisitionOrderType,
+                    order_type1.id,
+                ),
+                IntegrationOperation::delete(
+                    ChangelogTableName::ProgramRequisitionOrderType,
+                    order_type2.id,
+                ),
+                IntegrationOperation::delete(
+                    ChangelogTableName::ProgramRequisitionOrderType,
+                    order_type3.id,
+                ),
+                IntegrationOperation::delete(
+                    ChangelogTableName::ProgramRequisitionSettings,
                     program_requisition_settings1.id,
-                )),
-                IntegrationOperation::delete(ProgramRequisitionSettingsRowDelete(
+                ),
+                IntegrationOperation::delete(
+                    ChangelogTableName::ProgramRequisitionSettings,
                     program_requisition_settings2.id,
-                )),
+                ),
             ],
             ..Default::default()
         });

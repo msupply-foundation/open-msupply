@@ -3,9 +3,8 @@ use super::{
     rnr_form_line_row::rnr_form_line::dsl::*, rnr_form_row::rnr_form,
 };
 use crate::{
-    db_diesel::changelog::changelog::RowOrId, ChangelogRepository,
-    ChangelogSyncType, Delete, RepositoryError, RowActionType,
-    SourceSiteId, StorageConnection, Upsert,
+    db_diesel::changelog::changelog::RowOrId, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 
 use chrono::NaiveDate;
@@ -206,67 +205,10 @@ impl<'a> RnRFormLineRowRepository<'a> {
             .filter(rnr_form_line::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
-}
 
-#[derive(Debug, Clone)]
-pub struct RnRFormLineDelete(pub String);
-// For tests only
-impl Delete for RnRFormLineDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RnRFormLineRow::generate_changelog(
-                RowOrId::Id(&self.0),
-                con,
-                RowActionType::Delete,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        diesel::delete(rnr_form_line.filter(id.eq(&self.0))).execute(con.lock().connection())?;
-        ChangelogRepository::new(con).insert(&changelog)?;
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(rnr_form_line.filter(id.eq(record_id)))
+            .execute(self.connection.lock().connection())?;
         Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            RnRFormLineRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
-}
-
-impl Upsert for RnRFormLineRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        RnRFormLineRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RnRFormLineRow::generate_changelog(
-                RowOrId::Row(self),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            RnRFormLineRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use repository::{NameLinkRowRepository, StorageConnection, StoreMode, StoreRow, SyncBufferRow};
+use repository::{NameLinkRowRepository, Row, StorageConnection, StoreMode, StoreRow, SyncBufferRow};
 
 use crate::sync::translations::name::NameTranslation;
 use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
@@ -105,7 +105,7 @@ impl SyncTranslation for StoreTranslation {
             is_disabled: data.is_disabled,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Store(result)))
     }
 }
 

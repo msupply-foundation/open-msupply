@@ -28,7 +28,7 @@ fn gr_line_non_finalised_pull_record() -> TestSyncIncomingRecord {
     let mut record = TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         GR_LINE_NON_FINALISED,
-        InvoiceLineRow {
+        Row::InvoiceLine(InvoiceLineRow {
             id: "gr_line_test_1".to_string(),
             invoice_id: "gr_non_finalised_test".to_string(),
             item_link_id: "item_a".to_string(),
@@ -47,7 +47,7 @@ fn gr_line_non_finalised_pull_record() -> TestSyncIncomingRecord {
             expiry_date: chrono::NaiveDate::from_ymd_opt(2025, 12, 31),
             purchase_order_line_id: Some("po_line_1".to_string()),
             ..Default::default()
-        },
+        }),
     );
     // Parent invoice must exist (id == goods_received_ID) so the translator routes
     // through the non-finalised branch — this is the invoice the GR translator creates
@@ -128,7 +128,7 @@ fn gr_line_finalised_pull_record() -> TestSyncIncomingRecord {
     expected_line.purchase_order_line_id = Some("po_line_1".to_string());
 
     let mut record =
-        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, GR_LINE_FINALISED, expected_line);
+        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, GR_LINE_FINALISED, Row::InvoiceLine(expected_line));
     // No invoice exists with id == goods_received_ID ("gr_finalised_test"); existing_invoice
     // uses a different id ("gr_existing_si"). The absence of that invoice routes the translator
     // through the finalised branch, which finds the spawned line via legacy_goods_received_line_id.

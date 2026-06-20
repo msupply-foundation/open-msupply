@@ -1,4 +1,4 @@
-use repository::{UnitRow, UnitRowDelete};
+use repository::{ChangelogTableName, Row, UnitRow};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
@@ -49,46 +49,46 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             UNIT_1,
-            UnitRow {
+            Row::Unit(UnitRow {
                 id: UNIT_1.0.to_owned(),
                 name: "Units".to_string(),
                 description: None,
                 index: 0,
                 is_active: true,
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             UNIT_2,
-            UnitRow {
+            Row::Unit(UnitRow {
                 id: UNIT_2.0.to_owned(),
                 name: "Tab".to_string(),
                 description: None,
                 index: 1,
                 is_active: true,
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             UNIT_3,
-            UnitRow {
+            Row::Unit(UnitRow {
                 id: UNIT_3.0.to_owned(),
                 name: "Bottle".to_string(),
                 description: Some("This is a bottle unit type".to_string()),
                 index: 2,
                 is_active: true,
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             UNIT_4,
-            UnitRow {
+            Row::Unit(UnitRow {
                 id: UNIT_4.0.to_owned(),
                 name: "Vial".to_string(),
                 description: Some("This is a vial unit type".to_string()),
                 index: 3,
                 is_active: true,
-            },
+            }),
         ),
     ]
 }
@@ -97,6 +97,6 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         UNIT_1.0,
-        UnitRowDelete(UNIT_1.0.to_string()),
+        ChangelogTableName::Unit,
     )]
 }

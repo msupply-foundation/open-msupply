@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use repository::VaccinationRow;
+use repository::{Row, VaccinationRow};
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -55,7 +55,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         VACCINATION1,
-        vaccination1(),
+        Row::Vaccination(vaccination1()),
     )]
 }
 

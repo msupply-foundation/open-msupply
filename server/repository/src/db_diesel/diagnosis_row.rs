@@ -1,7 +1,6 @@
 use super::diagnosis_row::diagnosis::dsl::*;
 use crate::{
-    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
-    StorageConnection, Upsert,
+    ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
 };
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -39,7 +38,7 @@ impl<'a> DiagnosisRowRepository<'a> {
         DiagnosisRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &DiagnosisRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &DiagnosisRow) -> Result<(), RepositoryError> {
         diesel::insert_into(diagnosis)
             .values(row)
             .on_conflict(id)
@@ -90,10 +89,14 @@ impl<'a> DiagnosisRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    fn _delete(&self, diagnosis_id: &str) -> Result<(), RepositoryError> {
+    pub(crate) fn _delete(&self, diagnosis_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(diagnosis.filter(id.eq(diagnosis_id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        self._delete(record_id)
     }
 
     pub fn delete(&self, diagnosis_id: &str) -> Result<(), RepositoryError> {
@@ -108,67 +111,3 @@ impl<'a> DiagnosisRowRepository<'a> {
     }
 }
 
-impl Upsert for DiagnosisRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        DiagnosisRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            DiagnosisRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct DiagnosisRowDelete(pub String);
-impl Delete for DiagnosisRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let repo = DiagnosisRowRepository::new(con);
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => DiagnosisRow::generate_changelog(
-                self.0.clone(),
-                con,
-                RowActionType::Delete,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        repo._delete(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            DiagnosisRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
-}

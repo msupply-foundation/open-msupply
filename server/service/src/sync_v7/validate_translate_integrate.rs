@@ -5,7 +5,10 @@ use crate::{
         },
         ActiveStoresOnSite,
     },
-    sync_v7::{serde::deserialize, sync_logger::SyncLogger},
+    sync_v7::{
+        serde::{deserialize, V7Upsert},
+        sync_logger::SyncLogger,
+    },
 };
 
 use super::validate::*;
@@ -73,147 +76,42 @@ fn parse_table_name(table_name: &str) -> Result<ChangelogTableName, Error> {
 
 fn integrate_upserts(
     connection: &StorageConnection,
-    upsert: Vec<(Box<dyn Upsert>, ChangeLogInsertRow)>,
+    upsert: Vec<(V7Upsert, ChangeLogInsertRow)>,
 ) -> Result<(), Error> {
+    let changelog_repo = ChangelogRepository::new(connection);
     for (upsert, changelog_row) in upsert {
+        // Write the row, then insert the v7-supplied changelog row (NonSync rows are not
+        // in the changelog, so the paired row is a default and not inserted).
         upsert
-            .upsert_sync(connection, ChangelogSyncType::SyncTypeV7 { changelog_row })
+            .integrate_no_changelog(connection)
             .map_err(Error::IntegrationError)?;
+        if let V7Upsert::Row(_) = upsert {
+            changelog_repo
+                .insert(&changelog_row)
+                .map_err(Error::IntegrationError)?;
+        }
     }
 
     Ok(())
 }
-fn translate_delete(
-    table_name: &ChangelogTableName,
-    record_id: &str,
-) -> Result<Box<dyn Delete>, Error> {
-    let id = record_id.to_string();
-    let delete: Box<dyn Delete> = match table_name {
-        ChangelogTableName::Abbreviation => Box::new(AbbreviationRowDelete(id)),
-        ChangelogTableName::ActivityLog => Box::new(ActivityLogRowDelete(id)),
-        ChangelogTableName::AssetInternalLocation => Box::new(AssetInternalLocationRowDelete(id)),
-        ChangelogTableName::BackendPlugin => Box::new(BackendPluginRowDelete(id)),
-        ChangelogTableName::ClinicianStoreJoin => Box::new(ClinicianStoreJoinRowDelete(id)),
-        ChangelogTableName::Contact => Box::new(ContactRowDelete(id)),
-        ChangelogTableName::Diagnosis => Box::new(DiagnosisRowDelete(id)),
-        ChangelogTableName::FormSchema => Box::new(FormSchemaRowDelete(id)),
-        ChangelogTableName::FrontendPlugin => Box::new(FrontendPluginRowDelete(id)),
-        ChangelogTableName::IndicatorValue => Box::new(IndicatorValueRowDelete(id)),
-        ChangelogTableName::Invoice => Box::new(InvoiceRowDelete(id)),
-        ChangelogTableName::InvoiceLine => Box::new(InvoiceLineRowDelete(id)),
-        ChangelogTableName::ItemDirection => Box::new(ItemDirectionRowDelete(id)),
-        ChangelogTableName::Location => Box::new(LocationRowDelete(id)),
-        ChangelogTableName::MasterListLine => Box::new(MasterListLineRowDelete(id)),
-        ChangelogTableName::MasterListNameJoin => Box::new(MasterListNameJoinRowDelete(id)),
-        ChangelogTableName::NameStoreJoin => Box::new(NameStoreJoinRowDelete(id)),
-        ChangelogTableName::NameTag => Box::new(NameTagRowDelete(id)),
-        ChangelogTableName::NameTagJoin => Box::new(NameTagJoinRowDelete(id)),
-        ChangelogTableName::Preference => Box::new(PreferenceRowDelete(id)),
-        ChangelogTableName::ProgramRequisitionOrderType => {
-            Box::new(ProgramRequisitionOrderTypeRowDelete(id))
-        }
-        ChangelogTableName::ProgramRequisitionSettings => {
-            Box::new(ProgramRequisitionSettingsRowDelete(id))
-        }
-        ChangelogTableName::PurchaseOrder => Box::new(PurchaseOrderDelete(id)),
-        ChangelogTableName::PurchaseOrderLine => Box::new(PurchaseOrderLineDelete(id)),
-        ChangelogTableName::Report => Box::new(ReportRowDelete(id)),
-        ChangelogTableName::Requisition => Box::new(RequisitionRowDelete(id)),
-        ChangelogTableName::RequisitionLine => Box::new(RequisitionLineRowDelete(id)),
-        ChangelogTableName::RnrForm => Box::new(RnRFormDelete(id)),
-        ChangelogTableName::RnrFormLine => Box::new(RnRFormLineDelete(id)),
-        ChangelogTableName::Site => Box::new(SiteRowDelete(id)),
-        ChangelogTableName::StockLine => Box::new(StockLineRowDelete(id)),
-        ChangelogTableName::Stocktake => Box::new(StocktakeRowDelete(id)),
-        ChangelogTableName::StocktakeLine => Box::new(StocktakeLineRowDelete(id)),
-        ChangelogTableName::UserAccount => Box::new(UserAccountRowDelete(id)),
-        ChangelogTableName::UserPermission => Box::new(UserPermissionRowDelete(id)),
-        ChangelogTableName::VVMStatus => Box::new(VVMStatusRowDelete(id)),
-        ChangelogTableName::VVMStatusLog => Box::new(VVMStatusLogRowDelete(id)),
-        ChangelogTableName::Unit => Box::new(UnitRowDelete(id)),
-        ChangelogTableName::Program => Box::new(ProgramRowDelete(id)),
-        ChangelogTableName::Asset => Box::new(AssetRowDelete(id)),
-        ChangelogTableName::Category => Box::new(CategoryRowDelete(id)),
-        ChangelogTableName::Currency => Box::new(CurrencyRowDelete(id)),
-        ChangelogTableName::Item => Box::new(ItemRowDelete(id)),
-        ChangelogTableName::Name => Box::new(NameRowDelete(id)),
-        ChangelogTableName::Sensor => Box::new(SensorRowDelete(id)),
-        // Tables without a delete translator / do not delete
-        ChangelogTableName::AncillaryItem
-        | ChangelogTableName::AssetCatalogueItem
-        | ChangelogTableName::AssetCatalogueType
-        | ChangelogTableName::AssetCategory
-        | ChangelogTableName::AssetClass
-        | ChangelogTableName::AssetLog
-        | ChangelogTableName::AssetLogReason
-        | ChangelogTableName::AssetProperty
-        | ChangelogTableName::Barcode
-        | ChangelogTableName::BundledItem
-        | ChangelogTableName::Campaign
-        | ChangelogTableName::Clinician
-        | ChangelogTableName::ContactForm
-        | ChangelogTableName::ContactTrace
-        | ChangelogTableName::Context
-        | ChangelogTableName::Demographic
-        | ChangelogTableName::DemographicIndicator
-        | ChangelogTableName::Document
-        | ChangelogTableName::DocumentRegistry
-        | ChangelogTableName::Encounter
-        | ChangelogTableName::IndicatorColumn
-        | ChangelogTableName::IndicatorLine
-        | ChangelogTableName::InsuranceProvider
-        | ChangelogTableName::ItemCategoryJoin
-        | ChangelogTableName::ItemStoreJoin
-        | ChangelogTableName::ItemVariant
-        | ChangelogTableName::ItemWarningJoin
-        | ChangelogTableName::LocationMovement
-        | ChangelogTableName::LocationType
-        | ChangelogTableName::MasterList
-        | ChangelogTableName::NameInsuranceJoin
-        | ChangelogTableName::NameOmsFields
-        | ChangelogTableName::NameProperty
-        | ChangelogTableName::PackagingVariant
-        | ChangelogTableName::Period
-        | ChangelogTableName::PeriodSchedule
-        | ChangelogTableName::PluginData
-        | ChangelogTableName::Printer
-        | ChangelogTableName::ProgramEnrolment
-        | ChangelogTableName::ProgramEvent
-        | ChangelogTableName::ProgramIndicator
-        | ChangelogTableName::Property
-        | ChangelogTableName::ReasonOption
-        | ChangelogTableName::ShippingMethod
-        | ChangelogTableName::Store
-        | ChangelogTableName::StorePreference
-        | ChangelogTableName::SyncFileReference
-        | ChangelogTableName::SyncMessage
-        | ChangelogTableName::SystemLog
-        | ChangelogTableName::TemperatureBreach
-        | ChangelogTableName::TemperatureLog
-        | ChangelogTableName::UserStoreJoin
-        | ChangelogTableName::Vaccination
-        | ChangelogTableName::VaccineCourse
-        | ChangelogTableName::VaccineCourseDose
-        | ChangelogTableName::VaccineCourseItem
-        | ChangelogTableName::VaccineCourseStoreConfig => {
-            return Err(Error::DeleteTranslatorNotFound(table_name.clone()));
-        }
-    };
-
-    Ok(delete)
-}
-
 fn integrate_delete(
     connection: &StorageConnection,
-    delete: Box<dyn Delete>,
     table_name: ChangelogTableName,
     row: &SyncBufferRow,
 ) -> Result<(), Error> {
+    // Delete the row (dispatched by table). A `NoDeletePath` outcome means the table
+    // is never deleted via sync — preserve the previous "delete translator not found".
+    match integrate_delete_no_changelog(connection, &table_name, &row.record_id)
+        .map_err(Error::IntegrationError)?
+    {
+        DeleteOutcome::NoDeletePath => return Err(Error::DeleteTranslatorNotFound(table_name)),
+        DeleteOutcome::Deleted => {}
+    }
+    // Insert the v7-supplied changelog row.
     let changelog_row = create_changelog(table_name, RowActionType::Delete, row);
-    delete
-        .delete_sync(connection, ChangelogSyncType::SyncTypeV7 { changelog_row })
+    ChangelogRepository::new(connection)
+        .insert(&changelog_row)
         .map_err(Error::IntegrationError)?;
-
     Ok(())
 }
 
@@ -240,10 +138,7 @@ fn validate_translate_integrate_one(
             let upserts = deserialize(connection, &table_name, &row, sync_context)?;
             integrate_upserts(connection, upserts)
         }
-        SyncAction::Delete => {
-            let delete = translate_delete(&table_name, &row.record_id)?;
-            integrate_delete(connection, delete, table_name, row)
-        }
+        SyncAction::Delete => integrate_delete(connection, table_name, row),
         _ => Err(Error::UnsupportedAction(row.action.clone())),
     }
 }

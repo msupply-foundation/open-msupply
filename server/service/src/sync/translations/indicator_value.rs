@@ -1,7 +1,7 @@
 use repository::{
     indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
-    ChangelogRow, ChangelogTableName, EqualFilter, IndicatorValueRow, IndicatorValueRowDelete, Row,
-    StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, IndicatorValueRow, Row, StorageConnection,
+    StoreFilter, StoreRepository, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -70,7 +70,7 @@ impl SyncTranslation for IndicatorValue {
 
         let check_fk = fk_checker.with_table_required(connection, "indicator_value", &id);
 
-        Ok(PullTranslateResult::upsert(IndicatorValueRow {
+        Ok(PullTranslateResult::upsert(Row::IndicatorValue(IndicatorValueRow {
             id,
             customer_name_id: check_fk(customer_name_id, "customer_name_link_id", FkField::NameLink)?,
             store_id: check_fk(store_id, "store_id", FkField::Store)?,
@@ -78,7 +78,7 @@ impl SyncTranslation for IndicatorValue {
             indicator_line_id: check_fk(indicator_line_id, "indicator_line_id", FkField::IndicatorLine)?,
             indicator_column_id: check_fk(indicator_column_id, "indicator_column_id", FkField::IndicatorColumn)?,
             value,
-        }))
+        })))
     }
 
     fn try_translate_to_upsert_sync_record(
@@ -142,9 +142,10 @@ impl SyncTranslation for IndicatorValue {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         // TODO, check site ? (should never get delete records for this site, only transfer other half)
-        Ok(PullTranslateResult::delete(IndicatorValueRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::IndicatorValue,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 
     fn try_translate_to_delete_sync_record(

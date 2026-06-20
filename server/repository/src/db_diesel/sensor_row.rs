@@ -1,6 +1,6 @@
 use super::{location_row::location, store_row::store, StorageConnection};
 
-use crate::{repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert};
+use crate::{repository_error::RepositoryError, SourceSiteId};
 use crate::{ChangelogRepository, RowActionType};
 
 use chrono::NaiveDateTime;
@@ -124,73 +124,8 @@ impl<'a> SensorRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
-}
 
-#[derive(Debug, Clone)]
-pub struct SensorRowDelete(pub String);
-
-impl Delete for SensorRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let repo = SensorRowRepository::new(con);
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                let row = repo
-                    .find_one_by_id(&self.0)?
-                    .ok_or_else(|| RepositoryError::NotFound)?;
-                row.generate_changelog(
-                    con,
-                    RowActionType::Upsert,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        repo._mark_deleted(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        let row = SensorRowRepository::new(con)
-            .find_one_by_id(&self.0)
-            .expect("sensor lookup");
-        assert_eq!(row.map(|r| r.is_active), Some(false));
-    }
-}
-
-impl Upsert for SensorRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        SensorRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            SensorRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        self._mark_deleted(record_id)
     }
 }

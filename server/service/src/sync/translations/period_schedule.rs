@@ -1,4 +1,4 @@
-use repository::{PeriodScheduleRow, StorageConnection, SyncBufferRow};
+use repository::{PeriodScheduleRow, Row, StorageConnection, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 
 use super::{PullTranslateResult, SyncTranslation};
@@ -38,7 +38,7 @@ impl SyncTranslation for PeriodScheduleTranslation {
 
         let result = PeriodScheduleRow { id, name };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::PeriodSchedule(result)))
     }
 }
 

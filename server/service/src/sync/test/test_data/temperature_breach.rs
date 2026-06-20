@@ -3,7 +3,7 @@ use crate::sync::translations::temperature_breach::{
 };
 
 use chrono::{Duration, NaiveDate, NaiveTime};
-use repository::{TemperatureBreachRow, TemperatureBreachType};
+use repository::{Row, TemperatureBreachRow, TemperatureBreachType};
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -37,7 +37,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TEMPERATURE_BREACH_1,
-        TemperatureBreachRow {
+        Row::TemperatureBreach(TemperatureBreachRow {
             id: TEMPERATURE_BREACH_1.0.to_string(),
             store_id: "store_a".to_string(),
             location_id: None,
@@ -61,7 +61,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     + Duration::seconds(47046),
             ),
             comment: None,
-        },
+        }),
     )]
 }
 

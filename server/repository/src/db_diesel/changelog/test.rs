@@ -10,12 +10,12 @@ use crate::{
         MockDataInserts,
     },
     test_db::{self, setup_all, setup_all_with_data},
-    ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogSyncType,
+    ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogRow,
     ChangelogTableName, CurrencyRow, CursorAndLimit, FilterBuilder, InvoiceLineRow,
     InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, KeyType, KeyValueStoreRepository,
     LocationRowRepository, NameRow, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRow, RequisitionRowRepository, RowActionType, StorageConnection, StoreRow,
-    StoreRowRepository, Upsert, VaccinationRow, VaccinationRowRepository,
+    RequisitionRow, RequisitionRowRepository, Row, RowActionType, SourceSiteId, StorageConnection,
+    StoreRow, StoreRowRepository, VaccinationRow, VaccinationRowRepository,
 };
 
 fn delete_all_changelog(connection: &StorageConnection) {
@@ -715,13 +715,20 @@ async fn test_changelog_outgoing_sync_records() {
     };
 
     // We want to test the sync scenario where changelog is set with site id = site1_id.
-    row.upsert_sync(
-        &connection,
-        ChangelogSyncType::SyncTypeV5V6 {
-            source_site_id: Some(site1_id),
-        },
-    )
-    .unwrap();
+    let row = Row::Asset(row);
+    row.integrate_no_changelog(&connection).unwrap();
+    for changelog in row
+        .generate_changelog(
+            &connection,
+            RowActionType::Upsert,
+            SourceSiteId::SourceSiteId(Some(site1_id)),
+        )
+        .unwrap()
+    {
+        ChangelogRepository::new(&connection)
+            .insert(&changelog)
+            .unwrap();
+    }
 
     // Now we should have two records to send to site 1 the remote site on initialisation
     // The asset class and the asset
@@ -826,18 +833,24 @@ async fn test_changelog_outgoing_sync_records() {
 
     // A second asset for site 1's store, originated by central (Remote).
     let central_asset_id = "central_asset_id".to_string();
-    AssetRow {
+    let central_asset = Row::Asset(AssetRow {
         id: central_asset_id.clone(),
         store_id: Some(site1_store_id.clone()),
         ..Default::default()
+    });
+    central_asset.integrate_no_changelog(&connection).unwrap();
+    for changelog in central_asset
+        .generate_changelog(
+            &connection,
+            RowActionType::Upsert,
+            SourceSiteId::SourceSiteId(Some(central_site_id)),
+        )
+        .unwrap()
+    {
+        ChangelogRepository::new(&connection)
+            .insert(&changelog)
+            .unwrap();
     }
-    .upsert_sync(
-        &connection,
-        ChangelogSyncType::SyncTypeV5V6 {
-            source_site_id: Some(central_site_id),
-        },
-    )
-    .unwrap();
 
     // Site 1 post-initialisation: Remote arm relays the central-edited asset.
     let outgoing_results = ChangelogRepository::new(&connection)

@@ -3,8 +3,8 @@ use super::{PullTranslateResult, SyncTranslation};
 use crate::sync::translations::PushTranslateResult;
 use crate::sync::CentralServerConfig;
 use repository::{
-    ChangelogRow, ChangelogTableName, Row, SiteRow, SiteRowDelete, SiteRowRepository,
-    StorageConnection, SyncBufferRow, SyncVersion,
+    ChangelogRow, ChangelogTableName, Row, SiteRow, SiteRowRepository, StorageConnection,
+    SyncBufferRow, SyncVersion,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::empty_str_as_option_string;
@@ -86,7 +86,7 @@ impl SyncTranslation for SiteTranslation {
             sync_version: data.sync_version,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Site(result)))
     }
 
     fn try_translate_to_upsert_sync_record(
@@ -126,9 +126,10 @@ impl SyncTranslation for SiteTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(SiteRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::Site,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 }
 

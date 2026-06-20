@@ -1,7 +1,7 @@
 use crate::db_diesel::name_row::name;
 use crate::{
-    diesel_macros::define_linked_tables, ChangelogRepository, ChangelogSyncType, Delete,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    diesel_macros::define_linked_tables, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 use diesel::prelude::*;
 
@@ -120,10 +120,14 @@ impl<'a> ContactRowRepository<'a> {
         Ok(result)
     }
 
-    fn _delete(&self, contact_id: &str) -> Result<(), RepositoryError> {
+    pub(crate) fn _delete(&self, contact_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(contact_with_links::table.filter(contact_with_links::id.eq(contact_id)))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        self._delete(record_id)
     }
 
     pub fn delete(&self, contact_id: &str) -> Result<(), RepositoryError> {
@@ -138,66 +142,3 @@ impl<'a> ContactRowRepository<'a> {
     }
 }
 
-impl Upsert for ContactRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        ContactRowRepository::new(con)._upsert(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ContactRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-#[derive(Debug, Clone)]
-pub struct ContactRowDelete(pub String);
-impl Delete for ContactRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let repo = ContactRowRepository::new(con);
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => ContactRow::generate_changelog(
-                self.0.clone(),
-                con,
-                RowActionType::Delete,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        repo._delete(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ContactRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
-}

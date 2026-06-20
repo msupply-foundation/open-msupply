@@ -1,4 +1,5 @@
 use repository::campaign::campaign_row::CampaignRow;
+use repository::Row;
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -49,8 +50,8 @@ fn campaign2() -> CampaignRow {
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, CAMPAIGN1, campaign1()),
-        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, CAMPAIGN2, campaign2()),
+        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, CAMPAIGN1, Row::Campaign(campaign1())),
+        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, CAMPAIGN2, Row::Campaign(campaign2())),
     ]
 }
 

@@ -39,11 +39,9 @@ impl SyncTranslation for PropertyTranslation {
             ));
         };
 
-        Ok(PullTranslateResult::upsert(serde_json::from_value::<
-            PropertyRow,
-        >(
-            sync_record.data.0.clone()
-        )?))
+        Ok(PullTranslateResult::upsert(Row::Property(
+            serde_json::from_value::<PropertyRow>(sync_record.data.0.clone())?,
+        )))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

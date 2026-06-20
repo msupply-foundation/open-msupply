@@ -1,4 +1,4 @@
-use repository::DiagnosisRow;
+use repository::{DiagnosisRow, Row};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
@@ -31,24 +31,24 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             DIAGNOSIS_1,
-            DiagnosisRow {
+            Row::Diagnosis(DiagnosisRow {
                 id: DIAGNOSIS_1.0.to_owned(),
                 code: "Bad cold".to_string(),
                 description: "stuff".to_string(),
                 notes: Some("Don't use this unless it's a really bad cold!".to_string()),
                 valid_till: None,
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             DIAGNOSIS_2,
-            DiagnosisRow {
+            Row::Diagnosis(DiagnosisRow {
                 id: DIAGNOSIS_2.0.to_owned(),
                 code: "OLD".to_string(),
                 description: "Not longer valid".to_string(),
                 notes: Some("Expired 25 Dec 2022".to_string()),
                 valid_till: Some("2022-12-25".parse().unwrap()),
-            },
+            }),
         ),
     ]
 }

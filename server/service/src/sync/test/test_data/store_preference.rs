@@ -1,5 +1,5 @@
 use crate::sync::test::TestSyncIncomingRecord;
-use repository::{StorePreferenceRow, StorePreferenceType};
+use repository::{Row, StorePreferenceRow, StorePreferenceType};
 use util::constants::DEFAULT_AMC_LOOKBACK_MONTHS;
 
 const TABLE_NAME: &str = "pref";
@@ -144,7 +144,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             STORE_PREFERENCE_1,
-            StorePreferenceRow {
+            Row::StorePreference(StorePreferenceRow {
                 id: "store_a".to_string(),
                 r#type: StorePreferenceType::StorePreferences,
                 pack_to_one: true,
@@ -164,12 +164,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 use_consumption_and_stock_from_customers_for_internal_orders: true,
                 manually_link_internal_order_to_inbound_shipment: false,
                 edit_prescribed_quantity_on_prescription: false,
-            },
+            }),
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             STORE_PREFERENCE_2,
-            StorePreferenceRow {
+            Row::StorePreference(StorePreferenceRow {
                 id: "store_b".to_string(),
                 r#type: StorePreferenceType::StorePreferences,
                 pack_to_one: false,
@@ -190,7 +190,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 use_consumption_and_stock_from_customers_for_internal_orders: false,
                 manually_link_internal_order_to_inbound_shipment: true,
                 edit_prescribed_quantity_on_prescription: false,
-            },
+            }),
         ),
     ]
 }

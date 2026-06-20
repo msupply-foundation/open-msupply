@@ -4,7 +4,7 @@ use crate::sync::translations::requisition_line::{
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 use chrono::NaiveDate;
-use repository::{RequisitionLineRow, RequisitionLineRowDelete};
+use repository::{ChangelogTableName, RequisitionLineRow, Row};
 use serde_json::json;
 use util::constants::APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30;
 
@@ -56,7 +56,7 @@ fn requisition_line_request_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         REQUISITION_LINE_1,
-        RequisitionLineRow {
+        Row::RequisitionLine(RequisitionLineRow {
             id: REQUISITION_LINE_1.0.to_string(),
             requisition_id: "mock_request_draft_requisition3".to_string(),
             item_link_id: "item_a".to_string(),
@@ -84,7 +84,7 @@ fn requisition_line_request_pull_record() -> TestSyncIncomingRecord {
             forecast_total_doses: None,
             forecast_total_units: None,
             vaccine_courses: None,
-        },
+        }),
     )
 }
 fn requisition_line_request_push_record() -> TestSyncOutgoingRecord {
@@ -178,7 +178,7 @@ fn requisition_line_om_fields_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         REQUISITION_LINE_OM_FIELD,
-        RequisitionLineRow {
+        Row::RequisitionLine(RequisitionLineRow {
             id: REQUISITION_LINE_OM_FIELD.0.to_string(),
             requisition_id: "mock_request_draft_requisition3".to_string(),
             item_link_id: "item_a".to_string(),
@@ -211,7 +211,7 @@ fn requisition_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             forecast_total_doses: None,
             forecast_total_units: None,
             vaccine_courses: None,
-        },
+        }),
     )
 }
 fn requisition_line_om_fields_push_record() -> TestSyncOutgoingRecord {
@@ -271,7 +271,7 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         REQUISITION_LINE_OM_FIELD.0,
-        RequisitionLineRowDelete(REQUISITION_LINE_OM_FIELD.0.to_string()),
+        ChangelogTableName::RequisitionLine,
     )]
 }
 

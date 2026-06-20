@@ -1,5 +1,5 @@
 use super::StorageConnection;
-use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
+use crate::SourceSiteId;
 
 use crate::repository_error::RepositoryError;
 use crate::{ChangelogRepository, RowActionType};
@@ -48,7 +48,7 @@ impl<'a> CurrencyRowRepository<'a> {
         CurrencyRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &CurrencyRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &CurrencyRow) -> Result<(), RepositoryError> {
         diesel::insert_into(currency::table)
             .values(row)
             .on_conflict(currency::id)
@@ -102,6 +102,10 @@ impl<'a> CurrencyRowRepository<'a> {
         Ok(())
     }
 
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        self._mark_deleted(record_id)
+    }
+
     pub fn mark_deleted(&self, currency_id: &str) -> Result<(), RepositoryError> {
         self._mark_deleted(currency_id)?;
         let changelog = CurrencyRow::generate_changelog(
@@ -114,68 +118,3 @@ impl<'a> CurrencyRowRepository<'a> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct CurrencyRowDelete(pub String);
-impl Delete for CurrencyRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let repo = CurrencyRowRepository::new(con);
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => CurrencyRow::generate_changelog(
-                self.0.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        repo._mark_deleted(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert!(matches!(
-            CurrencyRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(Some(CurrencyRow {
-                is_active: false,
-                ..
-            })) | Ok(None)
-        ));
-    }
-}
-
-impl Upsert for CurrencyRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        CurrencyRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            CurrencyRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}

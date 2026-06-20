@@ -6,7 +6,7 @@ use crate::sync::{
 use chrono::NaiveDate;
 use repository::{
     mock::{mock_item_a, mock_stock_line_a},
-    InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineType,
+    ChangelogTableName, InvoiceLineRow, InvoiceLineType, Row,
 };
 use serde_json::json;
 const TABLE_NAME: &str = "trans_line";
@@ -74,7 +74,7 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TRANS_LINE_1,
-        InvoiceLineRow {
+        Row::InvoiceLine(InvoiceLineRow {
             id: TRANS_LINE_1.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
             item_link_id: mock_item_a().id,
@@ -110,7 +110,7 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
             shipped_pack_size: Some(1.0),
             status: None,
             legacy_goods_received_line_id: None,
-        },
+        }),
     )
 }
 fn trans_line_1_push_record() -> TestSyncOutgoingRecord {
@@ -222,7 +222,7 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TRANS_LINE_2,
-        InvoiceLineRow {
+        Row::InvoiceLine(InvoiceLineRow {
             id: TRANS_LINE_2.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
             item_link_id: mock_item_a().id,
@@ -258,7 +258,7 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
             shipped_pack_size: Some(100.0),
             status: None,
             legacy_goods_received_line_id: None,
-        },
+        }),
     )
 }
 fn trans_line_2_push_record() -> TestSyncOutgoingRecord {
@@ -378,7 +378,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TRANS_LINE_OM_FIELDS,
-        InvoiceLineRow {
+        Row::InvoiceLine(InvoiceLineRow {
             id: TRANS_LINE_OM_FIELDS.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
             item_link_id: mock_item_a().id,
@@ -414,7 +414,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             shipped_pack_size: Some(100.0),
             status: Some(repository::InvoiceLineStatus::Pending),
             legacy_goods_received_line_id: None,
-        },
+        }),
     )
 }
 fn trans_line_om_fields_push_record() -> TestSyncOutgoingRecord {
@@ -529,7 +529,7 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TRANS_LINE_OM_UNSET_TAX_FIELDS,
-        InvoiceLineRow {
+        Row::InvoiceLine(InvoiceLineRow {
             id: TRANS_LINE_OM_UNSET_TAX_FIELDS.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
             item_link_id: mock_item_a().id,
@@ -565,7 +565,7 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
             shipped_pack_size: Some(100.0),
             status: None,
             legacy_goods_received_line_id: None,
-        },
+        }),
     )
 }
 fn trans_line_om_fields_unset_tax_push_record() -> TestSyncOutgoingRecord {
@@ -680,7 +680,7 @@ fn trans_line_negative_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TRANS_LINE_NEGATIVE,
-        InvoiceLineRow {
+        Row::InvoiceLine(InvoiceLineRow {
             id: TRANS_LINE_NEGATIVE.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
             item_link_id: mock_item_a().id,
@@ -716,7 +716,7 @@ fn trans_line_negative_pull_record() -> TestSyncIncomingRecord {
             shipped_pack_size: Some(0.0),
             status: None,
             legacy_goods_received_line_id: None,
-        },
+        }),
     )
 }
 fn trans_line_negative_push_record() -> TestSyncOutgoingRecord {
@@ -832,7 +832,7 @@ fn trans_line_prescribed_quantity_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TRANS_LINE_PRESCRIBED_QUANTITY,
-        InvoiceLineRow {
+        Row::InvoiceLine(InvoiceLineRow {
             id: TRANS_LINE_PRESCRIBED_QUANTITY.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
             item_link_id: mock_item_a().id,
@@ -868,7 +868,7 @@ fn trans_line_prescribed_quantity_pull_record() -> TestSyncIncomingRecord {
             shipped_pack_size: Some(0.0),
             status: None,
             legacy_goods_received_line_id: None,
-        },
+        }),
     )
 }
 
@@ -983,7 +983,7 @@ fn trans_line_invalid_stockline_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TRANS_LINE_INVALID_STOCKLINE,
-        InvoiceLineRow {
+        Row::InvoiceLine(InvoiceLineRow {
             id: TRANS_LINE_INVALID_STOCKLINE.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
             item_link_id: mock_item_a().id,
@@ -1019,7 +1019,7 @@ fn trans_line_invalid_stockline_pull_record() -> TestSyncIncomingRecord {
             shipped_pack_size: Some(0.0),
             status: None,
             legacy_goods_received_line_id: None,
-        },
+        }),
     )
 }
 fn trans_line_invalid_stockline_push_record() -> TestSyncOutgoingRecord {
@@ -1133,7 +1133,7 @@ fn trans_line_empty_stockline_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TRANS_LINE_EMPTY_STOCKLINE,
-        InvoiceLineRow {
+        Row::InvoiceLine(InvoiceLineRow {
             id: TRANS_LINE_EMPTY_STOCKLINE.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
             item_link_id: mock_item_a().id,
@@ -1169,7 +1169,7 @@ fn trans_line_empty_stockline_pull_record() -> TestSyncIncomingRecord {
             shipped_pack_size: Some(0.0),
             status: None,
             legacy_goods_received_line_id: None,
-        },
+        }),
     )
 }
 
@@ -1236,7 +1236,7 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         TRANS_LINE_OM_UNSET_TAX_FIELDS.0,
-        InvoiceLineRowDelete(TRANS_LINE_OM_UNSET_TAX_FIELDS.0.to_string()),
+        ChangelogTableName::InvoiceLine,
     )]
 }
 

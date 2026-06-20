@@ -1,7 +1,7 @@
 use crate::sync::translations::temperature_log::LegacyTemperatureLogRow;
 
 use chrono::{Duration, NaiveDate, NaiveTime};
-use repository::TemperatureLogRow;
+use repository::{Row, TemperatureLogRow};
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -27,7 +27,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TEMPERATURE_LOG_1,
-        TemperatureLogRow {
+        Row::TemperatureLog(TemperatureLogRow {
             id: TEMPERATURE_LOG_1.0.to_string(),
             store_id: "store_a".to_string(),
             location_id: None,
@@ -39,7 +39,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 .unwrap()
                 + Duration::seconds(47046),
             temperature_breach_id: None,
-        },
+        }),
     )]
 }
 

@@ -1,5 +1,5 @@
 use crate::sync::test::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
-use repository::NameOmsFieldsRow;
+use repository::{NameOmsFieldsRow, Row};
 use serde_json::json;
 
 const TABLE_NAME: &str = "name_oms_fields";
@@ -23,7 +23,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_OMS_FIELDS_1,
-        name_oms_fields_1(),
+        Row::NameOmsFields(name_oms_fields_1()),
     )]
 }
 

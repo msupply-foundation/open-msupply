@@ -1,4 +1,4 @@
-use repository::{NameTagJoinRow, NameTagJoinRowDelete, StorageConnection, SyncBufferRow};
+use repository::{ChangelogTableName, NameTagJoinRow, Row, StorageConnection, SyncBufferRow};
 
 use serde::Deserialize;
 
@@ -55,7 +55,7 @@ impl SyncTranslation for NameTagJoinTranslation {
             name_tag_id: check_fk(name_tag_ID, "name_tag_id", FkField::NameTag)?,
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::NameTagJoin(result)))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -63,9 +63,10 @@ impl SyncTranslation for NameTagJoinTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(NameTagJoinRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::NameTagJoin,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 }
 

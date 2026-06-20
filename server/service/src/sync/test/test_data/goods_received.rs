@@ -45,7 +45,7 @@ fn gr_non_finalised_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         GR_NON_FINALISED,
-        InvoiceRow {
+        Row::Invoice(InvoiceRow {
             id: "gr_non_finalised_test".to_string(),
             name_id: "name_a".to_string(),
             store_id: "store_a".to_string(),
@@ -62,7 +62,7 @@ fn gr_non_finalised_pull_record() -> TestSyncIncomingRecord {
                 .unwrap(),
             purchase_order_id: Some("test_purchase_order_a".to_string()),
             ..Default::default()
-        },
+        }),
     )
 }
 
@@ -86,7 +86,7 @@ fn gr_finalised_pull_record() -> TestSyncIncomingRecord {
     expected_invoice.purchase_order_id = Some("test_purchase_order_a".to_string());
 
     let mut record =
-        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, GR_FINALISED, expected_invoice);
+        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, GR_FINALISED, Row::Invoice(expected_invoice));
     record.extra_data = Some(MockData {
         invoices: vec![existing_invoice],
         ..Default::default()

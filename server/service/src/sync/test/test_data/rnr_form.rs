@@ -1,4 +1,4 @@
-use repository::{rnr_form_row::RnRFormRow, RnRFormDelete, RnRFormStatus};
+use repository::{rnr_form_row::RnRFormRow, ChangelogTableName, RnRFormStatus, Row};
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -42,7 +42,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         RNR_FORM1,
-        rnr_form1(),
+        Row::RnrForm(rnr_form1()),
     )]
 }
 
@@ -58,6 +58,6 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         RNR_FORM1.0,
-        RnRFormDelete(RNR_FORM1.0.to_string()),
+        ChangelogTableName::RnrForm,
     )]
 }

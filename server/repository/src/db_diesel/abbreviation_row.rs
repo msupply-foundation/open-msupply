@@ -1,7 +1,6 @@
 use super::abbreviation_row::abbreviation::dsl::*;
 use crate::{
-    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
-    StorageConnection, Upsert,
+    ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
 };
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -34,7 +33,7 @@ impl<'a> AbbreviationRowRepository<'a> {
         AbbreviationRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &AbbreviationRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &AbbreviationRow) -> Result<(), RepositoryError> {
         diesel::insert_into(abbreviation)
             .values(row)
             .on_conflict(id)
@@ -83,6 +82,10 @@ impl<'a> AbbreviationRowRepository<'a> {
         Ok(())
     }
 
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        self._delete(record_id)
+    }
+
     pub fn delete(&self, abbreviation_id: &str) -> Result<(), RepositoryError> {
         self._delete(abbreviation_id)?;
         let changelog = AbbreviationRow::generate_changelog(
@@ -92,72 +95,5 @@ impl<'a> AbbreviationRowRepository<'a> {
             SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
-    }
-}
-
-impl Upsert for AbbreviationRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        AbbreviationRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            AbbreviationRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct AbbreviationRowDelete(pub String);
-impl Delete for AbbreviationRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let repo = AbbreviationRowRepository::new(con);
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                AbbreviationRow::generate_changelog(
-                    self.0.clone(),
-                    con,
-                    RowActionType::Delete,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        repo._delete(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            AbbreviationRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
     }
 }

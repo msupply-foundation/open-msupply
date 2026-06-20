@@ -4,7 +4,7 @@ use super::{
 };
 use crate::repository_error::RepositoryError;
 use crate::{
-    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert,
+    ChangelogRepository, RowActionType, SourceSiteId,
 };
 
 use diesel::prelude::*;
@@ -40,7 +40,7 @@ impl<'a> MasterListLineRowRepository<'a> {
         MasterListLineRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
         diesel::insert_into(master_list_line)
             .values(row)
             .on_conflict(id)
@@ -97,70 +97,8 @@ impl<'a> MasterListLineRowRepository<'a> {
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
-}
 
-impl Upsert for MasterListLineRow {
-    fn upsert_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        MasterListLineRowRepository::new(con)._upsert_one(self)?;
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
-                con,
-                RowActionType::Upsert,
-                SourceSiteId::SourceSiteId(source_site_id),
-            )?,
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            MasterListLineRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct MasterListLineRowDelete(pub String);
-impl Delete for MasterListLineRowDelete {
-    fn delete_sync(
-        &self,
-        con: &StorageConnection,
-        sync_type: ChangelogSyncType,
-    ) -> Result<(), RepositoryError> {
-        let repo = MasterListLineRowRepository::new(con);
-
-        let changelog = match sync_type {
-            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
-                MasterListLineRow::generate_changelog(
-                    self.0.clone(),
-                    con,
-                    RowActionType::Delete,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                )?
-            }
-            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
-        };
-
-        repo._delete(&self.0)?;
-        ChangelogRepository::new(con).insert(&changelog)?;
-        Ok(())
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            MasterListLineRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
+    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+        self._delete(record_id)
     }
 }

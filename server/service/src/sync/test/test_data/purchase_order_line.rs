@@ -5,7 +5,7 @@ use crate::sync::{
     },
 };
 use chrono::NaiveDate;
-use repository::{PurchaseOrderLineDelete, PurchaseOrderLineRow, PurchaseOrderLineStatus};
+use repository::{ChangelogTableName, PurchaseOrderLineRow, PurchaseOrderLineStatus, Row};
 use serde_json::json;
 
 use super::TestSyncOutgoingRecord;
@@ -102,7 +102,7 @@ fn purchase_order_line_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         PURCHASE_ORDER_LINE_1,
-        PurchaseOrderLineRow {
+        Row::PurchaseOrderLine(PurchaseOrderLineRow {
             id: PURCHASE_ORDER_LINE_1.0.to_string(),
             purchase_order_id: "sync_test_purchase_order_1".to_string(),
             line_number: 1,
@@ -123,7 +123,7 @@ fn purchase_order_line_pull_record() -> TestSyncIncomingRecord {
             note: None,
             unit: None,
             status: PurchaseOrderLineStatus::New,
-        },
+        }),
     )
 }
 
@@ -163,7 +163,7 @@ fn purchase_order_line_unlinked_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         PURCHASE_ORDER_LINE_UNLINKED,
-        PurchaseOrderLineRow {
+        Row::PurchaseOrderLine(PurchaseOrderLineRow {
             id: PURCHASE_ORDER_LINE_UNLINKED.0.to_string(),
             purchase_order_id: "12e889c0f0d211eb8dddb54df6d7fsadsa".to_string(),
             line_number: 1,
@@ -184,7 +184,7 @@ fn purchase_order_line_unlinked_pull_record() -> TestSyncIncomingRecord {
             note: None,
             unit: None,
             status: PurchaseOrderLineStatus::Sent,
-        },
+        }),
     )
 }
 
@@ -238,6 +238,6 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         PURCHASE_ORDER_LINE_UNLINKED.0,
-        PurchaseOrderLineDelete(PURCHASE_ORDER_LINE_UNLINKED.0.to_string()),
+        ChangelogTableName::PurchaseOrderLine,
     )]
 }

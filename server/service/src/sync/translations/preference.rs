@@ -5,8 +5,7 @@ use super::{
     ToSyncRecordTranslationType,
 };
 use repository::{
-    ChangelogRow, ChangelogTableName, PreferenceRow, PreferenceRowDelete, Row, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, PreferenceRow, Row, StorageConnection, SyncBufferRow,
 };
 
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
@@ -38,7 +37,7 @@ impl SyncTranslation for PreferenceTranslator {
             ..row
         };
 
-        Ok(PullTranslateResult::upsert(result))
+        Ok(PullTranslateResult::upsert(Row::Preference(result)))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -82,9 +81,10 @@ impl SyncTranslation for PreferenceTranslator {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(PreferenceRowDelete(
+        Ok(PullTranslateResult::delete(
+            ChangelogTableName::Preference,
             sync_record.record_id.clone(),
-        )))
+        ))
     }
 }
 

@@ -1,4 +1,4 @@
-use repository::{IndicatorValueRow, IndicatorValueRowDelete};
+use repository::{ChangelogTableName, IndicatorValueRow, Row};
 use serde_json::{self, json};
 
 use crate::sync::{
@@ -26,7 +26,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     data.push(TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         INDICATOR_VALUE_A,
-        IndicatorValueRow {
+        Row::IndicatorValue(IndicatorValueRow {
             id: "indicator_value_a".to_string(),
             customer_name_id: "name_store_a".to_string(),
             store_id: "store_b".to_string(),
@@ -34,7 +34,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             indicator_line_id: "indicator_line_a".to_string(),
             indicator_column_id: "indicator_column_a".to_string(),
             value: "123".to_string(),
-        },
+        }),
     ));
 
     const INDICATOR_VALUE_B: (&str, &str) = (
@@ -52,7 +52,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     data.push(TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         INDICATOR_VALUE_B,
-        IndicatorValueRow {
+        Row::IndicatorValue(IndicatorValueRow {
             id: "indicator_value_b".to_string(),
             customer_name_id: "name_store_a".to_string(),
             store_id: "store_b".to_string(),
@@ -60,7 +60,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             indicator_line_id: "indicator_line_a".to_string(),
             indicator_column_id: "indicator_column_b".to_string(),
             value: "My life for Aiur".to_string(),
-        },
+        }),
     ));
     data
 }
@@ -72,7 +72,7 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
             TestSyncIncomingRecord::new_pull_delete(
                 &r.sync_buffer_row.table_name,
                 &r.sync_buffer_row.record_id,
-                IndicatorValueRowDelete(r.sync_buffer_row.record_id.clone()),
+                ChangelogTableName::IndicatorValue,
             )
         })
         .collect()
