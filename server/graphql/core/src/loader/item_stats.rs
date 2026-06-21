@@ -64,10 +64,11 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
 
         let service_provider = self.service_provider.clone();
 
-        // get_item_stats is synchronous and may invoke the average_monthly_consumption /
-        // get_consumption plugins (the whole boajs interpreter, including any blocking http). Run
-        // it on the blocking pool so it doesn't block the async runtime thread (#11949). The
-        // ServiceContext is built inside the closure so nothing non-`Send` crosses the boundary.
+        // get_item_stats is synchronous and does blocking DB work, so run it on the blocking pool
+        // rather than the async runtime thread (#11949). The plugin calls it makes
+        // (average_monthly_consumption / get_consumption) dispatch themselves to the dedicated
+        // plugin runtime (see call_plugin), so the boajs engine cache stays on managed threads
+        // (#11943). The ServiceContext is built inside the closure so nothing non-`Send` crosses.
         tokio::task::spawn_blocking(
             move || -> Result<HashMap<ItemStatsLoaderInput, ItemStats>, async_graphql::Error> {
                 let service_context = service_provider.basic_context()?;

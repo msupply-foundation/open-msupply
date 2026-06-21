@@ -11,6 +11,8 @@ use thiserror::Error;
 
 use crate::boajs::{self, BoaJsError};
 
+use super::plugin_executor;
+
 #[derive(Debug, Error, PartialEq)]
 #[error("Error in plugin {code}")]
 pub struct PluginError {
@@ -54,6 +56,49 @@ fn plugin_type_to_string(r#type: PluginType) -> String {
     serde_json::to_string(&r#type).unwrap().replace("\"", "")
 }
 
+fn boajs_plugin_error(code: &str, variant: BoaJsError) -> PluginError {
+    PluginError {
+        code: code.to_string(),
+        variant: PluginErrorVariant::BoaJs(variant),
+    }
+}
+
+/// Serialize the input and gather the owned, `Send` data the boajs work needs, so
+/// it can be dispatched to the plugin runtime. boa's `Context` is `!Send`, so the
+/// engine itself must be built and run on the pool thread, not moved there.
+fn prepare_call<I: Serialize>(
+    input: I,
+    r#type: PluginType,
+    plugin: &PluginInstance,
+) -> Result<(serde_json::Value, Vec<String>, Vec<u8>), BoaJsError> {
+    let input = serde_json::to_value(&input)?;
+    let export_location = vec!["plugins".to_string(), plugin_type_to_string(r#type)];
+    let bundle = match &plugin.variant {
+        PluginInstanceVariant::BoaJs(bundle) => bundle.clone(),
+    };
+    Ok((input, export_location, bundle))
+}
+
+/// Build/run the plugin engine. Runs on a plugin-runtime thread (where the
+/// thread-local engine cache lives and teardown is managed). Works in
+/// `serde_json::Value` so the generic input/output don't cross the thread boundary.
+fn run_engine(
+    input: serde_json::Value,
+    export_location: Vec<String>,
+    bundle: Vec<u8>,
+) -> Result<serde_json::Value, BoaJsError> {
+    let export_location: Vec<&str> = export_location.iter().map(String::as_str).collect();
+    boajs::call_method(input, export_location, &bundle)
+}
+
+/// Run a backend plugin. The synchronous boajs interpreter is dispatched to the
+/// dedicated plugin runtime (boundary dispatch) so the engine cache lives on
+/// threads whose teardown we manage (#11943) and CPU stays off the async runtime
+/// (#11949). Callers don't need to wrap this in `spawn_blocking` themselves.
+///
+/// Sync callers must already be on a blocking thread (e.g. inside a
+/// `spawn_blocking` requisition mutation or the item_stats loader), since this
+/// blocks until the plugin returns.
 pub(crate) fn call_plugin<I, O>(
     input: I,
     r#type: PluginType,
@@ -63,27 +108,20 @@ where
     I: Serialize,
     O: DeserializeOwned,
 {
-    let result = match &plugin.variant {
-        PluginInstanceVariant::BoaJs(bundle) => boajs::call_method(
-            input,
-            vec!["plugins", &plugin_type_to_string(r#type)],
-            bundle,
-        )
-        .map_err(Into::into),
-    };
+    let code = plugin.code.clone();
 
-    result.map_err(|variant| PluginError {
-        code: plugin.code.clone(),
-        variant,
-    })
+    let (input, export_location, bundle) =
+        prepare_call(input, r#type, plugin).map_err(|e| boajs_plugin_error(&code, e))?;
+
+    let output = plugin_executor::run_blocking(move || run_engine(input, export_location, bundle))
+        .map_err(|e| boajs_plugin_error(&code, e))?;
+
+    serde_json::from_value(output).map_err(|e| boajs_plugin_error(&code, BoaJsError::SerdeError(e)))
 }
 
-/// Async sibling of [`call_plugin`] for callers running on the async runtime. Runs the
-/// synchronous boajs interpreter on the blocking pool so it doesn't block the runtime.
-/// See issue #11949.
-///
-/// Takes an owned `Arc<PluginInstance>` (rather than a borrow) so it can move onto the
-/// blocking thread; the `Arc` makes that move cheap.
+/// Async sibling of [`call_plugin`] for callers running on the async runtime
+/// (processor / schedule). Awaits the plugin runtime so the boajs interpreter
+/// never runs on a runtime worker thread (#11949).
 pub(crate) async fn call_plugin_async<I, O>(
     input: I,
     r#type: PluginType,
@@ -93,15 +131,16 @@ where
     I: Serialize + Send + 'static,
     O: DeserializeOwned + Send + 'static,
 {
-    // Clone the code up front for the join-error branch, since `plugin` moves into the closure.
     let code = plugin.code.clone();
 
-    tokio::task::spawn_blocking(move || call_plugin(input, r#type, &plugin))
+    let (input, export_location, bundle) =
+        prepare_call(input, r#type, &plugin).map_err(|e| boajs_plugin_error(&code, e))?;
+
+    let output = plugin_executor::run_async(move || run_engine(input, export_location, bundle))
         .await
-        .map_err(|join_error| PluginError {
-            code,
-            variant: PluginErrorVariant::BoaJs(BoaJsError::TaskJoin(join_error.to_string())),
-        })?
+        .map_err(|e| boajs_plugin_error(&code, e))?;
+
+    serde_json::from_value(output).map_err(|e| boajs_plugin_error(&code, BoaJsError::SerdeError(e)))
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -204,5 +243,45 @@ impl PluginInstance {
     pub fn unbind_by_id(id: &str) {
         let mut plugins = PLUGINS.write().unwrap();
         plugins.retain(|p| p.instance.id != id);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{migrations::Version, PluginType};
+
+    // Bundle exporting `plugins.average_monthly_consumption` so call_plugin's
+    // export path (`["plugins", "average_monthly_consumption"]`) resolves. It
+    // calls no native methods, so it runs without a bound BoaJsContext.
+    fn test_instance() -> PluginInstance {
+        PluginInstance {
+            id: "test".to_string(),
+            code: "test_plugin".to_string(),
+            variant: PluginInstanceVariant::BoaJs(
+                b"export const plugins = { average_monthly_consumption: (x) => x * 2 };".to_vec(),
+            ),
+            version: Version::from_str("1.0.0"),
+        }
+    }
+
+    // call_plugin dispatches the boajs work to the dedicated plugin runtime and
+    // round-trips input -> serialize -> engine -> deserialize -> output.
+    #[test]
+    fn call_plugin_round_trips_through_plugin_runtime() {
+        let plugin = test_instance();
+        let out: f64 =
+            call_plugin(21.0_f64, PluginType::AverageMonthlyConsumption, &plugin).unwrap();
+        assert_eq!(out, 42.0);
+    }
+
+    // Same for the async sibling.
+    #[tokio::test]
+    async fn call_plugin_async_round_trips_through_plugin_runtime() {
+        let plugin = Arc::new(test_instance());
+        let out: f64 = call_plugin_async(5.0_f64, PluginType::AverageMonthlyConsumption, plugin)
+            .await
+            .unwrap();
+        assert_eq!(out, 10.0);
     }
 }

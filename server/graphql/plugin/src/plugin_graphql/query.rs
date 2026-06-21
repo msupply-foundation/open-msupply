@@ -24,9 +24,10 @@ pub async fn plugin_graphql_query(
     let store_id = store_id.to_string();
     let plugin_code = plugin_code.to_string();
 
-    // Calling a plugin runs the whole boajs interpreter synchronously, including any
-    // `fetch`/`use_graphql` http calls the plugin makes. The plugin service method is sync, so
-    // run it on the blocking threadpool rather than the request worker's runtime thread (#11949).
+    // The plugin service method is sync, so run it on the blocking pool rather than the request
+    // worker's runtime thread (#11949). The plugin call it makes dispatches itself to the
+    // dedicated plugin runtime (see call_plugin), so the boajs engine cache stays on managed
+    // threads (#11943).
     let result = tokio::task::spawn_blocking(move || {
         service_provider
             .plugin_service

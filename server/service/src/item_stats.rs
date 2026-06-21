@@ -16,6 +16,8 @@ use repository::{
     DaysOutOfStockRepository, DaysOutOfStockRow, EqualFilter, PluginType, RepositoryError,
     RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow, StorageConnection,
 };
+use log::debug;
+use std::time::Instant;
 use std::{collections::HashMap, ops::Neg};
 use util::{date_now, date_with_offset};
 
@@ -122,10 +124,19 @@ pub fn get_item_stats(
         item_ids: item_ids.clone(),
     };
 
+    // Issue #11943: the AMC plugin path is the dominant cost of the items list
+    // query's `stats` field. Logged at debug so it's silent at the prod Info
+    // level but available via RUST_LOG/config when diagnosing plugin perf.
+    let amc_started = Instant::now();
     let amc_by_item = match PluginInstance::get_one(PluginType::AverageMonthlyConsumption) {
         Some(plugin) => amc::Trait::call(&(*plugin), input),
         None => amc::Trait::call(&DefaultAmc, input),
     }?;
+    debug!(
+        "get_item_stats: AMC computation took {}ms for {} item(s)",
+        amc_started.elapsed().as_millis(),
+        item_ids.len(),
+    );
 
     let stock_on_hand_rows = get_stock_on_hand_rows(connection, store_id, Some(item_ids.clone()))?;
 
