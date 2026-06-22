@@ -4,6 +4,7 @@ import { Document } from './document';
 
 export { useOutboundItems } from './line/useOutboundItems';
 export { useOutboundLines } from './line/useOutboundLines';
+export { useDuplicateOutbound } from './document/useDuplicateOutbound';
 
 export const useOutbound = {
   utils: {
@@ -23,6 +24,7 @@ export const useOutbound = {
     update: Document.useOutboundUpdate,
     delete: Document.useOutboundDelete,
     deleteRows: Document.useOutboundDeleteRows,
+    duplicate: Document.useOutboundDuplicate,
     insert: Document.useOutboundInsert,
 
     fields: Document.useOutboundFields,

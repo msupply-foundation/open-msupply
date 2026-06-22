@@ -4,7 +4,9 @@ use crate::invoice::{
     inbound_shipment::UpdateInboundShipmentStatus, InvoiceRowStatusError,
 };
 use crate::preference::{preferences::Backdating, Preference};
-use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
+use crate::validate::{
+    check_other_party, check_other_party_store_is_disabled, CheckOtherPartyType, OtherPartyErrors,
+};
 use chrono::{Duration, Utc};
 use repository::{
     InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRow, InvoiceStatus, InvoiceType, Name,
@@ -28,6 +30,9 @@ pub fn validate(
 
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
+        return Err(OtherPartyStoreDisabled);
     }
     if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
         return Err(NotAnInboundShipment);

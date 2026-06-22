@@ -20,6 +20,7 @@ table! {
         logo -> Nullable<Text>,
     }
 }
+
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, TS)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -29,6 +30,10 @@ pub enum StoreMode {
     Dispensary,
 }
 
+// Default `store` mapping: everything except `logo`. Used by all joins and
+// generic reads. The logo column is large (base64-encoded image) and is
+// almost never needed alongside other store columns — fetch it via
+// `store_logo_row` instead.
 define_linked_tables! {
     view: store = "store_view",
     core: store_with_links = "store",
@@ -149,10 +154,7 @@ impl<'a> StoreRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_logo_by_id(
-        &self,
-        store_id: &str,
-    ) -> Result<Option<StoreLogoRow>, RepositoryError> {
+    pub fn find_logo_by_id(&self, store_id: &str) -> Result<Option<StoreLogoRow>, RepositoryError> {
         let result = store_logo_row::table
             .filter(store_logo_row::id.eq(store_id))
             .first(self.connection.lock().connection())
@@ -160,10 +162,7 @@ impl<'a> StoreRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_logos_by_ids(
-        &self,
-        ids: &[String],
-    ) -> Result<Vec<StoreLogoRow>, RepositoryError> {
+    pub fn find_logos_by_ids(&self, ids: &[String]) -> Result<Vec<StoreLogoRow>, RepositoryError> {
         let result = store_logo_row::table
             .filter(store_logo_row::id.eq_any(ids))
             .load(self.connection.lock().connection())?;
@@ -175,11 +174,7 @@ impl<'a> StoreRowRepository<'a> {
     /// lean upsert first, then the logo upsert second). A `None` logo value
     /// is a no-op — matching the old AsChangeset semantics, where sync data
     /// without a logo never cleared an existing one.
-    pub fn update_logo(
-        &self,
-        store_id: &str,
-        logo: Option<&str>,
-    ) -> Result<(), RepositoryError> {
+    pub fn update_logo(&self, store_id: &str, logo: Option<&str>) -> Result<(), RepositoryError> {
         let Some(logo) = logo else { return Ok(()) };
         diesel::update(store_logo_row::table.filter(store_logo_row::id.eq(store_id)))
             .set(store_logo_row::logo.eq(logo))

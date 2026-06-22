@@ -178,6 +178,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         }
 
         ServiceError::CannotEditFinalised
+        | ServiceError::OtherPartyStoreDisabled
         | ServiceError::CannotAddLinesToAuthorisedReceivedInvoice => {
             return Ok(InsertErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},

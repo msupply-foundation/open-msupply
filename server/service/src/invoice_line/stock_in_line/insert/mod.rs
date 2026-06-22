@@ -109,6 +109,7 @@ pub enum InsertStockInLineError {
     DonorNotVisible,
     SelectedDonorPartyIsNotADonor,
     CannotEditFinalised,
+    OtherPartyStoreDisabled,
     CannotAddLinesToAuthorisedReceivedInvoice,
     LocationDoesNotExist,
     ItemVariantDoesNotExist,

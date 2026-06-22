@@ -74,6 +74,7 @@ pub enum DeleteInboundShipmentError {
     WrongInboundShipmentType,
     NotThisStoreInvoice,
     CannotEditFinalised,
+    OtherPartyStoreDisabled,
     LineDeleteError {
         line_id: String,
         error: DeleteStockInLineError,

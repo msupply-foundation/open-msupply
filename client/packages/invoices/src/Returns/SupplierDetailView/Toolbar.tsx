@@ -8,6 +8,7 @@ import {
   useTranslation,
   useNavigate,
   RouteBuilder,
+  DisabledStoreNotice,
 } from '@openmsupply-client/common';
 import { SupplierReturnFragment, useReturns } from '../api';
 import { SupplierSearchInput } from '@openmsupply-client/system';
@@ -85,6 +86,7 @@ export const Toolbar: FC = () => {
                 />
               }
             />
+            <DisabledStoreNotice otherParty={otherParty} />
           </Box>
         </Grid>
       </Grid>

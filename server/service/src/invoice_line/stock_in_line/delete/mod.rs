@@ -67,6 +67,7 @@ pub enum DeleteStockInLineError {
     NotAStockIn,
     NotThisStoreInvoice,
     CannotEditFinalised,
+    OtherPartyStoreDisabled,
     CannotDeleteLinesOfAuthorisedReceivedInvoice,
     BatchIsReserved,
     NotThisInvoiceLine(String),

@@ -51,8 +51,6 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
         &self,
         loader_inputs: &[ItemStatsLoaderInput],
     ) -> Result<HashMap<ItemStatsLoaderInput, Self::Value>, Self::Error> {
-        let service_context = self.service_provider.basic_context()?;
-
         // The loader registry is shared across all requests, so a single batch can mix
         // inputs from different stores. Group by (store_id, payload) and query each group
         // separately rather than assuming a single store/payload for the whole batch.
@@ -64,34 +62,46 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
                 .push(input.item_id.clone());
         }
 
-        let mut out = HashMap::<ItemStatsLoaderInput, Self::Value>::new();
+        let service_provider = self.service_provider.clone();
 
-        for ((store_id, payload), item_ids) in map {
-            let item_stats = self
-                .service_provider
-                .item_stats_service
-                .get_item_stats(
-                    &service_context,
-                    &store_id,
-                    payload.amc_lookback_months.map(|f| f.into_inner()),
-                    item_ids,
-                    payload.period_end,
-                )
-                .map_err(|e| StandardGraphqlError::from_error(&e))?;
+        // get_item_stats is synchronous and may invoke the average_monthly_consumption /
+        // get_consumption plugins (the whole boajs interpreter, including any blocking http). Run
+        // it on the blocking pool so it doesn't block the async runtime thread (#11949). The
+        // ServiceContext is built inside the closure so nothing non-`Send` crosses the boundary.
+        tokio::task::spawn_blocking(
+            move || -> Result<HashMap<ItemStatsLoaderInput, ItemStats>, async_graphql::Error> {
+                let service_context = service_provider.basic_context()?;
+                let mut out = HashMap::<ItemStatsLoaderInput, ItemStats>::new();
 
-            for item_stat in item_stats {
-                out.insert(
-                    ItemStatsLoaderInput::new(
-                        &store_id,
-                        &item_stat.item_id,
-                        payload.amc_lookback_months.map(|f| f.into_inner()),
-                        payload.period_end,
-                    ),
-                    item_stat,
-                );
-            }
-        }
-        Ok(out)
+                for ((store_id, payload), item_ids) in map {
+                    let item_stats = service_provider
+                        .item_stats_service
+                        .get_item_stats(
+                            &service_context,
+                            &store_id,
+                            payload.amc_lookback_months.map(|f| f.into_inner()),
+                            item_ids,
+                            payload.period_end,
+                        )
+                        .map_err(|e| StandardGraphqlError::from_error(&e))?;
+
+                    for item_stat in item_stats {
+                        out.insert(
+                            ItemStatsLoaderInput::new(
+                                &store_id,
+                                &item_stat.item_id,
+                                payload.amc_lookback_months.map(|f| f.into_inner()),
+                                payload.period_end,
+                            ),
+                            item_stat,
+                        );
+                    }
+                }
+                Ok(out)
+            },
+        )
+        .await
+        .map_err(StandardGraphqlError::from_join_error)?
     }
 }
 

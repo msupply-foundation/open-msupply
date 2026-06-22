@@ -14,5 +14,8 @@ export const useIsResponseDisabled = (): boolean => {
         data?.approvalStatus === RequisitionNodeApprovalStatus.Pending))
   )
     return true;
+  // The other party's store may have been disabled (e.g. after a store merge);
+  // such records remain viewable but must not be editable.
+  if (data.otherParty?.store?.isDisabled) return true;
   return isResponseDisabled(data);
 };

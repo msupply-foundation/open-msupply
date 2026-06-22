@@ -305,13 +305,6 @@ pub trait PluginServiceTrait: Sync + Send {
         plugins.values().map(|p| p.metadata.clone()).collect()
     }
 
-    /// Drop any cached frontend plugin whose row id matches. Used when a
-    /// plugin row is deleted so the served files don't outlive the DB row.
-    fn unbind_frontend_plugin_by_id(&self, ctx: &ServiceContext, id: &str) {
-        let mut plugins = ctx.frontend_plugins_cache.0.write().unwrap();
-        plugins.retain(|_code, plugin| plugin.metadata.id != id);
-    }
-
     fn install_uploaded_plugin(
         &self,
         ctx: &ServiceContext,
@@ -679,4 +672,5 @@ mod test {
             .unwrap_err();
         assert!(matches!(err, UninstallPluginError::PluginNotFound));
     }
+
 }

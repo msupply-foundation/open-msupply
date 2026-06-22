@@ -44,7 +44,9 @@ import { VaccineCourseDoseFragment } from '../api/operations.generated';
 
 const FORM_ID = 'vaccine-course-edit';
 
-const getDemographicOptions = (demographics: DemographicNode[]) => {
+const getDemographicOptions = (
+  demographics: Pick<DemographicNode, 'id' | 'name'>[]
+) => {
   const options = demographics.map(demographic => {
     return {
       value: demographic.id,

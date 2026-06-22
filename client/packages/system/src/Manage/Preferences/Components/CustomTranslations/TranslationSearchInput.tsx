@@ -81,7 +81,7 @@ export const TranslationSearchInput = ({
       }
       textSx={{ backgroundColor: theme.palette.background.drawer }}
       fullWidth
-      placeholder={`${t('messages.search')}...`}
+      placeholder={t('placeholder.add-translation')}
     />
   );
 };
