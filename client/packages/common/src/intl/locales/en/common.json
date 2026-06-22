@@ -2539,6 +2539,7 @@
   "preference.externalInboundShipmentLinesMustBeAuthorised": "Inbound shipment (external) lines must be authorised",
   "preference.firstThresholdForExpiringItems": "First threshold for expiring items (days)",
   "preference.genderOptions": "Gender options",
+  "preference.inactivityTimeoutMinutes": "Inactivity timeout (minutes)",
   "preference.inboundShipmentAutoVerify": "Automatically verify inbound shipments",
   "preference.invoiceStatusOptions": "Invoice status options",
   "preference.isGaps": "Enable GAPS",
