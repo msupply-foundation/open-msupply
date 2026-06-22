@@ -25,7 +25,6 @@ impl MigrationFragment for Migrate {
             "item",
             "item_category_join",
             "item_direction",
-            "item_store_join",
             "item_warning_join",
             "location_type",
             "master_list",
