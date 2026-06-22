@@ -6,10 +6,13 @@ import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
  * (Arabic, Dari, Pashto).
  *
  * Use this instead of `SvgIcon` only for icons whose meaning is directional —
- * arrows, external-link, list, sidebar, truck, search, the mSupply man, etc.
- * Non-directional symbols (checkmark, help, info, translate, settings...) must
+ * arrows, external-link, list, truck, search, the mSupply man, the
+ * comment/speech bubble, the folded-corner document, etc. The help/question-mark
+ * icon is also flipped: Arabic's question mark glyph is itself mirrored (؟), so a
+ * flipped "?" is what RTL readers expect.
+ * Other non-directional symbols (checkmark, info, translate, settings...) must
  * keep using `SvgIcon` directly, otherwise they render reversed (a backwards
- * tick / question mark / "A文" glyph).
+ * tick / "A文" glyph).
  *
  * The flip is driven by the active theme `direction`, so it follows the
  * language automatically and is a no-op in LTR. Any caller-provided `sx` is
