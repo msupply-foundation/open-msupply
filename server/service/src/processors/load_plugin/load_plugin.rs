@@ -39,7 +39,7 @@ impl Processor for LoadPlugin {
                 PluginInstance::bind(plugin);
             }
             (ChangelogTableName::BackendPlugin, RowActionType::Delete) => {
-                PluginInstance::unbind_by_id(&changelog.record_id);
+                PluginInstance::unbind_by_id(&ctx.connection, &changelog.record_id)?;
             }
             (ChangelogTableName::FrontendPlugin, RowActionType::Upsert) => {
                 let plugin = FrontendPluginRowRepository::new(&ctx.connection)

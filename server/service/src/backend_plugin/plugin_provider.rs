@@ -3,8 +3,8 @@ use std::sync::{Arc, RwLock};
 use base64::{prelude::BASE64_STANDARD, Engine};
 
 use repository::{
-    migrations::Version, BackendPluginRow, FrontendPluginRow, PluginType, PluginTypes,
-    PluginVariantType,
+    migrations::Version, BackendPluginRow, BackendPluginRowRepository, FrontendPluginRow,
+    PluginType, PluginTypes, PluginVariantType, RepositoryError, StorageConnection,
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
@@ -198,11 +198,46 @@ impl PluginInstance {
         (*plugins).push(Plugin { types, instance });
     }
 
-    /// Drop any cached backend plugin whose row id matches. Used when a plugin
-    /// row is deleted (via the uninstall mutation or a sync delete record) so
-    /// the in-memory cache doesn't outlive the database row.
-    pub fn unbind_by_id(id: &str) {
-        let mut plugins = PLUGINS.write().unwrap();
-        plugins.retain(|p| p.instance.id != id);
+    /// Remove the cached backend plugin whose row id matches a deleted DB row,
+    /// then re-bind the highest remaining version for that code (if any).
+    ///
+    /// A backend plugin's row id embeds its version
+    /// (`backend_{code}_{version}`), so multiple versions of the same code can
+    /// coexist in the DB while the cache holds only the highest. Deleting the
+    /// active (highest) version must fall back to the next-highest remaining
+    /// version rather than dropping the plugin entirely. Mirrors the frontend
+    /// fallback in plugin/mod.rs. See issue #12169.
+    pub fn unbind_by_id(
+        connection: &StorageConnection,
+        id: &str,
+    ) -> Result<(), RepositoryError> {
+        // Remove the cached entry for the deleted id and remember its code. If
+        // the deleted version wasn't the cached (active) one, nothing is removed
+        // and there's nothing to reconcile.
+        let removed_code = {
+            let mut plugins = PLUGINS.write().unwrap();
+            let code = plugins
+                .iter()
+                .find(|p| p.instance.id == id)
+                .map(|p| p.instance.code.clone());
+            plugins.retain(|p| p.instance.id != id);
+            code
+        }; // Drop the write lock before bind, which locks PLUGINS internally.
+
+        let code = match removed_code {
+            Some(code) => code,
+            None => return Ok(()),
+        };
+
+        // Re-bind any remaining rows for that code; bind keeps the highest
+        // compatible version, so the next-highest survivor becomes active (or
+        // nothing, if no remaining version is compatible).
+        for row in BackendPluginRowRepository::new(connection).all()? {
+            if row.code == code {
+                Self::bind(row);
+            }
+        }
+
+        Ok(())
     }
 }
