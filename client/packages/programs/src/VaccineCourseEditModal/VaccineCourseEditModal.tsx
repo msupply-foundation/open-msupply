@@ -268,7 +268,6 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
                 endAdornment="%"
                 decimalLimit={1}
                 min={0}
-                max={100}
                 required
                 formError={{
                   formId: FORM_ID,
