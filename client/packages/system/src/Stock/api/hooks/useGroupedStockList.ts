@@ -2,6 +2,7 @@ import {
   ItemSortFieldInput,
   SortBy,
   StockLineFilterInput,
+  keepPreviousData,
   useQuery,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../operations.generated';
@@ -9,9 +10,13 @@ import { useStockGraphQL } from '../useStockGraphQL';
 import { LIST, STOCK } from './keys';
 
 // Only a subset of stock-line filters apply in grouped mode — the Toolbar
-// hides location/expiry/VVM/masterList filters when grouping is active. The
-// search/name/code subset is what the Toolbar exposes.
-type GroupedFilterBy = Pick<StockLineFilterInput, 'search' | 'name' | 'code'>;
+// hides location/expiry/VVM filters when grouping is active. masterList is an
+// item-level filter so it stays available; the rest is what the Toolbar
+// exposes when grouped.
+type GroupedFilterBy = Pick<
+  StockLineFilterInput,
+  'search' | 'name' | 'code' | 'masterList'
+>;
 
 export type GroupedStockListParams = {
   first?: number;
@@ -60,6 +65,7 @@ export const useGroupedStockList = (
       ...(filterBy?.search ? { search: filterBy.search } : {}),
       ...(filterBy?.name ? { name: filterBy.name } : {}),
       ...(filterBy?.code ? { code: filterBy.code } : {}),
+      ...(filterBy?.masterList ? { masterList: filterBy.masterList } : {}),
     };
 
     const query = await stockApi.itemsByStockLineFilter({
@@ -89,7 +95,7 @@ export const useGroupedStockList = (
   const query = useQuery({
     queryKey,
     queryFn,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     enabled: options?.enabled,
   });
 

@@ -5,10 +5,10 @@ export const useListInternalOrderLines = (requisitionId: string) => {
   const api = useInboundApi();
 
   return {
-    ...useQuery(
-      api.keys.listInternalOrderLines(requisitionId),
-      () => api.get.listInternalOrderLines(requisitionId),
-      { enabled: !!requisitionId }
-    ),
+    ...useQuery({
+      queryKey: api.keys.listInternalOrderLines(requisitionId),
+      queryFn: () => api.get.listInternalOrderLines(requisitionId),
+      enabled: !!requisitionId
+    }),
   };
 };

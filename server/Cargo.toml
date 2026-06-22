@@ -19,13 +19,21 @@ log = "0.4.29"
 pretty_assertions = "1.4.1"
 rcgen = "0.14.7"
 regex = "1.12.3"
-reqwest = { version = "0.12.22", features = [
+reqwest = { version = "0.13.3", features = [
   "gzip",
   "json",
-  "rustls-tls",
+  "query",
+  "rustls",
   "multipart",
   "blocking",
 ], default-features = false }
+# `rustls` must match reqwest's transitive rustls major.minor exactly.
+# reqwest's `use_preconfigured_tls` takes `impl Any` and downcasts to its
+# own `rustls::ClientConfig` type — a mismatch makes `ClientBuilder::build()`
+# return `Err("Unknown TLS backend...")` at runtime (covered by
+# `util::tls::tests::https_client_builds`). Bump together with reqwest.
+rustls = "0.23.4"
+webpki-roots = "1.0"
 serde = { version = "^1.0.219", features = ["derive"] }
 serde_json = "1.0.149"
 serde_yaml = "0.9.34"
@@ -66,6 +74,7 @@ members = [
   "android",
   "report_builder",
   "repository",
+  "mock_msupply",
   "graphql",
   "server",
   "service",
@@ -89,6 +98,7 @@ members = [
   "graphql/requisition",
   "graphql/requisition_line",
   "graphql/stock_line",
+  "graphql/stock_relocation",
   "graphql/stocktake",
   "graphql/stocktake_line",
   "graphql/types",

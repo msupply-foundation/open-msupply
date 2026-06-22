@@ -38,6 +38,7 @@ export enum AppRoute {
   Inventory = 'inventory',
   Stock = 'stock',
   Stocktakes = 'stocktakes',
+  StockMovement = 'stock-movement',
   Locations = 'locations',
   MasterLists = 'master-lists',
   IndicatorsDemographics = 'indicators-demographics',
@@ -48,6 +49,7 @@ export enum AppRoute {
   Stores = 'stores',
   GlobalPreferences = 'global-preferences',
   Campaigns = 'campaigns',
+  Plugins = 'plugins',
 
   Tools = 'tools',
 
@@ -71,6 +73,7 @@ export enum AppRoute {
 
   PageNotFound = 'page-not-found',
   PurchaseOrderOutstandingLines = 'outstanding-lines',
+  SyncMessage = 'sync-message',
 }
 
 export enum ExternalURL {

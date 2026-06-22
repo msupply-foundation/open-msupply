@@ -1,13 +1,17 @@
 import React from 'react';
 import {
-  InfiniteSearchPicker,
-  NameFilterInput,
+  Autocomplete,
   SxProps,
   Theme,
+  useBufferState,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useName, NameRowFragment } from '../../api';
-import { NullableNameSearchInputProps } from '../../utils';
+import { useName } from '../../api';
+import {
+  basicFilterOptions,
+  filterByNameAndCode,
+  NullableNameSearchInputProps,
+} from '../../utils';
 import { getNameOptionRenderer } from '../NameOptionRenderer';
 
 export const ManufacturerSearchInput = ({
@@ -16,37 +20,34 @@ export const ManufacturerSearchInput = ({
   fullWidth,
   value,
   disabled = false,
-  clearable = true,
-  currentId,
-  extraFilter,
-  filterBy,
-  textSx,
+  textSx = {},
 }: NullableNameSearchInputProps & {
-  fullWidth?: boolean;
   textSx?: SxProps<Theme>;
+  fullWidth?: boolean;
 }) => {
   const t = useTranslation();
+  const { data, isLoading } = useName.document.manufacturers();
+  const [buffer, setBuffer] = useBufferState(value);
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
   return (
-    <InfiniteSearchPicker<NameRowFragment, NameFilterInput>
-      value={value}
-      onChange={onChange}
-      currentId={currentId}
-      useInfiniteData={useName.document.manufacturersInfinite}
-      useGetById={useName.document.get}
-      apiFilter={filterBy as NameFilterInput | undefined}
-      getOptionLabel={option => option.name}
-      getOptionCode={option => option.code}
-      renderOption={NameOptionRenderer}
-      getOptionDisabled={option => option.isOnHold}
-      extraFilter={extraFilter}
+    <Autocomplete
       disabled={disabled}
-      clearable={clearable}
-      width={fullWidth ? undefined : width}
+      value={buffer && { ...buffer, label: buffer.name }}
+      filterOptionConfig={basicFilterOptions}
+      filterOptions={filterByNameAndCode}
+      loading={isLoading}
+      onChange={(_, name) => {
+        setBuffer(name);
+        onChange(name);
+      }}
+      options={data?.nodes ?? []}
+      renderOption={NameOptionRenderer}
+      width={fullWidth ? '100%' : `${width}px`}
       popperMinWidth={width}
+      isOptionEqualToValue={(option, value) => option?.id === value?.id}
+      getOptionDisabled={option => option.isOnHold}
       textSx={textSx}
-      noOptionsText={t('label.no-options')}
     />
   );
 };

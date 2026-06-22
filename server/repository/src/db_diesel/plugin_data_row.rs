@@ -3,8 +3,9 @@ use super::{
     StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, Upsert};
+use crate::{repository_error::RepositoryError, Delete, Upsert};
 
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
 use serde::{Deserialize, Serialize};
@@ -18,6 +19,7 @@ table! {
         related_record_id -> Nullable<Text>,
         data_identifier -> Text,
         data -> Text,
+        datetime -> Nullable<Timestamp>,
     }
 }
 
@@ -35,6 +37,10 @@ pub struct PluginDataRow {
     pub related_record_id: Option<String>,
     pub data_identifier: String, // Used by the plugin to identify the data, often would be a table name
     pub data: String,
+    /// Optional, plugin-controlled timestamp (e.g. "update time"). Kept as a
+    /// distinct column to allow efficient filtering by date range.
+    #[serde(default)]
+    pub datetime: Option<NaiveDateTime>,
 }
 
 pub struct PluginDataRowRepository<'a> {
@@ -63,6 +69,12 @@ impl<'a> PluginDataRowRepository<'a> {
             .optional()?;
 
         Ok(result)
+    }
+
+    pub fn delete(&self, id: &str, store_id: Option<String>) -> Result<i64, RepositoryError> {
+        diesel::delete(plugin_data::table.filter(plugin_data::id.eq(id)))
+            .execute(self.connection.lock().connection())?;
+        self.insert_changelog(id, store_id, RowActionType::Delete)
     }
 
     fn insert_changelog(
@@ -94,6 +106,26 @@ impl Upsert for PluginDataRow {
         assert_eq!(
             PluginDataRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
+        )
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PluginDataRowDelete(pub String);
+impl Delete for PluginDataRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let repo = PluginDataRowRepository::new(con);
+        // Look up the existing row to preserve its store_id on the delete changelog,
+        // so the delete is routed to the same sites the upsert was synced to.
+        let store_id = repo.find_one_by_id(&self.0)?.and_then(|row| row.store_id);
+        let change_log_id = repo.delete(&self.0, store_id)?;
+        Ok(Some(change_log_id))
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            PluginDataRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
         )
     }
 }

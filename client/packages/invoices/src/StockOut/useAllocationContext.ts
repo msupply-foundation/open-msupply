@@ -84,6 +84,7 @@ interface AllocationContext {
   setPrescribedQuantity: (quantity: number) => void;
   setNote: (note: string | null) => void;
   setVvmStatus: (id: string, vvmStatus?: VvmStatusFragment | null) => void;
+  setReceivedNumberOfPacks: (id: string, value: number | null) => void;
   setAllocateIn: (
     allocateIn: AllocateInOption,
     // TODO: these are passed into a few functions, can we intialise with them instead?
@@ -291,6 +292,14 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       draftLines: updatedLines,
       isDirty: true,
     }));
+  },
+
+  setReceivedNumberOfPacks: (id: string, value: number | null) => {
+    const { draftLines } = get();
+    const updatedLines = draftLines.map(line =>
+      line.id === id ? { ...line, receivedNumberOfPacks: value } : line
+    );
+    set(state => ({ ...state, draftLines: updatedLines, isDirty: true }));
   },
 
   autoAllocate: (quantity, format, t, allowPartialPacks = false) => {

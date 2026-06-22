@@ -2,6 +2,8 @@ use std::time::{Duration, Instant};
 
 use reqwest::*;
 
+use crate::https_client_builder;
+
 /// Returns the URL with the query string and fragment stripped, so it can be
 /// safely written to logs. Some endpoints (e.g. PatientApiV4) include patient
 /// names, DOB, policy number, etc. in the query string — never log those.
@@ -34,7 +36,7 @@ where
 {
     let mut index = 0;
     loop {
-        let client = Client::builder()
+        let client = https_client_builder()
             .connect_timeout(Duration::from_secs(connection_timeouts.0[index]))
             .read_timeout(READ_IDLE_TIMEOUT)
             .build()
@@ -123,7 +125,6 @@ where
             } else {
                 "not retrying".to_string()
             };
-
             log::warn!(
                 "API request failed: url '{}', {}, attempt {}/{} after {:.1}s (request body: {}); {}",
                 url_display,

@@ -270,7 +270,7 @@ mod test {
             RequisitionLineRow {
                 id: "requisition_line".to_string(),
                 requisition_id: requisition().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 snapshot_datetime: Some(
                     NaiveDate::from_ymd_opt(2021, 1, 2)
                         .unwrap()
@@ -295,7 +295,7 @@ mod test {
                 invoice_lines: vec![InvoiceLineRow {
                     id: format!("{invoice_id}line"),
                     invoice_id: invoice_id.clone(),
-                    item_link_id: mock_item_a().id,
+                    item_id: mock_item_a().id,
                     r#type: InvoiceLineType::StockOut,
                     stock_line_id: Some(format!("{invoice_id}stock_line")),
                     pack_size: 1.0,
@@ -304,7 +304,7 @@ mod test {
                 stock_lines: vec![StockLineRow {
                     id: format!("{invoice_id}stock_line"),
                     store_id: store().id,
-                    item_link_id: mock_item_a().id,
+                    item_id: mock_item_a().id,
                     pack_size: 1.0,
                     ..Default::default()
                 }],
@@ -534,7 +534,7 @@ mod test {
             RequisitionLineRow {
                 id: "requisition_line".to_string(),
                 requisition_id: requisition().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 snapshot_datetime: Some(
                     NaiveDate::from_ymd_opt(2021, 1, 2)
                         .unwrap()
@@ -561,7 +561,7 @@ mod test {
                 invoice_lines: vec![InvoiceLineRow {
                     id: format!("{invoice_id}line"),
                     invoice_id: invoice_id.clone(),
-                    item_link_id: mock_item_a().id,
+                    item_id: mock_item_a().id,
                     r#type: InvoiceLineType::StockOut,
                     stock_line_id: Some(format!("{invoice_id}stock_line")),
                     pack_size: 1.0,
@@ -570,7 +570,7 @@ mod test {
                 stock_lines: vec![StockLineRow {
                     id: format!("{invoice_id}stock_line"),
                     store_id: store().id,
-                    item_link_id: mock_item_a().id,
+                    item_id: mock_item_a().id,
                     pack_size: 1.0,
                     ..Default::default()
                 }],

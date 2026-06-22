@@ -180,7 +180,7 @@ fn generate_line(
     InvoiceLineRow {
         id,
         invoice_id,
-        item_link_id: item_id,
+        item_id,
         location_id: location.map(|l| l.value).unwrap_or_default(),
         pack_size,
         batch,
@@ -212,6 +212,8 @@ fn generate_line(
         prescribed_quantity: None,
         reason_option_id: None,
         status,
+        received_number_of_packs: None,
+        linked_invoice_line_id: None,
     }
 }
 

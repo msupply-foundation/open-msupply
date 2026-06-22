@@ -10,6 +10,7 @@ use crate::{
         LocationIsOnHoldError,
     },
     stock_line::historical_stock::get_historical_stock_line_available_quantity,
+    validate::check_other_party_store_is_disabled,
 };
 use repository::{
     InvoiceRow, InvoiceStatus, ItemRow, LocationRowRepository, StockLine, StorageConnection,
@@ -58,6 +59,9 @@ pub fn validate(
     }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
+        return Err(OtherPartyStoreDisabled);
     }
     if !check_batch_on_hold(&batch, &input.r#type) {
         return Err(BatchIsOnHold);

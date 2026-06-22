@@ -3,6 +3,7 @@ import {
   StockLineFilterInput,
   StockLineSortFieldInput,
   useQuery,
+  keepPreviousData,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../operations.generated';
 import { useStockGraphQL } from '../useStockGraphQL';
@@ -57,7 +58,7 @@ export const useStockList = (
     queryKey,
     queryFn,
 
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     enabled: options?.enabled,
   });
   return query;
@@ -75,6 +76,7 @@ const toSortField = (
     totalNumberOfPacks: StockLineSortFieldInput.NumberOfPacks,
     'location.code': StockLineSortFieldInput.LocationCode,
     costPricePerPack: StockLineSortFieldInput.CostPricePerPack,
+    sellPricePerPack: StockLineSortFieldInput.SellPricePerPack,
     expiryDate: StockLineSortFieldInput.ExpiryDate,
     manufactureDate: StockLineSortFieldInput.ManufactureDate,
   };

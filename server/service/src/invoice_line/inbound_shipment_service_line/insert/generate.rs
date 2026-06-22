@@ -27,7 +27,7 @@ pub fn generate(
         tax_percentage,
         note,
         item_code: item.code,
-        item_link_id: item.id,
+        item_id: item.id,
         item_name: name.unwrap_or(item.name),
         r#type: InvoiceLineType::Service,
         foreign_currency_price_before_tax: calculate_foreign_currency_total(
@@ -60,5 +60,7 @@ pub fn generate(
         volume_per_pack: 0.0,
         shipped_pack_size: None,
         status: None,
+        received_number_of_packs: None,
+        linked_invoice_line_id: None,
     })
 }
