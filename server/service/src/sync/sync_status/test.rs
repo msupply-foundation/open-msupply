@@ -571,7 +571,7 @@ async fn run_server_and_sync(
             central_pull: 1,
         },
         disable_integration_transaction: false,
-        disable_remote_site_auth: false,
+        relax_hardware_id_token_checks: false,
     };
 
     let synchroniser =

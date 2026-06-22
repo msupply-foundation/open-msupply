@@ -8,11 +8,8 @@ pub(crate) static SYNC_V6_VERSION: u32 = 5; // bumped for 2.9.02 (adding new typ
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Default)]
 #[serde(try_from = "SyncSettingsRaw")]
 pub struct SyncSettings {
-    // The core upstream-sync credentials are all-or-nothing: a `sync:` block must set all of
-    // url/username/password_sha256/interval_seconds together (upstream sync configured), or omit
-    // them all (a flags-only block, e.g. just `disable_remote_site_auth`). A partial set is a
-    // configuration error — see the `TryFrom` impl below. Use `has_core_sync_settings()` to tell a
-    // configured block from a flags-only one.
+    // url/username/password_sha256/interval_seconds are all-or-nothing (validated in `TryFrom`);
+    // `has_core_sync_settings()` reports whether they're set.
     pub url: String,
     pub username: String,
     pub password_sha256: String,
@@ -23,17 +20,14 @@ pub struct SyncSettings {
     /// Disable the outer transaction wrapping integration. Set to true if PostgreSQL runs out of
     /// shared memory (max_locks_per_transaction) during large initial syncs.
     pub disable_integration_transaction: bool,
-    /// When true, the central server skips v7 remote-site auth checks: the hardware-id match
-    /// (on every pull/push/status) and, during token issuance, the hardware-id match and the
-    /// "token already allocated" guard (a fresh token is minted, overwriting any existing one).
-    /// Site name + password are still required. Defaults to false. Only affects v7; intended for
-    /// recovery/migration, not normal operation.
-    pub disable_remote_site_auth: bool,
+    /// On a central server, relax the v7 hardware-id and token guards so a site can re-pair from a
+    /// new machine without an admin reset: skips the hardware-id match and the "token already
+    /// allocated" check. Site name, password and token are still verified. For recovery/migration.
+    pub relax_hardware_id_token_checks: bool,
 }
 
-/// Raw deserialization shape for [`SyncSettings`]. The four upstream-sync credential fields are
-/// optional here so they can be validated as a group (all set, or all omitted) in `TryFrom`,
-/// while the standalone flags (`batch_size`, `disable_*`) can appear on their own.
+/// Deserialization shape for [`SyncSettings`]: credential fields are optional so `TryFrom` can
+/// validate them as a group (all set, or all omitted).
 #[derive(Deserialize)]
 struct SyncSettingsRaw {
     #[serde(default)]
@@ -49,7 +43,7 @@ struct SyncSettingsRaw {
     #[serde(default)]
     disable_integration_transaction: bool,
     #[serde(default)]
-    disable_remote_site_auth: bool,
+    relax_hardware_id_token_checks: bool,
 }
 
 impl TryFrom<SyncSettingsRaw> for SyncSettings {
@@ -63,12 +57,11 @@ impl TryFrom<SyncSettingsRaw> for SyncSettings {
             interval_seconds,
             batch_size,
             disable_integration_transaction,
-            disable_remote_site_auth,
+            relax_hardware_id_token_checks,
         } = raw;
 
-        // url/username/password_sha256/interval_seconds are all-or-nothing: either upstream sync is
-        // fully configured, or the block carries only flags. A partial set is rejected so a typo or
-        // a half-filled `sync:` block fails loudly at startup instead of silently dropping fields.
+        // Credentials are all-or-nothing: reject a partial set so a half-filled `sync:` block fails
+        // loudly at startup instead of silently dropping fields.
         let (url, username, password_sha256, interval_seconds) =
             match (url, username, password_sha256, interval_seconds) {
                 (Some(url), Some(username), Some(password_sha256), Some(interval_seconds)) => {
@@ -90,7 +83,7 @@ impl TryFrom<SyncSettingsRaw> for SyncSettings {
             interval_seconds,
             batch_size,
             disable_integration_transaction,
-            disable_remote_site_auth,
+            relax_hardware_id_token_checks,
         })
     }
 }
@@ -123,10 +116,8 @@ impl SyncSettings {
         !equal
     }
 
-    /// Whether the core sync settings (url, username, password) are set. A `sync:` yaml block may
-    /// legitimately contain only flags (e.g. `disable_remote_site_auth`) without configuring
-    /// upstream sync — for that case this returns false and callers should treat the block as
-    /// "sync not configured" for credential / seeding / auth purposes.
+    /// Whether the core sync credentials (url, username, password) are set; a `sync:` block may
+    /// instead carry only flags, which callers treat as "sync not configured".
     pub fn has_core_sync_settings(&self) -> bool {
         !self.url.is_empty() && !self.username.is_empty() && !self.password_sha256.is_empty()
     }
@@ -136,20 +127,18 @@ impl SyncSettings {
 mod tests {
     use super::*;
 
-    // The credential fields are all-or-nothing. This guards the TryFrom validation: a half-filled
-    // `sync:` block must be rejected, not silently completed with blanks.
     #[test]
     fn partial_credentials_are_rejected() {
-        // url + username, but no password/interval — a partial credential set.
+        // Partial credential set (no password/interval) is rejected.
         let err = serde_yaml::from_str::<SyncSettings>("url: http://x\nusername: y\n")
             .unwrap_err()
             .to_string();
         assert!(err.contains("all together"), "unexpected error: {err}");
 
-        // Flags-only block (no credentials at all) is allowed.
+        // A flags-only block is allowed.
         let flags_only =
-            serde_yaml::from_str::<SyncSettings>("disable_remote_site_auth: true\n").unwrap();
-        assert!(flags_only.disable_remote_site_auth);
+            serde_yaml::from_str::<SyncSettings>("relax_hardware_id_token_checks: true\n").unwrap();
+        assert!(flags_only.relax_hardware_id_token_checks);
         assert!(!flags_only.has_core_sync_settings());
 
         // All four credentials present is allowed.

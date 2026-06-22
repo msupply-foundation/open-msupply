@@ -213,7 +213,7 @@ pub struct ServiceProvider {
     // Yaml only fields ----- Not stored in KV store
     pub(crate) batch_size: BatchSize,
     pub(crate) disable_integration_transaction: bool,
-    pub(crate) disable_remote_site_auth: bool,
+    pub(crate) relax_hardware_id_token_checks: bool,
 }
 
 pub struct ServiceContext {
@@ -224,7 +224,7 @@ pub struct ServiceContext {
     pub store_id: String,
     pub batch_size: BatchSize,
     pub disable_integration_transaction: bool,
-    pub disable_remote_site_auth: bool,
+    pub relax_hardware_id_token_checks: bool,
 }
 
 impl ServiceProvider {
@@ -258,7 +258,7 @@ impl ServiceProvider {
         subscription_trigger: SubscriptionTriggerHandle,
         batch_size: BatchSize,
         disable_integration_transaction: bool,
-        disable_remote_site_auth: bool,
+        relax_hardware_id_token_checks: bool,
     ) -> Self {
         ServiceProvider {
             connection_manager: connection_manager.clone(),
@@ -341,7 +341,7 @@ impl ServiceProvider {
             shipping_method_service: Box::new(ShippingMethodService {}),
             subscription_trigger,
             disable_integration_transaction,
-            disable_remote_site_auth,
+            relax_hardware_id_token_checks,
         }
     }
 
@@ -355,7 +355,7 @@ impl ServiceProvider {
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
             batch_size: self.batch_size.clone(),
             disable_integration_transaction: self.disable_integration_transaction,
-            disable_remote_site_auth: self.disable_remote_site_auth,
+            relax_hardware_id_token_checks: self.relax_hardware_id_token_checks,
         })
     }
 
@@ -371,7 +371,7 @@ impl ServiceProvider {
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
             batch_size: self.batch_size.clone(),
             disable_integration_transaction: self.disable_integration_transaction,
-            disable_remote_site_auth: self.disable_remote_site_auth,
+            relax_hardware_id_token_checks: self.relax_hardware_id_token_checks,
         })
     }
 
@@ -388,7 +388,7 @@ impl ServiceProvider {
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
             batch_size: self.batch_size.clone(),
             disable_integration_transaction: self.disable_integration_transaction,
-            disable_remote_site_auth: self.disable_remote_site_auth,
+            relax_hardware_id_token_checks: self.relax_hardware_id_token_checks,
         })
     }
 
@@ -409,7 +409,7 @@ impl ServiceContext {
             frontend_plugins_cache: FrontendPluginCache::new(),
             batch_size: BatchSize::default(),
             disable_integration_transaction: false,
-            disable_remote_site_auth: false,
+            relax_hardware_id_token_checks: false,
         }
     }
 }
