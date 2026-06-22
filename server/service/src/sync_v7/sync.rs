@@ -283,6 +283,11 @@ impl<'a> SyncV7<'a> {
             self.batch_size.remote_push
         );
 
+        // Start the progress with remaining = push queue count
+        let initial_cursor = cursor_controller.get(self.connection)? as i64;
+        let max_cursor = ChangelogRepository::new(self.connection).max_cursor()? as i64;
+        logger.progress((max_cursor - initial_cursor).max(0))?;
+
         loop {
             let cursor = cursor_controller.get(self.connection)? as i64;
 
