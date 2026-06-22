@@ -327,6 +327,30 @@ impl VVMStatusLogRow {
     }
 }
 
+impl UserPermissionRow {
+    pub(crate) fn generate_changelog(
+        row_or_id: RowOrId<UserPermissionRow>,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = match row_or_id {
+            RowOrId::Row(row) => row,
+            RowOrId::Id(row_id) => &UserPermissionRowRepository::new(con)
+                .find_one_by_id(row_id)?
+                .ok_or(RepositoryError::NotFound)?,
+        };
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::UserPermission,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: row.store_id.clone(),
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
 // ==========================================================================
 // Lines that inherit their parent's changelog
 // --------------------------------------------------------------------------
@@ -1907,23 +1931,6 @@ impl UserAccountRow {
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::UserAccount,
-            record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
-impl UserPermissionRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::UserPermission,
             record_id,
             row_action: action,
             source_site_id: source_site_id.get_id(con)?,
