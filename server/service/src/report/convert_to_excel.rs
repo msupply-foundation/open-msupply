@@ -10,7 +10,12 @@ use umya_spreadsheet::{
     Cell, FontSize, Spreadsheet, Worksheet,
 };
 
-pub fn csv_to_excel(base_dir: &str, csv_data: &str, filename: &str) -> Result<String, ReportError> {
+pub fn csv_to_excel(
+    base_dir: &str,
+    csv_data: &str,
+    filename: &str,
+    sheet_name: Option<&str>,
+) -> Result<String, ReportError> {
     // Parse CSV data
     let mut reader = Reader::from_reader(csv_data.as_bytes());
     let headers = reader
@@ -25,6 +30,10 @@ pub fn csv_to_excel(base_dir: &str, csv_data: &str, filename: &str) -> Result<St
 
     // Create Excel workbook
     let mut book = umya_spreadsheet::new_file();
+    if let Some(name) = sheet_name.map(sanitize_sheet_name).filter(|n| !n.is_empty()) {
+        // Failure to rename the default sheet is non-fatal — fall through with the default name.
+        let _ = book.set_sheet_name(0, &name);
+    }
     let sheet = book
         .get_sheet_mut(&0)
         .ok_or_else(|| ReportError::DocGenerationError("Failed to get worksheet".to_string()))?;
@@ -77,6 +86,21 @@ pub fn export_html_report_to_excel(
         .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
 
     Ok(reserved_file.id)
+}
+
+/// Coerce a free-form string into a value Excel will accept as a sheet name.
+/// Excel forbids `\ / ? * [ ] :`, leading/trailing apostrophes, names longer
+/// than 31 chars, and empty names.
+fn sanitize_sheet_name(name: &str) -> String {
+    let cleaned: String = name
+        .chars()
+        .map(|c| match c {
+            '\\' | '/' | '?' | '*' | '[' | ']' | ':' => '_',
+            _ => c,
+        })
+        .collect();
+    let trimmed = cleaned.trim().trim_matches('\'');
+    trimmed.chars().take(31).collect()
 }
 
 /// Hold a file in the temporary directory
@@ -714,7 +738,7 @@ mod report_to_excel_test {
     fn test_csv_to_excel() {
         let csv_data = "Name,Status,Invoice Number\nHarry Potter,Picked,2\nHermione Granger,New,3\nRon Weasley,New,4\n";
 
-        let result = csv_to_excel(".", csv_data, "test_csv_export");
+        let result = csv_to_excel(".", csv_data, "test_csv_export", None);
         assert!(result.is_ok(), "CSV to Excel conversion should succeed");
 
         let file_id = result.unwrap();
@@ -750,6 +774,33 @@ mod report_to_excel_test {
         assert_eq!(get_value("A4"), "Ron Weasley");
         assert_eq!(get_value("B4"), "New");
         assert_eq!(get_value("C4"), "4");
+    }
+
+    #[test]
+    fn test_csv_to_excel_sets_sheet_name() {
+        let csv_data = "Name,Status\nHarry Potter,Picked\n";
+        let file_id =
+            csv_to_excel(".", csv_data, "test_sheet_name", Some("fsmclinic")).unwrap();
+
+        let file_service = StaticFileService::new(".").unwrap();
+        let generated_file = file_service
+            .find_file(&file_id, StaticFileCategory::Temporary)
+            .unwrap()
+            .unwrap();
+        let book = umya_spreadsheet::reader::xlsx::read(&generated_file.path).unwrap();
+        let sheet = book.get_sheet(&0).unwrap();
+        assert_eq!(sheet.get_name(), "fsmclinic");
+    }
+
+    #[test]
+    fn test_sanitize_sheet_name_strips_forbidden_chars_and_truncates() {
+        // Forbidden characters become underscores
+        assert_eq!(sanitize_sheet_name("a/b\\c?d*e[f]g:h"), "a_b_c_d_e_f_g_h");
+        // Leading/trailing apostrophes and whitespace stripped
+        assert_eq!(sanitize_sheet_name("  'name'  "), "name");
+        // Truncated to 31 chars
+        let long = "a".repeat(50);
+        assert_eq!(sanitize_sheet_name(&long).len(), 31);
     }
 
     #[test]
