@@ -13,6 +13,7 @@ util = { path = "../util" }
 clap = { workspace = true }
 chrono = { workspace = true }
 rand = { workspace = true }
+itertools = { workspace = true }
 diesel = { version = "2.3.7", default-features = false, features = [
     "r2d2",
     "numeric",

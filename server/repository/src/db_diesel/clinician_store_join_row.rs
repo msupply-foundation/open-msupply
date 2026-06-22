@@ -2,11 +2,14 @@ use super::{clinician_link_row::clinician_link, clinician_row::clinician, Storag
 
 use crate::{ChangelogRepository, RowActionType};
 use crate::{RepositoryError, SourceSiteId};
+use crate::diesel_macros::define_batch_table;
 
 use diesel::prelude::*;
 
-table! {
-  clinician_store_join (id) {
+define_batch_table! {
+    struct: ClinicianStoreJoinRow,
+    repo: ClinicianStoreJoinRowRepository,
+    table: clinician_store_join (id) {
     id -> Text,
     store_id -> Text,
     clinician_link_id -> Text,

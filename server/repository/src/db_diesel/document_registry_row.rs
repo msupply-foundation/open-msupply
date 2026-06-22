@@ -1,8 +1,8 @@
 use super::StorageConnection;
 
 use crate::{
-    db_diesel::form_schema_row::form_schema, ChangelogRepository, RepositoryError, RowActionType,
-    SourceSiteId,
+    db_diesel::form_schema_row::form_schema, diesel_macros::define_batch_table, ChangelogRepository,
+    RepositoryError, RowActionType, SourceSiteId,
 };
 
 use diesel::prelude::*;
@@ -18,8 +18,10 @@ pub enum DocumentRegistryCategory {
     Custom,
 }
 
-table! {
-    document_registry (id) {
+define_batch_table! {
+    struct: DocumentRegistryRow,
+    repo: DocumentRegistryRowRepository,
+    table: document_registry (id) {
         id -> Text,
         category -> crate::DocumentRegistryCategoryMapping,
         document_type -> Text,

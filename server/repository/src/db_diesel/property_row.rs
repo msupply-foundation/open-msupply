@@ -2,6 +2,7 @@ use super::property_row::property::dsl::*;
 
 use serde::{Deserialize, Serialize};
 
+use crate::diesel_macros::define_batch_table;
 use crate::types::PropertyValueType;
 use crate::ChangelogRepository;
 use crate::RepositoryError;
@@ -11,8 +12,10 @@ use crate::StorageConnection;
 
 use diesel::prelude::*;
 
-table! {
-    property (id) {
+define_batch_table! {
+    struct: PropertyRow,
+    repo: PropertyRowRepository,
+    table: property (id) {
         id -> Text,
         key -> Text,
         name -> Text,

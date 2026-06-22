@@ -1,13 +1,16 @@
 use super::{sensor_row::sensor, store_row::store, StorageConnection};
 
+use crate::diesel_macros::define_batch_table;
 use crate::{repository_error::RepositoryError, SourceSiteId};
 use crate::{ChangelogRepository, RowActionType};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
-table! {
-    temperature_log (id) {
+define_batch_table! {
+    struct: TemperatureLogRow,
+    repo: TemperatureLogRowRepository,
+    table: temperature_log (id) {
         id -> Text,
         temperature -> Double,
         sensor_id -> Text,
@@ -17,6 +20,7 @@ table! {
         temperature_breach_id -> Nullable<Text>,
     }
 }
+
 
 joinable!(temperature_log -> sensor (sensor_id));
 joinable!(temperature_log -> store (store_id));

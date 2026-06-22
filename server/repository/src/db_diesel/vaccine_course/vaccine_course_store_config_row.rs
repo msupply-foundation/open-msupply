@@ -1,12 +1,15 @@
 use super::vaccine_course_store_config_row::vaccine_course_store_config::dsl::*;
 use crate::{
-    ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
+    diesel_macros::define_batch_table, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    vaccine_course_store_config (id) {
+define_batch_table! {
+    struct: VaccineCourseStoreConfigRow,
+    repo: VaccineCourseStoreConfigRowRepository,
+    table: vaccine_course_store_config (id) {
         id -> Text,
         vaccine_course_id -> Text,
         store_id -> Text,

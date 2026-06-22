@@ -1,5 +1,6 @@
 use crate::{
-    ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
+    diesel_macros::define_batch_table, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 
 use super::{
@@ -13,8 +14,10 @@ use serde::{Deserialize, Serialize};
 
 use diesel::prelude::*;
 
-table! {
-    contact_form (id) {
+define_batch_table! {
+    struct: ContactFormRow,
+    repo: ContactFormRowRepository,
+    table: contact_form (id) {
         id -> Text,
         reply_email -> Text,
         body -> Text,

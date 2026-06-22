@@ -1,12 +1,15 @@
 use super::printer_row::printer::dsl::*;
 use crate::{
-    ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
+    diesel_macros::define_batch_table, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    printer (id) {
+define_batch_table! {
+    struct: PrinterRow,
+    repo: PrinterRowRepository,
+    table: printer (id) {
         id -> Text,
         description -> Text,
         address -> Text,

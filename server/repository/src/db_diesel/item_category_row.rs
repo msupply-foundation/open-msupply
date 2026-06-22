@@ -1,14 +1,16 @@
 use super::{category_row::category, item_link_row::item_link, item_row::item, StorageConnection};
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, RowActionType,
-    SourceSiteId,
+    diesel_macros::define_batch_table, repository_error::RepositoryError, ChangelogRepository,
+    RowActionType, SourceSiteId,
 };
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
-table! {
-    item_category_join (id) {
+define_batch_table! {
+    struct: ItemCategoryJoinRow,
+    repo: ItemCategoryJoinRowRepository,
+    table: item_category_join (id) {
         id -> Text,
         item_link_id -> Text,
         category_id -> Text,

@@ -1,12 +1,15 @@
 use super::abbreviation_row::abbreviation::dsl::*;
 use crate::{
-    ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
+    diesel_macros::define_batch_table, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    abbreviation (id) {
+define_batch_table! {
+    struct: AbbreviationRow,
+    repo: AbbreviationRowRepository,
+    table: abbreviation (id) {
         id -> Text,
         text -> Text,
         expansion -> Text,

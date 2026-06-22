@@ -5,12 +5,15 @@ use crate::{
     repository_error::RepositoryError, StorageConnection,
 };
 use crate::{
-    name_oms_fields, ChangelogRepository, RowActionType, SourceSiteId,
+    diesel_macros::define_batch_table, name_oms_fields, ChangelogRepository, RowActionType,
+    SourceSiteId,
 };
 use diesel::prelude::*;
 
-table! {
-    program_requisition_settings (id) {
+define_batch_table! {
+    struct: ProgramRequisitionSettingsRow,
+    repo: ProgramRequisitionSettingsRowRepository,
+    table: program_requisition_settings (id) {
         id -> Text,
         name_tag_id -> Text,
         program_id -> Text,

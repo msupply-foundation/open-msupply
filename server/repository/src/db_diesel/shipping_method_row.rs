@@ -1,12 +1,15 @@
 use crate::{
-    ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
+    diesel_macros::define_batch_table, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    shipping_method (id) {
+define_batch_table! {
+    struct: ShippingMethodRow,
+    repo: ShippingMethodRowRepository,
+    table: shipping_method (id) {
         id -> Text,
         method -> Text,
         deleted_datetime -> Nullable<Timestamp>

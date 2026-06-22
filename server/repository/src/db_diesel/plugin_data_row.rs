@@ -3,15 +3,17 @@ use super::{
     StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, SourceSiteId};
+use crate::{diesel_macros::define_batch_table, repository_error::RepositoryError, SourceSiteId};
 
 use diesel::prelude::*;
 
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-table! {
-    plugin_data (id) {
+define_batch_table! {
+    struct: PluginDataRow,
+    repo: PluginDataRowRepository,
+    table: plugin_data (id) {
         id -> Text,
         store_id -> Nullable<Text>,
         plugin_code -> Text,

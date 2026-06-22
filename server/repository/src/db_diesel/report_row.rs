@@ -3,7 +3,9 @@ use super::{
     RowActionType, StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, SourceSiteId};
+use crate::{
+    diesel_macros::define_batch_table, repository_error::RepositoryError, SourceSiteId,
+};
 use clap::ValueEnum;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -37,8 +39,10 @@ pub enum ContextType {
     CustomerReturn,
 }
 
-table! {
-  report (id) {
+define_batch_table! {
+    struct: ReportRow,
+    repo: ReportRowRepository,
+    table: report (id) {
       id -> Text,
       name -> Text,
       template -> Text,

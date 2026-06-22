@@ -4,13 +4,16 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::{
-    ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
+    diesel_macros::define_batch_table, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 
 use diesel::prelude::*;
 
-table! {
-    vaccine_course (id) {
+define_batch_table! {
+    struct: VaccineCourseRow,
+    repo: VaccineCourseRowRepository,
+    table: vaccine_course (id) {
         id -> Text,
         name -> Text,
         program_id -> Text,

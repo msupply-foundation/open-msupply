@@ -2,6 +2,7 @@ use super::{name_property_row::name_property::dsl::*, property_row::property};
 
 use serde::{Deserialize, Serialize};
 
+use crate::diesel_macros::define_batch_table;
 use crate::ChangelogRepository;
 use crate::RepositoryError;
 use crate::RowActionType;
@@ -10,8 +11,10 @@ use crate::StorageConnection;
 
 use diesel::prelude::*;
 
-table! {
-    name_property (id) {
+define_batch_table! {
+    struct: NamePropertyRow,
+    repo: NamePropertyRowRepository,
+    table: name_property (id) {
         id -> Text,
         property_id -> Text,
         remote_editable -> Bool,

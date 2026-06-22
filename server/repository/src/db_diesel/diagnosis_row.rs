@@ -1,13 +1,16 @@
 use super::diagnosis_row::diagnosis::dsl::*;
 use crate::{
-    ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
+    diesel_macros::define_batch_table, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 use chrono::NaiveDate;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    diagnosis (id) {
+define_batch_table! {
+    struct: DiagnosisRow,
+    repo: DiagnosisRowRepository,
+    table: diagnosis (id) {
         id -> Text,
         code -> Text,
         description -> Text,

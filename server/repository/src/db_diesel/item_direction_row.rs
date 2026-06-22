@@ -2,14 +2,16 @@ use super::item_direction_row::item_direction::dsl::*;
 use super::item_link;
 use super::item_row::item;
 use crate::{
-    ChangelogRepository, RepositoryError, RowActionType, SourceSiteId,
-    StorageConnection,
+    diesel_macros::define_batch_table, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    item_direction (id) {
+define_batch_table! {
+    struct: ItemDirectionRow,
+    repo: ItemDirectionRowRepository,
+    table: item_direction (id) {
         id -> Text,
         item_link_id -> Text,
         directions -> Text,

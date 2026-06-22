@@ -1,3 +1,4 @@
+use crate::diesel_macros::define_batch_table;
 use crate::{ChangelogRepository, RowActionType};
 use crate::{RepositoryError, SourceSiteId, StorageConnection};
 
@@ -7,8 +8,11 @@ use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
-table! {
-    system_log (id) {
+define_batch_table! {
+    struct: SystemLogRow,
+    repo: SystemLogRowRepository,
+    writer: _insert_one,
+    table: system_log (id) {
         id -> Text,
         #[sql_name = "type"] type_ -> crate::db_diesel::system_log_row::SystemLogTypeMapping,
         sync_site_id -> Nullable<Integer>,

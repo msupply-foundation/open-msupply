@@ -1,7 +1,8 @@
 use super::StorageConnection;
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
+    diesel_macros::define_batch_table, repository_error::RepositoryError, ChangelogRepository,
+    RowActionType, SourceSiteId,
 };
 
 use diesel::prelude::*;
@@ -13,8 +14,10 @@ use crate::db_diesel::{
     name_row::name, stock_line_row::stock_line,
 };
 
-table! {
-    reason_option (id) {
+define_batch_table! {
+    struct: ReasonOptionRow,
+    repo: ReasonOptionRowRepository,
+    table: reason_option (id) {
         id -> Text,
         #[sql_name = "type"] type_ -> crate::db_diesel::reason_option_row::ReasonOptionTypeMapping,
         is_active -> Bool,

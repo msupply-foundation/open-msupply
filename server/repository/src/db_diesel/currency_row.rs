@@ -3,12 +3,15 @@ use crate::SourceSiteId;
 
 use crate::repository_error::RepositoryError;
 use crate::{ChangelogRepository, RowActionType};
+use crate::diesel_macros::define_batch_table;
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
 
-table! {
-    currency (id) {
+define_batch_table! {
+    struct: CurrencyRow,
+    repo: CurrencyRowRepository,
+    table: currency (id) {
         id -> Text,
         rate -> Double,
         code -> Text,

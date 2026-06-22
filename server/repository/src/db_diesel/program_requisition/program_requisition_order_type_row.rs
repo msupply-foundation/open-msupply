@@ -1,14 +1,16 @@
 use super::program_requisition_settings_row::program_requisition_settings;
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
-    StorageConnection,
+    diesel_macros::define_batch_table, repository_error::RepositoryError, ChangelogRepository,
+    RowActionType, SourceSiteId, StorageConnection,
 };
 
 use diesel::prelude::*;
 
-table! {
-    program_requisition_order_type (id) {
+define_batch_table! {
+    struct: ProgramRequisitionOrderTypeRow,
+    repo: ProgramRequisitionOrderTypeRowRepository,
+    table: program_requisition_order_type (id) {
         id -> Text,
         program_requisition_settings_id -> Text,
         name -> Text,

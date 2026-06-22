@@ -1,6 +1,7 @@
 use super::asset_log_reason_row::asset_log_reason::dsl::*;
 
 use crate::asset_log_row::AssetLogStatus;
+use crate::diesel_macros::define_batch_table;
 use crate::ChangelogRepository;
 use crate::RepositoryError;
 use crate::RowActionType;
@@ -11,8 +12,10 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    asset_log_reason (id) {
+define_batch_table! {
+    struct: AssetLogReasonRow,
+    repo: AssetLogReasonRowRepository,
+    table: asset_log_reason (id) {
         id -> Text,
         asset_log_status -> crate::db_diesel::assets::asset_log_row::AssetLogStatusMapping,
         reason -> Text,
@@ -20,6 +23,7 @@ table! {
         comments_required -> Bool,
     }
 }
+
 
 #[derive(
     Clone, Insertable, Queryable, Default, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,

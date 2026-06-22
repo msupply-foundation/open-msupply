@@ -1,14 +1,16 @@
 use crate::{
-    ChangelogRepository,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection,
+    diesel_macros::define_batch_table, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    bundled_item(id) {
+define_batch_table! {
+    struct: BundledItemRow,
+    repo: BundledItemRowRepository,
+    table: bundled_item(id) {
         id -> Text,
         principal_item_variant_id -> Text,
         bundled_item_variant_id -> Text,

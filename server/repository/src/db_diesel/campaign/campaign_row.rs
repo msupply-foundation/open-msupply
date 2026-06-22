@@ -1,12 +1,15 @@
 use crate::{
-    ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
+    diesel_macros::define_batch_table, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 use chrono::NaiveDate;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    campaign(id) {
+define_batch_table! {
+    struct: CampaignRow,
+    repo: CampaignRowRepository,
+    table: campaign(id) {
         id -> Text,
         name -> Text,
         start_date -> Nullable<Date>,

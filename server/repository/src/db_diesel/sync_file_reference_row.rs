@@ -1,5 +1,6 @@
 use super::sync_file_reference_row::sync_file_reference::dsl::*;
 
+use crate::diesel_macros::define_batch_table;
 use crate::RepositoryError;
 use crate::StorageConnection;
 
@@ -30,8 +31,10 @@ pub enum SyncFileDirection {
     Download, // Download is the default as this is the direction we want for new record via sync, which will be defaulted
 }
 
-table! {
-    sync_file_reference (id) {
+define_batch_table! {
+    struct: SyncFileReferenceRow,
+    repo: SyncFileReferenceRowRepository,
+    table: sync_file_reference (id) {
         id -> Text,
         table_name -> Text,
         record_id -> Text,

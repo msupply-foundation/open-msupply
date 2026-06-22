@@ -141,8 +141,8 @@ impl RowOrDelete {
 
 impl Row {
     /// (table_name, record_id) for this row, derived via the changelog generation
-    /// (which already knows each variant's table and id). Test/assert helper.
-    fn table_and_record_id(
+    /// (which already knows each variant's table and id).
+    pub(crate) fn table_and_record_id(
         &self,
         con: &StorageConnection,
     ) -> (ChangelogTableName, String) {

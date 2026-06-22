@@ -6,14 +6,17 @@ use crate::{
         context_row::context, document::document, item_link_row::item_link,
         master_list_row::master_list,
     },
+    diesel_macros::define_batch_table,
     repository_error::RepositoryError,
     ChangelogRepository, RowActionType, SourceSiteId, StorageConnection,
 };
 
 use diesel::prelude::*;
 
-table! {
-    program (id) {
+define_batch_table! {
+    struct: ProgramRow,
+    repo: ProgramRowRepository,
+    table: program (id) {
         id -> Text,
         master_list_id -> Nullable<Text>,
         name -> Text,

@@ -1,5 +1,6 @@
 use super::{location_row::location, sensor_row::sensor, store_row::store, StorageConnection};
 
+use crate::diesel_macros::define_batch_table;
 use crate::{repository_error::RepositoryError, SourceSiteId};
 use crate::{ChangelogRepository, RowActionType};
 
@@ -8,8 +9,10 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-table! {
-    temperature_breach (id) {
+define_batch_table! {
+    struct: TemperatureBreachRow,
+    repo: TemperatureBreachRowRepository,
+    table: temperature_breach (id) {
         id -> Text,
         duration_milliseconds -> Integer,
         #[sql_name = "type"] type_ -> crate::db_diesel::temperature_breach_row::TemperatureBreachTypeMapping,
@@ -25,6 +28,7 @@ table! {
         comment -> Nullable<Text>,
     }
 }
+
 
 joinable!(temperature_breach -> sensor (sensor_id));
 joinable!(temperature_breach -> store (store_id));

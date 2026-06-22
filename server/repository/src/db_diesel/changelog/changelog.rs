@@ -116,7 +116,7 @@ diesel_string_enum! {
 }
 
 diesel_string_enum! {
-    #[derive(Clone, Eq, Hash, Serialize, Deserialize, strum::EnumIter, TS)]
+    #[derive(Clone, Eq, Hash, Serialize, Deserialize, strum::EnumIter, TS, PartialOrd, Ord)]
     #[strum(serialize_all = "snake_case")]
     // The set of tables tracked by the changelog. How each one syncs is
     // defined separately in `sync_style.rs`.

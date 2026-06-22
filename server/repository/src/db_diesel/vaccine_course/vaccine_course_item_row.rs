@@ -4,13 +4,16 @@ use crate::db_diesel::item_row::item;
 use crate::RepositoryError;
 use crate::StorageConnection;
 use crate::{ChangelogRepository, RowActionType, SourceSiteId};
+use crate::diesel_macros::define_batch_table;
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    vaccine_course_item (id) {
+define_batch_table! {
+    struct: VaccineCourseItemRow,
+    repo: VaccineCourseItemRowRepository,
+    table: vaccine_course_item (id) {
         id -> Text,
         vaccine_course_id -> Text,
         item_link_id -> Text,

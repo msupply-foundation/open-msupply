@@ -1,7 +1,8 @@
 use super::{user_store_join_row::user_store_join, StorageConnection};
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
+    diesel_macros::define_batch_table, repository_error::RepositoryError, ChangelogRepository,
+    RowActionType, SourceSiteId,
 };
 
 use super::{store_row::store, user_row::user_account};
@@ -11,8 +12,10 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 use util::constants::DEFAULT_AMC_LOOKBACK_MONTHS;
 
-table! {
-    store_preference (id) {
+define_batch_table! {
+    struct: StorePreferenceRow,
+    repo: StorePreferenceRowRepository,
+    table: store_preference (id) {
         id -> Text,
         #[sql_name = "type"] type_ -> crate::db_diesel::store_preference_row::StorePreferenceTypeMapping,
         pack_to_one -> Bool,

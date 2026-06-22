@@ -4,14 +4,18 @@ use crate::{
     db_diesel::store_row::store, repository_error::RepositoryError, user_account, SourceSiteId,
 };
 use crate::{ChangelogRepository, RowActionType};
+use crate::diesel_macros::define_batch_table;
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-table! {
-    activity_log (id) {
+define_batch_table! {
+    struct: ActivityLogRow,
+    repo: ActivityLogRowRepository,
+    writer: _insert_one,
+    table: activity_log (id) {
         id -> Text,
         #[sql_name = "type"] type_ -> crate::db_diesel::activity_log_row::ActivityLogTypeMapping,
         user_id -> Nullable<Text>,

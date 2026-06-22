@@ -1,12 +1,14 @@
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
-    StorageConnection,
+    diesel_macros::define_batch_table, repository_error::RepositoryError, ChangelogRepository,
+    RowActionType, SourceSiteId, StorageConnection,
 };
 
 use diesel::prelude::*;
 
-table! {
-    period_schedule (id) {
+define_batch_table! {
+    struct: PeriodScheduleRow,
+    repo: PeriodScheduleRowRepository,
+    table: period_schedule (id) {
         id -> Text,
         name -> Text,
     }

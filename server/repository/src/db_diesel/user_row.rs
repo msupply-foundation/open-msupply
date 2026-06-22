@@ -1,15 +1,18 @@
 use super::StorageConnection;
 
 use crate::{
-    lower, repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
+    diesel_macros::define_batch_table, lower, repository_error::RepositoryError,
+    ChangelogRepository, RowActionType, SourceSiteId,
 };
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 
-table! {
-    user_account (id) {
+define_batch_table! {
+    struct: UserAccountRow,
+    repo: UserAccountRowRepository,
+    table: user_account (id) {
         id -> Text,
         username -> Text,
         hashed_password -> Text,

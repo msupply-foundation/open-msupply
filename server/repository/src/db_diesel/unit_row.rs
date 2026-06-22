@@ -1,12 +1,14 @@
 use super::{unit_row::unit::dsl::*, StorageConnection};
 use crate::{
-    db_diesel::changelog::ChangelogRepository, repository_error::RepositoryError,
-    ChangelogTableName, RowActionType, SourceSiteId,
+    db_diesel::changelog::ChangelogRepository, diesel_macros::define_batch_table,
+    repository_error::RepositoryError, ChangelogTableName, RowActionType, SourceSiteId,
 };
 use diesel::prelude::*;
 
-table! {
-    unit (id) {
+define_batch_table! {
+    struct: UnitRow,
+    repo: UnitRowRepository,
+    table: unit (id) {
         id -> Text,
         name -> Text,
         description -> Nullable<Text>,
@@ -133,5 +135,15 @@ impl<'a> UnitRowRepository<'a> {
 
     pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
         self._mark_deleted(record_id)
+    }
+
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::update(unit.filter(id.eq_any(ids)))
+            .set(is_active.eq(false))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 }

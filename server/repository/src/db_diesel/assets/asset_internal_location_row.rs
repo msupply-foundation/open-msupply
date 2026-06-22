@@ -5,13 +5,16 @@ use crate::RepositoryError;
 use crate::SourceSiteId;
 use crate::StorageConnection;
 use crate::{ChangelogRepository, RowActionType};
+use crate::diesel_macros::define_batch_table;
 use serde::Deserialize;
 use serde::Serialize;
 
 use diesel::prelude::*;
 
-table! {
-    asset_internal_location (id) {
+define_batch_table! {
+    struct: AssetInternalLocationRow,
+    repo: AssetInternalLocationRowRepository,
+    table: asset_internal_location (id) {
         id -> Text,
         asset_id -> Text,
         location_id -> Text,

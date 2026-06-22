@@ -2,14 +2,17 @@ use super::{location_row::location, store_row::store, StorageConnection};
 
 use crate::{repository_error::RepositoryError, SourceSiteId};
 use crate::{ChangelogRepository, RowActionType};
+use crate::diesel_macros::define_batch_table;
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-table! {
-    sensor (id) {
+define_batch_table! {
+    struct: SensorRow,
+    repo: SensorRowRepository,
+    table: sensor (id) {
         id -> Text,
         name -> Text,
         serial -> Text,

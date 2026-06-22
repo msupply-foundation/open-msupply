@@ -1,13 +1,16 @@
 use super::{name_oms_fields, StorageConnection};
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
+    diesel_macros::define_batch_table, repository_error::RepositoryError, ChangelogRepository,
+    RowActionType, SourceSiteId,
 };
 
 use diesel::prelude::*;
 
-table! {
-    name_tag (id) {
+define_batch_table! {
+    struct: NameTagRow,
+    repo: NameTagRowRepository,
+    table: name_tag (id) {
         id -> Text,
         name -> Text,
     }

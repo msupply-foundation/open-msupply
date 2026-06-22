@@ -3,12 +3,15 @@ use super::{
 };
 use crate::{repository_error::RepositoryError, SourceSiteId};
 use crate::{ChangelogRepository, RowActionType};
+use crate::diesel_macros::define_batch_table;
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
-table! {
-    location_movement (id) {
+define_batch_table! {
+    struct: LocationMovementRow,
+    repo: LocationMovementRowRepository,
+    table: location_movement (id) {
         id -> Text,
         store_id -> Text,
         stock_line_id -> Text,

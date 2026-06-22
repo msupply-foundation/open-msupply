@@ -3,15 +3,17 @@ use crate::{
     db_diesel::{
         changelog::changelog::RowOrId, invoice_line_row::invoice_line,
         stock_line_row::stock_line, store_row::store,
-    }, ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
+    }, diesel_macros::define_batch_table, ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
 };
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    vvm_status_log (id) {
+define_batch_table! {
+    struct: VVMStatusLogRow,
+    repo: VVMStatusLogRowRepository,
+    table: vvm_status_log (id) {
         id -> Text,
         status_id -> Text,
         created_datetime -> Timestamp,
@@ -22,6 +24,7 @@ table! {
         store_id -> Text
     }
 }
+
 
 joinable!(vvm_status_log -> stock_line (stock_line_id));
 joinable!(vvm_status_log -> invoice_line (invoice_line_id));

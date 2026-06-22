@@ -1,14 +1,16 @@
 use super::{item_link, item_row::item, warning_row::warning};
 use crate::{
-    ChangelogRepository, RepositoryError, RowActionType, SourceSiteId,
-    StorageConnection,
+    diesel_macros::define_batch_table, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    item_warning_join (id) {
+define_batch_table! {
+    struct: ItemWarningJoinRow,
+    repo: ItemWarningJoinRowRepository,
+    table: item_warning_join (id) {
         id -> Text,
         item_link_id -> Text,
         warning_id -> Text,

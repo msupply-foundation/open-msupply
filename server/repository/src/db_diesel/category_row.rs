@@ -1,13 +1,15 @@
 use super::item_link_row::item_link;
 use crate::{
-    item_row::item, repository_error::RepositoryError, ChangelogRepository, RowActionType,
-    SourceSiteId, StorageConnection,
+    diesel_macros::define_batch_table, item_row::item, repository_error::RepositoryError,
+    ChangelogRepository, RowActionType, SourceSiteId, StorageConnection,
 };
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
-table! {
-    category (id) {
+define_batch_table! {
+    struct: CategoryRow,
+    repo: CategoryRowRepository,
+    table: category (id) {
         id -> Text,
         name -> Text,
         description -> Nullable<Text>,

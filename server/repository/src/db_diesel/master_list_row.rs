@@ -1,13 +1,16 @@
 use super::{item_link_row::item_link, master_list_row::master_list::dsl::*, StorageConnection};
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
+    diesel_macros::define_batch_table, repository_error::RepositoryError, ChangelogRepository,
+    RowActionType, SourceSiteId,
 };
 
 use diesel::prelude::*;
 
-table! {
-    master_list (id) {
+define_batch_table! {
+    struct: MasterListRow,
+    repo: MasterListRowRepository,
+    table: master_list (id) {
         id -> Text,
         name -> Text,
         code -> Text,

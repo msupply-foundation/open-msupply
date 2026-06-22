@@ -2,6 +2,7 @@ use super::asset_property_row::asset_property::dsl::*;
 
 use serde::{Deserialize, Serialize};
 
+use crate::diesel_macros::define_batch_table;
 use crate::types::PropertyValueType;
 use crate::ChangelogRepository;
 use crate::RepositoryError;
@@ -11,8 +12,10 @@ use crate::StorageConnection;
 
 use diesel::prelude::*;
 
-table! {
-    asset_property (id) {
+define_batch_table! {
+    struct: AssetPropertyRow,
+    repo: AssetPropertyRowRepository,
+    table: asset_property (id) {
         id -> Text,
         key -> Text,
         name -> Text,
@@ -23,6 +26,7 @@ table! {
         allowed_values -> Nullable<Text>,
     }
 }
+
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,

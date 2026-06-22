@@ -4,13 +4,16 @@ use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::repository_error::RepositoryError;
 use crate::{ChangelogRepository, RowActionType};
 use crate::SourceSiteId;
+use crate::diesel_macros::define_batch_table;
 
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 
-table! {
-    stocktake (id) {
+define_batch_table! {
+    struct: StocktakeRow,
+    repo: StocktakeRowRepository,
+    table: stocktake (id) {
         id -> Text,
         store_id -> Text,
         user_id -> Text,

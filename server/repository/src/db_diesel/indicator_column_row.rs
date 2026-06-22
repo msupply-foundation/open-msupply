@@ -1,11 +1,14 @@
 use super::{IndicatorValueType, StorageConnection};
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
+    diesel_macros::define_batch_table, repository_error::RepositoryError, ChangelogRepository,
+    RowActionType, SourceSiteId,
 };
 use diesel::prelude::*;
 
-table! {
-    indicator_column (id) {
+define_batch_table! {
+    struct: IndicatorColumnRow,
+    repo: IndicatorColumnRowRepository,
+    table: indicator_column (id) {
         id -> Text,
         program_indicator_id -> Text,
         column_number -> Integer,

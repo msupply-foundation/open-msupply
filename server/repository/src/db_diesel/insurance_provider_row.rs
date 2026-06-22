@@ -5,11 +5,14 @@ use super::{
 use crate::{
     repository_error::RepositoryError, SourceSiteId,
 };
+use crate::diesel_macros::define_batch_table;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-  insurance_provider (id) {
+define_batch_table! {
+    struct: InsuranceProviderRow,
+    repo: InsuranceProviderRowRepository,
+    table: insurance_provider (id) {
       id -> Text,
       provider_name -> Text,
       is_active -> Bool,

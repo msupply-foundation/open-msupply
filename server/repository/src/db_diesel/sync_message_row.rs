@@ -1,7 +1,7 @@
 use super::{
     store_row::store, ChangelogRepository, RowActionType, RowOrId, StorageConnection,
 };
-use crate::{RepositoryError, SourceSiteId};
+use crate::{diesel_macros::define_batch_table, RepositoryError, SourceSiteId};
 use ts_rs::TS;
 
 use chrono::NaiveDateTime;
@@ -39,8 +39,10 @@ impl From<SyncMessageRowType> for String {
     }
 }
 
-table! {
-    sync_message (id) {
+define_batch_table! {
+    struct: SyncMessageRow,
+    repo: SyncMessageRowRepository,
+    table: sync_message (id) {
         id -> Text,
         to_store_id -> Nullable<Text>,
         from_store_id -> Nullable<Text>,

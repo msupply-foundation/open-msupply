@@ -2,7 +2,9 @@ use super::{
     ChangelogRepository, RowActionType, StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, SourceSiteId};
+use crate::{
+    diesel_macros::define_batch_table, repository_error::RepositoryError, SourceSiteId,
+};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -52,8 +54,10 @@ pub enum FrontendPluginVariantType {
     BoaJs,
 }
 
-table! {
-  frontend_plugin (id) {
+define_batch_table! {
+  struct: FrontendPluginRow,
+  repo: FrontendPluginRowRepository,
+  table: frontend_plugin (id) {
       id -> Text,
       code -> Text,
       version -> Text,

@@ -3,6 +3,7 @@ use super::asset_category_row::asset_category::dsl::*;
 use serde::Deserialize;
 use serde::Serialize;
 
+use crate::diesel_macros::define_batch_table;
 use crate::RepositoryError;
 use crate::SourceSiteId;
 use crate::StorageConnection;
@@ -10,13 +11,16 @@ use crate::{ChangelogRepository, RowActionType};
 
 use diesel::prelude::*;
 
-table! {
-    asset_category (id) {
+define_batch_table! {
+    struct: AssetCategoryRow,
+    repo: AssetCategoryRowRepository,
+    table: asset_category (id) {
         id -> Text,
         name -> Text,
         asset_class_id -> Text,
     }
 }
+
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,

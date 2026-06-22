@@ -2,14 +2,17 @@ use super::StorageConnection;
 
 use crate::{
     db_diesel::changelog::ChangelogRepository,
+    diesel_macros::define_batch_table,
     repository_error::RepositoryError,
     ChangelogTableName, RowActionType, SourceSiteId,
 };
 
 use diesel::prelude::*;
 
-table! {
-    location_type (id) {
+define_batch_table! {
+    struct: LocationTypeRow,
+    repo: LocationTypeRowRepository,
+    table: location_type (id) {
         id -> Text,
         name -> Text,
         min_temperature -> Double,

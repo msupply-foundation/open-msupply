@@ -1,15 +1,18 @@
 use super::period_row::period::dsl::*;
 
 use crate::{
-    period_schedule_row::period_schedule, repository_error::RepositoryError, ChangelogRepository,
-    RowActionType, SourceSiteId, StorageConnection,
+    diesel_macros::define_batch_table, period_schedule_row::period_schedule,
+    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
+    StorageConnection,
 };
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
 
-table! {
-    period (id) {
+define_batch_table! {
+    struct: PeriodRow,
+    repo: PeriodRowRepository,
+    table: period (id) {
         id -> Text,
         period_schedule_id -> Text,
         name -> Text,

@@ -5,11 +5,14 @@ use crate::{
     SourceSiteId,
 };
 use crate::{ChangelogRepository, RowActionType};
+use crate::diesel_macros::define_batch_table;
 
 use diesel::prelude::*;
 
-table! {
-  clinician (id) {
+define_batch_table! {
+    struct: ClinicianRow,
+    repo: ClinicianRowRepository,
+    table: clinician (id) {
     id -> Text,
     code  -> Text,
     last_name -> Text,

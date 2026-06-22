@@ -5,13 +5,16 @@ use crate::db_diesel::{
     name_row::name, stock_line_row::stock_line,
 };
 use crate::{
-    ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
+    diesel_macros::define_batch_table, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    vvm_status (id) {
+define_batch_table! {
+    struct: VVMStatusRow,
+    repo: VVMStatusRowRepository,
+    table: vvm_status (id) {
         id -> Text,
         description -> Text,
         code -> Text,

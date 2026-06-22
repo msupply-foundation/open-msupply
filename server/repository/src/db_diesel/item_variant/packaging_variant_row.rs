@@ -1,13 +1,15 @@
 use crate::{
-    ChangelogRepository,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection,
+    diesel_macros::define_batch_table, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    packaging_variant(id) {
+define_batch_table! {
+    struct: PackagingVariantRow,
+    repo: PackagingVariantRowRepository,
+    table: packaging_variant(id) {
         id -> Text,
         name -> Text,
         item_variant_id -> Text,

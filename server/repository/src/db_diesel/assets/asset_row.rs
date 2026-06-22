@@ -2,14 +2,17 @@ use super::asset_row::asset::dsl::*;
 use crate::asset_log_row::latest_asset_log;
 use crate::db_diesel::store_row::store;
 use crate::{
-    ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
+    diesel_macros::define_batch_table, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    asset (id) {
+define_batch_table! {
+    struct: AssetRow,
+    repo: AssetRowRepository,
+    table: asset (id) {
         id -> Text,
         notes -> Nullable<Text>,
         asset_number -> Nullable<Text>,

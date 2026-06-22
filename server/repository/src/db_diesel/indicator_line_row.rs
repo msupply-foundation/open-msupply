@@ -1,7 +1,8 @@
 use super::StorageConnection;
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
+    diesel_macros::define_batch_table, repository_error::RepositoryError, ChangelogRepository,
+    RowActionType, SourceSiteId,
 };
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -18,8 +19,10 @@ pub enum IndicatorValueType {
     Number,
 }
 
-table! {
-    indicator_line (id) {
+define_batch_table! {
+    struct: IndicatorLineRow,
+    repo: IndicatorLineRowRepository,
+    table: indicator_line (id) {
         id -> Text,
         program_indicator_id -> Text,
         line_number -> Integer,

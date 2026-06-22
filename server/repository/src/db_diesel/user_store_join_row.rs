@@ -1,12 +1,15 @@
 use super::{store_row::store, user_row::user_account, StorageConnection};
 
+use crate::diesel_macros::define_batch_table;
 use crate::repository_error::RepositoryError;
 use crate::{ChangelogRepository, RowActionType, SourceSiteId};
 
 use diesel::prelude::*;
 
-table! {
-  user_store_join (id) {
+define_batch_table! {
+    struct: UserStoreJoinRow,
+    repo: UserStoreJoinRowRepository,
+    table: user_store_join (id) {
       id -> Text,
       user_id -> Text,
       store_id -> Text,

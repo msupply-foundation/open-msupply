@@ -6,15 +6,17 @@ use crate::{
     db_diesel::{
         clinician_link_row::clinician_link, clinician_row::clinician, item_link_row::item_link,
         item_row::item, name_row::name,
-    }, ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
+    }, diesel_macros::define_batch_table, ChangelogRepository, RepositoryError, RowActionType, SourceSiteId, StorageConnection,
 };
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    vaccine_course_dose (id) {
+define_batch_table! {
+    struct: VaccineCourseDoseRow,
+    repo: VaccineCourseDoseRowRepository,
+    table: vaccine_course_dose (id) {
         id -> Text,
         vaccine_course_id -> Text,
         label -> Text,

@@ -1,5 +1,6 @@
 use super::asset_class_row::asset_class::dsl::*;
 
+use crate::diesel_macros::define_batch_table;
 use crate::RepositoryError;
 use crate::SourceSiteId;
 use crate::StorageConnection;
@@ -9,12 +10,15 @@ use diesel::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
 
-table! {
-    asset_class (id) {
+define_batch_table! {
+    struct: AssetClassRow,
+    repo: AssetClassRowRepository,
+    table: asset_class (id) {
         id -> Text,
         name -> Text,
     }
 }
+
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,

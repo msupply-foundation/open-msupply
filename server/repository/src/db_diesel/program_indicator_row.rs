@@ -1,13 +1,16 @@
 use super::StorageConnection;
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
+    diesel_macros::define_batch_table, repository_error::RepositoryError, ChangelogRepository,
+    RowActionType, SourceSiteId,
 };
 
 use diesel::prelude::*;
 
-table! {
-    program_indicator (id) {
+define_batch_table! {
+    struct: ProgramIndicatorRow,
+    repo: ProgramIndicatorRowRepository,
+    table: program_indicator (id) {
         id -> Text,
         program_id -> Text,
         code -> Nullable<Text>,

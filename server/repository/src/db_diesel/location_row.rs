@@ -5,10 +5,13 @@ use super::{
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::{ChangelogRepository, RowActionType};
 use crate::SourceSiteId;
+use crate::diesel_macros::define_batch_table;
 use diesel::prelude::*;
 
-table! {
-    location (id) {
+define_batch_table! {
+    struct: LocationRow,
+    repo: LocationRowRepository,
+    table: location (id) {
         id -> Text,
         name -> Text,
         code -> Text,

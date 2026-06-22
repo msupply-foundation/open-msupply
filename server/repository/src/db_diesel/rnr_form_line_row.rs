@@ -3,8 +3,8 @@ use super::{
     rnr_form_line_row::rnr_form_line::dsl::*, rnr_form_row::rnr_form,
 };
 use crate::{
-    db_diesel::changelog::changelog::RowOrId, ChangelogRepository, RepositoryError, RowActionType,
-    SourceSiteId, StorageConnection,
+    db_diesel::changelog::changelog::RowOrId, diesel_macros::define_batch_table, ChangelogRepository,
+    RepositoryError, RowActionType, SourceSiteId, StorageConnection,
 };
 
 use chrono::NaiveDate;
@@ -12,8 +12,10 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-table! {
-    rnr_form_line (id) {
+define_batch_table! {
+    struct: RnRFormLineRow,
+    repo: RnRFormLineRowRepository,
+    table: rnr_form_line (id) {
         id -> Text,
         rnr_form_id -> Text,
         item_link_id -> Text,

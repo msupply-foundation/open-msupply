@@ -1,12 +1,17 @@
 use super::StorageConnection;
 
-use crate::{ChangelogRepository, RepositoryError, RowActionType, SourceSiteId};
+use crate::{
+    diesel_macros::define_batch_table, ChangelogRepository, RepositoryError, RowActionType,
+    SourceSiteId,
+};
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    demographic(id) {
+define_batch_table! {
+    struct: DemographicRow,
+    repo: DemographicRowRepository,
+    table: demographic(id) {
         id -> Text,
         name -> Text,
         population_percentage -> Double

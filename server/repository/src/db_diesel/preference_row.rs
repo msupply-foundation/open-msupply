@@ -1,6 +1,6 @@
 use crate::{
-    db_diesel::changelog::changelog::RowOrId, ChangelogRepository, RepositoryError, RowActionType,
-    SourceSiteId, StorageConnection,
+    db_diesel::changelog::changelog::RowOrId, diesel_macros::define_batch_table, ChangelogRepository,
+    RepositoryError, RowActionType, SourceSiteId, StorageConnection,
 };
 
 use super::preference_row::preference::dsl::*;
@@ -8,8 +8,10 @@ use serde::{Deserialize, Serialize};
 
 use diesel::prelude::*;
 
-table! {
-    preference (id) {
+define_batch_table! {
+    struct: PreferenceRow,
+    repo: PreferenceRowRepository,
+    table: preference (id) {
         id -> Text,
         key -> Text,
         value -> Text,

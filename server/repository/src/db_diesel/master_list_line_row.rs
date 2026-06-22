@@ -4,13 +4,15 @@ use super::{
 };
 use crate::repository_error::RepositoryError;
 use crate::{
-    ChangelogRepository, RowActionType, SourceSiteId,
+    diesel_macros::define_batch_table, ChangelogRepository, RowActionType, SourceSiteId,
 };
 
 use diesel::prelude::*;
 
-table! {
-    master_list_line (id) {
+define_batch_table! {
+    struct: MasterListLineRow,
+    repo: MasterListLineRowRepository,
+    table: master_list_line (id) {
         id -> Text,
         item_link_id -> Text,
         master_list_id -> Text,

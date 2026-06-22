@@ -1,13 +1,16 @@
 use super::StorageConnection;
 
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, RowActionType, SourceSiteId,
+    diesel_macros::define_batch_table, repository_error::RepositoryError, ChangelogRepository,
+    RowActionType, SourceSiteId,
 };
 
 use diesel::prelude::*;
 
-table! {
-    context (id) {
+define_batch_table! {
+    struct: ContextRow,
+    repo: ContextRowRepository,
+    table: context (id) {
         id -> Text,
         name -> Text,
     }

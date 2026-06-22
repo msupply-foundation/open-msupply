@@ -1,4 +1,5 @@
 use crate::db_diesel::{item_link_row::item_link, requisition_row::requisition};
+use crate::diesel_macros::define_batch_table;
 use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
 use diesel::prelude::*;
@@ -11,8 +12,10 @@ use crate::SourceSiteId;
 
 use chrono::NaiveDateTime;
 
-table! {
-    requisition_line (id) {
+define_batch_table! {
+    struct: RequisitionLineRow,
+    repo: RequisitionLineRowRepository,
+    table: requisition_line (id) {
         id -> Text,
         requisition_id -> Text,
         item_link_id -> Text,
@@ -44,6 +47,7 @@ table! {
         vaccine_courses -> Nullable<Text>,
     }
 }
+
 
 joinable!(requisition_line -> item_link (item_link_id));
 joinable!(requisition_line -> requisition (requisition_id));

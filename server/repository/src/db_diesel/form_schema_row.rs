@@ -2,13 +2,17 @@ use super::{
     ChangelogRepository, RowActionType, StorageConnection,
 };
 
-use crate::{RepositoryError, SourceSiteId};
+use crate::{diesel_macros::define_batch_table, RepositoryError, SourceSiteId};
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    form_schema (id) {
+define_batch_table! {
+    struct: FormSchemaRow,
+    repo: FormSchemaRowRepository,
+    // `_upsert_one` takes `FormSchemaJson`; the row-typed writer is `_upsert_one_row`.
+    writer: _upsert_one_row,
+    table: form_schema (id) {
         id -> Text,
         #[sql_name = "type"] type_ -> Text,
         json_schema -> Text,

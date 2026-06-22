@@ -1,12 +1,14 @@
 use diesel::prelude::*;
 
 use crate::{
-    item_link, ChangelogRepository, RepositoryError, RowActionType,
-    SourceSiteId, StorageConnection,
+    diesel_macros::define_batch_table, item_link, ChangelogRepository, RepositoryError,
+    RowActionType, SourceSiteId, StorageConnection,
 };
 
-table! {
-  item_store_join (id) {
+define_batch_table! {
+  struct: ItemStoreJoinRow,
+  repo: ItemStoreJoinRowRepository,
+  table: item_store_join (id) {
     id -> Text,
     item_link_id  -> Text,
     store_id -> Text,

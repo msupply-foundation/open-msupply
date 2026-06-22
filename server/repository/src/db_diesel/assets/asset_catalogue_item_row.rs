@@ -2,6 +2,7 @@ use super::asset_catalogue_item_row::asset_catalogue_item::dsl::*;
 
 use serde::{Deserialize, Serialize};
 
+use crate::diesel_macros::define_batch_table;
 use crate::RepositoryError;
 use crate::SourceSiteId;
 use crate::StorageConnection;
@@ -9,8 +10,10 @@ use crate::{ChangelogRepository, RowActionType};
 
 use diesel::prelude::*;
 
-table! {
-    asset_catalogue_item (id) {
+define_batch_table! {
+    struct: AssetCatalogueItemRow,
+    repo: AssetCatalogueItemRowRepository,
+    table: asset_catalogue_item (id) {
         id -> Text,
         sub_catalogue -> Text,
         asset_category_id -> Text,

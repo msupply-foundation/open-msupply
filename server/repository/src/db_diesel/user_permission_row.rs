@@ -1,5 +1,6 @@
 use super::StorageConnection;
 use crate::diesel_macros::diesel_string_enum;
+use crate::diesel_macros::define_batch_table;
 use crate::repository_error::RepositoryError;
 use crate::{ChangelogRepository, RowActionType, SourceSiteId};
 use diesel::prelude::*;
@@ -7,8 +8,10 @@ use serde::{Deserialize, Serialize};
 use strum::EnumIter;
 use util::uuid::{deterministic_uuid, Uuid};
 
-table! {
-  user_permission (id) {
+define_batch_table! {
+    struct: UserPermissionRow,
+    repo: UserPermissionRowRepository,
+    table: user_permission (id) {
       id -> Text,
       user_id -> Text,
       store_id -> Nullable<Text>,
