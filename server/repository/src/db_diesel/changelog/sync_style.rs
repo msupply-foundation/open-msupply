@@ -484,7 +484,7 @@ impl ChangelogTableName {
                 transport: V5,
             },
             UserPermission => SyncStyle {
-                authoring: vec![Central],
+                authoring: vec![Remote],
                 distribution: vec![D::Remote],
                 transport: V5,
             },

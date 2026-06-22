@@ -1,4 +1,5 @@
 use super::StorageConnection;
+use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::diesel_macros::diesel_string_enum;
 use crate::repository_error::RepositoryError;
 use crate::{ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert};
@@ -185,7 +186,7 @@ impl<'a> UserPermissionRowRepository<'a> {
     pub fn upsert_one(&self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = UserPermissionRow::generate_changelog(
-            row.id.clone(),
+            RowOrId::Row(row),
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -223,13 +224,13 @@ impl<'a> UserPermissionRowRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        self._delete(id)?;
         let changelog = UserPermissionRow::generate_changelog(
-            id.to_string(),
+            RowOrId::Id(id),
             self.connection,
             RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
+        self._delete(id)?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
@@ -247,7 +248,7 @@ impl Delete for UserPermissionRowDelete {
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
                 UserPermissionRow::generate_changelog(
-                    self.0.clone(),
+                    RowOrId::Id(&self.0),
                     con,
                     RowActionType::Delete,
                     SourceSiteId::SourceSiteId(source_site_id),
@@ -279,7 +280,7 @@ impl Upsert for UserPermissionRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
+                RowOrId::Row(self),
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),
